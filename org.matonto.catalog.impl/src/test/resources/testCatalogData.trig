@@ -4,10 +4,15 @@
 @prefix prov: <http://www.w3.org/ns/prov#> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
 
+GRAPH <http://matonto.org/test/different>
+{
+    <http://matonto.org/test/different> a owl:Class .
+}
+
 GRAPH <http://matonto.org/test/records#update>
 {
     <http://matonto.org/test/records#update> a mcat:OntologyRecord ;
-        mcat:catalog <http://matonto.org/test/catalog-published> ;
+        mcat:catalog <http://matonto.org/test/catalog-distributed> ;
         dc:title "Update" ;
         dc:identifier "Identifier" ;
         dc:issued "2016-01-01T00:00:00Z"^^xsd:dateTime ;
@@ -17,7 +22,7 @@ GRAPH <http://matonto.org/test/records#update>
 GRAPH <http://matonto.org/test/records#remove>
 {
     <http://matonto.org/test/records#remove> a mcat:MappingRecord ;
-        mcat:catalog <http://matonto.org/test/catalog-published> ;
+        mcat:catalog <http://matonto.org/test/catalog-distributed> ;
         dc:title "Remove" ;
         dc:identifier "Identifier" ;
         dc:issued "2016-02-01T00:00:00Z"^^xsd:dateTime ;
@@ -27,7 +32,7 @@ GRAPH <http://matonto.org/test/records#remove>
 GRAPH <http://matonto.org/test/records#unversioned>
 {
     <http://matonto.org/test/records#unversioned> a mcat:UnversionedRecord ;
-        mcat:catalog <http://matonto.org/test/catalog-published> ;
+        mcat:catalog <http://matonto.org/test/catalog-distributed> ;
         dc:title "Unversioned" ;
         dc:identifier "Identifier" ;
         dc:issued "2016-03-01T00:00:00Z"^^xsd:dateTime ;
@@ -38,7 +43,7 @@ GRAPH <http://matonto.org/test/records#unversioned>
 GRAPH <http://matonto.org/test/records#versionedRDF>
 {
     <http://matonto.org/test/records#versionedRDF> a mcat:VersionedRDFRecord ;
-        mcat:catalog <http://matonto.org/test/catalog-published> ;
+        mcat:catalog <http://matonto.org/test/catalog-distributed> ;
         dc:title "Versioned RDF" ;
         dc:identifier "Identifier" ;
         dc:issued "2016-03-01T00:00:00Z"^^xsd:dateTime ;
@@ -49,7 +54,7 @@ GRAPH <http://matonto.org/test/records#versionedRDF>
 GRAPH <http://matonto.org/test/records#get>
 {
     <http://matonto.org/test/records#get> a mcat:VersionedRecord ;
-        mcat:catalog <http://matonto.org/test/catalog-published> ;
+        mcat:catalog <http://matonto.org/test/catalog-distributed> ;
         dc:title "Get" ;
         dc:description "Description" ;
         dc:identifier "Identifier" ;
@@ -119,6 +124,28 @@ GRAPH <http://matonto.org/test/branches#test>
         dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime .
 }
 
+GRAPH <http://matonto.org/test/in-progress-commits#test>
+{
+    <http://matonto.org/test/in-progress-commits#test> a mcat:InProgressCommit ;
+        dc:title "In progress commit" ;
+        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        prov:generated <http://matonto.org/test/in-revisions#revision> .
+
+    <http://matonto.org/test/revisions#in-revision> a mcat:Revision ;
+        mcat:additions <http://matonto.org/test/in-additions#test> ;
+        mcat:deletions <http://matonto.org/test/in-deletions#test> .
+}
+
+GRAPH <http://matonto.org/test/in-additions#test>
+{
+    <http://matonto.org/test/add> dc:title "Add" ;
+}
+
+GRAPH <http://matonto.org/test/in-deletions#test>
+{
+    <http://matonto.org/test/delete> dc:title "Delete" ;
+}
+
 GRAPH <http://matonto.org/test/commits#test>
 {
     <http://matonto.org/test/commits#test> a mcat:Commit ;
@@ -164,7 +191,7 @@ GRAPH <http://matonto.org/test/commits#test0>
 GRAPH <http://matonto.org/test/additions#test0>
 {
     <http://matonto.org/test/ontology> a owl:Ontology ;
-        dc:title "Title" .
+        dc:title "Test 0 Title" .
     <http://matonto.org/test/class0> a owl:Class .
 }
 
@@ -184,12 +211,12 @@ GRAPH <http://matonto.org/test/commits#test1>
 
 GRAPH <http://matonto.org/test/additions#test1>
 {
-    <http://matonto.org/test/ontology> dc:title "New Title" .
+    <http://matonto.org/test/ontology> dc:title "Test 1 Title" .
 }
 
 GRAPH <http://matonto.org/test/deletions#test1>
 {
-    <http://matonto.org/test/ontology> dc:title "Title" .
+    <http://matonto.org/test/ontology> dc:title "Test 0 Title" .
 }
 
 GRAPH <http://matonto.org/test/commits#test2>
@@ -207,12 +234,12 @@ GRAPH <http://matonto.org/test/commits#test2>
 
 GRAPH <http://matonto.org/test/additions#test2>
 {
-    <http://matonto.org/test/ontology> dc:title "Another New Title" .
+    <http://matonto.org/test/ontology> dc:title "Test 2 Title" .
 }
 
 GRAPH <http://matonto.org/test/deletions#test2>
 {
-    <http://matonto.org/test/ontology> dc:title "New Title" .
+    <http://matonto.org/test/ontology> dc:title "Test 1 Title" .
 }
 
 GRAPH <http://matonto.org/test/commits#test4a>
@@ -230,12 +257,12 @@ GRAPH <http://matonto.org/test/commits#test4a>
 
 GRAPH <http://matonto.org/test/additions#test4a>
 {
-    <http://matonto.org/test/ontology> dc:title "New Title" .
+    <http://matonto.org/test/ontology> dc:title "Test 4 Title" .
 }
 
 GRAPH <http://matonto.org/test/deletions#test4a>
 {
-    <http://matonto.org/test/ontology> dc:title "Another New Title" .
+    <http://matonto.org/test/ontology> dc:title "Test 2 Title" .
 }
 
 GRAPH <http://matonto.org/test/commits#test4b>
@@ -253,12 +280,12 @@ GRAPH <http://matonto.org/test/commits#test4b>
 
 GRAPH <http://matonto.org/test/additions#test4b>
 {
-    <http://matonto.org/test/ontology> dc:title "New Title" .
+    <http://matonto.org/test/ontology> dc:title "Test 4 Title" .
 }
 
 GRAPH <http://matonto.org/test/deletions#test4b>
 {
-    <http://matonto.org/test/ontology> dc:title "Another New Title" .
+    <http://matonto.org/test/ontology> dc:title "Test 2 Title" .
 }
 
 GRAPH <http://matonto.org/test/commits#test3>
@@ -277,12 +304,12 @@ GRAPH <http://matonto.org/test/commits#test3>
 
 GRAPH <http://matonto.org/test/additions#test3>
 {
-    <http://matonto.org/test/ontology> dc:title "Another New Title" .
+    <http://matonto.org/test/ontology> dc:title "Test 3 Title" .
 }
 
 GRAPH <http://matonto.org/test/deletions#test3>
 {
-    <http://matonto.org/test/ontology> dc:title "New Title" .
+    <http://matonto.org/test/ontology> dc:title "Test 4 Title" .
 }
 
 GRAPH <http://matonto.org/test/commits#test5a>
@@ -300,7 +327,7 @@ GRAPH <http://matonto.org/test/commits#test5a>
 
 GRAPH <http://matonto.org/test/additions#test5a>
 {
-    <http://matonto.org/test/ontology> dc:title "Title 5a" .
+    <http://matonto.org/test/ontology> dc:title "Test 5a Title" .
     <http://matonto.org/test/class> a owl:Class .
 }
 
@@ -319,18 +346,14 @@ GRAPH <http://matonto.org/test/commits#test6a>
 
 GRAPH <http://matonto.org/test/additions#test6a>
 {
-    <http://matonto.org/test/ontology> dc:title "Title 6a" .
+    <http://matonto.org/test/ontology> dc:title "Test 6a Title" .
 }
 
 GRAPH <http://matonto.org/test/deletions#test6a>
 {
     <http://matonto.org/test/class0> a owl:Class .
-}
-
-GRAPH <http://matonto.org/test/deletions#test6a>
-{
-    <http://matonto.org/test/ontology> dc:title "Another New Title" .
-    <http://matonto.org/test/ontology> dc:title "Title 5a" .
+    <http://matonto.org/test/ontology> dc:title "Test 3 Title" .
+    <http://matonto.org/test/ontology> dc:title "Test 5a Title" .
 }
 
 GRAPH <http://matonto.org/test/commits#test5b>
@@ -348,6 +371,6 @@ GRAPH <http://matonto.org/test/commits#test5b>
 
 GRAPH <http://matonto.org/test/additions#test5b>
 {
-    <http://matonto.org/test/ontology> dc:title "Title 5b" .
+    <http://matonto.org/test/ontology> dc:title "Test 5b Title" .
     <http://matonto.org/test/class2> a owl:Class .
 }

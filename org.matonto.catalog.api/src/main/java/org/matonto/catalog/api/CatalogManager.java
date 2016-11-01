@@ -31,10 +31,7 @@ import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.orm.OrmFactory;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 public interface CatalogManager {
 
@@ -169,6 +166,14 @@ public interface CatalogManager {
     boolean removeDistributionFromVersion(Resource distributionId, Resource versionId);
 
     /**
+     * Gets the Distribution identified by the provided Resource.
+     *
+     * @param distributionId The Resource identifying the Distribution you want to get.
+     * @return An Optional of the Distribution if it exists.
+     */
+    Optional<Distribution> getDistribution(Resource distributionId);
+
+    /**
      * Creates an Object which extends Version with the provided metadata using the provided factory.
      *
      * @param title The title text.
@@ -207,6 +212,14 @@ public interface CatalogManager {
     boolean removeVersion(Resource versionId, Resource versionedRecordId);
 
     /**
+     * Gets the Version identified by the provided Resource.
+     *
+     * @param versionId The Resource identifying the Version you want to get.
+     * @return An Optional of the Version if it exists.
+     */
+    Optional<Version> getVersion(Resource versionId);
+
+    /**
      * Creates a Branch with the provided metadata.
      *
      * @param title The title text.
@@ -240,6 +253,14 @@ public interface CatalogManager {
      * @return True if the Branch was successfully removed; otherwise, false.
      */
     boolean removeBranch(Resource branchId, Resource versionedRDFRecordId);
+
+    /**
+     * Gets the Branch identified by the provided Resource.
+     *
+     * @param branchId The Resource identifying the Branch you want to get.
+     * @return An Optional of the Branch if it exists.
+     */
+    Optional<Branch> getBranch(Resource branchId);
 
     /**
      * Creates a Commit from the provided InProgressCommit along with the message.
@@ -316,12 +337,20 @@ public interface CatalogManager {
     Optional<Commit> getCommit(Resource commitId);
 
     /**
-     * Gets the commit chain (set of commits) which ends at the provided Commit.
+     * Removes the InProgressCommit identified by the provided Resource.
+     *
+     * @param inProgressCommitId The Resource identifying the InProgressCommit to be removed.
+     * @return True if the InProgressCommit was removed; otherwise, false.
+     */
+    boolean removeInProgressCommit(Resource inProgressCommitId);
+
+    /**
+     * Gets the commit chain (set of resources) which ends at the provided Commit.
      *
      * @param commitId The Resource identifying the Commit for the desired chain.
-     * @return Set of Commits which make up the commit chain for the provided Commit.
+     * @return Set of Resources identifying the Commits which make up the commit chain for the provided Commit.
      */
-    Set<Commit> getCommitChain(Resource commitId);
+    Set<Resource> getCommitChain(Resource commitId);
 
     /**
      * Gets the Model which represents the resource for the provided Commit.
@@ -333,11 +362,21 @@ public interface CatalogManager {
     Optional<Model> getCompiledResource(Resource commitId);
 
     /**
-     * Gets all of the conflicted between the two provided Commits.
+     * Gets all of the conflicts between the two provided Commits.
      *
-     * @param commitId1 The first Commit.
-     * @param commitId2 The second Commit.
-     * @return Map of Strings with associated Maps
+     * @param leftId The left (first) Commit.
+     * @param rightId The right (second) Commit.
+     * @return Set of Conflicts
      */
-    Optional<Map<String, Map<String, List<Model>>>> getConflicts(Resource commitId1, Resource commitId2);
+    Set<Conflict> getConflicts(Resource leftId, Resource rightId);
+
+    /**
+     * Gets all of the conflicts between the two provided Models.
+     *
+     * @param original The original Model.
+     * @param left The left (first) Model.
+     * @param right The right (second) Model.
+     * @return Set of Conflicts
+     */
+    Set<Conflict> getConflicts(Model original, Model left, Model right);
 }

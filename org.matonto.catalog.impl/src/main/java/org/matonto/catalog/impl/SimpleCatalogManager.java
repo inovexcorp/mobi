@@ -28,10 +28,10 @@ import aQute.bnd.annotation.metatype.Configurable;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.SystemUtils;
 import org.apache.log4j.Logger;
 import org.eclipse.jdt.annotation.Nullable;
 import org.matonto.catalog.api.CatalogManager;
+import org.matonto.catalog.api.Conflict;
 import org.matonto.catalog.api.PaginatedSearchParams;
 import org.matonto.catalog.api.PaginatedSearchResults;
 import org.matonto.catalog.api.builder.DistributionConfig;
@@ -49,6 +49,7 @@ import org.matonto.query.api.BindingSet;
 import org.matonto.query.api.TupleQuery;
 import org.matonto.rdf.api.*;
 import org.matonto.rdf.orm.OrmFactory;
+import org.matonto.rdf.orm.Thing;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.base.RepositoryResult;
@@ -74,21 +75,15 @@ public class SimpleCatalogManager implements CatalogManager {
     private ModelFactory mf;
     private CatalogFactory catalogFactory;
     private RecordFactory recordFactory;
-    /*private UnversionedRecordFactory unversionedRecordFactory;
-    private VersionedRecordFactory versionedRecordFactory;
-    private VersionedRDFRecordFactory versionedRDFRecordFactory;
-    private OntologyRecordFactory ontologyRecordFactory;
-    private MappingRecordFactory mappingRecordFactory;
-    private DatasetRecordFactory datasetRecordFactory;*/
     private DistributionFactory distributionFactory;
-    /*private VersionFactory versionFactory;*/
     private BranchFactory branchFactory;
     private UserFactory userFactory;
     private InProgressCommitFactory inProgressCommitFactory;
     private CommitFactory commitFactory;
     private RevisionFactory revisionFactory;
-    private IRI publishedCatalogIRI;
-    private IRI unpublishedCatalogIRI;
+    private VersionFactory versionFactory;
+    private Resource distributedCatalogIRI;
+    private Resource localCatalogIRI;
     private Map<Resource, String> sortingOptions = new HashMap<>();
 
     public SimpleCatalogManager() {}
@@ -118,45 +113,10 @@ public class SimpleCatalogManager implements CatalogManager {
         this.recordFactory = recordFactory;
     }
 
-    /*@Reference
-    protected void setUnversionedRecordFactory(UnversionedRecordFactory unversionedRecordFactory) {
-        this.unversionedRecordFactory = unversionedRecordFactory;
-    }
-
-    @Reference
-    protected void setVersionedRecordFactory(VersionedRecordFactory versionedRecordFactory) {
-        this.versionedRecordFactory = versionedRecordFactory;
-    }
-
-    @Reference
-    protected void setVersionedRDFRecordFactory(VersionedRDFRecordFactory versionedRDFRecordFactory) {
-        this.versionedRDFRecordFactory = versionedRDFRecordFactory;
-    }
-
-    @Reference
-    protected void setOntologyRecordFactory(OntologyRecordFactory ontologyRecordFactory) {
-        this.ontologyRecordFactory = ontologyRecordFactory;
-    }
-
-    @Reference
-    protected void setDatasetRecordFactory(DatasetRecordFactory datasetRecordFactory) {
-        this.datasetRecordFactory = datasetRecordFactory;
-    }
-
-    @Reference
-    protected void setMappingRecordFactory(MappingRecordFactory mappingRecordFactory) {
-        this.mappingRecordFactory = mappingRecordFactory;
-    }*/
-
     @Reference
     protected void setDistributionFactory(DistributionFactory distributionFactory) {
         this.distributionFactory = distributionFactory;
     }
-
-    /*@Reference
-    protected void setVersionFactory(VersionFactory versionFactory) {
-        this.versionFactory = versionFactory;
-    }*/
 
     @Reference
     protected void setBranchFactory(BranchFactory branchFactory) {
@@ -171,6 +131,11 @@ public class SimpleCatalogManager implements CatalogManager {
     @Reference
     protected void setInProgressCommitFactory(InProgressCommitFactory inProgressCommitFactory) {
         this.inProgressCommitFactory = inProgressCommitFactory;
+    }
+
+    @Reference
+    protected void setVersionFactory(VersionFactory versionFactory) {
+        this.versionFactory = versionFactory;
     }
 
     @Reference
@@ -209,7 +174,6 @@ public class SimpleCatalogManager implements CatalogManager {
     private static final String DELETIONS_NAMESPACE = "https://matonto.org/deletions#";
     private static final String DELETION_CONTEXT_FLAG = "https://matonto.org/has-deletions";
 
-    // private static final String GET_RECORD_QUERY;
     private static final String FIND_RECORDS_QUERY;
     private static final String FIND_RECORDS_TYPE_FILTER_QUERY;
     private static final String COUNT_RECORDS_QUERY;
@@ -224,10 +188,6 @@ public class SimpleCatalogManager implements CatalogManager {
 
     static {
         try {
-            /*GET_RECORD_QUERY = IOUtils.toString(
-                    SimpleCatalogManager.class.getResourceAsStream("/get-record.rq"),
-                    "UTF-8"
-            );*/
             FIND_RECORDS_QUERY = IOUtils.toString(
                     SimpleCatalogManager.class.getResourceAsStream("/find-records.rq"),
                     "UTF-8"
@@ -260,18 +220,18 @@ public class SimpleCatalogManager implements CatalogManager {
     @Activate
     protected void start(Map<String, Object> props) {
         CatalogConfig config = Configurable.createConfigurable(CatalogConfig.class, props);
-        publishedCatalogIRI = vf.createIRI(config.iri() + "-published");
-        unpublishedCatalogIRI = vf.createIRI(config.iri() + "-unpublished");
+        distributedCatalogIRI = vf.createIRI(config.iri() + "-distributed");
+        localCatalogIRI = vf.createIRI(config.iri() + "-local");
         createSortingOptions();
 
-        if (!resourceExists(publishedCatalogIRI)) {
-            log.debug("Initializing the published MatOnto Catalog.");
-            addCatalogToRepo(publishedCatalogIRI, config.title() + " (Published)", config.description());
+        if (!resourceExists(distributedCatalogIRI, Catalog.TYPE)) {
+            log.debug("Initializing the distributed MatOnto Catalog.");
+            addCatalogToRepo(distributedCatalogIRI, config.title() + " (Distributed)", config.description());
         }
 
-        if (!resourceExists(unpublishedCatalogIRI)) {
-            log.debug("Initializing the unpublished MatOnto Catalog.");
-            addCatalogToRepo(unpublishedCatalogIRI, config.title() + " (Unpublished)", config.description());
+        if (!resourceExists(localCatalogIRI, Catalog.TYPE)) {
+            log.debug("Initializing the local MatOnto Catalog.");
+            addCatalogToRepo(localCatalogIRI, config.title() + " (Local)", config.description());
         }
     }
 
@@ -282,12 +242,12 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public Catalog getPublishedCatalog() throws MatOntoException {
-        return getCatalog(publishedCatalogIRI);
+        return getCatalog(distributedCatalogIRI);
     }
 
     @Override
     public Catalog getUnpublishedCatalog() throws MatOntoException {
-        return getCatalog(unpublishedCatalogIRI);
+        return getCatalog(localCatalogIRI);
     }
 
     @Override
@@ -385,19 +345,23 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public Set<Resource> getRecordIds(Resource catalogId) {
-        RepositoryConnection conn = null;
-        Set<Resource> results = new HashSet<>();
-        try {
-            conn = repository.getConnection();
-            RepositoryResult<Statement> statements = conn.getStatements(null, vf.createIRI(Record.catalog_IRI),
-                    catalogId);
-            statements.forEach(statement -> results.add(statement.getSubject()));
-        } catch (RepositoryException e) {
-            throw new MatOntoException("Error in repository connection.", e);
-        } finally {
-            closeConnection(conn);
+        if (resourceExists(catalogId, Catalog.TYPE)) {
+            RepositoryConnection conn = null;
+            try {
+                conn = repository.getConnection();
+                Set<Resource> results = new HashSet<>();
+                RepositoryResult<Statement> statements = conn.getStatements(null, vf.createIRI(Record.catalog_IRI),
+                        catalogId);
+                statements.forEach(statement -> results.add(statement.getSubject()));
+                return results;
+            } catch (RepositoryException e) {
+                throw new MatOntoException("Error in repository connection.", e);
+            } finally {
+                closeConnection(conn);
+            }
+        } else {
+            return Collections.emptySet();
         }
-        return results;
     }
 
     @Override
@@ -409,7 +373,7 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public boolean addRecord(Resource catalogId, Record record) throws MatOntoException {
-        if (!getRecord(catalogId, record.getResource()).isPresent()) {
+        if (resourceExists(catalogId, Catalog.TYPE) && !resourceExists(record.getResource())) {
             RepositoryConnection conn = null;
             try {
                 conn = repository.getConnection();
@@ -428,7 +392,7 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public boolean updateRecord(Resource catalogId, Record newRecord) throws MatOntoException {
-        if (getRecord(catalogId, newRecord.getResource()).isPresent()) {
+        if (resourceExists(catalogId, Catalog.TYPE) && isRecord(newRecord.getResource())) {
             update(newRecord.getResource(), newRecord.getModel());
             return true;
         } else {
@@ -438,7 +402,7 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public boolean removeRecord(Resource catalogId, Resource recordId) throws MatOntoException {
-        if (getRecord(catalogId, recordId).isPresent()) {
+        if (resourceExists(catalogId, Catalog.TYPE) && isRecord(recordId)) {
             remove(recordId);
             return true;
         } else {
@@ -449,21 +413,15 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public Optional<Record> getRecord(Resource catalogId, Resource recordId) throws MatOntoException {
         RepositoryConnection conn = null;
-        Model recordModel = mf.createModel();
         try {
             conn = repository.getConnection();
-            RepositoryResult<Statement> statements = conn.getStatements(recordId, null, null, recordId);
-            statements.forEach(recordModel::add);
+            boolean condition = isRecord(recordId) && conn.getStatements(recordId, vf.createIRI(Record.catalog_IRI),
+                    catalogId).hasNext();
+            return getObject(condition, recordId, recordFactory);
         } catch (RepositoryException e) {
             throw new MatOntoException("Error in repository connection.", e);
         } finally {
             closeConnection(conn);
-        }
-        if (recordModel.size() != 0 && recordModel.contains(recordId, vf.createIRI(Record.catalog_IRI), catalogId,
-                recordId)) {
-            return Optional.of(recordFactory.createNew(recordId, recordModel));
-        } else {
-            return Optional.empty();
         }
     }
 
@@ -471,7 +429,8 @@ public class SimpleCatalogManager implements CatalogManager {
     public Distribution createDistribution(DistributionConfig config) {
         OffsetDateTime now = OffsetDateTime.now();
 
-        Distribution distribution = distributionFactory.createNew(vf.createIRI(DISTRIBUTION_NAMESPACE + UUID.randomUUID()));
+        Distribution distribution = distributionFactory.createNew(vf.createIRI(DISTRIBUTION_NAMESPACE
+                + UUID.randomUUID()));
         distribution.setProperty(vf.createLiteral(config.getTitle()), vf.createIRI(DC_TITLE));
         distribution.setProperty(vf.createLiteral(now), vf.createIRI(DC_ISSUED));
         distribution.setProperty(vf.createLiteral(now), vf.createIRI(DC_MODIFIED));
@@ -503,7 +462,7 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public boolean updateDistribution(Distribution newDistribution) {
-        if (resourceExists(newDistribution.getResource())) {
+        if (resourceExists(newDistribution.getResource(), Distribution.TYPE)) {
             update(newDistribution.getResource(), newDistribution.getModel());
             return true;
         } else {
@@ -513,13 +472,20 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public boolean removeDistributionFromUnversionedRecord(Resource distributionId, Resource unversionedRecordId) {
-        return removeObjectWithRelationship(distributionId, unversionedRecordId,
+        return resourceExists(unversionedRecordId, UnversionedRecord.TYPE) && resourceExists(distributionId,
+                Distribution.TYPE) && removeObjectWithRelationship(distributionId, unversionedRecordId,
                 UnversionedRecord.unversionedDistribution_IRI);
     }
 
     @Override
     public boolean removeDistributionFromVersion(Resource distributionId, Resource versionId) {
-        return removeObjectWithRelationship(distributionId, versionId, Version.versionedDistribution_IRI);
+        return (isVersion(versionId) && resourceExists(distributionId, Distribution.TYPE)
+                && removeObjectWithRelationship(distributionId, versionId, Version.versionedDistribution_IRI));
+    }
+
+    @Override
+    public Optional<Distribution> getDistribution(Resource distributionId) {
+        return getObject(resourceExists(distributionId, Distribution.TYPE), distributionId, distributionFactory);
     }
 
     @Override
@@ -539,7 +505,7 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public boolean addVersion(Version version, Resource versionedRecordId) {
-        if (!resourceExists(version.getResource()) && resourceExists(versionedRecordId)) {
+        if (!resourceExists(version.getResource()) && isVersionedRecord(versionedRecordId)) {
             RepositoryConnection conn = null;
             try {
                 conn = repository.getConnection();
@@ -562,7 +528,7 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public boolean updateVersion(Version newVersion) {
-        if (resourceExists(newVersion.getResource())) {
+        if (isVersion(newVersion.getResource())) {
             update(newVersion.getResource(), newVersion.getModel());
             return true;
         } else {
@@ -572,7 +538,8 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public boolean removeVersion(Resource versionId, Resource versionedRecordId) {
-        if (removeObjectWithRelationship(versionId, versionedRecordId, VersionedRecord.version_IRI)) {
+        if (isVersion(versionId) && isVersionedRecord(versionedRecordId) && removeObjectWithRelationship(versionId,
+                versionedRecordId, VersionedRecord.version_IRI)) {
             RepositoryConnection conn = null;
             try {
                 conn = repository.getConnection();
@@ -602,6 +569,11 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
+    public Optional<Version> getVersion(Resource versionId) {
+        return getObject(isVersion(versionId), versionId, versionFactory);
+    }
+
+    @Override
     public Branch createBranch(String title, @Nullable String description) {
         OffsetDateTime now = OffsetDateTime.now();
 
@@ -618,7 +590,7 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public boolean addBranch(Branch branch, Resource versionedRDFRecordId) {
-        if (!resourceExists(branch.getResource()) && resourceExists(versionedRDFRecordId)) {
+        if (!resourceExists(branch.getResource()) && isVersionedRecord(versionedRDFRecordId)) {
             RepositoryConnection conn = null;
             try {
                 conn = repository.getConnection();
@@ -640,7 +612,7 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public boolean updateBranch(Branch newBranch) {
-        if (resourceExists(newBranch.getResource())) {
+        if (resourceExists(newBranch.getResource(), Branch.TYPE)) {
             update(newBranch.getResource(), newBranch.getModel());
             return true;
         } else {
@@ -650,7 +622,13 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public boolean removeBranch(Resource branchId, Resource versionedRDFRecordId) {
-        return removeObjectWithRelationship(branchId, versionedRDFRecordId, VersionedRDFRecord.branch_IRI);
+        return resourceExists(branchId, Branch.TYPE) && isVersionedRDFRecord(versionedRDFRecordId)
+                && removeObjectWithRelationship(branchId, versionedRDFRecordId, VersionedRDFRecord.branch_IRI);
+    }
+
+    @Override
+    public Optional<Branch> getBranch(Resource branchId) {
+        return getObject(resourceExists(branchId, Branch.TYPE), branchId, branchFactory);
     }
 
     @Override
@@ -691,7 +669,7 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public Optional<InProgressCommit> createInProgressCommit(@Nullable Set<Commit> parents, User user,
                                                              Resource branchId) {
-        if (resourceExists(branchId)) {
+        if (resourceExists(branchId, Branch.TYPE)) {
             UUID uuid = UUID.randomUUID();
 
             Revision revision = revisionFactory.createNew(vf.createIRI(REVISION_NAMESPACE + uuid));
@@ -722,7 +700,7 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public boolean addAdditions(Model statements, Resource commitId) throws MatOntoException {
-        if (resourceExists(commitId)) {
+        if (isCommit(commitId)) {
             RepositoryConnection conn = null;
             try {
                 conn = repository.getConnection();
@@ -751,7 +729,7 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public boolean addDeletions(Model statements, Resource commitId) throws MatOntoException {
-        if (resourceExists(commitId)) {
+        if (isCommit(commitId)) {
             RepositoryConnection conn = null;
             try {
                 conn = repository.getConnection();
@@ -780,7 +758,7 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public boolean addCommitToBranch(Commit commit, Resource branchId) throws MatOntoException {
-        if (!resourceExists(commit.getResource()) && resourceExists(branchId)) {
+        if (!resourceExists(commit.getResource()) && resourceExists(branchId, Branch.TYPE)) {
             RepositoryConnection conn = null;
             try {
                 conn = repository.getConnection();
@@ -803,7 +781,7 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public boolean addCommitToTag(Commit commit, Resource tagId) throws MatOntoException {
-        if (!resourceExists(commit.getResource()) && resourceExists(tagId)) {
+        if (!resourceExists(commit.getResource()) && resourceExists(tagId, Tag.TYPE)) {
             RepositoryConnection conn = null;
             try {
                 conn = repository.getConnection();
@@ -844,37 +822,69 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public Optional<Commit> getCommit(Resource commitId) throws MatOntoException {
-        RepositoryConnection conn = null;
-        Model commitModel = mf.createModel();
-        try {
-            conn = repository.getConnection();
-            RepositoryResult<Statement> statements = conn.getStatements(null, null, null, commitId);
-            statements.forEach(commitModel::add);
-        } catch (RepositoryException e) {
-            throw new MatOntoException("Error in repository connection.", e);
-        } finally {
-            closeConnection(conn);
-        }
-        if (commitModel.size() != 0) {
-            return Optional.of(commitFactory.createNew(commitId, commitModel));
+        if (isCommit(commitId)) {
+            RepositoryConnection conn = null;
+            Model commitModel = mf.createModel();
+            try {
+                conn = repository.getConnection();
+                RepositoryResult<Statement> statements = conn.getStatements(null, null, null, commitId);
+                statements.forEach(commitModel::add);
+            } catch (RepositoryException e) {
+                throw new MatOntoException("Error in repository connection.", e);
+            } finally {
+                closeConnection(conn);
+            }
+            if (commitModel.size() != 0) {
+                return Optional.of(commitFactory.createNew(commitId, commitModel));
+            } else {
+                return Optional.empty();
+            }
         } else {
             return Optional.empty();
         }
     }
 
     @Override
-    public Set<Commit> getCommitChain(Resource commitId) {
-        return null;
+    public boolean removeInProgressCommit(Resource inProgressCommitId) {
+        if (resourceExists(inProgressCommitId, InProgressCommit.TYPE)) {
+            remove(inProgressCommitId);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    @Override
+    public Set<Resource> getCommitChain(Resource commitId) {
+        if (isCommit(commitId)) {
+            RepositoryConnection conn = null;
+            try {
+                conn = repository.getConnection();
+                Iterator<Value> commits = getCommitChainIterator(commitId, conn);
+                Set<Resource> results = new HashSet<>();
+                commits.forEachRemaining(commit -> results.add((Resource) commit));
+                results.add(commitId);
+                return results;
+            } catch (RepositoryException e) {
+                throw new MatOntoException("Error in repository connection", e);
+            } finally {
+                closeConnection(conn);
+            }
+        } else {
+            return Collections.emptySet();
+        }
     }
 
     @Override
     public Optional<Model> getCompiledResource(Resource commitId) throws MatOntoException {
-        if (resourceExists(commitId)) {
+        if (isCommit(commitId)) {
             RepositoryConnection conn = null;
             try {
                 conn = repository.getConnection();
                 Iterator<Value> iterator = getCommitChainIterator(commitId, conn);
-                return Optional.of(createModelFromIterator(iterator, commitId, conn));
+                Model model = createModelFromIterator(iterator, commitId, conn);
+                model.remove(null ,null, null, vf.createIRI(DELETION_CONTEXT_FLAG));
+                return Optional.of(model);
             } catch (RepositoryException e) {
                 throw new MatOntoException("Error in repository connection", e);
             } finally {
@@ -886,84 +896,130 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public Optional<Map<String, Map<String, List<Model>>>> getConflicts(Resource commitId1, Resource commitId2) throws
-            MatOntoException {
-        if (resourceExists(commitId1) && resourceExists(commitId2)) {
+    public Set<Conflict> getConflicts(Resource leftId, Resource rightId) throws MatOntoException {
+        if (isCommit(leftId) && isCommit(rightId)) {
             RepositoryConnection conn = null;
             try {
                 conn = repository.getConnection();
-                Iterator<Value> commitIterator1 = getCommitChainIterator(commitId1, conn);
-                Iterator<Value> commitIterator2 = getCommitChainIterator(commitId2, conn);
-                while (commitIterator1.hasNext() && commitIterator2.hasNext()) {
-                    if (!commitIterator1.next().equals(commitIterator2.next())) {
+
+                Iterator<Value> leftIterator = getCommitChainIterator(leftId, conn);
+                Iterator<Value> rightIterator = getCommitChainIterator(rightId, conn);
+                Value originalEnd = null;
+
+                while (leftIterator.hasNext() && rightIterator.hasNext()) {
+                    Value currentId = leftIterator.next();
+                    if (!currentId.equals(rightIterator.next())) {
                         break;
+                    } else {
+                        originalEnd = currentId;
                     }
                 }
-                Set<String> conflicts = new HashSet<>();
 
-                Model model1 = createModelFromIterator(commitIterator1, commitId1, conn);
-                Model model2 = createModelFromIterator(commitIterator2, commitId2, conn);
+                if (originalEnd == null) {
+                    throw new MatOntoException("There is no common parent between the provided Commits.");
+                }
 
-                Map<Value, Set<Value>> map1 = new HashMap<>();
-                model1.forEach(statement -> {
-                    Value subject = statement.getSubject();
-                    Value predicate = statement.getPredicate();
-                    if (map1.containsKey(statement.getSubject())) {
-                        map1.get(subject).add(predicate);
-                    } else {
-                        map1.put(subject, Stream.of(predicate).collect(Collectors.toSet()));
-                    }
-                    if (statement.getContext().isPresent() && predicate.equals(vf.createIRI(RDF_TYPE))) {
-                        conflicts.add(subject.stringValue());
-                    }
-                });
+                Model original = getCompiledResource((Resource)originalEnd).get();
+                Model left = createModelFromIterator(leftIterator, leftId, conn);
+                Model right = createModelFromIterator(rightIterator, rightId, conn);
 
-                Map<Value, Set<Value>> map2 = new HashMap<>();
-                model2.forEach(statement -> {
-                    Value subject = statement.getSubject();
-                    Value predicate = statement.getPredicate();
-                    if (map2.containsKey(statement.getSubject())) {
-                        map2.get(subject).add(predicate);
-                    } else {
-                        map2.put(subject, Stream.of(predicate).collect(Collectors.toSet()));
-                    }
-                    if (statement.getContext().isPresent() && predicate.equals(vf.createIRI(RDF_TYPE))) {
-                        conflicts.add(subject.stringValue());
-                    }
-                });
-
-                Set<Value> subjects1 = map1.keySet();
-                Set<Value> subjects2 = map2.keySet();
-
-                subjects1.retainAll(subjects2);
-
-                subjects1.forEach(subject -> {
-                    Set<Value> predicates1 = map1.get(subject);
-                    Set<Value> predicates2 = map2.get(subject);
-                    predicates1.retainAll(predicates2);
-                    if (predicates1.size() != 0) {
-                        conflicts.add(subject.stringValue());
-                    }
-                });
-
-                conflicts.forEach(System.out::println);
-
-                /*System.out.println(map1);
-                System.out.println(map2);*/
-
-                /*model1.forEach(s -> System.out.println("Commit 1: " + s.getSubject() + " " + s.getPredicate() + " "
-                        + s.getObject() + " " + s.getContext()));
-                model2.forEach(s -> System.out.println("Commit 2: " + s.getSubject() + " " + s.getPredicate() + " "
-                        + s.getObject() + " " + s.getContext()));*/
+                return getConflicts(original, left, right);
             } catch (RepositoryException e) {
                 throw new MatOntoException("Error in repository connection.", e);
             } finally {
                 closeConnection(conn);
             }
         } else {
-            throw new MatOntoException("One or both of the commit IRIs could not be found in the Repository");
+            throw new MatOntoException("One or both of the commit IRIs could not be found in the Repository.");
         }
-        return Optional.empty();
+    }
+
+    @Override
+    public Set<Conflict> getConflicts(Model original, Model left, Model right) {
+        Set<Conflict> conflicts = new HashSet<>();
+        Set<String> conflictedSubjects = new HashSet<>();
+
+        Map<Value, Set<Value>> leftMap = getSubjectPredicatesMap(left);
+        Map<Value, Set<Value>> rightMap = getSubjectPredicatesMap(right);
+
+        Set<Value> leftSubjects = leftMap.keySet();
+        Set<Value> rightSubjects = rightMap.keySet();
+
+        leftSubjects.retainAll(rightSubjects);
+
+        leftSubjects.forEach(subject -> {
+            Set<Value> predicates1 = leftMap.get(subject);
+            Set<Value> predicates2 = rightMap.get(subject);
+            predicates1.retainAll(predicates2);
+            if (predicates1.size() != 0) {
+                conflictedSubjects.add(subject.stringValue());
+            }
+        });
+
+        Stream.of(left, right).forEach(model -> model.filter(null, null, null, vf.createIRI(DELETION_CONTEXT_FLAG))
+                .forEach(statement -> conflictedSubjects.add(statement.getSubject().stringValue())));
+
+        conflictedSubjects.forEach(subject -> {
+            IRI subjectIRI = vf.createIRI(subject);
+            Model base = original.filter(subjectIRI, null, null);
+            Model first = left.filter(subjectIRI, null, null);
+            Model second = right.filter(subjectIRI, null, null);
+            conflicts.add(new SimpleConflict.Builder(subject, base, first, second).build());
+        });
+
+        return conflicts;
+    }
+
+    /**
+     * Gets the Object identified by the provided factory if it is available and of the correct type.
+     *
+     * @param condition The boolean identifying if the resource is correct.
+     * @param id The Resource identifying which Object you are trying to get.
+     * @param factory The OrmFactory which will create the desired Object.
+     * @return An Optional containing the Object identified, if available.
+     */
+    private <T extends Thing> Optional<T> getObject(boolean condition, Resource id, OrmFactory<T> factory) {
+        if (condition) {
+            RepositoryConnection conn = null;
+            Model model = mf.createModel();
+            try {
+                conn = repository.getConnection();
+                RepositoryResult<Statement> statements = conn.getStatements(null, null, null, id);
+                statements.forEach(model::add);
+            } catch (RepositoryException e) {
+                throw new MatOntoException("Error in repository connection.", e);
+            } finally {
+                closeConnection(conn);
+            }
+            if (model.size() != 0) {
+                return Optional.of(factory.createNew(id, model));
+            } else {
+                return Optional.empty();
+            }
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * Gets a Map with keys corresponding to the subjects of the statements of the provided Model and values listing out
+     * the unique predicates associated with those subjects.
+     *
+     * @param model The Model to get the subjects and predicates from.
+     * @return The Map containing the subjects with related predicates.
+     */
+    private Map<Value, Set<Value>> getSubjectPredicatesMap(Model model) {
+        Map<Value, Set<Value>> map = new HashMap<>();
+        model.forEach(statement -> {
+            Value subject = statement.getSubject();
+            Value predicate = statement.getPredicate();
+            if (map.containsKey(statement.getSubject())) {
+                map.get(subject).add(predicate);
+            } else {
+                map.put(subject, Stream.of(predicate).collect(Collectors.toSet()));
+            }
+        });
+        return map;
     }
 
     /**
@@ -992,7 +1048,6 @@ public class SimpleCatalogManager implements CatalogManager {
         } finally {
             closeConnection(conn);
         }
-
     }
 
     /**
@@ -1033,7 +1088,81 @@ public class SimpleCatalogManager implements CatalogManager {
         } finally {
             closeConnection(conn);
         }
+    }
 
+    /**
+     * Checks to see if the provided Resource exists in the Repository and is of the provided type.
+     *
+     * @param resourceIRI The Resource to look for in the Repository
+     * @param type The String of the IRI identifying the type of entity in the Repository.
+     * @return True if the Resource is in the Repository; otherwise, false
+     */
+    private boolean resourceExists(Resource resourceIRI, String type) throws MatOntoException {
+        RepositoryConnection conn = null;
+        try {
+            conn = repository.getConnection();
+            return conn.getStatements(null, vf.createIRI(RDF_TYPE), vf.createIRI(type), resourceIRI).hasNext();
+        } catch (RepositoryException e) {
+            throw new MatOntoException("Error in repository connection.", e);
+        } finally {
+            closeConnection(conn);
+        }
+    }
+
+    /**
+     * Checks if the Object identified by the Resource is a Version (or Tag).
+     *
+     * @param resourceId The Resource to identify the desired Object.
+     * @return True if the Resource is a Version (or Tag); otherwise, false.
+     */
+    private boolean isVersion(Resource resourceId) {
+        return resourceExists(resourceId, Version.TYPE) || resourceExists(resourceId, Tag.TYPE);
+    }
+
+    /**
+     * Checks if the Object identified by the Resource is a Record.
+     *
+     * @param resourceId The Resource to identify the desired Object.
+     * @return True if the Resource is a Record; otherwise, false.
+     */
+    private boolean isRecord(Resource resourceId) {
+        return resourceExists(resourceId, Record.TYPE) || resourceExists(resourceId, UnversionedRecord.TYPE)
+                || isVersionedRecord(resourceId);
+    }
+
+    /**
+     * Checks if the Object identified by the Resource is a VersionedRecord (or VersionedRDFRecord or OntologyRecord or
+     * DatasetRecord or MappingRecord).
+     *
+     * @param resourceId The Resource to identify the desired Object
+     * @return True if the Resource is a VersionedRecord (or VersionedRDFRecord or OntologyRecord or DatasetRecord or
+     *         MappingRecord); otherwise, false.
+     */
+    private boolean isVersionedRecord(Resource resourceId) {
+        return resourceExists(resourceId, VersionedRecord.TYPE) || isVersionedRDFRecord(resourceId);
+    }
+
+    /**
+     * Checks if the Object identified by the Resource is a VersionedRDFRecord (or OntologyRecord or DatasetRecord or
+     * MappingRecord).
+     *
+     * @param resourceId The Resource to identify the desired Object
+     * @return True if the Resource is a VersionedRDFRecord (or OntologyRecord or DatasetRecord or MappingRecord);
+     *         otherwise, false.
+     */
+    private boolean isVersionedRDFRecord(Resource resourceId) {
+        return resourceExists(resourceId, VersionedRDFRecord.TYPE) || resourceExists(resourceId, OntologyRecord.TYPE)
+                || resourceExists(resourceId, DatasetRecord.TYPE) || resourceExists(resourceId, MappingRecord.TYPE);
+    }
+
+    /**
+     * Checks if the Object identified by the Resource is a Commit (or InProgressCommit).
+     *
+     * @param resourceId The Resource to identify the desired Object
+     * @return True if the Resource is a Commit (or InProgressCommit); otherwise, false.
+     */
+    private boolean isCommit(Resource resourceId) {
+        return resourceExists(resourceId, Commit.TYPE) || resourceExists(resourceId, InProgressCommit.TYPE);
     }
 
     /**
@@ -1094,7 +1223,6 @@ public class SimpleCatalogManager implements CatalogManager {
      *
      * @param bindingSet The BindingSet which contains the information about the Record.
      * @param resource The Resource which identifies the created Record.
-     * @param conn The RepositoryConnection to get additional statements from the repository.
      * @return A Record created from the provided information.
      */
     private Record processRecordBindingSet(BindingSet bindingSet, Resource resource) {
@@ -1135,7 +1263,8 @@ public class SimpleCatalogManager implements CatalogManager {
      */
     private boolean addDistribution(Distribution distribution, Resource resourceId, String predicate) throws
             MatOntoException {
-        if (!resourceExists(distribution.getResource()) && resourceExists(resourceId)) {
+        if (!resourceExists(distribution.getResource(), Distribution.TYPE) && (isVersion(resourceId)
+                || resourceExists(resourceId, UnversionedRecord.TYPE))) {
             RepositoryConnection conn = null;
             try {
                 conn = repository.getConnection();
@@ -1261,16 +1390,25 @@ public class SimpleCatalogManager implements CatalogManager {
     private Model addRevisionStatementsToModel(Model model, Resource commitId, RepositoryConnection conn) {
         Resource additionsId = getAdditionsResource(commitId, conn);
         Resource deletionsId = getDeletionsResource(commitId, conn);
-        conn.getStatements(null, null, null, additionsId).forEach(statement -> model.add(statement.getSubject(),
-                statement.getPredicate(), statement.getObject()));
-        conn.getStatements(null, null, null, deletionsId).forEach(statement -> {
-            if(model.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())) {
-                model.remove(statement.getSubject(), statement.getPredicate(), statement.getObject());
-            } else {
-                model.add(statement.getSubject(), statement.getPredicate(), statement.getObject(),
-                        vf.createIRI(DELETION_CONTEXT_FLAG));
+        conn.getStatements(null, null, null, additionsId).forEach(statement -> {
+            Resource subject = statement.getSubject();
+            IRI predicate = statement.getPredicate();
+            Value object = statement.getObject();
+            if (!model.contains(subject, predicate, object)) {
+                model.add(subject, predicate, object);
             }
         });
+        conn.getStatements(null, null, null, deletionsId).forEach(statement -> {
+            Resource subject = statement.getSubject();
+            IRI predicate = statement.getPredicate();
+            Value object = statement.getObject();
+            if (model.contains(subject, predicate, object)) {
+                model.remove(subject, predicate, object);
+            } else {
+                model.add(subject, predicate, object, vf.createIRI(DELETION_CONTEXT_FLAG));
+            }
+        });
+
         return model;
     }
 
