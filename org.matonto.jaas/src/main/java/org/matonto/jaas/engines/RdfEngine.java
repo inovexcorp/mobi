@@ -42,6 +42,7 @@ import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.base.RepositoryResult;
 import org.matonto.repository.exception.RepositoryException;
 import org.openrdf.model.vocabulary.DCTERMS;
+import org.openrdf.model.vocabulary.RDF;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -229,8 +230,12 @@ public class RdfEngine implements Engine {
 
         Model userModel = modelFactory.createModel();
         try (RepositoryConnection conn = repository.getConnection()) {
-            RepositoryResult<Statement> statements = conn.getStatements(factory.createIRI(userNamespace + username), null, null, context);
+            RepositoryResult<Statement> statements = conn.getStatements(factory.createIRI(userNamespace + username),
+                    null, null, context);
+            RepositoryResult<Statement> roles = conn.getStatements(null, factory.createIRI(RDF.TYPE.stringValue()),
+                    factory.createIRI(Role.TYPE), context);
             statements.forEach(userModel::add);
+            roles.forEach(userModel::add);
         } catch (RepositoryException e) {
             throw new MatOntoException("Error in repository connection", e);
         }
@@ -339,8 +344,12 @@ public class RdfEngine implements Engine {
 
         Model groupModel = modelFactory.createModel();
         try (RepositoryConnection conn = repository.getConnection()) {
-            RepositoryResult<Statement> statements = conn.getStatements(factory.createIRI(groupNamespace + groupName), null, null, context);
+            RepositoryResult<Statement> statements = conn.getStatements(factory.createIRI(groupNamespace + groupName),
+                    null, null, context);
+            RepositoryResult<Statement> roles = conn.getStatements(null, factory.createIRI(RDF.TYPE.stringValue()),
+                    factory.createIRI(Role.TYPE), context);
             statements.forEach(groupModel::add);
+            roles.forEach(groupModel::add);
         } catch (RepositoryException e) {
             throw new MatOntoException("Error in repository connection", e);
         }
