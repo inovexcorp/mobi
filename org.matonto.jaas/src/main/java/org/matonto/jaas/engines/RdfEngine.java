@@ -81,7 +81,8 @@ public class RdfEngine implements Engine {
         RepositoryConnection conn = repository.getConnection();
         conn.begin();
         roles.stream()
-                .filter(role -> !resourceExists(factory.createIRI(roleNamespace + role))).forEach(role -> {
+                .filter(role -> !resourceExists(factory.createIRI(roleNamespace + role)))
+                .forEach(role -> {
                     Role adminRole = roleFactory.createNew(factory.createIRI(roleNamespace + role));
                     adminRole.setProperty(factory.createLiteral(role), factory.createIRI(DCTERMS.TITLE.stringValue()));
                     conn.add(adminRole.getModel(), context);
@@ -91,6 +92,7 @@ public class RdfEngine implements Engine {
                     .map(role -> roleFactory.createNew(factory.createIRI(roleNamespace + role)))
                     .collect(Collectors.toSet());
             User admin = userFactory.createNew(factory.createIRI(userNamespace + "admin"));
+            admin.setUsername(factory.createLiteral("admin"));
             admin.setPassword(factory.createLiteral("admin"));
             admin.setHasUserRole(allRoles);
             conn.add(admin.getModel(), context);
