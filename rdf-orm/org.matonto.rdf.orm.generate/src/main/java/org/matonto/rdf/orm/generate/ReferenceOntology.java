@@ -23,6 +23,7 @@ package org.matonto.rdf.orm.generate;
  * #L%
  */
 
+import org.apache.commons.lang3.StringUtils;
 import org.openrdf.model.IRI;
 import org.openrdf.model.Model;
 import org.openrdf.model.vocabulary.OWL;
@@ -41,11 +42,18 @@ public class ReferenceOntology {
 
     private final String packageName;
 
+    private final String ontologyName;
+
     private SourceGenerator sourceGenerator;
 
-    public ReferenceOntology(final String packageName, final Model ontologyModel){
+    public ReferenceOntology(final String packageName, final Model ontologyModel) {
+        this(packageName, null, ontologyModel);
+    }
+
+    public ReferenceOntology(final String packageName, final String ontologyName, final Model ontologyModel) {
         this.packageName = packageName;
         this.ontologyModel = ontologyModel;
+        this.ontologyName = ontologyName;
     }
 
     public Model getOntologyModel() {
@@ -56,16 +64,16 @@ public class ReferenceOntology {
         return packageName;
     }
 
-    public boolean containsClass(final IRI classIri){
-        return !ontologyModel.filter(classIri, RDF.TYPE, RDFS.CLASS).isEmpty() || !ontologyModel.filter(classIri,RDF.TYPE, OWL.CLASS).isEmpty();
+    public boolean containsClass(final IRI classIri) {
+        return !ontologyModel.filter(classIri, RDF.TYPE, RDFS.CLASS).isEmpty() || !ontologyModel.filter(classIri, RDF.TYPE, OWL.CLASS).isEmpty();
     }
 
-    public String getClassName(final IRI classUri){
-      return  packageName + "." + SourceGenerator.getName(true,classUri,ontologyModel);
+    public String getClassName(final IRI classUri) {
+        return packageName + "." + SourceGenerator.getName(true, classUri, ontologyModel);
     }
 
-    public boolean containsProperty(final IRI propertyIri){
-        return !ontologyModel.filter(propertyIri,RDF.TYPE, RDF.PROPERTY).isEmpty();
+    public boolean containsProperty(final IRI propertyIri) {
+        return !ontologyModel.filter(propertyIri, RDF.TYPE, RDF.PROPERTY).isEmpty();
     }
 
     public SourceGenerator getSourceGenerator() {
@@ -73,7 +81,11 @@ public class ReferenceOntology {
     }
 
     public void generateSource(List<ReferenceOntology> references) throws OntologyToJavaException, IOException {
-        this.sourceGenerator = new SourceGenerator(this.ontologyModel,this.packageName,references);
+        this.sourceGenerator = new SourceGenerator(this.ontologyModel, this.packageName, this.ontologyName, references);
+    }
+
+    public String getOntologyName() {
+        return packageName + "." + (StringUtils.isBlank(this.ontologyName) ? "" : SourceGenerator.stripWhiteSpace(ontologyName)) + "_Thing";
     }
 
 }

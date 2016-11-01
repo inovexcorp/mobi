@@ -39,7 +39,6 @@ import org.matonto.rdf.orm.impl.ThingImpl;
 import org.openrdf.model.IRI;
 import org.openrdf.model.Model;
 import org.openrdf.model.Resource;
-import org.openrdf.model.Statement;
 import org.openrdf.model.impl.LinkedHashModel;
 import org.openrdf.model.vocabulary.OWL;
 import org.openrdf.model.vocabulary.RDF;
@@ -128,7 +127,12 @@ public class SourceGenerator {
 
     public static void toSource(final Model model, final String outputPackage, final String location, final Collection<ReferenceOntology> referencedOntologies)
             throws OntologyToJavaException, IOException {
-        final SourceGenerator generator = new SourceGenerator(model, outputPackage, referencedOntologies);
+        toSource(model, outputPackage, null, location, referencedOntologies);
+    }
+
+    public static void toSource(final Model model, final String outputPackage, final String name, final String location, final Collection<ReferenceOntology> referencedOntologies)
+            throws OntologyToJavaException, IOException {
+        final SourceGenerator generator = new SourceGenerator(model, outputPackage, name, referencedOntologies);
         generator.build(location);
     }
 
@@ -171,7 +175,7 @@ public class SourceGenerator {
      * @param input The input string
      * @return The stripped and cleaned output name
      */
-    private static String stripWhiteSpace(final String input) {
+    protected static String stripWhiteSpace(final String input) {
         StringBuilder builder = new StringBuilder();
         boolean lastIsWhiteSpace = false;
         boolean first = true;
