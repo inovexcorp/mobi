@@ -67,7 +67,6 @@
                         <inherited>false</inherited>
                         <configuration>
                             <generates>
-                                <!--
                                 <ontology>
                                     <ontologyFile>${project.basedir}/src/test/resources/foaf.rdf</ontologyFile>
                                     <outputPackage>com.xmlns.foaf._0._1</outputPackage>
@@ -78,19 +77,16 @@
                                     <outputPackage>org.matonto.delimited</outputPackage>
                                     <ontologyName>Delimited</ontologyName>
                                 </ontology>
-                                -->
                                 <ontology>
                                     <ontologyFile>${project.basedir}/src/test/resources/crazy2.trig</ontologyFile>
                                     <outputPackage>org.matonto.inherit</outputPackage>
                                     <ontologyName>InheritTest</ontologyName>
                                 </ontology>
-                                <!--
                                 <ontology>
                                     <ontologyFile>${project.basedir}/src/test/resources/provo.owl</ontologyFile>
                                     <outputPackage>org.provo</outputPackage>
                                     <ontologyName>ProvO</ontologyName>
                                 </ontology>
-                                -->
                             </generates>
                             <references>
                                 <ontology>
