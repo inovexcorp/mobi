@@ -152,7 +152,7 @@
                         <Bundle-Name>MatOnto Web</Bundle-Name>
                         <Export-Package />
                         <Import-Package>
-                            org.matonto.jaas.proxy,
+                            <!--org.matonto.jaas.proxy,-->
                             org.matonto.ontology.rest,
                             org.matonto.etl.rest,
                             *
