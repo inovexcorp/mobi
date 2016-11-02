@@ -252,103 +252,104 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public PaginatedSearchResults<Record> findRecord(Resource catalogId, PaginatedSearchParams searchParams) {
-        RepositoryConnection conn = repository.getConnection();
-        Optional<Resource> typeParam = searchParams.getTypeFilter();
+        try (RepositoryConnection conn = repository.getConnection()) {
+            Optional<Resource> typeParam = searchParams.getTypeFilter();
 
-        // Get Total Count
-        TupleQuery countQuery;
-        if (typeParam.isPresent()) {
-            countQuery = conn.prepareTupleQuery(COUNT_RECORDS_TYPE_FILTER_QUERY);
-            countQuery.setBinding(TYPE_FILTER_BINDING, typeParam.get());
-        } else {
-            countQuery = conn.prepareTupleQuery(COUNT_RECORDS_QUERY);
-        }
+            // Get Total Count
+            TupleQuery countQuery;
+            if (typeParam.isPresent()) {
+                countQuery = conn.prepareTupleQuery(COUNT_RECORDS_TYPE_FILTER_QUERY);
+                countQuery.setBinding(TYPE_FILTER_BINDING, typeParam.get());
+            } else {
+                countQuery = conn.prepareTupleQuery(COUNT_RECORDS_QUERY);
+            }
 
-        TupleQueryResult countResults = countQuery.evaluate();
+            TupleQueryResult countResults = countQuery.evaluate();
 
-        int totalCount;
-        BindingSet countBindingSet;
-        if (countResults.hasNext()
-                && (countBindingSet = countResults.next()).getBindingNames().contains(RECORD_COUNT_BINDING)) {
-            totalCount = Bindings.requiredLiteral(countBindingSet, RECORD_COUNT_BINDING).intValue();
-            countResults.close();
-        } else {
-            countResults.close();
+            int totalCount;
+            BindingSet countBindingSet;
+            if (countResults.hasNext()
+                    && (countBindingSet = countResults.next()).getBindingNames().contains(RECORD_COUNT_BINDING)) {
+                totalCount = Bindings.requiredLiteral(countBindingSet, RECORD_COUNT_BINDING).intValue();
+                countResults.close();
+            } else {
+                countResults.close();
+                conn.close();
+                return SearchResults.emptyResults();
+            }
+
+            log.debug("Resource count: " + totalCount);
+
+            // Prepare Query
+            int limit = searchParams.getLimit();
+            int offset = searchParams.getOffset();
+
+            String sortBinding;
+            Resource sortByParam = searchParams.getSortBy();
+            if (sortingOptions.get(sortByParam) != null) {
+                sortBinding = sortingOptions.get(sortByParam);
+            } else {
+                log.warn("sortBy parameter must be in the allowed list. Sorting by modified date instead.");
+                sortBinding = "modified";
+            }
+
+            String querySuffix;
+            Optional<Boolean> ascendingParam = searchParams.getAscending();
+            if (ascendingParam.isPresent() && ascendingParam.get()) {
+                querySuffix = String.format("\nORDER BY ?%s\nLIMIT %d\nOFFSET %d", sortBinding,
+                        limit, offset);
+            } else {
+                querySuffix = String.format("\nORDER BY DESC(?%s)\nLIMIT %d\nOFFSET %d",
+                        sortBinding, limit, offset);
+            }
+
+            String queryString;
+            TupleQuery query;
+            if (typeParam.isPresent()) {
+                queryString = FIND_RECORDS_TYPE_FILTER_QUERY + querySuffix;
+                query = conn.prepareTupleQuery(queryString);
+                query.setBinding(TYPE_FILTER_BINDING, typeParam.get());
+            } else {
+                queryString = FIND_RECORDS_QUERY + querySuffix;
+                query = conn.prepareTupleQuery(queryString);
+            }
+
+            log.debug("Query String:\n" + queryString);
+            log.debug("Query Plan:\n" + query);
+
+            // Get Results
+            TupleQueryResult result = query.evaluate();
+
+            List<Record> records = new ArrayList<>();
+            BindingSet resultsBindingSet;
+            while (result.hasNext() && (resultsBindingSet = result.next()).getBindingNames().contains(RECORD_BINDING)) {
+                Resource resource = vf.createIRI(Bindings.requiredResource(resultsBindingSet, RECORD_BINDING)
+                        .stringValue());
+                Record record = processRecordBindingSet(resultsBindingSet, resource);
+                records.add(record);
+            }
+
+            result.close();
             conn.close();
-            return SearchResults.emptyResults();
-        }
 
-        log.debug("Resource count: " + totalCount);
+            log.debug("Result set size: " + records.size());
 
-        // Prepare Query
-        int limit = searchParams.getLimit();
-        int offset = searchParams.getOffset();
+            int pageNumber = (offset / limit) + 1;
 
-        String sortBinding;
-        Resource sortByParam = searchParams.getSortBy();
-        if (sortingOptions.get(sortByParam) != null) {
-            sortBinding = sortingOptions.get(sortByParam);
-        } else {
-            log.warn("sortBy parameter must be in the allowed list. Sorting by modified date instead.");
-            sortBinding = "modified";
-        }
-
-        String querySuffix;
-        Optional<Boolean> ascendingParam = searchParams.getAscending();
-        if (ascendingParam.isPresent() && ascendingParam.get()) {
-            querySuffix = String.format("\nORDER BY ?%s\nLIMIT %d\nOFFSET %d", sortBinding,
-                    limit, offset);
-        } else {
-            querySuffix = String.format("\nORDER BY DESC(?%s)\nLIMIT %d\nOFFSET %d",
-                    sortBinding, limit, offset);
-        }
-
-        String queryString;
-        TupleQuery query;
-        if (typeParam.isPresent()) {
-            queryString = FIND_RECORDS_TYPE_FILTER_QUERY + querySuffix;
-            query = conn.prepareTupleQuery(queryString);
-            query.setBinding(TYPE_FILTER_BINDING, typeParam.get());
-        } else {
-            queryString = FIND_RECORDS_QUERY + querySuffix;
-            query = conn.prepareTupleQuery(queryString);
-        }
-
-        log.debug("Query String:\n" + queryString);
-        log.debug("Query Plan:\n" + query);
-
-        // Get Results
-        TupleQueryResult result = query.evaluate();
-
-        List<Record> records = new ArrayList<>();
-        BindingSet resultsBindingSet;
-        while (result.hasNext() && (resultsBindingSet = result.next()).getBindingNames().contains(RECORD_BINDING)) {
-            Resource resource = vf.createIRI(Bindings.requiredResource(resultsBindingSet, RECORD_BINDING)
-                    .stringValue());
-            Record record = processRecordBindingSet(resultsBindingSet, resource);
-            records.add(record);
-        }
-
-        result.close();
-        conn.close();
-
-        log.debug("Result set size: " + records.size());
-
-        int pageNumber = (offset / limit) + 1;
-
-        if (records.size() > 0) {
-            return new SimpleSearchResults<>(records, totalCount, limit, pageNumber);
-        } else {
-            return SearchResults.emptyResults();
+            if (records.size() > 0) {
+                return new SimpleSearchResults<>(records, totalCount, limit, pageNumber);
+            } else {
+                return SearchResults.emptyResults();
+            }
+        } catch (RepositoryException e) {
+            throw new MatOntoException("Error in repository connection.", e);
         }
     }
 
     @Override
     public Set<Resource> getRecordIds(Resource catalogId) {
         if (resourceExists(catalogId, Catalog.TYPE)) {
-            RepositoryConnection conn = null;
-            try {
-                conn = repository.getConnection();
+            try (RepositoryConnection conn = repository.getConnection()) {
                 Set<Resource> results = new HashSet<>();
                 RepositoryResult<Statement> statements = conn.getStatements(null, vf.createIRI(Record.catalog_IRI),
                         catalogId);
@@ -356,8 +357,6 @@ public class SimpleCatalogManager implements CatalogManager {
                 return results;
             } catch (RepositoryException e) {
                 throw new MatOntoException("Error in repository connection.", e);
-            } finally {
-                closeConnection(conn);
             }
         } else {
             return Collections.emptySet();
@@ -374,15 +373,11 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public boolean addRecord(Resource catalogId, Record record) throws MatOntoException {
         if (resourceExists(catalogId, Catalog.TYPE) && !resourceExists(record.getResource())) {
-            RepositoryConnection conn = null;
-            try {
-                conn = repository.getConnection();
+            try (RepositoryConnection conn = repository.getConnection()) {
                 record.setCatalog(getCatalog(catalogId));
                 conn.add(record.getModel(), record.getResource());
             } catch (RepositoryException e) {
                 throw new MatOntoException("Error in repository connection", e);
-            } finally {
-                closeConnection(conn);
             }
             return true;
         } else {
@@ -412,16 +407,12 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public Optional<Record> getRecord(Resource catalogId, Resource recordId) throws MatOntoException {
-        RepositoryConnection conn = null;
-        try {
-            conn = repository.getConnection();
+        try (RepositoryConnection conn = repository.getConnection()) {
             boolean condition = isRecord(recordId) && conn.getStatements(recordId, vf.createIRI(Record.catalog_IRI),
                     catalogId).hasNext();
             return getObject(condition, recordId, recordFactory);
         } catch (RepositoryException e) {
             throw new MatOntoException("Error in repository connection.", e);
-        } finally {
-            closeConnection(conn);
         }
     }
 
@@ -506,9 +497,7 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public boolean addVersion(Version version, Resource versionedRecordId) {
         if (!resourceExists(version.getResource()) && isVersionedRecord(versionedRecordId)) {
-            RepositoryConnection conn = null;
-            try {
-                conn = repository.getConnection();
+            try (RepositoryConnection conn = repository.getConnection()) {
                 IRI latestVersionResource = vf.createIRI(VersionedRecord.latestVersion_IRI);
                 conn.begin();
                 conn.remove(versionedRecordId, latestVersionResource, null, versionedRecordId);
@@ -517,8 +506,6 @@ public class SimpleCatalogManager implements CatalogManager {
                 conn.commit();
             } catch (RepositoryException e) {
                 throw new MatOntoException("Error in repository connection", e);
-            } finally {
-                closeConnection(conn);
             }
             return true;
         } else {
@@ -540,9 +527,7 @@ public class SimpleCatalogManager implements CatalogManager {
     public boolean removeVersion(Resource versionId, Resource versionedRecordId) {
         if (isVersion(versionId) && isVersionedRecord(versionedRecordId) && removeObjectWithRelationship(versionId,
                 versionedRecordId, VersionedRecord.version_IRI)) {
-            RepositoryConnection conn = null;
-            try {
-                conn = repository.getConnection();
+            try (RepositoryConnection conn = repository.getConnection()) {
                 IRI latestVersionIRI = vf.createIRI(VersionedRecord.latestVersion_IRI);
                 if (conn.getStatements(versionedRecordId, latestVersionIRI, versionId, versionedRecordId).hasNext()) {
                     conn.begin();
@@ -559,8 +544,6 @@ public class SimpleCatalogManager implements CatalogManager {
                 }
             } catch (RepositoryException e) {
                 throw new MatOntoException("Error in repository connection", e);
-            } finally {
-                closeConnection(conn);
             }
             return true;
         } else {
@@ -591,9 +574,7 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public boolean addBranch(Branch branch, Resource versionedRDFRecordId) {
         if (!resourceExists(branch.getResource()) && isVersionedRecord(versionedRDFRecordId)) {
-            RepositoryConnection conn = null;
-            try {
-                conn = repository.getConnection();
+            try (RepositoryConnection conn = repository.getConnection()) {
                 conn.begin();
                 conn.add(versionedRDFRecordId, vf.createIRI(VersionedRDFRecord.branch_IRI), branch.getResource(),
                         versionedRDFRecordId);
@@ -601,8 +582,6 @@ public class SimpleCatalogManager implements CatalogManager {
                 conn.commit();
             } catch (RepositoryException e) {
                 throw new MatOntoException("Error in repository connection", e);
-            } finally {
-                closeConnection(conn);
             }
             return true;
         } else {
@@ -701,9 +680,7 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public boolean addAdditions(Model statements, Resource commitId) throws MatOntoException {
         if (isCommit(commitId)) {
-            RepositoryConnection conn = null;
-            try {
-                conn = repository.getConnection();
+            try (RepositoryConnection conn = repository.getConnection()) {
                 Resource additions = getAdditionsResource(commitId, conn);
                 Resource deletions = getDeletionsResource(commitId, conn);
                 conn.begin();
@@ -718,8 +695,6 @@ public class SimpleCatalogManager implements CatalogManager {
                 conn.commit();
             } catch (RepositoryException e) {
                 throw new MatOntoException("Error in repository connection", e);
-            } finally {
-                closeConnection(conn);
             }
             return true;
         } else {
@@ -730,9 +705,7 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public boolean addDeletions(Model statements, Resource commitId) throws MatOntoException {
         if (isCommit(commitId)) {
-            RepositoryConnection conn = null;
-            try {
-                conn = repository.getConnection();
+            try (RepositoryConnection conn = repository.getConnection()) {
                 Resource additions = getAdditionsResource(commitId, conn);
                 Resource deletions = getDeletionsResource(commitId, conn);
                 conn.begin();
@@ -747,8 +720,6 @@ public class SimpleCatalogManager implements CatalogManager {
                 conn.commit();
             } catch (RepositoryException e) {
                 throw new MatOntoException("Error in repository connection", e);
-            } finally {
-                closeConnection(conn);
             }
             return true;
         } else {
@@ -759,9 +730,7 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public boolean addCommitToBranch(Commit commit, Resource branchId) throws MatOntoException {
         if (!resourceExists(commit.getResource()) && resourceExists(branchId, Branch.TYPE)) {
-            RepositoryConnection conn = null;
-            try {
-                conn = repository.getConnection();
+            try (RepositoryConnection conn = repository.getConnection()) {
                 IRI headIRI = vf.createIRI(Branch.head_IRI);
                 conn.begin();
                 conn.remove(branchId, headIRI, null, branchId);
@@ -770,8 +739,6 @@ public class SimpleCatalogManager implements CatalogManager {
                 conn.commit();
             } catch (RepositoryException e) {
                 throw new MatOntoException("Error in repository connection", e);
-            } finally {
-                closeConnection(conn);
             }
             return true;
         } else {
@@ -782,9 +749,7 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public boolean addCommitToTag(Commit commit, Resource tagId) throws MatOntoException {
         if (!resourceExists(commit.getResource()) && resourceExists(tagId, Tag.TYPE)) {
-            RepositoryConnection conn = null;
-            try {
-                conn = repository.getConnection();
+            try (RepositoryConnection conn = repository.getConnection()) {
                 IRI commitIRI = vf.createIRI(Tag.commit_IRI);
                 conn.begin();
                 conn.remove(tagId, commitIRI, null, tagId);
@@ -793,8 +758,6 @@ public class SimpleCatalogManager implements CatalogManager {
                 conn.commit();
             } catch (RepositoryException e) {
                 throw new MatOntoException("Error in repository connection", e);
-            } finally {
-                closeConnection(conn);
             }
             return true;
         } else {
@@ -805,14 +768,10 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public boolean addInProgressCommit(InProgressCommit inProgressCommit) throws MatOntoException {
         if (!resourceExists(inProgressCommit.getResource())) {
-            RepositoryConnection conn = null;
-            try {
-                conn = repository.getConnection();
+            try (RepositoryConnection conn = repository.getConnection()) {
                 conn.add(inProgressCommit.getModel(), inProgressCommit.getResource());
             } catch (RepositoryException e) {
                 throw new MatOntoException("Error in repository connection", e);
-            } finally {
-                closeConnection(conn);
             }
             return true;
         } else {
@@ -823,21 +782,17 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public Optional<Commit> getCommit(Resource commitId) throws MatOntoException {
         if (isCommit(commitId)) {
-            RepositoryConnection conn = null;
-            Model commitModel = mf.createModel();
-            try {
-                conn = repository.getConnection();
+            try (RepositoryConnection conn = repository.getConnection()) {
+                Model commitModel = mf.createModel();
                 RepositoryResult<Statement> statements = conn.getStatements(null, null, null, commitId);
                 statements.forEach(commitModel::add);
+                if (commitModel.size() != 0) {
+                    return Optional.of(commitFactory.createNew(commitId, commitModel));
+                } else {
+                    return Optional.empty();
+                }
             } catch (RepositoryException e) {
                 throw new MatOntoException("Error in repository connection.", e);
-            } finally {
-                closeConnection(conn);
-            }
-            if (commitModel.size() != 0) {
-                return Optional.of(commitFactory.createNew(commitId, commitModel));
-            } else {
-                return Optional.empty();
             }
         } else {
             return Optional.empty();
@@ -857,9 +812,7 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public Set<Resource> getCommitChain(Resource commitId) {
         if (isCommit(commitId)) {
-            RepositoryConnection conn = null;
-            try {
-                conn = repository.getConnection();
+            try (RepositoryConnection conn = repository.getConnection()) {
                 Iterator<Value> commits = getCommitChainIterator(commitId, conn);
                 Set<Resource> results = new HashSet<>();
                 commits.forEachRemaining(commit -> results.add((Resource) commit));
@@ -867,8 +820,6 @@ public class SimpleCatalogManager implements CatalogManager {
                 return results;
             } catch (RepositoryException e) {
                 throw new MatOntoException("Error in repository connection", e);
-            } finally {
-                closeConnection(conn);
             }
         } else {
             return Collections.emptySet();
@@ -878,17 +829,13 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public Optional<Model> getCompiledResource(Resource commitId) throws MatOntoException {
         if (isCommit(commitId)) {
-            RepositoryConnection conn = null;
-            try {
-                conn = repository.getConnection();
+            try (RepositoryConnection conn = repository.getConnection()) {
                 Iterator<Value> iterator = getCommitChainIterator(commitId, conn);
                 Model model = createModelFromIterator(iterator, commitId, conn);
                 model.remove(null ,null, null, vf.createIRI(DELETION_CONTEXT_FLAG));
                 return Optional.of(model);
             } catch (RepositoryException e) {
                 throw new MatOntoException("Error in repository connection", e);
-            } finally {
-                closeConnection(conn);
             }
         } else {
             return Optional.empty();
@@ -898,10 +845,7 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public Set<Conflict> getConflicts(Resource leftId, Resource rightId) throws MatOntoException {
         if (isCommit(leftId) && isCommit(rightId)) {
-            RepositoryConnection conn = null;
-            try {
-                conn = repository.getConnection();
-
+            try (RepositoryConnection conn = repository.getConnection()) {
                 Iterator<Value> leftIterator = getCommitChainIterator(leftId, conn);
                 Iterator<Value> rightIterator = getCommitChainIterator(rightId, conn);
                 Value originalEnd = null;
@@ -926,8 +870,6 @@ public class SimpleCatalogManager implements CatalogManager {
                 return getConflicts(original, left, right);
             } catch (RepositoryException e) {
                 throw new MatOntoException("Error in repository connection.", e);
-            } finally {
-                closeConnection(conn);
             }
         } else {
             throw new MatOntoException("One or both of the commit IRIs could not be found in the Repository.");
@@ -980,21 +922,17 @@ public class SimpleCatalogManager implements CatalogManager {
      */
     private <T extends Thing> Optional<T> getObject(boolean condition, Resource id, OrmFactory<T> factory) {
         if (condition) {
-            RepositoryConnection conn = null;
-            Model model = mf.createModel();
-            try {
-                conn = repository.getConnection();
+            try (RepositoryConnection conn = repository.getConnection()) {
+                Model model = mf.createModel();
                 RepositoryResult<Statement> statements = conn.getStatements(null, null, null, id);
                 statements.forEach(model::add);
+                if (model.size() != 0) {
+                    return Optional.of(factory.createNew(id, model));
+                } else {
+                    return Optional.empty();
+                }
             } catch (RepositoryException e) {
                 throw new MatOntoException("Error in repository connection.", e);
-            } finally {
-                closeConnection(conn);
-            }
-            if (model.size() != 0) {
-                return Optional.of(factory.createNew(id, model));
-            } else {
-                return Optional.empty();
             }
         } else {
             return Optional.empty();
@@ -1031,9 +969,7 @@ public class SimpleCatalogManager implements CatalogManager {
      * @param description The description text.
      */
     private void addCatalogToRepo(Resource catalogId, String title, String description) {
-        RepositoryConnection conn = null;
-        try {
-            conn = repository.getConnection();
+        try (RepositoryConnection conn = repository.getConnection()) {
             OffsetDateTime now = OffsetDateTime.now();
 
             Catalog catalog = catalogFactory.createNew(catalogId);
@@ -1045,8 +981,6 @@ public class SimpleCatalogManager implements CatalogManager {
             conn.add(catalog.getModel(), catalogId);
         } catch (RepositoryException e) {
             throw new MatOntoException("Error in repository connection.", e);
-        } finally {
-            closeConnection(conn);
         }
     }
 
@@ -1058,18 +992,14 @@ public class SimpleCatalogManager implements CatalogManager {
      * @throws MatOntoException if RepositoryConnection has a problem.
      */
     private Catalog getCatalog(Resource catalogId) throws MatOntoException {
-        RepositoryConnection conn = null;
-        Model catalogModel = mf.createModel();
-        try {
-            conn = repository.getConnection();
+        try (RepositoryConnection conn = repository.getConnection()) {
+            Model catalogModel = mf.createModel();
             RepositoryResult<Statement> statements = conn.getStatements(catalogId, null, null, catalogId);
             statements.forEach(catalogModel::add);
+            return catalogFactory.getExisting(catalogId, catalogModel);
         } catch (RepositoryException e) {
             throw new MatOntoException("Error in repository connection", e);
-        } finally {
-            closeConnection(conn);
         }
-        return catalogFactory.getExisting(catalogId, catalogModel);
     }
 
     /**
@@ -1079,14 +1009,10 @@ public class SimpleCatalogManager implements CatalogManager {
      * @return True if the Resource is in the Repository; otherwise, false
      */
     private boolean resourceExists(Resource resourceIRI) throws MatOntoException {
-        RepositoryConnection conn = null;
-        try {
-            conn = repository.getConnection();
+        try (RepositoryConnection conn = repository.getConnection()) {
             return conn.getStatements(null, null, null, resourceIRI).hasNext();
         } catch (RepositoryException e) {
             throw new MatOntoException("Error in repository connection.", e);
-        } finally {
-            closeConnection(conn);
         }
     }
 
@@ -1098,14 +1024,10 @@ public class SimpleCatalogManager implements CatalogManager {
      * @return True if the Resource is in the Repository; otherwise, false
      */
     private boolean resourceExists(Resource resourceIRI, String type) throws MatOntoException {
-        RepositoryConnection conn = null;
-        try {
-            conn = repository.getConnection();
+        try (RepositoryConnection conn = repository.getConnection()) {
             return conn.getStatements(null, vf.createIRI(RDF_TYPE), vf.createIRI(type), resourceIRI).hasNext();
         } catch (RepositoryException e) {
             throw new MatOntoException("Error in repository connection.", e);
-        } finally {
-            closeConnection(conn);
         }
     }
 
@@ -1163,21 +1085,6 @@ public class SimpleCatalogManager implements CatalogManager {
      */
     private boolean isCommit(Resource resourceId) {
         return resourceExists(resourceId, Commit.TYPE) || resourceExists(resourceId, InProgressCommit.TYPE);
-    }
-
-    /**
-     * Closes the passed connection to the repository.
-     *
-     * @param conn a connection to the repository for mappings
-     */
-    private void closeConnection(RepositoryConnection conn) {
-        try {
-            if (conn != null) {
-                conn.close();
-            }
-        } catch (RepositoryException e) {
-            log.warn("Could not close Repository." + e.toString());
-        }
     }
 
     /**
@@ -1265,17 +1172,13 @@ public class SimpleCatalogManager implements CatalogManager {
             MatOntoException {
         if (!resourceExists(distribution.getResource(), Distribution.TYPE) && (isVersion(resourceId)
                 || resourceExists(resourceId, UnversionedRecord.TYPE))) {
-            RepositoryConnection conn = null;
-            try {
-                conn = repository.getConnection();
+            try (RepositoryConnection conn = repository.getConnection()) {
                 conn.begin();
                 conn.add(resourceId, vf.createIRI(predicate), distribution.getResource(), resourceId);
                 conn.add(distribution.getModel(), distribution.getResource());
                 conn.commit();
             } catch (RepositoryException e) {
                 throw new MatOntoException("Error in repository connection", e);
-            } finally {
-                closeConnection(conn);
             }
             return true;
         } else {
@@ -1294,9 +1197,7 @@ public class SimpleCatalogManager implements CatalogManager {
      */
     private boolean removeObjectWithRelationship(Resource objectId, Resource removeFromId, String predicate) throws
             MatOntoException {
-        RepositoryConnection conn = null;
-        try {
-            conn = repository.getConnection();
+        try (RepositoryConnection conn = repository.getConnection()) {
             IRI relationshipIRI = vf.createIRI(predicate);
             boolean hasRelationship = conn.getStatements(removeFromId, relationshipIRI, objectId, removeFromId)
                     .hasNext();
@@ -1311,8 +1212,6 @@ public class SimpleCatalogManager implements CatalogManager {
             }
         } catch (RepositoryException e) {
             throw new MatOntoException("Error in repository connection", e);
-        } finally {
-            closeConnection(conn);
         }
     }
 
@@ -1323,17 +1222,13 @@ public class SimpleCatalogManager implements CatalogManager {
      * @param model The Model containing the underlying information about the Object you are updating.
      */
     private void update(Resource resourceId, Model model) throws MatOntoException {
-        RepositoryConnection conn = null;
-        try {
-            conn = repository.getConnection();
+        try (RepositoryConnection conn = repository.getConnection()) {
             conn.begin();
             conn.remove(resourceId, null, null, resourceId);
             conn.add(model, resourceId);
             conn.commit();
         } catch (RepositoryException e) {
             throw new MatOntoException("Error in repository connection", e);
-        } finally {
-            closeConnection(conn);
         }
     }
 
@@ -1343,14 +1238,10 @@ public class SimpleCatalogManager implements CatalogManager {
      * @param resourceId The Resource identifying the element to be removed.
      */
     private void remove(Resource resourceId) throws MatOntoException {
-        RepositoryConnection conn = null;
-        try {
-            conn = repository.getConnection();
+        try (RepositoryConnection conn = repository.getConnection()) {
             conn.remove(resourceId, null, null, resourceId);
         } catch (RepositoryException e) {
             throw new MatOntoException("Error in repository connection", e);
-        } finally {
-            closeConnection(conn);
         }
     }
 
