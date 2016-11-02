@@ -701,3 +701,37 @@ GRAPH <http://matonto.org/test/deletions#conflict2-5>
 {
     <http://matonto.org/test/ontology> dc:title "Title" .
 }
+
+GRAPH <http://matonto.org/test/diff1>
+{
+    <http://matonto.org/test/ontology> a owl:Ontology ;
+        dc:title "Title" ;
+        dc:description "Description" .
+    <http://matonto.org/test/class0> a owl:Class ;
+        dc:title "Class 1" .
+}
+
+GRAPH <http://matonto.org/test/diff2>
+{
+    <http://matonto.org/test/ontology> a owl:Ontology ;
+        dc:title "Title" ;
+        dc:description "Description" ;
+        dc:description "Another description" .
+    <http://matonto.org/test/class0> a owl:Class ;
+        dc:title "Class 1 changed" .
+    <http://matonto.org/test/class1> a owl:Class ;
+        dc:title "Class 2" .
+}
+
+GRAPH <http://matonto.org/test/diff/additions>
+{
+    <http://matonto.org/test/ontology> dc:description "Another description" .
+    <http://matonto.org/test/class0> dc:title "Class 1 changed" .
+    <http://matonto.org/test/class1> a owl:Class ;
+        dc:title "Class 2" .
+}
+
+GRAPH <http://matonto.org/test/diff/deletions>
+{
+    <http://matonto.org/test/class0> dc:title "Class 1" .
+}

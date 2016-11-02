@@ -30,10 +30,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.eclipse.jdt.annotation.Nullable;
-import org.matonto.catalog.api.CatalogManager;
-import org.matonto.catalog.api.Conflict;
-import org.matonto.catalog.api.PaginatedSearchParams;
-import org.matonto.catalog.api.PaginatedSearchResults;
+import org.matonto.catalog.api.*;
 import org.matonto.catalog.api.builder.DistributionConfig;
 import org.matonto.catalog.api.builder.RecordConfig;
 import org.matonto.catalog.api.ontologies.mcat.*;
@@ -921,6 +918,26 @@ public class SimpleCatalogManager implements CatalogManager {
         } else {
             throw new MatOntoException("One or both of the commit IRIs could not be found in the Repository.");
         }
+    }
+
+    @Override
+    public Difference getDiff(Model original, Model changed) {
+        Model originalCopy = mf.createModel(original);
+        Model changedCopy = mf.createModel(changed);
+        original.forEach(statement -> {
+            Resource subject = statement.getSubject();
+            IRI predicate = statement.getPredicate();
+            Value object = statement.getObject();
+            if (changedCopy.contains(subject, predicate, object)) {
+                originalCopy.remove(subject, predicate, object);
+                changedCopy.remove(subject, predicate, object);
+            }
+        });
+
+        return new SimpleDifference.Builder()
+                .additions(changedCopy)
+                .deletions(originalCopy)
+                .build();
     }
 
     /**

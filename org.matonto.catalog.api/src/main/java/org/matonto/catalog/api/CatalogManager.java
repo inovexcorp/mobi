@@ -371,11 +371,12 @@ public interface CatalogManager {
     Set<Conflict> getConflicts(Resource leftId, Resource rightId);
 
     /**
-     * Gets all of the conflicts between the two provided Models.
+     * Gets the Difference, consisting of Models of additions and deletions, made between the original and the changed
+     * Model.
      *
-     * @param left The left (first) Model.
-     * @param right The right (second) Model.
-     * @return Set of Conflicts
+     * @param original The original Model.
+     * @param changed The changed Model.
+     * @return The Difference between the two Models.
      */
-    // Set<Conflict> getConflicts(Model left, Model right);
+    Difference getDiff(Model original, Model changed);
 }

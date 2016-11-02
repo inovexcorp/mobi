@@ -27,6 +27,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.matonto.catalog.api.Conflict;
+import org.matonto.catalog.api.Difference;
 import org.matonto.catalog.api.PaginatedSearchParams;
 import org.matonto.catalog.api.PaginatedSearchResults;
 import org.matonto.catalog.api.ontologies.mcat.*;
@@ -1467,5 +1468,46 @@ public class SimpleCatalogManagerTest {
                         assertEquals(statement.getPredicate().stringValue(), predicate);
                     }));
         });
+    }
+
+    @Test
+    public void testGetDiff() throws Exception {
+        RepositoryConnection conn = repo.getConnection();
+
+        Model original = mf.createModel();
+        conn.getStatements(null, null, null, vf.createIRI("http://matonto.org/test/diff1")).forEach(original::add);
+
+        Model changed = mf.createModel();
+        conn.getStatements(null, null, null, vf.createIRI("http://matonto.org/test/diff2")).forEach(changed::add);
+
+        Model additions = mf.createModel();
+        conn.getStatements(null, null, null, vf.createIRI("http://matonto.org/test/diff/additions"))
+                .forEach(additions::add);
+
+        Model deletions = mf.createModel();
+        conn.getStatements(null, null, null, vf.createIRI("http://matonto.org/test/diff/deletions"))
+                .forEach(deletions::add);
+
+        conn.close();
+
+        Difference diff = manager.getDiff(original, changed);
+        assertEquals(diff.getAdditions().size(), additions.size());
+        diff.getAdditions().forEach(s -> assertEquals(additions.contains(s.getSubject(), s.getPredicate(),
+                s.getObject()), true));
+        assertEquals(diff.getDeletions().size(), deletions.size());
+        diff.getDeletions().forEach(s -> assertEquals(deletions.contains(s.getSubject(), s.getPredicate(),
+                s.getObject()), true));
+
+        diff = manager.getDiff(original, original);
+        assertEquals(diff.getAdditions().size(), 0);
+        assertEquals(diff.getDeletions().size(), 0);
+
+        diff = manager.getDiff(changed, original);
+        assertEquals(diff.getDeletions().size(), additions.size());
+        diff.getDeletions().forEach(s -> assertEquals(additions.contains(s.getSubject(), s.getPredicate(),
+                s.getObject()), true));
+        assertEquals(diff.getAdditions().size(), deletions.size());
+        diff.getAdditions().forEach(s -> assertEquals(deletions.contains(s.getSubject(), s.getPredicate(),
+                s.getObject()), true));
     }
 }
