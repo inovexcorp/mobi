@@ -350,7 +350,7 @@ public interface CatalogManager {
      * @param commitId The Resource identifying the Commit for the desired chain.
      * @return Set of Resources identifying the Commits which make up the commit chain for the provided Commit.
      */
-    Set<Resource> getCommitChain(Resource commitId);
+    LinkedHashSet<Resource> getCommitChain(Resource commitId);
 
     /**
      * Gets the Model which represents the resource for the provided Commit.
@@ -373,10 +373,9 @@ public interface CatalogManager {
     /**
      * Gets all of the conflicts between the two provided Models.
      *
-     * @param original The original Model.
      * @param left The left (first) Model.
      * @param right The right (second) Model.
      * @return Set of Conflicts
      */
-    Set<Conflict> getConflicts(Model original, Model left, Model right);
+    // Set<Conflict> getConflicts(Model left, Model right);
 }

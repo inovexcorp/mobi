@@ -30,7 +30,6 @@ import org.matonto.catalog.api.Conflict;
 import org.matonto.catalog.api.PaginatedSearchParams;
 import org.matonto.catalog.api.PaginatedSearchResults;
 import org.matonto.catalog.api.ontologies.mcat.*;
-import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.ontologies.usermanagement.User;
 import org.matonto.ontologies.rdfs.PropertyFactory;
 import org.matonto.rdf.api.*;
@@ -54,7 +53,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static junit.framework.TestCase.assertEquals;
-import static junit.framework.TestCase.fail;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.Matchers.notNull;
 import static org.mockito.Mockito.mock;
@@ -94,10 +92,8 @@ public class SimpleCatalogManagerTest {
     private static final String PROV_GENERATED = PROV_O + "generated";
     private static final String PROV_WAS_DERIVED_FROM = PROV_O + "wasDerivedFrom";
 
-    private static final String COMMIT_NAMESPACE = "https://matonto.org/commits#";
     private static final String IN_PROGRESS_COMMIT_NAMESPACE = "https://matonto.org/in-progress-commits#";
     private static final String REVISION_NAMESPACE = "https://matonto.org/revisions#";
-    private static final String DELETION_CONTEXT_FLAG = "https://matonto.org/has-deletions";
 
     private IRI ONT_TYPE;
     private IRI MAPPING_TYPE;
@@ -1383,75 +1379,93 @@ public class SimpleCatalogManagerTest {
     }
 
     @Test
-    public void testGetConflicts() throws Exception {
-        Resource commitId1 = vf.createIRI("http://matonto.org/test/commits#test6a");
-        Resource commitId2 = vf.createIRI("http://matonto.org/test/commits#test5b");
-        Resource different = vf.createIRI("http://matonto.org/test/different");
+    public void testGetConflictsScenario1() throws Exception {
+        // Class deletion
+        Resource leftId = vf.createIRI("http://matonto.org/test/commits#conflict1");
+        Resource rightId = vf.createIRI("http://matonto.org/test/commits#conflict2");
 
-        Resource ontologyId = vf.createIRI("http://matonto.org/test/ontology");
-
-        try {
-            manager.getConflicts(commitId1, different);
-            fail("Expected error to be thrown.");
-        } catch (Exception e) {
-            assertEquals(e instanceof MatOntoException, true);
-            assertEquals(e.getMessage(), "One or both of the commit IRIs could not be found in the Repository.");
-        }
-
-        try {
-            manager.getConflicts(different, commitId2);
-            fail("Expected error to be thrown.");
-        } catch (Exception e) {
-            assertEquals(e instanceof MatOntoException, true);
-            assertEquals(e.getMessage(), "One or both of the commit IRIs could not be found in the Repository.");
-        }
-
-        try {
-            manager.getConflicts(commitId1, vf.createIRI("http://matonto.org/test/commits#test"));
-            fail("Expected error to be thrown.");
-        } catch (Exception e) {
-            assertEquals(e instanceof MatOntoException, true);
-            assertEquals(e.getMessage(), "There is no common parent between the provided Commits.");
-        }
-
-        Model ontologyOriginal = mf.createModel();
-        ontologyOriginal.add(ontologyId, vf.createIRI(RDF_TYPE), vf.createIRI("http://www.w3.org/2002/07/owl#Ontology"));
-        ontologyOriginal.add(ontologyId, vf.createIRI(DC_TITLE), vf.createLiteral("Test 3 Title"));
-
-        Model ontologyLeft = mf.createModel();
-        ontologyLeft.add(ontologyId, vf.createIRI(DC_TITLE), vf.createLiteral("Test 6a Title"));
-        ontologyLeft.add(ontologyId, vf.createIRI(DC_TITLE), vf.createLiteral("Test 3 Title"),
-                vf.createIRI(DELETION_CONTEXT_FLAG));
-
-        Model ontologyRight = mf.createModel();
-        ontologyRight.add(ontologyId, vf.createIRI(DC_TITLE), vf.createLiteral("Test 5b Title"));
-
-        Resource classId = vf.createIRI("http://matonto.org/test/class0");
-
-        Model classOriginal = mf.createModel();
-        classOriginal.add(vf.createIRI("http://matonto.org/test/class0"), vf.createIRI(RDF_TYPE),
-                vf.createIRI("http://www.w3.org/2002/07/owl#Class"));
-
-        Model classLeft = mf.createModel();
-        classLeft.add(classId, vf.createIRI(RDF_TYPE), vf.createIRI("http://www.w3.org/2002/07/owl#Class"),
-                vf.createIRI(DELETION_CONTEXT_FLAG));
-
-        Model classRight = mf.createModel();
-
-        Set<Conflict> result = manager.getConflicts(commitId1, commitId2);
-        assertEquals(result.size(), 2);
+        Set<Conflict> result = manager.getConflicts(leftId, rightId);
+        assertEquals(result.size(), 1);
         result.forEach(conflict -> {
-            if (conflict.getSubject().equals(classId.stringValue())) {
-                assertEquals(conflict.getLeft(), classLeft);
-                assertEquals(conflict.getRight(), classRight);
-                assertEquals(conflict.getOriginal(), classOriginal);
-            } else if (conflict.getSubject().equals(ontologyId.stringValue())) {
-                assertEquals(conflict.getLeft(), ontologyLeft);
-                assertEquals(conflict.getRight(), ontologyRight);
-                assertEquals(conflict.getOriginal(), ontologyOriginal);
-            } else {
-                fail("Conflicts aren't what they should be.");
-            }
+            assertEquals(conflict.getOriginal().size(), 1);
+            assertEquals(conflict.getLeftAdditions().size(), 0);
+            assertEquals(conflict.getRightAdditions().size(), 0);
+            assertEquals(conflict.getRightDeletions().size(), 0);
+            assertEquals(conflict.getLeftDeletions().size(), 1);
+            Stream.of(conflict.getLeftDeletions(), conflict.getOriginal()).forEach(model -> model.forEach(statement -> {
+                assertEquals(statement.getSubject().stringValue(), "http://matonto.org/test/class0");
+                assertEquals(statement.getPredicate().stringValue(), RDF_TYPE);
+            }));
+        });
+    }
+
+    @Test
+    public void testGetConflictsScenario2() throws Exception {
+        // Both altered same title
+        Resource leftId = vf.createIRI("http://matonto.org/test/commits#conflict1-2");
+        Resource rightId = vf.createIRI("http://matonto.org/test/commits#conflict2-2");
+
+        Set<Conflict> result = manager.getConflicts(leftId, rightId);
+        assertEquals(result.size(), 1);
+
+        String subject = "http://matonto.org/test/ontology";
+        String predicate = DC_TITLE;
+        result.forEach(conflict -> {
+            assertEquals(conflict.getOriginal().size(), 1);
+            assertEquals(conflict.getLeftAdditions().size(), 1);
+            assertEquals(conflict.getRightAdditions().size(), 1);
+            assertEquals(conflict.getRightDeletions().size(), 0);
+            assertEquals(conflict.getLeftDeletions().size(), 0);
+            Stream.of(conflict.getOriginal(), conflict.getLeftAdditions(), conflict.getRightAdditions())
+                    .forEach(model -> model.forEach(statement -> {
+                assertEquals(statement.getSubject().stringValue(), subject);
+                assertEquals(statement.getPredicate().stringValue(), predicate);
+            }));
+        });
+    }
+
+    @Test
+    public void testGetConflictsScenario3() throws Exception {
+        // Second chain has two commits which adds then removes something
+        Resource leftId = vf.createIRI("http://matonto.org/test/commits#conflict1-3");
+        Resource rightId = vf.createIRI("http://matonto.org/test/commits#conflict3-3");
+
+        Set<Conflict> result = manager.getConflicts(leftId, rightId);
+        assertEquals(result.size(), 0);
+    }
+
+    @Test
+    public void testGetConflictsScenario4() throws Exception {
+        // Change a property on one branch
+        Resource leftId = vf.createIRI("http://matonto.org/test/commits#conflict1-4");
+        Resource rightId = vf.createIRI("http://matonto.org/test/commits#conflict2-4");
+
+        Set<Conflict> result = manager.getConflicts(leftId, rightId);
+        assertEquals(result.size(), 0);
+    }
+
+    @Test
+    public void testGetConflictsScenario5() throws Exception {
+        // One branch removes property while other adds another to it
+        Resource leftId = vf.createIRI("http://matonto.org/test/commits#conflict1-5");
+        Resource rightId = vf.createIRI("http://matonto.org/test/commits#conflict2-5");
+
+        Set<Conflict> result = manager.getConflicts(leftId, rightId);
+        assertEquals(result.size(), 1);
+
+        String subject = "http://matonto.org/test/ontology";
+        String predicate = DC_TITLE;
+        result.forEach(conflict -> {
+            assertEquals(conflict.getOriginal().size(), 1);
+            assertEquals(conflict.getLeftAdditions().size(), 1);
+            assertEquals(conflict.getRightAdditions().size(), 0);
+            assertEquals(conflict.getRightDeletions().size(), 1);
+            assertEquals(conflict.getLeftDeletions().size(), 0);
+            Stream.of(conflict.getOriginal(), conflict.getLeftAdditions(), conflict.getRightDeletions())
+                    .forEach(model -> model.forEach(statement -> {
+                        assertEquals(statement.getSubject().stringValue(), subject);
+                        assertEquals(statement.getPredicate().stringValue(), predicate);
+                    }));
         });
     }
 }

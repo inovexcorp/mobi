@@ -27,11 +27,13 @@ import org.matonto.rdf.api.Model;
 
 public interface Conflict {
 
-    String getSubject();
-
     Model getOriginal();
 
-    Model getLeft();
+    Model getLeftAdditions();
 
-    Model getRight();
+    Model getLeftDeletions();
+
+    Model getRightAdditions();
+
+    Model getRightDeletions();
 }

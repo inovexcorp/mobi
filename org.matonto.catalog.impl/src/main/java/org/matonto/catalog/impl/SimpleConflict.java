@@ -27,15 +27,11 @@ import org.matonto.catalog.api.Conflict;
 import org.matonto.rdf.api.Model;
 
 public class SimpleConflict implements Conflict {
-    private String subject;
     private Model original;
-    private Model left;
-    private Model right;
-
-    @Override
-    public String getSubject() {
-        return subject;
-    }
+    private Model leftAdditions;
+    private Model leftDeletions;
+    private Model rightAdditions;
+    private Model rightDeletions;
 
     @Override
     public Model getOriginal() {
@@ -43,35 +39,60 @@ public class SimpleConflict implements Conflict {
     }
 
     @Override
-    public Model getLeft() {
-        return left;
+    public Model getLeftAdditions() {
+        return leftAdditions;
     }
 
     @Override
-    public Model getRight() {
-        return right;
+    public Model getLeftDeletions() {
+        return leftDeletions;
+    }
+
+    @Override
+    public Model getRightAdditions() {
+        return rightAdditions;
+    }
+
+    @Override
+    public Model getRightDeletions() {
+        return rightDeletions;
     }
 
     public static class Builder {
-        private final String subject;
         private final Model original;
-        private final Model left;
-        private final Model right;
+        private Model leftAdditions;
+        private Model leftDeletions;
+        private Model rightAdditions;
+        private Model rightDeletions;
 
         /**
          * The builder for a SimpleConflict which takes the subject IRI string, original model, the first model being
          * compared (left), and the second model being compared (right).
          *
-         * @param subject The IRI String identifying the subject of the statements provided in the models.
-         * @param original The Model which contains the original element you are comparing.
-         * @param left The Model which contains the first model's version.
-         * @param right The Model which contains the second model's version.
+         * @param original The Model identifying the original state for this conflict.
          */
-        public Builder(String subject, Model original, Model left, Model right) {
-            this.subject = subject;
+        public Builder(Model original) {
             this.original = original;
-            this.left = left;
-            this.right = right;
+        }
+
+        public Builder leftAdditions(Model leftAdditions) {
+            this.leftAdditions = leftAdditions;
+            return this;
+        }
+
+        public Builder leftDeletions(Model leftDeletions) {
+            this.leftDeletions = leftDeletions;
+            return this;
+        }
+
+        public Builder rightAdditions(Model rightAdditions) {
+            this.rightAdditions = rightAdditions;
+            return this;
+        }
+
+        public Builder rightDeletions(Model rightDeletions) {
+            this.rightDeletions = rightDeletions;
+            return this;
         }
 
         public SimpleConflict build() {
@@ -80,9 +101,10 @@ public class SimpleConflict implements Conflict {
     }
 
     private SimpleConflict(Builder builder) {
-        this.subject = builder.subject;
         this.original = builder.original;
-        this.left = builder.left;
-        this.right = builder.right;
+        this.leftAdditions = builder.leftAdditions;
+        this.leftDeletions = builder.leftDeletions;
+        this.rightAdditions = builder.rightAdditions;
+        this.rightDeletions = builder.rightDeletions;
     }
 }

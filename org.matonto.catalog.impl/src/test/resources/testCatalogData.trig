@@ -372,8 +372,16 @@ GRAPH <http://matonto.org/test/commits#test5b>
 GRAPH <http://matonto.org/test/additions#test5b>
 {
     <http://matonto.org/test/ontology> dc:title "Test 5b Title" .
+    <http://matonto.org/test/ontology> dc:title "Test 5b Title 2" .
     <http://matonto.org/test/class2> a owl:Class .
 }
+
+GRAPH <http://matonto.org/test/deletions#test5b>
+{
+    <http://matonto.org/test/ontology> dc:title "Test 3 Title" .
+}
+
+# Conflict Scenario 1 - Class deletion (1 conflict)
 
 GRAPH <http://matonto.org/test/commits#conflict0>
 {
@@ -389,14 +397,13 @@ GRAPH <http://matonto.org/test/commits#conflict0>
 
 GRAPH <http://matonto.org/test/additions#conflict0>
 {
-    <http://matonto.org/test/ontology> a owl:Ontology ;
-        dc:title "Title" .
+    <http://matonto.org/test/ontology> a owl:Ontology .
     <http://matonto.org/test/class0> a owl:Class .
 }
 
 GRAPH <http://matonto.org/test/commits#conflict1>
 {
-    <http://matonto.org/test/commits#conflict0> a mcat:Commit ;
+    <http://matonto.org/test/commits#conflict1> a mcat:Commit ;
         dc:title "Commit" ;
         prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
         prov:wasInformedBy <http://matonto.org/test/commits#conflict0> ;
@@ -414,7 +421,7 @@ GRAPH <http://matonto.org/test/deletions#conflict1>
 
 GRAPH <http://matonto.org/test/commits#conflict2>
 {
-    <http://matonto.org/test/commits#conflict0> a mcat:Commit ;
+    <http://matonto.org/test/commits#conflict2> a mcat:Commit ;
         dc:title "Commit" ;
         prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
         prov:wasInformedBy <http://matonto.org/test/commits#conflict0> ;
@@ -428,4 +435,269 @@ GRAPH <http://matonto.org/test/commits#conflict2>
 GRAPH <http://matonto.org/test/additions#conflict2>
 {
     <http://matonto.org/test/class1> a owl:Class .
+    <http://matonto.org/test/ontology> dc:title "New Title" .
+}
+
+# Conflict Scenario 2 - Both altered same title (1 conflict)
+
+GRAPH <http://matonto.org/test/commits#conflict0-2>
+{
+    <http://matonto.org/test/commits#conflict0-2> a mcat:Commit ;
+        dc:title "Commit" ;
+        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        prov:generated <http://matonto.org/test/revisions#conflict0-2> .
+
+    <http://matonto.org/test/revisions#conflict0-2> a mcat:Revision ;
+        mcat:additions <http://matonto.org/test/additions#conflict0-2> ;
+        mcat:deletions <http://matonto.org/test/deletions#conflict0-2> .
+}
+
+GRAPH <http://matonto.org/test/additions#conflict0-2>
+{
+    <http://matonto.org/test/ontology> a owl:Ontology ;
+        dc:title "Title" ;
+        dc:description "Description" .
+    <http://matonto.org/test/class0> a owl:Class .
+}
+
+GRAPH <http://matonto.org/test/commits#conflict1-2>
+{
+    <http://matonto.org/test/commits#conflict1-2> a mcat:Commit ;
+        dc:title "Commit" ;
+        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        prov:wasInformedBy <http://matonto.org/test/commits#conflict0-2> ;
+        prov:generated <http://matonto.org/test/revisions#conflict1-2> .
+
+    <http://matonto.org/test/revisions#conflict1-2> a mcat:Revision ;
+        mcat:additions <http://matonto.org/test/additions#conflict1-2> ;
+        mcat:deletions <http://matonto.org/test/deletions#conflict1-2> .
+}
+
+GRAPH <http://matonto.org/test/additions#conflict1-2>
+{
+    <http://matonto.org/test/ontology> dc:title "New Title 1" .
+}
+
+GRAPH <http://matonto.org/test/deletions#conflict1-2>
+{
+    <http://matonto.org/test/ontology> dc:title "Title" .
+}
+
+GRAPH <http://matonto.org/test/commits#conflict2-2>
+{
+    <http://matonto.org/test/commits#conflict2-2> a mcat:Commit ;
+        dc:title "Commit" ;
+        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        prov:wasInformedBy <http://matonto.org/test/commits#conflict0-2> ;
+        prov:generated <http://matonto.org/test/revisions#conflict2-2> .
+
+    <http://matonto.org/test/revisions#conflict2-2> a mcat:Revision ;
+        mcat:additions <http://matonto.org/test/additions#conflict2-2> ;
+        mcat:deletions <http://matonto.org/test/deletions#conflict2-2> .
+}
+
+GRAPH <http://matonto.org/test/additions#conflict2-2>
+{
+    <http://matonto.org/test/ontology> dc:title "New Title 2" .
+}
+
+GRAPH <http://matonto.org/test/deletions#conflict2-2>
+{
+    <http://matonto.org/test/ontology> dc:title "Title" .
+}
+
+# Conflict Scenario 3 - Second chain has two commits which adds then removes something (no conflicts)
+
+GRAPH <http://matonto.org/test/commits#conflict0-3>
+{
+    <http://matonto.org/test/commits#conflict0-3> a mcat:Commit ;
+        dc:title "Commit" ;
+        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        prov:generated <http://matonto.org/test/revisions#conflict0-3> .
+
+    <http://matonto.org/test/revisions#conflict0-3> a mcat:Revision ;
+        mcat:additions <http://matonto.org/test/additions#conflict0-3> ;
+        mcat:deletions <http://matonto.org/test/deletions#conflict0-3> .
+}
+
+GRAPH <http://matonto.org/test/additions#conflict0-3>
+{
+    <http://matonto.org/test/ontology> a owl:Ontology ;
+        dc:title "Title" ;
+        dc:description "Description" .
+    <http://matonto.org/test/class0> a owl:Class .
+}
+
+GRAPH <http://matonto.org/test/commits#conflict1-3>
+{
+    <http://matonto.org/test/commits#conflict1-3> a mcat:Commit ;
+        dc:title "Commit" ;
+        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        prov:wasInformedBy <http://matonto.org/test/commits#conflict0-3> ;
+        prov:generated <http://matonto.org/test/revisions#conflict1-3> .
+
+    <http://matonto.org/test/revisions#conflict1-3> a mcat:Revision ;
+        mcat:additions <http://matonto.org/test/additions#conflict1-3> ;
+        mcat:deletions <http://matonto.org/test/deletions#conflict1-3> .
+}
+
+GRAPH <http://matonto.org/test/additions#conflict1-3>
+{
+    <http://matonto.org/test/ontology> dc:title "New Title" .
+}
+
+GRAPH <http://matonto.org/test/commits#conflict2-3>
+{
+    <http://matonto.org/test/commits#conflict2-3> a mcat:Commit ;
+        dc:title "Commit" ;
+        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        prov:wasInformedBy <http://matonto.org/test/commits#conflict0-3> ;
+        prov:generated <http://matonto.org/test/revisions#conflict2-3> .
+
+    <http://matonto.org/test/revisions#conflict2-3> a mcat:Revision ;
+        mcat:additions <http://matonto.org/test/additions#conflict2-3> ;
+        mcat:deletions <http://matonto.org/test/deletions#conflict2-3> .
+}
+
+GRAPH <http://matonto.org/test/additions#conflict2-3>
+{
+    <http://matonto.org/test/ontology> dc:title "New Title" .
+}
+
+GRAPH <http://matonto.org/test/commits#conflict3-3>
+{
+    <http://matonto.org/test/commits#conflict3-3> a mcat:Commit ;
+        dc:title "Commit" ;
+        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        prov:wasInformedBy <http://matonto.org/test/commits#conflict2-3> ;
+        prov:generated <http://matonto.org/test/revisions#conflict3-3> .
+
+    <http://matonto.org/test/revisions#conflict2-3> a mcat:Revision ;
+        mcat:additions <http://matonto.org/test/additions#conflict3-3> ;
+        mcat:deletions <http://matonto.org/test/deletions#conflict3-3> .
+}
+
+GRAPH <http://matonto.org/test/deletions#conflict3-3>
+{
+    <http://matonto.org/test/ontology> dc:title "New Title" .
+}
+
+# Conflict Scenario 4 - Change a property on one branch (no conflicts)
+
+GRAPH <http://matonto.org/test/commits#conflict0-4>
+{
+    <http://matonto.org/test/commits#conflict0-4> a mcat:Commit ;
+        dc:title "Commit" ;
+        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        prov:generated <http://matonto.org/test/revisions#conflict0-4> .
+
+    <http://matonto.org/test/revisions#conflict0-4> a mcat:Revision ;
+        mcat:additions <http://matonto.org/test/additions#conflict0-4> ;
+        mcat:deletions <http://matonto.org/test/deletions#conflict0-4> .
+}
+
+GRAPH <http://matonto.org/test/additions#conflict0-4>
+{
+    <http://matonto.org/test/ontology> a owl:Ontology ;
+        dc:title "Title" .
+    <http://matonto.org/test/class0> a owl:Class .
+}
+
+GRAPH <http://matonto.org/test/commits#conflict1-4>
+{
+    <http://matonto.org/test/commits#conflict1-4> a mcat:Commit ;
+        dc:title "Commit" ;
+        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        prov:wasInformedBy <http://matonto.org/test/commits#conflict0-4> ;
+        prov:generated <http://matonto.org/test/revisions#conflict1-4> .
+
+    <http://matonto.org/test/revisions#conflict1-4> a mcat:Revision ;
+        mcat:additions <http://matonto.org/test/additions#conflict1-4> ;
+        mcat:deletions <http://matonto.org/test/deletions#conflict1-4> .
+}
+
+GRAPH <http://matonto.org/test/additions#conflict1-4>
+{
+    <http://matonto.org/test/ontology> dc:description "Description" .
+}
+
+GRAPH <http://matonto.org/test/commits#conflict2-4>
+{
+    <http://matonto.org/test/commits#conflict2-4> a mcat:Commit ;
+        dc:title "Commit" ;
+        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        prov:wasInformedBy <http://matonto.org/test/commits#conflict0-4> ;
+        prov:generated <http://matonto.org/test/revisions#conflict2-4> .
+
+    <http://matonto.org/test/revisions#conflict2-4> a mcat:Revision ;
+        mcat:additions <http://matonto.org/test/additions#conflict2-4> ;
+        mcat:deletions <http://matonto.org/test/deletions#conflict2-4> .
+}
+
+GRAPH <http://matonto.org/test/additions#conflict2-4>
+{
+    <http://matonto.org/test/ontology> dc:title "New Title" .
+}
+
+GRAPH <http://matonto.org/test/deletions#conflict2-4>
+{
+    <http://matonto.org/test/ontology> dc:title "Title" .
+}
+
+# Conflict Scenario 5 - One branch removes property while other adds another to it (1 conflict)
+
+GRAPH <http://matonto.org/test/commits#conflict0-5>
+{
+    <http://matonto.org/test/commits#conflict0-5> a mcat:Commit ;
+        dc:title "Commit" ;
+        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        prov:generated <http://matonto.org/test/revisions#conflict0-5> .
+
+    <http://matonto.org/test/revisions#conflict0-5> a mcat:Revision ;
+        mcat:additions <http://matonto.org/test/additions#conflict0-5> ;
+        mcat:deletions <http://matonto.org/test/deletions#conflict0-5> .
+}
+
+GRAPH <http://matonto.org/test/additions#conflict0-5>
+{
+    <http://matonto.org/test/ontology> a owl:Ontology ;
+        dc:title "Title" ;
+        dc:description "Description" .
+    <http://matonto.org/test/class0> a owl:Class .
+}
+
+GRAPH <http://matonto.org/test/commits#conflict1-5>
+{
+    <http://matonto.org/test/commits#conflict1-5> a mcat:Commit ;
+        dc:title "Commit" ;
+        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        prov:wasInformedBy <http://matonto.org/test/commits#conflict0-5> ;
+        prov:generated <http://matonto.org/test/revisions#conflict1-5> .
+
+    <http://matonto.org/test/revisions#conflict1-5> a mcat:Revision ;
+        mcat:additions <http://matonto.org/test/additions#conflict1-5> ;
+        mcat:deletions <http://matonto.org/test/deletions#conflict1-5> .
+}
+
+GRAPH <http://matonto.org/test/additions#conflict1-5>
+{
+    <http://matonto.org/test/ontology> dc:title "New Title" .
+}
+
+GRAPH <http://matonto.org/test/commits#conflict2-5>
+{
+    <http://matonto.org/test/commits#conflict2-5> a mcat:Commit ;
+        dc:title "Commit" ;
+        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        prov:wasInformedBy <http://matonto.org/test/commits#conflict0-5> ;
+        prov:generated <http://matonto.org/test/revisions#conflict2-5> .
+
+    <http://matonto.org/test/revisions#conflict2-5> a mcat:Revision ;
+        mcat:additions <http://matonto.org/test/additions#conflict2-5> ;
+        mcat:deletions <http://matonto.org/test/deletions#conflict2-5> .
+}
+
+GRAPH <http://matonto.org/test/deletions#conflict2-5>
+{
+    <http://matonto.org/test/ontology> dc:title "Title" .
 }

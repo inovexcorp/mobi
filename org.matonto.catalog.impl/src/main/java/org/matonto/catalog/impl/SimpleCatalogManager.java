@@ -172,7 +172,7 @@ public class SimpleCatalogManager implements CatalogManager {
     private static final String REVISION_NAMESPACE = "https://matonto.org/revisions#";
     private static final String ADDITIONS_NAMESPACE = "https://matonto.org/additions#";
     private static final String DELETIONS_NAMESPACE = "https://matonto.org/deletions#";
-    private static final String DELETION_CONTEXT_FLAG = "https://matonto.org/has-deletions";
+    private static final String DELETION_CONTEXT = "https://matonto.org/is-a-deletion#";
 
     private static final String FIND_RECORDS_QUERY;
     private static final String FIND_RECORDS_TYPE_FILTER_QUERY;
@@ -810,11 +810,11 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public Set<Resource> getCommitChain(Resource commitId) {
+    public LinkedHashSet<Resource> getCommitChain(Resource commitId) {
         if (isCommit(commitId)) {
             try (RepositoryConnection conn = repository.getConnection()) {
                 Iterator<Value> commits = getCommitChainIterator(commitId, conn);
-                Set<Resource> results = new HashSet<>();
+                LinkedHashSet<Resource> results = new LinkedHashSet<>();
                 commits.forEachRemaining(commit -> results.add((Resource) commit));
                 results.add(commitId);
                 return results;
@@ -822,7 +822,7 @@ public class SimpleCatalogManager implements CatalogManager {
                 throw new MatOntoException("Error in repository connection", e);
             }
         } else {
-            return Collections.emptySet();
+            return new LinkedHashSet<>();
         }
     }
 
@@ -832,7 +832,7 @@ public class SimpleCatalogManager implements CatalogManager {
             try (RepositoryConnection conn = repository.getConnection()) {
                 Iterator<Value> iterator = getCommitChainIterator(commitId, conn);
                 Model model = createModelFromIterator(iterator, commitId, conn);
-                model.remove(null ,null, null, vf.createIRI(DELETION_CONTEXT_FLAG));
+                model.remove(null, null, null, vf.createIRI(DELETION_CONTEXT));
                 return Optional.of(model);
             } catch (RepositoryException e) {
                 throw new MatOntoException("Error in repository connection", e);
@@ -848,8 +848,8 @@ public class SimpleCatalogManager implements CatalogManager {
             try (RepositoryConnection conn = repository.getConnection()) {
                 Iterator<Value> leftIterator = getCommitChainIterator(leftId, conn);
                 Iterator<Value> rightIterator = getCommitChainIterator(rightId, conn);
-                Value originalEnd = null;
 
+                Value originalEnd = null;
                 while (leftIterator.hasNext() && rightIterator.hasNext()) {
                     Value currentId = leftIterator.next();
                     if (!currentId.equals(rightIterator.next())) {
@@ -858,16 +858,63 @@ public class SimpleCatalogManager implements CatalogManager {
                         originalEnd = currentId;
                     }
                 }
-
                 if (originalEnd == null) {
                     throw new MatOntoException("There is no common parent between the provided Commits.");
                 }
 
-                Model original = getCompiledResource((Resource)originalEnd).get();
                 Model left = createModelFromIterator(leftIterator, leftId, conn);
                 Model right = createModelFromIterator(rightIterator, rightId, conn);
 
-                return getConflicts(original, left, right);
+                Model duplicates = mf.createModel(left);
+                duplicates.retainAll(right);
+
+                left.removeAll(duplicates);
+                right.removeAll(duplicates);
+
+                Resource deletionContext = vf.createIRI(DELETION_CONTEXT);
+
+                Model leftDeletions = mf.createModel(left.filter(null, null, null, deletionContext));
+                Model rightDeletions = mf.createModel(right.filter(null, null, null, deletionContext));
+
+                left.removeAll(leftDeletions);
+                right.removeAll(rightDeletions);
+
+                Set<Conflict> result = new HashSet<>();
+
+                Model original = getCompiledResource((Resource)originalEnd).get();
+                IRI rdfType = vf.createIRI(RDF_TYPE);
+
+                leftDeletions.forEach(statement -> {
+                    Resource subject = statement.getSubject();
+                    IRI predicate = statement.getPredicate();
+                    if (predicate.equals(rdfType) || right.contains(subject, predicate, null)) {
+                        result.add(createConflict(subject, predicate, original, left, leftDeletions, right, rightDeletions));
+                        Stream.of(left, leftDeletions, right, rightDeletions).forEach(item ->
+                                item.remove(subject, predicate, null));
+                    }
+                });
+
+                rightDeletions.forEach(statement -> {
+                    Resource subject = statement.getSubject();
+                    IRI predicate = statement.getPredicate();
+                    if (predicate.equals(rdfType) || left.contains(subject, predicate, null)) {
+                        result.add(createConflict(subject, predicate, original, left, leftDeletions, right, rightDeletions));
+                        Stream.of(left, leftDeletions, right, rightDeletions).forEach(item ->
+                                item.remove(subject, predicate, null));
+                    }
+                });
+
+                left.forEach(statement -> {
+                    Resource subject = statement.getSubject();
+                    IRI predicate = statement.getPredicate();
+                    if (right.contains(subject, predicate, null)) {
+                        result.add(createConflict(subject, predicate, original, left, leftDeletions, right, rightDeletions));
+                        Stream.of(left, leftDeletions, right, rightDeletions).forEach(item ->
+                                item.remove(subject, predicate, null));
+                    }
+                });
+
+                return result;
             } catch (RepositoryException e) {
                 throw new MatOntoException("Error in repository connection.", e);
             }
@@ -876,40 +923,26 @@ public class SimpleCatalogManager implements CatalogManager {
         }
     }
 
-    @Override
-    public Set<Conflict> getConflicts(Model original, Model left, Model right) {
-        Set<Conflict> conflicts = new HashSet<>();
-        Set<String> conflictedSubjects = new HashSet<>();
-
-        Map<Value, Set<Value>> leftMap = getSubjectPredicatesMap(left);
-        Map<Value, Set<Value>> rightMap = getSubjectPredicatesMap(right);
-
-        Set<Value> leftSubjects = leftMap.keySet();
-        Set<Value> rightSubjects = rightMap.keySet();
-
-        leftSubjects.retainAll(rightSubjects);
-
-        leftSubjects.forEach(subject -> {
-            Set<Value> predicates1 = leftMap.get(subject);
-            Set<Value> predicates2 = rightMap.get(subject);
-            predicates1.retainAll(predicates2);
-            if (predicates1.size() != 0) {
-                conflictedSubjects.add(subject.stringValue());
-            }
-        });
-
-        Stream.of(left, right).forEach(model -> model.filter(null, null, null, vf.createIRI(DELETION_CONTEXT_FLAG))
-                .forEach(statement -> conflictedSubjects.add(statement.getSubject().stringValue())));
-
-        conflictedSubjects.forEach(subject -> {
-            IRI subjectIRI = vf.createIRI(subject);
-            Model base = original.filter(subjectIRI, null, null);
-            Model first = left.filter(subjectIRI, null, null);
-            Model second = right.filter(subjectIRI, null, null);
-            conflicts.add(new SimpleConflict.Builder(subject, base, first, second).build());
-        });
-
-        return conflicts;
+    /**
+     * Creates a conflict using the provided parameters as the data to construct it.
+     *
+     * @param subject The Resource identifying the conflicted statement's subject.
+     * @param predicate The IRI identifying the conflicted statement's predicate.
+     * @param original The Model of the original item.
+     * @param left The Model of the left item being compared.
+     * @param leftDeletions The Model of the deleted statements from the left Model.
+     * @param right The Model of the right item being compared.
+     * @param rightDeletions The Model of the deleted statements from the right Model.
+     * @return A Conflict created using all of the provided data.
+     */
+    private Conflict createConflict(Resource subject, IRI predicate, Model original, Model left, Model leftDeletions,
+                                    Model right, Model rightDeletions) {
+        return new SimpleConflict.Builder(mf.createModel(original.filter(subject, predicate, null)))
+                .leftAdditions(mf.createModel(left.filter(subject, predicate, null)))
+                .leftDeletions(mf.createModel(leftDeletions.filter(subject, predicate, null)))
+                .rightAdditions(mf.createModel(right.filter(subject, predicate, null)))
+                .rightDeletions(mf.createModel(rightDeletions.filter(subject, predicate, null)))
+                .build();
     }
 
     /**
@@ -937,27 +970,6 @@ public class SimpleCatalogManager implements CatalogManager {
         } else {
             return Optional.empty();
         }
-    }
-
-    /**
-     * Gets a Map with keys corresponding to the subjects of the statements of the provided Model and values listing out
-     * the unique predicates associated with those subjects.
-     *
-     * @param model The Model to get the subjects and predicates from.
-     * @return The Map containing the subjects with related predicates.
-     */
-    private Map<Value, Set<Value>> getSubjectPredicatesMap(Model model) {
-        Map<Value, Set<Value>> map = new HashMap<>();
-        model.forEach(statement -> {
-            Value subject = statement.getSubject();
-            Value predicate = statement.getPredicate();
-            if (map.containsKey(statement.getSubject())) {
-                map.get(subject).add(predicate);
-            } else {
-                map.put(subject, Stream.of(predicate).collect(Collectors.toSet()));
-            }
-        });
-        return map;
     }
 
     /**
@@ -1296,10 +1308,9 @@ public class SimpleCatalogManager implements CatalogManager {
             if (model.contains(subject, predicate, object)) {
                 model.remove(subject, predicate, object);
             } else {
-                model.add(subject, predicate, object, vf.createIRI(DELETION_CONTEXT_FLAG));
+                model.add(subject, predicate, object, vf.createIRI(DELETION_CONTEXT));
             }
         });
-
         return model;
     }
 
