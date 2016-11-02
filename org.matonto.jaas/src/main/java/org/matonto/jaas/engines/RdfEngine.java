@@ -232,12 +232,15 @@ public class RdfEngine implements Engine {
 
         Model userModel = modelFactory.createModel();
         try (RepositoryConnection conn = repository.getConnection()) {
+            conn.begin();
             RepositoryResult<Statement> statements = conn.getStatements(factory.createIRI(userNamespace + username),
                     null, null, context);
-            RepositoryResult<Statement> roles = conn.getStatements(null, factory.createIRI(RDF.TYPE.stringValue()),
-                    factory.createIRI(Role.TYPE), context);
             statements.forEach(userModel::add);
-            roles.forEach(userModel::add);
+            roles.forEach(role -> {
+                RepositoryResult<Statement> roleStatements = conn.getStatements(factory.createIRI(roleNamespace + role),
+                        null, null, context);
+                roleStatements.forEach(userModel::add);
+            });
         } catch (RepositoryException e) {
             throw new MatOntoException("Error in repository connection", e);
         }
@@ -348,10 +351,12 @@ public class RdfEngine implements Engine {
         try (RepositoryConnection conn = repository.getConnection()) {
             RepositoryResult<Statement> statements = conn.getStatements(factory.createIRI(groupNamespace + groupName),
                     null, null, context);
-            RepositoryResult<Statement> roles = conn.getStatements(null, factory.createIRI(RDF.TYPE.stringValue()),
-                    factory.createIRI(Role.TYPE), context);
             statements.forEach(groupModel::add);
-            roles.forEach(groupModel::add);
+            roles.forEach(role -> {
+                RepositoryResult<Statement> roleStatements = conn.getStatements(factory.createIRI(roleNamespace + role),
+                        null, null, context);
+                roleStatements.forEach(groupModel::add);
+            });
         } catch (RepositoryException e) {
             throw new MatOntoException("Error in repository connection", e);
         }
