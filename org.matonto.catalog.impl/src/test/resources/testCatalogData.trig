@@ -374,3 +374,58 @@ GRAPH <http://matonto.org/test/additions#test5b>
     <http://matonto.org/test/ontology> dc:title "Test 5b Title" .
     <http://matonto.org/test/class2> a owl:Class .
 }
+
+GRAPH <http://matonto.org/test/commits#conflict0>
+{
+    <http://matonto.org/test/commits#conflict0> a mcat:Commit ;
+        dc:title "Commit" ;
+        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        prov:generated <http://matonto.org/test/revisions#conflict0> .
+
+    <http://matonto.org/test/revisions#conflict0> a mcat:Revision ;
+        mcat:additions <http://matonto.org/test/additions#conflict0> ;
+        mcat:deletions <http://matonto.org/test/deletions#conflict0> .
+}
+
+GRAPH <http://matonto.org/test/additions#conflict0>
+{
+    <http://matonto.org/test/ontology> a owl:Ontology ;
+        dc:title "Title" .
+    <http://matonto.org/test/class0> a owl:Class .
+}
+
+GRAPH <http://matonto.org/test/commits#conflict1>
+{
+    <http://matonto.org/test/commits#conflict0> a mcat:Commit ;
+        dc:title "Commit" ;
+        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        prov:wasInformedBy <http://matonto.org/test/commits#conflict0> ;
+        prov:generated <http://matonto.org/test/revisions#conflict1> .
+
+    <http://matonto.org/test/revisions#conflict1> a mcat:Revision ;
+        mcat:additions <http://matonto.org/test/additions#conflict1> ;
+        mcat:deletions <http://matonto.org/test/deletions#conflict1> .
+}
+
+GRAPH <http://matonto.org/test/deletions#conflict1>
+{
+    <http://matonto.org/test/class0> a owl:Class .
+}
+
+GRAPH <http://matonto.org/test/commits#conflict2>
+{
+    <http://matonto.org/test/commits#conflict0> a mcat:Commit ;
+        dc:title "Commit" ;
+        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        prov:wasInformedBy <http://matonto.org/test/commits#conflict0> ;
+        prov:generated <http://matonto.org/test/revisions#conflict2> .
+
+    <http://matonto.org/test/revisions#conflict2> a mcat:Revision ;
+        mcat:additions <http://matonto.org/test/additions#conflict2> ;
+        mcat:deletions <http://matonto.org/test/deletions#conflict2> .
+}
+
+GRAPH <http://matonto.org/test/additions#conflict2>
+{
+    <http://matonto.org/test/class1> a owl:Class .
+}
