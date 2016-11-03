@@ -77,7 +77,6 @@ public class SimpleCatalogManager implements CatalogManager {
     private InProgressCommitFactory inProgressCommitFactory;
     private CommitFactory commitFactory;
     private RevisionFactory revisionFactory;
-    private VersionFactory versionFactory;
     private Resource distributedCatalogIRI;
     private Resource localCatalogIRI;
     private Map<Resource, String> sortingOptions = new HashMap<>();
@@ -127,11 +126,6 @@ public class SimpleCatalogManager implements CatalogManager {
     @Reference
     protected void setInProgressCommitFactory(InProgressCommitFactory inProgressCommitFactory) {
         this.inProgressCommitFactory = inProgressCommitFactory;
-    }
-
-    @Reference
-    protected void setVersionFactory(VersionFactory versionFactory) {
-        this.versionFactory = versionFactory;
     }
 
     @Reference
@@ -367,7 +361,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public boolean addRecord(Resource catalogId, Record record) throws MatOntoException {
+    public <T extends Record> boolean addRecord(Resource catalogId, T record) throws MatOntoException {
         if (resourceExists(catalogId, Catalog.TYPE) && !resourceExists(record.getResource())) {
             try (RepositoryConnection conn = repository.getConnection()) {
                 record.setCatalog(getCatalog(catalogId));
@@ -382,7 +376,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public boolean updateRecord(Resource catalogId, Record newRecord) throws MatOntoException {
+    public <T extends Record> boolean updateRecord(Resource catalogId, T newRecord) throws MatOntoException {
         if (resourceExists(catalogId, Catalog.TYPE) && isRecord(newRecord.getResource())) {
             update(newRecord.getResource(), newRecord.getModel());
             return true;
@@ -402,11 +396,12 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public Optional<Record> getRecord(Resource catalogId, Resource recordId) throws MatOntoException {
+    public <T extends Record> Optional<T> getRecord(Resource catalogId, Resource recordId, OrmFactory<T> factory)
+            throws MatOntoException {
         try (RepositoryConnection conn = repository.getConnection()) {
             boolean condition = isRecord(recordId) && conn.getStatements(recordId, vf.createIRI(Record.catalog_IRI),
                     catalogId).hasNext();
-            return getObject(condition, recordId, recordFactory);
+            return getObject(condition, recordId, factory);
         } catch (RepositoryException e) {
             throw new MatOntoException("Error in repository connection.", e);
         }
@@ -491,7 +486,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public boolean addVersion(Version version, Resource versionedRecordId) {
+    public <T extends Version> boolean addVersion(T version, Resource versionedRecordId) {
         if (!resourceExists(version.getResource()) && isVersionedRecord(versionedRecordId)) {
             try (RepositoryConnection conn = repository.getConnection()) {
                 IRI latestVersionResource = vf.createIRI(VersionedRecord.latestVersion_IRI);
@@ -510,7 +505,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public boolean updateVersion(Version newVersion) {
+    public <T extends Version> boolean updateVersion(T newVersion) {
         if (isVersion(newVersion.getResource())) {
             update(newVersion.getResource(), newVersion.getModel());
             return true;
@@ -548,8 +543,8 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public Optional<Version> getVersion(Resource versionId) {
-        return getObject(isVersion(versionId), versionId, versionFactory);
+    public <T extends Version> Optional<T> getVersion(Resource versionId, OrmFactory<T> factory) {
+        return getObject(isVersion(versionId), versionId, factory);
     }
 
     @Override
@@ -731,25 +726,6 @@ public class SimpleCatalogManager implements CatalogManager {
                 conn.begin();
                 conn.remove(branchId, headIRI, null, branchId);
                 conn.add(branchId, headIRI, commit.getResource(), branchId);
-                conn.add(commit.getModel(), commit.getResource());
-                conn.commit();
-            } catch (RepositoryException e) {
-                throw new MatOntoException("Error in repository connection", e);
-            }
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    @Override
-    public boolean addCommitToTag(Commit commit, Resource tagId) throws MatOntoException {
-        if (!resourceExists(commit.getResource()) && resourceExists(tagId, Tag.TYPE)) {
-            try (RepositoryConnection conn = repository.getConnection()) {
-                IRI commitIRI = vf.createIRI(Tag.commit_IRI);
-                conn.begin();
-                conn.remove(tagId, commitIRI, null, tagId);
-                conn.add(tagId, commitIRI, commit.getResource(), tagId);
                 conn.add(commit.getModel(), commit.getResource());
                 conn.commit();
             } catch (RepositoryException e) {

@@ -72,7 +72,7 @@ public interface CatalogManager {
      *
      * @param config The RecordConfig containing the Record's metadata.
      * @param factory The OrmFactory for creating the entity.
-     * @param <T> The type of Record that you wish to create.
+     * @param <T> An Object which extends Record.
      * @return The Record Object of type T consisting of all the provided metadata.
      */
     <T extends Record> T createRecord(RecordConfig config, OrmFactory<T> factory);
@@ -82,18 +82,20 @@ public interface CatalogManager {
      *
      * @param catalogId The Resource identifying the catalog to add the Record to.
      * @param record The Object which extends Record to add to the Catalog.
+     * @param <T> An Object which extends Record.
      * @return True if the Record was successfully added; otherwise, false.
      */
-    boolean addRecord(Resource catalogId, Record record);
+    <T extends Record> boolean addRecord(Resource catalogId, T record);
 
     /**
      * Uses the provided Record to find the Resource of the existing Record and replaces it.
      *
      * @param catalogId The Resource identifying the catalog which contains desired Record.
      * @param newRecord The Record with the desired changes.
+     * @param <T> An Object which extends Record.
      * @return True if the Record was successfully updated; otherwise, false.
      */
-    boolean updateRecord(Resource catalogId, Record newRecord);
+    <T extends Record> boolean updateRecord(Resource catalogId, T newRecord);
 
     /**
      * Removes the Record from the provided Catalog.
@@ -109,9 +111,11 @@ public interface CatalogManager {
      *
      * @param catalogId The Resource identifying the catalog which optionally contains the Record you want to get.
      * @param recordId The Resource identifying the Record you want to get.
+     * @param factory The OrmFactory of the Type of Record you want to get back.
+     * @param <T> An Object which extends Record.
      * @return An Optional with a Record with the recordId if it was found
      */
-    Optional<Record> getRecord(Resource catalogId, Resource recordId);
+    <T extends Record> Optional<T> getRecord(Resource catalogId, Resource recordId, OrmFactory<T> factory);
 
     /**
      * Creates a Distribution with the provided metadata.
@@ -190,17 +194,19 @@ public interface CatalogManager {
      *
      * @param version The Version to add to the VersionedRecord.
      * @param versionedRecordId The Resource identifying the VersionedRecord which will get a new Version.
+     * @param <T> An Object which extends Version.
      * @return True if the Version was successfully added; otherwise, false.
      */
-    boolean addVersion(Version version, Resource versionedRecordId);
+    <T extends Version> boolean addVersion(T version, Resource versionedRecordId);
 
     /**
      * Uses the Version provided to find the Resource of the existing Version to update.
      *
      * @param newVersion The Version with the desired changes.
+     * @param <T> An Object which extends Version.
      * @return True if the Version was successfully updated; otherwise, false.
      */
-    boolean updateVersion(Version newVersion);
+    <T extends Version> boolean updateVersion(T newVersion);
 
     /**
      * Removes the Version with the provided versionId from the provided VersionedRecord.
@@ -215,9 +221,11 @@ public interface CatalogManager {
      * Gets the Version identified by the provided Resource.
      *
      * @param versionId The Resource identifying the Version you want to get.
+     * @param factory The OrmFactory identifying the type of Version you want to get back.
+     * @param <T> An Object which extends Version.
      * @return An Optional of the Version if it exists.
      */
-    Optional<Version> getVersion(Resource versionId);
+    <T extends Version> Optional<T> getVersion(Resource versionId, OrmFactory<T> factory);
 
     /**
      * Creates a Branch with the provided metadata.
@@ -310,15 +318,6 @@ public interface CatalogManager {
      * @return True if the Commit was successfully added to the Branch; otherwise, false.
      */
     boolean addCommitToBranch(Commit commit, Resource branchId);
-
-    /**
-     * Adds the provided Commit to the Tag identified by the provided Resource in the Repository.
-     *
-     * @param commit The Commit to store in the Repository.
-     * @param tagId The Resource identifying the Tag to add the Commit to.
-     * @return True if the Commit was successfully added to the Branch; otherwise, false.
-     */
-    boolean addCommitToTag(Commit commit, Resource tagId);
 
     /**
      * Adds the provided InProgressCommit to the Repository.

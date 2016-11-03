@@ -68,6 +68,12 @@ public class SimpleCatalogManagerTest {
     private ValueConverterRegistry vcr = new DefaultValueConverterRegistry();
     private CatalogFactory catalogFactory = new CatalogFactory();
     private RecordFactory recordFactory = new RecordFactory();
+    private UnversionedRecordFactory unversionedRecordFactory = new UnversionedRecordFactory();
+    private VersionedRecordFactory versionedRecordFactory = new VersionedRecordFactory();
+    private VersionedRDFRecordFactory versionedRDFRecordFactory = new VersionedRDFRecordFactory();
+    private OntologyRecordFactory ontologyRecordFactory = new OntologyRecordFactory();
+    private MappingRecordFactory mappingRecordFactory = new MappingRecordFactory();
+    private DatasetRecordFactory datasetRecordFactory = new DatasetRecordFactory();
     private DistributionFactory distributionFactory = new DistributionFactory();
     private BranchFactory branchFactory = new BranchFactory();
     private InProgressCommitFactory inProgressCommitFactory = new InProgressCommitFactory();
@@ -76,6 +82,7 @@ public class SimpleCatalogManagerTest {
     private ThingFactory thingFactory = new ThingFactory();
     private PropertyFactory propertyFactory = new PropertyFactory();
     private VersionFactory versionFactory = new VersionFactory();
+    private TagFactory tagFactory = new TagFactory();
 
     private static final String RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
 
@@ -116,6 +123,30 @@ public class SimpleCatalogManagerTest {
         recordFactory.setValueFactory(vf);
         recordFactory.setValueConverterRegistry(vcr);
 
+        unversionedRecordFactory.setModelFactory(mf);
+        unversionedRecordFactory.setValueFactory(vf);
+        unversionedRecordFactory.setValueConverterRegistry(vcr);
+
+        versionedRecordFactory.setModelFactory(mf);
+        versionedRecordFactory.setValueFactory(vf);
+        versionedRecordFactory.setValueConverterRegistry(vcr);
+
+        versionedRDFRecordFactory.setModelFactory(mf);
+        versionedRDFRecordFactory.setValueFactory(vf);
+        versionedRDFRecordFactory.setValueConverterRegistry(vcr);
+
+        ontologyRecordFactory.setModelFactory(mf);
+        ontologyRecordFactory.setValueFactory(vf);
+        ontologyRecordFactory.setValueConverterRegistry(vcr);
+
+        mappingRecordFactory.setModelFactory(mf);
+        mappingRecordFactory.setValueFactory(vf);
+        mappingRecordFactory.setValueConverterRegistry(vcr);
+
+        datasetRecordFactory.setModelFactory(mf);
+        datasetRecordFactory.setValueFactory(vf);
+        datasetRecordFactory.setValueConverterRegistry(vcr);
+
         commitFactory.setModelFactory(mf);
         commitFactory.setValueFactory(vf);
         commitFactory.setValueConverterRegistry(vcr);
@@ -139,6 +170,10 @@ public class SimpleCatalogManagerTest {
         versionFactory.setModelFactory(mf);
         versionFactory.setValueFactory(vf);
         versionFactory.setValueConverterRegistry(vcr);
+
+        tagFactory.setModelFactory(mf);
+        tagFactory.setValueFactory(vf);
+        tagFactory.setValueConverterRegistry(vcr);
 
         thingFactory.setValueFactory(vf);
         thingFactory.setValueConverterRegistry(vcr);
@@ -172,7 +207,6 @@ public class SimpleCatalogManagerTest {
         manager.setCommitFactory(commitFactory);
         manager.setInProgressCommitFactory(inProgressCommitFactory);
         manager.setRevisionFactory(revisionFactory);
-        manager.setVersionFactory(versionFactory);
 
         InputStream testData = getClass().getResourceAsStream("/testCatalogData.trig");
 
@@ -279,6 +313,210 @@ public class SimpleCatalogManagerTest {
     }
 
     @Test
+    public void testAddUnversionedRecord() throws Exception {
+        Resource catalogId = vf.createIRI("http://matonto.org/test/catalog-distributed");
+        Resource recordId = vf.createIRI("https://matonto.org/records#test");
+        Resource different = vf.createIRI("http://matonto.org/test/different");
+
+        Model model = mf.createModel();
+        model.add(recordId, vf.createIRI(Record.catalog_IRI), catalogId, recordId);
+
+        UnversionedRecord record = mock(UnversionedRecord.class);
+        when(record.getResource()).thenReturn(recordId);
+        when(record.getModel()).thenReturn(model);
+
+        RepositoryConnection conn = repo.getConnection();
+
+        assertEquals(conn.getStatements(record.getResource(), null, null, record.getResource())
+                .hasNext(), false);
+
+        boolean result = manager.addRecord(different, record);
+        assertEquals(result, false);
+
+        result = manager.addRecord(catalogId, record);
+        assertEquals(result, true);
+        assertEquals(conn.getStatements(record.getResource(), null, null, record.getResource())
+                .hasNext(), true);
+        assertEquals(conn.getStatements(record.getResource(), null, catalogId, record.getResource())
+                .hasNext(), true);
+
+        result = manager.addRecord(catalogId, record);
+        assertEquals(result, false);
+
+        conn.close();
+    }
+
+    @Test
+    public void testAddVersionedRecord() throws Exception {
+        Resource catalogId = vf.createIRI("http://matonto.org/test/catalog-distributed");
+        Resource recordId = vf.createIRI("https://matonto.org/records#test");
+        Resource different = vf.createIRI("http://matonto.org/test/different");
+
+        Model model = mf.createModel();
+        model.add(recordId, vf.createIRI(Record.catalog_IRI), catalogId, recordId);
+
+        VersionedRecord record = mock(VersionedRecord.class);
+        when(record.getResource()).thenReturn(recordId);
+        when(record.getModel()).thenReturn(model);
+
+        RepositoryConnection conn = repo.getConnection();
+
+        assertEquals(conn.getStatements(record.getResource(), null, null, record.getResource())
+                .hasNext(), false);
+
+        boolean result = manager.addRecord(different, record);
+        assertEquals(result, false);
+
+        result = manager.addRecord(catalogId, record);
+        assertEquals(result, true);
+        assertEquals(conn.getStatements(record.getResource(), null, null, record.getResource())
+                .hasNext(), true);
+        assertEquals(conn.getStatements(record.getResource(), null, catalogId, record.getResource())
+                .hasNext(), true);
+
+        result = manager.addRecord(catalogId, record);
+        assertEquals(result, false);
+
+        conn.close();
+    }
+
+    @Test
+    public void testAddVersionedRDFRecord() throws Exception {
+        Resource catalogId = vf.createIRI("http://matonto.org/test/catalog-distributed");
+        Resource recordId = vf.createIRI("https://matonto.org/records#test");
+        Resource different = vf.createIRI("http://matonto.org/test/different");
+
+        Model model = mf.createModel();
+        model.add(recordId, vf.createIRI(Record.catalog_IRI), catalogId, recordId);
+
+        VersionedRDFRecord record = mock(VersionedRDFRecord.class);
+        when(record.getResource()).thenReturn(recordId);
+        when(record.getModel()).thenReturn(model);
+
+        RepositoryConnection conn = repo.getConnection();
+
+        assertEquals(conn.getStatements(record.getResource(), null, null, record.getResource())
+                .hasNext(), false);
+
+        boolean result = manager.addRecord(different, record);
+        assertEquals(result, false);
+
+        result = manager.addRecord(catalogId, record);
+        assertEquals(result, true);
+        assertEquals(conn.getStatements(record.getResource(), null, null, record.getResource())
+                .hasNext(), true);
+        assertEquals(conn.getStatements(record.getResource(), null, catalogId, record.getResource())
+                .hasNext(), true);
+
+        result = manager.addRecord(catalogId, record);
+        assertEquals(result, false);
+
+        conn.close();
+    }
+
+    @Test
+    public void testAddOntologyRecord() throws Exception {
+        Resource catalogId = vf.createIRI("http://matonto.org/test/catalog-distributed");
+        Resource recordId = vf.createIRI("https://matonto.org/records#test");
+        Resource different = vf.createIRI("http://matonto.org/test/different");
+
+        Model model = mf.createModel();
+        model.add(recordId, vf.createIRI(Record.catalog_IRI), catalogId, recordId);
+
+        OntologyRecord record = mock(OntologyRecord.class);
+        when(record.getResource()).thenReturn(recordId);
+        when(record.getModel()).thenReturn(model);
+
+        RepositoryConnection conn = repo.getConnection();
+
+        assertEquals(conn.getStatements(record.getResource(), null, null, record.getResource())
+                .hasNext(), false);
+
+        boolean result = manager.addRecord(different, record);
+        assertEquals(result, false);
+
+        result = manager.addRecord(catalogId, record);
+        assertEquals(result, true);
+        assertEquals(conn.getStatements(record.getResource(), null, null, record.getResource())
+                .hasNext(), true);
+        assertEquals(conn.getStatements(record.getResource(), null, catalogId, record.getResource())
+                .hasNext(), true);
+
+        result = manager.addRecord(catalogId, record);
+        assertEquals(result, false);
+
+        conn.close();
+    }
+
+    @Test
+    public void testAddMappingRecord() throws Exception {
+        Resource catalogId = vf.createIRI("http://matonto.org/test/catalog-distributed");
+        Resource recordId = vf.createIRI("https://matonto.org/records#test");
+        Resource different = vf.createIRI("http://matonto.org/test/different");
+
+        Model model = mf.createModel();
+        model.add(recordId, vf.createIRI(Record.catalog_IRI), catalogId, recordId);
+
+        MappingRecord record = mock(MappingRecord.class);
+        when(record.getResource()).thenReturn(recordId);
+        when(record.getModel()).thenReturn(model);
+
+        RepositoryConnection conn = repo.getConnection();
+
+        assertEquals(conn.getStatements(record.getResource(), null, null, record.getResource())
+                .hasNext(), false);
+
+        boolean result = manager.addRecord(different, record);
+        assertEquals(result, false);
+
+        result = manager.addRecord(catalogId, record);
+        assertEquals(result, true);
+        assertEquals(conn.getStatements(record.getResource(), null, null, record.getResource())
+                .hasNext(), true);
+        assertEquals(conn.getStatements(record.getResource(), null, catalogId, record.getResource())
+                .hasNext(), true);
+
+        result = manager.addRecord(catalogId, record);
+        assertEquals(result, false);
+
+        conn.close();
+    }
+
+    @Test
+    public void testAddDatasetRecord() throws Exception {
+        Resource catalogId = vf.createIRI("http://matonto.org/test/catalog-distributed");
+        Resource recordId = vf.createIRI("https://matonto.org/records#test");
+        Resource different = vf.createIRI("http://matonto.org/test/different");
+
+        Model model = mf.createModel();
+        model.add(recordId, vf.createIRI(Record.catalog_IRI), catalogId, recordId);
+
+        DatasetRecord record = mock(DatasetRecord.class);
+        when(record.getResource()).thenReturn(recordId);
+        when(record.getModel()).thenReturn(model);
+
+        RepositoryConnection conn = repo.getConnection();
+
+        assertEquals(conn.getStatements(record.getResource(), null, null, record.getResource())
+                .hasNext(), false);
+
+        boolean result = manager.addRecord(different, record);
+        assertEquals(result, false);
+
+        result = manager.addRecord(catalogId, record);
+        assertEquals(result, true);
+        assertEquals(conn.getStatements(record.getResource(), null, null, record.getResource())
+                .hasNext(), true);
+        assertEquals(conn.getStatements(record.getResource(), null, catalogId, record.getResource())
+                .hasNext(), true);
+
+        result = manager.addRecord(catalogId, record);
+        assertEquals(result, false);
+
+        conn.close();
+    }
+
+    @Test
     public void testUpdateRecord() throws Exception {
         Resource catalogId = vf.createIRI("http://matonto.org/test/catalog-distributed");
         Resource recordId = vf.createIRI("http://matonto.org/test/records#update");
@@ -289,6 +527,270 @@ public class SimpleCatalogManagerTest {
         model.add(recordId, vf.createIRI(Record.keyword_IRI), vf.createLiteral("keyword1"), recordId);
 
         Record record = mock(Record.class);
+        when(record.getResource()).thenReturn(recordId);
+        when(record.getModel()).thenReturn(model);
+
+        RepositoryConnection conn = repo.getConnection();
+
+        assertEquals(conn.getStatements(recordId, vf.createIRI(Record.catalog_IRI), catalogId, recordId).hasNext(),
+                true);
+        assertEquals(conn.getStatements(recordId, vf.createIRI(Record.keyword_IRI), vf.createLiteral("keyword1"),
+                recordId).hasNext(), false);
+
+        boolean result = manager.updateRecord(different, record);
+        assertEquals(result, false);
+
+        result = manager.updateRecord(catalogId, record);
+        assertEquals(result, true);
+        assertEquals(conn.getStatements(record.getResource(), vf.createIRI(Record.catalog_IRI), catalogId,
+                record.getResource()).hasNext(), true);
+        assertEquals(conn.getStatements(record.getResource(), vf.createIRI(Record.keyword_IRI),
+                vf.createLiteral("keyword1"), record.getResource()).hasNext(), true);
+
+        Record record2 = mock(Record.class);
+        when(record2.getResource()).thenReturn(vf.createIRI("http://matonto.org/test/records#not-present"));
+        when(record2.getModel()).thenReturn(model);
+
+        result = manager.updateRecord(catalogId, record2);
+        assertEquals(result, false);
+
+        result = manager.updateRecord(different, record2);
+        assertEquals(result, false);
+
+        conn.close();
+    }
+
+    @Test
+    public void testUpdateUnversionedRecord() throws Exception {
+        Resource catalogId = vf.createIRI("http://matonto.org/test/catalog-distributed");
+        Resource recordId = vf.createIRI("http://matonto.org/test/records#update");
+        Resource different = vf.createIRI("http://matonto.org/test/different");
+
+        Model model = mf.createModel();
+        model.add(recordId, vf.createIRI(Record.catalog_IRI), catalogId, recordId);
+        model.add(recordId, vf.createIRI(Record.keyword_IRI), vf.createLiteral("keyword1"), recordId);
+
+        UnversionedRecord record = mock(UnversionedRecord.class);
+        when(record.getResource()).thenReturn(recordId);
+        when(record.getModel()).thenReturn(model);
+
+        RepositoryConnection conn = repo.getConnection();
+
+        assertEquals(conn.getStatements(recordId, vf.createIRI(Record.catalog_IRI), catalogId, recordId).hasNext(),
+                true);
+        assertEquals(conn.getStatements(recordId, vf.createIRI(Record.keyword_IRI), vf.createLiteral("keyword1"),
+                recordId).hasNext(), false);
+
+        boolean result = manager.updateRecord(different, record);
+        assertEquals(result, false);
+
+        result = manager.updateRecord(catalogId, record);
+        assertEquals(result, true);
+        assertEquals(conn.getStatements(record.getResource(), vf.createIRI(Record.catalog_IRI), catalogId,
+                record.getResource()).hasNext(), true);
+        assertEquals(conn.getStatements(record.getResource(), vf.createIRI(Record.keyword_IRI),
+                vf.createLiteral("keyword1"), record.getResource()).hasNext(), true);
+
+        Record record2 = mock(Record.class);
+        when(record2.getResource()).thenReturn(vf.createIRI("http://matonto.org/test/records#not-present"));
+        when(record2.getModel()).thenReturn(model);
+
+        result = manager.updateRecord(catalogId, record2);
+        assertEquals(result, false);
+
+        result = manager.updateRecord(different, record2);
+        assertEquals(result, false);
+
+        conn.close();
+    }
+
+    @Test
+    public void testUpdateVersionedRecord() throws Exception {
+        Resource catalogId = vf.createIRI("http://matonto.org/test/catalog-distributed");
+        Resource recordId = vf.createIRI("http://matonto.org/test/records#update");
+        Resource different = vf.createIRI("http://matonto.org/test/different");
+
+        Model model = mf.createModel();
+        model.add(recordId, vf.createIRI(Record.catalog_IRI), catalogId, recordId);
+        model.add(recordId, vf.createIRI(Record.keyword_IRI), vf.createLiteral("keyword1"), recordId);
+
+        VersionedRecord record = mock(VersionedRecord.class);
+        when(record.getResource()).thenReturn(recordId);
+        when(record.getModel()).thenReturn(model);
+
+        RepositoryConnection conn = repo.getConnection();
+
+        assertEquals(conn.getStatements(recordId, vf.createIRI(Record.catalog_IRI), catalogId, recordId).hasNext(),
+                true);
+        assertEquals(conn.getStatements(recordId, vf.createIRI(Record.keyword_IRI), vf.createLiteral("keyword1"),
+                recordId).hasNext(), false);
+
+        boolean result = manager.updateRecord(different, record);
+        assertEquals(result, false);
+
+        result = manager.updateRecord(catalogId, record);
+        assertEquals(result, true);
+        assertEquals(conn.getStatements(record.getResource(), vf.createIRI(Record.catalog_IRI), catalogId,
+                record.getResource()).hasNext(), true);
+        assertEquals(conn.getStatements(record.getResource(), vf.createIRI(Record.keyword_IRI),
+                vf.createLiteral("keyword1"), record.getResource()).hasNext(), true);
+
+        Record record2 = mock(Record.class);
+        when(record2.getResource()).thenReturn(vf.createIRI("http://matonto.org/test/records#not-present"));
+        when(record2.getModel()).thenReturn(model);
+
+        result = manager.updateRecord(catalogId, record2);
+        assertEquals(result, false);
+
+        result = manager.updateRecord(different, record2);
+        assertEquals(result, false);
+
+        conn.close();
+    }
+
+    @Test
+    public void testUpdateVersionedRDFRecord() throws Exception {
+        Resource catalogId = vf.createIRI("http://matonto.org/test/catalog-distributed");
+        Resource recordId = vf.createIRI("http://matonto.org/test/records#update");
+        Resource different = vf.createIRI("http://matonto.org/test/different");
+
+        Model model = mf.createModel();
+        model.add(recordId, vf.createIRI(Record.catalog_IRI), catalogId, recordId);
+        model.add(recordId, vf.createIRI(Record.keyword_IRI), vf.createLiteral("keyword1"), recordId);
+
+        VersionedRDFRecord record = mock(VersionedRDFRecord.class);
+        when(record.getResource()).thenReturn(recordId);
+        when(record.getModel()).thenReturn(model);
+
+        RepositoryConnection conn = repo.getConnection();
+
+        assertEquals(conn.getStatements(recordId, vf.createIRI(Record.catalog_IRI), catalogId, recordId).hasNext(),
+                true);
+        assertEquals(conn.getStatements(recordId, vf.createIRI(Record.keyword_IRI), vf.createLiteral("keyword1"),
+                recordId).hasNext(), false);
+
+        boolean result = manager.updateRecord(different, record);
+        assertEquals(result, false);
+
+        result = manager.updateRecord(catalogId, record);
+        assertEquals(result, true);
+        assertEquals(conn.getStatements(record.getResource(), vf.createIRI(Record.catalog_IRI), catalogId,
+                record.getResource()).hasNext(), true);
+        assertEquals(conn.getStatements(record.getResource(), vf.createIRI(Record.keyword_IRI),
+                vf.createLiteral("keyword1"), record.getResource()).hasNext(), true);
+
+        Record record2 = mock(Record.class);
+        when(record2.getResource()).thenReturn(vf.createIRI("http://matonto.org/test/records#not-present"));
+        when(record2.getModel()).thenReturn(model);
+
+        result = manager.updateRecord(catalogId, record2);
+        assertEquals(result, false);
+
+        result = manager.updateRecord(different, record2);
+        assertEquals(result, false);
+
+        conn.close();
+    }
+
+    @Test
+    public void testUpdateOntologyRecord() throws Exception {
+        Resource catalogId = vf.createIRI("http://matonto.org/test/catalog-distributed");
+        Resource recordId = vf.createIRI("http://matonto.org/test/records#update");
+        Resource different = vf.createIRI("http://matonto.org/test/different");
+
+        Model model = mf.createModel();
+        model.add(recordId, vf.createIRI(Record.catalog_IRI), catalogId, recordId);
+        model.add(recordId, vf.createIRI(Record.keyword_IRI), vf.createLiteral("keyword1"), recordId);
+
+        OntologyRecord record = mock(OntologyRecord.class);
+        when(record.getResource()).thenReturn(recordId);
+        when(record.getModel()).thenReturn(model);
+
+        RepositoryConnection conn = repo.getConnection();
+
+        assertEquals(conn.getStatements(recordId, vf.createIRI(Record.catalog_IRI), catalogId, recordId).hasNext(),
+                true);
+        assertEquals(conn.getStatements(recordId, vf.createIRI(Record.keyword_IRI), vf.createLiteral("keyword1"),
+                recordId).hasNext(), false);
+
+        boolean result = manager.updateRecord(different, record);
+        assertEquals(result, false);
+
+        result = manager.updateRecord(catalogId, record);
+        assertEquals(result, true);
+        assertEquals(conn.getStatements(record.getResource(), vf.createIRI(Record.catalog_IRI), catalogId,
+                record.getResource()).hasNext(), true);
+        assertEquals(conn.getStatements(record.getResource(), vf.createIRI(Record.keyword_IRI),
+                vf.createLiteral("keyword1"), record.getResource()).hasNext(), true);
+
+        Record record2 = mock(Record.class);
+        when(record2.getResource()).thenReturn(vf.createIRI("http://matonto.org/test/records#not-present"));
+        when(record2.getModel()).thenReturn(model);
+
+        result = manager.updateRecord(catalogId, record2);
+        assertEquals(result, false);
+
+        result = manager.updateRecord(different, record2);
+        assertEquals(result, false);
+
+        conn.close();
+    }
+
+    @Test
+    public void testUpdateMappingRecord() throws Exception {
+        Resource catalogId = vf.createIRI("http://matonto.org/test/catalog-distributed");
+        Resource recordId = vf.createIRI("http://matonto.org/test/records#update");
+        Resource different = vf.createIRI("http://matonto.org/test/different");
+
+        Model model = mf.createModel();
+        model.add(recordId, vf.createIRI(Record.catalog_IRI), catalogId, recordId);
+        model.add(recordId, vf.createIRI(Record.keyword_IRI), vf.createLiteral("keyword1"), recordId);
+
+        MappingRecord record = mock(MappingRecord.class);
+        when(record.getResource()).thenReturn(recordId);
+        when(record.getModel()).thenReturn(model);
+
+        RepositoryConnection conn = repo.getConnection();
+
+        assertEquals(conn.getStatements(recordId, vf.createIRI(Record.catalog_IRI), catalogId, recordId).hasNext(),
+                true);
+        assertEquals(conn.getStatements(recordId, vf.createIRI(Record.keyword_IRI), vf.createLiteral("keyword1"),
+                recordId).hasNext(), false);
+
+        boolean result = manager.updateRecord(different, record);
+        assertEquals(result, false);
+
+        result = manager.updateRecord(catalogId, record);
+        assertEquals(result, true);
+        assertEquals(conn.getStatements(record.getResource(), vf.createIRI(Record.catalog_IRI), catalogId,
+                record.getResource()).hasNext(), true);
+        assertEquals(conn.getStatements(record.getResource(), vf.createIRI(Record.keyword_IRI),
+                vf.createLiteral("keyword1"), record.getResource()).hasNext(), true);
+
+        Record record2 = mock(Record.class);
+        when(record2.getResource()).thenReturn(vf.createIRI("http://matonto.org/test/records#not-present"));
+        when(record2.getModel()).thenReturn(model);
+
+        result = manager.updateRecord(catalogId, record2);
+        assertEquals(result, false);
+
+        result = manager.updateRecord(different, record2);
+        assertEquals(result, false);
+
+        conn.close();
+    }
+
+    @Test
+    public void testUpdateDatasetRecord() throws Exception {
+        Resource catalogId = vf.createIRI("http://matonto.org/test/catalog-distributed");
+        Resource recordId = vf.createIRI("http://matonto.org/test/records#update");
+        Resource different = vf.createIRI("http://matonto.org/test/different");
+
+        Model model = mf.createModel();
+        model.add(recordId, vf.createIRI(Record.catalog_IRI), catalogId, recordId);
+        model.add(recordId, vf.createIRI(Record.keyword_IRI), vf.createLiteral("keyword1"), recordId);
+
+        DatasetRecord record = mock(DatasetRecord.class);
         when(record.getResource()).thenReturn(recordId);
         when(record.getModel()).thenReturn(model);
 
@@ -356,7 +858,7 @@ public class SimpleCatalogManagerTest {
         assertEquals(conn.getStatements(recordId, null, null, recordId).hasNext(), true);
         conn.close();
 
-        Optional<Record> result = manager.getRecord(catalogId, recordId);
+        Optional<Record> result = manager.getRecord(catalogId, recordId, recordFactory);
 
         assertEquals(result.isPresent(), true);
         Record record = result.get();
@@ -371,7 +873,181 @@ public class SimpleCatalogManagerTest {
 
         Resource recordId2 = vf.createIRI("http://matonto.org/test/records#not-present");
 
-        result = manager.getRecord(catalogId, recordId2);
+        result = manager.getRecord(catalogId, recordId2, recordFactory);
+
+        assertEquals(result.isPresent(), false);
+    }
+
+    @Test
+    public void testGetUnversionedRecord() throws Exception {
+        Resource catalogId = vf.createIRI("http://matonto.org/test/catalog-distributed");
+        Resource recordId = vf.createIRI("http://matonto.org/test/records#get");
+
+        RepositoryConnection conn = repo.getConnection();
+        assertEquals(conn.getStatements(recordId, null, null, recordId).hasNext(), true);
+        conn.close();
+
+        Optional<UnversionedRecord> result = manager.getRecord(catalogId, recordId, unversionedRecordFactory);
+
+        assertEquals(result.isPresent(), true);
+        UnversionedRecord record = result.get();
+        assertEquals(record.getProperty(vf.createIRI(DC_TITLE)).isPresent(), true);
+        assertEquals(record.getProperty(vf.createIRI(DC_TITLE)).get().stringValue(), "Get");
+        assertEquals(record.getProperty(vf.createIRI(DC_DESCRIPTION)).isPresent(), true);
+        assertEquals(record.getProperty(vf.createIRI(DC_DESCRIPTION)).get().stringValue(), "Description");
+        assertEquals(record.getProperty(vf.createIRI(DC_IDENTIFIER)).isPresent(), true);
+        assertEquals(record.getProperty(vf.createIRI(DC_IDENTIFIER)).get().stringValue(), "Identifier");
+        assertEquals(record.getProperty(vf.createIRI(DC_MODIFIED)).isPresent(), true);
+        assertEquals(record.getProperty(vf.createIRI(DC_ISSUED)).isPresent(), true);
+
+        Resource recordId2 = vf.createIRI("http://matonto.org/test/records#not-present");
+
+        result = manager.getRecord(catalogId, recordId2, unversionedRecordFactory);
+
+        assertEquals(result.isPresent(), false);
+    }
+
+    @Test
+    public void testGetVersionedRecord() throws Exception {
+        Resource catalogId = vf.createIRI("http://matonto.org/test/catalog-distributed");
+        Resource recordId = vf.createIRI("http://matonto.org/test/records#get");
+
+        RepositoryConnection conn = repo.getConnection();
+        assertEquals(conn.getStatements(recordId, null, null, recordId).hasNext(), true);
+        conn.close();
+
+        Optional<VersionedRecord> result = manager.getRecord(catalogId, recordId, versionedRecordFactory);
+
+        assertEquals(result.isPresent(), true);
+        VersionedRecord record = result.get();
+        assertEquals(record.getProperty(vf.createIRI(DC_TITLE)).isPresent(), true);
+        assertEquals(record.getProperty(vf.createIRI(DC_TITLE)).get().stringValue(), "Get");
+        assertEquals(record.getProperty(vf.createIRI(DC_DESCRIPTION)).isPresent(), true);
+        assertEquals(record.getProperty(vf.createIRI(DC_DESCRIPTION)).get().stringValue(), "Description");
+        assertEquals(record.getProperty(vf.createIRI(DC_IDENTIFIER)).isPresent(), true);
+        assertEquals(record.getProperty(vf.createIRI(DC_IDENTIFIER)).get().stringValue(), "Identifier");
+        assertEquals(record.getProperty(vf.createIRI(DC_MODIFIED)).isPresent(), true);
+        assertEquals(record.getProperty(vf.createIRI(DC_ISSUED)).isPresent(), true);
+
+        Resource recordId2 = vf.createIRI("http://matonto.org/test/records#not-present");
+
+        result = manager.getRecord(catalogId, recordId2, versionedRecordFactory);
+
+        assertEquals(result.isPresent(), false);
+    }
+
+    @Test
+    public void testGetVersionedRDFRecord() throws Exception {
+        Resource catalogId = vf.createIRI("http://matonto.org/test/catalog-distributed");
+        Resource recordId = vf.createIRI("http://matonto.org/test/records#get");
+
+        RepositoryConnection conn = repo.getConnection();
+        assertEquals(conn.getStatements(recordId, null, null, recordId).hasNext(), true);
+        conn.close();
+
+        Optional<VersionedRDFRecord> result = manager.getRecord(catalogId, recordId, versionedRDFRecordFactory);
+
+        assertEquals(result.isPresent(), true);
+        VersionedRDFRecord record = result.get();
+        assertEquals(record.getProperty(vf.createIRI(DC_TITLE)).isPresent(), true);
+        assertEquals(record.getProperty(vf.createIRI(DC_TITLE)).get().stringValue(), "Get");
+        assertEquals(record.getProperty(vf.createIRI(DC_DESCRIPTION)).isPresent(), true);
+        assertEquals(record.getProperty(vf.createIRI(DC_DESCRIPTION)).get().stringValue(), "Description");
+        assertEquals(record.getProperty(vf.createIRI(DC_IDENTIFIER)).isPresent(), true);
+        assertEquals(record.getProperty(vf.createIRI(DC_IDENTIFIER)).get().stringValue(), "Identifier");
+        assertEquals(record.getProperty(vf.createIRI(DC_MODIFIED)).isPresent(), true);
+        assertEquals(record.getProperty(vf.createIRI(DC_ISSUED)).isPresent(), true);
+
+        Resource recordId2 = vf.createIRI("http://matonto.org/test/records#not-present");
+
+        result = manager.getRecord(catalogId, recordId2, versionedRDFRecordFactory);
+
+        assertEquals(result.isPresent(), false);
+    }
+
+    @Test
+    public void testGetOntologyRecord() throws Exception {
+        Resource catalogId = vf.createIRI("http://matonto.org/test/catalog-distributed");
+        Resource recordId = vf.createIRI("http://matonto.org/test/records#get");
+
+        RepositoryConnection conn = repo.getConnection();
+        assertEquals(conn.getStatements(recordId, null, null, recordId).hasNext(), true);
+        conn.close();
+
+        Optional<OntologyRecord> result = manager.getRecord(catalogId, recordId, ontologyRecordFactory);
+
+        assertEquals(result.isPresent(), true);
+        OntologyRecord record = result.get();
+        assertEquals(record.getProperty(vf.createIRI(DC_TITLE)).isPresent(), true);
+        assertEquals(record.getProperty(vf.createIRI(DC_TITLE)).get().stringValue(), "Get");
+        assertEquals(record.getProperty(vf.createIRI(DC_DESCRIPTION)).isPresent(), true);
+        assertEquals(record.getProperty(vf.createIRI(DC_DESCRIPTION)).get().stringValue(), "Description");
+        assertEquals(record.getProperty(vf.createIRI(DC_IDENTIFIER)).isPresent(), true);
+        assertEquals(record.getProperty(vf.createIRI(DC_IDENTIFIER)).get().stringValue(), "Identifier");
+        assertEquals(record.getProperty(vf.createIRI(DC_MODIFIED)).isPresent(), true);
+        assertEquals(record.getProperty(vf.createIRI(DC_ISSUED)).isPresent(), true);
+
+        Resource recordId2 = vf.createIRI("http://matonto.org/test/records#not-present");
+
+        result = manager.getRecord(catalogId, recordId2, ontologyRecordFactory);
+
+        assertEquals(result.isPresent(), false);
+    }
+
+    @Test
+    public void testGetMappingRecord() throws Exception {
+        Resource catalogId = vf.createIRI("http://matonto.org/test/catalog-distributed");
+        Resource recordId = vf.createIRI("http://matonto.org/test/records#get");
+
+        RepositoryConnection conn = repo.getConnection();
+        assertEquals(conn.getStatements(recordId, null, null, recordId).hasNext(), true);
+        conn.close();
+
+        Optional<MappingRecord> result = manager.getRecord(catalogId, recordId, mappingRecordFactory);
+
+        assertEquals(result.isPresent(), true);
+        MappingRecord record = result.get();
+        assertEquals(record.getProperty(vf.createIRI(DC_TITLE)).isPresent(), true);
+        assertEquals(record.getProperty(vf.createIRI(DC_TITLE)).get().stringValue(), "Get");
+        assertEquals(record.getProperty(vf.createIRI(DC_DESCRIPTION)).isPresent(), true);
+        assertEquals(record.getProperty(vf.createIRI(DC_DESCRIPTION)).get().stringValue(), "Description");
+        assertEquals(record.getProperty(vf.createIRI(DC_IDENTIFIER)).isPresent(), true);
+        assertEquals(record.getProperty(vf.createIRI(DC_IDENTIFIER)).get().stringValue(), "Identifier");
+        assertEquals(record.getProperty(vf.createIRI(DC_MODIFIED)).isPresent(), true);
+        assertEquals(record.getProperty(vf.createIRI(DC_ISSUED)).isPresent(), true);
+
+        Resource recordId2 = vf.createIRI("http://matonto.org/test/records#not-present");
+
+        result = manager.getRecord(catalogId, recordId2, mappingRecordFactory);
+
+        assertEquals(result.isPresent(), false);
+    }
+
+    @Test
+    public void testGetDatasetRecord() throws Exception {
+        Resource catalogId = vf.createIRI("http://matonto.org/test/catalog-distributed");
+        Resource recordId = vf.createIRI("http://matonto.org/test/records#get");
+
+        RepositoryConnection conn = repo.getConnection();
+        assertEquals(conn.getStatements(recordId, null, null, recordId).hasNext(), true);
+        conn.close();
+
+        Optional<DatasetRecord> result = manager.getRecord(catalogId, recordId, datasetRecordFactory);
+
+        assertEquals(result.isPresent(), true);
+        DatasetRecord record = result.get();
+        assertEquals(record.getProperty(vf.createIRI(DC_TITLE)).isPresent(), true);
+        assertEquals(record.getProperty(vf.createIRI(DC_TITLE)).get().stringValue(), "Get");
+        assertEquals(record.getProperty(vf.createIRI(DC_DESCRIPTION)).isPresent(), true);
+        assertEquals(record.getProperty(vf.createIRI(DC_DESCRIPTION)).get().stringValue(), "Description");
+        assertEquals(record.getProperty(vf.createIRI(DC_IDENTIFIER)).isPresent(), true);
+        assertEquals(record.getProperty(vf.createIRI(DC_IDENTIFIER)).get().stringValue(), "Identifier");
+        assertEquals(record.getProperty(vf.createIRI(DC_MODIFIED)).isPresent(), true);
+        assertEquals(record.getProperty(vf.createIRI(DC_ISSUED)).isPresent(), true);
+
+        Resource recordId2 = vf.createIRI("http://matonto.org/test/records#not-present");
+
+        result = manager.getRecord(catalogId, recordId2, datasetRecordFactory);
 
         assertEquals(result.isPresent(), false);
     }
@@ -756,6 +1432,55 @@ public class SimpleCatalogManagerTest {
     }
 
     @Test
+    public void testAddTag() throws Exception {
+        IRI latestVersionIRI = vf.createIRI(VersionedRecord.latestVersion_IRI);
+        Resource versionId = vf.createIRI("https://matonto.org/versions#test");
+        Resource versionedResourceId = vf.createIRI("http://matonto.org/test/records#get");
+        Resource different = vf.createIRI("http://matonto.org/test/different");
+
+        Model model = mf.createModel();
+        model.add(versionId, vf.createIRI(DC_TITLE), vf.createLiteral("title"), versionId);
+
+        Tag version = mock(Tag.class);
+        when(version.getResource()).thenReturn(versionId);
+        when(version.getModel()).thenReturn(model);
+
+        RepositoryConnection conn = repo.getConnection();
+
+        assertEquals(conn.getStatements(versionId, null, null, versionId).hasNext(), false);
+        assertEquals(conn.getStatements(versionedResourceId, latestVersionIRI, null, versionedResourceId).hasNext(),
+                true);
+        assertEquals(conn.getStatements(versionedResourceId, latestVersionIRI, versionId, versionedResourceId)
+                .hasNext(), false);
+
+        boolean result = manager.addVersion(version, different);
+        assertEquals(result, false);
+
+        result = manager.addVersion(version, versionedResourceId);
+        assertEquals(result, true);
+        assertEquals(conn.getStatements(versionId, null, null, versionId).hasNext(), true);
+        assertEquals(conn.getStatements(versionedResourceId, latestVersionIRI, versionId, versionedResourceId)
+                .hasNext(), true);
+
+        result = manager.addVersion(version, versionedResourceId);
+        assertEquals(result, false);
+
+        Resource versionId2 = vf.createIRI("https://matonto.org/versions#test2");
+
+        Model model2 = mf.createModel();
+        model.add(versionId2, vf.createIRI(DC_TITLE), vf.createLiteral("title"), versionId2);
+
+        Version version2 = mock(Version.class);
+        when(version2.getResource()).thenReturn(versionId2);
+        when(version2.getModel()).thenReturn(model2);
+
+        result = manager.addVersion(version2, vf.createIRI("https://matonto.org/test/not/there"));
+        assertEquals(result, false);
+
+        conn.close();
+    }
+
+    @Test
     public void testUpdateVersion() throws Exception {
         Resource versionId = vf.createIRI("http://matonto.org/test/versions#test");
 
@@ -763,6 +1488,37 @@ public class SimpleCatalogManagerTest {
         model.add(versionId, vf.createIRI(DC_TITLE), vf.createLiteral("New Title"));
 
         Version version = mock(Version.class);
+        when(version.getResource()).thenReturn(versionId);
+        when(version.getModel()).thenReturn(model);
+
+        RepositoryConnection conn = repo.getConnection();
+
+        assertEquals(conn.getStatements(versionId, vf.createIRI(DC_TITLE), vf.createLiteral("New Title"))
+                .hasNext(), false);
+
+        boolean result = manager.updateVersion(version);
+        assertEquals(result, true);
+        assertEquals(conn.getStatements(versionId, vf.createIRI(DC_TITLE), vf.createLiteral("New Title"), versionId)
+                .hasNext(), true);
+
+        Version version2 = mock(Version.class);
+        when(version2.getResource()).thenReturn(vf.createIRI("http://matonto.org/test/distributions#not-present"));
+        when(version2.getModel()).thenReturn(model);
+
+        result = manager.updateVersion(version2);
+        assertEquals(result, false);
+
+        conn.close();
+    }
+
+    @Test
+    public void testUpdateTag() throws Exception {
+        Resource versionId = vf.createIRI("http://matonto.org/test/versions#test");
+
+        Model model = mf.createModel();
+        model.add(versionId, vf.createIRI(DC_TITLE), vf.createLiteral("New Title"));
+
+        Tag version = mock(Tag.class);
         when(version.getResource()).thenReturn(versionId);
         when(version.getModel()).thenReturn(model);
 
@@ -845,10 +1601,10 @@ public class SimpleCatalogManagerTest {
         assertEquals(conn.getStatements(versionId, null, null, versionId).hasNext(), true);
         conn.close();
 
-        Optional<Version> result = manager.getVersion(different);
+        Optional<Version> result = manager.getVersion(different, versionFactory);
         assertEquals(result.isPresent(), false);
 
-        result = manager.getVersion(versionId);
+        result = manager.getVersion(versionId, versionFactory);
         assertEquals(result.isPresent(), true);
         Version version = result.get();
         assertEquals(version.getProperty(vf.createIRI(DC_TITLE)).isPresent(), true);
@@ -858,7 +1614,33 @@ public class SimpleCatalogManagerTest {
 
         Resource notThere = vf.createIRI("http://matonto.org/test/records#not-present");
 
-        result = manager.getVersion(notThere);
+        result = manager.getVersion(notThere, versionFactory);
+        assertEquals(result.isPresent(), false);
+    }
+
+    @Test
+    public void testGetTag() throws Exception {
+        Resource versionId = vf.createIRI("http://matonto.org/test/versions#test");
+        Resource different = vf.createIRI("http://matonto.org/test/different");
+
+        RepositoryConnection conn = repo.getConnection();
+        assertEquals(conn.getStatements(versionId, null, null, versionId).hasNext(), true);
+        conn.close();
+
+        Optional<Tag> result = manager.getVersion(different, tagFactory);
+        assertEquals(result.isPresent(), false);
+
+        result = manager.getVersion(versionId, tagFactory);
+        assertEquals(result.isPresent(), true);
+        Version version = result.get();
+        assertEquals(version.getProperty(vf.createIRI(DC_TITLE)).isPresent(), true);
+        assertEquals(version.getProperty(vf.createIRI(DC_TITLE)).get().stringValue(), "Version");
+        assertEquals(version.getProperty(vf.createIRI(DC_ISSUED)).isPresent(), true);
+        assertEquals(version.getProperty(vf.createIRI(DC_MODIFIED)).isPresent(), true);
+
+        Resource notThere = vf.createIRI("http://matonto.org/test/records#not-present");
+
+        result = manager.getVersion(notThere, tagFactory);
         assertEquals(result.isPresent(), false);
     }
 
@@ -1200,41 +1982,6 @@ public class SimpleCatalogManagerTest {
         assertEquals(conn.getStatements(branchId, headIRI, commitId, branchId).hasNext(), true);
 
         result = manager.addCommitToBranch(commit, branchId);
-        assertEquals(result, false);
-
-        conn.close();
-    }
-
-    @Test
-    public void testAddCommitToTag() throws Exception {
-        IRI commitIRI = vf.createIRI(Tag.commit_IRI);
-        Resource commitId = vf.createIRI("https://matonto.org/commits#test");
-        Resource tagId = vf.createIRI("http://matonto.org/test/tags#test");
-        Resource different = vf.createIRI("http://matonto.org/test/different");
-
-        Model model = mf.createModel();
-        model.add(commitId, vf.createIRI(DC_TITLE), vf.createLiteral("title"), commitId);
-
-        Commit commit = mock(Commit.class);
-        when(commit.getResource()).thenReturn(commitId);
-        when(commit.getModel()).thenReturn(model);
-
-        RepositoryConnection conn = repo.getConnection();
-
-        assertEquals(conn.getStatements(commitId, null, null, commitId).hasNext(), false);
-
-        boolean result = manager.addCommitToTag(commit, vf.createIRI("https://matonto.org/test/not/there"));
-        assertEquals(result, false);
-
-        result = manager.addCommitToTag(commit, different);
-        assertEquals(result, false);
-
-        result = manager.addCommitToTag(commit, tagId);
-        assertEquals(result, true);
-        assertEquals(conn.getStatements(commitId, null, null, commitId).hasNext(), true);
-        assertEquals(conn.getStatements(tagId, commitIRI, commitId, tagId).hasNext(), true);
-
-        result = manager.addCommitToTag(commit, tagId);
         assertEquals(result, false);
 
         conn.close();
