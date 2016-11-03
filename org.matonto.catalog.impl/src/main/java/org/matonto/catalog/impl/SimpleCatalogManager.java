@@ -29,7 +29,6 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
-import org.eclipse.jdt.annotation.Nullable;
 import org.matonto.catalog.api.*;
 import org.matonto.catalog.api.builder.DistributionConfig;
 import org.matonto.catalog.api.builder.RecordConfig;
@@ -477,7 +476,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public <T extends Version> T createVersion(String title, @Nullable String description, OrmFactory<T> factory) {
+    public <T extends Version> T createVersion(String title, String description, OrmFactory<T> factory) {
         OffsetDateTime now = OffsetDateTime.now();
 
         T version = factory.createNew(vf.createIRI(VERSION_NAMESPACE + UUID.randomUUID()));
@@ -554,7 +553,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public Branch createBranch(String title, @Nullable String description) {
+    public Branch createBranch(String title, String description) {
         OffsetDateTime now = OffsetDateTime.now();
 
         Branch branch = branchFactory.createNew(vf.createIRI(BRANCH_NAMESPACE + UUID.randomUUID()));
@@ -643,7 +642,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public Optional<InProgressCommit> createInProgressCommit(@Nullable Set<Commit> parents, User user,
+    public Optional<InProgressCommit> createInProgressCommit(Set<Commit> parents, User user,
                                                              Resource branchId) {
         if (resourceExists(branchId, Branch.TYPE)) {
             UUID uuid = UUID.randomUUID();
