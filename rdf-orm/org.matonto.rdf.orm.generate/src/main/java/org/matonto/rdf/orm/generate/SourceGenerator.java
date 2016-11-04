@@ -367,7 +367,6 @@ public class SourceGenerator {
                                 .arg(interfaceMethod.params().get(0)).arg(JExpr._this()))
                         .arg(JExpr.ref("valueFactory").invoke("createIRI")
                                 .arg(interfaceClass.staticRef(classMethodIriMap.get(interfaceClass).get(interfaceMethod))));
-//                                .arg(classMethodIriMap.get(interfaceClass).get(interfaceMethod)));
             } else {
                 method.body().invoke("setProperty")
                         .arg(JExpr.ref("valueConverterRegistry").invoke("convertType")
@@ -475,7 +474,7 @@ public class SourceGenerator {
                 generateMethodName(type.equals(boolean.class) ? "is" : "get", name));
         method._throws(OrmException.class);
         final JDocComment comment = method.javadoc();
-        comment.add("Get the " + fieldName + " property from this instance of a " + (interfaceIri != null ? interfaceIri.stringValue() : getOntologyName())
+        comment.add("Get the " + fieldName + " property from this instance of a " + (interfaceIri != null ? interfaceIri.stringValue() : getOntologyName(this.packageName, this.ontologyName))
                 + "' type.<br><br>" + getFieldComment(propertyIri));
         comment.addReturn().add("The " + fieldName + " {@link " + type.binaryName() + "} value for this instance");
         return method;
@@ -559,7 +558,7 @@ public class SourceGenerator {
                     if (value instanceof IRI) {
                         final IRI extending = (IRI) stmt.getObject();
                         if (!extending.equals(OWL.THING)) {
-                            LOG.debug("Class '" + (iri != null ? iri.stringValue() : getOntologyName()) + "' extends '" + extending + "'");
+                            LOG.debug("Class '" + (iri != null ? iri.stringValue() : getOntologyName(this.packageName, this.ontologyName)) + "' extends '" + extending + "'");
                             if (interfaces.containsKey(extending)) {
                                 clazz._implements(interfaces.get(extending));
                             } else {
@@ -610,13 +609,10 @@ public class SourceGenerator {
         });
     }
 
-    private String getOntologyName() {
-        return packageName + "." + (StringUtils.isBlank(this.ontologyName) ? "" : stripWhiteSpace(ontologyName)) + "_Thing";
-    }
 
     private JDefinedClass generateOntologyThing() throws OntologyToJavaException {
         try {
-            final JDefinedClass ontologyThing = codeModel._class(JMod.PUBLIC, getOntologyName(), ClassType.INTERFACE);
+            final JDefinedClass ontologyThing = codeModel._class(JMod.PUBLIC, getOntologyName(this.packageName, this.ontologyName), ClassType.INTERFACE);
             ontologyThing._extends(codeModel.ref(Thing.class));
             // Track field names to the IRI.
             final Map<String, IRI> fieldIriMap = new HashMap<>();
@@ -846,5 +842,9 @@ public class SourceGenerator {
 
     public Map<IRI, JDefinedClass> getInterfaces() {
         return interfaces;
+    }
+
+    protected static String getOntologyName(final String packageName, final String ontologyName) {
+        return packageName + "." + (StringUtils.isBlank(ontologyName) ? "" : stripWhiteSpace(ontologyName)) + "_Thing";
     }
 }

@@ -84,8 +84,5 @@ public class ReferenceOntology {
         this.sourceGenerator = new SourceGenerator(this.ontologyModel, this.packageName, this.ontologyName, references);
     }
 
-    public String getOntologyName() {
-        return packageName + "." + (StringUtils.isBlank(this.ontologyName) ? "" : SourceGenerator.stripWhiteSpace(ontologyName)) + "_Thing";
-    }
 
 }
