@@ -356,6 +356,12 @@ public class RdfEngine implements Engine {
                         null, null, context);
                 roleStatements.forEach(groupModel::add);
             });
+            groupModel.filter(factory.createIRI(groupNamespace + groupName), factory.createIRI(Group.member_IRI), null)
+                    .objects().forEach(userIRI -> {
+                        RepositoryResult<Statement> userStatements = conn.getStatements((Resource) userIRI, null, null,
+                                context);
+                        userStatements.forEach(groupModel::add);
+                    });
         } catch (RepositoryException e) {
             throw new MatOntoException("Error in repository connection", e);
         }
