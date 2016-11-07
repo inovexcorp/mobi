@@ -42,7 +42,6 @@ import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.base.RepositoryResult;
 import org.matonto.repository.exception.RepositoryException;
 import org.openrdf.model.vocabulary.DCTERMS;
-import org.openrdf.model.vocabulary.RDF;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -141,7 +140,7 @@ public class RdfEngine implements Engine {
 
     @Reference
     protected void setRoleFactory(RoleFactory roleFactory) {
-        this.roleFactory= roleFactory;
+        this.roleFactory = roleFactory;
     }
 
     @Reference
@@ -406,12 +405,12 @@ public class RdfEngine implements Engine {
         getGroups().stream()
                 .filter(group -> group.getMember().stream()
                         .map(Thing::getResource)
-                        .collect(Collectors.toSet()).contains(factory.createIRI(userNamespace + username)))
+                        .anyMatch(resource -> resource.equals(factory.createIRI(userNamespace + username))))
                 .map(Group::getHasGroupRole)
                 .forEach(groupRoles -> groupRoles.stream()
                         .filter(role -> !allRoles.stream()
                                 .map(Thing::getResource)
-                                .collect(Collectors.toSet()).contains(role.getResource()))
+                                .anyMatch(resource -> resource.equals(role.getResource())))
                         .forEach(allRoles::add));
 
         return allRoles;
