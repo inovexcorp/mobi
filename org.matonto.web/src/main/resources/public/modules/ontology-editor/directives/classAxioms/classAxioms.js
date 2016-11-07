@@ -55,6 +55,7 @@
                                     dvm.sm.selected.matonto.originalIRI, dvm.sm.listItem.classIndex,
                                     dvm.ro.getItemIri(value));
                             });
+                            dvm.sm.goTo(dvm.sm.selected.matonto.originalIRI);
                         }
                     }
 
@@ -62,6 +63,7 @@
                         if (prefixes.rdfs + 'subClassOf' === dvm.key) {
                             dvm.sm.deleteEntityFromParentInHierarchy(dvm.sm.listItem.classHierarchy,
                                 dvm.sm.selected.matonto.originalIRI, axiomObject['@id'], dvm.sm.listItem.classIndex);
+                            dvm.sm.goTo(dvm.sm.selected.matonto.originalIRI);
                         }
                     }
                 }

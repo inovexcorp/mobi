@@ -359,6 +359,7 @@ function mockPrefixes() {
             this.dc = 'dc:';
             this.dcterms = 'dcterms:';
             this.rdf = 'rdf';
+            this.skos = 'skos';
         });
     });
 }
@@ -482,6 +483,8 @@ function mockOntologyState() {
             this.openAt = jasmine.createSpy('openAt');
             this.goTo = jasmine.createSpy('goTo');
             this.unSelectItem = jasmine.createSpy('unSelectItem');
+            this.addEntityToHierarchy = jasmine.createSpy('addEntityToHierarchy');
+            this.deleteEntityFromParentInHierarchy = jasmine.createSpy('deleteEntityFromParentInHierarchy');
         });
     });
 }

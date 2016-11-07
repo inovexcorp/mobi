@@ -35,7 +35,8 @@
                 replace: true,
                 templateUrl: 'modules/ontology-editor/directives/relationshipOverlay/relationshipOverlay.html',
                 scope: {
-                    relationshipList: '<'
+                    relationshipList: '<',
+                    onSubmit: '&?'
                 },
                 controllerAs: 'dvm',
                 controller: function() {

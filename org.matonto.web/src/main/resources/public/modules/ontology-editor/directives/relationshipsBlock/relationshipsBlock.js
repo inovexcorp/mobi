@@ -27,9 +27,9 @@
         .module('relationshipsBlock', [])
         .directive('relationshipsBlock', relationshipsBlock);
 
-        relationshipsBlock.$inject = ['ontologyStateService', 'ontologyManagerService'];
+        relationshipsBlock.$inject = ['ontologyStateService', 'ontologyManagerService', 'prefixes', 'responseObj'];
 
-        function relationshipsBlock(ontologyStateService, ontologyManagerService) {
+        function relationshipsBlock(ontologyStateService, ontologyManagerService, prefixes, responseObj) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -41,13 +41,71 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
+                    var broaderRelations = [
+                        prefixes.skos + 'broaderTransitive',
+                        prefixes.skos + 'broader',
+                        prefixes.skos + 'broadMatch'
+                    ];
+                    var narrowerRelations = [
+                        prefixes.skos + 'narrowerTransitive',
+                        prefixes.skos + 'narrower',
+                        prefixes.skos + 'narrowMatch'
+                    ];
                     dvm.om = ontologyManagerService;
                     dvm.sm = ontologyStateService;
+                    dvm.ro = responseObj;
+
+                    function containsProperty(entity, properties) {
+                        _.forOwn(entity, (value, key) => {
+                            if (_.includes(properties, key)) {
+                                return true;
+                            }
+                        });
+                        return false;
+                    }
 
                     dvm.openRemoveOverlay = function(key, index) {
                         dvm.key = key;
                         dvm.index = index;
                         dvm.showRemoveOverlay = true;
+                    }
+
+                    dvm.updateHierarchy = function(relationship, values) {
+                        var relationshipIRI = dvm.ro.getItemIri(relationship);
+                        if (_.includes(broaderRelations, relationshipIRI) && !containsProperty(dvm.sm.selected,
+                            _.without(broaderRelations, relationshipIRI))) {
+                            _.forEach(values, value => {
+                                if (!containsProperty(dvm.om.getEntityById(dvm.sm.listItem.ontologyId, value['@id']),
+                                    narrowerRelations)) {
+                                    dvm.sm.addEntityToHierarchy(dvm.sm.listItem.conceptHierarchy,
+                                        dvm.sm.selected.matonto.originalIRI, dvm.sm.listItem.conceptIndex,
+                                        value['@id']);
+                                }
+                            });
+                            dvm.sm.goTo(dvm.sm.selected.matonto.originalIRI);
+                        } else if (_.includes(narrowerRelations, relationshipIRI) && !containsProperty(dvm.sm.selected,
+                            _.without(narrowerRelations, relationshipIRI))) {
+                            _.forEach(values, value => {
+                                if (!containsProperty(dvm.om.getEntityById(dvm.sm.listItem.ontologyId, value['@id']),
+                                    narrowerRelations)) {
+                                    dvm.sm.addEntityToHierarchy(dvm.sm.listItem.conceptHierarchy, value['@id'],
+                                        dvm.sm.listItem.conceptIndex, dvm.sm.selected.matonto.originalIRI);
+                                }
+                            });
+                            dvm.sm.goTo(dvm.sm.selected.matonto.originalIRI);
+                        } else if ()
+                    }
+
+                    dvm.removeFromHierarchy = function(axiomObject) {
+                        if (_.includes(broaderRelations, dvm.key)) {
+                            dvm.sm.deleteEntityFromParentInHierarchy(dvm.sm.listItem.conceptHierarchy,
+                                dvm.sm.selected.matonto.originalIRI, axiomObject['@id'], dvm.sm.listItem.conceptIndex);
+                            dvm.sm.goTo(dvm.sm.selected.matonto.originalIRI);
+                        } else if (_.includes(narrowerRelations, dvm.key)) {
+                            dvm.sm.deleteEntityFromParentInHierarchy(dvm.sm.listItem.conceptHierarchy,
+                                axiomObject['@id'], dvm.sm.selected.matonto.originalIRI, dvm.sm.listItem.conceptIndex);
+                            dvm.sm.goTo(dvm.sm.selected.matonto.originalIRI);
+                        }
                     }
                 }
             }
