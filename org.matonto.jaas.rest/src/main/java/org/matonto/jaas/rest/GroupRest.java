@@ -54,7 +54,8 @@ public interface GroupRest {
     @POST
     @RolesAllowed("admin")
     @ApiOperation("Create a new MatOnto group")
-    Response createGroup(@QueryParam("name") String groupName);
+    Response createGroup(@QueryParam("title") String groupName,
+                         @DefaultValue("") @QueryParam("description") String description);
 
     /**
      * Retrieves a specific group in MatOnto.
@@ -80,7 +81,8 @@ public interface GroupRest {
     @Path("{groupId}")
     @RolesAllowed("admin")
     @ApiOperation("Update a MatOnto group's information")
-    Response updateGroup(@PathParam("groupId") String groupName);
+    Response updateGroup(@PathParam("groupId") String groupName,
+                         @DefaultValue("") @QueryParam("description") String description);
 
     /**
      * Removes a group from MatOnto, and by consequence removing all users from it as well.

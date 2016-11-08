@@ -23,6 +23,7 @@ package org.matonto.jaas.rest;
  * #L%
  */
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 
@@ -58,7 +59,11 @@ public interface UserRest {
     @POST
     @RolesAllowed("admin")
     @ApiOperation("Create a MatOnto user account")
-    Response createUser(@QueryParam("username") String username, @QueryParam("password") String password);
+    Response createUser(@QueryParam("username") String username,
+                        @QueryParam("password") String password,
+                        @DefaultValue("") @QueryParam("firstName") String firstName,
+                        @DefaultValue("") @QueryParam("lastName") String lastName,
+                        @DefaultValue("") @QueryParam("email") String email);
 
     /**
      * Retrieves the specified user in MatOnto.
@@ -69,7 +74,9 @@ public interface UserRest {
     @GET
     @Path("{userId}")
     @RolesAllowed("admin")
+    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation("Get a single MatOnto user")
+    @JsonSerialize
     Response getUser(@PathParam("userId") String username);
 
     /**
@@ -79,7 +86,7 @@ public interface UserRest {
      * @param context the context of the request
      * @param username the current username of the user to update
      * @param currentPassword the current password of the user to update
-     * @param newUsername a new username for the user
+
      * @param newPassword a new password for the user
      * @return a Response indicating the success or failure of the request
      */
@@ -90,8 +97,10 @@ public interface UserRest {
     Response updateUser(@Context ContainerRequestContext context,
                         @PathParam("userId") String username,
                         @QueryParam("currentPassword") String currentPassword,
-                        @QueryParam("username") String newUsername,
-                        @QueryParam("newPassword") String newPassword);
+                        @DefaultValue("") @QueryParam("newPassword") String newPassword,
+                        @DefaultValue("") @QueryParam("firstName") String newFirstName,
+                        @DefaultValue("") @QueryParam("lastName") String newLastName,
+                        @DefaultValue("") @QueryParam("email") String newEmail);
 
     /**
      * Removes the specified user from MatOnto. Only the user being deleted or an admin
@@ -166,26 +175,26 @@ public interface UserRest {
      * it will be created.
      *
      * @param username the username of the user to add to the group
-     * @param group the group to add the specified user to
+     * @param groupName the group to add the specified user to
      * @return a Response indicating the success or failure of the request
      */
     @PUT
     @Path("{userId}/groups")
     @RolesAllowed("admin")
     @ApiOperation("Add a MatOnto user to a group")
-    Response addUserGroup(@PathParam("userId") String username, @QueryParam("group") String group);
+    Response addUserGroup(@PathParam("userId") String username, @QueryParam("group") String groupName);
 
     /**
      * Removes the specified user from a group in MatOnto. If this is the only user in the
      * group, the group will be removed as well.
      *
      * @param username the username of the user to remove from a group
-     * @param group the group to remove the specified user from
+     * @param groupName the group to remove the specified user from
      * @return a Response indicating the success or failure of the request
      */
     @DELETE
     @Path("{userId}/groups")
     @RolesAllowed("admin")
     @ApiOperation("Remove a MatOnto user from a group")
-    Response removeUserGroup(@PathParam("userId") String username, @QueryParam("group") String group);
+    Response removeUserGroup(@PathParam("userId") String username, @QueryParam("group") String groupName);
 }
