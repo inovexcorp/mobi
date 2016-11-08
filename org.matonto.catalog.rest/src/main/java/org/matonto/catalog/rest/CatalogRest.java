@@ -25,233 +25,666 @@ package org.matonto.catalog.rest;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import org.matonto.catalog.api.Distribution;
-import org.matonto.catalog.rest.jaxb.DistributionMarshaller;
-import org.matonto.rest.util.jaxb.PaginatedResults;
-import org.matonto.catalog.rest.jaxb.PublishedResourceMarshaller;
+import org.matonto.catalog.api.ontologies.mcat.*;
 
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 import java.util.Set;
 
-@Path("/catalog")
-@Api( value = "/catalog" )
+@Path("/catalogs")
+@Api(value = "/catalogs")
 public interface CatalogRest {
 
     /**
-     * Retrieves a list of all the PublishedResources in the catalog. An optional type parameter filters the returned
-     * resources. Parameters can be passed to control paging.
+     * Retrieves a list of the catalogs (two) available in the system. These catalogs will be the distributed and
+     * local catalog which contain different Records depending on the situation.
      *
-     * @param resourceType The String representing the rdf:type of the resources to retrieve.
-     * @param searchTerms The String representing the search terms for filtering resources.
+     * @param catalogType The type of Catalog you want back (looking for either "local" or "distributed").
+     * @return The list of Catalog objects within the repository.
+     */
+    @GET
+    @Path("")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Retrieves the distributed and local catalog metadata.")
+    Set<Catalog> getCatalogs(@QueryParam("type") String catalogType);
+
+    /**
+     * Retrieves the specified catalog based on the provided catalogId.
+     *
+     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @return The Catalog object from the repository.
+     */
+    @GET
+    @Path("/{catalogId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Retrieves the catalog specified by the provided ID.")
+    Catalog getCatalog(@PathParam("catalogId") String catalogId);
+
+    /**
+     * Retrieves a list of all the Records in the Catalog. An optional type parameter filters the returned records.
+     * Parameters can be passed to control paging.
+     *
+     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param sort The field with sort order specified.
+     * @param recordType The type of Records you want to get back.
+     * @param offset The offset for the page.
      * @param limit The number of resources to return in one page.
-     * @param start The offset for the page.
-     * @return The paginated List of PublishedResources that match the search criteria.
+     * @return The list of Records that match the search criteria.
      */
     @GET
-    @Path("/resources")
+    @Path("/{catalogId}/records")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Retrieves the published catalog resources.")
-    PaginatedResults<PublishedResourceMarshaller> listPublishedResources(
-            @Context UriInfo uriInfo,
-            @QueryParam("type") String resourceType,
-            @QueryParam("searchTerms") String searchTerms,
-            @DefaultValue("http://purl.org/dc/terms/modified") @QueryParam("sortBy") String sortBy,
-            @DefaultValue("false") @QueryParam("asc") boolean ascending,
-            @DefaultValue("100") @QueryParam("limit") int limit,
-            @DefaultValue("0") @QueryParam("start") int start);
+    @ApiOperation("Retrieves the records in the catalog.")
+    <T extends Record> Set<T> getRecords(@PathParam("catalogId") String catalogId,
+                                         @QueryParam("sort") String sort,
+                                         @QueryParam("type") String recordType,
+                                         @DefaultValue("0") @QueryParam("offset") int offset,
+                                         @DefaultValue("100") @QueryParam("limit") int limit);
 
     /**
-     * Returns a PublishedResourceMarshaller with requested Resource ID.
+     * Creates a new Record in the repository. Returns a Response indicating whether it was created successfully.
      *
-     * @param resourceId the String representing the Resource ID. NOTE: Assumes ID represents
-     *                   an IRI unless String begins with "_:".
-     * @return PublishedResourceMarshaller with requested Resource ID.
-     */
-    @GET
-    @Path("/resources/{resourceId}")
-    @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed("user")
-    @ApiOperation("Retrieves the published catalog resource by its ID.")
-    PublishedResourceMarshaller getPublishedResource(@PathParam("resourceId") String resourceId);
-
-    /**
-     * Publishes a new resource to the catalog.
-     *
-     * @param resource The PublishedResourceMarshaller containing the resource metadata.
-     * @param resourceType The String representing the rdf:type of the resource to publish.
-     * @return Whether or not the resource was successfully published.
+     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param record The new Record which you want to add to the catalog.
+     * @param <T> An Object which extends the Record class.
+     * @return A Response indicating whether the Record was created successfully.
      */
     @POST
-    @Path("/resources")
+    @Path("/{catalogId}/records")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Publishes a new resource to the catalog.")
-    Response createPublishedResource(PublishedResourceMarshaller resource,
-                                     @DefaultValue("http://matonto.org/ontologies/catalog#PublishedResource") @QueryParam("type") String resourceType);
+    @ApiOperation("Retrieves the catalog record by its ID.")
+    <T extends Record> Response createRecord(@PathParam("catalogId") String catalogId,
+                                             T record);
 
     /**
-     * Removes a PublishedResource from the catalog.
+     * Returns a Record with the requested Record ID.
      *
-     * @param resourceId the String representing the Resource ID. NOTE: Assumes ID represents
-     *                   an IRI unless String begins with "_:".
-     * @return Whether or not the resource was successfully removed.
-     */
-    @DELETE
-    @Path("/resources/{resourceId}")
-    @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed("user")
-    @ApiOperation("Removes a published resource from the catalog.")
-    Response deletePublishedResource(@PathParam("resourceId") String resourceId);
-
-//    @GET
-//    @Path("/resources/{resourceId}/versions/{versionId}")
-//    @Produces(MediaType.APPLICATION_JSON)
-//    @ApiOperation("Retrieves the published catalog resource by its ID.")
-//    PublishedResourceMarshaller getPublishedResource(@PathParam("resourceId") String resourceId);
-//
-//    /**
-//     * version param
-//     * @param resourceId
-//     * @return
-//     */
-//    @POST
-//    @Path("/resources/{resourceId}/versions")
-//    @Produces(MediaType.APPLICATION_JSON)
-//    @ApiOperation("Retrieves the published catalog resource by its ID.")
-//    PublishedResourceMarshaller getPublishedResource(@PathParam("resourceId") String resourceId);
-//
-//    @DELETE
-//    @Path("/resources/{resourceId}/versions/{versionId}")
-//    @Produces(MediaType.APPLICATION_JSON)
-//    @ApiOperation("Retrieves the published catalog resource by its ID.")
-//    PublishedResourceMarshaller getPublishedResource(@PathParam("resourceId") String resourceId);
-//
-//    @GET
-//    @Path("/resources/{resourceId}/versions")
-//    @Produces(MediaType.APPLICATION_JSON)
-//    @ApiOperation("Retrieves the published catalog resource by its ID.")
-//    PublishedResourceMarshaller getPublishedResource(@PathParam("resourceId") String resourceId);
-
-    /**
-     * Returns the Distributions for the requested Resource ID.
-     *
-     * @param resourceId the String representing the Resource ID. NOTE: Assumes ID represents
-     *                   an IRI unless String begins with "_:".
-     * @return The paginated List of Distributions for the requested Resource ID.
+     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param recordId The String representing the Record ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                 with "_:".
+     * @param <T> An Object which extends the Record class.
+     * @return A Record with requested Record ID.
      */
     @GET
-    @Path("/resources/{resourceId}/distributions")
+    @Path("/{catalogId}/records/{recordId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Retrieves all the distributions for the supplied resourceId.")
-    Set<DistributionMarshaller> getDistributions(@PathParam("resourceId") String resourceId);
+    @ApiOperation("Retrieves the catalog record by its ID.")
+    <T extends Record> T getRecord(@PathParam("catalogId") String catalogId,
+                                   @PathParam("recordId") String recordId);
 
     /**
-     * Publishes a new distribution for the specified resource.
+     * Deletes a Record from the repository. Returns a Response which indicates whether or not the requested Record was
+     * deleted.
      *
-     * @param distribution The Distribution containing the distribution metadata.
-     * @param resourceId the String representing the Resource ID. NOTE: Assumes ID represents
-     *                   an IRI unless String begins with "_:".
-     * @return Whether or not the distribution was successfully published.
+     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param recordId The String representing the Record ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                 with "_:".
+     * @return A Response indicating whether or not the Record was deleted.
+     */
+    @DELETE
+    @Path("/{catalogId}/records/{recordId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Deletes the catalog record by its ID.")
+    Response deleteRecord(@PathParam("catalogId") String catalogId,
+                          @PathParam("recordId") String recordId);
+
+    /**
+     * Updates a Record based on the ID contained within the provided Catalog. It returns a Response indicating whether
+     * the Record was correctly updated.
+     *
+     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param recordId The String representing the Record ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                 with "_:".
+     * @param record The Record containing the new values which will replace the existing Record.
+     * @param <T> An Object which extends the Record class.
+     * @return A Response indicating whether or not the Record was updated.
+     */
+    @PUT
+    @Path("/{catalogId}/records/{recordId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Updates the catalog record by its ID inside the provided Record.")
+    <T extends Record> Response updateRecord(@PathParam("catalogId") String catalogId,
+                                             @PathParam("recordId") String recordId,
+                                             T record);
+
+    /**
+     * Retrieves a list of all the Distributions associated with a specific UnversionedRecord. Parameters can be passed
+     * to control paging.
+     *
+     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param recordId The String representing the UnversionedRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                 String begins with "_:".
+     * @param sort The field with sort order specified.
+     * @param offset The offset for the page.
+     * @param limit The number of resources to return in one page.
+     * @return A Response with a list of all the Distributions of the requested UnversionedRecord.
+     */
+    @GET
+    @Path("/{catalogId}/records/{recordId}/distributions")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Retrieves the list of Distributions associated with an UnversionedRecord.")
+    Set<Distribution> getUnversionedDistributions(@PathParam("catalogId") String catalogId,
+                                                  @PathParam("recordId") String recordId,
+                                                  @QueryParam("sort") String sort,
+                                                  @DefaultValue("0") @QueryParam("offset") int offset,
+                                                  @DefaultValue("100") @QueryParam("limit") int limit);
+
+    /**
+     * Creates a new Distribution for the provided UnversionedRecord. Returns a response indicating whether it was
+     * saved or not.
+     *
+     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param recordId The String representing the UnversionedRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                 String begins with "_:".
+     * @param newDistribution The Distribution that you want to add to the specific Record.
+     * @return A Response indicating if the new Distribution was created successfully.
      */
     @POST
-    @Path("/resources/{resourceId}/distributions")
+    @Path("/{catalogId}/records/{recordId}/distributions")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Publishes a new distribution for the specified resource.")
-    Response createDistribution(Distribution distribution,
-                                @PathParam("resourceId") String resourceId);
+    @ApiOperation("Creates a new Distribution for the provided UnversionedRecord.")
+    Response createUnversionedDistribution(@PathParam("catalogId") String catalogId,
+                                           @PathParam("recordId") String recordId,
+                                           Distribution newDistribution);
 
     /**
-     * Removes all the Distributions from the specified resource.
+     * Returns the Distribution of the UnverionedRecord which was identified using the provided IDs.
      *
-     * @param resourceId the String representing the Resource ID. NOTE: Assumes ID represents
-     *                   an IRI unless String begins with "_:".
-     * @return Whether or not the distributions were successfully removed.
-     */
-    @DELETE
-    @Path("/resources/{resourceId}/distributions")
-    @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed("user")
-    @ApiOperation("Removes all the distribution from the specified resource.")
-    Response deleteDistributions(@PathParam("resourceId") String resourceId);
-
-    /**
-     * Retrieves a Distribution from the specified resource.
-     *
-     * @param resourceId the String representing the Resource ID. NOTE: Assumes ID represents
-     *                   an IRI unless String begins with "_:".
-     * @param distributionId the String representing the Distribution ID. NOTE: Assumes ID represents
-     *                       an IRI unless String begins with "_:".
-     * @return the Distribution from the specified resource.
+     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param recordId The String representing the UnversionedRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                 String begins with "_:".
+     * @param distributionId The String representing the Distribution ID. NOTE: Assumes ID represents an IRI unless
+     *                       String begins with "_:".
+     * @return The Distribution that was identified by the provided IDs.
      */
     @GET
-    @Path("/resources/{resourceId}/distributions/{distributionId}")
+    @Path("/{catalogId}/records/{recordId}/distributions/{distributionId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Retrieves the published resource distribution by its ID.")
-    DistributionMarshaller getDistribution(@PathParam("resourceId") String resourceId,
+    @ApiOperation("Gets a specific Distribution of an UnversionedRecord.")
+    Distribution getUnversionedDistribution(@PathParam("catalogId") String catalogId,
+                                            @PathParam("recordId") String recordId,
+                                            @PathParam("distributionId") String distributionId);
+
+    /**
+     * Deletes a specific Distribution identified by the provided IDs. Returns a response indicating whether it was
+     * successfully deleted.
+     *
+     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param recordId The String representing the UnversionedRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                 String begins with "_:".
+     * @param distributionId The String representing the Distribution ID. NOTE: Assumes ID represents an IRI unless
+     *                       String begins with "_:".
+     * @return A Response indicating if the Distribution was deleted.
+     */
+    @DELETE
+    @Path("/{catalogId}/records/{recordId}/distributions/{distributionId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Deletes a specific Distribution of an UnversionedRecord.")
+    Response deleteUnversionedDistribution(@PathParam("catalogId") String catalogId,
+                                           @PathParam("recordId") String recordId,
                                            @PathParam("distributionId") String distributionId);
 
     /**
-     * Removes a Distribution from the specified resource.
+     * Updates a specific Distribution for an UnversionedRecord identified by the provided IDs. Returns a response
+     * indicating whether it was successfully updated.
      *
-     * @param resourceId the String representing the Resource ID. NOTE: Assumes ID represents
-     *                   an IRI unless String begins with "_:".
-     * @param distributionId the String representing the Distribution ID. NOTE: Assumes ID represents
-     *                       an IRI unless String begins with "_:".
-     * @return Whether or not the distribution was successfully removed.
+     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param recordId The String representing the UnversionedRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                 String begins with "_:".
+     * @param distributionId The String representing the Distribution ID. NOTE: Assumes ID represents an IRI unless
+     *                       String begins with "_:".
+     * @return A Response indicating if the Distribution was updated.
+     */
+    @PUT
+    @Path("/{catalogId}/records/{recordId}/distributions/{distributionId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Updates a specific Distribution of an UnversionedRecord.")
+    Response updateUnversionedDistribution(@PathParam("catalogId") String catalogId,
+                                           @PathParam("recordId") String recordId,
+                                           @PathParam("distributionId") String distributionId);
+
+    /**
+     * Gets the latest Version of a VersionedRecord identified by the provided IDs.
+     *
+     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param recordId The String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                 String begins with "_:".
+     * @param <T> An Object which extends the Version class.
+     * @return The latest Version for the identified VersionedRecord.
+     */
+    @GET
+    @Path("/{catalogId}/records/{recordId}/latest-version")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Gets the latest Version of a VersionedRecord.")
+    <T extends Version> T getLatestVersion(@PathParam("catalogId") String catalogId,
+                                           @PathParam("recordId") String recordId);
+
+    /**
+     * Gets a list of all Versions for a VersionedRecord. Parameters can be passed to control paging.
+     *
+     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param recordId The String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                 String begins with "_:".
+     * @param sort The field with sort order specified.
+     * @param offset The offset for the page.
+     * @param limit The number of resources to return in one page.
+     * @param <T> An Object which extends the Version class.
+     * @return A list of all the Versions associated with a VersionedRecord.
+     */
+    @GET
+    @Path("/{catalogId}/records/{recordId}/versions")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Gets a list of Versions for a VersionedRecord.")
+    <T extends Version> Set<T> getVersions(@PathParam("catalogId") String catalogId,
+                                           @PathParam("recordId") String recordId,
+                                           @QueryParam("sort") String sort,
+                                           @DefaultValue("0") @QueryParam("offset") int offset,
+                                           @DefaultValue("100") @QueryParam("limit") int limit);
+
+    /**
+     * Creates a Version for the identified VersionedRecord and stores it in the repository. Returns a Response
+     * identifying whether the Version was created successfully.
+     *
+     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param recordId The String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                 String begins with "_:".
+     * @param newVersion The Version which you wish to add to the identified VersionedRecord.
+     * @param <T> An Object which extends the Version class.
+     * @return A Response indicating whether the Version was saved or not.
+     */
+    @POST
+    @Path("/{catalogId}/records/{recordId}/versions")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Creates a Version for the identified VersionedRecord.")
+    <T extends Version> Response createVersion(@PathParam("catalogId") String catalogId,
+                                               @PathParam("recordId") String recordId,
+                                               T newVersion);
+
+    /**
+     * Gets a specific Version identified by the provided IDs.
+     *
+     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param recordId The String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                 String begins with "_:".
+     * @param versionId The String representing the Version ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param <T> An Object which extends the Version class.
+     * @return The requested Version.
+     */
+    @GET
+    @Path("/{catalogId}/records/{recordId}/versions/{versionId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Gets a specific Version for the identified VersionedRecord.")
+    <T extends Version> T getVersion(@PathParam("catalogId") String catalogId,
+                                     @PathParam("recordId") String recordId,
+                                     @PathParam("versionId") String versionId);
+
+    /**
+     * Removes a specific Version from a VersionedRecord. If that Version happens to be the latest Version, the latest
+     * Version will be updated to be the previous Version. Returns a Response identifying whether the Version was
+     * deleted.
+     *
+     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param recordId The String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                 String begins with "_:".
+     * @param versionId The String representing the Version ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @return A Response indicating whether the Version was deleted.
      */
     @DELETE
-    @Path("/resources/{resourceId}/distributions/{distributionId}")
+    @Path("/{catalogId}/records/{recordId}/versions/{versionId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Retrieves the published catalog resource by its ID.")
-    Response deleteDistribution(@PathParam("resourceId") String resourceId,
-                                @PathParam("distributionId") String distributionId);
-
-//    @GET
-//    @Path("/resources/{resourceId}/versions/{versionId}/distributions")
-//    @Produces(MediaType.APPLICATION_JSON)
-//    @ApiOperation("Retrieves the published catalog resource by its ID.")
-//    PublishedResourceMarshaller getPublishedResource(@PathParam("resourceId") String resourceId);
-//
-//    @POST
-//    @Path("/resources/{resourceId}/versions/{versionId}/distributions")
-//    @Produces(MediaType.APPLICATION_JSON)
-//    @ApiOperation("Retrieves the published catalog resource by its ID.")
-//    PublishedResourceMarshaller getPublishedResource(@PathParam("resourceId") String resourceId);
-//
-//    @DELETE
-//    @Path("/resources/{resourceId}/versions/{versionId}/distributions")
-//    @Produces(MediaType.APPLICATION_JSON)
-//    @ApiOperation("Retrieves the published catalog resource by its ID.")
-//    PublishedResourceMarshaller getPublishedResource(@PathParam("resourceId") String resourceId);
+    @ApiOperation("Deletes a specific Version from the identified VersionedRecord.")
+    Response deleteVersion(@PathParam("catalogId") String catalogId,
+                           @PathParam("recordId") String recordId,
+                           @PathParam("versionId") String versionId);
 
     /**
-     * Returns all the available resource types.
+     * Updates the Version identified by the provided IDs using the newVersion. Returns a response identifying whether
+     * the Version was updated.
      *
-     * @return all the available resource type.
+     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param recordId The String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                 String begins with "_:".
+     * @param versionId The String representing the Version ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param newVersion The Version which will replace the existing Version identified in the repository.
+     * @param <T> An Object which extends the Version class.
+     * @return A Response indicating whether the Version was updated.
      */
-    @GET
-    @Path("/resource-types")
+    @PUT
+    @Path("/{catalogId}/records/{recordId}/versions/{versionId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Retrieves all the available resource types.")
-    Response getResourceTypes();
+    @ApiOperation("Updates a specific Version from the identified VersionedRecord.")
+    <T extends Version> Response updateVersion(@PathParam("catalogId") String catalogId,
+                                               @PathParam("recordId") String recordId,
+                                               @PathParam("versionId") String versionId,
+                                               T newVersion);
 
     /**
-     * Returns all the available sorting options.
+     * Retrieves a list of all the Distributions associated with a specific Version. Parameters can be passed to control
+     * paging.
      *
-     * @return all the available sorting options.
+     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param recordId The String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                 String begins with "_:".
+     * @param versionId The String representing the Version ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param sort The field with sort order specified.
+     * @param offset The offset for the page.
+     * @param limit The number of resources to return in one page.
+     * @return Returns a list of Distributions for the identified Version.
      */
     @GET
-    @Path("/sort-options")
+    @Path("/{catalogId}/records/{recordId}/versions/{versionId}/distributions")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Retrieves all the available sorting options.")
-    Response getSortOptions();
+    @ApiOperation("Gets the list of all Distributions for the identified Version.")
+    Set<Distribution> getVersionedDistributions(@PathParam("catalogId") String catalogId,
+                                                @PathParam("recordId") String recordId,
+                                                @PathParam("versionId") String versionId,
+                                                @QueryParam("sort") String sort,
+                                                @DefaultValue("0") @QueryParam("offset") int offset,
+                                                @DefaultValue("100") @QueryParam("limit") int limit);
+
+    /**
+     * Creates a new Distribution for the identified Version. Returns a response identifying whether the Distribution
+     * was created.
+     *
+     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param recordId The String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                 String begins with "_:".
+     * @param versionId The String representing the Version ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param newDistribution A Distribution which will be stored in the repository.
+     * @return A Response indicating whether the Distribution was created or not.
+     */
+    @POST
+    @Path("/{catalogId}/records/{recordId}/versions/{versionId}/distributions")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Creates a Distribution for the identified Version.")
+    Response createVersionedDistribution(@PathParam("catalogId") String catalogId,
+                                         @PathParam("recordId") String recordId,
+                                         @PathParam("versionId") String versionId,
+                                         Distribution newDistribution);
+
+    /**
+     * Gets a specific Distribution for the Version identified by the IDs.
+     *
+     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param recordId The String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                 String begins with "_:".
+     * @param versionId The String representing the Version ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param distributionId The String representing the Distribution ID. NOTE: Assumes ID represents an IRI unless
+     *                       String begins with "_:".
+     * @return The Distribution for the Version identified by the IDs.
+     */
+    @GET
+    @Path("/{catalogId}/records/{recordId}/versions/{versionId}/distributions/{distributionId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Gets a specific Distribution for the identified Version.")
+    Distribution getVersionedDistribution(@PathParam("catalogId") String catalogId,
+                                          @PathParam("recordId") String recordId,
+                                          @PathParam("versionId") String versionId,
+                                          @PathParam("distributionId") String distributionId);
+
+    /**
+     * Deletes the Distribution from the Version identified by the IDs. Returns a Response identifying whether the
+     * Distribution was deleted.
+     *
+     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param recordId The String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                 String begins with "_:".
+     * @param versionId The String representing the Version ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param distributionId The String representing the Distribution ID. NOTE: Assumes ID represents an IRI unless
+     *                       String begins with "_:".
+     * @return A Response identifying whether the Distribution was deleted.
+     */
+    @DELETE
+    @Path("/{catalogId}/records/{recordId}/versions/{versionId}/distributions/{distributionId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Gets the list of all Distributions for the identified Version.")
+    Response deleteVersionedDistribution(@PathParam("catalogId") String catalogId,
+                                         @PathParam("recordId") String recordId,
+                                         @PathParam("versionId") String versionId,
+                                         @PathParam("distributionId") String distributionId);
+
+    /**
+     * Updates the specified Distribution with the changes found in the newDistribution. Returns a Response identifying
+     * whether the Distribution was updated or not.
+     *
+     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param recordId The String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                 String begins with "_:".
+     * @param versionId The String representing the Version ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param distributionId The String representing the Distribution ID. NOTE: Assumes ID represents an IRI unless
+     *                       String begins with "_:".
+     * @param newDistribution The Distribution with the modifications made.
+     * @return A Response identifying whether the Distribution was updated.
+     */
+    @PUT
+    @Path("/{catalogId}/records/{recordId}/versions/{versionId}/distributions/{distributionId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Gets the list of all Distributions for the identified Version.")
+    Response updateVersionedDistribution(@PathParam("catalogId") String catalogId,
+                                         @PathParam("recordId") String recordId,
+                                         @PathParam("versionId") String versionId,
+                                         @PathParam("distributionId") String distributionId,
+                                         Distribution newDistribution);
+
+    /**
+     * Gets the Commit associated with the identified Version using the IDs.
+     *
+     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param recordId The String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                 String begins with "_:".
+     * @param versionId The String representing the Version ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @return The Commit associated with the identified Version.
+     */
+    @GET
+    @Path("/{catalogId}/records/{recordId}/versions/{versionId}/commit")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Gets the Commit associated with the identified Version.")
+    Commit getCommit(@PathParam("catalogId") String catalogId,
+                     @PathParam("recordId") String recordId,
+                     @PathParam("versionId") String versionId);
+
+    /**
+     * Gets a list of Branches associated with a VersionedRDFRecord identified by the IDs.
+     *
+     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param recordId The String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                 String begins with "_:".
+     * @param sort The field with sort order specified.
+     * @param offset The offset for the page.
+     * @param limit The number of resources to return in one page.
+     * @return A list of Branches for the identified VersionedRDFRecord.
+     */
+    @GET
+    @Path("/{catalogId}/records/{recordId}/branches")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Gets list of Branches associated with a specific VersionedRDFRecord.")
+    Set<Branch> getBranches(@PathParam("catalogId") String catalogId,
+                            @PathParam("recordId") String recordId,
+                            @QueryParam("sort") String sort,
+                            @DefaultValue("0") @QueryParam("offset") int offset,
+                            @DefaultValue("100") @QueryParam("limit") int limit);
+
+    /**
+     * Creates a Branch for a VersionedRDFRecord identified by the IDs. Returns a Response identifying whether the
+     * Branch was successfully created.
+     *
+     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param recordId The String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                 String begins with "_:".
+     * @return A Response identifying whether the Branch was created.
+     */
+    @POST
+    @Path("/{catalogId}/records/{recordId}/branches")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Creates a branch for a specific VersionedRDFRecord.")
+    Response createBranch(@PathParam("catalogId") String catalogId,
+                          @PathParam("recordId") String recordId);
+
+    /**
+     * Gets a specific branch for a VersionedRDFRecord identified by the IDs.
+     *
+     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param recordId The String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                 String begins with "_:".
+     * @param branchId The String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                 with "_:".
+     * @return The identified Branch for the specific VersionedRDFRecord.
+     */
+    @GET
+    @Path("/{catalogId}/records/{recordId}/branches/{branchId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Get a specific branch for a specific VersionedRDFRecord.")
+    Branch getBranch(@PathParam("catalogId") String catalogId,
+                     @PathParam("recordId") String recordId,
+                     @PathParam("branchId") String branchId);
+
+    /**
+     * Deletes a specific Branch on a VersionedRDFRecord. Returns a response identifying whether the Branch was
+     * successfully deleted.
+     *
+     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param recordId The String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                 String begins with "_:".
+     * @param branchId The String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                 with "_:".
+     * @return A Response identifying whether the Branch was deleted.
+     */
+    @DELETE
+    @Path("/{catalogId}/records/{recordId}/branches/{branchId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Deletes a specific branch for a specific VersionedRDFRecord.")
+    Response deleteBranch(@PathParam("catalogId") String catalogId,
+                          @PathParam("recordId") String recordId,
+                          @PathParam("branchId") String branchId);
+
+    /**
+     * Updates the specified Branch using the changes in the provided newBranch. Returns a Response identifying
+     * whether the Branch was updated or not.
+     *
+     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param recordId The String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                 String begins with "_:".
+     * @param branchId The String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                 with "_:".
+     * @param newBranch The Branch with the modifications that you want to save for the specified Branch.
+     * @return A Response identifying whether the Branch was successfully updated.
+     */
+    @PUT
+    @Path("/{catalogId}/records/{recordId}/branches/{branchId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Updates a specific branch for a specific VersionedRDFRecord.")
+    Response updateBranch(@PathParam("catalogId") String catalogId,
+                          @PathParam("recordId") String recordId,
+                          @PathParam("branchId") String branchId,
+                          Branch newBranch);
+
+    /**
+     * Gets the head Commit associated with a Branch.
+     *
+     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param recordId The String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                 String begins with "_:".
+     * @param branchId The String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                 with "_:".
+     * @return The Commit which is the head of the identified Branch.
+     */
+    @GET
+    @Path("/{catalogId}/records/{recordId}/branches/{branchId}/head")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Gets the head (Commit) for a specific Branch.")
+    Commit getHead(@PathParam("catalogId") String catalogId,
+                   @PathParam("recordId") String recordId,
+                   @PathParam("branchId") String branchId);
+
+    /**
+     * Updates a Branch's head Commit to be the provided newCommit. This newCommit must have the previous head Commit as
+     * a parent for this to happen. Returns a Response identifying whether the head Commit was updated or not.
+     *
+     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param recordId The String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                 String begins with "_:".
+     * @param branchId The String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                 with "_:".
+     * @param newCommit The Commit which contains the new Commit that will become the head Commit for the Branch.
+     * @return A Response identifying whether the head Commit was updated.
+     */
+    @PUT
+    @Path("/{catalogId}/records/{recordId}/branches/{branchId}/head")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Updates the head (Commit) for a specific Branch.")
+    Response updateHead(@PathParam("catalogId") String catalogId,
+                        @PathParam("recordId") String recordId,
+                        @PathParam("branchId") String branchId,
+                        Commit newCommit);
 }
