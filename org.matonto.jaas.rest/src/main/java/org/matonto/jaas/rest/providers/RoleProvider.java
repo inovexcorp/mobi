@@ -35,7 +35,6 @@ import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
@@ -60,7 +59,7 @@ public class RoleProvider implements MessageBodyWriter<Role> {
 
     @Override
     public boolean isWriteable(Class<?> someClass, Type type, Annotation[] annotations, MediaType mediaType) {
-        return type == Role.class || Arrays.asList(someClass.getGenericInterfaces()).contains(Role.class);
+        return isRole(someClass, type);
     }
 
     @Override
@@ -76,5 +75,9 @@ public class RoleProvider implements MessageBodyWriter<Role> {
         if (titleOpt.isPresent()) {
             outputStream.write(("\"" + titleOpt.get().stringValue() + "\"").getBytes());
         }
+    }
+
+    private boolean isRole(Class<?> someClass, Type type) {
+        return type == Role.class || Arrays.asList(someClass.getGenericInterfaces()).contains(Role.class);
     }
 }

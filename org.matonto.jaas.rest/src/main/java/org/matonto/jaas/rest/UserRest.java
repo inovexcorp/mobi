@@ -26,6 +26,7 @@ package org.matonto.jaas.rest;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.matonto.jaas.api.ontologies.usermanagement.User;
 
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
@@ -52,18 +53,16 @@ public interface UserRest {
      * Creates a user in MatOnto with the passed username and password. Both are required in order
      * to create the user.
      *
-     * @param username the username for the new user
+     * @param user the new user to create
      * @param password the password for the new user
      * @return a Response indicating the success or failure of the request
      */
     @POST
     @RolesAllowed("admin")
     @ApiOperation("Create a MatOnto user account")
-    Response createUser(@QueryParam("username") String username,
-                        @QueryParam("password") String password,
-                        @DefaultValue("") @QueryParam("firstName") String firstName,
-                        @DefaultValue("") @QueryParam("lastName") String lastName,
-                        @DefaultValue("") @QueryParam("email") String email);
+    @Consumes(MediaType.APPLICATION_JSON)
+    Response createUser(User user,
+                        @QueryParam("password") String password);
 
     /**
      * Retrieves the specified user in MatOnto.
@@ -94,13 +93,12 @@ public interface UserRest {
     @Path("{userId}")
     @RolesAllowed("user")
     @ApiOperation("Update a MatOnto user's information")
+    @Consumes(MediaType.APPLICATION_JSON)
     Response updateUser(@Context ContainerRequestContext context,
                         @PathParam("userId") String username,
                         @QueryParam("currentPassword") String currentPassword,
                         @DefaultValue("") @QueryParam("newPassword") String newPassword,
-                        @DefaultValue("") @QueryParam("firstName") String newFirstName,
-                        @DefaultValue("") @QueryParam("lastName") String newLastName,
-                        @DefaultValue("") @QueryParam("email") String newEmail);
+                        User newUser);
 
     /**
      * Removes the specified user from MatOnto. Only the user being deleted or an admin

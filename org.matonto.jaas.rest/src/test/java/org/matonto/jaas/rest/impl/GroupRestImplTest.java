@@ -31,6 +31,7 @@ import org.glassfish.jersey.server.ResourceConfig;
 import org.junit.Assert;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.engines.GroupConfig;
+import org.matonto.jaas.api.engines.UserConfig;
 import org.matonto.jaas.api.ontologies.usermanagement.*;
 import org.matonto.jaas.rest.providers.*;
 import org.matonto.ontologies.foaf.AgentFactory;
@@ -136,14 +137,12 @@ public class GroupRestImplTest extends MatontoRestTestNg {
         vcr.registerValueConverter(new ValueValueConverter());
         vcr.registerValueConverter(new LiteralValueConverter());
 
-
-        MockitoAnnotations.initMocks(this);
-
         role = roleFactory.createNew(vf.createIRI("http://matonto.org/roles/user"));
         role.setProperty(vf.createLiteral("user"), vf.createIRI(DCTERMS.TITLE.stringValue()));
         roles = Collections.singleton(role);
 
         user = userFactory.createNew(vf.createIRI("http://matonto.org/users/testUser"), role.getModel());
+        user.setHasUserRole(roles);
         users = Collections.singleton(user);
 
         group = groupFactory.createNew(vf.createIRI("http://matonto.org/groups/testGroup"), role.getModel());
@@ -154,6 +153,8 @@ public class GroupRestImplTest extends MatontoRestTestNg {
         groups = Collections.singleton(group);
 
         // Setup rest
+        MockitoAnnotations.initMocks(this);
+        groupProvider.setEngineManager(engineManager);
         rest = spy(new GroupRestImpl());
         rest.setEngineManager(engineManager);
         rest.setFactory(vf);
@@ -184,6 +185,7 @@ public class GroupRestImplTest extends MatontoRestTestNg {
         reset(engineManager);
         when(engineManager.getUsers(anyString())).thenReturn(users);
         when(engineManager.userExists(anyString())).thenReturn(true);
+        when(engineManager.createUser(anyString(), any(UserConfig.class))).thenReturn(user);
         when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.of(user));
         when(engineManager.getGroups(anyString())).thenReturn(groups);
         when(engineManager.groupExists(anyString())).thenReturn(true);
@@ -210,18 +212,37 @@ public class GroupRestImplTest extends MatontoRestTestNg {
     public void createGroupTest() {
         // Setup:
         when(engineManager.groupExists(anyString())).thenReturn(false);
+        JSONObject group = new JSONObject();
+        group.put("title", "newGroup");
+        group.put("description", "This is a description");
 
         Response response = target().path("groups")
-                .queryParam("title", "newGroup").queryParam("description", "This is a description")
-                .request().post(Entity.entity(null, MediaType.MULTIPART_FORM_DATA));
+                .request().post(Entity.entity(group.toString(), MediaType.APPLICATION_JSON));
         Assert.assertEquals(200, response.getStatus());
         verify(engineManager).storeGroup(anyString(), any(Group.class));
     }
 
     @Test
+    public void createGroupWithoutTitleTest() {
+        // Setup:
+        when(engineManager.groupExists(anyString())).thenReturn(false);
+        JSONObject group = new JSONObject();
+        group.put("description", "This is a description");
+
+        Response response = target().path("groups")
+                .request().post(Entity.entity(group.toString(), MediaType.APPLICATION_JSON));
+        Assert.assertEquals(400, response.getStatus());
+    }
+
+    @Test
     public void createExistingGroupTest() {
-        Response response = target().path("groups").queryParam("name", "testGroup")
-                .request().post(Entity.entity(null, MediaType.MULTIPART_FORM_DATA));
+        //Setup:
+        JSONObject group = new JSONObject();
+        group.put("title", "testGroup");
+        group.put("description", "This is a description");
+
+        Response response = target().path("groups")
+                .request().post(Entity.entity(group.toString(), MediaType.APPLICATION_JSON));
         Assert.assertEquals(400, response.getStatus());
     }
 
@@ -245,21 +266,45 @@ public class GroupRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void updateGroupTest() {
+        //Setup:
+        JSONObject group = new JSONObject();
+        group.put("title", "testGroup");
+        group.put("description", "This is a new description");
+
         Response response = target().path("groups/testGroup")
-                .queryParam("description", "This is a description")
-                .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
+                .request().put(Entity.entity(group.toString(), MediaType.APPLICATION_JSON));
         Assert.assertEquals(200, response.getStatus());
         verify(engineManager).retrieveGroup(anyString(), eq("testGroup"));
         verify(engineManager).updateGroup(anyString(), any(Group.class));
     }
 
     @Test
+    public void updateGroupWithDifferentTitleTest() {
+        //Setup:
+        JSONObject group = new JSONObject();
+        group.put("title", "newGroup");
+        group.put("description", "This is a new description");
+        Group newGroup = groupFactory.createNew(vf.createIRI("http://matonto.org/groups/" + group.getString("title")));
+        newGroup.setProperty(vf.createLiteral(group.getString("title")), vf.createIRI(DCTERMS.TITLE.stringValue()));
+        newGroup.setProperty(vf.createLiteral(group.getString("description")),
+                vf.createIRI(DCTERMS.DESCRIPTION.stringValue()));
+        when(engineManager.createGroup(anyString(), any(GroupConfig.class))).thenReturn(newGroup);
+
+        Response response = target().path("groups/testGroup")
+                .request().put(Entity.entity(group.toString(), MediaType.APPLICATION_JSON));
+        Assert.assertEquals(400, response.getStatus());
+    }
+
+    @Test
     public void updateGroupThatDoesNotExistTest() {
         //Setup:
+        JSONObject group = new JSONObject();
+        group.put("title", "testGroup");
+        group.put("description", "This is a new description");
         when(engineManager.retrieveGroup(anyString(), anyString())).thenReturn(Optional.empty());
 
         Response response = target().path("groups/error")
-                .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
+                .request().put(Entity.entity(group.toString(), MediaType.APPLICATION_JSON));
         Assert.assertEquals(400, response.getStatus());
     }
 

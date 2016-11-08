@@ -26,21 +26,29 @@ package org.matonto.jaas.rest.providers;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import net.sf.json.JSONObject;
+import org.apache.commons.io.IOUtils;
+import org.matonto.jaas.api.engines.EngineManager;
+import org.matonto.jaas.api.engines.GroupConfig;
 import org.matonto.jaas.api.ontologies.usermanagement.Group;
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
+import org.matonto.rest.util.ErrorUtils;
 import org.openrdf.model.vocabulary.DCTERMS;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.Optional;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.ext.MessageBodyReader;
 import javax.ws.rs.ext.MessageBodyWriter;
 import javax.ws.rs.ext.Provider;
 
@@ -50,17 +58,25 @@ import javax.ws.rs.ext.Provider;
         properties = {"providerSubject=Group"}
         )
 @Produces(MediaType.APPLICATION_JSON)
-public class GroupProvider implements MessageBodyWriter<Group> {
+@Consumes(MediaType.APPLICATION_JSON)
+public class GroupProvider implements MessageBodyWriter<Group>, MessageBodyReader<Group> {
     protected ValueFactory factory;
+    protected EngineManager engineManager;
+    private static final String RDF_ENGINE = "org.matonto.jaas.engines.RdfEngine";
 
     @Reference
     public void setFactory(ValueFactory factory) {
         this.factory = factory;
     }
 
+    @Reference
+    public void setEngineManager(EngineManager engineManager) {
+        this.engineManager = engineManager;
+    }
+
     @Override
     public boolean isWriteable(Class<?> someClass, Type type, Annotation[] annotations, MediaType mediaType) {
-        return type == Group.class || Arrays.asList(someClass.getGenericInterfaces()).contains(Group.class);
+        return isGroup(someClass, type);
     }
 
     @Override
@@ -79,5 +95,29 @@ public class GroupProvider implements MessageBodyWriter<Group> {
         object.put("description", descriptionOpt.isPresent() ? descriptionOpt.get().stringValue() : "");
         
         outputStream.write(object.toString().getBytes());
+    }
+
+    @Override
+    public boolean isReadable(Class<?> someClass, Type type, Annotation[] annotations, MediaType mediaType) {
+        return isGroup(someClass, type);
+    }
+
+    @Override
+    public Group readFrom(Class<Group> someClass, Type type, Annotation[] annotations, MediaType mediaType,
+                          MultivaluedMap<String, String> multivaluedMap, InputStream inputStream)
+            throws IOException, WebApplicationException {
+        JSONObject input = JSONObject.fromObject(IOUtils.toString(inputStream, "UTF-8"));
+        if (!input.containsKey("title")) {
+            throw ErrorUtils.sendError("Group must have a title", Response.Status.BAD_REQUEST);
+        }
+        GroupConfig config = new GroupConfig.Builder(input.getString("title"))
+                .description(input.containsKey("description") ? input.getString("description") : "")
+                .build();
+
+        return engineManager.createGroup(RDF_ENGINE, config);
+    }
+
+    private boolean isGroup(Class<?> someClass, Type type) {
+        return type == Group.class || Arrays.asList(someClass.getGenericInterfaces()).contains(Group.class);
     }
 }

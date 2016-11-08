@@ -34,6 +34,7 @@ import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.jaas.api.ontologies.usermanagement.UserFactory;
 import org.matonto.jaas.rest.GroupRest;
 import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rest.util.ErrorUtils;
 import org.openrdf.model.vocabulary.DCTERMS;
@@ -85,21 +86,16 @@ public class GroupRestImpl implements GroupRest {
     }
 
     @Override
-    public Response createGroup(String groupName, String description) {
-        if (groupName == null) {
-            throw ErrorUtils.sendError("Group name must be provided", Response.Status.BAD_REQUEST);
-        }
-        if (engineManager.groupExists(groupName)) {
-            throw ErrorUtils.sendError("Group already exists", Response.Status.BAD_REQUEST);
+    public Response createGroup(Group group) {
+        Value title = group.getProperty(factory.createIRI(DCTERMS.TITLE.stringValue())).orElseThrow(() ->
+                ErrorUtils.sendError("Group title must be provided", Response.Status.BAD_REQUEST));
+        if (engineManager.groupExists(title.stringValue())) {
+            throw ErrorUtils.sendError("Group " + title.stringValue() + " already exists", Response.Status.BAD_REQUEST);
         }
 
-        GroupConfig.Builder builder = new GroupConfig.Builder(groupName);
-        if (!description.isEmpty()) {
-            builder.description(description);
-        }
-        boolean result = engineManager.storeGroup(RDF_ENGINE, engineManager.createGroup(RDF_ENGINE, builder.build()));
+        boolean result = engineManager.storeGroup(RDF_ENGINE, group);
         if (result) {
-            logger.info("Created group " + groupName);
+            logger.info("Created group " + title.stringValue());
         }
         return Response.ok(result).build();
     }
@@ -117,28 +113,25 @@ public class GroupRestImpl implements GroupRest {
     }
 
     @Override
-    public Response updateGroup(String groupName, String description) {
+    public Response updateGroup(String groupName, Group newGroup) {
         if (groupName == null) {
             throw ErrorUtils.sendError("Group name must be provided", Response.Status.BAD_REQUEST);
         }
+        Value title = newGroup.getProperty(factory.createIRI(DCTERMS.TITLE.stringValue())).orElseThrow(() ->
+                ErrorUtils.sendError("Group title must be provided", Response.Status.BAD_REQUEST));
         Group savedGroup = engineManager.retrieveGroup(RDF_ENGINE, groupName).orElseThrow(() ->
                 ErrorUtils.sendError("Group " + groupName + " not found", Response.Status.BAD_REQUEST));
-        Set<String> roles = savedGroup.getHasGroupRole().stream()
-                .map(role -> role.getProperty(factory.createIRI(DCTERMS.TITLE.stringValue())))
-                .filter(Optional::isPresent)
-                .map(roleOpt -> roleOpt.get().stringValue())
-                .collect(Collectors.toSet());
-        GroupConfig config = new GroupConfig.Builder(groupName)
-                .roles(roles)
-                .description(description)
-                .build();
-        Group newGroup = engineManager.createGroup(RDF_ENGINE, config);
+        if (!savedGroup.getProperty(factory.createIRI(DCTERMS.TITLE.stringValue())).get().equals(title)) {
+            throw ErrorUtils.sendError("Group titles must match", Response.Status.BAD_REQUEST);
+        }
+        if (!savedGroup.getHasGroupRole().isEmpty()) {
+            newGroup.setHasGroupRole(savedGroup.getHasGroupRole());
+        }
         if (!savedGroup.getMember().isEmpty()) {
             newGroup.setMember(savedGroup.getMember());
         }
-        combineGroup(savedGroup, newGroup);
 
-        boolean result = engineManager.updateGroup(RDF_ENGINE, savedGroup);
+        boolean result = engineManager.updateGroup(RDF_ENGINE, newGroup);
         return Response.ok(result).build();
     }
 
@@ -175,7 +168,6 @@ public class GroupRestImpl implements GroupRest {
         if (groupName == null || role == null) {
             throw ErrorUtils.sendError("Both groupName and role must be provided", Response.Status.BAD_REQUEST);
         }
-
         Group savedGroup = engineManager.retrieveGroup(RDF_ENGINE, groupName).orElseThrow(() ->
                 ErrorUtils.sendError("Group " + groupName + " not found", Response.Status.BAD_REQUEST));
         Group tempGroup = engineManager.createGroup(RDF_ENGINE,
@@ -222,24 +214,5 @@ public class GroupRestImpl implements GroupRest {
                 .collect(Collectors.toSet());
 
         return Response.status(200).entity(new GenericEntity<Set<User>>(members) {}).build();
-    }
-
-    private void combineGroup(Group oldGroup, Group newGroup) {
-        if (!newGroup.getProperty(factory.createIRI(DCTERMS.TITLE.stringValue())).isPresent()) {
-            oldGroup.removeProperty(null, factory.createIRI(DCTERMS.TITLE.stringValue()));
-        } else {
-            oldGroup.setProperty(newGroup.getProperty(factory.createIRI(DCTERMS.TITLE.stringValue())).get(),
-                    factory.createIRI(DCTERMS.TITLE.stringValue()));
-        }
-        if (newGroup.getHasGroupRole().isEmpty()) {
-            oldGroup.removeProperty(null, factory.createIRI(Group.hasGroupRole_IRI));
-        } else {
-            oldGroup.setHasGroupRole(newGroup.getHasGroupRole());
-        }
-        if (newGroup.getMember().isEmpty()) {
-            oldGroup.removeProperty(null, factory.createIRI(Group.member_IRI));
-        } else {
-            oldGroup.setMember(newGroup.getMember());
-        }
     }
 }

@@ -62,6 +62,7 @@ import static org.mockito.Mockito.*;
 
 public class UserRestImplTest extends MatontoRestTestNg {
     private UserRestImpl rest;
+    private UserProvider userProvider;
     private RoleProvider roleProvider;
     private RoleSetProvider roleSetProvider;
     private GroupProvider groupProvider;
@@ -87,6 +88,7 @@ public class UserRestImplTest extends MatontoRestTestNg {
 
     @Override
     protected Application configureApp() throws Exception {
+        userProvider = new UserProvider();
         roleProvider = new RoleProvider();
         roleSetProvider = new RoleSetProvider();
         groupProvider = new GroupProvider();
@@ -154,6 +156,7 @@ public class UserRestImplTest extends MatontoRestTestNg {
         groups = Collections.singleton(group);
 
         MockitoAnnotations.initMocks(this);
+        userProvider.setEngineManager(engineManager);
         rest = spy(new UserRestImpl());
         rest.setEngineManager(engineManager);
         rest.setFactory(vf);
@@ -162,7 +165,7 @@ public class UserRestImplTest extends MatontoRestTestNg {
         return new ResourceConfig()
                 .register(rest)
                 .register(MultiPartFeature.class)
-                .register(UserProvider.class)
+                .register(userProvider)
                 .register(groupProvider)
                 .register(groupSetProvider)
                 .register(roleProvider)
@@ -172,7 +175,7 @@ public class UserRestImplTest extends MatontoRestTestNg {
     @Override
     protected void configureClient(ClientConfig config) {
         config.register(MultiPartFeature.class);
-        config.register(UserProvider.class);
+        config.register(userProvider);
         config.register(groupProvider);
         config.register(groupSetProvider);
         config.register(roleProvider);
@@ -212,33 +215,62 @@ public class UserRestImplTest extends MatontoRestTestNg {
     @Test
     public void createUserTest() {
         //Setup:
+        JSONObject user = new JSONObject();
+        user.put("username", "testUser1");
+        user.put("email", "example@example.com");
+        user.put("firstName", "John");
+        user.put("lastName", "Doe");
         when(engineManager.userExists(anyString())).thenReturn(false);
 
         Response response = target().path("users")
-                .queryParam("username", "testUser1").queryParam("password", "123")
-                .request().post(Entity.entity(null, MediaType.MULTIPART_FORM_DATA));
+                .queryParam("password", "123")
+                .request().post(Entity.entity(user.toString(), MediaType.APPLICATION_JSON));
         Assert.assertEquals(200, response.getStatus());
         verify(engineManager).storeUser(anyString(), any(User.class));
     }
 
     @Test
-    public void createExistingUserTest() {
+    public void createUserWithoutPasswordTest() {
+        //Setup:
+        JSONObject user = new JSONObject();
+        user.put("username", "testUser1");
+        user.put("email", "example@example.com");
+        user.put("firstName", "John");
+        user.put("lastName", "Doe");
+        when(engineManager.userExists(anyString())).thenReturn(false);
+
         Response response = target().path("users")
-                .queryParam("username", "testUser1")
-                .request().post(Entity.entity(null, MediaType.MULTIPART_FORM_DATA));
+                .request().post(Entity.entity(user.toString(), MediaType.APPLICATION_JSON));
         Assert.assertEquals(400, response.getStatus());
+    }
 
-        response = target().path("users")
+    @Test
+    public void createUserWithoutUsernameTest() {
+        //Setup:
+        JSONObject user = new JSONObject();
+        user.put("email", "example@example.com");
+        user.put("firstName", "John");
+        user.put("lastName", "Doe");
+        when(engineManager.userExists(anyString())).thenReturn(false);
+
+        Response response = target().path("users")
                 .queryParam("password", "123")
-                .request().post(Entity.entity(null, MediaType.MULTIPART_FORM_DATA));
+                .request().post(Entity.entity(user.toString(), MediaType.APPLICATION_JSON));
         Assert.assertEquals(400, response.getStatus());
+    }
 
-        response = target().path("users")
-                .request().post(Entity.entity(null, MediaType.MULTIPART_FORM_DATA));
-        Assert.assertEquals(400, response.getStatus());
+    @Test
+    public void createExistingUserTest() {
+        //Setup:
+        JSONObject user = new JSONObject();
+        user.put("username", "testUser");
+        user.put("email", "example@example.com");
+        user.put("firstName", "John");
+        user.put("lastName", "Doe");
 
-        response = target().path("users").queryParam("username", "testUser")
-                .request().post(Entity.entity(null, MediaType.MULTIPART_FORM_DATA));
+        Response response = target().path("users")
+                .queryParam("password", "123")
+                .request().post(Entity.entity(user.toString(), MediaType.APPLICATION_JSON));
         Assert.assertEquals(400, response.getStatus());
     }
 
@@ -263,34 +295,73 @@ public class UserRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void updateUserTest() {
+        //Setup:
+        JSONObject user = new JSONObject();
+        user.put("username", "testUser");
+        user.put("email", "maryjane@example.com");
+        user.put("firstName", "Mary");
+        user.put("lastName", "Jane");
+
         Response response = target().path("users/testUser")
                 .queryParam("currentPassword", "ABC")
                 .queryParam("newPassword", "XYZ")
-                .queryParam("firstName", "John")
-                .queryParam("lastName", "Doe")
-                .queryParam("email", "johndoe@example.com")
-                .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
+                .request().put(Entity.entity(user.toString(), MediaType.APPLICATION_JSON));
         Assert.assertEquals(200, response.getStatus());
         verify(engineManager).retrieveUser(anyString(), eq("testUser"));
         verify(engineManager).updateUser(anyString(), any(User.class));
     }
 
     @Test
+    public void updateUserWithDifferentUsernameTest() {
+        //Setup:
+        JSONObject user = new JSONObject();
+        user.put("username", "testUser1");
+        user.put("email", "maryjane@example.com");
+        user.put("firstName", "Mary");
+        user.put("lastName", "Jane");
+        User newUser = userFactory.createNew(vf.createIRI("http://matonto.org/users/" + user.getString("username")));
+        newUser.setUsername(vf.createLiteral(user.getString("username")));
+        newUser.setFirstName(Collections.singleton(vf.createLiteral(user.getString("firstName"))));
+        newUser.setLastName(Collections.singleton(vf.createLiteral(user.getString("lastName"))));
+        newUser.setMbox(Collections.singleton(thingFactory.createNew(vf.createIRI("mailto:" + user.getString("email")))));
+        when(engineManager.createUser(anyString(), any(UserConfig.class))).thenReturn(newUser);
+
+        Response response = target().path("users/testUser")
+                .queryParam("currentPassword", "ABC")
+                .queryParam("newPassword", "XYZ")
+                .request().put(Entity.entity(user.toString(), MediaType.APPLICATION_JSON));
+        Assert.assertEquals(400, response.getStatus());
+    }
+
+    @Test
     public void updateUserThatDoesNotExistTest() {
         //Setup:
+        JSONObject user = new JSONObject();
+        user.put("username", "error");
+        user.put("email", "maryjane@example.com");
+        user.put("firstName", "Mary");
+        user.put("lastName", "Jane");
         when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.empty());
 
         Response response = target().path("users/error")
                 .queryParam("currentPassword", "ABC")
-                .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
+                .queryParam("newPassword", "XYZ")
+                .request().put(Entity.entity(user.toString(), MediaType.APPLICATION_JSON));
         Assert.assertEquals(400, response.getStatus());
     }
 
     @Test
     public void updateUserWithoutCurrentPasswordTest() {
+        //Setup:
+        JSONObject user = new JSONObject();
+        user.put("username", "testUser");
+        user.put("email", "maryjane@example.com");
+        user.put("firstName", "Mary");
+        user.put("lastName", "Jane");
+
         Response response = target().path("users/testUser")
                 .queryParam("newPassword", "XYZ")
-                .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
+                .request().put(Entity.entity(user.toString(), MediaType.APPLICATION_JSON));
         Assert.assertEquals(400, response.getStatus());
     }
 

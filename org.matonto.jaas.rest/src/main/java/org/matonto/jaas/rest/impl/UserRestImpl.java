@@ -27,7 +27,6 @@ import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import org.matonto.jaas.api.config.MatontoConfiguration;
 import org.matonto.jaas.api.engines.EngineManager;
-import org.matonto.jaas.api.engines.GroupConfig;
 import org.matonto.jaas.api.engines.UserConfig;
 import org.matonto.jaas.api.ontologies.usermanagement.Group;
 import org.matonto.jaas.api.ontologies.usermanagement.Role;
@@ -37,6 +36,7 @@ import org.matonto.jaas.api.utils.TokenUtils;
 import org.matonto.jaas.rest.UserRest;
 import org.matonto.ontologies.foaf.Agent;
 import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.orm.Thing;
 import org.matonto.rest.util.ErrorUtils;
@@ -89,27 +89,22 @@ public class UserRestImpl implements UserRest {
     }
 
     @Override
-    public Response createUser(String username, String password, String firstName, String lastName, String email) {
-        if (username == null || password == null) {
-            throw ErrorUtils.sendError("Both a username and password must be provided", Response.Status.BAD_REQUEST);
+    public Response createUser(User user, String password) {
+        if (password == null) {
+            throw ErrorUtils.sendError("A password must be provided", Response.Status.BAD_REQUEST);
         }
-        if (engineManager.userExists(username)) {
+        Value username = user.getUsername().orElseThrow(() ->
+                ErrorUtils.sendError("A username must be provided", Response.Status.BAD_REQUEST));
+        if (engineManager.userExists(username.stringValue())) {
             throw ErrorUtils.sendError("User already exists", Response.Status.BAD_REQUEST);
         }
 
-        UserConfig.Builder builder = new UserConfig.Builder(username, password, new HashSet<>());
-        if (!firstName.isEmpty()) {
-            builder = builder.firstName(firstName);
-        }
-        if (!lastName.isEmpty()) {
-            builder = builder.lastName(lastName);
-        }
-        if (!email.isEmpty()) {
-            builder = builder.email(email);
-        }
-        boolean result = engineManager.storeUser(RDF_ENGINE, engineManager.createUser(RDF_ENGINE, builder.build()));
+        User tempUser = engineManager.createUser(RDF_ENGINE,
+                new UserConfig.Builder("", password, new HashSet<>()).build());
+        user.setPassword(tempUser.getPassword().get());
+        boolean result = engineManager.storeUser(RDF_ENGINE, user);
         if (result) {
-            logger.info("Created user " + username);
+            logger.info("Created user " + username.stringValue());
         }
         return Response.ok(result).build();
     }
@@ -126,7 +121,7 @@ public class UserRestImpl implements UserRest {
 
     @Override
     public Response updateUser(ContainerRequestContext context, String username, String currentPassword,
-                               String newPassword, String newFirstName, String newLastName, String newEmail) {
+                               String newPassword, User newUser) {
         if (username == null || currentPassword == null) {
             throw ErrorUtils.sendError("Both currentUsername and currentPassword must be provided",
                     Response.Status.BAD_REQUEST);
@@ -138,24 +133,26 @@ public class UserRestImpl implements UserRest {
         if (!engineManager.checkPassword(RDF_ENGINE, username, currentPassword)) {
             throw ErrorUtils.sendError("Invalid password", Response.Status.UNAUTHORIZED);
         }
-
+        Value newUsername = newUser.getUsername().orElseThrow(() ->
+                ErrorUtils.sendError("A username must be provided", Response.Status.BAD_REQUEST));
         User savedUser = engineManager.retrieveUser(RDF_ENGINE, username).orElseThrow(() ->
                 ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
+        if (!savedUser.getUsername().get().equals(newUsername)) {
+            throw ErrorUtils.sendError("Usernames must match", Response.Status.BAD_REQUEST);
+        }
 
-        String password = newPassword.isEmpty() ? currentPassword : newPassword;
-        Set<String> currentRoles = savedUser.getHasUserRole().stream()
-                .map(role -> role.getProperty(factory.createIRI(DCTERMS.TITLE.stringValue())))
-                .filter(Optional::isPresent)
-                .map(roleOpt -> roleOpt.get().stringValue())
-                .collect(Collectors.toSet());
-        UserConfig config = new UserConfig.Builder(username, password, currentRoles)
-                .firstName(newFirstName)
-                .lastName(newLastName)
-                .email(newEmail)
-                .build();
-        combineUser(savedUser, engineManager.createUser(RDF_ENGINE, config));
+        if (!savedUser.getHasUserRole().isEmpty()) {
+            newUser.setHasUserRole(savedUser.getHasUserRole());
+        }
+        if (newPassword.isEmpty()) {
+            newUser.setPassword(savedUser.getPassword().get());
+        } else {
+            User tempUser = engineManager.createUser(RDF_ENGINE,
+                    new UserConfig.Builder("", newPassword, new HashSet<>()).build());
+            newUser.setPassword(tempUser.getPassword().get());
+        }
 
-        boolean result = engineManager.updateUser(RDF_ENGINE, savedUser);
+        boolean result = engineManager.updateUser(RDF_ENGINE, newUser);
         return Response.ok(result).build();
     }
 
@@ -314,33 +311,5 @@ public class UserRestImpl implements UserRest {
         }
 
         return user.equals(username) || isAdmin;
-    }
-
-    private void combineUser(User oldUser, User newUser) {
-        oldUser.setPassword(newUser.getPassword().get());
-        if (newUser.getHasUserRole().isEmpty()) {
-            oldUser.getHasUserRole().forEach(role -> oldUser.removeProperty(role.getResource(),
-                    factory.createIRI(User.hasUserRole_IRI)));
-        } else {
-            oldUser.setHasUserRole(newUser.getHasUserRole());
-        }
-        if (newUser.getFirstName().isEmpty()) {
-            oldUser.getFirstName().forEach(literal -> oldUser.removeProperty(literal,
-                    factory.createIRI(User.firstName_IRI)));
-        } else {
-            oldUser.setFirstName(newUser.getFirstName());
-        }
-        if (newUser.getLastName().isEmpty()) {
-            oldUser.getLastName().forEach(literal -> oldUser.removeProperty(literal,
-                    factory.createIRI(User.lastName_IRI)));
-        } else {
-            oldUser.setLastName(newUser.getLastName());
-        }
-        if (newUser.getMbox().isEmpty()) {
-            oldUser.getMbox().forEach(thing -> oldUser.removeProperty(thing.getResource(),
-                    factory.createIRI(User.mbox_IRI)));
-        } else {
-            oldUser.setMbox(newUser.getMbox());
-        }
     }
 }
