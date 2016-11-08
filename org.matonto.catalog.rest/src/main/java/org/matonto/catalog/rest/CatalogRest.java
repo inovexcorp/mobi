@@ -557,7 +557,7 @@ public interface CatalogRest {
      *                 String begins with "_:".
      * @param sort The field with sort order specified.
      * @param offset The offset for the page.
-     * @param limit The number of resources to return in one page.
+     * @param limit The number of Branches to return in one page.
      * @return A list of Branches for the identified VersionedRDFRecord.
      */
     @GET
