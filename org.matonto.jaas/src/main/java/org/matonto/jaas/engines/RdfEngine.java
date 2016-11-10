@@ -42,6 +42,7 @@ import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.base.RepositoryResult;
 import org.matonto.repository.exception.RepositoryException;
 import org.openrdf.model.vocabulary.DCTERMS;
+import org.openrdf.model.vocabulary.RDF;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -77,32 +78,29 @@ public class RdfEngine implements Engine {
         setEncryption(config);
         initUserManagerResources();
 
-        RepositoryConnection conn = repository.getConnection();
-        conn.begin();
-        roles.stream()
-                .filter(role -> !resourceExists(factory.createIRI(roleNamespace + role)))
-                .forEach(role -> {
-                    Role adminRole = roleFactory.createNew(factory.createIRI(roleNamespace + role));
-                    adminRole.setProperty(factory.createLiteral(role), factory.createIRI(DCTERMS.TITLE.stringValue()));
-                    conn.add(adminRole.getModel(), context);
-                });
-        if (!resourceExists(factory.createIRI(userNamespace + "admin"))) {
-            Set<Role> allRoles = roles.stream()
-                    .map(role -> roleFactory.createNew(factory.createIRI(roleNamespace + role)))
-                    .collect(Collectors.toSet());
-            User admin = userFactory.createNew(factory.createIRI(userNamespace + "admin"));
-            admin.setUsername(factory.createLiteral("admin"));
-            admin.setPassword(factory.createLiteral("admin"));
-            admin.setHasUserRole(allRoles);
-            conn.add(admin.getModel(), context);
+        try (RepositoryConnection conn = repository.getConnection()) {
+            conn.begin();
+            roles.stream()
+                    .filter(role -> !resourceExists(factory.createIRI(roleNamespace + role)))
+                    .forEach(role -> {
+                        Role adminRole = roleFactory.createNew(factory.createIRI(roleNamespace + role));
+                        adminRole.setProperty(factory.createLiteral(role), factory.createIRI(DCTERMS.TITLE.stringValue()));
+                        conn.add(adminRole.getModel(), context);
+                    });
+            if (!resourceExists(factory.createIRI(userNamespace + "admin"))) {
+                Set<Role> allRoles = roles.stream()
+                        .map(role -> roleFactory.createNew(factory.createIRI(roleNamespace + role)))
+                        .collect(Collectors.toSet());
+                User admin = userFactory.createNew(factory.createIRI(userNamespace + "admin"));
+                admin.setUsername(factory.createLiteral("admin"));
+                admin.setPassword(factory.createLiteral("admin"));
+                admin.setHasUserRole(allRoles);
+                conn.add(admin.getModel(), context);
+            }
+            conn.commit();
+        } catch (RepositoryException e) {
+            throw new MatOntoException("Error in repository connection", e);
         }
-        conn.commit();
-        conn.close();
-    }
-
-    @Deactivate
-    public void deactivate() {
-        logger.info("Deactivating " + COMPONENT_NAME);
     }
 
     @Modified
@@ -151,8 +149,8 @@ public class RdfEngine implements Engine {
     @Override
     public Set<User> getUsers() {
         Set<User> users = new HashSet<>();
-        Model usersModel = modelFactory.createModel();
         try (RepositoryConnection conn = repository.getConnection()) {
+            Model usersModel = modelFactory.createModel();
             RepositoryResult<Statement> statements = conn.getStatements(null, null, null, context);
             statements.forEach(usersModel::add);
             users.addAll(userFactory.getAllExisting(usersModel));
@@ -220,7 +218,7 @@ public class RdfEngine implements Engine {
 
     @Override
     public boolean userExists(String username) {
-        return resourceExists(factory.createIRI(userNamespace + username));
+        return resourceExists(factory.createIRI(userNamespace + username), User.TYPE);
     }
 
     @Override
@@ -231,7 +229,6 @@ public class RdfEngine implements Engine {
 
         Model userModel = modelFactory.createModel();
         try (RepositoryConnection conn = repository.getConnection()) {
-            conn.begin();
             RepositoryResult<Statement> statements = conn.getStatements(factory.createIRI(userNamespace + username),
                     null, null, context);
             statements.forEach(userModel::add);
@@ -279,8 +276,8 @@ public class RdfEngine implements Engine {
     @Override
     public Set<Group> getGroups() {
         Set<Group> groups = new HashSet<>();
-        Model groupsModel = modelFactory.createModel();
         try (RepositoryConnection conn = repository.getConnection()) {
+            Model groupsModel = modelFactory.createModel();
             RepositoryResult<Statement> statements = conn.getStatements(null, null, null, context);
             statements.forEach(groupsModel::add);
             groups.addAll(groupFactory.getAllExisting(groupsModel));
@@ -337,7 +334,7 @@ public class RdfEngine implements Engine {
 
     @Override
     public boolean groupExists(String groupName) {
-        return resourceExists(factory.createIRI(groupNamespace + groupName));
+        return resourceExists(factory.createIRI(groupNamespace + groupName), Group.TYPE);
     }
 
     @Override
@@ -424,12 +421,9 @@ public class RdfEngine implements Engine {
 
     @Override
     public boolean checkPassword(String username, String password) {
-        if (!userExists(username)) {
-            throw new MatOntoException("User with that id does not exist");
-        }
         Optional<User> userOptional = retrieveUser(username);
         if (!userOptional.isPresent()) {
-            throw new MatOntoException("Could not retrieve user");
+            throw new MatOntoException("User with that id does not exist");
         }
         User user = userOptional.get();
         if (!user.getPassword().isPresent()) {
@@ -475,10 +469,19 @@ public class RdfEngine implements Engine {
     }
 
     private boolean resourceExists(Resource resource) {
-        RepositoryConnection conn = repository.getConnection();
-        RepositoryResult<Statement> statements = conn.getStatements(resource, null, null, context);
-        boolean exists = statements.hasNext();
-        conn.close();
-        return exists;
+        try (RepositoryConnection conn = repository.getConnection()) {
+            return conn.getStatements(resource, null, null, context).hasNext();
+        } catch (RepositoryException e) {
+            throw new MatOntoException("Error in repository connection", e);
+        }
+    }
+
+    private boolean resourceExists(Resource resource, String typeString) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            return conn.getStatements(resource, factory.createIRI(RDF.TYPE.stringValue()),
+                    factory.createIRI(typeString), context).hasNext();
+        } catch (RepositoryException e) {
+            throw new MatOntoException("Error in repository connection", e);
+        }
     }
 }

@@ -32,15 +32,15 @@ import java.util.Set;
 
 public interface Engine {
     /**
-     * Returns the set of all users accessible by the Engine's data source.
+     * Returns the Set of all Users accessible by the Engine's data source.
      *
      * @return a Set of Users accessible by the Engine
      */
     Set<User> getUsers();
 
     /**
-     * Creates a User using the passed configuration object with the username, password,
-     * roles, first name, last name, and email address for the new user.
+     * Creates a User using the passed configuration object with a username, password,
+     * roles, first name, last name, and email address.
      *
      * @param userConfig a configuration for the new User
      * @return a User with properties set by the passed configuration object
@@ -93,15 +93,15 @@ public interface Engine {
     boolean userExists(String username);
 
     /**
-     * Returns the set of all groups accessible by the Engine's data source.
+     * Returns the Set of all Groups accessible by the Engine's data source.
      *
      * @return a Set of Groups accessible by the Engine
      */
     Set<Group> getGroups();
 
     /**
-     * Creates a Group using the passed configuration object with the title, description,
-     * roles, and member usernames for the new group.
+     * Creates a Group using the passed configuration object with a title, description,
+     * roles, and list of member usernames.
      *
      * @param groupConfig a configuration for the new Group
      * @return a Group with properties set by the passed configuration object
@@ -153,8 +153,8 @@ public interface Engine {
     boolean groupExists(String groupName);
 
     /**
-     * Retrieves the set of all roles that the User with the passed username embodies.
-     * This set should contain all roles from all the User's groups as well.
+     * Retrieves the Set of all Roles that the User with the passed username embodies.
+     * This Set should contain all Roles from all the User's Groups as well.
      *
      * @param username the username of the User to collect the roles for
      * @return the Set of Roles that the User embodies

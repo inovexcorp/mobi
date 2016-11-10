@@ -74,6 +74,14 @@ public class UserConfig {
         private String firstName = "";
         private String lastName = "";
 
+        /**
+         * Creates a builder object for a UserConfig with the passed username, password
+         * and set of roles.
+         *
+         * @param username the required username string for a User
+         * @param password the required password string for a User
+         * @param roles the required Set of role strings for a User
+         */
         public Builder(String username, String password, Set<String> roles) {
             this.username = username;
             this.password = password;

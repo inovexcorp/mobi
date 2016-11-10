@@ -71,6 +71,7 @@ public class RdfEngineTest {
     private String groupId = "http://matonto.org/groups/" + groupName;
     private String userRoleId = "http://matonto.org/roles/user";
     private String adminRoleId = "http://matonto.org/roles/admin";
+    private String context = "http://matonto.org/usermanagement";
     private boolean setUp = false;
     private Map<String, Object> options = new HashMap<>();
 
@@ -132,10 +133,10 @@ public class RdfEngineTest {
             Set<Agent> members = Stream.of(testUser).collect(Collectors.toSet());
             testGroup.setMember(members);
             RepositoryConnection conn = repo.getConnection();
-            conn.add(userRole.getModel(), vf.createIRI("http://matonto.org/usermanagement"));
-            conn.add(adminRole.getModel(), vf.createIRI("http://matonto.org/usermanagement"));
-            conn.add(testUser.getModel(), vf.createIRI("http://matonto.org/usermanagement"));
-            conn.add(testGroup.getModel(), vf.createIRI("http://matonto.org/usermanagement"));
+            conn.add(userRole.getModel(), vf.createIRI(context));
+            conn.add(adminRole.getModel(), vf.createIRI(context));
+            conn.add(testUser.getModel(), vf.createIRI(context));
+            conn.add(testGroup.getModel(), vf.createIRI(context));
             conn.close();
             setUp = true;
         }

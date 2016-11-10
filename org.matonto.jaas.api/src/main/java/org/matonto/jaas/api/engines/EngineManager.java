@@ -36,7 +36,7 @@ public interface EngineManager {
      * with the passed name.
      *
      * @param engine the name of the Engine to test for
-     * @return true if the engine is in the manager; false otherwise
+     * @return true if the Engine is in the manager; false otherwise
      */
     boolean containsEngine(String engine);
 
@@ -132,7 +132,7 @@ public interface EngineManager {
      *
      * @param engine the name of the Engine to use when creating the Group
      * @param groupConfig a configuration for the new Group
-     * @return a User with properties set by the passed configuration object as determined
+     * @return a Group with properties set by the passed configuration object as determined
      *      by the specified Engine
      */
     Group createGroup(String engine, GroupConfig groupConfig);
@@ -184,7 +184,7 @@ public interface EngineManager {
      * Engine with the passed name.
      *
      * @param engine the name of the Engine to test for the existence of the Group with
-     * @param groupName the group name to look for
+     * @param groupName the name of the Group to look for
      * @return true if a Group exists with the passed name; false otherwise
      */
     boolean groupExists(String engine, String groupName);
@@ -193,28 +193,28 @@ public interface EngineManager {
      * Returns a boolean indicating whether a Group with the passed name exists using any
      * of the Engines managed by the EngineManager.
      *
-     * @param groupName the group name to look for
+     * @param groupName the name of the Group to look for
      * @return true if a Group exists with the passed name; false otherwise
      */
     boolean groupExists(String groupName);
 
     /**
-     * Retrieves the set of all roles that the User with the passed username embodies
-     * using the Engine with the passed name. This set should contain all roles from
-     * all the User's groups as well.
+     * Retrieves the Set of all Roles that the User with the passed username embodies
+     * using the Engine with the passed name. This Set should contain all Roles from
+     * all the User's Groups as well.
      *
-     * @param engine the name of the Engine to collect user roles from
-     * @param username the username of the User to collect the roles for
+     * @param engine the name of the Engine to collect User Roles from
+     * @param username the username of the User to collect the Roles for
      * @return the Set of Roles that the User embodies
      */
     Set<Role> getUserRoles(String engine, String username);
 
     /**
-     * Retrieves the full set of all roles that the User with the passed username embodies
-     * using all Engines managed by the EngineManager. This set should contain all roles from
-     * all the User's groups as well.
+     * Retrieves the full set of all Roles that the User with the passed username embodies
+     * using all Engines managed by the EngineManager. This Set should contain all Roles from
+     * all the User's Groups as well.
      *
-     * @param username the username of the User to collect the roles for
+     * @param username the username of the User to collect the Roles for
      * @return the Set of Roles that the User embodies
      */
     Set<Role> getUserRoles(String username);

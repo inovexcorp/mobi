@@ -26,9 +26,9 @@ package org.matonto.jaas.api.modules.token;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jwt.SignedJWT;
 import org.apache.log4j.Logger;
+import org.matonto.jaas.api.config.LoginModuleConfig;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.principals.UserPrincipal;
-import org.matonto.jaas.api.config.LoginModuleConfig;
 import org.matonto.jaas.api.utils.TokenUtils;
 
 import java.io.IOException;

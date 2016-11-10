@@ -38,14 +38,15 @@ public class UserPrincipal implements Principal {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof UserPrincipal)) return false;
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (!(obj instanceof UserPrincipal)) {
+            return false;
+        }
 
-        UserPrincipal that = (UserPrincipal) o;
-
-        if (name != null ? !name.equals(that.name) : that.name != null) return false;
-
-        return true;
+        UserPrincipal that = (UserPrincipal) obj;
+        return name != null ? name.equals(that.name) : that.name == null;
     }
 }
