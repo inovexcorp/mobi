@@ -76,7 +76,8 @@ public class RdfEngine implements Engine {
         logger.info("Activating " + COMPONENT_NAME);
         RdfEngineConfig config = Configurable.createConfigurable(RdfEngineConfig.class, props);
         setEncryption(config);
-        initUserManagerResources();
+        roles = Stream.of(config.roles()).collect(Collectors.toSet());
+        initEngineResources();
 
         try (RepositoryConnection conn = repository.getConnection()) {
             conn.begin();
@@ -108,7 +109,7 @@ public class RdfEngine implements Engine {
         logger.info("Modifying the " + COMPONENT_NAME);
         RdfEngineConfig config = Configurable.createConfigurable(RdfEngineConfig.class, props);
         setEncryption(config);
-        initUserManagerResources();
+        initEngineResources();
     }
 
     @Reference(name = "repository")
@@ -450,12 +451,12 @@ public class RdfEngine implements Engine {
         }
     }
 
-    private void initUserManagerResources() {
+    private void initEngineResources() {
         context = factory.createIRI("http://matonto.org/usermanagement");
         userNamespace = "http://matonto.org/users/";
         groupNamespace = "http://matonto.org/groups/";
         roleNamespace = "http://matonto.org/roles/";
-        roles = Stream.of("user", "admin").collect(Collectors.toSet());
+//        roles = Stream.of("user", "admin").collect(Collectors.toSet());
     }
 
     private void setEncryption(RdfEngineConfig config) {

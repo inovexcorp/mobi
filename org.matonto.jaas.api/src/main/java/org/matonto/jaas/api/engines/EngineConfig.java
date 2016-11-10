@@ -27,6 +27,11 @@ import aQute.bnd.annotation.metatype.Meta;
 
 @Meta.OCD
 public interface EngineConfig {
+    /**
+     * The list of roles for this engine.
+     */
+    @Meta.AD(id = "roles")
+    String[] roles();
 
     /**
      * Boolean enabling / disabling encrypted passwords.

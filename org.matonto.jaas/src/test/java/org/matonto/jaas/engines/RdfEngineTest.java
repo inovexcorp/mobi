@@ -146,6 +146,7 @@ public class RdfEngineTest {
             setUp = true;
         }
 
+        options.put("roles", new String[] {"admin", "user"});
         options.put("encryption.enabled", false);
         options.put("encryption.name", "basic");
         options.put("encryption.prefix", "{CRYPT}");
