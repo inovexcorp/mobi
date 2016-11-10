@@ -149,6 +149,16 @@ class SimpleCatalogManagerSpec extends Specification {
         vcr.registerValueConverter(versionFactory)
         vcr.registerValueConverter(branchFactory)
         vcr.registerValueConverter(thingFactory)
+        vcr.registerValueConverter(unversionedRecordFactory)
+        vcr.registerValueConverter(versionedRecordFactory)
+        vcr.registerValueConverter(versionedRDFRecordFactory)
+        vcr.registerValueConverter(ontologyRecordFactory)
+        vcr.registerValueConverter(mappingRecordFactory)
+        vcr.registerValueConverter(datasetRecordFactory)
+        vcr.registerValueConverter(tagFactory)
+        vcr.registerValueConverter(inProgressCommitFactory)
+        vcr.registerValueConverter(commitFactory)
+        vcr.registerValueConverter(revisionFactory)
         vcr.registerValueConverter(new ResourceValueConverter())
         vcr.registerValueConverter(new IRIValueConverter())
         vcr.registerValueConverter(new DoubleValueConverter())
@@ -164,14 +174,7 @@ class SimpleCatalogManagerSpec extends Specification {
         service.setModelFactory(mf)
         service.setCatalogFactory(catalogFactory)
         service.setRecordFactory(recordFactory)
-        /*service.setUnversionedRecordFactory(unversionedRecordFactory)
-        service.setVersionedRecordFactory(versionedRecordFactory)
-        service.setVersionedRDFRecordFactory(versionedRDFRecordFactory)
-        service.setOntologyRecordFactory(ontologyRecordFactory)
-        service.setMappingRecordFactory(mappingRecordFactory)
-        service.setDatasetRecordFactory(datasetRecordFactory)*/
         service.setDistributionFactory(distributionFactory)
-        /*service.setVersionFactory(versionFactory)*/
         service.setBranchFactory(branchFactory)
         service.setCommitFactory(commitFactory)
         service.setInProgressCommitFactory(inProgressCommitFactory)
@@ -202,10 +205,11 @@ class SimpleCatalogManagerSpec extends Specification {
                 .keywords(keywords)
                 .build();
         def record = service.createRecord(recordConfig, recordFactory)
-        def keywords = record.getKeyword()
         def publishers = record.getProperties(vf.createIRI(dcPublisher))
 
         expect:
+        record instanceof Record
+        def keywords = record.getKeyword()
         record.getProperty(vf.createIRI(dcTitle)).get().stringValue() == title
         record.getProperty(vf.createIRI(dcDescription)).get().stringValue() == description
         record.getProperty(vf.createIRI(dcIdentifier)).get().stringValue() == identifier
@@ -214,7 +218,6 @@ class SimpleCatalogManagerSpec extends Specification {
         keywords.contains(vf.createLiteral("keyword1"))
         keywords.contains(vf.createLiteral("keyword2"))
         publishers.contains(user.getResource())
-        record instanceof Record
     }
 
     def "createRecord creates a Record with no description or keywords when provided a RecordFactory"() {
@@ -224,6 +227,7 @@ class SimpleCatalogManagerSpec extends Specification {
         def publishers = record.getProperties(vf.createIRI(dcPublisher))
 
         expect:
+        record instanceof Record
         record.getProperty(vf.createIRI(dcTitle)).get().stringValue() == title
         !record.getProperty(vf.createIRI(dcDescription)).isPresent()
         record.getProperty(vf.createIRI(dcIdentifier)).get().stringValue() == identifier
@@ -231,7 +235,6 @@ class SimpleCatalogManagerSpec extends Specification {
         record.getProperty(vf.createIRI(dcModified)).isPresent()
         record.getKeyword().size() == 0
         publishers.contains(user.getResource())
-        record instanceof Record
     }
 
     def "createRecord creates an UnversionedRecord when provided an UnversionedRecordFactory"() {
@@ -241,10 +244,11 @@ class SimpleCatalogManagerSpec extends Specification {
                 .keywords(keywords)
                 .build();
         def record = service.createRecord(recordConfig, unversionedRecordFactory)
-        def keywords = record.getKeyword()
         def publishers = record.getProperties(vf.createIRI(dcPublisher))
 
         expect:
+        record instanceof UnversionedRecord
+        def keywords = record.getKeyword()
         record.getProperty(vf.createIRI(dcTitle)).get().stringValue() == title
         record.getProperty(vf.createIRI(dcDescription)).get().stringValue() == description
         record.getProperty(vf.createIRI(dcIdentifier)).get().stringValue() == identifier
@@ -253,7 +257,6 @@ class SimpleCatalogManagerSpec extends Specification {
         keywords.contains(vf.createLiteral("keyword1"))
         keywords.contains(vf.createLiteral("keyword2"))
         publishers.contains(user.getResource())
-        record instanceof UnversionedRecord
     }
 
     def "createRecord creates a VersionedRecord when provided a VersionedRecordFactory"() {
@@ -263,10 +266,11 @@ class SimpleCatalogManagerSpec extends Specification {
                 .keywords(keywords)
                 .build();
         def record = service.createRecord(recordConfig, versionedRecordFactory)
-        def keywords = record.getKeyword()
         def publishers = record.getProperties(vf.createIRI(dcPublisher))
 
         expect:
+        record instanceof VersionedRecord
+        def keywords = record.getKeyword()
         record.getProperty(vf.createIRI(dcTitle)).get().stringValue() == title
         record.getProperty(vf.createIRI(dcDescription)).get().stringValue() == description
         record.getProperty(vf.createIRI(dcIdentifier)).get().stringValue() == identifier
@@ -275,7 +279,6 @@ class SimpleCatalogManagerSpec extends Specification {
         keywords.contains(vf.createLiteral("keyword1"))
         keywords.contains(vf.createLiteral("keyword2"))
         publishers.contains(user.getResource())
-        record instanceof VersionedRecord
     }
 
     def "createRecord creates a VersionedRDFRecord when provided a VersionedRDFRecordFactory"() {
@@ -285,10 +288,11 @@ class SimpleCatalogManagerSpec extends Specification {
                 .keywords(keywords)
                 .build();
         def record = service.createRecord(recordConfig, versionedRDFRecordFactory)
-        def keywords = record.getKeyword()
         def publishers = record.getProperties(vf.createIRI(dcPublisher))
 
         expect:
+        record instanceof VersionedRDFRecord
+        def keywords = record.getKeyword()
         record.getProperty(vf.createIRI(dcTitle)).get().stringValue() == title
         record.getProperty(vf.createIRI(dcDescription)).get().stringValue() == description
         record.getProperty(vf.createIRI(dcIdentifier)).get().stringValue() == identifier
@@ -297,7 +301,6 @@ class SimpleCatalogManagerSpec extends Specification {
         keywords.contains(vf.createLiteral("keyword1"))
         keywords.contains(vf.createLiteral("keyword2"))
         publishers.contains(user.getResource())
-        record instanceof VersionedRDFRecord
     }
 
     def "createRecord creates an OntologyRecord when provided an OntologyRecordFactory"() {
@@ -307,10 +310,11 @@ class SimpleCatalogManagerSpec extends Specification {
                 .keywords(keywords)
                 .build();
         def record = service.createRecord(recordConfig, ontologyRecordFactory)
-        def keywords = record.getKeyword()
         def publishers = record.getProperties(vf.createIRI(dcPublisher))
 
         expect:
+        record instanceof OntologyRecord
+        def keywords = record.getKeyword()
         record.getProperty(vf.createIRI(dcTitle)).get().stringValue() == title
         record.getProperty(vf.createIRI(dcDescription)).get().stringValue() == description
         record.getProperty(vf.createIRI(dcIdentifier)).get().stringValue() == identifier
@@ -319,7 +323,6 @@ class SimpleCatalogManagerSpec extends Specification {
         keywords.contains(vf.createLiteral("keyword1"))
         keywords.contains(vf.createLiteral("keyword2"))
         publishers.contains(user.getResource())
-        record instanceof OntologyRecord
     }
 
     def "createRecord creates a MappingRecord when provided a MappingRecordFactory"() {
@@ -329,10 +332,11 @@ class SimpleCatalogManagerSpec extends Specification {
                 .keywords(keywords)
                 .build();
         def record = service.createRecord(recordConfig, mappingRecordFactory)
-        def keywords = record.getKeyword()
         def publishers = record.getProperties(vf.createIRI(dcPublisher))
 
         expect:
+        record instanceof MappingRecord
+        def keywords = record.getKeyword()
         record.getProperty(vf.createIRI(dcTitle)).get().stringValue() == title
         record.getProperty(vf.createIRI(dcDescription)).get().stringValue() == description
         record.getProperty(vf.createIRI(dcIdentifier)).get().stringValue() == identifier
@@ -341,7 +345,6 @@ class SimpleCatalogManagerSpec extends Specification {
         keywords.contains(vf.createLiteral("keyword1"))
         keywords.contains(vf.createLiteral("keyword2"))
         publishers.contains(user.getResource())
-        record instanceof MappingRecord
     }
 
     def "createRecord creates a DatasetRecord when provided a DatasetRecordFactory"() {
@@ -351,10 +354,11 @@ class SimpleCatalogManagerSpec extends Specification {
                 .keywords(keywords)
                 .build();
         def record = service.createRecord(recordConfig, datasetRecordFactory)
-        def keywords = record.getKeyword()
         def publishers = record.getProperties(vf.createIRI(dcPublisher))
 
         expect:
+        record instanceof DatasetRecord
+        def keywords = record.getKeyword()
         record.getProperty(vf.createIRI(dcTitle)).get().stringValue() == title
         record.getProperty(vf.createIRI(dcDescription)).get().stringValue() == description
         record.getProperty(vf.createIRI(dcIdentifier)).get().stringValue() == identifier
@@ -363,7 +367,6 @@ class SimpleCatalogManagerSpec extends Specification {
         keywords.contains(vf.createLiteral("keyword1"))
         keywords.contains(vf.createLiteral("keyword2"))
         publishers.contains(user.getResource())
-        record instanceof DatasetRecord
     }
 
     def "createDistribution creates a Distribution"() {
@@ -377,6 +380,7 @@ class SimpleCatalogManagerSpec extends Specification {
         def distribution = service.createDistribution(distributionConfig)
 
         expect:
+        distribution instanceof Distribution
         distribution.getProperty(vf.createIRI(dcTitle)).get().stringValue() == title
         distribution.getProperty(vf.createIRI(dcDescription)).get().stringValue() == description
         distribution.getProperty(vf.createIRI(dcTerms + "format")).get().stringValue() == format
@@ -384,7 +388,6 @@ class SimpleCatalogManagerSpec extends Specification {
         distribution.getDownloadURL().get().stringValue() == downloadURL.stringValue()
         distribution.getProperty(vf.createIRI(dcIssued)).isPresent()
         distribution.getProperty(vf.createIRI(dcModified)).isPresent()
-        distribution instanceof Distribution
     }
 
     def "createDistribution creates a Distribution with no description, format, accessURL, or downloadURL"() {
@@ -394,6 +397,7 @@ class SimpleCatalogManagerSpec extends Specification {
         def distribution = service.createDistribution(distributionConfig)
 
         expect:
+        distribution instanceof Distribution
         distribution.getProperty(vf.createIRI(dcTitle)).get().stringValue() == title
         !distribution.getProperty(vf.createIRI(dcDescription)).isPresent()
         !distribution.getProperty(vf.createIRI(dcTerms + "format")).isPresent()
@@ -401,7 +405,6 @@ class SimpleCatalogManagerSpec extends Specification {
         !distribution.getDownloadURL().isPresent()
         distribution.getProperty(vf.createIRI(dcIssued)).isPresent()
         distribution.getProperty(vf.createIRI(dcModified)).isPresent()
-        distribution instanceof Distribution
     }
 
     def "createVersion creates a Version when provided a VersionFactory"() {
@@ -409,11 +412,11 @@ class SimpleCatalogManagerSpec extends Specification {
         def version = service.createVersion("title", "description", versionFactory)
 
         expect:
+        version instanceof Version
         version.getProperty(vf.createIRI(dcTitle)).get().stringValue() == "title"
         version.getProperty(vf.createIRI(dcDescription)).get().stringValue() == "description"
         version.getProperty(vf.createIRI(dcIssued)).isPresent()
         version.getProperty(vf.createIRI(dcModified)).isPresent()
-        version instanceof Version
     }
 
     def "createVersion creates a Version with no description when provided a VersionFactory"() {
@@ -421,11 +424,11 @@ class SimpleCatalogManagerSpec extends Specification {
         def version = service.createVersion("title", null, versionFactory)
 
         expect:
+        version instanceof Version
         version.getProperty(vf.createIRI(dcTitle)).get().stringValue() == "title"
         !version.getProperty(vf.createIRI(dcDescription)).isPresent()
         version.getProperty(vf.createIRI(dcIssued)).isPresent()
         version.getProperty(vf.createIRI(dcModified)).isPresent()
-        version instanceof Version
     }
 
     def "createVersion creates a Tag when provided a TagFactory"() {
@@ -433,11 +436,11 @@ class SimpleCatalogManagerSpec extends Specification {
         def version = service.createVersion("title", "description", tagFactory)
 
         expect:
+        version instanceof Tag
         version.getProperty(vf.createIRI(dcTitle)).get().stringValue() == "title"
         version.getProperty(vf.createIRI(dcDescription)).get().stringValue() == "description"
         version.getProperty(vf.createIRI(dcIssued)).isPresent()
         version.getProperty(vf.createIRI(dcModified)).isPresent()
-        version instanceof Tag
     }
 
     def "createBranch creates a Branch"() {
@@ -445,11 +448,11 @@ class SimpleCatalogManagerSpec extends Specification {
         def branch = service.createBranch("title", "description")
 
         expect:
+        branch instanceof Branch
         branch.getProperty(vf.createIRI(dcTitle)).get().stringValue() == "title"
         branch.getProperty(vf.createIRI(dcDescription)).get().stringValue() == "description"
         branch.getProperty(vf.createIRI(dcIssued)).isPresent()
         branch.getProperty(vf.createIRI(dcModified)).isPresent()
-        branch instanceof Branch
     }
 
     def "createBranch creates a Branch with no description"() {
@@ -457,10 +460,10 @@ class SimpleCatalogManagerSpec extends Specification {
         def branch = service.createBranch("title", null)
 
         expect:
+        branch instanceof Branch
         branch.getProperty(vf.createIRI(dcTitle)).get().stringValue() == "title"
         !branch.getProperty(vf.createIRI(dcDescription)).isPresent()
         branch.getProperty(vf.createIRI(dcIssued)).isPresent()
         branch.getProperty(vf.createIRI(dcModified)).isPresent()
-        branch instanceof Branch
     }
 }

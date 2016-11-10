@@ -76,22 +76,22 @@ public class DistributionConfig {
             this.title = title;
         }
 
-        public DistributionConfig.Builder description(String description) {
+        public Builder description(String description) {
             this.description = description;
             return this;
         }
 
-        public DistributionConfig.Builder format(String format) {
+        public Builder format(String format) {
             this.format = format;
             return this;
         }
 
-        public DistributionConfig.Builder accessURL(Resource accessURL) {
+        public Builder accessURL(Resource accessURL) {
             this.accessURL = accessURL;
             return this;
         }
 
-        public DistributionConfig.Builder downloadURL(Resource downloadURL) {
+        public Builder downloadURL(Resource downloadURL) {
             this.downloadURL = downloadURL;
             return this;
         }

@@ -37,7 +37,6 @@
     rdfs:range rdfs:Literal.
 
 :catalog a owl:DatatypeProperty, owl:FunctionalProperty;
-    rdfs:subPropertyOf dct:hasPart;
     rdfs:label "catalog"@en;
     rdfs:comment "The Catalog containing the described Record."@en;
     rdfs:domain :Record;

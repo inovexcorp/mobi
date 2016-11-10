@@ -49,6 +49,7 @@ import org.openrdf.rio.Rio;
 import org.openrdf.sail.memory.MemoryStore;
 
 import java.io.InputStream;
+import java.security.InvalidParameterException;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -229,7 +230,7 @@ public class SimpleCatalogManagerTest {
 
     @Test
     public void testGetPublishedCatalog() throws Exception {
-        Catalog catalog = manager.getPublishedCatalog();
+        Catalog catalog = manager.getDistributedCatalog();
         Optional<Value> title = catalog.getProperty(vf.createIRI(DC_TITLE));
         Optional<Value> description = catalog.getProperty(vf.createIRI(DC_DESCRIPTION));
         Optional<Value> issued = catalog.getProperty(vf.createIRI(DC_ISSUED));
@@ -245,7 +246,7 @@ public class SimpleCatalogManagerTest {
 
     @Test
     public void testGetUnpublishedCatalog() throws Exception {
-        Catalog catalog = manager.getUnpublishedCatalog();
+        Catalog catalog = manager.getLocalCatalog();
         Optional<Value> title = catalog.getProperty(vf.createIRI(DC_TITLE));
         Optional<Value> description = catalog.getProperty(vf.createIRI(DC_DESCRIPTION));
         Optional<Value> issued = catalog.getProperty(vf.createIRI(DC_ISSUED));
@@ -1804,8 +1805,8 @@ public class SimpleCatalogManagerTest {
         assertEquals(result.getModel().contains(dummyId, null, null), false);
     }
 
-    @Test
-    public void testCreateInProgressCommit() throws Exception {
+    @Test(expected = InvalidParameterException.class)
+    public void testCreateInProgressCommitWithNoBranch() {
         Resource generation = vf.createIRI("http://matonto.org/test");
         Resource generation2 = vf.createIRI("http://matonto.org/test2");
         Commit parent = commitFactory.createNew(vf.createIRI("http://matonto.org/test/parent"));
@@ -1819,14 +1820,26 @@ public class SimpleCatalogManagerTest {
 
         Resource notPresent = vf.createIRI("http://matonto.org/test/distributions#not-present");
 
-        Optional<InProgressCommit> result = manager.createInProgressCommit(parents, user, notPresent);
-        assertEquals(result.isPresent(), false);
+        manager.createInProgressCommit(parents, user, notPresent);
+    }
+
+    @Test
+    public void testCreateInProgressCommit() throws Exception {
+        Resource generation = vf.createIRI("http://matonto.org/test");
+        Resource generation2 = vf.createIRI("http://matonto.org/test2");
+        Commit parent = commitFactory.createNew(vf.createIRI("http://matonto.org/test/parent"));
+        parent.setProperty(generation, vf.createIRI(PROV_GENERATED));
+        Commit parent2 = commitFactory.createNew(vf.createIRI("http://matonto.org/test/parent2"));
+        parent2.setProperty(generation2, vf.createIRI(PROV_GENERATED));
+        Set<Commit> parents = Stream.of(parent, parent2).collect(Collectors.toSet());
+
+        User user = mock(User.class);
+        when(user.getResource()).thenReturn(vf.createIRI("http://matonto.org/test/user"));
 
         Resource branchId = vf.createIRI("http://matonto.org/test/branches#test");
 
-        result = manager.createInProgressCommit(parents, user, branchId);
-        assertEquals(result.isPresent(), true);
-        InProgressCommit inProgressCommit = result.get();
+        InProgressCommit result = manager.createInProgressCommit(parents, user, branchId);
+        InProgressCommit inProgressCommit = result;
         assertEquals(inProgressCommit.getProperty(vf.createIRI(PROV_WAS_ASSOCIATED_WITH)).get().stringValue(),
                 user.getResource().stringValue());
         assertEquals(inProgressCommit.getProperty(vf.createIRI(PROV_GENERATED)).isPresent(), true);
@@ -1845,8 +1858,6 @@ public class SimpleCatalogManagerTest {
             assertEquals(generations.contains(property), true));
 
         result = manager.createInProgressCommit(null, user, branchId);
-        assertEquals(result.isPresent(), true);
-        inProgressCommit = result.get();
         assertEquals(inProgressCommit.getProperty(vf.createIRI(PROV_WAS_ASSOCIATED_WITH)).get().stringValue(),
                 user.getResource().stringValue());
         assertEquals(inProgressCommit.getProperty(vf.createIRI(PROV_GENERATED)).isPresent(), true);
@@ -2024,10 +2035,10 @@ public class SimpleCatalogManagerTest {
         assertEquals(conn.getStatements(commitId, null, null, commitId).hasNext(), true);
         conn.close();
 
-        Optional<Commit> result = manager.getCommit(different);
+        Optional<Commit> result = manager.getCommit(different, commitFactory);
         assertEquals(result.isPresent(), false);
 
-        result = manager.getCommit(commitId);
+        result = manager.getCommit(commitId, commitFactory);
         assertEquals(result.isPresent(), true);
         Commit commit = result.get();
         assertEquals(commit.getProperty(vf.createIRI(DC_TITLE)).isPresent(), true);
@@ -2042,9 +2053,41 @@ public class SimpleCatalogManagerTest {
 
         Resource notThere = vf.createIRI("http://matonto.org/test/records#not-present");
 
-        result = manager.getCommit(notThere);
+        result = manager.getCommit(notThere, commitFactory);
         assertEquals(result.isPresent(), false);
     }
+
+    /*@Test
+    public void testGetInProgressCommit() throws Exception {
+        Resource commitId = vf.createIRI("http://matonto.org/test/commits#test");
+        String revisionIRI = "http://matonto.org/test/revisions#revision";
+        Resource different = vf.createIRI("http://matonto.org/test/different");
+
+        RepositoryConnection conn = repo.getConnection();
+        assertEquals(conn.getStatements(commitId, null, null, commitId).hasNext(), true);
+        conn.close();
+
+        Optional<Commit> result = manager.getCommit(different, inProgressCommitFactory);
+        assertEquals(result.isPresent(), false);
+
+        result = manager.getCommit(commitId, inProgressCommitFactory);
+        assertEquals(result.isPresent(), true);
+        Commit commit = result.get();
+        assertEquals(commit.getProperty(vf.createIRI(DC_TITLE)).isPresent(), true);
+        assertEquals(commit.getProperty(vf.createIRI(DC_TITLE)).get().stringValue(), "Commit");
+        assertEquals(commit.getProperty(vf.createIRI(PROV_AT_TIME)).isPresent(), true);
+        assertEquals(commit.getProperty(vf.createIRI(PROV_GENERATED)).isPresent(), true);
+        assertEquals(commit.getProperty(vf.createIRI(PROV_GENERATED)).get().stringValue(), revisionIRI);
+
+        Revision revision = revisionFactory.createNew(vf.createIRI(revisionIRI), commit.getModel());
+        assertEquals(revision.getAdditions().isPresent(), true);
+        assertEquals(revision.getDeletions().isPresent(), true);
+
+        Resource notThere = vf.createIRI("http://matonto.org/test/records#not-present");
+
+        result = manager.getCommit(notThere, inProgressCommitFactory);
+        assertEquals(result.isPresent(), false);
+    }*/
 
     @Test
     public void testRemoveInProgressCommit() throws Exception {

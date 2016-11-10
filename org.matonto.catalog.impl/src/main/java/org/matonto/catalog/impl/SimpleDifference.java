@@ -44,8 +44,6 @@ public class SimpleDifference implements Difference {
         private Model additions;
         private Model deletions;
 
-        public Builder() {}
-
         public Builder additions(Model additions) {
             this.additions = additions;
             return this;

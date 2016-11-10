@@ -25,6 +25,14 @@ package org.matonto.catalog.api;
 
 import org.matonto.rdf.api.Model;
 
+/**
+ * This class provides details about the conflicts that occur when two Models are compared. These conflicts would be any
+ * statement where the same subject and predicate was either added or deleted. These two Models were constructed from
+ * two different Commit chains that had a similar Commit somewhere in their history. The statements associated with the
+ * conflicted subject and predicate at the common point is stored in the original. The leftAdditions and leftDeletions
+ * store the statements that were added or deleted for the left Commit. The rightAdditions and rightDeletions store the
+ * statements that were added or deleted for the right Commit.
+ */
 public interface Conflict {
 
     Model getOriginal();

@@ -1,4 +1,3 @@
-PREFIX dc: <http://purl.org/dc/terms/>
 PREFIX mcat: <http://matonto.org/ontologies/catalog#>
 
 SELECT

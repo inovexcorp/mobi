@@ -1,4 +1,3 @@
-PREFIX dc: <http://purl.org/dc/terms/>
 PREFIX mcat: <http://matonto.org/ontologies/catalog#>
 PREFIX prov: <http://www.w3.org/ns/prov#>
 

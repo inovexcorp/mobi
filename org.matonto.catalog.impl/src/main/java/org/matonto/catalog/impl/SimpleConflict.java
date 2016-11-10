@@ -66,8 +66,9 @@ public class SimpleConflict implements Conflict {
         private Model rightDeletions;
 
         /**
-         * The builder for a SimpleConflict which takes the subject IRI string, original model, the first model being
-         * compared (left), and the second model being compared (right).
+         * The builder for a SimpleConflict which takes the subject IRI string, original Model, the first Model being
+         * compared (left), and the second Model being compared (right). The left and right Models are further broken
+         * down into additions and deletions.
          *
          * @param original The Model identifying the original state for this conflict.
          */
