@@ -147,6 +147,24 @@ public class RdfEngine implements Engine {
     }
 
     @Override
+    public Optional<Role> getRole(String roleName) {
+        if (!roles.contains(roleName)) {
+            return Optional.empty();
+        }
+
+        Model roleModel = modelFactory.createModel();
+        try (RepositoryConnection conn = repository.getConnection()) {
+            RepositoryResult<Statement> statements = conn.getStatements(factory.createIRI(roleNamespace + roleName),
+                    null, null, context);
+            statements.forEach(roleModel::add);
+        } catch (RepositoryException e) {
+            throw new MatOntoException("Error in repository connection", e);
+        }
+
+        return Optional.of(roleFactory.getExisting(factory.createIRI(roleNamespace + roleName), roleModel));
+    }
+
+    @Override
     public Set<User> getUsers() {
         Set<User> users = new HashSet<>();
         try (RepositoryConnection conn = repository.getConnection()) {
@@ -177,8 +195,9 @@ public class RdfEngine implements Engine {
         }
         user.setPassword(factory.createLiteral(password));
         Set<Role> newRoles = userConfig.getRoles().stream()
-                .filter(role -> roles.contains(role))
-                .map(roleStr -> roleFactory.createNew(factory.createIRI(roleNamespace + roleStr)))
+                .map(this::getRole)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
                 .collect(Collectors.toSet());
         if (!newRoles.isEmpty()) {
             user.setHasUserRole(newRoles);
@@ -203,7 +222,7 @@ public class RdfEngine implements Engine {
     }
 
     @Override
-    public boolean storeUser(User user) {
+    public void storeUser(User user) {
         if (userExists(user.getResource().stringValue().replace(userNamespace, ""))) {
             throw new MatOntoException("User with that id already exists");
         }
@@ -213,7 +232,6 @@ public class RdfEngine implements Engine {
         } catch (RepositoryException e) {
             throw new MatOntoException("Error in repository connection", e);
         }
-        return true;
     }
 
     @Override
@@ -232,11 +250,9 @@ public class RdfEngine implements Engine {
             RepositoryResult<Statement> statements = conn.getStatements(factory.createIRI(userNamespace + username),
                     null, null, context);
             statements.forEach(userModel::add);
-            roles.forEach(role -> {
-                RepositoryResult<Statement> roleStatements = conn.getStatements(factory.createIRI(roleNamespace + role),
-                        null, null, context);
-                roleStatements.forEach(userModel::add);
-            });
+            roles.stream()
+                    .map(this::getRole)
+                    .forEach(roleOptional -> roleOptional.ifPresent(role -> userModel.addAll(role.getModel())));
         } catch (RepositoryException e) {
             throw new MatOntoException("Error in repository connection", e);
         }
@@ -244,7 +260,7 @@ public class RdfEngine implements Engine {
     }
 
     @Override
-    public boolean updateUser(User newUser) {
+    public void updateUser(User newUser) {
         if (!userExists(newUser.getResource().stringValue().replace(userNamespace, ""))) {
             throw new MatOntoException("User with that id does not exist");
         }
@@ -254,12 +270,10 @@ public class RdfEngine implements Engine {
         } catch (RepositoryException e) {
             throw new MatOntoException("Error in repository connection", e);
         }
-
-        return true;
     }
 
     @Override
-    public boolean deleteUser(String username) {
+    public void deleteUser(String username) {
         if (!userExists(username)) {
             throw new MatOntoException("User with that id does not exist");
         }
@@ -269,8 +283,6 @@ public class RdfEngine implements Engine {
         } catch (RepositoryException e) {
             throw new MatOntoException("Error in repository connection", e);
         }
-
-        return true;
     }
 
     @Override
@@ -304,8 +316,9 @@ public class RdfEngine implements Engine {
         }
         if (groupConfig.getRoles() != null) {
             Set<Role> newRoles = groupConfig.getRoles().stream()
-                    .filter(role -> roles.contains(role))
-                    .map(roleStr -> roleFactory.createNew(factory.createIRI(roleNamespace + roleStr)))
+                    .map(this::getRole)
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
                     .collect(Collectors.toSet());
             if (!newRoles.isEmpty()) {
                 group.setHasGroupRole(newRoles);
@@ -319,7 +332,7 @@ public class RdfEngine implements Engine {
     }
 
     @Override
-    public boolean storeGroup(Group group) {
+    public void storeGroup(Group group) {
         if (groupExists(group.getResource().stringValue().replace(groupNamespace, ""))) {
             throw new MatOntoException("Group with that id already exists");
         }
@@ -329,7 +342,6 @@ public class RdfEngine implements Engine {
         } catch (RepositoryException e) {
             throw new MatOntoException("Error in repository connection", e);
         }
-        return true;
     }
 
     @Override
@@ -348,11 +360,9 @@ public class RdfEngine implements Engine {
             RepositoryResult<Statement> statements = conn.getStatements(factory.createIRI(groupNamespace + groupName),
                     null, null, context);
             statements.forEach(groupModel::add);
-            roles.forEach(role -> {
-                RepositoryResult<Statement> roleStatements = conn.getStatements(factory.createIRI(roleNamespace + role),
-                        null, null, context);
-                roleStatements.forEach(groupModel::add);
-            });
+            roles.stream()
+                    .map(this::getRole)
+                    .forEach(roleOptional -> roleOptional.ifPresent(role -> groupModel.addAll(role.getModel())));
             groupModel.filter(factory.createIRI(groupNamespace + groupName), factory.createIRI(Group.member_IRI), null)
                     .objects().forEach(userIRI -> {
                         RepositoryResult<Statement> userStatements = conn.getStatements((Resource) userIRI, null, null,
@@ -366,7 +376,7 @@ public class RdfEngine implements Engine {
     }
 
     @Override
-    public boolean updateGroup(Group newGroup) {
+    public void updateGroup(Group newGroup) {
         if (!groupExists(newGroup.getResource().stringValue().replace(groupNamespace, ""))) {
             throw new MatOntoException("Group with that id does not exist");
         }
@@ -376,12 +386,10 @@ public class RdfEngine implements Engine {
         } catch (RepositoryException e) {
             throw new MatOntoException("Error in repository connection", e);
         }
-
-        return true;
     }
 
     @Override
-    public boolean deleteGroup(String groupName) {
+    public void deleteGroup(String groupName) {
         if (!groupExists(groupName)) {
             throw new MatOntoException("Group with that id does not exist");
         }
@@ -390,19 +398,15 @@ public class RdfEngine implements Engine {
         } catch (RepositoryException e) {
             throw new MatOntoException("Error in repository connection", e);
         }
-
-        return true;
     }
 
     @Override
     public Set<Role> getUserRoles(String username) {
-        if (!userExists(username)) {
-            throw new MatOntoException("User with that id does not exist");
-        }
-        Set<Role> allRoles = new HashSet<>();
+        TreeSet<Role> allRoles = new TreeSet<>((role1, role2) ->
+                role1.getResource().stringValue().compareTo(role2.getResource().stringValue()));
         Optional<User> userOptional = retrieveUser(username);
         if (!userOptional.isPresent()) {
-            throw new MatOntoException("Could not retrieve user");
+            throw new MatOntoException("User with that id does not exist");
         }
         allRoles.addAll(userOptional.get().getHasUserRole());
         getGroups().stream()
@@ -410,11 +414,8 @@ public class RdfEngine implements Engine {
                         .map(Thing::getResource)
                         .anyMatch(resource -> resource.equals(factory.createIRI(userNamespace + username))))
                 .map(Group::getHasGroupRole)
-                .forEach(groupRoles -> groupRoles.stream()
-                        .filter(role -> !allRoles.stream()
-                                .map(Thing::getResource)
-                                .anyMatch(resource -> resource.equals(role.getResource())))
-                        .forEach(allRoles::add));
+                .flatMap(Collection::stream)
+                .forEach(allRoles::add);
 
         return allRoles;
     }

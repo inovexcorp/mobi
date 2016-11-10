@@ -24,7 +24,6 @@ package org.matonto.jaas.engines;
  */
 
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.matonto.exception.MatOntoException;
@@ -52,6 +51,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static junit.framework.TestCase.*;
+
 public class RdfEngineTest {
     private Repository repo;
     private RdfEngine engine;
@@ -67,8 +68,10 @@ public class RdfEngineTest {
     private String username = "tester";
     private String userId = "http://matonto.org/users/" + username;
     private String password = "test";
-    private String groupName = "testers";
-    private String groupId = "http://matonto.org/groups/" + groupName;
+    private String groupName1 = "cats";
+    private String groupId1 = "http://matonto.org/groups/" + groupName1;
+    private String groupName2 = "dogs";
+    private String groupId2 = "http://matonto.org/groups/" + groupName2;
     private String userRoleId = "http://matonto.org/roles/user";
     private String adminRoleId = "http://matonto.org/roles/admin";
     private String context = "http://matonto.org/usermanagement";
@@ -127,16 +130,18 @@ public class RdfEngineTest {
             User testUser = userFactory.createNew(vf.createIRI(userId));
             testUser.setPassword(vf.createLiteral(password));
             testUser.setHasUserRole(roles);
-            Group testGroup = groupFactory.createNew(vf.createIRI(groupId));
             roles.add(adminRole);
-            testGroup.setHasGroupRole(roles);
             Set<Agent> members = Stream.of(testUser).collect(Collectors.toSet());
-            testGroup.setMember(members);
+            Group testGroup1 = groupFactory.createNew(vf.createIRI(groupId1));
+            Group testGroup2 = groupFactory.createNew(vf.createIRI(groupId2));
+            testGroup1.setHasGroupRole(roles);
+            testGroup2.setHasGroupRole(Collections.singleton(roleFactory.createNew(vf.createIRI(adminRoleId))));
+            testGroup1.setMember(members);
+            testGroup2.setMember(members);
             RepositoryConnection conn = repo.getConnection();
-            conn.add(userRole.getModel(), vf.createIRI(context));
-            conn.add(adminRole.getModel(), vf.createIRI(context));
             conn.add(testUser.getModel(), vf.createIRI(context));
-            conn.add(testGroup.getModel(), vf.createIRI(context));
+            conn.add(testGroup1.getModel(), vf.createIRI(context));
+            conn.add(testGroup2.getModel(), vf.createIRI(context));
             conn.close();
             setUp = true;
         }
@@ -156,9 +161,24 @@ public class RdfEngineTest {
     }
 
     @Test
+    public void testGetRole() throws Exception {
+        Optional<Role> roleOptional = engine.getRole("user");
+
+        assertTrue(roleOptional.isPresent());
+        Role role = roleOptional.get();
+        assertEquals(role.getResource(), (vf.createIRI(userRoleId)));
+    }
+
+    @Test
+    public void testGetRoleThatDoesNotExist() throws Exception {
+        Optional<Role> roleOptional = engine.getRole("error");
+        assertFalse(roleOptional.isPresent());
+    }
+
+    @Test
     public void testGetUsers() throws Exception {
         Set<User> users = engine.getUsers();
-        Assert.assertTrue(!users.isEmpty());
+        assertTrue(!users.isEmpty());
     }
 
     @Test
@@ -168,28 +188,26 @@ public class RdfEngineTest {
                 .firstName("John").lastName("Doe").build();
         User user = engine.createUser(config);
 
-        Assert.assertTrue(user.getResource().stringValue().equals(userId));
-        Assert.assertTrue(user.getUsername().isPresent() && user.getUsername().get().stringValue().equals(username));
-        Assert.assertTrue(user.getPassword().isPresent() && user.getPassword().get().stringValue().equals(password));
-        Assert.assertTrue(user.getHasUserRole().size() == roles.size());
-        Assert.assertTrue(!user.getMbox().isEmpty() && user.getMbox().size() == 1);
-        Assert.assertTrue(user.getMbox().stream().map(thing -> thing.getResource().stringValue()).collect(Collectors.toSet()).contains("mailto:example@example.com"));
-        Assert.assertTrue(!user.getFirstName().isEmpty() && user.getFirstName().size() == 1);
-        Assert.assertTrue(user.getFirstName().stream().map(Value::stringValue).collect(Collectors.toSet()).contains("John"));
-        Assert.assertTrue(!user.getLastName().isEmpty() && user.getLastName().size() == 1);
-        Assert.assertTrue(user.getLastName().stream().map(Value::stringValue).collect(Collectors.toSet()).contains("Doe"));
+        assertTrue(user.getResource().stringValue().equals(userId));
+        assertTrue(user.getUsername().isPresent() && user.getUsername().get().stringValue().equals(username));
+        assertTrue(user.getPassword().isPresent() && user.getPassword().get().stringValue().equals(password));
+        assertEquals(user.getHasUserRole().size(), roles.size());
+        assertTrue(!user.getMbox().isEmpty() && user.getMbox().size() == 1);
+        assertTrue(user.getMbox().stream().map(thing -> thing.getResource().stringValue()).collect(Collectors.toSet()).contains("mailto:example@example.com"));
+        assertTrue(!user.getFirstName().isEmpty() && user.getFirstName().size() == 1);
+        assertTrue(user.getFirstName().stream().map(Value::stringValue).collect(Collectors.toSet()).contains("John"));
+        assertTrue(!user.getLastName().isEmpty() && user.getLastName().size() == 1);
+        assertTrue(user.getLastName().stream().map(Value::stringValue).collect(Collectors.toSet()).contains("Doe"));
     }
 
     @Test
     public void testStoreUser() throws Exception {
         Resource newUserId = vf.createIRI("http://matonto.org/users/newuser");
         User newUser = userFactory.createNew(newUserId);
-        boolean result = engine.storeUser(newUser);
-
-        Assert.assertTrue(result);
+        engine.storeUser(newUser);
         RepositoryConnection connection = repo.getConnection();
         RepositoryResult<Statement> statements = connection.getStatements(newUserId, null, null);
-        Assert.assertTrue(statements.hasNext());
+        assertTrue(statements.hasNext());
         connection.close();
     }
 
@@ -202,27 +220,27 @@ public class RdfEngineTest {
     @Test
     public void testUserExists() throws Exception {
         boolean result = engine.userExists(username);
-        Assert.assertTrue(result);
+        assertTrue(result);
 
         result = engine.userExists("http://matonto.org/users/error");
-        Assert.assertFalse(result);
+        assertFalse(result);
     }
 
     @Test
     public void testRetrieveUser() throws Exception {
         Optional<User> userOptional = engine.retrieveUser(username);
 
-        Assert.assertTrue(userOptional.isPresent());
+        assertTrue(userOptional.isPresent());
         User user = userOptional.get();
-        Assert.assertTrue(user.getResource().stringValue().equals(userId));
-        Assert.assertTrue(user.getPassword().isPresent());
-        Assert.assertTrue(user.getPassword().get().stringValue().equals(password));
+        assertEquals(user.getResource().stringValue(), userId);
+        assertTrue(user.getPassword().isPresent());
+        assertEquals(user.getPassword().get().stringValue(), password);
     }
 
     @Test
     public void testRetrieveUserThatDoesNotExist() throws Exception {
         Optional<User> userOptional = engine.retrieveUser("http://matonto.org/users/error");
-        Assert.assertFalse(userOptional.isPresent());
+        assertFalse(userOptional.isPresent());
     }
 
     @Test
@@ -230,18 +248,16 @@ public class RdfEngineTest {
         User newUser = userFactory.createNew(vf.createIRI(userId));
         newUser.setPassword(vf.createLiteral("123"));
         newUser.setUsername(vf.createLiteral("user"));
-        boolean result = engine.updateUser(newUser);
-
-        Assert.assertTrue(result);
+        engine.updateUser(newUser);
         Model userModel = mf.createModel();
         RepositoryConnection connection = repo.getConnection();
         RepositoryResult<Statement> statements = connection.getStatements(vf.createIRI(userId), null, null);
         statements.forEach(userModel::add);
         connection.close();
-        Assert.assertFalse(userModel.isEmpty());
+        assertFalse(userModel.isEmpty());
         User savedUser = userFactory.getExisting(vf.createIRI(userId), userModel);
-        Assert.assertTrue(savedUser.getPassword().isPresent() && savedUser.getPassword().get().stringValue().equals("123"));
-        Assert.assertTrue(savedUser.getUsername().isPresent() && savedUser.getUsername().get().stringValue().equals("user"));
+        assertTrue(savedUser.getPassword().isPresent() && savedUser.getPassword().get().stringValue().equals("123"));
+        assertTrue(savedUser.getUsername().isPresent() && savedUser.getUsername().get().stringValue().equals("user"));
     }
 
     @Test(expected = MatOntoException.class)
@@ -252,13 +268,12 @@ public class RdfEngineTest {
 
     @Test
     public void testDeleteUser() throws Exception {
-        boolean result = engine.deleteUser(username);
-        Assert.assertTrue(result);
+        engine.deleteUser(username);
         RepositoryConnection connection = repo.getConnection();
         RepositoryResult<Statement> statements = connection.getStatements(vf.createIRI(userId), null, null);
-        Assert.assertTrue(!statements.hasNext());
+        assertTrue(!statements.hasNext());
         statements = connection.getStatements(null, null, vf.createIRI(userId));
-        Assert.assertTrue(!statements.hasNext());
+        assertTrue(!statements.hasNext());
         connection.close();
     }
 
@@ -270,23 +285,23 @@ public class RdfEngineTest {
     @Test
     public void testGetGroups() throws Exception {
         Set<Group> groups= engine.getGroups();
-        Assert.assertTrue(!groups.isEmpty());
+        assertTrue(!groups.isEmpty());
     }
 
     @Test
     public void testCreateGroup() throws Exception {
         Set<String> members = Stream.of("tester").collect(Collectors.toSet());
         Set<String> roles = Stream.of("user").collect(Collectors.toSet());
-        GroupConfig config = new GroupConfig.Builder(groupName).description("Test")
+        GroupConfig config = new GroupConfig.Builder(groupName1).description("Test")
                 .members(members).roles(roles).build();
         Group group = engine.createGroup(config);
 
-        Assert.assertTrue(group.getResource().stringValue().equals(groupId));
-        Assert.assertTrue(group.getMember().size() == members.size());
-        Assert.assertTrue(group.getHasGroupRole().size() == roles.size());
-        Assert.assertTrue(group.getProperty(vf.createIRI(DCTERMS.TITLE.stringValue())).isPresent()
-                && group.getProperty(vf.createIRI(DCTERMS.TITLE.stringValue())).get().stringValue().equals(groupName));
-        Assert.assertTrue(group.getProperty(vf.createIRI(DCTERMS.DESCRIPTION.stringValue())).isPresent()
+        assertEquals(group.getResource().stringValue(), groupId1);
+        assertEquals(group.getMember().size(), members.size());
+        assertEquals(group.getHasGroupRole().size(), roles.size());
+        assertTrue(group.getProperty(vf.createIRI(DCTERMS.TITLE.stringValue())).isPresent()
+                && group.getProperty(vf.createIRI(DCTERMS.TITLE.stringValue())).get().stringValue().equals(groupName1));
+        assertTrue(group.getProperty(vf.createIRI(DCTERMS.DESCRIPTION.stringValue())).isPresent()
                 && group.getProperty(vf.createIRI(DCTERMS.DESCRIPTION.stringValue())).get().stringValue().equals("Test"));
     }
 
@@ -294,59 +309,55 @@ public class RdfEngineTest {
     public void testStoreGroup() throws Exception {
         Resource newGroupId = vf.createIRI("http://matonto.org/users/newgroup");
         Group newGroup = groupFactory.createNew(newGroupId);
-        boolean result = engine.storeGroup(newGroup);
-
-        Assert.assertTrue(result);
+        engine.storeGroup(newGroup);
         RepositoryConnection connection = repo.getConnection();
         RepositoryResult<Statement> statements = connection.getStatements(newGroupId, null, null);
-        Assert.assertTrue(statements.hasNext());
+        assertTrue(statements.hasNext());
         connection.close();
     }
 
     @Test(expected = MatOntoException.class)
     public void testStoreGroupThatAlreadyExists() {
-        Group group= groupFactory.createNew(vf.createIRI(groupId));
+        Group group= groupFactory.createNew(vf.createIRI(groupId1));
         engine.storeGroup(group);
     }
 
     @Test
     public void testGroupExists() throws Exception {
-        boolean result = engine.groupExists(groupName);
-        Assert.assertTrue(result);
+        boolean result = engine.groupExists(groupName1);
+        assertTrue(result);
 
         result = engine.groupExists("http://matonto.org/groups/error");
-        Assert.assertFalse(result);
+        assertFalse(result);
     }
 
     @Test
     public void testRetrieveGroup() throws Exception {
-        Optional<Group> groupOptional = engine.retrieveGroup(groupName);
+        Optional<Group> groupOptional = engine.retrieveGroup(groupName1);
 
-        Assert.assertTrue(groupOptional.isPresent());
+        assertTrue(groupOptional.isPresent());
         Group group = groupOptional.get();
-        Assert.assertTrue(group.getResource().stringValue().equals(groupId));
+        assertEquals(group.getResource().stringValue(), groupId1);
     }
 
     @Test
     public void testRetrieveGroupThatDoesNotExist() throws Exception {
         Optional<Group> groupOptional= engine.retrieveGroup("http://matonto.org/groups/error");
-        Assert.assertFalse(groupOptional.isPresent());
+        assertFalse(groupOptional.isPresent());
     }
 
     @Test
     public void testUpdateGroup() throws Exception {
-        Group newGroup = groupFactory.createNew(vf.createIRI(groupId));
-        boolean result = engine.updateGroup(newGroup);
-
-        Assert.assertTrue(result);
+        Group newGroup = groupFactory.createNew(vf.createIRI(groupId1));
+        engine.updateGroup(newGroup);
         Model groupModel = mf.createModel();
         RepositoryConnection connection = repo.getConnection();
-        RepositoryResult<Statement> statements = connection.getStatements(vf.createIRI(groupId), null, null);
+        RepositoryResult<Statement> statements = connection.getStatements(vf.createIRI(groupId1), null, null);
         statements.forEach(groupModel::add);
         connection.close();
-        Assert.assertFalse(groupModel.isEmpty());
-        Group savedGroup = groupFactory.getExisting(vf.createIRI(groupId), groupModel);
-        Assert.assertTrue(savedGroup.getMember().isEmpty());
+        assertFalse(groupModel.isEmpty());
+        Group savedGroup = groupFactory.getExisting(vf.createIRI(groupId1), groupModel);
+        assertTrue(savedGroup.getMember().isEmpty());
     }
 
     @Test(expected = MatOntoException.class)
@@ -357,11 +368,10 @@ public class RdfEngineTest {
 
     @Test
     public void testDeleteGroup() throws Exception {
-        boolean result = engine.deleteGroup(groupName);
-        Assert.assertTrue(result);
+        engine.deleteGroup(groupName1);
         RepositoryConnection connection = repo.getConnection();
-        RepositoryResult<Statement> statements = connection.getStatements(vf.createIRI(groupId), null, null);
-        Assert.assertTrue(!statements.hasNext());
+        RepositoryResult<Statement> statements = connection.getStatements(vf.createIRI(groupId1), null, null);
+        assertTrue(!statements.hasNext());
         connection.close();
     }
 
@@ -373,12 +383,12 @@ public class RdfEngineTest {
     @Test
     public void testGetUserRoles() throws Exception {
         Set<Role> roles = engine.getUserRoles(username);
-        Assert.assertFalse(roles.isEmpty());
+        assertFalse(roles.isEmpty());
         Set<Resource> roleIds = roles.stream()
                 .map(Thing::getResource)
                 .collect(Collectors.toSet());
-        Assert.assertTrue(roleIds.contains(vf.createIRI(userRoleId)));
-        Assert.assertTrue(roleIds.contains(vf.createIRI(adminRoleId)));
+        assertTrue(roleIds.contains(vf.createIRI(userRoleId)));
+        assertTrue(roleIds.contains(vf.createIRI(adminRoleId)));
     }
 
     @Test(expected = MatOntoException.class)
@@ -389,9 +399,9 @@ public class RdfEngineTest {
     @Test
     public void testCheckPasswordWithoutEncryption() throws Exception {
         boolean result = engine.checkPassword(username, password);
-        Assert.assertTrue(result);
+        assertTrue(result);
 
         result = engine.checkPassword(username, "password");
-        Assert.assertFalse(result);
+        assertFalse(result);
     }
 }
