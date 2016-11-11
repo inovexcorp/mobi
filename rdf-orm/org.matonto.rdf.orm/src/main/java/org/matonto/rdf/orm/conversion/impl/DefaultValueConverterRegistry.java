@@ -158,33 +158,37 @@ public class DefaultValueConverterRegistry implements ValueConverterRegistry {
 
     @Override
     public <T> Set<Value> convertTypes(Set<T> types, Thing thing) throws OrmException {
-        @SuppressWarnings("unchecked")
-        final ValueConverter<T> converter = getValueConverter(boxify((Class<T>) types.iterator().next().getClass()));
-        if (converter != null) {
-            final List<Exception> exceptions = new ArrayList<>();
-            try {
-                return JOIN_POOL.submit(() -> {
-                    final Set<Value> result = types.parallelStream().map(type -> {
-                        try {
-                            return converter.convertType(type, thing);
-                        } catch (Exception e) {
-                            exceptions.add(e);
-                            return null;
-                        }
-                    }).collect(Collectors.toSet());
-                    if (exceptions.isEmpty()) {
-                        return result;
-                    } else {
-                        throw new ValueConversionException(
-                                "Issue converting values to desired type for the specified reasons:", exceptions);
-                    }
-                }).get();
-            } catch (InterruptedException | ExecutionException e) {
-                throw new ValueConversionException("Issue processing values in multi-threaded mode", e);
-            }
+        if (types.isEmpty()) {
+            return new HashSet<>();
         } else {
-            throw new ValueConversionException(
-                    "No ValueConverter registered to handle desired type: " + types.iterator().next().getClass());
+            @SuppressWarnings("unchecked")
+            final ValueConverter<T> converter = getValueConverter(boxify((Class<T>) types.iterator().next().getClass()));
+            if (converter != null) {
+                final List<Exception> exceptions = new ArrayList<>();
+                try {
+                    return JOIN_POOL.submit(() -> {
+                        final Set<Value> result = types.parallelStream().map(type -> {
+                            try {
+                                return converter.convertType(type, thing);
+                            } catch (Exception e) {
+                                exceptions.add(e);
+                                return null;
+                            }
+                        }).collect(Collectors.toSet());
+                        if (exceptions.isEmpty()) {
+                            return result;
+                        } else {
+                            throw new ValueConversionException(
+                                    "Issue converting values to desired type for the specified reasons:", exceptions);
+                        }
+                    }).get();
+                } catch (InterruptedException | ExecutionException e) {
+                    throw new ValueConversionException("Issue processing values in multi-threaded mode", e);
+                }
+            } else {
+                throw new ValueConversionException(
+                        "No ValueConverter registered to handle desired type: " + types.iterator().next().getClass());
+            }
         }
     }
 
@@ -204,7 +208,7 @@ public class DefaultValueConverterRegistry implements ValueConverterRegistry {
                 if (result != null) break;
             }
             // Recurse on super class
-            if (result == null && type.getSuperclass() !=null) {
+            if (result == null && type.getSuperclass() != null) {
                 result = (ValueConverter<T>) getValueConverter(type.getSuperclass());
             }
         }
