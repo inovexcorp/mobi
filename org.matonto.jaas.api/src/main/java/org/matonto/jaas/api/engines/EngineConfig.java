@@ -1,8 +1,8 @@
-package org.matonto.jaas.realm;
+package org.matonto.jaas.api.engines;
 
 /*-
  * #%L
- * org.matonto.jaas
+ * org.matonto.jaas.api
  * $Id:$
  * $HeadURL:$
  * %%
@@ -26,7 +26,12 @@ package org.matonto.jaas.realm;
 import aQute.bnd.annotation.metatype.Meta;
 
 @Meta.OCD
-public interface RealmConfig {
+public interface EngineConfig {
+    /**
+     * The list of roles for this engine.
+     */
+    @Meta.AD(id = "roles")
+    String[] roles();
 
     /**
      * Boolean enabling / disabling encrypted passwords.
@@ -48,7 +53,7 @@ public interface RealmConfig {
     String encryptionSuffix();
 
     /**
-     * Set the encryption algorithm to use in Karaf JAAS login module. Supported encryption algorithms follow:
+     * Set the encryption algorithm to use in engine. Supported encryption algorithms follow:
      * <ul>
      *     <li>MD2</li>
      *     <li>MD5</li>

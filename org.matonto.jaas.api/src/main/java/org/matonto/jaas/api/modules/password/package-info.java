@@ -1,4 +1,6 @@
-package org.matonto.jaas.config;
+@Version("1.0.0.${build}")
+
+package org.matonto.jaas.api.modules.password;
 
 /*-
  * #%L
@@ -23,7 +25,4 @@ package org.matonto.jaas.config;
  * #L%
  */
 
-public class LoginModuleConfig {
-
-    public static final String USERS_FILE = "users";
-}
+import aQute.bnd.annotation.Version;
