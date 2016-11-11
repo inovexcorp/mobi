@@ -134,7 +134,7 @@ public interface CatalogManager {
             MatOntoException;
 
     /**
-     * Creates a Distribution with with the metadata from the provided DistributionConfig.
+     * Creates a Distribution with the metadata from the provided DistributionConfig.
      *
      * @param config The DistributionConfig which contains the needed metadata to create the Distribution.
      * @return Distribution created with the provided metadata.
@@ -268,7 +268,7 @@ public interface CatalogManager {
      * @param description The description text.
      * @return Branch created with the provided metadata.
      */
-    Branch createBranch(String title, String description);
+    Branch createBranch(@Nonnull String title, String description);
 
     /**
      * Stores the provided Branch in the repository and adds it to the VersinedRDFRecord identified by the provided
