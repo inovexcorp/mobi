@@ -1,4 +1,4 @@
-package org.matonto.jaas.modules.token;
+package org.matonto.jaas.api.principals;
 
 /*-
  * #%L
@@ -23,26 +23,30 @@ package org.matonto.jaas.modules.token;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Component;
-import org.apache.karaf.jaas.modules.BackingEngine;
-import org.apache.karaf.jaas.modules.BackingEngineFactory;
-import org.apache.karaf.jaas.modules.encryption.EncryptionSupport;
-import org.matonto.jaas.config.LoginModuleConfig;
+import java.security.Principal;
 
-import java.util.Map;
+public class UserPrincipal implements Principal {
+    private String name;
 
-@Component(immediate = true)
-public class TokenBackingEngineFactory implements BackingEngineFactory {
-
-    @Override
-    public String getModuleClass() {
-        return TokenLoginModule.class.getName();
+    public UserPrincipal(String name) {
+        this.name = name;
     }
 
     @Override
-    public BackingEngine build(Map<String, ?> options) {
-        String usersFileString = (String) options.get(LoginModuleConfig.USERS_FILE);
-        EncryptionSupport encryptionSupport = new EncryptionSupport(options);
-        return new TokenBackingEngine(usersFileString, encryptionSupport);
+    public String getName() {
+        return this.name;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (!(obj instanceof UserPrincipal)) {
+            return false;
+        }
+
+        UserPrincipal that = (UserPrincipal) obj;
+        return name != null ? name.equals(that.name) : that.name == null;
     }
 }

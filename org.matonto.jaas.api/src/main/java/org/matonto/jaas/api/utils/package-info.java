@@ -1,4 +1,6 @@
-package org.matonto.jaas.modules.token;
+@Version("1.0.0.${build}")
+
+package org.matonto.jaas.api.utils;
 
 /*-
  * #%L
@@ -23,17 +25,4 @@ package org.matonto.jaas.modules.token;
  * #L%
  */
 
-import javax.security.auth.callback.Callback;
-
-public class TokenCallback implements Callback {
-
-    private String tokenString;
-
-    public String getTokenString() {
-        return tokenString;
-    }
-
-    public void setTokenString(String tokenString) {
-        this.tokenString = tokenString;
-    }
-}
+import aQute.bnd.annotation.Version;

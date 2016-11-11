@@ -29,7 +29,7 @@
 
     <groupId>org.matonto</groupId>
     <artifactId>root</artifactId>
-    <version>1.4.1-SNAPSHOT</version>
+    <version>1.4.2-SNAPSHOT</version>
 
     <packaging>pom</packaging>
 
@@ -81,6 +81,8 @@
         <module>org.matonto.karaf.feature</module>
         <module>org.matonto.rdf.orm.ontologies</module>
         <module>rdf-orm</module>
+        <module>org.matonto.jaas.api</module>
+        <module>org.matonto.jaas.proxy</module>
     </modules>
 
     <properties>

@@ -96,7 +96,9 @@
         <bundle start-level="80">mvn:org.matonto/repository.impl.sesame/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/catalog.api/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/catalog.impl/${project.version}</bundle>
+        <bundle start-level="80">mvn:org.matonto/jaas/1.2.10</bundle>
         <bundle start-level="80">mvn:org.matonto/jaas/${project.version}</bundle>
+        <bundle start-level="80">mvn:org.matonto/jaas.api/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/rdf.orm/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/rdf.orm.ontologies/${project.version}</bundle>
     </feature>

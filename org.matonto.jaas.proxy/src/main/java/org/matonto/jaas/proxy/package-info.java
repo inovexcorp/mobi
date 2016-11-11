@@ -1,10 +1,10 @@
-@Version("1.1.0.${build}")
+@Version("1.0.0.${build}")
 
-package org.matonto.jaas.modules.token;
+package org.matonto.jaas.proxy;
 
 /*-
  * #%L
- * org.matonto.jaas
+ * org.matonto.jaas.api
  * $Id:$
  * $HeadURL:$
  * %%

@@ -25,7 +25,7 @@ package org.matonto.web.authentication.filter;
 
 import com.nimbusds.jwt.SignedJWT;
 import org.apache.log4j.Logger;
-import org.matonto.jaas.utils.TokenUtils;
+import org.matonto.jaas.api.utils.TokenUtils;
 
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
