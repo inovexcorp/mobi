@@ -456,7 +456,6 @@ public class RdfEngine implements Engine {
         userNamespace = "http://matonto.org/users/";
         groupNamespace = "http://matonto.org/groups/";
         roleNamespace = "http://matonto.org/roles/";
-//        roles = Stream.of("user", "admin").collect(Collectors.toSet());
     }
 
     private void setEncryption(RdfEngineConfig config) {
