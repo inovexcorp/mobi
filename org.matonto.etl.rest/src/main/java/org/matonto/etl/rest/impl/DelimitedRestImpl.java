@@ -45,9 +45,9 @@ import org.matonto.etl.api.delimited.MappingManager;
 import org.matonto.etl.api.delimited.MappingWrapper;
 import org.matonto.etl.rest.DelimitedRest;
 import org.matonto.exception.MatOntoException;
+import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
-import org.matonto.rdf.core.utils.Values;
 import org.matonto.rest.util.CharsetUtils;
 import org.matonto.rest.util.ErrorUtils;
 import org.openrdf.model.Model;
@@ -93,6 +93,7 @@ public class DelimitedRestImpl implements DelimitedRest {
     private MappingManager mappingManager;
     private ValueFactory factory;
     private final Logger logger = LoggerFactory.getLogger(DelimitedRestImpl.class);
+    private SesameTransformer transformer;
 
     private static final long NUM_LINE_PREVIEW = 10;
 
@@ -111,6 +112,11 @@ public class DelimitedRestImpl implements DelimitedRest {
     @Reference
     public void setFactory(ValueFactory factory) {
         this.factory = factory;
+    }
+
+    @Reference
+    protected void setTransformer(SesameTransformer transformer) {
+        this.transformer = transformer;
     }
 
     @Activate
@@ -180,13 +186,13 @@ public class DelimitedRestImpl implements DelimitedRest {
         String result;
         InputStream data = getDocumentInputStream(delimitedFile);
         if (extension.equals("xls") || extension.equals("xlsx")) {
-            ExcelConfig config = new ExcelConfig.Builder(data, Values.matontoModel(mappingModel))
+            ExcelConfig config = new ExcelConfig.Builder(data, transformer.matontoModel(mappingModel))
                     .containsHeaders(containsHeaders)
                     .limit(NUM_LINE_PREVIEW)
                     .build();
             result = etlFile(format, () -> converter.convert(config));
         } else {
-            SVConfig config = new SVConfig.Builder(data, Values.matontoModel(mappingModel))
+            SVConfig config = new SVConfig.Builder(data, transformer.matontoModel(mappingModel))
                     .containsHeaders(containsHeaders)
                     .separator(separator.charAt(0))
                     .limit(NUM_LINE_PREVIEW)
@@ -215,7 +221,7 @@ public class DelimitedRestImpl implements DelimitedRest {
         Resource mappingId = mappingManager.createMappingId(factory.createIRI(mappingIRI)).getMappingIdentifier();
         Optional<MappingWrapper> mappingOptional = mappingManager.retrieveMapping(mappingId);
         if (mappingOptional.isPresent()) {
-            mappingModel = Values.sesameModel(mappingOptional.get().getModel());
+            mappingModel = transformer.sesameModel(mappingOptional.get().getModel());
         } else {
             throw ErrorUtils.sendError("Mapping " + mappingId + " does not exist",
                     Response.Status.BAD_REQUEST);
@@ -224,12 +230,12 @@ public class DelimitedRestImpl implements DelimitedRest {
         String result;
         InputStream data = getDocumentInputStream(delimitedFile);
         if (extension.equals("xls") || extension.equals("xlsx")) {
-            ExcelConfig config = new ExcelConfig.Builder(data, Values.matontoModel(mappingModel))
+            ExcelConfig config = new ExcelConfig.Builder(data, transformer.matontoModel(mappingModel))
                     .containsHeaders(containsHeaders)
                     .build();
             result = etlFile(format, () -> converter.convert(config));
         } else {
-            SVConfig config = new SVConfig.Builder(data, Values.matontoModel(mappingModel))
+            SVConfig config = new SVConfig.Builder(data, transformer.matontoModel(mappingModel))
                     .containsHeaders(containsHeaders)
                     .separator(separator.charAt(0))
                     .build();
@@ -280,7 +286,7 @@ public class DelimitedRestImpl implements DelimitedRest {
         // Convert InputStream to RDF
         Model model;
         try {
-            model = Values.sesameModel(supplier.get());
+            model = transformer.sesameModel(supplier.get());
         } catch (IOException | MatOntoException e) {
             throw ErrorUtils.sendError(e, "Error converting delimited file", Response.Status.BAD_REQUEST);
         }

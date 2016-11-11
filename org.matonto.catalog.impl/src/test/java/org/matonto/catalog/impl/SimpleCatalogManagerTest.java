@@ -31,7 +31,12 @@ import org.matonto.catalog.api.PublishedResource;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.query.api.BindingSet;
 import org.matonto.query.api.TupleQuery;
-import org.matonto.rdf.api.*;
+import org.matonto.rdf.api.IRI;
+import org.matonto.rdf.api.ModelFactory;
+import org.matonto.rdf.api.NamedGraph;
+import org.matonto.rdf.api.NamedGraphFactory;
+import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.Statement;
 import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory;
 import org.matonto.rdf.core.impl.sesame.LinkedHashNamedGraphFactory;
 import org.matonto.rdf.core.impl.sesame.SimpleIRI;
@@ -49,7 +54,12 @@ import org.openrdf.model.vocabulary.RDF;
 import org.openrdf.query.impl.MapBindingSet;
 
 import java.time.OffsetDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.GregorianCalendar;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;

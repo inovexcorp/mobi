@@ -37,6 +37,7 @@ import org.matonto.etl.api.ontologies.delimited.ClassMappingFactory;
 import org.matonto.etl.api.ontologies.delimited.Mapping;
 import org.matonto.etl.api.ontologies.delimited.MappingFactory;
 import org.matonto.exception.MatOntoException;
+import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.persistence.utils.Statements;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
@@ -45,7 +46,6 @@ import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.Statement;
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
-import org.matonto.rdf.core.utils.Values;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.base.RepositoryResult;
@@ -85,6 +85,7 @@ public class SimpleMappingManager implements MappingManager {
     private Repository repository;
     private MappingFactory mappingFactory;
     private ClassMappingFactory classMappingFactory;
+    private SesameTransformer transformer;
 
     public SimpleMappingManager() {}
 
@@ -128,6 +129,11 @@ public class SimpleMappingManager implements MappingManager {
     @Reference
     protected void setClassMappingFactory(ClassMappingFactory classMappingFactory) {
         this.classMappingFactory = classMappingFactory;
+    }
+
+    @Reference
+    protected void setSesameTransformer(SesameTransformer transformer) {
+        this.transformer = transformer;
     }
 
     @Override
@@ -189,7 +195,7 @@ public class SimpleMappingManager implements MappingManager {
 
     @Override
     public MappingWrapper createMapping(InputStream in, RDFFormat format) throws IOException, MatOntoException {
-        return getWrapperFromModel(Values.matontoModel(Rio.parse(in, "", format)));
+        return getWrapperFromModel(transformer.matontoModel(Rio.parse(in, "", format)));
     }
 
     @Override
