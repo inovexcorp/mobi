@@ -36,9 +36,19 @@ public interface EngineManager {
      * with the passed name.
      *
      * @param engine the name of the Engine to test for
-     * @return true if the engine is in the manager; false otherwise
+     * @return true if the Engine is in the manager; false otherwise
      */
     boolean containsEngine(String engine);
+
+    /**
+     * Attempts to retrieve the Role with the passed name using the Engine with the passed name.
+     * Returns an Optional with the Role if it exists for the Engine.
+     *
+     * @param engine the name of the Engine to use when retrieving the Role
+     * @param roleName the name of the Role to retrieve
+     * @return an Optional containing the Role if present; empty otherwise
+     */
+    Optional<Role> getRole(String engine, String roleName);
 
     /**
      * Returns the Set of Users accessible by the Engine with the passed name.
@@ -59,18 +69,17 @@ public interface EngineManager {
     User createUser(String engine, UserConfig userConfig);
 
     /**
-     * Stores the passed User using the Engine with the passed name. Returns a boolean
-     * indicating the success of the addition.
+     * Stores the passed User using the Engine with the passed name. If the engine is not
+     * in the manager, does nothing.
      *
      * @param engine the name of the Engine to store the User with
      * @param user the User to store
-     * @return true if the addition of the User was successful; false otherwise
      */
-    boolean storeUser(String engine, User user);
+    void storeUser(String engine, User user);
 
     /**
      * Attempts to retrieve the User with the passed username using the Engine with the
-     * passed username. Returns an Optional with the User if it was found or empty if it
+     * passed name. Returns an Optional with the User if it was found or empty if it
      * could not be found.
      *
      * @param engine the name of the Engine to retrieve the User with
@@ -81,24 +90,21 @@ public interface EngineManager {
 
     /**
      * Removes the User with the passed username using the Engine with the passed name.
-     * Returns a boolean indicating the success of the deletion.
+     * If the engine is not in the manager, does nothing.
      *
      * @param engine the name of the Engine to delete the User with
      * @param username the username of the User to delete
-     * @return true if the deletion of the User was successful; false otherwise
      */
-    boolean deleteUser(String engine, String username);
+    void deleteUser(String engine, String username);
 
     /**
      * Replaces the User with the same identifier as the passed User with the new User object
-     * using the Engine with the passed name. Returns a boolean indicating the success of the
-     * update.
+     * using the Engine with the passed name. If the engine is not in the manager, does nothing.
      *
      * @param engine the name of the Engine to update the User with
      * @param newUser the new User object to replace the existing one
-     * @return true if the update of the User was successful; false otherwise
      */
-    boolean updateUser(String engine, User newUser);
+    void updateUser(String engine, User newUser);
 
     /**
      * Returns a boolean indicating whether a User with the passed username exists using the
@@ -132,20 +138,19 @@ public interface EngineManager {
      *
      * @param engine the name of the Engine to use when creating the Group
      * @param groupConfig a configuration for the new Group
-     * @return a User with properties set by the passed configuration object as determined
+     * @return a Group with properties set by the passed configuration object as determined
      *      by the specified Engine
      */
     Group createGroup(String engine, GroupConfig groupConfig);
 
     /**
-     * Stores the passed Group using the Engine with the passed name. Returns a boolean
-     * indicating the success of the addition.
+     * Stores the passed Group using the Engine with the passed name. If the engine is not
+     * in the manager, does nothing.
      *
      * @param engine the name of the Engine to store the Group with
      * @param group the Group to store
-     * @return true if the addition of the Group was successful; false otherwise
      */
-    boolean storeGroup(String engine, Group group);
+    void storeGroup(String engine, Group group);
 
     /**
      * Attempts to retrieve the Group with the passed username using the Engine with the
@@ -160,31 +165,28 @@ public interface EngineManager {
 
     /**
      * Removes the Group with the passed name using the Engine with the passed name.
-     * Returns a boolean indicating the success of the deletion.
+     * If the engine is not in the manager, does nothing.
      *
      * @param engine the name of the Engine to delete the Group with
      * @param groupName the name of the Group to delete
-     * @return true if the deletion of the Group was successful; false otherwise
      */
-    boolean deleteGroup(String engine, String groupName);
+    void deleteGroup(String engine, String groupName);
 
     /**
      * Replaces the Group with the same identifier as the passed Group with the new Group object
-     * using the Engine with the passed name. Returns a boolean indicating the success of the
-     * update.
+     * using the Engine with the passed name. If the engine is not in the manager, does nothing.
      *
      * @param engine the name of the Engine to update the Group with
      * @param newGroup the new Group object to replace the existing one
-     * @return true if the update of the Group was successful; false otherwise
      */
-    boolean updateGroup(String engine, Group newGroup);
+    void updateGroup(String engine, Group newGroup);
 
     /**
      * Returns a boolean indicating whether a Group with the passed name exists using the
      * Engine with the passed name.
      *
      * @param engine the name of the Engine to test for the existence of the Group with
-     * @param groupName the group name to look for
+     * @param groupName the name of the Group to look for
      * @return true if a Group exists with the passed name; false otherwise
      */
     boolean groupExists(String engine, String groupName);
@@ -193,28 +195,28 @@ public interface EngineManager {
      * Returns a boolean indicating whether a Group with the passed name exists using any
      * of the Engines managed by the EngineManager.
      *
-     * @param groupName the group name to look for
+     * @param groupName the name of the Group to look for
      * @return true if a Group exists with the passed name; false otherwise
      */
     boolean groupExists(String groupName);
 
     /**
-     * Retrieves the set of all roles that the User with the passed username embodies
-     * using the Engine with the passed name. This set should contain all roles from
-     * all the User's groups as well.
+     * Retrieves the Set of all Roles that the User with the passed username embodies
+     * using the Engine with the passed name. This Set should contain all Roles from
+     * all the User's Groups as well.
      *
-     * @param engine the name of the Engine to collect user roles from
-     * @param username the username of the User to collect the roles for
+     * @param engine the name of the Engine to collect User Roles from
+     * @param username the username of the User to collect the Roles for
      * @return the Set of Roles that the User embodies
      */
     Set<Role> getUserRoles(String engine, String username);
 
     /**
-     * Retrieves the full set of all roles that the User with the passed username embodies
-     * using all Engines managed by the EngineManager. This set should contain all roles from
-     * all the User's groups as well.
+     * Retrieves the full set of all Roles that the User with the passed username embodies
+     * using all Engines managed by the EngineManager. This Set should contain all Roles from
+     * all the User's Groups as well.
      *
-     * @param username the username of the User to collect the roles for
+     * @param username the username of the User to collect the Roles for
      * @return the Set of Roles that the User embodies
      */
     Set<Role> getUserRoles(String username);

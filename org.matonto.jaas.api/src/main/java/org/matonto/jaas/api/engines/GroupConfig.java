@@ -28,8 +28,8 @@ import java.util.Set;
 public class GroupConfig {
     private String title;
     private String description = "";
-    private Set<String> members = null;
-    private Set<String> roles = null;
+    private Set<String> members;
+    private Set<String> roles;
 
     private GroupConfig(Builder builder) {
         title = builder.title;
@@ -57,9 +57,14 @@ public class GroupConfig {
     public static class Builder {
         private final String title;
         private String description = "";
-        private Set<String> members = null;
-        private Set<String> roles = null;
+        private Set<String> members;
+        private Set<String> roles;
 
+        /**
+         * Creates a builder object for a GroupConfig with the passed title.
+         *
+         * @param title the required title string for a Group
+         */
         public Builder(String title) {
             this.title = title;
         }

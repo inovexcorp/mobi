@@ -26,6 +26,7 @@ package org.matonto.jaas.engines;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import org.apache.log4j.Logger;
+import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.engines.Engine;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.engines.GroupConfig;
@@ -60,6 +61,14 @@ public class SimpleEngineManager implements EngineManager {
     }
 
     @Override
+    public Optional<Role> getRole(String engine, String roleName) {
+        if (engines.containsKey(engine)) {
+            return engines.get(engine).getRole(roleName);
+        }
+        return Optional.empty();
+    }
+
+    @Override
     public Set<User> getUsers(String engine) {
         if (engines.containsKey(engine)) {
             return engines.get(engine).getUsers();
@@ -76,8 +85,10 @@ public class SimpleEngineManager implements EngineManager {
     }
 
     @Override
-    public boolean storeUser(String engine, User user) {
-        return engines.containsKey(engine) && engines.get(engine).storeUser(user);
+    public void storeUser(String engine, User user) {
+        if (containsEngine(engine)) {
+            engines.get(engine).storeUser(user);
+        }
     }
 
     @Override
@@ -89,13 +100,17 @@ public class SimpleEngineManager implements EngineManager {
     }
 
     @Override
-    public boolean deleteUser(String engine, String username) {
-        return engines.containsKey(engine) && engines.get(engine).deleteUser(username);
+    public void deleteUser(String engine, String username) {
+        if (containsEngine(engine)) {
+            engines.get(engine).deleteUser(username);
+        }
     }
 
     @Override
-    public boolean updateUser(String engine, User newUser) {
-        return engines.containsKey(engine) && engines.get(engine).updateUser(newUser);
+    public void updateUser(String engine, User newUser) {
+        if (containsEngine(engine)) {
+            engines.get(engine).updateUser(newUser);
+        }
     }
 
     @Override
@@ -130,8 +145,10 @@ public class SimpleEngineManager implements EngineManager {
     }
 
     @Override
-    public boolean storeGroup(String engine, Group group) {
-        return engines.containsKey(engine) && engines.get(engine).storeGroup(group);
+    public void storeGroup(String engine, Group group) {
+        if (containsEngine(engine)) {
+            engines.get(engine).storeGroup(group);
+        }
     }
 
     @Override
@@ -143,13 +160,17 @@ public class SimpleEngineManager implements EngineManager {
     }
 
     @Override
-    public boolean deleteGroup(String engine, String groupName) {
-        return engines.containsKey(engine) && engines.get(engine).deleteGroup(groupName);
+    public void deleteGroup(String engine, String groupName) {
+        if (containsEngine(engine)) {
+            engines.get(engine).deleteGroup(groupName);
+        }
     }
 
     @Override
-    public boolean updateGroup(String engine, Group newGroup) {
-        return engines.containsKey(engine) && engines.get(engine).updateGroup(newGroup);
+    public void updateGroup(String engine, Group newGroup) {
+        if (containsEngine(engine)) {
+            engines.get(engine).updateGroup(newGroup);
+        }
     }
 
     @Override

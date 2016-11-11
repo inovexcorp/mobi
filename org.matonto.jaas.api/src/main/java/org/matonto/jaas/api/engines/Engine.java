@@ -32,15 +32,24 @@ import java.util.Set;
 
 public interface Engine {
     /**
-     * Returns the set of all users accessible by the Engine's data source.
+     * Attempts to retrieve the Role with the passed name. Returns an Optional with the Role
+     * if it exists for the Engine.
+     *
+     * @param roleName the name of the Role to retrieve
+     * @return an Optional that contains the Role if present; empty otherwise
+     */
+    Optional<Role> getRole(String roleName);
+
+    /**
+     * Returns the Set of all Users accessible by the Engine's data source.
      *
      * @return a Set of Users accessible by the Engine
      */
     Set<User> getUsers();
 
     /**
-     * Creates a User using the passed configuration object with the username, password,
-     * roles, first name, last name, and email address for the new user.
+     * Creates a User using the passed configuration object with a username, password,
+     * roles, first name, last name, and email address.
      *
      * @param userConfig a configuration for the new User
      * @return a User with properties set by the passed configuration object
@@ -48,13 +57,11 @@ public interface Engine {
     User createUser(UserConfig userConfig);
 
     /**
-     * Adds the passed User to the Engine's data source. Returns a boolean indicating the
-     * success of the addition.
+     * Adds the passed User to the Engine's data source.
      *
      * @param user the User to store
-     * @return true if the addition of the User was successful; false otherwise
      */
-    boolean storeUser(User user);
+    void storeUser(User user);
 
     /**
      * Attempts to retrieve the User with the passed username from the Engine's data source.
@@ -66,22 +73,19 @@ public interface Engine {
     Optional<User> retrieveUser(String username);
 
     /**
-     * Removes the User with the passed username from the Engine's data source. Returns a
-     * boolean indicating the success of the deletion.
+     * Removes the User with the passed username from the Engine's data source.
      *
      * @param username the username of the User to delete
-     * @return true if the deletion of the User was successful; false otherwise
      */
-    boolean deleteUser(String username);
+    void deleteUser(String username);
 
     /**
      * Replaces the User in the Engine's data source with the same identifier as the passed
-     * User with the new User object. Returns a boolean indicating the success of the update.
+     * User with the new User object.
      *
      * @param newUser the new User object to replace the existing one
-     * @return true if the update of the User was successful; false otherwise
      */
-    boolean updateUser(User newUser);
+    void updateUser(User newUser);
 
     /**
      * Returns a boolean indicating whether a User with the passed username exists in the
@@ -93,15 +97,15 @@ public interface Engine {
     boolean userExists(String username);
 
     /**
-     * Returns the set of all groups accessible by the Engine's data source.
+     * Returns the Set of all Groups accessible by the Engine's data source.
      *
      * @return a Set of Groups accessible by the Engine
      */
     Set<Group> getGroups();
 
     /**
-     * Creates a Group using the passed configuration object with the title, description,
-     * roles, and member usernames for the new group.
+     * Creates a Group using the passed configuration object with a title, description,
+     * roles, and list of member usernames.
      *
      * @param groupConfig a configuration for the new Group
      * @return a Group with properties set by the passed configuration object
@@ -109,13 +113,11 @@ public interface Engine {
     Group createGroup(GroupConfig groupConfig);
 
     /**
-     * Adds the passed Group to the Engine's data source. Returns a boolean indicating the
-     * success of the addition.
+     * Adds the passed Group to the Engine's data source.
      *
      * @param group the Group to store
-     * @return true if the addition of the Group was successful; false otherwise
      */
-    boolean storeGroup(Group group);
+    void storeGroup(Group group);
 
     /**
      * Attempts to retrieve the Group with the passed name from the Engine's data source.
@@ -126,22 +128,19 @@ public interface Engine {
     Optional<Group> retrieveGroup(String groupName);
 
     /**
-     * Removes the Group with the passed name from the Engine's data source. Returns a
-     * boolean indicating the success of the deletion.
+     * Removes the Group with the passed name from the Engine's data source.
      *
      * @param groupName the name of the Group to delete
-     * @return true if the deletion of the Group was successful; false otherwise
      */
-    boolean deleteGroup(String groupName);
+    void deleteGroup(String groupName);
 
     /**
      * Replaces the Group in the Engine's data source with the same identifier as the passed
-     * Group with the new Group object. Returns a boolean indicating the success of the update.
+     * Group with the new Group object.
      *
      * @param newGroup the new Group object to replace the existing one
-     * @return true if the update of the Group was successful; false otherwise
      */
-    boolean updateGroup(Group newGroup);
+    void updateGroup(Group newGroup);
 
     /**
      * Returns a boolean indicating whether a Group with the passed name exists in the
@@ -153,8 +152,8 @@ public interface Engine {
     boolean groupExists(String groupName);
 
     /**
-     * Retrieves the set of all roles that the User with the passed username embodies.
-     * This set should contain all roles from all the User's groups as well.
+     * Retrieves the Set of all Roles that the User with the passed username embodies.
+     * This Set should contain all Roles from all the User's Groups as well.
      *
      * @param username the username of the User to collect the roles for
      * @return the Set of Roles that the User embodies

@@ -36,10 +36,10 @@ import org.matonto.jaas.api.modules.token.TokenLoginModule;
 import org.matonto.jaas.proxy.ProxyLoginModule;
 import org.osgi.framework.BundleContext;
 
-import javax.security.auth.login.AppConfigurationEntry;
-import javax.security.auth.login.Configuration;
 import java.util.HashMap;
 import java.util.Map;
+import javax.security.auth.login.AppConfigurationEntry;
+import javax.security.auth.login.Configuration;
 
 @Component(
         name = MatontoConfigurationImpl.COMPONENT_NAME,

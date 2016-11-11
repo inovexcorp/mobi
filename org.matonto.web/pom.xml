@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.4.1-SNAPSHOT</version>
+        <version>1.4.2-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -82,12 +82,12 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>jaas.api</artifactId>
-            <version>1.4.1-SNAPSHOT</version>
+            <version>1.4.1</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>web.security</artifactId>
-            <version>1.4.1-SNAPSHOT</version>
+            <version>1.4.1</version>
         </dependency>
 
         <!-- REST Dependencies -->
@@ -152,7 +152,6 @@
                         <Bundle-Name>MatOnto Web</Bundle-Name>
                         <Export-Package />
                         <Import-Package>
-                            <!--org.matonto.jaas.proxy,-->
                             org.matonto.ontology.rest,
                             org.matonto.etl.rest,
                             *

@@ -30,16 +30,16 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import org.apache.log4j.Logger;
 
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.security.SecureRandom;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.Optional;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.MediaType;
 
 public class TokenUtils {
     private static final Logger LOG = Logger.getLogger(TokenUtils.class.getName());

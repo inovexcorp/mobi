@@ -24,17 +24,17 @@ package org.matonto.jaas.api.modules.password;
  */
 
 import org.apache.log4j.Logger;
+import org.matonto.jaas.api.config.LoginModuleConfig;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.principals.UserPrincipal;
-import org.matonto.jaas.api.config.LoginModuleConfig;
 
+import java.io.IOException;
+import java.util.Map;
 import javax.security.auth.Subject;
 import javax.security.auth.callback.*;
 import javax.security.auth.login.FailedLoginException;
 import javax.security.auth.login.LoginException;
 import javax.security.auth.spi.LoginModule;
-import java.io.IOException;
-import java.util.Map;
 
 public class PasswordLoginModule implements LoginModule {
     private static final Logger LOG = Logger.getLogger(PasswordLoginModule.class.getName());
@@ -74,7 +74,7 @@ public class PasswordLoginModule implements LoginModule {
             LOG.debug(ioe.getMessage());
             throw new LoginException(ioe.getMessage());
         } catch (UnsupportedCallbackException uce) {
-            String msg = uce.getMessage() + " not available to obtain information from user";
+            String msg = uce.getCallback().getClass().getName() + " not available to obtain information from user";
             LOG.debug(msg);
             throw new LoginException(msg);
         }
@@ -84,16 +84,16 @@ public class PasswordLoginModule implements LoginModule {
             throw new LoginException("Username can not be null");
         }
 
-        if (((PasswordCallback) callbacks[1]).getPassword() == null) {
+        char[] password = ((PasswordCallback) callbacks[1]).getPassword();
+        if (password == null) {
             throw new LoginException("Password can not be null");
         }
-        String password = new String(((PasswordCallback) callbacks[1]).getPassword());
 
         if (!engineManager.userExists(engineName, user)) {
             throw new FailedLoginException("User " + user + " does not exist");
         }
 
-        if (!engineManager.checkPassword(engineName, user, password)) {
+        if (!engineManager.checkPassword(engineName, user, new String(password))) {
             throw new FailedLoginException("Password is not valid");
         }
 
