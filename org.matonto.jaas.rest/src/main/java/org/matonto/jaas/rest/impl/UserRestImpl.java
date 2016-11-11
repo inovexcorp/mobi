@@ -35,13 +35,11 @@ import org.matonto.jaas.api.principals.UserPrincipal;
 import org.matonto.jaas.api.utils.TokenUtils;
 import org.matonto.jaas.rest.UserRest;
 import org.matonto.ontologies.foaf.Agent;
-import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.orm.Thing;
 import org.matonto.rest.util.ErrorUtils;
 import org.matonto.web.security.util.RestSecurityUtils;
-import org.openrdf.model.vocabulary.DCTERMS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -102,11 +100,9 @@ public class UserRestImpl implements UserRest {
         User tempUser = engineManager.createUser(RDF_ENGINE,
                 new UserConfig.Builder("", password, new HashSet<>()).build());
         user.setPassword(tempUser.getPassword().get());
-        boolean result = engineManager.storeUser(RDF_ENGINE, user);
-        if (result) {
-            logger.info("Created user " + username.stringValue());
-        }
-        return Response.ok(result).build();
+        engineManager.storeUser(RDF_ENGINE, user);
+        logger.info("Created user " + username.stringValue());
+        return Response.ok().build();
     }
 
     @Override
@@ -152,8 +148,8 @@ public class UserRestImpl implements UserRest {
             newUser.setPassword(tempUser.getPassword().get());
         }
 
-        boolean result = engineManager.updateUser(RDF_ENGINE, newUser);
-        return Response.ok(result).build();
+        engineManager.updateUser(RDF_ENGINE, newUser);
+        return Response.ok().build();
     }
 
     @Override
@@ -168,11 +164,9 @@ public class UserRestImpl implements UserRest {
             throw ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST);
         }
 
-        boolean result = engineManager.deleteUser(RDF_ENGINE, username);
-        if (result) {
-            logger.info("Deleted user " + username);
-        }
-        return Response.ok(result).build();
+        engineManager.deleteUser(RDF_ENGINE, username);
+        logger.info("Deleted user " + username);
+        return Response.ok().build();
     }
 
     @Override
@@ -195,16 +189,14 @@ public class UserRestImpl implements UserRest {
 
         User savedUser = engineManager.retrieveUser(RDF_ENGINE, username).orElseThrow(() ->
                 ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
-        User tempUser = engineManager.createUser(RDF_ENGINE,
-                new UserConfig.Builder("", "", Collections.singleton(role)).build());
+        Role roleObj = engineManager.getRole(RDF_ENGINE, role).orElseThrow(() ->
+                ErrorUtils.sendError("Role " + role + " not found", Response.Status.BAD_REQUEST));
         Set<Role> allRoles = savedUser.getHasUserRole();
-        allRoles.addAll(tempUser.getHasUserRole());
+        allRoles.add(roleObj);
         savedUser.setHasUserRole(allRoles);
-        boolean result = engineManager.updateUser(RDF_ENGINE, savedUser);
-        if (result) {
-            logger.info("Role " + role + " added to user " + username);
-        }
-        return Response.ok(result).build();
+        engineManager.updateUser(RDF_ENGINE, savedUser);
+        logger.info("Role " + role + " added to user " + username);
+        return Response.ok().build();
     }
 
     @Override
@@ -214,15 +206,12 @@ public class UserRestImpl implements UserRest {
         }
         User savedUser = engineManager.retrieveUser(RDF_ENGINE, username).orElseThrow(() ->
                 ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
-        User tempUser = engineManager.createUser(RDF_ENGINE,
-                new UserConfig.Builder("", "", Stream.of(role).collect(Collectors.toSet())).build());
-        Resource roleIRI = tempUser.getHasUserRole().stream().collect(Collectors.toList()).get(0).getResource();
-        savedUser.removeProperty(roleIRI, factory.createIRI(User.hasUserRole_IRI));
-        boolean result = engineManager.updateUser(RDF_ENGINE, savedUser);
-        if (result) {
-            logger.info("Role " + role + " removed from user " + username);
-        }
-        return Response.ok(result).build();
+        Role roleObj = engineManager.getRole(RDF_ENGINE, role).orElseThrow(() ->
+                ErrorUtils.sendError("Role " + role + " not found", Response.Status.BAD_REQUEST));
+        savedUser.removeProperty(roleObj.getResource(), factory.createIRI(User.hasUserRole_IRI));
+        engineManager.updateUser(RDF_ENGINE, savedUser);
+        logger.info("Role " + role + " removed from user " + username);
+        return Response.ok().build();
     }
 
     @Override
@@ -257,11 +246,9 @@ public class UserRestImpl implements UserRest {
         Set<Agent> newMembers = savedGroup.getMember();
         newMembers.addAll(Stream.of(savedUser).collect(Collectors.toSet()));
         savedGroup.setMember(newMembers);
-        boolean result = engineManager.updateGroup(RDF_ENGINE, savedGroup);
-        if (result) {
-            logger.info("Added user " + username + " to group " + groupName);
-        }
-        return Response.ok(result).build();
+        engineManager.updateGroup(RDF_ENGINE, savedGroup);
+        logger.info("Added user " + username + " to group " + groupName);
+        return Response.ok().build();
     }
 
     @Override
@@ -274,11 +261,9 @@ public class UserRestImpl implements UserRest {
         Group savedGroup = engineManager.retrieveGroup(RDF_ENGINE, groupName).orElseThrow(() ->
                 ErrorUtils.sendError("Group " + groupName + " not found", Response.Status.BAD_REQUEST));
         savedGroup.removeProperty(savedUser.getResource(), factory.createIRI(Group.member_IRI));
-        boolean result = engineManager.updateGroup(RDF_ENGINE, savedGroup);
-        if (result) {
-            logger.info("Removed user " + username + " from group " + groupName);
-        }
-        return Response.ok(result).build();
+        engineManager.updateGroup(RDF_ENGINE, savedGroup);
+        logger.info("Removed user " + username + " from group " + groupName);
+        return Response.ok().build();
     }
 
     /**

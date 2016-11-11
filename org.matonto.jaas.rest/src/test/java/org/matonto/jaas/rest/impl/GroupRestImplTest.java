@@ -190,9 +190,8 @@ public class GroupRestImplTest extends MatontoRestTestNg {
         when(engineManager.getGroups(anyString())).thenReturn(groups);
         when(engineManager.groupExists(anyString())).thenReturn(true);
         when(engineManager.createGroup(anyString(), any(GroupConfig.class))).thenReturn(group);
-        when(engineManager.storeGroup(any(), any(Group.class))).thenReturn(true);
         when(engineManager.retrieveGroup(anyString(), anyString())).thenReturn(Optional.of(group));
-        when(engineManager.updateGroup(anyString(), any(Group.class))).thenReturn(true);
+        when(engineManager.getRole(anyString(), anyString())).thenReturn(Optional.of(role));
     }
 
     @Test
@@ -365,6 +364,16 @@ public class GroupRestImplTest extends MatontoRestTestNg {
     }
 
     @Test
+    public void addRoleThatDoesNotExistToGroupTest() {
+        //Setup:
+        when(engineManager.getRole(anyString(), anyString())).thenReturn(Optional.empty());
+
+        Response response = target().path("groups/testgroup/roles").queryParam("role", "error")
+                .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
+        Assert.assertEquals(400, response.getStatus());
+    }
+
+    @Test
     public void removeGroupRoleTest() {
         Response response = target().path("groups/testGroup/roles").queryParam("role", "testRole")
                 .request().delete();
@@ -374,11 +383,21 @@ public class GroupRestImplTest extends MatontoRestTestNg {
     }
 
     @Test
-    public void removeRoleFromGroupThatDoesNotExist() {
+    public void removeRoleFromGroupThatDoesNotExistTest() {
         //Setup:
         when(engineManager.retrieveGroup(anyString(), anyString())).thenReturn(Optional.empty());
 
         Response response = target().path("groups/error/roles").queryParam("role", "testRole")
+                .request().delete();
+        Assert.assertEquals(400, response.getStatus());
+    }
+
+    @Test
+    public void removeRoleThatDoesNotExistFromGroupTest() {
+        //Setup:
+        when(engineManager.getRole(anyString(), anyString())).thenReturn(Optional.empty());
+
+        Response response = target().path("groups/testGroup/roles").queryParam("role", "error")
                 .request().delete();
         Assert.assertEquals(400, response.getStatus());
     }

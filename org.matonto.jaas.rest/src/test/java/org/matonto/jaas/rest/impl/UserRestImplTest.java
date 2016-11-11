@@ -188,14 +188,12 @@ public class UserRestImplTest extends MatontoRestTestNg {
         when(engineManager.getUsers(anyString())).thenReturn(users);
         when(engineManager.userExists(anyString())).thenReturn(true);
         when(engineManager.createUser(anyString(), any(UserConfig.class))).thenReturn(user);
-        when(engineManager.storeUser(anyString(), any(User.class))).thenReturn(true);
         when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.of(user));
         when(engineManager.checkPassword(anyString(), anyString(), anyString())).thenReturn(true);
-        when(engineManager.updateUser(anyString(), any(User.class))).thenReturn(true);
         when(engineManager.getGroups(anyString())).thenReturn(groups);
         when(engineManager.groupExists(anyString())).thenReturn(true);
         when(engineManager.retrieveGroup(anyString(), anyString())).thenReturn(Optional.of(group));
-        when(engineManager.updateGroup(anyString(), any(Group.class))).thenReturn(true);
+        when(engineManager.getRole(anyString(), anyString())).thenReturn(Optional.of(role));
     }
 
     @Test
@@ -423,6 +421,16 @@ public class UserRestImplTest extends MatontoRestTestNg {
     }
 
     @Test
+    public void addRoleThatDoesNotExistToUserTest() {
+        //Setup:
+        when(engineManager.getRole(anyString(), anyString())).thenReturn(Optional.empty());
+
+        Response response = target().path("users/testUser/roles").queryParam("role", "error")
+                .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
+        Assert.assertEquals(400, response.getStatus());
+    }
+
+    @Test
     public void removeUserRoleTest() {
         Response response = target().path("users/testUser/roles").queryParam("role", "testRole")
                 .request().delete();
@@ -432,11 +440,21 @@ public class UserRestImplTest extends MatontoRestTestNg {
     }
 
     @Test
-    public void removeRoleFromUserThatDoesNotExist() {
+    public void removeRoleFromUserThatDoesNotExistTest() {
         //Setup:
         when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.empty());
 
         Response response = target().path("users/error/roles").queryParam("role", "testRole")
+                .request().delete();
+        Assert.assertEquals(400, response.getStatus());
+    }
+
+    @Test
+    public void removeRoleThatDoesNotExistFromUserTest() {
+        //Setup:
+        when(engineManager.getRole(anyString(), anyString())).thenReturn(Optional.empty());
+
+        Response response = target().path("users/testUser/roles").queryParam("role", "error")
                 .request().delete();
         Assert.assertEquals(400, response.getStatus());
     }

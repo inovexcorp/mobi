@@ -27,13 +27,11 @@ import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import org.matonto.jaas.api.config.MatontoConfiguration;
 import org.matonto.jaas.api.engines.EngineManager;
-import org.matonto.jaas.api.engines.GroupConfig;
 import org.matonto.jaas.api.ontologies.usermanagement.Group;
 import org.matonto.jaas.api.ontologies.usermanagement.Role;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.jaas.api.ontologies.usermanagement.UserFactory;
 import org.matonto.jaas.rest.GroupRest;
-import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rest.util.ErrorUtils;
@@ -93,11 +91,9 @@ public class GroupRestImpl implements GroupRest {
             throw ErrorUtils.sendError("Group " + title.stringValue() + " already exists", Response.Status.BAD_REQUEST);
         }
 
-        boolean result = engineManager.storeGroup(RDF_ENGINE, group);
-        if (result) {
-            logger.info("Created group " + title.stringValue());
-        }
-        return Response.ok(result).build();
+        engineManager.storeGroup(RDF_ENGINE, group);
+        logger.info("Created group " + title.stringValue());
+        return Response.ok().build();
     }
 
     @Override
@@ -131,8 +127,8 @@ public class GroupRestImpl implements GroupRest {
             newGroup.setMember(savedGroup.getMember());
         }
 
-        boolean result = engineManager.updateGroup(RDF_ENGINE, newGroup);
-        return Response.ok(result).build();
+        engineManager.updateGroup(RDF_ENGINE, newGroup);
+        return Response.ok().build();
     }
 
     @Override
@@ -144,11 +140,9 @@ public class GroupRestImpl implements GroupRest {
             throw ErrorUtils.sendError("Group " + groupName + " not found", Response.Status.BAD_REQUEST);
         }
 
-        boolean result = engineManager.deleteGroup(RDF_ENGINE, groupName);
-        if (result) {
-            logger.info("Deleted group " + groupName);
-        }
-        return Response.ok(result).build();
+        engineManager.deleteGroup(RDF_ENGINE, groupName);
+        logger.info("Deleted group " + groupName);
+        return Response.ok().build();
     }
 
     @Override
@@ -170,16 +164,14 @@ public class GroupRestImpl implements GroupRest {
         }
         Group savedGroup = engineManager.retrieveGroup(RDF_ENGINE, groupName).orElseThrow(() ->
                 ErrorUtils.sendError("Group " + groupName + " not found", Response.Status.BAD_REQUEST));
-        Group tempGroup = engineManager.createGroup(RDF_ENGINE,
-                new GroupConfig.Builder("").roles(Collections.singleton(role)).build());
+        Role roleObj = engineManager.getRole(RDF_ENGINE, role).orElseThrow(() ->
+                ErrorUtils.sendError("Role " + role + " not found", Response.Status.BAD_REQUEST));
         Set<Role> allRoles = savedGroup.getHasGroupRole();
-        allRoles.addAll(tempGroup.getHasGroupRole());
+        allRoles.add(roleObj);
         savedGroup.setHasGroupRole(allRoles);
-        boolean result = engineManager.updateGroup(RDF_ENGINE, savedGroup);
-        if (result) {
-            logger.info("Added role " + role + " to group " + groupName);
-        }
-        return Response.ok(result).build();
+        engineManager.updateGroup(RDF_ENGINE, savedGroup);
+        logger.info("Added role " + role + " to group " + groupName);
+        return Response.ok().build();
     }
 
     @Override
@@ -190,15 +182,12 @@ public class GroupRestImpl implements GroupRest {
 
         Group savedGroup = engineManager.retrieveGroup(RDF_ENGINE, groupName).orElseThrow(() ->
                 ErrorUtils.sendError("Group " + groupName + " not found", Response.Status.BAD_REQUEST));
-        Group tempGroup = engineManager.createGroup(RDF_ENGINE,
-                new GroupConfig.Builder("").roles(Collections.singleton(role)).build());
-        Resource roleIRI = tempGroup.getHasGroupRole().stream().collect(Collectors.toList()).get(0).getResource();
-        savedGroup.removeProperty(roleIRI, factory.createIRI(Group.hasGroupRole_IRI));
-        boolean result = engineManager.updateGroup(RDF_ENGINE, savedGroup);
-        if (result) {
-            logger.info("Removed role " + role + " from group " + groupName);
-        }
-        return Response.ok(result).build();
+        Role roleObj = engineManager.getRole(RDF_ENGINE, role).orElseThrow(() ->
+                ErrorUtils.sendError("Role " + role + " not found", Response.Status.BAD_REQUEST));
+        savedGroup.removeProperty(roleObj.getResource(), factory.createIRI(Group.hasGroupRole_IRI));
+        engineManager.updateGroup(RDF_ENGINE, savedGroup);
+        logger.info("Removed role " + role + " from group " + groupName);
+        return Response.ok().build();
     }
 
     @Override
