@@ -207,7 +207,7 @@ public interface CatalogRest {
                                            Distribution newDistribution);
 
     /**
-     * Returns the Distribution of the UnversionedRecord which was identified using the provided IDs.
+     * Returns the Distribution of the UnversionedRecord identified using the provided IDs.
      *
      * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
@@ -529,7 +529,7 @@ public interface CatalogRest {
                                          Distribution newDistribution);
 
     /**
-     * Gets the Commit associated with the identified Version using the IDs.
+     * Gets the Commit associated with the identified Version using the provided IDs.
      *
      * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
@@ -549,7 +549,7 @@ public interface CatalogRest {
                        @PathParam("versionId") String versionId);
 
     /**
-     * Gets a list of Branches associated with a VersionedRDFRecord identified by the IDs.
+     * Gets a list of Branches associated with a VersionedRDFRecord identified by the provided IDs.
      *
      * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
@@ -579,6 +579,7 @@ public interface CatalogRest {
      *                  with "_:".
      * @param recordId The String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
      *                 String begins with "_:".
+     * @param newBranch The Branch which you wish to add to the VersionedRDFRecord.
      * @return A Response identifying whether the Branch was created.
      */
     @POST
@@ -588,10 +589,11 @@ public interface CatalogRest {
     @RolesAllowed("user")
     @ApiOperation("Creates a branch for a specific VersionedRDFRecord.")
     Response createBranch(@PathParam("catalogId") String catalogId,
-                          @PathParam("recordId") String recordId);
+                          @PathParam("recordId") String recordId,
+                          Branch newBranch);
 
     /**
-     * Gets a specific Branch of a VersionedRDFRecord identified by the IDs.
+     * Gets a specific Branch of a VersionedRDFRecord identified by the provided IDs.
      *
      * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
@@ -664,16 +666,16 @@ public interface CatalogRest {
      *                 String begins with "_:".
      * @param branchId The String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
      *                 with "_:".
-     * @return The Commit which is the head of the identified Branch.
+     * @return A Response with the Commit which is the head of the identified Branch.
      */
     @GET
     @Path("{catalogId}/records/{recordId}/branches/{branchId}/head")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @ApiOperation("Gets the head Commit for a specific Branch.")
-    Commit getHead(@PathParam("catalogId") String catalogId,
-                   @PathParam("recordId") String recordId,
-                   @PathParam("branchId") String branchId);
+    Response getHead(@PathParam("catalogId") String catalogId,
+                     @PathParam("recordId") String recordId,
+                     @PathParam("branchId") String branchId);
 
     /**
      * Updates a Branch's head Commit to be the provided newCommit. This newCommit must have the previous head Commit as
