@@ -24,13 +24,14 @@ package org.matonto.web.security.util;
  */
 
 import org.apache.log4j.Logger;
-import org.matonto.jaas.modules.token.TokenCallback;
+import org.matonto.jaas.api.modules.token.TokenCallback;
 
 import javax.security.auth.Subject;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
+import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
 
@@ -38,7 +39,7 @@ public class RestSecurityUtils {
 
     private static final Logger LOG = Logger.getLogger(RestSecurityUtils.class.getName());
 
-    public static boolean authenticateToken(String realm, Subject subject, String tokenString) {
+    public static boolean authenticateToken(String realm, Subject subject, String tokenString, Configuration configuration) {
         LoginContext loginContext;
         try {
             loginContext = new LoginContext(realm, subject, callbacks -> {
@@ -49,16 +50,16 @@ public class RestSecurityUtils {
                         throw new UnsupportedCallbackException(callback);
                     }
                 }
-            });
+            }, configuration);
             loginContext.login();
         } catch (LoginException e) {
-            LOG.debug("Authentication failed.");
+            LOG.debug("Authentication failed.", e);
             return false;
         }
         return true;
     }
 
-    public static boolean authenticateUser(String realm, Subject subject, String username, String password) {
+    public static boolean authenticateUser(String realm, Subject subject, String username, String password, Configuration configuration) {
         LoginContext loginContext;
         try {
             loginContext = new LoginContext(realm, subject, callbacks -> {
@@ -71,10 +72,10 @@ public class RestSecurityUtils {
                         throw new UnsupportedCallbackException(callback);
                     }
                 }
-            });
+            }, configuration);
             loginContext.login();
         } catch (LoginException e) {
-            LOG.debug("Authentication failed.");
+            LOG.debug("Authentication failed.", e);
             return false;
         }
         return true;

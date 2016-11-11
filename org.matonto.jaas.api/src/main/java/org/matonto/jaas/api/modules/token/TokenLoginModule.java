@@ -1,4 +1,4 @@
-package org.matonto.jaas.modules.token;
+package org.matonto.jaas.api.modules.token;
 
 /*-
  * #%L
@@ -25,54 +25,49 @@ package org.matonto.jaas.modules.token;
 
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jwt.SignedJWT;
-import org.apache.karaf.jaas.boot.principal.GroupPrincipal;
-import org.apache.karaf.jaas.boot.principal.RolePrincipal;
-import org.apache.karaf.jaas.boot.principal.UserPrincipal;
-import org.apache.karaf.jaas.modules.AbstractKarafLoginModule;
-import org.apache.karaf.jaas.modules.properties.PropertiesBackingEngine;
 import org.apache.log4j.Logger;
-import org.matonto.jaas.config.LoginModuleConfig;
-import org.matonto.jaas.utils.TokenUtils;
+import org.matonto.jaas.api.config.LoginModuleConfig;
+import org.matonto.jaas.api.engines.EngineManager;
+import org.matonto.jaas.api.principals.UserPrincipal;
+import org.matonto.jaas.api.utils.TokenUtils;
 
+import java.io.IOException;
+import java.text.ParseException;
+import java.util.Map;
+import java.util.Optional;
 import javax.security.auth.Subject;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.auth.login.FailedLoginException;
 import javax.security.auth.login.LoginException;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.text.ParseException;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Properties;
+import javax.security.auth.spi.LoginModule;
 
-
-public class TokenLoginModule extends AbstractKarafLoginModule {
+public class TokenLoginModule implements LoginModule {
 
     private static final Logger LOG = Logger.getLogger(TokenLoginModule.class.getName());
-
-    private String usersFileString;
+    private EngineManager engineManager;
+    private String engineName;
+    private Subject subject;
+    private CallbackHandler callbackHandler;
+    private String userId;
 
     @Override
-    public void initialize(Subject subject, CallbackHandler callbackHandler, Map<String, ?> sharedState, Map<String, ?> options) {
-        super.initialize(subject, callbackHandler, options);
-        usersFileString = options.get(LoginModuleConfig.USERS_FILE) + "";
-        LOG.debug("Initialized TokenLoginModule usersFileString=" + usersFileString);
+    public void initialize(Subject subject, CallbackHandler callbackHandler,
+                           Map<String, ?> sharedState, Map<String, ?> options) {
+        this.subject = subject;
+        this.callbackHandler = callbackHandler;
+        engineManager = (EngineManager) options.get(LoginModuleConfig.ENGINE_MANAGER);
+        engineName = options.get(LoginModuleConfig.ENGINE) + "";
+        LOG.debug("Initialized TokenLoginModule engineName=" + engineName);
     }
 
     @Override
     public boolean login() throws LoginException {
         LOG.debug("Verifying token...");
 
-        File usersFile = new File(usersFileString);
-        Properties users = new Properties();
-        try {
-            users.load(new FileInputStream(usersFile));
-        } catch (IOException ioe) {
-            String msg = "Unable to load user properties file " + usersFile;
+        if (!engineManager.containsEngine(engineName)) {
+            String msg = "Engine " + engineName + " is not registered with SimpleEngineManager";
             LOG.debug(msg);
             throw new LoginException(msg);
         }
@@ -112,15 +107,9 @@ public class TokenLoginModule extends AbstractKarafLoginModule {
         }
 
         if (!tokenOptional.isPresent()) {
-            if (!this.detailedLoginExcepion) {
-                String msg = "Login failed";
-                LOG.debug(msg);
-                throw new FailedLoginException(msg);
-            } else {
-                String msg = "Token not verified";
-                LOG.debug(msg);
-                throw new FailedLoginException(msg);
-            }
+            String msg = "Token not verified";
+            LOG.debug(msg);
+            throw new FailedLoginException(msg);
         }
 
         LOG.debug("Token found and verified.");
@@ -135,54 +124,36 @@ public class TokenLoginModule extends AbstractKarafLoginModule {
             throw new FailedLoginException(msg);
         }
 
-        // user infos container read from the users properties file
-        String userInfos = users.getProperty(user);
-        if (userInfos == null) {
-            if (!this.detailedLoginExcepion) {
-                throw new FailedLoginException("Login failed");
-            } else {
-                throw new FailedLoginException("User " + user + " does not exist");
-            }
+        if (!engineManager.userExists(engineName, user)) {
+            throw new FailedLoginException("User " + user + " does not exist");
         }
 
-        String[] infos = userInfos.split(",");
-
-        principals = new HashSet<>();
-        principals.add(new UserPrincipal(user));
-        for (int i = 1; i < infos.length; i++) {
-            if (infos[i].trim().startsWith(PropertiesBackingEngine.GROUP_PREFIX)) {
-                // it's a group reference
-                principals.add(new GroupPrincipal(infos[i].trim().substring(PropertiesBackingEngine.GROUP_PREFIX.length())));
-                String groupInfo = users.getProperty(infos[i].trim());
-                if (groupInfo != null) {
-                    String[] roles = groupInfo.split(",");
-                    for (int j = 1; j < roles.length; j++) {
-                        principals.add(new RolePrincipal(roles[j].trim()));
-                    }
-                }
-            } else {
-                // it's an user reference
-                principals.add(new RolePrincipal(infos[i].trim()));
-            }
-        }
-
-        users.clear();
-
+        this.userId = user;
         LOG.debug("Successfully logged in " + user);
         return true;
     }
 
     @Override
+    public boolean commit() throws LoginException {
+        if (this.userId != null) {
+            this.subject.getPrincipals().add(new UserPrincipal(this.userId));
+            return true;
+        }
+
+        return false;
+    }
+
+    @Override
     public boolean abort() throws LoginException {
-        clear();
+        this.userId = null;
         LOG.debug("Abort");
         return true;
     }
 
     @Override
     public boolean logout() throws LoginException {
-        subject.getPrincipals().removeAll(principals);
-        principals.clear();
+        subject.getPrincipals().remove(new UserPrincipal(this.userId));
+        this.userId = null;
         LOG.debug("Logout");
         return true;
     }
