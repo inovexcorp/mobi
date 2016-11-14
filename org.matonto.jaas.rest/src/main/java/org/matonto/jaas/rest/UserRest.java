@@ -116,10 +116,12 @@ public interface UserRest {
                         @PathParam("username") String username);
 
     /**
-     * Retrieves the list of roles of a user in MatOnto. This list only includes roles
-     * directly set on the user itself, not from groups the user is a part of.
+     * Retrieves the list of roles of a user in MatOnto. By default, this list only includes
+     * roles directly set on the user itself. You can optionally include roles from the groups
+     * the user is a part of.
      *
      * @param username the username of the user to retrieve roles from
+     * @param includeGroups whether or not to include roles from the user's groups
      * @return a Response with a JSON array of the roles of the user in MatOnto
      */
     @GET
@@ -127,7 +129,8 @@ public interface UserRest {
     @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation("List roles of a MatOnto user")
-    Response getUserRoles(@PathParam("username") String username);
+    Response getUserRoles(@PathParam("username") String username,
+                          @DefaultValue("false") @QueryParam("includeGroups") boolean includeGroups);
 
     /**
      * Adds a role to the specified user in MatOnto.

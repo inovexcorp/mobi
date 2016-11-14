@@ -54,6 +54,8 @@ import javax.ws.rs.core.Application;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
@@ -152,6 +154,9 @@ public class UserRestImplTest extends MatontoRestTestNg {
         users = Collections.singleton(user);
 
         group = groupFactory.createNew(vf.createIRI("http://matonto.org/groups/testGroup"), email.getModel());
+        Role adminRole = roleFactory.createNew(vf.createIRI("http://matonto.org/roles/admin"), email.getModel());
+        adminRole.setProperty(vf.createLiteral("admin"), vf.createIRI(DCTERMS.TITLE.stringValue()));
+        group.setHasGroupRole(Collections.singleton(adminRole));
         group.setMember(Collections.singleton(user));
         groups = Collections.singleton(group);
 
@@ -194,6 +199,8 @@ public class UserRestImplTest extends MatontoRestTestNg {
         when(engineManager.groupExists(anyString())).thenReturn(true);
         when(engineManager.retrieveGroup(anyString(), anyString())).thenReturn(Optional.of(group));
         when(engineManager.getRole(anyString(), anyString())).thenReturn(Optional.of(role));
+        when(engineManager.getUserRoles(anyString(), anyString())).thenReturn(Stream.concat(roles.stream(),
+                group.getHasGroupRole().stream()).collect(Collectors.toSet()));
     }
 
     @Test
@@ -387,6 +394,19 @@ public class UserRestImplTest extends MatontoRestTestNg {
         try {
             JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
             Assert.assertTrue(result.size() == roles.size());
+        } catch (Exception e) {
+            Assert.fail("Expected no exception, but got: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void getUserRolesIncludingGroupsTest() {
+        Response response = target().path("users/testUser/roles").queryParam("includeGroups", "true").request().get();
+        verify(engineManager).retrieveUser(anyString(), eq("testUser"));
+        Assert.assertEquals(200, response.getStatus());
+        try {
+            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            Assert.assertTrue(result.size() == roles.size() + group.getHasGroupRole().size());
         } catch (Exception e) {
             Assert.fail("Expected no exception, but got: " + e.getMessage());
         }

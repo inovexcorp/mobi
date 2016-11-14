@@ -170,15 +170,14 @@ public class UserRestImpl implements UserRest {
     }
 
     @Override
-    public Response getUserRoles(String username) {
+    public Response getUserRoles(String username, boolean includeGroups) {
         if (username == null) {
-            throw ErrorUtils.sendError("username must be provided", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError("Username must be provided", Response.Status.BAD_REQUEST);
         }
-
         User user = engineManager.retrieveUser(RDF_ENGINE, username).orElseThrow(() ->
                 ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
-
-        return Response.ok(new GenericEntity<Set<Role>>(user.getHasUserRole()) {}).build();
+        Set<Role> roles = includeGroups ? engineManager.getUserRoles(RDF_ENGINE, username) : user.getHasUserRole();
+        return Response.ok(new GenericEntity<Set<Role>>(roles) {}).build();
     }
 
     @Override
@@ -217,7 +216,7 @@ public class UserRestImpl implements UserRest {
     @Override
     public Response listUserGroups(String username) {
         if (username == null) {
-            throw ErrorUtils.sendError("username must be provided", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError("Username must be provided", Response.Status.BAD_REQUEST);
         }
 
         User savedUser = engineManager.retrieveUser(RDF_ENGINE, username).orElseThrow(() ->
