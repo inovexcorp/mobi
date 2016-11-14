@@ -71,12 +71,12 @@ public interface UserRest {
      * @return a Response with a JSON representation of the specified user in MatOnto
      */
     @GET
-    @Path("{userId}")
+    @Path("{username}")
     @RolesAllowed("admin")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation("Get a single MatOnto user")
     @JsonSerialize
-    Response getUser(@PathParam("userId") String username);
+    Response getUser(@PathParam("username") String username);
 
     /**
      * Updates the information of the specified user in MatOnto. Only the user being updated or an admin can make
@@ -90,12 +90,12 @@ public interface UserRest {
      * @return a Response indicating the success or failure of the request
      */
     @PUT
-    @Path("{userId}")
+    @Path("{username}")
     @RolesAllowed("user")
     @ApiOperation("Update a MatOnto user's information")
     @Consumes(MediaType.APPLICATION_JSON)
     Response updateUser(@Context ContainerRequestContext context,
-                        @PathParam("userId") String username,
+                        @PathParam("username") String username,
                         @QueryParam("currentPassword") String currentPassword,
                         @DefaultValue("") @QueryParam("newPassword") String newPassword,
                         User newUser);
@@ -109,11 +109,11 @@ public interface UserRest {
      * @return a Response indicating the success or failure of the request
      */
     @DELETE
-    @Path("{userId}")
+    @Path("{username}")
     @RolesAllowed("user")
     @ApiOperation("Remove a MatOnto user's account")
     Response deleteUser(@Context ContainerRequestContext context,
-                        @PathParam("userId") String username);
+                        @PathParam("username") String username);
 
     /**
      * Retrieves the list of roles of a user in MatOnto. This list only includes roles
@@ -123,11 +123,11 @@ public interface UserRest {
      * @return a Response with a JSON array of the roles of the user in MatOnto
      */
     @GET
-    @Path("{userId}/roles")
+    @Path("{username}/roles")
     @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation("List roles of a MatOnto user")
-    Response getUserRoles(@PathParam("userId") String username);
+    Response getUserRoles(@PathParam("username") String username);
 
     /**
      * Adds a role to the specified user in MatOnto.
@@ -137,10 +137,10 @@ public interface UserRest {
      * @return a Response indicating the success or failure of the request
      */
     @PUT
-    @Path("{userId}/roles")
+    @Path("{username}/roles")
     @RolesAllowed("admin")
     @ApiOperation("Add role to a MatOnto user")
-    Response addUserRole(@PathParam("userId") String username, @QueryParam("role") String role);
+    Response addUserRole(@PathParam("username") String username, @QueryParam("role") String role);
 
     /**
      * Removes a role from the specified user in MatOnto.
@@ -150,10 +150,10 @@ public interface UserRest {
      * @return a Response indicating the success or failure of the request
      */
     @DELETE
-    @Path("{userId}/roles")
+    @Path("{username}/roles")
     @RolesAllowed("admin")
     @ApiOperation("Remove role from a MatOnto user")
-    Response removeUserRole(@PathParam("userId") String username, @QueryParam("role") String role);
+    Response removeUserRole(@PathParam("username") String username, @QueryParam("role") String role);
 
     /**
      * Retrieves the list of groups a user is a member of in MatOnto.
@@ -162,37 +162,37 @@ public interface UserRest {
      * @return a Response with a JSON array of the groups the user is a part of in MatOnto
      */
     @GET
-    @Path("{userId}/groups")
+    @Path("{username}/groups")
     @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation("List groups of a MatOnto user")
-    Response listUserGroups(@PathParam("userId") String username);
+    Response listUserGroups(@PathParam("username") String username);
 
     /**
      * Adds the specified user to a group in MatOnto. If the group does not exist,
      * it will be created.
      *
      * @param username the username of the user to add to the group
-     * @param groupName the group to add the specified user to
+     * @param groupTitle the title of the group to add the specified user to
      * @return a Response indicating the success or failure of the request
      */
     @PUT
-    @Path("{userId}/groups")
+    @Path("{username}/groups")
     @RolesAllowed("admin")
     @ApiOperation("Add a MatOnto user to a group")
-    Response addUserGroup(@PathParam("userId") String username, @QueryParam("group") String groupName);
+    Response addUserGroup(@PathParam("username") String username, @QueryParam("group") String groupTitle);
 
     /**
      * Removes the specified user from a group in MatOnto. If this is the only user in the
      * group, the group will be removed as well.
      *
      * @param username the username of the user to remove from a group
-     * @param groupName the group to remove the specified user from
+     * @param groupTitle the title of the group to remove the specified user from
      * @return a Response indicating the success or failure of the request
      */
     @DELETE
-    @Path("{userId}/groups")
+    @Path("{username}/groups")
     @RolesAllowed("admin")
     @ApiOperation("Remove a MatOnto user from a group")
-    Response removeUserGroup(@PathParam("userId") String username, @QueryParam("group") String groupName);
+    Response removeUserGroup(@PathParam("username") String username, @QueryParam("group") String groupTitle);
 }

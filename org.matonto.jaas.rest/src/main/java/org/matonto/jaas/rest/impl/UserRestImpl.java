@@ -89,10 +89,10 @@ public class UserRestImpl implements UserRest {
     @Override
     public Response createUser(User user, String password) {
         if (password == null) {
-            throw ErrorUtils.sendError("A password must be provided", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError("Password must be provided", Response.Status.BAD_REQUEST);
         }
         Value username = user.getUsername().orElseThrow(() ->
-                ErrorUtils.sendError("A username must be provided", Response.Status.BAD_REQUEST));
+                ErrorUtils.sendError("Username must be provided", Response.Status.BAD_REQUEST));
         if (engineManager.userExists(username.stringValue())) {
             throw ErrorUtils.sendError("User already exists", Response.Status.BAD_REQUEST);
         }
@@ -108,7 +108,7 @@ public class UserRestImpl implements UserRest {
     @Override
     public Response getUser(String username) {
         if (username == null) {
-            throw ErrorUtils.sendError("username must be provided", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError("Username must be provided", Response.Status.BAD_REQUEST);
         }
         User user = engineManager.retrieveUser(RDF_ENGINE, username).orElseThrow(() ->
                 ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
@@ -119,7 +119,7 @@ public class UserRestImpl implements UserRest {
     public Response updateUser(ContainerRequestContext context, String username, String currentPassword,
                                String newPassword, User newUser) {
         if (username == null || currentPassword == null) {
-            throw ErrorUtils.sendError("Both currentUsername and currentPassword must be provided",
+            throw ErrorUtils.sendError("Both current username and current password must be provided",
                     Response.Status.BAD_REQUEST);
         }
         if (!isAuthorizedUser(context, username)) {
@@ -130,7 +130,7 @@ public class UserRestImpl implements UserRest {
             throw ErrorUtils.sendError("Invalid password", Response.Status.UNAUTHORIZED);
         }
         Value newUsername = newUser.getUsername().orElseThrow(() ->
-                ErrorUtils.sendError("A username must be provided", Response.Status.BAD_REQUEST));
+                ErrorUtils.sendError("Username must be provided in new user", Response.Status.BAD_REQUEST));
         User savedUser = engineManager.retrieveUser(RDF_ENGINE, username).orElseThrow(() ->
                 ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
         if (!savedUser.getUsername().get().equals(newUsername)) {
@@ -155,7 +155,7 @@ public class UserRestImpl implements UserRest {
     @Override
     public Response deleteUser(ContainerRequestContext context, String username) {
         if (username == null) {
-            throw ErrorUtils.sendError("username must be provided", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError("Username must be provided", Response.Status.BAD_REQUEST);
         }
         if (!isAuthorizedUser(context, username)) {
             throw ErrorUtils.sendError("Not authorized", Response.Status.UNAUTHORIZED);
@@ -235,34 +235,34 @@ public class UserRestImpl implements UserRest {
     }
 
     @Override
-    public Response addUserGroup(String username, String groupName) {
-        if (username == null || groupName == null) {
+    public Response addUserGroup(String username, String groupTitle) {
+        if (username == null || groupTitle == null) {
             throw ErrorUtils.sendError("Both username and group name must be provided", Response.Status.BAD_REQUEST);
         }
         User savedUser = engineManager.retrieveUser(RDF_ENGINE, username).orElseThrow(() ->
                 ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
-        Group savedGroup = engineManager.retrieveGroup(RDF_ENGINE, groupName).orElseThrow(() ->
-                ErrorUtils.sendError("Group " + groupName + " not found", Response.Status.BAD_REQUEST));
+        Group savedGroup = engineManager.retrieveGroup(RDF_ENGINE, groupTitle).orElseThrow(() ->
+                ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
         Set<Agent> newMembers = savedGroup.getMember();
-        newMembers.addAll(Stream.of(savedUser).collect(Collectors.toSet()));
+        newMembers.add(savedUser);
         savedGroup.setMember(newMembers);
         engineManager.updateGroup(RDF_ENGINE, savedGroup);
-        logger.info("Added user " + username + " to group " + groupName);
+        logger.info("Added user " + username + " to group " + groupTitle);
         return Response.ok().build();
     }
 
     @Override
-    public Response removeUserGroup(String username, String groupName) {
-        if (username == null || groupName == null) {
+    public Response removeUserGroup(String username, String groupTitle) {
+        if (username == null || groupTitle == null) {
             throw ErrorUtils.sendError("Both username and group name must be provided", Response.Status.BAD_REQUEST);
         }
         User savedUser = engineManager.retrieveUser(RDF_ENGINE, username).orElseThrow(() ->
                 ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
-        Group savedGroup = engineManager.retrieveGroup(RDF_ENGINE, groupName).orElseThrow(() ->
-                ErrorUtils.sendError("Group " + groupName + " not found", Response.Status.BAD_REQUEST));
+        Group savedGroup = engineManager.retrieveGroup(RDF_ENGINE, groupTitle).orElseThrow(() ->
+                ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
         savedGroup.removeProperty(savedUser.getResource(), factory.createIRI(Group.member_IRI));
         engineManager.updateGroup(RDF_ENGINE, savedGroup);
-        logger.info("Removed user " + username + " from group " + groupName);
+        logger.info("Removed user " + username + " from group " + groupTitle);
         return Response.ok().build();
     }
 
@@ -285,7 +285,6 @@ public class UserRestImpl implements UserRest {
         String user = "";
         boolean isAdmin = false;
 
-        // TODO: Make util method for this
         for (Principal principal : subject.getPrincipals()) {
             if (principal instanceof UserPrincipal) {
                 user = principal.getName();
