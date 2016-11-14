@@ -197,6 +197,9 @@ public abstract class AbstractOrmFactory<T extends Thing> implements OrmFactory<
                        ValueConverterRegistry valueConverterRegistry) {
         model.add(valueFactory.createStatement(resource, valueFactory.createIRI(OrmFactory.RDF_TYPE_IRI),
                 valueFactory.createIRI(typeIriString)));
+        getParentTypeIRIs().stream().forEach(iri->{
+            model.add(valueFactory.createStatement(resource, valueFactory.createIRI(OrmFactory.RDF_TYPE_IRI), iri));
+        });
         return getExisting(resource, model, valueFactory, valueConverterRegistry);
     }
 

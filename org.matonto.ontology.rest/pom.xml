@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.3.7-SNAPSHOT</version>
+        <version>1.4.3-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -41,7 +41,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rest.util</artifactId>
-            <version>1.2.10</version>
+            <version>1.3.11</version>
         </dependency>
         <dependency>
             <groupId>biz.aQute.bnd</groupId>
@@ -50,17 +50,17 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.api</artifactId>
-            <version>1.3.5-SNAPSHOT</version>
+            <version>1.3.11</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>persistence.api</artifactId>
-            <version>1.2.10</version>
+            <version>1.3.11</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>persistence.utils</artifactId>
-            <version>1.2.10</version>
+            <version>1.3.11</version>
         </dependency>
         
 		<dependency>
@@ -93,7 +93,6 @@
         <dependency>
             <groupId>org.openrdf.sesame</groupId>
             <artifactId>sesame-runtime-osgi</artifactId>
-            <version>${ontology.openrdf.version}</version>
         </dependency>
     </dependencies>
 

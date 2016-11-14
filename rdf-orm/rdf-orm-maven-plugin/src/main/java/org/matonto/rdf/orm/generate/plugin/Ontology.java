@@ -25,6 +25,7 @@ package org.matonto.rdf.orm.generate.plugin;
 
 import org.apache.maven.plugins.annotations.Parameter;
 
+
 public class Ontology {
 
     @Parameter(property = "ontologyFile", required = true)
@@ -32,6 +33,10 @@ public class Ontology {
 
     @Parameter(property = "outputPackage", required = true)
     private String outputPackage;
+
+    @Parameter(property = "ontologyName")
+    private String ontologyName;
+
 
     public String getOntologyFile() {
         return ontologyFile;
@@ -49,4 +54,7 @@ public class Ontology {
         this.outputPackage = outputPackage;
     }
 
+    public String getOntologyName() { return ontologyName; }
+
+    public void setOntologyName(String ontologyName) { this.ontologyName = ontologyName; }
 }

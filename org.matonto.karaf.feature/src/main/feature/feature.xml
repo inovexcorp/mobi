@@ -24,43 +24,51 @@
 
 <features xmlns="http://karaf.apache.org/xmlns/features/v1.3.0" name="matonto-features">
     <feature name="matonto-deps" description="MatOnto Dependency Bundles" version="${project.version}">
-        <bundle start-level="80">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.poi/3.14_1</bundle>
-        <bundle start-level="80">mvn:biz.aQute.bnd/biz.aQute.bnd.annotation/3.1.0</bundle>
-        <bundle start-level="80">mvn:commons-io/commons-io/2.4</bundle>
-        <bundle start-level="80">mvn:commons-codec/commons-codec/1.10</bundle>
-        <bundle start-level="80">mvn:org.apache.commons/commons-lang3/3.4</bundle>
-        <bundle start-level="80">mvn:commons-lang/commons-lang/2.6</bundle>
         <bundle start-level="80">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.ezmorph/1.0.6_1</bundle>
-        <bundle start-level="80">mvn:commons-beanutils/commons-beanutils/1.9.2</bundle>
-        <bundle start-level="80">mvn:commons-collections/commons-collections/3.2.1</bundle>
         <bundle start-level="80">mvn:org.apache.httpcomponents/httpclient-osgi/4.5.2</bundle>
         <bundle start-level="80">mvn:org.apache.httpcomponents/httpcore-osgi/4.4</bundle>
         <bundle start-level="80">mvn:javax.ws.rs/javax.ws.rs-api/2.0.1</bundle>
         <bundle start-level="80">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.json-lib/2.4_1</bundle>
         <bundle start-level="80">mvn:com.eclipsesource.jaxrs/swagger-all/1.5.7</bundle>
-        <bundle start-level="80">mvn:net.sourceforge.owlapi/owlapi-distribution/4.1.4-SNAPSHOT</bundle>
-        <bundle start-level="80">mvn:org.openrdf.sesame/sesame-runtime-osgi/2.8.6</bundle>
         <bundle start-level="80">mvn:com.nimbusds/nimbus-jose-jwt/4.11</bundle>
-        <bundle start-level="80">mvn:com.google.guava/guava/18.0</bundle>
-        <bundle start-level="80">mvn:org.matonto.bundles/trove4j/3.0.3_1</bundle>
         <bundle start-level="80">mvn:com.spatial4j/spatial4j/0.4.1</bundle>
-        <bundle start-level="80">mvn:com.google.inject/guice/4.0</bundle>
-        <bundle start-level="80">mvn:com.google.inject.extensions/guice-assistedinject/4.0</bundle>
-        <bundle start-level="80">mvn:com.google.inject.extensions/guice-multibindings/4.0</bundle>
         <bundle start-level="80">mvn:net.minidev/json-smart/1.3.1</bundle>
-        <bundle start-level="80">mvn:com.opencsv/opencsv/3.7</bundle>
         <bundle start-level="80">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.oro/2.0.8_6</bundle>
         <bundle start-level="80">mvn:com.github.jsonld-java/jsonld-java/0.7.0</bundle>
         <bundle start-level="80">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.aopalliance/1.0_6</bundle>
         <bundle start-level="80">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.jcip-annotations/1.0_2</bundle>
-        <bundle start-level="80">mvn:org.tukaani/xz/1.5</bundle>
         <bundle start-level="80">mvn:org.mapdb/mapdb/1.0.7</bundle>
-        <bundle start-level="80">mvn:ch.qos.logback/logback-classic/1.1.2</bundle>
-        <bundle start-level="80">mvn:ch.qos.logback/logback-core/1.1.2</bundle>
-        <bundle start-level="80">mvn:org.openrdf.sesame/sesame-runtime-osgi/4.0.1</bundle>
-        <bundle start-level="80">mvn:com.fasterxml.jackson.core/jackson-databind/2.6.3</bundle>
-        <bundle start-level="80">mvn:com.fasterxml.jackson.core/jackson-core/2.6.3</bundle>
-        <bundle start-level="80">mvn:com.fasterxml.jackson.core/jackson-annotations/2.6.3</bundle>
+
+        <!-- Shared Dependencies -->
+        <bundle start-level="80">mvn:biz.aQute.bnd/biz.aQute.bndlib/${bndlib.version}</bundle>
+        <bundle start-level="80">mvn:commons-io/commons-io/${commons-io.version}</bundle>
+        <bundle start-level="80">mvn:commons-codec/commons-codec/${commons-codec.version}</bundle>
+        <bundle start-level="80">mvn:org.apache.commons/commons-lang3/${commons-lang3.version}</bundle>
+        <bundle start-level="80">mvn:commons-lang/commons-lang/${commons-lang.version}</bundle>
+        <bundle start-level="80">mvn:commons-beanutils/commons-beanutils/${commons-beanutils.version}</bundle>
+        <bundle start-level="80">mvn:commons-collections/commons-collections/${commons-collections.version}</bundle>
+        <bundle start-level="80">mvn:org.openrdf.sesame/sesame-runtime-osgi/${openrdf.version}</bundle>
+
+        <!-- ETL Dependencies -->
+        <bundle start-level="80">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.poi/${poi.version}</bundle>
+        <bundle start-level="80">mvn:com.opencsv/opencsv/${opencsv.version}</bundle>
+        <bundle start-level="80">mvn:ch.qos.logback/logback-classic/${logback.version}</bundle>
+        <bundle start-level="80">mvn:ch.qos.logback/logback-core/${logback.version}</bundle>
+
+        <!-- Ontology Dependencies -->
+        <bundle start-level="80">mvn:net.sourceforge.owlapi/owlapi-distribution/${owlapi.version}</bundle>
+        <bundle start-level="80">mvn:org.tukaani/xz/1.5</bundle>
+        <bundle start-level="80">mvn:com.google.inject/guice/${guice.version}</bundle>
+        <bundle start-level="80">mvn:com.google.inject.extensions/guice-assistedinject/${guice.version}</bundle>
+        <bundle start-level="80">mvn:com.google.inject.extensions/guice-multibindings/${guice.version}</bundle>
+        <bundle start-level="80">mvn:com.fasterxml.jackson.core/jackson-databind/${jackson.version}</bundle>
+        <bundle start-level="80">mvn:com.fasterxml.jackson.core/jackson-core/${jackson.version}</bundle>
+        <bundle start-level="80">mvn:com.fasterxml.jackson.core/jackson-annotations/${jackson.version}</bundle>
+        <bundle start-level="80">mvn:com.google.guava/guava/18.0</bundle>
+        <bundle start-level="80">mvn:com.google.guava/guava/19.0</bundle>
+        <bundle start-level="80">mvn:org.matonto.bundles/trove4j/3.0.3_1</bundle>
+        <bundle start-level="80">mvn:com.github.ben-manes.caffeine/caffeine/2.1.0</bundle>
+        <bundle start-level="80">mvn:org.apache.commons/commons-rdf-api/${commons-rdf-api.version}</bundle>
     </feature>
     <feature name="matonto-core" description="MatOnto Core Platform Bundles" version="${project.version}">
         <feature prerequisite="true">jaas</feature>
@@ -89,6 +97,7 @@
         <bundle start-level="80">mvn:org.matonto/catalog.api/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/catalog.impl/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/jaas/${project.version}</bundle>
+        <bundle start-level="80">mvn:org.matonto/jaas.api/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/rdf.orm/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/rdf.orm.ontologies/${project.version}</bundle>
     </feature>

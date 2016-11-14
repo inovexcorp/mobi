@@ -30,6 +30,7 @@ import org.openrdf.rio.UnsupportedRDFormatException;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class TestGenerate {
 
@@ -38,7 +39,7 @@ public class TestGenerate {
         SourceGenerator.toSource(
                 GraphReadingUtility.readOntology(new File("src/test/resources/mapping.trig"),
                         "http://matonto.org/ontologies/delimited"),
-                "test", "target/generated-sources");
+                "test", "target/generated-sources", new ArrayList<>());
     }
 
 }

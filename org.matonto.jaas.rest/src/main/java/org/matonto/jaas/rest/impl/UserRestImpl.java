@@ -23,205 +23,161 @@ package org.matonto.jaas.rest.impl;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Modified;
 import aQute.bnd.annotation.component.Reference;
-import net.sf.json.JSONArray;
-import org.apache.karaf.jaas.boot.ProxyLoginModule;
-import org.apache.karaf.jaas.boot.principal.GroupPrincipal;
-import org.apache.karaf.jaas.boot.principal.RolePrincipal;
-import org.apache.karaf.jaas.boot.principal.UserPrincipal;
-import org.apache.karaf.jaas.config.JaasRealm;
-import org.apache.karaf.jaas.modules.BackingEngine;
-import org.apache.karaf.jaas.modules.BackingEngineFactory;
+import org.matonto.jaas.api.config.MatontoConfiguration;
+import org.matonto.jaas.api.engines.EngineManager;
+import org.matonto.jaas.api.engines.UserConfig;
+import org.matonto.jaas.api.ontologies.usermanagement.Group;
+import org.matonto.jaas.api.ontologies.usermanagement.Role;
+import org.matonto.jaas.api.ontologies.usermanagement.User;
+import org.matonto.jaas.api.principals.UserPrincipal;
+import org.matonto.jaas.api.utils.TokenUtils;
 import org.matonto.jaas.rest.UserRest;
-import org.matonto.jaas.utils.TokenUtils;
+import org.matonto.ontologies.foaf.Agent;
+import org.matonto.rdf.api.Value;
+import org.matonto.rdf.api.ValueFactory;
+import org.matonto.rdf.orm.Thing;
 import org.matonto.rest.util.ErrorUtils;
 import org.matonto.web.security.util.RestSecurityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.security.auth.Subject;
-import javax.security.auth.login.AppConfigurationEntry;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.Response;
 import java.security.Principal;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import javax.security.auth.Subject;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.GenericEntity;
+import javax.ws.rs.core.Response;
 
 @Component(immediate = true)
 public class UserRestImpl implements UserRest {
-    protected JaasRealm realm;
-    protected Map<String, BackingEngineFactory> engineFactories = new HashMap<>();
-    protected BackingEngine engine;
+    protected EngineManager engineManager;
+    protected ValueFactory factory;
+    protected MatontoConfiguration matontoConfiguration;
     private final Logger logger = LoggerFactory.getLogger(UserRestImpl.class);
-    static final String TOKEN_MODULE = "org.matonto.jaas.modules.token.TokenLoginModule";
+    private static final String RDF_ENGINE = "org.matonto.jaas.engines.RdfEngine";
 
-    @Reference(target = "(realmId=matonto)")
-    protected void setRealm(JaasRealm realm) {
-        this.realm = realm;
+    @Reference
+    protected void setEngineManager(EngineManager engineManager) {
+        this.engineManager = engineManager;
     }
 
-    @Reference(type = '*', dynamic = true)
-    protected void addEngineFactory(BackingEngineFactory engineFactory) {
-        this.engineFactories.put(engineFactory.getModuleClass(), engineFactory);
+    @Reference
+    protected void setFactory(ValueFactory factory) {
+        this.factory = factory;
     }
 
-    protected void removeEngineFactory(BackingEngineFactory engineFactory) {
-        this.engineFactories.remove(engineFactory.getModuleClass());
-    }
-
-    @Activate
-    protected void start() {
-        // Get ApplicationConfigEntry
-        AppConfigurationEntry entry = null;
-        for (AppConfigurationEntry configEntry : realm.getEntries()) {
-            if (configEntry.getOptions().get(ProxyLoginModule.PROPERTY_MODULE).equals(TOKEN_MODULE)) {
-                entry = configEntry;
-                break;
-            }
-        }
-
-        if (entry == null) throw new IllegalStateException("TokenLoginModule not registered with realm.");
-
-        // Get TokenBackingEngineFactory
-        BackingEngineFactory engineFactory;
-        if (engineFactories.containsKey(TOKEN_MODULE)) {
-            engineFactory = engineFactories.get(TOKEN_MODULE);
-        } else {
-            throw new IllegalStateException("Cannot find BackingEngineFactory service for TokenLoginModule.");
-        }
-
-        engine = engineFactory.build(entry.getOptions());
-    }
-
-    @Modified
-    protected void update() {
-        start();
+    @Reference
+    protected void setMatontoConfiguration(MatontoConfiguration configuration) {
+        this.matontoConfiguration = configuration;
     }
 
     @Override
     public Response listUsers() {
-        JSONArray users = new JSONArray();
-        engine.listUsers().stream()
-                .map(UserPrincipal::getName)
-                .forEach(users::add);
+        Set<String> usernames = engineManager.getUsers(RDF_ENGINE).stream()
+                .map(User::getUsername)
+                .filter(Optional::isPresent)
+                .map(username -> username.get().stringValue())
+                .collect(Collectors.toSet());
 
-        return Response.status(200).entity(users.toString()).build();
+        return Response.status(200).entity(usernames).build();
     }
 
     @Override
-    public Response createUser(String username, String password) {
-        if (username == null || password == null) {
-            throw ErrorUtils.sendError("Both a username and password must be provided", Response.Status.BAD_REQUEST);
+    public Response createUser(User user, String password) {
+        if (password == null) {
+            throw ErrorUtils.sendError("Password must be provided", Response.Status.BAD_REQUEST);
         }
-
-        if (findUser(username).isPresent()) {
+        Value username = user.getUsername().orElseThrow(() ->
+                ErrorUtils.sendError("Username must be provided", Response.Status.BAD_REQUEST));
+        if (engineManager.userExists(username.stringValue())) {
             throw ErrorUtils.sendError("User already exists", Response.Status.BAD_REQUEST);
         }
 
-        engine.addUser(username, password);
-        logger.info("Created user " + username);
+        User tempUser = engineManager.createUser(RDF_ENGINE,
+                new UserConfig.Builder("", password, new HashSet<>()).build());
+        user.setPassword(tempUser.getPassword().get());
+        engineManager.storeUser(RDF_ENGINE, user);
+        logger.info("Created user " + username.stringValue());
         return Response.ok().build();
     }
 
     @Override
     public Response getUser(String username) {
         if (username == null) {
-            throw ErrorUtils.sendError("username must be provided", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError("Username must be provided", Response.Status.BAD_REQUEST);
         }
-        UserPrincipal user = findUser(username).orElseThrow(() ->
+        User user = engineManager.retrieveUser(RDF_ENGINE, username).orElseThrow(() ->
                 ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
-        return Response.status(200).entity(user.getName()).build();
+        return Response.status(200).entity(user).build();
     }
 
     @Override
-    public Response updateUser(ContainerRequestContext context, String currentUsername, String currentPassword,
-                               String newUsername, String newPassword) {
-        if (currentUsername == null || currentPassword == null) {
-            throw ErrorUtils.sendError("Both currentUsername and currentPassword must be provided",
+    public Response updateUser(ContainerRequestContext context, String username, String currentPassword,
+                               String newPassword, User newUser) {
+        if (username == null || currentPassword == null) {
+            throw ErrorUtils.sendError("Both current username and current password must be provided",
                     Response.Status.BAD_REQUEST);
         }
-
-        if (!isAuthorizedUser(context, currentUsername)) {
+        if (!isAuthorizedUser(context, username)) {
             throw ErrorUtils.sendError("User is not authorized to make this request with these parameters",
                     Response.Status.FORBIDDEN);
         }
-
-        if (!validPassword(currentUsername, currentPassword)) {
+        if (!engineManager.checkPassword(RDF_ENGINE, username, currentPassword)) {
             throw ErrorUtils.sendError("Invalid password", Response.Status.UNAUTHORIZED);
         }
-
-        UserPrincipal user = findUser(currentUsername).orElseThrow(() ->
-                ErrorUtils.sendError("User " + currentUsername + " not found", Response.Status.BAD_REQUEST));
-
-        // If changing username, get current groups and roles then delete user
-        List<GroupPrincipal> groups = new ArrayList<>();
-        List<RolePrincipal> roles = new ArrayList<>();
-        if (newUsername != null) {
-            groups.addAll(engine.listGroups(user));
-            roles.addAll(engine.listRoles(user));
-            engine.deleteUser(currentUsername);
+        Value newUsername = newUser.getUsername().orElseThrow(() ->
+                ErrorUtils.sendError("Username must be provided in new user", Response.Status.BAD_REQUEST));
+        User savedUser = engineManager.retrieveUser(RDF_ENGINE, username).orElseThrow(() ->
+                ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
+        if (!savedUser.getUsername().get().equals(newUsername)) {
+            throw ErrorUtils.sendError("Usernames must match", Response.Status.BAD_REQUEST);
         }
 
-        // Add the new user and/or update the password
-        String username = newUsername == null ? currentUsername : newUsername;
-        String password = newPassword == null ? currentPassword : newPassword;
-        engine.addUser(username, password);
-
-        // If changing username, add previous groups and roles
-        if (newUsername != null) {
-            for (GroupPrincipal group : groups) {
-                engine.addGroup(newUsername, group.getName());
-            }
-            for (RolePrincipal role : roles) {
-                engine.addRole(newUsername, role.getName());
-            }
+        if (!savedUser.getHasUserRole().isEmpty()) {
+            newUser.setHasUserRole(savedUser.getHasUserRole());
+        }
+        if (newPassword.isEmpty()) {
+            newUser.setPassword(savedUser.getPassword().get());
+        } else {
+            User tempUser = engineManager.createUser(RDF_ENGINE,
+                    new UserConfig.Builder("", newPassword, new HashSet<>()).build());
+            newUser.setPassword(tempUser.getPassword().get());
         }
 
+        engineManager.updateUser(RDF_ENGINE, newUser);
         return Response.ok().build();
     }
 
     @Override
     public Response deleteUser(ContainerRequestContext context, String username) {
         if (username == null) {
-            throw ErrorUtils.sendError("username must be provided", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError("Username must be provided", Response.Status.BAD_REQUEST);
         }
-
         if (!isAuthorizedUser(context, username)) {
             throw ErrorUtils.sendError("Not authorized", Response.Status.UNAUTHORIZED);
         }
-
-        if (!findUser(username).isPresent()) {
+        if (!engineManager.userExists(username)) {
             throw ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST);
         }
 
-        engine.deleteUser(username);
+        engineManager.deleteUser(RDF_ENGINE, username);
         logger.info("Deleted user " + username);
         return Response.ok().build();
     }
 
     @Override
-    public Response getUserRoles(String username) {
+    public Response getUserRoles(String username, boolean includeGroups) {
         if (username == null) {
-            throw ErrorUtils.sendError("username must be provided", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError("Username must be provided", Response.Status.BAD_REQUEST);
         }
-
-        UserPrincipal user = findUser(username).orElseThrow(() ->
+        User user = engineManager.retrieveUser(RDF_ENGINE, username).orElseThrow(() ->
                 ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
-
-        JSONArray roles = new JSONArray();
-        engine.listRoles(user).stream()
-                .map(RolePrincipal::getName)
-                .forEach(roles::add);
-
-        return Response.status(200).entity(roles.toString()).build();
+        Set<Role> roles = includeGroups ? engineManager.getUserRoles(RDF_ENGINE, username) : user.getHasUserRole();
+        return Response.ok(new GenericEntity<Set<Role>>(roles) {}).build();
     }
 
     @Override
@@ -230,12 +186,15 @@ public class UserRestImpl implements UserRest {
             throw ErrorUtils.sendError("Both username and role must be provided", Response.Status.BAD_REQUEST);
         }
 
-        if (!findUser(username).isPresent()) {
-            throw ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST);
-        }
-
-        logger.info("Adding role " + role + " to user " + username);
-        engine.addRole(username, role);
+        User savedUser = engineManager.retrieveUser(RDF_ENGINE, username).orElseThrow(() ->
+                ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
+        Role roleObj = engineManager.getRole(RDF_ENGINE, role).orElseThrow(() ->
+                ErrorUtils.sendError("Role " + role + " not found", Response.Status.BAD_REQUEST));
+        Set<Role> allRoles = savedUser.getHasUserRole();
+        allRoles.add(roleObj);
+        savedUser.setHasUserRole(allRoles);
+        engineManager.updateUser(RDF_ENGINE, savedUser);
+        logger.info("Role " + role + " added to user " + username);
         return Response.ok().build();
     }
 
@@ -244,61 +203,65 @@ public class UserRestImpl implements UserRest {
         if (username == null || role == null) {
             throw ErrorUtils.sendError("Both username and role must be provided", Response.Status.BAD_REQUEST);
         }
-
-        if (!findUser(username).isPresent()) {
-            throw ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST);
-        }
-
-        logger.info("Removing role " + role + " from user " + username);
-        engine.deleteRole(username, role);
+        User savedUser = engineManager.retrieveUser(RDF_ENGINE, username).orElseThrow(() ->
+                ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
+        Role roleObj = engineManager.getRole(RDF_ENGINE, role).orElseThrow(() ->
+                ErrorUtils.sendError("Role " + role + " not found", Response.Status.BAD_REQUEST));
+        savedUser.removeProperty(roleObj.getResource(), factory.createIRI(User.hasUserRole_IRI));
+        engineManager.updateUser(RDF_ENGINE, savedUser);
+        logger.info("Role " + role + " removed from user " + username);
         return Response.ok().build();
     }
 
     @Override
     public Response listUserGroups(String username) {
         if (username == null) {
-            throw ErrorUtils.sendError("username must be provided", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError("Username must be provided", Response.Status.BAD_REQUEST);
         }
 
-        UserPrincipal user = findUser(username).orElseThrow(() ->
+        User savedUser = engineManager.retrieveUser(RDF_ENGINE, username).orElseThrow(() ->
                 ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
+        Set<Group> groups = engineManager.getGroups(RDF_ENGINE).stream()
+                .filter(group -> {
+                    Set<Agent> members = group.getMember();
+                    return members.stream()
+                        .map(Thing::getResource)
+                        .anyMatch(resource -> resource.equals(savedUser.getResource()));
+                })
+                .collect(Collectors.toSet());
 
-        logger.info("Listing groups for " + username);
-        JSONArray groups = new JSONArray();
-        engine.listGroups(user).stream()
-                .map(GroupPrincipal::getName)
-                .forEach(groups::add);
-
-        return Response.status(200).entity(groups.toString()).build();
+        return Response.status(200).entity(new GenericEntity<Set<Group>>(groups) {}).build();
     }
 
     @Override
-    public Response addUserGroup(String username, String group) {
-        if (username == null || group == null) {
-            throw ErrorUtils.sendError("Both username and group must be provided", Response.Status.BAD_REQUEST);
+    public Response addUserGroup(String username, String groupTitle) {
+        if (username == null || groupTitle == null) {
+            throw ErrorUtils.sendError("Both username and group name must be provided", Response.Status.BAD_REQUEST);
         }
-
-        if (!findUser(username).isPresent()) {
-            throw ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST);
-        }
-
-        logger.info("Adding user " + username + " to group " + group);
-        engine.addGroup(username, group);
+        User savedUser = engineManager.retrieveUser(RDF_ENGINE, username).orElseThrow(() ->
+                ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
+        Group savedGroup = engineManager.retrieveGroup(RDF_ENGINE, groupTitle).orElseThrow(() ->
+                ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
+        Set<Agent> newMembers = savedGroup.getMember();
+        newMembers.add(savedUser);
+        savedGroup.setMember(newMembers);
+        engineManager.updateGroup(RDF_ENGINE, savedGroup);
+        logger.info("Added user " + username + " to group " + groupTitle);
         return Response.ok().build();
     }
 
     @Override
-    public Response removeUserGroup(String username, String group) {
-        if (username == null || group == null) {
-            throw ErrorUtils.sendError("Both username and group must be provided", Response.Status.BAD_REQUEST);
+    public Response removeUserGroup(String username, String groupTitle) {
+        if (username == null || groupTitle == null) {
+            throw ErrorUtils.sendError("Both username and group name must be provided", Response.Status.BAD_REQUEST);
         }
-
-        if (!findUser(username).isPresent()) {
-            throw ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST);
-        }
-
-        logger.info("Removing user " + username + " from group " + group);
-        engine.deleteGroup(username, group);
+        User savedUser = engineManager.retrieveUser(RDF_ENGINE, username).orElseThrow(() ->
+                ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
+        Group savedGroup = engineManager.retrieveGroup(RDF_ENGINE, groupTitle).orElseThrow(() ->
+                ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
+        savedGroup.removeProperty(savedUser.getResource(), factory.createIRI(Group.member_IRI));
+        engineManager.updateGroup(RDF_ENGINE, savedGroup);
+        logger.info("Removed user " + username + " from group " + groupTitle);
         return Response.ok().build();
     }
 
@@ -314,48 +277,22 @@ public class UserRestImpl implements UserRest {
         Subject subject = new Subject();
         String tokenString = TokenUtils.getTokenString(context);
 
-        if (!RestSecurityUtils.authenticateToken(realm.getName(), subject, tokenString)) {
+        if (!RestSecurityUtils.authenticateToken("matonto", subject, tokenString, matontoConfiguration)) {
             return false;
         }
 
-        String USER_CLASS = "org.apache.karaf.jaas.boot.principal.UserPrincipal";
-        String ROLE_CLASS = "org.apache.karaf.jaas.boot.principal.RolePrincipal";
-
         String user = "";
-        Set<String> roles = new HashSet<>();
+        boolean isAdmin = false;
 
-        // TODO: Make util method for this
         for (Principal principal : subject.getPrincipals()) {
-            if (principal.getClass().getName().equals(USER_CLASS)) {
+            if (principal instanceof UserPrincipal) {
                 user = principal.getName();
-            } else if (principal.getClass().getName().equals(ROLE_CLASS)) {
-                roles.add(principal.getName());
+                isAdmin = engineManager.getUserRoles(RDF_ENGINE, user).stream()
+                        .map(Thing::getResource)
+                        .anyMatch(resource -> resource.stringValue().contains("admin"));
             }
         }
 
-        return user.equals(username) || roles.contains("admin");
-    }
-
-    /**
-     * Authenticates the username with the password.
-     * @param username the username to authenticate
-     * @param password the password with which to authenticate
-     * @return true if an only if the password authenticates the user
-     */
-    boolean validPassword(String username, String password) {
-        Subject subject = new Subject();
-        String realmName = realm.getName();
-
-        return RestSecurityUtils.authenticateUser(realmName, subject, username, password);
-    }
-
-    private Optional<UserPrincipal> findUser(String username) {
-        List<UserPrincipal> users = engine.listUsers();
-        for (UserPrincipal prin : users) {
-            if (prin.getName().equals(username)) {
-                return Optional.of(prin);
-            }
-        }
-        return Optional.empty();
+        return user.equals(username) || isAdmin;
     }
 }
