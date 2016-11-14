@@ -1,6 +1,6 @@
-@Version("2.0.0.${build}")
+@Version("1.0.0.${build}")
 
-package org.matonto.jaas.rest;
+package org.matonto.jaas.rest.providers;
 
 /*-
  * #%L
