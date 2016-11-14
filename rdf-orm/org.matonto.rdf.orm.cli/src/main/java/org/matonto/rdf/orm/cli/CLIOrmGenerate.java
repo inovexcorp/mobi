@@ -51,6 +51,9 @@ public class CLIOrmGenerate implements Action {
     @Argument(index = 1, name = "Output Package", description = "The name of the package you want to generate your source files into", required = true)
     private String generateToPackage;
 
+    @Argument(index = 2, name = "Ontology Name", description = "The name of the ontology.  This value is used in generating the name of the sub thing.")
+    private String ontologyName;
+
     @Completion(FileCompleter.class)
     @Argument(index = 2, name = "Output Location", description = "Where to write your output Java classes", required = true)
     private File outputLocationPath;
@@ -64,7 +67,7 @@ public class CLIOrmGenerate implements Action {
         final File ontologyFile = verifyOntologyFile(ontologyFilePath.getAbsolutePath());
         final File outputLocationFile = verifyOutputLocation(outputLocationPath.getAbsolutePath());
         final List<ReferenceOntology> referencedOntologies = verifyReferencedOntologyFiles(referencedOntologyFilePaths);
-        SourceGenerator.toSource(GraphReadingUtility.readOntology(ontologyFile, ""), generateToPackage, outputLocationFile.getAbsolutePath(), referencedOntologies);
+        SourceGenerator.toSource(GraphReadingUtility.readOntology(ontologyFile, ""), generateToPackage, ontologyName, outputLocationFile.getAbsolutePath(), referencedOntologies);
         return null;
     }
 
