@@ -37,11 +37,7 @@ public interface Conflict {
 
     Model getOriginal();
 
-    Model getLeftAdditions();
+    Difference getLeftDifference();
 
-    Model getLeftDeletions();
-
-    Model getRightAdditions();
-
-    Model getRightDeletions();
+    Difference getRightDifference();
 }

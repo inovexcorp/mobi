@@ -72,7 +72,7 @@ GRAPH <http://matonto.org/test/versions#test>
     <http://matonto.org/test/versions#test> a mcat:Version ;
         dc:title "Version" ;
         dc:issued "2016-03-01T00:00:00Z"^^xsd:dateTime ;
-        dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-11-11T00:00:00Z"^^xsd:dateTime ;
         mcat:versionedDistribution <http://matonto.org/test/distributions#test2> .
 }
 
@@ -88,7 +88,7 @@ GRAPH <http://matonto.org/test/versions#test3>
 {
     <http://matonto.org/test/versions#test3> a mcat:Version ;
         dc:title "Version 3" ;
-        dc:issued "2016-02-01T00:00:00Z"^^xsd:dateTime ;
+        dc:issued "2016-09-09T00:00:00Z"^^xsd:dateTime ;
         dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime .
 }
 
@@ -96,7 +96,7 @@ GRAPH <http://matonto.org/test/versions#remove>
 {
     <http://matonto.org/test/versions#remove> a mcat:Version ;
         dc:title "Version to Remove" ;
-        dc:issued "2016-02-01T00:00:00Z"^^xsd:dateTime ;
+        dc:issued "2016-08-08T00:00:00Z"^^xsd:dateTime ;
         dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime .
 }
 
@@ -120,6 +120,14 @@ GRAPH <http://matonto.org/test/branches#test>
 {
     <http://matonto.org/test/branches#test> a mcat:Branch ;
         dc:title "Branch" ;
+        dc:issued "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime .
+}
+
+GRAPH <http://matonto.org/test/branches#test2>
+{
+    <http://matonto.org/test/branches#test2> a mcat:Branch ;
+        dc:title "Branch 2" ;
         dc:issued "2016-03-01T00:00:00Z"^^xsd:dateTime ;
         dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime .
 }

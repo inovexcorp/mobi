@@ -24,14 +24,13 @@ package org.matonto.catalog.impl;
  */
 
 import org.matonto.catalog.api.Conflict;
+import org.matonto.catalog.api.Difference;
 import org.matonto.rdf.api.Model;
 
 public class SimpleConflict implements Conflict {
     private Model original;
-    private Model leftAdditions;
-    private Model leftDeletions;
-    private Model rightAdditions;
-    private Model rightDeletions;
+    private Difference left;
+    private Difference right;
 
     @Override
     public Model getOriginal() {
@@ -39,31 +38,19 @@ public class SimpleConflict implements Conflict {
     }
 
     @Override
-    public Model getLeftAdditions() {
-        return leftAdditions;
+    public Difference getLeftDifference() {
+        return left;
     }
 
     @Override
-    public Model getLeftDeletions() {
-        return leftDeletions;
-    }
-
-    @Override
-    public Model getRightAdditions() {
-        return rightAdditions;
-    }
-
-    @Override
-    public Model getRightDeletions() {
-        return rightDeletions;
+    public Difference getRightDifference() {
+        return right;
     }
 
     public static class Builder {
         private final Model original;
-        private Model leftAdditions;
-        private Model leftDeletions;
-        private Model rightAdditions;
-        private Model rightDeletions;
+        private Difference left;
+        private Difference right;
 
         /**
          * The builder for a SimpleConflict which takes the subject IRI string, original Model, the first Model being
@@ -76,23 +63,13 @@ public class SimpleConflict implements Conflict {
             this.original = original;
         }
 
-        public Builder leftAdditions(Model leftAdditions) {
-            this.leftAdditions = leftAdditions;
+        public Builder leftDifference(Difference left) {
+            this.left = left;
             return this;
         }
 
-        public Builder leftDeletions(Model leftDeletions) {
-            this.leftDeletions = leftDeletions;
-            return this;
-        }
-
-        public Builder rightAdditions(Model rightAdditions) {
-            this.rightAdditions = rightAdditions;
-            return this;
-        }
-
-        public Builder rightDeletions(Model rightDeletions) {
-            this.rightDeletions = rightDeletions;
+        public Builder rightDifference(Difference right) {
+            this.right = right;
             return this;
         }
 
@@ -103,9 +80,7 @@ public class SimpleConflict implements Conflict {
 
     private SimpleConflict(Builder builder) {
         this.original = builder.original;
-        this.leftAdditions = builder.leftAdditions;
-        this.leftDeletions = builder.leftDeletions;
-        this.rightAdditions = builder.rightAdditions;
-        this.rightDeletions = builder.rightDeletions;
+        this.left = builder.left;
+        this.right = builder.right;
     }
 }

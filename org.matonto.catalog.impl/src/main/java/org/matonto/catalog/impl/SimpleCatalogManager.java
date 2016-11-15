@@ -286,11 +286,9 @@ public class SimpleCatalogManager implements CatalogManager {
             String querySuffix;
             Optional<Boolean> ascendingParam = searchParams.getAscending();
             if (ascendingParam.isPresent() && ascendingParam.get()) {
-                querySuffix = String.format("\nORDER BY ?%s\nLIMIT %d\nOFFSET %d", sortBinding,
-                        limit, offset);
+                querySuffix = String.format("\nORDER BY ?%s\nLIMIT %d\nOFFSET %d", sortBinding, limit, offset);
             } else {
-                querySuffix = String.format("\nORDER BY DESC(?%s)\nLIMIT %d\nOFFSET %d",
-                        sortBinding, limit, offset);
+                querySuffix = String.format("\nORDER BY DESC(?%s)\nLIMIT %d\nOFFSET %d", sortBinding, limit, offset);
             }
 
             String queryString;
@@ -360,7 +358,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public <T extends Record> boolean addRecord(Resource catalogId, T record) throws MatOntoException {
+    public <T extends Record> void addRecord(Resource catalogId, T record) throws MatOntoException {
         if (resourceExists(catalogId, Catalog.TYPE) && !resourceExists(record.getResource())) {
             try (RepositoryConnection conn = repository.getConnection()) {
                 record.setCatalog(getCatalog(catalogId));
@@ -368,34 +366,34 @@ public class SimpleCatalogManager implements CatalogManager {
             } catch (RepositoryException e) {
                 throw new MatOntoException("Error in repository connection", e);
             }
-            return true;
+        } else {
+            throw new MatOntoException("The Record could not be added.");
         }
-        return false;
     }
 
     @Override
-    public <T extends Record> boolean updateRecord(Resource catalogId, T newRecord) throws MatOntoException {
+    public <T extends Record> void updateRecord(Resource catalogId, T newRecord) throws MatOntoException {
         if (resourceExists(catalogId, Catalog.TYPE) && resourceExists(newRecord.getResource(), T.TYPE)) {
             try (RepositoryConnection conn = repository.getConnection()) {
                 if (conn.getStatements(newRecord.getResource(), vf.createIRI(Record.catalog_IRI), catalogId)
                         .hasNext()) {
                     update(newRecord.getResource(), newRecord.getModel());
-                    return true;
                 }
             } catch (RepositoryException e) {
                 throw new MatOntoException("Error in repository connection", e);
             }
+        } else {
+            throw new MatOntoException("The Record could not be updated.");
         }
-        return false;
     }
 
     @Override
-    public boolean removeRecord(Resource catalogId, Resource recordId) throws MatOntoException {
+    public void removeRecord(Resource catalogId, Resource recordId) throws MatOntoException {
         if (resourceExists(catalogId, Catalog.TYPE) && resourceExists(recordId, Record.TYPE)) {
             remove(recordId);
-            return true;
+        } else {
+            throw new MatOntoException("The Record could not be removed.");
         }
-        return false;
     }
 
     @Override
@@ -436,37 +434,45 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public boolean addDistributionToUnversionedRecord(Distribution distribution, Resource unversionedRecordId) throws
+    public void addDistributionToUnversionedRecord(Distribution distribution, Resource unversionedRecordId) throws
             MatOntoException {
-        return addDistribution(distribution, unversionedRecordId, UnversionedRecord.unversionedDistribution_IRI);
+        if (!addDistribution(distribution, unversionedRecordId, UnversionedRecord.unversionedDistribution_IRI)) {
+            throw new MatOntoException("The Distribution could not be added.");
+        }
     }
 
     @Override
-    public boolean addDistributionToVersion(Distribution distribution, Resource versionId) throws MatOntoException {
-        return addDistribution(distribution, versionId, Version.versionedDistribution_IRI);
+    public void addDistributionToVersion(Distribution distribution, Resource versionId) throws MatOntoException {
+        if (!addDistribution(distribution, versionId, Version.versionedDistribution_IRI)) {
+            throw new MatOntoException("The Distribution could not be added.");
+        }
     }
 
     @Override
-    public boolean updateDistribution(Distribution newDistribution) throws MatOntoException {
+    public void updateDistribution(Distribution newDistribution) throws MatOntoException {
         if (resourceExists(newDistribution.getResource(), Distribution.TYPE)) {
             update(newDistribution.getResource(), newDistribution.getModel());
-            return true;
+        } else {
+            throw new MatOntoException("The Distribution could not be updated.");
         }
-        return false;
     }
 
     @Override
-    public boolean removeDistributionFromUnversionedRecord(Resource distributionId, Resource unversionedRecordId) throws
-        MatOntoException {
-        return resourceExists(unversionedRecordId, UnversionedRecord.TYPE) && resourceExists(distributionId,
+    public void removeDistributionFromUnversionedRecord(Resource distributionId, Resource unversionedRecordId) throws
+            MatOntoException {
+        if (!(resourceExists(unversionedRecordId, UnversionedRecord.TYPE) && resourceExists(distributionId,
                 Distribution.TYPE) && removeObjectWithRelationship(distributionId, unversionedRecordId,
-                UnversionedRecord.unversionedDistribution_IRI);
+                UnversionedRecord.unversionedDistribution_IRI))) {
+            throw new MatOntoException("The Distribution could not be removed.");
+        }
     }
 
     @Override
-    public boolean removeDistributionFromVersion(Resource distributionId, Resource versionId) throws MatOntoException {
-        return (resourceExists(versionId, Version.TYPE) && resourceExists(distributionId, Distribution.TYPE)
-                && removeObjectWithRelationship(distributionId, versionId, Version.versionedDistribution_IRI));
+    public void removeDistributionFromVersion(Resource distributionId, Resource versionId) throws MatOntoException {
+        if (!(resourceExists(versionId, Version.TYPE) && resourceExists(distributionId, Distribution.TYPE)
+                && removeObjectWithRelationship(distributionId, versionId, Version.versionedDistribution_IRI))) {
+            throw new MatOntoException("The Distribution could not be removed.");
+        }
     }
 
     @Override
@@ -490,7 +496,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public <T extends Version> boolean addVersion(T version, Resource versionedRecordId) throws MatOntoException {
+    public <T extends Version> void addVersion(T version, Resource versionedRecordId) throws MatOntoException {
         if (!resourceExists(version.getResource()) && resourceExists(versionedRecordId, VersionedRecord.TYPE)) {
             try (RepositoryConnection conn = repository.getConnection()) {
                 IRI latestVersionResource = vf.createIRI(VersionedRecord.latestVersion_IRI);
@@ -502,22 +508,22 @@ public class SimpleCatalogManager implements CatalogManager {
             } catch (RepositoryException e) {
                 throw new MatOntoException("Error in repository connection", e);
             }
-            return true;
+        } else {
+            throw new MatOntoException("Version could not be added.");
         }
-        return false;
     }
 
     @Override
-    public <T extends Version> boolean updateVersion(T newVersion) throws MatOntoException {
+    public <T extends Version> void updateVersion(T newVersion) throws MatOntoException {
         if (resourceExists(newVersion.getResource(), T.TYPE)) {
             update(newVersion.getResource(), newVersion.getModel());
-            return true;
+        } else {
+            throw new MatOntoException("The Version could not be updated.");
         }
-        return false;
     }
 
     @Override
-    public boolean removeVersion(Resource versionId, Resource versionedRecordId) throws MatOntoException {
+    public void removeVersion(Resource versionId, Resource versionedRecordId) throws MatOntoException {
         if (resourceExists(versionId, Version.TYPE) && resourceExists(versionedRecordId, VersionedRecord.TYPE)
                 && removeObjectWithRelationship(versionId, versionedRecordId, VersionedRecord.version_IRI)) {
             try (RepositoryConnection conn = repository.getConnection()) {
@@ -538,9 +544,9 @@ public class SimpleCatalogManager implements CatalogManager {
             } catch (RepositoryException e) {
                 throw new MatOntoException("Error in repository connection", e);
             }
-            return true;
+        } else {
+            throw new MatOntoException("The Version could not be removed.");
         }
-        return false;
     }
 
     @Override
@@ -565,7 +571,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public boolean addBranch(Branch branch, Resource versionedRDFRecordId) throws MatOntoException {
+    public void addBranch(Branch branch, Resource versionedRDFRecordId) throws MatOntoException {
         if (!resourceExists(branch.getResource()) && resourceExists(versionedRDFRecordId, VersionedRDFRecord.TYPE)) {
             try (RepositoryConnection conn = repository.getConnection()) {
                 conn.begin();
@@ -576,24 +582,26 @@ public class SimpleCatalogManager implements CatalogManager {
             } catch (RepositoryException e) {
                 throw new MatOntoException("Error in repository connection", e);
             }
-            return true;
+        } else {
+            throw new MatOntoException("The Branch could not be added.");
         }
-        return false;
     }
 
     @Override
-    public boolean updateBranch(Branch newBranch) throws MatOntoException {
+    public void updateBranch(Branch newBranch) throws MatOntoException {
         if (resourceExists(newBranch.getResource(), Branch.TYPE)) {
             update(newBranch.getResource(), newBranch.getModel());
-            return true;
+        } else {
+            throw new MatOntoException("The Branch could not be updated.");
         }
-        return false;
     }
 
     @Override
-    public boolean removeBranch(Resource branchId, Resource versionedRDFRecordId) throws MatOntoException {
-        return resourceExists(branchId, Branch.TYPE) && resourceExists(versionedRDFRecordId, VersionedRDFRecord.TYPE)
-                && removeObjectWithRelationship(branchId, versionedRDFRecordId, VersionedRDFRecord.branch_IRI);
+    public void removeBranch(Resource branchId, Resource versionedRDFRecordId) throws MatOntoException {
+        if (!(resourceExists(branchId, Branch.TYPE) && resourceExists(versionedRDFRecordId, VersionedRDFRecord.TYPE)
+                && removeObjectWithRelationship(branchId, versionedRDFRecordId, VersionedRDFRecord.branch_IRI))) {
+            throw new MatOntoException("The Branch could not be removed.");
+        }
     }
 
     @Override
@@ -663,12 +671,13 @@ public class SimpleCatalogManager implements CatalogManager {
             inProgressCommit.getModel().addAll(revision.getModel());
 
             return inProgressCommit;
+        } else {
+            throw new InvalidParameterException("The provided Resource does not identify a Branch entity.");
         }
-        throw new InvalidParameterException("The provided Resource does not identify a Branch entity.");
     }
 
     @Override
-    public boolean addAdditions(Model statements, Resource commitId) throws MatOntoException {
+    public void addAdditions(Model statements, Resource commitId) throws MatOntoException {
         if (resourceExists(commitId, InProgressCommit.TYPE)) {
             try (RepositoryConnection conn = repository.getConnection()) {
                 Resource additions = getAdditionsResource(commitId, conn);
@@ -686,13 +695,13 @@ public class SimpleCatalogManager implements CatalogManager {
             } catch (RepositoryException e) {
                 throw new MatOntoException("Error in repository connection", e);
             }
-            return true;
+        } else {
+            throw new MatOntoException("The additions could not be added.");
         }
-        return false;
     }
 
     @Override
-    public boolean addDeletions(Model statements, Resource commitId) throws MatOntoException {
+    public void addDeletions(Model statements, Resource commitId) throws MatOntoException {
         if (resourceExists(commitId, InProgressCommit.TYPE)) {
             try (RepositoryConnection conn = repository.getConnection()) {
                 Resource additions = getAdditionsResource(commitId, conn);
@@ -710,13 +719,13 @@ public class SimpleCatalogManager implements CatalogManager {
             } catch (RepositoryException e) {
                 throw new MatOntoException("Error in repository connection", e);
             }
-            return true;
+        } else {
+            throw new MatOntoException("The deletions could not be added.");
         }
-        return false;
     }
 
     @Override
-    public boolean addCommitToBranch(Commit commit, Resource branchId) throws MatOntoException {
+    public void addCommitToBranch(Commit commit, Resource branchId) throws MatOntoException {
         if (!resourceExists(commit.getResource()) && resourceExists(branchId, Branch.TYPE)) {
             try (RepositoryConnection conn = repository.getConnection()) {
                 IRI headIRI = vf.createIRI(Branch.head_IRI);
@@ -728,22 +737,22 @@ public class SimpleCatalogManager implements CatalogManager {
             } catch (RepositoryException e) {
                 throw new MatOntoException("Error in repository connection", e);
             }
-            return true;
+        } else {
+            throw new MatOntoException("The Commit could not be added.");
         }
-        return false;
     }
 
     @Override
-    public boolean addInProgressCommit(InProgressCommit inProgressCommit) throws MatOntoException {
+    public void addInProgressCommit(InProgressCommit inProgressCommit) throws MatOntoException {
         if (!resourceExists(inProgressCommit.getResource())) {
             try (RepositoryConnection conn = repository.getConnection()) {
                 conn.add(inProgressCommit.getModel(), inProgressCommit.getResource());
             } catch (RepositoryException e) {
                 throw new MatOntoException("Error in repository connection", e);
             }
-            return true;
+        } else {
+            throw new MatOntoException("The InProgressCommit could not be added.");
         }
-        return false;
     }
 
     @Override
@@ -752,12 +761,12 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public boolean removeInProgressCommit(Resource inProgressCommitId) throws MatOntoException {
+    public void removeInProgressCommit(Resource inProgressCommitId) throws MatOntoException {
         if (resourceExists(inProgressCommitId, InProgressCommit.TYPE)) {
             remove(inProgressCommitId);
-            return true;
+        } else {
+            throw new MatOntoException("The InProgressCommit could not be removed.");
         }
-        return false;
     }
 
     @Override
@@ -870,8 +879,9 @@ public class SimpleCatalogManager implements CatalogManager {
             } catch (RepositoryException e) {
                 throw new MatOntoException("Error in repository connection.", e);
             }
+        } else {
+            throw new MatOntoException("One or both of the commit IRIs could not be found in the Repository.");
         }
-        throw new MatOntoException("One or both of the commit IRIs could not be found in the Repository.");
     }
 
     @Override
@@ -908,11 +918,19 @@ public class SimpleCatalogManager implements CatalogManager {
      */
     private Conflict createConflict(Resource subject, IRI predicate, Model original, Model left, Model leftDeletions,
                                     Model right, Model rightDeletions) {
+        Difference leftDifference = new SimpleDifference.Builder()
+                .additions(mf.createModel(left.filter(subject, predicate, null)))
+                .deletions(mf.createModel(leftDeletions.filter(subject, predicate, null)))
+                .build();
+
+        Difference rightDifference = new SimpleDifference.Builder()
+                .additions(mf.createModel(right.filter(subject, predicate, null)))
+                .deletions(mf.createModel(rightDeletions.filter(subject, predicate, null)))
+                .build();
+
         return new SimpleConflict.Builder(mf.createModel(original.filter(subject, predicate, null)))
-                .leftAdditions(mf.createModel(left.filter(subject, predicate, null)))
-                .leftDeletions(mf.createModel(leftDeletions.filter(subject, predicate, null)))
-                .rightAdditions(mf.createModel(right.filter(subject, predicate, null)))
-                .rightDeletions(mf.createModel(rightDeletions.filter(subject, predicate, null)))
+                .leftDifference(leftDifference)
+                .rightDifference(rightDifference)
                 .build();
     }
 
@@ -982,8 +1000,9 @@ public class SimpleCatalogManager implements CatalogManager {
             } catch (RepositoryException e) {
                 throw new MatOntoException("Error in repository connection", e);
             }
+        } else {
+            throw new MatOntoException("The catalog could not be retrieved.");
         }
-        throw new MatOntoException("The catalog could not be retrieved.");
     }
 
     /**

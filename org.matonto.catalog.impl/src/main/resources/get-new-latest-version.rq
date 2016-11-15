@@ -4,9 +4,9 @@ PREFIX mcat: <http://matonto.org/ontologies/catalog#>
 SELECT
     ?version
 WHERE {
-	?record a ?type ;
-	    mcat:version ?version ;
-	    dc:issued ?issued .
+	<http://matonto.org/test/records#get> a ?type ;
+	    mcat:version ?version .
+    ?version dc:issued ?issued .
 
 	FILTER(?type IN (mcat:VersionedRecord, mcat:VersionedRDFRecord, mcat:OntologyRecord, mcat:MappingRecord, mcat:DatasetRecord))
 }

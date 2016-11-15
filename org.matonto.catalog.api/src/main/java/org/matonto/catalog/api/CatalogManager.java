@@ -92,10 +92,9 @@ public interface CatalogManager {
      * @param catalogId The Resource identifying the catalog to add the Record to.
      * @param record The Object which extends Record to add to the Catalog.
      * @param <T> An Object which extends Record.
-     * @return True if the Record was successfully added; otherwise, false.
      * @throws MatOntoException Thrown if a connection to the repository could not be made.
      */
-    <T extends Record> boolean addRecord(Resource catalogId, T record) throws MatOntoException;
+    <T extends Record> void addRecord(Resource catalogId, T record) throws MatOntoException;
 
     /**
      * Uses the provided Record to find the Resource of the existing Record and replaces it.
@@ -103,10 +102,9 @@ public interface CatalogManager {
      * @param catalogId The Resource identifying the catalog which contains desired Record.
      * @param newRecord The Record with the desired changes.
      * @param <T> An Object which extends Record.
-     * @return True if the Record was successfully updated; otherwise, false.
      * @throws MatOntoException Thrown if a connection to the repository could not be made.
      */
-    <T extends Record> boolean updateRecord(Resource catalogId, T newRecord) throws MatOntoException;
+    <T extends Record> void updateRecord(Resource catalogId, T newRecord) throws MatOntoException;
 
     /**
      * Removes the Record identified by the provided Resource from the repository if it was contained within the Catalog
@@ -114,10 +112,9 @@ public interface CatalogManager {
      *
      * @param catalogId The Resource identifying the catalog which contains the record you want to remove.
      * @param recordId The Resource identifying the Record which you want to remove.
-     * @return True if the Record was successfully removed; otherwise, false.
      * @throws MatOntoException Thrown if a connection to the repository could not be made.
      */
-    boolean removeRecord(Resource catalogId, Resource recordId) throws MatOntoException;
+    void removeRecord(Resource catalogId, Resource recordId) throws MatOntoException;
 
     /**
      * Gets the Record from the provided Catalog. The Record will be of type T which is determined by the provided
@@ -147,10 +144,9 @@ public interface CatalogManager {
      *
      * @param distribution The Distribution to add to the UnversionedRecord.
      * @param unversionedRecordId The Resource identifying the UnversionedRecord which will get a new Distribution.
-     * @return True if the Distribution was successfully added; otherwise, false.
      * @throws MatOntoException Thrown if a connection to the repository could not be made.
      */
-    boolean addDistributionToUnversionedRecord(Distribution distribution, Resource unversionedRecordId) throws
+    void addDistributionToUnversionedRecord(Distribution distribution, Resource unversionedRecordId) throws
             MatOntoException;
 
     /**
@@ -159,19 +155,17 @@ public interface CatalogManager {
      *
      * @param distribution The Distribution to add to the Version.
      * @param versionId The Resource identifying the Version which will get a new Distribution.
-     * @return True if the Distribution was successfully added; otherwise, false.
      * @throws MatOntoException Thrown if a connection to the repository could not be made.
      */
-    boolean addDistributionToVersion(Distribution distribution, Resource versionId) throws MatOntoException;
+    void addDistributionToVersion(Distribution distribution, Resource versionId) throws MatOntoException;
 
     /**
      * Uses the provided Distribution to find the Resource of the existing Distribution and replaces it.
      *
      * @param newDistribution The Distribution with the desired changes.
-     * @return True if the Distribution was successfully updated; otherwise, false.
      * @throws MatOntoException Thrown if a connection to the repository could not be made.
      */
-    boolean updateDistribution(Distribution newDistribution) throws MatOntoException;
+    void updateDistribution(Distribution newDistribution) throws MatOntoException;
 
     /**
      * Removes the Distribution identified by the provided Resource from the repository if it was a Distribution for the
@@ -179,10 +173,9 @@ public interface CatalogManager {
      *
      * @param distributionId The Resource identifying the Distribution you want to remove.
      * @param unversionedRecordId The Resource identifying the UnversionedRecord to remove the Distribution from.
-     * @return True if the Distribution was successfully removed; otherwise, false.
      * @throws MatOntoException Thrown if a connection to the repository could not be made.
      */
-    boolean removeDistributionFromUnversionedRecord(Resource distributionId, Resource unversionedRecordId) throws
+    void removeDistributionFromUnversionedRecord(Resource distributionId, Resource unversionedRecordId) throws
             MatOntoException;
 
     /**
@@ -191,10 +184,9 @@ public interface CatalogManager {
      *
      * @param distributionId The Resource identifying the Distribution you want to remove.
      * @param versionId The Resource identifying the Version to remove the Distribution from.
-     * @return True if the Distribution was successfully removed; otherwise, false.
      * @throws MatOntoException Thrown if a connection to the repository could not be made.
      */
-    boolean removeDistributionFromVersion(Resource distributionId, Resource versionId) throws MatOntoException;
+    void removeDistributionFromVersion(Resource distributionId, Resource versionId) throws MatOntoException;
 
     /**
      * Gets the Distribution identified by the provided Resource.
@@ -223,20 +215,18 @@ public interface CatalogManager {
      * @param version The Version to add to the VersionedRecord.
      * @param versionedRecordId The Resource identifying the VersionedRecord which will get a new Version.
      * @param <T> An Object which extends Version.
-     * @return True if the Version was successfully added; otherwise, false.
      * @throws MatOntoException Thrown if a connection to the repository could not be made.
      */
-    <T extends Version> boolean addVersion(T version, Resource versionedRecordId) throws MatOntoException;
+    <T extends Version> void addVersion(T version, Resource versionedRecordId) throws MatOntoException;
 
     /**
      * Uses the provided Version to find the Resource of the existing Version and replaces it.
      *
      * @param newVersion The Version with the desired changes.
      * @param <T> An Object which extends Version.
-     * @return True if the Version was successfully updated; otherwise, false.
      * @throws MatOntoException Thrown if a connection to the repository could not be made.
      */
-    <T extends Version> boolean updateVersion(T newVersion) throws MatOntoException;
+    <T extends Version> void updateVersion(T newVersion) throws MatOntoException;
 
     /**
      * Removes the Version identified by the provided Resource from the repository if it was a Version of the
@@ -244,10 +234,9 @@ public interface CatalogManager {
      *
      * @param versionId The Resource identifying the Version you want to remove.
      * @param versionedRecordId The Resource identifying the VersionedRecord to remove the Version from.
-     * @return True if the Version was successfully removed; otherwise, false.
      * @throws MatOntoException Thrown if a connection to the repository could not be made.
      */
-    boolean removeVersion(Resource versionId, Resource versionedRecordId) throws MatOntoException;
+    void removeVersion(Resource versionId, Resource versionedRecordId) throws MatOntoException;
 
     /**
      * Gets the Version identified by the provided Resource. The Version will be of type T which is determined by the
@@ -276,19 +265,17 @@ public interface CatalogManager {
      *
      * @param branch The Branch to add to the VersionedRDFRecord.
      * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord which will get a new Branch.
-     * @return True if the Branch was successfully added; otherwise, false.
      * @throws MatOntoException Thrown if a connection to the repository could not be made.
      */
-    boolean addBranch(Branch branch, Resource versionedRDFRecordId) throws MatOntoException;
+    void addBranch(Branch branch, Resource versionedRDFRecordId) throws MatOntoException;
 
     /**
      * Uses the provided Branch to find the Resource of the existing Branch and replaces it.
      *
      * @param newBranch The Branch with the desired changes.
-     * @return True if the Branch was successfully updated; otherwise, false.
      * @throws MatOntoException Thrown if a connection to the repository could not be made.
      */
-    boolean updateBranch(Branch newBranch) throws MatOntoException;
+    void updateBranch(Branch newBranch) throws MatOntoException;
 
     /**
      * Removes the Branch identified by the provided Resource from the repository if it was a Branch of the
@@ -296,10 +283,9 @@ public interface CatalogManager {
      *
      * @param branchId The Resource identifying the Branch you want to remove.
      * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord to remove the Branch from.
-     * @return True if the Branch was successfully removed; otherwise, false.
      * @throws MatOntoException Thrown if a connection to the repository could not be made.
      */
-    boolean removeBranch(Resource branchId, Resource versionedRDFRecordId) throws MatOntoException;
+    void removeBranch(Resource branchId, Resource versionedRDFRecordId) throws MatOntoException;
 
     /**
      * Gets the Branch identified by the provided Resource.
@@ -338,10 +324,9 @@ public interface CatalogManager {
      *
      * @param statements The statements which were added to the named graph.
      * @param commitId The Resource identifying the Commit that these statements are associated with.
-     * @return True if the statements were successfully added to the correct named graph; otherwise, false.
      * @throws MatOntoException Thrown if a connection to the repository could not be made.
      */
-    boolean addAdditions(Model statements, Resource commitId) throws MatOntoException;
+    void addAdditions(Model statements, Resource commitId) throws MatOntoException;
 
     /**
      * Adds the provided statements to the provided Commit as deletions. These statements were deleted and will be used
@@ -349,29 +334,26 @@ public interface CatalogManager {
      *
      * @param statements The statements which were added to the named graph.
      * @param commitId The Resource identifying the Commit that these statements are associated with.
-     * @return True if the statements were successfully added to the correct named graph; otherwise, false.
      * @throws MatOntoException Thrown if a connection to the repository could not be made.
      */
-    boolean addDeletions(Model statements, Resource commitId) throws MatOntoException;
+    void addDeletions(Model statements, Resource commitId) throws MatOntoException;
 
     /**
      * Stores the provided Commit in the repository and adds it to the Branch identified by the provided Resource.
      *
      * @param commit The Commit to store in the repository.
      * @param branchId The Resource identifying the Branch to add the Commit to.
-     * @return True if the Commit was successfully added to the Branch; otherwise, false.
      * @throws MatOntoException Thrown if a connection to the repository could not be made.
      */
-    boolean addCommitToBranch(Commit commit, Resource branchId) throws MatOntoException;
+    void addCommitToBranch(Commit commit, Resource branchId) throws MatOntoException;
 
     /**
      * Adds the provided InProgressCommit to the repository.
      *
      * @param inProgressCommit The InProgressCommit to add to the repository.
-     * @return True if the InProgressCommit is successfully added to the repository; otherwise, false.
      * @throws MatOntoException Thrown if a connection to the repository could not be made.
      */
-    boolean addInProgressCommit(InProgressCommit inProgressCommit) throws MatOntoException;
+    void addInProgressCommit(InProgressCommit inProgressCommit) throws MatOntoException;
 
     /**
      * Gets the Commit identified by the provided Resource.
@@ -388,10 +370,9 @@ public interface CatalogManager {
      * Removes the InProgressCommit identified by the provided Resource.
      *
      * @param inProgressCommitId The Resource identifying the InProgressCommit to be removed.
-     * @return True if the InProgressCommit was removed; otherwise, false.
      * @throws MatOntoException Thrown if a connection to the repository could not be made.
      */
-    boolean removeInProgressCommit(Resource inProgressCommitId) throws MatOntoException;
+    void removeInProgressCommit(Resource inProgressCommitId) throws MatOntoException;
 
     /**
      * Gets a Set of Resources which all identify different Commits within the repository. The Commit identified by the
