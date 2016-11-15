@@ -90,7 +90,7 @@
             <plugin>
                 <groupId>org.matonto.orm</groupId>
                 <artifactId>rdf-orm-maven-plugin</artifactId>
-                <version>${project.version}</version>
+                <version>1.4.1</version>
                 <executions>
                     <execution>
                         <id>generateOrmSources</id>

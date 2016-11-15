@@ -81,6 +81,7 @@ public class SimpleCatalogManager implements CatalogManager {
     private InProgressCommitFactory inProgressCommitFactory;
     private CommitFactory commitFactory;
     private RevisionFactory revisionFactory;
+    private VersionedRDFRecordFactory versionedRDFRecordFactory;
     private Resource distributedCatalogIRI;
     private Resource localCatalogIRI;
     private Map<Resource, String> sortingOptions = new HashMap<>();
@@ -140,6 +141,11 @@ public class SimpleCatalogManager implements CatalogManager {
     @Reference
     protected void setRevisionFactory(RevisionFactory revisionFactory) {
         this.revisionFactory = revisionFactory;
+    }
+
+    @Reference
+    protected void setVersionedRDFRecordFactory(VersionedRDFRecordFactory versionedRDFRecordFactory) {
+        this.versionedRDFRecordFactory = versionedRDFRecordFactory;
     }
 
     private static final String RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
@@ -610,64 +616,61 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public Commit createCommit(InProgressCommit inProgressCommit, String message) {
+    public Commit createCommit(@Nonnull InProgressCommit inProgressCommit, Set<Commit> parents,
+                               @Nonnull String message) {
         IRI associatedWith = vf.createIRI(Activity.wasAssociatedWith_IRI);
         IRI informedBy = vf.createIRI(org.matonto.ontologies.provo.Activity.wasInformedBy_IRI);
-
         OffsetDateTime now = OffsetDateTime.now();
         Value user = inProgressCommit.getProperty(associatedWith).get();
-
         String metadata = now.toString() + user.stringValue();
+        IRI generatedIRI = vf.createIRI(Activity.generated_IRI);
 
-        Set<Value> parents = inProgressCommit.getProperties(informedBy);
-        if (parents.size() != 0) {
+        if (parents != null) {
             metadata += parents.stream()
-                    .sorted((iri1, iri2) -> iri1.stringValue().compareTo(iri2.stringValue()))
-                    .map(Value::stringValue).collect(Collectors.joining(""));
+                    .sorted((commit1, commit2) -> commit1.getResource().stringValue().compareTo(commit2.getResource()
+                            .stringValue()))
+                    .map(commit -> commit.getResource().stringValue()).collect(Collectors.joining(""));
         }
 
         Commit commit = commitFactory.createNew(vf.createIRI(COMMIT_NAMESPACE + DigestUtils.shaHex(metadata)));
+        commit.setProperty(inProgressCommit.getProperty(generatedIRI).get(), generatedIRI);
         commit.setProperty(vf.createLiteral(now), vf.createIRI(PROV_AT_TIME));
         commit.setProperty(vf.createLiteral(message), vf.createIRI(DC_TITLE));
         commit.setProperty(user, associatedWith);
 
-        IRI generatedIRI = vf.createIRI(Activity.generated_IRI);
-        commit.setProperty(inProgressCommit.getProperty(generatedIRI).get(), generatedIRI);
-        if (parents.size() != 0) {
-            commit.setProperties(parents, informedBy);
-        }
-
         Model revisionModel = mf.createModel(inProgressCommit.getModel());
         revisionModel.remove(inProgressCommit.getResource(), null, null);
-        commit.getModel().addAll(revisionModel);
+        Revision revision = revisionFactory.getExisting((Resource)inProgressCommit.getProperty(generatedIRI).get(),
+                revisionModel);
 
+        if (parents != null) {
+            revision.setProperties(parents.stream()
+                    .map(parent -> parent.getProperty(generatedIRI).get())
+                    .collect(Collectors.toSet()), vf.createIRI(Entity.wasDerivedFrom_IRI));
+            commit.setProperties(parents.stream()
+                    .map(Commit::getResource)
+                    .collect(Collectors.toSet()), informedBy);
+        }
+
+        commit.getModel().addAll(revisionModel);
         return commit;
     }
 
     @Override
-    public InProgressCommit createInProgressCommit(Set<Commit> parents, User user, Resource branchId) throws
+    public InProgressCommit createInProgressCommit(User user, Resource recordId) throws
             InvalidParameterException {
-        if (resourceExists(branchId, Branch.TYPE)) {
+        if (resourceExists(recordId, VersionedRDFRecord.TYPE)) {
             UUID uuid = UUID.randomUUID();
 
             Revision revision = revisionFactory.createNew(vf.createIRI(REVISION_NAMESPACE + uuid));
             revision.setAdditions(vf.createIRI(ADDITIONS_NAMESPACE + uuid));
             revision.setDeletions(vf.createIRI(DELETIONS_NAMESPACE + uuid));
-            if (parents != null) {
-                revision.setProperties(parents.stream().map(parent ->
-                        parent.getProperty(vf.createIRI(Activity.generated_IRI)).get()).collect(Collectors.toSet()),
-                        vf.createIRI(Entity.wasDerivedFrom_IRI));
-            }
 
             InProgressCommit inProgressCommit = inProgressCommitFactory.createNew(vf.createIRI(
                     IN_PROGRESS_COMMIT_NAMESPACE + uuid));
-            inProgressCommit.setOnBranch(branchFactory.createNew(branchId));
+            inProgressCommit.setOnVersionedRDFRecord(versionedRDFRecordFactory.createNew(recordId));
             inProgressCommit.setProperty(user.getResource(), vf.createIRI(Activity.wasAssociatedWith_IRI));
             inProgressCommit.setProperty(revision.getResource(), vf.createIRI(Activity.generated_IRI));
-            if (parents != null) {
-                inProgressCommit.setProperties(parents.stream().map(Commit::getResource).collect(Collectors.toSet()),
-                        vf.createIRI(Activity.wasInformedBy_IRI));
-            }
             inProgressCommit.getModel().addAll(revision.getModel());
 
             return inProgressCommit;

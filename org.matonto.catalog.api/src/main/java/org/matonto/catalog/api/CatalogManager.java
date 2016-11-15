@@ -303,7 +303,7 @@ public interface CatalogManager {
      * @param message The String with the message text associated with the Commit.
      * @return Commit created based on the provided InProgressCommit with the message metadata.
      */
-    Commit createCommit(InProgressCommit inProgressCommit, String message);
+    Commit createCommit(@Nonnull InProgressCommit inProgressCommit, Set<Commit> parents, @Nonnull String message);
 
     /**
      * Creates an InProgressCommit which is a Commit that a User is actively working on. Once it is completed, the
@@ -315,8 +315,7 @@ public interface CatalogManager {
      * @return Optional with an InProgressCommit created using the provided metadata if the identified branch exists.
      * @throws InvalidParameterException if branchId does not point to a Branch entity in the repository.
      */
-    InProgressCommit createInProgressCommit(Set<Commit> parents, User user, Resource branchId) throws
-            InvalidParameterException;
+    InProgressCommit createInProgressCommit(User user, Resource branchId) throws InvalidParameterException;
 
     /**
      * Adds the provided statements to the provided Commit as additions. These statements were added and will be used

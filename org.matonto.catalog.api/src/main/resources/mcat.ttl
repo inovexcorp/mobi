@@ -177,11 +177,11 @@
     rdfs:label "In Progress Commit"@en;
     rdfs:comment "The provenance describing a commit activity that is currently being made on a Versioned RDF Record."@en.
 
-:onBranch a owl:ObjectProperty, owl:FunctionalProperty;
-    rdfs:label "on branch"@en;
-    rdfs:comment "The branch that the described In Progress Commit belongs to."@en;
+:onVersionedRDFRecord a owl:ObjectProperty, owl:FunctionalProperty;
+    rdfs:label "on versioned RDF record"@en;
+    rdfs:comment "The versioned RDF record that the described In Progress Commit belongs to."@en;
     rdfs:domain :InProgressCommit;
-    rdfs:range :Branch.
+    rdfs:range :VersionedRDFRecord.
 
 # Revision
 
