@@ -28,8 +28,8 @@
          * @ngdoc overview
          * @name settingsTabset
          *
-         * @description 
-         * The `settingsTabset` module only provides the `settingsTabset` directive 
+         * @description
+         * The `settingsTabset` module only provides the `settingsTabset` directive
          * which creates the main {@link tabset.directive:tabset tabset} for the settings page.
          */
         .module('settingsTabset', [])
@@ -39,12 +39,12 @@
          * @scope
          * @restrict E
          *
-         * @description 
-         * `settingsTabset` is a directive which creates a {@link tabset.directive:tabset tabset} with 
-         * {@link tab.directive:tab tabs} for different settings pertaining to the current user. The tabs 
+         * @description
+         * `settingsTabset` is a directive which creates a {@link tabset.directive:tabset tabset} with
+         * {@link tab.directive:tab tabs} for different settings pertaining to the current user. The tabs
          * are {@link profileTab.directive:profileTab profileTab},
-         * {@link passwordTab.directive:passwordTab passwordTab}, and the 
-         * {@link preferencesTab.directive:preferencesTab preferencesTab}. The directive is replaced by the 
+         * {@link passwordTab.directive:passwordTab passwordTab}, and the
+         * {@link preferencesTab.directive:preferencesTab preferencesTab}. The directive is replaced by the
          * contents of its template.
          */
         .directive('settingsTabset', settingsTabset);
@@ -53,7 +53,16 @@
         return {
             restrict: 'E',
             replace: true,
+            controllerAs: 'dvm',
             scope: {},
+            controller: function() {
+                var dvm = this;
+                dvm.tabs = {
+                    profile: true,
+                    password: false,
+                    preferences: false
+                };
+            },
             templateUrl: 'modules/settings/directives/settingsTabset/settingsTabset.html'
         }
     }

@@ -549,6 +549,7 @@ function mockUserManager() {
             this.addUser = jasmine.createSpy('addUser').and.returnValue($q.when());
             this.getUser = jasmine.createSpy('getUser').and.returnValue($q.when());
             this.updateUser = jasmine.createSpy('updateUser').and.returnValue($q.when());
+            this.updatePassword = jasmine.createSpy('updatePassword').and.returnValue($q.when());
             this.deleteUser = jasmine.createSpy('deleteUser').and.returnValue($q.when());
             this.addUserRole = jasmine.createSpy('addUserRole').and.returnValue($q.when());
             this.deleteUserRole = jasmine.createSpy('deleteUserRole').and.returnValue($q.when());

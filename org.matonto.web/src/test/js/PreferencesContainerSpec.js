@@ -20,13 +20,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Settings Container directive', function() {
+describe('Preferences Container directive', function() {
     var $compile,
         scope;
 
     beforeEach(function() {
         module('templates');
-        module('settingsContainer');
+        module('preferencesContainer');
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;
@@ -37,7 +37,7 @@ describe('Settings Container directive', function() {
     describe('in isolated scope', function() {
         beforeEach(function() {
             scope.header = '';
-            this.element = $compile(angular.element('<settings-container header="header"></settings-container>'))(scope); scope.$digest();
+            this.element = $compile(angular.element('<preferences-container header="header"></preferences-container>'))(scope); scope.$digest();
         });
         it('header should be two way bound', function() {
             var isolatedScope = this.element.isolateScope();
@@ -49,7 +49,7 @@ describe('Settings Container directive', function() {
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
             scope.header = '';
-            this.element = $compile(angular.element('<settings-container header="header"></settings-container>'))(scope);
+            this.element = $compile(angular.element('<preferences-container header="header"></preferences-container>'))(scope);
             scope.$digest();
         });
         it('for wrapping containers', function() {

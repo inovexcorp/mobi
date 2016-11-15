@@ -99,9 +99,9 @@
              * @description
              * Initializes the {@link userManager.service:userManagerService#users users} and
              * {@link userManager.service:userManagerService#groups groups} lists. Uses
-             * the results of the GET /matontorest/users and the GET /matontorest/users/roles
+             * the results of the GET /matontorest/users and the GET /matontorest/users/{username}/roles
              * endpoint for each user for the users list. Uses the GET /matontorest/groups
-             * endpoint and the result of the GET /matontorest/groups/{groupName}/users endpoint
+             * endpoint and the result of the GET /matontorest/groups/{groupTitle}/users endpoint
              * for each group for the groups list. If an error occurs in any of the HTTP calls,
              * logs the error on the console.
              */
@@ -109,7 +109,10 @@
                 $rootScope.showSpinner = true;
                 $http.get(userPrefix)
                     .then(response => {
-                        self.users = _.map(response.data, user => {return {username: user}});
+                        return $q.all(_.map(response.data, username => self.getUser(username)));
+                    }, response => $q.reject(response))
+                    .then(responses => {
+                        self.users = responses;
                         return $q.all(_.map(self.users, user => listUserRoles(user.username)));
                     }, response => $q.reject(response))
                     .then(responses => {
@@ -124,17 +127,21 @@
                 $rootScope.showSpinner = true;
                 $http.get(groupPrefix)
                     .then(response => {
-                        self.groups = _.map(_.keys(response.data), groupName => {
-                            return {
-                                name: groupName,
-                                roles: response.data[groupName]
-                            };
-                        });
-                        return $q.all(_.map(self.groups, group => self.getGroupUsers(group.name)));
+                        return $q.all(_.map(response.data, groupTitle => self.getGroup(groupTitle)));
+                    }, response => $q.reject(response))
+                    .then(responses => {
+                        self.groups = responses;
+                        return $q.all(_.map(self.groups, group => self.getGroupUsers(group.title)));
                     }, response => $q.reject(response))
                     .then(responses => {
                         _.forEach(responses, (response, idx) => {
-                            self.groups[idx].members = response;
+                            self.groups[idx].members = _.map(response, 'username');
+                        });
+                        return $q.all(_.map(self.groups, group => listGroupRoles(group.title)));
+                    }, response => $q.reject(response))
+                    .then(responses => {
+                        _.forEach(responses, (response, idx) => {
+                            self.groups[idx].roles = response;
                         });
                     }, response => {
                         console.log(_.get(response, 'statusText', 'Something went wrong. Could not load groups.'));
@@ -185,7 +192,7 @@
              * @methodOf userManager.service:userManagerService
              *
              * @description
-             * Calls the GET /matontorest/users/{userId} endpoint to retrieve a MatOnto user
+             * Calls the GET /matontorest/users/{username} endpoint to retrieve a MatOnto user
              * with passed username. Returns a Promise that resolves with the result of the call
              * if it was successful and rejects with an error message if it was not.
              *
@@ -214,39 +221,56 @@
              * @methodOf userManager.service:userManagerService
              *
              * @description
-             * Calls the PUT /matontorest/users/{userId} endpoint to update a MatOnto user
-             * specified by the passed username with an optional new username or password.
-             * Returns a Promise that resolves if it was successful and rejects with an
-             * error message if it was not. Updates the
+             * Calls the PUT /matontorest/users/{username} endpoint to update a MatOnto user specified
+             * by the passed username with the passed new user and an optional new password. Returns a
+             * Promise that resolves if it was successful and rejects with an error message if it was
+             * not. Updates the
              * {@link userManager.service:userManagerService#users users} list appropriately.
              *
              * @param {string} username the username of the user to retrieve
-             * @param {Object} newUserInfo an object containing all the new user information to
-             * save. The structure of the object will be similar to the structure of the user
+             * @param {Object} newUser an object containing all the new user information to
+             * save. The structure of the object should be the same as the structure of the user
              * objects in the {@link userManager.service:userManagerService#users users list}
              * @param {string} password the current password of the user
              * @param {string} [newPassword=''] the new password to save for the user
              * @return {Promise} A Promise that resolves if the request was successful; rejects
              * with an error message otherwise
              */
-            self.updateUser = function(username, newUserInfo, password, newPassword) {
+            self.updateUser = function(username, newUser/*, password, newPassword*/) {
+                var deferred = $q.defer()/*,
+                    config = {
+                        params: {
+                            currentPassword: password,
+                            newPassword: newPassword
+                        }
+                    }*/;
+
+                $rootScope.showSpinner = true;
+                $http.put(userPrefix + '/' + username, newUser/*, config*/)
+                    .then(response => {
+                        deferred.resolve();
+                        self.users.splice(_.findIndex(self.users, {username}), 1, newUser);
+                    }, error => {
+                        deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.'));
+                    }).then(() => {
+                        $rootScope.showSpinner = false;
+                    });
+                return deferred.promise;
+            }
+
+            self.updatePassword = function(username, password, newPassword) {
                 var deferred = $q.defer(),
                     config = {
                         params: {
-                            username: _.get(newUserInfo, 'username'),
                             currentPassword: password,
                             newPassword: newPassword
                         }
                     };
 
                 $rootScope.showSpinner = true;
-                $http.put(userPrefix + '/' + username, null, config)
+                $http.put(userPrefix + '/' + username + '/password', null, config)
                     .then(response => {
                         deferred.resolve();
-                        var original = _.find(self.users, {username: username});
-                        if (_.has(newUserInfo, 'username')) {
-                            _.set(original, 'username', newUserInfo.username);
-                        }
                     }, error => {
                         deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.'));
                     }).then(() => {
@@ -261,7 +285,7 @@
              * @methodOf userManager.service:userManagerService
              *
              * @description
-             * Calls the DELETE /matontorest/users/{userId} endpoint to remove the MatOnto user
+             * Calls the DELETE /matontorest/users/{username} endpoint to remove the MatOnto user
              * with passed username. Returns a Promise that resolves if the deletion was successful
              * and rejects with an error message if it was not. Updates the
              * {@link userManager.service:userManagerService#groups groups} list appropriately.
@@ -293,7 +317,7 @@
              * @methodOf userManager.service:userManagerService
              *
              * @description
-             * Calls the PUT /matontorest/users/{userId}/roles endpoint to add the passed
+             * Calls the PUT /matontorest/users/{username}/roles endpoint to add the passed
              * role to the MatOnto user specified by the passed username. Returns a Promise
              * that resolves if the addition was successful and rejects with an error message
              * if not. Updates the {@link userManager.service:userManagerService#users users}
@@ -331,7 +355,7 @@
              * @methodOf userManager.service:userManagerService
              *
              * @description
-             * Calls the DELETE /matontorest/users/{userId}/roles endpoint to remove the passed
+             * Calls the DELETE /matontorest/users/{username}/roles endpoint to remove the passed
              * role from the MatOnto user specified by the passed username. Returns a Promise
              * that resolves if the deletion was successful and rejects with an error message
              * if not. Updates the {@link userManager.service:userManagerService#users users}
@@ -369,7 +393,7 @@
              * @methodOf userManager.service:userManagerService
              *
              * @description
-             * Calls the PUT /matontorest/users/{userId}/groups endpoint to add the MatOnto user specified
+             * Calls the PUT /matontorest/users/{username}/groups endpoint to add the MatOnto user specified
              * by the passed username to the group specified by the passed group name. Returns a Promise
              * that resolves if the addition was successful and rejects with an error message if not.
              * Updates the {@link userManager.service:userManagerService#groups groups} list appropriately.
@@ -406,7 +430,7 @@
              * @methodOf userManager.service:userManagerService
              *
              * @description
-             * Calls the DELETE /matontorest/users/{userId}/groups endpoint to remove the MatOnto
+             * Calls the DELETE /matontorest/users/{username}/groups endpoint to remove the MatOnto
              * user specified by the passed username from the group specified by the passed group
              * name. Returns a Promise that resolves if the deletion was successful and rejects
              * with an error message if not. Updates the
@@ -480,19 +504,19 @@
              * @methodOf userManager.service:userManagerService
              *
              * @description
-             * Calls the GET /matontorest/groups/{groupId} endpoint to retrieve a MatOnto group
-             * with passed name. Returns a Promise that resolves with the result of the call
+             * Calls the GET /matontorest/groups/{groupTitle} endpoint to retrieve a MatOnto group
+             * with passed title. Returns a Promise that resolves with the result of the call
              * if it was successful and rejects with an error message if it was not.
              *
-             * @param {string} name the name of the group to retrieve
+             * @param {string} groupTitle the title of the group to retrieve
              * @return {Promise} A Promise that resolves with the group if the request was successful;
              * rejects with an error message otherwise
              */
-            self.getGroup = function(groupName) {
+            self.getGroup = function(groupTitle) {
                 var deferred = $q.defer();
 
                 $rootScope.showSpinner = true;
-                $http.get(groupPrefix + '/' + groupName)
+                $http.get(groupPrefix + '/' + groupTitle)
                     .then(response => {
                         deferred.resolve(response.data);
                     }, error => {
@@ -509,7 +533,7 @@
              * @methodOf userManager.service:userManagerService
              *
              * @description
-             * Calls the DELETE /matontorest/groups/{groupId} endpoint to remove the MatOnto group
+             * Calls the DELETE /matontorest/groups/{groupTitle} endpoint to remove the MatOnto group
              * with passed name. Returns a Promise that resolves if the deletion was successful
              * and rejects with an error message if it was not. Updates the
              * {@link userManager.service:userManagerService#groups groups} list appropriately.
@@ -540,7 +564,7 @@
              * @methodOf userManager.service:userManagerService
              *
              * @description
-             * Calls the PUT /matontorest/groups/{groupId}/roles endpoint to add the passed
+             * Calls the PUT /matontorest/groups/{groupTitle}/roles endpoint to add the passed
              * role to the MatOnto group specified by the passed name. Returns a Promise
              * that resolves if the addition was successful and rejects with an error message
              * if not. Updates the {@link userManager.service:userManagerService#groups groups}
@@ -578,7 +602,7 @@
              * @methodOf userManager.service:userManagerService
              *
              * @description
-             * Calls the DELETE /matontorest/groups/{groupId}/roles endpoint to remove the passed
+             * Calls the DELETE /matontorest/groups/{groupTitle}/roles endpoint to remove the passed
              * role from the MatOnto group specified by the passed name. Returns a Promise
              * that resolves if the deletion was successful and rejects with an error message
              * if not. Updates the {@link userManager.service:userManagerService#groups groups}

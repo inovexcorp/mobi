@@ -20,13 +20,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Custom Setting directive', function() {
+describe('Custom Preference directive', function() {
     var $compile,
         scope;
 
     beforeEach(function() {
         module('templates');
-        module('customSetting');
+        module('customPreference');
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;
@@ -38,7 +38,7 @@ describe('Custom Setting directive', function() {
         beforeEach(function() {
             scope.header = '';
             scope.question = '';
-            this.element = $compile(angular.element('<custom-setting header="header" question="question"></custom-setting>'))(scope);
+            this.element = $compile(angular.element('<custom-preference header="header" question="question"></custom-preference>'))(scope);
             scope.$digest();
         });
         it('header should be two way bound', function() {
@@ -58,7 +58,7 @@ describe('Custom Setting directive', function() {
         beforeEach(function() {
             scope.header = '';
             scope.question = '';
-            this.element = $compile(angular.element('<custom-setting header="header" question="question"></custom-setting>'))(scope);
+            this.element = $compile(angular.element('<custom-preference header="header" question="question"></custom-preference>'))(scope);
             scope.$digest();
         });
         it('for wrapping containers', function() {

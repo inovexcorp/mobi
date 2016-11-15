@@ -42,9 +42,9 @@ describe('Text Input directive', function() {
             scope.displayText = '';
             scope.mutedText = '';
             scope.required = true;
-            scope.name = '';
+            scope.inputName = '';
 
-            this.element = $compile(angular.element('<text-input ng-model="bindModel" change-event="changeEvent()" display-text="displayText" muted-text="mutedText" required="required" name="name"></text-input>'))(scope);
+            this.element = $compile(angular.element('<text-input ng-model="bindModel" change-event="changeEvent()" display-text="displayText" muted-text="mutedText" required="required" input-name="inputName"></text-input>'))(scope);
             scope.$digest();
         });
         it('bindModel should be two way bound', function() {
@@ -77,11 +77,11 @@ describe('Text Input directive', function() {
             scope.$digest();
             expect(scope.required).toBe(true);
         });
-        it('name should be one way bound', function() {
+        it('inputName should be one way bound', function() {
             var isolatedScope = this.element.isolateScope();
-            isolatedScope.name = 'Test';
+            isolatedScope.inputName = 'Test';
             scope.$digest();
-            expect(scope.name).toBe('');
+            expect(scope.inputName).toBe('');
         });
     });
     describe('contains the correct html', function() {
@@ -91,9 +91,9 @@ describe('Text Input directive', function() {
             scope.displayText = '';
             scope.mutedText = '';
             scope.required = false;
-            scope.name = '';
+            scope.inputName = '';
 
-            this.element = $compile(angular.element('<text-input ng-model="bindModel" change-event="changeEvent()" display-text="displayText" muted-text="mutedText" required="required" name="name"></text-input>'))(scope);
+            this.element = $compile(angular.element('<text-input ng-model="bindModel" change-event="changeEvent()" display-text="displayText" muted-text="mutedText" required="required" input-name="inputName"></text-input>'))(scope);
             scope.$digest();
             this.firstChild = angular.element(this.element.children()[0]);
         });
@@ -118,7 +118,7 @@ describe('Text Input directive', function() {
     it('should call changeEvent when the text in the input changes', function() {
         scope.bindModel = '';
         scope.changeEvent = jasmine.createSpy('changeEvent');
-        var element = $compile(angular.element('<text-input ng-model="bindModel" change-event="changeEvent()" display-text="displayText" muted-text="mutedText" required="required" name="name"></text-input>'))(scope);
+        var element = $compile(angular.element('<text-input ng-model="bindModel" change-event="changeEvent()" display-text="displayText" muted-text="mutedText" required="required" input-name="inputName"></text-input>'))(scope);
         scope.$digest();
 
         var input = angular.element(element.querySelectorAll('input[type="text"]')[0]);

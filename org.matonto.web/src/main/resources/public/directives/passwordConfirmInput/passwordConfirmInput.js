@@ -88,6 +88,7 @@
                 controllerAs: 'dvm',
                 scope: {
                     password: '=',
+                    confirmedPassword: '=',
                     label: '<',
                     required: '<?'
                 },

@@ -68,7 +68,7 @@
                     displayText: '<',
                     mutedText: '<',
                     required: '<',
-                    name: '<'
+                    inputName: '<'
                 },
                 templateUrl: 'directives/textInput/textInput.html'
             }

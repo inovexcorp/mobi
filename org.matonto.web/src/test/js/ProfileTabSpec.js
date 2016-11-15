@@ -25,6 +25,8 @@ describe('Profile Tab directive', function() {
         scope,
         userManagerSvc,
         loginManagerSvc,
+        $q,
+        $timeout,
         controller;
 
     beforeEach(function() {
@@ -33,9 +35,11 @@ describe('Profile Tab directive', function() {
         mockUserManager();
         mockLoginManager();
 
-        inject(function(_userManagerService_, _loginManagerService_, _$compile_, _$rootScope_) {
+        inject(function(_userManagerService_, _loginManagerService_, _$q_, _$timeout_, _$compile_, _$rootScope_) {
             userManagerSvc = _userManagerService_;
             loginManagerSvc = _loginManagerService_;
+            $q = _$q_;
+            $timeout = _$timeout_;
             $compile = _$compile_;
             scope = _$rootScope_;
         });
@@ -47,7 +51,35 @@ describe('Profile Tab directive', function() {
         var element = $compile(angular.element('<profile-tab></profile-tab>'))(scope);
         scope.$digest();
         controller = element.controller('profileTab');
+        expect(controller.currentUser).not.toBe(userManagerSvc.users[0]);
         expect(controller.currentUser).toEqual(userManagerSvc.users[0]);
+    });
+    describe('controller methods', function() {
+        beforeEach(function() {
+            loginManagerSvc.currentUser = 'user';
+            userManagerSvc.users = [{username: 'user'}];
+            this.element = $compile(angular.element('<profile-tab></profile-tab>'))(scope);
+            scope.$digest();
+            controller = this.element.controller('profileTab');
+        });
+        describe('should save changes to the user profile', function() {
+            it('unless an error occurs', function() {
+                userManagerSvc.updateUser.and.returnValue($q.reject('Error message'));
+                controller.save();
+                $timeout.flush();
+                expect(userManagerSvc.updateUser).toHaveBeenCalledWith(loginManagerSvc.currentUser, userManagerSvc.users[0]);
+                expect(controller.success).toBe(false);
+                expect(controller.errorMessage).toBe('Error message');
+            });
+            it('successfully', function() {
+                controller.save();
+                $timeout.flush();
+                expect(userManagerSvc.updateUser).toHaveBeenCalledWith(loginManagerSvc.currentUser, userManagerSvc.users[0]);
+                expect(controller.success).toBe(true);
+                expect(controller.errorMessage).toBe('');
+                expect(controller.form.$pristine).toBe(true);
+            });
+        });
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {

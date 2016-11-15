@@ -70,10 +70,10 @@ describe('Preferences Tab directive', function() {
             expect(this.element.find('block-footer').length).toBe(1);
         });
         it('with a settings container', function() {
-            expect(this.element.find('settings-container').length).toBe(1);
+            expect(this.element.find('preferences-container').length).toBe(1);
         });
         it('with custom settings', function() {
-            expect(this.element.find('custom-setting').length).toBe(2);
+            expect(this.element.find('custom-preference').length).toBe(2);
         });
         it('with a button to save', function() {
             expect(this.element.querySelectorAll('block-footer button').text().trim()).toBe('Save');

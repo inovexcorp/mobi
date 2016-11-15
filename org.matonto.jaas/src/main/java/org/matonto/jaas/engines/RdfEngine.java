@@ -205,8 +205,10 @@ public class RdfEngine implements Engine {
         }
 
         if (!userConfig.getEmail().equals("")) {
+            String emailStr = userConfig.getEmail();
             Set<Thing> email = new HashSet<>();
-            email.add(thingFactory.createNew(factory.createIRI("mailto:" + userConfig.getEmail())));
+            email.add(thingFactory.createNew(
+                    factory.createIRI(emailStr.contains("mailto:") ? emailStr : "mailto:" + emailStr)));
             user.setMbox(email);
         }
         if (!userConfig.getFirstName().equals("")) {

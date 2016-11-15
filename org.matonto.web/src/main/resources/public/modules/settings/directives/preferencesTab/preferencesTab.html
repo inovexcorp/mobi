@@ -24,17 +24,17 @@
     <div class="col-xs-6 col-xs-offset-3">
         <block>
             <block-content class="padding">
-                <settings-container header="'Ontology Editor'">
-                    <custom-setting header="'Drop Down Tooltip Display'" question="'What do you want displayed when you hover over the items in the dropdown?'">
+                <preferences-container header="'Ontology Editor'">
+                    <custom-preference header="'Drop Down Tooltip Display'" question="'What do you want displayed when you hover over the items in the dropdown?'">
                         <radio-button ng-model="vm.settings.tooltipDisplay" display-text="'Full IRI'" value="'@id'"></radio-button>
                         <radio-button ng-model="vm.settings.tooltipDisplay" display-text="'RDFS Label/DC Title'" value="'label'"></radio-button>
                         <radio-button ng-model="vm.settings.tooltipDisplay" display-text="'RDFS Comment/DC Description'" value="'comment'"></radio-button>
-                    </custom-setting>
-                    <custom-setting header="'Tree Item Display'" question="'What do you want displayed in the tree?'">
+                    </custom-preference>
+                    <custom-preference header="'Tree Item Display'" question="'What do you want displayed in the tree?'">
                         <radio-button ng-model="vm.settings.treeDisplay" display-text="'Pretty Print'" value="'pretty'"></radio-button>
                         <radio-button ng-model="vm.settings.treeDisplay" display-text="'Full IRI'" value="'@id'"></radio-button>
-                    </custom-setting>
-                </settings-container>
+                    </custom-preference>
+                </preferences-container>
             </block-content>
             <block-footer>
                 <button type="button" class="btn btn-primary pull-right" ng-click="dvm.save()">Save</button>

@@ -36,27 +36,30 @@ describe('User Manager service', function() {
     });
 
     it('should set the correct initial state for users and groups', function() {
-        var users = ['user'];
+        var users = [{username: 'user'}];
         var userRoles = ['user'];
-        var groupUsers = ['user'];
-        var groups = {group: 'group'};
-        $httpBackend.whenGET('/matontorest/users').respond(200, users);
+        var groups = [{title: 'group'}];
+        var groupRoles = _.clone(userRoles);
+        var groupUsers = _.clone(users);
+        $httpBackend.whenGET('/matontorest/users').respond(200, _.map(users, 'username'));
+        $httpBackend.whenGET('/matontorest/users/user').respond(200, users[0]);
         $httpBackend.whenGET('/matontorest/users/user/roles').respond(200, userRoles);
+        $httpBackend.whenGET('/matontorest/groups').respond(200, _.map(groups, 'title'));
+        $httpBackend.whenGET('/matontorest/groups/group').respond(200, groups[0]);
         $httpBackend.whenGET('/matontorest/groups/group/users').respond(200, groupUsers);
-        $httpBackend.whenGET('/matontorest/groups').respond(200, groups);
+        $httpBackend.whenGET('/matontorest/groups/group/roles').respond(200, groupRoles);
         userManagerSvc.initialize();
         $httpBackend.flush();
         expect(userManagerSvc.users.length).toBe(users.length);
         _.forEach(userManagerSvc.users, function(user, idx) {
-            expect(user.username).toBe(users[idx]);
+            expect(user.username).toBe(users[idx].username);
             expect(user.roles).toEqual(userRoles);
         });
-        var groupKeys = _.keys(groups);
-        expect(userManagerSvc.groups.length).toBe(groupKeys.length);
+        expect(userManagerSvc.groups.length).toBe(groups.length);
         _.forEach(userManagerSvc.groups, function(group, idx) {
-            expect(group.name).toBe(groupKeys[idx]);
-            expect(group.roles).toEqual(groups[groupKeys[idx]]);
-            expect(group.members).toContain('user');
+            expect(group.title).toBe(groups[idx].title);
+            expect(group.roles).toEqual(groupRoles);
+            expect(group.members).toEqual(_.map(groupUsers, 'username'));
         });
     });
     describe('should add a user', function() {
@@ -115,18 +118,18 @@ describe('User Manager service', function() {
     });
     describe('should update a user', function() {
         beforeEach(function() {
-            userManagerSvc.users = [{username: 'username'}];
-            params = {
+            userManagerSvc.users = [{username: 'username', firstName: 'Mary'}];
+            /*params = {
                 currentPassword: 'password',
-                username: 'newUsername'
-            };
+                newPassword: 'newPassword'
+            };*/
         });
         it('unless there is an error', function(done) {
             var username = userManagerSvc.users[0].username;
-            $httpBackend.whenPUT('/matontorest/users/' + username + createQueryString(params)).respond(function(method, url, data, headers) {
+            $httpBackend.whenPUT('/matontorest/users/' + username/* + createQueryString(params)*/).respond(function(method, url, data, headers) {
                 return [400, '', {}, 'Error Message'];
             });
-            userManagerSvc.updateUser(username, _.pick(params, 'username'), params.currentPassword).then(function(response) {
+            userManagerSvc.updateUser(username, userManagerSvc.users[0]/*, params.currentPassword, params.newPassword*/).then(function(response) {
                 fail('Promise should have rejected');
                 done();
             }, function(response) {
@@ -135,28 +138,48 @@ describe('User Manager service', function() {
             });
             $httpBackend.flush();
         });
-        it('if there is a new username', function(done) {
+        it('successfully', function(done) {
             var username = userManagerSvc.users[0].username;
-            $httpBackend.whenPUT('/matontorest/users/' + username + createQueryString(params)).respond(200, [])
-            userManagerSvc.updateUser(username, _.pick(params, 'username'), params.currentPassword).then(function(response) {
-                expect(_.find(userManagerSvc.users, {username: username})).toBeFalsy();
-                expect(_.find(userManagerSvc.users, {username: params.username})).toBeTruthy();
-                done();
-            });
-            $httpBackend.flush();
-        });
-        it('if there is not a new username', function(done) {
-            var username = userManagerSvc.users[0].username;
-            delete params.username;
-            $httpBackend.whenPUT('/matontorest/users/' + username + createQueryString(params)).respond(200, [])
-            userManagerSvc.updateUser(username, _.pick(params, 'username'), params.currentPassword).then(function(response) {
-                expect(_.find(userManagerSvc.users, {username: params.username})).toBeFalsy();
-                expect(_.find(userManagerSvc.users, {username: username})).toBeTruthy();
+            var newUser = _.clone(userManagerSvc.users[0]);
+            newUser.firstName = 'Jane';
+            $httpBackend.whenPUT('/matontorest/users/' + username/* + createQueryString(params)*/, newUser).respond(200, [])
+            userManagerSvc.updateUser(username, newUser/*, params.currentPassword, params.newPassword*/).then(function(response) {
+                expect(_.find(userManagerSvc.users, {username: username})).toEqual(newUser);
                 done();
             });
             $httpBackend.flush();
         });
     });
+    describe('should update a user password', function() {
+        beforeEach(function() {
+            this.username = 'user';
+            params = {
+                currentPassword: 'password',
+                newPassword: 'newPassword'
+            };
+        });
+        it('unless there is an error', function(done) {
+            $httpBackend.whenPUT('/matontorest/users/' + this.username + '/password' + createQueryString(params)).respond(function(method, url, data, headers) {
+                return [400, '', {}, 'Error Message'];
+            });
+            userManagerSvc.updatePassword(this.username, params.currentPassword, params.newPassword).then(function(response) {
+                fail('Promise should have rejected');
+                done();
+            }, function(response) {
+                expect(response).toBe('Error Message');
+                done();
+            });
+            $httpBackend.flush();
+        });
+        it('successfully', function(done) {
+            $httpBackend.whenPUT('/matontorest/users/' + this.username + '/password' + createQueryString(params)).respond(200, [])
+            userManagerSvc.updatePassword(this.username, params.currentPassword, params.newPassword).then(function(response) {
+                expect(true).toBe(true);
+                done();
+            });
+            $httpBackend.flush();
+        });
+    })
     describe('should delete a user', function() {
         beforeEach(function() {
             userManagerSvc.users = [{username: 'username'}];

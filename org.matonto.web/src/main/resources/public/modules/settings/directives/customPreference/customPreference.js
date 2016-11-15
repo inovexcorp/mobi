@@ -26,39 +26,41 @@
     angular
         /**
          * @ngdoc overview
-         * @name settingsContainer
+         * @name customPreference
          *
-         * @description 
-         * The `settingsContainer` module only provides the `settingsContainer` directive which creates 
-         * a section with transcluded content and a customizable header.
+         * @description
+         * The `customPreference` module only provides the `customPreference` directive which creates
+         * an article with transcluded content and a customizable header and question representing
+         * the setting.
          */
-        .module('settingsContainer', [])
+        .module('customPreference', [])
         /**
          * @ngdoc directive
-         * @name settingsContainer.directive:settingsContainer
+         * @name customPreference.directive:customPreference
          * @scope
          * @restrict E
          *
          * @description
-         * `settingsContainer` is a directive that creates a section with transcluded content and a header. 
-         * The main content for the overlay is transcluded so it can contain whatever is put between the 
-         * opening and closing tags. However, it is expected that the content will be 
-         * {@link customSetting.directive:customSetting customSetting} directives. The directive is replaced 
+         * `customPreference` is a directive that creates an article with transcluded content, a header, and
+         * a question representing what the setting is for. The main content for the overlay is transcluded
+         * so it can contain whatever is put between the opening and closing tags. The directive is replaced
          * by the content of its template.
          *
-         * @param {string} header the text to display in the section's header
+         * @param {string} header the text to display in the article's header
+         * @param {string} question the text to display as the setting's representative question
          */
-        .directive('settingsContainer', settingsContainer);
+        .directive('customPreference', customPreference);
 
-        function settingsContainer() {
+        function customPreference() {
             return {
                 restrict: 'E',
                 replace: true,
                 transclude: true,
                 scope: {
-                    header: '='
+                    header: '=',
+                    question: '='
                 },
-                templateUrl: 'modules/settings/directives/settingsContainer/settingsContainer.html'
+                templateUrl: 'modules/settings/directives/customPreference/customPreference.html'
             }
         }
 })();

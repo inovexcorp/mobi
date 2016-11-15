@@ -26,11 +26,11 @@
     angular
         .module('settings', [
             /* Custom directives */
-            'customSetting',
+            'customPreference',
             'passwordTab',
+            'preferencesContainer',
             'preferencesTab',
             'profileTab',
-            'settingsContainer',
             'settingsTabset'
         ]);
 })();

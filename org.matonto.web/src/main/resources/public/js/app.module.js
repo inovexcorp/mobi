@@ -59,6 +59,7 @@
             'confirmationOverlay',
             'customHeader',
             'customLabel',
+            'emailInput',
             'errorDisplay',
             'fileInput',
             'infoMessage',

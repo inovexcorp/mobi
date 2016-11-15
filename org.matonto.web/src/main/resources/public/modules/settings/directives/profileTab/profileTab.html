@@ -25,8 +25,19 @@
         <block class="full-height">
             <block-content class="padding">
                 <h1>{{dvm.currentUser.username}}</h1>
-                <p>Welcome {{dvm.currentUser.username}}! Use the tabs above to change your password and your account settings.</p>
+                <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
+                <p ng-if="dvm.success && dvm.form.$pristine" class="text-success">
+                    <i class="fa fa-check fa-fw"></i><span>Profile successfully saved</span>
+                </p>
+                <form name="dvm.form">
+                    <text-input ng-model="dvm.currentUser.firstName" input-name="'firstName'" display-text="'First Name'" ng-class="{'has-success': dvm.form.firstName.$dirty && dvm.form.firstName.$valid, 'has-error': dvm.form.firstName.$dirty && dvm.form.firstName.$invalid}"></text-input>
+                    <text-input ng-model="dvm.currentUser.lastName" input-name="'lastName'" display-text="'Last Name'" ng-class="{'has-success': dvm.form.lastName.$dirty && dvm.form.lastName.$valid, 'has-error': dvm.form.lastName.$dirty && dvm.form.lastName.$invalid}"></text-input>
+                    <email-input ng-model="dvm.currentUser.email" input-name="'email'" ng-class="{'has-success': dvm.form.email.$dirty && dvm.form.email.$valid, 'has-error': dvm.form.email.$dirty && dvm.form.email.$invalid}"></email-input>
+                </form>
             </block-content>
+            <block-footer>
+                <button class="btn btn-primary" ng-click="dvm.save()" ng-disabled="dvm.form.$pristine || dvm.form.$invalid">Save</button>
+            </block-footer>
         </block>
     </div>
 </div>

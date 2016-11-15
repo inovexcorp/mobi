@@ -28,8 +28,8 @@
          * @ngdoc overview
          * @name passwordTab
          *
-         * @description 
-         * The `passwordTab` module only provides the `passwordTab` directive which creates 
+         * @description
+         * The `passwordTab` module only provides the `passwordTab` directive which creates
          * a Bootstrap `row` with a form allowing the current user to change their password.
          */
         .module('passwordTab', [])
@@ -42,11 +42,11 @@
          * @requires loginManager.service:loginManagerService
          *
          * @description
-         * `passwordTab` is a directive that creates a Bootstrap `row` with a 
-         * {@link block.directive:block block} containing a form allowing the current user to 
-         * change their password. The user must enter their current password in order to make 
-         * a change. The new password is confirmed within a 
-         * {@link passwordConfirmInput.directive:passwordConfirmInput passwordConfirmInput}. The 
+         * `passwordTab` is a directive that creates a Bootstrap `row` with a
+         * {@link block.directive:block block} containing a form allowing the current user to
+         * change their password. The user must enter their current password in order to make
+         * a change. The new password is confirmed within a
+         * {@link passwordConfirmInput.directive:passwordConfirmInput passwordConfirmInput}. The
          * directive is replaced by the content of its template.
          */
         .directive('passwordTab', passwordTab);
@@ -63,12 +63,15 @@
                     var dvm = this;
                     dvm.um = userManagerService;
                     dvm.lm = loginManagerService;
-                    dvm.currentUser = _.find(dvm.um.users, {username: dvm.lm.currentUser});
 
                     dvm.save = function() {
-                        dvm.um.updateUser(dvm.currentUser.username, {}, dvm.currentPassword, dvm.password).then(response => {
+                        dvm.um.updatePassword(dvm.lm.currentUser, dvm.currentPassword, dvm.password).then(response => {
                             dvm.errorMessage = '';
                             dvm.success = true;
+                            dvm.currentPassword = '';
+                            dvm.password = '';
+                            dvm.confirmedPassword = '';
+                            dvm.form.$setPristine();
                         }, error => {
                             dvm.errorMessage = error;
                             dvm.success = false;

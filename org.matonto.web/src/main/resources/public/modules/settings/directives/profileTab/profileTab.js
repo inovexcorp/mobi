@@ -63,7 +63,18 @@
                     var dvm = this;
                     dvm.um = userManagerService;
                     dvm.lm = loginManagerService;
-                    dvm.currentUser = _.find(dvm.um.users, {username: dvm.lm.currentUser});
+                    dvm.currentUser = angular.copy(_.find(dvm.um.users, {username: dvm.lm.currentUser}));
+
+                    dvm.save = function() {
+                        dvm.um.updateUser(dvm.currentUser.username, dvm.currentUser).then(response => {
+                            dvm.errorMessage = '';
+                            dvm.success = true;
+                            dvm.form.$setPristine();
+                        }, error => {
+                            dvm.errorMessage = error;
+                            dvm.success = false;
+                        });
+                    }
                 },
                 templateUrl: 'modules/settings/directives/profileTab/profileTab.html'
             }
