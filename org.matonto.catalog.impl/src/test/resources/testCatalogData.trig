@@ -137,7 +137,7 @@ GRAPH <http://matonto.org/test/in-progress-commits#test>
     <http://matonto.org/test/in-progress-commits#test> a mcat:InProgressCommit, mcat:Commit ;
         dc:title "In progress commit" ;
         prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
-        prov:generated <http://matonto.org/test/in-revisions#revision> .
+        prov:generated <http://matonto.org/test/revisions#in-revision> .
 
     <http://matonto.org/test/revisions#in-revision> a mcat:Revision ;
         mcat:additions <http://matonto.org/test/in-additions#test> ;

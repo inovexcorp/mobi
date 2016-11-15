@@ -3,6 +3,8 @@ PREFIX mcat: <http://matonto.org/ontologies/catalog#>
 SELECT
     (COUNT(distinct ?record) as ?record_count)
 WHERE {
-	?record a ?type .
+	?record a ?type ;
+	    mcat:catalog ?catalog .
 	FILTER(?type IN (mcat:Record, mcat:UnversionedRecord, mcat:VersionedRecord, mcat:VersionedRDFRecord, mcat:OntologyRecord, mcat:MappingRecord, mcat:DatasetRecord))
+    FILTER EXISTS { ?record a ?type_filter . }
 }

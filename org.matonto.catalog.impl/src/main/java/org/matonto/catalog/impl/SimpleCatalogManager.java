@@ -170,14 +170,13 @@ public class SimpleCatalogManager implements CatalogManager {
     private static final String DELETION_CONTEXT = "https://matonto.org/is-a-deletion#";
 
     private static final String FIND_RECORDS_QUERY;
-    private static final String FIND_RECORDS_TYPE_FILTER_QUERY;
     private static final String COUNT_RECORDS_QUERY;
-    private static final String COUNT_RECORDS_TYPE_FILTER_QUERY;
     private static final String GET_NEW_LATEST_VERSION;
     private static final String GET_COMMIT_CHAIN;
     private static final String COMMIT_BINDING = "commit";
     private static final String PARENT_BINDING = "parent";
     private static final String RECORD_BINDING = "record";
+    private static final String CATALOG_BINDING = "catalog";
     private static final String RECORD_COUNT_BINDING = "record_count";
     private static final String TYPE_FILTER_BINDING = "type_filter";
 
@@ -187,16 +186,8 @@ public class SimpleCatalogManager implements CatalogManager {
                     SimpleCatalogManager.class.getResourceAsStream("/find-records.rq"),
                     "UTF-8"
             );
-            FIND_RECORDS_TYPE_FILTER_QUERY = IOUtils.toString(
-                    SimpleCatalogManager.class.getResourceAsStream("/find-records-type-filter.rq"),
-                    "UTF-8"
-            );
             COUNT_RECORDS_QUERY = IOUtils.toString(
                     SimpleCatalogManager.class.getResourceAsStream("/count-records.rq"),
-                    "UTF-8"
-            );
-            COUNT_RECORDS_TYPE_FILTER_QUERY = IOUtils.toString(
-                    SimpleCatalogManager.class.getResourceAsStream("/count-records-type-filter.rq"),
                     "UTF-8"
             );
             GET_NEW_LATEST_VERSION = IOUtils.toString(
@@ -252,12 +243,10 @@ public class SimpleCatalogManager implements CatalogManager {
             Optional<Resource> typeParam = searchParams.getTypeFilter();
 
             // Get Total Count
-            TupleQuery countQuery;
+            TupleQuery countQuery = conn.prepareTupleQuery(COUNT_RECORDS_QUERY);
+            countQuery.setBinding(CATALOG_BINDING, catalogId);
             if (typeParam.isPresent()) {
-                countQuery = conn.prepareTupleQuery(COUNT_RECORDS_TYPE_FILTER_QUERY);
                 countQuery.setBinding(TYPE_FILTER_BINDING, typeParam.get());
-            } else {
-                countQuery = conn.prepareTupleQuery(COUNT_RECORDS_QUERY);
             }
 
             TupleQueryResult countResults = countQuery.evaluate();
@@ -297,15 +286,11 @@ public class SimpleCatalogManager implements CatalogManager {
                 querySuffix = String.format("\nORDER BY DESC(?%s)\nLIMIT %d\nOFFSET %d", sortBinding, limit, offset);
             }
 
-            String queryString;
-            TupleQuery query;
+            String queryString = FIND_RECORDS_QUERY + querySuffix;
+            TupleQuery query = conn.prepareTupleQuery(queryString);
+            query.setBinding(CATALOG_BINDING, catalogId);
             if (typeParam.isPresent()) {
-                queryString = FIND_RECORDS_TYPE_FILTER_QUERY + querySuffix;
-                query = conn.prepareTupleQuery(queryString);
                 query.setBinding(TYPE_FILTER_BINDING, typeParam.get());
-            } else {
-                queryString = FIND_RECORDS_QUERY + querySuffix;
-                query = conn.prepareTupleQuery(queryString);
             }
 
             log.debug("Query String:\n" + queryString);
@@ -619,7 +604,7 @@ public class SimpleCatalogManager implements CatalogManager {
     public Commit createCommit(@Nonnull InProgressCommit inProgressCommit, Set<Commit> parents,
                                @Nonnull String message) {
         IRI associatedWith = vf.createIRI(Activity.wasAssociatedWith_IRI);
-        IRI informedBy = vf.createIRI(org.matonto.ontologies.provo.Activity.wasInformedBy_IRI);
+        IRI informedBy = vf.createIRI(Activity.wasInformedBy_IRI);
         OffsetDateTime now = OffsetDateTime.now();
         Value user = inProgressCommit.getProperty(associatedWith).get();
         String metadata = now.toString() + user.stringValue();
@@ -674,9 +659,8 @@ public class SimpleCatalogManager implements CatalogManager {
             inProgressCommit.getModel().addAll(revision.getModel());
 
             return inProgressCommit;
-        } else {
-            throw new InvalidParameterException("The provided Resource does not identify a Branch entity.");
         }
+        throw new InvalidParameterException("The provided Resource does not identify a Branch entity.");
     }
 
     @Override
@@ -769,6 +753,28 @@ public class SimpleCatalogManager implements CatalogManager {
             remove(inProgressCommitId);
         } else {
             throw new MatOntoException("The InProgressCommit could not be removed.");
+        }
+    }
+
+    @Override
+    public Model applyInProgressCommit(Resource inProgressCommitId, Model entity) throws MatOntoException {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            InProgressCommit inProgressCommit = this.getCommit(inProgressCommitId, inProgressCommitFactory)
+                    .orElseThrow(() -> new MatOntoException("The InProgressCommit could not be retrieved."));
+            Resource revisionIRI = (Resource)inProgressCommit.getProperty(vf.createIRI(Activity.generated_IRI)).get();
+            Revision revision = revisionFactory.getExisting(revisionIRI, inProgressCommit.getModel());
+            Resource additionsIRI = (Resource)revision.getAdditions().orElseThrow(() ->
+                    new MatOntoException("The additions could not be found."));
+            Resource deletionsIRI = (Resource)revision.getDeletions().orElseThrow(() ->
+                    new MatOntoException("The deletions could not be found."));
+            Model result = mf.createModel(entity);
+            conn.getStatements(null, null, null, additionsIRI).forEach(statement -> result.add(statement.getSubject(),
+                    statement.getPredicate(), statement.getObject()));
+            conn.getStatements(null, null, null, deletionsIRI).forEach(statement -> result.remove(statement
+                    .getSubject(), statement.getPredicate(), statement.getObject()));
+            return result;
+        } catch (RepositoryException e) {
+            throw new MatOntoException("Error in repository connection", e);
         }
     }
 
@@ -882,9 +888,8 @@ public class SimpleCatalogManager implements CatalogManager {
             } catch (RepositoryException e) {
                 throw new MatOntoException("Error in repository connection.", e);
             }
-        } else {
-            throw new MatOntoException("One or both of the commit IRIs could not be found in the Repository.");
         }
+        throw new MatOntoException("One or both of the commit IRIs could not be found in the Repository.");
     }
 
     @Override
@@ -1003,9 +1008,8 @@ public class SimpleCatalogManager implements CatalogManager {
             } catch (RepositoryException e) {
                 throw new MatOntoException("Error in repository connection", e);
             }
-        } else {
-            throw new MatOntoException("The catalog could not be retrieved.");
         }
+        throw new MatOntoException("The catalog could not be retrieved.");
     }
 
     /**

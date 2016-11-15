@@ -4,7 +4,7 @@ PREFIX mcat: <http://matonto.org/ontologies/catalog#>
 SELECT
     ?version
 WHERE {
-	<http://matonto.org/test/records#get> a ?type ;
+	?record a ?type ;
 	    mcat:version ?version .
     ?version dc:issued ?issued .
 

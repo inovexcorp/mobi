@@ -374,6 +374,18 @@ public interface CatalogManager {
     void removeInProgressCommit(Resource inProgressCommitId) throws MatOntoException;
 
     /**
+     * Applies the addition and deletion statements from the InProgressCommit identified by the provided Resource to the
+     * Model provided and returns the combined Model.
+     *
+     * @param inProgressCommitId The Resource identifying the InProgressCommit to be added.
+     * @param entity The Model which you want to apply the statements to.
+     * @return A Model consisting of the provided Model statements with the proper statements added and/or removed.
+     * @throws MatOntoException Thrown if a connection to the repository could not be made or the InProgressCommit
+     *         could not be found in it's entirety.
+     */
+    Model applyInProgressCommit(Resource inProgressCommitId, Model entity) throws MatOntoException;
+
+    /**
      * Gets a Set of Resources which all identify different Commits within the repository. The Commit identified by the
      * provided Resource is the last item in the Set and it was informed by the previous Commit in the Set. This
      * association is repeated until you get to the beginning of the Set. The resulting Set can then be thought about
