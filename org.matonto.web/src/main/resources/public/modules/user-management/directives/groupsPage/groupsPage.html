@@ -42,7 +42,7 @@
     </div>
     <div class="col-xs-8">
         <div class="group-title">
-            <h3>{{dvm.state.selectedGroup.name}}</h3>
+            <h3>{{dvm.state.selectedGroup.title}}</h3>
         </div>
         <div class="row">
             <div class="col-xs-12">
@@ -51,12 +51,12 @@
                         <block>
                             <block-header>
                                 <span>Description</span>
-                                <!-- <button class="btn btn-link pull-right" ng-click="dvm.editDescription()">
+                                <button class="btn btn-link pull-right" ng-click="dvm.editDescription()" ng-disabled="!dvm.state.selectedGroup || !dvm.um.isAdmin(dvm.lm.currentUser)">
                                     <i class="fa fa-pencil"></i>Edit
-                                </button> -->
+                                </button>
                             </block-header>
                             <block-content class="padding">
-                                <p ng-if="dvm.state.selectedGroup" class="group-description">This will be a description for {{dvm.state.selectedGroup.name}}</p>
+                                <p ng-if="dvm.state.selectedGroup" class="group-description">{{dvm.state.selectedGroup.description || 'No description'}}</p>
                             </block-content>
                         </block>
                     </div>

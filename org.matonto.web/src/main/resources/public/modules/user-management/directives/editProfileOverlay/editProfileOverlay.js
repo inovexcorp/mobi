@@ -24,12 +24,12 @@
     'use strict';
 
     angular
-        .module('changePasswordOverlay', [])
-        .directive('changePasswordOverlay', changePasswordOverlay);
+        .module('editProfileOverlay', [])
+        .directive('editProfileOverlay', editProfileOverlay);
 
-    changePasswordOverlay.$inject = ['userStateService', 'userManagerService'];
+    editProfileOverlay.$inject = ['userStateService', 'userManagerService'];
 
-    function changePasswordOverlay(userStateService, userManagerService) {
+    function editProfileOverlay(userStateService, userManagerService) {
         return {
             restrict: 'E',
             replace: true,
@@ -39,17 +39,19 @@
                 var dvm = this;
                 dvm.state = userStateService;
                 dvm.um = userManagerService;
+                dvm.newUser = angular.copy(dvm.state.selectedUser);
 
                 dvm.set = function() {
-                    dvm.um.updatePassword(dvm.state.selectedUser.username, dvm.currentPassword, dvm.password).then(response => {
+                    dvm.um.updateUser(dvm.state.selectedUser.username, dvm.newUser).then(response => {
                         dvm.errorMessage = '';
-                        dvm.state.displayChangePasswordOverlay = false;
+                        dvm.state.displayEditProfileOverlay = false;
+                        dvm.state.selectedUser = _.find(dvm.um.users, {username: dvm.newUser.username});
                     }, error => {
                         dvm.errorMessage = error;
                     });
                 }
             },
-            templateUrl: 'modules/user-management/directives/changePasswordOverlay/changePasswordOverlay.html'
+            templateUrl: 'modules/user-management/directives/editProfileOverlay/editProfileOverlay.html'
         };
     }
 })();

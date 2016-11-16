@@ -57,20 +57,20 @@ describe('User Management Overlays directive', function() {
             });
             describe('a group', function() {
                 beforeEach(function() {
-                    this.group = userStateSvc.selectedGroup = {name: 'group'};
+                    this.group = userStateSvc.selectedGroup = {title: 'group'};
                 });
                 it('unless an error occurs', function() {
                     userManagerSvc.deleteGroup.and.returnValue($q.reject('Error message'));
                     controller.delete();
                     $timeout.flush();
-                    expect(userManagerSvc.deleteGroup).toHaveBeenCalledWith(this.group.name);
+                    expect(userManagerSvc.deleteGroup).toHaveBeenCalledWith(this.group.title);
                     expect(controller.errorMessage).toBe('Error message');
                 });
                 it('successfully', function() {
-                    var groupName = userStateSvc.selectedGroup.name;
+                    var groupName = userStateSvc.selectedGroup.title;
                     controller.delete();
                     $timeout.flush();
-                    expect(userManagerSvc.deleteGroup).toHaveBeenCalledWith(this.group.name);
+                    expect(userManagerSvc.deleteGroup).toHaveBeenCalledWith(this.group.title);
                     expect(controller.errorMessage).toBe('');
                     expect(userStateSvc.displayDeleteConfirm).toBe(false);
                     expect(userStateSvc.selectedGroup).toBe(undefined);
@@ -102,19 +102,19 @@ describe('User Management Overlays directive', function() {
             beforeEach(function() {
                 userStateSvc.displayRemoveMemberConfirm = true;
                 this.memberName = userStateSvc.memberName = 'user';
-                this.group = userStateSvc.selectedGroup = {name: 'group'};
+                this.group = userStateSvc.selectedGroup = {title: 'group'};
             });
             it('unless an error occurs', function() {
                 userManagerSvc.deleteUserGroup.and.returnValue($q.reject('Error message'));
                 controller.removeMember();
                 $timeout.flush();
-                expect(userManagerSvc.deleteUserGroup).toHaveBeenCalledWith(this.memberName, this.group.name);
+                expect(userManagerSvc.deleteUserGroup).toHaveBeenCalledWith(this.memberName, this.group.title);
                 expect(controller.errorMessage).toBe('Error message');
             });
             it('unless an error occurs', function() {
                 controller.removeMember();
                 $timeout.flush();
-                expect(userManagerSvc.deleteUserGroup).toHaveBeenCalledWith(this.memberName, this.group.name);
+                expect(userManagerSvc.deleteUserGroup).toHaveBeenCalledWith(this.memberName, this.group.title);
                 expect(controller.errorMessage).toBe('');
                 expect(userStateSvc.memberName).toBe('');
                 expect(userStateSvc.selectedGroup).toEqual(this.group);

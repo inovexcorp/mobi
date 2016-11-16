@@ -308,8 +308,6 @@ public class UserRestImplTest extends MatontoRestTestNg {
         user.put("lastName", "Jane");
 
         Response response = target().path("users/testUser")
-                /*.queryParam("currentPassword", "ABC")
-                .queryParam("newPassword", "XYZ")*/
                 .request().put(Entity.entity(user.toString(), MediaType.APPLICATION_JSON));
         Assert.assertEquals(200, response.getStatus());
         verify(engineManager).retrieveUser(anyString(), eq("testUser"));
@@ -332,8 +330,6 @@ public class UserRestImplTest extends MatontoRestTestNg {
         when(engineManager.createUser(anyString(), any(UserConfig.class))).thenReturn(newUser);
 
         Response response = target().path("users/testUser")
-                /*.queryParam("currentPassword", "ABC")
-                .queryParam("newPassword", "XYZ")*/
                 .request().put(Entity.entity(user.toString(), MediaType.APPLICATION_JSON));
         Assert.assertEquals(400, response.getStatus());
     }
@@ -349,8 +345,6 @@ public class UserRestImplTest extends MatontoRestTestNg {
         when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.empty());
 
         Response response = target().path("users/error")
-                /*.queryParam("currentPassword", "ABC")
-                .queryParam("newPassword", "XYZ")*/
                 .request().put(Entity.entity(user.toString(), MediaType.APPLICATION_JSON));
         Assert.assertEquals(400, response.getStatus());
     }
@@ -382,21 +376,6 @@ public class UserRestImplTest extends MatontoRestTestNg {
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
         Assert.assertEquals(400, response.getStatus());
     }
-
-    /*@Test
-    public void updateUserWithoutCurrentPasswordTest() {
-        //Setup:
-        JSONObject user = new JSONObject();
-        user.put("username", "testUser");
-        user.put("email", "maryjane@example.com");
-        user.put("firstName", "Mary");
-        user.put("lastName", "Jane");
-
-        Response response = target().path("users/testUser")
-                .queryParam("newPassword", "XYZ")
-                .request().put(Entity.entity(user.toString(), MediaType.APPLICATION_JSON));
-        Assert.assertEquals(400, response.getStatus());
-    }*/
 
     @Test
     public void deleteUserTest() {

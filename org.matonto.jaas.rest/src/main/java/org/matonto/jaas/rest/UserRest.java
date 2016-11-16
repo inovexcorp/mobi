@@ -84,9 +84,7 @@ public interface UserRest {
      *
      * @param context the context of the request
      * @param username the current username of the user to update
-     * @param currentPassword the current password of the user to update
-
-     * @param newPassword a new password for the user
+     * @param newUser a user object with the new information to update
      * @return a Response indicating the success or failure of the request
      */
     @PUT
@@ -96,18 +94,17 @@ public interface UserRest {
     @Consumes(MediaType.APPLICATION_JSON)
     Response updateUser(@Context ContainerRequestContext context,
                         @PathParam("username") String username,
-                        /*@QueryParam("currentPassword") String currentPassword,
-                        @DefaultValue("") @QueryParam("newPassword") String newPassword,*/
                         User newUser);
 
     /**
-     * In order to change the user's password, the current password must be provided.
+     * Updates the password of the specified user in MatOnto. In order to change the user's password,
+     * the current password must be provided.
      *
-     * @param context
-     * @param username
-     * @param currentPassword
-     * @param newPassword
-     * @return
+     * @param context the context of the request
+     * @param username the current username of the user to update
+     * @param currentPassword the current password of the user to update
+     * @param newPassword a new password for the user
+     * @return a Response indicating the success or failure of the request
      */
     @PUT
     @Path("{username}/password")

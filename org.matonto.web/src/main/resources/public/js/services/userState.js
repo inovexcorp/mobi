@@ -180,6 +180,8 @@
              * {@link changePasswordOverlay.directive:changePasswordOverlay Change Password Overlay} should be shown.
              */
             self.displayChangePasswordOverlay = false;
+            self.displayEditProfileOverlay = false;
+            self.displayEditGroupInfoOverlay = false;
             /**
              * @ngdoc property
              * @name userState.service:userStateService#displayRemoveMemberConfirm

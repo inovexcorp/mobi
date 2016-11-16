@@ -29,6 +29,8 @@
             'changePasswordOverlay',
             'createGroupOverlay',
             'createUserOverlays',
+            'editGroupInfoOverlay',
+            'editProfileOverlay',
             'groupsList',
             'groupsPage',
             'memberTable',

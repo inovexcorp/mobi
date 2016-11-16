@@ -47,7 +47,26 @@
          * `createGroupOverlay` is a directive that creates an overlay with a form to add a group to Matonto.
          * The directive is replaced by the contents of its template.
          */
-        .directive('createGroupOverlay', createGroupOverlay);
+        .directive('createGroupOverlay', createGroupOverlay)
+        .directive('uniqueTitle', uniqueTitle);
+
+    uniqueTitle.$inject = ['$parse', 'userManagerService'];
+
+    function uniqueTitle($parse, userManagerService) {
+        return {
+            restrict: 'A',
+            require: 'ngModel',
+            link: function(scope, el, attrs, ctrl) {
+                ctrl.$validators.uniqueTitle = function(modelValue, viewValue) {
+                    var value = modelValue || viewValue;
+                    if (ctrl.$isEmpty(value)) {
+                        return true;
+                    }
+                    return !_.includes(_.map(userManagerService.groups, 'title'), value);
+                }
+            }
+        }
+    }
 
     createGroupOverlay.$inject = ['$q', 'userStateService', 'userManagerService', 'loginManagerService'];
 
@@ -62,12 +81,17 @@
                 dvm.state = userStateService;
                 dvm.um = userManagerService;
                 dvm.lm = loginManagerService;
-                dvm.members = [dvm.lm.currentUser];
+                dvm.newGroup = {
+                    title: '',
+                    description: '',
+                    roles: [],
+                    members: [dvm.lm.currentUser]
+                }
                 dvm.errorMessage = '';
 
                 dvm.add = function () {
-                    dvm.um.addGroup(dvm.name).then(response => {
-                        return $q.all(_.map(dvm.members, member => dvm.um.addUserGroup(member, dvm.name)));
+                    dvm.um.addGroup(dvm.newGroup).then(response => {
+                        return $q.all(_.map(dvm.newGroup.members, member => dvm.um.addUserGroup(member, dvm.newGroup.title)));
                     }, error => {
                         return $q.reject(error);
                     }).then(responses => {
@@ -77,15 +101,12 @@
                         dvm.errorMessage = error;
                     });
                 };
-                dvm.testUniqueness = function () {
-                    dvm.form.name.$setValidity('uniqueName', !_.includes(_.map(dvm.um.groups, 'name'), dvm.name));
-                };
                 dvm.addMember = function() {
-                    dvm.members.push(dvm.state.memberName);
+                    dvm.newGroup.members.push(dvm.state.memberName);
                     dvm.state.memberName = '';
                 }
                 dvm.removeMember = function() {
-                    _.pull(dvm.members, dvm.state.memberName);
+                    _.pull(dvm.newGroup.members, dvm.state.memberName);
                     dvm.state.memberName = '';
                 }
             },

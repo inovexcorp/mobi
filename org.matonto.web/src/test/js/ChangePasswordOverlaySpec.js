@@ -60,17 +60,17 @@ describe('Change Password Overlay directive', function() {
                 userStateSvc.displayChangePasswordOverlay = true;
             });
             it('unless an error occurs', function() {
-                userManagerSvc.updateUser.and.returnValue($q.reject('Error message'));
+                userManagerSvc.updatePassword.and.returnValue($q.reject('Error message'));
                 controller.set();
                 $timeout.flush();
-                expect(userManagerSvc.updateUser).toHaveBeenCalledWith(userStateSvc.selectedUser.username, {}, controller.currentPassword, controller.password);
+                expect(userManagerSvc.updatePassword).toHaveBeenCalledWith(userStateSvc.selectedUser.username, controller.currentPassword, controller.password);
                 expect(controller.errorMessage).toBe('Error message');
                 expect(userStateSvc.displayChangePasswordOverlay).toBe(true);
             });
             it('successfully', function() {
                 controller.set();
                 $timeout.flush();
-                expect(userManagerSvc.updateUser).toHaveBeenCalledWith(userStateSvc.selectedUser.username, {}, controller.currentPassword, controller.password);
+                expect(userManagerSvc.updatePassword).toHaveBeenCalledWith(userStateSvc.selectedUser.username, controller.currentPassword, controller.password);
                 expect(controller.errorMessage).toBe('');
                 expect(userStateSvc.displayChangePasswordOverlay).toBe(false);
             });
@@ -98,7 +98,7 @@ describe('Change Password Overlay directive', function() {
             expect(currentPassword.hasClass('has-error')).toBe(false);
             expect(button.attr('disabled')).toBeFalsy();
 
-            controller.form.currentPassword.$touched = true;
+            controller.form.currentPassword.$setDirty();
             controller.form.currentPassword.$setValidity('test', false);
             scope.$digest();
             expect(currentPassword.hasClass('has-error')).toBe(true);

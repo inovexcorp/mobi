@@ -578,6 +578,9 @@ function mockUserState() {
             this.displayCreateUserOverlay = false;
             this.displayCreateGroupOverlay = false;
             this.displayRemoveMemberConfirm = false;
+            this.displayEditGroupInfoOverlay = false;
+            this.displayEditProfileOverlay = false;
+            this.displayChangePasswordOverlay = false;
             this.reset = jasmine.createSpy('reset');
         });
     });

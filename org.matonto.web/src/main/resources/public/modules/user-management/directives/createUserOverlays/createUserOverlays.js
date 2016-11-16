@@ -48,7 +48,26 @@
          * The first ovelray provides a form for the basic information about the user. The second overlay
          * provides a form for settings the permissions and roles of the new user.
          */
-        .directive('createUserOverlays', createUserOverlays);
+        .directive('createUserOverlays', createUserOverlays)
+        .directive('uniqueUsername', uniqueUsername);
+
+    uniqueUsername.$inject = ['$parse', 'userManagerService'];
+
+    function uniqueUsername($parse, userManagerService) {
+        return {
+            restrict: 'A',
+            require: 'ngModel',
+            link: function(scope, el, attrs, ctrl) {
+                ctrl.$validators.uniqueUsername = function(modelValue, viewValue) {
+                    var value = modelValue || viewValue;
+                    if (ctrl.$isEmpty(value)) {
+                        return true;
+                    }
+                    return !_.includes(_.map(userManagerService.users, 'username'), value);
+                }
+            }
+        }
+    }
 
     createUserOverlays.$inject = ['$q', 'userStateService', 'userManagerService'];
 
@@ -64,12 +83,19 @@
                 dvm.errorMessage = '';
                 dvm.step = 0;
                 dvm.roles = {admin: false};
+                dvm.newUser = {
+                    username: '',
+                    roles: [],
+                    firstName: '',
+                    lastName: '',
+                    email: ''
+                };
 
                 dvm.add = function () {
-                    dvm.um.addUser(dvm.username, dvm.password).then(response => {
-                        var requests = [dvm.um.addUserRole(dvm.username, 'user')];
+                    dvm.um.addUser(dvm.newUser, dvm.password).then(response => {
+                        var requests = [dvm.um.addUserRole(dvm.newUser.username, 'user')];
                         if (dvm.roles.admin) {
-                            requests.push(dvm.um.addUserGroup(dvm.username, 'admingroup'));
+                            requests.push(dvm.um.addUserRole(dvm.newUser.username, 'admin'));
                         }
                         return $q.all(requests);
                     }, error => {
@@ -81,9 +107,6 @@
                     }, error => {
                         dvm.errorMessage = error;
                     });
-                };
-                dvm.testUniqueness = function () {
-                    dvm.infoForm.username.$setValidity('uniqueUsername', !_.includes(_.map(dvm.um.users, 'username'), dvm.username));
                 };
             },
             templateUrl: 'modules/user-management/directives/createUserOverlays/createUserOverlays.html'

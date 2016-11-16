@@ -23,16 +23,18 @@
 <create-user-overlays ng-if="dvm.state.displayCreateUserOverlay"></create-user-overlays>
 <create-group-overlay ng-if="dvm.state.displayCreateGroupOverlay"></create-group-overlay>
 <change-password-overlay ng-if="dvm.state.displayChangePasswordOverlay"></change-password-overlay>
+<edit-profile-overlay ng-if="dvm.state.displayEditProfileOverlay"></edit-profile-overlay>
+<edit-group-info-overlay ng-if="dvm.state.displayEditGroupInfoOverlay"></edit-group-info-overlay>
 
 <confirmation-overlay ng-if="dvm.state.displayDeleteConfirm"
     class="delete-confirm"
-    header-text="'Delete ' + (dvm.state.selectedGroup.name || dvm.state.selectedUser.username)"
+    header-text="'Delete ' + (dvm.state.selectedGroup.title || dvm.state.selectedUser.username)"
     confirm-click="dvm.delete()"
     cancel-click="dvm.state.displayDeleteConfirm = false"
     confirm-text="'Yes'"
     cancel-text="'No'">
     <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
-    Are you sure you want to remove <strong>{{dvm.state.selectedGroup.name || dvm.state.selectedUser.username}}</strong>?
+    Are you sure you want to remove <strong>{{dvm.state.selectedGroup.title || dvm.state.selectedUser.username}}</strong>?
 </confirmation-overlay>
 
 <confirmation-overlay ng-if="dvm.state.displayRemoveMemberConfirm"
@@ -43,5 +45,5 @@
     confirm-text="'Yes'"
     cancel-text="'No'">
     <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
-    Are you sure you want to remove <strong>{{dvm.state.memberName}}</strong> from <strong>{{dvm.state.selectedGroup.name}}</strong>?
+    Are you sure you want to remove <strong>{{dvm.state.memberName}}</strong> from <strong>{{dvm.state.selectedGroup.title}}</strong>?
 </confirmation-overlay>

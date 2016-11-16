@@ -53,7 +53,7 @@ describe('Create Group Overlay directive', function() {
         var element = $compile(angular.element('<create-group-overlay></create-group-overlay>'))(scope);
         scope.$digest();
         controller = element.controller('createGroupOverlay');
-        expect(controller.members).toContain(loginManagerSvc.currentUser);
+        expect(controller.newGroup.members).toContain(loginManagerSvc.currentUser);
     });
     describe('controller methods', function() {
         beforeEach(function() {
@@ -62,19 +62,18 @@ describe('Create Group Overlay directive', function() {
             scope.$digest();
             controller = this.element.controller('createGroupOverlay');
         });
-        describe('should add a group with the name and members entered', function() {
+        describe('should add a group with the entered information', function() {
             beforeEach(function() {
-                controller.name = 'groupName'
-                controller.members = ['user'];
+                controller.newGroup = {title: 'title', description: 'Description', members: 'user'};
                 userStateSvc.displayCreateGroupOverlay = true;
             });
             it('unless an error occurs', function() {
                 userManagerSvc.addUserGroup.and.returnValue($q.reject('Error Message'));
                 controller.add();
                 $timeout.flush();
-                expect(userManagerSvc.addGroup).toHaveBeenCalledWith(controller.name);
-                _.forEach(controller.members, function(member) {
-                    expect(userManagerSvc.addUserGroup).toHaveBeenCalledWith(member, controller.name);
+                expect(userManagerSvc.addGroup).toHaveBeenCalledWith(controller.newGroup);
+                _.forEach(controller.newGroup.members, function(member) {
+                    expect(userManagerSvc.addUserGroup).toHaveBeenCalledWith(member, controller.newGroup.title);
                 });
                 expect(controller.errorMessage).toBe('Error Message');
                 expect(userStateSvc.displayCreateGroupOverlay).not.toBe(false);
@@ -83,7 +82,7 @@ describe('Create Group Overlay directive', function() {
                 userManagerSvc.addGroup.and.returnValue($q.reject('Error Message'));
                 controller.add();
                 $timeout.flush();
-                expect(userManagerSvc.addGroup).toHaveBeenCalledWith(controller.name);
+                expect(userManagerSvc.addGroup).toHaveBeenCalledWith(controller.newGroup);
                 expect(userManagerSvc.addUserGroup).not.toHaveBeenCalled();
                 expect(controller.errorMessage).toBe('Error Message');
                 expect(userStateSvc.displayCreateGroupOverlay).not.toBe(false);
@@ -91,25 +90,13 @@ describe('Create Group Overlay directive', function() {
             it('successfully', function() {
                 controller.add();
                 $timeout.flush();
-                expect(userManagerSvc.addGroup).toHaveBeenCalledWith(controller.name);
-                _.forEach(controller.members, function(member) {
-                    expect(userManagerSvc.addUserGroup).toHaveBeenCalledWith(member, controller.name);
+                expect(userManagerSvc.addGroup).toHaveBeenCalledWith(controller.newGroup);
+                _.forEach(controller.newGroup.members, function(member) {
+                    expect(userManagerSvc.addUserGroup).toHaveBeenCalledWith(member, controller.newGroup.title);
                 });
                 expect(controller.errorMessage).toBe('');
                 expect(userStateSvc.displayCreateGroupOverlay).toBe(false);
             });
-        });
-        it('should test the uniqueness of the entered group name', function() {
-            controller.name = 'group';
-            userManagerSvc.groups = [{name: 'group'}];
-            scope.$digest();
-            controller.testUniqueness();
-            expect(controller.form.name.$invalid).toBe(true);
-
-            controller.name = 'group1';
-            scope.$digest();
-            controller.testUniqueness();
-            expect(controller.form.name.$invalid).toBe(false);
         });
     });
     describe('replaces the element with the correct html', function() {
@@ -125,19 +112,27 @@ describe('Create Group Overlay directive', function() {
         it('with a member table', function() {
             expect(this.element.find('member-table').length).toBe(1);
         });
-        it('depending on the form validity', function() {
+        it('depending on the title field validity', function() {
             controller = this.element.controller('createGroupOverlay');
-            controller.name = 'group';
             scope.$digest();
-            var inputGroup = angular.element(this.element.querySelectorAll('.name')[0]);
-            var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
+            var inputGroup = angular.element(this.element.querySelectorAll('.title')[0]);
             expect(inputGroup.hasClass('has-error')).toBe(false);
-            expect(button.attr('disabled')).toBeFalsy();
 
-            controller.form.name.$touched = true;
-            controller.form.name.$setValidity('uniqueName', false);
+            controller.form.title.$touched = true;
+            controller.newGroup.title = 'title';
+            userManagerSvc.groups = [{title: 'title'}];
             scope.$digest();
             expect(inputGroup.hasClass('has-error')).toBe(true);
+        });
+        it('depending on the form validity', function() {
+            controller = this.element.controller('createGroupOverlay');
+            controller.form.$invalid = false;
+            scope.$digest();
+            var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
+            expect(button.attr('disabled')).toBeFalsy();
+
+            controller.form.$invalid = true;
+            scope.$digest();
             expect(button.attr('disabled')).toBeTruthy();
         });
         it('depending on whether there is an error', function() {

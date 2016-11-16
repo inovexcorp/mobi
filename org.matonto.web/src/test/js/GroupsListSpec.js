@@ -68,12 +68,12 @@ describe('Groups List directive', function() {
         it('depending on how many groups there are', function() {
             expect(this.element.find('li').length).toBe(0);
 
-            userManagerSvc.groups = [{name: 'group', members: []}];
+            userManagerSvc.groups = [{title: 'group', members: []}];
             scope.$digest();
             expect(this.element.find('li').length).toBe(userManagerSvc.groups.length);
         });
         it('depending on which group is selected', function() {
-            var group = {name: 'group', members: []};
+            var group = {title: 'group', members: []};
             userManagerSvc.groups = [group];
             scope.$digest();
             var groupLink = angular.element(this.element.querySelectorAll('li a')[0]);
@@ -85,7 +85,7 @@ describe('Groups List directive', function() {
         });
         it('depending on whether the list should be filtered', function() {
             loginManagerSvc.currentUser = 'user';
-            userManagerSvc.groups = [{name: 'group1', members: []}, {name: 'group2', members: [loginManagerSvc.currentUser]}];
+            userManagerSvc.groups = [{title: 'group1', members: []}, {title: 'group2', members: [loginManagerSvc.currentUser]}];
             scope.$digest();
             expect(this.element.find('li').length).toBe(userManagerSvc.groups.length);
 
@@ -94,9 +94,9 @@ describe('Groups List directive', function() {
             expect(this.element.find('li').length).toBe(userManagerSvc.groups.length - 1);
         });
         it('depending on the user search string', function() {
-            var group = {name: 'user', members: []};
+            var group = {title: 'user', members: []};
             userManagerSvc.groups = [group];
-            userStateSvc.groupSearchString = group.name;
+            userStateSvc.groupSearchString = group.title;
             scope.$digest();
             expect(this.element.find('li').length).toBe(1);
 
@@ -106,7 +106,7 @@ describe('Groups List directive', function() {
         });
     });
     it('should call onClick when a group is clicked', function() {
-        var group = {name: 'group', members: []};
+        var group = {title: 'group', members: []};
         userStateSvc.filteredGroupList = false;
         userManagerSvc.groups = [group];
         var element = $compile(angular.element('<groups-list></groups-list>'))(scope);

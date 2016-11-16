@@ -61,11 +61,11 @@
                 dvm.state = userStateService;
                 dvm.um = userManagerService;
                 dvm.lm = loginManagerService;
-                dvm.roles = {admin: dvm.um.isAdmin(_.get(dvm.state.selectedUser, 'username', ''))};
+                dvm.roles = {admin: _.includes(_.get(dvm.state.selectedUser, 'roles', []), 'admin')};
 
                 $scope.$watch('dvm.state.selectedUser', function(newValue, oldValue) {
                     if (!_.isEqual(newValue, oldValue)) {
-                        dvm.roles.admin = dvm.um.isAdmin(dvm.state.selectedUser.username);
+                        dvm.roles.admin = _.includes(dvm.state.selectedUser.roles, 'admin');
                     }
                 });
                 dvm.deleteUser = function() {
@@ -75,28 +75,26 @@
                     dvm.state.displayCreateUserOverlay = true;
                 }
                 dvm.editProfile = function() {
-                    console.log('Edit profile');
+                    dvm.state.displayChangeProfileOverlay = true;
                 }
                 dvm.changePassword = function() {
                     dvm.state.displayChangePasswordOverlay = true;
                 }
                 dvm.changeRoles = function() {
-                    var requests = [];
-                    if (dvm.roles.admin !== dvm.um.isAdmin(dvm.state.selectedUser.username)) {
-                        if (dvm.roles.admin) {
-                            requests.push(dvm.um.addUserGroup(dvm.state.selectedUser.username, 'admingroup'));
-                        } else {
-                            requests.push(dvm.um.deleteUserGroup(dvm.state.selectedUser.username, 'admingroup'));
-                            requests.push(dvm.um.deleteUserRole(dvm.state.selectedUser.username, 'admin'));
-                        }
-                    }
-                    if (requests.length) {
-                        $q.all(requests).then(responses => {
-                            dvm.permissionErrorMessage = '';
-                        }, error => {
-                            dvm.permissionErrorMessage = error;
-                        });
-                    }
+                    var request = dvm.roles.admin ? dvm.um.addUserRole(dvm.state.selectedUser.username, 'admin') : dvm.um.deleteUserRole(dvm.state.selectedUser.username, 'admin');
+                    request.then(response => {
+                        dvm.permissionErrorMessage = '';
+                    }, error => {
+                        dvm.permissionErrorMessage = error;
+                    });
+                }
+                dvm.getUserGroups = function() {
+                    return _.filter(dvm.um.groups, group => _.includes(group.members, dvm.state.selectedUser.username));
+                }
+                dvm.goToGroup = function(group) {
+                    dvm.state.showGroups = true;
+                    dvm.state.showUsers = false;
+                    dvm.state.selectedGroup = group;
                 }
             }],
             templateUrl: 'modules/user-management/directives/usersPage/usersPage.html'

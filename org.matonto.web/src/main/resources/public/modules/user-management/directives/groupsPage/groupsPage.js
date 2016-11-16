@@ -69,13 +69,13 @@
                     dvm.state.displayDeleteConfirm = true;
                 }
                 dvm.editDescription = function() {
-                    console.log('Edit Description');
+                    dvm.state.displayEditGroupInfoOverlay = true;
                 }
                 dvm.removeMember = function() {
                     dvm.state.displayRemoveMemberConfirm = true;
                 }
                 dvm.addMember = function() {
-                    dvm.um.addUserGroup(dvm.state.memberName, dvm.state.selectedGroup.name).then(response => {
+                    dvm.um.addUserGroup(dvm.state.memberName, dvm.state.selectedGroup.title).then(response => {
                         dvm.errorMessage = '';
                         dvm.state.memberName = '';
                     }, error => {

@@ -65,15 +65,14 @@ describe('User Manager service', function() {
     describe('should add a user', function() {
         beforeEach(function() {
             params = {
-                password: 'password',
-                username: 'username'
+                password: 'password'
             };
         });
         it('unless there is an error', function(done) {
             $httpBackend.whenPOST('/matontorest/users' + createQueryString(params)).respond(function(method, url, data, headers) {
                 return [400, '', {}, 'Error Message'];
             });
-            userManagerSvc.addUser(params.username, params.password).then(function(response) {
+            userManagerSvc.addUser({}, params.password).then(function(response) {
                 fail('Promise should have rejected');
                 done();
             }, function(response) {
@@ -82,10 +81,11 @@ describe('User Manager service', function() {
             });
             $httpBackend.flush();
         });
-        it('with the passed username and password', function(done) {
-            $httpBackend.whenPOST('/matontorest/users' + createQueryString(params)).respond(200, []);
-            userManagerSvc.addUser(params.username, params.password).then(function(response) {
-                expect(userManagerSvc.users).toContain({username: params.username, roles: []});
+        it('successfully', function(done) {
+            var newUser = {username: 'username'};
+            $httpBackend.whenPOST('/matontorest/users' + createQueryString(params), newUser).respond(200, []);
+            userManagerSvc.addUser(newUser, params.password).then(function(response) {
+                expect(userManagerSvc.users).toContain(newUser);
                 done();
             });
             $httpBackend.flush();
@@ -119,17 +119,13 @@ describe('User Manager service', function() {
     describe('should update a user', function() {
         beforeEach(function() {
             userManagerSvc.users = [{username: 'username', firstName: 'Mary'}];
-            /*params = {
-                currentPassword: 'password',
-                newPassword: 'newPassword'
-            };*/
         });
         it('unless there is an error', function(done) {
             var username = userManagerSvc.users[0].username;
-            $httpBackend.whenPUT('/matontorest/users/' + username/* + createQueryString(params)*/).respond(function(method, url, data, headers) {
+            $httpBackend.whenPUT('/matontorest/users/' + username).respond(function(method, url, data, headers) {
                 return [400, '', {}, 'Error Message'];
             });
-            userManagerSvc.updateUser(username, userManagerSvc.users[0]/*, params.currentPassword, params.newPassword*/).then(function(response) {
+            userManagerSvc.updateUser(username, userManagerSvc.users[0]).then(function(response) {
                 fail('Promise should have rejected');
                 done();
             }, function(response) {
@@ -142,8 +138,8 @@ describe('User Manager service', function() {
             var username = userManagerSvc.users[0].username;
             var newUser = _.clone(userManagerSvc.users[0]);
             newUser.firstName = 'Jane';
-            $httpBackend.whenPUT('/matontorest/users/' + username/* + createQueryString(params)*/, newUser).respond(200, [])
-            userManagerSvc.updateUser(username, newUser/*, params.currentPassword, params.newPassword*/).then(function(response) {
+            $httpBackend.whenPUT('/matontorest/users/' + username, newUser).respond(200, [])
+            userManagerSvc.updateUser(username, newUser).then(function(response) {
                 expect(_.find(userManagerSvc.users, {username: username})).toEqual(newUser);
                 done();
             });
@@ -279,7 +275,7 @@ describe('User Manager service', function() {
     describe('should add a user to a group', function() {
         beforeEach(function() {
             userManagerSvc.users = [{username: 'username'}];
-            userManagerSvc.groups = [{name: 'group', members: []}];
+            userManagerSvc.groups = [{title: 'group', members: []}];
             params = {
                 group: 'group'
             };
@@ -300,20 +296,20 @@ describe('User Manager service', function() {
         });
         it('using the passed parameters', function(done) {
             var username = userManagerSvc.users[0].username;
-            var groupName = userManagerSvc.groups[0].name;
+            var groupTitle = userManagerSvc.groups[0].title;
             $httpBackend.whenPUT('/matontorest/users/' + username + '/groups' + createQueryString(params)).respond(200, []);
-            userManagerSvc.addUserGroup(username, groupName).then(function(response) {
-                var group = _.find(userManagerSvc.groups, {name: groupName});
+            userManagerSvc.addUserGroup(username, groupTitle).then(function(response) {
+                var group = _.find(userManagerSvc.groups, {title: groupTitle});
                 expect(group.members).toContain(username);
                 done();
             });
             $httpBackend.flush();
         });
     });
-    describe('should add a user to a group', function() {
+    describe('should remove a user from a group', function() {
         beforeEach(function() {
             userManagerSvc.users = [{username: 'username'}];
-            userManagerSvc.groups = [{name: 'group', members: ['username']}];
+            userManagerSvc.groups = [{title: 'group', members: ['username']}];
             params = {
                 group: 'group'
             };
@@ -334,10 +330,10 @@ describe('User Manager service', function() {
         });
         it('using the passed parameters', function(done) {
             var username = userManagerSvc.users[0].username;
-            var groupName = userManagerSvc.groups[0].name;
+            var groupTitle = userManagerSvc.groups[0].title;
             $httpBackend.whenDELETE('/matontorest/users/' + username + '/groups' + createQueryString(params)).respond(200, []);
-            userManagerSvc.deleteUserGroup(username, groupName).then(function(response) {
-                var group = _.find(userManagerSvc.groups, {name: groupName});
+            userManagerSvc.deleteUserGroup(username, groupTitle).then(function(response) {
+                var group = _.find(userManagerSvc.groups, {title: groupTitle});
                 expect(group.members).not.toContain(username);
                 done();
             });
@@ -345,16 +341,11 @@ describe('User Manager service', function() {
         });
     });
     describe('should add a group', function() {
-        beforeEach(function() {
-            params = {
-                name: 'group'
-            };
-        });
         it('unless there is an error', function(done) {
-            $httpBackend.whenPOST('/matontorest/groups' + createQueryString(params)).respond(function(method, url, data, headers) {
+            $httpBackend.whenPOST('/matontorest/groups').respond(function(method, url, data, headers) {
                 return [400, '', {}, 'Error Message'];
             });
-            userManagerSvc.addGroup(params.name).then(function(response) {
+            userManagerSvc.addGroup({}).then(function(response) {
                 fail('Promise should have rejected');
                 done();
             }, function(response) {
@@ -363,10 +354,11 @@ describe('User Manager service', function() {
             });
             $httpBackend.flush();
         });
-        it('using the passed parameters', function(done) {
-            $httpBackend.whenPOST('/matontorest/groups' + createQueryString(params)).respond(200, []);
-            userManagerSvc.addGroup(params.name).then(function(response) {
-                expect(userManagerSvc.groups).toContain({name: params.name, roles: ['group'], members: []});
+        it('successfully', function(done) {
+            var newGroup = {title: 'title'};
+            $httpBackend.whenPOST('/matontorest/groups', newGroup).respond(200, []);
+            userManagerSvc.addGroup(newGroup).then(function(response) {
+                expect(userManagerSvc.groups).toContain(newGroup);
                 done();
             });
             $httpBackend.flush();
@@ -374,11 +366,11 @@ describe('User Manager service', function() {
     });
     describe('should retrieve a group', function() {
         it('unless there is an error', function(done) {
-            var group = {name: 'group'};
-            $httpBackend.whenGET('/matontorest/groups/' + group.name).respond(function(method, url, data, headers) {
+            var group = {title: 'group'};
+            $httpBackend.whenGET('/matontorest/groups/' + group.title).respond(function(method, url, data, headers) {
                 return [400, '', {}, 'Error Message'];
             });
-            userManagerSvc.getGroup(group.name).then(function(response) {
+            userManagerSvc.getGroup(group.title).then(function(response) {
                 fail('Promise should have rejected');
                 done();
             }, function(response) {
@@ -388,10 +380,40 @@ describe('User Manager service', function() {
             $httpBackend.flush();
         });
         it('with the passed name', function(done) {
-            var group = {name: 'group'};
-            $httpBackend.whenGET('/matontorest/groups/' + group.name).respond(200, group);
-            userManagerSvc.getGroup(group.name).then(function(response) {
+            var group = {title: 'group'};
+            $httpBackend.whenGET('/matontorest/groups/' + group.title).respond(200, group);
+            userManagerSvc.getGroup(group.title).then(function(response) {
                 expect(response).toEqual(group);
+                done();
+            });
+            $httpBackend.flush();
+        });
+    });
+    describe('should update a group', function() {
+        beforeEach(function() {
+            userManagerSvc.groups = [{title: 'group', description: 'Description'}];
+        });
+        it('unless there is an error', function(done) {
+            var groupTitle = userManagerSvc.groups[0].title;
+            $httpBackend.whenPUT('/matontorest/groups/' + groupTitle).respond(function(method, url, data, headers) {
+                return [400, '', {}, 'Error Message'];
+            });
+            userManagerSvc.updateGroup(groupTitle, userManagerSvc.groups[0]).then(function(response) {
+                fail('Promise should have rejected');
+                done();
+            }, function(response) {
+                expect(response).toBe('Error Message');
+                done();
+            });
+            $httpBackend.flush();
+        });
+        it('successfully', function(done) {
+            var groupTitle = userManagerSvc.groups[0].title;
+            var newGroup = _.clone(userManagerSvc.groups[0]);
+            newGroup.description = 'New Description';
+            $httpBackend.whenPUT('/matontorest/groups/' + groupTitle, newGroup).respond(200, [])
+            userManagerSvc.updateGroup(groupTitle, newGroup).then(function(response) {
+                expect(_.find(userManagerSvc.groups, {title: groupTitle})).toEqual(newGroup);
                 done();
             });
             $httpBackend.flush();
@@ -399,14 +421,14 @@ describe('User Manager service', function() {
     });
     describe('should delete a group', function() {
         beforeEach(function() {
-            userManagerSvc.groups = [{name: 'group', members: ['username']}];
+            userManagerSvc.groups = [{title: 'group', members: ['username']}];
         });
         it('unless there is an error', function(done) {
-            var groupName = userManagerSvc.groups[0].name;
-            $httpBackend.whenDELETE('/matontorest/groups/' + groupName).respond(function(method, url, data, headers) {
+            var groupTitle = userManagerSvc.groups[0].title;
+            $httpBackend.whenDELETE('/matontorest/groups/' + groupTitle).respond(function(method, url, data, headers) {
                 return [400, '', {}, 'Error Message'];
             });
-            userManagerSvc.deleteGroup(groupName).then(function(response) {
+            userManagerSvc.deleteGroup(groupTitle).then(function(response) {
                 fail('Promise should have rejected');
                 done();
             }, function(response) {
@@ -415,11 +437,11 @@ describe('User Manager service', function() {
             });
             $httpBackend.flush();
         });
-        it('with the passed name', function(done) {
-            var groupName = userManagerSvc.groups[0].name;
-            $httpBackend.whenDELETE('/matontorest/groups/' + groupName).respond(200, [])
-            userManagerSvc.deleteGroup(groupName).then(function(response) {
-                expect(_.find(userManagerSvc.groups, {name: groupName})).toBeFalsy();
+        it('with the passed title', function(done) {
+            var groupTitle = userManagerSvc.groups[0].title;
+            $httpBackend.whenDELETE('/matontorest/groups/' + groupTitle).respond(200, [])
+            userManagerSvc.deleteGroup(groupTitle).then(function(response) {
+                expect(_.find(userManagerSvc.groups, {title: groupTitle})).toBeFalsy();
                 done();
             });
             $httpBackend.flush();
@@ -427,17 +449,17 @@ describe('User Manager service', function() {
     });
     describe('should add a role to a group', function() {
         beforeEach(function() {
-            userManagerSvc.groups = [{name: 'group', roles: []}];
+            userManagerSvc.groups = [{title: 'group', roles: []}];
             params = {
                 role: 'role'
             };
         });
         it('unless there is an error', function(done) {
-            var groupName = userManagerSvc.groups[0].name;
-            $httpBackend.whenPUT('/matontorest/groups/' + groupName + '/roles' + createQueryString(params)).respond(function(method, url, data, headers) {
+            var groupTitle = userManagerSvc.groups[0].title;
+            $httpBackend.whenPUT('/matontorest/groups/' + groupTitle + '/roles' + createQueryString(params)).respond(function(method, url, data, headers) {
                 return [400, '', {}, 'Error Message'];
             });
-            userManagerSvc.addGroupRole(groupName, params.role).then(function(response) {
+            userManagerSvc.addGroupRole(groupTitle, params.role).then(function(response) {
                 fail('Promise should have rejected');
                 done();
             }, function(response) {
@@ -447,10 +469,10 @@ describe('User Manager service', function() {
             $httpBackend.flush();
         });
         it('using the passed parameters', function(done) {
-            var groupName = userManagerSvc.groups[0].name;
-            $httpBackend.whenPUT('/matontorest/groups/' + groupName + '/roles' + createQueryString(params)).respond(200, []);
-            userManagerSvc.addGroupRole(groupName, params.role).then(function(response) {
-                var group = _.find(userManagerSvc.groups, {name: groupName});
+            var groupTitle = userManagerSvc.groups[0].title;
+            $httpBackend.whenPUT('/matontorest/groups/' + groupTitle + '/roles' + createQueryString(params)).respond(200, []);
+            userManagerSvc.addGroupRole(groupTitle, params.role).then(function(response) {
+                var group = _.find(userManagerSvc.groups, {title: groupTitle});
                 expect(group.roles).toContain(params.role);
                 done();
             });
@@ -459,17 +481,17 @@ describe('User Manager service', function() {
     });
     describe('should remove a role from a group', function() {
         beforeEach(function() {
-            userManagerSvc.groups = [{name: 'group', roles: ['role']}];
+            userManagerSvc.groups = [{title: 'group', roles: ['role']}];
             params = {
                 role: 'role'
             };
         });
         it('unless there is an error', function(done) {
-            var groupName = userManagerSvc.groups[0].name;
-            $httpBackend.whenDELETE('/matontorest/groups/' + groupName + '/roles' + createQueryString(params)).respond(function(method, url, data, headers) {
+            var groupTitle = userManagerSvc.groups[0].title;
+            $httpBackend.whenDELETE('/matontorest/groups/' + groupTitle + '/roles' + createQueryString(params)).respond(function(method, url, data, headers) {
                 return [400, '', {}, 'Error Message'];
             });
-            userManagerSvc.deleteGroupRole(groupName, params.role).then(function(response) {
+            userManagerSvc.deleteGroupRole(groupTitle, params.role).then(function(response) {
                 fail('Promise should have rejected');
                 done();
             }, function(response) {
@@ -479,10 +501,10 @@ describe('User Manager service', function() {
             $httpBackend.flush();
         });
         it('using the passed parameters', function(done) {
-            var groupName = userManagerSvc.groups[0].name;
-            $httpBackend.whenDELETE('/matontorest/groups/' + groupName + '/roles' + createQueryString(params)).respond(200, []);
-            userManagerSvc.deleteGroupRole(groupName, params.role).then(function(response) {
-                var group = _.find(userManagerSvc.groups, {name: groupName});
+            var groupTitle = userManagerSvc.groups[0].title;
+            $httpBackend.whenDELETE('/matontorest/groups/' + groupTitle + '/roles' + createQueryString(params)).respond(200, []);
+            userManagerSvc.deleteGroupRole(groupTitle, params.role).then(function(response) {
+                var group = _.find(userManagerSvc.groups, {title: groupTitle});
                 expect(group.roles).not.toContain(params.role);
                 done();
             });
@@ -504,11 +526,11 @@ describe('User Manager service', function() {
         });
         it('based on group roles', function() {
             userManagerSvc.users = [{username: 'user'}];
-            userManagerSvc.groups = [{name: 'group', roles: ['admin'], members: ['user']}];
+            userManagerSvc.groups = [{title: 'group', roles: ['admin'], members: ['user']}];
             var result = userManagerSvc.isAdmin(this.username);
             expect(result).toBe(true);
 
-            userManagerSvc.groups = [{name: 'group', members: ['user']}];
+            userManagerSvc.groups[0].roles = [];
             result = userManagerSvc.isAdmin(this.username);
             expect(result).toBe(false);
         });

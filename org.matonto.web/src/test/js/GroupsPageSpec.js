@@ -68,20 +68,20 @@ describe('Groups Page directive', function() {
         describe('should add a group member', function() {
             beforeEach(function() {
                 this.username = userStateSvc.memberName = 'user';
-                userStateSvc.selectedGroup = {name: 'group'};
+                userStateSvc.selectedGroup = {title: 'group'};
             });
             it('unless an error occurs', function() {
                 userManagerSvc.addUserGroup.and.returnValue($q.reject('Error message'));
                 controller.addMember();
                 $timeout.flush();
-                expect(userManagerSvc.addUserGroup).toHaveBeenCalledWith(this.username, userStateSvc.selectedGroup.name);
+                expect(userManagerSvc.addUserGroup).toHaveBeenCalledWith(this.username, userStateSvc.selectedGroup.title);
                 expect(userStateSvc.memberName).toBe(this.username);
                 expect(controller.errorMessage).toBe('Error message');
             });
             it('successfully', function() {
                 controller.addMember();
                 $timeout.flush();
-                expect(userManagerSvc.addUserGroup).toHaveBeenCalledWith(this.username, userStateSvc.selectedGroup.name);
+                expect(userManagerSvc.addUserGroup).toHaveBeenCalledWith(this.username, userStateSvc.selectedGroup.title);
                 expect(controller.errorMessage).toBe('');
                 expect(userStateSvc.memberName).toBe('');
             });
@@ -124,14 +124,14 @@ describe('Groups Page directive', function() {
             expect(this.element.find('member-table').length).toBe(0);
             expect(deleteButton.attr('disabled')).toBeTruthy();
 
-            userStateSvc.selectedGroup = {name: 'group', members: []};
+            userStateSvc.selectedGroup = {title: 'group', members: []};
             scope.$digest();
             expect(this.element.querySelectorAll('.col-xs-8 .group-description').length).toBe(1);
             expect(this.element.find('member-table').length).toBe(1);
             expect(deleteButton.attr('disabled')).toBeFalsy();
         });
         it('depending on whether the current user is an admin', function() {
-            userStateSvc.selectedGroup = {name: 'group', members: []};
+            userStateSvc.selectedGroup = {title: 'group', members: []};
             userManagerSvc.isAdmin.and.returnValue(false);
             scope.$digest();
             var deleteButton = angular.element(this.element.querySelectorAll('.col-xs-4 block-footer button.btn-link')[0]);

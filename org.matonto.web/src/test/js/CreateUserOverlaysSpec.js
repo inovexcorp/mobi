@@ -51,9 +51,9 @@ describe('Create User Overlays directive', function() {
             scope.$digest();
             controller = this.element.controller('createUserOverlays');
         });
-        describe('should add a user with the username and password entered', function() {
+        describe('should add a user with the entered information', function() {
             beforeEach(function() {
-                controller.username = 'username'
+                controller.newUser = {username: 'username', firstName: 'John', lastName: "Doe", email: 'example@example.com'};
                 controller.password = 'password';
                 userStateSvc.displayCreateUserOverlay = true;
             });
@@ -61,7 +61,7 @@ describe('Create User Overlays directive', function() {
                 userManagerSvc.addUser.and.returnValue($q.reject('Error Message'));
                 controller.add();
                 $timeout.flush();
-                expect(userManagerSvc.addUser).toHaveBeenCalledWith(controller.username, controller.password);
+                expect(userManagerSvc.addUser).toHaveBeenCalledWith(controller.newUser, controller.password);
                 expect(controller.errorMessage).toBe('Error Message');
                 expect(userStateSvc.displayCreateUserOverlay).not.toBe(false);
             });
@@ -70,31 +70,17 @@ describe('Create User Overlays directive', function() {
                     userManagerSvc.addUserRole.and.returnValue($q.reject('Error Message'));
                     controller.add();
                     $timeout.flush();
-                    expect(userManagerSvc.addUser).toHaveBeenCalledWith(controller.username, controller.password);
-                    expect(userManagerSvc.addUserRole).toHaveBeenCalledWith(controller.username, 'user');
-                    expect(userManagerSvc.addUserGroup).not.toHaveBeenCalled();
-                    expect(controller.errorMessage).toBe('Error Message');
-                    expect(userStateSvc.displayCreateUserOverlay).not.toBe(false);
-
-                    userManagerSvc.addUserRole.and.returnValue($q.when());
-                    userManagerSvc.addUserGroup.and.returnValue($q.reject('Error Message'));
-                    controller.roles.admin = true;
-                    controller.errorMessage = '';
-                    userStateSvc.displayCreateUserOverlay = true;
-                    controller.add();
-                    $timeout.flush();
-                    expect(userManagerSvc.addUser).toHaveBeenCalledWith(controller.username, controller.password);
-                    expect(userManagerSvc.addUserRole).toHaveBeenCalledWith(controller.username, 'user');
-                    expect(userManagerSvc.addUserGroup).toHaveBeenCalledWith(controller.username, 'admingroup');
+                    expect(userManagerSvc.addUser).toHaveBeenCalledWith(controller.newUser, controller.password);
+                    expect(userManagerSvc.addUserRole).toHaveBeenCalledWith(controller.newUser.username, 'user');
                     expect(controller.errorMessage).toBe('Error Message');
                     expect(userStateSvc.displayCreateUserOverlay).not.toBe(false);
                 });
                 it('successfully', function() {
                     controller.add();
                     $timeout.flush();
-                    expect(userManagerSvc.addUser).toHaveBeenCalledWith(controller.username, controller.password);
-                    expect(userManagerSvc.addUserRole).toHaveBeenCalledWith(controller.username, 'user');
-                    expect(userManagerSvc.addUserGroup).not.toHaveBeenCalled();
+                    expect(userManagerSvc.addUser).toHaveBeenCalledWith(controller.newUser, controller.password);
+                    expect(userManagerSvc.addUserRole).toHaveBeenCalledWith(controller.newUser.username, 'user');
+                    expect(userManagerSvc.addUserRole).not.toHaveBeenCalledWith(controller.newUser.username, 'admin');
                     expect(controller.errorMessage).toBe('');
                     expect(userStateSvc.displayCreateUserOverlay).toBe(false);
 
@@ -102,25 +88,13 @@ describe('Create User Overlays directive', function() {
                     userStateSvc.displayCreateUserOverlay = true;
                     controller.add();
                     $timeout.flush();
-                    expect(userManagerSvc.addUser).toHaveBeenCalledWith(controller.username, controller.password);
-                    expect(userManagerSvc.addUserRole).toHaveBeenCalledWith(controller.username, 'user');
-                    expect(userManagerSvc.addUserGroup).toHaveBeenCalledWith(controller.username, 'admingroup');
+                    expect(userManagerSvc.addUser).toHaveBeenCalledWith(controller.newUser, controller.password);
+                    expect(userManagerSvc.addUserRole).toHaveBeenCalledWith(controller.newUser.username, 'user');
+                    expect(userManagerSvc.addUserRole).toHaveBeenCalledWith(controller.newUser.username, 'admin');
                     expect(controller.errorMessage).toBe('');
                     expect(userStateSvc.displayCreateUserOverlay).toBe(false);
                 });
             });
-        });
-        it('should test the uniqueness of the entered user name', function() {
-            controller.username = 'username';
-            userManagerSvc.users = [{username: 'username'}];
-            scope.$digest();
-            controller.testUniqueness();
-            expect(controller.infoForm.username.$invalid).toBe(true);
-
-            controller.username = 'username1';
-            scope.$digest();
-            controller.testUniqueness();
-            expect(controller.infoForm.username.$invalid).toBe(false);
         });
     });
     describe('fills the element with the correct html', function() {
@@ -144,19 +118,27 @@ describe('Create User Overlays directive', function() {
         it('with a step progress bar', function() {
             expect(this.element.find('step-progress-bar').length).toBe(1);
         });
-        it('with the correct classes based on the info form validity', function() {
+        it('with the correct classes based on the username field validity', function() {
             controller = this.element.controller('createUserOverlays');
-            controller.username = 'username';
             scope.$digest();
             var inputGroup = angular.element(this.element.querySelectorAll('.username')[0]);
-            var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
             expect(inputGroup.hasClass('has-error')).toBe(false);
-            expect(button.attr('disabled')).toBeFalsy();
 
             controller.infoForm.username.$touched = true;
-            controller.infoForm.username.$setValidity('uniqueName', false);
+            userManagerSvc.users = [{username: 'username'}];
+            controller.newUser.username = 'username';
             scope.$digest();
             expect(inputGroup.hasClass('has-error')).toBe(true);
+        });
+        it('with the correct classes based on the info form validity', function() {
+            controller = this.element.controller('createUserOverlays');
+            controller.infoForm.$invalid = false;
+            scope.$digest();
+            var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
+            expect(button.attr('disabled')).toBeFalsy();
+
+            controller.infoForm.$invalid = true;
+            scope.$digest();
             expect(button.attr('disabled')).toBeTruthy();
         });
         it('with the correct classes based on the permission form validity', function() {
