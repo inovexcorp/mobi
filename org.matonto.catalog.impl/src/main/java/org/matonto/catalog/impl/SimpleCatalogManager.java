@@ -758,9 +758,9 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public Model applyInProgressCommit(Resource inProgressCommitId, Model entity) throws MatOntoException {
+        InProgressCommit inProgressCommit = this.getCommit(inProgressCommitId, inProgressCommitFactory)
+                .orElseThrow(() -> new MatOntoException("The InProgressCommit could not be retrieved."));
         try (RepositoryConnection conn = repository.getConnection()) {
-            InProgressCommit inProgressCommit = this.getCommit(inProgressCommitId, inProgressCommitFactory)
-                    .orElseThrow(() -> new MatOntoException("The InProgressCommit could not be retrieved."));
             Resource revisionIRI = (Resource)inProgressCommit.getProperty(vf.createIRI(Activity.generated_IRI)).get();
             Revision revision = revisionFactory.getExisting(revisionIRI, inProgressCommit.getModel());
             Resource additionsIRI = (Resource)revision.getAdditions().orElseThrow(() ->
