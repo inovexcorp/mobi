@@ -23,25 +23,11 @@ package org.matonto.catalog.api;
  * #L%
  */
 
-import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.Model;
 
-import java.time.OffsetDateTime;
+public interface Difference {
 
-public interface PublishedResourceBuilder<T extends PublishedResourceBuilder, U extends PublishedResource> {
+    Model getAdditions();
 
-    T description(String val);
-
-    T issued(OffsetDateTime val);
-
-    T modified(OffsetDateTime val);
-
-    T identifier(String val);
-
-    T addKeyword(String val);
-
-    T addDistribution(Distribution val);
-
-    T addType(Resource val);
-
-    U build();
+    Model getDeletions();
 }
