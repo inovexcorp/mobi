@@ -96,6 +96,8 @@
         <bundle start-level="80">mvn:org.matonto/repository.impl.sesame/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/catalog.api/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/catalog.impl/${project.version}</bundle>
+        <bundle start-level="80">mvn:org.matonto/catalog.api/1.3.11</bundle>
+        <bundle start-level="80">mvn:org.matonto/catalog.impl/1.3.11</bundle>
         <bundle start-level="80">mvn:org.matonto/jaas/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/jaas.api/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/rdf.orm/${project.version}</bundle>
@@ -114,7 +116,7 @@
         <bundle start-level="80">mvn:org.matonto/swagger.ui/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/web/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/sparql.rest/${project.version}</bundle>
-        <!--<bundle start-level="80">mvn:org.matonto/catalog.rest/${project.version}</bundle>-->
+        <bundle start-level="80">mvn:org.matonto/catalog.rest/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/jaas.rest/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/web.security/${project.version}</bundle>
     </feature>
