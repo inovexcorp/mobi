@@ -114,7 +114,7 @@
         <bundle start-level="80">mvn:org.matonto/swagger.ui/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/web/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/sparql.rest/${project.version}</bundle>
-        <bundle start-level="80">mvn:org.matonto/catalog.rest/${project.version}</bundle>
+        <!--<bundle start-level="80">mvn:org.matonto/catalog.rest/${project.version}</bundle>-->
         <bundle start-level="80">mvn:org.matonto/jaas.rest/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/web.security/${project.version}</bundle>
     </feature>
