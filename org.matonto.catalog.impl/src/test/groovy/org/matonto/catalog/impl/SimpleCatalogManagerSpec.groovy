@@ -25,8 +25,8 @@ package org.matonto.catalog.impl
 import org.matonto.catalog.api.builder.DistributionConfig
 import org.matonto.catalog.api.builder.RecordConfig
 import org.matonto.catalog.api.ontologies.mcat.*
-import org.matonto.jaas.ontologies.usermanagement.User
-import org.matonto.jaas.ontologies.usermanagement.UserFactory
+import org.matonto.jaas.api.ontologies.usermanagement.User
+import org.matonto.jaas.api.ontologies.usermanagement.UserFactory
 import org.matonto.rdf.api.Model
 import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory

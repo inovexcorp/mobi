@@ -23,7 +23,7 @@ package org.matonto.catalog.api.builder;
  * #L%
  */
 
-import org.matonto.jaas.ontologies.usermanagement.User;
+import org.matonto.jaas.api.ontologies.usermanagement.User;
 
 import java.util.Set;
 
