@@ -9,7 +9,7 @@
 @base <http://matonto.org/ontologies/catalog>.
 
 <http://matonto.org/ontologies/catalog> a owl:Ontology;
-    owl:versionIRI <http://matonto.org/ontologies/catalog#1.2>;
+    owl:versionIRI <http://matonto.org/ontologies/catalog#1.3>;
     owl:imports <http://www.w3.org/ns/prov-o#>;
     rdfs:label "The MatOnto Catalog Ontology"@en;
     rdfs:comment "The MatOnto catalog ontology is designed to facilitate interoperability between MatOnto catalogs published on the Web. By using the MatOnto catalog to describe resources, publishers increase discoverability and enable easy consumption of metadata from multiple catalogs. It further enables decentralized publishing of catalogs and facilitates federated resource search across sites. Aggregated MatOnto catalog metadata can serve as a manifest file to facilitate digital preservation."@en;
@@ -23,13 +23,6 @@
     rdfs:label "Catalog"@en;
     rdfs:comment "A curated collection of metadata about resources."@en.
 
-:record a owl:ObjectProperty;
-    rdfs:subPropertyOf dct:hasPart;
-    rdfs:label "record"@en;
-    rdfs:comment "A Record within the described Catalog."@en;
-    rdfs:domain :Catalog;
-    rdfs:range :Record.
-
 # Record
 
 :Record a owl:Class;
@@ -42,6 +35,12 @@
     rdfs:comment "A keyword describing the resource."@en;
     rdfs:domain :Record;
     rdfs:range rdfs:Literal.
+
+:catalog a owl:DatatypeProperty, owl:FunctionalProperty;
+    rdfs:label "catalog"@en;
+    rdfs:comment "The Catalog containing the described Record."@en;
+    rdfs:domain :Record;
+    rdfs:range :Catalog.
 
 # Unversioned Record
 
@@ -88,23 +87,23 @@
     rdfs:domain :VersionedRDFRecord;
     rdfs:range :Branch.
 
-# Ontology
+# OntologyRecord
 
-:Ontology a owl:Class;
+:OntologyRecord a owl:Class;
     rdfs:subClassOf :VersionedRDFRecord;
     rdfs:label "Ontology"@en;
     rdfs:comment "A collection of RDF data that defines an ontology resource."@en.
 
-# Mapping
+# MappingRecord
 
-:Mapping a owl:Class;
+:MappingRecord a owl:Class;
     rdfs:subClassOf :VersionedRDFRecord;
     rdfs:label "Mapping"@en;
     rdfs:comment "A collection of RDF data that defines a mapping resource."@en.
 
-# Dataset
+# DatasetRecord
 
-:Dataset a owl:Class;
+:DatasetRecord a owl:Class;
     rdfs:subClassOf :VersionedRDFRecord;
     rdfs:label "Dataset"@en;
     rdfs:comment "A collection of RDF data that defines a dataset resource."@en.
@@ -178,11 +177,11 @@
     rdfs:label "In Progress Commit"@en;
     rdfs:comment "The provenance describing a commit activity that is currently being made on a Versioned RDF Record."@en.
 
-:onBranch a owl:ObjectProperty, owl:FunctionalProperty;
-    rdfs:label "on branch"@en;
-    rdfs:comment "The branch that the described In Progress Commit belongs to."@en;
+:onVersionedRDFRecord a owl:ObjectProperty, owl:FunctionalProperty;
+    rdfs:label "on versioned RDF record"@en;
+    rdfs:comment "The versioned RDF record that the described In Progress Commit belongs to."@en;
     rdfs:domain :InProgressCommit;
-    rdfs:range :Branch.
+    rdfs:range :VersionedRDFRecord.
 
 # Revision
 
