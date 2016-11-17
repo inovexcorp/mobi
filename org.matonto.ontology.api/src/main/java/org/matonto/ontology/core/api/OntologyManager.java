@@ -49,10 +49,34 @@ public interface OntologyManager {
 
     Ontology createOntology(String json) throws MatontoOntologyException;
 
-    Optional<Ontology> retrieveOntology(@Nonnull Resource resource) throws MatontoOntologyException;
+    /**
+     * TODO: Update this implementation to return the MASTER branch by ontologyId which is the record's identifier.
+     * Retrieves Ontology object's MASTER branch by ontology id from the repository, and returns an Optional with
+     * Ontology object or an empty Optional instance if the ontology id is not found or any owlapi exception or sesame
+     * exception is caught.
+     *
+     * @param ontologyId the ontology id for the Ontology you want to retrieve.
+     * @return an Optional with Ontology if ontology id is found, or an empty Optional instance if not found.
+     * @throws MatontoOntologyException - if the repository connection fails or the ontology can't be created.
+     */
+    Optional<Ontology> retrieveOntology(@Nonnull Resource ontologyId) throws MatontoOntologyException;
 
     /**
-     * Persists Ontology object in the repository, and returns true if successfully persisted
+     * TODO: Add this method and implementation to get a particular branch of an ontology.
+     * Retrieves the requested branch of an Ontology object by ontology id from the repository, and returns an Optional
+     * with Ontology object or an empty Optional instance if the ontology id is not found or any owlapi exception or
+     * sesame exception is caught.
+     *
+     * @param ontologyId the ontology id for the Ontology you want to retrieve.
+     * @param branchId the branch id for the Branch you want to retrieve.
+     * @return an Optional with Ontology if ontology id is found, or an empty Optional instance if not found.
+     * @throws MatontoOntologyException - if the repository connection fails or the ontology can't be created.
+     */
+    Optional<Ontology> retrieveOntology(@Nonnull Resource ontologyId, @Nonnull Resource branchId) throws
+            MatontoOntologyException;
+
+    /**
+     * Persists Ontology object in the repository, and returns true if successfully persisted.
      *
      * @return True if successfully persisted
      * @throws IllegalStateException - if the repository is null
