@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.4.1-SNAPSHOT</version>
+        <version>1.4.6-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -40,8 +40,8 @@
     <dependencies>
         <dependency>
             <groupId>org.matonto</groupId>
-            <artifactId>jaas</artifactId>
-            <version>1.3.11</version>
+            <artifactId>jaas.api</artifactId>
+            <version>1.4.1</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
@@ -51,7 +51,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>web.security</artifactId>
-            <version>1.3.11</version>
+            <version>1.4.1</version>
         </dependency>
         <dependency>
             <groupId>log4j</groupId>
@@ -114,7 +114,8 @@
                         <Bundle-Name>MatOnto JAAS REST Services</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
-                            org.matonto.jaas.rest; provide:=true
+                            org.matonto.jaas.rest; provide:=true,
+                            org.matonto.jaas.rest.providers
                         </Export-Package>
                         <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>
