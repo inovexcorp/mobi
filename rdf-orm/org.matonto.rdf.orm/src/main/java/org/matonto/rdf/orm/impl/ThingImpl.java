@@ -146,9 +146,7 @@ public class ThingImpl implements Thing {
     @Override
     public void setProperties(Set<Value> values, IRI predicate, IRI... context) {
         // Remove other properties with same prediciate...
-        model.filter(getResource(), predicate, null, context).forEach(stmt -> {
-            model.remove(stmt);
-        });
+        model.remove(getResource(), predicate, null, context);
         values.forEach(value -> {
             model.add(getResource(), predicate, value, context);
         });
