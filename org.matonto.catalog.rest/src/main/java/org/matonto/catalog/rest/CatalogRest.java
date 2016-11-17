@@ -29,6 +29,7 @@ import org.matonto.catalog.api.ontologies.mcat.*;
 
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
+import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.*;
 
 @Path("/catalogs")
@@ -91,7 +92,7 @@ public interface CatalogRest {
      *
      * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param record The new Record which you want to add to the catalog.
+     * @param newRecord The new Record which you want to add to the catalog.
      * @param <T> An Object which extends the Record class.
      * @return A Response indicating whether the Record was created successfully.
      */
@@ -102,7 +103,7 @@ public interface CatalogRest {
     @RolesAllowed("user")
     @ApiOperation("Creates a new Record in the Catalog.")
     <T extends Record> Response createRecord(@PathParam("catalogId") String catalogId,
-                                             T record);
+                                             T newRecord);
 
     /**
      * Returns a Record with the provided ID.
@@ -544,9 +545,9 @@ public interface CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @ApiOperation("Gets the Commit associated with the identified Version.")
-    Response getCommit(@PathParam("catalogId") String catalogId,
-                       @PathParam("recordId") String recordId,
-                       @PathParam("versionId") String versionId);
+    Response getVersionCommit(@PathParam("catalogId") String catalogId,
+                              @PathParam("recordId") String recordId,
+                              @PathParam("versionId") String versionId);
 
     /**
      * Gets a list of Branches associated with a VersionedRDFRecord identified by the provided IDs.
@@ -700,4 +701,246 @@ public interface CatalogRest {
                         @PathParam("recordId") String recordId,
                         @PathParam("branchId") String branchId,
                         Commit newCommit);
+
+    /**
+     * Gets a Set of Commits associated with the Branch identified by the provided IDs which represents the Commit
+     * chain for that Branch.
+     *
+     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param recordId The String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                 String begins with "_:".
+     * @param branchId The String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                 with "_:".
+     * @return A list of Commits for the identified Branch which represents the Commit chain.,
+     */
+    @GET
+    @Path("{catalogId}/records/{recordId}/branches/{branchId}/commits")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Gets the Commit chain for a specific Branch.")
+    Response getCommitChain(@PathParam("catalogId") String catalogId,
+                            @PathParam("recordId") String recordId,
+                            @PathParam("branchId") String branchId);
+
+    /**
+     * Creates a new Commit in the repository for a specific Branch. The head Commit is updated to be this new Commit.
+     * Returns a Response indicating whether it was created successfully.
+     *
+     * @param context The context of the request.
+     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param recordId The String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                 String begins with "_:".
+     * @param branchId The String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                 with "_:".
+     * @return A Response indicating whether the Commit was successfully added to the Branch.
+     */
+    @POST
+    @Path("{catalogId}/records/{recordId}/branches/{branchId}/commits")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Creates a Commit for a specific Branch and sets it to be the new head Commit.")
+    Response createBranchCommit(@Context ContainerRequestContext context,
+                                @PathParam("catalogId") String catalogId,
+                                @PathParam("recordId") String recordId,
+                                @PathParam("branchId") String branchId);
+
+    /**
+     * Gets the Commit identified by the provided IDs.
+     *
+     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param recordId The String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                 String begins with "_:".
+     * @param branchId The String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                 with "_:".
+     * @param commitId The String representing the Commit ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                 with "_:".
+     * @return A Response with the Commit identified by the provided IDs.
+     */
+    @GET
+    @Path("{catalogId}/records/{recordId}/branches/{branchId}/commits/{commitId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Gets a specific Commit on a specific Branch.")
+    Response getBranchCommit(@PathParam("catalogId") String catalogId,
+                             @PathParam("recordId") String recordId,
+                             @PathParam("branchId") String branchId,
+                             @PathParam("commitId") String commitId);
+
+    /**
+     * Gets the Conflicts between the Commit identified by the provided IDs in the path and the Commit identified by the
+     * query parameter. For this comparison to be done, the Commits must have a ancestor Commit.
+     *
+     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param recordId The String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                 String begins with "_:".
+     * @param branchId The String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                 with "_:".
+     * @param leftId The String representing the left Commit ID. NOTE: Assumes ID represents an IRI unless String begins
+     *               with "_:".
+     * @param rightId The String representing the left Commit ID. NOTE: Assumes ID represents an IRI unless String
+     *                begins with "_:".
+     * @return A Response with the Commit identified by the provided IDs.
+     */
+    @GET
+    @Path("{catalogId}/records/{recordId}/branches/{branchId}/commits/{commitId}/conflicts")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Gets a specific Commit on a specific Branch.")
+    Response getConflicts(@PathParam("catalogId") String catalogId,
+                          @PathParam("recordId") String recordId,
+                          @PathParam("branchId") String branchId,
+                          @PathParam("commitId") String leftId,
+                          @QueryParam("commitId") String rightId);
+
+    /**
+     * Gets the Commit identified by the provided IDs and returns the compiled Resource following the Commit chain
+     * which terminates at the identified Commit.
+     *
+     * @param context The context of the request.
+     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param recordId The String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                 String begins with "_:".
+     * @param branchId The String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                 with "_:".
+     * @param commitId The String representing the Commit ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                 with "_:".
+     * @param rdfFormat the desired RDF return format. NOTE: Optional param - defaults to "jsonld".
+     * @param apply A boolean value identifying whether the InProgressCommit associated with identified Record should be
+     *              applied to the result.
+     * @return A Response the compiled Resource for the entity at the specific Commit.
+     */
+    @GET
+    @Path("{catalogId}/records/{recordId}/branches/{branchId}/commits/{commitId}/resource")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Gets the compiled resource for a the entity identified by a specific Commit.")
+    Response getCompiledResource(@Context ContainerRequestContext context,
+                                 @PathParam("catalogId") String catalogId,
+                                 @PathParam("recordId") String recordId,
+                                 @PathParam("branchId") String branchId,
+                                 @PathParam("commitId") String commitId,
+                                 @DefaultValue("jsonld") @QueryParam("rdfFormat") String rdfFormat,
+                                 @DefaultValue("false") @QueryParam("applyInProgressCommit") boolean apply);
+
+    /**
+     * Gets the Commit identified by the provided IDs and creates an OutputStream of the compiled Resource following the
+     * Commit chain which terminates at the identified Commit.
+     *
+     * @param context The context of the request.
+     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param recordId The String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                 String begins with "_:".
+     * @param branchId The String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                 with "_:".
+     * @param commitId The String representing the Commit ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                 with "_:".
+     * @param rdfFormat the desired RDF return format. NOTE: Optional param - defaults to "jsonld".
+     * @param apply A boolean value identifying whether the InProgressCommit associated with identified Record should be
+     *              applied to the result.
+     * @return A Response with the compiled Resource for the entity at the specific Commit to download.
+     */
+    @GET
+    @Path("{catalogId}/records/{recordId}/branches/{branchId}/commits/{commitId}/resource")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Gets the compiled resource for a the entity identified by a specific Commit.")
+    Response downloadCompiledResource(@Context ContainerRequestContext context,
+                                      @PathParam("catalogId") String catalogId,
+                                      @PathParam("recordId") String recordId,
+                                      @PathParam("branchId") String branchId,
+                                      @PathParam("commitId") String commitId,
+                                      @DefaultValue("jsonld") @QueryParam("rdfFormat") String rdfFormat,
+                                      @DefaultValue("false") @QueryParam("applyInProgressCommit") boolean apply);
+
+    /**
+     * Creates a new InProgressCommit in the repository for a particular user. Returns a Response indicating whether it
+     * was created successfully.
+     *
+     * @param context The context of the request.
+     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param recordId The String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                 String begins with "_:".
+     * @param newInProgressCommit The new InProgressCommit which you wish to add to the repository.
+     * @return A Response indicating whether the InProgressCommit was created successfully.
+     */
+    @POST
+    @Path("{catalogId}/records/{recordId}/in-progress-commit")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Creates a InProgressCommit linked to a specific VersionedRDFRecord.")
+    Response createInProgressCommit(@Context ContainerRequestContext context,
+                                    @PathParam("catalogId") String catalogId,
+                                    @PathParam("recordId") String recordId,
+                                    InProgressCommit newInProgressCommit);
+
+    /**
+     * Retrieves the current changes the user has made in the InProgressCommit identified by the provided IDs.
+     *
+     * @param context The context of the request.
+     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param recordId The String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                 String begins with "_:".
+     * @param rdfFormat the desired RDF return format. NOTE: Optional param - defaults to "jsonld".
+     * @return A Response with the changes from the specific InProgressCommit.
+     */
+    @GET
+    @Path("{catalogId}/records/{recordId}/in-progress-commit")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Gets the changes made in the User's current InProgressCommit for a specific VersionedRDFRecord.")
+    Response getInProgressCommit(@Context ContainerRequestContext context,
+                                 @PathParam("catalogId") String catalogId,
+                                 @PathParam("recordId") String recordId,
+                                 @DefaultValue("jsonld") @QueryParam("rdfFormat") String rdfFormat);
+
+    /**
+     * Deletes the InProgressCommit identified by the provided IDs from the repository. Returns a Response which
+     * indicates whether or not the requested InProgressCommit was deleted.
+     *
+     * @param context The context of the request.
+     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param recordId The String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                 String begins with "_:".
+     * @return A Response indicating whether the InProgressCommit was deleted successfully.
+     */
+    @DELETE
+    @Path("{catalogId}/records/{recordId}/in-progress-commit")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Gets the changes made in the User's current InProgressCommit for a specific VersionedRDFRecord.")
+    Response deleteInProgressCommit(@Context ContainerRequestContext context,
+                                    @PathParam("catalogId") String catalogId,
+                                    @PathParam("recordId") String recordId);
+
+    /**
+     * Updates the InProgressCommit for a user identified by the provided IDs using the modifications in the provided
+     * newInProgressCommit. Returns a Response indicating whether it was successfully updated.
+     *
+     * @param context The context of the request.
+     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param recordId The String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                 String begins with "_:".
+     * @param newInProgressCommit The InProgressCommit containing the new values which will replaces the existing
+     *                            InProgressCommit.
+     * @return A Response indicating whether or not the InProgressCommit was updated.
+     */
+    @PUT
+    @Path("{catalogId}/records/{recordId}/in-progress-commit")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Gets the changes made in the User's current InProgressCommit for a specific VersionedRDFRecord.")
+    Response updateInProgressCommit(@Context ContainerRequestContext context,
+                                    @PathParam("catalogId") String catalogId,
+                                    @PathParam("recordId") String recordId,
+                                    InProgressCommit newInProgressCommit);
 }
