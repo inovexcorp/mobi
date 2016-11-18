@@ -39,21 +39,55 @@ import javax.annotation.Nonnull;
 
 public interface OntologyManager {
 
+    /**
+     * Creates a new Ontology Object using the provided OntologyId.
+     *
+     * @param ontologyId the ontology id for the Ontology you want to create.
+     * @return an Ontology with the desired OntologyId.
+     * @throws MatontoOntologyException - if the ontology can't be created.
+     */
     Ontology createOntology(OntologyId ontologyId) throws MatontoOntologyException;
 
+    /**
+     * Creates a new Ontology Object using the provided File.
+     *
+     * @param file the File that contains the data to make up the Ontology.
+     * @return an Ontology created with the provided File.
+     * @throws MatontoOntologyException - if the ontology can't be created.
+     */
     Ontology createOntology(File file) throws MatontoOntologyException, FileNotFoundException;
 
+    /**
+     * Creates a new Ontology Object using the provided IRI.
+     *
+     * @param iri the IRI of the Ontology you want to create.
+     * @return an Ontology resolved from the provided IRI.
+     * @throws MatontoOntologyException - if the ontology can't be created.
+     */
     Ontology createOntology(IRI iri) throws MatontoOntologyException;
 
+    /**
+     * Creates a new Ontology Object using the provided InputStream.
+     *
+     * @param inputStream the InputStream which contains the ontology data.
+     * @return an Ontology created with the provided InputStream.
+     * @throws MatontoOntologyException - if the ontology can't be created.
+     */
     Ontology createOntology(InputStream inputStream) throws MatontoOntologyException;
 
+    /**
+     * Creates a new Ontology Object using the provided JSON-LD String.
+     *
+     * @param json the JSON-LD of the ontology you want to create.
+     * @return an Ontology created with the provided JSON-LD String.
+     * @throws MatontoOntologyException - if the ontology can't be created.
+     */
     Ontology createOntology(String json) throws MatontoOntologyException;
 
     /**
-     * TODO: Update this implementation to return the MASTER branch by ontologyId which is the record's identifier.
-     * Retrieves Ontology object's MASTER branch by ontology id from the repository, and returns an Optional with
-     * Ontology object or an empty Optional instance if the ontology id is not found or any owlapi exception or sesame
-     * exception is caught.
+     * Retrieves Ontology object's MASTER branch's head commit by ontology id from the repository, and returns an
+     * Optional with Ontology object or an empty Optional instance if the ontology id is not found or any owlapi
+     * exception or sesame exception is caught.
      *
      * @param ontologyId the ontology id for the Ontology you want to retrieve.
      * @return an Optional with Ontology if ontology id is found, or an empty Optional instance if not found.
@@ -62,7 +96,6 @@ public interface OntologyManager {
     Optional<Ontology> retrieveOntology(@Nonnull Resource ontologyId) throws MatontoOntologyException;
 
     /**
-     * TODO: Add this method and implementation to get a particular branch of an ontology.
      * Retrieves the requested branch of an Ontology object by ontology id from the repository, and returns an Optional
      * with Ontology object or an empty Optional instance if the ontology id is not found or any owlapi exception or
      * sesame exception is caught.
@@ -76,17 +109,22 @@ public interface OntologyManager {
             MatontoOntologyException;
 
     /**
-     * Persists Ontology object in the repository, and returns true if successfully persisted.
+     * Retrieves the requested commit on the requested branch of an Ontology object by ontology id from the repository,
+     * and returns an Optional with Ontology object or an empty Optional instance if the ontology id is not found or any
+     * owlapi exception or sesame exception is caught.
      *
-     * @return True if successfully persisted
-     * @throws IllegalStateException - if the repository is null
-     * @throws MatontoOntologyException - if an exception occurs while persisting
+     * @param ontologyId the ontology id for the Ontology you want to retrieve.
+     * @param branchId the branch id for the Branch you want to retrieve.
+     * @param commitId the commit id for the Commit you want to retrieve.
+     * @return an Optional with Ontology if ontology id is found, or an empty Optional instance if not found.
+     * @throws MatontoOntologyException - if the repository connection fails or the ontology can't be created.
      */
-    boolean storeOntology(@Nonnull Ontology ontology) throws MatontoOntologyException;
+    Optional<Ontology> retrieveOntology(@Nonnull Resource ontologyId, @Nonnull Resource branchId,
+                                        @Nonnull Resource commitId) throws MatontoOntologyException;
 
     /**
-     * Deletes the ontology with the given OntologyId, and returns true if successfully removed. The identifier
-     * used matches the rules for OntologyId.getOntologyIdentifier():
+     * Deletes the ontology and all associated Catalog elements with the given OntologyId, and returns true if
+     * successfully removed. The identifier used matches the rules for OntologyId.getOntologyIdentifier():
      *
      * <ol>
      *     <li>If a Version IRI is present, the ontology identifier will match the Version IRI</li>
@@ -95,62 +133,96 @@ public interface OntologyManager {
      * </ol>
      *
      * @return True if the name graph with given context id is successfully deleted, or false if ontology Id
-     * does not exist in the repository or if an owlapi exception or sesame exception is caught.
+     *         does not exist in the repository or if an owlapi exception or sesame exception is caught.
      * @throws IllegalStateException - if the repository is null
      */
     boolean deleteOntology(@Nonnull Resource resource) throws MatontoOntologyException;
 
     /**
-     * Updates Ontology object with the changed resource
+     * Creates a new OntologyId with a generated identifier.
      *
-     * @param ontologyResource Ontology Resource
-     * @param changedResource The IRI of the changed resource
-     * @param resourceJson The json-ld of the changed resource
-     * @return String value of the ontology id
+     * @return an OntologyId with a generated identifier.
      */
-    String saveChangesToOntology(Resource ontologyResource, Resource changedResource, String resourceJson);
-
-    /**
-     * Add the resource json to the Ontology object
-     *
-     * @param ontologyResource Ontology Resource
-     * @param resourceJson The json-ld of the new resource
-     * @return True if successfully updated, false otherwise
-     */
-    boolean addEntityToOntology(Resource ontologyResource, String resourceJson);
-
-    Map<String, Set> deleteEntityFromOntology(@Nonnull Resource ontologyResource, @Nonnull Resource entityResource)
-            throws MatontoOntologyException;
-
-    /**
-     * Gets the ontology registry which is persisted in the repository
-     *
-     * @return Set of ontology resources
-     * @throws MatontoOntologyException - if the repository is null
-     */
-    Set<Resource> getOntologyRegistry() throws MatontoOntologyException;
-
     OntologyId createOntologyId();
 
+    /**
+     * Creates a new OntologyId using the provided Resource as the identifier.
+     *
+     * @param resource the Resource that you want to be your identifier.
+     * @return an OntologyId with the provided Resource as the identifier.
+     */
     OntologyId createOntologyId(Resource resource);
 
+    /**
+     * Creates a new OntologyId using the provided IRI as the identifier.
+     *
+     * @param ontologyIRI the IRI that you want to be your identifier.
+     * @return an OntologyId with the provided IRI as the identifier.
+     */
     OntologyId createOntologyId(IRI ontologyIRI);
 
+    /**
+     * Creates a new OntologyId using the provided version IRI as the identifier.
+     *
+     * @param ontologyIRI the IRI for the ontology you want to create the OntologyId for.
+     * @param versionIRI the version IRI for the ontology you want to create the OntologyId for.
+     * @return an OntologyId using the ontologyIRI and versionIRI to determine the proper identifier.
+     */
     OntologyId createOntologyId(IRI ontologyIRI, IRI versionIRI);
 
-    SesameTransformer getTransformer();
+    /**
+     * Gets the subClass relationships in the provided Ontology.
+     *
+     * @param ontology the Ontology you wish to query.
+     * @return a TupleQueryResult with the query results.
+     */
+    TupleQueryResult getSubClassesOf(Ontology ontology);
 
-    TupleQueryResult getSubClassesOf(String ontologyIdStr);
+    /**
+     * Gets the subDatatype relationships in the provided Ontology.
+     *
+     * @param ontology the Ontology you wish to query.
+     * @return a TupleQueryResult with the query results.
+     */
+    TupleQueryResult getSubDatatypePropertiesOf(Ontology ontology);
 
-    TupleQueryResult getSubDatatypePropertiesOf(String ontologyIdStr);
+    /**
+     * Gets the subObject relationships in the provided Ontology.
+     *
+     * @param ontology the Ontology you wish to query.
+     * @return a TupleQueryResult with the query results.
+     */
+    TupleQueryResult getSubObjectPropertiesOf(Ontology ontology);
 
-    TupleQueryResult getSubObjectPropertiesOf(String ontologyIdStr);
+    /**
+     * Gets the classes with individuals in the provided Ontology.
+     *
+     * @param ontology the Ontology you wish to query.
+     * @return a TupleQueryResult with the query results.
+     */
+    TupleQueryResult getClassesWithIndividuals(Ontology ontology);
 
-    TupleQueryResult getClassesWithIndividuals(String ontologyIdStr);
+    /**
+     * Gets the entity usages in the provided Ontology.
+     *
+     * @param ontology the Ontology you wish to query.
+     * @return a TupleQueryResult with the query results.
+     */
+    TupleQueryResult getEntityUsages(Ontology ontology, String entityIRIStr);
 
-    TupleQueryResult getEntityUsages(String ontologyIdStr, String entityIRIStr);
+    /**
+     * Gets the concept relationships in the provided Ontology.
+     *
+     * @param ontology the Ontology you wish to query.
+     * @return a TupleQueryResult with the query results.
+     */
+    TupleQueryResult getConceptRelationships(Ontology ontology);
 
-    TupleQueryResult getConceptRelationships(String ontologyIdStr);
-
-    TupleQueryResult getSearchResults(String ontologyIdStr, String searchText);
+    /**
+     * Searches the provided Ontology using the provided searchText.
+     *
+     * @param ontology the Ontology you wish to query.
+     * @return a TupleQueryResult with the query results.
+     */
+    TupleQueryResult getSearchResults(Ontology ontology, String searchText);
 }
