@@ -25,6 +25,7 @@ package org.matonto.catalog.rest;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.matonto.catalog.api.ontologies.mcat.*;
 
 import javax.annotation.security.RolesAllowed;
@@ -796,6 +797,40 @@ public interface CatalogRest {
                           @PathParam("commitId") String leftId,
                           @QueryParam("commitId") String rightId);
 
+
+    /**
+     * Performs a merge between the two Commits identified by the provided IDs. The addition and deletion statements
+     * that are required to resolve any conflicts will be used to create the merged Commit. Returns a Response
+     * indicating whether the Commits were merged successfully.
+     *
+     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param recordId The String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                 String begins with "_:".
+     * @param branchId The String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                 with "_:".
+     * @param leftId The String representing the left Commit ID. NOTE: Assumes ID represents an IRI unless String begins
+     *               with "_:".
+     * @param rightId The String representing the left Commit ID. NOTE: Assumes ID represents an IRI unless String
+     *                begins with "_:".
+     * @param additionsJson The String of JSON-LD that corresponds to the statements that were added to the entity.
+     * @param deletionsJson The String of JSON-LD that corresponds to the statements that were deleted in the entity.
+     * @return A Response indicating whether the Commits were successfully merged.
+     */
+    @POST
+    @Path("{catalogId}/records/{recordId}/branches/{branchId}/commits/{commitId}/conflicts")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @RolesAllowed("user")
+    @ApiOperation("Merges the two commits identified by the ")
+    Response merge(@PathParam("catalogId") String catalogId,
+                   @PathParam("recordId") String recordId,
+                   @PathParam("branchId") String branchId,
+                   @PathParam("commitId") String leftId,
+                   @QueryParam("commitId") String rightId,
+                   @FormDataParam("additions") String additionsJson,
+                   @FormDataParam("deletions") String deletionsJson);
+
     /**
      * Gets the Commit identified by the provided IDs and returns the compiled Resource following the Commit chain
      * which terminates at the identified Commit.
@@ -930,17 +965,19 @@ public interface CatalogRest {
      *                  with "_:".
      * @param recordId The String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
      *                 String begins with "_:".
-     * @param newInProgressCommit The InProgressCommit containing the new values which will replaces the existing
-     *                            InProgressCommit.
+     * @param additionsJson The String of JSON-LD that corresponds to the statements that were added to the entity.
+     * @param deletionsJson The String of JSON-LD that corresponds to the statements that were deleted in the entity.
      * @return A Response indicating whether or not the InProgressCommit was updated.
      */
     @PUT
     @Path("{catalogId}/records/{recordId}/in-progress-commit")
     @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
     @ApiOperation("Gets the changes made in the User's current InProgressCommit for a specific VersionedRDFRecord.")
     Response updateInProgressCommit(@Context ContainerRequestContext context,
                                     @PathParam("catalogId") String catalogId,
                                     @PathParam("recordId") String recordId,
-                                    InProgressCommit newInProgressCommit);
+                                    @FormDataParam("additions") String additionsJson,
+                                    @FormDataParam("deletions") String deletionsJson);
 }
