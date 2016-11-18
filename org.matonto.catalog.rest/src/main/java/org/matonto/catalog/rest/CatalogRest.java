@@ -75,6 +75,7 @@ public interface CatalogRest {
      *                   dataset).
      * @param offset The offset for the page.
      * @param limit The number of Records to return in one page.
+     * @param searchText The String used to filter out Records.
      * @return The list of Records that match the search criteria.
      */
     @GET
@@ -86,7 +87,8 @@ public interface CatalogRest {
                         @QueryParam("sort") String sort,
                         @QueryParam("type") String recordType,
                         @DefaultValue("0") @QueryParam("offset") int offset,
-                        @DefaultValue("100") @QueryParam("limit") int limit);
+                        @DefaultValue("100") @QueryParam("limit") int limit,
+                        @QueryParam("searchText") String searchText);
 
     /**
      * Creates a new Record in the repository. Returns a Response indicating whether it was created successfully.
@@ -279,16 +281,15 @@ public interface CatalogRest {
      *                  with "_:".
      * @param recordId The String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
      *                 String begins with "_:".
-     * @param <T> An Object which extends the Version class.
      * @return The latest Version for the identified VersionedRecord.
      */
     @GET
-    @Path("{catalogId}/records/{recordId}/latest-version")
+    @Path("{catalogId}/records/{recordId}/versions/latest")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @ApiOperation("Gets the latest Version of a VersionedRecord.")
-    <T extends Version> Response getLatestVersion(@PathParam("catalogId") String catalogId,
-                                                  @PathParam("recordId") String recordId);
+    Response getLatestVersion(@PathParam("catalogId") String catalogId,
+                              @PathParam("recordId") String recordId);
 
     /**
      * Gets a list of all Versions for a VersionedRecord. Parameters can be passed to control paging.
@@ -300,7 +301,6 @@ public interface CatalogRest {
      * @param sort The field with sort order specified.
      * @param offset The offset for the page.
      * @param limit The number of Versions to return in one page.
-     * @param <T> An Object which extends the Version class.
      * @return A list of all the Versions associated with a VersionedRecord.
      */
     @GET
@@ -308,11 +308,11 @@ public interface CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @ApiOperation("Gets a list of Versions for a VersionedRecord.")
-    <T extends Version> Response getVersions(@PathParam("catalogId") String catalogId,
-                                             @PathParam("recordId") String recordId,
-                                             @QueryParam("sort") String sort,
-                                             @DefaultValue("0") @QueryParam("offset") int offset,
-                                             @DefaultValue("100") @QueryParam("limit") int limit);
+    Response getVersions(@PathParam("catalogId") String catalogId,
+                         @PathParam("recordId") String recordId,
+                         @QueryParam("sort") String sort,
+                         @DefaultValue("0") @QueryParam("offset") int offset,
+                         @DefaultValue("100") @QueryParam("limit") int limit);
 
     /**
      * Creates a Version for the identified VersionedRecord and stores it in the repository. This Version will become
@@ -354,9 +354,9 @@ public interface CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @ApiOperation("Gets a specific Version for the identified VersionedRecord.")
-    <T extends Version> Response getVersion(@PathParam("catalogId") String catalogId,
-                                            @PathParam("recordId") String recordId,
-                                            @PathParam("versionId") String versionId);
+    Response getVersion(@PathParam("catalogId") String catalogId,
+                        @PathParam("recordId") String recordId,
+                        @PathParam("versionId") String versionId);
 
     /**
      * Removes a specific Version from a VersionedRecord. If that Version happens to be the latest Version, the latest
@@ -551,6 +551,23 @@ public interface CatalogRest {
                               @PathParam("versionId") String versionId);
 
     /**
+     * Gets the master Branch of a VersionedRDFRecord identified by the provided IDs.
+     *
+     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param recordId The String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                 String begins with "_:".
+     * @return The master Branch for the identified VersionedRDFRecord.
+     */
+    @GET
+    @Path("{catalogId}/records/{recordId}/branches/master")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Gets the master Branch of a VersionedRDFRecord.")
+    Response getMasterBranch(@PathParam("catalogId") String catalogId,
+                             @PathParam("recordId") String recordId);
+
+    /**
      * Gets a list of Branches associated with a VersionedRDFRecord identified by the provided IDs.
      *
      * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
@@ -680,30 +697,6 @@ public interface CatalogRest {
                      @PathParam("branchId") String branchId);
 
     /**
-     * Updates a Branch's head Commit to be the provided newCommit. This newCommit must have the previous head Commit as
-     * a parent for this to happen. Returns a Response identifying whether the head Commit was updated or not.
-     *
-     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                  with "_:".
-     * @param recordId The String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
-     *                 String begins with "_:".
-     * @param branchId The String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                 with "_:".
-     * @param newCommit The Commit which contains the new Commit that will become the head Commit for the Branch.
-     * @return A Response identifying whether the head Commit was updated.
-     */
-    @PUT
-    @Path("{catalogId}/records/{recordId}/branches/{branchId}/head")
-    @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.APPLICATION_JSON)
-    @RolesAllowed("user")
-    @ApiOperation("Updates the head Commit for a specific Branch.")
-    Response updateHead(@PathParam("catalogId") String catalogId,
-                        @PathParam("recordId") String recordId,
-                        @PathParam("branchId") String branchId,
-                        Commit newCommit);
-
-    /**
      * Gets a Set of Commits associated with the Branch identified by the provided IDs which represents the Commit
      * chain for that Branch.
      *
@@ -725,8 +718,9 @@ public interface CatalogRest {
                             @PathParam("branchId") String branchId);
 
     /**
-     * Creates a new Commit in the repository for a specific Branch. The head Commit is updated to be this new Commit.
-     * Returns a Response indicating whether it was created successfully.
+     * Creates a new Commit in the repository for a specific Branch using the InProgressCommit associated with the user
+     * making this request. The head Commit is updated to be this new Commit. Returns a Response indicating whether it
+     * was created successfully.
      *
      * @param context The context of the request.
      * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
@@ -772,7 +766,7 @@ public interface CatalogRest {
 
     /**
      * Gets the Conflicts between the Commit identified by the provided IDs in the path and the Commit identified by the
-     * query parameter. For this comparison to be done, the Commits must have a ancestor Commit.
+     * query parameter. For this comparison to be done, the Commits must have an ancestor Commit in common.
      *
      * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
@@ -782,15 +776,15 @@ public interface CatalogRest {
      *                 with "_:".
      * @param leftId The String representing the left Commit ID. NOTE: Assumes ID represents an IRI unless String begins
      *               with "_:".
-     * @param rightId The String representing the left Commit ID. NOTE: Assumes ID represents an IRI unless String
+     * @param rightId The String representing the right Commit ID. NOTE: Assumes ID represents an IRI unless String
      *                begins with "_:".
-     * @return A Response with the Commit identified by the provided IDs.
+     * @return A Response with the list of Conflicts between the identified Commits.
      */
     @GET
     @Path("{catalogId}/records/{recordId}/branches/{branchId}/commits/{commitId}/conflicts")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets a specific Commit on a specific Branch.")
+    @ApiOperation("Gets a list of Conflicts found between the two provided Commits.")
     Response getConflicts(@PathParam("catalogId") String catalogId,
                           @PathParam("recordId") String recordId,
                           @PathParam("branchId") String branchId,
@@ -811,18 +805,18 @@ public interface CatalogRest {
      *                 with "_:".
      * @param leftId The String representing the left Commit ID. NOTE: Assumes ID represents an IRI unless String begins
      *               with "_:".
-     * @param rightId The String representing the left Commit ID. NOTE: Assumes ID represents an IRI unless String
+     * @param rightId The String representing the right Commit ID. NOTE: Assumes ID represents an IRI unless String
      *                begins with "_:".
      * @param additionsJson The String of JSON-LD that corresponds to the statements that were added to the entity.
      * @param deletionsJson The String of JSON-LD that corresponds to the statements that were deleted in the entity.
      * @return A Response indicating whether the Commits were successfully merged.
      */
     @POST
-    @Path("{catalogId}/records/{recordId}/branches/{branchId}/commits/{commitId}/conflicts")
+    @Path("{catalogId}/records/{recordId}/branches/{branchId}/commits/{commitId}/conflicts/resolution")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
-    @ApiOperation("Merges the two commits identified by the ")
+    @ApiOperation("Merges the two commits identified by the provided IDs.")
     Response merge(@PathParam("catalogId") String catalogId,
                    @PathParam("recordId") String recordId,
                    @PathParam("branchId") String branchId,
@@ -876,13 +870,13 @@ public interface CatalogRest {
      * @param commitId The String representing the Commit ID. NOTE: Assumes ID represents an IRI unless String begins
      *                 with "_:".
      * @param rdfFormat the desired RDF return format. NOTE: Optional param - defaults to "jsonld".
-     * @param apply A boolean value identifying whether the InProgressCommit associated with identified Record should be
-     *              applied to the result.
+     * @param apply A boolean value identifying whether the InProgressCommit associated with the identified Record and
+     *              User making the request should be applied to the result.
      * @return A Response with the compiled Resource for the entity at the specific Commit to download.
      */
     @GET
     @Path("{catalogId}/records/{recordId}/branches/{branchId}/commits/{commitId}/resource")
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*", "application/*"})
     @RolesAllowed("user")
     @ApiOperation("Gets the compiled resource for a the entity identified by a specific Commit.")
     Response downloadCompiledResource(@Context ContainerRequestContext context,
@@ -894,8 +888,8 @@ public interface CatalogRest {
                                       @DefaultValue("false") @QueryParam("applyInProgressCommit") boolean apply);
 
     /**
-     * Creates a new InProgressCommit in the repository for a particular user. Returns a Response indicating whether it
-     * was created successfully.
+     * Creates a new InProgressCommit in the repository for the user making this request. Returns a Response indicating
+     * whether it was created successfully.
      *
      * @param context The context of the request.
      * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
@@ -908,6 +902,7 @@ public interface CatalogRest {
     @POST
     @Path("{catalogId}/records/{recordId}/in-progress-commit")
     @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @ApiOperation("Creates a InProgressCommit linked to a specific VersionedRDFRecord.")
     Response createInProgressCommit(@Context ContainerRequestContext context,
@@ -916,7 +911,8 @@ public interface CatalogRest {
                                     InProgressCommit newInProgressCommit);
 
     /**
-     * Retrieves the current changes the user has made in the InProgressCommit identified by the provided IDs.
+     * Retrieves the current changes the user making the request has made in the InProgressCommit identified by the
+     * provided IDs.
      *
      * @param context The context of the request.
      * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
@@ -937,8 +933,8 @@ public interface CatalogRest {
                                  @DefaultValue("jsonld") @QueryParam("rdfFormat") String rdfFormat);
 
     /**
-     * Deletes the InProgressCommit identified by the provided IDs from the repository. Returns a Response which
-     * indicates whether or not the requested InProgressCommit was deleted.
+     * Deletes the InProgressCommit identified by the provided IDs and associated with the User making the request from
+     * the repository. Returns a Response which indicates whether or not the requested InProgressCommit was deleted.
      *
      * @param context The context of the request.
      * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
@@ -951,14 +947,14 @@ public interface CatalogRest {
     @Path("{catalogId}/records/{recordId}/in-progress-commit")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the changes made in the User's current InProgressCommit for a specific VersionedRDFRecord.")
+    @ApiOperation("Deletes the changes made in the User's current InProgressCommit for a specific VersionedRDFRecord.")
     Response deleteInProgressCommit(@Context ContainerRequestContext context,
                                     @PathParam("catalogId") String catalogId,
                                     @PathParam("recordId") String recordId);
 
     /**
-     * Updates the InProgressCommit for a user identified by the provided IDs using the modifications in the provided
-     * newInProgressCommit. Returns a Response indicating whether it was successfully updated.
+     * Updates the InProgressCommit for a user identified by the provided IDs using the statements found in the provided
+     * form data. Returns a Response indicating whether it was successfully updated.
      *
      * @param context The context of the request.
      * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
@@ -974,7 +970,7 @@ public interface CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
-    @ApiOperation("Gets the changes made in the User's current InProgressCommit for a specific VersionedRDFRecord.")
+    @ApiOperation("Updates the changes made in the User's current InProgressCommit for a specific VersionedRDFRecord.")
     Response updateInProgressCommit(@Context ContainerRequestContext context,
                                     @PathParam("catalogId") String catalogId,
                                     @PathParam("recordId") String recordId,
