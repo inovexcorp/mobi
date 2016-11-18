@@ -628,7 +628,7 @@
                     .then(response => {
                         deferred.resolve();
                         var group = _.find(self.groups, {title: groupTitle});
-                        group.roles = _.union(_.get(group, 'roles', []), role);
+                        group.roles = _.union(_.get(group, 'roles', []), [role]);
                     }, error => {
                         deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.'));
                     }).then(() => {
