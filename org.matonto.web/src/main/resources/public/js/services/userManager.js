@@ -357,7 +357,8 @@
                 $http.put(userPrefix + '/' + username + '/roles', null, config)
                     .then(response => {
                         deferred.resolve();
-                        _.get(_.find(self.users, {username: username}), 'roles').push(role);
+                        var user = _.find(self.users, {username});
+                        user.roles = _.union(_.get(user, 'roles', []), [role]);
                     }, error => {
                         deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.'));
                     }).then(() => {
@@ -430,7 +431,8 @@
                 $http.put(userPrefix + '/' + username + '/groups', null, config)
                     .then(response => {
                         deferred.resolve();
-                        _.get(_.find(self.groups, {title: groupTitle}), 'members').push(username);
+                        var group = _.find(self.groups, {title: groupTitle});
+                        group.members = _.union(_.get(group, 'members', []), [username]);
                     }, error => {
                         deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.'));
                     }).then(() => {
@@ -625,7 +627,8 @@
                 $http.put(groupPrefix + '/' + groupTitle + '/roles', null, config)
                     .then(response => {
                         deferred.resolve();
-                        _.get(_.find(self.groups, {title: groupTitle}), 'roles').push(role);
+                        var group = _.find(self.groups, {title: groupTitle});
+                        group.roles = _.union(_.get(group, 'roles', []), role);
                     }, error => {
                         deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.'));
                     }).then(() => {
