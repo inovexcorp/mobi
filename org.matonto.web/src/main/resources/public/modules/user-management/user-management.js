@@ -30,7 +30,7 @@
             'createGroupOverlay',
             'createUserOverlays',
             'editGroupInfoOverlay',
-            'editProfileOverlay',
+            'editUserProfileOverlay',
             'groupsList',
             'groupsPage',
             'memberTable',

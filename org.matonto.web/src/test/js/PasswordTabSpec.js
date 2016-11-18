@@ -129,21 +129,20 @@ describe('Password Tab directive', function() {
             expect(currentPassword.hasClass('has-error')).toBe(true);
         });
         it('depending on the form validity and dirtiness', function() {
-            expect(this.element.querySelectorAll('block-footer button').attr('disabled')).toBeTruthy();
+            var button = angular.element(this.element.querySelectorAll('block-footer button')[0]);
+            expect(button.attr('disabled')).toBeTruthy();
 
             controller = this.element.controller('passwordTab');
             controller.form.$invalid = false;
             scope.$digest();
-            expect(this.element.querySelectorAll('block-footer button').attr('disabled')).toBeTruthy();
+            expect(button.attr('disabled')).toBeTruthy();
 
             controller.form.$setDirty();
             scope.$digest();
-            expect(this.element.querySelectorAll('block-footer button').attr('disabled')).toBeFalsy();
+            expect(button.attr('disabled')).toBeFalsy();
         });
     });
     it('should save changes when the save button is clicked', function() {
-        loginManagerSvc.currentUser = 'user';
-        userManagerSvc.users = [{username: 'user'}];
         var element = $compile(angular.element('<password-tab></password-tab>'))(scope);
         scope.$digest();
         controller = element.controller('passwordTab');

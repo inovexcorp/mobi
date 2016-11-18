@@ -49,8 +49,8 @@
          * of adding and removing is determined by the passed addMember and removeMember functions.
          * When the "Add Member" link is clicked, a row is added to the table containins a ui-select
          * with the available users to add to the member list. Once a user has been selected in the
-         * ui-select, it will be added to the list. The directive is replaced by the contents of its
-         * template.
+         * ui-select, it will be added to the list. If you click off of the ui-select, it will be
+         * removed. The directive is replaced by the contents of its template.
          *
          * @param {function} removeMember the method to call when a member is removed from the list
          * @param {function} addMember the method to call when a member is added to the list

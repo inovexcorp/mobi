@@ -64,7 +64,7 @@ describe('Create Group Overlay directive', function() {
         });
         describe('should add a group with the entered information', function() {
             beforeEach(function() {
-                controller.newGroup = {title: 'title', description: 'Description', members: 'user'};
+                controller.newGroup = {title: 'title', description: 'Description', members: ['user']};
                 userStateSvc.displayCreateGroupOverlay = true;
             });
             it('unless an error occurs', function() {
@@ -98,6 +98,18 @@ describe('Create Group Overlay directive', function() {
                 expect(userStateSvc.displayCreateGroupOverlay).toBe(false);
             });
         });
+        it('should add a member to the new group', function() {
+            userStateSvc.memberName = 'John';
+            controller.addMember();
+            expect(controller.newGroup.members).toContain('John');
+            expect(userStateSvc.memberName).toBe('');
+        });
+        it('should remove a member from the new group', function() {
+            userStateSvc.memberName = 'user';
+            controller.removeMember();
+            expect(controller.newGroup.members).not.toContain('user');
+            expect(userStateSvc.memberName).toBe('');
+        });
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
@@ -111,6 +123,9 @@ describe('Create Group Overlay directive', function() {
         });
         it('with a member table', function() {
             expect(this.element.find('member-table').length).toBe(1);
+        });
+        it('with a text area for the group description', function() {
+            expect(this.element.find('text-area').length).toBe(1);
         });
         it('depending on the title field validity', function() {
             controller = this.element.controller('createGroupOverlay');

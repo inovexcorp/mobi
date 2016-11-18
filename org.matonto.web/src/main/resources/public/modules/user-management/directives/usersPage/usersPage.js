@@ -29,9 +29,9 @@
          * @name usersPage
          *
          * @description
-         * The `usersPage` module only provides the `usersPage` directive which provides the
-         * {@link usersList.directive:usersList usersList} and
-         * {@link userEditor.directive:userEditor userEditor} directives.
+         * The `usersPage` module only provides the `usersPage` directive which creates
+         * a Bootstrap `row` with {@link block.directive:block blocks} for selecting and editing
+         * a user in the {@link userManager.service:userManagerServiec#users users list}.
          */
         .module('usersPage', [])
         /**
@@ -40,17 +40,25 @@
          * @scope
          * @restrict E
          * @requires userState.service:userStateService
+         * @requires userManager.service:userManagerService
+         * @requires loginManager.service:loginManagerService
          *
          * @description
-         * `usersPage` is a directive that provides the {@link usersList.directive:usersList usersList}
-         * and {@link userEditor.directive:userEditor userEditor} directives depending on the
-         * {@link userState.service:userStateService state} of the user management page.
+         * `usersPage` is a directive that creates a Bootstrap `row` div with three columns
+         * containing {@link block.directive:block blocks} for selecting and editing a user.
+         * The left column contains a {@link usersList.directive:usersList usersList} block
+         * for selecting the current {@link userState.service:userStateService#selectedUser user}
+         * and buttons for creating, deleting, and searching for a user. The center column contains
+         * a block for previewing and editing a user's profile information and a block for changing
+         * a user's password. The right column contains a block for viewing and changing a user's
+         * permissions and a block for viewing the groups a user is a member of. The directive
+         * is replaced by the contents of its template.
          */
         .directive('usersPage', usersPage);
 
-    usersPage.$inject = ['$q', 'userStateService', 'userManagerService', 'loginManagerService'];
+    usersPage.$inject = ['userStateService', 'userManagerService', 'loginManagerService'];
 
-    function usersPage($q, userStateService, userManagerService, loginManagerService) {
+    function usersPage(userStateService, userManagerService, loginManagerService) {
         return {
             restrict: 'E',
             replace: true,
@@ -75,7 +83,7 @@
                     dvm.state.displayCreateUserOverlay = true;
                 }
                 dvm.editProfile = function() {
-                    dvm.state.displayChangeProfileOverlay = true;
+                    dvm.state.displayEditUserProfileOverlay = true;
                 }
                 dvm.changePassword = function() {
                     dvm.state.displayChangePasswordOverlay = true;

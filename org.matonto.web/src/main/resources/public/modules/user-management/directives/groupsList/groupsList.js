@@ -43,14 +43,30 @@
          * @requires loginManager.service:loginManagerService
          *
          * @description
-         * `groupsList` is a directive that creates a table containing different subsets of the
-         * {@link userManager.service:userManagerService#groups groups} list depending on which
-         * tab is selected. There is a tab for only groups the
-         * {@link loginManager.service:loginManagerService#currentUser current user} is in and a
-         * tab for all MatOnto groups. Groups can only be edited by admin users. The directive is
+         * `groupsList` is a directive that creates a <ul> containing different subsets of the
+         * {@link userManager.service:userManagerService#groups groups} list depending on whether
+         * the list should be filtered. Groups can only be edited by admin users. The directive is
          * replaced by the contents of its template.
          */
         .directive('groupsList', groupsList)
+        /**
+         * @ngdoc filter
+         * @name groupsList.filter:filterGroups
+         * @kind function
+         *
+         * @description
+         * Takes an array of group Objects from the
+         * {@link userManager.service:userManagerService userManagerService} and if the state
+         * says that the
+         * {@link userState.service:userStateService#filteredGroupList list should be filtered},
+         * filters the list of groups to only those that the
+         * {@link loginManager.service:loginManagerService#currentUser current User} is a member
+         * of.
+         *
+         * @param {Object[]} groupList The array of group Objects
+         * @returns {Object[]} Either the full group list or only the groups the current user is
+         * a member of
+         */
         .filter('filterGroups', filterGroups);
 
         filterGroups.$inject = ['userStateService', 'loginManagerService'];

@@ -28,9 +28,10 @@
          * @ngdoc overview
          * @name textInput
          *
-         * @description 
+         * @description
          * The `textInput` module only provides the `textInput` directive which creates
-         * a text input field with a customLabel and a custom on change function.
+         * a text input field with a {@link customLabel.directive:customLabel customLabel}
+         * and several optional customization variables.
          */
         .module('textInput', [])
         /**
@@ -39,29 +40,27 @@
          * @scope
          * @restrict E
          *
-         * @description 
-         * `textInput` is a directive that creates a Bootstrap "form-group" div with a 
-         * text input element and a customLabel. The text input is bound to the passed in
-         * bindModel variable and can have a custom on change function.
+         * @description
+         * `textInput` is a directive that creates a Bootstrap "form-group" div with a
+         * text input element and a {@link customLabel.directive:customLabel customLabel}.
+         * The text input is bound to the passed bindModel variable and has several
+         * optional customization variables. The directive is replaced by the contents of
+         * its template.
          *
          * @param {*} bindModel The variable to bind the value of the text input field to
-         * @param {function} changeEvent A function to be called when the value of the 
+         * @param {function} changeEvent A function to be called when the value of the
          * text input field changes
-         * @param {string=''} displayText The text to be displayed in the customLabel
-         * @param {string=''} mutedText The muted text to be displayed in the customLabel
-         *
-         * @usage
-         * <!-- With defaults -->
-         * <text-input ng-model="variableName" change-event="console.log('Change')"></text-input>
-         *
-         * <!-- With all params -->
-         * <text-input ng-model="variableName" change-event="console.log('Change')" display-text="'Label text'" muted-text="'Muted text'"></text-input>
+         * @param {string} [displayText=''] The text to be displayed in the customLabel
+         * @param {string} [mutedText=''] The muted text to be displayed in the customLabel
+         * @param {boolean} [required=false] whether or not the text input should be required
+         * @param {string} [inputName=''] the name to give the text input
          */
         .directive('textInput', textInput);
 
         function textInput() {
             return {
                 restrict: 'E',
+                replace: true,
                 scope: {
                     bindModel: '=ngModel',
                     changeEvent: '&',

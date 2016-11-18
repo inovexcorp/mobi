@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Change Password Overlay directive', function() {
+describe('Edit User Profile Overlay directive', function() {
     var $compile,
         scope,
         userManagerSvc,
@@ -31,7 +31,7 @@ describe('Change Password Overlay directive', function() {
 
     beforeEach(function() {
         module('templates');
-        module('changePasswordOverlay');
+        module('editUserProfileOverlay');
         mockUserManager();
         mockUserState();
 
@@ -47,73 +47,63 @@ describe('Change Password Overlay directive', function() {
 
     describe('controller methods', function() {
         beforeEach(function() {
-            userStateSvc.selectedUser = {username: 'user'};
-            this.element = $compile(angular.element('<change-password-overlay></change-password-overlay>'))(scope);
+            userStateSvc.selectedUser = {username: 'user', firstName: 'John', lastName: 'Doe', email: 'mailto:example@example.com'};
+            userManagerSvc.users = [userStateSvc.selectedUser];
+            this.element = $compile(angular.element('<edit-user-profile-overlay></edit-user-profile-overlay>'))(scope);
             scope.$digest();
-            controller = this.element.controller('changePasswordOverlay');
+            controller = this.element.controller('editUserProfileOverlay');
         });
-        describe('should save changes to the user password', function() {
+        describe('should save changes to the user profile', function() {
             beforeEach(function() {
-                controller.currentPassword = 'test';
-                controller.password = 'abc';
-                userStateSvc.displayChangePasswordOverlay = true;
+                userStateSvc.displayEditUserProfileOverlay = true;
             });
             it('unless an error occurs', function() {
-                userManagerSvc.updatePassword.and.returnValue($q.reject('Error message'));
+                userManagerSvc.updateUser.and.returnValue($q.reject('Error message'));
                 controller.set();
                 $timeout.flush();
-                expect(userManagerSvc.updatePassword).toHaveBeenCalledWith(userStateSvc.selectedUser.username, controller.currentPassword, controller.password);
+                expect(userManagerSvc.updateUser).toHaveBeenCalledWith(userStateSvc.selectedUser.username, controller.newUser);
                 expect(controller.errorMessage).toBe('Error message');
-                expect(userStateSvc.displayChangePasswordOverlay).toBe(true);
+                expect(userStateSvc.displayEditUserProfileOverlay).toBe(true);
             });
             it('successfully', function() {
+                var selectedUser = userStateSvc.selectedUser;
                 controller.set();
                 $timeout.flush();
-                expect(userManagerSvc.updatePassword).toHaveBeenCalledWith(userStateSvc.selectedUser.username, controller.currentPassword, controller.password);
+                expect(userManagerSvc.updateUser).toHaveBeenCalledWith(selectedUser.username, controller.newUser);
                 expect(controller.errorMessage).toBe('');
-                expect(userStateSvc.displayChangePasswordOverlay).toBe(false);
+                expect(userStateSvc.displayEditUserProfileOverlay).toBe(false);
+                expect(userStateSvc.selectedUser).toEqual(controller.newUser);
             });
         });
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            userStateSvc.selectedUser = {username: 'user'};
-            this.element = $compile(angular.element('<change-password-overlay></change-password-overlay>'))(scope);
+            userStateSvc.selectedUser = {username: 'user', firstName: 'John', lastName: 'Doe', email: 'mailto:example@example.com'};
+            this.element = $compile(angular.element('<edit-user-profile-overlay></edit-user-profile-overlay>'))(scope);
             scope.$digest();
         });
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('change-password-overlay')).toBe(true);
+            expect(this.element.hasClass('edit-user-profile-overlay')).toBe(true);
             expect(this.element.querySelectorAll('form.content').length).toBe(1);
         });
-        it('with a password confirm input', function() {
-            expect(this.element.find('password-confirm-input').length).toBe(1);
+        it('with text inputs', function() {
+            expect(this.element.find('text-input').length).toBe(2);
         });
-        it('with the correct classes based on the confirm password field validity and dirtiness', function() {
-            controller = this.element.controller('changePasswordOverlay');
-            controller.currentPassword = 'abc';
-            scope.$digest();
-            var currentPassword = angular.element(this.element.querySelectorAll('.current-password')[0]);
-            expect(currentPassword.hasClass('has-error')).toBe(false);
-
-            controller.form.currentPassword.$setDirty();
-            controller.form.currentPassword.$setValidity('test', false);
-            scope.$digest();
-            expect(currentPassword.hasClass('has-error')).toBe(true);
+        it('with an email input', function() {
+            expect(this.element.find('email-input').length).toBe(1);
         });
         it('depending on the form validity', function() {
-            controller = this.element.controller('changePasswordOverlay');
-            controller.currentPassword = 'abc';
-            scope.$digest();
             var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
             expect(button.attr('disabled')).toBeFalsy();
 
+            controller = this.element.controller('editUserProfileOverlay');
             controller.form.$invalid = true;
             scope.$digest();
             expect(button.attr('disabled')).toBeTruthy();
         });
         it('depending on whether there is an error', function() {
             expect(this.element.find('error-display').length).toBe(0);
-            controller = this.element.controller('changePasswordOverlay');
+            controller = this.element.controller('editUserProfileOverlay');
             controller.errorMessage = 'Error message';
             scope.$digest();
             expect(this.element.find('error-display').length).toBe(1);
@@ -126,7 +116,7 @@ describe('Change Password Overlay directive', function() {
         });
     });
     it('should set the correct state when the cancel button is clicked', function() {
-        var element = $compile(angular.element('<change-password-overlay></change-password-overlay>'))(scope);
+        var element = $compile(angular.element('<edit-user-profile-overlay></edit-user-profile-overlay>'))(scope);
         scope.$digest();
 
         var cancelButton = angular.element(element.querySelectorAll('.btn-container button.btn-default')[0]);
@@ -134,9 +124,9 @@ describe('Change Password Overlay directive', function() {
         expect(userStateSvc.displayChangePasswordOverlay).toBe(false);
     });
     it('should call set when the button is clicked', function() {
-        var element = $compile(angular.element('<change-password-overlay></change-password-overlay>'))(scope);
+        var element = $compile(angular.element('<edit-user-profile-overlay></edit-user-profile-overlay>'))(scope);
         scope.$digest();
-        controller = element.controller('changePasswordOverlay');
+        controller = element.controller('editUserProfileOverlay');
         spyOn(controller, 'set');
 
         var setButton = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);

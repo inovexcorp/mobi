@@ -24,7 +24,31 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name changePasswordOverlay
+         *
+         * @description
+         * The `changePasswordOverlay` module only provides the `changePasswordOverlay` directive which creates
+         * an overlay for changing the {@link userState.service:userStateService#selectedUser selected user's}
+         * password in MatOnto.
+         */
         .module('changePasswordOverlay', [])
+        /**
+         * @ngdoc directive
+         * @name changePasswordOverlay.directive:changePasswordOverlay
+         * @scope
+         * @restrict E
+         * @requires userManager.service:userManagerService
+         * @requires userState.service:userStateService
+         *
+         * @description
+         * `changePasswordOverlay` is a directive that creates an overlay with a form to change the
+         * {@link userState.service:userStateService#selectedUser selected user's} password in Matonto. The form
+         * uses a {@link passwordConfirmInput.directive:passwordConfirmInput passwordConfirmInput} to confirm the
+         * new password. The current password must be provided and correct for the change to persist. The directive
+         * is replaced by the contents of its template.
+         */
         .directive('changePasswordOverlay', changePasswordOverlay);
 
     changePasswordOverlay.$inject = ['userStateService', 'userManagerService'];

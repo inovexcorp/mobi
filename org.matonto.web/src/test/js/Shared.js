@@ -556,6 +556,8 @@ function mockUserManager() {
             this.addUserGroup = jasmine.createSpy('addUserGroup').and.returnValue($q.when());
             this.deleteUserGroup = jasmine.createSpy('deleteUserGroup').and.returnValue($q.when());
             this.addGroup = jasmine.createSpy('addGroup').and.returnValue($q.when());
+            this.getGroup = jasmine.createSpy('getGroup').and.returnValue($q.when());
+            this.updateGroup = jasmine.createSpy('updateGroup').and.returnValue($q.when());
             this.deleteGroup = jasmine.createSpy('deleteGroup').and.returnValue($q.when());
             this.addGroupRole = jasmine.createSpy('addGroupRole').and.returnValue($q.when());
             this.deleteGroupRole = jasmine.createSpy('deleteGroupRole').and.returnValue($q.when());
@@ -579,7 +581,7 @@ function mockUserState() {
             this.displayCreateGroupOverlay = false;
             this.displayRemoveMemberConfirm = false;
             this.displayEditGroupInfoOverlay = false;
-            this.displayEditProfileOverlay = false;
+            this.displayEditUserProfileOverlay = false;
             this.displayChangePasswordOverlay = false;
             this.reset = jasmine.createSpy('reset');
         });

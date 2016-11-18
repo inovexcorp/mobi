@@ -45,10 +45,24 @@
          *
          * @description
          * `createUserOverlays` is a directive that creates overlays with forms to add a user to Matonto.
-         * The first ovelray provides a form for the basic information about the user. The second overlay
-         * provides a form for settings the permissions and roles of the new user.
+         * The first overlay provides a form for the basic information about the user including the username,
+         * password, first name, last name, and email. The second overlay provides a form for settings the
+         * permissions and roles of the new user.
          */
         .directive('createUserOverlays', createUserOverlays)
+        /**
+         * @ngdoc directive
+         * @name mappingNameInput.directive:uniqueUsername
+         * @restrict A
+         * @requires $parse
+         * @requires userManager.service:userManagerService
+         *
+         * @description
+         * `uniqueUsername` is a directive which tests whether the ngModel value is in the list of saved
+         * {@link userManager.service:userManagerService#users username}. It requires the parent
+         * element to have an ngModel. If the ngModel value has already been used as a username,
+         * it sets the uniqueUsername validity of the parent element to false.
+         */
         .directive('uniqueUsername', uniqueUsername);
 
     uniqueUsername.$inject = ['$parse', 'userManagerService'];

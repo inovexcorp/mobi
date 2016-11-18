@@ -43,8 +43,8 @@
          * `preferencesContainer` is a directive that creates a section with transcluded content and a header.
          * The main content for the overlay is transcluded so it can contain whatever is put between the
          * opening and closing tags. However, it is expected that the content will be
-         * {@link customSetting.directive:customSetting customSetting} directives. The directive is replaced
-         * by the content of its template.
+         * {@link customPreference.directive:customPreference customPreference} directives. The directive is
+         * replaced by the content of its template.
          *
          * @param {string} header the text to display in the section's header
          */

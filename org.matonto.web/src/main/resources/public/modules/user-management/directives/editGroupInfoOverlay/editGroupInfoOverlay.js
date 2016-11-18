@@ -24,7 +24,30 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name editGroupInfoOverlay
+         *
+         * @description
+         * The `editGroupInfoOverlay` module only provides the `editGroupInfoOverlay` directive which creates
+         * an overlay for changing the {@link userState.service:userStateService#selectedGroup selected group's}
+         * information in MatOnto.
+         */
         .module('editGroupInfoOverlay', [])
+        /**
+         * @ngdoc directive
+         * @name editGroupInfoOverlay.directive:editGroupInfoOverlay
+         * @scope
+         * @restrict E
+         * @requires userManager.service:userManagerService
+         * @requires userState.service:userStateService
+         *
+         * @description
+         * `editGroupInfoOverlay` is a directive that creates an overlay with a form to change the
+         * {@link userState.service:userStateService#selectedGroup selected group's} information in Matonto. The
+         * form contains a field to edit the group's description. The directive is replaced by the contents of
+         * its template.
+         */
         .directive('editGroupInfoOverlay', editGroupInfoOverlay);
 
     editGroupInfoOverlay.$inject = ['userStateService', 'userManagerService'];

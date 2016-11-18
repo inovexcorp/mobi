@@ -42,12 +42,12 @@
          *
          * @description
          * `passwordConfirmInput` is a directive that creates two password inputs with validation
-         * to make sure the values of the inputs match each other. TheSecond input is required if
-         * the first  input has a value, but the first can also be optionally set to required as well.
+         * to make sure the values of the inputs match each other. The second input is required if
+         * the first input has a value, but the first can also be optionally set to required as well.
          * The directive is replaced by the contents of its template.
          *
          * @param {string} password the value to bind to the first password input
-         * @param {string} toConfirm the value to bind to the second password input
+         * @param {string} [confirmedPassword=undefined] the value to bind to the second password input
          * @param {string} label the label for the first password input
          * @param {boolean} [required=false] whether or not the inputs should be required
          */

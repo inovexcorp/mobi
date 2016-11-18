@@ -24,12 +24,35 @@
     'use strict';
 
     angular
-        .module('editProfileOverlay', [])
-        .directive('editProfileOverlay', editProfileOverlay);
+        /**
+         * @ngdoc overview
+         * @name editUserProfileOverlay
+         *
+         * @description
+         * The `editUserProfileOverlay` module only provides the `editUserProfileOverlay` directive which creates
+         * an overlay for changing the {@link userState.service:userStateService#selectedGroup selected group's}
+         * information in MatOnto.
+         */
+        .module('editUserProfileOverlay', [])
+        /**
+         * @ngdoc directive
+         * @name editUserProfileOverlay.directive:editUserProfileOverlay
+         * @scope
+         * @restrict E
+         * @requires userManager.service:userManagerService
+         * @requires userState.service:userStateService
+         *
+         * @description
+         * `editUserProfileOverlay` is a directive that creates an overlay with a form to change the
+         * {@link userState.service:userStateService#selectedGroup selected group's} information in Matonto. The
+         * form contains a field to edit the group's description. The directive is replaced by the contents of
+         * its template.
+         */
+        .directive('editUserProfileOverlay', editUserProfileOverlay);
 
-    editProfileOverlay.$inject = ['userStateService', 'userManagerService'];
+    editUserProfileOverlay.$inject = ['userStateService', 'userManagerService'];
 
-    function editProfileOverlay(userStateService, userManagerService) {
+    function editUserProfileOverlay(userStateService, userManagerService) {
         return {
             restrict: 'E',
             replace: true,
@@ -44,14 +67,14 @@
                 dvm.set = function() {
                     dvm.um.updateUser(dvm.state.selectedUser.username, dvm.newUser).then(response => {
                         dvm.errorMessage = '';
-                        dvm.state.displayEditProfileOverlay = false;
+                        dvm.state.displayEditUserProfileOverlay = false;
                         dvm.state.selectedUser = _.find(dvm.um.users, {username: dvm.newUser.username});
                     }, error => {
                         dvm.errorMessage = error;
                     });
                 }
             },
-            templateUrl: 'modules/user-management/directives/editProfileOverlay/editProfileOverlay.html'
+            templateUrl: 'modules/user-management/directives/editUserProfileOverlay/editUserProfileOverlay.html'
         };
     }
 })();

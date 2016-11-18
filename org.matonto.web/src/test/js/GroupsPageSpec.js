@@ -61,6 +61,10 @@ describe('Groups Page directive', function() {
             controller.deleteGroup();
             expect(userStateSvc.displayDeleteConfirm).toBe(true);
         });
+        it('should set the correct state for editing a group description', function() {
+            controller.editDescription();
+            expect(userStateSvc.displayEditGroupInfoOverlay).toBe(true);
+        });
         it('should set the correct state for removing a member', function() {
             controller.removeMember();
             expect(userStateSvc.displayRemoveMemberConfirm).toBe(true);
@@ -116,19 +120,27 @@ describe('Groups Page directive', function() {
             expect(deleteButton).toBeDefined();
             expect(angular.element(deleteButton).text().trim()).toContain('Delete');
         });
+        it('with a button for editing a group description', function() {
+            var editButton = this.element.querySelectorAll('.col-xs-8 block-header button.btn-link')[0];
+            expect(editButton).toBeDefined();
+            expect(angular.element(editButton).text().trim()).toContain('Edit');
+        });
         it('depending on whether a group is selected', function() {
             userManagerSvc.isAdmin.and.returnValue(true);
             scope.$digest();
             var deleteButton = angular.element(this.element.querySelectorAll('.col-xs-4 block-footer button.btn-link')[0]);
+            var editButton = angular.element(this.element.querySelectorAll('.col-xs-8 block-header button.btn-link')[0]);
             expect(this.element.querySelectorAll('.col-xs-8 .group-description').length).toBe(0);
             expect(this.element.find('member-table').length).toBe(0);
             expect(deleteButton.attr('disabled')).toBeTruthy();
+            expect(editButton.attr('disabled')).toBeTruthy();
 
             userStateSvc.selectedGroup = {title: 'group', members: []};
             scope.$digest();
             expect(this.element.querySelectorAll('.col-xs-8 .group-description').length).toBe(1);
             expect(this.element.find('member-table').length).toBe(1);
             expect(deleteButton.attr('disabled')).toBeFalsy();
+            expect(editButton.attr('disabled')).toBeFalsy();
         });
         it('depending on whether the current user is an admin', function() {
             userStateSvc.selectedGroup = {title: 'group', members: []};
@@ -136,13 +148,16 @@ describe('Groups Page directive', function() {
             scope.$digest();
             var deleteButton = angular.element(this.element.querySelectorAll('.col-xs-4 block-footer button.btn-link')[0]);
             var createButton = angular.element(this.element.querySelectorAll('.col-xs-4 block-header button.btn-link')[0]);
+            var editButton = angular.element(this.element.querySelectorAll('.col-xs-8 block-header button.btn-link')[0]);
             expect(deleteButton.attr('disabled')).toBeTruthy();
             expect(createButton.attr('disabled')).toBeTruthy();
+            expect(editButton.attr('disabled')).toBeTruthy();
 
             userManagerSvc.isAdmin.and.returnValue(true);
             scope.$digest();
             expect(deleteButton.attr('disabled')).toBeFalsy();
             expect(createButton.attr('disabled')).toBeFalsy();
+            expect(editButton.attr('disabled')).toBeFalsy();
         });
     });
     it('should call createGroup when the button is clicked', function() {
@@ -164,5 +179,15 @@ describe('Groups Page directive', function() {
         var deleteButton = angular.element(element.querySelectorAll('.col-xs-4 block-footer button.btn-link')[0]);
         deleteButton.triggerHandler('click');
         expect(controller.deleteGroup).toHaveBeenCalled();
+    });
+    it('should call editDescription when the button is clicked', function() {
+        var element = $compile(angular.element('<groups-page></groups-page>'))(scope);
+        scope.$digest();
+        controller = element.controller('groupsPage');
+        spyOn(controller, 'editDescription');
+
+        var editButton = angular.element(element.querySelectorAll('.col-xs-8 block-header button.btn-link')[0]);
+        editButton.triggerHandler('click');
+        expect(controller.editDescription).toHaveBeenCalled();
     });
 });

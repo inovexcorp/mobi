@@ -154,6 +154,24 @@ describe('User Management Overlays directive', function() {
             scope.$digest();
             expect(this.element.find('change-password-overlay').length).toBe(0);
         });
+        it('depending on whether a user profile is being edited', function() {
+            userStateSvc.displayEditUserProfileOverlay = true;
+            scope.$digest();
+            expect(this.element.find('edit-user-profile-overlay').length).toBe(1);
+
+            userStateSvc.displayEditUserProfileOverlay = false;
+            scope.$digest();
+            expect(this.element.find('edit-user-profile-overlay').length).toBe(0);
+        });
+        it('depending on whether group information is being edited', function() {
+            userStateSvc.displayEditGroupInfoOverlay = true;
+            scope.$digest();
+            expect(this.element.find('edit-group-info-overlay').length).toBe(1);
+
+            userStateSvc.displayEditGroupInfoOverlay = false;
+            scope.$digest();
+            expect(this.element.find('edit-group-info-overlay').length).toBe(0);
+        });
         it('depending on whether deleting an user or group should be confirmed', function() {
             userStateSvc.displayDeleteConfirm = true;
             scope.$digest();

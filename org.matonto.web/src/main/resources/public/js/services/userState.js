@@ -180,7 +180,27 @@
              * {@link changePasswordOverlay.directive:changePasswordOverlay Change Password Overlay} should be shown.
              */
             self.displayChangePasswordOverlay = false;
+            /**
+             * @ngdoc property
+             * @name userState.service:userStateService#displayEditProfileOverlay
+             * @propertyOf userState.service:userStateService
+             * @type {boolean}
+             *
+             * @description
+             * `displayEditProfileOverlay` holds a boolean indicating whether or not the
+             * {@link editProfileOverlay.directive:editProfileOverlay Edit Profile Overlay} should be shown.
+             */
             self.displayEditProfileOverlay = false;
+            /**
+             * @ngdoc property
+             * @name userState.service:userStateService#displayEditGroupInfoOverlay
+             * @propertyOf userState.service:userStateService
+             * @type {boolean}
+             *
+             * @description
+             * `displayEditGroupInfoOverlay` holds a boolean indicating whether or not the
+             * {@link editGroupInfoOverlay.directive:editGroupInfoOverlay Edit Group Info Overlay} should be shown.
+             */
             self.displayEditGroupInfoOverlay = false;
             /**
              * @ngdoc property

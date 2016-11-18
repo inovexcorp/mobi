@@ -155,6 +155,12 @@ describe('Create User Overlays directive', function() {
         it('with a password confirm input', function() {
             expect(this.element.find('password-confirm-input').length).toBe(1);
         });
+        it('with text inputs', function() {
+            expect(this.element.find('text-input').length).toBe(2);
+        });
+        it('with an email input', function() {
+            expect(this.element.find('email-input').length).toBe(1);
+        });
         it('with a user permissions input', function() {
             controller = this.element.controller('createUserOverlays');
             controller.step = 1;

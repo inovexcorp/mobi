@@ -60,10 +60,16 @@
              * @type {object[]}
              *
              * @description
-             * `groups` holds a list of objects representing the groups in MatOnto. Each object
-             * has a name property for the group name, a roles property for the roles associated
-             * with the group, and a members property with the names of all the users who are
-             * members of the group.
+             * `groups` holds a list of objects representing the groups in MatOnto. The structure of
+             * each object is:
+             * ```
+             * {
+             *    title: '',
+             *    description: '',
+             *    roles: [],
+             *    members: []
+             * }
+             * ```
              */
             self.groups = [];
             /**
@@ -73,9 +79,17 @@
              * @type {object[]}
              *
              * @description
-             * `users` holds a list of objects representing the users in MatOnto. Each object
-             * has a username property for the user's username and a roles property for the
-             * roles associated with the user.
+             * `users` holds a list of objects representing the users in MatOnto. The structure of
+             * each object is:
+             * ```
+             * {
+             *    username: '',
+             *    firstName: '',
+             *    lastName: '',
+             *    email: '',
+             *    roles: []
+             * }
+             * ```
              */
             self.users = [];
 
@@ -99,10 +113,11 @@
              * @description
              * Initializes the {@link userManager.service:userManagerService#users users} and
              * {@link userManager.service:userManagerService#groups groups} lists. Uses
-             * the results of the GET /matontorest/users and the GET /matontorest/users/{username}/roles
-             * endpoint for each user for the users list. Uses the GET /matontorest/groups
-             * endpoint and the result of the GET /matontorest/groups/{groupTitle}/users endpoint
-             * for each group for the groups list. If an error occurs in any of the HTTP calls,
+             * the results of the GET /matontorest/users, GET /matontorest/users/{username},
+             * and GET /matontorest/users/{username}/roles endpoints for the users list. Uses the
+             * results of the GET /matontorest/groups, GET /matontorest/groups/{groupTitle},
+             * GET /matontorest/groups/{groupTitle}/roles, and GET /matontorest/groups/{groupTitle}/roles
+             * endpoints for the groups list. If an error occurs in any of the HTTP calls,
              * logs the error on the console.
              */
             self.initialize = function() {
@@ -148,6 +163,7 @@
                     })
                     .then(() => $rootScope.showSpinner = false);
             }
+
             /**
              * @ngdoc method
              * @name addUser
@@ -158,7 +174,7 @@
              * that resolves if the addition was successful and rejects with an error message if it was not.
              * Updates the {@link userManager.service:userManagerService#users users} list appropriately.
              *
-             * @param {string} username the username for the new user
+             * @param {string} newUser the new user to add
              * @param {string} password the password for the new user
              * @return {Promise} A Promise that resolves if the request was successful; rejects
              * with an error message otherwise
@@ -183,7 +199,6 @@
                     });
                 return deferred.promise;
             }
-
             /**
              * @ngdoc method
              * @name getUser
@@ -212,7 +227,6 @@
                     });
                 return deferred.promise;
             }
-
             /**
              * @ngdoc method
              * @name updateUser
@@ -246,7 +260,6 @@
                     });
                 return deferred.promise;
             }
-
             /**
              * @ngdoc method
              * @name updateUser
@@ -254,8 +267,9 @@
              *
              * @description
              * Calls the PUT /matontorest/users/{username}/password endpoint to update the password of
-             * a MatOnto user specified by the passed username. Returns a Promise that resolves if it
-             * was successful and rejects with an error message if it was not.
+             * a MatOnto user specified by the passed username. Requires the user's current password to
+             * succeed. Returns a Promise that resolves if it was successful and rejects with an error
+             * message if it was not.
              *
              * @param {string} username the username of the user to update
              * @param {string} password the current password of the user
@@ -283,7 +297,6 @@
                     });
                 return deferred.promise;
             }
-
             /**
              * @ngdoc method
              * @name deleteUser
@@ -315,7 +328,6 @@
                     });
                 return deferred.promise;
             }
-
             /**
              * @ngdoc method
              * @name addUserRole
@@ -353,7 +365,6 @@
                     });
                 return deferred.promise;
             }
-
             /**
              * @ngdoc method
              * @name deleteUserRole
@@ -391,7 +402,6 @@
                     });
                 return deferred.promise;
             }
-
             /**
              * @ngdoc method
              * @name addUserGroup
@@ -428,7 +438,6 @@
                     });
                 return deferred.promise;
             }
-
             /**
              * @ngdoc method
              * @name deleteUserGroup
@@ -466,7 +475,6 @@
                     });
                 return deferred.promise;
             }
-
             /**
              * @ngdoc method
              * @name addGroup
@@ -497,7 +505,6 @@
                     });
                 return deferred.promise;
             }
-
             /**
              * @ngdoc method
              * @name getGroup
@@ -526,7 +533,6 @@
                     });
                 return deferred.promise;
             }
-
             /**
              * @ngdoc method
              * @name updateGroup
@@ -560,7 +566,6 @@
                     });
                 return deferred.promise;
             }
-
             /**
              * @ngdoc method
              * @name deleteGroup
@@ -591,7 +596,6 @@
                     });
                 return deferred.promise;
             }
-
             /**
              * @ngdoc method
              * @name addGroupRole
@@ -629,7 +633,6 @@
                     });
                 return deferred.promise;
             }
-
             /**
              * @ngdoc method
              * @name deleteGroupRole
@@ -667,11 +670,20 @@
                     });
                 return deferred.promise;
             }
-
             /**
-             * [getGroupUsers description]
-             * @param  {[type]} groupTitle [description]
-             * @return {[type]}            [description]
+             * @ngdoc method
+             * @name getGroupUsers
+             * @methodOf userManager.service:userManagerService
+             *
+             * @description
+             * Calls the GET /matontorest/groups/{groupTitle}/users endpoint to retrieve the list of
+             * users assigned to the MatOnto group specified by the passed title. Returns a Promise
+             * that resolves with the result of the call is successful and rejects with an error message
+             * if it was not.
+             *
+             * @param  {string} groupTitle the title of the group to retrieve users from
+             * @return {Promise} A Promise that resolves if the request is successful; rejects with an
+             * error message otherwise
              */
             self.getGroupUsers = function(groupTitle) {
                 var deferred = $q.defer();
@@ -687,7 +699,6 @@
                     });
                 return deferred.promise;
             }
-
             /**
              * @ngdoc method
              * @name isAdmin

@@ -28,8 +28,8 @@
          * @ngdoc overview
          * @name preferencesTab
          *
-         * @description 
-         * The `preferencesTab` module only provides the `preferencesTab` directive which creates 
+         * @description
+         * The `preferencesTab` module only provides the `preferencesTab` directive which creates
          * a Bootstrap `row` with a form allowing the current user to their preferences.
          */
         .module('preferencesTab', [])
@@ -41,12 +41,12 @@
          * @requires settingsManager.service:settingsManagerService
          *
          * @description
-         * `preferencesTab` is a directive that creates a Bootstrap `row` with a 
-         * {@link block.directive:block block} containing a form allowing the current user to 
-         * change their display preferences. The preferences are displayed using a 
-         * {@link settingsContainer.directive:settingsContainer settingsContainer} and several
-         * {@link customSettings.directive:customSettings customSettings}. The directive is 
-         * replaced by the content of its template.
+         * `preferencesTab` is a directive that creates a Bootstrap `row` with a
+         * {@link block.directive:block block} containing a form allowing the current user to
+         * change their display preferences. The preferences are displayed using a
+         * {@link preferencesContainer.directive:preferencesContainer preferencesContainer} and
+         * several {@link customPreference.directive:customPreference customPreference}. The
+         * directive is replaced by the content of its template.
          */
         .directive('preferencesTab', preferencesTab);
 

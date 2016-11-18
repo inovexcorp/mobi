@@ -90,6 +90,54 @@ describe('Profile Tab directive', function() {
         });
         it('for wrapping containers', function() {
             expect(this.element.hasClass('profile-tab')).toBe(true);
+            expect(this.element.hasClass('row')).toBe(true);
+            expect(this.element.querySelectorAll('.col-xs-6').length).toBe(1);
+            expect(this.element.querySelectorAll('.col-xs-offset-3').length).toBe(1);
         });
+        it('with a block', function() {
+            expect(this.element.find('block').length).toBe(1);
+        });
+        it('with a block content', function() {
+            expect(this.element.find('block-content').length).toBe(1);
+        });
+        it('with a block footer', function() {
+            expect(this.element.find('block-footer').length).toBe(1);
+        });
+        it('with text inputs', function() {
+            expect(this.element.find('text-input').length).toBe(2);
+        });
+        it('with an email input', function() {
+            expect(this.element.find('email-input').length).toBe(1);
+        });
+        it('depending on whether the password was saved successfully', function() {
+            expect(this.element.querySelectorAll('.text-success').length).toBe(0);
+
+            controller = this.element.controller('profileTab');
+            controller.success = true;
+            scope.$digest();
+            expect(this.element.querySelectorAll('.text-success').length).toBe(1);
+        });
+        it('depending on the form validity and dirtiness', function() {
+            expect(this.element.querySelectorAll('block-footer button').attr('disabled')).toBeTruthy();
+
+            controller = this.element.controller('profileTab');
+            controller.form.$invalid = false;
+            scope.$digest();
+            expect(this.element.querySelectorAll('block-footer button').attr('disabled')).toBeTruthy();
+
+            controller.form.$setDirty();
+            scope.$digest();
+            expect(this.element.querySelectorAll('block-footer button').attr('disabled')).toBeFalsy();
+        });
+    });
+    it('should save changes when the save button is clicked', function() {
+        var element = $compile(angular.element('<profile-tab></profile-tab>'))(scope);
+        scope.$digest();
+        controller = element.controller('profileTab');
+        spyOn(controller, 'save');
+
+        var button = angular.element(element.querySelectorAll('block-footer button')[0]);
+        button.triggerHandler('click');
+        expect(controller.save).toHaveBeenCalled();
     });
 });

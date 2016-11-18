@@ -20,13 +20,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Text Input directive', function() {
+describe('Email Input directive', function() {
     var $compile,
         scope;
 
     beforeEach(function() {
         module('templates');
-        module('textInput');
+        module('emailInput');
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;
@@ -37,13 +37,12 @@ describe('Text Input directive', function() {
     describe('in isolated scope', function() {
         beforeEach(function() {
             scope.bindModel = '';
-            scope.changeEvent = jasmine.createSpy('changeEvent');
-            scope.displayText = '';
             scope.mutedText = '';
+            scope.changeEvent = jasmine.createSpy('changeEvent');
             scope.required = true;
             scope.inputName = '';
 
-            this.element = $compile(angular.element('<text-input ng-model="bindModel" change-event="changeEvent()" display-text="displayText" muted-text="mutedText" required="required" input-name="inputName"></text-input>'))(scope);
+            this.element = $compile(angular.element('<email-input ng-model="bindModel" change-event="changeEvent()" muted-text="mutedText" required="required" input-name="inputName"></email-input>'))(scope);
             scope.$digest();
         });
         it('bindModel should be two way bound', function() {
@@ -57,12 +56,6 @@ describe('Text Input directive', function() {
             isolatedScope.changeEvent();
 
             expect(scope.changeEvent).toHaveBeenCalled();
-        });
-        it('displayText should be one way bound', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.displayText = 'Test';
-            scope.$digest();
-            expect(scope.displayText).toBe('');
         });
         it('mutedText should be one way bound', function() {
             var isolatedScope = this.element.isolateScope();
@@ -87,12 +80,11 @@ describe('Text Input directive', function() {
         beforeEach(function() {
             scope.bindModel = '';
             scope.changeEvent = jasmine.createSpy('changeEvent');
-            scope.displayText = '';
             scope.mutedText = '';
             scope.required = false;
             scope.inputName = '';
 
-            this.element = $compile(angular.element('<text-input ng-model="bindModel" change-event="changeEvent()" display-text="displayText" muted-text="mutedText" required="required" input-name="inputName"></text-input>'))(scope);
+            this.element = $compile(angular.element('<email-input ng-model="bindModel" change-event="changeEvent()" muted-text="mutedText" required="required" input-name="inputName"></email-input>'))(scope);
             scope.$digest();
         });
         it('for wrapping containers', function() {
@@ -112,11 +104,27 @@ describe('Text Input directive', function() {
             scope.$digest();
             expect(input.attr('required')).toBeTruthy();
         });
+        it('depending on whether the text input is a valid email', function() {
+            var input = angular.element(this.element.querySelectorAll('input[type="text"]')[0]);
+            var invalidInputs = ['abc', '$', '/', '#', '=', '-', '_', '+', 'example@', '@example.com', 'example@.'];
+            _.forEach(invalidInputs, function(value) {
+                scope.bindModel = value;
+                scope.$digest();
+                expect(input.hasClass('ng-invalid-pattern')).toBe(true);
+            });
+
+            var validInputs = ['example@example.com', 'example@co', 'example-@example.com', 'example_@example.com', 'example+@example.com'];
+            _.forEach(validInputs, function(value) {
+                scope.bindModel = value;
+                scope.$digest();
+                expect(input.hasClass('ng-invalid-pattern')).toBe(false);
+            });
+        });
     });
     it('should call changeEvent when the text in the input changes', function() {
         scope.bindModel = '';
         scope.changeEvent = jasmine.createSpy('changeEvent');
-        var element = $compile(angular.element('<text-input ng-model="bindModel" change-event="changeEvent()" display-text="displayText" muted-text="mutedText" required="required" input-name="inputName"></text-input>'))(scope);
+        var element = $compile(angular.element('<email-input ng-model="bindModel" change-event="changeEvent()" muted-text="mutedText" required="required" input-name="inputName"></email-input>'))(scope);
         scope.$digest();
 
         var input = angular.element(element.querySelectorAll('input[type="text"]')[0]);

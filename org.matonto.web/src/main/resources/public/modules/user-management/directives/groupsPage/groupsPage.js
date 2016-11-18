@@ -29,9 +29,9 @@
          * @name groupsPage
          *
          * @description
-         * The `groupsPage` module only provides the `groupsPage` directive which provides the
-         * {@link groupsList.directive:groupsList groupsList} and
-         * {@link groupEditor.directive:groupEditor groupEditor} directives.
+         * The `groupsPage` module only provides the `groupsPage` directive which which creates
+         * a Bootstrap `row` with {@link block.directive:block blocks} for selecting and editing
+         * a group in the {@link userManager.service:userManagerServiec#groups groups list}.
          */
         .module('groupsPage', [])
         /**
@@ -40,11 +40,18 @@
          * @scope
          * @restrict E
          * @requires userState.service:userStateService
+         * @requires userManager.service:userManagerService
+         * @requires loginManager.service:loginManagerService
          *
          * @description
-         * `groupsPage` is a directive that provides the {@link groupsList.directive:groupsList groupsList}
-         * and {@link groupEditor.directive:groupEditor groupEditor} directives depending on the
-         * {@link userState.service:userStateService state} of the user management page.
+         * `groupsPage` is a directive that creates a Bootstrap `row` div with two columns
+         * containing {@link block.directive:block blocks} for selecting and editing a group.
+         * The left column contains a {@link groupsList.directive:groupsList groupsList} block
+         * for selecting the current {@link userState.service:userStateService#selectedGroup group}
+         * and buttons for creating, deleting, and searching for a group. The right column contains
+         * a block for previewing and editing a group's description and a block for viewing and
+         * editing the {@link memberTable.directive:memberTable members} of the group. The directive
+         * is replaced by the contents of its template.
          */
         .directive('groupsPage', groupsPage);
 

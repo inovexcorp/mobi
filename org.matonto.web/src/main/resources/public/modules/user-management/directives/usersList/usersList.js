@@ -28,7 +28,7 @@
          * @ngdoc overview
          * @name usersList
          *
-         * @description 
+         * @description
          * The `usersList` module only provides the `usersList` directive which creates
          * an interactable list of all {@link userManager.service:userManagerService#users users}.
          */
@@ -42,9 +42,9 @@
          * @requires userState.service:userStateService
          * @requires loginManager.service:loginManagerService
          *
-         * @description 
-         * `usersList` is a directive that creates a table containing the
-         * {@link userManager.service:userManagerService#users users} list. Users can only be edited 
+         * @description
+         * `usersList` is a directive that creates a <ul> containing the
+         * {@link userManager.service:userManagerService#users users} list. Users can only be edited
          * by admin users. The directive is replaced by the contents of its template.
          */
         .directive('usersList', usersList);

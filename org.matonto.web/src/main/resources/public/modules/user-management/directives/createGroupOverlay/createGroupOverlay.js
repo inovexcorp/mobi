@@ -28,7 +28,7 @@
          * @ngdoc overview
          * @name createGroupOverlay
          *
-         * @description 
+         * @description
          * The `createGroupOverlay` module only provides the `createGroupOverlay` directive which creates
          * an overlay for adding a group to MatOnto.
          */
@@ -43,11 +43,26 @@
          * @requires userState.service:userStateService
          * @requires loginManager.service:loginManagerService
          *
-         * @description 
+         * @description
          * `createGroupOverlay` is a directive that creates an overlay with a form to add a group to Matonto.
-         * The directive is replaced by the contents of its template.
+         * The form includes the group title, a group description, and group
+         * {@link memberTable.directive:memberTable members}. The directive is replaced by the contents of its
+         * template.
          */
         .directive('createGroupOverlay', createGroupOverlay)
+        /**
+         * @ngdoc directive
+         * @name mappingNameInput.directive:uniqueTitle
+         * @restrict A
+         * @requires $parse
+         * @requires userManager.service:userManagerService
+         *
+         * @description
+         * `uniqueTitle` is a directive which tests whether the ngModel value is in the list of saved
+         * {@link userManager.service:userManagerService#groups group titles}. It requires the parent
+         * element to have an ngModel. If the ngModel value has already been used as a group title,
+         * it sets the uniqueTitle validity of the parent element to false.
+         */
         .directive('uniqueTitle', uniqueTitle);
 
     uniqueTitle.$inject = ['$parse', 'userManagerService'];

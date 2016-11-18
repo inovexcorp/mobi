@@ -44,10 +44,10 @@
          *
          * @description
          * `profileTab` is a directive that creates a Bootstrap `row` with a
-         * {@link block.directive:block block} that will eventually contain a form allowing the
-         * current user to change their profile information. However, since profile information
-         * is not currently being stored, the directive simply displays a welcome message. The
-         * directive is replaced by the content of its template.
+         * {@link block.directive:block block} that contains a form allowing the
+         * current user to change their profile information. This information includes their
+         * first name, last name, and email address. The directive is replaced by the content
+         * of its template.
          */
         .directive('profileTab', profileTab);
 

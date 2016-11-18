@@ -45,6 +45,9 @@
          * `userManagementOverlays` is a directive that creates all of the overlays used in the user
          * management page. Those overlays are {@link addGroupOverlay.directive:addGroupOverlay addGroupOverlay},
          * {@link addUserOverlays.directive:addUserOverlays addUserOverlays},
+         * {@link changePasswordOverlay.directive:changePasswordOverlay changePasswordOverlay},
+         * {@link editUserProfileOverlay.directive:editUserProfileOverlay editUserProfileOverlay},
+         * {@link editGroupInfoOverlay.directive:editGroupInfoOverlay editGroupInfoOverlay},
          * and several {@link confirmationOverlay.directive:confirmationOverlay confirmationOverlays}.
          */
         .directive('userManagementOverlays', userManagementOverlays);
@@ -81,7 +84,6 @@
                         });
                     }
                 };
-
                 dvm.removeMember = function() {
                     dvm.um.deleteUserGroup(dvm.state.memberName, dvm.state.selectedGroup.title).then(response => {
                         dvm.errorMessage = '';
