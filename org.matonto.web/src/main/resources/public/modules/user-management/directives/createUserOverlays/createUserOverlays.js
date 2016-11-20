@@ -29,8 +29,9 @@
          * @name createUserOverlays
          *
          * @description
-         * The `createUserOverlays` module only provides the `createUserOverlays` directive which creates
-         * overlays for adding a user to MatOnto.
+         * The `createUserOverlays` module provides the `createUserOverlays` directive, which creates overlays
+         * for adding a user to MatOnto, and the `uniqueUsername`, which tests whether a value is already used
+         * as a {@link userManager.service:userManagerService#users user's} username.
          */
         .module('createUserOverlays', [])
         /**
@@ -39,7 +40,6 @@
          * @scope
          * @restrict E
          * @requires $q
-         * @requires $timeout
          * @requires userManager.service:userManagerService
          * @requires userState.service:userStateService
          *
@@ -105,23 +105,20 @@
                     email: ''
                 };
 
-                dvm.add = function () {
+                dvm.add = function() {
                     dvm.um.addUser(dvm.newUser, dvm.password).then(response => {
                         var requests = [dvm.um.addUserRole(dvm.newUser.username, 'user')];
                         if (dvm.roles.admin) {
                             requests.push(dvm.um.addUserRole(dvm.newUser.username, 'admin'));
                         }
                         return $q.all(requests);
-                    }, error => {
-                        return $q.reject(error);
-                    }).then(response => {
+                    }, error => $q.reject(error))
+                    .then(response => {
                         dvm.errorMessage = '';
                         dvm.step = 2;
                         dvm.state.displayCreateUserOverlay = false;
-                    }, error => {
-                        dvm.errorMessage = error;
-                    });
-                };
+                    }, error => dvm.errorMessage = error);
+                }
             },
             templateUrl: 'modules/user-management/directives/createUserOverlays/createUserOverlays.html'
         };

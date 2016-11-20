@@ -123,9 +123,8 @@
             self.initialize = function() {
                 $rootScope.showSpinner = true;
                 $http.get(userPrefix)
-                    .then(response => {
-                        return $q.all(_.map(response.data, username => self.getUser(username)));
-                    }, response => $q.reject(response))
+                    .then(response => $q.all(_.map(response.data, username => self.getUser(username))),
+                        response => $q.reject(response))
                     .then(responses => {
                         self.users = responses;
                         return $q.all(_.map(self.users, user => listUserRoles(user.username)));
@@ -134,16 +133,13 @@
                         _.forEach(responses, (response, idx) => {
                             self.users[idx].roles = response;
                         });
-                    }, response => {
-                        console.log(_.get(response, 'statusText', 'Something went wrong. Could not load users.'));
-                    })
+                    }, response => console.log(_.get(response, 'statusText', 'Something went wrong. Could not load users.')))
                     .then(() => $rootScope.showSpinner = false);
 
                 $rootScope.showSpinner = true;
                 $http.get(groupPrefix)
-                    .then(response => {
-                        return $q.all(_.map(response.data, groupTitle => self.getGroup(groupTitle)));
-                    }, response => $q.reject(response))
+                    .then(response => $q.all(_.map(response.data, groupTitle => self.getGroup(groupTitle))),
+                        response => $q.reject(response))
                     .then(responses => {
                         self.groups = responses;
                         return $q.all(_.map(self.groups, group => self.getGroupUsers(group.title)));
@@ -158,9 +154,7 @@
                         _.forEach(responses, (response, idx) => {
                             self.groups[idx].roles = response;
                         });
-                    }, response => {
-                        console.log(_.get(response, 'statusText', 'Something went wrong. Could not load groups.'));
-                    })
+                    }, response => console.log(_.get(response, 'statusText', 'Something went wrong. Could not load groups.')))
                     .then(() => $rootScope.showSpinner = false);
             }
 
@@ -192,11 +186,8 @@
                     .then(response => {
                         deferred.resolve();
                         self.users.push(newUser);
-                    }, error => {
-                        deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.'));
-                    }).then(() => {
-                        $rootScope.showSpinner = false;
-                    });
+                    }, error => deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.')))
+                    .then(() => $rootScope.showSpinner = false);
                 return deferred.promise;
             }
             /**
@@ -218,13 +209,9 @@
 
                 $rootScope.showSpinner = true;
                 $http.get(userPrefix + '/' + username)
-                    .then(response => {
-                        deferred.resolve(response.data);
-                    }, error => {
-                        deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.'));
-                    }).then(() => {
-                        $rootScope.showSpinner = false;
-                    });
+                    .then(response => deferred.resolve(response.data),
+                        error => deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.')))
+                    .then(() => $rootScope.showSpinner = false);
                 return deferred.promise;
             }
             /**
@@ -253,16 +240,13 @@
                     .then(response => {
                         deferred.resolve();
                         self.users.splice(_.findIndex(self.users, {username}), 1, newUser);
-                    }, error => {
-                        deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.'));
-                    }).then(() => {
-                        $rootScope.showSpinner = false;
-                    });
+                    }, error => deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.')))
+                    .then(() => $rootScope.showSpinner = false);
                 return deferred.promise;
             }
             /**
              * @ngdoc method
-             * @name updateUser
+             * @name updatePassword
              * @methodOf userManager.service:userManagerService
              *
              * @description
@@ -288,13 +272,9 @@
 
                 $rootScope.showSpinner = true;
                 $http.put(userPrefix + '/' + username + '/password', null, config)
-                    .then(response => {
-                        deferred.resolve();
-                    }, error => {
-                        deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.'));
-                    }).then(() => {
-                        $rootScope.showSpinner = false;
-                    });
+                    .then(response => deferred.resolve(),
+                        error => deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.')))
+                    .then(() => $rootScope.showSpinner = false);
                 return deferred.promise;
             }
             /**
@@ -319,13 +299,10 @@
                 $http.delete(userPrefix + '/' + username)
                     .then(response => {
                         deferred.resolve();
-                        _.remove(self.users, {username: username});
+                        _.remove(self.users, {username});
                         _.forEach(self.groups, group => _.pull(group.members, username));
-                    }, error => {
-                        deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.'));
-                    }).then(() => {
-                        $rootScope.showSpinner = false;
-                    });
+                    }, error => deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.')))
+                    .then(() => $rootScope.showSpinner = false);
                 return deferred.promise;
             }
             /**
@@ -361,9 +338,7 @@
                         user.roles = _.union(_.get(user, 'roles', []), [role]);
                     }, error => {
                         deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.'));
-                    }).then(() => {
-                        $rootScope.showSpinner = false;
-                    });
+                    }).then(() => $rootScope.showSpinner = false);
                 return deferred.promise;
             }
             /**
@@ -395,12 +370,9 @@
                 $http.delete(userPrefix + '/' + username + '/roles', config)
                     .then(response => {
                         deferred.resolve();
-                        _.pull(_.get(_.find(self.users, {username: username}), 'roles'), role);
-                    }, error => {
-                        deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.'));
-                    }).then(() => {
-                        $rootScope.showSpinner = false;
-                    });
+                        _.pull(_.get(_.find(self.users, {username}), 'roles'), role);
+                    }, error => deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.')))
+                    .then(() => $rootScope.showSpinner = false);
                 return deferred.promise;
             }
             /**
@@ -433,11 +405,8 @@
                         deferred.resolve();
                         var group = _.find(self.groups, {title: groupTitle});
                         group.members = _.union(_.get(group, 'members', []), [username]);
-                    }, error => {
-                        deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.'));
-                    }).then(() => {
-                        $rootScope.showSpinner = false;
-                    });
+                    }, error => deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.')))
+                    .then(() => $rootScope.showSpinner = false);
                 return deferred.promise;
             }
             /**
@@ -470,11 +439,8 @@
                     .then(response => {
                         deferred.resolve();
                         _.pull(_.get(_.find(self.groups, {title: groupTitle}), 'members'), username);
-                    }, error => {
-                        deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.'));
-                    }).then(() => {
-                        $rootScope.showSpinner = false;
-                    });
+                    }, error => deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.')))
+                    .then(() => $rootScope.showSpinner = false);
                 return deferred.promise;
             }
             /**
@@ -500,11 +466,8 @@
                     .then(response => {
                         deferred.resolve();
                         self.groups.push(newGroup);
-                    }, error => {
-                        deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.'));
-                    }).then(() => {
-                        $rootScope.showSpinner = false;
-                    });
+                    }, error => deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.')))
+                    .then(() => $rootScope.showSpinner = false);
                 return deferred.promise;
             }
             /**
@@ -526,13 +489,9 @@
 
                 $rootScope.showSpinner = true;
                 $http.get(groupPrefix + '/' + groupTitle)
-                    .then(response => {
-                        deferred.resolve(response.data);
-                    }, error => {
-                        deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.'));
-                    }).then(() => {
-                        $rootScope.showSpinner = false;
-                    });
+                    .then(response => deferred.resolve(response.data),
+                        error => deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.')))
+                    .then(() => $rootScope.showSpinner = false);
                 return deferred.promise;
             }
             /**
@@ -561,11 +520,8 @@
                     .then(response => {
                         deferred.resolve();
                         self.groups.splice(_.findIndex(self.groups, {title: groupTitle}), 1, newGroup);
-                    }, error => {
-                        deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.'));
-                    }).then(() => {
-                        $rootScope.showSpinner = false;
-                    });
+                    }, error => deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.')))
+                    .then(() => $rootScope.showSpinner = false);
                 return deferred.promise;
             }
             /**
@@ -591,11 +547,8 @@
                     .then(response => {
                         deferred.resolve();
                         _.remove(self.groups, {title: groupTitle});
-                    }, error => {
-                        deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.'));
-                    }).then(() => {
-                        $rootScope.showSpinner = false;
-                    });
+                    }, error => deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.')))
+                    .then(() => $rootScope.showSpinner = false);
                 return deferred.promise;
             }
             /**
@@ -629,11 +582,8 @@
                         deferred.resolve();
                         var group = _.find(self.groups, {title: groupTitle});
                         group.roles = _.union(_.get(group, 'roles', []), [role]);
-                    }, error => {
-                        deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.'));
-                    }).then(() => {
-                        $rootScope.showSpinner = false;
-                    });
+                    }, error => deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.')))
+                    .then(() => $rootScope.showSpinner = false);
                 return deferred.promise;
             }
             /**
@@ -666,11 +616,8 @@
                     .then(response => {
                         deferred.resolve();
                         _.pull(_.get(_.find(self.groups, {title: groupTitle}), 'roles'), role);
-                    }, error => {
-                        deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.'));
-                    }).then(() => {
-                        $rootScope.showSpinner = false;
-                    });
+                    }, error => deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.')))
+                    .then(() => $rootScope.showSpinner = false);
                 return deferred.promise;
             }
             /**
@@ -693,13 +640,9 @@
 
                 $rootScope.showSpinner = true;
                 $http.get(groupPrefix + '/' + groupTitle + '/users')
-                    .then(response => {
-                        deferred.resolve(response.data);
-                    }, error => {
-                        deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.'));
-                    }).then(() => {
-                        $rootScope.showSpinner = false;
-                    });
+                    .then(response => deferred.resolve(response.data),
+                        error => deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.')))
+                    .then(() => $rootScope.showSpinner = false);
                 return deferred.promise;
             }
             /**
@@ -716,7 +659,7 @@
              * @return {boolean} true if the user is an admin; false otherwise
              */
             self.isAdmin = function(username) {
-                if (_.includes(_.get(_.find(self.users, {username: username}), 'roles', []), 'admin')) {
+                if (_.includes(_.get(_.find(self.users, {username}), 'roles', []), 'admin')) {
                     return true;
                 } else {
                     var userGroups = _.filter(self.groups, group => {
@@ -731,13 +674,9 @@
 
                 $rootScope.showSpinner = true;
                 $http.get(userPrefix + '/' + username + '/roles')
-                    .then(response => {
-                        deferred.resolve(response.data);
-                    }, error => {
-                        deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.'));
-                    }).then(() => {
-                        $rootScope.showSpinner = false;
-                    });
+                    .then(response => deferred.resolve(response.data),
+                        error => deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.')))
+                    .then(() => $rootScope.showSpinner = false);
                 return deferred.promise;
             }
 
@@ -746,13 +685,9 @@
 
                 $rootScope.showSpinner = true;
                 $http.get(userPrefix + '/' + username + '/groups')
-                    .then(response => {
-                        deferred.resolve(response.data);
-                    }, error => {
-                        deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.'));
-                    }).then(() => {
-                        $rootScope.showSpinner = false;
-                    });
+                    .then(response => deferred.resolve(response.data),
+                        error => deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.')))
+                    .then(() => $rootScope.showSpinner = false);
                 return deferred.promise;
             }
 
@@ -761,13 +696,9 @@
 
                 $rootScope.showSpinner = true;
                 $http.get(groupPrefix + '/' + groupTitle + '/roles')
-                    .then(response => {
-                        deferred.resolve(response.data);
-                    }, error => {
-                        deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.'));
-                    }).then(() => {
-                        $rootScope.showSpinner = false;
-                    });
+                    .then(response => deferred.resolve(response.data),
+                        error => deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.')))
+                    .then(() => $rootScope.showSpinner = false);
                 return deferred.promise;
             }
         }

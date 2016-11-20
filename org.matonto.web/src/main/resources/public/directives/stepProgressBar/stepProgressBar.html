@@ -23,7 +23,7 @@
 <div class="step-progress-bar row">
     <div class="col-xs-12">
         <div class="progress">
-            <div ng-repeat="step in dvm.getRange(stepNumber) track by step" class="step" ng-class="{'completed': step <= currentStep}" ng-style="{'left': (step === 0) ? '0%' : (step === stepNumber - 1) ? 'auto' : dvm.getPercentage(stepNumber, step) + '%', 'right': (step === stepNumber - 1) ? '0%' : 'auto', 'transform': (step !== 0 && step !== stepNumber - 1) ? 'translate(-50%)' : 'none'}">
+            <div ng-repeat="step in dvm.getRange(stepNumber) track by step" class="step" ng-class="{'completed': step <= currentStep}" ng-style="{'left': dvm.calculateLeft(step), 'right': dvm.calculateRight(step), 'transform': dvm.calculateTransform(step)}">
                 <span ng-if="currentStep === step">{{currentStep + 1}}</span>
                 <span ng-if="step < currentStep"><i class="fa fa-check"></i></span>
             </div>

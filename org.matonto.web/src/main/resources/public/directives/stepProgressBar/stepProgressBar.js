@@ -36,7 +36,7 @@
                 stepNumber: '<',
                 currentStep: '<'
             },
-            controller: function() {
+            controller: ['$scope', function($scope) {
                 var dvm = this;
 
                 dvm.getRange = function(num) {
@@ -45,7 +45,22 @@
                 dvm.getPercentage = function(totalNum, stepNum) {
                     return 100/(totalNum - 1) * stepNum;
                 }
-            },
+                dvm.calculateLeft = function(step) {
+                    if (step === 0) {
+                        return '0%';
+                    } else if (step === $scope.stepNumber - 1) {
+                        return 'auto';
+                    } else {
+                        return dvm.getPercentage($scope.stepNumber, step) + '%';
+                    }
+                }
+                dvm.calculateRight = function(step) {
+                    return (step === $scope.stepNumber - 1) ? '0%' : 'auto';
+                }
+                dvm.calculateTransform = function(step) {
+                    return (step !== 0 && step !== $scope.stepNumber - 1) ? 'translate(-50%)' : 'none';
+                }
+            }],
             templateUrl: 'directives/stepProgressBar/stepProgressBar.html'
         };
     }

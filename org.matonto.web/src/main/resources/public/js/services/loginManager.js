@@ -89,7 +89,7 @@
                     deferred = $q.defer();
 
                 $http.get('/matontorest/user/login', config)
-                    .then(function(response) {
+                    .then(response => {
                         if (response.status === 200 && response.data.scope !== anon) {
                             self.currentUser = response.data.sub;
                             $state.go('root.home');
@@ -97,7 +97,7 @@
                         } else {
                             deferred.resolve();
                         }
-                    }, function(response) {
+                    }, response => {
                         if (response.status === 401) {
                             deferred.reject('This email/password combination is not correct.');
                         } else {
@@ -119,7 +119,7 @@
              */
             self.logout = function() {
                 $http.get('/matontorest/user/logout')
-                    .then(function(response) {
+                    .then(response => {
                         self.currentUser = '';
                         $state.go('login');
                     });
@@ -142,7 +142,7 @@
              * response data if no user is logged in.
              */
             self.isAuthenticated = function () {
-                var handleError = function handleError(data) {
+                var handleError = function(data) {
                     self.currentUser = '';
                     $state.go('login');
                     return $q.reject(data);
@@ -157,9 +157,7 @@
                     } else {
                         return handleError(data);
                     }
-                }, data => {
-                    return handleError(data);
-                });
+                }, data => handleError(data));
             };
 
             /**
@@ -171,8 +169,8 @@
              * Makes a call to GET /matontorest/user/current to retrieve the user that is currently logged
              * in. Returns a Promise with the result of the call.
              *
-             * @return {Promise} A Promise with the response data the resolves if the request was successful
-             * and rejects if unsuccessful
+             * @return {Promise} A Promise with the response data that resolves if the request was successful;
+             * rejects if unsuccessful
              */
             self.getCurrentLogin = function () {
                 var deferred = $q.defer();
@@ -183,9 +181,7 @@
                     } else {
                         deferred.reject(response.data);
                     }
-                }, error => {
-                    deferred.reject(error.data);
-                });
+                }, error => deferred.reject(error.data));
 
                 return deferred.promise;
             };

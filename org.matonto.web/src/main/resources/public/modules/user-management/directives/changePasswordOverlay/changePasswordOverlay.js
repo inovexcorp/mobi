@@ -68,9 +68,7 @@
                     dvm.um.updatePassword(dvm.state.selectedUser.username, dvm.currentPassword, dvm.password).then(response => {
                         dvm.errorMessage = '';
                         dvm.state.displayChangePasswordOverlay = false;
-                    }, error => {
-                        dvm.errorMessage = error;
-                    });
+                    }, error => dvm.errorMessage = error);
                 }
             },
             templateUrl: 'modules/user-management/directives/changePasswordOverlay/changePasswordOverlay.html'

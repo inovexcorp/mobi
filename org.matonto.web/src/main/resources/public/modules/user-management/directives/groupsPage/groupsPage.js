@@ -85,9 +85,7 @@
                     dvm.um.addUserGroup(dvm.state.memberName, dvm.state.selectedGroup.title).then(response => {
                         dvm.errorMessage = '';
                         dvm.state.memberName = '';
-                    }, error => {
-                        dvm.errorMessage = error;
-                    });
+                    }, error => dvm.errorMessage = error);
                 }
             },
             templateUrl: 'modules/user-management/directives/groupsPage/groupsPage.html'

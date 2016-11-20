@@ -29,8 +29,9 @@
          * @name createGroupOverlay
          *
          * @description
-         * The `createGroupOverlay` module only provides the `createGroupOverlay` directive which creates
-         * an overlay for adding a group to MatOnto.
+         * The `createGroupOverlay` module provides the `createGroupOverlay` directive, which creates an overlay
+         * for adding a group to MatOnto, and the `uniqueTitle` directive, which tests whether a value is already
+         * used for a {@link userManager.service:userManagerService#groups group} title.
          */
         .module('createGroupOverlay', [])
         /**
@@ -105,17 +106,13 @@
                 dvm.errorMessage = '';
 
                 dvm.add = function () {
-                    dvm.um.addGroup(dvm.newGroup).then(response => {
-                        return $q.all(_.map(dvm.newGroup.members, member => dvm.um.addUserGroup(member, dvm.newGroup.title)));
-                    }, error => {
-                        return $q.reject(error);
-                    }).then(responses => {
+                    dvm.um.addGroup(dvm.newGroup).then(response => $q.all(_.map(dvm.newGroup.members, member => dvm.um.addUserGroup(member, dvm.newGroup.title))),
+                        error => $q.reject(error))
+                    .then(responses => {
                         dvm.errorMessage = '';
                         dvm.state.displayCreateGroupOverlay = false;
-                    }, error => {
-                        dvm.errorMessage = error;
-                    });
-                };
+                    }, error => dvm.errorMessage = error);
+                }
                 dvm.addMember = function() {
                     dvm.newGroup.members.push(dvm.state.memberName);
                     dvm.state.memberName = '';

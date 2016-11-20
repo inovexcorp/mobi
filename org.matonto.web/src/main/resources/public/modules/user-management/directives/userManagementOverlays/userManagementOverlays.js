@@ -71,17 +71,13 @@
                             dvm.errorMessage = '';
                             dvm.state.selectedGroup = undefined;
                             dvm.state.displayDeleteConfirm = false;
-                        }, error => {
-                            dvm.errorMessage = error;
-                        });
+                        }, error => dvm.errorMessage = error);
                     } else if (dvm.state.selectedUser) {
                         dvm.um.deleteUser(dvm.state.selectedUser.username).then(response => {
                             dvm.errorMessage = '';
                             dvm.state.selectedUser = undefined;
                             dvm.state.displayDeleteConfirm = false;
-                        }, error => {
-                            dvm.errorMessage = error;
-                        });
+                        }, error => dvm.errorMessage = error);
                     }
                 };
                 dvm.removeMember = function() {
@@ -89,9 +85,7 @@
                         dvm.errorMessage = '';
                         dvm.state.memberName = '';
                         dvm.state.displayRemoveMemberConfirm = false;
-                    }, error => {
-                        dvm.errorMessage = error;
-                    });
+                    }, error => dvm.errorMessage = error);
                 }
             },
             templateUrl: 'modules/user-management/directives/userManagementOverlays/userManagementOverlays.html'

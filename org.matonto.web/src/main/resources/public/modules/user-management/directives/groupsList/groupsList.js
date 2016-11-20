@@ -29,8 +29,10 @@
          * @name groupsList
          *
          * @description
-         * The `groupsList` module only provides the `groupsList` directive which creates
-         * an interactable list of all {@link userManager.service:userManagerService#groups groups}.
+         * The `groupsList` module provides the `groupsList` directive which creates an interactable
+         * list of all {@link userManager.service:userManagerService#groups groups}, and the
+         * `filterGroups` filter which filters a list of groups based on a
+         * {@link userState.service:userStateService#filteredGroupList state variable}.
          */
         .module('groupsList', [])
         /**

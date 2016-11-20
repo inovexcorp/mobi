@@ -69,9 +69,7 @@
                         dvm.errorMessage = '';
                         dvm.state.displayEditGroupInfoOverlay = false;
                         dvm.state.selectedGroup = _.find(dvm.um.groups, {title: dvm.newGroup.title});
-                    }, error => {
-                        dvm.errorMessage = error;
-                    });
+                    }, error => dvm.errorMessage = error);
                 }
             },
             templateUrl: 'modules/user-management/directives/editGroupInfoOverlay/editGroupInfoOverlay.html'

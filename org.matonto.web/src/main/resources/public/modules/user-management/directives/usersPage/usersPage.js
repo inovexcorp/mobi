@@ -90,11 +90,7 @@
                 }
                 dvm.changeRoles = function() {
                     var request = dvm.roles.admin ? dvm.um.addUserRole(dvm.state.selectedUser.username, 'admin') : dvm.um.deleteUserRole(dvm.state.selectedUser.username, 'admin');
-                    request.then(response => {
-                        dvm.permissionErrorMessage = '';
-                    }, error => {
-                        dvm.permissionErrorMessage = error;
-                    });
+                    request.then(response => dvm.permissionErrorMessage = '', error => dvm.permissionErrorMessage = error);
                 }
                 dvm.getUserGroups = function() {
                     return _.filter(dvm.um.groups, group => _.includes(group.members, dvm.state.selectedUser.username));

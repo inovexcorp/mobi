@@ -69,9 +69,7 @@
                         dvm.errorMessage = '';
                         dvm.state.displayEditUserProfileOverlay = false;
                         dvm.state.selectedUser = _.find(dvm.um.users, {username: dvm.newUser.username});
-                    }, error => {
-                        dvm.errorMessage = error;
-                    });
+                    }, error => dvm.errorMessage = error);
                 }
             },
             templateUrl: 'modules/user-management/directives/editUserProfileOverlay/editUserProfileOverlay.html'
