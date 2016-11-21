@@ -1,8 +1,8 @@
-package org.matonto.catalog.impl;
+package org.matonto.catalog.api;
 
 /*-
  * #%L
- * org.matonto.catalog.impl
+ * org.matonto.catalog.api
  * $Id:$
  * $HeadURL:$
  * %%
@@ -23,26 +23,11 @@ package org.matonto.catalog.impl;
  * #L%
  */
 
-import org.matonto.catalog.api.Ontology;
-import org.matonto.catalog.api.OntologyBuilder;
-import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.Model;
 
-public class SimpleOntologyBuilder extends AbstractPublishedResourceBuilder<OntologyBuilder, Ontology>
-        implements OntologyBuilder {
+public interface Difference {
 
-    public SimpleOntologyBuilder(Resource resource, String title) {
-        this.resource = resource;
-        this.title = title;
-    }
+    Model getAdditions();
 
-    @Override
-    protected OntologyBuilder getThis() {
-        return this;
-    }
-
-    @Override
-    public Ontology build() {
-        setModified();
-        return new SimpleOntology(this);
-    }
+    Model getDeletions();
 }

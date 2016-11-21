@@ -1,8 +1,10 @@
-package org.matonto.catalog.api;
+@Version("1.0.0.${build}")
+
+package org.matonto.jaas.rest.providers;
 
 /*-
  * #%L
- * org.matonto.catalog.api
+ * org.matonto.jaas.rest
  * $Id:$
  * $HeadURL:$
  * %%
@@ -23,25 +25,4 @@ package org.matonto.catalog.api;
  * #L%
  */
 
-import org.matonto.rdf.api.Resource;
-
-import java.time.OffsetDateTime;
-
-public interface PublishedResourceBuilder<T extends PublishedResourceBuilder, U extends PublishedResource> {
-
-    T description(String val);
-
-    T issued(OffsetDateTime val);
-
-    T modified(OffsetDateTime val);
-
-    T identifier(String val);
-
-    T addKeyword(String val);
-
-    T addDistribution(Distribution val);
-
-    T addType(Resource val);
-
-    U build();
-}
+import aQute.bnd.annotation.Version;
