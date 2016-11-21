@@ -85,9 +85,9 @@ public interface OntologyManager {
     Ontology createOntology(String json) throws MatontoOntologyException;
 
     /**
-     * Retrieves Ontology object's MASTER branch's head commit by ontology id from the repository, and returns an
-     * Optional with Ontology object or an empty Optional instance if the ontology id is not found or any owlapi
-     * exception or sesame exception is caught.
+     * Retrieves an Ontology using an ontology id and the head commit of its MASTER branch. Returns an Optional with
+     * Ontology object or an empty Optional instance if the ontology id is not found or any owlapi exception or sesame
+     * exception is caught.
      *
      * @param ontologyId the ontology id for the Ontology you want to retrieve.
      * @return an Optional with Ontology if ontology id is found, or an empty Optional instance if not found.
@@ -96,9 +96,9 @@ public interface OntologyManager {
     Optional<Ontology> retrieveOntology(@Nonnull Resource ontologyId) throws MatontoOntologyException;
 
     /**
-     * Retrieves the requested branch of an Ontology object by ontology id from the repository, and returns an Optional
-     * with Ontology object or an empty Optional instance if the ontology id is not found or any owlapi exception or
-     * sesame exception is caught.
+     * Retrieves an Ontology using an ontology id and a branch id from the repository. Returns an Optional with Ontology
+     * object or an empty Optional instance if the ontology id is not found or any owlapi exception or sesame exception
+     * is caught.
      *
      * @param ontologyId the ontology id for the Ontology you want to retrieve.
      * @param branchId the branch id for the Branch you want to retrieve.
@@ -109,9 +109,9 @@ public interface OntologyManager {
             MatontoOntologyException;
 
     /**
-     * Retrieves the requested commit on the requested branch of an Ontology object by ontology id from the repository,
-     * and returns an Optional with Ontology object or an empty Optional instance if the ontology id is not found or any
-     * owlapi exception or sesame exception is caught.
+     * Retrieves an Ontology using an ontology id, a branch id, and the id of a commit on that branch from the
+     * repository. Returns an Optional with Ontology object or an empty Optional instance if the ontology id is not
+     * found or any owlapi exception or sesame exception is caught.
      *
      * @param ontologyId the ontology id for the Ontology you want to retrieve.
      * @param branchId the branch id for the Branch you want to retrieve.
@@ -203,9 +203,10 @@ public interface OntologyManager {
     TupleQueryResult getClassesWithIndividuals(Ontology ontology);
 
     /**
-     * Gets the entity usages in the provided Ontology.
+     * Gets the entity usages for the entity identified by the provided String in the provided Ontology.
      *
      * @param ontology the Ontology you wish to query.
+     * @param entityIRIStr the String for the id of the entity you want to get the usages of.
      * @return a TupleQueryResult with the query results.
      */
     TupleQueryResult getEntityUsages(Ontology ontology, String entityIRIStr);
@@ -222,6 +223,7 @@ public interface OntologyManager {
      * Searches the provided Ontology using the provided searchText.
      *
      * @param ontology the Ontology you wish to query.
+     * @param searchText the String for the text you want to search for in the Ontology.
      * @return a TupleQueryResult with the query results.
      */
     TupleQueryResult getSearchResults(Ontology ontology, String searchText);

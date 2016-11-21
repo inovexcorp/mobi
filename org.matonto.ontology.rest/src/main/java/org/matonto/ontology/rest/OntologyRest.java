@@ -55,7 +55,8 @@ public interface OntologyRest {
                         @FormDataParam("record") OntologyRecord record);
 
     /**
-     * Updates the InProgressCommit associated with the OntologyRecord identified by the provided ontologyId.
+     * Updates the InProgressCommit associated with the User making the request for the OntologyRecord identified by the
+     * provided ontologyId.
      *
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
@@ -129,7 +130,7 @@ public interface OntologyRest {
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
-     * @return annotation properties in the ontology identified by the provided IDs.
+     * @return true if added, false otherwise.
      */
     @POST
     @Path("{ontologyId}/annotations")
@@ -232,6 +233,50 @@ public interface OntologyRest {
     Response getDatatypesInOntology(@PathParam("ontologyId") String ontologyIdStr,
                                     @QueryParam("branchId") String branchIdStr,
                                     @QueryParam("commitId") String commitIdStr);
+
+    /**
+     * Adds the datatype to the ontology identified by the provided IDs.
+     *
+     * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
+     *                      an IRI unless String begins with "_:".
+     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
+     *                    master Branch.
+     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
+     *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
+     *                    otherwise, nothing will be returned.
+     * @return true if added, false otherwise.
+     */
+    @POST
+    @Path("{ontologyId}/datatypes")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    Response addDatatypeToOntology(@PathParam("ontologyId") String ontologyIdStr,
+                                   @QueryParam("branchId") String branchIdStr,
+                                   @QueryParam("commitId") String commitIdStr);
+
+    /**
+     * Delete the datatype from the ontology identified by the provided IDs.
+     *
+     * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
+     *                      an IRI unless String begins with "_:".
+     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
+     *                    master Branch.
+     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
+     *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
+     *                    otherwise, nothing will be returned.
+     * @return true if deleted, false otherwise.
+     */
+    @DELETE
+    @Path("{ontologyId}/datatypes")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    Response deleteDatatypeFromOntology(@PathParam("ontologyId") String ontologyIdStr,
+                                        @QueryParam("branchId") String branchIdStr,
+                                        @QueryParam("commitId") String commitIdStr);
 
     /**
      * Returns object properties in the ontology identified by the provided IDs.
@@ -447,7 +492,7 @@ public interface OntologyRest {
                                           @QueryParam("commitId") String commitIdStr);
 
     /**
-     * Returns IRIs in the direct imported ontologies of the ontology identified by the provided IDs.
+     * Returns IRIs in the imports closure for the ontology identified by the provided IDs.
      *
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
@@ -495,7 +540,7 @@ public interface OntologyRest {
                                @QueryParam("commitId") String commitIdStr);
 
     /**
-     * Returns annotation properties in the direct imported ontologies of the ontology identified by the provided IDs.
+     * Returns annotation properties in the imports closure for the ontology identified by the provided IDs.
      *
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
@@ -517,7 +562,7 @@ public interface OntologyRest {
                                                 @QueryParam("commitId") String commitIdStr);
 
     /**
-     * Returns classes in the direct imported ontologies of the ontology identified by the provided IDs.
+     * Returns classes in the imports closure for the ontology identified by the provided IDs.
      *
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
@@ -539,7 +584,7 @@ public interface OntologyRest {
                                             @QueryParam("commitId") String commitIdStr);
 
     /**
-     * Returns datatypes in the direct imported ontologies of the ontology identified by the provided IDs.
+     * Returns datatypes in the imports closure for the ontology identified by the provided IDs.
      *
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
@@ -561,7 +606,7 @@ public interface OntologyRest {
                                               @QueryParam("commitId") String commitIdStr);
 
     /**
-     * Returns object properties in the direct imported ontologies of the ontology identified by the provided IDs.
+     * Returns object properties in the imports closure for the ontology identified by the provided IDs.
      *
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
@@ -583,7 +628,7 @@ public interface OntologyRest {
                                                      @QueryParam("commitId") String commitIdStr);
 
     /**
-     * Returns data properties in the direct imported ontologies of the ontology identified by the provided IDs.
+     * Returns data properties in the imports closure for the ontology identified by the provided IDs.
      *
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
@@ -605,7 +650,7 @@ public interface OntologyRest {
                                                    @QueryParam("commitId") String commitIdStr);
 
     /**
-     * Returns named individuals in the direct imported ontologies of the ontology identified by the provided IDs.
+     * Returns named individuals in the imports closure for the ontology identified by the provided IDs.
      *
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
@@ -707,8 +752,8 @@ public interface OntologyRest {
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
-     * @return nested JSON structure that represents the class hierarchy for the ontology identified by the provided
-     *         IDs.
+     * @return nested JSON structure that represents the class hierarchy for classes with individuals in the ontology
+     *         identified by the provided IDs.
      */
     @GET
     @Path("{ontologyId}/classes-with-individuals")
@@ -719,8 +764,8 @@ public interface OntologyRest {
                                        @QueryParam("commitId") String commitIdStr);
 
     /**
-     * Returns JSON SPARQL query results containing statements with the requested entity IRI as the predicate of
-     * each statement.
+     * Returns JSON SPARQL query results containing statements with the requested entity IRI as the predicate or object
+     * of each statement.
      *
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
