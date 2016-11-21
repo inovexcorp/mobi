@@ -73,11 +73,11 @@
 
                 $scope.$watch('dvm.state.selectedUser', function(newValue, oldValue) {
                     if (!_.isEqual(newValue, oldValue)) {
-                        dvm.roles.admin = _.includes(dvm.state.selectedUser.roles, 'admin');
+                        dvm.roles.admin = _.includes(_.get(dvm.state.selectedUser, 'roles', []), 'admin');
                     }
                 });
                 dvm.deleteUser = function() {
-                    dvm.state.displayDeleteConfirm = true;
+                    dvm.state.displayDeleteUserConfirm = true;
                 }
                 dvm.createUser = function() {
                     dvm.state.displayCreateUserOverlay = true;

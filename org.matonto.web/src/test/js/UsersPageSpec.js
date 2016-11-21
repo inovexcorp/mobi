@@ -59,7 +59,7 @@ describe('Users Page directive', function() {
         });
         it('should set the correct state for deleting a user', function() {
             controller.deleteUser();
-            expect(userStateSvc.displayDeleteConfirm).toBe(true);
+            expect(userStateSvc.displayDeleteUserConfirm).toBe(true);
         });
         it('should set the correct state for changing a user profile', function() {
             controller.editProfile();

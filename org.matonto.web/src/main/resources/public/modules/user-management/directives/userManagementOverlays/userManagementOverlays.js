@@ -65,21 +65,20 @@
                 dvm.um = userManagerService;
                 dvm.errorMessage = '';
 
-                dvm.delete = function() {
-                    if (dvm.state.selectedGroup) {
-                        dvm.um.deleteGroup(dvm.state.selectedGroup.title).then(response => {
-                            dvm.errorMessage = '';
-                            dvm.state.selectedGroup = undefined;
-                            dvm.state.displayDeleteConfirm = false;
-                        }, error => dvm.errorMessage = error);
-                    } else if (dvm.state.selectedUser) {
-                        dvm.um.deleteUser(dvm.state.selectedUser.username).then(response => {
-                            dvm.errorMessage = '';
-                            dvm.state.selectedUser = undefined;
-                            dvm.state.displayDeleteConfirm = false;
-                        }, error => dvm.errorMessage = error);
-                    }
-                };
+                dvm.deleteUser = function() {
+                    dvm.um.deleteUser(dvm.state.selectedUser.username).then(response => {
+                        dvm.errorMessage = '';
+                        dvm.state.selectedUser = undefined;
+                        dvm.state.displayDeleteUserConfirm = false;
+                    }, error => dvm.errorMessage = error);
+                }
+                dvm.deleteGroup = function() {
+                    dvm.um.deleteGroup(dvm.state.selectedGroup.title).then(response => {
+                        dvm.errorMessage = '';
+                        dvm.state.selectedGroup = undefined;
+                        dvm.state.displayDeleteGroupConfirm = false;
+                    }, error => dvm.errorMessage = error);
+                }
                 dvm.removeMember = function() {
                     dvm.um.deleteUserGroup(dvm.state.memberName, dvm.state.selectedGroup.title).then(response => {
                         dvm.errorMessage = '';

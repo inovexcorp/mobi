@@ -576,7 +576,8 @@ function mockUserState() {
             this.selectedGroup = undefined;
             this.selectedUser = undefined;
             this.memberName = '';
-            this.displayDeleteConfirm = false;
+            this.displayDeleteUserConfirm = false;
+            this.displayDeleteGroupConfirm = false;
             this.displayCreateUserOverlay = false;
             this.displayCreateGroupOverlay = false;
             this.displayRemoveMemberConfirm = false;

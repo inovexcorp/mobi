@@ -138,15 +138,26 @@
 
             /**
              * @ngdoc property
-             * @name userState.service:userStateService#displayDeleteConfirm
+             * @name userState.service:userStateService#displayDeleteUserConfirm
              * @propertyOf userState.service:userStateService
              * @type {boolean}
              *
              * @description
-             * `displayDeleteConfirm` holds a boolean indicating whether or not the delete
-             * confirmation overlay should be shown.
+             * `displayDeleteUserConfirm` holds a boolean indicating whether or not the delete
+             * user confirmation overlay should be shown.
              */
-            self.displayDeleteConfirm = false;
+            self.displayDeleteUserConfirm = false;
+            /**
+             * @ngdoc property
+             * @name userState.service:userStateService#displayDeleteGroupConfirm
+             * @propertyOf userState.service:userStateService
+             * @type {boolean}
+             *
+             * @description
+             * `displayDeleteGroupConfirm` holds a boolean indicating whether or not the delete
+             * group confirmation overlay should be shown.
+             */
+            self.displayDeleteGroupConfirm = false;
             /**
              * @ngdoc property
              * @name userState.service:userStateService#displayCreateUserOverlay

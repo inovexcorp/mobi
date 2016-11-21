@@ -73,7 +73,7 @@
                     dvm.state.displayCreateGroupOverlay = true;
                 }
                 dvm.deleteGroup = function() {
-                    dvm.state.displayDeleteConfirm = true;
+                    dvm.state.displayDeleteGroupConfirm = true;
                 }
                 dvm.editDescription = function() {
                     dvm.state.displayEditGroupInfoOverlay = true;

@@ -59,7 +59,7 @@ describe('Groups Page directive', function() {
         });
         it('should set the correct state for deleting a group', function() {
             controller.deleteGroup();
-            expect(userStateSvc.displayDeleteConfirm).toBe(true);
+            expect(userStateSvc.displayDeleteGroupConfirm).toBe(true);
         });
         it('should set the correct state for editing a group description', function() {
             controller.editDescription();
