@@ -111,6 +111,8 @@ class SimpleMappingManagerSpec extends Specification {
         mappingWrapper.getModel() >> model
 
         mapping.getModel() >> model
+
+        transformer.matontoModel(_) >> { args -> Values.matontoModel(args[0])}
     }
 
     def "storeMapping throws an exception when mapping exists"() {
@@ -197,7 +199,6 @@ class SimpleMappingManagerSpec extends Specification {
         def actualVersionedMapping = service.createMapping(versionedMappingFile)
 
         then:
-        transformer.matontoModel(_) >> { args -> Values.matontoModel(args[0])}
         actualMapping.getModel() == expectedModel;
         actualVersionedMapping.getModel() == expectedVersionedModel;
     }
@@ -216,7 +217,6 @@ class SimpleMappingManagerSpec extends Specification {
                 .getResourceAsStream("newestVersionedMapping.jsonld"), RDFFormat.JSONLD)
 
         then:
-        transformer.matontoModel(_) >> { args -> Values.matontoModel(args[0])}
         mapping.getModel() == model;
         versionedMapping.getModel() == versionedModel;
     }
@@ -237,7 +237,6 @@ class SimpleMappingManagerSpec extends Specification {
         def actualVersionedMapping = service.createMapping(versionedMappingFile.getText("UTF-8"))
 
         then:
-        transformer.matontoModel(_) >> { args -> Values.matontoModel(args[0])}
         actualMapping.getModel() == expectedModel;
         actualVersionedMapping.getModel() == expectedVersionedModel;
     }
@@ -248,7 +247,6 @@ class SimpleMappingManagerSpec extends Specification {
                 .getResourceAsStream("testInvalidMapping.ttl"), RDFFormat.TURTLE)
 
         then:
-        transformer.matontoModel(_) >> { args -> Values.matontoModel(args[0])}
         thrown(MatOntoException);
     }
 }
