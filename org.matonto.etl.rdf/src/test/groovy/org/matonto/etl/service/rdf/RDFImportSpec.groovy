@@ -1,16 +1,19 @@
 package org.matonto.etl.service.rdf
 
-import org.matonto.rdf.api.Model
-import org.matonto.rdf.api.ModelFactory
-import org.matonto.rdf.api.Statement
-import org.matonto.rdf.core.impl.sesame.LinkedHashModel
+import org.matonto.ontology.utils.api.SesameTransformer
+import org.matonto.rdf.core.utils.Values
 import org.matonto.repository.api.DelegatingRepository
 import org.matonto.repository.api.RepositoryConnection
 import org.springframework.core.io.ClassPathResource
 import spock.lang.Specification
 
-
 class RDFImportSpec extends Specification {
+
+    def transformer = Mock(SesameTransformer)
+
+    def setup() {
+        transformer.matontoModel(_) >> { args -> Values.matontoModel(args[0])}
+    }
 
     def "Throws exception if repository ID does not exist"(){
         setup:
@@ -39,14 +42,12 @@ class RDFImportSpec extends Specification {
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-        def mf = Mock(ModelFactory.class)
-        importService.setModelFactory(mf)
+        importService.setTransformer(transformer)
 
         when:
         importService.importFile("test", testFile, true)
 
         then:
-        1 * mf.createModel(_ as Collection<Statement>) >> new LinkedHashModel()
         thrown IllegalArgumentException
     }
 
@@ -54,19 +55,17 @@ class RDFImportSpec extends Specification {
         setup:
         def repo = Mock(DelegatingRepository.class)
         RepositoryConnection repoConn = Mock()
-        ModelFactory factory = Mock()
         RDFImportServiceImpl importService = new RDFImportServiceImpl()
         File testFile = new ClassPathResource("importer/testFile.trig").getFile();
+        importService.setTransformer(transformer)
 
         when:
         importService.addRepository(repo)
-        importService.setModelFactory(factory)
         importService.importFile("test", testFile, true)
 
         then:
         1 * repo.getRepositoryID() >> "test"
         1 * repo.getConnection() >> repoConn
-        1 * factory.createModel(_) >> Mock(Model.class)
     }
 
     def "Invalid file type causes error"(){

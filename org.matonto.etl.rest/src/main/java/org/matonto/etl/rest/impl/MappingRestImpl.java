@@ -32,10 +32,10 @@ import org.matonto.etl.api.delimited.MappingManager;
 import org.matonto.etl.api.delimited.MappingWrapper;
 import org.matonto.etl.rest.MappingRest;
 import org.matonto.exception.MatOntoException;
+import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
-import org.matonto.rdf.core.utils.Values;
 import org.matonto.rest.util.ErrorUtils;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.Rio;
@@ -60,6 +60,7 @@ public class MappingRestImpl implements MappingRest {
     private MappingManager manager;
     private ValueFactory factory;
     private final Logger logger = LoggerFactory.getLogger(MappingRestImpl.class);
+    private SesameTransformer transformer;
 
     @Reference
     public void setManager(MappingManager manager) {
@@ -69,6 +70,11 @@ public class MappingRestImpl implements MappingRest {
     @Reference
     public void setFactory(ValueFactory factory) {
         this.factory = factory;
+    }
+
+    @Reference
+    protected void setTransformer(SesameTransformer transformer) {
+        this.transformer = transformer;
     }
 
     @Override
@@ -214,7 +220,7 @@ public class MappingRestImpl implements MappingRest {
         Optional<MappingWrapper> mappingModel = manager.retrieveMapping(mappingIRI);
         if (mappingModel.isPresent()) {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
-            Rio.write(Values.sesameModel(mappingModel.get().getModel()), out, format);
+            Rio.write(transformer.sesameModel(mappingModel.get().getModel()), out, format);
             mapping = new String(out.toByteArray(), StandardCharsets.UTF_8);
         } else {
             return Optional.empty();
