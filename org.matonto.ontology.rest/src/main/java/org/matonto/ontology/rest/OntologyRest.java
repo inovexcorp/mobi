@@ -239,6 +239,7 @@ public interface OntologyRest {
      *
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
+     * @param resourceJson the String representing the new datatype model.
      * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
      *                    master Branch.
@@ -253,6 +254,7 @@ public interface OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     Response addDatatypeToOntology(@PathParam("ontologyId") String ontologyIdStr,
+                                   @QueryParam("resourceJson") String resourceJson,
                                    @QueryParam("branchId") String branchIdStr,
                                    @QueryParam("commitId") String commitIdStr);
 
@@ -260,6 +262,8 @@ public interface OntologyRest {
      * Delete the datatype from the ontology identified by the provided IDs.
      *
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
+     *                      an IRI unless String begins with "_:".
+     * @param datatypeIdStr the String representing the datatype Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
      * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
@@ -275,6 +279,7 @@ public interface OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     Response deleteDatatypeFromOntology(@PathParam("ontologyId") String ontologyIdStr,
+                                        @PathParam("datatypeId") String datatypeIdStr,
                                         @QueryParam("branchId") String branchIdStr,
                                         @QueryParam("commitId") String commitIdStr);
 
