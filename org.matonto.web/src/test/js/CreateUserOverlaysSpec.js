@@ -51,6 +51,14 @@ describe('Create User Overlays directive', function() {
             scope.$digest();
             controller = this.element.controller('createUserOverlays');
         });
+        it('should get the list of used usernames', function() {
+            userManagerSvc.users = [{username: 'user'}];
+            var usernames = controller.getUsernames();
+            expect(usernames.length).toBe(userManagerSvc.users.length);
+            _.forEach(usernames, function(username, idx) {
+                expect(username).toBe(userManagerSvc.users[idx].username);
+            });
+        });
         describe('should add a user with the entered information', function() {
             beforeEach(function() {
                 controller.newUser = {username: 'username', firstName: 'John', lastName: "Doe", email: 'example@example.com'};
@@ -124,9 +132,8 @@ describe('Create User Overlays directive', function() {
             var inputGroup = angular.element(this.element.querySelectorAll('.username')[0]);
             expect(inputGroup.hasClass('has-error')).toBe(false);
 
-            controller.infoForm.username.$touched = true;
-            userManagerSvc.users = [{username: 'username'}];
-            controller.newUser.username = 'username';
+            controller.infoForm.username.$setDirty();
+            controller.infoForm.username.$invalid = true;
             scope.$digest();
             expect(inputGroup.hasClass('has-error')).toBe(true);
         });

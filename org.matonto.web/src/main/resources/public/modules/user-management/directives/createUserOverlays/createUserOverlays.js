@@ -29,9 +29,8 @@
          * @name createUserOverlays
          *
          * @description
-         * The `createUserOverlays` module provides the `createUserOverlays` directive, which creates overlays
-         * for adding a user to MatOnto, and the `uniqueUsername`, which tests whether a value is already used
-         * as a {@link userManager.service:userManagerService#users user's} username.
+         * The `createUserOverlays` module only provides the `createUserOverlays` directive which creates overlays
+         * for adding a user to MatOnto.
          */
         .module('createUserOverlays', [])
         /**
@@ -49,39 +48,7 @@
          * password, first name, last name, and email. The second overlay provides a form for settings the
          * permissions and roles of the new user.
          */
-        .directive('createUserOverlays', createUserOverlays)
-        /**
-         * @ngdoc directive
-         * @name mappingNameInput.directive:uniqueUsername
-         * @restrict A
-         * @requires $parse
-         * @requires userManager.service:userManagerService
-         *
-         * @description
-         * `uniqueUsername` is a directive which tests whether the ngModel value is in the list of saved
-         * {@link userManager.service:userManagerService#users username}. It requires the parent
-         * element to have an ngModel. If the ngModel value has already been used as a username,
-         * it sets the uniqueUsername validity of the parent element to false.
-         */
-        .directive('uniqueUsername', uniqueUsername);
-
-    uniqueUsername.$inject = ['$parse', 'userManagerService'];
-
-    function uniqueUsername($parse, userManagerService) {
-        return {
-            restrict: 'A',
-            require: 'ngModel',
-            link: function(scope, el, attrs, ctrl) {
-                ctrl.$validators.uniqueUsername = function(modelValue, viewValue) {
-                    var value = modelValue || viewValue;
-                    if (ctrl.$isEmpty(value)) {
-                        return true;
-                    }
-                    return !_.includes(_.map(userManagerService.users, 'username'), value);
-                }
-            }
-        }
-    }
+        .directive('createUserOverlays', createUserOverlays);
 
     createUserOverlays.$inject = ['$q', 'userStateService', 'userManagerService'];
 
@@ -105,6 +72,9 @@
                     email: ''
                 };
 
+                dvm.getUsernames = function() {
+                    return _.map(dvm.um.users, 'username');
+                }
                 dvm.add = function() {
                     dvm.um.addUser(dvm.newUser, dvm.password).then(response => {
                         var requests = [dvm.um.addUserRole(dvm.newUser.username, 'user')];

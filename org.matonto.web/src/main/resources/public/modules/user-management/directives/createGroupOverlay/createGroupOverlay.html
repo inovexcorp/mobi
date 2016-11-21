@@ -25,9 +25,9 @@
         <h6>Create Group</h6>
         <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
 
-        <div class="form-group title" ng-class="{'has-error': dvm.form.title.$touched && dvm.form.title.$invalid}">
+        <div class="form-group title" ng-class="{'has-error': dvm.form.title.$dirty && dvm.form.title.$invalid}">
             <custom-label muted-text="'*'">Group Title</custom-label>
-            <input class="form-control" type="text" name="title" ng-model="dvm.newGroup.title" unique-title required/>
+            <input class="form-control" type="text" name="title" ng-model="dvm.newGroup.title" unique-value="dvm.getTitles()" required/>
         </div>
         <p ng-messages="dvm.form.name.$error" class="error-msg">
             <ng-message when="uniqueTitle">This group title has already been taken.</ng-message>

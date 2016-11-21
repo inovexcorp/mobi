@@ -71,6 +71,7 @@
             'tabset',
             'textArea',
             'textInput',
+            'uniqueValue',
 
             /* Custom Modules */
             'catalog',

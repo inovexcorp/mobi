@@ -62,6 +62,14 @@ describe('Create Group Overlay directive', function() {
             scope.$digest();
             controller = this.element.controller('createGroupOverlay');
         });
+        it('should get the list of used group titles', function() {
+            userManagerSvc.groups = [{title: 'group'}];
+            var titles = controller.getTitles();
+            expect(titles.length).toBe(userManagerSvc.groups.length);
+            _.forEach(titles, function(title, idx) {
+                expect(title).toBe(userManagerSvc.groups[idx].title);
+            });
+        });
         describe('should add a group with the entered information', function() {
             beforeEach(function() {
                 controller.newGroup = {title: 'title', description: 'Description', members: ['user']};
@@ -133,9 +141,10 @@ describe('Create Group Overlay directive', function() {
             var inputGroup = angular.element(this.element.querySelectorAll('.title')[0]);
             expect(inputGroup.hasClass('has-error')).toBe(false);
 
+            controller.form.title.$setDirty();
             controller.form.title.$touched = true;
-            controller.newGroup.title = 'title';
-            userManagerSvc.groups = [{title: 'title'}];
+            /*controller.newGroup.title = 'title';
+            userManagerSvc.groups = [{title: 'title'}];*/
             scope.$digest();
             expect(inputGroup.hasClass('has-error')).toBe(true);
         });

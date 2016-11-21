@@ -29,9 +29,8 @@
          * @name createGroupOverlay
          *
          * @description
-         * The `createGroupOverlay` module provides the `createGroupOverlay` directive, which creates an overlay
-         * for adding a group to MatOnto, and the `uniqueTitle` directive, which tests whether a value is already
-         * used for a {@link userManager.service:userManagerService#groups group} title.
+         * The `createGroupOverlay` module only provides the `createGroupOverlay` directive which creates an
+         * overlay for adding a group to MatOnto.
          */
         .module('createGroupOverlay', [])
         /**
@@ -50,39 +49,7 @@
          * {@link memberTable.directive:memberTable members}. The directive is replaced by the contents of its
          * template.
          */
-        .directive('createGroupOverlay', createGroupOverlay)
-        /**
-         * @ngdoc directive
-         * @name mappingNameInput.directive:uniqueTitle
-         * @restrict A
-         * @requires $parse
-         * @requires userManager.service:userManagerService
-         *
-         * @description
-         * `uniqueTitle` is a directive which tests whether the ngModel value is in the list of saved
-         * {@link userManager.service:userManagerService#groups group titles}. It requires the parent
-         * element to have an ngModel. If the ngModel value has already been used as a group title,
-         * it sets the uniqueTitle validity of the parent element to false.
-         */
-        .directive('uniqueTitle', uniqueTitle);
-
-    uniqueTitle.$inject = ['$parse', 'userManagerService'];
-
-    function uniqueTitle($parse, userManagerService) {
-        return {
-            restrict: 'A',
-            require: 'ngModel',
-            link: function(scope, el, attrs, ctrl) {
-                ctrl.$validators.uniqueTitle = function(modelValue, viewValue) {
-                    var value = modelValue || viewValue;
-                    if (ctrl.$isEmpty(value)) {
-                        return true;
-                    }
-                    return !_.includes(_.map(userManagerService.groups, 'title'), value);
-                }
-            }
-        }
-    }
+        .directive('createGroupOverlay', createGroupOverlay);
 
     createGroupOverlay.$inject = ['$q', 'userStateService', 'userManagerService', 'loginManagerService'];
 
@@ -105,6 +72,9 @@
                 }
                 dvm.errorMessage = '';
 
+                dvm.getTitles = function() {
+                    return _.map(dvm.um.groups, 'title');
+                }
                 dvm.add = function () {
                     dvm.um.addGroup(dvm.newGroup).then(response => $q.all(_.map(dvm.newGroup.members, member => dvm.um.addUserGroup(member, dvm.newGroup.title))),
                         error => $q.reject(error))
