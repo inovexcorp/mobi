@@ -35,6 +35,7 @@ import org.junit.Assert;
 import org.matonto.etl.api.delimited.MappingId;
 import org.matonto.etl.api.delimited.MappingManager;
 import org.matonto.etl.api.delimited.MappingWrapper;
+import org.matonto.ontology.utils.impl.SimpleSesameTransformer;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.Resource;
@@ -91,6 +92,7 @@ public class MappingRestImplTest extends MatontoRestTestNg {
         rest = new MappingRestImpl();
         rest.setManager(manager);
         rest.setFactory(valueFactory);
+        rest.setTransformer(new SimpleSesameTransformer());
 
         when(mappingId.getMappingIdentifier()).thenReturn(valueFactory.createIRI(MAPPING_IRI));
         when(mappingWrapper.getModel()).thenReturn(fakeModel);
