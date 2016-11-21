@@ -275,7 +275,7 @@ public interface OntologyRest {
      * @return true if deleted, false otherwise.
      */
     @DELETE
-    @Path("{ontologyId}/datatypes")
+    @Path("{ontologyId}/datatypes/{datatypeId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     Response deleteDatatypeFromOntology(@PathParam("ontologyId") String ontologyIdStr,
