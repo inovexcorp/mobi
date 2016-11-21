@@ -26,10 +26,11 @@
         <h1>User Info</h1>
         <div class="form-group username" ng-class="{'has-error': dvm.infoForm.username.$dirty && dvm.infoForm.username.$invalid}">
             <custom-label muted-text="'*'">Username</custom-label>
-            <input class="form-control" type="text" name="username" ng-model="dvm.newUser.username" unique-value="dvm.getUsernames()" required/>
+            <input class="form-control" type="text" name="username" ng-model="dvm.newUser.username" unique-value="dvm.getUsernames()" ng-pattern="dvm.usernamePattern" ng-trim="false" required/>
         </div>
         <p ng-messages="dvm.infoForm.username.$error" class="error-msg">
-            <ng-message when="uniqueUsername">This username has already been taken.</ng-message>
+            <ng-message when="uniqueUsername">This username has already been taken</ng-message>
+            <ng-message when="pattern">Invalid username</ng-message>
         </p>
         <password-confirm-input password="dvm.password" label="'Password'" required></password-confirm-input>
         <text-input ng-model="dvm.newUser.firstName" input-name="'firstName'" display-text="'First Name'"></text-input>

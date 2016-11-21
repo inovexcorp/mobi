@@ -32,6 +32,7 @@ describe('Create User Overlays directive', function() {
     beforeEach(function() {
         module('templates');
         module('createUserOverlays');
+        injectRegexConstant();
         mockUserManager();
         mockUserState();
 
@@ -132,8 +133,8 @@ describe('Create User Overlays directive', function() {
             var inputGroup = angular.element(this.element.querySelectorAll('.username')[0]);
             expect(inputGroup.hasClass('has-error')).toBe(false);
 
+            controller.newUser.username = '$';
             controller.infoForm.username.$setDirty();
-            controller.infoForm.username.$invalid = true;
             scope.$digest();
             expect(inputGroup.hasClass('has-error')).toBe(true);
         });

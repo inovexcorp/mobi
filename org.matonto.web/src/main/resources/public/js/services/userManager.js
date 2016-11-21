@@ -208,7 +208,7 @@
                 var deferred = $q.defer();
 
                 $rootScope.showSpinner = true;
-                $http.get(userPrefix + '/' + username)
+                $http.get(userPrefix + '/' + encodeURIComponent(username))
                     .then(response => deferred.resolve(response.data),
                         error => deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.')))
                     .then(() => $rootScope.showSpinner = false);
@@ -236,10 +236,10 @@
                 var deferred = $q.defer();
 
                 $rootScope.showSpinner = true;
-                $http.put(userPrefix + '/' + username, newUser)
+                $http.put(userPrefix + '/' + encodeURIComponent(username), newUser)
                     .then(response => {
                         deferred.resolve();
-                        self.users.splice(_.findIndex(self.users, {username}), 1, newUser);
+                        _.assign(_.find(self.users, {username}), newUser);
                     }, error => deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.')))
                     .then(() => $rootScope.showSpinner = false);
                 return deferred.promise;
@@ -271,7 +271,7 @@
                     };
 
                 $rootScope.showSpinner = true;
-                $http.put(userPrefix + '/' + username + '/password', null, config)
+                $http.put(userPrefix + '/' + encodeURIComponent(username) + '/password', null, config)
                     .then(response => deferred.resolve(),
                         error => deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.')))
                     .then(() => $rootScope.showSpinner = false);
@@ -296,7 +296,7 @@
                 var deferred = $q.defer();
 
                 $rootScope.showSpinner = true;
-                $http.delete(userPrefix + '/' + username)
+                $http.delete(userPrefix + '/' + encodeURIComponent(username))
                     .then(response => {
                         deferred.resolve();
                         _.remove(self.users, {username});
@@ -331,7 +331,7 @@
                     };
 
                 $rootScope.showSpinner = true;
-                $http.put(userPrefix + '/' + username + '/roles', null, config)
+                $http.put(userPrefix + '/' + encodeURIComponent(username) + '/roles', null, config)
                     .then(response => {
                         deferred.resolve();
                         var user = _.find(self.users, {username});
@@ -367,7 +367,7 @@
                     };
 
                 $rootScope.showSpinner = true;
-                $http.delete(userPrefix + '/' + username + '/roles', config)
+                $http.delete(userPrefix + '/' + encodeURIComponent(username) + '/roles', config)
                     .then(response => {
                         deferred.resolve();
                         _.pull(_.get(_.find(self.users, {username}), 'roles'), role);
@@ -400,7 +400,7 @@
                     };
 
                 $rootScope.showSpinner = true;
-                $http.put(userPrefix + '/' + username + '/groups', null, config)
+                $http.put(userPrefix + '/' + encodeURIComponent(username) + '/groups', null, config)
                     .then(response => {
                         deferred.resolve();
                         var group = _.find(self.groups, {title: groupTitle});
@@ -435,7 +435,7 @@
                     };
 
                 $rootScope.showSpinner = true;
-                $http.delete(userPrefix + '/' + username + '/groups', config)
+                $http.delete(userPrefix + '/' + encodeURIComponent(username) + '/groups', config)
                     .then(response => {
                         deferred.resolve();
                         _.pull(_.get(_.find(self.groups, {title: groupTitle}), 'members'), username);
@@ -488,7 +488,7 @@
                 var deferred = $q.defer();
 
                 $rootScope.showSpinner = true;
-                $http.get(groupPrefix + '/' + groupTitle)
+                $http.get(groupPrefix + '/' + encodeURIComponent(groupTitle))
                     .then(response => deferred.resolve(response.data),
                         error => deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.')))
                     .then(() => $rootScope.showSpinner = false);
@@ -516,10 +516,10 @@
                 var deferred = $q.defer();
 
                 $rootScope.showSpinner = true;
-                $http.put(groupPrefix + '/' + groupTitle, newGroup)
+                $http.put(groupPrefix + '/' + encodeURIComponent(groupTitle), newGroup)
                     .then(response => {
                         deferred.resolve();
-                        self.groups.splice(_.findIndex(self.groups, {title: groupTitle}), 1, newGroup);
+                        _.assign(_.find(self.groups, {title: groupTitle}), newGroup);
                     }, error => deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.')))
                     .then(() => $rootScope.showSpinner = false);
                 return deferred.promise;
@@ -543,7 +543,7 @@
                 var deferred = $q.defer();
 
                 $rootScope.showSpinner = true;
-                $http.delete(groupPrefix + '/' + groupTitle)
+                $http.delete(groupPrefix + '/' + encodeURIComponent(groupTitle))
                     .then(response => {
                         deferred.resolve();
                         _.remove(self.groups, {title: groupTitle});
@@ -577,7 +577,7 @@
                     };
 
                 $rootScope.showSpinner = true;
-                $http.put(groupPrefix + '/' + groupTitle + '/roles', null, config)
+                $http.put(groupPrefix + '/' + encodeURIComponent(groupTitle) + '/roles', null, config)
                     .then(response => {
                         deferred.resolve();
                         var group = _.find(self.groups, {title: groupTitle});
@@ -612,7 +612,7 @@
                     };
 
                 $rootScope.showSpinner = true;
-                $http.delete(groupPrefix + '/' + groupTitle + '/roles', config)
+                $http.delete(groupPrefix + '/' + encodeURIComponent(groupTitle) + '/roles', config)
                     .then(response => {
                         deferred.resolve();
                         _.pull(_.get(_.find(self.groups, {title: groupTitle}), 'roles'), role);
@@ -639,7 +639,7 @@
                 var deferred = $q.defer();
 
                 $rootScope.showSpinner = true;
-                $http.get(groupPrefix + '/' + groupTitle + '/users')
+                $http.get(groupPrefix + '/' + encodeURIComponent(groupTitle) + '/users')
                     .then(response => deferred.resolve(response.data),
                         error => deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.')))
                     .then(() => $rootScope.showSpinner = false);
@@ -673,7 +673,7 @@
                 var deferred = $q.defer();
 
                 $rootScope.showSpinner = true;
-                $http.get(userPrefix + '/' + username + '/roles')
+                $http.get(userPrefix + '/' + encodeURIComponent(username) + '/roles')
                     .then(response => deferred.resolve(response.data),
                         error => deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.')))
                     .then(() => $rootScope.showSpinner = false);
@@ -684,7 +684,7 @@
                 var deferred = $q.defer();
 
                 $rootScope.showSpinner = true;
-                $http.get(userPrefix + '/' + username + '/groups')
+                $http.get(userPrefix + '/' + encodeURIComponent(username) + '/groups')
                     .then(response => deferred.resolve(response.data),
                         error => deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.')))
                     .then(() => $rootScope.showSpinner = false);
@@ -695,7 +695,7 @@
                 var deferred = $q.defer();
 
                 $rootScope.showSpinner = true;
-                $http.get(groupPrefix + '/' + groupTitle + '/roles')
+                $http.get(groupPrefix + '/' + encodeURIComponent(groupTitle) + '/roles')
                     .then(response => deferred.resolve(response.data),
                         error => deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.')))
                     .then(() => $rootScope.showSpinner = false);

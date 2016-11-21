@@ -50,9 +50,9 @@
          */
         .directive('createUserOverlays', createUserOverlays);
 
-    createUserOverlays.$inject = ['$q', 'userStateService', 'userManagerService'];
+    createUserOverlays.$inject = ['$q', 'userStateService', 'userManagerService', 'REGEX'];
 
-    function createUserOverlays($q, userStateService, userManagerService) {
+    function createUserOverlays($q, userStateService, userManagerService, REGEX) {
         return {
             restrict: 'E',
             controllerAs: 'dvm',
@@ -61,6 +61,7 @@
                 var dvm = this;
                 dvm.state = userStateService;
                 dvm.um = userManagerService;
+                dvm.usernamePattern = REGEX.LOCALNAME;
                 dvm.errorMessage = '';
                 dvm.step = 0;
                 dvm.roles = {admin: false};
