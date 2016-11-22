@@ -23,6 +23,7 @@ package org.matonto.jaas.engines;
  * #L%
  */
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -66,12 +67,12 @@ public class RdfEngineTest {
     private ThingFactory thingFactory = new ThingFactory();
 
     private String username = "tester";
-    private String userId = "http://matonto.org/users/" + username;
+    private String userId = "http://matonto.org/users/" + DigestUtils.sha1Hex(username);
     private String password = "test";
     private String groupName1 = "cats";
-    private String groupId1 = "http://matonto.org/groups/" + groupName1;
+    private String groupId1 = "http://matonto.org/groups/" + DigestUtils.sha1Hex(groupName1);
     private String groupName2 = "dogs";
-    private String groupId2 = "http://matonto.org/groups/" + groupName2;
+    private String groupId2 = "http://matonto.org/groups/" + DigestUtils.sha1Hex(groupName2);
     private String userRoleId = "http://matonto.org/roles/user";
     private String adminRoleId = "http://matonto.org/roles/admin";
     private String context = "http://matonto.org/usermanagement";
@@ -205,11 +206,19 @@ public class RdfEngineTest {
     public void testStoreUser() throws Exception {
         Resource newUserId = vf.createIRI("http://matonto.org/users/newuser");
         User newUser = userFactory.createNew(newUserId);
+        newUser.setUsername(vf.createLiteral("newuser"));
         engine.storeUser(newUser);
         RepositoryConnection connection = repo.getConnection();
         RepositoryResult<Statement> statements = connection.getStatements(newUserId, null, null);
         assertTrue(statements.hasNext());
         connection.close();
+    }
+
+    @Test(expected = MatOntoException.class)
+    public void testStoreUserWithNoUsername() {
+        Resource newUserId = vf.createIRI("http://matonto.org/users/newuser");
+        User newUser = userFactory.createNew(newUserId);
+        engine.storeUser(newUser);
     }
 
     @Test(expected = MatOntoException.class)
@@ -310,11 +319,19 @@ public class RdfEngineTest {
     public void testStoreGroup() throws Exception {
         Resource newGroupId = vf.createIRI("http://matonto.org/users/newgroup");
         Group newGroup = groupFactory.createNew(newGroupId);
+        newGroup.setProperty(vf.createLiteral("newgroup"), vf.createIRI(DCTERMS.TITLE.stringValue()));
         engine.storeGroup(newGroup);
         RepositoryConnection connection = repo.getConnection();
         RepositoryResult<Statement> statements = connection.getStatements(newGroupId, null, null);
         assertTrue(statements.hasNext());
         connection.close();
+    }
+
+    @Test(expected = MatOntoException.class)
+    public void testStoreGroupWithNoTitle() {
+        Resource newGroupId = vf.createIRI("http://matonto.org/users/newgroup");
+        Group newGroup = groupFactory.createNew(newGroupId);
+        engine.storeGroup(newGroup);
     }
 
     @Test(expected = MatOntoException.class)

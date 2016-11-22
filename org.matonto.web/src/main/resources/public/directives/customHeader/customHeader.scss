@@ -51,5 +51,29 @@ body.collapsed-nav .main-header {
         a {
             margin-left: 5px;
         }
+
+        div {
+            display: inline-block;
+
+            .dropdown-menu {
+                left: auto;
+                right: 0;
+
+                li {
+                    display: block;
+
+                    .divider {
+                        width: 100%;
+                    }
+                }
+                a {
+                    margin-left: 0;
+
+                    &.active {
+                        border-color: $brand-info;
+                    }
+                }
+            }
+        }
     }
 }
