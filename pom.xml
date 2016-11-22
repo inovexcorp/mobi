@@ -83,6 +83,7 @@
         <module>rdf-orm</module>
         <module>org.matonto.jaas.api</module>
         <module>org.matonto.jaas.proxy</module>
+        <module>org.matonto.platform.config.api</module>
     </modules>
 
     <properties>
