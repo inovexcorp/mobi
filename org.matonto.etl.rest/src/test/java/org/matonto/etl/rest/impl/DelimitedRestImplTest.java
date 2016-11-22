@@ -45,14 +45,17 @@ import org.matonto.etl.api.delimited.DelimitedConverter;
 import org.matonto.etl.api.delimited.MappingId;
 import org.matonto.etl.api.delimited.MappingManager;
 import org.matonto.etl.api.delimited.MappingWrapper;
+import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.core.impl.sesame.LinkedHashModel;
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
+import org.matonto.rdf.core.utils.Values;
 import org.matonto.rest.util.MatontoRestTestNg;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.openrdf.model.Model;
 import org.testng.annotations.Test;
 
 import javax.ws.rs.client.Entity;
@@ -88,6 +91,9 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
     @Mock
     MappingWrapper mappingWrapper;
 
+    @Mock
+    SesameTransformer transformer;
+
     @Override
     protected Application configureApp() throws Exception {
         ValueFactory factory = SimpleValueFactory.getInstance();
@@ -96,6 +102,7 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
         rest.setDelimitedConverter(converter);
         rest.setMappingManager(manager);
         rest.setFactory(factory);
+        rest.setTransformer(transformer);
 
         when(mappingWrapper.getModel()).thenReturn(new LinkedHashModel());
         when(converter.convert(any(SVConfig.class))).thenReturn(new LinkedHashModel());
@@ -117,6 +124,10 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
                 return factory.createIRI(i.getArguments()[0].toString());
             }
         });
+        when(transformer.matontoModel(any(Model.class)))
+                .thenAnswer(i -> Values.matontoModel((Model) i.getArguments()[0]));
+        when(transformer.sesameModel(any(org.matonto.rdf.api.Model.class)))
+                .thenAnswer(i -> Values.sesameModel((org.matonto.rdf.api.Model) i.getArguments()[0]));
 
         rest.start();
 

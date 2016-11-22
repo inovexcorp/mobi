@@ -122,17 +122,17 @@ public interface Engine {
     /**
      * Attempts to retrieve the Group with the passed name from the Engine's data source.
      *
-     * @param groupName the name of the Group to retrieve
+     * @param groupTitle the title of the Group to retrieve
      * @return an Optional that contains the Group if present; empty otherwise
      */
-    Optional<Group> retrieveGroup(String groupName);
+    Optional<Group> retrieveGroup(String groupTitle);
 
     /**
      * Removes the Group with the passed name from the Engine's data source.
      *
-     * @param groupName the name of the Group to delete
+     * @param groupTitle the title of the Group to delete
      */
-    void deleteGroup(String groupName);
+    void deleteGroup(String groupTitle);
 
     /**
      * Replaces the Group in the Engine's data source with the same identifier as the passed
@@ -146,10 +146,10 @@ public interface Engine {
      * Returns a boolean indicating whether a Group with the passed name exists in the
      * Engine's data source.
      *
-     * @param groupName the name to look for in the Engine's data source
+     * @param groupTitle the title to look for in the Engine's data source
      * @return true if a Group exists with the passed name; false otherwise
      */
-    boolean groupExists(String groupName);
+    boolean groupExists(String groupTitle);
 
     /**
      * Retrieves the Set of all Roles that the User with the passed username embodies.

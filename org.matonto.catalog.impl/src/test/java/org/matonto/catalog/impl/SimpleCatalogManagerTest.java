@@ -21,6 +21,7 @@ package org.matonto.catalog.impl;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -33,12 +34,27 @@ import org.matonto.catalog.api.ontologies.mcat.*;
 import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.jaas.api.ontologies.usermanagement.UserFactory;
-import org.matonto.rdf.api.*;
+import org.matonto.rdf.api.IRI;
+import org.matonto.rdf.api.Model;
+import org.matonto.rdf.api.ModelFactory;
+import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.Statement;
+import org.matonto.rdf.api.Value;
+import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory;
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
 import org.matonto.rdf.core.utils.Values;
 import org.matonto.rdf.orm.conversion.ValueConverterRegistry;
-import org.matonto.rdf.orm.conversion.impl.*;
+import org.matonto.rdf.orm.conversion.impl.DefaultValueConverterRegistry;
+import org.matonto.rdf.orm.conversion.impl.DoubleValueConverter;
+import org.matonto.rdf.orm.conversion.impl.FloatValueConverter;
+import org.matonto.rdf.orm.conversion.impl.IRIValueConverter;
+import org.matonto.rdf.orm.conversion.impl.IntegerValueConverter;
+import org.matonto.rdf.orm.conversion.impl.LiteralValueConverter;
+import org.matonto.rdf.orm.conversion.impl.ResourceValueConverter;
+import org.matonto.rdf.orm.conversion.impl.ShortValueConverter;
+import org.matonto.rdf.orm.conversion.impl.StringValueConverter;
+import org.matonto.rdf.orm.conversion.impl.ValueValueConverter;
 import org.matonto.rdf.orm.impl.ThingFactory;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
@@ -51,7 +67,10 @@ import org.openrdf.sail.memory.MemoryStore;
 
 import java.io.InputStream;
 import java.security.InvalidParameterException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 

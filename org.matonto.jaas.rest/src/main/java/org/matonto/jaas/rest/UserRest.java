@@ -72,7 +72,7 @@ public interface UserRest {
      */
     @GET
     @Path("{username}")
-    @RolesAllowed("admin")
+    @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation("Get a single MatOnto user")
     @JsonSerialize
@@ -84,9 +84,7 @@ public interface UserRest {
      *
      * @param context the context of the request
      * @param username the current username of the user to update
-     * @param currentPassword the current password of the user to update
-
-     * @param newPassword a new password for the user
+     * @param newUser a user object with the new information to update
      * @return a Response indicating the success or failure of the request
      */
     @PUT
@@ -96,9 +94,26 @@ public interface UserRest {
     @Consumes(MediaType.APPLICATION_JSON)
     Response updateUser(@Context ContainerRequestContext context,
                         @PathParam("username") String username,
-                        @QueryParam("currentPassword") String currentPassword,
-                        @DefaultValue("") @QueryParam("newPassword") String newPassword,
                         User newUser);
+
+    /**
+     * Updates the password of the specified user in MatOnto. In order to change the user's password,
+     * the current password must be provided.
+     *
+     * @param context the context of the request
+     * @param username the current username of the user to update
+     * @param currentPassword the current password of the user to update
+     * @param newPassword a new password for the user
+     * @return a Response indicating the success or failure of the request
+     */
+    @PUT
+    @Path("{username}/password")
+    @RolesAllowed("user")
+    @ApiOperation("Update a MatOnto user's password")
+    Response updatePassword(@Context ContainerRequestContext context,
+                            @PathParam("username") String username,
+                            @QueryParam("currentPassword") String currentPassword,
+                            @QueryParam("newPassword") String newPassword);
 
     /**
      * Removes the specified user from MatOnto. Only the user being deleted or an admin

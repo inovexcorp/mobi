@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Custom Label directive', function() {
+describe('Custom Header directive', function() {
     var $compile,
         scope,
         ontologyManagerSvc,
@@ -30,6 +30,8 @@ describe('Custom Label directive', function() {
         delimitedManagerSvc,
         sparqlManagerSvc,
         loginManagerSvc,
+        userStateSvc,
+        userManagerSvc,
         controller;
 
     beforeEach(function() {
@@ -42,8 +44,10 @@ describe('Custom Label directive', function() {
         mockDelimitedManager();
         mockSparqlManager();
         mockLoginManager();
+        mockUserState();
+        mockUserManager();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_, _sparqlManagerService_, _loginManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_, _sparqlManagerService_, _loginManagerService_, _userStateService_, _userManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyManagerSvc = _ontologyManagerService_;
@@ -53,6 +57,8 @@ describe('Custom Label directive', function() {
             delimitedManagerSvc = _delimitedManagerService_;
             sparqlManagerSvc = _sparqlManagerService_;
             loginManagerSvc = _loginManagerService_;
+            userStateSvc = _userStateService_;
+            userManagerSvc = _userManagerService_;
         });
     });
 
@@ -86,6 +92,8 @@ describe('Custom Label directive', function() {
             expect(delimitedManagerSvc.reset).toHaveBeenCalled();
             expect(sparqlManagerSvc.reset).toHaveBeenCalled();
             expect(loginManagerSvc.logout).toHaveBeenCalled();
+            expect(userStateSvc.reset).toHaveBeenCalled();
+            expect(userManagerSvc.reset).toHaveBeenCalled();
         });
     });
     describe('contains the correct html', function() {

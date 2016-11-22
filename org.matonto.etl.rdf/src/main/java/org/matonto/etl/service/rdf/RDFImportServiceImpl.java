@@ -23,36 +23,38 @@ package org.matonto.etl.service.rdf;
  * #L%
  */
 
+import aQute.bnd.annotation.component.Component;
+import aQute.bnd.annotation.component.Reference;
+import org.matonto.etl.api.rdf.RDFImportService;
+import org.matonto.ontology.utils.api.SesameTransformer;
+import org.matonto.rdf.api.Model;
+import org.matonto.repository.api.DelegatingRepository;
+import org.matonto.repository.api.Repository;
+import org.matonto.repository.api.RepositoryConnection;
+import org.matonto.repository.exception.RepositoryException;
+import org.openrdf.rio.ParserConfig;
+import org.openrdf.rio.RDFFormat;
+import org.openrdf.rio.RDFHandlerException;
+import org.openrdf.rio.RDFParseException;
+import org.openrdf.rio.RDFParser;
+import org.openrdf.rio.Rio;
+import org.openrdf.rio.helpers.BasicParserSettings;
+import org.openrdf.rio.helpers.StatementCollector;
+
+import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-import org.matonto.etl.api.rdf.RDFImportService;
-import org.matonto.rdf.api.Model;
-import org.matonto.rdf.api.ModelFactory;
-import org.matonto.rdf.api.Statement;
-import org.matonto.rdf.core.utils.Values;
-import org.matonto.repository.api.DelegatingRepository;
-import org.matonto.repository.api.RepositoryConnection;
-import org.matonto.repository.api.Repository;
-import org.matonto.repository.exception.RepositoryException;
-import org.openrdf.rio.*;
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Reference;
-import org.openrdf.rio.helpers.BasicParserSettings;
-import org.openrdf.rio.helpers.StatementCollector;
-import javax.annotation.Nonnull;
 
 @Component(provide = RDFImportService.class)
 public class RDFImportServiceImpl implements RDFImportService {
 
     private Map<String, Repository> initializedRepositories = new HashMap<>();
 
-    private ModelFactory modelFactory;
+    private SesameTransformer transformer;
 
     @Reference(type = '*', dynamic = true)
     public void addRepository(DelegatingRepository repository) {
@@ -64,8 +66,8 @@ public class RDFImportServiceImpl implements RDFImportService {
     }
 
     @Reference
-    public void setModelFactory(ModelFactory modelFactory) {
-        this.modelFactory = modelFactory;
+    public void setTransformer(SesameTransformer transformer) {
+        this.transformer = transformer;
     }
 
     /**
@@ -114,7 +116,7 @@ public class RDFImportServiceImpl implements RDFImportService {
             throw new RDFParseException(e);
         }
 
-        importModel(repositoryID, matontoModel(model));
+        importModel(repositoryID, transformer.matontoModel(model));
     }
 
     public void importModel(String repositoryID, Model model) {
@@ -126,13 +128,5 @@ public class RDFImportServiceImpl implements RDFImportService {
         } else {
             throw new IllegalArgumentException("Repository does not exist");
         }
-    }
-
-    private Model matontoModel(org.openrdf.model.Model model) {
-        Set<Statement> stmts = model.stream()
-                .map(Values::matontoStatement)
-                .collect(Collectors.toSet());
-
-        return modelFactory.createModel(stmts);
     }
 }

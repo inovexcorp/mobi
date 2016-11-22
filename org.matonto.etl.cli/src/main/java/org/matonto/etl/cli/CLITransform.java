@@ -36,8 +36,8 @@ import org.matonto.etl.api.config.SVConfig;
 import org.matonto.etl.api.delimited.DelimitedConverter;
 import org.matonto.etl.api.rdf.RDFExportService;
 import org.matonto.etl.api.rdf.RDFImportService;
+import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.rdf.api.Model;
-import org.matonto.rdf.core.utils.Values;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.Rio;
 
@@ -96,6 +96,13 @@ public class CLITransform implements Action {
         this.rdfExportService = rdfExportService;
     }
 
+    @Reference
+    private SesameTransformer transformer;
+
+    protected void setSesameTransformer(SesameTransformer transformer) {
+        this.transformer = transformer;
+    }
+
     @Override
     public Object execute() throws Exception {
         LOGGER.info("Importing CSV");
@@ -128,7 +135,7 @@ public class CLITransform implements Action {
             if (!format.isPresent()) {
                 throw new Exception("Mapping file is not in a correct RDF format.");
             }
-            Model mapping = Values.matontoModel(Rio.parse(new FileInputStream(mappingFile), "", format.get()));
+            Model mapping = transformer.matontoModel(Rio.parse(new FileInputStream(mappingFile), "", format.get()));
             Model model;
             if (extension.equals("xls") || extension.equals("xlsx")) {
                 ExcelConfig config = new ExcelConfig.Builder(new FileInputStream(newFile), mapping)

@@ -26,6 +26,7 @@ describe('Login controller', function() {
         loginManagerSvc,
         ontologyManagerSvc,
         mappingManagerSvc,
+        userManagerSvc,
         $q,
         controller;
 
@@ -34,13 +35,15 @@ describe('Login controller', function() {
         mockOntologyManager();
         mockMappingManager();
         mockLoginManager();
+        mockUserManager();
 
-        inject(function(_$rootScope_, _$controller_, _loginManagerService_,  _ontologyManagerService_, _mappingManagerService_, _$q_) {
+        inject(function(_$rootScope_, _$controller_, _loginManagerService_,  _ontologyManagerService_, _mappingManagerService_, _userManagerService_, _$q_) {
             scope = _$rootScope_;
             $controller = _$controller_;
             loginManagerSvc = _loginManagerService_;
             ontologyManagerSvc = _ontologyManagerService_;
             mappingManagerSvc = _mappingManagerService_;
+            userManagerSvc = _userManagerService_;
             $q = _$q_;
         });
 
@@ -50,26 +53,27 @@ describe('Login controller', function() {
     describe('correctly validates a login combination', function() {
         beforeEach(function() {
             controller.form = {
-                username: '',
+                username: 'user',
                 password: ''
             };
         });
         it('unless an error occurs', function() {
             loginManagerSvc.login.and.returnValue($q.reject('Error message'));
-            controller.login(true);
+            controller.login();
             scope.$digest();
-            expect(loginManagerSvc.login).toHaveBeenCalledWith(true, controller.form.username, controller.form.password);
+            expect(loginManagerSvc.login).toHaveBeenCalledWith(controller.form.username, controller.form.password);
             expect(controller.errorMessage).toBe('Error message');
             expect(ontologyManagerSvc.initialize).not.toHaveBeenCalled();
             expect(mappingManagerSvc.initialize).not.toHaveBeenCalled();
         });
         it('successfully', function() {
-            controller.login(true);
+            controller.login();
             scope.$digest();
-            expect(loginManagerSvc.login).toHaveBeenCalledWith(true, controller.form.username, controller.form.password);
+            expect(loginManagerSvc.login).toHaveBeenCalledWith(controller.form.username, controller.form.password);
             expect(controller.errorMessage).toBe('');
             expect(ontologyManagerSvc.initialize).toHaveBeenCalled();
             expect(mappingManagerSvc.initialize).toHaveBeenCalled();
+            expect(userManagerSvc.initialize).toHaveBeenCalled();
         });
     });
 });
