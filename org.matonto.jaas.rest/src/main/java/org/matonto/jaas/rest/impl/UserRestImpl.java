@@ -44,9 +44,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.security.Principal;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.security.auth.Subject;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.GenericEntity;
@@ -116,18 +117,14 @@ public class UserRestImpl implements UserRest {
     }
 
     @Override
-    public Response updateUser(ContainerRequestContext context, String username, String currentPassword,
-                               String newPassword, User newUser) {
-        if (username == null || currentPassword == null) {
-            throw ErrorUtils.sendError("Both current username and current password must be provided",
+    public Response updateUser(ContainerRequestContext context, String username, User newUser) {
+        if (username == null) {
+            throw ErrorUtils.sendError("Current username must be provided",
                     Response.Status.BAD_REQUEST);
         }
         if (!isAuthorizedUser(context, username)) {
             throw ErrorUtils.sendError("User is not authorized to make this request with these parameters",
                     Response.Status.FORBIDDEN);
-        }
-        if (!engineManager.checkPassword(RDF_ENGINE, username, currentPassword)) {
-            throw ErrorUtils.sendError("Invalid password", Response.Status.UNAUTHORIZED);
         }
         Value newUsername = newUser.getUsername().orElseThrow(() ->
                 ErrorUtils.sendError("Username must be provided in new user", Response.Status.BAD_REQUEST));
@@ -140,15 +137,35 @@ public class UserRestImpl implements UserRest {
         if (!savedUser.getHasUserRole().isEmpty()) {
             newUser.setHasUserRole(savedUser.getHasUserRole());
         }
-        if (newPassword.isEmpty()) {
-            newUser.setPassword(savedUser.getPassword().get());
-        } else {
-            User tempUser = engineManager.createUser(RDF_ENGINE,
-                    new UserConfig.Builder("", newPassword, new HashSet<>()).build());
-            newUser.setPassword(tempUser.getPassword().get());
-        }
+        newUser.setPassword(savedUser.getPassword().get());
 
         engineManager.updateUser(RDF_ENGINE, newUser);
+        return Response.ok().build();
+    }
+
+    @Override
+    public Response updatePassword(ContainerRequestContext context, String username, String currentPassword,
+                                   String newPassword) {
+        if (username == null || currentPassword == null) {
+            throw ErrorUtils.sendError("Both current username and current password must be provided",
+                    Response.Status.BAD_REQUEST);
+        }
+        if (newPassword == null) {
+            throw ErrorUtils.sendError("New password must be provided", Response.Status.BAD_REQUEST);
+        }
+        if (!isAuthorizedUser(context, username)) {
+            throw ErrorUtils.sendError("User is not authorized to make this request with these parameters",
+                    Response.Status.FORBIDDEN);
+        }
+        if (!engineManager.checkPassword(RDF_ENGINE, username, currentPassword)) {
+            throw ErrorUtils.sendError("Invalid password", Response.Status.UNAUTHORIZED);
+        }
+        User savedUser = engineManager.retrieveUser(RDF_ENGINE, username).orElseThrow(() ->
+                ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
+        User tempUser = engineManager.createUser(RDF_ENGINE,
+                new UserConfig.Builder("", newPassword, new HashSet<>()).build());
+        savedUser.setPassword(tempUser.getPassword().get());
+        engineManager.updateUser(RDF_ENGINE, savedUser);
         return Response.ok().build();
     }
 

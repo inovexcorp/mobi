@@ -24,19 +24,20 @@
     'use strict';
 
     angular
-        .module('customSetting', [])
-        .directive('customSetting', customSetting);
-
-        function customSetting() {
-            return {
-                restrict: 'E',
-                replace: true,
-                transclude: true,
-                scope: {
-                    header: '=',
-                    question: '='
-                },
-                templateUrl: 'modules/settings/directives/customSetting/customSetting.html'
-            }
-        }
+        .module('user-management', [
+            /* Custom directives */
+            'changePasswordOverlay',
+            'createGroupOverlay',
+            'createUserOverlays',
+            'editGroupInfoOverlay',
+            'editUserProfileOverlay',
+            'groupsList',
+            'groupsPage',
+            'memberTable',
+            'userManagementOverlays',
+            'userManagementTabset',
+            'userPermissionsInput',
+            'usersList',
+            'usersPage'
+        ]);
 })();

@@ -158,19 +158,19 @@ public interface EngineManager {
      * could not be found.
      *
      * @param engine the name of the Engine to retrieve the Group with
-     * @param groupName the name of the Group to retrieve
+     * @param groupTitle the title of the Group to retrieve
      * @return an Optional that contains the Group if present; empty otherwise
      */
-    Optional<Group> retrieveGroup(String engine, String groupName);
+    Optional<Group> retrieveGroup(String engine, String groupTitle);
 
     /**
      * Removes the Group with the passed name using the Engine with the passed name.
      * If the engine is not in the manager, does nothing.
      *
      * @param engine the name of the Engine to delete the Group with
-     * @param groupName the name of the Group to delete
+     * @param groupTitle the title of the Group to delete
      */
-    void deleteGroup(String engine, String groupName);
+    void deleteGroup(String engine, String groupTitle);
 
     /**
      * Replaces the Group with the same identifier as the passed Group with the new Group object
@@ -186,19 +186,19 @@ public interface EngineManager {
      * Engine with the passed name.
      *
      * @param engine the name of the Engine to test for the existence of the Group with
-     * @param groupName the name of the Group to look for
+     * @param groupTitle the title of the Group to look for
      * @return true if a Group exists with the passed name; false otherwise
      */
-    boolean groupExists(String engine, String groupName);
+    boolean groupExists(String engine, String groupTitle);
 
     /**
      * Returns a boolean indicating whether a Group with the passed name exists using any
      * of the Engines managed by the EngineManager.
      *
-     * @param groupName the name of the Group to look for
+     * @param groupTitle the title of the Group to look for
      * @return true if a Group exists with the passed name; false otherwise
      */
-    boolean groupExists(String groupName);
+    boolean groupExists(String groupTitle);
 
     /**
      * Retrieves the Set of all Roles that the User with the passed username embodies

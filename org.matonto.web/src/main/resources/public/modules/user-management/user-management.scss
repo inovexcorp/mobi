@@ -1,0 +1,24 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.user-management {
+    background-color: $gray-lighter;
+
+    .table {
+        tr {
+            &:first-child td {
+                border-top: none;
+            }
+
+            td {
+                &:last-child {
+                    span {
+                        &:last-child {                        
+                            margin-left: 10px;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
