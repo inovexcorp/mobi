@@ -26,15 +26,20 @@ package org.matonto.jaas.engines;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import org.apache.log4j.Logger;
-import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.engines.Engine;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.engines.GroupConfig;
 import org.matonto.jaas.api.engines.UserConfig;
-import org.matonto.jaas.api.ontologies.usermanagement.*;
+import org.matonto.jaas.api.ontologies.usermanagement.Group;
+import org.matonto.jaas.api.ontologies.usermanagement.Role;
+import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.rdf.orm.Thing;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component(
@@ -152,17 +157,17 @@ public class SimpleEngineManager implements EngineManager {
     }
 
     @Override
-    public Optional<Group> retrieveGroup(String engine, String groupName) {
+    public Optional<Group> retrieveGroup(String engine, String groupTitle) {
         if (engines.containsKey(engine)) {
-            return engines.get(engine).retrieveGroup(groupName);
+            return engines.get(engine).retrieveGroup(groupTitle);
         }
         return Optional.empty();
     }
 
     @Override
-    public void deleteGroup(String engine, String groupName) {
+    public void deleteGroup(String engine, String groupTitle) {
         if (containsEngine(engine)) {
-            engines.get(engine).deleteGroup(groupName);
+            engines.get(engine).deleteGroup(groupTitle);
         }
     }
 
@@ -174,14 +179,14 @@ public class SimpleEngineManager implements EngineManager {
     }
 
     @Override
-    public boolean groupExists(String engine, String groupName) {
-        return engines.containsKey(engine) && engines.get(engine).groupExists(groupName);
+    public boolean groupExists(String engine, String groupTitle) {
+        return engines.containsKey(engine) && engines.get(engine).groupExists(groupTitle);
     }
 
     @Override
-    public boolean groupExists(String groupName) {
+    public boolean groupExists(String groupTitle) {
         for (Engine engine : engines.values()) {
-            if (engine.groupExists(groupName)) {
+            if (engine.groupExists(groupTitle)) {
                 return true;
             }
         }
