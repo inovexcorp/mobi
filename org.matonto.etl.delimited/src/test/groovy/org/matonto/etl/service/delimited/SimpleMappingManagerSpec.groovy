@@ -27,6 +27,7 @@ import org.matonto.etl.api.delimited.MappingWrapper
 import org.matonto.etl.api.ontologies.delimited.*
 import org.matonto.exception.MatOntoException
 import org.matonto.ontologies.rdfs.Resource
+import org.matonto.ontology.utils.api.SesameTransformer
 import org.matonto.rdf.api.Model
 import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory
@@ -64,6 +65,7 @@ class SimpleMappingManagerSpec extends Specification {
     def builder = new SimpleMappingId.Builder(vf)
     def mappingIRI = vf.createIRI("http://test.com/mapping")
     def versionIRI = vf.createIRI("http://test.com/mapping/1.0")
+    def transformer = Mock(SesameTransformer)
 
     def setup() {
         mappingFactory.setValueFactory(vf)
@@ -101,6 +103,7 @@ class SimpleMappingManagerSpec extends Specification {
         service.setModelFactory(mf)
         service.setMappingFactory(mappingFactory)
         service.setClassMappingFactory(classMappingFactory)
+        service.setSesameTransformer(transformer)
 
         mappingWrapper.getId() >> mappingId
         mappingWrapper.getMapping() >> mapping
@@ -108,6 +111,8 @@ class SimpleMappingManagerSpec extends Specification {
         mappingWrapper.getModel() >> model
 
         mapping.getModel() >> model
+
+        transformer.matontoModel(_) >> { args -> Values.matontoModel(args[0])}
     }
 
     def "storeMapping throws an exception when mapping exists"() {
@@ -187,11 +192,13 @@ class SimpleMappingManagerSpec extends Specification {
                 .toURI()).toFile()
 
         def expectedModel = Values.matontoModel(Rio.parse(mappingStream, "", RDFFormat.TURTLE))
-        def actualMapping = service.createMapping(mappingFile)
         def expectedVersionedModel = Values.matontoModel(Rio.parse(versionedMappingStream, "", RDFFormat.JSONLD))
+
+        when:
+        def actualMapping = service.createMapping(mappingFile)
         def actualVersionedMapping = service.createMapping(versionedMappingFile)
 
-        expect:
+        then:
         actualMapping.getModel() == expectedModel;
         actualVersionedMapping.getModel() == expectedVersionedModel;
     }
@@ -200,14 +207,16 @@ class SimpleMappingManagerSpec extends Specification {
         setup:
         def model = Values.matontoModel(Rio.parse(getClass().getClassLoader()
                 .getResourceAsStream("newestMapping.ttl"), "", RDFFormat.TURTLE))
-        def mapping = service.createMapping(getClass().getClassLoader()
-                .getResourceAsStream("newestMapping.ttl"), RDFFormat.TURTLE)
         def versionedModel = Values.matontoModel(Rio.parse(getClass().getClassLoader()
                 .getResourceAsStream("newestVersionedMapping.jsonld"), "", RDFFormat.JSONLD))
+
+        when:
+        def mapping = service.createMapping(getClass().getClassLoader()
+                .getResourceAsStream("newestMapping.ttl"), RDFFormat.TURTLE)
         def versionedMapping = service.createMapping(getClass().getClassLoader()
                 .getResourceAsStream("newestVersionedMapping.jsonld"), RDFFormat.JSONLD)
 
-        expect:
+        then:
         mapping.getModel() == model;
         versionedMapping.getModel() == versionedModel;
     }
@@ -221,11 +230,13 @@ class SimpleMappingManagerSpec extends Specification {
                 .toURI()).toFile()
 
         def expectedModel = Values.matontoModel(Rio.parse(mappingStream, "", RDFFormat.JSONLD))
-        def actualMapping = service.createMapping(mappingFile.getText("UTF-8"))
         def expectedVersionedModel = Values.matontoModel(Rio.parse(versionedMappingStream, "", RDFFormat.JSONLD))
+
+        when:
+        def actualMapping = service.createMapping(mappingFile.getText("UTF-8"))
         def actualVersionedMapping = service.createMapping(versionedMappingFile.getText("UTF-8"))
 
-        expect:
+        then:
         actualMapping.getModel() == expectedModel;
         actualVersionedMapping.getModel() == expectedVersionedModel;
     }
