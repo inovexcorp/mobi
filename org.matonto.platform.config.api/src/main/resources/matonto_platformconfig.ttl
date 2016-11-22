@@ -1,9 +1,9 @@
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
 @prefix owl: <http://www.w3.org/2002/07/owl#>.
-@prefix dc: <http://purl.org/dc/elements/1.1/>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
 @prefix dct: <http://purl.org/dc/terms/>.
+@prefix foaf: <http://xmlns.com/foaf/0.1/>.
 @prefix matuser: <http://matonto.org/ontologies/user/management#> .
 @prefix : <http://matonto.org/ontologies/platform/config#>.
 @base <http://matonto.org/ontologies/platform/config>.
@@ -15,7 +15,7 @@
     rdfs:comment "The MatOnto platform configuration ontology describes how user preferences, user state, and applications are expressed within the MatOnto framework."@en;
     dct:creator [foaf:name "Jordan Lewis"], [foaf:name "Megan Mercer"];
     foaf:maker [foaf:name "MatOnto"; foaf:homepage <http://matonto.org>];
-    dct:modified "2016-11-21"^^xsd:date.
+    dct:modified "2016-11-22"^^xsd:date.
 
 # Application
 
@@ -48,13 +48,6 @@
     rdfs:domain :ApplicationState;
     rdfs:range :Application.
 
-# OntologyState
-
-:OntologyState a owl:Class;
-    rdfs:subClassOf :VersionedState;
-    rdfs:label "Ontology State"@en;
-    rdfs:comment "A representation of a user's last state for a versioned Ontology"@en.
-
 # Preferences
 
 :Preferences a owl:Class;
@@ -85,5 +78,5 @@
 :forUser a owl:ObjectProperty;
     rdfs:label "for user"@en;
     rdfs:comment "The User associated with the described Preferences or State."@en;
-    rdfs:domain [a owl:Class; owl:unionOf(:State :Preferences)] ;
+    #rdfs:domain [a owl:Class; owl:unionOf(:State :Preferences)] ;
     rdfs:range matuser:User.

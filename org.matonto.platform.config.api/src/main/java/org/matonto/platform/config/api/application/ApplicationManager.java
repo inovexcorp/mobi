@@ -1,22 +1,45 @@
 package org.matonto.platform.config.api.application;
 
+/*-
+ * #%L
+ * org.matonto.platform.config.api
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+
 import org.matonto.platform.config.api.ontologies.platformconfig.Application;
 
 public interface ApplicationManager {
 
     /**
-     * Tests whether an Application with the passed id exists as a service.
+     * Tests whether an Application with the passed ID exists as a service.
      *
-     * @param applicationid The id to search for an Application that matches
-     * @return true if an Application exists with the passed id; false otherwise
+     * @param applicationid The ID to search for an Application that matches
+     * @return true if an Application exists with the passed ID; false otherwise
      */
     boolean applicationExists(String applicationid);
 
     /**
-     * Returns the Application object for the Application service with the passed id.
+     * Returns the Application object for the Application service with the passed ID.
      *
-     * @param applicationid The id of the Application to retrieve
-     * @return the Application specified by the passed id
+     * @param applicationid The ID of the Application to retrieve
+     * @return the Application specified by the passed ID
      */
     Application getApplication(String applicationid);
 }
