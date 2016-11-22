@@ -143,8 +143,6 @@ describe('Create Group Overlay directive', function() {
 
             controller.form.title.$setDirty();
             controller.form.title.$touched = true;
-            /*controller.newGroup.title = 'title';
-            userManagerSvc.groups = [{title: 'title'}];*/
             scope.$digest();
             expect(inputGroup.hasClass('has-error')).toBe(true);
         });
