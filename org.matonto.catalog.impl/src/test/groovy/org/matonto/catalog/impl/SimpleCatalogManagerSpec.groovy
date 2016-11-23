@@ -179,7 +179,6 @@ class SimpleCatalogManagerSpec extends Specification {
         service.setCommitFactory(commitFactory)
         service.setInProgressCommitFactory(inProgressCommitFactory)
         service.setRevisionFactory(revisionFactory)
-        service.setThingFactory(thingFactory)
 
         catalog.getModel() >> model
 

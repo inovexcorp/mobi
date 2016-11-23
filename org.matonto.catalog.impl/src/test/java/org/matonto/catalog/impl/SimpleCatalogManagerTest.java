@@ -248,7 +248,6 @@ public class SimpleCatalogManagerTest {
         manager.setCommitFactory(commitFactory);
         manager.setRevisionFactory(revisionFactory);
         manager.setVersionedRDFRecordFactory(versionedRDFRecordFactory);
-        manager.setThingFactory(thingFactory);
 
         InputStream testData = getClass().getResourceAsStream("/testCatalogData.trig");
 
@@ -1372,10 +1371,9 @@ public class SimpleCatalogManagerTest {
     public void testAddMasterBranch() throws Exception {
         IRI branchIRI = vf.createIRI(VersionedRDFRecord.branch_IRI);
         IRI masterBranchIRI = vf.createIRI(VersionedRDFRecord.masterBranch_IRI);
-        Resource recordId = vf.createIRI("http://matonto.org/test/records#versionedRDF");
+        Resource recordId = vf.createIRI("http://matonto.org/test/records#update");
 
         RepositoryConnection conn = repo.getConnection();
-
         manager.addMasterBranch(recordId);
         assertTrue(conn.getStatements(recordId, masterBranchIRI, null, recordId).hasNext());
         assertTrue(conn.getStatements(recordId, branchIRI, null, recordId).hasNext());
@@ -1418,6 +1416,13 @@ public class SimpleCatalogManagerTest {
         manager.updateBranch(branch);
     }
 
+    @Test(expected = MatOntoException.class)
+    public void testUpdateMasterBranch() {
+        Resource branchId = vf.createIRI("http://matonto.org/test/branches#master");
+        Branch branch = branchFactory.createNew(branchId);
+        manager.updateBranch(branch);
+    }
+
     @Test
     public void testRemoveBranch() throws Exception {
         Resource branchId = vf.createIRI("http://matonto.org/test/branches#test");
@@ -1449,6 +1454,13 @@ public class SimpleCatalogManagerTest {
     @Test(expected = MatOntoException.class)
     public void testRemoveWrongBranch() {
         Resource branchId = vf.createIRI("http://matonto.org/test/branches#test2");
+        Resource versionedRDFRecordId = vf.createIRI("http://matonto.org/test/records#versionedRDF");
+        manager.removeBranch(branchId, versionedRDFRecordId);
+    }
+
+    @Test(expected = MatOntoException.class)
+    public void testRemoveMasterBranch() {
+        Resource branchId = vf.createIRI("http://matonto.org/test/branches#master");
         Resource versionedRDFRecordId = vf.createIRI("http://matonto.org/test/records#versionedRDF");
         manager.removeBranch(branchId, versionedRDFRecordId);
     }

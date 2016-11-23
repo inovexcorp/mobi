@@ -87,7 +87,7 @@
     rdfs:domain :VersionedRDFRecord;
     rdfs:range :Branch.
 
-:masterBranch a owl:ObjectProperty;
+:masterBranch a owl:ObjectProperty, owl:FunctionalProperty;
     rdfs:label "master branch"@en;
     rdfs:comment "The master Branch of the described Versioned RDF Record."@en;
     rdfs:domain :VersionedRDFRecord;

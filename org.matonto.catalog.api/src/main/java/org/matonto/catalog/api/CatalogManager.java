@@ -292,7 +292,8 @@ public interface CatalogManager {
     void addMasterBranch(Resource versionedRDFRecordId) throws MatOntoException;
 
     /**
-     * Uses the provided Branch to find the Resource of the existing Branch and replaces it.
+     * Uses the provided Branch to find the Resource of the existing non-master Branch and replaces it. If the provided
+     * Branch is the master Branch, it will not be updated.
      *
      * @param newBranch The Branch with the desired changes.
      * @throws MatOntoException Thrown if a connection to the repository could not be made.
@@ -300,8 +301,9 @@ public interface CatalogManager {
     void updateBranch(Branch newBranch) throws MatOntoException;
 
     /**
-     * Removes the Branch identified by the provided Resource from the repository if it was a Branch of the
-     * VersionedRDFRecord identified by the provided Resource.
+     * Removes the non-master Branch identified by the provided Resource from the repository if it was a Branch of the
+     * VersionedRDFRecord identified by the provided Resource. If the provided Branch is the master Branch, it will not
+     * be removed.
      *
      * @param branchId The Resource identifying the Branch you want to remove.
      * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord to remove the Branch from.

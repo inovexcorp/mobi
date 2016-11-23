@@ -83,7 +83,6 @@ public class SimpleCatalogManager implements CatalogManager {
     private CommitFactory commitFactory;
     private RevisionFactory revisionFactory;
     private VersionedRDFRecordFactory versionedRDFRecordFactory;
-    private ThingFactory thingFactory;
     private Resource distributedCatalogIRI;
     private Resource localCatalogIRI;
     private Map<Resource, String> sortingOptions = new HashMap<>();
@@ -148,11 +147,6 @@ public class SimpleCatalogManager implements CatalogManager {
     @Reference
     protected void setVersionedRDFRecordFactory(VersionedRDFRecordFactory versionedRDFRecordFactory) {
         this.versionedRDFRecordFactory = versionedRDFRecordFactory;
-    }
-
-    @Reference
-    protected void setThingFactory(ThingFactory thingFactory) {
-        this.thingFactory = thingFactory;
     }
 
     private static final String RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
@@ -629,18 +623,31 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public void updateBranch(Branch newBranch) throws MatOntoException {
-        if (resourceExists(newBranch.getResource(), Branch.TYPE)) {
-            update(newBranch.getResource(), newBranch.getModel());
-        } else {
-            throw new MatOntoException("The Branch could not be updated.");
+        try (RepositoryConnection conn = repository.getConnection()) {
+            IRI masterBranchIRI = vf.createIRI(VersionedRDFRecord.masterBranch_IRI);
+            if (resourceExists(newBranch.getResource(), Branch.TYPE)
+                    && !conn.getStatements(null, masterBranchIRI, newBranch.getResource()).hasNext()) {
+                update(newBranch.getResource(), newBranch.getModel());
+            } else {
+                throw new MatOntoException("The Branch could not be updated.");
+            }
+        } catch (RepositoryException e) {
+            throw new MatOntoException("Error in repository connection", e);
         }
     }
 
     @Override
     public void removeBranch(Resource branchId, Resource versionedRDFRecordId) throws MatOntoException {
-        if (!(resourceExists(branchId, Branch.TYPE) && resourceExists(versionedRDFRecordId, VersionedRDFRecord.TYPE)
-                && removeObjectWithRelationship(branchId, versionedRDFRecordId, VersionedRDFRecord.branch_IRI))) {
-            throw new MatOntoException("The Branch could not be removed.");
+        try (RepositoryConnection conn = repository.getConnection()) {
+            IRI masterBranchIRI = vf.createIRI(VersionedRDFRecord.masterBranch_IRI);
+            if (!(resourceExists(branchId, Branch.TYPE) && resourceExists(versionedRDFRecordId, VersionedRDFRecord.TYPE)
+                    && !conn.getStatements(versionedRDFRecordId, masterBranchIRI, branchId, versionedRDFRecordId)
+                    .hasNext() && removeObjectWithRelationship(branchId, versionedRDFRecordId,
+                    VersionedRDFRecord.branch_IRI))) {
+                throw new MatOntoException("The Branch could not be removed.");
+            }
+        } catch (RepositoryException e) {
+            throw new MatOntoException("Error in repository connection", e);
         }
     }
 

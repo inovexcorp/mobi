@@ -59,7 +59,8 @@ GRAPH <http://matonto.org/test/records#versionedRDF>
         dc:issued "2016-03-01T00:00:00Z"^^xsd:dateTime ;
         dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime ;
         mcat:branch <http://matonto.org/test/branches#test> ;
-        mcat:masterBranch <http://matonto.org/test/branches#test> .
+        mcat:branch <http://matonto.org/test/branches#master> ;
+        mcat:masterBranch <http://matonto.org/test/branches#master> .
 }
 
 GRAPH <http://matonto.org/test/records#get>
@@ -123,6 +124,14 @@ GRAPH <http://matonto.org/test/distributions#test2>
 {
     <http://matonto.org/test/distributions#test2> a mcat:Distribution ;
         dc:title "Distribution 2" ;
+        dc:issued "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime .
+}
+
+GRAPH <http://matonto.org/test/branches#master>
+{
+    <http://matonto.org/test/branches#master> a mcat:Branch ;
+        dc:title "Master Branch" ;
         dc:issued "2016-03-01T00:00:00Z"^^xsd:dateTime ;
         dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime .
 }
