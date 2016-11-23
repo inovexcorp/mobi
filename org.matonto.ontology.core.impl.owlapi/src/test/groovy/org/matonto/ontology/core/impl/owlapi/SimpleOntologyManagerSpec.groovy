@@ -43,7 +43,7 @@ class SimpleOntologyManagerSpec extends Specification {
     def ontology = Mock(Ontology)
     def ontologyId = Mock(OntologyId)
 
-    def "storeOntology throws an exception when ontology exists"() {
+    /*def "storeOntology throws an exception when ontology exists"() {
         setup:
         def manager = [
                 ontologyExists: { o -> return true }
@@ -79,5 +79,5 @@ class SimpleOntologyManagerSpec extends Specification {
         repository.getConnection() >> connection
         repository.getConfig() >> Mock(RepositoryConfig.class)
         result
-    }
+    }*/
 }

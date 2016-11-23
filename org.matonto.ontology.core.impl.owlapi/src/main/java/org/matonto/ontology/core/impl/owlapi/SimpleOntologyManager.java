@@ -23,80 +23,62 @@ package org.matonto.ontology.core.impl.owlapi;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.ConfigurationPolicy;
-import aQute.bnd.annotation.component.Deactivate;
-import aQute.bnd.annotation.component.Modified;
 import aQute.bnd.annotation.component.Reference;
 import org.apache.commons.io.IOUtils;
+import org.apache.log4j.Logger;
+import org.matonto.catalog.api.CatalogManager;
+import org.matonto.catalog.api.ontologies.mcat.*;
 import org.matonto.exception.MatOntoException;
 import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyId;
 import org.matonto.ontology.core.api.OntologyManager;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.ontology.utils.api.SesameTransformer;
-import org.matonto.persistence.utils.Models;
-import org.matonto.persistence.utils.Statements;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.query.api.TupleQuery;
-import org.matonto.rdf.api.BNode;
+import org.matonto.rdf.api.*;
 import org.matonto.rdf.api.IRI;
-import org.matonto.rdf.api.Model;
-import org.matonto.rdf.api.ModelFactory;
-import org.matonto.rdf.api.Resource;
-import org.matonto.rdf.api.Statement;
-import org.matonto.rdf.api.ValueFactory;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.base.RepositoryResult;
 import org.matonto.repository.config.RepositoryConsumerConfig;
 import org.matonto.repository.exception.RepositoryException;
-import org.openrdf.rio.RDFFormat;
-import org.openrdf.rio.RDFParseException;
-import org.openrdf.rio.Rio;
+import org.matonto.repository.impl.sesame.SesameRepositoryWrapper;
+import org.openrdf.model.vocabulary.DCTERMS;
+import org.openrdf.repository.sail.SailRepository;
+import org.openrdf.sail.memory.MemoryStore;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.RioRDFXMLDocumentFormatFactory;
-import org.semanticweb.owlapi.model.MissingImportHandlingStrategy;
-import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyCreationException;
-import org.semanticweb.owlapi.model.OWLOntologyLoaderConfiguration;
-import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.rio.RioMemoryTripleSource;
 import org.semanticweb.owlapi.rio.RioParserImpl;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.LinkedHashSet;
 import java.util.Optional;
-import java.util.Set;
 
-
-@Component (provide = OntologyManager.class,
-            name = SimpleOntologyManager.COMPONENT_NAME,
-            designateFactory = RepositoryConsumerConfig.class,
-            configurationPolicy = ConfigurationPolicy.require)
+@Component(provide = OntologyManager.class,
+        name = SimpleOntologyManager.COMPONENT_NAME,
+        designateFactory = RepositoryConsumerConfig.class,
+        configurationPolicy = ConfigurationPolicy.require)
 public class SimpleOntologyManager implements OntologyManager {
 
-    protected static final String COMPONENT_NAME =
-            "org.matonto.ontology.core.OntologyManager";
-    private Resource registryContext;
-    private Resource registrySubject;
-    private IRI registryPredicate;
+    protected static final String COMPONENT_NAME = "org.matonto.ontology.core.OntologyManager";
+    private static final Logger log = Logger.getLogger(SimpleOntologyManager.class);
     private Repository repository;
-    private ValueFactory factory;
-    private static final Logger LOG = LoggerFactory.getLogger(SimpleOntologyManager.class);
-    private SesameTransformer transformer;
+    private ValueFactory valueFactory;
+    private SesameTransformer sesameTransformer;
     private ModelFactory modelFactory;
+    private CatalogManager catalogManager;
+    private OntologyRecordFactory ontologyRecordFactory;
+    private CommitFactory commitFactory;
+
     private static final String GET_SUB_CLASSES_OF;
     private static final String GET_SUB_DATATYPE_PROPERTIES_OF;
     private static final String GET_SUB_OBJECT_PROPERTIES_OF;
@@ -104,7 +86,6 @@ public class SimpleOntologyManager implements OntologyManager {
     private static final String GET_ENTITY_USAGES;
     private static final String GET_CONCEPT_RELATIONSHIPS;
     private static final String GET_SEARCH_RESULTS;
-    private static final String GRAPH_BINDING = "graph";
     private static final String ENTITY_BINDING = "entity";
     private static final String SEARCH_TEXT = "searchText";
 
@@ -167,58 +148,41 @@ public class SimpleOntologyManager implements OntologyManager {
         }
     }
 
+    public SimpleOntologyManager() {}
+
     @Reference(name = "repository")
     protected void setRepository(Repository repository) {
         this.repository = repository;
     }
 
-    @Activate
-    public void activate(final Map<String, Object> properties) {
-        LOG.info("Activating " + COMPONENT_NAME);
-        initOntologyRegistryResources();
-    }
- 
-    @Deactivate
-    public void deactivate() {
-        LOG.info("Deactivating " + COMPONENT_NAME);
-    }
-    
-    @Modified
-    public void modified(final Map<String, Object> properties) {
-        LOG.info("Modifying the " + COMPONENT_NAME);
-        initOntologyRegistryResources();
+    @Reference
+    protected void setValueFactory(ValueFactory valueFactory) {
+        this.valueFactory = valueFactory;
     }
 
     @Reference
-    protected void setValueFactory(final ValueFactory vf) {
-        factory = vf;
-    }
-
-    @Reference
-    protected void setTransformer(final SesameTransformer transformer) {
-        this.transformer = transformer;
-    }
-
-    @Reference
-    protected void setModelFactory(final ModelFactory modelFactory) {
+    protected void setModelFactory(ModelFactory modelFactory) {
         this.modelFactory = modelFactory;
     }
 
-    @Override
-    public Set<Resource> getOntologyRegistry() {
-        RepositoryConnection conn = null;
-        Set<Resource> registry = new HashSet<>();
-        try {
-            conn = repository.getConnection();
-            conn.getStatements(registrySubject, registryPredicate, null, registryContext)
-                    .forEach(stmt -> Statements.objectResource(stmt).ifPresent(registry::add));
-        } catch (RepositoryException e) {
-            throw new MatontoOntologyException("Error in repository connection", e);
-        } finally {
-            closeConnection(conn);
-        }
+    @Reference
+    protected void setSesameTransformer(SesameTransformer sesameTransformer) {
+        this.sesameTransformer = sesameTransformer;
+    }
 
-        return registry;
+    @Reference
+    protected void setCatalogManager(CatalogManager catalogManager) {
+        this.catalogManager = catalogManager;
+    }
+
+    @Reference
+    protected void setOntologyRecordFactory(OntologyRecordFactory ontologyRecordFactory) {
+        this.ontologyRecordFactory = ontologyRecordFactory;
+    }
+
+    @Reference
+    protected void setCommitFactory(CommitFactory commitFactory) {
+        this.commitFactory = commitFactory;
     }
 
     @Override
@@ -246,387 +210,245 @@ public class SimpleOntologyManager implements OntologyManager {
         return new SimpleOntology(json, this);
     }
 
-    /**
-     * Checks if given context id exists in the local ontology registry.
-     *
-     * @return True if given context id exists in the local ontology registry, or else false.
-     * @throws IllegalStateException - if the repository is null
-     */
-    public boolean ontologyExists(@Nonnull Resource resource) {
-        RepositoryConnection conn = null;
-        boolean exists = false;
-        try {
-            conn = repository.getConnection();
-            RepositoryResult<Statement> statements =
-                    conn.getStatements(registrySubject, registryPredicate, resource, registryContext);
+    @Override
+    public Optional<Ontology> retrieveOntology(@Nonnull Resource ontologyId) throws MatontoOntologyException {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            RepositoryResult<Statement> statements = conn.getStatements(null,
+                    sesameTransformer.matontoIRI(DCTERMS.IDENTIFIER), ontologyId);
             if (statements.hasNext()) {
-                exists = true;
+                OntologyRecord record = catalogManager.getRecord(catalogManager.getLocalCatalog().getResource(),
+                        statements.next().getSubject(), ontologyRecordFactory).orElseThrow(() ->
+                        new MatontoOntologyException("The OntologyRecord could not be retrieved."));
+                Branch masterBranch = record.getMasterBranch().orElseThrow(() ->
+                        new MatontoOntologyException("The master Branch was not set on the OntologyRecord."));
+                masterBranch = catalogManager.getBranch(masterBranch.getResource()).orElseThrow(() ->
+                        new MatontoOntologyException("The master Branch could not be retrieved."));
+                Commit commit = masterBranch.getHead().orElseThrow(() ->
+                        new MatontoOntologyException("The head Commit was not set on the master Branch."));
+                return Optional.of(createOntologyFromCommit(commit));
+            } else {
+                throw new MatontoOntologyException("The OntologyRecord could not be found.");
             }
-        } catch (RepositoryException e) {
-            throw new MatontoOntologyException("Error in repository connection", e);
-        } finally {
-            closeConnection(conn);
-        }
-
-        return exists;
-    }
-
-    /**
-     * Retrieves Ontology object by ontology id from the repository, and returns an Optional with Ontology
-     * object or an empty Optional instance if the ontology id is not found or any owlapi exception or sesame
-     * exception is caught.
-     *
-     * @return an Optional with Ontology if ontology id is found, or an empty Optional instance if not found.
-     * @throws IllegalStateException - if the repository is null
-     */
-    @Override
-    public Optional<Ontology> retrieveOntology(@Nonnull Resource resource) throws MatontoOntologyException {
-        if (!ontologyExists(resource)) {
-            return Optional.empty();
-        }
-
-        OWLOntologyManager mgr = OWLManager.createOWLOntologyManager();
-        OWLOntology onto = null;
-        RepositoryConnection conn = null;
-
-        try {
-            conn = repository.getConnection();
-            RepositoryResult<Statement> stmts = conn.getStatements(null, null, null, resource);
-            org.openrdf.model.Model sesameModel = new org.openrdf.model.impl.LinkedHashModel();
-            stmts.forEach(stmt -> sesameModel.add(transformer.sesameStatement(stmt)));
-            RioParserImpl parser = new RioParserImpl(new RioRDFXMLDocumentFormatFactory());
-            onto = mgr.createOntology();
-            OWLOntologyLoaderConfiguration config = new OWLOntologyLoaderConfiguration()
-                    .setMissingImportHandlingStrategy(MissingImportHandlingStrategy.SILENT);
-            parser.parse(new RioMemoryTripleSource(sesameModel), onto, config);
-        } catch (OWLOntologyCreationException e) {
-            throw new MatontoOntologyException("Unable to create an ontology object", e);
-        } catch (RepositoryException e) {
-            throw new MatontoOntologyException("Error in repository connection", e);
-        } finally {
-            closeConnection(conn);
-        }
-
-        Ontology matontoOntology = SimpleOntologyValues.matontoOntology(onto, resource);
-
-        return Optional.of(matontoOntology);
-    }
-
-    @Override
-    public boolean storeOntology(@Nonnull Ontology ontology) throws MatontoOntologyException {
-        Resource resource = ontology.getOntologyId().getOntologyIdentifier();
-        if (ontologyExists(resource)) {
-            throw new MatontoOntologyException("Ontology with the ontology ID already exists.");
-        }
-
-        RepositoryConnection conn = null;
-
-        try {
-            Model model = ontology.asModel(modelFactory);
-            conn = repository.getConnection();
-            conn.add(model, resource);
-            conn.add(registrySubject, registryPredicate, resource, registryContext);
-        } catch (RepositoryException e) {
-            throw new MatontoOntologyException("Error in repository connection", e);
-        } finally {
-            closeConnection(conn);
-        }
-
-        return true;
-    }
-
-    private void checkRepositoryAndOntology(Resource ontologyResource) {
-        if (!ontologyExists(ontologyResource)) {
-            throw new MatontoOntologyException("Ontology ID does not exist.");
-        }
-    }
-
-    private Model getModelFromJson(String json) {
-        try {
-            InputStream in = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
-            return transformer.matontoModel(Rio.parse(in, "", RDFFormat.JSONLD));
-        } catch (IOException | RDFParseException e) {
-            throw new MatontoOntologyException("Error in parsing JSON", e);
+        } catch (MatOntoException | OWLOntologyCreationException e) {
+            throw new MatontoOntologyException(e.getMessage(), e);
         }
     }
 
     @Override
-    public String saveChangesToOntology(Resource ontologyResource, Resource originalResource,
-                                         String resourceJson) throws MatontoOntologyException {
-        checkRepositoryAndOntology(ontologyResource);
+    public Optional<Ontology> retrieveOntology(@Nonnull Resource ontologyId, @Nonnull Resource branchId) throws
+            MatontoOntologyException {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            Optional<Ontology> result = Optional.empty();
+            RepositoryResult<Statement> statements = conn.getStatements(null,
+                    sesameTransformer.matontoIRI(DCTERMS.IDENTIFIER), ontologyId);
+            if (statements.hasNext()) {
+                OntologyRecord record = catalogManager.getRecord(catalogManager.getLocalCatalog().getResource(),
+                        statements.next().getSubject(), ontologyRecordFactory).orElseThrow(() ->
+                        new MatontoOntologyException("The OntologyRecord could not be retrieved."));
+                for (Branch branch : record.getBranch()) {
+                    if (branch.getResource().equals(branchId)) {
+                        branch = catalogManager.getBranch(branch.getResource()).orElseThrow(() ->
+                                new MatontoOntologyException("The identified Branch could not be retrieved."));
+                        Commit headCommit = branch.getHead().orElseThrow(() ->
+                                new MatontoOntologyException("The head Commit was not set on the Branch."));
+                        result = Optional.of(createOntologyFromCommit(headCommit));
+                        break;
+                    }
+                }
+            }
+            return result;
+        } catch (MatOntoException | OWLOntologyCreationException e) {
+            throw new MatontoOntologyException(e.getMessage(), e);
+        }
+    }
 
-        try {
-            final RepositoryConnection conn = repository.getConnection();
-
-            try {
-                Model changedModel = getModelFromJson(resourceJson);
-
-                Resource newSubject = Models.subject(changedModel).orElseThrow(() ->
-                        new MatontoOntologyException("No subject was available in the resourceJson"));
-
-                boolean hasNewOntologyIRI = originalResource.equals(ontologyResource)
-                        && !ontologyResource.equals(newSubject);
-
-                Resource context = hasNewOntologyIRI
-                        ? (new SimpleOntology(resourceJson, this)).getOntologyId().getOntologyIdentifier() :
-                        ontologyResource;
-
-                conn.begin();
-
-                // Ontology IRI has changed, so update the context of all statements
-                if (hasNewOntologyIRI) {
-                    conn.getStatements(null, null, null, ontologyResource).forEach(stmt -> {
-                        conn.remove(stmt);
-                        if (!stmt.getSubject().equals(newSubject)) {
-                            conn.add(stmt, context);
+    @Override
+    public Optional<Ontology> retrieveOntology(@Nonnull Resource ontologyId, @Nonnull Resource branchId,
+                                               @Nonnull Resource commitId) throws MatontoOntologyException {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            Optional<Ontology> result = Optional.empty();
+            RepositoryResult<Statement> statements = conn.getStatements(null,
+                    sesameTransformer.matontoIRI(DCTERMS.IDENTIFIER), ontologyId);
+            if (statements.hasNext()) {
+                OntologyRecord record = catalogManager.getRecord(catalogManager.getLocalCatalog().getResource(),
+                        statements.next().getSubject(), ontologyRecordFactory).orElseThrow(() ->
+                        new MatontoOntologyException("The OntologyRecord could not be retrieved."));
+                for (Branch branch : record.getBranch()) {
+                    if (branch.getResource().equals(branchId)) {
+                        branch = catalogManager.getBranch(branch.getResource()).orElseThrow(() ->
+                                new MatontoOntologyException("The identified Branch could not be retrieved."));
+                        Commit headCommit = branch.getHead().orElseThrow(() ->
+                                new MatontoOntologyException("The head Commit was not set on the Branch."));
+                        LinkedHashSet<Resource> commitChain =  catalogManager.getCommitChain(headCommit.getResource());
+                        if (commitChain.contains(commitId)) {
+                            Commit commit = catalogManager.getCommit(commitId, commitFactory).orElseThrow(() ->
+                                    new MatontoOntologyException("The identified Commit could not be retrieved."));
+                            result = Optional.of(createOntologyFromCommit(commit));
                         }
-                    });
-                    conn.remove(registrySubject, registryPredicate, ontologyResource, registryContext);
-                    conn.add(factory.createStatement(registrySubject, registryPredicate, context,
-                            registryContext));
-                }
-
-                // Remove all original statements if the object is not a blank node. Replace subject with new
-                // subject if the IRI is changed and it is a blank node
-                conn.getStatements(originalResource, null, null, context).forEach(stmt -> {
-                    if (!(stmt.getObject() instanceof BNode)) {
-                        conn.remove(stmt);
-                    } else if (!newSubject.equals(originalResource)) {
-                        conn.remove(stmt);
-                        conn.add(factory.createStatement(newSubject, stmt.getPredicate(), stmt.getObject(),
-                                context));
+                        break;
                     }
-                });
-
-                // Updates statements that reference the changed entity if needed
-                conn.getStatements(null, null, originalResource, context).forEach(stmt -> {
-                    conn.remove(stmt);
-                    conn.add(factory.createStatement(stmt.getSubject(), stmt.getPredicate(), newSubject,
-                            context));
-                });
-
-                // Add all new statements if the object is not a blank node
-                changedModel.forEach(stmt -> {
-                    if (!(stmt.getObject() instanceof BNode)) {
-                        conn.add(stmt, context);
-                    }
-                });
-
-                conn.commit();
-
-                return context.stringValue();
-
-            } finally {
-                closeConnection(conn);
-            }
-        } catch (RepositoryException e) {
-            throw new MatontoOntologyException("Error in repository connection", e);
-        }
-    }
-
-    @Override
-    public boolean addEntityToOntology(Resource ontologyResource, String resourceJson) throws MatontoOntologyException {
-
-        try {
-            final RepositoryConnection conn = repository.getConnection();
-
-            try {
-                Model changedModel = getModelFromJson(resourceJson);
-                conn.begin();
-                changedModel.forEach(stmt -> conn.add(stmt, ontologyResource));
-                conn.commit();
-
-            } finally {
-                closeConnection(conn);
-            }
-        } catch (RepositoryException e) {
-            throw new MatontoOntologyException("Error in repository connection", e);
-        }
-
-        return true;
-    }
-
-    @Override
-    public boolean deleteOntology(@Nonnull Resource resource) throws MatontoOntologyException {
-        if (!ontologyExists(resource)) {
-            throw new MatontoOntologyException("Ontology ID does not exist.");
-        }
-
-        RepositoryConnection conn = null;
-
-        try {
-            conn = repository.getConnection();
-            conn.clear(resource);
-            conn.remove(registrySubject, registryPredicate, resource, registryContext);
-        } catch (RepositoryException e) {
-            throw new MatontoOntologyException("Error in repository connection", e);
-        } finally {
-            closeConnection(conn);
-        }
-
-        return true;
-    }
-
-    @Override
-    public Map<String, Set> deleteEntityFromOntology(@Nonnull Resource ontologyResource,
-                                                     @Nonnull Resource entityResource) throws MatontoOntologyException {
-        checkRepositoryAndOntology(ontologyResource);
-
-        RepositoryConnection conn = null;
-        Map<String, Set> changedEntities = new HashMap<>();
-        try {
-            conn = repository.getConnection();
-            RepositoryResult<Statement> entitySubjectStatements =
-                    conn.getStatements(entityResource, null, null, ontologyResource);
-            RepositoryResult<Statement> entityObjectStatements =
-                    conn.getStatements(null, null, entityResource, ontologyResource);
-            RepositoryResult<Statement> entityPredicateStatements =
-                    conn.getStatements(null, factory.createIRI(entityResource.stringValue()), null, ontologyResource);
-
-            Set<Statement> cachedObjectStatements = new HashSet<>();
-            Set<Statement> cachedPredicateStatements = new HashSet<>();
-            Set<String> changedIriStrings = new HashSet<>();
-            Set<org.openrdf.model.Model> changedModels = new HashSet<>();
-
-            for (Statement stmt : entityObjectStatements) {
-                if (!(stmt.getSubject() instanceof BNode)) {
-                    changedIriStrings.add(stmt.getSubject().stringValue());
                 }
-                cachedObjectStatements.add(stmt);
             }
-            for (Statement stmt : entityPredicateStatements) {
-                if (!(stmt.getSubject() instanceof BNode)) {
-                    changedIriStrings.add(stmt.getSubject().stringValue());
-                }
-                cachedPredicateStatements.add(stmt);
-            }
-            changedEntities.put("iris", changedIriStrings);
-
-            conn.remove(entitySubjectStatements, ontologyResource);
-            conn.remove(cachedObjectStatements, ontologyResource);
-            conn.remove(cachedPredicateStatements, ontologyResource);
-
-            for (String iriString : changedIriStrings) {
-                RepositoryResult<Statement> changedEntity =
-                        conn.getStatements(factory.createIRI(iriString), null, null, ontologyResource);
-                Model model = modelFactory.createModel();
-
-                changedEntity.forEach(model::add);
-                changedModels.add(transformer.sesameModel(model));
-            }
-            changedEntities.put("models", changedModels);
-        } catch (RepositoryException e) {
-            throw new MatontoOntologyException("Error in repository connection", e);
-        } finally {
-            closeConnection(conn);
+            return result;
+        } catch (MatOntoException | OWLOntologyCreationException e) {
+            throw new MatontoOntologyException(e.getMessage(), e);
         }
-
-        return changedEntities;
     }
 
-    /**
-     * Initializes the resources used to store the ontology registry statements in
-     * the repository. These values are initialized whenever the SimpleOntologyManager
-     * is created.
-     *
-     * @throws IllegalStateException - if the repository is null
-     */
-    private void initOntologyRegistryResources() throws MatontoOntologyException {
-        registryContext = factory.createIRI("https://matonto.org/registry/ontologies");
-        registrySubject = factory.createIRI("https://matonto.org/registry/ontologies");
-        registryPredicate = factory.createIRI("https://matonto.org/registry#hasItem");
+    @Override
+    public boolean deleteOntology(@Nonnull Resource ontologyId) throws MatontoOntologyException {
+        return false;
     }
 
     @Override
     public OntologyId createOntologyId() {
-        return new SimpleOntologyId.Builder(factory).build();
+        return new SimpleOntologyId.Builder(valueFactory).build();
     }
 
     @Override
     public OntologyId createOntologyId(Resource resource) {
-        return new SimpleOntologyId.Builder(factory).id(resource).build();
+        return new SimpleOntologyId.Builder(valueFactory).id(resource).build();
     }
 
     @Override
     public OntologyId createOntologyId(IRI ontologyIRI) {
-        return new SimpleOntologyId.Builder(factory).ontologyIRI(ontologyIRI).build();
+        return new SimpleOntologyId.Builder(valueFactory).ontologyIRI(ontologyIRI).build();
     }
 
     @Override
     public OntologyId createOntologyId(IRI ontologyIRI, IRI versionIRI) {
-        return new SimpleOntologyId.Builder(factory).ontologyIRI(ontologyIRI).versionIRI(versionIRI).build();
+        return new SimpleOntologyId.Builder(valueFactory).ontologyIRI(ontologyIRI).versionIRI(versionIRI).build();
     }
 
-    private void closeConnection(RepositoryConnection conn) {
-        try {
-            if (conn != null) {
-                conn.close();
-            }
+    @Override
+    public TupleQueryResult getSubClassesOf(Ontology ontology) throws MatontoOntologyException {
+        Repository repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
+        repo.initialize();
+        try (RepositoryConnection conn = repo.getConnection()) {
+            conn.add(ontology.asModel(modelFactory));
+            TupleQuery query = conn.prepareTupleQuery(GET_SUB_CLASSES_OF);
+            return query.evaluate();
         } catch (RepositoryException e) {
-            LOG.warn("Could not close Repository." + e.toString());
+            throw new MatontoOntologyException("Error in repository connection.", e);
+        } finally {
+            repo.shutDown();
         }
     }
 
     @Override
-    public SesameTransformer getTransformer() {
-        return transformer;
+    public TupleQueryResult getSubDatatypePropertiesOf(Ontology ontology) {
+        Repository repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
+        repo.initialize();
+        try (RepositoryConnection conn = repo.getConnection()) {
+            conn.add(ontology.asModel(modelFactory));
+            TupleQuery query = conn.prepareTupleQuery(GET_SUB_DATATYPE_PROPERTIES_OF);
+            return query.evaluate();
+        } catch (RepositoryException e) {
+            throw new MatontoOntologyException("Error in repository connection.", e);
+        } finally {
+            repo.shutDown();
+        }
     }
 
     @Override
-    public TupleQueryResult getSubClassesOf(String ontologyIdStr) {
-        RepositoryConnection conn = repository.getConnection();
-        TupleQuery query = conn.prepareTupleQuery(GET_SUB_CLASSES_OF);
-        query.setBinding(GRAPH_BINDING, factory.createIRI(ontologyIdStr));
-        return query.evaluate();
+    public TupleQueryResult getSubObjectPropertiesOf(Ontology ontology) {
+        Repository repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
+        repo.initialize();
+        try (RepositoryConnection conn = repo.getConnection()) {
+            conn.add(ontology.asModel(modelFactory));
+            TupleQuery query = conn.prepareTupleQuery(GET_SUB_OBJECT_PROPERTIES_OF);
+            return query.evaluate();
+        } catch (RepositoryException e) {
+            throw new MatontoOntologyException("Error in repository connection.", e);
+        } finally {
+            repo.shutDown();
+        }
     }
 
     @Override
-    public TupleQueryResult getSubObjectPropertiesOf(String ontologyIdStr) {
-        RepositoryConnection conn = repository.getConnection();
-        TupleQuery query = conn.prepareTupleQuery(GET_SUB_OBJECT_PROPERTIES_OF);
-        query.setBinding(GRAPH_BINDING, factory.createIRI(ontologyIdStr));
-        return query.evaluate();
+    public TupleQueryResult getClassesWithIndividuals(Ontology ontology) {
+        Repository repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
+        repo.initialize();
+        try (RepositoryConnection conn = repo.getConnection()) {
+            conn.add(ontology.asModel(modelFactory));
+            TupleQuery query = conn.prepareTupleQuery(GET_CLASSES_WITH_INDIVIDUALS);
+            return query.evaluate();
+        } catch (RepositoryException e) {
+            throw new MatontoOntologyException("Error in repository connection.", e);
+        } finally {
+            repo.shutDown();
+        }
     }
 
     @Override
-    public TupleQueryResult getSubDatatypePropertiesOf(String ontologyIdStr) {
-        RepositoryConnection conn = repository.getConnection();
-        TupleQuery query = conn.prepareTupleQuery(GET_SUB_DATATYPE_PROPERTIES_OF);
-        query.setBinding(GRAPH_BINDING, factory.createIRI(ontologyIdStr));
-        return query.evaluate();
+    public TupleQueryResult getEntityUsages(Ontology ontology, String entityIRIStr) {
+        Repository repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
+        repo.initialize();
+        try (RepositoryConnection conn = repo.getConnection()) {
+            conn.add(ontology.asModel(modelFactory));
+            TupleQuery query = conn.prepareTupleQuery(GET_ENTITY_USAGES);
+            query.setBinding(ENTITY_BINDING, valueFactory.createIRI(entityIRIStr));
+            return query.evaluate();
+        } catch (RepositoryException e) {
+            throw new MatontoOntologyException("Error in repository connection.", e);
+        } finally {
+            repo.shutDown();
+        }
     }
 
     @Override
-    public TupleQueryResult getClassesWithIndividuals(String ontologyIdStr) {
-        RepositoryConnection conn = repository.getConnection();
-        TupleQuery query = conn.prepareTupleQuery(GET_CLASSES_WITH_INDIVIDUALS);
-        query.setBinding(GRAPH_BINDING, factory.createIRI(ontologyIdStr));
-        return query.evaluate();
+    public TupleQueryResult getConceptRelationships(Ontology ontology) {
+        Repository repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
+        repo.initialize();
+        try (RepositoryConnection conn = repo.getConnection()) {
+            conn.add(ontology.asModel(modelFactory));
+            TupleQuery query = conn.prepareTupleQuery(GET_CONCEPT_RELATIONSHIPS);
+            return query.evaluate();
+        } catch (RepositoryException e) {
+            throw new MatontoOntologyException("Error in repository connection.", e);
+        } finally {
+            repo.shutDown();
+        }
     }
 
     @Override
-    public TupleQueryResult getEntityUsages(String ontologyIdStr, String entityIRIStr) {
-        RepositoryConnection conn = repository.getConnection();
-        TupleQuery query = conn.prepareTupleQuery(GET_ENTITY_USAGES);
-        query.setBinding(GRAPH_BINDING, factory.createIRI(ontologyIdStr));
-        query.setBinding(ENTITY_BINDING, factory.createIRI(entityIRIStr));
-        return query.evaluate();
+    public TupleQueryResult getSearchResults(Ontology ontology, String searchText) {
+        Repository repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
+        repo.initialize();
+        try (RepositoryConnection conn = repo.getConnection()) {
+            conn.add(ontology.asModel(modelFactory));
+            TupleQuery query = conn.prepareTupleQuery(GET_SEARCH_RESULTS);
+            query.setBinding(SEARCH_TEXT, valueFactory.createLiteral(searchText.toLowerCase()));
+            return query.evaluate();
+        } catch (RepositoryException e) {
+            throw new MatontoOntologyException("Error in repository connection.", e);
+        } finally {
+            repo.shutDown();
+        }
     }
 
-    @Override
-    public TupleQueryResult getConceptRelationships(String ontologyIdStr) {
-        RepositoryConnection conn = repository.getConnection();
-        TupleQuery query = conn.prepareTupleQuery(GET_CONCEPT_RELATIONSHIPS);
-        query.setBinding(GRAPH_BINDING, factory.createIRI(ontologyIdStr));
-        return query.evaluate();
-    }
-
-    @Override
-    public TupleQueryResult getSearchResults(String ontologyIdStr, String searchText) {
-        RepositoryConnection conn = repository.getConnection();
-        TupleQuery query = conn.prepareTupleQuery(GET_SEARCH_RESULTS);
-        query.setBinding(GRAPH_BINDING, factory.createIRI(ontologyIdStr));
-        query.setBinding(SEARCH_TEXT, factory.createLiteral(searchText.toLowerCase()));
-        return query.evaluate();
+    /**
+     * Creates an Ontology using the provided Commit.
+     *
+     * @param commit the Commit identifying the version of the Ontology that you want to create.
+     * @return an Ontology built at the time identified by the Commit.
+     * @throws OWLOntologyCreationException - if the Ontology could not be created.
+     */
+    private Ontology createOntologyFromCommit(Commit commit) throws OWLOntologyCreationException {
+        Model ontologyModel = catalogManager.getCompiledResource(commit.getResource()).orElseThrow(() ->
+                new MatontoOntologyException("The compiled resource could not be retrieved."));
+        try {
+            OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+            OWLOntology ontology = manager.createOntology();
+            org.openrdf.model.Model sesameModel = new org.openrdf.model.impl.LinkedHashModel();
+            ontologyModel.forEach(statement -> sesameModel.add(sesameTransformer.sesameStatement(statement)));
+            OWLOntologyLoaderConfiguration config = new OWLOntologyLoaderConfiguration()
+                    .setMissingImportHandlingStrategy(MissingImportHandlingStrategy.SILENT);
+            RioParserImpl parser = new RioParserImpl(new RioRDFXMLDocumentFormatFactory());
+            parser.parse(new RioMemoryTripleSource(sesameModel), ontology, config);
+            return SimpleOntologyValues.matontoOntology(ontology);
+        } catch (OWLOntologyCreationException e) {
+            throw new MatontoOntologyException("Unable to create an ontology object.", e);
+        }
     }
 }

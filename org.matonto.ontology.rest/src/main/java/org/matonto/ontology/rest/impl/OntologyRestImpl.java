@@ -404,7 +404,7 @@ public class OntologyRestImpl implements OntologyRest {
 
     @Override
     public Response getIRIsInOntology(String ontologyIdStr) {
-        JSONObject result = doWithOntology(ontologyIdStr, this::getAllIRIs);      
+        JSONObject result = doWithOntology(ontologyIdStr, this::getAllIRIs);
         return Response.status(200).entity(result.toString()).build();
     }
 
@@ -443,11 +443,11 @@ public class OntologyRestImpl implements OntologyRest {
         JSONObject result = doWithOntology(ontologyIdStr, this::getNamedIndividualArray);
         return Response.status(200).entity(result.toString()).build();
     }
-    
+
     @Override
     public Response getIRIsInImportedOntologies(String ontologyIdStr) {
         JSONArray result = doWithImportedOntologies(ontologyIdStr, this::getAllIRIs);
-        
+
         return Response.status(200).entity(result.toString()).build();
     }
 
@@ -664,7 +664,7 @@ public class OntologyRestImpl implements OntologyRest {
                 .stream()
                 .map(Entity::getIRI)
                 .collect(Collectors.toList());
-        
+
         JSONObject object = new JSONObject();
         object.put("classes", iriListToJsonArray(iris));
         return object;
@@ -753,7 +753,7 @@ public class OntologyRestImpl implements OntologyRest {
             throw ErrorUtils.sendError("Ontology " + ontologyIdStr + " does not exist.", Response.Status.BAD_REQUEST);
         }
     }
-    
+
     private JSONArray doWithImportedOntologies(String ontologyIdStr, Function<Ontology, JSONObject> iriFunction) {
         throwErrorIfMissingParam(ontologyIdStr, "ontologyIdStr is missing");
 
@@ -795,7 +795,7 @@ public class OntologyRestImpl implements OntologyRest {
         }
         return array;
     }
-    
+
     private Set<Ontology> getImportedOntologies(@Nonnull String ontologyIdStr) throws MatontoOntologyException {
         Optional<Ontology> optOntology = getOntology(ontologyIdStr);
         if (optOntology.isPresent()) {
@@ -844,7 +844,7 @@ public class OntologyRestImpl implements OntologyRest {
      * @return the JSONObject with the IRIs for all components of an ontology.
      */
     private JSONObject getAllIRIs(Ontology ontology) {
-        return combineJsonObjects(getAnnotationArray(ontology), getClassArray(ontology), 
+        return combineJsonObjects(getAnnotationArray(ontology), getClassArray(ontology),
                 getDatatypeArray(ontology), getObjectPropertyArray(ontology), getDataPropertyArray(ontology),
                 getNamedIndividualArray(ontology));
     }
@@ -876,7 +876,7 @@ public class OntologyRestImpl implements OntologyRest {
                 return RDFFormat.JSONLD.getDefaultMIMEType();
         }
     }
-    
+
     private JSONObject combineJsonObjects(JSONObject... objects) {
         if (objects.length == 0) {
             return new JSONObject();

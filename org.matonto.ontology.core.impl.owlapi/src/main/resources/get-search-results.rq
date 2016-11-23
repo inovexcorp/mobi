@@ -2,9 +2,7 @@ prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 
 select distinct ?entity ?type
 where {
-    graph ?graph {
-        ?entity rdf:type ?type .
-        ?entity ?p ?o .
-        filter contains(lcase(?o), ?searchText)
-    }
+    ?entity rdf:type ?type .
+    ?entity ?p ?o .
+    filter contains(lcase(?o), ?searchText)
 }

@@ -23,161 +23,123 @@ package org.matonto.ontology.core.impl.owlapi;
  * #L%
  */
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.matonto.catalog.api.CatalogManager;
+import org.matonto.catalog.api.ontologies.mcat.CommitFactory;
+import org.matonto.catalog.api.ontologies.mcat.OntologyRecordFactory;
 import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyId;
-import org.matonto.rdf.api.BNode;
+import org.matonto.ontology.core.utils.MatontoOntologyException;
+import org.matonto.ontology.utils.api.SesameTransformer;
+import org.matonto.ontology.utils.impl.SimpleSesameTransformer;
 import org.matonto.rdf.api.IRI;
+import org.matonto.rdf.api.ModelFactory;
+import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory;
+import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
+import org.matonto.rdf.orm.conversion.ValueConverterRegistry;
+import org.matonto.rdf.orm.conversion.impl.*;
+import org.matonto.repository.api.Repository;
+import org.matonto.repository.impl.sesame.SesameRepositoryWrapper;
+import org.openrdf.repository.sail.SailRepository;
+import org.openrdf.sail.memory.MemoryStore;
 
 import java.io.File;
-import java.io.InputStream;
 import java.nio.file.Paths;
 import java.util.Optional;
 
-import static org.easymock.EasyMock.anyString;
+import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.isA;
 import static org.easymock.EasyMock.mock;
+
 import static org.junit.Assert.assertEquals;
-import static org.powermock.api.easymock.PowerMock.mockStatic;
-import static org.powermock.api.easymock.PowerMock.replay;
+import static org.junit.Assert.assertFalse;
+import static org.mockito.Matchers.any;
 
-
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({SimpleOntologyValues.class, SimpleOntologyId.class})
 public class SimpleOntologyManagerTest {
 
-    private ValueFactory factory;
-    private OntologyId ontologyIdMock;
-    private IRI idMock;
-    private IRI ontologyIRI;
-    private IRI versionIRI;
+    private SimpleOntologyManager manager;
+    private Repository repository;
+    private ValueFactory valueFactory = SimpleValueFactory.getInstance();
+    private ModelFactory modelFactory = LinkedHashModelFactory.getInstance();
+    private SesameTransformer sesameTransformer;
+    private CatalogManager catalogManager;
+    private OntologyRecordFactory ontologyRecordFactory = new OntologyRecordFactory();
+    private CommitFactory commitFactory = new CommitFactory();
+    private IRI missingIRI;
+    private ValueConverterRegistry vcr = new DefaultValueConverterRegistry();
 
     @Before
-    public void setUp() {
-        factory = mock(ValueFactory.class);    
-        ontologyIdMock = mock(OntologyId.class);
-        idMock = mock(IRI.class);
-        org.semanticweb.owlapi.model.IRI owlOntologyIRI = org.semanticweb.owlapi.model.IRI.create("http://test.com/ontology1");
-        org.semanticweb.owlapi.model.IRI owlVersionIRI = org.semanticweb.owlapi.model.IRI.create("http://test.com/ontology1/1.0.0");
+    public void setUp() throws Exception {
+        missingIRI = valueFactory.createIRI("http://matonto.org/missing");
 
-        ontologyIRI = mock(IRI.class);
-        expect(ontologyIRI.stringValue()).andReturn("http://test.com/ontology1").anyTimes();
-        expect(ontologyIRI.getNamespace()).andReturn("http://test.com/ontology1").anyTimes();
+        repository = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
+        repository.initialize();
 
-        versionIRI = mock(IRI.class);
-        expect(versionIRI.stringValue()).andReturn("http://test.com/ontology1/1.0.0").anyTimes();
-        expect(versionIRI.getNamespace()).andReturn("http://test.com/ontology1").anyTimes();
-        
-        replay(ontologyIRI, versionIRI);     
+        ontologyRecordFactory.setModelFactory(modelFactory);
+        ontologyRecordFactory.setValueFactory(valueFactory);
+        ontologyRecordFactory.setValueConverterRegistry(vcr);
 
-        mockStatic(SimpleOntologyValues.class);
-        expect(SimpleOntologyValues.owlapiIRI(ontologyIRI)).andReturn(owlOntologyIRI).anyTimes();
-        expect(SimpleOntologyValues.owlapiIRI(versionIRI)).andReturn(owlVersionIRI).anyTimes();
-        expect(SimpleOntologyValues.matontoIRI(owlOntologyIRI)).andReturn(ontologyIRI).anyTimes();
-        expect(SimpleOntologyValues.matontoIRI(owlVersionIRI)).andReturn(versionIRI).anyTimes();
+        commitFactory.setModelFactory(modelFactory);
+        commitFactory.setValueFactory(valueFactory);
+        commitFactory.setValueConverterRegistry(vcr);
+
+        vcr.registerValueConverter(ontologyRecordFactory);
+        vcr.registerValueConverter(commitFactory);
+        vcr.registerValueConverter(new ResourceValueConverter());
+        vcr.registerValueConverter(new IRIValueConverter());
+        vcr.registerValueConverter(new DoubleValueConverter());
+        vcr.registerValueConverter(new IntegerValueConverter());
+        vcr.registerValueConverter(new FloatValueConverter());
+        vcr.registerValueConverter(new ShortValueConverter());
+        vcr.registerValueConverter(new StringValueConverter());
+        vcr.registerValueConverter(new ValueValueConverter());
+        vcr.registerValueConverter(new LiteralValueConverter());
+
+        catalogManager = mock(CatalogManager.class);
+        sesameTransformer = mock(SesameTransformer.class);
+
+        manager = new SimpleOntologyManager();
+        manager.setRepository(repository);
+        manager.setValueFactory(valueFactory);
+        manager.setModelFactory(modelFactory);
+        manager.setSesameTransformer(sesameTransformer);
+        manager.setCatalogManager(catalogManager);
+        manager.setOntologyRecordFactory(ontologyRecordFactory);
+        manager.setCommitFactory(commitFactory);
     }
-    
-    @Test
-    public void testCreateOntologyIdWithNoParam() throws Exception {
-        expect(factory.createIRI(anyString())).andReturn(idMock).anyTimes();
 
-        replay(factory);
-        
-        SimpleOntologyManager manager = new SimpleOntologyManager();
-        manager.setValueFactory(factory);
-        ontologyIdMock = manager.createOntologyId();
-        assertEquals(idMock, ontologyIdMock.getOntologyIdentifier());
-        assertEquals(Optional.empty(), ontologyIdMock.getOntologyIRI());
-        assertEquals(Optional.empty(), ontologyIdMock.getVersionIRI());
-    } 
-    
-    @Test
-    public void testCreateOntologyIdWithBNode() throws Exception {
-        BNode bNodeMock = mock(BNode.class);
-        replay(factory, idMock, bNodeMock);
-        
-        SimpleOntologyManager manager = new SimpleOntologyManager();
-        manager.setValueFactory(factory);
-        ontologyIdMock = manager.createOntologyId(bNodeMock);
-        assertEquals(bNodeMock, ontologyIdMock.getOntologyIdentifier());
-        assertEquals(Optional.empty(), ontologyIdMock.getOntologyIRI());
-        assertEquals(Optional.empty(), ontologyIdMock.getVersionIRI());
+    @After
+    public void tearDown() throws Exception {
+        repository.shutDown();
     }
-    
-    @Test
-    public void testCreateOntologyIdWithOntologyIRI() throws Exception {
-        expect(factory.createIRI(isA(String.class))).andReturn(ontologyIRI);
-        replay(factory, SimpleOntologyValues.class);
-        
-        SimpleOntologyManager manager = new SimpleOntologyManager();
-        manager.setValueFactory(factory);
-        ontologyIdMock = manager.createOntologyId(ontologyIRI);
-        assertEquals(ontologyIRI, ontologyIdMock.getOntologyIdentifier());
-        assertEquals(ontologyIRI, ontologyIdMock.getOntologyIRI().get());
-        assertEquals(Optional.empty(), ontologyIdMock.getVersionIRI());
-    }   
-    
-    @Test
-    public void testCreateOntologyIdWithOntologyIRIAndVersionIRI() throws Exception {
-        expect(factory.createIRI(isA(String.class))).andReturn(versionIRI);
-        expect(SimpleOntologyValues.matontoIRI(isA(org.semanticweb.owlapi.model.IRI.class))).andReturn(versionIRI);
-        replay(factory, SimpleOntologyValues.class);
-        
-        SimpleOntologyManager manager = new SimpleOntologyManager();
-        manager.setValueFactory(factory);
-        ontologyIdMock = manager.createOntologyId(ontologyIRI, versionIRI);
-        assertEquals(versionIRI, ontologyIdMock.getOntologyIdentifier());
-        assertEquals(ontologyIRI, ontologyIdMock.getOntologyIRI().get());
-        assertEquals(versionIRI, ontologyIdMock.getVersionIRI().get());
-    }
-    
+
     @Test
     public void testCreateOntologyWithOntologyId() throws Exception {
-        expect(ontologyIdMock.getOntologyIRI()).andReturn(Optional.of(ontologyIRI)).anyTimes();
-        expect(ontologyIdMock.getVersionIRI()).andReturn(Optional.of(versionIRI)).anyTimes();
-        replay(ontologyIdMock, SimpleOntologyValues.class);
-        
-        SimpleOntologyManager manager = new SimpleOntologyManager();
-        Ontology ontology = manager.createOntology(ontologyIdMock);
-        assertEquals(ontologyIdMock, ontology.getOntologyId());
+        OntologyId ontologyId = new SimpleOntologyId.Builder(valueFactory).build();
+        Ontology ontology = manager.createOntology(ontologyId);
+        assertEquals(ontologyId, ontology.getOntologyId());
     }
-    
-    @Test
+
+    /*@Test
     public void testCreateOntologyWithFile() throws Exception {
-        expect(SimpleOntologyValues.matontoIRI(isA(org.semanticweb.owlapi.model.IRI.class))).andReturn(ontologyIRI).anyTimes();
-        expect(ontologyIdMock.getOntologyIRI()).andReturn(Optional.of(ontologyIRI)).anyTimes();
-        expect(ontologyIdMock.getVersionIRI()).andReturn(Optional.of(versionIRI)).anyTimes();
-        expect(factory.createIRI(isA(String.class))).andReturn(ontologyIRI);
-        replay(factory, ontologyIdMock, SimpleOntologyValues.class);
-        
         File file = Paths.get(getClass().getResource("/test.owl").toURI()).toFile();
-        SimpleOntologyManager manager = new SimpleOntologyManager();
-        manager.setValueFactory(factory);
         Ontology ontology = manager.createOntology(file);
-        assertEquals(ontologyIRI, ontology.getOntologyId().getOntologyIRI().get());
-    }
-    
+        IRI expectedIRI = valueFactory.createIRI("http://test.com/ontology1");
+        assertEquals(expectedIRI, ontology.getOntologyId().getOntologyIRI().get());
+    }*/
+
     @Test
-    public void testCreateOntologyWithInputStream() throws Exception {
-        expect(SimpleOntologyValues.matontoIRI(isA(org.semanticweb.owlapi.model.IRI.class))).andReturn(ontologyIRI).anyTimes();
-        expect(factory.createIRI(isA(String.class))).andReturn(ontologyIRI);
-        replay(factory, SimpleOntologyValues.class);
-        SimpleOntologyManager manager = new SimpleOntologyManager();
-        manager.setValueFactory(factory);
-        InputStream stream = this.getClass().getResourceAsStream("/test.owl");
-        Ontology ontology = manager.createOntology(stream);
-        assertEquals(ontologyIRI, ontology.getOntologyId().getOntologyIRI().get());
+    public void testRetrieveOntologyWithNoIdentifier() {
+        Optional<Ontology> result = manager.retrieveOntology(missingIRI);
+        assertFalse(result.isPresent());
     }
-    
-    //ToDo: TestRetrieveOntology
-    
-    //ToDo: TestStoreOntology
-    
-    //ToDo: TestDeleteOntology
+
+    /*@Test(expected = )
+    public void testRetrieveOntologyWithNoRecord() {
+
+    }*/
 }

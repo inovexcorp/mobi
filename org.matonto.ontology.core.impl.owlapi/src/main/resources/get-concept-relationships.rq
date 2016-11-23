@@ -3,40 +3,38 @@ prefix skos: <http://www.w3.org/2004/02/skos/core#>
 
 select ?parent ?child
 where {
-    graph ?graph {
-        {
-            ?parent rdf:type skos:Concept
-            optional {
-                ?child skos:broaderTransitive ?parent
-            }
-            optional {
-                ?child skos:broader ?parent
-            }
-            optional {
-                ?child skos:broadMatch ?parent
-            }
-            optional {
-                ?child ^skos:narrowerTransitive ?parent
-            }
-            optional {
-                ?child ^skos:narrower ?parent
-            }
-            optional {
-                ?child ^skos:narrowMatch ?parent
-            }
+    {
+        ?parent rdf:type skos:Concept
+        optional {
+            ?child skos:broaderTransitive ?parent
         }
-        union
-        {
-            ?parent rdf:type skos:ConceptScheme
-            optional {
-                ?child ^skos:hasTopConcept ?parent
-            }
-            optional {
-                ?child skos:topConceptOf ?parent
-            }
-            optional {
-                ?child skos:inScheme ?parent
-            }
+        optional {
+            ?child skos:broader ?parent
+        }
+        optional {
+            ?child skos:broadMatch ?parent
+        }
+        optional {
+            ?child ^skos:narrowerTransitive ?parent
+        }
+        optional {
+            ?child ^skos:narrower ?parent
+        }
+        optional {
+            ?child ^skos:narrowMatch ?parent
+        }
+    }
+    union
+    {
+        ?parent rdf:type skos:ConceptScheme
+        optional {
+            ?child ^skos:hasTopConcept ?parent
+        }
+        optional {
+            ?child skos:topConceptOf ?parent
+        }
+        optional {
+            ?child skos:inScheme ?parent
         }
     }
 }
