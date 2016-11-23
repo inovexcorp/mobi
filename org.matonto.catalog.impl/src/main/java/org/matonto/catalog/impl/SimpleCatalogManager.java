@@ -441,10 +441,10 @@ public class SimpleCatalogManager implements CatalogManager {
             distribution.setProperty(vf.createLiteral(config.getFormat()), vf.createIRI(DC_TERMS + "format"));
         }
         if (config.getAccessURL() != null) {
-            distribution.setAccessURL(thingFactory.createNew(config.getAccessURL()));
+            distribution.setAccessURL(config.getAccessURL());
         }
         if (config.getDownloadURL() != null) {
-            distribution.setDownloadURL(thingFactory.createNew(config.getDownloadURL()));
+            distribution.setDownloadURL(config.getDownloadURL());
         }
 
         return distribution;
@@ -674,8 +674,8 @@ public class SimpleCatalogManager implements CatalogManager {
             UUID uuid = UUID.randomUUID();
 
             Revision revision = revisionFactory.createNew(vf.createIRI(REVISION_NAMESPACE + uuid));
-            revision.setAdditions(thingFactory.createNew(vf.createIRI(ADDITIONS_NAMESPACE + uuid)));
-            revision.setDeletions(thingFactory.createNew(vf.createIRI(DELETIONS_NAMESPACE + uuid)));
+            revision.setAdditions(vf.createIRI(ADDITIONS_NAMESPACE + uuid));
+            revision.setDeletions(vf.createIRI(DELETIONS_NAMESPACE + uuid));
 
             InProgressCommit inProgressCommit = inProgressCommitFactory.createNew(vf.createIRI(
                     IN_PROGRESS_COMMIT_NAMESPACE + uuid));
@@ -789,10 +789,10 @@ public class SimpleCatalogManager implements CatalogManager {
         try (RepositoryConnection conn = repository.getConnection()) {
             Resource revisionIRI = (Resource)inProgressCommit.getProperty(vf.createIRI(Activity.generated_IRI)).get();
             Revision revision = revisionFactory.getExisting(revisionIRI, inProgressCommit.getModel());
-            Resource additionsIRI = revision.getAdditions().orElseThrow(() ->
-                    new MatOntoException("The additions could not be found.")).getResource();
-            Resource deletionsIRI = revision.getDeletions().orElseThrow(() ->
-                    new MatOntoException("The deletions could not be found.")).getResource();
+            Resource additionsIRI = (Resource)revision.getAdditions().orElseThrow(() ->
+                    new MatOntoException("The additions could not be found."));
+            Resource deletionsIRI = (Resource)revision.getDeletions().orElseThrow(() ->
+                    new MatOntoException("The deletions could not be found."));
             Model result = mf.createModel(entity);
             conn.getStatements(null, null, null, additionsIRI).forEach(statement -> result.add(statement.getSubject(),
                     statement.getPredicate(), statement.getObject()));

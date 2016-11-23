@@ -385,8 +385,8 @@ class SimpleCatalogManagerSpec extends Specification {
         distribution.getProperty(vf.createIRI(dcTitle)).get().stringValue() == title
         distribution.getProperty(vf.createIRI(dcDescription)).get().stringValue() == description
         distribution.getProperty(vf.createIRI(dcTerms + "format")).get().stringValue() == format
-        distribution.getAccessURL().get().getResource().stringValue() == accessURL.stringValue()
-        distribution.getDownloadURL().get().getResource().stringValue() == downloadURL.stringValue()
+        distribution.getAccessURL().get().stringValue() == accessURL.stringValue()
+        distribution.getDownloadURL().get().stringValue() == downloadURL.stringValue()
         distribution.getProperty(vf.createIRI(dcIssued)).isPresent()
         distribution.getProperty(vf.createIRI(dcModified)).isPresent()
     }

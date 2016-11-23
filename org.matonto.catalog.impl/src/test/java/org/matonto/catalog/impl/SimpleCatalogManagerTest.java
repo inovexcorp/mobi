@@ -939,7 +939,7 @@ public class SimpleCatalogManagerTest {
         int limit = 1;
         int offset = 0;
         IRI modified = vf.createIRI(DC_MODIFIED);
-        IRI localCatalogId = vf.createIRI("http://matonto.org/test/catalog-local");
+        IRI localCatalogId = vf.createIRI("http://matonto.org/test/catalog-missing");
         PaginatedSearchParams searchParams = new SimpleSearchParams.Builder(limit, offset, modified).build();
         // when
         PaginatedSearchResults<Record> records = manager.findRecord(localCatalogId, searchParams);
