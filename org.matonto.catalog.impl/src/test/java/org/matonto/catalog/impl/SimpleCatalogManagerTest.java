@@ -1369,6 +1369,31 @@ public class SimpleCatalogManagerTest {
     }
 
     @Test
+    public void testAddMasterBranch() throws Exception {
+        IRI branchIRI = vf.createIRI(VersionedRDFRecord.branch_IRI);
+        IRI masterBranchIRI = vf.createIRI(VersionedRDFRecord.masterBranch_IRI);
+        Resource recordId = vf.createIRI("http://matonto.org/test/records#versionedRDF");
+
+        RepositoryConnection conn = repo.getConnection();
+
+        manager.addMasterBranch(recordId);
+        assertTrue(conn.getStatements(recordId, masterBranchIRI, null, recordId).hasNext());
+        assertTrue(conn.getStatements(recordId, branchIRI, null, recordId).hasNext());
+        conn.close();
+    }
+
+    @Test(expected = MatOntoException.class)
+    public void testAddMasterBranchToMissingVersionedRDFRecord() {
+        manager.addMasterBranch(notPresentId);
+    }
+
+    @Test(expected = MatOntoException.class)
+    public void testAddMasterBranchToRecordWithMasterBranchAlready() {
+        Resource recordId = vf.createIRI("http://matonto.org/test/records#versionedRDF");
+        manager.addMasterBranch(recordId);
+    }
+
+    @Test
     public void testUpdateBranch() throws Exception {
         Resource branchId = vf.createIRI("http://matonto.org/test/branches#test");
         RepositoryConnection conn = repo.getConnection();

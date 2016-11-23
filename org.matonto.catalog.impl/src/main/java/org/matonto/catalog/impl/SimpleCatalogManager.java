@@ -605,6 +605,29 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
+    public void addMasterBranch(Resource versionedRDFRecordId) throws MatOntoException {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            IRI masterBranchIRI = vf.createIRI(VersionedRDFRecord.masterBranch_IRI);
+            if (resourceExists(versionedRDFRecordId, VersionedRDFRecord.TYPE) && !conn
+                    .getStatements(versionedRDFRecordId, masterBranchIRI, null, versionedRDFRecordId).hasNext()) {
+                Branch branch = branchFactory.createNew(vf.createIRI(BRANCH_NAMESPACE + UUID.randomUUID()));
+                branch.setProperty(vf.createLiteral("MASTER"), vf.createIRI(DC_TITLE));
+                branch.setProperty(vf.createLiteral("The master branch."), vf.createIRI(DC_DESCRIPTION));
+                conn.begin();
+                conn.add(versionedRDFRecordId, vf.createIRI(VersionedRDFRecord.branch_IRI), branch.getResource(),
+                        versionedRDFRecordId);
+                conn.add(versionedRDFRecordId, masterBranchIRI, branch.getResource(), versionedRDFRecordId);
+                conn.add(branch.getModel(), branch.getResource());
+                conn.commit();
+            } else {
+                throw new MatOntoException("The master Branch could not be added.");
+            }
+        } catch (RepositoryException e) {
+            throw new MatOntoException("Error in repository connection", e);
+        }
+    }
+
+    @Override
     public void updateBranch(Branch newBranch) throws MatOntoException {
         if (resourceExists(newBranch.getResource(), Branch.TYPE)) {
             update(newBranch.getResource(), newBranch.getModel());

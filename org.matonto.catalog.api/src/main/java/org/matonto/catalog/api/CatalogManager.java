@@ -272,7 +272,7 @@ public interface CatalogManager {
     Branch createBranch(@Nonnull String title, String description);
 
     /**
-     * Stores the provided Branch in the repository and adds it to the VersinedRDFRecord identified by the provided
+     * Stores the provided Branch in the repository and adds it to the VersionedRDFRecord identified by the provided
      * Resource.
      *
      * @param branch The Branch to add to the VersionedRDFRecord.
@@ -280,6 +280,16 @@ public interface CatalogManager {
      * @throws MatOntoException Thrown if a connection to the repository could not be made.
      */
     void addBranch(Branch branch, Resource versionedRDFRecordId) throws MatOntoException;
+
+    /**
+     * Creates a new master Branch, adds it to the VersionedRDFRecord identified by the provided Resource as the
+     * masterBranch, and stores the Branch in the repository. This method will not create a new master Branch if one
+     * already exists.
+     *
+     * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord which will get a new Branch.
+     * @throws MatOntoException Thrown if a connection to the repository could not be made.
+     */
+    void addMasterBranch(Resource versionedRDFRecordId) throws MatOntoException;
 
     /**
      * Uses the provided Branch to find the Resource of the existing Branch and replaces it.
