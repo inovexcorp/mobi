@@ -9,6 +9,16 @@ GRAPH <http://matonto.org/test/different>
     <http://matonto.org/test/different> a owl:Class .
 }
 
+GRAPH <http://matonto.org/test/records#unique>
+{
+    <http://matonto.org/test/records#unique> a mcat:Record ;
+        mcat:catalog <http://matonto.org/test/catalog-local> ;
+        dc:title "Unique" ;
+        dc:identifier "Unique" ;
+        dc:issued "2016-01-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-03-02T00:00:00Z"^^xsd:dateTime .
+}
+
 GRAPH <http://matonto.org/test/records#update>
 {
     <http://matonto.org/test/records#update> a mcat:OntologyRecord, mcat:VersionedRDFRecord, mcat:VersionedRecord, mcat:Record ;

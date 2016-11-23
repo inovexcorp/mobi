@@ -48,6 +48,7 @@ import org.matonto.query.api.TupleQuery;
 import org.matonto.rdf.api.*;
 import org.matonto.rdf.orm.OrmFactory;
 import org.matonto.rdf.orm.Thing;
+import org.matonto.rdf.orm.impl.ThingFactory;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.base.RepositoryResult;
@@ -82,6 +83,7 @@ public class SimpleCatalogManager implements CatalogManager {
     private CommitFactory commitFactory;
     private RevisionFactory revisionFactory;
     private VersionedRDFRecordFactory versionedRDFRecordFactory;
+    private ThingFactory thingFactory;
     private Resource distributedCatalogIRI;
     private Resource localCatalogIRI;
     private Map<Resource, String> sortingOptions = new HashMap<>();
@@ -148,6 +150,11 @@ public class SimpleCatalogManager implements CatalogManager {
         this.versionedRDFRecordFactory = versionedRDFRecordFactory;
     }
 
+    @Reference
+    protected void setThingFactory(ThingFactory thingFactory) {
+        this.thingFactory = thingFactory;
+    }
+
     private static final String RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
 
     private static final String DC_TERMS = "http://purl.org/dc/terms/";
@@ -155,6 +162,7 @@ public class SimpleCatalogManager implements CatalogManager {
     private static final String DC_DESCRIPTION = DC_TERMS + "description";
     private static final String DC_ISSUED = DC_TERMS + "issued";
     private static final String DC_MODIFIED = DC_TERMS + "modified";
+    private static final String DC_IDENTIFIER = DC_TERMS + "identifier";
 
     private static final String PROV_AT_TIME = "http://www.w3.org/ns/prov#atTime";
 
@@ -350,15 +358,19 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public <T extends Record> void addRecord(Resource catalogId, T record) throws MatOntoException {
-        if (resourceExists(catalogId, Catalog.TYPE) && !resourceExists(record.getResource())) {
-            try (RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            IRI identifierIRI = vf.createIRI(DC_IDENTIFIER);
+            Value identifier = record.getProperty(identifierIRI).orElseThrow(() ->
+                    new MatOntoException("The Record must have an identifier."));
+            if (resourceExists(catalogId, Catalog.TYPE) && !resourceExists(record.getResource()) &&
+                    !conn.getStatements(null, identifierIRI, identifier).hasNext()) {
                 record.setCatalog(getCatalog(catalogId));
                 conn.add(record.getModel(), record.getResource());
-            } catch (RepositoryException e) {
-                throw new MatOntoException("Error in repository connection", e);
+            } else {
+                throw new MatOntoException("The Record could not be added.");
             }
-        } else {
-            throw new MatOntoException("The Record could not be added.");
+        } catch (RepositoryException e) {
+            throw new MatOntoException("Error in repository connection", e);
         }
     }
 
@@ -400,6 +412,20 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
+    public <T extends Record> Optional<T> getRecord(String identifier, OrmFactory<T> factory) throws MatOntoException {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            RepositoryResult<Statement> statements = conn.getStatements(null, vf.createIRI(DC_IDENTIFIER),
+                    vf.createLiteral(identifier));
+            if (statements.hasNext()) {
+                return getObject(true, statements.next().getSubject(), factory);
+            }
+        } catch (RepositoryException e) {
+            throw new MatOntoException("Error in repository connection.", e);
+        }
+        return Optional.empty();
+    }
+
+    @Override
     public Distribution createDistribution(DistributionConfig config) {
         OffsetDateTime now = OffsetDateTime.now();
 
@@ -415,10 +441,10 @@ public class SimpleCatalogManager implements CatalogManager {
             distribution.setProperty(vf.createLiteral(config.getFormat()), vf.createIRI(DC_TERMS + "format"));
         }
         if (config.getAccessURL() != null) {
-            distribution.setAccessURL(config.getAccessURL());
+            distribution.setAccessURL(thingFactory.createNew(config.getAccessURL()));
         }
         if (config.getDownloadURL() != null) {
-            distribution.setDownloadURL(config.getDownloadURL());
+            distribution.setDownloadURL(thingFactory.createNew(config.getDownloadURL()));
         }
 
         return distribution;
@@ -648,8 +674,8 @@ public class SimpleCatalogManager implements CatalogManager {
             UUID uuid = UUID.randomUUID();
 
             Revision revision = revisionFactory.createNew(vf.createIRI(REVISION_NAMESPACE + uuid));
-            revision.setAdditions(vf.createIRI(ADDITIONS_NAMESPACE + uuid));
-            revision.setDeletions(vf.createIRI(DELETIONS_NAMESPACE + uuid));
+            revision.setAdditions(thingFactory.createNew(vf.createIRI(ADDITIONS_NAMESPACE + uuid)));
+            revision.setDeletions(thingFactory.createNew(vf.createIRI(DELETIONS_NAMESPACE + uuid)));
 
             InProgressCommit inProgressCommit = inProgressCommitFactory.createNew(vf.createIRI(
                     IN_PROGRESS_COMMIT_NAMESPACE + uuid));
@@ -763,10 +789,10 @@ public class SimpleCatalogManager implements CatalogManager {
         try (RepositoryConnection conn = repository.getConnection()) {
             Resource revisionIRI = (Resource)inProgressCommit.getProperty(vf.createIRI(Activity.generated_IRI)).get();
             Revision revision = revisionFactory.getExisting(revisionIRI, inProgressCommit.getModel());
-            Resource additionsIRI = (Resource)revision.getAdditions().orElseThrow(() ->
-                    new MatOntoException("The additions could not be found."));
-            Resource deletionsIRI = (Resource)revision.getDeletions().orElseThrow(() ->
-                    new MatOntoException("The deletions could not be found."));
+            Resource additionsIRI = revision.getAdditions().orElseThrow(() ->
+                    new MatOntoException("The additions could not be found.")).getResource();
+            Resource deletionsIRI = revision.getDeletions().orElseThrow(() ->
+                    new MatOntoException("The deletions could not be found.")).getResource();
             Model result = mf.createModel(entity);
             conn.getStatements(null, null, null, additionsIRI).forEach(statement -> result.add(statement.getSubject(),
                     statement.getPredicate(), statement.getObject()));

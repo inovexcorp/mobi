@@ -28,6 +28,7 @@ import org.matonto.catalog.api.ontologies.mcat.*
 import org.matonto.jaas.api.ontologies.usermanagement.User
 import org.matonto.jaas.api.ontologies.usermanagement.UserFactory
 import org.matonto.rdf.api.Model
+import org.matonto.rdf.api.Resource
 import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory
 import org.matonto.rdf.orm.conversion.impl.*
@@ -80,8 +81,8 @@ class SimpleCatalogManagerSpec extends Specification {
     def provWasInformedBy = prov + "wasInformedBy"
     def provGenerated = prov + "generated"
     def provWasDerivedFrom = prov + "wasDerivedFrom"
-    def accessURL
-    def downloadURL
+    Resource accessURL
+    Resource downloadURL
     def format = "format"
     def parents = new HashSet<Commit>()
     def dummyCommit
@@ -138,6 +139,7 @@ class SimpleCatalogManagerSpec extends Specification {
         userFactory.setValueFactory(vf)
         userFactory.setModelFactory(mf)
         userFactory.setValueConverterRegistry(vcr)
+        thingFactory.setModelFactory(mf)
         thingFactory.setValueFactory(vf)
         thingFactory.setValueConverterRegistry(vcr)
 
@@ -177,6 +179,7 @@ class SimpleCatalogManagerSpec extends Specification {
         service.setCommitFactory(commitFactory)
         service.setInProgressCommitFactory(inProgressCommitFactory)
         service.setRevisionFactory(revisionFactory)
+        service.setThingFactory(thingFactory)
 
         catalog.getModel() >> model
 
@@ -382,8 +385,8 @@ class SimpleCatalogManagerSpec extends Specification {
         distribution.getProperty(vf.createIRI(dcTitle)).get().stringValue() == title
         distribution.getProperty(vf.createIRI(dcDescription)).get().stringValue() == description
         distribution.getProperty(vf.createIRI(dcTerms + "format")).get().stringValue() == format
-        distribution.getAccessURL().get().stringValue() == accessURL.stringValue()
-        distribution.getDownloadURL().get().stringValue() == downloadURL.stringValue()
+        distribution.getAccessURL().get().getResource().stringValue() == accessURL.stringValue()
+        distribution.getDownloadURL().get().getResource().stringValue() == downloadURL.stringValue()
         distribution.getProperty(vf.createIRI(dcIssued)).isPresent()
         distribution.getProperty(vf.createIRI(dcModified)).isPresent()
     }

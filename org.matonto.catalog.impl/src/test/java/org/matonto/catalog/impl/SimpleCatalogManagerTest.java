@@ -106,6 +106,7 @@ public class SimpleCatalogManagerTest {
     private IRI distributedCatalogId;
     private Resource notPresentId;
     private Resource differentId;
+    private IRI dcIdentifier;
 
     private static final String RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
 
@@ -203,6 +204,7 @@ public class SimpleCatalogManagerTest {
         versionedRDFRecordFactory.setValueFactory(vf);
         versionedRDFRecordFactory.setValueConverterRegistry(vcr);
 
+        thingFactory.setModelFactory(mf);
         thingFactory.setValueFactory(vf);
         thingFactory.setValueConverterRegistry(vcr);
 
@@ -246,6 +248,7 @@ public class SimpleCatalogManagerTest {
         manager.setCommitFactory(commitFactory);
         manager.setRevisionFactory(revisionFactory);
         manager.setVersionedRDFRecordFactory(versionedRDFRecordFactory);
+        manager.setThingFactory(thingFactory);
 
         InputStream testData = getClass().getResourceAsStream("/testCatalogData.trig");
 
@@ -263,6 +266,7 @@ public class SimpleCatalogManagerTest {
         distributedCatalogId = vf.createIRI("http://matonto.org/test/catalog-distributed");
         notPresentId = vf.createIRI("http://matonto.org/test/records#not-present");
         differentId = vf.createIRI("http://matonto.org/test/different");
+        dcIdentifier = vf.createIRI(DC_IDENTIFIER);
     }
 
     @After
@@ -322,6 +326,7 @@ public class SimpleCatalogManagerTest {
     public void testAddRecord() throws Exception {
         Resource recordId = vf.createIRI("https://matonto.org/records#test");
         Record record = recordFactory.createNew(recordId);
+        record.addProperty(vf.createLiteral("record"), dcIdentifier);
 
         RepositoryConnection conn = repo.getConnection();
         assertFalse(conn.getStatements(recordId, null, null, recordId).hasNext());
@@ -337,6 +342,7 @@ public class SimpleCatalogManagerTest {
     public void testAddRecordToMissingCatalog() {
         Resource recordId = vf.createIRI("https://matonto.org/records#test");
         Record record = recordFactory.createNew(recordId);
+        record.addProperty(vf.createLiteral("record"), dcIdentifier);
         manager.addRecord(differentId, record);
     }
 
@@ -344,6 +350,15 @@ public class SimpleCatalogManagerTest {
     public void testAddExistingRecordToCatalog() {
         Resource existingId = vf.createIRI("http://matonto.org/test/records#update");
         Record record = recordFactory.createNew(existingId);
+        record.addProperty(vf.createLiteral("record"), dcIdentifier);
+        manager.addRecord(distributedCatalogId, record);
+    }
+
+    @Test(expected = MatOntoException.class)
+    public void testAddRecordWithExistingIdentifier() {
+        Resource newId = vf.createIRI("http://matonto.org/test/records#brand-new");
+        Record record = recordFactory.createNew(newId);
+        record.addProperty(vf.createLiteral("Unique"), dcIdentifier);
         manager.addRecord(distributedCatalogId, record);
     }
 
@@ -351,6 +366,7 @@ public class SimpleCatalogManagerTest {
     public void testAddUnversionedRecord() throws Exception {
         Resource recordId = vf.createIRI("https://matonto.org/records#test");
         UnversionedRecord record = unversionedRecordFactory.createNew(recordId);
+        record.addProperty(vf.createLiteral("record"), dcIdentifier);
 
         RepositoryConnection conn = repo.getConnection();
         assertFalse(conn.getStatements(recordId, null, null, recordId).hasNext());
@@ -366,6 +382,7 @@ public class SimpleCatalogManagerTest {
     public void testAddVersionedRecord() throws Exception {
         Resource recordId = vf.createIRI("https://matonto.org/records#test");
         VersionedRecord record = versionedRecordFactory.createNew(recordId);
+        record.addProperty(vf.createLiteral("record"), dcIdentifier);
 
         RepositoryConnection conn = repo.getConnection();
         assertFalse(conn.getStatements(recordId, null, null, recordId).hasNext());
@@ -381,6 +398,7 @@ public class SimpleCatalogManagerTest {
     public void testAddVersionedRDFRecord() throws Exception {
         Resource recordId = vf.createIRI("https://matonto.org/records#test");
         VersionedRDFRecord record = versionedRDFRecordFactory.createNew(recordId);
+        record.addProperty(vf.createLiteral("record"), dcIdentifier);
 
         RepositoryConnection conn = repo.getConnection();
         assertFalse(conn.getStatements(recordId, null, null, recordId).hasNext());
@@ -396,6 +414,7 @@ public class SimpleCatalogManagerTest {
     public void testAddOntologyRecord() throws Exception {
         Resource recordId = vf.createIRI("https://matonto.org/records#test");
         OntologyRecord record = ontologyRecordFactory.createNew(recordId);
+        record.addProperty(vf.createLiteral("record"), dcIdentifier);
 
         RepositoryConnection conn = repo.getConnection();
         assertFalse(conn.getStatements(recordId, null, null, recordId).hasNext());
@@ -411,6 +430,7 @@ public class SimpleCatalogManagerTest {
     public void testAddMappingRecord() throws Exception {
         Resource recordId = vf.createIRI("https://matonto.org/records#test");
         MappingRecord record = mappingRecordFactory.createNew(recordId);
+        record.addProperty(vf.createLiteral("record"), dcIdentifier);
 
         RepositoryConnection conn = repo.getConnection();
         assertFalse(conn.getStatements(recordId, null, null, recordId).hasNext());
@@ -426,6 +446,7 @@ public class SimpleCatalogManagerTest {
     public void testAddDatasetRecord() throws Exception {
         Resource recordId = vf.createIRI("https://matonto.org/records#test");
         DatasetRecord record = datasetRecordFactory.createNew(recordId);
+        record.addProperty(vf.createLiteral("record"), dcIdentifier);
 
         RepositoryConnection conn = repo.getConnection();
         assertFalse(conn.getStatements(recordId, null, null, recordId).hasNext());
@@ -670,6 +691,25 @@ public class SimpleCatalogManagerTest {
         Resource distributedCatalogId = vf.createIRI("http://matonto.org/test/catalog-local");
         Optional<Record> optionalRecord = manager.getRecord(distributedCatalogId, recordId, recordFactory);
         assertFalse(optionalRecord.isPresent());
+    }
+
+    @Test
+    public void testGetRecordByIdentifier() throws Exception {
+        Optional<Record> result = manager.getRecord("Unique", recordFactory);
+        assertTrue(result.isPresent());
+        Record record = result.get();
+        assertTrue(record.getProperty(vf.createIRI(DC_TITLE)).isPresent());
+        assertEquals("Unique", record.getProperty(vf.createIRI(DC_TITLE)).get().stringValue());
+        assertTrue(record.getProperty(vf.createIRI(DC_IDENTIFIER)).isPresent());
+        assertEquals("Unique", record.getProperty(vf.createIRI(DC_IDENTIFIER)).get().stringValue());
+        assertTrue(record.getProperty(vf.createIRI(DC_MODIFIED)).isPresent());
+        assertTrue(record.getProperty(vf.createIRI(DC_ISSUED)).isPresent());
+    }
+
+    @Test
+    public void testGetRecordByMissingIdentifier() throws Exception {
+        Optional<Record> result = manager.getRecord("Missing", recordFactory);
+        assertFalse(result.isPresent());
     }
 
     @Test
