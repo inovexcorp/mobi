@@ -410,16 +410,16 @@ public interface CatalogManager {
     Model applyInProgressCommit(Resource inProgressCommitId, Model entity) throws MatOntoException;
 
     /**
-     * Gets a Set of Resources which all identify different Commits within the repository. The Commit identified by the
-     * provided Resource is the last item in the Set and it was informed by the previous Commit in the Set. This
-     * association is repeated until you get to the beginning of the Set. The resulting Set can then be thought about
+     * Gets a List of Resources which all identify different Commits within the repository. The Commit identified by the
+     * provided Resource is the last item in the List and it was informed by the previous Commit in the List. This
+     * association is repeated until you get to the beginning of the List. The resulting List can then be thought about
      * the chain of Commits on a Branch terminating at the Commit identified by the provided Resource.
      *
      * @param commitId The Resource identifying the Commit for the desired chain.
-     * @return Set of Resources identifying the Commits which make up the commit chain for the provided Commit.
+     * @return List of Resources identifying the Commits which make up the commit chain for the provided Commit.
      * @throws MatOntoException Thrown if a connection to the repository could not be made.
      */
-    LinkedHashSet<Resource> getCommitChain(Resource commitId) throws MatOntoException;
+    List<Resource> getCommitChain(Resource commitId) throws MatOntoException;
 
     /**
      * Gets the Model which represents the entity at the instance of the Commit identified by the provided Resource

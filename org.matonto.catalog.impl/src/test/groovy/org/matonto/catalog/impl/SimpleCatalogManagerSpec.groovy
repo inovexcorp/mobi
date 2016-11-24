@@ -81,8 +81,8 @@ class SimpleCatalogManagerSpec extends Specification {
     def provWasInformedBy = prov + "wasInformedBy"
     def provGenerated = prov + "generated"
     def provWasDerivedFrom = prov + "wasDerivedFrom"
-    Resource accessURL
-    Resource downloadURL
+    def accessURL
+    def downloadURL
     def format = "format"
     def parents = new HashSet<Commit>()
     def dummyCommit
