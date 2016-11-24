@@ -105,4 +105,14 @@ public interface StateManager {
      *      a connection to the repository could not be made
      */
     Model getStates(String username, String applicationId) throws MatOntoException;
+
+    /**
+     * Retrieves a State Model by the passed State ID.
+     *
+     * @param stateId the ID of the State to retrieve
+     * @return a Model of all the statements associated with the specified State
+     * @throws MatOntoException if the State could not be found or a connection to the repository could
+     *      not be made
+     */
+    Model getState(Resource stateId) throws MatOntoException;
 }
