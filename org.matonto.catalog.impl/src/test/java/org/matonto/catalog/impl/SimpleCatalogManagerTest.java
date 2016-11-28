@@ -1481,6 +1481,8 @@ public class SimpleCatalogManagerTest {
         Resource recordId = vf.createIRI("http://matonto.org/test/records#versionedRDF");
         Resource commitIdToRemove = vf.createIRI("http://matonto.org/test/commits#test4b");
         Resource commitIdToKeep = vf.createIRI("http://matonto.org/test/commits#test3");
+        Resource tagId = vf.createIRI("http://matonto.org/test/tags#test");
+        IRI commitIRI = vf.createIRI(Tag.commit_IRI);
         IRI branchIRI = vf.createIRI(VersionedRDFRecord.branch_IRI);
 
         RepositoryConnection conn = repo.getConnection();
@@ -1488,12 +1490,14 @@ public class SimpleCatalogManagerTest {
         assertTrue(conn.getStatements(recordId, branchIRI, branchId, recordId).hasNext());
         assertTrue(conn.getStatements(null, null, null, commitIdToRemove).hasNext());
         assertTrue(conn.getStatements(null, null, null, commitIdToKeep).hasNext());
+        assertTrue(conn.getStatements(tagId, commitIRI, commitIdToRemove, tagId).hasNext());
 
         manager.removeBranch(branchId, recordId);
         assertFalse(conn.getStatements(branchId, null, null, branchId).hasNext());
         assertFalse(conn.getStatements(recordId, branchIRI, branchId, recordId).hasNext());
         assertFalse(conn.getStatements(null, null, null, commitIdToRemove).hasNext());
         assertTrue(conn.getStatements(null, null, null, commitIdToKeep).hasNext());
+        assertFalse(conn.getStatements(tagId, commitIRI, commitIdToRemove, tagId).hasNext());
         conn.close();
     }
 

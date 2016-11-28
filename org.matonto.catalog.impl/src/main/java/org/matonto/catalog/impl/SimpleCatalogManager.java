@@ -683,30 +683,29 @@ public class SimpleCatalogManager implements CatalogManager {
             } else if (optionalBranch.isPresent() && resourceExists(versionedRDFRecordId, VersionedRDFRecord.TYPE)
                     && removeObjectWithRelationship(branchId, versionedRDFRecordId, VersionedRDFRecord.branch_IRI)) {
                 Branch branch = optionalBranch.get();
-                Optional<Commit> optionalHeadCommit = branch.getHead();
-                if (optionalHeadCommit.isPresent()) {
-                    List<Resource> chain = getCommitChain(optionalHeadCommit.get().getResource());
-                    IRI headCommitIRI = vf.createIRI(Branch.head_IRI);
-                    IRI wasInformedByIRI = vf.createIRI(Activity.wasInformedBy_IRI);
-                    conn.begin();
-                    for (int i = chain.size() - 1; i >= 0; i--) {
-                        Optional<Commit> optionalLink = getCommit(chain.get(i), commitFactory);
-                        if (optionalLink.isPresent()) {
-                            Resource commitId = optionalLink.get().getResource();
-                            if (!conn.getStatements(null, headCommitIRI, commitId).hasNext()
-                                    || !conn.getStatements(null, wasInformedByIRI, commitId).hasNext()) {
-                                conn.remove((Resource)null, null, null, commitId);
-                            } else {
-                                break;
-                            }
+                Commit headCommit = branch.getHead().orElseThrow(() ->
+                        new MatOntoException("The head Commit was not set on the Branch."));
+                List<Resource> chain = getCommitChain(headCommit.getResource());
+                IRI headCommitIRI = vf.createIRI(Branch.head_IRI);
+                IRI wasInformedByIRI = vf.createIRI(Activity.wasInformedBy_IRI);
+                IRI commitIRI = vf.createIRI(Tag.commit_IRI);
+                conn.begin();
+                for (int i = chain.size() - 1; i >= 0; i--) {
+                    Resource commitId = chain.get(i);
+                    if (resourceExists(commitId, Commit.TYPE)) {
+                        if (!conn.getStatements(null, headCommitIRI, commitId).hasNext()
+                                || !conn.getStatements(null, wasInformedByIRI, commitId).hasNext()) {
+                            conn.remove((Resource) null, null, null, commitId);
+                            conn.remove((Resource) null, commitIRI, commitId);
+                        } else {
+                            break;
                         }
                     }
-                    conn.commit();
                 }
+                conn.commit();
             } else {
                 throw new MatOntoException("The Branch could not be removed.");
             }
-
         } catch (RepositoryException e) {
             throw new MatOntoException("Error in repository connection", e);
         }
@@ -1354,11 +1353,13 @@ public class SimpleCatalogManager implements CatalogManager {
         try (RepositoryConnection conn = repository.getConnection()) {
             VersionedRDFRecord versionedRDFRecord = versionedRDFRecordFactory.getExisting(record.getResource(),
                     record.getModel());
+            versionedRDFRecord.getVersion().forEach(version -> removeVersion(version.getResource(),
+                    versionedRDFRecord.getResource()));
             conn.remove(versionedRDFRecord.getResource(), vf.createIRI(VersionedRDFRecord.masterBranch_IRI), null,
                     versionedRDFRecord.getResource());
             versionedRDFRecord.getBranch().forEach(branch -> removeBranch(branch.getResource(),
                     versionedRDFRecord.getResource()));
-            removeVersionedRecord(versionedRDFRecord);
+            remove(versionedRDFRecord.getResource());
         } catch (RepositoryException e) {
             throw new MatOntoException("Error in repository connection", e);
         }

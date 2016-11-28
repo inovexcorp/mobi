@@ -214,7 +214,8 @@ GRAPH <http://matonto.org/test/tags#test>
     <http://matonto.org/test/tags#test> a mcat:Tag, mcat:Version ;
         dc:title "Tag" ;
         dc:issued "2016-03-01T00:00:00Z"^^xsd:dateTime ;
-        dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime .
+        dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime ;
+        mcat:commit <http://matonto.org/test/commits#test4b> .
 }
 
 GRAPH <http://matonto.org/test/commits#test0>
