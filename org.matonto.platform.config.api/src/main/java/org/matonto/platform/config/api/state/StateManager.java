@@ -27,6 +27,9 @@ import org.matonto.exception.MatOntoException;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.Resource;
 
+import java.util.Map;
+import java.util.Set;
+
 public interface StateManager {
     /**
      * Determines whether a State with the passed ID exists in the repository.
@@ -84,27 +87,17 @@ public interface StateManager {
     void updateState(Resource stateId, Model newState) throws MatOntoException;
 
     /**
-     * Retrieves all State Models associated with the User with the passed username.
+     * Retrieves all State IDs with Models of all associated statements for the User with the passed
+     * username and matching the other passed filters. Can filter by associated application ID and by
+     * associated subjects.
      *
      * @param username the username of the User to retrieve State for
-     * @return a Model of all the statements associated with all State for the specified User
-     * @throws MatOntoException if the User could not be found or a connection to the repository could
-     *      not be made
+     * @param applicationId the ID of the Application to filter State by
+     * @param subjects a Set of subject IRIs to filter the State by
+     * @return a Map of State IDs to Models of all the associated statements for all State for the
+     *      specified User and matching the filter criteria
      */
-    Model getStates(String username) throws MatOntoException;
-
-    /**
-     * Retrieves all ApplicationState Models associated with the User with the passed username and the
-     * Application with the passed ID.
-     *
-     * @param username the username of the User to retrieve State for
-     * @param applicationId the ID of the Application to find ApplicationState for
-     * @return a Model of all the statements associated with all ApplicationStates for the specified User
-     *      for the specified Application
-     * @throws MatOntoException if the User could not be found, the Application could not be found, or
-     *      a connection to the repository could not be made
-     */
-    Model getStates(String username, String applicationId) throws MatOntoException;
+    Map<String, Model> getStates(String username, String applicationId, Set<Resource> subjects);
 
     /**
      * Retrieves a State Model by the passed State ID.
