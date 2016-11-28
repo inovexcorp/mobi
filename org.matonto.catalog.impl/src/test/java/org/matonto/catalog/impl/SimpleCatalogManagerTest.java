@@ -1479,8 +1479,8 @@ public class SimpleCatalogManagerTest {
     public void testRemoveBranch() throws Exception {
         Resource branchId = vf.createIRI("http://matonto.org/test/branches#test");
         Resource recordId = vf.createIRI("http://matonto.org/test/records#versionedRDF");
-        Resource commitIdToRemove = vf.createIRI("http://matonto.org/test/commits#test4b");
-        Resource commitIdToKeep = vf.createIRI("http://matonto.org/test/commits#test3");
+        Resource commitIdToRemove = vf.createIRI("http://matonto.org/test/commits#conflict2");
+        Resource commitIdToKeep = vf.createIRI("http://matonto.org/test/commits#conflict0");
         Resource tagId = vf.createIRI("http://matonto.org/test/tags#test");
         IRI commitIRI = vf.createIRI(Tag.commit_IRI);
         IRI branchIRI = vf.createIRI(VersionedRDFRecord.branch_IRI);

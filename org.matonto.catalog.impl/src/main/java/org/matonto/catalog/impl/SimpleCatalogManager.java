@@ -700,7 +700,7 @@ public class SimpleCatalogManager implements CatalogManager {
                     Resource commitId = chain.get(i);
                     if (resourceExists(commitId, Commit.TYPE)) {
                         if (!conn.getStatements(null, headCommitIRI, commitId).hasNext()
-                                || !conn.getStatements(null, wasInformedByIRI, commitId).hasNext()) {
+                                && !conn.getStatements(null, wasInformedByIRI, commitId).hasNext()) {
                             conn.remove((Resource) null, null, null, commitId);
                             conn.remove((Resource) null, commitIRI, commitId);
                         } else {

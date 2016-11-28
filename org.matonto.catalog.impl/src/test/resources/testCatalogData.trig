@@ -154,7 +154,7 @@ GRAPH <http://matonto.org/test/branches#test>
         dc:title "Branch" ;
         dc:issued "2016-03-01T00:00:00Z"^^xsd:dateTime ;
         dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime ;
-        mcat:head <http://matonto.org/test/commits#test4b> .
+        mcat:head <http://matonto.org/test/commits#conflict2> .
 }
 
 GRAPH <http://matonto.org/test/branches#test2>
@@ -217,7 +217,7 @@ GRAPH <http://matonto.org/test/tags#test>
         dc:title "Tag" ;
         dc:issued "2016-03-01T00:00:00Z"^^xsd:dateTime ;
         dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime ;
-        mcat:commit <http://matonto.org/test/commits#test4b> .
+        mcat:commit <http://matonto.org/test/commits#conflict2> .
 }
 
 GRAPH <http://matonto.org/test/commits#test0>
