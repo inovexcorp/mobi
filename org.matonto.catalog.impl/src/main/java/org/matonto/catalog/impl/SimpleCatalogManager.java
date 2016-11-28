@@ -198,12 +198,14 @@ public class SimpleCatalogManager implements CatalogManager {
     private static final String COUNT_RECORDS_QUERY;
     private static final String GET_NEW_LATEST_VERSION;
     private static final String GET_COMMIT_CHAIN;
+    private static final String GET_IN_PROGRESS_COMMIT;
     private static final String COMMIT_BINDING = "commit";
     private static final String PARENT_BINDING = "parent";
     private static final String RECORD_BINDING = "record";
     private static final String CATALOG_BINDING = "catalog";
     private static final String RECORD_COUNT_BINDING = "record_count";
     private static final String TYPE_FILTER_BINDING = "type_filter";
+    private static final String USER_BINDING = "user";
 
     static {
         try {
@@ -221,6 +223,10 @@ public class SimpleCatalogManager implements CatalogManager {
             );
             GET_COMMIT_CHAIN = IOUtils.toString(
                     SimpleCatalogManager.class.getResourceAsStream("/get-commit-chain.rq"),
+                    "UTF-8"
+            );
+            GET_IN_PROGRESS_COMMIT = IOUtils.toString(
+                    SimpleCatalogManager.class.getResourceAsStream("/get-in-progress-commit.rq"),
                     "UTF-8"
             );
         } catch (IOException e) {
@@ -760,7 +766,11 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public InProgressCommit createInProgressCommit(User user, Resource recordId) throws
             InvalidParameterException {
-        if (resourceExists(recordId, VersionedRDFRecord.TYPE)) {
+        if (!resourceExists(recordId, VersionedRDFRecord.TYPE)) {
+            throw new InvalidParameterException("The provided Resource does not identify a Record entity.");
+        } else if (userHasInProgressCommit(user, recordId)) {
+            throw new MatOntoException("The user already has an InProgressCommit for the identified Record.");
+        } else {
             UUID uuid = UUID.randomUUID();
 
             Revision revision = revisionFactory.createNew(vf.createIRI(REVISION_NAMESPACE + uuid));
@@ -776,7 +786,6 @@ public class SimpleCatalogManager implements CatalogManager {
 
             return inProgressCommit;
         }
-        throw new InvalidParameterException("The provided Resource does not identify a Branch entity.");
     }
 
     @Override
@@ -1029,6 +1038,24 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     /**
+     * Checks if a User has an InProgressCommit for the VersionedRDFRecord identified by the provided Resource.
+     *
+     * @param user The User that is being checked.
+     * @param recordId The Resource identifying the VersionedRDFRecord.
+     * @return True if the User has an InProgressCommit on the VersionedRDFRecord; otherwise, false.
+     */
+    private boolean userHasInProgressCommit(User user, Resource recordId) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            TupleQuery query = conn.prepareTupleQuery(GET_IN_PROGRESS_COMMIT);
+            query.setBinding(USER_BINDING, user.getResource());
+            query.setBinding(RECORD_BINDING, recordId);
+            return query.evaluate().hasNext();
+        } catch (RepositoryException e) {
+            throw new MatOntoException("Error in repository connection.", e);
+        }
+    }
+
+    /**
      * Creates a conflict using the provided parameters as the data to construct it.
      *
      * @param subject The Resource identifying the conflicted statement's subject.
@@ -1132,7 +1159,7 @@ public class SimpleCatalogManager implements CatalogManager {
      * Checks to see if the provided Resource exists in the Repository.
      *
      * @param resourceIRI The Resource to look for in the Repository
-     * @return True if the Resource is in the Repository; otherwise, false
+     * @return True if the Resource is in the Repository; otherwise, false.
      */
     private boolean resourceExists(Resource resourceIRI) throws MatOntoException {
         try (RepositoryConnection conn = repository.getConnection()) {
@@ -1147,7 +1174,7 @@ public class SimpleCatalogManager implements CatalogManager {
      *
      * @param resourceIRI The Resource to look for in the Repository
      * @param type The String of the IRI identifying the type of entity in the Repository.
-     * @return True if the Resource is in the Repository; otherwise, false
+     * @return True if the Resource is in the Repository; otherwise, false.
      */
     private boolean resourceExists(Resource resourceIRI, String type) throws MatOntoException {
         try (RepositoryConnection conn = repository.getConnection()) {

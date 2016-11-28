@@ -1628,6 +1628,13 @@ public class SimpleCatalogManagerTest {
         manager.createInProgressCommit(user, notPresent);
     }
 
+    @Test(expected = MatOntoException.class)
+    public void testCreateInProgressCommitWhenYouAlreadyHaveOne() {
+        User user = userFactory.createNew(vf.createIRI("http://matonto.org/test/user/taken"));
+        Resource versionedRDFRecordId = vf.createIRI("http://matonto.org/test/records#versionedRDF");
+        manager.createInProgressCommit(user, versionedRDFRecordId);
+    }
+
     @Test
     public void testAddAdditions() throws Exception {
         Resource commitId = vf.createIRI("http://matonto.org/test/in-progress-commits#test");

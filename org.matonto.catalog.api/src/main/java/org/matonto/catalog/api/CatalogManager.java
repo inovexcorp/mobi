@@ -335,11 +335,15 @@ public interface CatalogManager {
      *
      * @param parents The Commit(s) that this InProgressCommit was informed by.
      * @param user The User that this InProgressCommit is associated with.
-     * @param branchId The Resource identifying the Branch that this InProgressCommit is on.
+     * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord that this InProgressCommit is on.
      * @return Optional with an InProgressCommit created using the provided metadata if the identified branch exists.
-     * @throws InvalidParameterException if branchId does not point to a Branch entity in the repository.
+     * @throws InvalidParameterException if versionedRDFRecordId does not point to a VersionedRDFRecord entity in the
+     *         repository.
+     * @throws MatOntoException if the User already has an InProgressCommit associated with the identified
+     *         VersionedRDFRecord.
      */
-    InProgressCommit createInProgressCommit(User user, Resource branchId) throws InvalidParameterException;
+    InProgressCommit createInProgressCommit(User user, Resource versionedRDFRecordId) throws InvalidParameterException,
+            MatOntoException;
 
     /**
      * Adds the provided statements to the provided Commit as additions. These statements were added and will be used
