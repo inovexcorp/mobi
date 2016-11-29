@@ -263,13 +263,15 @@ public interface CatalogManager {
     <T extends Version> Optional<T> getVersion(Resource versionId, OrmFactory<T> factory) throws MatOntoException;
 
     /**
-     * Creates a Branch with the provided metadata.
+     * Creates a Branch with the provided metadata using the provided OrmFactory.
      *
      * @param title The title text.
      * @param description The description text.
+     * @param factory The OrmFactory identifying the type of Branch you want to get back.
+     * @param <T> An Object which extends Branch.
      * @return Branch created with the provided metadata.
      */
-    Branch createBranch(@Nonnull String title, String description);
+    <T extends Branch> T createBranch(@Nonnull String title, String description, OrmFactory<T> factory);
 
     /**
      * Stores the provided Branch in the repository and adds it to the VersionedRDFRecord identified by the provided
@@ -277,9 +279,10 @@ public interface CatalogManager {
      *
      * @param branch The Branch to add to the VersionedRDFRecord.
      * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord which will get a new Branch.
+     * @param <T> An Object which extends Branch.
      * @throws MatOntoException Thrown if a connection to the repository could not be made.
      */
-    void addBranch(Branch branch, Resource versionedRDFRecordId) throws MatOntoException;
+    <T extends Branch> void addBranch(T branch, Resource versionedRDFRecordId) throws MatOntoException;
 
     /**
      * Creates a new master Branch, adds it to the VersionedRDFRecord identified by the provided Resource as the
@@ -296,9 +299,10 @@ public interface CatalogManager {
      * Branch is the master Branch, it will not be updated.
      *
      * @param newBranch The Branch with the desired changes.
+     * @param <T> An Object which extends Branch.
      * @throws MatOntoException Thrown if a connection to the repository could not be made.
      */
-    void updateBranch(Branch newBranch) throws MatOntoException;
+    <T extends Branch> void updateBranch(T newBranch) throws MatOntoException;
 
     /**
      * Removes the non-master Branch identified by the provided Resource from the repository if it was a Branch of the
@@ -312,13 +316,16 @@ public interface CatalogManager {
     void removeBranch(Resource branchId, Resource versionedRDFRecordId) throws MatOntoException;
 
     /**
-     * Gets the Branch identified by the provided Resource.
+     * Gets the Branch identified by the provided Resource. The Branch will be of type T which is determined by the
+     * provided OrmFactory.
      *
      * @param branchId The Resource identifying the Branch you want to get.
      * @return An Optional of the Branch if it exists.
+     * @param factory The OrmFactory identifying the type of Branch you want to get back.
+     * @param <T> An Object which extends Branch.
      * @throws MatOntoException Thrown if a connection to the repository could not be made.
      */
-    Optional<Branch> getBranch(Resource branchId) throws MatOntoException;
+    <T extends Branch> Optional<T> getBranch(Resource branchId, OrmFactory<T> factory) throws MatOntoException;
 
     /**
      * Creates a Commit from the provided InProgressCommit along with the message.

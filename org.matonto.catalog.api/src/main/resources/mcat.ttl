@@ -118,13 +118,26 @@
 
 :Branch a owl:Class;
     rdfs:label "Branch"@en;
-    rdfs:comment "A set of Commits of a Versioned RDF Resource."@en.
+    rdfs:comment "A set of Commits of a Versioned RDF Record."@en.
 
 :head a owl:ObjectProperty, owl:FunctionalProperty;
     rdfs:label "head"@en;
     rdfs:comment "The latest Commit of the described Branch."@en;
     rdfs:domain :Branch;
     rdfs:range :Commit.
+
+# UserBranch
+
+:UserBranch a owl:Class;
+    rdfs:subClassOf :Branch;
+    rdfs:label "User Branch"@en;
+    rdfs:comment "A set of Commits of a Versioned RDF Record linked to a specific User."@en.
+
+:createdFrom a owl:ObjectProperty, owl:FunctionalProperty;
+    rdfs:label "created from"@en;
+    rdfs:comment "The Branch that the described UserBranch was created from."@en;
+    rdfs:domain :UserBranch;
+    rdfs:range :Branch.
 
 # Version
 

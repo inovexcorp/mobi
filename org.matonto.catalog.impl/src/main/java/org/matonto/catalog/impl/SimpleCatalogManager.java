@@ -609,10 +609,10 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public Branch createBranch(@Nonnull String title, String description) {
+    public <T extends Branch> T createBranch(@Nonnull String title, String description, OrmFactory<T> factory) {
         OffsetDateTime now = OffsetDateTime.now();
 
-        Branch branch = branchFactory.createNew(vf.createIRI(BRANCH_NAMESPACE + UUID.randomUUID()));
+        T branch = factory.createNew(vf.createIRI(BRANCH_NAMESPACE + UUID.randomUUID()));
         branch.setProperty(vf.createLiteral(title), vf.createIRI(DC_TITLE));
         branch.setProperty(vf.createLiteral(now), vf.createIRI(DC_ISSUED));
         branch.setProperty(vf.createLiteral(now), vf.createIRI(DC_MODIFIED));
@@ -624,7 +624,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public void addBranch(Branch branch, Resource versionedRDFRecordId) throws MatOntoException {
+    public <T extends Branch> void addBranch(T branch, Resource versionedRDFRecordId) throws MatOntoException {
         if (!resourceExists(branch.getResource()) && resourceExists(versionedRDFRecordId, VersionedRDFRecord.TYPE)) {
             try (RepositoryConnection conn = repository.getConnection()) {
                 conn.begin();
@@ -665,7 +665,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public void updateBranch(Branch newBranch) throws MatOntoException {
+    public <T extends Branch> void updateBranch(T newBranch) throws MatOntoException {
         try (RepositoryConnection conn = repository.getConnection()) {
             IRI masterBranchIRI = vf.createIRI(VersionedRDFRecord.masterBranch_IRI);
             if (resourceExists(newBranch.getResource(), Branch.TYPE)
@@ -681,7 +681,7 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public void removeBranch(Resource branchId, Resource versionedRDFRecordId) throws MatOntoException {
-        Optional<Branch> optionalBranch = getBranch(branchId);
+        Optional<Branch> optionalBranch = getBranch(branchId, branchFactory);
         try (RepositoryConnection conn = repository.getConnection()) {
             IRI masterBranchIRI = vf.createIRI(VersionedRDFRecord.masterBranch_IRI);
             if (conn.getStatements(versionedRDFRecordId, masterBranchIRI, branchId, versionedRDFRecordId).hasNext()) {
@@ -718,8 +718,8 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public Optional<Branch> getBranch(Resource branchId) throws MatOntoException {
-        return getObject(resourceExists(branchId, Branch.TYPE), branchId, branchFactory);
+    public <T extends Branch> Optional<T> getBranch(Resource branchId, OrmFactory<T> factory) throws MatOntoException {
+        return getObject(resourceExists(branchId, T.TYPE), branchId, factory);
     }
 
     @Override

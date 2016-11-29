@@ -99,6 +99,7 @@ public class SimpleCatalogManagerTest {
     private ThingFactory thingFactory = new ThingFactory();
     private VersionFactory versionFactory = new VersionFactory();
     private TagFactory tagFactory = new TagFactory();
+    private UserBranchFactory userBranchFactory = new UserBranchFactory();
     private UserFactory userFactory = new UserFactory();
     private IRI distributedCatalogId;
     private Resource notPresentId;
@@ -1462,6 +1463,25 @@ public class SimpleCatalogManagerTest {
         conn.close();
     }
 
+    @Test
+    public void testUpdateUserBranch() throws Exception {
+        Resource branchId = vf.createIRI("http://matonto.org/test/branches#test");
+        RepositoryConnection conn = repo.getConnection();
+        Model branchModel = mf.createModel();
+        conn.getStatements(branchId, null, null, branchId).forEach(branchModel::add);
+
+        UserBranch branch = userBranchFactory.getExisting(branchId, branchModel);
+        branch.getModel().add(branchId, vf.createIRI(DC_TITLE), vf.createLiteral("New Title"));
+
+        assertFalse(conn.getStatements(branchId, vf.createIRI(DC_TITLE), vf.createLiteral("New Title"), branchId)
+                .hasNext());
+
+        manager.updateBranch(branch);
+        assertTrue(conn.getStatements(branchId, vf.createIRI(DC_TITLE), vf.createLiteral("New Title"), branchId)
+                .hasNext());
+        conn.close();
+    }
+
     @Test(expected = MatOntoException.class)
     public void testUpdateMissingBranch() {
         Branch branch = branchFactory.createNew(notPresentId);
@@ -1535,7 +1555,24 @@ public class SimpleCatalogManagerTest {
         assertTrue(conn.getStatements(branchId, null, null, branchId).hasNext());
         conn.close();
 
-        Optional<Branch> result = manager.getBranch(branchId);
+        Optional<Branch> result = manager.getBranch(branchId, branchFactory);
+        assertTrue(result.isPresent());
+        Branch branch = result.get();
+        assertTrue(branch.getProperty(vf.createIRI(DC_TITLE)).isPresent());
+        assertEquals("Branch", branch.getProperty(vf.createIRI(DC_TITLE)).get().stringValue());
+        assertTrue(branch.getProperty(vf.createIRI(DC_ISSUED)).isPresent());
+        assertTrue(branch.getProperty(vf.createIRI(DC_MODIFIED)).isPresent());
+    }
+
+    @Test
+    public void testGetUserBranch() throws Exception {
+        Resource branchId = vf.createIRI("http://matonto.org/test/branches#test");
+
+        RepositoryConnection conn = repo.getConnection();
+        assertTrue(conn.getStatements(branchId, null, null, branchId).hasNext());
+        conn.close();
+
+        Optional<UserBranch> result = manager.getBranch(branchId, userBranchFactory);
         assertTrue(result.isPresent());
         Branch branch = result.get();
         assertTrue(branch.getProperty(vf.createIRI(DC_TITLE)).isPresent());
@@ -1546,7 +1583,7 @@ public class SimpleCatalogManagerTest {
 
     @Test
     public void testGetMissingBranch() throws Exception {
-        Optional<Branch> optionalBranch = manager.getBranch(notPresentId);
+        Optional<Branch> optionalBranch = manager.getBranch(notPresentId, branchFactory);
         assertFalse(optionalBranch.isPresent());
     }
 
