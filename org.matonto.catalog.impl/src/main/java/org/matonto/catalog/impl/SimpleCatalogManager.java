@@ -1253,7 +1253,16 @@ public class SimpleCatalogManager implements CatalogManager {
         OffsetDateTime issued = Bindings.requiredLiteral(bindingSet, "issued").dateTimeValue();
         OffsetDateTime modified = Bindings.requiredLiteral(bindingSet, "modified").dateTimeValue();
 
-        return addPropertiesToRecord(recordFactory.createNew(resource), builder.build(), issued, modified);
+        Record record = recordFactory.createNew(resource);
+        bindingSet.getBinding("types").ifPresent(binding -> {
+            String[] values = StringUtils.split(binding.getValue().stringValue(), ",");
+
+            for (String value : values) {
+                record.getModel().add(resource, vf.createIRI(RDF_TYPE), vf.createIRI(value));
+            }
+        });
+
+        return addPropertiesToRecord(record, builder.build(), issued, modified);
     }
 
     /**
