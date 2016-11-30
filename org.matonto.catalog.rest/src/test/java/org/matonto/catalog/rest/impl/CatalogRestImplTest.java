@@ -35,6 +35,8 @@ import org.matonto.catalog.api.PaginatedSearchResults;
 import org.matonto.catalog.api.builder.RecordConfig;
 import org.matonto.catalog.api.ontologies.mcat.Catalog;
 import org.matonto.catalog.api.ontologies.mcat.CatalogFactory;
+import org.matonto.catalog.api.ontologies.mcat.Distribution;
+import org.matonto.catalog.api.ontologies.mcat.DistributionFactory;
 import org.matonto.catalog.api.ontologies.mcat.Record;
 import org.matonto.catalog.api.ontologies.mcat.RecordFactory;
 import org.matonto.catalog.api.ontologies.mcat.UnversionedRecordFactory;
@@ -72,16 +74,16 @@ import org.testng.annotations.Test;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Application;
+import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -104,6 +106,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     private UnversionedRecordFactory unversionedRecordFactory;
     private VersionedRecordFactory versionedRecordFactory;
     private VersionedRDFRecordFactory versionedRDFRecordFactory;
+    private DistributionFactory distributionFactory;
     private UserFactory userFactory;
     private ValueFactory vf;
     private ModelFactory mf;
@@ -111,11 +114,13 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     private Catalog localCatalog;
     private Catalog distributedCatalog;
     private Record testRecord;
+    private Distribution testDistribution;
     private User user;
     private static final String ERROR_IRI = "http://matonto.org/error";
     private static final String LOCAL_IRI = "http://matonto.org/catalogs/local";
     private static final String DISTRIBUTED_IRI = "http://matonto.org/catalogs/distributed";
     private static final String RECORD_IRI = "http://matonto.org/records/test";
+    private static final String DISTRIBUTION_IRI = "http://matonto.org/distributions/test";
     private static final String USER_IRI = "http://matonto.org/users/tester";
 
     @Mock
@@ -137,6 +142,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         unversionedRecordFactory = new UnversionedRecordFactory();
         versionedRecordFactory = new VersionedRecordFactory();
         versionedRDFRecordFactory = new VersionedRDFRecordFactory();
+        distributionFactory = new DistributionFactory();
         userFactory = new UserFactory();
         catalogFactory.setModelFactory(mf);
         catalogFactory.setValueFactory(vf);
@@ -153,6 +159,9 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         versionedRDFRecordFactory.setModelFactory(mf);
         versionedRDFRecordFactory.setValueFactory(vf);
         versionedRDFRecordFactory.setValueConverterRegistry(vcr);
+        distributionFactory.setModelFactory(mf);
+        distributionFactory.setValueFactory(vf);
+        distributionFactory.setValueConverterRegistry(vcr);
         userFactory.setModelFactory(mf);
         userFactory.setValueFactory(vf);
         userFactory.setValueConverterRegistry(vcr);
@@ -162,6 +171,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         vcr.registerValueConverter(unversionedRecordFactory);
         vcr.registerValueConverter(versionedRecordFactory);
         vcr.registerValueConverter(versionedRDFRecordFactory);
+        vcr.registerValueConverter(distributionFactory);
         vcr.registerValueConverter(userFactory);
         vcr.registerValueConverter(new ResourceValueConverter());
         vcr.registerValueConverter(new IRIValueConverter());
@@ -176,6 +186,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         localCatalog = catalogFactory.createNew(vf.createIRI(LOCAL_IRI));
         distributedCatalog = catalogFactory.createNew(vf.createIRI(DISTRIBUTED_IRI));
         testRecord = recordFactory.createNew(vf.createIRI(RECORD_IRI));
+        testDistribution = distributionFactory.createNew(vf.createIRI(DISTRIBUTION_IRI));
         user = userFactory.createNew(vf.createIRI(USER_IRI));
 
         MockitoAnnotations.initMocks(this);
@@ -183,7 +194,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         rest = new CatalogRestImpl();
         rest.setFactory(vf);
         rest.setEngineManager(engineManager);
-        rest.setSesameTransformer(new SimpleSesameTransformer());
+        rest.setTransformer(new SimpleSesameTransformer());
         rest.setCatalogManager(catalogManager);
         rest.addRecordFactory(recordFactory);
         rest.addRecordFactory(unversionedRecordFactory);
@@ -316,7 +327,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         assertEquals(200, response.getStatus());
         MultivaluedMap<String, Object> headers = response.getHeaders();
         assertEquals(headers.get("X-Total-Count").get(0), "" + results.getTotalSize());
-        assertFalse(headers.containsKey("Link"));
+        assertEquals(response.getLinks().size(), 0);
         try {
             JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
             assertEquals(result.size(), results.getPage().size());
@@ -335,12 +346,12 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
                 .queryParam("offset", 1)
                 .queryParam("limit", 1).request().get();
         assertEquals(200, response.getStatus());
-        MultivaluedMap<String, Object> headers = response.getHeaders();
-        assertTrue(headers.containsKey("Link"));
-        List<Object> links = headers.get("Link");
+        Set<Link> links = response.getLinks();
         assertEquals(links.size(), 2);
-        assertTrue(links.get(0).toString().contains("next") || links.get(0).toString().contains("prev"));
-        assertTrue(links.get(1).toString().contains("next") || links.get(1).toString().contains("prev"));
+        links.forEach(link -> {
+                assertTrue(link.getUri().getRawPath().contains("catalogs/" + encode(LOCAL_IRI) + "/records"));
+                assertTrue(link.getRel().equals("prev") || link.getRel().equals("next"));
+            });
     }
 
     @Test
@@ -361,7 +372,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         record.put(Record.keyword_IRI, new JSONArray().element(new JSONObject().element("@value", "keyword")));
 
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records")
-                .request().post(Entity.entity(record.toString(), MediaType.APPLICATION_JSON));
+                .request().post(Entity.json(record.toString()));
         assertEquals(200, response.getStatus());
         assertEquals(response.readEntity(String.class), RECORD_IRI);
         verify(catalogManager, times(1)).createRecord(any(RecordConfig.class), eq(recordFactory));
@@ -421,6 +432,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI))
                 .request().get();
         Assert.assertEquals(200, response.getStatus());
+        verify(catalogManager, times(1)).getRecord(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), recordFactory);
         try {
             JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
             assertEquals(result.size(), 1);
@@ -448,6 +460,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI))
                 .request().delete();
         assertEquals(200, response.getStatus());
+        verify(catalogManager, times(1)).removeRecord(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI));
     }
 
     @Test
@@ -458,6 +471,17 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI))
                 .request().delete();
         assertEquals(400, response.getStatus());
+    }
+
+    @Test
+    public void updateRecordTest() {
+        //Setup:
+        JSONObject record = new JSONObject().element("@id", RECORD_IRI);
+
+        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI))
+                .request().put(Entity.json(record.toString()));
+        assertEquals(200, response.getStatus());
+        verify(catalogManager, times(1)).updateRecord(eq(vf.createIRI(LOCAL_IRI)), any(Record.class));
     }
 
     private String encode(String str) {

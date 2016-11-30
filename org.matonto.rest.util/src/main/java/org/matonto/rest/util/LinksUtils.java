@@ -62,7 +62,7 @@ public class LinksUtils {
      * @return Links for the provided details.
      */
     public static Links buildLinks(UriInfo uriInfo, int size, int totalSize, int limit, int start) {
-        String path = uriInfo.getPath();
+        String path = uriInfo.getPath(false);
 
         Links links = new Links();
         links.setBase(uriInfo.getBaseUri().toString());

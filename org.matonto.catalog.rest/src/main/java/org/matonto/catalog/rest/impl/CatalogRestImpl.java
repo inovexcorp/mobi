@@ -27,6 +27,7 @@ import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.log4j.Logger;
 import org.matonto.catalog.api.CatalogManager;
@@ -42,6 +43,7 @@ import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.jaas.api.principals.UserPrincipal;
 import org.matonto.jaas.api.utils.TokenUtils;
 import org.matonto.ontology.utils.api.SesameTransformer;
+import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.orm.OrmFactory;
@@ -54,6 +56,7 @@ import org.openrdf.model.vocabulary.DCTERMS;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.Rio;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 import javax.security.auth.Subject;
@@ -66,10 +69,11 @@ import javax.ws.rs.core.UriInfo;
 public class CatalogRestImpl implements CatalogRest {
     protected MatontoConfiguration matontoConfiguration;
     protected EngineManager engineManager;
-    private SesameTransformer sesameTransformer;
+    private SesameTransformer transformer;
     private CatalogManager catalogManager;
     private ValueFactory factory;
     protected Map<String, OrmFactory<? extends Record>> recordFactories = new HashMap<>();
+    protected DistributionFactory distributionFactory;
 
     private static final String RDF_ENGINE = "org.matonto.jaas.engines.RdfEngine";
     private static final Set<String> SORT_RESOURCES;
@@ -104,8 +108,8 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Reference
-    protected void setSesameTransformer(SesameTransformer sesameTransformer) {
-        this.sesameTransformer = sesameTransformer;
+    protected void setTransformer(SesameTransformer transformer) {
+        this.transformer = transformer;
     }
 
     @Reference
@@ -116,6 +120,11 @@ public class CatalogRestImpl implements CatalogRest {
     @Reference
     protected void setFactory(ValueFactory factory) {
         this.factory = factory;
+    }
+
+    @Reference
+    protected void setDistributionFactory(DistributionFactory distributionFactory) {
+        this.distributionFactory = distributionFactory;
     }
 
     @Override
@@ -172,10 +181,10 @@ public class CatalogRestImpl implements CatalogRest {
         Response.ResponseBuilder response = Response.ok(results.toString())
                 .header("X-Total-Count", records.getTotalSize());
         if (links.getNext() != null) {
-            response = response.link(links.getNext(), "next");
+            response = response.link(links.getBase() + links.getNext(), "next");
         }
         if (links.getPrev() != null) {
-            response = response.link(links.getPrev(), "prev");
+            response = response.link(links.getBase() + links.getPrev(), "prev");
         }
         return response.build();
     }
@@ -248,8 +257,20 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
-    public <T extends Record> Response updateRecord(String catalogId, String recordId, T newRecord) {
-        return Response.status(Response.Status.NOT_IMPLEMENTED).build();
+    public Response updateRecord(String catalogId, String recordId, String newRecordJson) {
+        Model newRecordModel;
+        try {
+            newRecordModel = transformer.matontoModel(Rio.parse(IOUtils.toInputStream(newRecordJson), "",
+                    RDFFormat.JSONLD));
+        } catch (IOException e) {
+            throw ErrorUtils.sendError("Invalid JSON-LD", Response.Status.BAD_REQUEST);
+        }
+        Record newRecord = recordFactories.get(Record.TYPE).getExisting(factory.createIRI(recordId), newRecordModel);
+        if (newRecord == null) {
+            throw ErrorUtils.sendError("Record ids must match", Response.Status.BAD_REQUEST);
+        }
+        catalogManager.updateRecord(factory.createIRI(catalogId), newRecord);
+        return Response.ok().build();
     }
 
     @Override
@@ -274,7 +295,7 @@ public class CatalogRestImpl implements CatalogRest {
 
     @Override
     public Response updateUnversionedDistribution(String catalogId, String recordId, String distributionId, 
-                                                  Distribution newDistribution) {
+                                                  String newDistributionJson) {
         return Response.status(Response.Status.NOT_IMPLEMENTED).build();
     }
 
@@ -455,7 +476,7 @@ public class CatalogRestImpl implements CatalogRest {
 
     private String thingToJsonld(Thing thing) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        Rio.write(sesameTransformer.sesameModel(thing.getModel()), out, RDFFormat.JSONLD);
+        Rio.write(transformer.sesameModel(thing.getModel()), out, RDFFormat.JSONLD);
         return out.toString();
     }
 

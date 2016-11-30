@@ -154,19 +154,17 @@ public interface CatalogRest {
      *                  with "_:".
      * @param recordId The String representing the Record ID. NOTE: Assumes ID represents an IRI unless String begins
      *                 with "_:".
-     * @param newRecord The Record containing the new values which will replace the existing Record.
-     * @param <T> An Object which extends the Record class.
+     * @param newRecordJson The JSON-LD of the new Record which will replace the existing Record.
      * @return A Response indicating whether or not the Record was updated.
      */
     @PUT
     @Path("{catalogId}/records/{recordId}")
-    @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Updates the Catalog Record by its ID using the provided Record.")
-    <T extends Record> Response updateRecord(@PathParam("catalogId") String catalogId,
-                                             @PathParam("recordId") String recordId,
-                                             T newRecord);
+    @ApiOperation("Updates the Catalog Record by its ID using the provided Record JSON-LD.")
+    Response updateRecord(@PathParam("catalogId") String catalogId,
+                          @PathParam("recordId") String recordId,
+                          String newRecordJson);
 
     /**
      * Retrieves a list of all the Distributions associated with a specific UnversionedRecord. Parameters can be passed
@@ -264,18 +262,18 @@ public interface CatalogRest {
      *                 String begins with "_:".
      * @param distributionId The String representing the Distribution ID. NOTE: Assumes ID represents an IRI unless
      *                       String begins with "_:".
+     * @param newDistributionJson The JSON-LD of the new Distribution which will replace the existing Distribution.
      * @return A Response indicating if the Distribution was updated.
      */
     @PUT
     @Path("{catalogId}/records/{recordId}/distributions/{distributionId}")
-    @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @ApiOperation("Updates a specific Distribution of an UnversionedRecord.")
     Response updateUnversionedDistribution(@PathParam("catalogId") String catalogId,
                                            @PathParam("recordId") String recordId,
                                            @PathParam("distributionId") String distributionId,
-                                           Distribution newDistribution);
+                                           String newDistributionJson);
 
     /**
      * Gets the latest Version of a VersionedRecord identified by the provided IDs.
