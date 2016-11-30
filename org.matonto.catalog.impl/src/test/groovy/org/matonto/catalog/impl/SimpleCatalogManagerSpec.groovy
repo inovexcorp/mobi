@@ -62,6 +62,7 @@ class SimpleCatalogManagerSpec extends Specification {
     def inProgressCommitFactory = new InProgressCommitFactory()
     def commitFactory = new CommitFactory()
     def revisionFactory = new RevisionFactory()
+    def userBranchFactory = new UserBranchFactory()
     def thingFactory = new ThingFactory()
     def title = "title"
     def description = "description"
@@ -136,6 +137,9 @@ class SimpleCatalogManagerSpec extends Specification {
         revisionFactory.setValueFactory(vf)
         revisionFactory.setModelFactory(mf)
         revisionFactory.setValueConverterRegistry(vcr)
+        userBranchFactory.setValueFactory(vf)
+        userBranchFactory.setModelFactory(mf)
+        userBranchFactory.setValueConverterRegistry(vcr)
         userFactory.setValueFactory(vf)
         userFactory.setModelFactory(mf)
         userFactory.setValueConverterRegistry(vcr)
@@ -445,7 +449,7 @@ class SimpleCatalogManagerSpec extends Specification {
 
     def "createBranch creates a Branch"() {
         setup:
-        def branch = service.createBranch("title", "description")
+        def branch = service.createBranch("title", "description", branchFactory)
 
         expect:
         branch instanceof Branch
@@ -455,9 +459,21 @@ class SimpleCatalogManagerSpec extends Specification {
         branch.getProperty(vf.createIRI(dcModified)).isPresent()
     }
 
+    def "createBranch creates a UserBranch when provided a UserBranchFactory"() {
+        setup:
+        def branch = service.createBranch("title", "description", userBranchFactory)
+
+        expect:
+        branch instanceof UserBranch
+        branch.getProperty(vf.createIRI(dcTitle)).get().stringValue() == "title"
+        branch.getProperty(vf.createIRI(dcDescription)).get().stringValue() == "description"
+        branch.getProperty(vf.createIRI(dcIssued)).isPresent()
+        branch.getProperty(vf.createIRI(dcModified)).isPresent()
+    }
+
     def "createBranch creates a Branch with no description"() {
         setup:
-        def branch = service.createBranch("title", null)
+        def branch = service.createBranch("title", null, branchFactory)
 
         expect:
         branch instanceof Branch
