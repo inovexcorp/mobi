@@ -804,7 +804,7 @@ public class SimpleCatalogManagerTest {
         int limit = 1;
         int offset = 0;
         IRI modified = vf.createIRI(DC_MODIFIED);
-        PaginatedSearchParams searchParams = new SimpleSearchParams.Builder(limit, offset, modified).build();
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder(limit, offset, modified).build();
         // when
         PaginatedSearchResults<Record> records = manager.findRecord(distributedCatalogId, searchParams);
         // then
@@ -820,7 +820,7 @@ public class SimpleCatalogManagerTest {
         int limit = 1;
         int offset = 1;
         IRI modified = vf.createIRI(DC_MODIFIED);
-        PaginatedSearchParams searchParams = new SimpleSearchParams.Builder(limit, offset, modified).build();
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder(limit, offset, modified).build();
         // when
         PaginatedSearchResults<Record> records = manager.findRecord(distributedCatalogId, searchParams);
         // then
@@ -836,7 +836,7 @@ public class SimpleCatalogManagerTest {
         int limit = 1000;
         int offset = 0;
         IRI modified = vf.createIRI(DC_MODIFIED);
-        PaginatedSearchParams searchParams = new SimpleSearchParams.Builder(limit, offset, modified).build();
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder(limit, offset, modified).build();
         // when
         PaginatedSearchResults<Record> records = manager.findRecord(distributedCatalogId, searchParams);
         // then
@@ -854,12 +854,12 @@ public class SimpleCatalogManagerTest {
         IRI title = vf.createIRI(DC_TITLE);
         int limit = 1;
         int offset = 0;
-        PaginatedSearchParams searchParams1 = new SimpleSearchParams.Builder(limit, offset, modified).ascending(true).build();
-        PaginatedSearchParams searchParams2 = new SimpleSearchParams.Builder(limit, offset, modified).ascending(false).build();
-        PaginatedSearchParams searchParams3 = new SimpleSearchParams.Builder(limit, offset, issued).ascending(true).build();
-        PaginatedSearchParams searchParams4 = new SimpleSearchParams.Builder(limit, offset, issued).ascending(false).build();
-        PaginatedSearchParams searchParams5 = new SimpleSearchParams.Builder(limit, offset, title).ascending(true).build();
-        PaginatedSearchParams searchParams6 = new SimpleSearchParams.Builder(limit, offset, title).ascending(false).build();
+        PaginatedSearchParams searchParams1 = new PaginatedSearchParams.Builder(limit, offset, modified).ascending(true).build();
+        PaginatedSearchParams searchParams2 = new PaginatedSearchParams.Builder(limit, offset, modified).ascending(false).build();
+        PaginatedSearchParams searchParams3 = new PaginatedSearchParams.Builder(limit, offset, issued).ascending(true).build();
+        PaginatedSearchParams searchParams4 = new PaginatedSearchParams.Builder(limit, offset, issued).ascending(false).build();
+        PaginatedSearchParams searchParams5 = new PaginatedSearchParams.Builder(limit, offset, title).ascending(true).build();
+        PaginatedSearchParams searchParams6 = new PaginatedSearchParams.Builder(limit, offset, title).ascending(false).build();
         // when
         PaginatedSearchResults<Record> resources1 = manager.findRecord(distributedCatalogId, searchParams1);
         PaginatedSearchResults<Record> resources2 = manager.findRecord(distributedCatalogId, searchParams2);
@@ -885,7 +885,7 @@ public class SimpleCatalogManagerTest {
         int limit = 1;
         int offset = 0;
         IRI modified = vf.createIRI(DC_MODIFIED);
-        PaginatedSearchParams searchParams = new SimpleSearchParams.Builder(limit, offset, modified).build();
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder(limit, offset, modified).build();
         // when
         PaginatedSearchResults<Record> records = manager.findRecord(distributedCatalogId, searchParams);
         // then
@@ -900,7 +900,7 @@ public class SimpleCatalogManagerTest {
         int offset = 0;
         IRI modified = vf.createIRI(DC_MODIFIED);
         IRI localCatalogId = vf.createIRI("http://matonto.org/test/catalog-local");
-        PaginatedSearchParams searchParams = new SimpleSearchParams.Builder(limit, offset, modified).build();
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder(limit, offset, modified).build();
         // when
         PaginatedSearchResults<Record> records = manager.findRecord(localCatalogId, searchParams);
         // then
@@ -914,9 +914,9 @@ public class SimpleCatalogManagerTest {
         int limit = 1000;
         int offset = 0;
         IRI modified = vf.createIRI(DC_MODIFIED);
-        PaginatedSearchParams ontSearchParams = new SimpleSearchParams.Builder(limit, offset, modified).typeFilter(ONT_TYPE).build();
-        PaginatedSearchParams mappingSearchParams = new SimpleSearchParams.Builder(limit, offset, modified).typeFilter(MAPPING_TYPE).build();
-        PaginatedSearchParams fullSearchParams = new SimpleSearchParams.Builder(limit, offset, modified).build();
+        PaginatedSearchParams ontSearchParams = new PaginatedSearchParams.Builder(limit, offset, modified).typeFilter(ONT_TYPE).build();
+        PaginatedSearchParams mappingSearchParams = new PaginatedSearchParams.Builder(limit, offset, modified).typeFilter(MAPPING_TYPE).build();
+        PaginatedSearchParams fullSearchParams = new PaginatedSearchParams.Builder(limit, offset, modified).build();
         // when
         PaginatedSearchResults<Record> ontRecords = manager.findRecord(distributedCatalogId, ontSearchParams);
         PaginatedSearchResults<Record> mappingRecords = manager.findRecord(distributedCatalogId, mappingSearchParams);

@@ -83,30 +83,33 @@ public interface CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @ApiOperation("Retrieves the Records in the Catalog.")
-    Response getRecords(@PathParam("catalogId") String catalogId,
+    Response getRecords(@Context UriInfo uriInfo,
+                        @PathParam("catalogId") String catalogId,
                         @QueryParam("sort") String sort,
                         @QueryParam("type") String recordType,
                         @DefaultValue("0") @QueryParam("offset") int offset,
                         @DefaultValue("100") @QueryParam("limit") int limit,
+                        @DefaultValue("true") @QueryParam("ascending") boolean asc,
                         @QueryParam("searchText") String searchText);
 
     /**
-     * Creates a new Record in the repository. Returns a Response indicating whether it was created successfully.
+     * Creates a new Record in the repository used the passed JSON-LD object. Determines the type of the new Record
+     * based on the "@type" array of the JSON-LD object. Requires the `dcterms:title`, `dcterms:identifier`, and
+     * `dcterms:publisher` properties to be included. Returns a Response indicating whether it was created successfully.
      *
+     * @param context The context of the request.
      * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param newRecord The new Record which you want to add to the catalog.
-     * @param <T> An Object which extends the Record class.
+     * @param newRecordJson The JSON-LD of the new Record which you want to add to the catalog.
      * @return A Response indicating whether the Record was created successfully.
      */
     @POST
     @Path("{catalogId}/records")
-    @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @ApiOperation("Creates a new Record in the Catalog.")
-    <T extends Record> Response createRecord(@PathParam("catalogId") String catalogId,
-                                             T newRecord);
+    Response createRecord(@Context ContainerRequestContext context,
+                          @PathParam("catalogId") String catalogId, String newRecordJson);
 
     /**
      * Returns a Record with the provided ID.
@@ -976,4 +979,28 @@ public interface CatalogRest {
                                     @PathParam("recordId") String recordId,
                                     @FormDataParam("additions") String additionsJson,
                                     @FormDataParam("deletions") String deletionsJson);
+
+    /**
+     * Returns all the available record types.
+     *
+     * @return All the available record types
+     */
+    @GET
+    @Path("/record-types")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Retrieves all the available record types.")
+    Response getRecordTypes();
+
+    /**
+     * Returns all the available sorting options.
+     *
+     * @return all the available sorting options.
+     */
+    @GET
+    @Path("/sort-options")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Retrieves all the available sorting options.")
+    Response getSortOptions();
 }
