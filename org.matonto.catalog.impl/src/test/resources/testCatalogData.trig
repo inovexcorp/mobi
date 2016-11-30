@@ -9,6 +9,26 @@ GRAPH <http://matonto.org/test/different>
     <http://matonto.org/test/different> a owl:Class .
 }
 
+GRAPH <http://matonto.org/test/records#just-a-record>
+{
+    <http://matonto.org/test/records#just-a-record> a mcat:Record ;
+        mcat:catalog <http://matonto.org/test/catalog-distributed> ;
+        dc:title "Just a Record" ;
+        dc:identifier "Record" ;
+        dc:issued "2016-01-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-03-02T00:00:00Z"^^xsd:dateTime .
+}
+
+GRAPH <http://matonto.org/test/records#unique>
+{
+    <http://matonto.org/test/records#unique> a mcat:Record ;
+        mcat:catalog <http://matonto.org/test/catalog-local> ;
+        dc:title "Unique" ;
+        dc:identifier "Unique" ;
+        dc:issued "2016-01-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-03-02T00:00:00Z"^^xsd:dateTime .
+}
+
 GRAPH <http://matonto.org/test/records#update>
 {
     <http://matonto.org/test/records#update> a mcat:OntologyRecord, mcat:VersionedRDFRecord, mcat:VersionedRecord, mcat:Record ;
@@ -48,7 +68,9 @@ GRAPH <http://matonto.org/test/records#versionedRDF>
         dc:identifier "Identifier" ;
         dc:issued "2016-03-01T00:00:00Z"^^xsd:dateTime ;
         dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime ;
-        mcat:branch <http://matonto.org/test/branches#test> .
+        mcat:branch <http://matonto.org/test/branches#test> ;
+        mcat:branch <http://matonto.org/test/branches#master> ;
+        mcat:masterBranch <http://matonto.org/test/branches#master> .
 }
 
 GRAPH <http://matonto.org/test/records#get>
@@ -97,7 +119,8 @@ GRAPH <http://matonto.org/test/versions#remove>
     <http://matonto.org/test/versions#remove> a mcat:Version ;
         dc:title "Version to Remove" ;
         dc:issued "2016-08-08T00:00:00Z"^^xsd:dateTime ;
-        dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime .
+        dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime ;
+        mcat:versionedDistribution <http://matonto.org/test/distributions#test2> .
 }
 
 GRAPH <http://matonto.org/test/distributions#test>
@@ -116,12 +139,22 @@ GRAPH <http://matonto.org/test/distributions#test2>
         dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime .
 }
 
+GRAPH <http://matonto.org/test/branches#master>
+{
+    <http://matonto.org/test/branches#master> a mcat:Branch ;
+        dc:title "Master Branch" ;
+        dc:issued "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime ;
+        mcat:head <http://matonto.org/test/commits#test4a> .
+}
+
 GRAPH <http://matonto.org/test/branches#test>
 {
     <http://matonto.org/test/branches#test> a mcat:Branch ;
         dc:title "Branch" ;
         dc:issued "2016-03-01T00:00:00Z"^^xsd:dateTime ;
-        dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime .
+        dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime ;
+        mcat:head <http://matonto.org/test/commits#conflict2> .
 }
 
 GRAPH <http://matonto.org/test/branches#test2>
@@ -137,7 +170,9 @@ GRAPH <http://matonto.org/test/in-progress-commits#test>
     <http://matonto.org/test/in-progress-commits#test> a mcat:InProgressCommit, mcat:Commit ;
         dc:title "In progress commit" ;
         prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
-        prov:generated <http://matonto.org/test/revisions#in-revision> .
+        prov:generated <http://matonto.org/test/revisions#in-revision> ;
+        prov:wasAssociatedWith <http://matonto.org/test/user/taken> ;
+        mcat:onVersionedRDFRecord <http://matonto.org/test/records#versionedRDF> .
 
     <http://matonto.org/test/revisions#in-revision> a mcat:Revision ;
         mcat:additions <http://matonto.org/test/in-additions#test> ;
@@ -181,7 +216,8 @@ GRAPH <http://matonto.org/test/tags#test>
     <http://matonto.org/test/tags#test> a mcat:Tag, mcat:Version ;
         dc:title "Tag" ;
         dc:issued "2016-03-01T00:00:00Z"^^xsd:dateTime ;
-        dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime .
+        dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime ;
+        mcat:commit <http://matonto.org/test/commits#conflict2> .
 }
 
 GRAPH <http://matonto.org/test/commits#test0>

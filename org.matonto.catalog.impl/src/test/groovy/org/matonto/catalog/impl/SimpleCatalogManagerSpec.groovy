@@ -28,6 +28,7 @@ import org.matonto.catalog.api.ontologies.mcat.*
 import org.matonto.jaas.api.ontologies.usermanagement.User
 import org.matonto.jaas.api.ontologies.usermanagement.UserFactory
 import org.matonto.rdf.api.Model
+import org.matonto.rdf.api.Resource
 import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory
 import org.matonto.rdf.orm.conversion.impl.*
@@ -138,6 +139,7 @@ class SimpleCatalogManagerSpec extends Specification {
         userFactory.setValueFactory(vf)
         userFactory.setModelFactory(mf)
         userFactory.setValueConverterRegistry(vcr)
+        thingFactory.setModelFactory(mf)
         thingFactory.setValueFactory(vf)
         thingFactory.setValueConverterRegistry(vcr)
 
