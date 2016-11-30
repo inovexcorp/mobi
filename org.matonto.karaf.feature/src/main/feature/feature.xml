@@ -102,6 +102,7 @@
         <bundle start-level="80">mvn:org.matonto/jaas.api/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/rdf.orm/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/rdf.orm.ontologies/${project.version}</bundle>
+        <bundle start-level="80">mvn:org.matonto/platform.config.api/${project.version}</bundle>
     </feature>
     <feature name="matonto-cli" description="MatOnto CLI Bundles" version="${project.version}">
         <feature prerequisite="true">matonto-core</feature>
@@ -118,6 +119,7 @@
         <bundle start-level="80">mvn:org.matonto/sparql.rest/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/catalog.rest/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/jaas.rest/${project.version}</bundle>
+        <bundle start-level="80">mvn:org.matonto/platform.config.rest/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/web.security/${project.version}</bundle>
     </feature>
 </features>

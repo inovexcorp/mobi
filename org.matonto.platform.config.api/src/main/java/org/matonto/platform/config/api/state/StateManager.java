@@ -66,7 +66,8 @@ public interface StateManager {
     void storeState(Model newState, String username, String applicationId) throws MatOntoException;
 
     /**
-     * Removes State with the passed ID from the repository.
+     * Removes State with the passed ID from the repository. Removes all associated statements unless
+     * their subjects and related to other States.
      *
      * @param stateId the ID of the State to remove from the repository NOTE: Assumes ID represents an
      *      IRI unless String begins with "_:".
