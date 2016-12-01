@@ -184,7 +184,8 @@ public interface CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @ApiOperation("Retrieves the list of Distributions associated with an UnversionedRecord.")
-    Response getUnversionedDistributions(@PathParam("catalogId") String catalogId,
+    Response getUnversionedDistributions(@Context UriInfo uriInfo,
+                                         @PathParam("catalogId") String catalogId,
                                          @PathParam("recordId") String recordId,
                                          @QueryParam("sort") String sort,
                                          @DefaultValue("0") @QueryParam("offset") int offset,
@@ -198,18 +199,17 @@ public interface CatalogRest {
      *                  with "_:".
      * @param recordId The String representing the UnversionedRecord ID. NOTE: Assumes ID represents an IRI unless
      *                 String begins with "_:".
-     * @param newDistribution The Distribution that you want to add to the specific Record.
+     * @param newDistributionJson The JSON-LD of the new Distribution that you want to add to the specific Record.
      * @return A Response indicating if the new Distribution was created successfully.
      */
     @POST
     @Path("{catalogId}/records/{recordId}/distributions")
-    @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @ApiOperation("Creates a new Distribution for the provided UnversionedRecord.")
     Response createUnversionedDistribution(@PathParam("catalogId") String catalogId,
                                            @PathParam("recordId") String recordId,
-                                           Distribution newDistribution);
+                                           String newDistributionJson);
 
     /**
      * Returns the Distribution of the UnversionedRecord identified using the provided IDs.

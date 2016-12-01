@@ -33,6 +33,7 @@ import org.apache.log4j.Logger;
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.PaginatedSearchParams;
 import org.matonto.catalog.api.PaginatedSearchResults;
+import org.matonto.catalog.api.builder.DistributionConfig;
 import org.matonto.catalog.api.builder.RecordConfig;
 import org.matonto.catalog.api.ontologies.mcat.*;
 import org.matonto.catalog.rest.CatalogRest;
@@ -43,8 +44,11 @@ import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.jaas.api.principals.UserPrincipal;
 import org.matonto.jaas.api.utils.TokenUtils;
 import org.matonto.ontology.utils.api.SesameTransformer;
+import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
+import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.orm.OrmFactory;
 import org.matonto.rdf.orm.Thing;
@@ -53,6 +57,7 @@ import org.matonto.rest.util.LinksUtils;
 import org.matonto.rest.util.jaxb.Links;
 import org.matonto.web.security.util.RestSecurityUtils;
 import org.openrdf.model.vocabulary.DCTERMS;
+import org.openrdf.model.vocabulary.RDF;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.Rio;
 
@@ -72,6 +77,7 @@ public class CatalogRestImpl implements CatalogRest {
     private SesameTransformer transformer;
     private CatalogManager catalogManager;
     private ValueFactory factory;
+    private ModelFactory modelFactory;
     protected Map<String, OrmFactory<? extends Record>> recordFactories = new HashMap<>();
     protected DistributionFactory distributionFactory;
 
@@ -123,6 +129,11 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Reference
+    protected void setModelFactory(ModelFactory modelFactory) {
+        this.modelFactory = modelFactory;
+    }
+
+    @Reference
     protected void setDistributionFactory(DistributionFactory distributionFactory) {
         this.distributionFactory = distributionFactory;
     }
@@ -165,7 +176,7 @@ public class CatalogRestImpl implements CatalogRest {
         if (!SORT_RESOURCES.contains(sort)) {
             throw ErrorUtils.sendError("Invalid sort property IRI", Response.Status.BAD_REQUEST);
         }
-        Resource sortBy = factory.createIRI(sort);
+        IRI sortBy = factory.createIRI(sort);
         PaginatedSearchParams.Builder builder = new PaginatedSearchParams.Builder(limit, offset, sortBy).ascending(asc);
         Optional.ofNullable(recordType).ifPresent(s -> builder.typeFilter(factory.createIRI(s)));
         Optional.ofNullable(searchText).ifPresent(builder::searchTerm);
@@ -191,48 +202,52 @@ public class CatalogRestImpl implements CatalogRest {
 
     @Override
     public Response createRecord(ContainerRequestContext context, String catalogId, String newRecordJson) {
-        JSONObject recordInfo = JSONObject.fromObject(newRecordJson);
-        String title = Optional.ofNullable(
-                Optional.ofNullable(
-                    Optional.ofNullable(
-                            recordInfo.optJSONArray(DCTERMS.TITLE.stringValue())
-                    ).orElse(new JSONArray()).optJSONObject(0)
-                ).orElse(new JSONObject()).optString("@value", null)
-            ).orElseThrow(() -> ErrorUtils.sendError("Record title is required", Response.Status.BAD_REQUEST));
-        String identifier = Optional.ofNullable(
-                Optional.ofNullable(
-                    Optional.ofNullable(
-                            recordInfo.optJSONArray(DCTERMS.IDENTIFIER.stringValue())
-                    ).orElse(new JSONArray()).optJSONObject(0)
-                ).orElse(new JSONObject()).optString("@value", null)
-            ).orElseThrow(() -> ErrorUtils.sendError("Record identifier is required", Response.Status.BAD_REQUEST));
-        String type = Optional.ofNullable(
-                Optional.ofNullable(recordInfo.optJSONArray("@type")).orElse(new JSONArray()).optString(0)
-            ).orElseThrow(() -> ErrorUtils.sendError("Record type is required", Response.Status.BAD_REQUEST));
+        Model newRecordModel;
+        try {
+            newRecordModel = transformer.matontoModel(Rio.parse(IOUtils.toInputStream(newRecordJson), "", RDFFormat.JSONLD));
+        } catch (IOException e) {
+            throw ErrorUtils.sendError("Invalid JSON-LD", Response.Status.BAD_REQUEST);
+        }
+
+        Model titleModel = modelFactory.createModel(newRecordModel)
+                .filter(null, factory.createIRI(DCTERMS.TITLE.stringValue()), null);
+        if (titleModel.isEmpty()) {
+            throw ErrorUtils.sendError("Record title is required", Response.Status.BAD_REQUEST);
+        }
+        String title = titleModel.objects().iterator().next().stringValue();
+
+        Model identifierModel = modelFactory.createModel(newRecordModel)
+                .filter(null, factory.createIRI(DCTERMS.IDENTIFIER.stringValue()), null);
+        if (identifierModel.isEmpty()) {
+            throw ErrorUtils.sendError("Record identifier is required", Response.Status.BAD_REQUEST);
+        }
+        String identifier = identifierModel.objects().iterator().next().stringValue();
+
+        Model typeModel = modelFactory.createModel(newRecordModel)
+                .filter(null, factory.createIRI(RDF.TYPE.stringValue()), null);
+        if (typeModel.isEmpty()) {
+            throw ErrorUtils.sendError("Record type is required", Response.Status.BAD_REQUEST);
+        }
+        String type = typeModel.objects().iterator().next().stringValue();
         if (!recordFactories.keySet().contains(type)) {
             throw ErrorUtils.sendError("Invalid Record type", Response.Status.BAD_REQUEST);
         }
-
         Set<User> publishers = new HashSet<>();
         getActiveUser(context).ifPresent(publishers::add);
-        RecordConfig.Builder config = new RecordConfig.Builder(title, identifier, publishers);
-        Optional.ofNullable(
-                Optional.ofNullable(
-                    Optional.ofNullable(
-                            recordInfo.optJSONArray(DCTERMS.DESCRIPTION.stringValue())
-                    ).orElse(new JSONArray()).optJSONObject(0)
-                ).orElse(new JSONObject()).optString("@value", null)
-            ).ifPresent(config::description);
-        Set<String> keywords = Arrays.stream(Optional.ofNullable(recordInfo.optJSONArray(Record.keyword_IRI)).orElse(new JSONArray()).toArray())
-                .filter(o -> o instanceof JSONObject)
-                .map(JSONObject::fromObject)
-                .filter(jsonObject -> !jsonObject.optString("@value").isEmpty())
-                .map(jsonObject -> jsonObject.getString("@value"))
-                .collect(Collectors.toSet());
-        if (!keywords.isEmpty()) {
-            config.keywords(keywords);
+        RecordConfig.Builder builder = new RecordConfig.Builder(title, identifier, publishers);
+
+        Model descriptionModel = modelFactory.createModel(newRecordModel)
+                .filter(null, factory.createIRI(DCTERMS.DESCRIPTION.stringValue()), null);
+        if (!descriptionModel.isEmpty()) {
+            builder.description(descriptionModel.objects().iterator().next().stringValue());
         }
-        Record newRecord = catalogManager.createRecord(config.build(), recordFactories.get(type));
+
+        Model keywordModel = modelFactory.createModel(newRecordModel)
+                .filter(null, factory.createIRI(Record.keyword_IRI), null);
+        if (!keywordModel.isEmpty()) {
+            builder.keywords(keywordModel.objects().stream().map(Value::stringValue).collect(Collectors.toSet()));
+        }
+        Record newRecord = catalogManager.createRecord(builder.build(), recordFactories.get(type));
         catalogManager.addRecord(factory.createIRI(catalogId), newRecord);
 
         return Response.ok(newRecord.getResource().stringValue()).build();
@@ -262,7 +277,7 @@ public class CatalogRestImpl implements CatalogRest {
         try {
             newRecordModel = transformer.matontoModel(Rio.parse(IOUtils.toInputStream(newRecordJson), "",
                     RDFFormat.JSONLD));
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw ErrorUtils.sendError("Invalid JSON-LD", Response.Status.BAD_REQUEST);
         }
         Record newRecord = recordFactories.get(Record.TYPE).getExisting(factory.createIRI(recordId), newRecordModel);
@@ -274,18 +289,107 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
-    public Response getUnversionedDistributions(String catalogId, String recordId, String sort, int offset, int limit) {
-        return Response.status(Response.Status.NOT_IMPLEMENTED).build();
+    public Response getUnversionedDistributions(UriInfo uriInfo, String catalogId, String recordId, String sort,
+                                                int offset, int limit) {
+        if (!SORT_RESOURCES.contains(sort)) {
+            throw ErrorUtils.sendError("Invalid sort property IRI", Response.Status.BAD_REQUEST);
+        }
+        IRI sortBy = factory.createIRI(sort);
+        UnversionedRecordFactory ormFactory = (UnversionedRecordFactory) recordFactories.get(UnversionedRecord.TYPE);
+        UnversionedRecord record = catalogManager.getRecord(factory.createIRI(catalogId), factory.createIRI(recordId),
+                ormFactory).orElseThrow(() -> ErrorUtils.sendError("Record not found", Response.Status.BAD_REQUEST));
+        Set<Resource> distributionIRIs = record.getUnversionedDistribution().stream()
+                .map(Thing::getResource)
+                .collect(Collectors.toSet());
+
+        Set<Distribution> distributions = distributionIRIs.stream()
+                .map(resource -> catalogManager.getDistribution(resource))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .sorted((dist1, dist2) -> dist1.getProperty(sortBy).get().stringValue()
+                        .compareTo(dist2.getProperty(sortBy).get().stringValue()))
+                .skip(offset)
+                .limit(limit)
+                .collect(Collectors.toSet());
+
+        Links links = LinksUtils.buildLinks(uriInfo, distributions.size(), distributionIRIs.size(), limit, offset);
+
+        JSONArray results = JSONArray.fromObject(distributions.stream()
+                .map(this::thingToJsonld)
+                .collect(Collectors.toSet()));
+
+        Response.ResponseBuilder response = Response.ok(results.toString())
+                .header("X-Total-Count", distributionIRIs.size());
+        if (links.getNext() != null) {
+            response = response.link(links.getBase() + links.getNext(), "next");
+        }
+        if (links.getPrev() != null) {
+            response = response.link(links.getBase() + links.getPrev(), "prev");
+        }
+        return response.build();
     }
 
     @Override
-    public Response createUnversionedDistribution(String catalogId, String recordId, Distribution newDistribution) {
-        return Response.status(Response.Status.NOT_IMPLEMENTED).build();
+    public Response createUnversionedDistribution(String catalogId, String recordId, String newDistributionJson) {
+        if (!catalogManager.getRecordIds(factory.createIRI(catalogId)).contains(factory.createIRI(recordId))) {
+            throw ErrorUtils.sendError("Record " + recordId + " does not exist in Catalog " + catalogId,
+                    Response.Status.BAD_REQUEST);
+        }
+        Model newDistributionModel;
+        try {
+            newDistributionModel = transformer.matontoModel(Rio.parse(IOUtils.toInputStream(newDistributionJson), "",
+                    RDFFormat.JSONLD));
+        } catch (IOException e) {
+            throw ErrorUtils.sendError("Invalid JSON-LD", Response.Status.BAD_REQUEST);
+        }
+        Model titleModel = modelFactory.createModel(newDistributionModel)
+                .filter(null, factory.createIRI(DCTERMS.TITLE.stringValue()), null);
+        if (titleModel.isEmpty()) {
+            throw ErrorUtils.sendError("Record title is required", Response.Status.BAD_REQUEST);
+        }
+        String title = titleModel.objects().iterator().next().stringValue();
+        DistributionConfig.Builder builder = new DistributionConfig.Builder(title);
+        Model descriptionModel = modelFactory.createModel(newDistributionModel)
+                .filter(null, factory.createIRI(DCTERMS.DESCRIPTION.stringValue()), null);
+        if (!descriptionModel.isEmpty()) {
+            builder.description(descriptionModel.objects().iterator().next().stringValue());
+        }
+        Model formatModel = modelFactory.createModel(newDistributionModel)
+                .filter(null, factory.createIRI(DCTERMS.FORMAT.stringValue()), null);
+        if (!formatModel.isEmpty()) {
+            builder.format(formatModel.objects().iterator().next().stringValue());
+        }
+        Model accessURLModel = modelFactory.createModel(newDistributionModel)
+                .filter(null, factory.createIRI(Distribution.accessURL_IRI), null);
+        if (!accessURLModel.isEmpty()) {
+            builder.accessURL((Resource) accessURLModel.objects().iterator().next());
+        }
+        Model downloadURLModel = modelFactory.createModel(newDistributionModel)
+                .filter(null, factory.createIRI(Distribution.downloadURL_IRI), null);
+        if (!downloadURLModel.isEmpty()) {
+            builder.downloadURL((Resource) downloadURLModel.objects().iterator().next());
+        }
+        Distribution newDistribution = catalogManager.createDistribution(builder.build());
+        catalogManager.addDistributionToUnversionedRecord(newDistribution, factory.createIRI(recordId));
+
+        return Response.ok().build();
     }
 
     @Override
     public Response getUnversionedDistribution(String catalogId, String recordId, String distributionId) {
-        return Response.status(Response.Status.NOT_IMPLEMENTED).build();
+        UnversionedRecordFactory ormFactory = (UnversionedRecordFactory) recordFactories.get(UnversionedRecord.TYPE);
+        UnversionedRecord record = catalogManager.getRecord(factory.createIRI(catalogId), factory.createIRI(recordId),
+                ormFactory).orElseThrow(() -> ErrorUtils.sendError("Record not found", Response.Status.BAD_REQUEST));
+        Set<Resource> distributionIRIs = record.getUnversionedDistribution().stream()
+                .map(Thing::getResource)
+                .collect(Collectors.toSet());
+        if (!distributionIRIs.contains(factory.createIRI(distributionId))) {
+            throw ErrorUtils.sendError("Distribution does not belong to Record " + recordId,
+                    Response.Status.BAD_REQUEST);
+        }
+        Distribution distribution = catalogManager.getDistribution(factory.createIRI(distributionId)).orElseThrow(() ->
+                ErrorUtils.sendError("Distribution not found", Response.Status.BAD_REQUEST));
+        return Response.ok(thingToJsonld(distribution)).build();
     }
 
     @Override
