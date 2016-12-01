@@ -25,21 +25,24 @@ package org.matonto.platform.config.api.application;
 
 import org.matonto.platform.config.api.ontologies.platformconfig.Application;
 
+import java.util.Optional;
+
 public interface ApplicationManager {
 
     /**
      * Tests whether an Application with the passed ID exists as a service.
      *
-     * @param applicationid The ID to search for an Application that matches
+     * @param applicationId The ID to search for an Application that matches
      * @return true if an Application exists with the passed ID; false otherwise
      */
-    boolean applicationExists(String applicationid);
+    boolean applicationExists(String applicationId);
 
     /**
-     * Returns the Application object for the Application service with the passed ID.
+     * Returns an Optional with the Application object for the Application service with the passed ID if
+     * found; return an empty Optional otherwise.
      *
-     * @param applicationid The ID of the Application to retrieve
-     * @return the Application specified by the passed ID
+     * @param applicationId The ID of the Application to retrieve
+     * @return the Application specified by the passed ID if found; empty otherwise
      */
-    Application getApplication(String applicationid);
+    Optional<Application> getApplication(String applicationId);
 }

@@ -1,5 +1,28 @@
 package org.matonto.platform.config.rest;
 
+/*-
+ * #%L
+ * org.matonto.platform.config.rest
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 
@@ -43,7 +66,7 @@ public interface StateRest {
      * Can pass the ID of an Application to be associated with the new State. Returns the ID of the new State.
      *
      * @param context the context of the request
-     * @param applicationId the ID of the Application to associated the new State with
+     * @param applicationId the ID of the Application to associate the new State with
      * @param stateJson the JSON-LD of all resources to be linked to the new State
      * @return a Response with the ID of the new State
      */
@@ -56,7 +79,7 @@ public interface StateRest {
 
     /**
      * Retrieves all resources associated with the State identified by ID. Will only retrieve the State if it belongs
-     * to the User making the request.
+     * to the User making the request; returns a 400 code otherwise.
      *
      * @param context the context of the request
      * @param stateId the ID of the State to retrieve
@@ -71,7 +94,7 @@ public interface StateRest {
 
     /**
      * Updates the resources of the State identified by ID with the new statements passed as JSON-LD. Will only update
-     * the State if it belongs to the User making the request.
+     * the State if it belongs to the User making the request; returns a 400 code otherwise.
      *
      * @param context the context of the request
      * @param stateId the ID of the State to update
@@ -88,7 +111,7 @@ public interface StateRest {
 
     /**
      * Removes the State identified by ID and all associated resources if not used by other States. Will only delete
-     * the State if it belongs to the User making the request.
+     * the State if it belongs to the User making the request; returns a 400 code otherwise.
      *
      * @param context the context of the request
      * @param stateId the ID of the State to remove
