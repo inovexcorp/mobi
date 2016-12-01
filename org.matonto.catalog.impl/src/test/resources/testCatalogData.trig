@@ -148,6 +148,15 @@ GRAPH <http://matonto.org/test/branches#master>
         mcat:head <http://matonto.org/test/commits#test4a> .
 }
 
+GRAPH <http://matonto.org/test/user-branches#test>
+{
+    <http://matonto.org/test/user-branches#test> a mcat:Branch, mcat:UserBranch ;
+        dc:title "User Branch" ;
+        dc:issued "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime ;
+        mcat:head <http://matonto.org/test/commits#conflict2> .
+}
+
 GRAPH <http://matonto.org/test/branches#test>
 {
     <http://matonto.org/test/branches#test> a mcat:Branch ;

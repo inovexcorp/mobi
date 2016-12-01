@@ -202,6 +202,10 @@ public class SimpleCatalogManagerTest {
         versionedRDFRecordFactory.setValueFactory(vf);
         versionedRDFRecordFactory.setValueConverterRegistry(vcr);
 
+        userBranchFactory.setModelFactory(mf);
+        userBranchFactory.setValueFactory(vf);
+        userBranchFactory.setValueConverterRegistry(vcr);
+
         thingFactory.setModelFactory(mf);
         thingFactory.setValueFactory(vf);
         thingFactory.setValueConverterRegistry(vcr);
@@ -224,6 +228,7 @@ public class SimpleCatalogManagerTest {
         vcr.registerValueConverter(thingFactory);
         vcr.registerValueConverter(userFactory);
         vcr.registerValueConverter(versionedRDFRecordFactory);
+        vcr.registerValueConverter(userBranchFactory);
         vcr.registerValueConverter(new ResourceValueConverter());
         vcr.registerValueConverter(new IRIValueConverter());
         vcr.registerValueConverter(new DoubleValueConverter());
@@ -309,7 +314,7 @@ public class SimpleCatalogManagerTest {
     @Test
     public void testGetRecordIds() throws Exception {
         Set<Resource> results = manager.getRecordIds(distributedCatalogId);
-        assertEquals(results.size(), TOTAL_SIZE);
+        assertEquals(TOTAL_SIZE, results.size());
         assertTrue(results.contains(vf.createIRI("http://matonto.org/test/records#update")));
         assertTrue(results.contains(vf.createIRI("http://matonto.org/test/records#remove")));
         assertTrue(results.contains(vf.createIRI("http://matonto.org/test/records#get")));
