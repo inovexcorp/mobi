@@ -163,6 +163,7 @@ class SimpleCatalogManagerSpec extends Specification {
         vcr.registerValueConverter(inProgressCommitFactory)
         vcr.registerValueConverter(commitFactory)
         vcr.registerValueConverter(revisionFactory)
+        vcr.registerValueConverter(userBranchFactory)
         vcr.registerValueConverter(new ResourceValueConverter())
         vcr.registerValueConverter(new IRIValueConverter())
         vcr.registerValueConverter(new DoubleValueConverter())
@@ -180,9 +181,14 @@ class SimpleCatalogManagerSpec extends Specification {
         service.setRecordFactory(recordFactory)
         service.setDistributionFactory(distributionFactory)
         service.setBranchFactory(branchFactory)
+        service.setUserFactory(userFactory)
         service.setCommitFactory(commitFactory)
         service.setInProgressCommitFactory(inProgressCommitFactory)
         service.setRevisionFactory(revisionFactory)
+        service.setVersionedRDFRecordFactory(versionedRDFRecordFactory)
+        service.setVersionedRecordFactory(versionedRecordFactory)
+        service.setUnversionedRecordFactory(unversionedRecordFactory)
+        service.setVersionFactory(versionFactory)
 
         catalog.getModel() >> model
 
