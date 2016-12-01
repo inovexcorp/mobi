@@ -14,6 +14,7 @@ GRAPH <http://matonto.org/test/records#just-a-record>
     <http://matonto.org/test/records#just-a-record> a mcat:Record ;
         mcat:catalog <http://matonto.org/test/catalog-distributed> ;
         dc:title "Just a Record" ;
+        dc:description "Description" ;
         dc:identifier "Record" ;
         dc:issued "2016-01-01T00:00:00Z"^^xsd:dateTime ;
         dc:modified "2016-03-02T00:00:00Z"^^xsd:dateTime .
@@ -24,7 +25,19 @@ GRAPH <http://matonto.org/test/records#unique>
     <http://matonto.org/test/records#unique> a mcat:Record ;
         mcat:catalog <http://matonto.org/test/catalog-local> ;
         dc:title "Unique" ;
+        dc:description "Description" ;
         dc:identifier "Unique" ;
+        dc:issued "2016-01-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-03-02T00:00:00Z"^^xsd:dateTime .
+}
+
+GRAPH <http://matonto.org/test/records#dataset>
+{
+    <http://matonto.org/test/records#dataset> a mcat:DatasetRecord, mcat:VersionedRDFRecord, mcat:VersionedRecord, mcat:Record ;
+        mcat:catalog <http://matonto.org/test/catalog-distributed> ;
+        dc:title "Dataset" ;
+        dc:description "Description" ;
+        dc:identifier "Dataset" ;
         dc:issued "2016-01-01T00:00:00Z"^^xsd:dateTime ;
         dc:modified "2016-03-02T00:00:00Z"^^xsd:dateTime .
 }
@@ -34,9 +47,10 @@ GRAPH <http://matonto.org/test/records#update>
     <http://matonto.org/test/records#update> a mcat:OntologyRecord, mcat:VersionedRDFRecord, mcat:VersionedRecord, mcat:Record ;
         mcat:catalog <http://matonto.org/test/catalog-distributed> ;
         dc:title "Update" ;
+        dc:description "Description" ;
         dc:identifier "Identifier" ;
-        dc:issued "2016-01-01T00:00:00Z"^^xsd:dateTime ;
-        dc:modified "2016-03-02T00:00:00Z"^^xsd:dateTime .
+        dc:issued "2015-01-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-12-02T00:00:00Z"^^xsd:dateTime .
 }
 
 GRAPH <http://matonto.org/test/records#remove>
@@ -44,6 +58,7 @@ GRAPH <http://matonto.org/test/records#remove>
     <http://matonto.org/test/records#remove> a mcat:MappingRecord, mcat:VersionedRDFRecord, mcat:VersionedRecord, mcat:Record ;
         mcat:catalog <http://matonto.org/test/catalog-distributed> ;
         dc:title "Remove" ;
+        dc:description "Description" ;
         dc:identifier "Identifier" ;
         dc:issued "2016-02-01T00:00:00Z"^^xsd:dateTime ;
         dc:modified "2016-02-02T00:00:00Z"^^xsd:dateTime .
@@ -54,6 +69,7 @@ GRAPH <http://matonto.org/test/records#unversioned>
     <http://matonto.org/test/records#unversioned> a mcat:UnversionedRecord, mcat:Record ;
         mcat:catalog <http://matonto.org/test/catalog-distributed> ;
         dc:title "Unversioned" ;
+        dc:description "Description" ;
         dc:identifier "Identifier" ;
         dc:issued "2016-03-01T00:00:00Z"^^xsd:dateTime ;
         dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime ;
@@ -65,6 +81,7 @@ GRAPH <http://matonto.org/test/records#versionedRDF>
     <http://matonto.org/test/records#versionedRDF> a mcat:VersionedRDFRecord, mcat:VersionedRecord, mcat:Record ;
         mcat:catalog <http://matonto.org/test/catalog-distributed> ;
         dc:title "Versioned RDF" ;
+        dc:description "Description" ;
         dc:identifier "Identifier" ;
         dc:issued "2016-03-01T00:00:00Z"^^xsd:dateTime ;
         dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime ;
@@ -153,8 +170,7 @@ GRAPH <http://matonto.org/test/user-branches#test>
     <http://matonto.org/test/user-branches#test> a mcat:Branch, mcat:UserBranch ;
         dc:title "User Branch" ;
         dc:issued "2016-03-01T00:00:00Z"^^xsd:dateTime ;
-        dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime ;
-        mcat:head <http://matonto.org/test/commits#conflict2> .
+        dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime .
 }
 
 GRAPH <http://matonto.org/test/branches#test>

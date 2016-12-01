@@ -423,8 +423,8 @@ public class SimpleCatalogManager implements CatalogManager {
     public <T extends Record> Optional<T> getRecord(Resource catalogId, Resource recordId, OrmFactory<T> factory)
             throws MatOntoException {
         try (RepositoryConnection conn = repository.getConnection()) {
-            boolean condition = resourceExists(recordId, T.TYPE) && conn.getStatements(recordId,
-                    vf.createIRI(Record.catalog_IRI), catalogId).hasNext();
+            boolean condition = resourceExists(recordId, factory.getTypeIRI().stringValue())
+                    && conn.getStatements(recordId, vf.createIRI(Record.catalog_IRI), catalogId).hasNext();
             return getObject(condition, recordId, factory);
         } catch (RepositoryException e) {
             throw new MatOntoException("Error in repository connection.", e);
@@ -593,7 +593,7 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public <T extends Version> Optional<T> getVersion(Resource versionId, OrmFactory<T> factory) throws
             MatOntoException {
-        return getObject(resourceExists(versionId, T.TYPE), versionId, factory);
+        return getObject(resourceExists(versionId, factory.getTypeIRI().stringValue()), versionId, factory);
     }
 
     @Override
@@ -657,7 +657,7 @@ public class SimpleCatalogManager implements CatalogManager {
     public <T extends Branch> void updateBranch(T newBranch) throws MatOntoException {
         try (RepositoryConnection conn = repository.getConnection()) {
             IRI masterBranchIRI = vf.createIRI(VersionedRDFRecord.masterBranch_IRI);
-            if (resourceExists(newBranch.getResource(), Branch.TYPE)
+            if (resourceExists(newBranch.getResource(), T.TYPE)
                     && !conn.getStatements(null, masterBranchIRI, newBranch.getResource()).hasNext()) {
                 update(newBranch.getResource(), newBranch.getModel());
             } else {
@@ -706,8 +706,7 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public <T extends Branch> Optional<T> getBranch(Resource branchId, OrmFactory<T> factory) throws MatOntoException {
-        T.DEFAULT_IMPL
-        return getObject(resourceExists(branchId, T.TYPE), branchId, factory);
+        return getObject(resourceExists(branchId, factory.getTypeIRI().stringValue()), branchId, factory);
     }
 
     @Override
@@ -857,7 +856,7 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public <T extends Commit> Optional<T> getCommit(Resource commitId, OrmFactory<T> factory) throws MatOntoException {
-        return getObject(resourceExists(commitId, T.TYPE), commitId, factory);
+        return getObject(resourceExists(commitId, factory.getTypeIRI().stringValue()), commitId, factory);
     }
 
     @Override
