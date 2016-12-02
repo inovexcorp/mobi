@@ -133,11 +133,9 @@ public interface OntologyManager {
      * </ol>
      *
      * @param ontologyId the ontology id for the Ontology you want to delete.
-     * @return True if the name graph with given context id is successfully deleted, or false if ontology Id
-     *         does not exist in the repository or if an owlapi exception or sesame exception is caught.
      * @throws MatontoOntologyException - if the repository is null
      */
-    boolean deleteOntology(@Nonnull Resource ontologyId) throws MatontoOntologyException;
+    void deleteOntology(@Nonnull Resource ontologyId) throws MatontoOntologyException;
 
     /**
      * Creates a new OntologyId with a generated identifier.

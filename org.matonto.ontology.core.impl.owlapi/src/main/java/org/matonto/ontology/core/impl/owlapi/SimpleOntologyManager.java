@@ -42,11 +42,9 @@ import org.matonto.rdf.api.*;
 import org.matonto.rdf.api.IRI;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
-import org.matonto.repository.base.RepositoryResult;
 import org.matonto.repository.config.RepositoryConsumerConfig;
 import org.matonto.repository.exception.RepositoryException;
 import org.matonto.repository.impl.sesame.SesameRepositoryWrapper;
-import org.openrdf.model.vocabulary.DCTERMS;
 import org.openrdf.repository.sail.SailRepository;
 import org.openrdf.sail.memory.MemoryStore;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -60,7 +58,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Optional;
 
 @Component(provide = OntologyManager.class,
@@ -71,13 +69,13 @@ public class SimpleOntologyManager implements OntologyManager {
 
     protected static final String COMPONENT_NAME = "org.matonto.ontology.core.OntologyManager";
     private static final Logger log = Logger.getLogger(SimpleOntologyManager.class);
-    private Repository repository;
     private ValueFactory valueFactory;
     private SesameTransformer sesameTransformer;
     private ModelFactory modelFactory;
     private CatalogManager catalogManager;
     private OntologyRecordFactory ontologyRecordFactory;
     private CommitFactory commitFactory;
+    private BranchFactory branchFactory;
 
     private static final String GET_SUB_CLASSES_OF;
     private static final String GET_SUB_DATATYPE_PROPERTIES_OF;
@@ -150,11 +148,6 @@ public class SimpleOntologyManager implements OntologyManager {
 
     public SimpleOntologyManager() {}
 
-    @Reference(name = "repository")
-    protected void setRepository(Repository repository) {
-        this.repository = repository;
-    }
-
     @Reference
     protected void setValueFactory(ValueFactory valueFactory) {
         this.valueFactory = valueFactory;
@@ -185,6 +178,11 @@ public class SimpleOntologyManager implements OntologyManager {
         this.commitFactory = commitFactory;
     }
 
+    @Reference
+    protected void setBranchFactory(BranchFactory branchFactory) {
+        this.branchFactory = branchFactory;
+    }
+
     @Override
     public Ontology createOntology(OntologyId ontologyId) throws MatontoOntologyException {
         return new SimpleOntology(ontologyId, this);
@@ -212,92 +210,86 @@ public class SimpleOntologyManager implements OntologyManager {
 
     @Override
     public Optional<Ontology> retrieveOntology(@Nonnull Resource ontologyId) throws MatontoOntologyException {
-        try (RepositoryConnection conn = repository.getConnection()) {
-            RepositoryResult<Statement> statements = conn.getStatements(null,
-                    sesameTransformer.matontoIRI(DCTERMS.IDENTIFIER), ontologyId);
-            if (statements.hasNext()) {
-                OntologyRecord record = catalogManager.getRecord(catalogManager.getLocalCatalog().getResource(),
-                        statements.next().getSubject(), ontologyRecordFactory).orElseThrow(() ->
-                        new MatontoOntologyException("The OntologyRecord could not be retrieved."));
-                Branch masterBranch = record.getMasterBranch().orElseThrow(() ->
-                        new MatontoOntologyException("The master Branch was not set on the OntologyRecord."));
-                masterBranch = catalogManager.getBranch(masterBranch.getResource()).orElseThrow(() ->
-                        new MatontoOntologyException("The master Branch could not be retrieved."));
-                Commit commit = masterBranch.getHead().orElseThrow(() ->
-                        new MatontoOntologyException("The head Commit was not set on the master Branch."));
+        Optional<Ontology> result = Optional.empty();
+        Optional<OntologyRecord> record = catalogManager.getRecord(ontologyId.stringValue(), ontologyRecordFactory);
+        if (record.isPresent()) {
+            Branch masterBranch = record.get().getMasterBranch().orElseThrow(() ->
+                    new MatontoOntologyException("The master Branch was not set on the OntologyRecord."));
+            masterBranch = catalogManager.getBranch(masterBranch.getResource(), branchFactory).orElseThrow(() ->
+                    new MatontoOntologyException("The master Branch could not be retrieved."));
+            Commit commit = masterBranch.getHead().orElseThrow(() ->
+                    new MatontoOntologyException("The head Commit was not set on the master Branch."));
+            try {
                 return Optional.of(createOntologyFromCommit(commit));
-            } else {
-                throw new MatontoOntologyException("The OntologyRecord could not be found.");
+            } catch (OWLOntologyCreationException e) {
+                throw new MatontoOntologyException(e.getMessage(), e);
             }
-        } catch (MatOntoException | OWLOntologyCreationException e) {
-            throw new MatontoOntologyException(e.getMessage(), e);
         }
+        return result;
     }
 
     @Override
     public Optional<Ontology> retrieveOntology(@Nonnull Resource ontologyId, @Nonnull Resource branchId) throws
             MatontoOntologyException {
-        try (RepositoryConnection conn = repository.getConnection()) {
-            Optional<Ontology> result = Optional.empty();
-            RepositoryResult<Statement> statements = conn.getStatements(null,
-                    sesameTransformer.matontoIRI(DCTERMS.IDENTIFIER), ontologyId);
-            if (statements.hasNext()) {
-                OntologyRecord record = catalogManager.getRecord(catalogManager.getLocalCatalog().getResource(),
-                        statements.next().getSubject(), ontologyRecordFactory).orElseThrow(() ->
-                        new MatontoOntologyException("The OntologyRecord could not be retrieved."));
-                for (Branch branch : record.getBranch()) {
-                    if (branch.getResource().equals(branchId)) {
-                        branch = catalogManager.getBranch(branch.getResource()).orElseThrow(() ->
-                                new MatontoOntologyException("The identified Branch could not be retrieved."));
-                        Commit headCommit = branch.getHead().orElseThrow(() ->
-                                new MatontoOntologyException("The head Commit was not set on the Branch."));
+        Optional<Ontology> result = Optional.empty();
+        Optional<OntologyRecord> record = catalogManager.getRecord(ontologyId.stringValue(), ontologyRecordFactory);
+        if (record.isPresent()) {
+            for (Branch branch : record.get().getBranch()) {
+                if (branch.getResource().equals(branchId)) {
+                    branch = catalogManager.getBranch(branchId, branchFactory).orElseThrow(() ->
+                            new MatontoOntologyException("The identified Branch could not be retrieved."));
+                    Commit headCommit = branch.getHead().orElseThrow(() ->
+                            new MatontoOntologyException("The head Commit was not set on the Branch."));
+                    try {
                         result = Optional.of(createOntologyFromCommit(headCommit));
-                        break;
+                    } catch (OWLOntologyCreationException e) {
+                        throw new MatontoOntologyException(e.getMessage(), e);
                     }
+                    break;
                 }
             }
-            return result;
-        } catch (MatOntoException | OWLOntologyCreationException e) {
-            throw new MatontoOntologyException(e.getMessage(), e);
         }
+        return result;
     }
 
     @Override
     public Optional<Ontology> retrieveOntology(@Nonnull Resource ontologyId, @Nonnull Resource branchId,
                                                @Nonnull Resource commitId) throws MatontoOntologyException {
-        try (RepositoryConnection conn = repository.getConnection()) {
-            Optional<Ontology> result = Optional.empty();
-            RepositoryResult<Statement> statements = conn.getStatements(null,
-                    sesameTransformer.matontoIRI(DCTERMS.IDENTIFIER), ontologyId);
-            if (statements.hasNext()) {
-                OntologyRecord record = catalogManager.getRecord(catalogManager.getLocalCatalog().getResource(),
-                        statements.next().getSubject(), ontologyRecordFactory).orElseThrow(() ->
-                        new MatontoOntologyException("The OntologyRecord could not be retrieved."));
-                for (Branch branch : record.getBranch()) {
-                    if (branch.getResource().equals(branchId)) {
-                        branch = catalogManager.getBranch(branch.getResource()).orElseThrow(() ->
-                                new MatontoOntologyException("The identified Branch could not be retrieved."));
-                        Commit headCommit = branch.getHead().orElseThrow(() ->
-                                new MatontoOntologyException("The head Commit was not set on the Branch."));
-                        LinkedHashSet<Resource> commitChain =  catalogManager.getCommitChain(headCommit.getResource());
-                        if (commitChain.contains(commitId)) {
-                            Commit commit = catalogManager.getCommit(commitId, commitFactory).orElseThrow(() ->
-                                    new MatontoOntologyException("The identified Commit could not be retrieved."));
+        Optional<Ontology> result = Optional.empty();
+        Optional<OntologyRecord> record = catalogManager.getRecord(ontologyId.stringValue(), ontologyRecordFactory);
+        if (record.isPresent()) {
+            for (Branch branch : record.get().getBranch()) {
+                if (branch.getResource().equals(branchId)) {
+                    branch = catalogManager.getBranch(branch.getResource(), branchFactory).orElseThrow(() ->
+                            new MatontoOntologyException("The identified Branch could not be retrieved."));
+                    Commit headCommit = branch.getHead().orElseThrow(() ->
+                            new MatontoOntologyException("The head Commit was not set on the Branch."));
+                    List<Resource> commitChain = catalogManager.getCommitChain(headCommit.getResource());
+                    if (commitChain.contains(commitId)) {
+                        Commit commit = catalogManager.getCommit(commitId, commitFactory).orElseThrow(() ->
+                                new MatontoOntologyException("The identified Commit could not be retrieved."));
+                        try {
                             result = Optional.of(createOntologyFromCommit(commit));
+                        } catch (OWLOntologyCreationException e) {
+                            throw new MatontoOntologyException(e.getMessage(), e);
                         }
-                        break;
                     }
+                    break;
                 }
             }
-            return result;
-        } catch (MatOntoException | OWLOntologyCreationException e) {
-            throw new MatontoOntologyException(e.getMessage(), e);
         }
+        return result;
     }
 
     @Override
-    public boolean deleteOntology(@Nonnull Resource ontologyId) throws MatontoOntologyException {
-        return false;
+    public void deleteOntology(@Nonnull Resource ontologyId) throws MatontoOntologyException {
+        OntologyRecord record = catalogManager.getRecord(ontologyId.stringValue(), ontologyRecordFactory)
+                .orElseThrow(() -> new MatontoOntologyException("The OntologyRecord could not be retrieved."));
+        try {
+            catalogManager.removeRecord(catalogManager.getLocalCatalog().getResource(), record.getResource());
+        } catch (MatOntoException e) {
+            throw new MatontoOntologyException(e.getMessage(), e);
+        }
     }
 
     @Override
