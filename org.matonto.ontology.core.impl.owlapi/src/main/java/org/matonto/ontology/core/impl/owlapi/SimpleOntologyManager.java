@@ -36,7 +36,7 @@ import org.matonto.ontology.core.api.OntologyId;
 import org.matonto.ontology.core.api.OntologyManager;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.ontology.utils.api.SesameTransformer;
-import org.matonto.query.TupleQueryResult;
+import org.matonto.query.api.BindingSet;
 import org.matonto.query.api.TupleQuery;
 import org.matonto.rdf.api.*;
 import org.matonto.rdf.api.IRI;
@@ -58,8 +58,10 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Component(provide = OntologyManager.class,
         name = SimpleOntologyManager.COMPONENT_NAME,
@@ -313,74 +315,36 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Override
-    public TupleQueryResult getSubClassesOf(Ontology ontology) throws MatontoOntologyException {
-        Repository repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
-        repo.initialize();
-        try (RepositoryConnection conn = repo.getConnection()) {
-            conn.add(ontology.asModel(modelFactory));
-            TupleQuery query = conn.prepareTupleQuery(GET_SUB_CLASSES_OF);
-            return query.evaluate();
-        } catch (RepositoryException e) {
-            throw new MatontoOntologyException("Error in repository connection.", e);
-        } finally {
-            repo.shutDown();
-        }
+    public Set<BindingSet> getSubClassesOf(Ontology ontology) throws MatontoOntologyException {
+        return runQueryOnOntology(ontology, GET_SUB_CLASSES_OF);
     }
 
     @Override
-    public TupleQueryResult getSubDatatypePropertiesOf(Ontology ontology) {
-        Repository repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
-        repo.initialize();
-        try (RepositoryConnection conn = repo.getConnection()) {
-            conn.add(ontology.asModel(modelFactory));
-            TupleQuery query = conn.prepareTupleQuery(GET_SUB_DATATYPE_PROPERTIES_OF);
-            return query.evaluate();
-        } catch (RepositoryException e) {
-            throw new MatontoOntologyException("Error in repository connection.", e);
-        } finally {
-            repo.shutDown();
-        }
+    public Set<BindingSet> getSubDatatypePropertiesOf(Ontology ontology) {
+        return runQueryOnOntology(ontology, GET_SUB_DATATYPE_PROPERTIES_OF);
     }
 
     @Override
-    public TupleQueryResult getSubObjectPropertiesOf(Ontology ontology) {
-        Repository repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
-        repo.initialize();
-        try (RepositoryConnection conn = repo.getConnection()) {
-            conn.add(ontology.asModel(modelFactory));
-            TupleQuery query = conn.prepareTupleQuery(GET_SUB_OBJECT_PROPERTIES_OF);
-            return query.evaluate();
-        } catch (RepositoryException e) {
-            throw new MatontoOntologyException("Error in repository connection.", e);
-        } finally {
-            repo.shutDown();
-        }
+    public Set<BindingSet> getSubObjectPropertiesOf(Ontology ontology) {
+        return runQueryOnOntology(ontology, GET_SUB_OBJECT_PROPERTIES_OF);
     }
 
     @Override
-    public TupleQueryResult getClassesWithIndividuals(Ontology ontology) {
-        Repository repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
-        repo.initialize();
-        try (RepositoryConnection conn = repo.getConnection()) {
-            conn.add(ontology.asModel(modelFactory));
-            TupleQuery query = conn.prepareTupleQuery(GET_CLASSES_WITH_INDIVIDUALS);
-            return query.evaluate();
-        } catch (RepositoryException e) {
-            throw new MatontoOntologyException("Error in repository connection.", e);
-        } finally {
-            repo.shutDown();
-        }
+    public Set<BindingSet> getClassesWithIndividuals(Ontology ontology) {
+        return runQueryOnOntology(ontology, GET_CLASSES_WITH_INDIVIDUALS);
     }
 
     @Override
-    public TupleQueryResult getEntityUsages(Ontology ontology, String entityIRIStr) {
+    public Set<BindingSet> getEntityUsages(Ontology ontology, String entityIRIStr) {
         Repository repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
         repo.initialize();
         try (RepositoryConnection conn = repo.getConnection()) {
             conn.add(ontology.asModel(modelFactory));
             TupleQuery query = conn.prepareTupleQuery(GET_ENTITY_USAGES);
             query.setBinding(ENTITY_BINDING, valueFactory.createIRI(entityIRIStr));
-            return query.evaluate();
+            Set<BindingSet> result = new HashSet<>();
+            query.evaluate().forEach(result::add);
+            return result;
         } catch (RepositoryException e) {
             throw new MatontoOntologyException("Error in repository connection.", e);
         } finally {
@@ -389,29 +353,21 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Override
-    public TupleQueryResult getConceptRelationships(Ontology ontology) {
-        Repository repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
-        repo.initialize();
-        try (RepositoryConnection conn = repo.getConnection()) {
-            conn.add(ontology.asModel(modelFactory));
-            TupleQuery query = conn.prepareTupleQuery(GET_CONCEPT_RELATIONSHIPS);
-            return query.evaluate();
-        } catch (RepositoryException e) {
-            throw new MatontoOntologyException("Error in repository connection.", e);
-        } finally {
-            repo.shutDown();
-        }
+    public Set<BindingSet> getConceptRelationships(Ontology ontology) {
+        return runQueryOnOntology(ontology, GET_CONCEPT_RELATIONSHIPS);
     }
 
     @Override
-    public TupleQueryResult getSearchResults(Ontology ontology, String searchText) {
+    public Set<BindingSet> getSearchResults(Ontology ontology, String searchText) {
         Repository repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
         repo.initialize();
         try (RepositoryConnection conn = repo.getConnection()) {
             conn.add(ontology.asModel(modelFactory));
             TupleQuery query = conn.prepareTupleQuery(GET_SEARCH_RESULTS);
             query.setBinding(SEARCH_TEXT, valueFactory.createLiteral(searchText.toLowerCase()));
-            return query.evaluate();
+            Set<BindingSet> result = new HashSet<>();
+            query.evaluate().forEach(result::add);
+            return result;
         } catch (RepositoryException e) {
             throw new MatontoOntologyException("Error in repository connection.", e);
         } finally {
@@ -441,6 +397,29 @@ public class SimpleOntologyManager implements OntologyManager {
             return SimpleOntologyValues.matontoOntology(ontology);
         } catch (OWLOntologyCreationException e) {
             throw new MatontoOntologyException("Unable to create an ontology object.", e);
+        }
+    }
+
+    /**
+     * Executes the provided query on the provided Ontology.
+     *
+     * @param ontology the ontology to query on.
+     * @param queryString the query string that you wish to run.
+     * @return the results of the query.
+     */
+    private Set<BindingSet> runQueryOnOntology(Ontology ontology, String queryString) {
+        Repository repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
+        repo.initialize();
+        try (RepositoryConnection conn = repo.getConnection()) {
+            conn.add(ontology.asModel(modelFactory));
+            TupleQuery query = conn.prepareTupleQuery(queryString);
+            Set<BindingSet> result = new HashSet<>();
+            query.evaluate().forEach(result::add);
+            return result;
+        } catch (RepositoryException e) {
+            throw new MatontoOntologyException("Error in repository connection.", e);
+        } finally {
+            repo.shutDown();
         }
     }
 }

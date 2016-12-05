@@ -26,6 +26,7 @@ package org.matonto.ontology.core.api;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.query.TupleQueryResult;
+import org.matonto.query.api.BindingSet;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Resource;
 
@@ -173,64 +174,64 @@ public interface OntologyManager {
      * Gets the subClass relationships in the provided Ontology.
      *
      * @param ontology the Ontology you wish to query.
-     * @return a TupleQueryResult with the query results.
+     * @return a Set with the query results.
      * @throws MatontoOntologyException - if the repository is null
      */
-    TupleQueryResult getSubClassesOf(Ontology ontology) throws MatontoOntologyException;
+    Set<BindingSet> getSubClassesOf(Ontology ontology) throws MatontoOntologyException;
 
     /**
      * Gets the subDatatype relationships in the provided Ontology.
      *
      * @param ontology the Ontology you wish to query.
-     * @return a TupleQueryResult with the query results.
+     * @return a Set with the query results.
      * @throws MatontoOntologyException - if the repository is null
      */
-    TupleQueryResult getSubDatatypePropertiesOf(Ontology ontology) throws MatontoOntologyException;
+    Set<BindingSet> getSubDatatypePropertiesOf(Ontology ontology) throws MatontoOntologyException;
 
     /**
      * Gets the subObject relationships in the provided Ontology.
      *
      * @param ontology the Ontology you wish to query.
-     * @return a TupleQueryResult with the query results.
+     * @return a Set with the query results.
      * @throws MatontoOntologyException - if the repository is null
      */
-    TupleQueryResult getSubObjectPropertiesOf(Ontology ontology) throws MatontoOntologyException;
+    Set<BindingSet> getSubObjectPropertiesOf(Ontology ontology) throws MatontoOntologyException;
 
     /**
      * Gets the classes with individuals in the provided Ontology.
      *
      * @param ontology the Ontology you wish to query.
-     * @return a TupleQueryResult with the query results.
+     * @return a Set with the query results.
      * @throws MatontoOntologyException - if the repository is null
      */
-    TupleQueryResult getClassesWithIndividuals(Ontology ontology) throws MatontoOntologyException;
+    Set<BindingSet> getClassesWithIndividuals(Ontology ontology) throws MatontoOntologyException;
 
     /**
      * Gets the entity usages for the entity identified by the provided String in the provided Ontology.
      *
      * @param ontology the Ontology you wish to query.
      * @param entityIRIStr the String for the id of the entity you want to get the usages of.
-     * @return a TupleQueryResult with the query results.
+     * @return a Set with the query results.
      * @throws MatontoOntologyException - if the repository is null
      */
-    TupleQueryResult getEntityUsages(Ontology ontology, String entityIRIStr) throws MatontoOntologyException;
+    Set<BindingSet> getEntityUsages(Ontology ontology, String entityIRIStr) throws MatontoOntologyException;
 
     /**
      * Gets the concept relationships in the provided Ontology.
      *
      * @param ontology the Ontology you wish to query.
-     * @return a TupleQueryResult with the query results.
+     * @return a Set with the query results.
      * @throws MatontoOntologyException - if the repository is null
      */
-    TupleQueryResult getConceptRelationships(Ontology ontology) throws MatontoOntologyException;
+    Set<BindingSet> getConceptRelationships(Ontology ontology) throws MatontoOntologyException;
 
     /**
      * Searches the provided Ontology using the provided searchText.
      *
      * @param ontology the Ontology you wish to query.
      * @param searchText the String for the text you want to search for in the Ontology.
-     * @return a TupleQueryResult with the query results.
+     * @return a Set with the query results.
      * @throws MatontoOntologyException - if the repository is null
      */
-    TupleQueryResult getSearchResults(Ontology ontology, String searchText) throws MatontoOntologyException;
+    Set<BindingSet> getSearchResults(Ontology ontology, String searchText) throws MatontoOntologyException;
 }
