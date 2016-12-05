@@ -24,6 +24,7 @@ package org.matonto.platform.config.api.application;
  */
 
 import org.matonto.platform.config.api.ontologies.platformconfig.Application;
+import org.matonto.exception.MatOntoException;
 
 import java.util.Map;
 
@@ -34,8 +35,9 @@ public interface ApplicationWrapper {
      *
      * @param props a collection of key-value configurations for an Application
      * @throws IllegalArgumentException if configuration is invalid or missing properties
+     * @throws MatOntoException if a connection to the Repository could not be made
      */
-    void validateConfig(Map<String, Object> props);
+    void validateConfig(Map<String, Object> props) throws IllegalArgumentException;
 
     /**
      * Returns the ID of the application. The ID is the local name of the Application's IRI.
@@ -48,6 +50,7 @@ public interface ApplicationWrapper {
      * Returns the Application object for the application retrieved from the repository.
      *
      * @return an Application object representing the application
+     * @throws MatOntoException if a connection to the Repository could not be made
      */
     Application getApplication();
 }

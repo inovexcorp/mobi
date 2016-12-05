@@ -32,14 +32,16 @@ import java.util.Set;
 
 public interface StateManager {
     /**
-     * Determines whether a State with the passed ID exists in the repository.
+     * Determines whether a State with the passed ID exists in the repository and whether it is for the User
+     * with the passed username.
      *
      * @param stateId the ID of the State to look for NOTE: Assumes ID represents an IRI unless String
      *      begins with "_:".
+     * @param username the username the State should be for
      * @return true if the State object exists; false otherwise
      * @throws MatOntoException if a connection to the repository could not be made
      */
-    boolean stateExists(Resource stateId) throws MatOntoException;
+    boolean stateExists(Resource stateId, String username) throws MatOntoException;
 
     /**
      * Stores the passed Model in the repository as a new State for the User with the passed username.
@@ -47,10 +49,11 @@ public interface StateManager {
      *
      * @param newState a collection of statements to link to the new State
      * @param username the username of the User to associate with the new State
+     * @return The IRI of the new State
      * @throws MatOntoException if the User could not be found or a connection to the repository could
      *      not be made
      */
-    void storeState(Model newState, String username) throws MatOntoException;
+    Resource storeState(Model newState, String username) throws MatOntoException;
 
     /**
      * Stores the passed Model in the repository as a new ApplicationState for the User with the passed
@@ -60,21 +63,23 @@ public interface StateManager {
      * @param newState a collection of statements to link to the new State
      * @param username the username of the User to associate with the new State
      * @param applicationId the ID of the Application to attach the new State to
+     * @return The IRI of the new ApplicationState
      * @throws MatOntoException if the User could not be found, the Application could not be found, or
      *      a connection to the repository could not be made
      */
-    void storeState(Model newState, String username, String applicationId) throws MatOntoException;
+    Resource storeState(Model newState, String username, String applicationId) throws MatOntoException;
 
     /**
      * Removes State with the passed ID from the repository. Removes all associated statements unless
-     * their subjects and related to other States.
+     * their subjects are related to other States.
      *
      * @param stateId the ID of the State to remove from the repository NOTE: Assumes ID represents an
      *      IRI unless String begins with "_:".
-     * @throws MatOntoException if the State could not be found or a connection to the repository could
-     *      not be made
+     * @param username the username the State should be for
+     * @throws MatOntoException if the State could not be found, the State is not for the specified User,
+     *      or a connection to the repository could not be made
      */
-    void deleteState(Resource stateId) throws MatOntoException;
+    void deleteState(Resource stateId, String username) throws MatOntoException;
 
     /**
      * Updates the State with the passed ID with the passed new Model of statements.
@@ -82,10 +87,11 @@ public interface StateManager {
      * @param stateId the ID of the State to update NOTE: Assumes ID represents an IRI unless String
      *      begins with "_:".
      * @param newState the new Model of statements to associate with the State
-     * @throws MatOntoException if the State could not be found or a connection to the repository could
-     *      not be made
+     * @param username the username the State should be for
+     * @throws MatOntoException if the State could not be found, the State is not for the specified User,
+     *      or a connection to the repository could not be made
      */
-    void updateState(Resource stateId, Model newState) throws MatOntoException;
+    void updateState(Resource stateId, Model newState, String username) throws MatOntoException;
 
     /**
      * Retrieves all State IDs with Models of all associated statements for the User with the passed
@@ -97,16 +103,18 @@ public interface StateManager {
      * @param subjects a Set of subject IRIs to filter the State by
      * @return a Map of State IDs to Models of all the associated statements for all State for the
      *      specified User and matching the filter criteria
+     * @throws MatOntoException if a connection to the repository could not be made
      */
-    Map<String, Model> getStates(String username, String applicationId, Set<Resource> subjects);
+    Map<Resource, Model> getStates(String username, String applicationId, Set<Resource> subjects) throws MatOntoException;
 
     /**
      * Retrieves a State Model by the passed State ID.
      *
      * @param stateId the ID of the State to retrieve
+     * @param username the username the State should be for
      * @return a Model of all the statements associated with the specified State
-     * @throws MatOntoException if the State could not be found or a connection to the repository could
-     *      not be made
+     * @throws MatOntoException if the State could not be found the State is not for the specified User,
+     *      or a connection to the repository could not be made
      */
-    Model getState(Resource stateId) throws MatOntoException;
+    Model getState(Resource stateId, String username) throws MatOntoException;
 }

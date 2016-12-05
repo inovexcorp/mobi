@@ -40,6 +40,7 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.List;
 
 @Path("/states")
 @Api(value = "/states")
@@ -50,7 +51,7 @@ public interface StateRest {
      *
      * @param context the context of the request
      * @param applicationId the ID of the Application to filter State by
-     * @param subjectIds an array of all the IDs of resources that should be associated with the States
+     * @param subjectIds a List of all the IDs of resources that should be associated with the States
      * @return a Response with an JSON array of the IDs and JSON-LD serialization of the resources for all States
      *      that match the passed criteria
      */
@@ -59,7 +60,8 @@ public interface StateRest {
     @RolesAllowed("user")
     @ApiOperation("Retrieves State for the User making the request based on filter criteria")
     Response getStates(@Context ContainerRequestContext context,
-                       @QueryParam("application") String applicationId, @QueryParam("subjects") String[] subjectIds);
+                       @QueryParam("application") String applicationId,
+                       @QueryParam("subjects") List<String> subjectIds);
 
     /**
      * Creates a new State for the User making the request using the passed JSON-LD to be associated with the new State.
@@ -75,7 +77,8 @@ public interface StateRest {
     @RolesAllowed("user")
     @ApiOperation("Creates a new State for the User making the request")
     Response createState(@Context ContainerRequestContext context,
-                         @QueryParam("application") String applicationId, String stateJson);
+                         @QueryParam("application") String applicationId,
+                         String stateJson);
 
     /**
      * Retrieves all resources associated with the State identified by ID. Will only retrieve the State if it belongs
@@ -102,11 +105,12 @@ public interface StateRest {
      * @return a Response indicating the success of the request
      */
     @PUT
-    @Path("{stateId")
+    @Path("{stateId}")
     @Consumes(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @ApiOperation("Updates State as long as it belongs to the User making the request")
-    Response updateState(@Context ContainerRequestContext context, @PathParam("stateId") String stateId,
+    Response updateState(@Context ContainerRequestContext context,
+                         @PathParam("stateId") String stateId,
                          String newStateJson);
 
     /**
@@ -118,7 +122,7 @@ public interface StateRest {
      * @return a Response indicating the success of the request
      */
     @DELETE
-    @Path("{stateId")
+    @Path("{stateId}")
     @RolesAllowed("user")
     @ApiOperation("Deletes State as long as it belongs to the User making the request")
     Response deleteState(@Context ContainerRequestContext context, @PathParam("stateId") String stateId);

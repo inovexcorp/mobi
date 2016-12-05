@@ -75,9 +75,9 @@
 
 # Misc.
 
-:forUser a owl:ObjectProperty;
+:forUser a owl:ObjectProperty, owl:FunctionalProperty;
     rdfs:label "for user"@en;
     rdfs:comment "The User associated with the described Preferences or State."@en;
     # ORM issue with blank node domains. Will show up on ontology _Thing
-    #rdfs:domain [a owl:Class; owl:unionOf(:State :Preferences)] ;
+    #rdfs:domain [a owl:Class; owl:unionOf(:State :Preferences)];
     rdfs:range matuser:User.
