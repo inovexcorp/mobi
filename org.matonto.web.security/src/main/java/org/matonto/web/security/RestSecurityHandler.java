@@ -33,15 +33,15 @@ import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.ontologies.usermanagement.Role;
 import org.matonto.jaas.api.principals.UserPrincipal;
 import org.matonto.jaas.api.utils.TokenUtils;
+import org.matonto.web.security.util.AuthenticationProps;
 import org.matonto.web.security.util.RestSecurityUtils;
 
+import java.security.Principal;
+import java.util.List;
+import java.util.stream.Collectors;
 import javax.security.auth.Subject;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.SecurityContext;
-import java.security.Principal;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Component(immediate = true)
 public class RestSecurityHandler implements AuthenticationHandler, AuthorizationHandler {
@@ -76,7 +76,9 @@ public class RestSecurityHandler implements AuthenticationHandler, Authorization
             LOG.debug("No UserPrincipals found.");
             return null;
         }
-        return principals.get(0);
+        Principal principal = principals.get(0);
+        containerRequestContext.setProperty(AuthenticationProps.USERNAME, principal.getName());
+        return principal;
     }
 
     @Override

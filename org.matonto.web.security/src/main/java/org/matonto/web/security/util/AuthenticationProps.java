@@ -1,10 +1,8 @@
-@Version("3.0.0.${build}")
-
-package org.matonto.catalog.api;
+package org.matonto.web.security.util;
 
 /*-
  * #%L
- * org.matonto.catalog.api
+ * org.matonto.web.security
  * $Id:$
  * $HeadURL:$
  * %%
@@ -25,4 +23,6 @@ package org.matonto.catalog.api;
  * #L%
  */
 
-import aQute.bnd.annotation.Version;
+public class AuthenticationProps {
+    public static final String USERNAME = "org.matonto.web.username";
+}
