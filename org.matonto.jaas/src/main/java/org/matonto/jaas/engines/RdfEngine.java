@@ -59,6 +59,7 @@ import org.matonto.repository.base.RepositoryResult;
 import org.matonto.repository.exception.RepositoryException;
 import org.openrdf.model.vocabulary.DCTERMS;
 import org.openrdf.model.vocabulary.RDF;
+import org.osgi.framework.BundleContext;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -94,10 +95,10 @@ public class RdfEngine implements Engine {
     private ThingFactory thingFactory;
 
     @Activate
-    public void start(Map<String, Object> props) {
+    public void start(BundleContext bundleContext, Map<String, Object> props) {
         logger.info("Activating " + COMPONENT_NAME);
         RdfEngineConfig config = Configurable.createConfigurable(RdfEngineConfig.class, props);
-        setEncryption(config);
+        setEncryption(config, bundleContext);
         roles = Stream.of(config.roles()).collect(Collectors.toSet());
         initEngineResources();
 
@@ -118,7 +119,7 @@ public class RdfEngine implements Engine {
                         .collect(Collectors.toSet());
                 User admin = userFactory.createNew(adminIRI);
                 admin.setUsername(factory.createLiteral("admin"));
-                admin.setPassword(factory.createLiteral("admin"));
+                admin.setPassword(factory.createLiteral(getEncryptedPassword("admin")));
                 admin.setHasUserRole(allRoles);
                 conn.add(admin.getModel(), context);
             }
@@ -129,10 +130,10 @@ public class RdfEngine implements Engine {
     }
 
     @Modified
-    public void modified(Map<String, Object> props) {
+    public void modified(BundleContext bundleContext, Map<String, Object> props) {
         logger.info("Modifying the " + COMPONENT_NAME);
         RdfEngineConfig config = Configurable.createConfigurable(RdfEngineConfig.class, props);
-        setEncryption(config);
+        setEncryption(config, bundleContext);
         initEngineResources();
     }
 
@@ -207,18 +208,7 @@ public class RdfEngine implements Engine {
     public User createUser(UserConfig userConfig) {
         User user = userFactory.createNew(createUserIri(userConfig.getUsername()));
         user.setUsername(factory.createLiteral(userConfig.getUsername()));
-        String password = userConfig.getPassword();
-        Encryption encryption = encryptionSupport.getEncryption();
-        if (encryption != null) {
-            password = encryptionSupport.getEncryption().encryptPassword(password);
-            if (encryptionSupport.getEncryptionPrefix() != null) {
-                password = encryptionSupport.getEncryptionPrefix() + password;
-            }
-            if (encryptionSupport.getEncryptionSuffix() != null) {
-                password = password + encryptionSupport.getEncryptionSuffix();
-            }
-        }
-        user.setPassword(factory.createLiteral(password));
+        user.setPassword(factory.createLiteral(getEncryptedPassword(userConfig.getPassword())));
         Set<Role> newRoles = userConfig.getRoles().stream()
                 .map(this::getRole)
                 .filter(Optional::isPresent)
@@ -480,6 +470,31 @@ public class RdfEngine implements Engine {
         }
     }
 
+    private String getEncryptedPassword(String password) {
+        Encryption encryption = encryptionSupport.getEncryption();
+        String encryptionPrefix = encryptionSupport.getEncryptionPrefix();
+        String encryptionSuffix = encryptionSupport.getEncryptionSuffix();
+
+        if (encryption == null) {
+            return password;
+        } else {
+            boolean prefix = encryptionPrefix == null || password.startsWith(encryptionPrefix);
+            boolean suffix = encryptionSuffix == null || password.endsWith(encryptionSuffix);
+            if (prefix && suffix) {
+                return password;
+            } else {
+                String encryptPassword = encryption.encryptPassword(password);
+                if (encryptionPrefix != null) {
+                    encryptPassword = encryptionPrefix + encryptPassword;
+                }
+                if (encryptionSuffix != null) {
+                    encryptPassword += encryptionSuffix;
+                }
+                return encryptPassword;
+            }
+        }
+    }
+
     private void initEngineResources() {
         context = factory.createIRI("http://matonto.org/usermanagement");
         userNamespace = "http://matonto.org/users/";
@@ -487,8 +502,9 @@ public class RdfEngine implements Engine {
         roleNamespace = "http://matonto.org/roles/";
     }
 
-    private void setEncryption(RdfEngineConfig config) {
+    private void setEncryption(RdfEngineConfig config, BundleContext context) {
         Map<String, Object> options = new HashMap<>();
+        options.put(BundleContext.class.getName(), context);
         options.put("encryption.name", config.encryptionName());
         options.put("encryption.enabled", config.encryptionEnabled());
         options.put("encryption.prefix", config.encryptionPrefix());

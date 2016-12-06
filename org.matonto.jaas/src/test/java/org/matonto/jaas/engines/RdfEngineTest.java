@@ -24,9 +24,12 @@ package org.matonto.jaas.engines;
  */
 
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.karaf.jaas.modules.Encryption;
+import org.apache.karaf.jaas.modules.encryption.EncryptionSupport;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.engines.GroupConfig;
 import org.matonto.jaas.api.engines.UserConfig;
@@ -44,16 +47,27 @@ import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.base.RepositoryResult;
 import org.matonto.repository.impl.sesame.SesameRepositoryWrapper;
+import org.mockito.Mock;
 import org.openrdf.model.vocabulary.DCTERMS;
 import org.openrdf.repository.sail.SailRepository;
 import org.openrdf.sail.memory.MemoryStore;
+import org.osgi.framework.BundleContext;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static junit.framework.TestCase.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.when;
 
+@RunWith(PowerMockRunner.class)
+@PrepareForTest(RdfEngine.class)
 public class RdfEngineTest {
     private Repository repo;
     private RdfEngine engine;
@@ -78,6 +92,15 @@ public class RdfEngineTest {
     private String context = "http://matonto.org/usermanagement";
     private boolean setUp = false;
     private Map<String, Object> options = new HashMap<>();
+
+    @Mock
+    BundleContext bundleContext;
+
+    @Mock
+    Encryption encryption;
+
+    @Mock
+    EncryptionSupport encryptionSupport;
 
     @Before
     public void setUp() throws Exception {
@@ -147,6 +170,13 @@ public class RdfEngineTest {
             setUp = true;
         }
 
+        PowerMockito.whenNew(EncryptionSupport.class).withAnyArguments().thenReturn(encryptionSupport);
+        when(encryptionSupport.getEncryption()).thenReturn(encryption);
+        when(encryptionSupport.getEncryptionPrefix()).thenReturn("");
+        when(encryptionSupport.getEncryptionSuffix()).thenReturn("");
+        when(encryption.checkPassword(anyString(), anyString())).thenReturn(true);
+        when(encryption.encryptPassword(anyString())).thenAnswer(i -> i.getArgumentAt(0, String.class));
+
         options.put("roles", new String[] {"admin", "user"});
         options.put("encryption.enabled", false);
         options.put("encryption.name", "basic");
@@ -154,7 +184,8 @@ public class RdfEngineTest {
         options.put("encryption.suffix", "{CRYPT}");
         options.put("encryption.algorithm", "MD5");
         options.put("encryption.encoding", "hexadecimal");
-        engine.start(options);
+
+        engine.start(bundleContext, options);
     }
 
     @After
@@ -416,9 +447,22 @@ public class RdfEngineTest {
 
     @Test
     public void testCheckPasswordWithoutEncryption() throws Exception {
+        // Setup:
+        when(encryptionSupport.getEncryption()).thenReturn(null);
+
         boolean result = engine.checkPassword(username, password);
         assertTrue(result);
 
+        result = engine.checkPassword(username, "password");
+        assertFalse(result);
+    }
+
+    @Test
+    public void testCheckPasswordWithEncryption() throws Exception {
+        boolean result = engine.checkPassword(username, password);
+        assertTrue(result);
+
+        when(encryption.checkPassword(anyString(), anyString())).thenReturn(false);
         result = engine.checkPassword(username, "password");
         assertFalse(result);
     }
