@@ -31,6 +31,7 @@ import org.apache.commons.io.IOUtils;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.engines.UserConfig;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
+import org.matonto.jaas.engines.RdfEngine;
 import org.matonto.rdf.api.Literal;
 import org.matonto.rdf.orm.Thing;
 import org.matonto.rest.util.ErrorUtils;
@@ -63,7 +64,6 @@ import javax.ws.rs.ext.Provider;
 @Consumes(MediaType.APPLICATION_JSON)
 public class UserProvider implements MessageBodyWriter<User>, MessageBodyReader<User> {
     protected EngineManager engineManager;
-    private static final String RDF_ENGINE = "org.matonto.jaas.engines.RdfEngine";
 
     @Reference
     public void setEngineManager(EngineManager engineManager) {
@@ -116,7 +116,7 @@ public class UserProvider implements MessageBodyWriter<User>, MessageBodyReader<
                 .lastName(input.containsKey("lastName") ? input.getString("lastName") : "")
                 .build();
 
-        return engineManager.createUser(RDF_ENGINE, config);
+        return engineManager.createUser(RdfEngine.COMPONENT_NAME, config);
     }
 
     private boolean isUser(Class<?> someClass, Type type) {

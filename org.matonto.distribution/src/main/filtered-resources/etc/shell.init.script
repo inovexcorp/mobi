@@ -33,6 +33,9 @@ matonto-deploy-bundles = {
         org.matonto.jaas.rest${deploy.bundles.version} \
         org.matonto.jaas.proxy${deploy.bundles.version} \
         org.matonto.rdf.orm.ontologies${deploy.bundles.version} \
+        org.matonto.platform.config.api${deploy.bundles.version} \
+        org.matonto.platform.config.rest${deploy.bundles.version} \
+        org.matonto.platform.config.impl{deploy.bundles.version} \
         com.eclipsesource.jaxrs.swagger-all
 }
 
