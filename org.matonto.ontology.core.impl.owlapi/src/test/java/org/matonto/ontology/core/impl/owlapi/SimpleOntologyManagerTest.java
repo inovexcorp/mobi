@@ -23,52 +23,86 @@ package org.matonto.ontology.core.impl.owlapi;
  * #L%
  */
 
-import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.matonto.catalog.api.CatalogManager;
-import org.matonto.catalog.api.ontologies.mcat.*;
+import org.matonto.catalog.api.ontologies.mcat.Branch;
+import org.matonto.catalog.api.ontologies.mcat.BranchFactory;
+import org.matonto.catalog.api.ontologies.mcat.Catalog;
+import org.matonto.catalog.api.ontologies.mcat.CatalogFactory;
+import org.matonto.catalog.api.ontologies.mcat.Commit;
+import org.matonto.catalog.api.ontologies.mcat.CommitFactory;
+import org.matonto.catalog.api.ontologies.mcat.OntologyRecord;
+import org.matonto.catalog.api.ontologies.mcat.OntologyRecordFactory;
 import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.persistence.utils.Bindings;
 import org.matonto.query.api.Binding;
 import org.matonto.query.api.BindingSet;
-import org.matonto.rdf.api.*;
+import org.matonto.rdf.api.IRI;
+import org.matonto.rdf.api.Model;
+import org.matonto.rdf.api.ModelFactory;
+import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory;
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
 import org.matonto.rdf.core.utils.Values;
 import org.matonto.rdf.orm.conversion.ValueConverterRegistry;
-import org.matonto.rdf.orm.conversion.impl.*;
+import org.matonto.rdf.orm.conversion.impl.DefaultValueConverterRegistry;
+import org.matonto.rdf.orm.conversion.impl.DoubleValueConverter;
+import org.matonto.rdf.orm.conversion.impl.FloatValueConverter;
+import org.matonto.rdf.orm.conversion.impl.IRIValueConverter;
+import org.matonto.rdf.orm.conversion.impl.IntegerValueConverter;
+import org.matonto.rdf.orm.conversion.impl.LiteralValueConverter;
+import org.matonto.rdf.orm.conversion.impl.ResourceValueConverter;
+import org.matonto.rdf.orm.conversion.impl.ShortValueConverter;
+import org.matonto.rdf.orm.conversion.impl.StringValueConverter;
+import org.matonto.rdf.orm.conversion.impl.ValueValueConverter;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.Rio;
-import org.powermock.api.easymock.PowerMock;
+import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
+import org.semanticweb.owlapi.model.OWLOntology;
 
 import java.io.InputStream;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.easymock.EasyMock.expect;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
-import static org.powermock.api.easymock.PowerMock.mockStatic;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(SimpleOntologyValues.class)
 public class SimpleOntologyManagerTest {
 
+    @Mock
+    private CatalogManager catalogManager;
+
+    @Mock
+    private SesameTransformer sesameTransformer;
+
+    @Mock
+    private Ontology ontology;
+
+    @Mock
+    private Ontology vocabulary;
+
     private SimpleOntologyManager manager;
     private ValueFactory valueFactory = SimpleValueFactory.getInstance();
     private ModelFactory modelFactory = LinkedHashModelFactory.getInstance();
-    private SesameTransformer sesameTransformer;
-    private CatalogManager catalogManager;
     private OntologyRecordFactory ontologyRecordFactory = new OntologyRecordFactory();
     private CommitFactory commitFactory = new CommitFactory();
     private BranchFactory branchFactory = new BranchFactory();
@@ -83,8 +117,6 @@ public class SimpleOntologyManagerTest {
     private IRI versionIRI;
     private org.semanticweb.owlapi.model.IRI owlOntologyIRI;
     private org.semanticweb.owlapi.model.IRI owlVersionIRI;
-    private Ontology ontology;
-    private Ontology vocabulary;
 
     @Before
     public void setUp() throws Exception {
@@ -128,37 +160,28 @@ public class SimpleOntologyManagerTest {
         vcr.registerValueConverter(new ValueValueConverter());
         vcr.registerValueConverter(new LiteralValueConverter());
 
+        MockitoAnnotations.initMocks(this);
+
         Catalog catalog = catalogFactory.createNew(catalogIRI);
-
-        catalogManager = mock(CatalogManager.class);
         when(catalogManager.getLocalCatalog()).thenReturn(catalog);
+        when(catalogManager.getRecord(missingIRI.stringValue(), ontologyRecordFactory)).thenReturn(Optional.empty());
 
-        sesameTransformer = mock(SesameTransformer.class);
         when(sesameTransformer.sesameModel(any(Model.class))).thenReturn(new org.openrdf.model.impl.LinkedHashModel());
 
         InputStream testOntology = getClass().getResourceAsStream("/test-ontology.ttl");
-        ontology = mock(Ontology.class);
         when(ontology.asModel(modelFactory)).thenReturn(Values.matontoModel(Rio.parse(testOntology, "",
                 RDFFormat.TURTLE)));
 
         InputStream testVocabulary = getClass().getResourceAsStream("/test-vocabulary.ttl");
-        vocabulary = mock(Ontology.class);
         when(vocabulary.asModel(modelFactory)).thenReturn(Values.matontoModel(Rio.parse(testVocabulary, "",
                 RDFFormat.TURTLE)));
 
-        mockStatic(SimpleOntologyValues.class);
-        /*when(SimpleOntologyValues.owlapiIRI(ontologyIRI)).thenReturn(owlOntologyIRI);
+        PowerMockito.mockStatic(SimpleOntologyValues.class);
+        when(SimpleOntologyValues.owlapiIRI(ontologyIRI)).thenReturn(owlOntologyIRI);
         when(SimpleOntologyValues.owlapiIRI(versionIRI)).thenReturn(owlVersionIRI);
         when(SimpleOntologyValues.matontoIRI(owlOntologyIRI)).thenReturn(ontologyIRI);
         when(SimpleOntologyValues.matontoIRI(owlVersionIRI)).thenReturn(versionIRI);
-        when(SimpleOntologyValues.matontoOntology(anyObject())).thenReturn(ontology);*/
-
-        expect(SimpleOntologyValues.owlapiIRI(ontologyIRI)).andReturn(owlOntologyIRI).anyTimes();
-        expect(SimpleOntologyValues.owlapiIRI(versionIRI)).andReturn(owlVersionIRI).anyTimes();
-        expect(SimpleOntologyValues.matontoIRI(owlOntologyIRI)).andReturn(ontologyIRI).anyTimes();
-        expect(SimpleOntologyValues.matontoIRI(owlVersionIRI)).andReturn(versionIRI).anyTimes();
-        expect(SimpleOntologyValues.matontoOntology(EasyMock.anyObject())).andReturn(ontology).anyTimes();
-        PowerMock.replay(SimpleOntologyValues.class);
+        when(SimpleOntologyValues.matontoOntology(any(OWLOntology.class))).thenReturn(ontology);
 
         manager = new SimpleOntologyManager();
         manager.setValueFactory(valueFactory);
@@ -186,8 +209,6 @@ public class SimpleOntologyManagerTest {
 
     @Test
     public void testRetrieveOntologyWithMissingIdentifier() {
-        when(catalogManager.getRecord(missingIRI.stringValue(), ontologyRecordFactory)).thenReturn(Optional.empty());
-
         Optional<Ontology> result = manager.retrieveOntology(missingIRI);
         assertFalse(result.isPresent());
     }
@@ -287,8 +308,6 @@ public class SimpleOntologyManagerTest {
 
     @Test
     public void testRetrieveOntologyUsingABranchWithMissingIdentifier() throws Exception {
-        when(catalogManager.getRecord(missingIRI.stringValue(), ontologyRecordFactory)).thenReturn(Optional.empty());
-
         Optional<Ontology> result = manager.retrieveOntology(missingIRI, branchIRI);
         assertFalse(result.isPresent());
     }
@@ -394,8 +413,6 @@ public class SimpleOntologyManagerTest {
 
     @Test
     public void testRetrieveOntologyUsingACommitWithMissingIdentifier() throws Exception {
-        when(catalogManager.getRecord(missingIRI.stringValue(), ontologyRecordFactory)).thenReturn(Optional.empty());
-
         Optional<Ontology> result = manager.retrieveOntology(missingIRI, branchIRI, commitIRI);
         assertFalse(result.isPresent());
     }

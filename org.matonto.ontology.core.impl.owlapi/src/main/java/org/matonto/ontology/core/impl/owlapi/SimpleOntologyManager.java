@@ -65,9 +65,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 
-@Component(provide = OntologyManager.class,
-        name = SimpleOntologyManager.COMPONENT_NAME,
-        configurationPolicy = ConfigurationPolicy.require)
+@Component(
+        provide = OntologyManager.class,
+        name = SimpleOntologyManager.COMPONENT_NAME)
 public class SimpleOntologyManager implements OntologyManager {
 
     protected static final String COMPONENT_NAME = "org.matonto.ontology.core.OntologyManager";
