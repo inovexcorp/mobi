@@ -52,6 +52,8 @@ import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.base.RepositoryResult;
 import org.matonto.repository.exception.RepositoryException;
+import org.openrdf.model.vocabulary.DCTERMS;
+import org.openrdf.model.vocabulary.RDF;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
@@ -82,6 +84,9 @@ public class SimpleCatalogManager implements CatalogManager {
     private CommitFactory commitFactory;
     private RevisionFactory revisionFactory;
     private VersionedRDFRecordFactory versionedRDFRecordFactory;
+    private VersionedRecordFactory versionedRecordFactory;
+    private UnversionedRecordFactory unversionedRecordFactory;
+    private VersionFactory versionFactory;
     private Resource distributedCatalogIRI;
     private Resource localCatalogIRI;
     private Map<Resource, String> sortingOptions = new HashMap<>();
@@ -148,13 +153,20 @@ public class SimpleCatalogManager implements CatalogManager {
         this.versionedRDFRecordFactory = versionedRDFRecordFactory;
     }
 
-    private static final String RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
+    @Reference
+    protected void setVersionedRecordFactory(VersionedRecordFactory versionedRecordFactory) {
+        this.versionedRecordFactory = versionedRecordFactory;
+    }
 
-    private static final String DC_TERMS = "http://purl.org/dc/terms/";
-    private static final String DC_TITLE = DC_TERMS + "title";
-    private static final String DC_DESCRIPTION = DC_TERMS + "description";
-    private static final String DC_ISSUED = DC_TERMS + "issued";
-    private static final String DC_MODIFIED = DC_TERMS + "modified";
+    @Reference
+    protected void setUnversionedRecordFactory(UnversionedRecordFactory unversionedRecordFactory) {
+        this.unversionedRecordFactory = unversionedRecordFactory;
+    }
+
+    @Reference
+    protected void setVersionFactory(VersionFactory versionFactory) {
+        this.versionFactory = versionFactory;
+    }
 
     private static final String PROV_AT_TIME = "http://www.w3.org/ns/prov#atTime";
 
@@ -173,12 +185,14 @@ public class SimpleCatalogManager implements CatalogManager {
     private static final String COUNT_RECORDS_QUERY;
     private static final String GET_NEW_LATEST_VERSION;
     private static final String GET_COMMIT_CHAIN;
+    private static final String GET_IN_PROGRESS_COMMIT;
     private static final String COMMIT_BINDING = "commit";
     private static final String PARENT_BINDING = "parent";
     private static final String RECORD_BINDING = "record";
     private static final String CATALOG_BINDING = "catalog";
     private static final String RECORD_COUNT_BINDING = "record_count";
     private static final String TYPE_FILTER_BINDING = "type_filter";
+    private static final String USER_BINDING = "user";
 
     static {
         try {
@@ -196,6 +210,10 @@ public class SimpleCatalogManager implements CatalogManager {
             );
             GET_COMMIT_CHAIN = IOUtils.toString(
                     SimpleCatalogManager.class.getResourceAsStream("/get-commit-chain.rq"),
+                    "UTF-8"
+            );
+            GET_IN_PROGRESS_COMMIT = IOUtils.toString(
+                    SimpleCatalogManager.class.getResourceAsStream("/get-in-progress-commit.rq"),
                     "UTF-8"
             );
         } catch (IOException e) {
@@ -350,15 +368,19 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public <T extends Record> void addRecord(Resource catalogId, T record) throws MatOntoException {
-        if (resourceExists(catalogId, Catalog.TYPE) && !resourceExists(record.getResource())) {
-            try (RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            IRI identifierIRI = vf.createIRI(DCTERMS.IDENTIFIER.stringValue());
+            Value identifier = record.getProperty(identifierIRI).orElseThrow(() ->
+                    new MatOntoException("The Record must have an identifier."));
+            if (resourceExists(catalogId, Catalog.TYPE) && !resourceExists(record.getResource()) &&
+                    !conn.getStatements(null, identifierIRI, identifier).hasNext()) {
                 record.setCatalog(getCatalog(catalogId));
                 conn.add(record.getModel(), record.getResource());
-            } catch (RepositoryException e) {
-                throw new MatOntoException("Error in repository connection", e);
+            } else {
+                throw new MatOntoException("The Record could not be added.");
             }
-        } else {
-            throw new MatOntoException("The Record could not be added.");
+        } catch (RepositoryException e) {
+            throw new MatOntoException("Error in repository connection", e);
         }
     }
 
@@ -380,8 +402,18 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public void removeRecord(Resource catalogId, Resource recordId) throws MatOntoException {
-        if (resourceExists(catalogId, Catalog.TYPE) && resourceExists(recordId, Record.TYPE)) {
-            remove(recordId);
+        Optional<Record> optionalRecord = getRecord(catalogId, recordId, recordFactory);
+        if (optionalRecord.isPresent()) {
+            Record record = optionalRecord.get();
+            if (record.getModel().contains(null, null, vf.createIRI(UnversionedRecord.TYPE))) {
+                removeUnversionedRecord(record);
+            } else if (record.getModel().contains(null, null, vf.createIRI(VersionedRDFRecord.TYPE))) {
+                removeVersionedRDFRecord(record);
+            } else if (record.getModel().contains(null, null, vf.createIRI(VersionedRecord.TYPE))) {
+                removeVersionedRecord(record);
+            } else {
+                remove(recordId);
+            }
         } else {
             throw new MatOntoException("The Record could not be removed.");
         }
@@ -391,12 +423,26 @@ public class SimpleCatalogManager implements CatalogManager {
     public <T extends Record> Optional<T> getRecord(Resource catalogId, Resource recordId, OrmFactory<T> factory)
             throws MatOntoException {
         try (RepositoryConnection conn = repository.getConnection()) {
-            boolean condition = resourceExists(recordId, T.TYPE) && conn.getStatements(recordId,
-                    vf.createIRI(Record.catalog_IRI), catalogId).hasNext();
+            boolean condition = resourceExists(recordId, factory.getTypeIRI().stringValue())
+                    && conn.getStatements(recordId, vf.createIRI(Record.catalog_IRI), catalogId).hasNext();
             return getObject(condition, recordId, factory);
         } catch (RepositoryException e) {
             throw new MatOntoException("Error in repository connection.", e);
         }
+    }
+
+    @Override
+    public <T extends Record> Optional<T> getRecord(String identifier, OrmFactory<T> factory) throws MatOntoException {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            RepositoryResult<Statement> statements = conn.getStatements(null,
+                    vf.createIRI(DCTERMS.IDENTIFIER.stringValue()), vf.createLiteral(identifier));
+            if (statements.hasNext()) {
+                return getObject(true, statements.next().getSubject(), factory);
+            }
+        } catch (RepositoryException e) {
+            throw new MatOntoException("Error in repository connection.", e);
+        }
+        return Optional.empty();
     }
 
     @Override
@@ -405,14 +451,15 @@ public class SimpleCatalogManager implements CatalogManager {
 
         Distribution distribution = distributionFactory.createNew(vf.createIRI(DISTRIBUTION_NAMESPACE
                 + UUID.randomUUID()));
-        distribution.setProperty(vf.createLiteral(config.getTitle()), vf.createIRI(DC_TITLE));
-        distribution.setProperty(vf.createLiteral(now), vf.createIRI(DC_ISSUED));
-        distribution.setProperty(vf.createLiteral(now), vf.createIRI(DC_MODIFIED));
+        distribution.setProperty(vf.createLiteral(config.getTitle()), vf.createIRI(DCTERMS.TITLE.stringValue()));
+        distribution.setProperty(vf.createLiteral(now), vf.createIRI(DCTERMS.ISSUED.stringValue()));
+        distribution.setProperty(vf.createLiteral(now), vf.createIRI(DCTERMS.MODIFIED.stringValue()));
         if (config.getDescription() != null) {
-            distribution.setProperty(vf.createLiteral(config.getDescription()), vf.createIRI(DC_DESCRIPTION));
+            distribution.setProperty(vf.createLiteral(config.getDescription()),
+                    vf.createIRI(DCTERMS.DESCRIPTION.stringValue()));
         }
         if (config.getFormat() != null) {
-            distribution.setProperty(vf.createLiteral(config.getFormat()), vf.createIRI(DC_TERMS + "format"));
+            distribution.setProperty(vf.createLiteral(config.getFormat()), vf.createIRI(DCTERMS.FORMAT.stringValue()));
         }
         if (config.getAccessURL() != null) {
             distribution.setAccessURL(config.getAccessURL());
@@ -476,12 +523,12 @@ public class SimpleCatalogManager implements CatalogManager {
         OffsetDateTime now = OffsetDateTime.now();
 
         T version = factory.createNew(vf.createIRI(VERSION_NAMESPACE + UUID.randomUUID()));
-        version.setProperty(vf.createLiteral(title), vf.createIRI(DC_TITLE));
+        version.setProperty(vf.createLiteral(title), vf.createIRI(DCTERMS.TITLE.stringValue()));
         if (description != null) {
-            version.setProperty(vf.createLiteral(description), vf.createIRI(DC_DESCRIPTION));
+            version.setProperty(vf.createLiteral(description), vf.createIRI(DCTERMS.DESCRIPTION.stringValue()));
         }
-        version.setProperty(vf.createLiteral(now), vf.createIRI(DC_ISSUED));
-        version.setProperty(vf.createLiteral(now), vf.createIRI(DC_MODIFIED));
+        version.setProperty(vf.createLiteral(now), vf.createIRI(DCTERMS.ISSUED.stringValue()));
+        version.setProperty(vf.createLiteral(now), vf.createIRI(DCTERMS.MODIFIED.stringValue()));
 
         return version;
     }
@@ -515,7 +562,8 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public void removeVersion(Resource versionId, Resource versionedRecordId) throws MatOntoException {
-        if (resourceExists(versionId, Version.TYPE) && resourceExists(versionedRecordId, VersionedRecord.TYPE)
+        Optional<Version> optionalVersion = getVersion(versionId, versionFactory);
+        if (optionalVersion.isPresent() && resourceExists(versionedRecordId, VersionedRecord.TYPE)
                 && removeObjectWithRelationship(versionId, versionedRecordId, VersionedRecord.version_IRI)) {
             try (RepositoryConnection conn = repository.getConnection()) {
                 IRI latestVersionIRI = vf.createIRI(VersionedRecord.latestVersion_IRI);
@@ -532,6 +580,8 @@ public class SimpleCatalogManager implements CatalogManager {
                     }
                     conn.commit();
                 }
+                Version version = optionalVersion.get();
+                version.getVersionedDistribution().forEach(distribution -> remove(distribution.getResource()));
             } catch (RepositoryException e) {
                 throw new MatOntoException("Error in repository connection", e);
             }
@@ -543,26 +593,26 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public <T extends Version> Optional<T> getVersion(Resource versionId, OrmFactory<T> factory) throws
             MatOntoException {
-        return getObject(resourceExists(versionId, T.TYPE), versionId, factory);
+        return getObject(resourceExists(versionId, factory.getTypeIRI().stringValue()), versionId, factory);
     }
 
     @Override
-    public Branch createBranch(@Nonnull String title, String description) {
+    public <T extends Branch> T createBranch(@Nonnull String title, String description, OrmFactory<T> factory) {
         OffsetDateTime now = OffsetDateTime.now();
 
-        Branch branch = branchFactory.createNew(vf.createIRI(BRANCH_NAMESPACE + UUID.randomUUID()));
-        branch.setProperty(vf.createLiteral(title), vf.createIRI(DC_TITLE));
-        branch.setProperty(vf.createLiteral(now), vf.createIRI(DC_ISSUED));
-        branch.setProperty(vf.createLiteral(now), vf.createIRI(DC_MODIFIED));
+        T branch = factory.createNew(vf.createIRI(BRANCH_NAMESPACE + UUID.randomUUID()));
+        branch.setProperty(vf.createLiteral(title), vf.createIRI(DCTERMS.TITLE.stringValue()));
+        branch.setProperty(vf.createLiteral(now), vf.createIRI(DCTERMS.ISSUED.stringValue()));
+        branch.setProperty(vf.createLiteral(now), vf.createIRI(DCTERMS.MODIFIED.stringValue()));
         if (description != null) {
-            branch.setProperty(vf.createLiteral(description), vf.createIRI(DC_DESCRIPTION));
+            branch.setProperty(vf.createLiteral(description), vf.createIRI(DCTERMS.DESCRIPTION.stringValue()));
         }
 
         return branch;
     }
 
     @Override
-    public void addBranch(Branch branch, Resource versionedRDFRecordId) throws MatOntoException {
+    public <T extends Branch> void addBranch(T branch, Resource versionedRDFRecordId) throws MatOntoException {
         if (!resourceExists(branch.getResource()) && resourceExists(versionedRDFRecordId, VersionedRDFRecord.TYPE)) {
             try (RepositoryConnection conn = repository.getConnection()) {
                 conn.begin();
@@ -579,25 +629,84 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public void updateBranch(Branch newBranch) throws MatOntoException {
-        if (resourceExists(newBranch.getResource(), Branch.TYPE)) {
-            update(newBranch.getResource(), newBranch.getModel());
-        } else {
-            throw new MatOntoException("The Branch could not be updated.");
+    public void addMasterBranch(Resource versionedRDFRecordId) throws MatOntoException {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            IRI masterBranchIRI = vf.createIRI(VersionedRDFRecord.masterBranch_IRI);
+            if (conn.getStatements(versionedRDFRecordId, masterBranchIRI, null, versionedRDFRecordId).hasNext()) {
+                throw new MatOntoException("The Record already has a master Branch.");
+            } else if (resourceExists(versionedRDFRecordId, VersionedRDFRecord.TYPE)) {
+                Branch branch = branchFactory.createNew(vf.createIRI(BRANCH_NAMESPACE + UUID.randomUUID()));
+                branch.setProperty(vf.createLiteral("MASTER"), vf.createIRI(DCTERMS.TITLE.stringValue()));
+                branch.setProperty(vf.createLiteral("The master branch."),
+                        vf.createIRI(DCTERMS.DESCRIPTION.stringValue()));
+                conn.begin();
+                conn.add(versionedRDFRecordId, vf.createIRI(VersionedRDFRecord.branch_IRI), branch.getResource(),
+                        versionedRDFRecordId);
+                conn.add(versionedRDFRecordId, masterBranchIRI, branch.getResource(), versionedRDFRecordId);
+                conn.add(branch.getModel(), branch.getResource());
+                conn.commit();
+            } else {
+                throw new MatOntoException("The master Branch could not be added.");
+            }
+        } catch (RepositoryException e) {
+            throw new MatOntoException("Error in repository connection", e);
+        }
+    }
+
+    @Override
+    public <T extends Branch> void updateBranch(T newBranch) throws MatOntoException {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            IRI masterBranchIRI = vf.createIRI(VersionedRDFRecord.masterBranch_IRI);
+            if (resourceExists(newBranch.getResource(), T.TYPE)
+                    && !conn.getStatements(null, masterBranchIRI, newBranch.getResource()).hasNext()) {
+                update(newBranch.getResource(), newBranch.getModel());
+            } else {
+                throw new MatOntoException("The Branch could not be updated.");
+            }
+        } catch (RepositoryException e) {
+            throw new MatOntoException("Error in repository connection", e);
         }
     }
 
     @Override
     public void removeBranch(Resource branchId, Resource versionedRDFRecordId) throws MatOntoException {
-        if (!(resourceExists(branchId, Branch.TYPE) && resourceExists(versionedRDFRecordId, VersionedRDFRecord.TYPE)
-                && removeObjectWithRelationship(branchId, versionedRDFRecordId, VersionedRDFRecord.branch_IRI))) {
-            throw new MatOntoException("The Branch could not be removed.");
+        Optional<Branch> optionalBranch = getBranch(branchId, branchFactory);
+        try (RepositoryConnection conn = repository.getConnection()) {
+            IRI masterBranchIRI = vf.createIRI(VersionedRDFRecord.masterBranch_IRI);
+            if (conn.getStatements(versionedRDFRecordId, masterBranchIRI, branchId, versionedRDFRecordId).hasNext()) {
+                throw new MatOntoException("The master Branch cannot be removed.");
+            } else if (optionalBranch.isPresent() && resourceExists(versionedRDFRecordId, VersionedRDFRecord.TYPE)
+                    && removeObjectWithRelationship(branchId, versionedRDFRecordId, VersionedRDFRecord.branch_IRI)) {
+                Branch branch = optionalBranch.get();
+                Commit headCommit = branch.getHead().orElseThrow(() ->
+                        new MatOntoException("The head Commit was not set on the Branch."));
+                List<Resource> chain = getCommitChain(headCommit.getResource());
+                IRI headCommitIRI = vf.createIRI(Branch.head_IRI);
+                IRI wasInformedByIRI = vf.createIRI(Activity.wasInformedBy_IRI);
+                IRI commitIRI = vf.createIRI(Tag.commit_IRI);
+                conn.begin();
+                for (int i = chain.size() - 1; i >= 0; i--) {
+                    Resource commitId = chain.get(i);
+                    if (!conn.getStatements(null, headCommitIRI, commitId).hasNext()
+                            && !conn.getStatements(null, wasInformedByIRI, commitId).hasNext()) {
+                        conn.remove((Resource) null, null, null, commitId);
+                        conn.remove((Resource) null, commitIRI, commitId);
+                    } else {
+                        break;
+                    }
+                }
+                conn.commit();
+            } else {
+                throw new MatOntoException("The Branch could not be removed.");
+            }
+        } catch (RepositoryException e) {
+            throw new MatOntoException("Error in repository connection", e);
         }
     }
 
     @Override
-    public Optional<Branch> getBranch(Resource branchId) throws MatOntoException {
-        return getObject(resourceExists(branchId, Branch.TYPE), branchId, branchFactory);
+    public <T extends Branch> Optional<T> getBranch(Resource branchId, OrmFactory<T> factory) throws MatOntoException {
+        return getObject(resourceExists(branchId, factory.getTypeIRI().stringValue()), branchId, factory);
     }
 
     @Override
@@ -620,7 +729,7 @@ public class SimpleCatalogManager implements CatalogManager {
         Commit commit = commitFactory.createNew(vf.createIRI(COMMIT_NAMESPACE + DigestUtils.shaHex(metadata)));
         commit.setProperty(inProgressCommit.getProperty(generatedIRI).get(), generatedIRI);
         commit.setProperty(vf.createLiteral(now), vf.createIRI(PROV_AT_TIME));
-        commit.setProperty(vf.createLiteral(message), vf.createIRI(DC_TITLE));
+        commit.setProperty(vf.createLiteral(message), vf.createIRI(DCTERMS.TITLE.stringValue()));
         commit.setProperty(user, associatedWith);
 
         Model revisionModel = mf.createModel(inProgressCommit.getModel());
@@ -644,7 +753,11 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public InProgressCommit createInProgressCommit(User user, Resource recordId) throws
             InvalidParameterException {
-        if (resourceExists(recordId, VersionedRDFRecord.TYPE)) {
+        if (!resourceExists(recordId, VersionedRDFRecord.TYPE)) {
+            throw new InvalidParameterException("The provided Resource does not identify a Record entity.");
+        } else if (userHasInProgressCommit(user.getResource(), recordId)) {
+            throw new MatOntoException("The user already has an InProgressCommit for the identified Record.");
+        } else {
             UUID uuid = UUID.randomUUID();
 
             Revision revision = revisionFactory.createNew(vf.createIRI(REVISION_NAMESPACE + uuid));
@@ -660,7 +773,6 @@ public class SimpleCatalogManager implements CatalogManager {
 
             return inProgressCommit;
         }
-        throw new InvalidParameterException("The provided Resource does not identify a Branch entity.");
     }
 
     @Override
@@ -744,7 +856,7 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public <T extends Commit> Optional<T> getCommit(Resource commitId, OrmFactory<T> factory) throws MatOntoException {
-        return getObject(resourceExists(commitId, T.TYPE), commitId, factory);
+        return getObject(resourceExists(commitId, factory.getTypeIRI().stringValue()), commitId, factory);
     }
 
     @Override
@@ -779,8 +891,8 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public LinkedHashSet<Resource> getCommitChain(Resource commitId) throws MatOntoException {
-        LinkedHashSet<Resource> results = new LinkedHashSet<>();
+    public List<Resource> getCommitChain(Resource commitId) throws MatOntoException {
+        List<Resource> results = new ArrayList<>();
         if (resourceExists(commitId, Commit.TYPE)) {
             try (RepositoryConnection conn = repository.getConnection()) {
                 Iterator<Value> commits = getCommitChainIterator(commitId, conn);
@@ -849,7 +961,7 @@ public class SimpleCatalogManager implements CatalogManager {
                 Set<Conflict> result = new HashSet<>();
 
                 Model original = getCompiledResource((Resource)originalEnd).get();
-                IRI rdfType = vf.createIRI(RDF_TYPE);
+                IRI rdfType = vf.createIRI(RDF.TYPE.stringValue());
 
                 leftDeletions.forEach(statement -> {
                     Resource subject = statement.getSubject();
@@ -910,6 +1022,25 @@ public class SimpleCatalogManager implements CatalogManager {
                 .additions(changedCopy)
                 .deletions(originalCopy)
                 .build();
+    }
+
+    /**
+     * Checks if a User identified by the provided Resource has an InProgressCommit for the VersionedRDFRecord
+     * identified by the other provided Resource.
+     *
+     * @param userId The Resource that identifies the User that is being checked.
+     * @param recordId The Resource identifying the VersionedRDFRecord.
+     * @return True if the User has an InProgressCommit on the VersionedRDFRecord; otherwise, false.
+     */
+    private boolean userHasInProgressCommit(Resource userId, Resource recordId) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            TupleQuery query = conn.prepareTupleQuery(GET_IN_PROGRESS_COMMIT);
+            query.setBinding(USER_BINDING, userId);
+            query.setBinding(RECORD_BINDING, recordId);
+            return query.evaluate().hasNext();
+        } catch (RepositoryException e) {
+            throw new MatOntoException("Error in repository connection.", e);
+        }
     }
 
     /**
@@ -980,10 +1111,10 @@ public class SimpleCatalogManager implements CatalogManager {
             OffsetDateTime now = OffsetDateTime.now();
 
             Catalog catalog = catalogFactory.createNew(catalogId);
-            catalog.setProperty(vf.createLiteral(title), vf.createIRI(DC_TITLE));
-            catalog.setProperty(vf.createLiteral(description), vf.createIRI(DC_DESCRIPTION));
-            catalog.setProperty(vf.createLiteral(now), vf.createIRI(DC_ISSUED));
-            catalog.setProperty(vf.createLiteral(now), vf.createIRI(DC_MODIFIED));
+            catalog.setProperty(vf.createLiteral(title), vf.createIRI(DCTERMS.TITLE.stringValue()));
+            catalog.setProperty(vf.createLiteral(description), vf.createIRI(DCTERMS.DESCRIPTION.stringValue()));
+            catalog.setProperty(vf.createLiteral(now), vf.createIRI(DCTERMS.ISSUED.stringValue()));
+            catalog.setProperty(vf.createLiteral(now), vf.createIRI(DCTERMS.MODIFIED.stringValue()));
 
             conn.add(catalog.getModel(), catalogId);
         } catch (RepositoryException e) {
@@ -1016,7 +1147,7 @@ public class SimpleCatalogManager implements CatalogManager {
      * Checks to see if the provided Resource exists in the Repository.
      *
      * @param resourceIRI The Resource to look for in the Repository
-     * @return True if the Resource is in the Repository; otherwise, false
+     * @return True if the Resource is in the Repository; otherwise, false.
      */
     private boolean resourceExists(Resource resourceIRI) throws MatOntoException {
         try (RepositoryConnection conn = repository.getConnection()) {
@@ -1031,11 +1162,12 @@ public class SimpleCatalogManager implements CatalogManager {
      *
      * @param resourceIRI The Resource to look for in the Repository
      * @param type The String of the IRI identifying the type of entity in the Repository.
-     * @return True if the Resource is in the Repository; otherwise, false
+     * @return True if the Resource is in the Repository; otherwise, false.
      */
     private boolean resourceExists(Resource resourceIRI, String type) throws MatOntoException {
         try (RepositoryConnection conn = repository.getConnection()) {
-            return conn.getStatements(null, vf.createIRI(RDF_TYPE), vf.createIRI(type), resourceIRI).hasNext();
+            return conn.getStatements(null, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(type), resourceIRI)
+                    .hasNext();
         } catch (RepositoryException e) {
             throw new MatOntoException("Error in repository connection.", e);
         }
@@ -1045,9 +1177,9 @@ public class SimpleCatalogManager implements CatalogManager {
      * Creates the base for the sorting options Object.
      */
     private void createSortingOptions() {
-        sortingOptions.put(vf.createIRI(DC_MODIFIED), "modified");
-        sortingOptions.put(vf.createIRI(DC_ISSUED), "issued");
-        sortingOptions.put(vf.createIRI(DC_TITLE), "title");
+        sortingOptions.put(vf.createIRI(DCTERMS.MODIFIED.stringValue()), "modified");
+        sortingOptions.put(vf.createIRI(DCTERMS.ISSUED.stringValue()), "issued");
+        sortingOptions.put(vf.createIRI(DCTERMS.TITLE.stringValue()), "title");
     }
 
     /**
@@ -1062,14 +1194,15 @@ public class SimpleCatalogManager implements CatalogManager {
      */
     private <T extends Record> T addPropertiesToRecord(T record, RecordConfig config, OffsetDateTime issued,
                                                        OffsetDateTime modified) {
-        record.setProperty(vf.createLiteral(config.getTitle()), vf.createIRI(DC_TITLE));
-        record.setProperty(vf.createLiteral(issued), vf.createIRI(DC_ISSUED));
-        record.setProperty(vf.createLiteral(modified), vf.createIRI(DC_MODIFIED));
+        record.setProperty(vf.createLiteral(config.getTitle()), vf.createIRI(DCTERMS.TITLE.stringValue()));
+        record.setProperty(vf.createLiteral(issued), vf.createIRI(DCTERMS.ISSUED.stringValue()));
+        record.setProperty(vf.createLiteral(modified), vf.createIRI(DCTERMS.MODIFIED.stringValue()));
         record.setProperties(config.getPublishers().stream().map(User::getResource).collect(Collectors.toSet()),
-                vf.createIRI(DC_TERMS + "publisher"));
-        record.setProperty(vf.createLiteral(config.getIdentifier()), vf.createIRI(DC_TERMS + "identifier"));
+                vf.createIRI(DCTERMS.PUBLISHER.stringValue()));
+        record.setProperty(vf.createLiteral(config.getIdentifier()), vf.createIRI(DCTERMS.IDENTIFIER.stringValue()));
         if (config.getDescription() != null) {
-            record.setProperty(vf.createLiteral(config.getDescription()), vf.createIRI(DC_DESCRIPTION));
+            record.setProperty(vf.createLiteral(config.getDescription()),
+                    vf.createIRI(DCTERMS.DESCRIPTION.stringValue()));
         }
         if (config.getKeywords() != null) {
             record.setKeyword(config.getKeywords().stream().map(vf::createLiteral).collect(Collectors.toSet()));
@@ -1110,7 +1243,16 @@ public class SimpleCatalogManager implements CatalogManager {
         OffsetDateTime issued = Bindings.requiredLiteral(bindingSet, "issued").dateTimeValue();
         OffsetDateTime modified = Bindings.requiredLiteral(bindingSet, "modified").dateTimeValue();
 
-        return addPropertiesToRecord(recordFactory.createNew(resource), builder.build(), issued, modified);
+        Record record = recordFactory.createNew(resource);
+        bindingSet.getBinding("types").ifPresent(binding -> {
+            String[] values = StringUtils.split(binding.getValue().stringValue(), ",");
+
+            for (String value : values) {
+                record.getModel().add(resource, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(value));
+            }
+        });
+
+        return addPropertiesToRecord(record, builder.build(), issued, modified);
     }
 
     /**
@@ -1188,10 +1330,62 @@ public class SimpleCatalogManager implements CatalogManager {
      * Removes the Resource which is identified.
      *
      * @param resourceId The Resource identifying the element to be removed.
+     * @throws MatOntoException if RepositoryConnection has a problem.
      */
     private void remove(Resource resourceId) throws MatOntoException {
         try (RepositoryConnection conn = repository.getConnection()) {
             conn.clear(resourceId);
+        } catch (RepositoryException e) {
+            throw new MatOntoException("Error in repository connection", e);
+        }
+    }
+
+    /**
+     * Removes the UnversionedRecord created from the provided Record along with all associated Distributions.
+     *
+     * @param record The Record to remove.
+     * @throws MatOntoException if RepositoryConnection has a problem.
+     */
+    private void removeUnversionedRecord(Record record) throws MatOntoException {
+        UnversionedRecord unversionedRecord = unversionedRecordFactory.getExisting(record.getResource(),
+                record.getModel());
+        unversionedRecord.getUnversionedDistribution().forEach(distribution -> remove(distribution.getResource()));
+        remove(unversionedRecord.getResource());
+    }
+
+    /**
+     * Removes the VersionedRecord created from the provided Record along with all associated Versions and all the
+     * Distributions associated with those Versions.
+     *
+     * @param record The Record to remove.
+     * @throws MatOntoException if RepositoryConnection has a problem.
+     */
+    private void removeVersionedRecord(Record record) throws MatOntoException {
+        VersionedRecord versionedRecord = versionedRecordFactory.getExisting(record.getResource(), record.getModel());
+        versionedRecord.getVersion().forEach(version -> removeVersion(version.getResource(),
+                versionedRecord.getResource()));
+        remove(versionedRecord.getResource());
+    }
+
+    /**
+     * Removes the VersionedRDFRecord created from the provided Record along with all associated Versions, all the
+     * Distributions associated with those Versions, all associated Branches, and all the Commits associated with those
+     * Branches.
+     *
+     * @param record The Record to remove.
+     * @throws MatOntoException if RepositoryConnection has a problem.
+     */
+    private void removeVersionedRDFRecord(Record record) throws MatOntoException {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            VersionedRDFRecord versionedRDFRecord = versionedRDFRecordFactory.getExisting(record.getResource(),
+                    record.getModel());
+            versionedRDFRecord.getVersion().forEach(version -> removeVersion(version.getResource(),
+                    versionedRDFRecord.getResource()));
+            conn.remove(versionedRDFRecord.getResource(), vf.createIRI(VersionedRDFRecord.masterBranch_IRI), null,
+                    versionedRDFRecord.getResource());
+            versionedRDFRecord.getBranch().forEach(branch -> removeBranch(branch.getResource(),
+                    versionedRDFRecord.getResource()));
+            remove(versionedRDFRecord.getResource());
         } catch (RepositoryException e) {
             throw new MatOntoException("Error in repository connection", e);
         }

@@ -20,23 +20,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-(function() {
-    'use strict';
+describe('User State service', function() {
+    var $httpBackend,
+        userStateSvc;
 
-    angular
-        .module('customSetting', [])
-        .directive('customSetting', customSetting);
+    beforeEach(function() {
+        module('userState');
 
-        function customSetting() {
-            return {
-                restrict: 'E',
-                replace: true,
-                transclude: true,
-                scope: {
-                    header: '=',
-                    question: '='
-                },
-                templateUrl: 'modules/settings/directives/customSetting/customSetting.html'
-            }
-        }
-})();
+        inject(function(userStateService) {
+            userStateSvc = userStateService;
+        });
+    });
+
+    it('should reset variables', function() {
+        userStateSvc.reset();
+        expect(userStateSvc.selectedGroup).toBeUndefined();
+        expect(userStateSvc.selectedUser).toBeUndefined();
+        expect(userStateSvc.memberName).toBe('');
+        expect(userStateSvc.filteredGroupList).toBe(true);
+    });
+});

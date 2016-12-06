@@ -31,6 +31,7 @@
             'ngCookies',
             'ngHandsontable',
             'ngMessages',
+            'ui.bootstrap',
             'ui.codemirror',
             'ui.router',
             'ui.select',
@@ -52,19 +53,25 @@
             'blockFooter',
             'blockHeader',
             'blockSearch',
+            'checkbox',
             'circleButton',
+            'clickAnywhereButHere',
             'confirmationOverlay',
             'customHeader',
             'customLabel',
+            'emailInput',
             'errorDisplay',
             'fileInput',
             'infoMessage',
             'pagination',
+            'passwordConfirmInput',
             'radioButton',
+            'stepProgressBar',
             'tab',
             'tabset',
             'textArea',
             'textInput',
+            'uniqueValue',
 
             /* Custom Modules */
             'catalog',
@@ -75,6 +82,7 @@
             'ontology-editor',
             'settings',
             'sparql',
+            'user-management',
             'webtop',
 
             /* Custom Services */
@@ -90,7 +98,9 @@
             'responseObj',
             'settingsManager',
             'sparqlManager',
-            'updateRefs'
+            'updateRefs',
+            'userManager',
+            'userState'
         ])
         .constant('_', window._)
         .constant('REGEX', {

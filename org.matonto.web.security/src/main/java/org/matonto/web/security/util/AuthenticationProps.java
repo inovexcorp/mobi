@@ -1,6 +1,8 @@
+package org.matonto.web.security.util;
+
 /*-
  * #%L
- * org.matonto.web
+ * org.matonto.web.security
  * $Id:$
  * $HeadURL:$
  * %%
@@ -20,22 +22,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-(function() {
-    'use strict';
 
-    angular
-        .module('settingsContainer', [])
-        .directive('settingsContainer', settingsContainer);
-
-        function settingsContainer() {
-            return {
-                restrict: 'E',
-                replace: true,
-                transclude: true,
-                scope: {
-                    header: '='
-                },
-                templateUrl: 'modules/settings/directives/settingsContainer/settingsContainer.html'
-            }
-        }
-})();
+public class AuthenticationProps {
+    public static final String USERNAME = "org.matonto.web.username";
+}

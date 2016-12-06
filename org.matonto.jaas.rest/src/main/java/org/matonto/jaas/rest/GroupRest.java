@@ -67,7 +67,7 @@ public interface GroupRest {
      */
     @GET
     @Path("{groupTitle}")
-    @RolesAllowed("admin")
+    @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation("Get a single MatOnto group")
     Response getGroup(@PathParam("groupTitle") String groupTitle);
@@ -145,7 +145,7 @@ public interface GroupRest {
      */
     @GET
     @Path("{groupTitle}/users")
-    @RolesAllowed("admin")
+    @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation("List users of a MatOnto group")
     Response getGroupUsers(@PathParam("groupTitle") String groupTitle);

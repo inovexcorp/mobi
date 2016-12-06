@@ -131,6 +131,18 @@ public interface CatalogManager {
             MatOntoException;
 
     /**
+     * Gets the Record based on the provided identifier. The Record will be of type T which is determined by the
+     * provided OrmFactory.
+     *
+     * @param identifier The String identifying the Record you want to get.
+     * @param factory The OrmFactory of the Type of Record you want to get back.
+     * @param <T> An Object which extends Record.
+     * @return An Optional with a Record with the identifier if it was found.
+     * @throws MatOntoException Thrown if a connection to the repository could not be made.
+     */
+    <T extends Record> Optional<T> getRecord(String identifier, OrmFactory<T> factory) throws MatOntoException;
+
+    /**
      * Creates a Distribution with the metadata from the provided DistributionConfig.
      *
      * @param config The DistributionConfig which contains the needed metadata to create the Distribution.
@@ -251,35 +263,51 @@ public interface CatalogManager {
     <T extends Version> Optional<T> getVersion(Resource versionId, OrmFactory<T> factory) throws MatOntoException;
 
     /**
-     * Creates a Branch with the provided metadata.
+     * Creates a Branch with the provided metadata using the provided OrmFactory.
      *
      * @param title The title text.
      * @param description The description text.
+     * @param factory The OrmFactory identifying the type of Branch you want to get back.
+     * @param <T> An Object which extends Branch.
      * @return Branch created with the provided metadata.
      */
-    Branch createBranch(@Nonnull String title, String description);
+    <T extends Branch> T createBranch(@Nonnull String title, String description, OrmFactory<T> factory);
 
     /**
-     * Stores the provided Branch in the repository and adds it to the VersinedRDFRecord identified by the provided
+     * Stores the provided Branch in the repository and adds it to the VersionedRDFRecord identified by the provided
      * Resource.
      *
      * @param branch The Branch to add to the VersionedRDFRecord.
      * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord which will get a new Branch.
+     * @param <T> An Object which extends Branch.
      * @throws MatOntoException Thrown if a connection to the repository could not be made.
      */
-    void addBranch(Branch branch, Resource versionedRDFRecordId) throws MatOntoException;
+    <T extends Branch> void addBranch(T branch, Resource versionedRDFRecordId) throws MatOntoException;
 
     /**
-     * Uses the provided Branch to find the Resource of the existing Branch and replaces it.
+     * Creates a new master Branch, adds it to the VersionedRDFRecord identified by the provided Resource as the
+     * masterBranch, and stores the Branch in the repository. This method will not create a new master Branch if one
+     * already exists.
+     *
+     * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord which will get a new Branch.
+     * @throws MatOntoException Thrown if a connection to the repository could not be made.
+     */
+    void addMasterBranch(Resource versionedRDFRecordId) throws MatOntoException;
+
+    /**
+     * Uses the provided Branch to find the Resource of the existing non-master Branch and replaces it. If the provided
+     * Branch is the master Branch, it will not be updated.
      *
      * @param newBranch The Branch with the desired changes.
+     * @param <T> An Object which extends Branch.
      * @throws MatOntoException Thrown if a connection to the repository could not be made.
      */
-    void updateBranch(Branch newBranch) throws MatOntoException;
+    <T extends Branch> void updateBranch(T newBranch) throws MatOntoException;
 
     /**
-     * Removes the Branch identified by the provided Resource from the repository if it was a Branch of the
-     * VersionedRDFRecord identified by the provided Resource.
+     * Removes the non-master Branch identified by the provided Resource from the repository if it was a Branch of the
+     * VersionedRDFRecord identified by the provided Resource. If the provided Branch is the master Branch, it will not
+     * be removed.
      *
      * @param branchId The Resource identifying the Branch you want to remove.
      * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord to remove the Branch from.
@@ -288,13 +316,16 @@ public interface CatalogManager {
     void removeBranch(Resource branchId, Resource versionedRDFRecordId) throws MatOntoException;
 
     /**
-     * Gets the Branch identified by the provided Resource.
+     * Gets the Branch identified by the provided Resource. The Branch will be of type T which is determined by the
+     * provided OrmFactory.
      *
      * @param branchId The Resource identifying the Branch you want to get.
      * @return An Optional of the Branch if it exists.
+     * @param factory The OrmFactory identifying the type of Branch you want to get back.
+     * @param <T> An Object which extends Branch.
      * @throws MatOntoException Thrown if a connection to the repository could not be made.
      */
-    Optional<Branch> getBranch(Resource branchId) throws MatOntoException;
+    <T extends Branch> Optional<T> getBranch(Resource branchId, OrmFactory<T> factory) throws MatOntoException;
 
     /**
      * Creates a Commit from the provided InProgressCommit along with the message.
@@ -311,11 +342,15 @@ public interface CatalogManager {
      *
      * @param parents The Commit(s) that this InProgressCommit was informed by.
      * @param user The User that this InProgressCommit is associated with.
-     * @param branchId The Resource identifying the Branch that this InProgressCommit is on.
+     * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord that this InProgressCommit is on.
      * @return Optional with an InProgressCommit created using the provided metadata if the identified branch exists.
-     * @throws InvalidParameterException if branchId does not point to a Branch entity in the repository.
+     * @throws InvalidParameterException if versionedRDFRecordId does not point to a VersionedRDFRecord entity in the
+     *         repository.
+     * @throws MatOntoException if the User already has an InProgressCommit associated with the identified
+     *         VersionedRDFRecord.
      */
-    InProgressCommit createInProgressCommit(User user, Resource branchId) throws InvalidParameterException;
+    InProgressCommit createInProgressCommit(User user, Resource versionedRDFRecordId) throws InvalidParameterException,
+            MatOntoException;
 
     /**
      * Adds the provided statements to the provided Commit as additions. These statements were added and will be used
@@ -386,16 +421,16 @@ public interface CatalogManager {
     Model applyInProgressCommit(Resource inProgressCommitId, Model entity) throws MatOntoException;
 
     /**
-     * Gets a Set of Resources which all identify different Commits within the repository. The Commit identified by the
-     * provided Resource is the last item in the Set and it was informed by the previous Commit in the Set. This
-     * association is repeated until you get to the beginning of the Set. The resulting Set can then be thought about
+     * Gets a List of Resources which all identify different Commits within the repository. The Commit identified by the
+     * provided Resource is the last item in the List and it was informed by the previous Commit in the List. This
+     * association is repeated until you get to the beginning of the List. The resulting List can then be thought about
      * the chain of Commits on a Branch terminating at the Commit identified by the provided Resource.
      *
      * @param commitId The Resource identifying the Commit for the desired chain.
-     * @return Set of Resources identifying the Commits which make up the commit chain for the provided Commit.
+     * @return List of Resources identifying the Commits which make up the commit chain for the provided Commit.
      * @throws MatOntoException Thrown if a connection to the repository could not be made.
      */
-    LinkedHashSet<Resource> getCommitChain(Resource commitId) throws MatOntoException;
+    List<Resource> getCommitChain(Resource commitId) throws MatOntoException;
 
     /**
      * Gets the Model which represents the entity at the instance of the Commit identified by the provided Resource

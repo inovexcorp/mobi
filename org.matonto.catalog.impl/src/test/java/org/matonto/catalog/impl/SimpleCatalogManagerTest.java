@@ -21,6 +21,7 @@ package org.matonto.catalog.impl;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -33,12 +34,27 @@ import org.matonto.catalog.api.ontologies.mcat.*;
 import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.jaas.api.ontologies.usermanagement.UserFactory;
-import org.matonto.rdf.api.*;
+import org.matonto.rdf.api.IRI;
+import org.matonto.rdf.api.Model;
+import org.matonto.rdf.api.ModelFactory;
+import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.Statement;
+import org.matonto.rdf.api.Value;
+import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory;
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
 import org.matonto.rdf.core.utils.Values;
 import org.matonto.rdf.orm.conversion.ValueConverterRegistry;
-import org.matonto.rdf.orm.conversion.impl.*;
+import org.matonto.rdf.orm.conversion.impl.DefaultValueConverterRegistry;
+import org.matonto.rdf.orm.conversion.impl.DoubleValueConverter;
+import org.matonto.rdf.orm.conversion.impl.FloatValueConverter;
+import org.matonto.rdf.orm.conversion.impl.IRIValueConverter;
+import org.matonto.rdf.orm.conversion.impl.IntegerValueConverter;
+import org.matonto.rdf.orm.conversion.impl.LiteralValueConverter;
+import org.matonto.rdf.orm.conversion.impl.ResourceValueConverter;
+import org.matonto.rdf.orm.conversion.impl.ShortValueConverter;
+import org.matonto.rdf.orm.conversion.impl.StringValueConverter;
+import org.matonto.rdf.orm.conversion.impl.ValueValueConverter;
 import org.matonto.rdf.orm.impl.ThingFactory;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
@@ -83,10 +99,12 @@ public class SimpleCatalogManagerTest {
     private ThingFactory thingFactory = new ThingFactory();
     private VersionFactory versionFactory = new VersionFactory();
     private TagFactory tagFactory = new TagFactory();
+    private UserBranchFactory userBranchFactory = new UserBranchFactory();
     private UserFactory userFactory = new UserFactory();
     private IRI distributedCatalogId;
     private Resource notPresentId;
     private Resource differentId;
+    private IRI dcIdentifier;
 
     private static final String RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
 
@@ -106,7 +124,7 @@ public class SimpleCatalogManagerTest {
 
     private IRI ONT_TYPE;
     private IRI MAPPING_TYPE;
-    private static final int TOTAL_SIZE = 5;
+    private static final int TOTAL_SIZE = 7;
 
     @Before
     public void setUp() throws Exception {
@@ -184,6 +202,11 @@ public class SimpleCatalogManagerTest {
         versionedRDFRecordFactory.setValueFactory(vf);
         versionedRDFRecordFactory.setValueConverterRegistry(vcr);
 
+        userBranchFactory.setModelFactory(mf);
+        userBranchFactory.setValueFactory(vf);
+        userBranchFactory.setValueConverterRegistry(vcr);
+
+        thingFactory.setModelFactory(mf);
         thingFactory.setValueFactory(vf);
         thingFactory.setValueConverterRegistry(vcr);
 
@@ -205,6 +228,7 @@ public class SimpleCatalogManagerTest {
         vcr.registerValueConverter(thingFactory);
         vcr.registerValueConverter(userFactory);
         vcr.registerValueConverter(versionedRDFRecordFactory);
+        vcr.registerValueConverter(userBranchFactory);
         vcr.registerValueConverter(new ResourceValueConverter());
         vcr.registerValueConverter(new IRIValueConverter());
         vcr.registerValueConverter(new DoubleValueConverter());
@@ -227,6 +251,9 @@ public class SimpleCatalogManagerTest {
         manager.setCommitFactory(commitFactory);
         manager.setRevisionFactory(revisionFactory);
         manager.setVersionedRDFRecordFactory(versionedRDFRecordFactory);
+        manager.setVersionFactory(versionFactory);
+        manager.setUnversionedRecordFactory(unversionedRecordFactory);
+        manager.setVersionedRecordFactory(versionedRecordFactory);
 
         InputStream testData = getClass().getResourceAsStream("/testCatalogData.trig");
 
@@ -244,6 +271,7 @@ public class SimpleCatalogManagerTest {
         distributedCatalogId = vf.createIRI("http://matonto.org/test/catalog-distributed");
         notPresentId = vf.createIRI("http://matonto.org/test/records#not-present");
         differentId = vf.createIRI("http://matonto.org/test/different");
+        dcIdentifier = vf.createIRI(DC_IDENTIFIER);
     }
 
     @After
@@ -286,7 +314,7 @@ public class SimpleCatalogManagerTest {
     @Test
     public void testGetRecordIds() throws Exception {
         Set<Resource> results = manager.getRecordIds(distributedCatalogId);
-        assertEquals(5, results.size());
+        assertEquals(TOTAL_SIZE, results.size());
         assertTrue(results.contains(vf.createIRI("http://matonto.org/test/records#update")));
         assertTrue(results.contains(vf.createIRI("http://matonto.org/test/records#remove")));
         assertTrue(results.contains(vf.createIRI("http://matonto.org/test/records#get")));
@@ -303,6 +331,7 @@ public class SimpleCatalogManagerTest {
     public void testAddRecord() throws Exception {
         Resource recordId = vf.createIRI("https://matonto.org/records#test");
         Record record = recordFactory.createNew(recordId);
+        record.addProperty(vf.createLiteral("record"), dcIdentifier);
 
         RepositoryConnection conn = repo.getConnection();
         assertFalse(conn.getStatements(recordId, null, null, recordId).hasNext());
@@ -318,6 +347,7 @@ public class SimpleCatalogManagerTest {
     public void testAddRecordToMissingCatalog() {
         Resource recordId = vf.createIRI("https://matonto.org/records#test");
         Record record = recordFactory.createNew(recordId);
+        record.addProperty(vf.createLiteral("record"), dcIdentifier);
         manager.addRecord(differentId, record);
     }
 
@@ -325,6 +355,15 @@ public class SimpleCatalogManagerTest {
     public void testAddExistingRecordToCatalog() {
         Resource existingId = vf.createIRI("http://matonto.org/test/records#update");
         Record record = recordFactory.createNew(existingId);
+        record.addProperty(vf.createLiteral("record"), dcIdentifier);
+        manager.addRecord(distributedCatalogId, record);
+    }
+
+    @Test(expected = MatOntoException.class)
+    public void testAddRecordWithExistingIdentifier() {
+        Resource newId = vf.createIRI("http://matonto.org/test/records#brand-new");
+        Record record = recordFactory.createNew(newId);
+        record.addProperty(vf.createLiteral("Unique"), dcIdentifier);
         manager.addRecord(distributedCatalogId, record);
     }
 
@@ -332,6 +371,7 @@ public class SimpleCatalogManagerTest {
     public void testAddUnversionedRecord() throws Exception {
         Resource recordId = vf.createIRI("https://matonto.org/records#test");
         UnversionedRecord record = unversionedRecordFactory.createNew(recordId);
+        record.addProperty(vf.createLiteral("record"), dcIdentifier);
 
         RepositoryConnection conn = repo.getConnection();
         assertFalse(conn.getStatements(recordId, null, null, recordId).hasNext());
@@ -347,6 +387,7 @@ public class SimpleCatalogManagerTest {
     public void testAddVersionedRecord() throws Exception {
         Resource recordId = vf.createIRI("https://matonto.org/records#test");
         VersionedRecord record = versionedRecordFactory.createNew(recordId);
+        record.addProperty(vf.createLiteral("record"), dcIdentifier);
 
         RepositoryConnection conn = repo.getConnection();
         assertFalse(conn.getStatements(recordId, null, null, recordId).hasNext());
@@ -362,6 +403,7 @@ public class SimpleCatalogManagerTest {
     public void testAddVersionedRDFRecord() throws Exception {
         Resource recordId = vf.createIRI("https://matonto.org/records#test");
         VersionedRDFRecord record = versionedRDFRecordFactory.createNew(recordId);
+        record.addProperty(vf.createLiteral("record"), dcIdentifier);
 
         RepositoryConnection conn = repo.getConnection();
         assertFalse(conn.getStatements(recordId, null, null, recordId).hasNext());
@@ -377,6 +419,7 @@ public class SimpleCatalogManagerTest {
     public void testAddOntologyRecord() throws Exception {
         Resource recordId = vf.createIRI("https://matonto.org/records#test");
         OntologyRecord record = ontologyRecordFactory.createNew(recordId);
+        record.addProperty(vf.createLiteral("record"), dcIdentifier);
 
         RepositoryConnection conn = repo.getConnection();
         assertFalse(conn.getStatements(recordId, null, null, recordId).hasNext());
@@ -392,6 +435,7 @@ public class SimpleCatalogManagerTest {
     public void testAddMappingRecord() throws Exception {
         Resource recordId = vf.createIRI("https://matonto.org/records#test");
         MappingRecord record = mappingRecordFactory.createNew(recordId);
+        record.addProperty(vf.createLiteral("record"), dcIdentifier);
 
         RepositoryConnection conn = repo.getConnection();
         assertFalse(conn.getStatements(recordId, null, null, recordId).hasNext());
@@ -407,6 +451,7 @@ public class SimpleCatalogManagerTest {
     public void testAddDatasetRecord() throws Exception {
         Resource recordId = vf.createIRI("https://matonto.org/records#test");
         DatasetRecord record = datasetRecordFactory.createNew(recordId);
+        record.addProperty(vf.createLiteral("record"), dcIdentifier);
 
         RepositoryConnection conn = repo.getConnection();
         assertFalse(conn.getStatements(recordId, null, null, recordId).hasNext());
@@ -583,13 +628,62 @@ public class SimpleCatalogManagerTest {
 
     @Test
     public void testRemoveRecord() throws Exception {
-        Resource recordId = vf.createIRI("http://matonto.org/test/records#remove");
+        Resource recordId = vf.createIRI("http://matonto.org/test/records#just-a-record");
 
         RepositoryConnection conn = repo.getConnection();
         assertTrue(conn.getStatements(recordId, null, null, recordId).hasNext());
 
         manager.removeRecord(distributedCatalogId, recordId);
         assertFalse(conn.getStatements(recordId, null, null, recordId).hasNext());
+        conn.close();
+    }
+
+    @Test
+    public void testRemoveUnversionedRecord() throws Exception {
+        Resource recordId = vf.createIRI("http://matonto.org/test/records#unversioned");
+        Resource distributionId = vf.createIRI("http://matonto.org/test/distributions#test");
+
+        RepositoryConnection conn = repo.getConnection();
+        assertTrue(conn.getStatements(recordId, null, null, recordId).hasNext());
+        assertTrue(conn.getStatements(distributionId, null, null, distributionId).hasNext());
+
+        manager.removeRecord(distributedCatalogId, recordId);
+        assertFalse(conn.getStatements(recordId, null, null, recordId).hasNext());
+        assertFalse(conn.getStatements(distributionId, null, null, distributionId).hasNext());
+        conn.close();
+    }
+
+    @Test
+    public void testRemoveVersionedRecord() throws Exception {
+        Resource recordId = vf.createIRI("http://matonto.org/test/records#get");
+        Set<Resource> versions = Stream.of(vf.createIRI("http://matonto.org/test/versions#test"),
+                vf.createIRI("http://matonto.org/test/versions#test2"),
+                vf.createIRI("http://matonto.org/test/versions#test3"),
+                vf.createIRI("http://matonto.org/test/versions#remove")).collect(Collectors.toSet());
+
+        RepositoryConnection conn = repo.getConnection();
+        assertTrue(conn.getStatements(recordId, null, null, recordId).hasNext());
+        versions.forEach(r -> assertTrue(conn.getStatements(r, null, null, r).hasNext()));
+
+        manager.removeRecord(distributedCatalogId, recordId);
+        assertFalse(conn.getStatements(recordId, null, null, recordId).hasNext());
+        versions.forEach(r -> assertFalse(conn.getStatements(r, null, null, r).hasNext()));
+        conn.close();
+    }
+
+    @Test
+    public void testRemoveVersionedRDFRecord() throws Exception {
+        Resource recordId = vf.createIRI("http://matonto.org/test/records#versionedRDF");
+        Set<Resource> branches = Stream.of(vf.createIRI("http://matonto.org/test/branches#test"),
+                vf.createIRI("http://matonto.org/test/branches#master")).collect(Collectors.toSet());
+
+        RepositoryConnection conn = repo.getConnection();
+        assertTrue(conn.getStatements(recordId, null, null, recordId).hasNext());
+        branches.forEach(r -> assertTrue(conn.getStatements(r, null, null, r).hasNext()));
+
+        manager.removeRecord(distributedCatalogId, recordId);
+        assertFalse(conn.getStatements(recordId, null, null, recordId).hasNext());
+        branches.forEach(r -> assertFalse(conn.getStatements(r, null, null, r).hasNext()));
         conn.close();
     }
 
@@ -654,8 +748,27 @@ public class SimpleCatalogManagerTest {
     }
 
     @Test
+    public void testGetRecordByIdentifier() throws Exception {
+        Optional<Record> result = manager.getRecord("Unique", recordFactory);
+        assertTrue(result.isPresent());
+        Record record = result.get();
+        assertTrue(record.getProperty(vf.createIRI(DC_TITLE)).isPresent());
+        assertEquals("Unique", record.getProperty(vf.createIRI(DC_TITLE)).get().stringValue());
+        assertTrue(record.getProperty(vf.createIRI(DC_IDENTIFIER)).isPresent());
+        assertEquals("Unique", record.getProperty(vf.createIRI(DC_IDENTIFIER)).get().stringValue());
+        assertTrue(record.getProperty(vf.createIRI(DC_MODIFIED)).isPresent());
+        assertTrue(record.getProperty(vf.createIRI(DC_ISSUED)).isPresent());
+    }
+
+    @Test
+    public void testGetRecordByMissingIdentifier() throws Exception {
+        Optional<Record> result = manager.getRecord("Missing", recordFactory);
+        assertFalse(result.isPresent());
+    }
+
+    @Test
     public void testGetUnversionedRecord() throws Exception {
-        Resource recordId = vf.createIRI("http://matonto.org/test/records#get");
+        Resource recordId = vf.createIRI("http://matonto.org/test/records#unversioned");
 
         RepositoryConnection conn = repo.getConnection();
         assertTrue(conn.getStatements(recordId, null, null, recordId).hasNext());
@@ -665,7 +778,7 @@ public class SimpleCatalogManagerTest {
         assertTrue(result.isPresent());
         UnversionedRecord record = result.get();
         assertTrue(record.getProperty(vf.createIRI(DC_TITLE)).isPresent());
-        assertEquals("Get", record.getProperty(vf.createIRI(DC_TITLE)).get().stringValue());
+        assertEquals("Unversioned", record.getProperty(vf.createIRI(DC_TITLE)).get().stringValue());
         assertTrue(record.getProperty(vf.createIRI(DC_DESCRIPTION)).isPresent());
         assertEquals("Description", record.getProperty(vf.createIRI(DC_DESCRIPTION)).get().stringValue());
         assertTrue(record.getProperty(vf.createIRI(DC_IDENTIFIER)).isPresent());
@@ -697,7 +810,7 @@ public class SimpleCatalogManagerTest {
 
     @Test
     public void testGetVersionedRDFRecord() throws Exception {
-        Resource recordId = vf.createIRI("http://matonto.org/test/records#get");
+        Resource recordId = vf.createIRI("http://matonto.org/test/records#versionedRDF");
 
         RepositoryConnection conn = repo.getConnection();
         assertTrue(conn.getStatements(recordId, null, null, recordId).hasNext());
@@ -707,7 +820,7 @@ public class SimpleCatalogManagerTest {
         assertTrue(result.isPresent());
         VersionedRDFRecord record = result.get();
         assertTrue(record.getProperty(vf.createIRI(DC_TITLE)).isPresent());
-        assertEquals("Get", record.getProperty(vf.createIRI(DC_TITLE)).get().stringValue());
+        assertEquals("Versioned RDF", record.getProperty(vf.createIRI(DC_TITLE)).get().stringValue());
         assertTrue(record.getProperty(vf.createIRI(DC_DESCRIPTION)).isPresent());
         assertEquals("Description", record.getProperty(vf.createIRI(DC_DESCRIPTION)).get().stringValue());
         assertTrue(record.getProperty(vf.createIRI(DC_IDENTIFIER)).isPresent());
@@ -718,7 +831,7 @@ public class SimpleCatalogManagerTest {
 
     @Test
     public void testGetOntologyRecord() throws Exception {
-        Resource recordId = vf.createIRI("http://matonto.org/test/records#get");
+        Resource recordId = vf.createIRI("http://matonto.org/test/records#update");
 
         RepositoryConnection conn = repo.getConnection();
         assertTrue(conn.getStatements(recordId, null, null, recordId).hasNext());
@@ -728,7 +841,7 @@ public class SimpleCatalogManagerTest {
         assertTrue(result.isPresent());
         OntologyRecord record = result.get();
         assertTrue(record.getProperty(vf.createIRI(DC_TITLE)).isPresent());
-        assertEquals("Get", record.getProperty(vf.createIRI(DC_TITLE)).get().stringValue());
+        assertEquals("Update", record.getProperty(vf.createIRI(DC_TITLE)).get().stringValue());
         assertTrue(record.getProperty(vf.createIRI(DC_DESCRIPTION)).isPresent());
         assertEquals("Description", record.getProperty(vf.createIRI(DC_DESCRIPTION)).get().stringValue());
         assertTrue(record.getProperty(vf.createIRI(DC_IDENTIFIER)).isPresent());
@@ -739,7 +852,7 @@ public class SimpleCatalogManagerTest {
 
     @Test
     public void testGetMappingRecord() throws Exception {
-        Resource recordId = vf.createIRI("http://matonto.org/test/records#get");
+        Resource recordId = vf.createIRI("http://matonto.org/test/records#remove");
 
         RepositoryConnection conn = repo.getConnection();
         assertTrue(conn.getStatements(recordId, null, null, recordId).hasNext());
@@ -749,7 +862,7 @@ public class SimpleCatalogManagerTest {
         assertTrue(result.isPresent());
         MappingRecord record = result.get();
         assertTrue(record.getProperty(vf.createIRI(DC_TITLE)).isPresent());
-        assertEquals("Get", record.getProperty(vf.createIRI(DC_TITLE)).get().stringValue());
+        assertEquals("Remove", record.getProperty(vf.createIRI(DC_TITLE)).get().stringValue());
         assertTrue(record.getProperty(vf.createIRI(DC_DESCRIPTION)).isPresent());
         assertEquals("Description", record.getProperty(vf.createIRI(DC_DESCRIPTION)).get().stringValue());
         assertTrue(record.getProperty(vf.createIRI(DC_IDENTIFIER)).isPresent());
@@ -760,7 +873,7 @@ public class SimpleCatalogManagerTest {
 
     @Test
     public void testGetDatasetRecord() throws Exception {
-        Resource recordId = vf.createIRI("http://matonto.org/test/records#get");
+        Resource recordId = vf.createIRI("http://matonto.org/test/records#dataset");
 
         RepositoryConnection conn = repo.getConnection();
         assertTrue(conn.getStatements(recordId, null, null, recordId).hasNext());
@@ -770,11 +883,11 @@ public class SimpleCatalogManagerTest {
         assertTrue(result.isPresent());
         DatasetRecord record = result.get();
         assertTrue(record.getProperty(vf.createIRI(DC_TITLE)).isPresent());
-        assertEquals("Get", record.getProperty(vf.createIRI(DC_TITLE)).get().stringValue());
+        assertEquals("Dataset", record.getProperty(vf.createIRI(DC_TITLE)).get().stringValue());
         assertTrue(record.getProperty(vf.createIRI(DC_DESCRIPTION)).isPresent());
         assertEquals("Description", record.getProperty(vf.createIRI(DC_DESCRIPTION)).get().stringValue());
         assertTrue(record.getProperty(vf.createIRI(DC_IDENTIFIER)).isPresent());
-        assertEquals("Identifier", record.getProperty(vf.createIRI(DC_IDENTIFIER)).get().stringValue());
+        assertEquals("Dataset", record.getProperty(vf.createIRI(DC_IDENTIFIER)).get().stringValue());
         assertTrue(record.getProperty(vf.createIRI(DC_MODIFIED)).isPresent());
         assertTrue(record.getProperty(vf.createIRI(DC_ISSUED)).isPresent());
     }
@@ -853,7 +966,7 @@ public class SimpleCatalogManagerTest {
         Assert.assertThat(resources2.getPage().iterator().next().getResource().stringValue(), equalTo("http://matonto.org/test/records#update"));
         Assert.assertThat(resources3.getPage().iterator().next().getResource().stringValue(), equalTo("http://matonto.org/test/records#update"));
         Assert.assertThat(resources4.getPage().iterator().next().getResource().stringValue(), equalTo("http://matonto.org/test/records#get"));
-        Assert.assertThat(resources5.getPage().iterator().next().getResource().stringValue(), equalTo("http://matonto.org/test/records#get"));
+        Assert.assertThat(resources5.getPage().iterator().next().getResource().stringValue(), equalTo("http://matonto.org/test/records#dataset"));
         Assert.assertThat(resources6.getPage().iterator().next().getResource().stringValue(), equalTo("http://matonto.org/test/records#versionedRDF"));
     }
 
@@ -880,7 +993,7 @@ public class SimpleCatalogManagerTest {
         int limit = 1;
         int offset = 0;
         IRI modified = vf.createIRI(DC_MODIFIED);
-        IRI localCatalogId = vf.createIRI("http://matonto.org/test/catalog-local");
+        IRI localCatalogId = vf.createIRI("http://matonto.org/test/catalog-missing");
         PaginatedSearchParams searchParams = new SimpleSearchParams.Builder(limit, offset, modified).build();
         // when
         PaginatedSearchResults<Record> records = manager.findRecord(localCatalogId, searchParams);
@@ -907,8 +1020,8 @@ public class SimpleCatalogManagerTest {
         Assert.assertThat(ontRecords.getTotalSize(), equalTo(1));
         Assert.assertThat(mappingRecords.getPage().size(), equalTo(1));
         Assert.assertThat(mappingRecords.getTotalSize(), equalTo(1));
-        Assert.assertThat(fullRecords.getPage().size(), equalTo(5));
-        Assert.assertThat(fullRecords.getTotalSize(), equalTo(5));
+        Assert.assertThat(fullRecords.getPage().size(), equalTo(TOTAL_SIZE));
+        Assert.assertThat(fullRecords.getTotalSize(), equalTo(TOTAL_SIZE));
     }
 
     @Test
@@ -1188,16 +1301,19 @@ public class SimpleCatalogManagerTest {
         Resource recordId = vf.createIRI("http://matonto.org/test/records#get");
         Resource versionId = vf.createIRI("http://matonto.org/test/versions#remove");
         Resource latestVersionId = vf.createIRI("http://matonto.org/test/versions#test");
+        Resource distributionId = vf.createIRI("http://matonto.org/test/distributions#test2");
         IRI versionIRI = vf.createIRI(VersionedRecord.version_IRI);
         IRI latestIRI = vf.createIRI(VersionedRecord.latestVersion_IRI);
 
         RepositoryConnection conn = repo.getConnection();
         assertTrue(conn.getStatements(recordId, versionIRI, latestVersionId, recordId).hasNext());
+        assertTrue(conn.getStatements(distributionId, null, null, distributionId).hasNext());
 
         manager.removeVersion(versionId, recordId);
         assertFalse(conn.getStatements(versionId, null, null, versionId).hasNext());
         assertTrue(conn.getStatements(recordId, latestIRI, latestVersionId, recordId).hasNext());
         assertFalse(conn.getStatements(recordId, versionIRI, versionId, recordId).hasNext());
+        assertFalse(conn.getStatements(distributionId, null, null, distributionId).hasNext());
         conn.close();
     }
 
@@ -1263,7 +1379,7 @@ public class SimpleCatalogManagerTest {
 
     @Test
     public void testGetTag() throws Exception {
-        Resource versionId = vf.createIRI("http://matonto.org/test/versions#test");
+        Resource versionId = vf.createIRI("http://matonto.org/test/tags#test");
 
         RepositoryConnection conn = repo.getConnection();
         assertTrue(conn.getStatements(versionId, null, null, versionId).hasNext());
@@ -1273,7 +1389,7 @@ public class SimpleCatalogManagerTest {
         assertTrue(result.isPresent());
         Version version = result.get();
         assertTrue(version.getProperty(vf.createIRI(DC_TITLE)).isPresent());
-        assertEquals("Version", version.getProperty(vf.createIRI(DC_TITLE)).get().stringValue());
+        assertEquals("Tag", version.getProperty(vf.createIRI(DC_TITLE)).get().stringValue());
         assertTrue(version.getProperty(vf.createIRI(DC_ISSUED)).isPresent());
         assertTrue(version.getProperty(vf.createIRI(DC_MODIFIED)).isPresent());
     }
@@ -1310,6 +1426,30 @@ public class SimpleCatalogManagerTest {
     }
 
     @Test
+    public void testAddMasterBranch() throws Exception {
+        IRI branchIRI = vf.createIRI(VersionedRDFRecord.branch_IRI);
+        IRI masterBranchIRI = vf.createIRI(VersionedRDFRecord.masterBranch_IRI);
+        Resource recordId = vf.createIRI("http://matonto.org/test/records#update");
+
+        RepositoryConnection conn = repo.getConnection();
+        manager.addMasterBranch(recordId);
+        assertTrue(conn.getStatements(recordId, masterBranchIRI, null, recordId).hasNext());
+        assertTrue(conn.getStatements(recordId, branchIRI, null, recordId).hasNext());
+        conn.close();
+    }
+
+    @Test(expected = MatOntoException.class)
+    public void testAddMasterBranchToMissingVersionedRDFRecord() {
+        manager.addMasterBranch(notPresentId);
+    }
+
+    @Test(expected = MatOntoException.class)
+    public void testAddMasterBranchToRecordWithMasterBranchAlready() {
+        Resource recordId = vf.createIRI("http://matonto.org/test/records#versionedRDF");
+        manager.addMasterBranch(recordId);
+    }
+
+    @Test
     public void testUpdateBranch() throws Exception {
         Resource branchId = vf.createIRI("http://matonto.org/test/branches#test");
         RepositoryConnection conn = repo.getConnection();
@@ -1328,9 +1468,35 @@ public class SimpleCatalogManagerTest {
         conn.close();
     }
 
+    @Test
+    public void testUpdateUserBranch() throws Exception {
+        Resource branchId = vf.createIRI("http://matonto.org/test/branches#test");
+        RepositoryConnection conn = repo.getConnection();
+        Model branchModel = mf.createModel();
+        conn.getStatements(branchId, null, null, branchId).forEach(branchModel::add);
+
+        UserBranch branch = userBranchFactory.getExisting(branchId, branchModel);
+        branch.getModel().add(branchId, vf.createIRI(DC_TITLE), vf.createLiteral("New Title"));
+
+        assertFalse(conn.getStatements(branchId, vf.createIRI(DC_TITLE), vf.createLiteral("New Title"), branchId)
+                .hasNext());
+
+        manager.updateBranch(branch);
+        assertTrue(conn.getStatements(branchId, vf.createIRI(DC_TITLE), vf.createLiteral("New Title"), branchId)
+                .hasNext());
+        conn.close();
+    }
+
     @Test(expected = MatOntoException.class)
     public void testUpdateMissingBranch() {
         Branch branch = branchFactory.createNew(notPresentId);
+        manager.updateBranch(branch);
+    }
+
+    @Test(expected = MatOntoException.class)
+    public void testUpdateMasterBranch() {
+        Resource branchId = vf.createIRI("http://matonto.org/test/branches#master");
+        Branch branch = branchFactory.createNew(branchId);
         manager.updateBranch(branch);
     }
 
@@ -1338,15 +1504,25 @@ public class SimpleCatalogManagerTest {
     public void testRemoveBranch() throws Exception {
         Resource branchId = vf.createIRI("http://matonto.org/test/branches#test");
         Resource recordId = vf.createIRI("http://matonto.org/test/records#versionedRDF");
+        Resource commitIdToRemove = vf.createIRI("http://matonto.org/test/commits#conflict2");
+        Resource commitIdToKeep = vf.createIRI("http://matonto.org/test/commits#conflict0");
+        Resource tagId = vf.createIRI("http://matonto.org/test/tags#test");
+        IRI commitIRI = vf.createIRI(Tag.commit_IRI);
         IRI branchIRI = vf.createIRI(VersionedRDFRecord.branch_IRI);
 
         RepositoryConnection conn = repo.getConnection();
         assertTrue(conn.getStatements(branchId, null, null, branchId).hasNext());
         assertTrue(conn.getStatements(recordId, branchIRI, branchId, recordId).hasNext());
+        assertTrue(conn.getStatements(null, null, null, commitIdToRemove).hasNext());
+        assertTrue(conn.getStatements(null, null, null, commitIdToKeep).hasNext());
+        assertTrue(conn.getStatements(tagId, commitIRI, commitIdToRemove, tagId).hasNext());
 
         manager.removeBranch(branchId, recordId);
         assertFalse(conn.getStatements(branchId, null, null, branchId).hasNext());
         assertFalse(conn.getStatements(recordId, branchIRI, branchId, recordId).hasNext());
+        assertFalse(conn.getStatements(null, null, null, commitIdToRemove).hasNext());
+        assertTrue(conn.getStatements(null, null, null, commitIdToKeep).hasNext());
+        assertFalse(conn.getStatements(tagId, commitIRI, commitIdToRemove, tagId).hasNext());
         conn.close();
     }
 
@@ -1369,6 +1545,13 @@ public class SimpleCatalogManagerTest {
         manager.removeBranch(branchId, versionedRDFRecordId);
     }
 
+    @Test(expected = MatOntoException.class)
+    public void testRemoveMasterBranch() {
+        Resource branchId = vf.createIRI("http://matonto.org/test/branches#master");
+        Resource versionedRDFRecordId = vf.createIRI("http://matonto.org/test/records#versionedRDF");
+        manager.removeBranch(branchId, versionedRDFRecordId);
+    }
+
     @Test
     public void testGetBranch() throws Exception {
         Resource branchId = vf.createIRI("http://matonto.org/test/branches#test");
@@ -1377,7 +1560,7 @@ public class SimpleCatalogManagerTest {
         assertTrue(conn.getStatements(branchId, null, null, branchId).hasNext());
         conn.close();
 
-        Optional<Branch> result = manager.getBranch(branchId);
+        Optional<Branch> result = manager.getBranch(branchId, branchFactory);
         assertTrue(result.isPresent());
         Branch branch = result.get();
         assertTrue(branch.getProperty(vf.createIRI(DC_TITLE)).isPresent());
@@ -1387,8 +1570,25 @@ public class SimpleCatalogManagerTest {
     }
 
     @Test
+    public void testGetUserBranch() throws Exception {
+        Resource branchId = vf.createIRI("http://matonto.org/test/user-branches#test");
+
+        RepositoryConnection conn = repo.getConnection();
+        assertTrue(conn.getStatements(branchId, null, null, branchId).hasNext());
+        conn.close();
+
+        Optional<UserBranch> result = manager.getBranch(branchId, userBranchFactory);
+        assertTrue(result.isPresent());
+        Branch branch = result.get();
+        assertTrue(branch.getProperty(vf.createIRI(DC_TITLE)).isPresent());
+        assertEquals("User Branch", branch.getProperty(vf.createIRI(DC_TITLE)).get().stringValue());
+        assertTrue(branch.getProperty(vf.createIRI(DC_ISSUED)).isPresent());
+        assertTrue(branch.getProperty(vf.createIRI(DC_MODIFIED)).isPresent());
+    }
+
+    @Test
     public void testGetMissingBranch() throws Exception {
-        Optional<Branch> optionalBranch = manager.getBranch(notPresentId);
+        Optional<Branch> optionalBranch = manager.getBranch(notPresentId, branchFactory);
         assertFalse(optionalBranch.isPresent());
     }
 
@@ -1468,6 +1668,13 @@ public class SimpleCatalogManagerTest {
         User user = userFactory.createNew(vf.createIRI("http://matonto.org/test/user"));
         Resource notPresent = vf.createIRI("http://matonto.org/test/distributions#not-present");
         manager.createInProgressCommit(user, notPresent);
+    }
+
+    @Test(expected = MatOntoException.class)
+    public void testCreateInProgressCommitWhenYouAlreadyHaveOne() {
+        User user = userFactory.createNew(vf.createIRI("http://matonto.org/test/user/taken"));
+        Resource versionedRDFRecordId = vf.createIRI("http://matonto.org/test/records#versionedRDF");
+        manager.createInProgressCommit(user, versionedRDFRecordId);
     }
 
     @Test
@@ -1632,8 +1839,8 @@ public class SimpleCatalogManagerTest {
 
     @Test
     public void testGetInProgressCommit() throws Exception {
-        Resource commitId = vf.createIRI("http://matonto.org/test/commits#test");
-        String revisionIRI = "http://matonto.org/test/revisions#revision";
+        Resource commitId = vf.createIRI("http://matonto.org/test/in-progress-commits#test");
+        String revisionIRI = "http://matonto.org/test/revisions#in-revision";
 
         RepositoryConnection conn = repo.getConnection();
         assertTrue(conn.getStatements(commitId, null, null, commitId).hasNext());
@@ -1642,7 +1849,7 @@ public class SimpleCatalogManagerTest {
         Optional<InProgressCommit> result = manager.getCommit(commitId, inProgressCommitFactory);
         Commit commit = result.get();
         assertTrue(commit.getProperty(vf.createIRI(DC_TITLE)).isPresent());
-        assertEquals("Commit", commit.getProperty(vf.createIRI(DC_TITLE)).get().stringValue());
+        assertEquals("In progress commit", commit.getProperty(vf.createIRI(DC_TITLE)).get().stringValue());
         assertTrue(commit.getProperty(vf.createIRI(PROV_AT_TIME)).isPresent());
         assertTrue(commit.getProperty(vf.createIRI(PROV_GENERATED)).isPresent());
         assertEquals(revisionIRI, commit.getProperty(vf.createIRI(PROV_GENERATED)).get().stringValue());
@@ -1695,7 +1902,7 @@ public class SimpleCatalogManagerTest {
         Resource notThere = vf.createIRI("http://matonto.org/test/records#not-present");
         Resource different = vf.createIRI("http://matonto.org/test/different");
 
-        Set<Resource> result = manager.getCommitChain(different);
+        List<Resource> result = manager.getCommitChain(different);
         assertEquals(0, result.size());
 
         result = manager.getCommitChain(notThere);

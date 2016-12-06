@@ -28,6 +28,7 @@ import org.matonto.catalog.api.ontologies.mcat.*
 import org.matonto.jaas.api.ontologies.usermanagement.User
 import org.matonto.jaas.api.ontologies.usermanagement.UserFactory
 import org.matonto.rdf.api.Model
+import org.matonto.rdf.api.Resource
 import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory
 import org.matonto.rdf.orm.conversion.impl.*
@@ -61,6 +62,7 @@ class SimpleCatalogManagerSpec extends Specification {
     def inProgressCommitFactory = new InProgressCommitFactory()
     def commitFactory = new CommitFactory()
     def revisionFactory = new RevisionFactory()
+    def userBranchFactory = new UserBranchFactory()
     def thingFactory = new ThingFactory()
     def title = "title"
     def description = "description"
@@ -135,9 +137,13 @@ class SimpleCatalogManagerSpec extends Specification {
         revisionFactory.setValueFactory(vf)
         revisionFactory.setModelFactory(mf)
         revisionFactory.setValueConverterRegistry(vcr)
+        userBranchFactory.setValueFactory(vf)
+        userBranchFactory.setModelFactory(mf)
+        userBranchFactory.setValueConverterRegistry(vcr)
         userFactory.setValueFactory(vf)
         userFactory.setModelFactory(mf)
         userFactory.setValueConverterRegistry(vcr)
+        thingFactory.setModelFactory(mf)
         thingFactory.setValueFactory(vf)
         thingFactory.setValueConverterRegistry(vcr)
 
@@ -157,6 +163,7 @@ class SimpleCatalogManagerSpec extends Specification {
         vcr.registerValueConverter(inProgressCommitFactory)
         vcr.registerValueConverter(commitFactory)
         vcr.registerValueConverter(revisionFactory)
+        vcr.registerValueConverter(userBranchFactory)
         vcr.registerValueConverter(new ResourceValueConverter())
         vcr.registerValueConverter(new IRIValueConverter())
         vcr.registerValueConverter(new DoubleValueConverter())
@@ -174,9 +181,14 @@ class SimpleCatalogManagerSpec extends Specification {
         service.setRecordFactory(recordFactory)
         service.setDistributionFactory(distributionFactory)
         service.setBranchFactory(branchFactory)
+        service.setUserFactory(userFactory)
         service.setCommitFactory(commitFactory)
         service.setInProgressCommitFactory(inProgressCommitFactory)
         service.setRevisionFactory(revisionFactory)
+        service.setVersionedRDFRecordFactory(versionedRDFRecordFactory)
+        service.setVersionedRecordFactory(versionedRecordFactory)
+        service.setUnversionedRecordFactory(unversionedRecordFactory)
+        service.setVersionFactory(versionFactory)
 
         catalog.getModel() >> model
 
@@ -443,7 +455,7 @@ class SimpleCatalogManagerSpec extends Specification {
 
     def "createBranch creates a Branch"() {
         setup:
-        def branch = service.createBranch("title", "description")
+        def branch = service.createBranch("title", "description", branchFactory)
 
         expect:
         branch instanceof Branch
@@ -453,9 +465,21 @@ class SimpleCatalogManagerSpec extends Specification {
         branch.getProperty(vf.createIRI(dcModified)).isPresent()
     }
 
+    def "createBranch creates a UserBranch when provided a UserBranchFactory"() {
+        setup:
+        def branch = service.createBranch("title", "description", userBranchFactory)
+
+        expect:
+        branch instanceof UserBranch
+        branch.getProperty(vf.createIRI(dcTitle)).get().stringValue() == "title"
+        branch.getProperty(vf.createIRI(dcDescription)).get().stringValue() == "description"
+        branch.getProperty(vf.createIRI(dcIssued)).isPresent()
+        branch.getProperty(vf.createIRI(dcModified)).isPresent()
+    }
+
     def "createBranch creates a Branch with no description"() {
         setup:
-        def branch = service.createBranch("title", null)
+        def branch = service.createBranch("title", null, branchFactory)
 
         expect:
         branch instanceof Branch
