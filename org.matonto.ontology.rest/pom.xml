@@ -65,7 +65,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>catalog.api</artifactId>
-            <version>1.4.4-SNAPSHOT</version>
+            <version>1.4.8-SNAPSHOT</version>
         </dependency>
         
 		<dependency>

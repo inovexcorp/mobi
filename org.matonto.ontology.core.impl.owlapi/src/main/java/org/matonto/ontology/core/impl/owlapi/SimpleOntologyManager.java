@@ -54,6 +54,7 @@ import org.semanticweb.owlapi.rio.RioMemoryTripleSource;
 import org.semanticweb.owlapi.rio.RioParserImpl;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -62,10 +63,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 
 @Component(provide = OntologyManager.class,
         name = SimpleOntologyManager.COMPONENT_NAME,
-        designateFactory = RepositoryConsumerConfig.class,
         configurationPolicy = ConfigurationPolicy.require)
 public class SimpleOntologyManager implements OntologyManager {
 
@@ -186,6 +187,11 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Override
+    public SesameTransformer getTransformer() {
+        return sesameTransformer;
+    }
+
+    @Override
     public Ontology createOntology(OntologyId ontologyId) throws MatontoOntologyException {
         return new SimpleOntology(ontologyId, this);
     }
@@ -208,6 +214,22 @@ public class SimpleOntologyManager implements OntologyManager {
     @Override
     public Ontology createOntology(String json) throws MatontoOntologyException {
         return new SimpleOntology(json, this);
+    }
+
+    @Override
+    public Ontology createOntology(Model model) throws MatontoOntologyException {
+        try {
+            OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+            OWLOntology ontology = manager.createOntology();
+            org.openrdf.model.Model sesameModel = sesameTransformer.sesameModel(model);
+            OWLOntologyLoaderConfiguration config = new OWLOntologyLoaderConfiguration()
+                    .setMissingImportHandlingStrategy(MissingImportHandlingStrategy.SILENT);
+            RioParserImpl parser = new RioParserImpl(new RioRDFXMLDocumentFormatFactory());
+            parser.parse(new RioMemoryTripleSource(sesameModel), ontology, config);
+            return SimpleOntologyValues.matontoOntology(ontology);
+        } catch (OWLOntologyCreationException e) {
+            throw new MatontoOntologyException("Unable to create an ontology object.", e);
+        }
     }
 
     @Override
@@ -316,63 +338,43 @@ public class SimpleOntologyManager implements OntologyManager {
 
     @Override
     public Set<BindingSet> getSubClassesOf(Ontology ontology) throws MatontoOntologyException {
-        return runQueryOnOntology(ontology, GET_SUB_CLASSES_OF);
+        return runQueryOnOntology(ontology, GET_SUB_CLASSES_OF, null);
     }
 
     @Override
     public Set<BindingSet> getSubDatatypePropertiesOf(Ontology ontology) {
-        return runQueryOnOntology(ontology, GET_SUB_DATATYPE_PROPERTIES_OF);
+        return runQueryOnOntology(ontology, GET_SUB_DATATYPE_PROPERTIES_OF, null);
     }
 
     @Override
     public Set<BindingSet> getSubObjectPropertiesOf(Ontology ontology) {
-        return runQueryOnOntology(ontology, GET_SUB_OBJECT_PROPERTIES_OF);
+        return runQueryOnOntology(ontology, GET_SUB_OBJECT_PROPERTIES_OF, null);
     }
 
     @Override
     public Set<BindingSet> getClassesWithIndividuals(Ontology ontology) {
-        return runQueryOnOntology(ontology, GET_CLASSES_WITH_INDIVIDUALS);
+        return runQueryOnOntology(ontology, GET_CLASSES_WITH_INDIVIDUALS, null);
     }
 
     @Override
-    public Set<BindingSet> getEntityUsages(Ontology ontology, String entityIRIStr) {
-        Repository repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
-        repo.initialize();
-        try (RepositoryConnection conn = repo.getConnection()) {
-            conn.add(ontology.asModel(modelFactory));
-            TupleQuery query = conn.prepareTupleQuery(GET_ENTITY_USAGES);
-            query.setBinding(ENTITY_BINDING, valueFactory.createIRI(entityIRIStr));
-            Set<BindingSet> result = new HashSet<>();
-            query.evaluate().forEach(result::add);
-            return result;
-        } catch (RepositoryException e) {
-            throw new MatontoOntologyException("Error in repository connection.", e);
-        } finally {
-            repo.shutDown();
-        }
+    public Set<BindingSet> getEntityUsages(Ontology ontology, Resource entity) {
+        return runQueryOnOntology(ontology, GET_ENTITY_USAGES, tupleQuery -> {
+            tupleQuery.setBinding(ENTITY_BINDING, entity);
+            return tupleQuery;
+        });
     }
 
     @Override
     public Set<BindingSet> getConceptRelationships(Ontology ontology) {
-        return runQueryOnOntology(ontology, GET_CONCEPT_RELATIONSHIPS);
+        return runQueryOnOntology(ontology, GET_CONCEPT_RELATIONSHIPS, null);
     }
 
     @Override
     public Set<BindingSet> getSearchResults(Ontology ontology, String searchText) {
-        Repository repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
-        repo.initialize();
-        try (RepositoryConnection conn = repo.getConnection()) {
-            conn.add(ontology.asModel(modelFactory));
-            TupleQuery query = conn.prepareTupleQuery(GET_SEARCH_RESULTS);
-            query.setBinding(SEARCH_TEXT, valueFactory.createLiteral(searchText.toLowerCase()));
-            Set<BindingSet> result = new HashSet<>();
-            query.evaluate().forEach(result::add);
-            return result;
-        } catch (RepositoryException e) {
-            throw new MatontoOntologyException("Error in repository connection.", e);
-        } finally {
-            repo.shutDown();
-        }
+        return runQueryOnOntology(ontology, GET_SEARCH_RESULTS, tupleQuery -> {
+            tupleQuery.setBinding(SEARCH_TEXT, valueFactory.createLiteral(searchText.toLowerCase()));
+            return tupleQuery;
+        });
     }
 
     /**
@@ -385,19 +387,7 @@ public class SimpleOntologyManager implements OntologyManager {
     private Ontology createOntologyFromCommit(Commit commit) throws OWLOntologyCreationException {
         Model ontologyModel = catalogManager.getCompiledResource(commit.getResource()).orElseThrow(() ->
                 new MatontoOntologyException("The compiled resource could not be retrieved."));
-        try {
-            OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
-            OWLOntology ontology = manager.createOntology();
-            org.openrdf.model.Model sesameModel = new org.openrdf.model.impl.LinkedHashModel();
-            ontologyModel.forEach(statement -> sesameModel.add(sesameTransformer.sesameStatement(statement)));
-            OWLOntologyLoaderConfiguration config = new OWLOntologyLoaderConfiguration()
-                    .setMissingImportHandlingStrategy(MissingImportHandlingStrategy.SILENT);
-            RioParserImpl parser = new RioParserImpl(new RioRDFXMLDocumentFormatFactory());
-            parser.parse(new RioMemoryTripleSource(sesameModel), ontology, config);
-            return SimpleOntologyValues.matontoOntology(ontology);
-        } catch (OWLOntologyCreationException e) {
-            throw new MatontoOntologyException("Unable to create an ontology object.", e);
-        }
+        return createOntology(ontologyModel);
     }
 
     /**
@@ -407,12 +397,16 @@ public class SimpleOntologyManager implements OntologyManager {
      * @param queryString the query string that you wish to run.
      * @return the results of the query.
      */
-    private Set<BindingSet> runQueryOnOntology(Ontology ontology, String queryString) {
+    private Set<BindingSet> runQueryOnOntology(Ontology ontology, String queryString,
+                                               @Nullable Function<TupleQuery, TupleQuery> addBinding) {
         Repository repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
         repo.initialize();
         try (RepositoryConnection conn = repo.getConnection()) {
             conn.add(ontology.asModel(modelFactory));
             TupleQuery query = conn.prepareTupleQuery(queryString);
+            if (addBinding != null) {
+                query = addBinding.apply(query);
+            }
             Set<BindingSet> result = new HashSet<>();
             query.evaluate().forEach(result::add);
             return result;

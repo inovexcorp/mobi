@@ -28,6 +28,7 @@ import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.query.api.BindingSet;
 import org.matonto.rdf.api.IRI;
+import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.Resource;
 
 import java.io.File;
@@ -39,6 +40,13 @@ import java.util.Set;
 import javax.annotation.Nonnull;
 
 public interface OntologyManager {
+
+    /**
+     * Returns the SesameTransformer used by the OntologyManager.
+     *
+     * @return the SesameTransformer used by the OntologyManager.
+     */
+    SesameTransformer getTransformer();
 
     /**
      * Creates a new Ontology Object using the provided OntologyId.
@@ -86,6 +94,15 @@ public interface OntologyManager {
     Ontology createOntology(String json) throws MatontoOntologyException;
 
     /**
+     * Creates a new Ontology Object using the provided Model.
+     *
+     * @param model the Model of the ontology you want to create.
+     * @return an Ontology created with the provided Model.
+     * @throws MatontoOntologyException - if the ontology can't be created.
+     */
+    Ontology createOntology(Model model) throws MatontoOntologyException;
+
+    /**
      * Retrieves an Ontology using an ontology id and the head commit of its MASTER branch. Returns an Optional with
      * Ontology object or an empty Optional instance if the ontology id is not found or any owlapi exception or sesame
      * exception is caught.
@@ -97,9 +114,9 @@ public interface OntologyManager {
     Optional<Ontology> retrieveOntology(@Nonnull Resource ontologyId) throws MatontoOntologyException;
 
     /**
-     * Retrieves an Ontology using an ontology id and a branch id from the repository. Returns an Optional with Ontology
-     * object or an empty Optional instance if the ontology id is not found or any owlapi exception or sesame exception
-     * is caught.
+     * Retrieves an Ontology using an ontology id and the head commit of a Branch identified by the provided branch id.
+     * Returns an Optional with Ontology object or an empty Optional instance if the ontology id is not found or any
+     * owlapi exception or sesame exception is caught.
      *
      * @param ontologyId the ontology id for the Ontology you want to retrieve.
      * @param branchId the branch id for the Branch you want to retrieve.
@@ -171,7 +188,7 @@ public interface OntologyManager {
     OntologyId createOntologyId(IRI ontologyIRI, IRI versionIRI);
 
     /**
-     * Gets the subClass relationships in the provided Ontology.
+     * Gets the subClassOf relationships for classes in the provided Ontology.
      *
      * @param ontology the Ontology you wish to query.
      * @return a Set with the query results.
@@ -180,7 +197,7 @@ public interface OntologyManager {
     Set<BindingSet> getSubClassesOf(Ontology ontology) throws MatontoOntologyException;
 
     /**
-     * Gets the subDatatype relationships in the provided Ontology.
+     * Gets the subPropertyOf relationships for datatype properties in the provided Ontology.
      *
      * @param ontology the Ontology you wish to query.
      * @return a Set with the query results.
@@ -189,7 +206,7 @@ public interface OntologyManager {
     Set<BindingSet> getSubDatatypePropertiesOf(Ontology ontology) throws MatontoOntologyException;
 
     /**
-     * Gets the subObject relationships in the provided Ontology.
+     * Gets the subPropertyOf relationships for object properties in the provided Ontology.
      *
      * @param ontology the Ontology you wish to query.
      * @return a Set with the query results.
@@ -207,14 +224,14 @@ public interface OntologyManager {
     Set<BindingSet> getClassesWithIndividuals(Ontology ontology) throws MatontoOntologyException;
 
     /**
-     * Gets the entity usages for the entity identified by the provided String in the provided Ontology.
+     * Gets the entity usages for the provided Resource in the provided Ontology.
      *
      * @param ontology the Ontology you wish to query.
-     * @param entityIRIStr the String for the id of the entity you want to get the usages of.
+     * @param entity the Resource for the entity you want to get the usages of.
      * @return a Set with the query results.
      * @throws MatontoOntologyException - if the repository is null
      */
-    Set<BindingSet> getEntityUsages(Ontology ontology, String entityIRIStr) throws MatontoOntologyException;
+    Set<BindingSet> getEntityUsages(Ontology ontology, Resource entity) throws MatontoOntologyException;
 
     /**
      * Gets the concept relationships in the provided Ontology.
