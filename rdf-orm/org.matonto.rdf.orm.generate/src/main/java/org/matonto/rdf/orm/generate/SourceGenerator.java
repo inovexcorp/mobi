@@ -511,6 +511,10 @@ public class SourceGenerator {
                 return codeModel.ref(ourClass.fullName());
             } else if (rangeIri.equals(RDFS.LITERAL)) {
                 return codeModel.ref(org.matonto.rdf.api.Literal.class);
+            } else if (rangeIri.equals(RDFS.RESOURCE)) {
+                return codeModel.ref(org.matonto.rdf.api.Resource.class);
+            } else if (rangeIri.equals(XMLSchema.ANYURI)) {
+                return codeModel.ref(org.matonto.rdf.api.IRI.class);
             } else if (rangeIri.equals(XMLSchema.STRING)) {
                 return codeModel.ref(String.class);
             } else if (rangeIri.equals(XMLSchema.BOOLEAN)) {

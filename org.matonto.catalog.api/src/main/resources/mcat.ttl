@@ -87,6 +87,12 @@
     rdfs:domain :VersionedRDFRecord;
     rdfs:range :Branch.
 
+:masterBranch a owl:ObjectProperty, owl:FunctionalProperty;
+    rdfs:label "master branch"@en;
+    rdfs:comment "The master Branch of the described Versioned RDF Record."@en;
+    rdfs:domain :VersionedRDFRecord;
+    rdfs:range :Branch.
+
 # OntologyRecord
 
 :OntologyRecord a owl:Class;
@@ -112,13 +118,26 @@
 
 :Branch a owl:Class;
     rdfs:label "Branch"@en;
-    rdfs:comment "A set of Commits of a Versioned RDF Resource."@en.
+    rdfs:comment "A set of Commits of a Versioned RDF Record."@en.
 
 :head a owl:ObjectProperty, owl:FunctionalProperty;
     rdfs:label "head"@en;
     rdfs:comment "The latest Commit of the described Branch."@en;
     rdfs:domain :Branch;
     rdfs:range :Commit.
+
+# UserBranch
+
+:UserBranch a owl:Class;
+    rdfs:subClassOf :Branch;
+    rdfs:label "User Branch"@en;
+    rdfs:comment "A set of Commits of a Versioned RDF Record linked to a specific User."@en.
+
+:createdFrom a owl:ObjectProperty, owl:FunctionalProperty;
+    rdfs:label "created from"@en;
+    rdfs:comment "The Branch that the described UserBranch was created from."@en;
+    rdfs:domain :UserBranch;
+    rdfs:range :Branch.
 
 # Version
 
@@ -151,16 +170,16 @@
     rdfs:label "Distribution"@en;
     rdfs:comment "Represents a specific available form of a record. Each record might be available in different forms, these forms might represent different formats of the record or different endpoints. Examples of distributions include a downloadable CSV file, an API or an RSS feed."@en.
 
-:accessURL a owl:ObjectProperty, owl:FunctionalProperty;
+:accessURL a owl:DatatypeProperty, owl:FunctionalProperty;
     rdfs:label "access URL"@en;
     rdfs:domain :Distribution;
-    rdfs:range rdfs:Resource;
+    rdfs:range xsd:anyURI;
     rdfs:comment "Could be any kind of URL that gives access to a distribution of the record. E.g. landing page, download, feed URL, SPARQL endpoint. Use when your catalog does not have information on which it is or when it is definitely not a download."@en.
 
-:downloadURL a owl:ObjectProperty, owl:FunctionalProperty;
+:downloadURL a owl:DatatypeProperty, owl:FunctionalProperty;
     rdfs:label "download URL"@en;
     rdfs:domain :Distribution;
-    rdfs:range rdfs:Resource;
+    rdfs:range xsd:anyURI;
     rdfs:comment "This is a direct link to a downloadable file in a given format. E.g. CSV file or RDF file. The format is described by the distribution's dc:format and/or :mediaType."@en.
 
 # Commit
@@ -190,17 +209,17 @@
     rdfs:label "Revision"@en;
     rdfs:comment "The entity created by a Commit."@en.
 
-:additions a owl:ObjectProperty, owl:FunctionalProperty;
+:additions a owl:DatatypeProperty, owl:FunctionalProperty;
     rdfs:label "additions"@en;
     rdfs:comment "Links the IRI of a graph containing the statements that were added with the described Revision."@en;
     rdfs:domain :Revision;
-    rdfs:range rdfs:Resource.
+    rdfs:range xsd:anyURI.
 
-:deletions a owl:ObjectProperty, owl:FunctionalProperty;
+:deletions a owl:DatatypeProperty, owl:FunctionalProperty;
     rdfs:label "deletions"@en;
     rdfs:comment "Links the IRI of a graph containing the statements that were deleted with the described Revision."@en;
     rdfs:domain :Revision;
-    rdfs:range rdfs:Resource.
+    rdfs:range xsd:anyURI.
 
 # Misc.
 

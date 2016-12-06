@@ -29,7 +29,7 @@
 
     <groupId>org.matonto</groupId>
     <artifactId>root</artifactId>
-    <version>1.4.7</version>
+    <version>1.4.8</version>
 
     <packaging>pom</packaging>
 
@@ -83,6 +83,9 @@
         <module>rdf-orm</module>
         <module>org.matonto.jaas.api</module>
         <module>org.matonto.jaas.proxy</module>
+        <module>org.matonto.platform.config.api</module>
+        <module>org.matonto.platform.config.rest</module>
+        <module>org.matonto.platform.config.impl</module>
     </modules>
 
     <properties>
