@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   #%L
-  org.matonto.jaas.rest
+  org.matonto.platform.config.api
   $Id:$
   $HeadURL:$
   %%
@@ -33,82 +33,34 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>jaas.rest</artifactId>
-    <name>${project.groupId}.${project.artifactId}</name>
+    <artifactId>platform.config.api</artifactId>
     <packaging>bundle</packaging>
+    <name>${project.groupId}.${project.artifactId}</name>
 
     <dependencies>
         <dependency>
             <groupId>org.matonto</groupId>
-            <artifactId>jaas.api</artifactId>
-            <version>1.4.1</version>
+            <artifactId>rdf.orm</artifactId>
+            <version>1.4.7</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
-            <artifactId>jaas</artifactId>
-            <version>1.4.8-SNAPSHOT</version>
+            <artifactId>rdf.orm.ontologies</artifactId>
+            <version>1.4.7</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
-            <artifactId>rest.util</artifactId>
+            <artifactId>api</artifactId>
             <version>1.3.11</version>
-        </dependency>
-        <dependency>
-            <groupId>org.matonto</groupId>
-            <artifactId>web.security</artifactId>
-            <version>1.4.1</version>
-        </dependency>
-        <dependency>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
         </dependency>
         <dependency>
             <groupId>biz.aQute.bnd</groupId>
             <artifactId>biz.aQute.bndlib</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.apache.servicemix.bundles</groupId>
-            <artifactId>org.apache.servicemix.bundles.json-lib</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>javax.ws.rs</groupId>
-            <artifactId>javax.ws.rs-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.glassfish.jersey.media</groupId>
-            <artifactId>jersey-media-multipart</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.swagger</groupId>
-            <artifactId>swagger-annotations</artifactId>
-        </dependency>
-
-        <!-- Test dependencies -->
-        <dependency>
-            <groupId>org.glassfish.jersey.test-framework.providers</groupId>
-            <artifactId>jersey-test-framework-provider-jdk-http</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.testng</groupId>
-            <artifactId>testng</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-        </dependency>
     </dependencies>
 
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                    <systemPropertyVariables>
-                        <java.io.tmpdir>${project.build.directory}</java.io.tmpdir>
-                    </systemPropertyVariables>
-                </configuration>
-            </plugin>
             <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
@@ -116,17 +68,47 @@
                 <configuration>
                     <instructions>
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
-                        <Bundle-Name>MatOnto JAAS REST Services</Bundle-Name>
+                        <Bundle-Name>MatOnto Platform Config API</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
-                            org.matonto.jaas.rest; provide:=true,
-                            org.matonto.jaas.rest.providers
+                            org.matonto.platform.config.api.*
                         </Export-Package>
                         <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>
                         <_snapshot>${maven.build.timestamp}</_snapshot>
                     </instructions>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.matonto.orm</groupId>
+                <artifactId>rdf-orm-maven-plugin</artifactId>
+                <version>1.4.7</version>
+                <executions>
+                    <execution>
+                        <id>generateOrmSources</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>generate-orm</goal>
+                        </goals>
+                        <inherited>false</inherited>
+                        <configuration>
+                            <generates>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/src/main/resources/matonto_platformconfig.ttl</ontologyFile>
+                                    <outputPackage>org.matonto.platform.config.api.ontologies.platformconfig</outputPackage>
+                                    <ontologyName>PlatformConfig</ontologyName>
+                                </ontology>
+                            </generates>
+                            <references>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/src/main/resources/matonto_user_management.ttl</ontologyFile>
+                                    <outputPackage>org.matonto.jaas.api.ontologies.usermanagement</outputPackage>
+                                </ontology>
+                            </references>
+                            <outputLocation>${project.basedir}/src/main/java</outputLocation>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

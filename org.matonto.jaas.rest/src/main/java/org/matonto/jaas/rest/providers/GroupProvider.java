@@ -30,6 +30,7 @@ import org.apache.commons.io.IOUtils;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.engines.GroupConfig;
 import org.matonto.jaas.api.ontologies.usermanagement.Group;
+import org.matonto.jaas.engines.RdfEngine;
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rest.util.ErrorUtils;
@@ -62,7 +63,6 @@ import javax.ws.rs.ext.Provider;
 public class GroupProvider implements MessageBodyWriter<Group>, MessageBodyReader<Group> {
     protected ValueFactory factory;
     protected EngineManager engineManager;
-    private static final String RDF_ENGINE = "org.matonto.jaas.engines.RdfEngine";
 
     @Reference
     public void setFactory(ValueFactory factory) {
@@ -114,7 +114,7 @@ public class GroupProvider implements MessageBodyWriter<Group>, MessageBodyReade
                 .description(input.containsKey("description") ? input.getString("description") : "")
                 .build();
 
-        return engineManager.createGroup(RDF_ENGINE, config);
+        return engineManager.createGroup(RdfEngine.COMPONENT_NAME, config);
     }
 
     private boolean isGroup(Class<?> someClass, Type type) {
