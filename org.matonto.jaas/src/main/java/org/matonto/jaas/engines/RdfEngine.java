@@ -488,7 +488,7 @@ public class RdfEngine implements Engine {
                     encryptPassword = encryptionPrefix + encryptPassword;
                 }
                 if (encryptionSuffix != null) {
-                    encryptPassword = encryptPassword + encryptionSuffix;
+                    encryptPassword += encryptionSuffix;
                 }
                 return encryptPassword;
             }
