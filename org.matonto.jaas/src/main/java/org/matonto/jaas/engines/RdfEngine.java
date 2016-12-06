@@ -76,7 +76,7 @@ import java.util.stream.Stream;
         configurationPolicy = ConfigurationPolicy.require
 )
 public class RdfEngine implements Engine {
-    static final String COMPONENT_NAME = "org.matonto.jaas.engines.RdfEngine";
+    public static final String COMPONENT_NAME = "org.matonto.jaas.engines.RdfEngine";
     private static final Logger logger = Logger.getLogger(RdfEngine.class);
 
     private Resource context;
