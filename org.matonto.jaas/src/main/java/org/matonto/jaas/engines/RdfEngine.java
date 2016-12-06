@@ -119,7 +119,7 @@ public class RdfEngine implements Engine {
                         .collect(Collectors.toSet());
                 User admin = userFactory.createNew(adminIRI);
                 admin.setUsername(factory.createLiteral("admin"));
-                admin.setPassword(factory.createLiteral("admin"));
+                admin.setPassword(factory.createLiteral(getEncryptedPassword("admin")));
                 admin.setHasUserRole(allRoles);
                 conn.add(admin.getModel(), context);
             }
@@ -208,18 +208,7 @@ public class RdfEngine implements Engine {
     public User createUser(UserConfig userConfig) {
         User user = userFactory.createNew(createUserIri(userConfig.getUsername()));
         user.setUsername(factory.createLiteral(userConfig.getUsername()));
-        String password = userConfig.getPassword();
-        Encryption encryption = encryptionSupport.getEncryption();
-        if (encryption != null) {
-            password = encryptionSupport.getEncryption().encryptPassword(password);
-            if (encryptionSupport.getEncryptionPrefix() != null) {
-                password = encryptionSupport.getEncryptionPrefix() + password;
-            }
-            if (encryptionSupport.getEncryptionSuffix() != null) {
-                password = password + encryptionSupport.getEncryptionSuffix();
-            }
-        }
-        user.setPassword(factory.createLiteral(password));
+        user.setPassword(factory.createLiteral(getEncryptedPassword(userConfig.getPassword())));
         Set<Role> newRoles = userConfig.getRoles().stream()
                 .map(this::getRole)
                 .filter(Optional::isPresent)
@@ -477,6 +466,31 @@ public class RdfEngine implements Engine {
                 return encryption.checkPassword(password, savedPassword);
             } else {
                 return password.equals(savedPassword);
+            }
+        }
+    }
+
+    private String getEncryptedPassword(String password) {
+        Encryption encryption = encryptionSupport.getEncryption();
+        String encryptionPrefix = encryptionSupport.getEncryptionPrefix();
+        String encryptionSuffix = encryptionSupport.getEncryptionSuffix();
+
+        if (encryption == null) {
+            return password;
+        } else {
+            boolean prefix = encryptionPrefix == null || password.startsWith(encryptionPrefix);
+            boolean suffix = encryptionSuffix == null || password.endsWith(encryptionSuffix);
+            if (prefix && suffix) {
+                return password;
+            } else {
+                String encryptPassword = encryption.encryptPassword(password);
+                if (encryptionPrefix != null) {
+                    encryptPassword = encryptionPrefix + encryptPassword;
+                }
+                if (encryptionSuffix != null) {
+                    encryptPassword = encryptPassword + encryptionSuffix;
+                }
+                return encryptPassword;
             }
         }
     }
