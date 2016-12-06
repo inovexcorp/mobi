@@ -32,6 +32,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
+import org.matonto.jaas.engines.RdfEngine;
 import org.matonto.persistence.utils.Bindings;
 import org.matonto.platform.config.api.application.ApplicationManager;
 import org.matonto.platform.config.api.ontologies.platformconfig.Application;
@@ -47,6 +48,7 @@ import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
+import org.matonto.rdf.orm.OrmFactory;
 import org.matonto.rdf.orm.impl.ThingFactory;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
@@ -79,7 +81,6 @@ public class SimpleStateManager implements StateManager {
     private EngineManager engineManager;
     private ApplicationManager applicationManager;
 
-    private static final String RDF_ENGINE = "org.matonto.jaas.engines.RdfEngine";
     private static final String NAMESPACE = "http://matonto.org/states#";
 
     private static final String GET_STATES_QUERY;
@@ -142,7 +143,7 @@ public class SimpleStateManager implements StateManager {
 
     @Override
     public boolean stateExists(Resource stateId, String username) throws MatOntoException {
-        User user = engineManager.retrieveUser(RDF_ENGINE, username).orElseThrow(() ->
+        User user = engineManager.retrieveUser(RdfEngine.COMPONENT_NAME, username).orElseThrow(() ->
                 new MatOntoException("User not found"));
         try (RepositoryConnection conn = repository.getConnection()) {
             boolean stateExists = conn.getStatements(stateId, factory.createIRI(RDF.TYPE.stringValue()),
@@ -159,7 +160,7 @@ public class SimpleStateManager implements StateManager {
     @Override
     public Map<Resource, Model> getStates(String username, String applicationId, Set<Resource> subjects)
             throws MatOntoException {
-        User user = engineManager.retrieveUser(RDF_ENGINE, username).orElseThrow(() ->
+        User user = engineManager.retrieveUser(RdfEngine.COMPONENT_NAME, username).orElseThrow(() ->
                 new MatOntoException("User not found"));
         Optional<Application> app = applicationManager.getApplication(applicationId);
         Map<Resource, Model> states = new HashMap<>();
@@ -192,41 +193,29 @@ public class SimpleStateManager implements StateManager {
 
     @Override
     public Resource storeState(Model newState, String username) throws MatOntoException {
-        User user = engineManager.retrieveUser(RDF_ENGINE, username).orElseThrow(() ->
-                new MatOntoException("User with that name does not exist"));
-        State stateObj = stateFactory.createNew(factory.createIRI(NAMESPACE + UUID.randomUUID()));
-        stateObj.setStateResource(newState.subjects().stream().map(thingFactory::createNew)
-                .collect(Collectors.toSet()));
-        stateObj.setForUser(user);
-        stateObj.getModel().addAll(newState);
+        State state = createState(newState, username, stateFactory);
 
         try (RepositoryConnection conn = repository.getConnection()) {
-            conn.add(stateObj.getModel());
+            conn.add(state.getModel());
         } catch (RepositoryException e) {
             throw new MatOntoException("Error in repository connection", e);
         }
-        return stateObj.getResource();
+        return state.getResource();
     }
 
     @Override
     public Resource storeState(Model newState, String username, String applicationId) throws MatOntoException {
-        User user = engineManager.retrieveUser(RDF_ENGINE, username).orElseThrow(() ->
-                new MatOntoException("User not found"));
+        ApplicationState state = createState(newState, username, applicationStateFactory);
         Application app = applicationManager.getApplication(applicationId).orElseThrow(() ->
                 new MatOntoException("Application not found"));
-        ApplicationState stateObj = applicationStateFactory.createNew(factory.createIRI(NAMESPACE + UUID.randomUUID()));
-        stateObj.setStateResource(newState.subjects().stream().map(thingFactory::createNew)
-                .collect(Collectors.toSet()));
-        stateObj.setForUser(user);
-        stateObj.setApplication(app);
-        stateObj.getModel().addAll(newState);
+        state.setApplication(app);
 
         try (RepositoryConnection conn = repository.getConnection()) {
-            conn.add(stateObj.getModel());
+            conn.add(state.getModel());
         } catch (RepositoryException e) {
             throw new MatOntoException("Error in repository connection", e);
         }
-        return stateObj.getResource();
+        return state.getResource();
     }
 
     @Override
@@ -270,7 +259,6 @@ public class SimpleStateManager implements StateManager {
         if (!stateExists(stateId, username)) {
             throw new MatOntoException("State not found");
         }
-
         try (RepositoryConnection conn = repository.getConnection()) {
             Model stateModel = modelFactory.createModel();
             conn.getStatements(stateId, null, null).forEach(stateModel::add);
@@ -287,5 +275,16 @@ public class SimpleStateManager implements StateManager {
                 .filter(thing -> !conn.getStatements(null, factory.createIRI(State.stateResource_IRI),
                         thing.getResource()).hasNext())
                 .forEach(thing -> conn.remove(thing.getResource(), null, null));
+    }
+
+    private <T extends State> T createState(Model newState, String username, OrmFactory<T> ormFactory) {
+        User user = engineManager.retrieveUser(RdfEngine.COMPONENT_NAME, username).orElseThrow(() ->
+                new MatOntoException("User not found"));
+        T stateObj = ormFactory.createNew(factory.createIRI(NAMESPACE + UUID.randomUUID()));
+        stateObj.setStateResource(newState.subjects().stream().map(thingFactory::createNew)
+                .collect(Collectors.toSet()));
+        stateObj.setForUser(user);
+        stateObj.getModel().addAll(newState);
+        return stateObj;
     }
 }

@@ -141,7 +141,7 @@ public class StateRestImplTest extends MatontoRestTestNg {
         try {
             String str = response.readEntity(String.class);
             JSONArray arr = JSONArray.fromObject(str);
-            assertTrue(arr.size() == results.size());
+            assertEquals(results.size(), arr.size());
             for (int i = 0; i < arr.size(); i++) {
                 JSONObject object = arr.optJSONObject(i);
                 assertNotNull(object);
@@ -170,7 +170,7 @@ public class StateRestImplTest extends MatontoRestTestNg {
         try {
             String str = response.readEntity(String.class);
             JSONArray arr = JSONArray.fromObject(str);
-            assertTrue(arr.size() == results.size());
+            assertEquals(results.size(), arr.size());
             for (int i = 0; i < arr.size(); i++) {
                 JSONObject object = arr.optJSONObject(i);
                 assertNotNull(object);

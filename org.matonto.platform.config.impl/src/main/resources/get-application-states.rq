@@ -4,7 +4,7 @@ SELECT
     ?id
     (GROUP_CONCAT(DISTINCT ?resource ; separator = ",") AS ?resources)
 WHERE {
-    ?id a plat:State ;
+    ?id a plat:ApplicationState ;
         plat:forUser ?userId ;
         plat:stateResource ?resource .
 
