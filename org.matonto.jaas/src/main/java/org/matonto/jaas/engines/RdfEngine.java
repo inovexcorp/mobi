@@ -59,6 +59,7 @@ import org.matonto.repository.base.RepositoryResult;
 import org.matonto.repository.exception.RepositoryException;
 import org.openrdf.model.vocabulary.DCTERMS;
 import org.openrdf.model.vocabulary.RDF;
+import org.osgi.framework.BundleContext;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -94,10 +95,10 @@ public class RdfEngine implements Engine {
     private ThingFactory thingFactory;
 
     @Activate
-    public void start(Map<String, Object> props) {
+    public void start(BundleContext bundleContext, Map<String, Object> props) {
         logger.info("Activating " + COMPONENT_NAME);
         RdfEngineConfig config = Configurable.createConfigurable(RdfEngineConfig.class, props);
-        setEncryption(config);
+        setEncryption(config, bundleContext);
         roles = Stream.of(config.roles()).collect(Collectors.toSet());
         initEngineResources();
 
@@ -129,10 +130,10 @@ public class RdfEngine implements Engine {
     }
 
     @Modified
-    public void modified(Map<String, Object> props) {
+    public void modified(BundleContext bundleContext, Map<String, Object> props) {
         logger.info("Modifying the " + COMPONENT_NAME);
         RdfEngineConfig config = Configurable.createConfigurable(RdfEngineConfig.class, props);
-        setEncryption(config);
+        setEncryption(config, bundleContext);
         initEngineResources();
     }
 
@@ -487,8 +488,9 @@ public class RdfEngine implements Engine {
         roleNamespace = "http://matonto.org/roles/";
     }
 
-    private void setEncryption(RdfEngineConfig config) {
+    private void setEncryption(RdfEngineConfig config, BundleContext context) {
         Map<String, Object> options = new HashMap<>();
+        options.put(BundleContext.class.getName(), context);
         options.put("encryption.name", config.encryptionName());
         options.put("encryption.enabled", config.encryptionEnabled());
         options.put("encryption.prefix", config.encryptionPrefix());

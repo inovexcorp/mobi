@@ -73,14 +73,14 @@ public class MatontoConfigurationImpl extends MatontoConfiguration {
             Map<String, Object> tokenOptions = new HashMap<>();
             tokenOptions.put(LoginModuleConfig.ENGINE_MANAGER, engineManager);
             tokenOptions.put(LoginModuleConfig.ENGINE, RDF_ENGINE);
-            tokenOptions.put(ProxyLoginModule.BUNDLE_CONTEXT, context);
+            tokenOptions.put(BundleContext.class.getName(), context);
             tokenOptions.put(ProxyLoginModule.BUNDLE_ID, Long.toString(context.getBundle().getBundleId()));
             tokenOptions.put(ProxyLoginModule.MODULE, TokenLoginModule.class.getName());
 
             Map<String, Object> passwordOptions = new HashMap<>();
             passwordOptions.put(LoginModuleConfig.ENGINE_MANAGER, engineManager);
             passwordOptions.put(LoginModuleConfig.ENGINE, RDF_ENGINE);
-            passwordOptions.put(ProxyLoginModule.BUNDLE_CONTEXT, context);
+            passwordOptions.put(BundleContext.class.getName(), context);
             passwordOptions.put(ProxyLoginModule.BUNDLE_ID, Long.toString(context.getBundle().getBundleId()));
             passwordOptions.put(ProxyLoginModule.MODULE, PasswordLoginModule.class.getName());
 
