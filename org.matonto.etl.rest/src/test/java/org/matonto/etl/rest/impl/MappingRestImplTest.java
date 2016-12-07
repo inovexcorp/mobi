@@ -61,6 +61,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
+import static org.matonto.rest.util.RestUtils.encode;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.when;
@@ -239,15 +240,5 @@ public class MappingRestImplTest extends MatontoRestTestNg {
         } catch (Exception e) {
             Assert.fail("Expected no exception, but got: " + e.getMessage());
         }
-    }
-
-    private String encode(String str) {
-        String encoded = null;
-        try {
-            encoded = URLEncoder.encode(str, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
-        return encoded;
     }
 }
