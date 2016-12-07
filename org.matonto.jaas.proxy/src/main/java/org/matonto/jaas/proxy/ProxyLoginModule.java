@@ -26,25 +26,26 @@ package org.matonto.jaas.proxy;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 
+import java.util.Map;
 import javax.security.auth.Subject;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.login.LoginException;
 import javax.security.auth.spi.LoginModule;
-import java.util.Map;
 
 public class ProxyLoginModule implements LoginModule {
 
     public static final String MODULE = "module";
-    public static final String BUNDLE_CONTEXT = "bundle.context";
     public static final String BUNDLE_ID = "bundle.id";
 
     private LoginModule target = null;
 
     @Override
-    public void initialize(Subject subject, CallbackHandler callbackHandler, Map<String, ?> sharedState, Map<String, ?> options) {
-        BundleContext context = (BundleContext) options.get(BUNDLE_CONTEXT);
+    public void initialize(Subject subject, CallbackHandler callbackHandler, Map<String, ?> sharedState,
+                           Map<String, ?> options) {
+        BundleContext context = (BundleContext) options.get(BundleContext.class.getName());
         if (context == null) {
-            throw new IllegalStateException("Option " + BUNDLE_CONTEXT + " must be set to the BundleContext of the module");
+            throw new IllegalStateException("Option " + BundleContext.class.getName()
+                    + " must be set to the BundleContext of the module");
         }
         String module = (String) options.get(MODULE);
         if (module == null) {
@@ -52,7 +53,8 @@ public class ProxyLoginModule implements LoginModule {
         }
         String bundleId = (String) options.get(BUNDLE_ID);
         if (bundleId == null) {
-            throw new IllegalStateException("Option " + BUNDLE_ID + " must be set to the name of the bundle with the module");
+            throw new IllegalStateException("Option " + BUNDLE_ID
+                    + " must be set to the name of the bundle with the module");
         }
         Bundle bundle = context.getBundle(Long.parseLong(bundleId));
         if (bundle == null) {
@@ -61,7 +63,8 @@ public class ProxyLoginModule implements LoginModule {
         try {
             target = (LoginModule) bundle.loadClass(module).newInstance();
         } catch (Exception e) {
-            throw new IllegalStateException("Can not load or create login module " + module + " for bundle " + bundleId, e);
+            throw new IllegalStateException("Can not load or create login module " + module
+                    + " for bundle " + bundleId, e);
         }
         target.initialize(subject, callbackHandler, sharedState, options);
     }
