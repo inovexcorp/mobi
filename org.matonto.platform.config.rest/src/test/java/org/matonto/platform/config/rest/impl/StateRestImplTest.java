@@ -40,6 +40,7 @@ import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory;
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
 import org.matonto.rdf.core.utils.Values;
 import org.matonto.rest.util.MatontoRestTestNg;
+import org.matonto.rest.util.UsernameTestFilter;
 import org.matonto.web.security.util.AuthenticationProps;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -54,8 +55,6 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Response;
 import java.io.ByteArrayOutputStream;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -65,6 +64,7 @@ import java.util.stream.IntStream;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.matonto.rest.util.RestUtils.encode;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anySet;
 import static org.mockito.Matchers.anyString;
@@ -306,15 +306,5 @@ public class StateRestImplTest extends MatontoRestTestNg {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         Rio.write(transformer.sesameModel(model), out, RDFFormat.JSONLD);
         return out.toString();
-    }
-
-    private String encode(String str) {
-        String encoded = null;
-        try {
-            encoded = URLEncoder.encode(str, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
-        return encoded;
     }
 }
