@@ -26,11 +26,22 @@ package org.matonto.ontology.rest;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.glassfish.jersey.media.multipart.FormDataParam;
-import org.matonto.catalog.api.ontologies.mcat.OntologyRecord;
 
 import java.io.InputStream;
+import java.util.List;
+import javax.annotation.Nonnull;
 import javax.annotation.security.RolesAllowed;
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -39,20 +50,27 @@ import javax.ws.rs.core.Response;
 public interface OntologyRest {
 
     /**
-     * Ingests/uploads an ontology file to a data store and creates an OntologyRecord in the repository to track the
-     * work done on it. A master Branch is created and stored with an initial Commit containing the data provided in the
-     * ontology file.
+     * Ingests/uploads an ontology file to a data store and creates and stores an OntologyRecord using the form data in
+     * the repository to track the work done on it. A master Branch is created and stored with an initial Commit
+     * containing the data provided in the ontology file.
      *
+     * @param context the context of the request
      * @param fileInputStream the ontology file to upload
-     * @param record the OntologyRecord containing metadata describing the uploaded ontology
-     * @return true if persisted, false otherwise
+     * @param title the title for the OntologyRecord
+     * @param description the description for the OntologyRecord
+     * @param keywords the comma separated list of keywords associated with the OntologyRecord
+     * @return OK if persisted, BAD REQUEST if publishers can't be found, and INTERNAL SERVER ERROR if problems with
+     *         CatalogManager methods
      */
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    Response uploadFile(@FormDataParam("file") InputStream fileInputStream,
-                        @FormDataParam("record") OntologyRecord record);
+    Response uploadFile(@Context ContainerRequestContext context,
+                        @FormDataParam("file") @Nonnull InputStream fileInputStream,
+                        @FormDataParam("title") @Nonnull String title,
+                        @FormDataParam("description") String description,
+                        @FormDataParam("keywords") String keywords);
 
     /**
      * Updates the InProgressCommit associated with the User making the request for the OntologyRecord identified by the
@@ -69,7 +87,8 @@ public interface OntologyRest {
     @Path("{ontologyId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    Response saveChangesToOntology(@PathParam("ontologyId") String ontologyIdStr,
+    Response saveChangesToOntology(@Context ContainerRequestContext context,
+                                   @PathParam("ontologyId") String ontologyIdStr,
                                    @QueryParam("resourceId") String resourceIdStr,
                                    @QueryParam("resourceJson") String resourceJson);
 
