@@ -26,49 +26,62 @@ package org.matonto.catalog.rest.impl;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.ByteArrayOutputStream;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.PaginatedSearchParams;
 import org.matonto.catalog.api.PaginatedSearchResults;
 import org.matonto.catalog.api.builder.DistributionConfig;
 import org.matonto.catalog.api.builder.RecordConfig;
-import org.matonto.catalog.api.ontologies.mcat.*;
+import org.matonto.catalog.api.ontologies.mcat.Branch;
+import org.matonto.catalog.api.ontologies.mcat.Catalog;
+import org.matonto.catalog.api.ontologies.mcat.Distribution;
+import org.matonto.catalog.api.ontologies.mcat.DistributionFactory;
+import org.matonto.catalog.api.ontologies.mcat.InProgressCommit;
+import org.matonto.catalog.api.ontologies.mcat.Record;
+import org.matonto.catalog.api.ontologies.mcat.UnversionedRecord;
+import org.matonto.catalog.api.ontologies.mcat.UnversionedRecordFactory;
+import org.matonto.catalog.api.ontologies.mcat.Version;
+import org.matonto.catalog.api.ontologies.mcat.VersionFactory;
+import org.matonto.catalog.api.ontologies.mcat.VersionedRecord;
+import org.matonto.catalog.api.ontologies.mcat.VersionedRecordFactory;
 import org.matonto.catalog.rest.CatalogRest;
 import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.config.MatontoConfiguration;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
-import org.matonto.jaas.api.principals.UserPrincipal;
-import org.matonto.jaas.api.utils.TokenUtils;
+import org.matonto.jaas.engines.RdfEngine;
 import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
-import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.orm.OrmFactory;
 import org.matonto.rdf.orm.Thing;
 import org.matonto.rest.util.ErrorUtils;
 import org.matonto.rest.util.LinksUtils;
 import org.matonto.rest.util.jaxb.Links;
-import org.matonto.web.security.util.RestSecurityUtils;
+import org.matonto.web.security.util.AuthenticationProps;
 import org.openrdf.model.vocabulary.DCTERMS;
-import org.openrdf.model.vocabulary.RDF;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.Rio;
 
-import java.io.IOException;
-import java.util.*;
-import java.util.stream.Collectors;
-import javax.security.auth.Subject;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Component(immediate = true)
 public class CatalogRestImpl implements CatalogRest {
@@ -79,6 +92,7 @@ public class CatalogRestImpl implements CatalogRest {
     private ValueFactory factory;
     private ModelFactory modelFactory;
     protected Map<String, OrmFactory<? extends Record>> recordFactories = new HashMap<>();
+    protected Map<String, OrmFactory<? extends Version>> versionFactories = new HashMap<>();
     protected DistributionFactory distributionFactory;
 
     private static final String RDF_ENGINE = "org.matonto.jaas.engines.RdfEngine";
@@ -105,12 +119,21 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Reference(type = '*', dynamic = true)
-    protected  <T extends Record> void addRecordFactory(OrmFactory<T> factory) {
+    protected <T extends Record> void addRecordFactory(OrmFactory<T> factory) {
         recordFactories.put(factory.getTypeIRI().stringValue(), factory);
     }
 
-    protected  <T extends Record> void removeRecordFactory(OrmFactory<T> factory) {
+    protected <T extends Record> void removeRecordFactory(OrmFactory<T> factory) {
         recordFactories.remove(factory.getTypeIRI().stringValue());
+    }
+
+    @Reference
+    protected <T extends Version> void addVersionFactory(OrmFactory<T> factory) {
+        versionFactories.put(factory.getTypeIRI().stringValue(), factory);
+    }
+
+    protected <T extends Version> void removeVersionFactory(OrmFactory<T> factory) {
+        versionFactories.remove(factory.getTypeIRI().stringValue());
     }
 
     @Reference
@@ -201,55 +224,30 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
-    public Response createRecord(ContainerRequestContext context, String catalogId, String newRecordJson) {
-        Model newRecordModel;
-        try {
-            newRecordModel = transformer.matontoModel(Rio.parse(IOUtils.toInputStream(newRecordJson), "", RDFFormat.JSONLD));
-        } catch (IOException e) {
-            throw ErrorUtils.sendError("Invalid JSON-LD", Response.Status.BAD_REQUEST);
-        }
-
-        Model titleModel = modelFactory.createModel(newRecordModel)
-                .filter(null, factory.createIRI(DCTERMS.TITLE.stringValue()), null);
-        if (titleModel.isEmpty()) {
-            throw ErrorUtils.sendError("Record title is required", Response.Status.BAD_REQUEST);
-        }
-        String title = titleModel.objects().iterator().next().stringValue();
-
-        Model identifierModel = modelFactory.createModel(newRecordModel)
-                .filter(null, factory.createIRI(DCTERMS.IDENTIFIER.stringValue()), null);
-        if (identifierModel.isEmpty()) {
-            throw ErrorUtils.sendError("Record identifier is required", Response.Status.BAD_REQUEST);
-        }
-        String identifier = identifierModel.objects().iterator().next().stringValue();
-
-        Model typeModel = modelFactory.createModel(newRecordModel)
-                .filter(null, factory.createIRI(RDF.TYPE.stringValue()), null);
-        if (typeModel.isEmpty()) {
-            throw ErrorUtils.sendError("Record type is required", Response.Status.BAD_REQUEST);
-        }
-        String type = typeModel.objects().iterator().next().stringValue();
-        if (!recordFactories.keySet().contains(type)) {
+    public Response createRecord(ContainerRequestContext context, String catalogId, String typeIRI, String title,
+                                 String identifierIRI, String description, String keywords) {
+        if (typeIRI == null || !recordFactories.keySet().contains(typeIRI)) {
             throw ErrorUtils.sendError("Invalid Record type", Response.Status.BAD_REQUEST);
         }
-        Set<User> publishers = new HashSet<>();
-        getActiveUser(context).ifPresent(publishers::add);
-        RecordConfig.Builder builder = new RecordConfig.Builder(title, identifier, publishers);
-
-        Model descriptionModel = modelFactory.createModel(newRecordModel)
-                .filter(null, factory.createIRI(DCTERMS.DESCRIPTION.stringValue()), null);
-        if (!descriptionModel.isEmpty()) {
-            builder.description(descriptionModel.objects().iterator().next().stringValue());
+        if (title == null) {
+            throw ErrorUtils.sendError("Record title is required", Response.Status.BAD_REQUEST);
+        }
+        if (identifierIRI == null) {
+            throw ErrorUtils.sendError("Record identifier is required", Response.Status.BAD_REQUEST);
         }
 
-        Model keywordModel = modelFactory.createModel(newRecordModel)
-                .filter(null, factory.createIRI(Record.keyword_IRI), null);
-        if (!keywordModel.isEmpty()) {
-            builder.keywords(keywordModel.objects().stream().map(Value::stringValue).collect(Collectors.toSet()));
+        User activeUser = engineManager.retrieveUser(RdfEngine.COMPONENT_NAME,
+                context.getProperty(AuthenticationProps.USERNAME).toString()).orElseThrow(() ->
+                ErrorUtils.sendError("User not found", Response.Status.FORBIDDEN));
+        RecordConfig.Builder builder = new RecordConfig.Builder(title, identifierIRI,
+                Collections.singleton(activeUser));
+        Optional.ofNullable(description).ifPresent(builder::description);
+        if (keywords != null && !keywords.isEmpty()) {
+            builder.keywords(Arrays.stream(StringUtils.split(keywords, ",")).collect(Collectors.toSet()));
         }
-        Record newRecord = catalogManager.createRecord(builder.build(), recordFactories.get(type));
+
+        Record newRecord = catalogManager.createRecord(builder.build(), recordFactories.get(typeIRI));
         catalogManager.addRecord(factory.createIRI(catalogId), newRecord);
-
         return Response.ok(newRecord.getResource().stringValue()).build();
     }
 
@@ -295,9 +293,9 @@ public class CatalogRestImpl implements CatalogRest {
             throw ErrorUtils.sendError("Invalid sort property IRI", Response.Status.BAD_REQUEST);
         }
         IRI sortBy = factory.createIRI(sort);
-        UnversionedRecordFactory ormFactory = (UnversionedRecordFactory) recordFactories.get(UnversionedRecord.TYPE);
+        UnversionedRecordFactory recordFactory = (UnversionedRecordFactory) recordFactories.get(UnversionedRecord.TYPE);
         UnversionedRecord record = catalogManager.getRecord(factory.createIRI(catalogId), factory.createIRI(recordId),
-                ormFactory).orElseThrow(() -> ErrorUtils.sendError("Record not found", Response.Status.BAD_REQUEST));
+                recordFactory).orElseThrow(() -> ErrorUtils.sendError("Record not found", Response.Status.BAD_REQUEST));
         Set<Resource> distributionIRIs = record.getUnversionedDistribution().stream()
                 .map(Thing::getResource)
                 .collect(Collectors.toSet());
@@ -311,82 +309,24 @@ public class CatalogRestImpl implements CatalogRest {
                 .skip(offset)
                 .limit(limit)
                 .collect(Collectors.toSet());
-
-        Links links = LinksUtils.buildLinks(uriInfo, distributions.size(), distributionIRIs.size(), limit, offset);
-
-        JSONArray results = JSONArray.fromObject(distributions.stream()
-                .map(this::thingToJsonld)
-                .collect(Collectors.toSet()));
-
-        Response.ResponseBuilder response = Response.ok(results.toString())
-                .header("X-Total-Count", distributionIRIs.size());
-        if (links.getNext() != null) {
-            response = response.link(links.getBase() + links.getNext(), "next");
-        }
-        if (links.getPrev() != null) {
-            response = response.link(links.getBase() + links.getPrev(), "prev");
-        }
-        return response.build();
+        return createPaginatedResponse(uriInfo, distributions, distributionIRIs, limit, offset);
     }
 
     @Override
-    public Response createUnversionedDistribution(String catalogId, String recordId, String newDistributionJson) {
+    public Response createUnversionedDistribution(String catalogId, String recordId, String title, String description,
+                                                  String format, String accessURL, String downloadURL) {
         if (!catalogManager.getRecordIds(factory.createIRI(catalogId)).contains(factory.createIRI(recordId))) {
-            throw ErrorUtils.sendError("Record " + recordId + " does not exist in Catalog " + catalogId,
-                    Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError("Record not found in Catalog " + catalogId, Response.Status.BAD_REQUEST);
         }
-        Model newDistributionModel;
-        try {
-            newDistributionModel = transformer.matontoModel(Rio.parse(IOUtils.toInputStream(newDistributionJson), "",
-                    RDFFormat.JSONLD));
-        } catch (IOException e) {
-            throw ErrorUtils.sendError("Invalid JSON-LD", Response.Status.BAD_REQUEST);
-        }
-        Model titleModel = modelFactory.createModel(newDistributionModel)
-                .filter(null, factory.createIRI(DCTERMS.TITLE.stringValue()), null);
-        if (titleModel.isEmpty()) {
-            throw ErrorUtils.sendError("Record title is required", Response.Status.BAD_REQUEST);
-        }
-        String title = titleModel.objects().iterator().next().stringValue();
-        DistributionConfig.Builder builder = new DistributionConfig.Builder(title);
-        Model descriptionModel = modelFactory.createModel(newDistributionModel)
-                .filter(null, factory.createIRI(DCTERMS.DESCRIPTION.stringValue()), null);
-        if (!descriptionModel.isEmpty()) {
-            builder.description(descriptionModel.objects().iterator().next().stringValue());
-        }
-        Model formatModel = modelFactory.createModel(newDistributionModel)
-                .filter(null, factory.createIRI(DCTERMS.FORMAT.stringValue()), null);
-        if (!formatModel.isEmpty()) {
-            builder.format(formatModel.objects().iterator().next().stringValue());
-        }
-        Model accessURLModel = modelFactory.createModel(newDistributionModel)
-                .filter(null, factory.createIRI(Distribution.accessURL_IRI), null);
-        if (!accessURLModel.isEmpty()) {
-            builder.accessURL((Resource) accessURLModel.objects().iterator().next());
-        }
-        Model downloadURLModel = modelFactory.createModel(newDistributionModel)
-                .filter(null, factory.createIRI(Distribution.downloadURL_IRI), null);
-        if (!downloadURLModel.isEmpty()) {
-            builder.downloadURL((Resource) downloadURLModel.objects().iterator().next());
-        }
-        Distribution newDistribution = catalogManager.createDistribution(builder.build());
-        catalogManager.addDistributionToUnversionedRecord(newDistribution, factory.createIRI(recordId));
 
-        return Response.ok().build();
+        Distribution newDistribution = createDistribution(title, description, format, accessURL, downloadURL);
+        catalogManager.addDistributionToUnversionedRecord(newDistribution, factory.createIRI(recordId));
+        return Response.ok(newDistribution.getResource().stringValue()).build();
     }
 
     @Override
     public Response getUnversionedDistribution(String catalogId, String recordId, String distributionId) {
-        UnversionedRecordFactory ormFactory = (UnversionedRecordFactory) recordFactories.get(UnversionedRecord.TYPE);
-        UnversionedRecord record = catalogManager.getRecord(factory.createIRI(catalogId), factory.createIRI(recordId),
-                ormFactory).orElseThrow(() -> ErrorUtils.sendError("Record not found", Response.Status.BAD_REQUEST));
-        Set<Resource> distributionIRIs = record.getUnversionedDistribution().stream()
-                .map(Thing::getResource)
-                .collect(Collectors.toSet());
-        if (!distributionIRIs.contains(factory.createIRI(distributionId))) {
-            throw ErrorUtils.sendError("Distribution does not belong to Record " + recordId,
-                    Response.Status.BAD_REQUEST);
-        }
+        testUnversionedDistributionPath(catalogId, recordId, distributionId);
         Distribution distribution = catalogManager.getDistribution(factory.createIRI(distributionId)).orElseThrow(() ->
                 ErrorUtils.sendError("Distribution not found", Response.Status.BAD_REQUEST));
         return Response.ok(thingToJsonld(distribution)).build();
@@ -394,74 +334,189 @@ public class CatalogRestImpl implements CatalogRest {
 
     @Override
     public Response deleteUnversionedDistribution(String catalogId, String recordId, String distributionId) {
-        return Response.status(Response.Status.NOT_IMPLEMENTED).build();
+        if (!catalogManager.getRecordIds(factory.createIRI(catalogId)).contains(factory.createIRI(recordId))) {
+            throw ErrorUtils.sendError("Record not found in Catalog " + catalogId, Response.Status.BAD_REQUEST);
+        }
+        try {
+            catalogManager.removeDistributionFromUnversionedRecord(factory.createIRI(distributionId),
+                    factory.createIRI(recordId));
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
+        }
+        return Response.ok().build();
     }
 
     @Override
     public Response updateUnversionedDistribution(String catalogId, String recordId, String distributionId, 
                                                   String newDistributionJson) {
-        return Response.status(Response.Status.NOT_IMPLEMENTED).build();
+        testUnversionedDistributionPath(catalogId, recordId, distributionId);
+        updateDistribution(newDistributionJson, distributionId);
+        return Response.ok().build();
     }
 
     @Override
     public Response getLatestVersion(String catalogId, String recordId) {
-        return Response.status(Response.Status.NOT_IMPLEMENTED).build();
+        VersionedRecordFactory recordFactory = (VersionedRecordFactory) recordFactories.get(VersionedRecord.TYPE);
+        VersionedRecord record = catalogManager.getRecord(factory.createIRI(catalogId), factory.createIRI(recordId),
+                recordFactory).orElseThrow(() -> ErrorUtils.sendError("Record not found", Response.Status.BAD_REQUEST));
+        Resource versionIRI = record.getLatestVersion().orElseThrow(() ->
+                ErrorUtils.sendError("Record does not have a latest version", Response.Status.BAD_REQUEST))
+                .getResource();
+        VersionFactory versionFactory = (VersionFactory) versionFactories.get(Version.TYPE);
+        Version version = catalogManager.getVersion(versionIRI, versionFactory).orElseThrow(() ->
+                ErrorUtils.sendError("Version not found", Response.Status.BAD_REQUEST));
+        return Response.ok(thingToJsonld(version)).build();
     }
 
     @Override
-    public Response getVersions(String catalogId, String recordId, String sort, int offset, int limit) {
-        return Response.status(Response.Status.NOT_IMPLEMENTED).build();
+    public Response getVersions(UriInfo uriInfo, String catalogId, String recordId, String sort, int offset, int limit) {
+        if (!SORT_RESOURCES.contains(sort)) {
+            throw ErrorUtils.sendError("Invalid sort property IRI", Response.Status.BAD_REQUEST);
+        }
+        IRI sortBy = factory.createIRI(sort);
+        VersionedRecordFactory ormFactory = (VersionedRecordFactory) recordFactories.get(VersionedRecord.TYPE);
+        VersionedRecord record = catalogManager.getRecord(factory.createIRI(catalogId), factory.createIRI(recordId),
+                ormFactory).orElseThrow(() -> ErrorUtils.sendError("Record not found", Response.Status.BAD_REQUEST));
+        Set<Resource> versionIRIs = record.getVersion().stream()
+                .map(Thing::getResource)
+                .collect(Collectors.toSet());
+
+        VersionFactory versionFactory = (VersionFactory) versionFactories.get(Version.TYPE);
+        Set<Version> versions = versionIRIs.stream()
+                .map(resource -> catalogManager.getVersion(resource, versionFactory))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .sorted((ver1, ver2) -> ver1.getProperty(sortBy).get().stringValue()
+                        .compareTo(ver2.getProperty(sortBy).get().stringValue()))
+                .skip(offset)
+                .limit(limit)
+                .collect(Collectors.toSet());
+        return createPaginatedResponse(uriInfo, versions, versionIRIs, limit, offset);
     }
 
     @Override
-    public <T extends Version> Response createVersion(String catalogId, String recordId, T newVersion) {
-        return Response.status(Response.Status.NOT_IMPLEMENTED).build();
+    public Response createVersion(String catalogId, String recordId, String typeIRI, String title, String description) {
+        if (!catalogManager.getRecordIds(factory.createIRI(catalogId)).contains(factory.createIRI(recordId))) {
+            throw ErrorUtils.sendError("Record not found in Catalog " + catalogId, Response.Status.BAD_REQUEST);
+        }
+        if (typeIRI == null || !versionFactories.keySet().contains(typeIRI)) {
+            throw ErrorUtils.sendError("Invalid Version type", Response.Status.BAD_REQUEST);
+        }
+        if (title == null) {
+            throw ErrorUtils.sendError("Version title is required", Response.Status.BAD_REQUEST);
+        }
+
+        Version newVersion = catalogManager.createVersion(title, description, versionFactories.get(typeIRI));
+        catalogManager.addVersion(newVersion, factory.createIRI(recordId));
+        return Response.ok(newVersion.getResource().stringValue()).build();
     }
 
     @Override
     public Response getVersion(String catalogId, String recordId, String versionId) {
-        return Response.status(Response.Status.NOT_IMPLEMENTED).build();
+        testVersionPath(catalogId, recordId, versionId);
+        VersionFactory versionFactory = (VersionFactory) versionFactories.get(Version.TYPE);
+        Version version = catalogManager.getVersion(factory.createIRI(versionId), versionFactory).orElseThrow(() ->
+                ErrorUtils.sendError("Version not found", Response.Status.BAD_REQUEST));
+        return Response.ok(thingToJsonld(version)).build();
     }
 
     @Override
     public Response deleteVersion(String catalogId, String recordId, String versionId) {
-        return Response.status(Response.Status.NOT_IMPLEMENTED).build();
+        if (!catalogManager.getRecordIds(factory.createIRI(catalogId)).contains(factory.createIRI(recordId))) {
+            throw ErrorUtils.sendError("Record not found in Catalog " + catalogId, Response.Status.BAD_REQUEST);
+        }
+        try {
+            catalogManager.removeVersion(factory.createIRI(versionId), factory.createIRI(recordId));
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
+        }
+        return Response.ok().build();
     }
 
     @Override
-    public <T extends Version> Response updateVersion(String catalogId, String recordId, String versionId, 
-                                                      T newVersion) {
-        return Response.status(Response.Status.NOT_IMPLEMENTED).build();
+    public Response updateVersion(String catalogId, String recordId, String versionId, String newVersionJson) {
+        testVersionPath(catalogId, recordId, versionId);
+        Model newVersionModel;
+        try {
+            newVersionModel = transformer.matontoModel(Rio.parse(IOUtils.toInputStream(newVersionJson), "",
+                    RDFFormat.JSONLD));
+        } catch (Exception e) {
+            throw ErrorUtils.sendError("Invalid JSON-LD", Response.Status.BAD_REQUEST);
+        }
+        VersionFactory versionFactory = (VersionFactory) versionFactories.get(Version.TYPE);
+        Version newVersion = versionFactory.getExisting(factory.createIRI(versionId), newVersionModel);
+        if (newVersion == null) {
+            throw ErrorUtils.sendError("Version ids must match", Response.Status.BAD_REQUEST);
+        }
+        catalogManager.updateVersion(newVersion);
+        return Response.ok().build();
     }
 
     @Override
-    public Response getVersionedDistributions(String catalogId, String recordId, String versionId, String sort, 
+    public Response getVersionedDistributions(UriInfo uriInfo, String catalogId, String recordId, String versionId, String sort,
                                               int offset, int limit) {
-        return Response.status(Response.Status.NOT_IMPLEMENTED).build();
+        if (!SORT_RESOURCES.contains(sort)) {
+            throw ErrorUtils.sendError("Invalid sort property IRI", Response.Status.BAD_REQUEST);
+        }
+        IRI sortBy = factory.createIRI(sort);
+        testVersionPath(catalogId, recordId, versionId);
+        VersionFactory versionFactory = (VersionFactory) versionFactories.get(Version.TYPE);
+        Version version = catalogManager.getVersion(factory.createIRI(versionId), versionFactory).orElseThrow(() ->
+                ErrorUtils.sendError("Version not found", Response.Status.BAD_REQUEST));
+        Set<Resource> distributionIRIs = version.getVersionedDistribution().stream()
+                .map(Thing::getResource)
+                .collect(Collectors.toSet());
+
+        Set<Distribution> distributions = distributionIRIs.stream()
+                .map(resource -> catalogManager.getDistribution(resource))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .sorted((dist1, dist2) -> dist1.getProperty(sortBy).get().stringValue()
+                        .compareTo(dist2.getProperty(sortBy).get().stringValue()))
+                .skip(offset)
+                .limit(limit)
+                .collect(Collectors.toSet());
+        return createPaginatedResponse(uriInfo, distributions, distributionIRIs, limit, offset);
     }
 
     @Override
-    public Response createVersionedDistribution(String catalogId, String recordId, String versionId, 
-                                                Distribution newDistribution) {
-        return Response.status(Response.Status.NOT_IMPLEMENTED).build();
+    public Response createVersionedDistribution(String catalogId, String recordId, String versionId, String title,
+                                                String description, String format, String accessURL,
+                                                String downloadURL) {
+        testVersionPath(catalogId, recordId, versionId);
+        Distribution newDistribution = createDistribution(title, description, format, accessURL, downloadURL);
+        catalogManager.addDistributionToVersion(newDistribution, factory.createIRI(versionId));
+        return Response.ok(newDistribution.getResource().stringValue()).build();
     }
 
     @Override
     public Response getVersionedDistribution(String catalogId, String recordId, String versionId, 
                                              String distributionId) {
-        return Response.status(Response.Status.NOT_IMPLEMENTED).build();
+        testVersionedDistributionPath(catalogId, recordId, versionId, distributionId);
+        Distribution distribution = catalogManager.getDistribution(factory.createIRI(distributionId)).orElseThrow(() ->
+                ErrorUtils.sendError("Distribution not found", Response.Status.BAD_REQUEST));
+        return Response.ok(thingToJsonld(distribution)).build();
     }
 
     @Override
     public Response deleteVersionedDistribution(String catalogId, String recordId, String versionId, 
                                                 String distributionId) {
-        return Response.status(Response.Status.NOT_IMPLEMENTED).build();
+        testVersionPath(catalogId, recordId, versionId);
+        try {
+            catalogManager.removeDistributionFromVersion(factory.createIRI(distributionId),
+                    factory.createIRI(versionId));
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
+        }
+        return Response.ok().build();
     }
 
     @Override
     public Response updateVersionedDistribution(String catalogId, String recordId, String versionId, 
-                                                String distributionId, Distribution newDistribution) {
-        return Response.status(Response.Status.NOT_IMPLEMENTED).build();
+                                                String distributionId, String newDistributionJson) {
+        testVersionedDistributionPath(catalogId, recordId, versionId, distributionId);
+        updateDistribution(newDistributionJson, distributionId);
+        return Response.ok().build();
     }
 
     @Override
@@ -584,18 +639,97 @@ public class CatalogRestImpl implements CatalogRest {
         return out.toString();
     }
 
-    private Optional<User> getActiveUser(ContainerRequestContext context) {
-        Subject subject = new Subject();
-        String tokenString = TokenUtils.getTokenString(context);
-
-        if (!RestSecurityUtils.authenticateToken("matonto", subject, tokenString, matontoConfiguration)) {
-            return Optional.empty();
+    private <T extends Thing> Response createPaginatedResponse(UriInfo uriInfo, Set<T> things, Set<Resource> iris, int limit,
+                                             int offset) {
+        Links links = LinksUtils.buildLinks(uriInfo, things.size(), iris.size(), limit, offset);
+        JSONArray results = JSONArray.fromObject(things.stream()
+                .map(this::thingToJsonld)
+                .collect(Collectors.toSet()));
+        Response.ResponseBuilder response = Response.ok(results.toString())
+                .header("X-Total-Count", iris.size());
+        if (links.getNext() != null) {
+            response = response.link(links.getBase() + links.getNext(), "next");
         }
-        final User[] user = {null};
-        subject.getPrincipals().stream()
-                .filter(principal -> principal instanceof UserPrincipal)
-                .forEach(principal ->
-                        user[0] = engineManager.retrieveUser(RDF_ENGINE, principal.getName()).orElse(null));
-        return Optional.ofNullable(user[0]);
+        if (links.getPrev() != null) {
+            response = response.link(links.getBase() + links.getPrev(), "prev");
+        }
+        return response.build();
+    }
+
+    private void testUnversionedDistributionPath(String catalogId, String recordId, String distributionId) {
+        UnversionedRecordFactory recordFactory = (UnversionedRecordFactory) recordFactories.get(UnversionedRecord.TYPE);
+        UnversionedRecord record = catalogManager.getRecord(factory.createIRI(catalogId), factory.createIRI(recordId),
+                recordFactory).orElseThrow(() -> ErrorUtils.sendError("Record not found", Response.Status.BAD_REQUEST));
+        Set<Resource> distributionIRIs = record.getUnversionedDistribution().stream()
+                .map(Thing::getResource)
+                .collect(Collectors.toSet());
+        if (!distributionIRIs.contains(factory.createIRI(distributionId))) {
+            throw ErrorUtils.sendError("Distribution does not belong to Record " + recordId,
+                    Response.Status.BAD_REQUEST);
+        }
+    }
+
+    private void testVersionPath(String catalogId, String recordId, String versionId) {
+        VersionedRecordFactory recordFactory = (VersionedRecordFactory) recordFactories.get(VersionedRecord.TYPE);
+        VersionedRecord record = catalogManager.getRecord(factory.createIRI(catalogId), factory.createIRI(recordId),
+                recordFactory).orElseThrow(() -> ErrorUtils.sendError("Record not found", Response.Status.BAD_REQUEST));
+        Set<Resource> versionIRIs = record.getVersion().stream()
+                .map(Thing::getResource)
+                .collect(Collectors.toSet());
+        if (!versionIRIs.contains(factory.createIRI(versionId))) {
+            throw ErrorUtils.sendError("Version does not belong to Record " + recordId, Response.Status.BAD_REQUEST);
+        }
+    }
+
+    private void testVersionedDistributionPath(String catalogId, String recordId, String versionId, String distributionId) {
+        VersionedRecordFactory recordFactory = (VersionedRecordFactory) recordFactories.get(VersionedRecord.TYPE);
+        VersionedRecord record = catalogManager.getRecord(factory.createIRI(catalogId), factory.createIRI(recordId),
+                recordFactory).orElseThrow(() -> ErrorUtils.sendError("Record not found", Response.Status.BAD_REQUEST));
+        Set<Resource> versionIRIs = record.getVersion().stream()
+                .map(Thing::getResource)
+                .collect(Collectors.toSet());
+        if (!versionIRIs.contains(factory.createIRI(versionId))) {
+            throw ErrorUtils.sendError("Version does not belong to Record " + recordId, Response.Status.BAD_REQUEST);
+        }
+        VersionFactory versionFactory = (VersionFactory) versionFactories.get(Version.TYPE);
+        Version version = catalogManager.getVersion(factory.createIRI(versionId), versionFactory).orElseThrow(() ->
+                ErrorUtils.sendError("Version not found", Response.Status.BAD_REQUEST));
+        Set<Resource> distributionIRIs = version.getVersionedDistribution().stream()
+                .map(Thing::getResource)
+                .collect(Collectors.toSet());
+        if (!distributionIRIs.contains(factory.createIRI(distributionId))) {
+            throw ErrorUtils.sendError("Distribution does not belong to Version " + recordId,
+                    Response.Status.BAD_REQUEST);
+        }
+    }
+
+    private Distribution createDistribution(String title, String description, String format, String accessURL,
+                                            String downloadURL) {
+        if (title == null) {
+            throw ErrorUtils.sendError("Distribution title is required", Response.Status.BAD_REQUEST);
+        }
+        DistributionConfig.Builder builder = new DistributionConfig.Builder(title);
+        Optional.ofNullable(description).ifPresent(builder::description);
+        Optional.ofNullable(format).ifPresent(builder::format);
+        Optional.ofNullable(accessURL).ifPresent(s -> builder.accessURL(factory.createIRI(s)));
+        Optional.ofNullable(downloadURL).ifPresent(s -> builder.downloadURL(factory.createIRI(s)));
+
+        return catalogManager.createDistribution(builder.build());
+    }
+
+    private void updateDistribution(String newDistributionJson, String distributionId) {
+        Model newDistributionModel;
+        try {
+            newDistributionModel = transformer.matontoModel(Rio.parse(IOUtils.toInputStream(newDistributionJson), "",
+                    RDFFormat.JSONLD));
+        } catch (Exception e) {
+            throw ErrorUtils.sendError("Invalid JSON-LD", Response.Status.BAD_REQUEST);
+        }
+        Distribution newDistribution = distributionFactory.getExisting(factory.createIRI(distributionId),
+                newDistributionModel);
+        if (newDistribution == null) {
+            throw ErrorUtils.sendError("Distribution ids must match", Response.Status.BAD_REQUEST);
+        }
+        catalogManager.updateDistribution(newDistribution);
     }
 }

@@ -25,6 +25,7 @@ package org.matonto.catalog.rest;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.matonto.catalog.api.ontologies.mcat.*;
 
@@ -32,6 +33,7 @@ import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.*;
+import java.util.List;
 
 @Path("/catalogs")
 @Api(value = "/catalogs")
@@ -93,23 +95,33 @@ public interface CatalogRest {
                         @QueryParam("searchText") String searchText);
 
     /**
-     * Creates a new Record in the repository used the passed JSON-LD object. Determines the type of the new Record
-     * based on the "@type" array of the JSON-LD object. Requires the `dcterms:title`, `dcterms:identifier`, and
-     * `dcterms:publisher` properties to be included. Returns a Response indicating whether it was created successfully.
+     * Creates a new Record in the repository using the passed form data. Determines the type of the new Record
+     * based on the "type" field. Requires the `title` and `identifier` fields to be set. Returns a Response with the
+     * IRI of the new Record.
      *
      * @param context The context of the request.
      * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param newRecordJson The JSON-LD of the new Record which you want to add to the catalog.
+     * @param typeIRI The required IRI of the type for the new Record. Must be a valid IRI for a Record or one of its
+     *                subclasses.
+     * @param title The required title for the new Record.
+     * @param identifier The required identifier for the new Record. Must be a valid IRI.
+     * @param description The optional description for the new Record.
+     * @param keywords The optional comma separated list of keywords for the new Record.
      * @return A Response indicating whether the Record was created successfully.
      */
     @POST
     @Path("{catalogId}/records")
-    @Consumes(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
     @ApiOperation("Creates a new Record in the Catalog.")
     Response createRecord(@Context ContainerRequestContext context,
-                          @PathParam("catalogId") String catalogId, String newRecordJson);
+                          @PathParam("catalogId") String catalogId,
+                          @FormDataParam("type") String typeIRI,
+                          @FormDataParam("title") String title,
+                          @FormDataParam("identifier") String identifier,
+                          @FormDataParam("description") String description,
+                          @FormDataParam("keywords") String keywords);
 
     /**
      * Returns a Record with the provided ID.
@@ -148,7 +160,7 @@ public interface CatalogRest {
 
     /**
      * Updates a Record based on the ID contained within the provided Catalog using the modifications from the provided
-     * newRecord. It returns a Response indicating whether the Record was correctly updated.
+     * JSON-LD. It returns a Response indicating whether the Record was correctly updated.
      *
      * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
@@ -170,6 +182,7 @@ public interface CatalogRest {
      * Retrieves a list of all the Distributions associated with a specific UnversionedRecord. Parameters can be passed
      * to control paging.
      *
+     * @param uriInfo The URI information of the request to be used in creating links to other pages of distributions
      * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
      * @param recordId The String representing the UnversionedRecord ID. NOTE: Assumes ID represents an IRI unless
@@ -192,24 +205,32 @@ public interface CatalogRest {
                                          @DefaultValue("100") @QueryParam("limit") int limit);
 
     /**
-     * Creates a new Distribution for the provided UnversionedRecord. Returns a Response indicating whether it was
-     * saved or not.
+     * Creates a new Distribution for the provided UnversionedRecord using the passed form data. Requires the "title"
+     * field to be set. Returns a Response with the IRI of the new Distribution.
      *
      * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
      * @param recordId The String representing the UnversionedRecord ID. NOTE: Assumes ID represents an IRI unless
      *                 String begins with "_:".
-     * @param newDistributionJson The JSON-LD of the new Distribution that you want to add to the specific Record.
+     * @param title The required title for the new Distribution.
+     * @param description The optional description for the new Distribution.
+     * @param format The optional format string for the new Distribution. Expects a MIME type.
+     * @param accessUrl The optional access URL for the new Distribution.
+     * @param downloadURL The optional download URL for the new Distribution.
      * @return A Response indicating if the new Distribution was created successfully.
      */
     @POST
     @Path("{catalogId}/records/{recordId}/distributions")
-    @Consumes(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
     @ApiOperation("Creates a new Distribution for the provided UnversionedRecord.")
     Response createUnversionedDistribution(@PathParam("catalogId") String catalogId,
                                            @PathParam("recordId") String recordId,
-                                           String newDistributionJson);
+                                           @FormDataParam("title") String title,
+                                           @FormDataParam("description") String description,
+                                           @FormDataParam("format") String format,
+                                           @FormDataParam("accessURL") String accessUrl,
+                                           @FormDataParam("downloadURL") String downloadURL);
 
     /**
      * Returns the Distribution of the UnversionedRecord identified using the provided IDs.
@@ -254,7 +275,7 @@ public interface CatalogRest {
 
     /**
      * Updates a specific Distribution for an UnversionedRecord identified by the provided IDs using the modifications
-     * in the provided newDistribution. Returns a Response indicating whether it was successfully updated.
+     * in the provided JSON-LD. Returns a Response indicating whether it was successfully updated.
      *
      * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
@@ -295,6 +316,7 @@ public interface CatalogRest {
     /**
      * Gets a list of all Versions for a VersionedRecord. Parameters can be passed to control paging.
      *
+     * @param uriInfo The URI information of the request to be used in creating links to other pages of versions
      * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
      * @param recordId The String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
@@ -309,7 +331,8 @@ public interface CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @ApiOperation("Gets a list of Versions for a VersionedRecord.")
-    Response getVersions(@PathParam("catalogId") String catalogId,
+    Response getVersions(@Context UriInfo uriInfo,
+                         @PathParam("catalogId") String catalogId,
                          @PathParam("recordId") String recordId,
                          @QueryParam("sort") String sort,
                          @DefaultValue("0") @QueryParam("offset") int offset,
@@ -324,19 +347,22 @@ public interface CatalogRest {
      *                  with "_:".
      * @param recordId The String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
      *                 String begins with "_:".
-     * @param newVersion The Version which you wish to add to the identified VersionedRecord.
-     * @param <T> An Object which extends the Version class.
+     * @param typeIRI The required IRI of the type for the new Version. Must be a valid IRI for a Version or one of its
+     *                subclasses.
+     * @param title The required title for the new Version.
+     * @param description The optional description for the new Version.
      * @return A Response indicating whether the Version was saved or not.
      */
     @POST
     @Path("{catalogId}/records/{recordId}/versions")
-    @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
     @ApiOperation("Creates a Version for the identified VersionedRecord.")
-    <T extends Version> Response createVersion(@PathParam("catalogId") String catalogId,
-                                               @PathParam("recordId") String recordId,
-                                               T newVersion);
+    Response createVersion(@PathParam("catalogId") String catalogId,
+                           @PathParam("recordId") String recordId,
+                           @FormDataParam("type") String typeIRI,
+                           @FormDataParam("title") String title,
+                           @FormDataParam("description") String description);
 
     /**
      * Gets a specific Version identified by the provided IDs.
@@ -347,7 +373,6 @@ public interface CatalogRest {
      *                 String begins with "_:".
      * @param versionId The String representing the Version ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param <T> An Object which extends the Version class.
      * @return The requested Version.
      */
     @GET
@@ -382,7 +407,7 @@ public interface CatalogRest {
                            @PathParam("versionId") String versionId);
 
     /**
-     * Updates the Version identified by the provided IDs using the modifications in the provided newVersion. Returns a
+     * Updates the Version identified by the provided IDs using the modifications in the provided JSON-LD. Returns a
      * Response identifying whether the Version was updated.
      *
      * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
@@ -391,8 +416,7 @@ public interface CatalogRest {
      *                 String begins with "_:".
      * @param versionId The String representing the Version ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param newVersion The Version which will replace the existing Version identified in the repository.
-     * @param <T> An Object which extends the Version class.
+     * @param newVersionJson The JSON-LD of the new Version which will replace the existing Version.
      * @return A Response indicating whether the Version was updated.
      */
     @PUT
@@ -401,15 +425,16 @@ public interface CatalogRest {
     @Consumes(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @ApiOperation("Updates a specific Version of the identified VersionedRecord.")
-    <T extends Version> Response updateVersion(@PathParam("catalogId") String catalogId,
-                                               @PathParam("recordId") String recordId,
-                                               @PathParam("versionId") String versionId,
-                                               T newVersion);
+    Response updateVersion(@PathParam("catalogId") String catalogId,
+                           @PathParam("recordId") String recordId,
+                           @PathParam("versionId") String versionId,
+                           String newVersionJson);
 
     /**
      * Retrieves a list of all the Distributions associated with a specific Version. Parameters can be passed to control
      * paging.
      *
+     * @param uriInfo The URI information of the request to be used in creating links to other pages of distributions
      * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
      * @param recordId The String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
@@ -426,7 +451,8 @@ public interface CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @ApiOperation("Gets the list of all Distributions for the identified Version.")
-    Response getVersionedDistributions(@PathParam("catalogId") String catalogId,
+    Response getVersionedDistributions(@Context UriInfo uriInfo,
+                                       @PathParam("catalogId") String catalogId,
                                        @PathParam("recordId") String recordId,
                                        @PathParam("versionId") String versionId,
                                        @QueryParam("sort") String sort,
@@ -443,19 +469,26 @@ public interface CatalogRest {
      *                 String begins with "_:".
      * @param versionId The String representing the Version ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param newDistribution A Distribution which will be stored in the repository.
+     * @param title The required title for the new Distribution.
+     * @param description The optional description for the new Distribution.
+     * @param format The optional format string for the new Distribution. Expects a MIME type.
+     * @param accessUrl The optional access URL for the new Distribution.
+     * @param downloadURL The optional download URL for the new Distribution.
      * @return A Response indicating whether the Distribution was created or not.
      */
     @POST
     @Path("{catalogId}/records/{recordId}/versions/{versionId}/distributions")
-    @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
     @ApiOperation("Creates a Distribution for the identified Version.")
     Response createVersionedDistribution(@PathParam("catalogId") String catalogId,
                                          @PathParam("recordId") String recordId,
                                          @PathParam("versionId") String versionId,
-                                         Distribution newDistribution);
+                                         @FormDataParam("title") String title,
+                                         @FormDataParam("description") String description,
+                                         @FormDataParam("format") String format,
+                                         @FormDataParam("accessURL") String accessUrl,
+                                         @FormDataParam("downloadURL") String downloadURL);
 
     /**
      * Gets a specific Distribution for the Version identified by the IDs.
@@ -516,7 +549,7 @@ public interface CatalogRest {
      *                  with "_:".
      * @param distributionId The String representing the Distribution ID. NOTE: Assumes ID represents an IRI unless
      *                       String begins with "_:".
-     * @param newDistribution The Distribution with the modifications made.
+     * @param newDistributionJson The JSON-LD of the new Distribution which will replace the existing Distribution.
      * @return A Response identifying whether the Distribution was updated.
      */
     @PUT
@@ -529,7 +562,7 @@ public interface CatalogRest {
                                          @PathParam("recordId") String recordId,
                                          @PathParam("versionId") String versionId,
                                          @PathParam("distributionId") String distributionId,
-                                         Distribution newDistribution);
+                                         String newDistributionJson);
 
     /**
      * Gets the Commit associated with the identified Version using the provided IDs.
