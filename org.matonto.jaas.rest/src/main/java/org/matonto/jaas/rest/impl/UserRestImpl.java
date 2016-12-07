@@ -40,6 +40,7 @@ import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.orm.Thing;
 import org.matonto.rest.util.ErrorUtils;
+import org.matonto.web.security.util.AuthenticationProps;
 import org.matonto.web.security.util.RestSecurityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -122,10 +123,7 @@ public class UserRestImpl implements UserRest {
             throw ErrorUtils.sendError("Current username must be provided",
                     Response.Status.BAD_REQUEST);
         }
-        if (!isAuthorizedUser(context, username)) {
-            throw ErrorUtils.sendError("User is not authorized to make this request with these parameters",
-                    Response.Status.FORBIDDEN);
-        }
+        isAuthorizedUser(context, username);
         Value newUsername = newUser.getUsername().orElseThrow(() ->
                 ErrorUtils.sendError("Username must be provided in new user", Response.Status.BAD_REQUEST));
         User savedUser = engineManager.retrieveUser(RdfEngine.COMPONENT_NAME, username).orElseThrow(() ->
@@ -153,10 +151,7 @@ public class UserRestImpl implements UserRest {
         if (newPassword == null) {
             throw ErrorUtils.sendError("New password must be provided", Response.Status.BAD_REQUEST);
         }
-        if (!isAuthorizedUser(context, username)) {
-            throw ErrorUtils.sendError("User is not authorized to make this request with these parameters",
-                    Response.Status.FORBIDDEN);
-        }
+        isAuthorizedUser(context, username);
         if (!engineManager.checkPassword(RdfEngine.COMPONENT_NAME, username, currentPassword)) {
             throw ErrorUtils.sendError("Invalid password", Response.Status.UNAUTHORIZED);
         }
@@ -174,9 +169,7 @@ public class UserRestImpl implements UserRest {
         if (username == null) {
             throw ErrorUtils.sendError("Username must be provided", Response.Status.BAD_REQUEST);
         }
-        if (!isAuthorizedUser(context, username)) {
-            throw ErrorUtils.sendError("Not authorized", Response.Status.UNAUTHORIZED);
-        }
+        isAuthorizedUser(context, username);
         if (!engineManager.userExists(username)) {
             throw ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST);
         }
@@ -284,33 +277,22 @@ public class UserRestImpl implements UserRest {
     }
 
     /**
-     * Checks if the user is authorized to make this request. Returns true if the requesting user matches username or
-     * if the requesting user is an admin.
+     * Checks if the user is authorized to make this request. The requesting user must be an admin or have a matching
+     * username.
      *
      * @param context The request context
      * @param username The required username if the user is not an admin
-     * @return true if an only if the user is an admin or matches username
      */
-    boolean isAuthorizedUser(ContainerRequestContext context, String username) {
-        Subject subject = new Subject();
-        String tokenString = TokenUtils.getTokenString(context);
-
-        if (!RestSecurityUtils.authenticateToken("matonto", subject, tokenString, matontoConfiguration)) {
-            return false;
+    private void isAuthorizedUser(ContainerRequestContext context, String username) {
+        String activeUsername = context.getProperty(AuthenticationProps.USERNAME).toString();
+        if (!engineManager.userExists(activeUsername)) {
+            throw ErrorUtils.sendError("User not found", Response.Status.FORBIDDEN);
         }
-
-        String user = "";
-        boolean isAdmin = false;
-
-        for (Principal principal : subject.getPrincipals()) {
-            if (principal instanceof UserPrincipal) {
-                user = principal.getName();
-                isAdmin = engineManager.getUserRoles(RdfEngine.COMPONENT_NAME, user).stream()
-                        .map(Thing::getResource)
-                        .anyMatch(resource -> resource.stringValue().contains("admin"));
-            }
+        boolean isAdmin = engineManager.getUserRoles(activeUsername).stream()
+                .map(Thing::getResource)
+                .anyMatch(resource -> resource.stringValue().contains("admin"));
+        if (!username.equals(activeUsername) && !isAdmin) {
+            throw ErrorUtils.sendError("Not authorized to make this request", Response.Status.FORBIDDEN);
         }
-
-        return user.equals(username) || isAdmin;
     }
 }

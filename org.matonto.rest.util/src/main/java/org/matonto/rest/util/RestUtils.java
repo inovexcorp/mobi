@@ -1,8 +1,8 @@
-package org.matonto.platform.config.rest.impl;
+package org.matonto.rest.util;
 
 /*-
  * #%L
- * org.matonto.platform.config.rest
+ * org.matonto.rest.util
  * $Id:$
  * $HeadURL:$
  * %%
@@ -23,15 +23,24 @@ package org.matonto.platform.config.rest.impl;
  * #L%
  */
 
-import org.matonto.web.security.util.AuthenticationProps;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.container.ContainerRequestFilter;
-import java.io.IOException;
+public class RestUtils {
 
-public class UsernameTestFilter implements ContainerRequestFilter {
-    @Override
-    public void filter(ContainerRequestContext containerRequestContext) throws IOException {
-        containerRequestContext.setProperty(AuthenticationProps.USERNAME, "tester");
+    /**
+     * Encodes the passed string for use in a URL.
+     *
+     * @param str The string to be encoded.
+     * @return The URL encoded version of the passed string.
+     */
+    public static String encode(String str) {
+        String encoded = null;
+        try {
+            encoded = URLEncoder.encode(str, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        return encoded;
     }
 }
