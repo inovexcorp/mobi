@@ -721,8 +721,7 @@ public class SimpleCatalogManager implements CatalogManager {
 
         if (parents != null) {
             metadata += parents.stream()
-                    .sorted((commit1, commit2) -> commit1.getResource().stringValue().compareTo(commit2.getResource()
-                            .stringValue()))
+                    .sorted(Comparator.comparing(commit2 -> commit2.getResource().stringValue()))
                     .map(commit -> commit.getResource().stringValue()).collect(Collectors.joining(""));
         }
 
@@ -755,7 +754,7 @@ public class SimpleCatalogManager implements CatalogManager {
             InvalidParameterException {
         if (!resourceExists(recordId, VersionedRDFRecord.TYPE)) {
             throw new InvalidParameterException("The provided Resource does not identify a Record entity.");
-        } else if (userHasInProgressCommit(user.getResource(), recordId)) {
+        } else if (getInProgressCommitIRI(user.getResource(), recordId).isPresent()) {
             throw new MatOntoException("The user already has an InProgressCommit for the identified Record.");
         } else {
             UUID uuid = UUID.randomUUID();
@@ -857,6 +856,23 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public <T extends Commit> Optional<T> getCommit(Resource commitId, OrmFactory<T> factory) throws MatOntoException {
         return getObject(resourceExists(commitId, factory.getTypeIRI().stringValue()), commitId, factory);
+    }
+
+    @Override
+    public Optional<Resource> getInProgressCommitIRI(Resource userId, Resource recordId) throws MatOntoException {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            TupleQuery query = conn.prepareTupleQuery(GET_IN_PROGRESS_COMMIT);
+            query.setBinding(USER_BINDING, userId);
+            query.setBinding(RECORD_BINDING, recordId);
+            TupleQueryResult queryResult = query.evaluate();
+            if (queryResult.hasNext()) {
+                return Optional.of(Bindings.requiredResource(queryResult.next(), COMMIT_BINDING));
+            } else {
+                return Optional.empty();
+            }
+        } catch (RepositoryException e) {
+            throw new MatOntoException("Error in repository connection.", e);
+        }
     }
 
     @Override
@@ -1022,25 +1038,6 @@ public class SimpleCatalogManager implements CatalogManager {
                 .additions(changedCopy)
                 .deletions(originalCopy)
                 .build();
-    }
-
-    /**
-     * Checks if a User identified by the provided Resource has an InProgressCommit for the VersionedRDFRecord
-     * identified by the other provided Resource.
-     *
-     * @param userId The Resource that identifies the User that is being checked.
-     * @param recordId The Resource identifying the VersionedRDFRecord.
-     * @return True if the User has an InProgressCommit on the VersionedRDFRecord; otherwise, false.
-     */
-    private boolean userHasInProgressCommit(Resource userId, Resource recordId) {
-        try (RepositoryConnection conn = repository.getConnection()) {
-            TupleQuery query = conn.prepareTupleQuery(GET_IN_PROGRESS_COMMIT);
-            query.setBinding(USER_BINDING, userId);
-            query.setBinding(RECORD_BINDING, recordId);
-            return query.evaluate().hasNext();
-        } catch (RepositoryException e) {
-            throw new MatOntoException("Error in repository connection.", e);
-        }
     }
 
     /**

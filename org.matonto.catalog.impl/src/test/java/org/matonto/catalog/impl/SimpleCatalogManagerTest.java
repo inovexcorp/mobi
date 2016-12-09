@@ -1860,6 +1860,19 @@ public class SimpleCatalogManagerTest {
     }
 
     @Test
+    public void testGetInProgressCommitIRI() throws Exception {
+        Resource userId = vf.createIRI("http://matonto.org/test/user/taken");
+        Resource versionedRDFRecordId = vf.createIRI("http://matonto.org/test/records#versionedRDF");
+        Optional<Resource> result = manager.getInProgressCommitIRI(userId, versionedRDFRecordId);
+        assertTrue(result.isPresent());
+        assertEquals(vf.createIRI("http://matonto.org/test/in-progress-commits#test"), result.get());
+
+        userId = vf.createIRI("http://matonto.org/test/user");
+        result = manager.getInProgressCommitIRI(userId, versionedRDFRecordId);
+        assertFalse(result.isPresent());
+    }
+
+    @Test
     public void testRemoveInProgressCommit() throws Exception {
         Resource inProgressCommitId = vf.createIRI("http://matonto.org/test/in-progress-commits#test");
         RepositoryConnection conn = repo.getConnection();
