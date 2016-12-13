@@ -52,8 +52,8 @@ public class LinksUtils {
     }
 
     /**
-     * Creates the Links that will be used to get the next and previous page of results in the PaginatedResults based
-     * off of the provided details.
+     * Creates the Links that will be used to get the next and previous page of results based off of the provided
+     * details.
      *
      * @param uriInfo the request URI information.
      * @param size the number of results returned.
