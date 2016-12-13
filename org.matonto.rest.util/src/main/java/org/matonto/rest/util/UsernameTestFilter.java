@@ -1,10 +1,8 @@
-@Version("3.1.0.${build}")
-
-package org.matonto.catalog.api;
+package org.matonto.rest.util;
 
 /*-
  * #%L
- * org.matonto.catalog.api
+ * org.matonto.platform.config.rest
  * $Id:$
  * $HeadURL:$
  * %%
@@ -25,4 +23,17 @@ package org.matonto.catalog.api;
  * #L%
  */
 
-import aQute.bnd.annotation.Version;
+import org.matonto.web.security.util.AuthenticationProps;
+
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.container.ContainerRequestFilter;
+import java.io.IOException;
+
+public class UsernameTestFilter implements ContainerRequestFilter {
+    public static final String USERNAME = "tester";
+
+    @Override
+    public void filter(ContainerRequestContext containerRequestContext) throws IOException {
+        containerRequestContext.setProperty(AuthenticationProps.USERNAME, USERNAME);
+    }
+}

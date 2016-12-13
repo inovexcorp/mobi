@@ -43,6 +43,7 @@ import org.matonto.rdf.orm.conversion.ValueConverterRegistry;
 import org.matonto.rdf.orm.conversion.impl.*;
 import org.matonto.rdf.orm.impl.ThingFactory;
 import org.matonto.rest.util.MatontoRestTestNg;
+import org.matonto.rest.util.UsernameTestFilter;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.openrdf.model.vocabulary.DCTERMS;
@@ -146,9 +147,9 @@ public class UserRestImplTest extends MatontoRestTestNg {
         role.setProperty(vf.createLiteral("user"), vf.createIRI(DCTERMS.TITLE.stringValue()));
         roles = Collections.singleton(role);
 
-        user = userFactory.createNew(vf.createIRI("http://matonto.org/users/testUser"), email.getModel());
+        user = userFactory.createNew(vf.createIRI("http://matonto.org/users/" + UsernameTestFilter.USERNAME), email.getModel());
         user.setHasUserRole(roles);
-        user.setUsername(vf.createLiteral("testUser"));
+        user.setUsername(vf.createLiteral(UsernameTestFilter.USERNAME));
         user.setPassword(vf.createLiteral("ABC"));
         user.setMbox(Collections.singleton(email));
         users = Collections.singleton(user);
@@ -165,11 +166,11 @@ public class UserRestImplTest extends MatontoRestTestNg {
         rest = spy(new UserRestImpl());
         rest.setEngineManager(engineManager);
         rest.setFactory(vf);
-        doReturn(true).when(rest).isAuthorizedUser(any(), any());
 
         return new ResourceConfig()
                 .register(rest)
                 .register(MultiPartFeature.class)
+                .register(UsernameTestFilter.class)
                 .register(userProvider)
                 .register(groupProvider)
                 .register(groupSetProvider)
@@ -192,6 +193,7 @@ public class UserRestImplTest extends MatontoRestTestNg {
         reset(engineManager);
         when(engineManager.getUsers(anyString())).thenReturn(users);
         when(engineManager.userExists(anyString())).thenReturn(true);
+        when(engineManager.userExists(UsernameTestFilter.USERNAME)).thenReturn(true);
         when(engineManager.createUser(anyString(), any(UserConfig.class))).thenReturn(user);
         when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.of(user));
         when(engineManager.checkPassword(anyString(), anyString(), anyString())).thenReturn(true);
@@ -200,6 +202,8 @@ public class UserRestImplTest extends MatontoRestTestNg {
         when(engineManager.retrieveGroup(anyString(), anyString())).thenReturn(Optional.of(group));
         when(engineManager.getRole(anyString(), anyString())).thenReturn(Optional.of(role));
         when(engineManager.getUserRoles(anyString(), anyString())).thenReturn(Stream.concat(roles.stream(),
+                group.getHasGroupRole().stream()).collect(Collectors.toSet()));
+        when(engineManager.getUserRoles(UsernameTestFilter.USERNAME)).thenReturn(Stream.concat(roles.stream(),
                 group.getHasGroupRole().stream()).collect(Collectors.toSet()));
     }
 
@@ -221,7 +225,7 @@ public class UserRestImplTest extends MatontoRestTestNg {
     public void createUserTest() {
         //Setup:
         JSONObject user = new JSONObject();
-        user.put("username", "testUser1");
+        user.put("username", "testUser");
         user.put("email", "example@example.com");
         user.put("firstName", "John");
         user.put("lastName", "Doe");
@@ -238,7 +242,7 @@ public class UserRestImplTest extends MatontoRestTestNg {
     public void createUserWithoutPasswordTest() {
         //Setup:
         JSONObject user = new JSONObject();
-        user.put("username", "testUser1");
+        user.put("username", "testUser");
         user.put("email", "example@example.com");
         user.put("firstName", "John");
         user.put("lastName", "Doe");
@@ -268,7 +272,7 @@ public class UserRestImplTest extends MatontoRestTestNg {
     public void createExistingUserTest() {
         //Setup:
         JSONObject user = new JSONObject();
-        user.put("username", "testUser");
+        user.put("username", UsernameTestFilter.USERNAME);
         user.put("email", "example@example.com");
         user.put("firstName", "John");
         user.put("lastName", "Doe");
@@ -281,9 +285,9 @@ public class UserRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void getUserTest() {
-        Response response = target().path("users/testUser").request().get();
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME).request().get();
         Assert.assertEquals(200, response.getStatus());
-        verify(engineManager).retrieveUser(anyString(), eq("testUser"));
+        verify(engineManager).retrieveUser(anyString(), eq(UsernameTestFilter.USERNAME));
         JSONObject user = JSONObject.fromObject(response.readEntity(String.class));
         Assert.assertTrue(user.containsKey("username"));
     }
@@ -302,15 +306,15 @@ public class UserRestImplTest extends MatontoRestTestNg {
     public void updateUserTest() {
         //Setup:
         JSONObject user = new JSONObject();
-        user.put("username", "testUser");
+        user.put("username", UsernameTestFilter.USERNAME);
         user.put("email", "maryjane@example.com");
         user.put("firstName", "Mary");
         user.put("lastName", "Jane");
 
-        Response response = target().path("users/testUser")
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME)
                 .request().put(Entity.entity(user.toString(), MediaType.APPLICATION_JSON));
         Assert.assertEquals(200, response.getStatus());
-        verify(engineManager).retrieveUser(anyString(), eq("testUser"));
+        verify(engineManager, atLeastOnce()).retrieveUser(anyString(), eq(UsernameTestFilter.USERNAME));
         verify(engineManager).updateUser(anyString(), any(User.class));
     }
 
@@ -318,7 +322,7 @@ public class UserRestImplTest extends MatontoRestTestNg {
     public void updateUserWithDifferentUsernameTest() {
         //Setup:
         JSONObject user = new JSONObject();
-        user.put("username", "testUser1");
+        user.put("username", "testUser");
         user.put("email", "maryjane@example.com");
         user.put("firstName", "Mary");
         user.put("lastName", "Jane");
@@ -329,7 +333,7 @@ public class UserRestImplTest extends MatontoRestTestNg {
         newUser.setMbox(Collections.singleton(thingFactory.createNew(vf.createIRI("mailto:" + user.getString("email")))));
         when(engineManager.createUser(anyString(), any(UserConfig.class))).thenReturn(newUser);
 
-        Response response = target().path("users/testUser")
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME)
                 .request().put(Entity.entity(user.toString(), MediaType.APPLICATION_JSON));
         Assert.assertEquals(400, response.getStatus());
     }
@@ -351,19 +355,19 @@ public class UserRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void updatePasswordTest() {
-        Response response = target().path("users/testUser/password")
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/password")
                 .queryParam("currentPassword", "ABC")
                 .queryParam("newPassword", "XYZ")
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
         Assert.assertEquals(200, response.getStatus());
-        verify(engineManager).checkPassword(anyString(), eq("testUser"), eq("ABC"));
-        verify(engineManager).retrieveUser(anyString(), eq("testUser"));
+        verify(engineManager).checkPassword(anyString(), eq(UsernameTestFilter.USERNAME), eq("ABC"));
+        verify(engineManager, atLeastOnce()).retrieveUser(anyString(), eq(UsernameTestFilter.USERNAME));
         verify(engineManager).updateUser(anyString(), any(User.class));
     }
 
     @Test
     public void updatePasswordWithoutCurrentPasswordTest() {
-        Response response = target().path("users/testUser/password")
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/password")
                 .queryParam("newPassword", "XYZ")
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
         Assert.assertEquals(400, response.getStatus());
@@ -371,7 +375,7 @@ public class UserRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void updatePasswordWithoutNewPasswordTest() {
-        Response response = target().path("users/testUser/password")
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/password")
                 .queryParam("currentPassword", "ABC")
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
         Assert.assertEquals(400, response.getStatus());
@@ -379,15 +383,15 @@ public class UserRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void deleteUserTest() {
-        Response response = target().path("users/testUser").request().delete();
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME).request().delete();
         Assert.assertEquals(200, response.getStatus());
-        verify(engineManager).deleteUser(anyString(), eq("testUser"));
+        verify(engineManager).deleteUser(anyString(), eq(UsernameTestFilter.USERNAME));
     }
 
     @Test
     public void deleteUserThatDoesNotExistTest() {
         //Setup:
-        when(engineManager.userExists(anyString())).thenReturn(false);
+        when(engineManager.userExists("error")).thenReturn(false);
 
         Response response = target().path("users/error").request().delete();
         Assert.assertEquals(400, response.getStatus());
@@ -395,8 +399,8 @@ public class UserRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void getUserRolesTest() {
-        Response response = target().path("users/testUser/roles").request().get();
-        verify(engineManager).retrieveUser(anyString(), eq("testUser"));
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/roles").request().get();
+        verify(engineManager).retrieveUser(anyString(), eq(UsernameTestFilter.USERNAME));
         Assert.assertEquals(200, response.getStatus());
         try {
             JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
@@ -408,8 +412,8 @@ public class UserRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void getUserRolesIncludingGroupsTest() {
-        Response response = target().path("users/testUser/roles").queryParam("includeGroups", "true").request().get();
-        verify(engineManager).retrieveUser(anyString(), eq("testUser"));
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/roles").queryParam("includeGroups", "true").request().get();
+        verify(engineManager).retrieveUser(anyString(), eq(UsernameTestFilter.USERNAME));
         Assert.assertEquals(200, response.getStatus());
         try {
             JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
@@ -430,10 +434,10 @@ public class UserRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void addUserRoleTest() {
-        Response response = target().path("users/testUser/roles").queryParam("role", "testRole")
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/roles").queryParam("role", "testRole")
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
         Assert.assertEquals(200, response.getStatus());
-        verify(engineManager).retrieveUser(anyString(), eq("testUser"));
+        verify(engineManager).retrieveUser(anyString(), eq(UsernameTestFilter.USERNAME));
         verify(engineManager).updateUser(anyString(), any(User.class));
     }
 
@@ -452,17 +456,17 @@ public class UserRestImplTest extends MatontoRestTestNg {
         //Setup:
         when(engineManager.getRole(anyString(), anyString())).thenReturn(Optional.empty());
 
-        Response response = target().path("users/testUser/roles").queryParam("role", "error")
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/roles").queryParam("role", "error")
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
         Assert.assertEquals(400, response.getStatus());
     }
 
     @Test
     public void removeUserRoleTest() {
-        Response response = target().path("users/testUser/roles").queryParam("role", "testRole")
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/roles").queryParam("role", "testRole")
                 .request().delete();
         Assert.assertEquals(200, response.getStatus());
-        verify(engineManager).retrieveUser(anyString(), eq("testUser"));
+        verify(engineManager).retrieveUser(anyString(), eq(UsernameTestFilter.USERNAME));
         verify(engineManager).updateUser(anyString(), any(User.class));
     }
 
@@ -481,16 +485,16 @@ public class UserRestImplTest extends MatontoRestTestNg {
         //Setup:
         when(engineManager.getRole(anyString(), anyString())).thenReturn(Optional.empty());
 
-        Response response = target().path("users/testUser/roles").queryParam("role", "error")
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/roles").queryParam("role", "error")
                 .request().delete();
         Assert.assertEquals(400, response.getStatus());
     }
 
     @Test
     public void getUserGroupsTest() {
-        Response response = target().path("users/testUser/groups").request().get();
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/groups").request().get();
         Assert.assertEquals(200, response.getStatus());
-        verify(engineManager).retrieveUser(anyString(), eq("testUser"));
+        verify(engineManager).retrieveUser(anyString(), eq(UsernameTestFilter.USERNAME));
         verify(engineManager).getGroups(anyString());
         try {
             JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
@@ -502,7 +506,7 @@ public class UserRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void addUserGroupTest() {
-        Response response = target().path("users/testUser/groups").queryParam("group", "testGroup")
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/groups").queryParam("group", "testGroup")
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
         Assert.assertEquals(200, response.getStatus());
         verify(engineManager).retrieveGroup(anyString(), eq("testGroup"));
@@ -524,14 +528,14 @@ public class UserRestImplTest extends MatontoRestTestNg {
         //Setup:
         when(engineManager.retrieveGroup(anyString(), anyString())).thenReturn(Optional.empty());
 
-        Response response = target().path("users/testUser/groups").queryParam("group", "error")
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/groups").queryParam("group", "error")
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
         Assert.assertEquals(400, response.getStatus());
     }
 
     @Test
     public void removeUserGroupTest() {
-        Response response = target().path("users/testUser/groups").queryParam("group", "testGroup")
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/groups").queryParam("group", "testGroup")
                 .request().delete();
         Assert.assertEquals(200, response.getStatus());
         verify(engineManager).retrieveGroup(anyString(), eq("testGroup"));
@@ -553,7 +557,7 @@ public class UserRestImplTest extends MatontoRestTestNg {
         //Setup:
         when(engineManager.retrieveGroup(anyString(), anyString())).thenReturn(Optional.empty());
 
-        Response response = target().path("users/testUser/groups").queryParam("group", "error")
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/groups").queryParam("group", "error")
                 .request().delete();
         Assert.assertEquals(400, response.getStatus());
     }
