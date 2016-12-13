@@ -150,7 +150,9 @@ public class CatalogRestImpl implements CatalogRest {
 
     @Reference(type = '*', dynamic = true)
     protected <T extends Record> void addRecordFactory(OrmFactory<T> factory) {
-        recordFactories.put(factory.getTypeIRI().stringValue(), factory);
+        if (Record.class.isAssignableFrom(factory.getType())) {
+            recordFactories.put(factory.getTypeIRI().stringValue(), factory);
+        }
     }
 
     protected <T extends Record> void removeRecordFactory(OrmFactory<T> factory) {
@@ -159,7 +161,9 @@ public class CatalogRestImpl implements CatalogRest {
 
     @Reference(type = '*', dynamic = true)
     protected <T extends Version> void addVersionFactory(OrmFactory<T> factory) {
-        versionFactories.put(factory.getTypeIRI().stringValue(), factory);
+        if (Version.class.isAssignableFrom(factory.getType())) {
+            versionFactories.put(factory.getTypeIRI().stringValue(), factory);
+        }
     }
 
     protected <T extends Version> void removeVersionFactory(OrmFactory<T> factory) {
@@ -168,7 +172,9 @@ public class CatalogRestImpl implements CatalogRest {
 
     @Reference(type = '*', dynamic = true)
     protected <T extends Branch> void addBranchFactory(OrmFactory<T> factory) {
-        branchFactories.put(factory.getTypeIRI().stringValue(), factory);
+        if (Branch.class.isAssignableFrom(factory.getType())) {
+            branchFactories.put(factory.getTypeIRI().stringValue(), factory);
+        }
     }
 
     protected <T extends Branch> void removeBranchFactory(OrmFactory<T> factory) {
