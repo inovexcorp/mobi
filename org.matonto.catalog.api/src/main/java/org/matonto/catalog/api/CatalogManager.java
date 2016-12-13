@@ -328,9 +328,11 @@ public interface CatalogManager {
     <T extends Branch> Optional<T> getBranch(Resource branchId, OrmFactory<T> factory) throws MatOntoException;
 
     /**
-     * Creates a Commit from the provided InProgressCommit along with the message.
+     * Creates a Commit from the provided InProgressCommit along with the message whose parents are the passed
+     * Set of Commits.
      *
      * @param inProgressCommit The InProgressCommit which is the basis for the created Commit.
+     * @param parents The parent Commits for the created Commit. Used for associating the Revisions as well.
      * @param message The String with the message text associated with the Commit.
      * @return Commit created based on the provided InProgressCommit with the message metadata.
      */
@@ -409,6 +411,16 @@ public interface CatalogManager {
      * @throws MatOntoException Thrown if a connection to the repository could not be made.
      */
     Optional<Resource> getInProgressCommitIRI(Resource userId, Resource recordId) throws MatOntoException;
+
+    /**
+     * Gets the addition and deletion statements of a Commit identified by the provided Resource as a Difference.
+     *
+     * @param commitId The Resource identifying the Commit to retrieve the Difference from
+     * @return A Difference object containing the addition and deletion statements of a Commit
+     * @throws MatOntoException Thrown if a connection to the repository could not be made, the Commit could not be
+     *      found, or the Commit's Revision does not have the additions/deletions set
+     */
+    Difference getCommitDifference(Resource commitId) throws MatOntoException;
 
     /**
      * Removes the InProgressCommit identified by the provided Resource.

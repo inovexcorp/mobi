@@ -40,6 +40,11 @@
     <dependencies>
         <dependency>
             <groupId>org.matonto</groupId>
+            <artifactId>platform.config.api</artifactId>
+            <version>1.4.9-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
             <artifactId>rest.util</artifactId>
             <version>1.4.9-SNAPSHOT</version>
         </dependency>

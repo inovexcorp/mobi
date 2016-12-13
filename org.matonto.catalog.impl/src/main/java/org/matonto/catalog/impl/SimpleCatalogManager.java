@@ -538,9 +538,11 @@ public class SimpleCatalogManager implements CatalogManager {
         if (!resourceExists(version.getResource()) && resourceExists(versionedRecordId, VersionedRecord.TYPE)) {
             try (RepositoryConnection conn = repository.getConnection()) {
                 IRI latestVersionResource = vf.createIRI(VersionedRecord.latestVersion_IRI);
+                IRI versionResource = vf.createIRI(VersionedRecord.version_IRI);
                 conn.begin();
                 conn.remove(versionedRecordId, latestVersionResource, null, versionedRecordId);
                 conn.add(versionedRecordId, latestVersionResource, version.getResource(), versionedRecordId);
+                conn.add(versionedRecordId, versionResource, version.getResource(), versionedRecordId);
                 conn.add(version.getModel(), version.getResource());
                 conn.commit();
             } catch (RepositoryException e) {
@@ -678,24 +680,27 @@ public class SimpleCatalogManager implements CatalogManager {
             } else if (optionalBranch.isPresent() && resourceExists(versionedRDFRecordId, VersionedRDFRecord.TYPE)
                     && removeObjectWithRelationship(branchId, versionedRDFRecordId, VersionedRDFRecord.branch_IRI)) {
                 Branch branch = optionalBranch.get();
-                Commit headCommit = branch.getHead().orElseThrow(() ->
-                        new MatOntoException("The head Commit was not set on the Branch."));
-                List<Resource> chain = getCommitChain(headCommit.getResource());
-                IRI headCommitIRI = vf.createIRI(Branch.head_IRI);
-                IRI wasInformedByIRI = vf.createIRI(Activity.wasInformedBy_IRI);
-                IRI commitIRI = vf.createIRI(Tag.commit_IRI);
-                conn.begin();
-                for (int i = chain.size() - 1; i >= 0; i--) {
-                    Resource commitId = chain.get(i);
-                    if (!conn.getStatements(null, headCommitIRI, commitId).hasNext()
-                            && !conn.getStatements(null, wasInformedByIRI, commitId).hasNext()) {
-                        conn.remove((Resource) null, null, null, commitId);
-                        conn.remove((Resource) null, commitIRI, commitId);
-                    } else {
-                        break;
+                Optional<Commit> headCommit = branch.getHead();
+                if (headCommit.isPresent()) {
+                    List<Resource> chain = getCommitChain(headCommit.get().getResource());
+                    IRI headCommitIRI = vf.createIRI(Branch.head_IRI);
+                    IRI wasInformedByIRI = vf.createIRI(Activity.wasInformedBy_IRI);
+                    IRI commitIRI = vf.createIRI(Tag.commit_IRI);
+                    conn.begin();
+                    for (int i = chain.size() - 1; i >= 0; i--) {
+                        Resource commitId = chain.get(i);
+                        if (!conn.getStatements(null, headCommitIRI, commitId).hasNext()
+                                && !conn.getStatements(null, wasInformedByIRI, commitId).hasNext()) {
+                            conn.remove((Resource) null, null, null, commitId);
+                            conn.remove((Resource) null, commitIRI, commitId);
+                        } else {
+                            break;
+                        }
                     }
+                    conn.commit();
+                } else {
+                    log.warn("The HEAD Commit was not set on the Branch.");
                 }
-                conn.commit();
             } else {
                 throw new MatOntoException("The Branch could not be removed.");
             }
@@ -876,6 +881,34 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
+    public Difference getCommitDifference(Resource commitId) throws MatOntoException {
+        return this.getCommitDifference(commitId, commitFactory);
+    }
+
+    private <T extends Commit> Difference getCommitDifference(Resource commitId, OrmFactory<T> commitFactory) {
+        T commit = this.getCommit(commitId, commitFactory).orElseThrow(() ->
+                new MatOntoException("The Commit could not be retrieved."));
+        try (RepositoryConnection conn = repository.getConnection()) {
+            Resource revisionIRI = (Resource) commit.getProperty(vf.createIRI(Activity.generated_IRI)).get();
+            Revision revision = revisionFactory.getExisting(revisionIRI, commit.getModel());
+            Resource additionsIRI = (Resource)revision.getAdditions().orElseThrow(() ->
+                    new MatOntoException("The additions could not be found."));
+            Resource deletionsIRI = (Resource)revision.getDeletions().orElseThrow(() ->
+                    new MatOntoException("The deletions could not be found."));
+            Model addModel = mf.createModel();
+            Model deleteModel = mf.createModel();
+            conn.getStatements(null, null, null, additionsIRI).forEach(addModel::add);
+            conn.getStatements(null, null, null, deletionsIRI).forEach(deleteModel::add);
+            return new SimpleDifference.Builder()
+                    .additions(addModel)
+                    .deletions(deleteModel)
+                    .build();
+        } catch (RepositoryException e) {
+            throw new MatOntoException("Error in repository connection", e);
+        }
+    }
+
+    @Override
     public void removeInProgressCommit(Resource inProgressCommitId) throws MatOntoException {
         if (resourceExists(inProgressCommitId, InProgressCommit.TYPE)) {
             remove(inProgressCommitId);
@@ -886,24 +919,12 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public Model applyInProgressCommit(Resource inProgressCommitId, Model entity) throws MatOntoException {
-        InProgressCommit inProgressCommit = this.getCommit(inProgressCommitId, inProgressCommitFactory)
-                .orElseThrow(() -> new MatOntoException("The InProgressCommit could not be retrieved."));
-        try (RepositoryConnection conn = repository.getConnection()) {
-            Resource revisionIRI = (Resource)inProgressCommit.getProperty(vf.createIRI(Activity.generated_IRI)).get();
-            Revision revision = revisionFactory.getExisting(revisionIRI, inProgressCommit.getModel());
-            Resource additionsIRI = (Resource)revision.getAdditions().orElseThrow(() ->
-                    new MatOntoException("The additions could not be found."));
-            Resource deletionsIRI = (Resource)revision.getDeletions().orElseThrow(() ->
-                    new MatOntoException("The deletions could not be found."));
-            Model result = mf.createModel(entity);
-            conn.getStatements(null, null, null, additionsIRI).forEach(statement -> result.add(statement.getSubject(),
-                    statement.getPredicate(), statement.getObject()));
-            conn.getStatements(null, null, null, deletionsIRI).forEach(statement -> result.remove(statement
-                    .getSubject(), statement.getPredicate(), statement.getObject()));
-            return result;
-        } catch (RepositoryException e) {
-            throw new MatOntoException("Error in repository connection", e);
-        }
+        Difference diff = this.getCommitDifference(inProgressCommitId, inProgressCommitFactory);
+        Model result = mf.createModel(entity);
+        diff.getAdditions().forEach(result::add);
+        diff.getDeletions().forEach(statement -> result.remove(statement.getSubject(), statement.getPredicate(),
+                statement.getObject()));
+        return result;
     }
 
     @Override

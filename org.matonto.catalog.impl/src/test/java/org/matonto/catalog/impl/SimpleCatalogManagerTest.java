@@ -1207,6 +1207,7 @@ public class SimpleCatalogManagerTest {
     @Test
     public void testAddVersion() throws Exception {
         IRI latestVersionIRI = vf.createIRI(VersionedRecord.latestVersion_IRI);
+        IRI versionPropIRI = vf.createIRI(VersionedRecord.version_IRI);
         Resource versionId = vf.createIRI("https://matonto.org/versions#test");
         Resource versionedRecordId = vf.createIRI("http://matonto.org/test/records#get");
 
@@ -1215,10 +1216,13 @@ public class SimpleCatalogManagerTest {
         assertFalse(conn.getStatements(versionId, null, null, versionId).hasNext());
         assertTrue(conn.getStatements(versionedRecordId, latestVersionIRI, null, versionedRecordId).hasNext());
         assertFalse(conn.getStatements(versionedRecordId, latestVersionIRI, versionId, versionedRecordId).hasNext());
+        assertTrue(conn.getStatements(versionedRecordId, versionPropIRI, null, versionedRecordId).hasNext());
+        assertFalse(conn.getStatements(versionedRecordId, versionPropIRI, versionId, versionedRecordId).hasNext());
 
         manager.addVersion(version, versionedRecordId);
         assertTrue(conn.getStatements(versionId, null, null, versionId).hasNext());
         assertTrue(conn.getStatements(versionedRecordId, latestVersionIRI, versionId, versionedRecordId).hasNext());
+        assertTrue(conn.getStatements(versionedRecordId, versionPropIRI, versionId, versionedRecordId).hasNext());
         conn.close();
     }
 
@@ -1873,6 +1877,23 @@ public class SimpleCatalogManagerTest {
     }
 
     @Test
+    public void testGetCommitDifference() throws Exception {
+        Resource commit = vf.createIRI("http://matonto.org/test/commits#test");
+        IRI dcTitleIRI = vf.createIRI(DC_TITLE);
+        Resource addIRI = vf.createIRI("http://matonto.org/test/add");
+        Resource deleteIRI = vf.createIRI("http://matonto.org/test/delete");
+
+        Difference result = manager.getCommitDifference(commit);
+        assertTrue(result.getAdditions().contains(addIRI, dcTitleIRI, vf.createLiteral("Add")));
+        assertTrue(result.getDeletions().contains(deleteIRI, dcTitleIRI, vf.createLiteral("Delete")));
+    }
+
+    @Test(expected = MatOntoException.class)
+    public void testGetMissingCommitDifference() {
+        manager.getCommitDifference(notPresentId);
+    }
+
+    @Test
     public void testRemoveInProgressCommit() throws Exception {
         Resource inProgressCommitId = vf.createIRI("http://matonto.org/test/in-progress-commits#test");
         RepositoryConnection conn = repo.getConnection();
@@ -1881,6 +1902,11 @@ public class SimpleCatalogManagerTest {
         manager.removeInProgressCommit(inProgressCommitId);
         assertFalse(conn.getStatements(inProgressCommitId, null, null, inProgressCommitId).hasNext());
         conn.close();
+    }
+
+    @Test(expected = MatOntoException.class)
+    public void testRemoveMissingInProgressCommit() {
+        manager.removeInProgressCommit(notPresentId);
     }
 
     @Test
@@ -1903,11 +1929,6 @@ public class SimpleCatalogManagerTest {
     @Test(expected = MatOntoException.class)
     public void testApplyMissingInProgressCommit() {
         manager.applyInProgressCommit(notPresentId, mf.createModel());
-    }
-
-    @Test(expected = MatOntoException.class)
-    public void testRemoveMissingInProgressCommit() {
-        manager.removeInProgressCommit(notPresentId);
     }
 
     @Test
