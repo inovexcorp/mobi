@@ -52,6 +52,7 @@
     "font-awesome": "^4.5.0",
     "handsontable": "^0.27.0",
     "lodash": "^4.6.0",
+    "ng-handsontable": "^0.13.0",
     "ui-select": "^0.19.3"
   }
 }
