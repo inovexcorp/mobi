@@ -83,7 +83,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import javax.annotation.Nonnull;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Response;
 
@@ -142,9 +141,9 @@ public class OntologyRestImpl implements OntologyRest {
     @Override
     public Response uploadFile(ContainerRequestContext context, InputStream fileInputStream, String title,
                                String description, String keywords) {
-        throwErrorIfMissingParam(title, "The \"title\" is missing.");
+        throwErrorIfMissingParam(title, "The title is missing.");
         if (fileInputStream == null) {
-            throw ErrorUtils.sendError("The \"file\" is missing.", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError("The file is missing.", Response.Status.BAD_REQUEST);
         }
         User user = getUserFromContext(context);
         try {
@@ -337,8 +336,6 @@ public class OntologyRestImpl implements OntologyRest {
                                       String branchIdStr, String commitIdStr) {
         Set<Ontology> importedOntologies = getImportedOntologies(context, ontologyIdStr, branchIdStr, commitIdStr);
         JSONArray array = importedOntologies.stream()
-                .filter(ontology -> !ontology.getOntologyId().getOntologyIdentifier().stringValue()
-                        .equals(ontologyIdStr))
                 .map(ontology -> getOntologyAsJsonObject(ontology, rdfFormat))
                 .collect(JSONArray::new, JSONArray::add, JSONArray::add);
         return array.size() == 0 ? Response.status(Response.Status.NO_CONTENT).build()
@@ -458,7 +455,7 @@ public class OntologyRestImpl implements OntologyRest {
                                      String branchIdStr, String commitIdStr) {
         Ontology ontology = getOntology(context, ontologyIdStr, branchIdStr, commitIdStr).orElseThrow(() ->
                 ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
-        throwErrorIfMissingParam(searchText, "The \"searchText\" is missing.");
+        throwErrorIfMissingParam(searchText, "The searchText is missing.");
         TupleQueryResult results = ontologyManager.getSearchResults(ontology, searchText);
         Map<String, Set<String>> response = new HashMap<>();
         results.forEach(queryResult -> {
@@ -551,13 +548,23 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     /**
+     * Checks to make sure that the provided String is not null or empty;
+     *
+     * @param param the parameter String to check
+     * @return true if it null or empty; otherwise, false
+     */
+    private boolean stringParamIsMissing(String param) {
+        return param == null || param.length() == 0;
+    }
+
+    /**
      * Checks to make sure that the parameter is present. If it is not, it throws an error with the provided String.
      *
-     * @param param the parameter String being checked
+     * @param param the parameter String to check
      * @param errorMessage the error message String to throw in the error is missing
      */
     private void throwErrorIfMissingParam(String param, String errorMessage) {
-        if (param == null || param.length() == 0) {
+        if (stringParamIsMissing(param)) {
             throw ErrorUtils.sendError(errorMessage, Response.Status.BAD_REQUEST);
         }
     }
@@ -605,16 +612,23 @@ public class OntologyRestImpl implements OntologyRest {
      */
     private Optional<Ontology> getOntology(ContainerRequestContext context, String ontologyIdStr, String branchIdStr,
                                            String commitIdStr) {
-        throwErrorIfMissingParam(ontologyIdStr, "The \"ontologyIdStr\" is missing.");
-        throwErrorIfMissingParam(branchIdStr, "The \"branchIdStr\" is missing.");
-        throwErrorIfMissingParam(commitIdStr, "The \"commitIdStr\" is missing.");
-
+        throwErrorIfMissingParam(ontologyIdStr, "The ontologyIdStr is missing.");
         Resource ontologyId = valueFactory.createIRI(ontologyIdStr);
-        Resource branchId = valueFactory.createIRI(branchIdStr);
-        Resource commitId = valueFactory.createIRI(commitIdStr);
 
         try {
-            Optional<Ontology> optionalOntology = ontologyManager.retrieveOntology(ontologyId, branchId, commitId);
+            Optional<Ontology> optionalOntology;
+            if (!stringParamIsMissing(commitIdStr)) {
+                throwErrorIfMissingParam(branchIdStr, "The branchIdStr is missing.");
+                Resource branchId = valueFactory.createIRI(branchIdStr);
+                Resource commitId = valueFactory.createIRI(commitIdStr);
+                optionalOntology = ontologyManager.retrieveOntology(ontologyId, branchId, commitId);
+            } else if (!stringParamIsMissing(branchIdStr)) {
+                Resource branchId = valueFactory.createIRI(branchIdStr);
+                optionalOntology = ontologyManager.retrieveOntology(ontologyId, branchId);
+            } else {
+                optionalOntology = ontologyManager.retrieveOntology(ontologyId);
+            }
+
             if (optionalOntology.isPresent()) {
                 User user = getUserFromContext(context);
                 OntologyRecord record = catalogManager.getRecord(ontologyIdStr, ontologyRecordFactory).orElseThrow(() ->
@@ -700,7 +714,10 @@ public class OntologyRestImpl implements OntologyRest {
                                                 String branchIdStr, String commitIdStr) {
         Optional<Ontology> optionalOntology = getOntology(context, ontologyIdStr, branchIdStr, commitIdStr);
         if (optionalOntology.isPresent()) {
-            return optionalOntology.get().getImportsClosure();
+            return optionalOntology.get().getImportsClosure().stream()
+                    .filter(ontology -> !ontology.getOntologyId().getOntologyIdentifier().stringValue()
+                            .equals(ontologyIdStr))
+                    .collect(Collectors.toSet());
         } else {
             throw ErrorUtils.sendError("Ontology " + ontologyIdStr + " does not exist.", Response.Status.BAD_REQUEST);
         }
@@ -712,7 +729,7 @@ public class OntologyRestImpl implements OntologyRest {
      * @param ontology the Ontology to get the Annotations from.
      * @return a JSONArray of Annotations from the provided Ontology.
      */
-    private JSONObject getAnnotationArray(@Nonnull Ontology ontology) {
+    private JSONObject getAnnotationArray(Ontology ontology) {
         Set<IRI> iris = new HashSet<>();
         iris.addAll(ontology.getAllAnnotations()
                 .stream()
@@ -734,7 +751,7 @@ public class OntologyRestImpl implements OntologyRest {
      * @param ontology the Ontology to get the Annotations from.
      * @return a JSONArray of Classes from the provided Ontology.
      */
-    private JSONObject getClassArray(@Nonnull Ontology ontology) {
+    private JSONObject getClassArray(Ontology ontology) {
         List<IRI> iris = ontology.getAllClasses()
                 .stream()
                 .map(Entity::getIRI)
@@ -751,7 +768,7 @@ public class OntologyRestImpl implements OntologyRest {
      * @param ontology the Ontology to get the Annotations from.
      * @return a JSONArray of Datatypes from the provided Ontology.
      */
-    private JSONObject getDatatypeArray(@Nonnull Ontology ontology) {
+    private JSONObject getDatatypeArray(Ontology ontology) {
         List<IRI> iris = ontology.getAllDatatypes()
                 .stream()
                 .map(Entity::getIRI)
@@ -767,7 +784,7 @@ public class OntologyRestImpl implements OntologyRest {
      * @param ontology the Ontology to get the Annotations from.
      * @return a JSONArray of ObjectProperties from the provided Ontology.
      */
-    private JSONObject getObjectPropertyArray(@Nonnull Ontology ontology) {
+    private JSONObject getObjectPropertyArray(Ontology ontology) {
         List<IRI> iris = ontology.getAllObjectProperties()
                 .stream()
                 .map(Entity::getIRI)
@@ -783,7 +800,7 @@ public class OntologyRestImpl implements OntologyRest {
      * @param ontology the Ontology to get the Annotations from.
      * @return a JSONArray of DatatypeProperties from the provided Ontology.
      */
-    private JSONObject getDataPropertyArray(@Nonnull Ontology ontology) {
+    private JSONObject getDataPropertyArray(Ontology ontology) {
         List<IRI> iris = ontology.getAllDataProperties()
                 .stream()
                 .map(Entity::getIRI)
@@ -816,7 +833,7 @@ public class OntologyRestImpl implements OntologyRest {
      * @param iris the Collection of IRIs to restructure into this JSONArray.
      * @return a JSONArray of the restructured items.
      */
-    private JSONArray iriListToJsonArray(@Nonnull Collection<IRI> iris) {
+    private JSONArray iriListToJsonArray(Collection<IRI> iris) {
         if (iris.isEmpty()) {
             return new JSONArray();
         }

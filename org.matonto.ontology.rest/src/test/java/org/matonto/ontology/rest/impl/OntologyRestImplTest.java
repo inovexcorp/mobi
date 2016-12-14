@@ -400,8 +400,13 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         when(ontologyManager.createOntology(any(Model.class))).thenReturn(ontology);
         when(ontologyManager.retrieveOntology(eq(ontologyIRI), any(Resource.class), any(Resource.class)))
                 .thenReturn(Optional.of(ontology));
+        when(ontologyManager.retrieveOntology(eq(ontologyIRI), any(Resource.class))).thenReturn(Optional.of(ontology));
+        when(ontologyManager.retrieveOntology(eq(ontologyIRI))).thenReturn(Optional.of(ontology));
         when(ontologyManager.retrieveOntology(eq(importedOntologyIRI), any(Resource.class), any(Resource.class)))
                 .thenReturn(Optional.of(importedOntology));
+        when(ontologyManager.retrieveOntology(eq(importedOntologyIRI), any(Resource.class)))
+                .thenReturn(Optional.of(importedOntology));
+        when(ontologyManager.retrieveOntology(eq(importedOntologyIRI))).thenReturn(Optional.of(importedOntology));
         TupleQueryResult subClassesOf = simpleOntologyManager.getSubClassesOf(ontology);
         when(ontologyManager.getSubClassesOf(eq(ontology))).thenReturn(subClassesOf);
         TupleQueryResult subObjectPropertiesOf = simpleOntologyManager.getSubObjectPropertiesOf(ontology);
@@ -443,8 +448,6 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
     }
 
     private void assertGetOntology(boolean hasInProgressCommit) {
-        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
-                any(Resource.class));
         assertGetUserFromContext();
         verify(catalogManager, atLeastOnce()).getRecord(anyString(), eq(ontologyRecordFactory));
         verify(catalogManager, atLeastOnce()).getInProgressCommitIRI(any(Resource.class), any(Resource.class));
@@ -598,6 +601,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .queryParam("entityId", catalogId.stringValue()).request().post(Entity.json(entity));
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(true);
         assertGetUserInProgressCommitIRI(true);
         verify(catalogManager, times(1)).addAdditions(any(Model.class), eq(inProgressCommitId));
@@ -616,6 +621,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .queryParam("entityId", catalogId.stringValue()).request().post(Entity.json(entity));
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(false);
         assertGetUserInProgressCommitIRI(false);
         verify(catalogManager, times(1)).addAdditions(any(Model.class), eq(inProgressCommitId));
@@ -635,6 +642,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .queryParam("entityId", catalogId.stringValue()).request().post(Entity.json(entity));
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(true);
         assertGetUserInProgressCommitIRI(true);
         verify(catalogManager, times(0)).addAdditions(any(Model.class), any(Resource.class));
@@ -650,6 +659,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .get();
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(true);
         JSONObject responseObject = JSONObject.fromObject(response.readEntity(String.class));
         assertAnnotations(responseObject);
@@ -669,6 +680,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .get();
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(false);
         JSONObject responseObject = JSONObject.fromObject(response.readEntity(String.class));
         assertAnnotations(responseObject);
@@ -680,7 +693,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
     }
 
     @Test
-    public void testGetIRIsInOntologyMissingBranchId() {
+    public void testGetIRIsInOntologyWithCommitIdAndMissingBranchId() {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/iris")
                 .queryParam("commitId", commitId.stringValue()).request().get();
 
@@ -692,7 +705,32 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/iris")
                 .queryParam("branchId", branchId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class));
+        assertGetOntology(true);
+        JSONObject responseObject = JSONObject.fromObject(response.readEntity(String.class));
+        assertAnnotations(responseObject);
+        assertClasses(responseObject);
+        assertDatatypes(responseObject);
+        assertObjectProperties(responseObject);
+        assertDataProperties(responseObject);
+        assertIndividuals(responseObject);
+    }
+
+    @Test
+    public void testGetIRIsInOntologyMissingBranchIdAndMissingCommitId() {
+        Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/iris").request().get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class));
+        assertGetOntology(true);
+        JSONObject responseObject = JSONObject.fromObject(response.readEntity(String.class));
+        assertAnnotations(responseObject);
+        assertClasses(responseObject);
+        assertDatatypes(responseObject);
+        assertObjectProperties(responseObject);
+        assertDataProperties(responseObject);
+        assertIndividuals(responseObject);
     }
 
     @Test
@@ -717,6 +755,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .get();
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(true);
         assertAnnotations(JSONObject.fromObject(response.readEntity(String.class)));
     }
@@ -730,12 +770,14 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .get();
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(false);
         assertAnnotations(JSONObject.fromObject(response.readEntity(String.class)));
     }
 
     @Test
-    public void testGetAnnotationsInOntologyMissingBranchId() {
+    public void testGetAnnotationsInOntologyWithCommitIdAndMissingBranchId() {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/annotations")
                 .queryParam("commitId", commitId.stringValue()).request().get();
 
@@ -747,7 +789,21 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/annotations")
                 .queryParam("branchId", branchId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class));
+        assertGetOntology(false);
+        assertAnnotations(JSONObject.fromObject(response.readEntity(String.class)));
+    }
+
+    @Test
+    public void testGetAnnotationsInOntologyMissingBranchIdAndMissingCommitId() {
+        Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/annotations")
+                .request().get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class));
+        assertGetOntology(false);
+        assertAnnotations(JSONObject.fromObject(response.readEntity(String.class)));
     }
 
     @Test
@@ -800,6 +856,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .get();
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(true);
         assertClasses(JSONObject.fromObject(response.readEntity(String.class)));
     }
@@ -813,12 +871,14 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .get();
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(false);
         assertClasses(JSONObject.fromObject(response.readEntity(String.class)));
     }
 
     @Test
-    public void testGetClassesInOntologyMissingBranchId() {
+    public void testGetClassesInOntologyWithCommitIdAndMissingBranchId() {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/classes")
                 .queryParam("commitId", commitId.stringValue()).request().get();
 
@@ -830,7 +890,21 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/classes")
                 .queryParam("branchId", branchId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class));
+        assertGetOntology(true);
+        assertClasses(JSONObject.fromObject(response.readEntity(String.class)));
+    }
+
+    @Test
+    public void testGetClassesInOntologyMissingBranchIdAndMissingCommitId() {
+        Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/classes").request()
+                .get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class));
+        assertGetOntology(true);
+        assertClasses(JSONObject.fromObject(response.readEntity(String.class)));
     }
 
     @Test
@@ -883,6 +957,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 commitId.stringValue()).request().delete();
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(true);
         assertDeletionsToInProgressCommit(true);
     }
@@ -896,12 +972,14 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 commitId.stringValue()).request().delete();
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(false);
         assertDeletionsToInProgressCommit(false);
     }
 
     @Test
-    public void testDeleteClassFromOntologyMissingBranchId() {
+    public void testDeleteClassFromOntologyWithCommitIdAndMissingBranchId() {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/classes/"
                 + encode(classId.stringValue())).queryParam("commitId", commitId.stringValue()).request().delete();
 
@@ -913,7 +991,21 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/classes/"
                 + encode(classId.stringValue())).queryParam("branchId", branchId.stringValue()).request().delete();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class));
+        assertGetOntology(true);
+        assertDeletionsToInProgressCommit(true);
+    }
+
+    @Test
+    public void testDeleteClassFromOntologyMissingBranchIdAndCommitId() {
+        Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/classes/"
+                + encode(classId.stringValue())).request().delete();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class));
+        assertGetOntology(true);
+        assertDeletionsToInProgressCommit(true);
     }
 
     @Test
@@ -937,6 +1029,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .get();
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(true);
         assertDatatypes(JSONObject.fromObject(response.readEntity(String.class)));
     }
@@ -950,12 +1044,14 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .get();
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(false);
         assertDatatypes(JSONObject.fromObject(response.readEntity(String.class)));
     }
 
     @Test
-    public void testGetDatatypesInOntologyMissingBranchId() {
+    public void testGetDatatypesInOntologyWithCommitIdAndMissingBranchId() {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/datatypes")
                 .queryParam("commitId", commitId.stringValue()).request().get();
 
@@ -967,7 +1063,21 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/datatypes")
                 .queryParam("branchId", branchId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class));
+        assertGetOntology(true);
+        assertDatatypes(JSONObject.fromObject(response.readEntity(String.class)));
+    }
+
+    @Test
+    public void testGetDatatypesInOntologyMissingBranchIdAndCommitId() {
+        Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/datatypes").request()
+                .get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class));
+        assertGetOntology(true);
+        assertDatatypes(JSONObject.fromObject(response.readEntity(String.class)));
     }
 
     @Test
@@ -1020,6 +1130,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .queryParam("commitId", commitId.stringValue()).request().delete();
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(true);
         assertDeletionsToInProgressCommit(true);
     }
@@ -1033,12 +1145,14 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .queryParam("commitId", commitId.stringValue()).request().delete();
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(false);
         assertDeletionsToInProgressCommit(false);
     }
 
     @Test
-    public void testDeleteDatatypeFromOntologyMissingBranchId() {
+    public void testDeleteDatatypeFromOntologyWithCommitIdAndMissingBranchId() {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/datatypes/"
                 + encode(datatypeIRI.stringValue())).queryParam("commitId", commitId.stringValue()).request().delete();
 
@@ -1050,7 +1164,21 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/datatypes/"
                 + encode(datatypeIRI.stringValue())).queryParam("branchId", branchId.stringValue()).request().delete();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class));
+        assertGetOntology(true);
+        assertDeletionsToInProgressCommit(true);
+    }
+
+    @Test
+    public void testDeleteDatatypeFromOntologyMissingBranchIdAndMissingCommitId() {
+        Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/datatypes/"
+                + encode(datatypeIRI.stringValue())).request().delete();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class));
+        assertGetOntology(true);
+        assertDeletionsToInProgressCommit(true);
     }
 
     @Test
@@ -1074,6 +1202,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .get();
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(true);
         assertObjectProperties(JSONObject.fromObject(response.readEntity(String.class)));
     }
@@ -1087,12 +1217,14 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .get();
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(false);
         assertObjectProperties(JSONObject.fromObject(response.readEntity(String.class)));
     }
 
     @Test
-    public void testGetObjectPropertiesInOntologyMissingBranchId() {
+    public void testGetObjectPropertiesInOntologyWithCommitIdAndMissingBranchId() {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/object-properties")
                 .queryParam("commitId", commitId.stringValue()).request().get();
 
@@ -1104,7 +1236,21 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/object-properties")
                 .queryParam("branchId", branchId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class));
+        assertGetOntology(true);
+        assertObjectProperties(JSONObject.fromObject(response.readEntity(String.class)));
+    }
+
+    @Test
+    public void testGetObjectPropertiesInOntologyMissingBranchIdAndCommitId() {
+        Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/object-properties")
+                .request().get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class));
+        assertGetOntology(true);
+        assertObjectProperties(JSONObject.fromObject(response.readEntity(String.class)));
     }
 
     @Test
@@ -1157,6 +1303,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .queryParam("commitId", commitId.stringValue()).request().delete();
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(true);
         assertDeletionsToInProgressCommit(true);
     }
@@ -1170,12 +1318,14 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .queryParam("commitId", commitId.stringValue()).request().delete();
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(false);
         assertDeletionsToInProgressCommit(false);
     }
 
     @Test
-    public void testDeleteObjectPropertyFromOntologyMissingBranchId() {
+    public void testDeleteObjectPropertyFromOntologyWithCommitIdAndMissingBranchId() {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/object-properties/"
                 + encode(objectPropertyIRI.stringValue())).queryParam("commitId", commitId.stringValue()).request()
                 .delete();
@@ -1189,7 +1339,21 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 + encode(objectPropertyIRI.stringValue())).queryParam("branchId", branchId.stringValue()).request()
                 .delete();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class));
+        assertGetOntology(true);
+        assertDeletionsToInProgressCommit(true);
+    }
+
+    @Test
+    public void testDeleteObjectPropertyFromOntologyMissingBranchIdAndCommitId() {
+        Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/object-properties/"
+                + encode(objectPropertyIRI.stringValue())).request().delete();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class));
+        assertGetOntology(true);
+        assertDeletionsToInProgressCommit(true);
     }
 
     @Test
@@ -1213,6 +1377,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .get();
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(true);
         assertDataProperties(JSONObject.fromObject(response.readEntity(String.class)));
     }
@@ -1224,12 +1390,14 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .get();
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(false);
         assertDataProperties(JSONObject.fromObject(response.readEntity(String.class)));
     }
 
     @Test
-    public void testGetDataPropertiesInOntologyMissingBranchId() {
+    public void testGetDataPropertiesInOntologyWithCommitIdAndMissingBranchId() {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/data-properties")
                 .queryParam("commitId", commitId.stringValue()).request().get();
 
@@ -1241,7 +1409,21 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/data-properties")
                 .queryParam("branchId", branchId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class));
+        assertGetOntology(true);
+        assertDataProperties(JSONObject.fromObject(response.readEntity(String.class)));
+    }
+
+    @Test
+    public void testGetDataPropertiesInOntologyMissingBranchIdAndCommitId() {
+        Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/data-properties")
+                .request().get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class));
+        assertGetOntology(true);
+        assertDataProperties(JSONObject.fromObject(response.readEntity(String.class)));
     }
 
     @Test
@@ -1294,6 +1476,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .queryParam("commitId", commitId.stringValue()).request().delete();
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(true);
         assertDeletionsToInProgressCommit(true);
     }
@@ -1307,12 +1491,14 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .queryParam("commitId", commitId.stringValue()).request().delete();
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(false);
         assertDeletionsToInProgressCommit(false);
     }
 
     @Test
-    public void testDeleteDataPropertyFromOntologyMissingBranchId() {
+    public void testDeleteDataPropertyFromOntologyWithCommitIdAndMissingBranchId() {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/data-properties/"
                 + encode(dataPropertyIRI.stringValue())).queryParam("commitId", commitId.stringValue()).request()
                 .delete();
@@ -1326,7 +1512,21 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 + encode(dataPropertyIRI.stringValue())).queryParam("branchId", branchId.stringValue()).request()
                 .delete();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class));
+        assertGetOntology(true);
+        assertDeletionsToInProgressCommit(true);
+    }
+
+    @Test
+    public void testDeleteDataPropertyFromOntologyMissingBranchIdAndCommitId() {
+        Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/data-properties/"
+                + encode(dataPropertyIRI.stringValue())).request().delete();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class));
+        assertGetOntology(true);
+        assertDeletionsToInProgressCommit(true);
     }
 
     @Test
@@ -1350,6 +1550,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .get();
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(true);
         assertIndividuals(JSONObject.fromObject(response.readEntity(String.class)));
     }
@@ -1361,12 +1563,14 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .get();
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(false);
         assertIndividuals(JSONObject.fromObject(response.readEntity(String.class)));
     }
 
     @Test
-    public void testGetNamedIndividualsInOntologyMissingBranchId() {
+    public void testGetNamedIndividualsInOntologyWithCommitIdAndMissingBranchId() {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/named-individuals")
                 .queryParam("commitId", commitId.stringValue()).request().get();
 
@@ -1378,7 +1582,21 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/named-individuals")
                 .queryParam("branchId", branchId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class));
+        assertGetOntology(true);
+        assertIndividuals(JSONObject.fromObject(response.readEntity(String.class)));
+    }
+
+    @Test
+    public void testGetNamedIndividualsInOntologyMissingBranchIdAndCommitId() {
+        Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/named-individuals")
+                .request().get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class));
+        assertGetOntology(true);
+        assertIndividuals(JSONObject.fromObject(response.readEntity(String.class)));
     }
 
     @Test
@@ -1431,6 +1649,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .queryParam("commitId", commitId.stringValue()).request().delete();
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(true);
         assertDeletionsToInProgressCommit(true);
     }
@@ -1444,12 +1664,14 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .queryParam("commitId", commitId.stringValue()).request().delete();
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(false);
         assertDeletionsToInProgressCommit(false);
     }
 
     @Test
-    public void testDeleteNamedIndividualFromOntologyMissingBranchId() {
+    public void testDeleteNamedIndividualFromOntologyWithCommitIdAndMissingBranchId() {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/named-individuals/"
                 + encode(individualIRI.stringValue())).queryParam("commitId", commitId.stringValue()).request()
                 .delete();
@@ -1463,7 +1685,21 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 + encode(individualIRI.stringValue())).queryParam("branchId", branchId.stringValue()).request()
                 .delete();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class));
+        assertGetOntology(true);
+        assertDeletionsToInProgressCommit(true);
+    }
+
+    @Test
+    public void testDeleteNamedIndividualFromOntologyMissingBranchIdAndCommitId() {
+        Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/named-individuals/"
+                + encode(individualIRI.stringValue())).request().delete();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class));
+        assertGetOntology(true);
+        assertDeletionsToInProgressCommit(true);
     }
 
     @Test
@@ -1487,6 +1723,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .get();
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(true);
         assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), (responseObject) ->{
             assertAnnotations(responseObject);
@@ -1507,6 +1745,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .get();
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(false);
         assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), (responseObject) ->{
             assertAnnotations(responseObject);
@@ -1519,7 +1759,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
     }
 
     @Test
-    public void testGetIRIsInImportedOntologiesMissingBranchId() {
+    public void testGetIRIsInImportedOntologiesWithCommitIdAndMissingBranchId() {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/imported-iris")
                 .queryParam("commitId", commitId.stringValue()).request().get();
 
@@ -1531,7 +1771,35 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/imported-iris")
                 .queryParam("branchId", branchId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class));
+        assertGetOntology(true);
+        assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), (responseObject) ->{
+            assertAnnotations(responseObject);
+            assertClasses(responseObject);
+            assertDatatypes(responseObject);
+            assertObjectProperties(responseObject);
+            assertDataProperties(responseObject);
+            assertIndividuals(responseObject);
+        });
+    }
+
+    @Test
+    public void testGetIRIsInImportedOntologiesMissingBranchIdAndCommitId() {
+        Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/imported-iris")
+                .request().get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class));
+        assertGetOntology(true);
+        assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), (responseObject) ->{
+            assertAnnotations(responseObject);
+            assertClasses(responseObject);
+            assertDatatypes(responseObject);
+            assertObjectProperties(responseObject);
+            assertDataProperties(responseObject);
+            assertIndividuals(responseObject);
+        });
     }
 
     @Test
@@ -1556,6 +1824,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .get();
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(true);
         assertEquals(JSONArray.fromObject(response.readEntity(String.class)), importedOntologyResults);
     }
@@ -1569,12 +1839,14 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .get();
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(false);
         assertEquals(JSONArray.fromObject(response.readEntity(String.class)), importedOntologyResults);
     }
 
     @Test
-    public void testGetImportsClosureMissingBranchId() {
+    public void testGetImportsClosureWithCommitIdAndMissingBranchId() {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/imported-ontologies")
                 .queryParam("commitId", commitId.stringValue()).request().get();
 
@@ -1586,7 +1858,21 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/imported-ontologies")
                 .queryParam("branchId", branchId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class));
+        assertGetOntology(true);
+        assertEquals(JSONArray.fromObject(response.readEntity(String.class)), importedOntologyResults);
+    }
+
+    @Test
+    public void testGetImportsClosureMissingBranchIdAndCommitId() {
+        Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/imported-ontologies")
+                .request().get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class));
+        assertGetOntology(true);
+        assertEquals(JSONArray.fromObject(response.readEntity(String.class)), importedOntologyResults);
     }
 
     @Test
@@ -1611,6 +1897,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .get();
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(true);
         assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), this::assertAnnotations);
     }
@@ -1624,12 +1912,14 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .get();
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(false);
         assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), this::assertAnnotations);
     }
 
     @Test
-    public void testGetAnnotationsInImportedOntologiesMissingBranchId() {
+    public void testGetAnnotationsInImportedOntologiesWithCommitIdAndMissingBranchId() {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/imported-annotations")
                 .queryParam("commitId", commitId.stringValue()).request().get();
 
@@ -1641,7 +1931,21 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/imported-annotations")
                 .queryParam("branchId", branchId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class));
+        assertGetOntology(true);
+        assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), this::assertAnnotations);
+    }
+
+    @Test
+    public void testGetAnnotationsInImportedOntologiesMissingBranchIdAndCommitId() {
+        Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/imported-annotations")
+                .request().get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class));
+        assertGetOntology(true);
+        assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), this::assertAnnotations);
     }
 
     @Test
@@ -1666,6 +1970,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .get();
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(true);
         assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), this::assertClasses);
     }
@@ -1679,12 +1985,14 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .get();
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(false);
         assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), this::assertClasses);
     }
 
     @Test
-    public void testGetClassesInImportedOntologiesMissingBranchId() {
+    public void testGetClassesInImportedOntologiesWithCommitIdAndMissingBranchId() {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/imported-classes")
                 .queryParam("commitId", commitId.stringValue()).request().get();
 
@@ -1696,7 +2004,21 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/imported-classes")
                 .queryParam("branchId", branchId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class));
+        assertGetOntology(true);
+        assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), this::assertClasses);
+    }
+
+    @Test
+    public void testGetClassesInImportedOntologiesMissingBranchIdAndCommitId() {
+        Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/imported-classes")
+                .request().get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class));
+        assertGetOntology(true);
+        assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), this::assertClasses);
     }
 
     @Test
@@ -1721,6 +2043,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .get();
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(true);
         assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), this::assertDatatypes);
     }
@@ -1734,12 +2058,14 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .get();
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(false);
         assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), this::assertDatatypes);
     }
 
     @Test
-    public void testGetDatatypesInImportedOntologiesMissingBranchId() {
+    public void testGetDatatypesInImportedOntologiesWithCommitIdAndMissingBranchId() {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/imported-datatypes")
                 .queryParam("commitId", commitId.stringValue()).request().get();
 
@@ -1751,7 +2077,21 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/imported-datatypes")
                 .queryParam("branchId", branchId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class));
+        assertGetOntology(true);
+        assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), this::assertDatatypes);
+    }
+
+    @Test
+    public void testGetDatatypesInImportedOntologiesMissingBranchIdAndCommitId() {
+        Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/imported-datatypes")
+                .request().get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class));
+        assertGetOntology(true);
+        assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), this::assertDatatypes);
     }
 
     @Test
@@ -1776,6 +2116,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 commitId.stringValue()).request().get();
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(true);
         assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), this::assertObjectProperties);
     }
@@ -1789,12 +2131,14 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 commitId.stringValue()).request().get();
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(false);
         assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), this::assertObjectProperties);
     }
 
     @Test
-    public void testGetObjectPropertiesInImportedOntologiesMissingBranchId() {
+    public void testGetObjectPropertiesInImportedOntologiesWithCommitIdAndMissingBranchId() {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue())
                 + "/imported-object-properties").queryParam("commitId", commitId.stringValue()).request().get();
 
@@ -1806,7 +2150,21 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue())
                 + "/imported-object-properties").queryParam("branchId", branchId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class));
+        assertGetOntology(true);
+        assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), this::assertObjectProperties);
+    }
+
+    @Test
+    public void testGetObjectPropertiesInImportedOntologiesMissingBranchIdAndCommitId() {
+        Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue())
+                + "/imported-object-properties").request().get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class));
+        assertGetOntology(true);
+        assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), this::assertObjectProperties);
     }
 
     @Test
@@ -1831,6 +2189,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 commitId.stringValue()).request().get();
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(true);
         assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), this::assertDataProperties);
     }
@@ -1844,12 +2204,14 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 commitId.stringValue()).request().get();
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(false);
         assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), this::assertDataProperties);
     }
 
     @Test
-    public void testGetDataPropertiesInImportedOntologiesMissingBranchId() {
+    public void testGetDataPropertiesInImportedOntologiesWithCommitIdAndMissingBranchId() {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue())
                 + "/imported-data-properties").queryParam("commitId", commitId.stringValue()).request().get();
 
@@ -1861,7 +2223,21 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue())
                 + "/imported-data-properties").queryParam("branchId", branchId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class));
+        assertGetOntology(true);
+        assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), this::assertDataProperties);
+    }
+
+    @Test
+    public void testGetDataPropertiesInImportedOntologiesMissingBranchIdAndCommmitId() {
+        Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue())
+                + "/imported-data-properties").request().get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class));
+        assertGetOntology(true);
+        assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), this::assertDataProperties);
     }
 
     @Test
@@ -1886,6 +2262,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 commitId.stringValue()).request().get();
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(true);
         assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), this::assertIndividuals);
     }
@@ -1899,12 +2277,14 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 commitId.stringValue()).request().get();
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(false);
         assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), this::assertIndividuals);
     }
 
     @Test
-    public void testGetNamedIndividualsInImportedOntologiesMissingBranchId() {
+    public void testGetNamedIndividualsInImportedOntologiesWithCommitIdMissingBranchId() {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue())
                 + "/imported-named-individuals").queryParam("commitId", commitId.stringValue()).request().get();
 
@@ -1916,7 +2296,21 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue())
                 + "/imported-named-individuals").queryParam("branchId", branchId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class));
+        assertGetOntology(true);
+        assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), this::assertIndividuals);
+    }
+
+    @Test
+    public void testGetNamedIndividualsInImportedOntologiesMissingBranchIdAndCommitId() {
+        Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue())
+                + "/imported-named-individuals").request().get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class));
+        assertGetOntology(true);
+        assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), this::assertIndividuals);
     }
 
     @Test
@@ -1941,6 +2335,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .get();
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(true);
         assertEquals(JSONObject.fromObject(response.readEntity(String.class)), subClassesOfResult);
     }
@@ -1954,12 +2350,14 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .get();
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(false);
         assertEquals(JSONObject.fromObject(response.readEntity(String.class)), subClassesOfResult);
     }
 
     @Test
-    public void testGetOntologyClassHierarchyMissingBranchId() {
+    public void testGetOntologyClassHierarchyWithCommitIdAndMissingBranchId() {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue())+ "/class-hierarchies")
                 .queryParam("commitId", commitId.stringValue()).request().get();
 
@@ -1971,7 +2369,21 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue())+ "/class-hierarchies")
                 .queryParam("branchId", branchId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class));
+        assertGetOntology(true);
+        assertEquals(JSONObject.fromObject(response.readEntity(String.class)), subClassesOfResult);
+    }
+
+    @Test
+    public void testGetOntologyClassHierarchyMissingBranchIdAndCommitId() {
+        Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue())+ "/class-hierarchies")
+                .request().get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class));
+        assertGetOntology(true);
+        assertEquals(JSONObject.fromObject(response.readEntity(String.class)), subClassesOfResult);
     }
 
     @Test
@@ -1996,6 +2408,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 commitId.stringValue()).request().get();
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(true);
         assertEquals(JSONObject.fromObject(response.readEntity(String.class)), subObjectPropertiesOfResult);
     }
@@ -2009,12 +2423,14 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 commitId.stringValue()).request().get();
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(false);
         assertEquals(JSONObject.fromObject(response.readEntity(String.class)), subObjectPropertiesOfResult);
     }
 
     @Test
-    public void testGetOntologyObjectPropertyHierarchyMissingBranchId() {
+    public void testGetOntologyObjectPropertyHierarchyWithCommitIdAndMissingBranchId() {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue())
                 + "/object-property-hierarchies").queryParam("commitId", commitId.stringValue()).request().get();
 
@@ -2026,7 +2442,21 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue())
                 + "/object-property-hierarchies").queryParam("branchId", branchId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class));
+        assertGetOntology(true);
+        assertEquals(JSONObject.fromObject(response.readEntity(String.class)), subObjectPropertiesOfResult);
+    }
+
+    @Test
+    public void testGetOntologyObjectPropertyHierarchyMissingBranchIdAndCommitId() {
+        Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue())
+                + "/object-property-hierarchies").request().get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class));
+        assertGetOntology(true);
+        assertEquals(JSONObject.fromObject(response.readEntity(String.class)), subObjectPropertiesOfResult);
     }
 
     @Test
@@ -2051,6 +2481,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 commitId.stringValue()).request().get();
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(true);
         assertEquals(JSONObject.fromObject(response.readEntity(String.class)), subDatatypePropertiesOfResult);
     }
@@ -2064,12 +2496,14 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 commitId.stringValue()).request().get();
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(false);
         assertEquals(JSONObject.fromObject(response.readEntity(String.class)), subDatatypePropertiesOfResult);
     }
 
     @Test
-    public void testGetOntologyDataPropertyHierarchyMissingBranchId() {
+    public void testGetOntologyDataPropertyHierarchyWithCommitIdAndMissingBranchId() {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue())
                 + "/data-property-hierarchies").queryParam("commitId", commitId.stringValue()).request().get();
 
@@ -2081,7 +2515,21 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue())
                 + "/data-property-hierarchies").queryParam("branchId", branchId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class));
+        assertGetOntology(true);
+        assertEquals(JSONObject.fromObject(response.readEntity(String.class)), subDatatypePropertiesOfResult);
+    }
+
+    @Test
+    public void testGetOntologyDataPropertyHierarchyMissingBranchIdAndCommitId() {
+        Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue())
+                + "/data-property-hierarchies").request().get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class));
+        assertGetOntology(true);
+        assertEquals(JSONObject.fromObject(response.readEntity(String.class)), subDatatypePropertiesOfResult);
     }
 
     @Test
@@ -2106,6 +2554,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .get();
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(true);
         assertEquals(JSONObject.fromObject(response.readEntity(String.class)), conceptHierarchyResult);
     }
@@ -2119,12 +2569,14 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .get();
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(false);
         assertEquals(JSONObject.fromObject(response.readEntity(String.class)), conceptHierarchyResult);
     }
 
     @Test
-    public void testGetConceptHierarchyMissingBranchId() {
+    public void testGetConceptHierarchyWithCommitIdAndMissingBranchId() {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/concept-hierarchies")
                 .queryParam("commitId", commitId.stringValue()).request().get();
 
@@ -2136,7 +2588,21 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/concept-hierarchies")
                 .queryParam("branchId", branchId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class));
+        assertGetOntology(true);
+        assertEquals(JSONObject.fromObject(response.readEntity(String.class)), conceptHierarchyResult);
+    }
+
+    @Test
+    public void testGetConceptHierarchyMissingBranchIdAndCommitId() {
+        Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/concept-hierarchies")
+                .request().get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class));
+        assertGetOntology(true);
+        assertEquals(JSONObject.fromObject(response.readEntity(String.class)), conceptHierarchyResult);
     }
 
     @Test
@@ -2161,6 +2627,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 commitId.stringValue()).request().get();
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(true);
         assertEquals(JSONObject.fromObject(response.readEntity(String.class)), subClassesOfResult);
     }
@@ -2174,12 +2642,14 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 commitId.stringValue()).request().get();
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(false);
         assertEquals(JSONObject.fromObject(response.readEntity(String.class)), subClassesOfResult);
     }
 
     @Test
-    public void testGetClassesWithIndividualsMissingBranchId() {
+    public void testGetClassesWithIndividualsWithCommitIdAndMissingBranchId() {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue())
                 + "/classes-with-individuals").queryParam("commitId", commitId.stringValue()).request().get();
 
@@ -2191,7 +2661,21 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue())
                 + "/classes-with-individuals").queryParam("branchId", branchId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class));
+        assertGetOntology(true);
+        assertEquals(JSONObject.fromObject(response.readEntity(String.class)), subClassesOfResult);
+    }
+
+    @Test
+    public void testGetClassesWithIndividualsMissingBranchIdAndCommitId() {
+        Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue())
+                + "/classes-with-individuals").request().get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class));
+        assertGetOntology(true);
+        assertEquals(JSONObject.fromObject(response.readEntity(String.class)), subClassesOfResult);
     }
 
     @Test
@@ -2216,6 +2700,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 commitId.stringValue()).request().get();
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(true);
         assertEquals(JSONObject.fromObject(response.readEntity(String.class)), entityUsagesResult);
     }
@@ -2229,12 +2715,14 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 commitId.stringValue()).request().get();
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(false);
         assertEquals(JSONObject.fromObject(response.readEntity(String.class)), entityUsagesResult);
     }
 
     @Test
-    public void testGetEntityUsagesMissingBranchId() {
+    public void testGetEntityUsagesWithCommitIdAndMissingBranchId() {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/entity-usages/"
                 + encode(classId.stringValue())).queryParam("commitId", commitId.stringValue()).request().get();
 
@@ -2246,7 +2734,21 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/entity-usages/"
                 + encode(classId.stringValue())).queryParam("branchId", branchId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class));
+        assertGetOntology(true);
+        assertEquals(JSONObject.fromObject(response.readEntity(String.class)), entityUsagesResult);
+    }
+
+    @Test
+    public void testGetEntityUsagesMissingBranchIdAndCommitId() {
+        Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/entity-usages/"
+                + encode(classId.stringValue())).request().get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class));
+        assertGetOntology(true);
+        assertEquals(JSONObject.fromObject(response.readEntity(String.class)), entityUsagesResult);
     }
 
     @Test
@@ -2271,6 +2773,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .queryParam("searchText", "class").request().get();
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(true);
         assertEquals(JSONObject.fromObject(response.readEntity(String.class)), searchResults);
     }
@@ -2284,6 +2788,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .queryParam("searchText", "class").request().get();
 
         assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(false);
         assertEquals(JSONObject.fromObject(response.readEntity(String.class)), searchResults);
     }
@@ -2295,6 +2801,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .queryParam("searchText", "nothing").request().get();
 
         assertEquals(response.getStatus(), 204);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class),
+                any(Resource.class));
         assertGetOntology(true);
     }
 
@@ -2308,7 +2816,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
     }
 
     @Test
-    public void testGetSearchResultsMissingBranchId() {
+    public void testGetSearchResultsWithCommitIdAndMissingBranchId() {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/search-results")
                 .queryParam("commitId", commitId.stringValue()).queryParam("searchText", "class").request().get();
 
@@ -2320,7 +2828,21 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/search-results")
                 .queryParam("branchId", branchId.stringValue()).queryParam("searchText", "class").request().get();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class), any(Resource.class));
+        assertGetOntology(true);
+        assertEquals(JSONObject.fromObject(response.readEntity(String.class)), searchResults);
+    }
+
+    @Test
+    public void testGetSearchResultsMissingBranchIdAndCommitId() {
+        Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/search-results")
+                .queryParam("searchText", "class").request().get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager, times(1)).retrieveOntology(any(Resource.class));
+        assertGetOntology(true);
+        assertEquals(JSONObject.fromObject(response.readEntity(String.class)), searchResults);
     }
 
     @Test
