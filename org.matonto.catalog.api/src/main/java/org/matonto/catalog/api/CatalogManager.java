@@ -340,7 +340,6 @@ public interface CatalogManager {
      * Creates an InProgressCommit which is a Commit that a User is actively working on. Once it is completed, the
      * InProgressCommit will be used to create a Commit with associated message.
      *
-     * @param parents The Commit(s) that this InProgressCommit was informed by.
      * @param user The User that this InProgressCommit is associated with.
      * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord that this InProgressCommit is on.
      * @return Optional with an InProgressCommit created using the provided metadata if the identified branch exists.
@@ -399,6 +398,17 @@ public interface CatalogManager {
      * @throws MatOntoException Thrown if a connection to the repository could not be made.
      */
     <T extends Commit> Optional<T> getCommit(Resource commitId, OrmFactory<T> factory) throws MatOntoException;
+
+    /**
+     * Gets the IRI of the InProgressCommit for the User identified by the provided Resource for the VersionedRDFRecord
+     * identified by the provided Resource.
+     *
+     * @param userId The IRI of the User whose InProgressCommit you want to get.
+     * @param recordId The IRI of the Record the InProgressCommit should be associated with.
+     * @return The Resource of the InProgressCommti identified by the provided Resource if it exists.
+     * @throws MatOntoException Thrown if a connection to the repository could not be made.
+     */
+    Optional<Resource> getInProgressCommitIRI(Resource userId, Resource recordId) throws MatOntoException;
 
     /**
      * Removes the InProgressCommit identified by the provided Resource.
