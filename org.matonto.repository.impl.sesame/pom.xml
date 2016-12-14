@@ -42,7 +42,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>persistence.api</artifactId>
-            <version>1.4.9-SNAPSHOT</version>
+            <version>1.4.10-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
@@ -102,7 +102,8 @@
                             org.matonto.repository.base; provide:=true,
                             org.matonto.repository.config; provide:=true,
                             org.matonto.query.api; provide:=true,
-                            org.matonto.query; provide:=true
+                            org.matonto.query; provide:=true,
+                            org.matonto.repository.impl.sesame
                         </Export-Package>
                         <_metatype>*</_metatype>
                         <Service-Component>*</Service-Component>

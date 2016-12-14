@@ -41,17 +41,17 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.api</artifactId>
-            <version>1.4.9-SNAPSHOT</version>
+            <version>1.4.10-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.utils</artifactId>
-            <version>1.4.9-SNAPSHOT</version>
+            <version>1.4.10-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>persistence.api</artifactId>
-            <version>1.4.9-SNAPSHOT</version>
+            <version>1.4.10-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
@@ -61,12 +61,12 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>catalog.api</artifactId>
-            <version>1.4.9-SNAPSHOT</version>
+            <version>1.4.10-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>repository.impl.sesame</artifactId>
-            <version>1.4.9-SNAPSHOT</version>
+            <version>1.4.10-SNAPSHOT</version>
         </dependency>
 
         <dependency>
@@ -142,7 +142,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>catalog.impl</artifactId>
-            <version>1.4.9-SNAPSHOT</version>
+            <version>1.4.10-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
