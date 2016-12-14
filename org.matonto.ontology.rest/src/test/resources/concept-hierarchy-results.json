@@ -1,10 +1,6 @@
-@Version("1.3.0.${build}")
-
-package org.matonto.persistence.utils;
-
 /*-
  * #%L
- * org.matonto.persistence.utils
+ * org.matonto.ontology.rest
  * $Id:$
  * $HeadURL:$
  * %%
@@ -24,5 +20,20 @@ package org.matonto.persistence.utils;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-
-import aQute.bnd.annotation.Version;
+{
+  "hierarchy": [
+    {
+      "entityIRI": "https://matonto.org/vocabulary#Concept1",
+      "subEntities": [
+        {
+          "entityIRI": "https://matonto.org/vocabulary#Concept2"
+        }
+      ]
+    }
+  ],
+  "index": {
+    "https://matonto.org/vocabulary#Concept2": [
+      "https://matonto.org/vocabulary#Concept1"
+    ]
+  }
+}

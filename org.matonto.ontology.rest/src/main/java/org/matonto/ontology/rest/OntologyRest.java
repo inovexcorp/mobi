@@ -28,8 +28,6 @@ import io.swagger.annotations.ApiOperation;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
 import java.io.InputStream;
-import java.util.List;
-import javax.annotation.Nonnull;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -54,9 +52,9 @@ public interface OntologyRest {
      * the repository to track the work done on it. A master Branch is created and stored with an initial Commit
      * containing the data provided in the ontology file.
      *
-     * @param context the context of the request
-     * @param fileInputStream the ontology file to upload
-     * @param title the title for the OntologyRecord
+     * @param context the context of the request.
+     * @param fileInputStream the ontology file to upload.
+     * @param title the title for the OntologyRecord.
      * @param description the description for the OntologyRecord
      * @param keywords the comma separated list of keywords associated with the OntologyRecord
      * @return OK if persisted, BAD REQUEST if publishers can't be found, and INTERNAL SERVER ERROR if problems with
@@ -67,8 +65,8 @@ public interface OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     Response uploadFile(@Context ContainerRequestContext context,
-                        @FormDataParam("file") @Nonnull InputStream fileInputStream,
-                        @FormDataParam("title") @Nonnull String title,
+                        @FormDataParam("file") InputStream fileInputStream,
+                        @FormDataParam("title") String title,
                         @FormDataParam("description") String description,
                         @FormDataParam("keywords") String keywords);
 
@@ -76,25 +74,37 @@ public interface OntologyRest {
      * Updates the InProgressCommit associated with the User making the request for the OntologyRecord identified by the
      * provided ontologyId.
      *
+     * @param context the context of the request.
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
-     * @param resourceIdStr the String representing the edited Resource id. NOTE: Assumes id represents
-     *                      an IRI unless String begins with "_:".
-     * @param resourceJson the String representing the edited Resource.
+     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
+     *                    master Branch.
+     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
+     *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
+     *                    otherwise, nothing will be returned.
+     * @param entityIdStr the String representing the edited entity id. NOTE: Assumes id represents an IRI unless String
+     *                    begins with "_:".
+     * @param entityJson the String representing the edited Resource.
      * @return true if updated, false otherwise
      */
     @POST
     @Path("{ontologyId}")
+    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     Response saveChangesToOntology(@Context ContainerRequestContext context,
                                    @PathParam("ontologyId") String ontologyIdStr,
-                                   @QueryParam("resourceId") String resourceIdStr,
-                                   @QueryParam("resourceJson") String resourceJson);
+                                   @QueryParam("branchId") String branchIdStr,
+                                   @QueryParam("commitId") String commitIdStr,
+                                   @QueryParam("entityId") String entityIdStr,
+                                   String entityJson);
 
     /**
      * Returns IRIs in the ontology identified by the provided IDs.
      *
+     * @param context the context of the request.
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
      * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -110,13 +120,15 @@ public interface OntologyRest {
     @Path("{ontologyId}/iris")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    Response getIRIsInOntology(@PathParam("ontologyId") String ontologyIdStr,
+    Response getIRIsInOntology(@Context ContainerRequestContext context,
+                               @PathParam("ontologyId") String ontologyIdStr,
                                @QueryParam("branchId") String branchIdStr,
                                @QueryParam("commitId") String commitIdStr);
 
     /**
      * Returns annotation properties in the ontology identified by the provided IDs.
      *
+     * @param context the context of the request.
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
      * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -132,37 +144,33 @@ public interface OntologyRest {
     @Path("{ontologyId}/annotations")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    Response getAnnotationsInOntology(@PathParam("ontologyId") String ontologyIdStr,
+    Response getAnnotationsInOntology(@Context ContainerRequestContext context,
+                                      @PathParam("ontologyId") String ontologyIdStr,
                                       @QueryParam("branchId") String branchIdStr,
                                       @QueryParam("commitId") String commitIdStr);
 
     /**
      * Create a new owl annotation property in the ontology identified by the provided IDs.
      *
+     * @param context the context of the request.
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
      * @param annotationJson the String representing the new annotation in JSON-LD.
-     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
-     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
-     *                    master Branch.
-     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
-     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
-     *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
-     *                    otherwise, nothing will be returned.
      * @return true if added, false otherwise.
      */
     @POST
     @Path("{ontologyId}/annotations")
+    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    Response addAnnotationToOntology(@PathParam("ontologyId") String ontologyIdStr,
-                                     @QueryParam("annotationJson") String annotationJson,
-                                     @QueryParam("branchId") String branchIdStr,
-                                     @QueryParam("commitId") String commitIdStr);
+    Response addAnnotationToOntology(@Context ContainerRequestContext context,
+                                     @PathParam("ontologyId") String ontologyIdStr,
+                                     String annotationJson);
 
     /**
      * Returns classes in the ontology identified by the provided IDs.
      *
+     * @param context the context of the request.
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
      * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -178,37 +186,33 @@ public interface OntologyRest {
     @Path("{ontologyId}/classes")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    Response getClassesInOntology(@PathParam("ontologyId") String ontologyIdStr,
+    Response getClassesInOntology(@Context ContainerRequestContext context,
+                                  @PathParam("ontologyId") String ontologyIdStr,
                                   @QueryParam("branchId") String branchIdStr,
                                   @QueryParam("commitId") String commitIdStr);
 
     /**
      * Add class to ontology identified by the provided IDs from the server.
      *
+     * @param context the context of the request.
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
-     * @param resourceJson the String representing the new class model.
-     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
-     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
-     *                    master Branch.
-     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
-     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
-     *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
-     *                    otherwise, nothing will be returned.
+     * @param classJson the String representing the new class model.
      * @return true if added, false otherwise.
      */
     @POST
     @Path("{ontologyId}/classes")
+    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    Response addClassToOntology(@PathParam("ontologyId") String ontologyIdStr,
-                                @QueryParam("resourceJson") String resourceJson,
-                                @QueryParam("branchId") String branchIdStr,
-                                @QueryParam("commitId") String commitIdStr);
+    Response addClassToOntology(@Context ContainerRequestContext context,
+                                @PathParam("ontologyId") String ontologyIdStr,
+                                String classJson);
 
     /**
      * Delete class with requested class ID from ontology identified by the provided IDs from the server.
      *
+     * @param context the context of the request.
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
      * @param classIdStr the String representing the class Resource id. NOTE: Assumes id represents
@@ -226,7 +230,8 @@ public interface OntologyRest {
     @Path("{ontologyId}/classes/{classId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    Response deleteClassFromOntology(@PathParam("ontologyId") String ontologyIdStr,
+    Response deleteClassFromOntology(@Context ContainerRequestContext context,
+                                     @PathParam("ontologyId") String ontologyIdStr,
                                      @PathParam("classId") String classIdStr,
                                      @QueryParam("branchId") String branchIdStr,
                                      @QueryParam("commitId") String commitIdStr);
@@ -234,6 +239,7 @@ public interface OntologyRest {
     /**
      * Returns datatypes in the ontology identified by the provided IDs.
      *
+     * @param context the context of the request.
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
      * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -249,37 +255,33 @@ public interface OntologyRest {
     @Path("{ontologyId}/datatypes")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    Response getDatatypesInOntology(@PathParam("ontologyId") String ontologyIdStr,
+    Response getDatatypesInOntology(@Context ContainerRequestContext context,
+                                    @PathParam("ontologyId") String ontologyIdStr,
                                     @QueryParam("branchId") String branchIdStr,
                                     @QueryParam("commitId") String commitIdStr);
 
     /**
      * Adds the datatype to the ontology identified by the provided IDs.
      *
+     * @param context the context of the request.
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
-     * @param resourceJson the String representing the new datatype model.
-     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
-     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
-     *                    master Branch.
-     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
-     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
-     *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
-     *                    otherwise, nothing will be returned.
+     * @param datatypeJson the String representing the new datatype model.
      * @return true if added, false otherwise.
      */
     @POST
     @Path("{ontologyId}/datatypes")
+    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    Response addDatatypeToOntology(@PathParam("ontologyId") String ontologyIdStr,
-                                   @QueryParam("resourceJson") String resourceJson,
-                                   @QueryParam("branchId") String branchIdStr,
-                                   @QueryParam("commitId") String commitIdStr);
+    Response addDatatypeToOntology(@Context ContainerRequestContext context,
+                                   @PathParam("ontologyId") String ontologyIdStr,
+                                   String datatypeJson);
 
     /**
      * Delete the datatype from the ontology identified by the provided IDs.
      *
+     * @param context the context of the request.
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
      * @param datatypeIdStr the String representing the datatype Resource id. NOTE: Assumes id represents
@@ -297,7 +299,8 @@ public interface OntologyRest {
     @Path("{ontologyId}/datatypes/{datatypeId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    Response deleteDatatypeFromOntology(@PathParam("ontologyId") String ontologyIdStr,
+    Response deleteDatatypeFromOntology(@Context ContainerRequestContext context,
+                                        @PathParam("ontologyId") String ontologyIdStr,
                                         @PathParam("datatypeId") String datatypeIdStr,
                                         @QueryParam("branchId") String branchIdStr,
                                         @QueryParam("commitId") String commitIdStr);
@@ -305,6 +308,7 @@ public interface OntologyRest {
     /**
      * Returns object properties in the ontology identified by the provided IDs.
      *
+     * @param context the context of the request.
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
      * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -320,41 +324,37 @@ public interface OntologyRest {
     @Path("{ontologyId}/object-properties")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    Response getObjectPropertiesInOntology(@PathParam("ontologyId") String ontologyIdStr,
+    Response getObjectPropertiesInOntology(@Context ContainerRequestContext context,
+                                           @PathParam("ontologyId") String ontologyIdStr,
                                            @QueryParam("branchId") String branchIdStr,
                                            @QueryParam("commitId") String commitIdStr);
 
     /**
      * Adds the object property to the ontology identified by the provided IDs from the server.
      *
+     * @param context the context of the request.
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
-     * @param resourceJson the String representing the new property model.
-     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
-     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
-     *                    master Branch.
-     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
-     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
-     *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
-     *                    otherwise, nothing will be returned.
+     * @param objectPropertyJson the String representing the new property model.
      * @return true if added, false otherwise.
      */
     @POST
     @Path("{ontologyId}/object-properties")
+    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    Response addObjectPropertyToOntology(@PathParam("ontologyId") String ontologyIdStr,
-                                         @QueryParam("resourceJson") String resourceJson,
-                                         @QueryParam("branchId") String branchIdStr,
-                                         @QueryParam("commitId") String commitIdStr);
+    Response addObjectPropertyToOntology(@Context ContainerRequestContext context,
+                                         @PathParam("ontologyId") String ontologyIdStr,
+                                         String objectPropertyJson);
 
     /**
      * Delete object property with requested class ID from ontology identified by the provided IDs from the server.
      *
+     * @param context the context of the request.
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
-     * @param propertyIdStr the String representing the class Resource id. NOTE: Assumes id represents
-     *                      an IRI unless String begins with "_:".
+     * @param objectPropertyIdStr the String representing the class Resource id. NOTE: Assumes id represents
+     *                            an IRI unless String begins with "_:".
      * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
      *                    master Branch.
@@ -365,17 +365,19 @@ public interface OntologyRest {
      * @return true if deleted, false otherwise.
      */
     @DELETE
-    @Path("{ontologyId}/object-properties/{propertyId}")
+    @Path("{ontologyId}/object-properties/{objectPropertyId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    Response deleteObjectPropertyFromOntology(@PathParam("ontologyId") String ontologyIdStr,
-                                              @PathParam("propertyId") String propertyIdStr,
+    Response deleteObjectPropertyFromOntology(@Context ContainerRequestContext context,
+                                              @PathParam("ontologyId") String ontologyIdStr,
+                                              @PathParam("objectPropertyId") String objectPropertyIdStr,
                                               @QueryParam("branchId") String branchIdStr,
                                               @QueryParam("commitId") String commitIdStr);
 
     /**
      * Returns data properties in the ontology identified by the provided IDs.
      *
+     * @param context the context of the request.
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
      * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -391,40 +393,36 @@ public interface OntologyRest {
     @Path("{ontologyId}/data-properties")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    Response getDataPropertiesInOntology(@PathParam("ontologyId") String ontologyIdStr,
+    Response getDataPropertiesInOntology(@Context ContainerRequestContext context,
+                                         @PathParam("ontologyId") String ontologyIdStr,
                                          @QueryParam("branchId") String branchIdStr,
                                          @QueryParam("commitId") String commitIdStr);
 
     /**
      * Adds the data property to the ontology identified by the provided IDs from the server.
      *
+     * @param context the context of the request.
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
-     * @param resourceJson the String representing the new property model.
-     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
-     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
-     *                    master Branch.
-     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
-     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
-     *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
-     *                    otherwise, nothing will be returned.
+     * @param dataPropertyJson the String representing the new property model.
      * @return true if added, false otherwise.
      */
     @POST
     @Path("{ontologyId}/data-properties")
+    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    Response addDataPropertyToOntology(@PathParam("ontologyId") String ontologyIdStr,
-                                       @QueryParam("resourceJson") String resourceJson,
-                                       @QueryParam("branchId") String branchIdStr,
-                                       @QueryParam("commitId") String commitIdStr);
+    Response addDataPropertyToOntology(@Context ContainerRequestContext context,
+                                       @PathParam("ontologyId") String ontologyIdStr,
+                                       String dataPropertyJson);
 
     /**
      * Delete data property with requested class ID from ontology identified by the provided IDs from the server.
      *
+     * @param context the context of the request.
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
-     * @param propertyIdStr the String representing the class Resource id. NOTE: Assumes id represents
+     * @param dataPropertyIdStr the String representing the class Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
      * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
@@ -436,17 +434,19 @@ public interface OntologyRest {
      * @return true if deleted, false otherwise.
      */
     @DELETE
-    @Path("{ontologyId}/data-properties/{propertyId}")
+    @Path("{ontologyId}/data-properties/{dataPropertyId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    Response deleteDataPropertyFromOntology(@PathParam("ontologyId") String ontologyIdStr,
-                                            @PathParam("propertyId") String propertyIdStr,
+    Response deleteDataPropertyFromOntology(@Context ContainerRequestContext context,
+                                            @PathParam("ontologyId") String ontologyIdStr,
+                                            @PathParam("dataPropertyId") String dataPropertyIdStr,
                                             @QueryParam("branchId") String branchIdStr,
                                             @QueryParam("commitId") String commitIdStr);
 
     /**
      * Returns named individuals in the ontology identified by the provided IDs.
      *
+     * @param context the context of the request.
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
      * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -462,37 +462,33 @@ public interface OntologyRest {
     @Path("{ontologyId}/named-individuals")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    Response getNamedIndividualsInOntology(@PathParam("ontologyId") String ontologyIdStr,
+    Response getNamedIndividualsInOntology(@Context ContainerRequestContext context,
+                                           @PathParam("ontologyId") String ontologyIdStr,
                                            @QueryParam("branchId") String branchIdStr,
                                            @QueryParam("commitId") String commitIdStr);
 
     /**
      * Adds the individual to the ontology identified by the provided IDs from the server.
      *
+     * @param context the context of the request.
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
-     * @param resourceJson the String representing the new individual model.
-     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
-     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
-     *                    master Branch.
-     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
-     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
-     *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
-     *                    otherwise, nothing will be returned.
+     * @param individualJson the String representing the new individual model.
      * @return true if added, false otherwise.
      */
     @POST
     @Path("{ontologyId}/named-individuals")
+    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    Response addIndividualToOntology(@PathParam("ontologyId") String ontologyIdStr,
-                                     @QueryParam("resourceJson") String resourceJson,
-                                     @QueryParam("branchId") String branchIdStr,
-                                     @QueryParam("commitId") String commitIdStr);
+    Response addIndividualToOntology(@Context ContainerRequestContext context,
+                                     @PathParam("ontologyId") String ontologyIdStr,
+                                     String individualJson);
 
     /**
      * Delete individual with requested class ID from ontology identified by the provided IDs from the server.
      *
+     * @param context the context of the request.
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
      * @param individualIdStr the String representing the individual Resource id. NOTE: Assumes id represents
@@ -510,7 +506,8 @@ public interface OntologyRest {
     @Path("{ontologyId}/named-individuals/{individualId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    Response deleteIndividualFromOntology(@PathParam("ontologyId") String ontologyIdStr,
+    Response deleteIndividualFromOntology(@Context ContainerRequestContext context,
+                                          @PathParam("ontologyId") String ontologyIdStr,
                                           @PathParam("individualId") String individualIdStr,
                                           @QueryParam("branchId") String branchIdStr,
                                           @QueryParam("commitId") String commitIdStr);
@@ -518,6 +515,7 @@ public interface OntologyRest {
     /**
      * Returns IRIs in the imports closure for the ontology identified by the provided IDs.
      *
+     * @param context the context of the request.
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
      * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -533,7 +531,8 @@ public interface OntologyRest {
     @Path("{ontologyId}/imported-iris")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    Response getIRIsInImportedOntologies(@PathParam("ontologyId") String ontologyIdStr,
+    Response getIRIsInImportedOntologies(@Context ContainerRequestContext context,
+                                         @PathParam("ontologyId") String ontologyIdStr,
                                          @QueryParam("branchId") String branchIdStr,
                                          @QueryParam("commitId") String commitIdStr);
 
@@ -541,6 +540,7 @@ public interface OntologyRest {
      * Returns an array of the imports closure in the requested format from the ontology
      * with the requested ID.
      *
+     * @param context the context of the request.
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
      * @param rdfFormat the desired RDF return format. NOTE: Optional param - defaults to "jsonld".
@@ -558,7 +558,8 @@ public interface OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @ApiOperation(value = "Retrieves the JSON-LD of all directly imported ontologies")
-    Response getImportsClosure(@PathParam("ontologyId") String ontologyIdStr,
+    Response getImportsClosure(@Context ContainerRequestContext context,
+                               @PathParam("ontologyId") String ontologyIdStr,
                                @DefaultValue("jsonld") @QueryParam("rdfFormat") String rdfFormat,
                                @QueryParam("branchId") String branchIdStr,
                                @QueryParam("commitId") String commitIdStr);
@@ -566,6 +567,7 @@ public interface OntologyRest {
     /**
      * Returns annotation properties in the imports closure for the ontology identified by the provided IDs.
      *
+     * @param context the context of the request.
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
      * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -581,13 +583,15 @@ public interface OntologyRest {
     @Path("{ontologyId}/imported-annotations")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    Response getAnnotationsInImportedOntologies(@PathParam("ontologyId") String ontologyIdStr,
+    Response getAnnotationsInImportedOntologies(@Context ContainerRequestContext context,
+                                                @PathParam("ontologyId") String ontologyIdStr,
                                                 @QueryParam("branchId") String branchIdStr,
                                                 @QueryParam("commitId") String commitIdStr);
 
     /**
      * Returns classes in the imports closure for the ontology identified by the provided IDs.
      *
+     * @param context the context of the request.
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
      * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -603,13 +607,15 @@ public interface OntologyRest {
     @Path("{ontologyId}/imported-classes")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    Response getClassesInImportedOntologies(@PathParam("ontologyId") String ontologyIdStr,
+    Response getClassesInImportedOntologies(@Context ContainerRequestContext context,
+                                            @PathParam("ontologyId") String ontologyIdStr,
                                             @QueryParam("branchId") String branchIdStr,
                                             @QueryParam("commitId") String commitIdStr);
 
     /**
      * Returns datatypes in the imports closure for the ontology identified by the provided IDs.
      *
+     * @param context the context of the request.
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
      * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -625,13 +631,15 @@ public interface OntologyRest {
     @Path("{ontologyId}/imported-datatypes")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    Response getDatatypesInImportedOntologies(@PathParam("ontologyId") String ontologyIdStr,
+    Response getDatatypesInImportedOntologies(@Context ContainerRequestContext context,
+                                              @PathParam("ontologyId") String ontologyIdStr,
                                               @QueryParam("branchId") String branchIdStr,
                                               @QueryParam("commitId") String commitIdStr);
 
     /**
      * Returns object properties in the imports closure for the ontology identified by the provided IDs.
      *
+     * @param context the context of the request.
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
      * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -647,13 +655,15 @@ public interface OntologyRest {
     @Path("{ontologyId}/imported-object-properties")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    Response getObjectPropertiesInImportedOntologies(@PathParam("ontologyId") String ontologyIdStr,
+    Response getObjectPropertiesInImportedOntologies(@Context ContainerRequestContext context,
+                                                     @PathParam("ontologyId") String ontologyIdStr,
                                                      @QueryParam("branchId") String branchIdStr,
                                                      @QueryParam("commitId") String commitIdStr);
 
     /**
      * Returns data properties in the imports closure for the ontology identified by the provided IDs.
      *
+     * @param context the context of the request.
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
      * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -669,13 +679,15 @@ public interface OntologyRest {
     @Path("{ontologyId}/imported-data-properties")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    Response getDataPropertiesInImportedOntologies(@PathParam("ontologyId") String ontologyIdStr,
+    Response getDataPropertiesInImportedOntologies(@Context ContainerRequestContext context,
+                                                   @PathParam("ontologyId") String ontologyIdStr,
                                                    @QueryParam("branchId") String branchIdStr,
                                                    @QueryParam("commitId") String commitIdStr);
 
     /**
      * Returns named individuals in the imports closure for the ontology identified by the provided IDs.
      *
+     * @param context the context of the request.
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
      * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -691,13 +703,15 @@ public interface OntologyRest {
     @Path("{ontologyId}/imported-named-individuals")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    Response getNamedIndividualsInImportedOntologies(@PathParam("ontologyId") String ontologyIdStr,
+    Response getNamedIndividualsInImportedOntologies(@Context ContainerRequestContext context,
+                                                     @PathParam("ontologyId") String ontologyIdStr,
                                                      @QueryParam("branchId") String branchIdStr,
                                                      @QueryParam("commitId") String commitIdStr);
 
     /**
      * Returns the JSON class hierarchy for the ontology identified by the provided IDs.
      *
+     * @param context the context of the request.
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
      * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -714,13 +728,15 @@ public interface OntologyRest {
     @Path("{ontologyId}/class-hierarchies")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    Response getOntologyClassHierarchy(@PathParam("ontologyId") String ontologyIdStr,
+    Response getOntologyClassHierarchy(@Context ContainerRequestContext context,
+                                       @PathParam("ontologyId") String ontologyIdStr,
                                        @QueryParam("branchId") String branchIdStr,
                                        @QueryParam("commitId") String commitIdStr);
 
     /**
      * Returns the JSON object property hierarchy for the ontology identified by the provided IDs.
      *
+     * @param context the context of the request.
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
      * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -737,13 +753,15 @@ public interface OntologyRest {
     @Path("{ontologyId}/object-property-hierarchies")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    Response getOntologyObjectPropertyHierarchy(@PathParam("ontologyId") String ontologyIdStr,
+    Response getOntologyObjectPropertyHierarchy(@Context ContainerRequestContext context,
+                                                @PathParam("ontologyId") String ontologyIdStr,
                                                 @QueryParam("branchId") String branchIdStr,
                                                 @QueryParam("commitId") String commitIdStr);
 
     /**
      * Returns the JSON data property hierarchy for the ontology identified by the provided IDs.
      *
+     * @param context the context of the request.
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
      * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -760,61 +778,15 @@ public interface OntologyRest {
     @Path("{ontologyId}/data-property-hierarchies")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    Response getOntologyDataPropertyHierarchy(@PathParam("ontologyId") String ontologyIdStr,
+    Response getOntologyDataPropertyHierarchy(@Context ContainerRequestContext context,
+                                              @PathParam("ontologyId") String ontologyIdStr,
                                               @QueryParam("branchId") String branchIdStr,
                                               @QueryParam("commitId") String commitIdStr);
 
     /**
-     * Returns classes with individuals defined in the ontology with the requested ontologyId.
-     *
-     * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
-     *                      an IRI unless String begins with "_:".
-     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
-     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
-     *                    master Branch.
-     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
-     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
-     *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
-     *                    otherwise, nothing will be returned.
-     * @return nested JSON structure that represents the class hierarchy for classes with individuals in the ontology
-     *         identified by the provided IDs.
-     */
-    @GET
-    @Path("{ontologyId}/classes-with-individuals")
-    @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed("user")
-    Response getClassesWithIndividuals(@PathParam("ontologyId") String ontologyIdStr,
-                                       @QueryParam("branchId") String branchIdStr,
-                                       @QueryParam("commitId") String commitIdStr);
-
-    /**
-     * Returns JSON SPARQL query results containing statements with the requested entity IRI as the predicate or object
-     * of each statement.
-     *
-     * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
-     *                      an IRI unless String begins with "_:".
-     * @param entityIRIStr the String representing the entity Resource IRI.
-     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
-     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
-     *                    master Branch.
-     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
-     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
-     *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
-     *                    otherwise, nothing will be returned.
-     * @return JSON SPARQL query results.
-     */
-    @GET
-    @Path("{ontologyId}/entity-usages/{entityIri}")
-    @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed("user")
-    Response getEntityUsages(@PathParam("ontologyId") String ontologyIdStr,
-                             @PathParam("entityIri") String entityIRIStr,
-                             @QueryParam("branchId") String branchIdStr,
-                             @QueryParam("commitId") String commitIdStr);
-
-    /**
      * Returns the JSON SKOS concept hierarchy for the ontology identified by the provided IDs.
      *
+     * @param context the context of the request.
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
      * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -831,14 +803,68 @@ public interface OntologyRest {
     @Path("{ontologyId}/concept-hierarchies")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    Response getConceptHierarchy(@PathParam("ontologyId") String ontologyIdStr,
+    Response getConceptHierarchy(@Context ContainerRequestContext context,
+                                 @PathParam("ontologyId") String ontologyIdStr,
                                  @QueryParam("branchId") String branchIdStr,
                                  @QueryParam("commitId") String commitIdStr);
+
+    /**
+     * Returns classes with individuals defined in the ontology with the requested ontologyId.
+     *
+     * @param context the context of the request.
+     * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
+     *                      an IRI unless String begins with "_:".
+     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
+     *                    master Branch.
+     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
+     *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
+     *                    otherwise, nothing will be returned.
+     * @return nested JSON structure that represents the class hierarchy for classes with individuals in the ontology
+     *         identified by the provided IDs.
+     */
+    @GET
+    @Path("{ontologyId}/classes-with-individuals")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    Response getClassesWithIndividuals(@Context ContainerRequestContext context,
+                                       @PathParam("ontologyId") String ontologyIdStr,
+                                       @QueryParam("branchId") String branchIdStr,
+                                       @QueryParam("commitId") String commitIdStr);
+
+    /**
+     * Returns JSON SPARQL query results containing statements with the requested entity IRI as the predicate or object
+     * of each statement.
+     *
+     * @param context the context of the request.
+     * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
+     *                      an IRI unless String begins with "_:".
+     * @param entityIRIStr the String representing the entity Resource IRI.
+     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
+     *                    master Branch.
+     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
+     *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
+     *                    otherwise, nothing will be returned.
+     * @return JSON SPARQL query results.
+     */
+    @GET
+    @Path("{ontologyId}/entity-usages/{entityIri}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    Response getEntityUsages(@Context ContainerRequestContext context,
+                             @PathParam("ontologyId") String ontologyIdStr,
+                             @PathParam("entityIri") String entityIRIStr,
+                             @QueryParam("branchId") String branchIdStr,
+                             @QueryParam("commitId") String commitIdStr);
 
     /**
      * Returns the JSON String of the resulting entities sorted by type from the ontology with the requested ontology ID
      * that have statements which contain the requested searchText in a Literal Value.
      *
+     * @param context the context of the request.
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
      * @param searchText the String for the text that is searched for in all of the Literals within the ontology with
@@ -856,7 +882,8 @@ public interface OntologyRest {
     @Path("{ontologyId}/search-results")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    Response getSearchResults(@PathParam("ontologyId") String ontologyIdStr,
+    Response getSearchResults(@Context ContainerRequestContext context,
+                              @PathParam("ontologyId") String ontologyIdStr,
                               @QueryParam("searchText") String searchText,
                               @QueryParam("branchId") String branchIdStr,
                               @QueryParam("commitId") String commitIdStr);
