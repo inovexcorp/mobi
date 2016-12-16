@@ -287,6 +287,10 @@ public class SimpleCatalogManager implements CatalogManager {
             int limit = searchParams.getLimit();
             int offset = searchParams.getOffset();
 
+            if (offset > Math.floor(totalCount / limit)) {
+                throw new MatOntoException("Offset exceeds number of pages");
+            }
+
             String sortBinding;
             Resource sortByParam = searchParams.getSortBy();
             if (sortingOptions.get(sortByParam) != null) {
@@ -882,23 +886,25 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public Difference getCommitDifference(Resource commitId) throws MatOntoException {
-        return this.getCommitDifference(commitId, commitFactory);
+        return getCommitDifference(commitId, commitFactory);
     }
 
     private <T extends Commit> Difference getCommitDifference(Resource commitId, OrmFactory<T> commitFactory) {
-        T commit = this.getCommit(commitId, commitFactory).orElseThrow(() ->
+        T commit = getCommit(commitId, commitFactory).orElseThrow(() ->
                 new MatOntoException("The Commit could not be retrieved."));
         try (RepositoryConnection conn = repository.getConnection()) {
             Resource revisionIRI = (Resource) commit.getProperty(vf.createIRI(Activity.generated_IRI)).get();
             Revision revision = revisionFactory.getExisting(revisionIRI, commit.getModel());
-            Resource additionsIRI = (Resource)revision.getAdditions().orElseThrow(() ->
+            Resource additionsIRI = (Resource) revision.getAdditions().orElseThrow(() ->
                     new MatOntoException("The additions could not be found."));
-            Resource deletionsIRI = (Resource)revision.getDeletions().orElseThrow(() ->
+            Resource deletionsIRI = (Resource) revision.getDeletions().orElseThrow(() ->
                     new MatOntoException("The deletions could not be found."));
             Model addModel = mf.createModel();
             Model deleteModel = mf.createModel();
-            conn.getStatements(null, null, null, additionsIRI).forEach(addModel::add);
-            conn.getStatements(null, null, null, deletionsIRI).forEach(deleteModel::add);
+            conn.getStatements(null, null, null, additionsIRI).forEach(statement ->
+                    addModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
+            conn.getStatements(null, null, null, deletionsIRI).forEach(statement ->
+                    deleteModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
             return new SimpleDifference.Builder()
                     .additions(addModel)
                     .deletions(deleteModel)
@@ -919,7 +925,7 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public Model applyInProgressCommit(Resource inProgressCommitId, Model entity) throws MatOntoException {
-        Difference diff = this.getCommitDifference(inProgressCommitId, inProgressCommitFactory);
+        Difference diff = getCommitDifference(inProgressCommitId, inProgressCommitFactory);
         Model result = mf.createModel(entity);
         diff.getAdditions().forEach(result::add);
         diff.getDeletions().forEach(statement -> result.remove(statement.getSubject(), statement.getPredicate(),

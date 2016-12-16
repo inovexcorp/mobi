@@ -415,10 +415,10 @@ public interface CatalogManager {
     /**
      * Gets the addition and deletion statements of a Commit identified by the provided Resource as a Difference.
      *
-     * @param commitId The Resource identifying the Commit to retrieve the Difference from
-     * @return A Difference object containing the addition and deletion statements of a Commit
+     * @param commitId The Resource identifying the Commit to retrieve the Difference from.
+     * @return A Difference object containing the addition and deletion statements of a Commit.
      * @throws MatOntoException Thrown if a connection to the repository could not be made, the Commit could not be
-     *      found, or the Commit's Revision does not have the additions/deletions set
+     *      found, or the Commit's Revision does not have the additions/deletions set.
      */
     Difference getCommitDifference(Resource commitId) throws MatOntoException;
 
@@ -466,11 +466,11 @@ public interface CatalogManager {
     Optional<Model> getCompiledResource(Resource commitId) throws MatOntoException;
 
     /**
-     * Gets all of the conflicts between the two provided Commits.
+     * Gets all of the conflicts between the Commits identified by the two provided Resources.
      *
      * @param leftId The left (first) Commit.
      * @param rightId The right (second) Commit.
-     * @return Set of Conflicts
+     * @return The Set of Conflicts between the two Commits identified by the provided Resources.
      * @throws MatOntoException Thrown if a connection to the repository could not be made.
      */
     Set<Conflict> getConflicts(Resource leftId, Resource rightId) throws MatOntoException;

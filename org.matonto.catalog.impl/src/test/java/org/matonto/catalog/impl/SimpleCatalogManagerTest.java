@@ -1024,6 +1024,17 @@ public class SimpleCatalogManagerTest {
         Assert.assertThat(fullRecords.getTotalSize(), equalTo(TOTAL_SIZE));
     }
 
+    @Test(expected = MatOntoException.class)
+    public void testFindRecordWithOffsetThatIsTooLarge() {
+        // given
+        int limit = 10;
+        int offset = 1;
+        IRI modified = vf.createIRI(DC_MODIFIED);
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder(limit, offset, modified).build();
+        // when
+        manager.findRecord(distributedCatalogId, searchParams);
+    }
+
     @Test
     public void testAddDistributionToUnversionedRecord() throws Exception {
         IRI distributionIRI = vf.createIRI(UnversionedRecord.unversionedDistribution_IRI);

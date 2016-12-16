@@ -86,6 +86,7 @@ public interface CatalogRest {
      *                   dataset).
      * @param offset The offset for the page.
      * @param limit The number of Records to return in one page.
+     * @param asc Whether or not the list should be sorted ascending or descending.
      * @param searchText The String used to filter out Records.
      * @return The list of Records that match the search criteria.
      */
@@ -105,7 +106,7 @@ public interface CatalogRest {
 
     /**
      * Creates a new Record in the repository using the passed form data. Determines the type of the new Record
-     * based on the "type" field. Requires the `title` and `identifier` fields to be set. Returns a Response with the
+     * based on the `type` field. Requires the `title` and `identifier` fields to be set. Returns a Response with the
      * IRI of the new Record.
      *
      * @param context The context of the request.
@@ -200,6 +201,7 @@ public interface CatalogRest {
      * @param sort The field with sort order specified.
      * @param offset The offset for the page.
      * @param limit The number of Distributions to return in one page.
+     * @param asc Whether or not the list should be sorted ascending or descending.
      * @return A Response with a list of all the Distributions of the requested UnversionedRecord.
      */
     @GET
@@ -212,7 +214,8 @@ public interface CatalogRest {
                                          @PathParam("recordId") String recordId,
                                          @QueryParam("sort") String sort,
                                          @DefaultValue("0") @QueryParam("offset") int offset,
-                                         @DefaultValue("100") @QueryParam("limit") int limit);
+                                         @DefaultValue("100") @QueryParam("limit") int limit,
+                                         @DefaultValue("true") @QueryParam("ascending") boolean asc);
 
     /**
      * Creates a new Distribution for the provided UnversionedRecord using the passed form data. Requires the "title"
@@ -317,6 +320,7 @@ public interface CatalogRest {
      * @param sort The field with sort order specified.
      * @param offset The offset for the page.
      * @param limit The number of Versions to return in one page.
+     * @param asc Whether or not the list should be sorted ascending or descending.
      * @return A list of all the Versions associated with a VersionedRecord.
      */
     @GET
@@ -329,7 +333,8 @@ public interface CatalogRest {
                          @PathParam("recordId") String recordId,
                          @QueryParam("sort") String sort,
                          @DefaultValue("0") @QueryParam("offset") int offset,
-                         @DefaultValue("100") @QueryParam("limit") int limit);
+                         @DefaultValue("100") @QueryParam("limit") int limit,
+                         @DefaultValue("true") @QueryParam("ascending") boolean asc);
 
     /**
      * Creates a Version for the identified VersionedRecord using the passed form data and stores it in the repository.
@@ -455,6 +460,7 @@ public interface CatalogRest {
      * @param sort The field with sort order specified.
      * @param offset The offset for the page.
      * @param limit The number of Distributions to return in one page.
+     * @param asc Whether or not the list should be sorted ascending or descending.
      * @return Returns a list of Distributions for the identified Version.
      */
     @GET
@@ -468,7 +474,8 @@ public interface CatalogRest {
                                        @PathParam("versionId") String versionId,
                                        @QueryParam("sort") String sort,
                                        @DefaultValue("0") @QueryParam("offset") int offset,
-                                       @DefaultValue("100") @QueryParam("limit") int limit);
+                                       @DefaultValue("100") @QueryParam("limit") int limit,
+                                       @DefaultValue("true") @QueryParam("ascending") boolean asc);
 
     /**
      * Creates a new Distribution for the identified Version using the passed form data. Returns a Response with the
@@ -607,6 +614,7 @@ public interface CatalogRest {
      * @param sort The field with sort order specified.
      * @param offset The offset for the page.
      * @param limit The number of Branches to return in one page.
+     * @param asc Whether or not the list should be sorted ascending or descending.
      * @return A list of Branches for the identified VersionedRDFRecord.
      */
     @GET
@@ -619,7 +627,8 @@ public interface CatalogRest {
                          @PathParam("recordId") String recordId,
                          @QueryParam("sort") String sort,
                          @DefaultValue("0") @QueryParam("offset") int offset,
-                         @DefaultValue("100") @QueryParam("limit") int limit);
+                         @DefaultValue("100") @QueryParam("limit") int limit,
+                         @DefaultValue("true") @QueryParam("ascending") boolean asc);
 
     /**
      * Creates a Branch for a VersionedRDFRecord identified by the IDs using the passed form data. Returns a Response
@@ -835,6 +844,7 @@ public interface CatalogRest {
      *                 begins with "_:".
      * @param targetBranchId The String representing the target Branch ID. NOTE: Assumes ID represents an IRI unless
      *                       String begins with "_:".
+     * @param rdfFormat The desired RDF return format. NOTE: Optional param - defaults to "jsonld".
      * @return A Response with the list of Conflicts between the identified Branches' HEAD Commits.
      */
     @GET
@@ -845,7 +855,8 @@ public interface CatalogRest {
     Response getConflicts(@PathParam("catalogId") String catalogId,
                           @PathParam("recordId") String recordId,
                           @PathParam("branchId") String branchId,
-                          @QueryParam("targetId") String targetBranchId);
+                          @QueryParam("targetId") String targetBranchId,
+                          @DefaultValue("jsonld") @QueryParam("format") String rdfFormat);
 
 
     /**
@@ -893,7 +904,7 @@ public interface CatalogRest {
      *                 with "_:".
      * @param commitId The String representing the Commit ID. NOTE: Assumes ID represents an IRI unless String begins
      *                 with "_:".
-     * @param rdfFormat the desired RDF return format. NOTE: Optional param - defaults to "jsonld".
+     * @param rdfFormat The desired RDF return format. NOTE: Optional param - defaults to "jsonld".
      * @param apply A boolean value identifying whether the InProgressCommit associated with identified Record should be
      *              applied to the result.
      * @return A Response the compiled Resource for the entity at the specific Commit.
@@ -924,7 +935,7 @@ public interface CatalogRest {
      *                 with "_:".
      * @param commitId The String representing the Commit ID. NOTE: Assumes ID represents an IRI unless String begins
      *                 with "_:".
-     * @param rdfFormat the desired RDF return format. NOTE: Optional param - defaults to "jsonld".
+     * @param rdfFormat The desired RDF return format. NOTE: Optional param - defaults to "jsonld".
      * @param apply A boolean value identifying whether the InProgressCommit associated with the identified Record and
      *              User making the request should be applied to the result.
      * @return A Response with the compiled Resource for the entity at the specific Commit to download.
