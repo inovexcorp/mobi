@@ -57,13 +57,14 @@ public interface OntologyRest {
      * @param title the title for the OntologyRecord.
      * @param description the description for the OntologyRecord
      * @param keywords the comma separated list of keywords associated with the OntologyRecord
-     * @return OK if persisted, BAD REQUEST if publishers can't be found, and INTERNAL SERVER ERROR if problems with
-     *         CatalogManager methods
+     * @return OK if persisted, BAD REQUEST if publishers can't be found, or INTERNAL SERVER ERROR if there is a problem
+     *         creating the OntologyRecord.
      */
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
+    @ApiOperation("Uploads an ontology file to the data store.")
     Response uploadFile(@Context ContainerRequestContext context,
                         @FormDataParam("file") InputStream fileInputStream,
                         @FormDataParam("title") String title,
@@ -87,13 +88,14 @@ public interface OntologyRest {
      * @param entityIdStr the String representing the edited entity id. NOTE: Assumes id represents an IRI unless String
      *                    begins with "_:".
      * @param entityJson the String representing the edited Resource.
-     * @return true if updated, false otherwise
+     * @return a Response indicating whether it was successfully updated.
      */
     @POST
     @Path("{ontologyId}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
+    @ApiOperation("Updates the requester's InProgressCommit with the provided entity.")
     Response saveChangesToOntology(@Context ContainerRequestContext context,
                                    @PathParam("ontologyId") String ontologyIdStr,
                                    @QueryParam("branchId") String branchIdStr,
@@ -120,6 +122,7 @@ public interface OntologyRest {
     @Path("{ontologyId}/iris")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
+    @ApiOperation("Gets the IRIs in the identified ontology.")
     Response getIRIsInOntology(@Context ContainerRequestContext context,
                                @PathParam("ontologyId") String ontologyIdStr,
                                @QueryParam("branchId") String branchIdStr,
@@ -144,28 +147,59 @@ public interface OntologyRest {
     @Path("{ontologyId}/annotations")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
+    @ApiOperation("Gets the annotation in the identified ontology.")
     Response getAnnotationsInOntology(@Context ContainerRequestContext context,
                                       @PathParam("ontologyId") String ontologyIdStr,
                                       @QueryParam("branchId") String branchIdStr,
                                       @QueryParam("commitId") String commitIdStr);
 
     /**
-     * Create a new owl annotation property in the ontology identified by the provided IDs.
+     * Add a new owl annotation property to the ontology identified by the provided IDs associated with the
+     * requester's InProgressCommit.
      *
      * @param context the context of the request.
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
      * @param annotationJson the String representing the new annotation in JSON-LD.
-     * @return true if added, false otherwise.
+     * @return a Response indicating whether it was successfully added.
      */
     @POST
     @Path("{ontologyId}/annotations")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
+    @ApiOperation("Adds a new annotation to the identified ontology.")
     Response addAnnotationToOntology(@Context ContainerRequestContext context,
                                      @PathParam("ontologyId") String ontologyIdStr,
                                      String annotationJson);
+
+    /**
+     * Delete annotation with requested annotation ID from ontology identified by the provided IDs from the server.
+     *
+     * @param context the context of the request.
+     * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
+     *                      an IRI unless String begins with "_:".
+     * @param annotationIdStr the String representing the annotation Resource id. NOTE: Assumes id represents
+     *                        an IRI unless String begins with "_:".
+     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
+     *                    master Branch.
+     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
+     *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
+     *                    otherwise, nothing will be returned.
+     * @return a Response indicating whether it was successfully deleted.
+     */
+    @DELETE
+    @Path("{ontologyId}/annotations/{annotationId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Deletes the identified annotation from the identified ontology.")
+    Response deleteAnnotationFromOntology(@Context ContainerRequestContext context,
+                                     @PathParam("ontologyId") String ontologyIdStr,
+                                     @PathParam("annotationId") String annotationIdStr,
+                                     @QueryParam("branchId") String branchIdStr,
+                                     @QueryParam("commitId") String commitIdStr);
 
     /**
      * Returns classes in the ontology identified by the provided IDs.
@@ -186,25 +220,28 @@ public interface OntologyRest {
     @Path("{ontologyId}/classes")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
+    @ApiOperation("Gets the classes in the identified ontology.")
     Response getClassesInOntology(@Context ContainerRequestContext context,
                                   @PathParam("ontologyId") String ontologyIdStr,
                                   @QueryParam("branchId") String branchIdStr,
                                   @QueryParam("commitId") String commitIdStr);
 
     /**
-     * Add class to ontology identified by the provided IDs from the server.
+     * Add a new class to ontology identified by the provided IDs from the server associated with the requester's
+     * InProgressCommit.
      *
      * @param context the context of the request.
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
      * @param classJson the String representing the new class model.
-     * @return true if added, false otherwise.
+     * @return a Response indicating whether it was successfully added.
      */
     @POST
     @Path("{ontologyId}/classes")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
+    @ApiOperation("Adds a new class to the identified ontology.")
     Response addClassToOntology(@Context ContainerRequestContext context,
                                 @PathParam("ontologyId") String ontologyIdStr,
                                 String classJson);
@@ -224,12 +261,13 @@ public interface OntologyRest {
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
-     * @return true if deleted, false otherwise.
+     * @return a Response indicating whether it was successfully deleted.
      */
     @DELETE
     @Path("{ontologyId}/classes/{classId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
+    @ApiOperation("Deletes the identified class from the identified ontology.")
     Response deleteClassFromOntology(@Context ContainerRequestContext context,
                                      @PathParam("ontologyId") String ontologyIdStr,
                                      @PathParam("classId") String classIdStr,
@@ -255,25 +293,28 @@ public interface OntologyRest {
     @Path("{ontologyId}/datatypes")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
+    @ApiOperation("Gets the datatypes in the identified ontology.")
     Response getDatatypesInOntology(@Context ContainerRequestContext context,
                                     @PathParam("ontologyId") String ontologyIdStr,
                                     @QueryParam("branchId") String branchIdStr,
                                     @QueryParam("commitId") String commitIdStr);
 
     /**
-     * Adds the datatype to the ontology identified by the provided IDs.
+     * Adds a new datatype to the ontology identified by the provided IDs associated with the requester's
+     * InProgressCommit.
      *
      * @param context the context of the request.
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
      * @param datatypeJson the String representing the new datatype model.
-     * @return true if added, false otherwise.
+     * @return a Response indicating whether it was successfully added.
      */
     @POST
     @Path("{ontologyId}/datatypes")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
+    @ApiOperation("Adds a new datatype to the identified ontology.")
     Response addDatatypeToOntology(@Context ContainerRequestContext context,
                                    @PathParam("ontologyId") String ontologyIdStr,
                                    String datatypeJson);
@@ -293,12 +334,13 @@ public interface OntologyRest {
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
-     * @return true if deleted, false otherwise.
+     * @return a Response indicating whether it was successfully deleted.
      */
     @DELETE
     @Path("{ontologyId}/datatypes/{datatypeId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
+    @ApiOperation("Deletes the identified datatype from the identified ontology.")
     Response deleteDatatypeFromOntology(@Context ContainerRequestContext context,
                                         @PathParam("ontologyId") String ontologyIdStr,
                                         @PathParam("datatypeId") String datatypeIdStr,
@@ -324,25 +366,28 @@ public interface OntologyRest {
     @Path("{ontologyId}/object-properties")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
+    @ApiOperation("Gets the object properties in the identified ontology.")
     Response getObjectPropertiesInOntology(@Context ContainerRequestContext context,
                                            @PathParam("ontologyId") String ontologyIdStr,
                                            @QueryParam("branchId") String branchIdStr,
                                            @QueryParam("commitId") String commitIdStr);
 
     /**
-     * Adds the object property to the ontology identified by the provided IDs from the server.
+     * Adds a new object property to the ontology identified by the provided IDs from the server associated with the
+     * requester's InProgressCommit.
      *
      * @param context the context of the request.
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
      * @param objectPropertyJson the String representing the new property model.
-     * @return true if added, false otherwise.
+     * @return a Response indicating whether it was successfully added.
      */
     @POST
     @Path("{ontologyId}/object-properties")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
+    @ApiOperation("Adds a new object property to the identified ontology.")
     Response addObjectPropertyToOntology(@Context ContainerRequestContext context,
                                          @PathParam("ontologyId") String ontologyIdStr,
                                          String objectPropertyJson);
@@ -362,12 +407,13 @@ public interface OntologyRest {
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
-     * @return true if deleted, false otherwise.
+     * @return a Response indicating whether it was successfully deleted.
      */
     @DELETE
     @Path("{ontologyId}/object-properties/{objectPropertyId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
+    @ApiOperation("Deletes the identified object property from the identified ontology.")
     Response deleteObjectPropertyFromOntology(@Context ContainerRequestContext context,
                                               @PathParam("ontologyId") String ontologyIdStr,
                                               @PathParam("objectPropertyId") String objectPropertyIdStr,
@@ -393,25 +439,28 @@ public interface OntologyRest {
     @Path("{ontologyId}/data-properties")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
+    @ApiOperation("Gets the data properties from the identified ontology.")
     Response getDataPropertiesInOntology(@Context ContainerRequestContext context,
                                          @PathParam("ontologyId") String ontologyIdStr,
                                          @QueryParam("branchId") String branchIdStr,
                                          @QueryParam("commitId") String commitIdStr);
 
     /**
-     * Adds the data property to the ontology identified by the provided IDs from the server.
+     * Adds a new data property to the ontology identified by the provided IDs from the server associated with the
+     * requester's InProgressCommit.
      *
      * @param context the context of the request.
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
      * @param dataPropertyJson the String representing the new property model.
-     * @return true if added, false otherwise.
+     * @return a Response indicating whether it was successfully added.
      */
     @POST
     @Path("{ontologyId}/data-properties")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
+    @ApiOperation("Adds a new data property to the identified ontology.")
     Response addDataPropertyToOntology(@Context ContainerRequestContext context,
                                        @PathParam("ontologyId") String ontologyIdStr,
                                        String dataPropertyJson);
@@ -431,12 +480,13 @@ public interface OntologyRest {
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
-     * @return true if deleted, false otherwise.
+     * @return a Response indicating whether it was successfully deleted.
      */
     @DELETE
     @Path("{ontologyId}/data-properties/{dataPropertyId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
+    @ApiOperation("Deletes the identified data property from the identified ontology.")
     Response deleteDataPropertyFromOntology(@Context ContainerRequestContext context,
                                             @PathParam("ontologyId") String ontologyIdStr,
                                             @PathParam("dataPropertyId") String dataPropertyIdStr,
@@ -462,25 +512,28 @@ public interface OntologyRest {
     @Path("{ontologyId}/named-individuals")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
+    @ApiOperation("Gets the individuals in the identified ontology.")
     Response getNamedIndividualsInOntology(@Context ContainerRequestContext context,
                                            @PathParam("ontologyId") String ontologyIdStr,
                                            @QueryParam("branchId") String branchIdStr,
                                            @QueryParam("commitId") String commitIdStr);
 
     /**
-     * Adds the individual to the ontology identified by the provided IDs from the server.
+     * Adds a new individual to the ontology identified by the provided IDs from the server associated with the
+     * requester's InProgressCommit.
      *
      * @param context the context of the request.
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
      * @param individualJson the String representing the new individual model.
-     * @return true if added, false otherwise.
+     * @return a Response indicating whether it was successfully added.
      */
     @POST
     @Path("{ontologyId}/named-individuals")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
+    @ApiOperation("Adds a new individual to the identified ontology.")
     Response addIndividualToOntology(@Context ContainerRequestContext context,
                                      @PathParam("ontologyId") String ontologyIdStr,
                                      String individualJson);
@@ -500,12 +553,13 @@ public interface OntologyRest {
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
-     * @return true if deleted, false otherwise.
+     * @return a Response indicating whether it was successfully deleted.
      */
     @DELETE
     @Path("{ontologyId}/named-individuals/{individualId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
+    @ApiOperation("Deletes the identified individual from the identified ontology.")
     Response deleteIndividualFromOntology(@Context ContainerRequestContext context,
                                           @PathParam("ontologyId") String ontologyIdStr,
                                           @PathParam("individualId") String individualIdStr,
@@ -531,6 +585,7 @@ public interface OntologyRest {
     @Path("{ontologyId}/imported-iris")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
+    @ApiOperation("Gets the IRIs from the imported ontologies of the identified ontology.")
     Response getIRIsInImportedOntologies(@Context ContainerRequestContext context,
                                          @PathParam("ontologyId") String ontologyIdStr,
                                          @QueryParam("branchId") String branchIdStr,
@@ -557,7 +612,7 @@ public interface OntologyRest {
     @Path("{ontologyId}/imported-ontologies")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation(value = "Retrieves the JSON-LD of all directly imported ontologies")
+    @ApiOperation("Retrieves the JSON-LD of all directly imported ontologies.")
     Response getImportsClosure(@Context ContainerRequestContext context,
                                @PathParam("ontologyId") String ontologyIdStr,
                                @DefaultValue("jsonld") @QueryParam("rdfFormat") String rdfFormat,
@@ -583,6 +638,7 @@ public interface OntologyRest {
     @Path("{ontologyId}/imported-annotations")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
+    @ApiOperation("Gets the annotations from the imported ontologies of the identified ontology.")
     Response getAnnotationsInImportedOntologies(@Context ContainerRequestContext context,
                                                 @PathParam("ontologyId") String ontologyIdStr,
                                                 @QueryParam("branchId") String branchIdStr,
@@ -607,6 +663,7 @@ public interface OntologyRest {
     @Path("{ontologyId}/imported-classes")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
+    @ApiOperation("Gets the classes from the imported ontologies of the identified ontology.")
     Response getClassesInImportedOntologies(@Context ContainerRequestContext context,
                                             @PathParam("ontologyId") String ontologyIdStr,
                                             @QueryParam("branchId") String branchIdStr,
@@ -631,6 +688,7 @@ public interface OntologyRest {
     @Path("{ontologyId}/imported-datatypes")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
+    @ApiOperation("Gets the datatypes from the imported ontologies of the identified ontology.")
     Response getDatatypesInImportedOntologies(@Context ContainerRequestContext context,
                                               @PathParam("ontologyId") String ontologyIdStr,
                                               @QueryParam("branchId") String branchIdStr,
@@ -655,6 +713,7 @@ public interface OntologyRest {
     @Path("{ontologyId}/imported-object-properties")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
+    @ApiOperation("Gets the object properties from the imported ontologies of the identified ontology.")
     Response getObjectPropertiesInImportedOntologies(@Context ContainerRequestContext context,
                                                      @PathParam("ontologyId") String ontologyIdStr,
                                                      @QueryParam("branchId") String branchIdStr,
@@ -679,6 +738,7 @@ public interface OntologyRest {
     @Path("{ontologyId}/imported-data-properties")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
+    @ApiOperation("Gets the data properties from the imported ontologies of the identified ontology.")
     Response getDataPropertiesInImportedOntologies(@Context ContainerRequestContext context,
                                                    @PathParam("ontologyId") String ontologyIdStr,
                                                    @QueryParam("branchId") String branchIdStr,
@@ -703,6 +763,7 @@ public interface OntologyRest {
     @Path("{ontologyId}/imported-named-individuals")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
+    @ApiOperation("Gets the named individuals from the imported ontologies of the identified ontology.")
     Response getNamedIndividualsInImportedOntologies(@Context ContainerRequestContext context,
                                                      @PathParam("ontologyId") String ontologyIdStr,
                                                      @QueryParam("branchId") String branchIdStr,
@@ -728,6 +789,7 @@ public interface OntologyRest {
     @Path("{ontologyId}/class-hierarchies")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
+    @ApiOperation("Gets the class hierarchies for the identified ontology.")
     Response getOntologyClassHierarchy(@Context ContainerRequestContext context,
                                        @PathParam("ontologyId") String ontologyIdStr,
                                        @QueryParam("branchId") String branchIdStr,
@@ -753,6 +815,7 @@ public interface OntologyRest {
     @Path("{ontologyId}/object-property-hierarchies")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
+    @ApiOperation("Gets the object property hierarchies for the identified ontology.")
     Response getOntologyObjectPropertyHierarchy(@Context ContainerRequestContext context,
                                                 @PathParam("ontologyId") String ontologyIdStr,
                                                 @QueryParam("branchId") String branchIdStr,
@@ -778,6 +841,7 @@ public interface OntologyRest {
     @Path("{ontologyId}/data-property-hierarchies")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
+    @ApiOperation("Gets the data property hierarchies for the identified ontology.")
     Response getOntologyDataPropertyHierarchy(@Context ContainerRequestContext context,
                                               @PathParam("ontologyId") String ontologyIdStr,
                                               @QueryParam("branchId") String branchIdStr,
@@ -803,13 +867,15 @@ public interface OntologyRest {
     @Path("{ontologyId}/concept-hierarchies")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
+    @ApiOperation("Gets the concept hierarchies for the identified ontology.")
     Response getConceptHierarchy(@Context ContainerRequestContext context,
                                  @PathParam("ontologyId") String ontologyIdStr,
                                  @QueryParam("branchId") String branchIdStr,
                                  @QueryParam("commitId") String commitIdStr);
 
     /**
-     * Returns classes with individuals defined in the ontology with the requested ontologyId.
+     * Returns classes with individuals defined in the ontology in a hierarchical structure with the requested
+     * ontologyId.
      *
      * @param context the context of the request.
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
@@ -828,6 +894,7 @@ public interface OntologyRest {
     @Path("{ontologyId}/classes-with-individuals")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
+    @ApiOperation("Gets the classes with individuals in a hierarchical structure for the identified ontology.")
     Response getClassesWithIndividuals(@Context ContainerRequestContext context,
                                        @PathParam("ontologyId") String ontologyIdStr,
                                        @QueryParam("branchId") String branchIdStr,
@@ -854,6 +921,7 @@ public interface OntologyRest {
     @Path("{ontologyId}/entity-usages/{entityIri}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
+    @ApiOperation("Gets the usages of the identified entity in the identified ontology.")
     Response getEntityUsages(@Context ContainerRequestContext context,
                              @PathParam("ontologyId") String ontologyIdStr,
                              @PathParam("entityIri") String entityIRIStr,
@@ -882,6 +950,7 @@ public interface OntologyRest {
     @Path("{ontologyId}/search-results")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
+    @ApiOperation("Gets the search results from the identified ontology using the provided searchText.")
     Response getSearchResults(@Context ContainerRequestContext context,
                               @PathParam("ontologyId") String ontologyIdStr,
                               @QueryParam("searchText") String searchText,
