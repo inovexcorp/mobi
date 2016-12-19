@@ -24,7 +24,6 @@ package org.matonto.ontology.core.impl.owlapi;
  */
 
 import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.ConfigurationPolicy;
 import aQute.bnd.annotation.component.Reference;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
@@ -36,34 +35,35 @@ import org.matonto.ontology.core.api.OntologyId;
 import org.matonto.ontology.core.api.OntologyManager;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.ontology.utils.api.SesameTransformer;
-import org.matonto.query.api.BindingSet;
+import org.matonto.query.TupleQueryResult;
 import org.matonto.query.api.TupleQuery;
 import org.matonto.rdf.api.*;
 import org.matonto.rdf.api.IRI;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
-import org.matonto.repository.config.RepositoryConsumerConfig;
 import org.matonto.repository.exception.RepositoryException;
 import org.matonto.repository.impl.sesame.SesameRepositoryWrapper;
 import org.openrdf.repository.sail.SailRepository;
 import org.openrdf.sail.memory.MemoryStore;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.RioRDFXMLDocumentFormatFactory;
-import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.model.MissingImportHandlingStrategy;
+import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.semanticweb.owlapi.model.OWLOntologyLoaderConfiguration;
+import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.rio.RioMemoryTripleSource;
 import org.semanticweb.owlapi.rio.RioParserImpl;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Function;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 @Component(
         provide = OntologyManager.class,
@@ -152,37 +152,37 @@ public class SimpleOntologyManager implements OntologyManager {
     public SimpleOntologyManager() {}
 
     @Reference
-    protected void setValueFactory(ValueFactory valueFactory) {
+    public void setValueFactory(ValueFactory valueFactory) {
         this.valueFactory = valueFactory;
     }
 
     @Reference
-    protected void setModelFactory(ModelFactory modelFactory) {
+    public void setModelFactory(ModelFactory modelFactory) {
         this.modelFactory = modelFactory;
     }
 
     @Reference
-    protected void setSesameTransformer(SesameTransformer sesameTransformer) {
+    public void setSesameTransformer(SesameTransformer sesameTransformer) {
         this.sesameTransformer = sesameTransformer;
     }
 
     @Reference
-    protected void setCatalogManager(CatalogManager catalogManager) {
+    public void setCatalogManager(CatalogManager catalogManager) {
         this.catalogManager = catalogManager;
     }
 
     @Reference
-    protected void setOntologyRecordFactory(OntologyRecordFactory ontologyRecordFactory) {
+    public void setOntologyRecordFactory(OntologyRecordFactory ontologyRecordFactory) {
         this.ontologyRecordFactory = ontologyRecordFactory;
     }
 
     @Reference
-    protected void setCommitFactory(CommitFactory commitFactory) {
+    public void setCommitFactory(CommitFactory commitFactory) {
         this.commitFactory = commitFactory;
     }
 
     @Reference
-    protected void setBranchFactory(BranchFactory branchFactory) {
+    public void setBranchFactory(BranchFactory branchFactory) {
         this.branchFactory = branchFactory;
     }
 
@@ -337,27 +337,27 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Override
-    public Set<BindingSet> getSubClassesOf(Ontology ontology) throws MatontoOntologyException {
+    public TupleQueryResult getSubClassesOf(Ontology ontology) throws MatontoOntologyException {
         return runQueryOnOntology(ontology, GET_SUB_CLASSES_OF, null);
     }
 
     @Override
-    public Set<BindingSet> getSubDatatypePropertiesOf(Ontology ontology) {
+    public TupleQueryResult getSubDatatypePropertiesOf(Ontology ontology) {
         return runQueryOnOntology(ontology, GET_SUB_DATATYPE_PROPERTIES_OF, null);
     }
 
     @Override
-    public Set<BindingSet> getSubObjectPropertiesOf(Ontology ontology) {
+    public TupleQueryResult getSubObjectPropertiesOf(Ontology ontology) {
         return runQueryOnOntology(ontology, GET_SUB_OBJECT_PROPERTIES_OF, null);
     }
 
     @Override
-    public Set<BindingSet> getClassesWithIndividuals(Ontology ontology) {
+    public TupleQueryResult getClassesWithIndividuals(Ontology ontology) {
         return runQueryOnOntology(ontology, GET_CLASSES_WITH_INDIVIDUALS, null);
     }
 
     @Override
-    public Set<BindingSet> getEntityUsages(Ontology ontology, Resource entity) {
+    public TupleQueryResult getEntityUsages(Ontology ontology, Resource entity) {
         return runQueryOnOntology(ontology, GET_ENTITY_USAGES, tupleQuery -> {
             tupleQuery.setBinding(ENTITY_BINDING, entity);
             return tupleQuery;
@@ -365,12 +365,12 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Override
-    public Set<BindingSet> getConceptRelationships(Ontology ontology) {
+    public TupleQueryResult getConceptRelationships(Ontology ontology) {
         return runQueryOnOntology(ontology, GET_CONCEPT_RELATIONSHIPS, null);
     }
 
     @Override
-    public Set<BindingSet> getSearchResults(Ontology ontology, String searchText) {
+    public TupleQueryResult getSearchResults(Ontology ontology, String searchText) {
         return runQueryOnOntology(ontology, GET_SEARCH_RESULTS, tupleQuery -> {
             tupleQuery.setBinding(SEARCH_TEXT, valueFactory.createLiteral(searchText.toLowerCase()));
             return tupleQuery;
@@ -397,8 +397,8 @@ public class SimpleOntologyManager implements OntologyManager {
      * @param queryString the query string that you wish to run.
      * @return the results of the query.
      */
-    private Set<BindingSet> runQueryOnOntology(Ontology ontology, String queryString,
-                                               @Nullable Function<TupleQuery, TupleQuery> addBinding) {
+    private TupleQueryResult runQueryOnOntology(Ontology ontology, String queryString,
+                                                @Nullable Function<TupleQuery, TupleQuery> addBinding) {
         Repository repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
         repo.initialize();
         try (RepositoryConnection conn = repo.getConnection()) {
@@ -407,9 +407,7 @@ public class SimpleOntologyManager implements OntologyManager {
             if (addBinding != null) {
                 query = addBinding.apply(query);
             }
-            Set<BindingSet> result = new HashSet<>();
-            query.evaluate().forEach(result::add);
-            return result;
+            return query.evaluateAndReturn();
         } catch (RepositoryException e) {
             throw new MatontoOntologyException("Error in repository connection.", e);
         } finally {

@@ -194,7 +194,7 @@ public interface OntologyManager {
      * @return a Set with the query results.
      * @throws MatontoOntologyException - if the repository is null
      */
-    Set<BindingSet> getSubClassesOf(Ontology ontology) throws MatontoOntologyException;
+    TupleQueryResult getSubClassesOf(Ontology ontology) throws MatontoOntologyException;
 
     /**
      * Gets the subPropertyOf relationships for datatype properties in the provided Ontology.
@@ -203,7 +203,7 @@ public interface OntologyManager {
      * @return a Set with the query results.
      * @throws MatontoOntologyException - if the repository is null
      */
-    Set<BindingSet> getSubDatatypePropertiesOf(Ontology ontology) throws MatontoOntologyException;
+    TupleQueryResult getSubDatatypePropertiesOf(Ontology ontology) throws MatontoOntologyException;
 
     /**
      * Gets the subPropertyOf relationships for object properties in the provided Ontology.
@@ -212,7 +212,7 @@ public interface OntologyManager {
      * @return a Set with the query results.
      * @throws MatontoOntologyException - if the repository is null
      */
-    Set<BindingSet> getSubObjectPropertiesOf(Ontology ontology) throws MatontoOntologyException;
+    TupleQueryResult getSubObjectPropertiesOf(Ontology ontology) throws MatontoOntologyException;
 
     /**
      * Gets the classes with individuals in the provided Ontology.
@@ -221,7 +221,7 @@ public interface OntologyManager {
      * @return a Set with the query results.
      * @throws MatontoOntologyException - if the repository is null
      */
-    Set<BindingSet> getClassesWithIndividuals(Ontology ontology) throws MatontoOntologyException;
+    TupleQueryResult getClassesWithIndividuals(Ontology ontology) throws MatontoOntologyException;
 
     /**
      * Gets the entity usages for the provided Resource in the provided Ontology.
@@ -231,7 +231,7 @@ public interface OntologyManager {
      * @return a Set with the query results.
      * @throws MatontoOntologyException - if the repository is null
      */
-    Set<BindingSet> getEntityUsages(Ontology ontology, Resource entity) throws MatontoOntologyException;
+    TupleQueryResult getEntityUsages(Ontology ontology, Resource entity) throws MatontoOntologyException;
 
     /**
      * Gets the concept relationships in the provided Ontology.
@@ -240,7 +240,7 @@ public interface OntologyManager {
      * @return a Set with the query results.
      * @throws MatontoOntologyException - if the repository is null
      */
-    Set<BindingSet> getConceptRelationships(Ontology ontology) throws MatontoOntologyException;
+    TupleQueryResult getConceptRelationships(Ontology ontology) throws MatontoOntologyException;
 
     /**
      * Searches the provided Ontology using the provided searchText.
@@ -250,5 +250,5 @@ public interface OntologyManager {
      * @return a Set with the query results.
      * @throws MatontoOntologyException - if the repository is null
      */
-    Set<BindingSet> getSearchResults(Ontology ontology, String searchText) throws MatontoOntologyException;
+    TupleQueryResult getSearchResults(Ontology ontology, String searchText) throws MatontoOntologyException;
 }

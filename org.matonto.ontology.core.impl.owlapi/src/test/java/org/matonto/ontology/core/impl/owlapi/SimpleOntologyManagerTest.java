@@ -39,8 +39,8 @@ import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.persistence.utils.Bindings;
+import org.matonto.query.TupleQueryResult;
 import org.matonto.query.api.Binding;
-import org.matonto.query.api.BindingSet;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
@@ -595,9 +595,9 @@ public class SimpleOntologyManagerTest {
         children.put("http://matonto.org/ontology#Class1a", "http://matonto.org/ontology#Class1b");
         children.put("http://matonto.org/ontology#Class2a", "http://matonto.org/ontology#Class2b");
 
-        Set<BindingSet> result = manager.getSubClassesOf(ontology);
+        TupleQueryResult result = manager.getSubClassesOf(ontology);
 
-        assertEquals(parents.size(), result.size());
+        assertTrue(result.hasNext());
         result.forEach(b -> {
             String parent = Bindings.requiredResource(b, "parent").stringValue();
             assertTrue(parents.contains(parent));
@@ -619,9 +619,9 @@ public class SimpleOntologyManagerTest {
         Map<String, String> children = new HashMap<>();
         children.put("http://matonto.org/ontology#dataProperty1a", "http://matonto.org/ontology#dataProperty1b");
 
-        Set<BindingSet> result = manager.getSubDatatypePropertiesOf(ontology);
+        TupleQueryResult result = manager.getSubDatatypePropertiesOf(ontology);
 
-        assertEquals(parents.size(), result.size());
+        assertTrue(result.hasNext());
         result.forEach(b -> {
             String parent = Bindings.requiredResource(b, "parent").stringValue();
             assertTrue(parents.contains(parent));
@@ -643,9 +643,9 @@ public class SimpleOntologyManagerTest {
         Map<String, String> children = new HashMap<>();
         children.put("http://matonto.org/ontology#objectProperty1a", "http://matonto.org/ontology#objectProperty1b");
 
-        Set<BindingSet> result = manager.getSubObjectPropertiesOf(ontology);
+        TupleQueryResult result = manager.getSubObjectPropertiesOf(ontology);
 
-        assertEquals(parents.size(), result.size());
+        assertTrue(result.hasNext());
         result.forEach(b -> {
             String parent = Bindings.requiredResource(b, "parent").stringValue();
             assertTrue(parents.contains(parent));
@@ -670,9 +670,9 @@ public class SimpleOntologyManagerTest {
         children.put("http://matonto.org/ontology#Class1a", "http://matonto.org/ontology#Class1b");
         children.put("http://matonto.org/ontology#Class2a", "http://matonto.org/ontology#Class2b");
 
-        Set<BindingSet> result = manager.getClassesWithIndividuals(ontology);
+        TupleQueryResult result = manager.getClassesWithIndividuals(ontology);
 
-        assertEquals(parents.size(), result.size());
+        assertTrue(result.hasNext());
         result.forEach(b -> {
             String parent = Bindings.requiredResource(b, "parent").stringValue();
             assertTrue(parents.contains(parent));
@@ -694,10 +694,10 @@ public class SimpleOntologyManagerTest {
         Set<String> predicates = Stream.of("http://www.w3.org/2000/01/rdf-schema#subClassOf",
                 "http://www.w3.org/1999/02/22-rdf-syntax-ns#type").collect(Collectors.toSet());
 
-        Set<BindingSet> result = manager.getEntityUsages(ontology, valueFactory
+        TupleQueryResult result = manager.getEntityUsages(ontology, valueFactory
                 .createIRI("http://matonto.org/ontology#Class1a"));
 
-        assertEquals(subjects.size(), result.size());
+        assertTrue(result.hasNext());
         result.forEach(b -> {
             Optional<Binding> optionalSubject = b.getBinding("s");
             if (optionalSubject.isPresent()) {
@@ -723,9 +723,9 @@ public class SimpleOntologyManagerTest {
         Map<String, String> children = new HashMap<>();
         children.put("https://matonto.org/vocabulary#Concept1", "https://matonto.org/vocabulary#Concept2");
 
-        Set<BindingSet> result = manager.getConceptRelationships(vocabulary);
+        TupleQueryResult result = manager.getConceptRelationships(vocabulary);
 
-        assertEquals(parents.size(), result.size());
+        assertTrue(result.hasNext());
         result.forEach(b -> {
             String parent = Bindings.requiredResource(b, "parent").stringValue();
             assertTrue(parents.contains(parent));
@@ -746,9 +746,9 @@ public class SimpleOntologyManagerTest {
                 "http://matonto.org/ontology#Class1b", "http://matonto.org/ontology#Class1c",
                 "http://matonto.org/ontology#Class1a").collect(Collectors.toSet());
 
-        Set<BindingSet> result = manager.getSearchResults(ontology, "class");
+        TupleQueryResult result = manager.getSearchResults(ontology, "class");
 
-        assertEquals(entities.size(), result.size());
+        assertTrue(result.hasNext());
         result.forEach(b -> {
             String parent = Bindings.requiredResource(b, "entity").stringValue();
             assertTrue(entities.contains(parent));
