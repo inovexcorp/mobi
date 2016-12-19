@@ -1028,7 +1028,7 @@ public class SimpleCatalogManagerTest {
     public void testFindRecordWithOffsetThatIsTooLarge() {
         // given
         int limit = 10;
-        int offset = 1;
+        int offset = 11;
         IRI modified = vf.createIRI(DC_MODIFIED);
         PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder(limit, offset, modified).build();
         // when

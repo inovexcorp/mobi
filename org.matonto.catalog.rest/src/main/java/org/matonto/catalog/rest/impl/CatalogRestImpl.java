@@ -87,6 +87,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -370,7 +371,7 @@ public class CatalogRestImpl implements CatalogRest {
             Set<Resource> distributionIRIs = record.getUnversionedDistribution().stream()
                     .map(Thing::getResource)
                     .collect(Collectors.toSet());
-            Set<Distribution> distributions = getSortedThingPage(distributionIRIs, this::getDistribution, sort,
+            List<Distribution> distributions = getSortedThingPage(distributionIRIs, this::getDistribution, sort,
                     offset, limit, asc);
             return createPaginatedResponse(uriInfo, distributions, distributionIRIs.size(), limit, offset);
         } catch (MatOntoException e) {
@@ -434,7 +435,7 @@ public class CatalogRestImpl implements CatalogRest {
             Set<Resource> versionIRIs = record.getVersion().stream()
                     .map(Thing::getResource)
                     .collect(Collectors.toSet());
-            Set<Version> versions = getSortedThingPage(versionIRIs, this::getVersion, sort, offset, limit, asc);
+            List<Version> versions = getSortedThingPage(versionIRIs, this::getVersion, sort, offset, limit, asc);
             return createPaginatedResponse(uriInfo, versions, versionIRIs.size(), limit, offset);
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
@@ -566,7 +567,7 @@ public class CatalogRestImpl implements CatalogRest {
             Set<Resource> distributionIRIs = version.getVersionedDistribution().stream()
                     .map(Thing::getResource)
                     .collect(Collectors.toSet());
-            Set<Distribution> distributions = getSortedThingPage(distributionIRIs, this::getDistribution, sort,
+            List<Distribution> distributions = getSortedThingPage(distributionIRIs, this::getDistribution, sort,
                     offset, limit, asc);
             return createPaginatedResponse(uriInfo, distributions, distributionIRIs.size(), limit, offset);
         } catch (MatOntoException e) {
@@ -648,7 +649,7 @@ public class CatalogRestImpl implements CatalogRest {
             Set<Resource> branchIRIs = record.getBranch().stream()
                     .map(Thing::getResource)
                     .collect(Collectors.toSet());
-            Set<Branch> branches = getSortedThingPage(branchIRIs, this::getBranch, sort, offset, limit, asc);
+            List<Branch> branches = getSortedThingPage(branchIRIs, this::getBranch, sort, offset, limit, asc);
             return createPaginatedResponse(uriInfo, branches, branchIRIs.size(), limit, offset);
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
@@ -1044,7 +1045,7 @@ public class CatalogRestImpl implements CatalogRest {
 
         JSONArray results = JSONArray.fromObject(items.stream()
                 .map(this::thingToJsonObject)
-                .collect(Collectors.toSet()));
+                .collect(Collectors.toList()));
         Response.ResponseBuilder response = Response.ok(results).header("X-Total-Count", totalSize);
         if (links.getNext() != null) {
             response = response.link(links.getBase() + links.getNext(), "next");
@@ -1408,16 +1409,16 @@ public class CatalogRestImpl implements CatalogRest {
      * @param iris The Set of Resource for all of the Things.
      * @param thingFunction A Function to retrieve Things based on their Resource IDs.
      * @param sortBy The property IRI string to sort the Set of Things by.
-     * @param offset The index of the page of Things to return.
+     * @param offset The number of Things to skip.
      * @param limit The size of the page of Things to the return.
      * @param asc Whether the sorting should be ascending or descending.
      * @param <T> A class that extends Things.
      * @return A Set of Things that has been sorted and limited to create a page in a paginated Response.
      */
-    private <T extends Thing> Set<T> getSortedThingPage(Set<Resource> iris, Function<Resource, T> thingFunction,
-                                                        String sortBy, int offset, int limit, boolean asc) {
-        if (offset > Math.floor(iris.size() / limit)) {
-            throw ErrorUtils.sendError("Offset exceeds number of pages", Response.Status.BAD_REQUEST);
+    private <T extends Thing> List<T> getSortedThingPage(Set<Resource> iris, Function<Resource, T> thingFunction,
+                                                         String sortBy, int offset, int limit, boolean asc) {
+        if (offset > iris.size()) {
+            throw ErrorUtils.sendError("Offset exceeds total size", Response.Status.BAD_REQUEST);
         }
         IRI sortIRI = factory.createIRI(sortBy);
         Comparator<T> comparator = Comparator.comparing(dist -> dist.getProperty(sortIRI).get().stringValue());
@@ -1429,7 +1430,7 @@ public class CatalogRestImpl implements CatalogRest {
         return stream.sorted(comparator)
                 .skip(offset)
                 .limit(limit)
-                .collect(Collectors.toSet());
+                .collect(Collectors.toList());
     }
 
     /**

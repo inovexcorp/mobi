@@ -58,7 +58,7 @@ public class LinksUtils {
      * @param uriInfo the request URI information.
      * @param size the number of results returned.
      * @param limit the maximum number of results returned.
-     * @param offset the offset index of the results.
+     * @param offset the offset of the results.
      * @return Links for the provided details.
      */
     public static Links buildLinks(UriInfo uriInfo, int size, int totalSize, int limit, int offset) {

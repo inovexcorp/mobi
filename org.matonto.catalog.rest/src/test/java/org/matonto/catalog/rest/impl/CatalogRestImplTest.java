@@ -905,7 +905,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     @Test
     public void getUnversionedRecordsWithOffsetThatIsTooLargeTest() {
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/distributions")
-                .queryParam("sort", DCTERMS.TITLE.stringValue()).queryParam("offset", "1").request().get();
+                .queryParam("sort", DCTERMS.TITLE.stringValue()).queryParam("offset", "100").request().get();
         assertEquals(response.getStatus(), 400);
     }
 
@@ -1229,7 +1229,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     @Test
     public void getVersionsWithOffsetThatIsTooLargeTest() {
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/versions")
-                .queryParam("sort", DCTERMS.TITLE.stringValue()).queryParam("offset", "1").request().get();
+                .queryParam("sort", DCTERMS.TITLE.stringValue()).queryParam("offset", "100").request().get();
         assertEquals(response.getStatus(), 400);
     }
 
@@ -1582,7 +1582,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     public void getVersionedDistributionsWithOffsetThatIsTooLargeTest() {
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI) + "/distributions")
-                .queryParam("sort", DCTERMS.TITLE.stringValue()).queryParam("offset", "1").request().get();
+                .queryParam("sort", DCTERMS.TITLE.stringValue()).queryParam("offset", "100").request().get();
         assertEquals(response.getStatus(), 400);
     }
 
@@ -2074,7 +2074,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     @Test
     public void getBranchesWithOffsetThatIsTooLargeTest() {
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/branches")
-                .queryParam("sort", DCTERMS.TITLE.stringValue()).queryParam("offset", "1").request().get();
+                .queryParam("sort", DCTERMS.TITLE.stringValue()).queryParam("offset", "100").request().get();
         assertEquals(response.getStatus(), 400);
     }
 
