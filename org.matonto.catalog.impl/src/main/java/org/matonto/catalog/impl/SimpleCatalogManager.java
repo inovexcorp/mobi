@@ -23,16 +23,46 @@ package org.matonto.catalog.impl;
  * #L%
  */
 
-import aQute.bnd.annotation.component.*;
+import aQute.bnd.annotation.component.Activate;
+import aQute.bnd.annotation.component.Component;
+import aQute.bnd.annotation.component.ConfigurationPolicy;
+import aQute.bnd.annotation.component.Modified;
+import aQute.bnd.annotation.component.Reference;
 import aQute.bnd.annotation.metatype.Configurable;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
-import org.matonto.catalog.api.*;
+import org.matonto.catalog.api.CatalogManager;
+import org.matonto.catalog.api.Conflict;
+import org.matonto.catalog.api.Difference;
+import org.matonto.catalog.api.PaginatedSearchParams;
+import org.matonto.catalog.api.PaginatedSearchResults;
 import org.matonto.catalog.api.builder.DistributionConfig;
 import org.matonto.catalog.api.builder.RecordConfig;
-import org.matonto.catalog.api.ontologies.mcat.*;
+import org.matonto.catalog.api.ontologies.mcat.Branch;
+import org.matonto.catalog.api.ontologies.mcat.BranchFactory;
+import org.matonto.catalog.api.ontologies.mcat.Catalog;
+import org.matonto.catalog.api.ontologies.mcat.CatalogFactory;
+import org.matonto.catalog.api.ontologies.mcat.Commit;
+import org.matonto.catalog.api.ontologies.mcat.CommitFactory;
+import org.matonto.catalog.api.ontologies.mcat.Distribution;
+import org.matonto.catalog.api.ontologies.mcat.DistributionFactory;
+import org.matonto.catalog.api.ontologies.mcat.InProgressCommit;
+import org.matonto.catalog.api.ontologies.mcat.InProgressCommitFactory;
+import org.matonto.catalog.api.ontologies.mcat.Record;
+import org.matonto.catalog.api.ontologies.mcat.RecordFactory;
+import org.matonto.catalog.api.ontologies.mcat.Revision;
+import org.matonto.catalog.api.ontologies.mcat.RevisionFactory;
+import org.matonto.catalog.api.ontologies.mcat.Tag;
+import org.matonto.catalog.api.ontologies.mcat.UnversionedRecord;
+import org.matonto.catalog.api.ontologies.mcat.UnversionedRecordFactory;
+import org.matonto.catalog.api.ontologies.mcat.Version;
+import org.matonto.catalog.api.ontologies.mcat.VersionFactory;
+import org.matonto.catalog.api.ontologies.mcat.VersionedRDFRecord;
+import org.matonto.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
+import org.matonto.catalog.api.ontologies.mcat.VersionedRecord;
+import org.matonto.catalog.api.ontologies.mcat.VersionedRecordFactory;
 import org.matonto.catalog.config.CatalogConfig;
 import org.matonto.catalog.util.SearchResults;
 import org.matonto.exception.MatOntoException;
@@ -45,7 +75,13 @@ import org.matonto.query.TupleQueryResult;
 import org.matonto.query.api.Binding;
 import org.matonto.query.api.BindingSet;
 import org.matonto.query.api.TupleQuery;
-import org.matonto.rdf.api.*;
+import org.matonto.rdf.api.IRI;
+import org.matonto.rdf.api.Model;
+import org.matonto.rdf.api.ModelFactory;
+import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.Statement;
+import org.matonto.rdf.api.Value;
+import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.orm.OrmFactory;
 import org.matonto.rdf.orm.Thing;
 import org.matonto.repository.api.Repository;
@@ -55,13 +91,25 @@ import org.matonto.repository.exception.RepositoryException;
 import org.openrdf.model.vocabulary.DCTERMS;
 import org.openrdf.model.vocabulary.RDF;
 
-import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.security.InvalidParameterException;
 import java.time.OffsetDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.annotation.Nonnull;
 
 @Component(
         configurationPolicy = ConfigurationPolicy.require,
@@ -287,6 +335,10 @@ public class SimpleCatalogManager implements CatalogManager {
             int limit = searchParams.getLimit();
             int offset = searchParams.getOffset();
 
+            if (offset > totalCount) {
+                throw new MatOntoException("Offset exceeds total size");
+            }
+
             String sortBinding;
             Resource sortByParam = searchParams.getSortBy();
             if (sortingOptions.get(sortByParam) != null) {
@@ -372,8 +424,8 @@ public class SimpleCatalogManager implements CatalogManager {
             IRI identifierIRI = vf.createIRI(DCTERMS.IDENTIFIER.stringValue());
             Value identifier = record.getProperty(identifierIRI).orElseThrow(() ->
                     new MatOntoException("The Record must have an identifier."));
-            if (resourceExists(catalogId, Catalog.TYPE) && !resourceExists(record.getResource()) &&
-                    !conn.getStatements(null, identifierIRI, identifier).hasNext()) {
+            if (resourceExists(catalogId, Catalog.TYPE) && !resourceExists(record.getResource())
+                    && !conn.getStatements(null, identifierIRI, identifier).hasNext()) {
                 record.setCatalog(getCatalog(catalogId));
                 conn.add(record.getModel(), record.getResource());
             } else {
@@ -538,9 +590,11 @@ public class SimpleCatalogManager implements CatalogManager {
         if (!resourceExists(version.getResource()) && resourceExists(versionedRecordId, VersionedRecord.TYPE)) {
             try (RepositoryConnection conn = repository.getConnection()) {
                 IRI latestVersionResource = vf.createIRI(VersionedRecord.latestVersion_IRI);
+                IRI versionResource = vf.createIRI(VersionedRecord.version_IRI);
                 conn.begin();
                 conn.remove(versionedRecordId, latestVersionResource, null, versionedRecordId);
                 conn.add(versionedRecordId, latestVersionResource, version.getResource(), versionedRecordId);
+                conn.add(versionedRecordId, versionResource, version.getResource(), versionedRecordId);
                 conn.add(version.getModel(), version.getResource());
                 conn.commit();
             } catch (RepositoryException e) {
@@ -678,24 +732,27 @@ public class SimpleCatalogManager implements CatalogManager {
             } else if (optionalBranch.isPresent() && resourceExists(versionedRDFRecordId, VersionedRDFRecord.TYPE)
                     && removeObjectWithRelationship(branchId, versionedRDFRecordId, VersionedRDFRecord.branch_IRI)) {
                 Branch branch = optionalBranch.get();
-                Commit headCommit = branch.getHead().orElseThrow(() ->
-                        new MatOntoException("The head Commit was not set on the Branch."));
-                List<Resource> chain = getCommitChain(headCommit.getResource());
-                IRI headCommitIRI = vf.createIRI(Branch.head_IRI);
-                IRI wasInformedByIRI = vf.createIRI(Activity.wasInformedBy_IRI);
-                IRI commitIRI = vf.createIRI(Tag.commit_IRI);
-                conn.begin();
-                for (int i = chain.size() - 1; i >= 0; i--) {
-                    Resource commitId = chain.get(i);
-                    if (!conn.getStatements(null, headCommitIRI, commitId).hasNext()
-                            && !conn.getStatements(null, wasInformedByIRI, commitId).hasNext()) {
-                        conn.remove((Resource) null, null, null, commitId);
-                        conn.remove((Resource) null, commitIRI, commitId);
-                    } else {
-                        break;
+                Optional<Commit> headCommit = branch.getHead();
+                if (headCommit.isPresent()) {
+                    List<Resource> chain = getCommitChain(headCommit.get().getResource());
+                    IRI headCommitIRI = vf.createIRI(Branch.head_IRI);
+                    IRI wasInformedByIRI = vf.createIRI(Activity.wasInformedBy_IRI);
+                    IRI commitIRI = vf.createIRI(Tag.commit_IRI);
+                    conn.begin();
+                    for (int i = chain.size() - 1; i >= 0; i--) {
+                        Resource commitId = chain.get(i);
+                        if (!conn.getStatements(null, headCommitIRI, commitId).hasNext()
+                                && !conn.getStatements(null, wasInformedByIRI, commitId).hasNext()) {
+                            conn.remove((Resource) null, null, null, commitId);
+                            conn.remove((Resource) null, commitIRI, commitId);
+                        } else {
+                            break;
+                        }
                     }
+                    conn.commit();
+                } else {
+                    log.warn("The HEAD Commit was not set on the Branch.");
                 }
-                conn.commit();
             } else {
                 throw new MatOntoException("The Branch could not be removed.");
             }
@@ -876,6 +933,36 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
+    public Difference getCommitDifference(Resource commitId) throws MatOntoException {
+        return getCommitDifference(commitId, commitFactory);
+    }
+
+    private <T extends Commit> Difference getCommitDifference(Resource commitId, OrmFactory<T> commitFactory) {
+        T commit = getCommit(commitId, commitFactory).orElseThrow(() ->
+                new MatOntoException("The Commit could not be retrieved."));
+        try (RepositoryConnection conn = repository.getConnection()) {
+            Resource revisionIRI = (Resource) commit.getProperty(vf.createIRI(Activity.generated_IRI)).get();
+            Revision revision = revisionFactory.getExisting(revisionIRI, commit.getModel());
+            Resource additionsIRI = (Resource) revision.getAdditions().orElseThrow(() ->
+                    new MatOntoException("The additions could not be found."));
+            Resource deletionsIRI = (Resource) revision.getDeletions().orElseThrow(() ->
+                    new MatOntoException("The deletions could not be found."));
+            Model addModel = mf.createModel();
+            Model deleteModel = mf.createModel();
+            conn.getStatements(null, null, null, additionsIRI).forEach(statement ->
+                    addModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
+            conn.getStatements(null, null, null, deletionsIRI).forEach(statement ->
+                    deleteModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
+            return new SimpleDifference.Builder()
+                    .additions(addModel)
+                    .deletions(deleteModel)
+                    .build();
+        } catch (RepositoryException e) {
+            throw new MatOntoException("Error in repository connection", e);
+        }
+    }
+
+    @Override
     public void removeInProgressCommit(Resource inProgressCommitId) throws MatOntoException {
         if (resourceExists(inProgressCommitId, InProgressCommit.TYPE)) {
             remove(inProgressCommitId);
@@ -886,24 +973,12 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public Model applyInProgressCommit(Resource inProgressCommitId, Model entity) throws MatOntoException {
-        InProgressCommit inProgressCommit = this.getCommit(inProgressCommitId, inProgressCommitFactory)
-                .orElseThrow(() -> new MatOntoException("The InProgressCommit could not be retrieved."));
-        try (RepositoryConnection conn = repository.getConnection()) {
-            Resource revisionIRI = (Resource)inProgressCommit.getProperty(vf.createIRI(Activity.generated_IRI)).get();
-            Revision revision = revisionFactory.getExisting(revisionIRI, inProgressCommit.getModel());
-            Resource additionsIRI = (Resource)revision.getAdditions().orElseThrow(() ->
-                    new MatOntoException("The additions could not be found."));
-            Resource deletionsIRI = (Resource)revision.getDeletions().orElseThrow(() ->
-                    new MatOntoException("The deletions could not be found."));
-            Model result = mf.createModel(entity);
-            conn.getStatements(null, null, null, additionsIRI).forEach(statement -> result.add(statement.getSubject(),
-                    statement.getPredicate(), statement.getObject()));
-            conn.getStatements(null, null, null, deletionsIRI).forEach(statement -> result.remove(statement
-                    .getSubject(), statement.getPredicate(), statement.getObject()));
-            return result;
-        } catch (RepositoryException e) {
-            throw new MatOntoException("Error in repository connection", e);
-        }
+        Difference diff = getCommitDifference(inProgressCommitId, inProgressCommitFactory);
+        Model result = mf.createModel(entity);
+        diff.getAdditions().forEach(result::add);
+        diff.getDeletions().forEach(statement -> result.remove(statement.getSubject(), statement.getPredicate(),
+                statement.getObject()));
+        return result;
     }
 
     @Override

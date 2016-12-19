@@ -1,8 +1,10 @@
-package org.matonto.catalog.api;
+@Version("2.0.0.${build}")
+
+package org.matonto.catalog.rest;
 
 /*-
  * #%L
- * org.matonto.catalog.api
+ * org.matonto.catalog.rest
  * $Id:$
  * $HeadURL:$
  * %%
@@ -23,15 +25,4 @@ package org.matonto.catalog.api;
  * #L%
  */
 
-import org.matonto.rdf.api.Resource;
-
-public interface PaginatedSearchParamsBuilder {
-
-    PaginatedSearchParamsBuilder searchTerm(String val);
-
-    PaginatedSearchParamsBuilder typeFilter(Resource val);
-
-    PaginatedSearchParamsBuilder ascending(boolean val);
-
-    PaginatedSearchParams build();
-}
+import aQute.bnd.annotation.Version;

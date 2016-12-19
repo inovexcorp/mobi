@@ -104,6 +104,7 @@
                                 <ontology>
                                     <ontologyFile>${project.basedir}/src/main/resources/mcat.ttl</ontologyFile>
                                     <outputPackage>org.matonto.catalog.api.ontologies.mcat</outputPackage>
+                                    <ontologyName>MCAT</ontologyName>
                                 </ontology>
                             </generates>
                             <references>
