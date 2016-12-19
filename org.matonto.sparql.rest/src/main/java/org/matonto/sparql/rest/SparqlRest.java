@@ -55,7 +55,7 @@ public interface SparqlRest {
      * Retrieves the paged results of the provided SPARQL query. Parameters can be passed to control paging.
      *
      * @param limit The number of resources to return in one page.
-     * @param start The offset for the page.
+     * @param offset The offset for the page.
      * @return The paginated List of JSONObjects that match the SPARQL query bindings.
      */
     @GET
@@ -67,5 +67,5 @@ public interface SparqlRest {
             @QueryParam("query") String queryString,
             @Context UriInfo uriInfo,
             @DefaultValue("100") @QueryParam("limit") int limit,
-            @DefaultValue("0") @QueryParam("start") int start);
+            @DefaultValue("0") @QueryParam("offset") int offset);
 }

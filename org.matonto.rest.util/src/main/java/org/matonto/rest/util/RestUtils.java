@@ -23,6 +23,8 @@ package org.matonto.rest.util;
  * #L%
  */
 
+import org.openrdf.rio.RDFFormat;
+
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 
@@ -42,5 +44,63 @@ public class RestUtils {
             e.printStackTrace();
         }
         return encoded;
+    }
+
+    /**
+     * Returns the specified RDFFormat. Currently supports Turtle, RDF/XML, and JSON-LD.
+     *
+     * @param format The abbreviated name of a RDFFormat.
+     * @return A RDFFormat object with the requested format.
+     */
+    public static RDFFormat getRDFFormat(String format) {
+        switch (format.toLowerCase()) {
+            case "turtle":
+                return RDFFormat.TURTLE;
+            case "rdf/xml":
+                return RDFFormat.RDFXML;
+            case "jsonld":
+            default:
+                return RDFFormat.JSONLD;
+        }
+    }
+
+    /**
+     * Returns the file extension for the specified RDFFormat. Currently supports Turtle, RDF/XML, OWL/XML, and JSON-LD.
+     *
+     * @param format The abbreviated name of a RDFFormat.
+     * @return The default file extension for the requested format.
+     */
+    public static String getRDFFormatFileExtension(String format) {
+        switch (format.toLowerCase()) {
+            case "turtle":
+                return RDFFormat.TURTLE.getDefaultFileExtension();
+            case "rdf/xml":
+                return RDFFormat.RDFXML.getDefaultFileExtension();
+            case "owl/xml" :
+                return "owx";
+            case "jsonld":
+            default:
+                return RDFFormat.JSONLD.getDefaultFileExtension();
+        }
+    }
+
+    /**
+     * Returns the MIME type for the specified RDFFormat. Currently supports Turtle, RDF/XML, OWL/XML, and JSON-LD.
+     *
+     * @param format The abbreviated name of a RDFFormat.
+     * @return THe default MIME type for the requested format.
+     */
+    public static String getRDFFormatMimeType(String format) {
+        switch (format.toLowerCase()) {
+            case "turtle":
+                return RDFFormat.TURTLE.getDefaultMIMEType();
+            case "rdf/xml":
+                return RDFFormat.RDFXML.getDefaultMIMEType();
+            case "owl/xml" :
+                return "application/owl+xml";
+            case "jsonld":
+            default:
+                return RDFFormat.JSONLD.getDefaultMIMEType();
+        }
     }
 }
