@@ -433,7 +433,7 @@ public class OntologyRestImpl implements OntologyRest {
             JSONArray array = importedOntologies.stream()
                     .map(ontology -> getOntologyAsJsonObject(ontology, rdfFormat))
                     .collect(JSONArray::new, JSONArray::add, JSONArray::add);
-            return array.size() == 0 ? Response.noContent().build() : Response.ok().entity(array).build();
+            return array.size() == 0 ? Response.noContent().build() : Response.ok(array).build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         }
@@ -619,8 +619,8 @@ public class OntologyRestImpl implements OntologyRest {
                     }
                 }
             });
-            return response.size() == 0 ? Response.noContent().build() : Response.ok().entity(JSONObject
-                    .fromObject(response)).build();
+            return response.size() == 0 ? Response.noContent().build() : Response.ok(JSONObject.fromObject(response))
+                    .build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         }
