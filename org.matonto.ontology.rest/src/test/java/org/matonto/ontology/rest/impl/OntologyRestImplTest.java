@@ -60,7 +60,6 @@ import org.matonto.ontology.core.api.propertyexpression.DataProperty;
 import org.matonto.ontology.core.api.propertyexpression.ObjectProperty;
 import org.matonto.ontology.core.impl.owlapi.SimpleAnnotation;
 import org.matonto.ontology.core.impl.owlapi.SimpleNamedIndividual;
-import org.matonto.ontology.core.impl.owlapi.SimpleOntology;
 import org.matonto.ontology.core.impl.owlapi.SimpleOntologyManager;
 import org.matonto.ontology.core.impl.owlapi.classexpression.SimpleClass;
 import org.matonto.ontology.core.impl.owlapi.datarange.SimpleDatatype;
@@ -129,8 +128,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotEquals;
+import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
 public class OntologyRestImplTest extends MatontoRestTestNg {
@@ -466,7 +465,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
 
     private void assertAnnotations(JSONObject responseObject, Set<AnnotationProperty> propSet, Set<Annotation> annSet) {
         JSONArray jsonAnnotations = responseObject.optJSONArray("annotationProperties");
-        assertFalse(jsonAnnotations == null);
+        assertNotNull(jsonAnnotations);
         assertEquals(jsonAnnotations.size(), propSet.size() + annSet.size());
         propSet.forEach(annotationProperty ->
                 assertTrue(jsonAnnotations.contains(createJsonIRI(annotationProperty.getIRI()))));
@@ -476,21 +475,21 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
 
     private void assertClasses(JSONObject responseObject, Set<OClass> set) {
         JSONArray jsonClasses = responseObject.optJSONArray("classes");
-        assertFalse(jsonClasses == null);
+        assertNotNull(jsonClasses);
         assertEquals(jsonClasses.size(), set.size());
         set.forEach(oClass -> assertTrue(jsonClasses.contains(createJsonIRI(oClass.getIRI()))));
     }
 
     private void assertDatatypes(JSONObject responseObject, Set<Datatype> set) {
         JSONArray jsonDatatypes = responseObject.optJSONArray("datatypes");
-        assertFalse(jsonDatatypes == null);
+        assertNotNull(jsonDatatypes);
         assertEquals(jsonDatatypes.size(), set.size());
         set.forEach(datatype -> assertTrue(jsonDatatypes.contains(createJsonIRI(datatype.getIRI()))));
     }
 
     private void assertObjectProperties(JSONObject responseObject, Set<ObjectProperty> set) {
         JSONArray jsonObjectProperties = responseObject.optJSONArray("objectProperties");
-        assertFalse(jsonObjectProperties == null);
+        assertNotNull(jsonObjectProperties);
         assertEquals(jsonObjectProperties.size(), set.size());
         set.forEach(objectProperty -> assertTrue(jsonObjectProperties.contains(createJsonIRI(objectProperty
                 .getIRI()))));
@@ -498,7 +497,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
 
     private void assertDataProperties(JSONObject responseObject, Set<DataProperty> set) {
         JSONArray jsonDataProperties = responseObject.optJSONArray("dataProperties");
-        assertFalse(jsonDataProperties == null);
+        assertNotNull(jsonDataProperties);
         assertEquals(jsonDataProperties.size(), set.size());
         set.forEach(dataProperty -> assertTrue(jsonDataProperties.contains(createJsonIRI(dataProperty
                 .getIRI()))));
@@ -506,7 +505,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
 
     private void assertIndividuals(JSONObject responseObject, Set<Individual> set) {
         JSONArray jsonIndividuals = responseObject.optJSONArray("namedIndividuals");
-        assertFalse(jsonIndividuals == null);
+        assertNotNull(jsonIndividuals);
         assertEquals(jsonIndividuals.size(), set.size());
         set.forEach(individual -> assertTrue(jsonIndividuals.contains(createJsonIRI(
                 ((NamedIndividual)individual).getIRI()))));
@@ -525,7 +524,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
     private void assertImportedOntologies(JSONArray responseArray, Consumer<JSONObject> assertConsumer) {
         for (Object o : responseArray) {
             JSONObject jsonO = (JSONObject)o;
-            String ontologyId = (jsonO).get("id").toString();
+            String ontologyId = jsonO.get("id").toString();
             assertNotEquals(importedOntologies.stream()
                     .filter(ont -> ont.getOntologyId().getOntologyIdentifier().stringValue().equals(ontologyId))
                     .collect(Collectors.toList()).size(), 0);
@@ -674,6 +673,62 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         assertGetUserInProgressCommitIRI(true);
         verify(catalogManager, times(0)).addAdditions(any(Model.class), any(Resource.class));
         verify(catalogManager, times(0)).addDeletions(any(Model.class), any(Resource.class));
+    }
+
+    @Test
+    public void testSaveChangesToOntologyWithCommitIdAndMissingBranchId() {
+        JSONObject entity = new JSONObject().element("@id", "http://matonto.org/entity");
+
+        Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()))
+                .queryParam("commitId", commitId.stringValue()).queryParam("entityId", catalogId.stringValue())
+                .request().post(Entity.json(entity));
+
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void testSaveChangesToOntologyMissingCommitId() {
+        JSONObject entity = new JSONObject().element("@id", "http://matonto.org/entity");
+
+        Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()))
+                .queryParam("branchId", branchId.stringValue()).queryParam("entityId", catalogId.stringValue())
+                .request().post(Entity.json(entity));
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).retrieveOntology(any(Resource.class), any(Resource.class));
+        assertGetOntology(true);
+        assertGetUserInProgressCommitIRI(true);
+        verify(catalogManager).addAdditions(any(Model.class), eq(inProgressCommitId));
+        verify(catalogManager).addDeletions(any(Model.class), eq(inProgressCommitId));
+    }
+
+    @Test
+    public void testSaveChangesToOntologyMissingBranchIdAndMissingCommitId() {
+        JSONObject entity = new JSONObject().element("@id", "http://matonto.org/entity");
+
+        Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()))
+                .queryParam("entityId", catalogId.stringValue()).request().post(Entity.json(entity));
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).retrieveOntology(any(Resource.class));
+        assertGetOntology(true);
+        assertGetUserInProgressCommitIRI(true);
+        verify(catalogManager).addAdditions(any(Model.class), eq(inProgressCommitId));
+        verify(catalogManager).addDeletions(any(Model.class), eq(inProgressCommitId));
+    }
+
+    @Test
+    public void testSaveChangesToOntologyWhenRetrieveOntologyIsEmpty() {
+        when(ontologyManager.retrieveOntology(any(Resource.class), any(Resource.class), any(Resource.class)))
+                .thenReturn(Optional.empty());
+
+        JSONObject entity = new JSONObject().element("@id", "http://matonto.org/entity");
+
+        Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()))
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .queryParam("entityId", catalogId.stringValue()).request().post(Entity.json(entity));
+
+        assertEquals(response.getStatus(), 400);
     }
 
     // Test get IRIs in ontology

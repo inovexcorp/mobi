@@ -147,7 +147,7 @@ public interface OntologyRest {
     @Path("{ontologyId}/annotations")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the annotation in the identified ontology.")
+    @ApiOperation("Gets the annotations in the identified ontology.")
     Response getAnnotationsInOntology(@Context ContainerRequestContext context,
                                       @PathParam("ontologyId") String ontologyIdStr,
                                       @QueryParam("branchId") String branchIdStr,

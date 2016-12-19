@@ -199,7 +199,7 @@ public class OntologyRestImpl implements OntologyRest {
                                       String commitIdStr) {
         try {
             JSONObject result = doWithOntology(context, ontologyIdStr, branchIdStr, commitIdStr, this::getAllIRIs);
-            return Response.ok().entity(result).build();
+            return Response.ok(result).build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         }
@@ -211,7 +211,7 @@ public class OntologyRestImpl implements OntologyRest {
         try {
             JSONObject result = doWithOntology(context, ontologyIdStr, branchIdStr, commitIdStr,
                     this::getAnnotationArray);
-            return Response.ok().entity(result).build();
+            return Response.ok(result).build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         }
@@ -245,7 +245,7 @@ public class OntologyRestImpl implements OntologyRest {
                                          String commitIdStr) {
         try {
             JSONObject result = doWithOntology(context, ontologyIdStr, branchIdStr, commitIdStr, this::getClassArray);
-            return Response.ok().entity(result).build();
+            return Response.ok(result).build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         }
@@ -279,7 +279,7 @@ public class OntologyRestImpl implements OntologyRest {
         try {
             JSONObject result = doWithOntology(context, ontologyIdStr, branchIdStr, commitIdStr,
                     this::getDatatypeArray);
-            return Response.ok().entity(result).build();
+            return Response.ok(result).build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         }
@@ -313,7 +313,7 @@ public class OntologyRestImpl implements OntologyRest {
         try {
             JSONObject result = doWithOntology(context, ontologyIdStr, branchIdStr, commitIdStr,
                     this::getObjectPropertyArray);
-            return Response.ok().entity(result).build();
+            return Response.ok(result).build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         }
@@ -349,7 +349,7 @@ public class OntologyRestImpl implements OntologyRest {
         try {
             JSONObject result = doWithOntology(context, ontologyIdStr, branchIdStr, commitIdStr,
                     this::getDataPropertyArray);
-            return Response.ok().entity(result).build();
+            return Response.ok(result).build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         }
@@ -384,7 +384,7 @@ public class OntologyRestImpl implements OntologyRest {
         try {
             JSONObject result = doWithOntology(context, ontologyIdStr, branchIdStr, commitIdStr,
                     this::getNamedIndividualArray);
-            return Response.ok().entity(result).build();
+            return Response.ok(result).build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         }
@@ -419,7 +419,7 @@ public class OntologyRestImpl implements OntologyRest {
         try {
             JSONArray result = doWithImportedOntologies(context, ontologyIdStr, branchIdStr, commitIdStr,
                     this::getAllIRIs);
-            return Response.ok().entity(result).build();
+            return Response.ok(result).build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         }
@@ -445,7 +445,7 @@ public class OntologyRestImpl implements OntologyRest {
         try {
             JSONArray result = doWithImportedOntologies(context, ontologyIdStr, branchIdStr, commitIdStr,
                     this::getAnnotationArray);
-            return Response.ok().entity(result).build();
+            return Response.ok(result).build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         }
@@ -457,7 +457,7 @@ public class OntologyRestImpl implements OntologyRest {
         try {
             JSONArray result = doWithImportedOntologies(context, ontologyIdStr, branchIdStr, commitIdStr,
                     this::getClassArray);
-            return Response.ok().entity(result).build();
+            return Response.ok(result).build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         }
@@ -469,7 +469,7 @@ public class OntologyRestImpl implements OntologyRest {
         try {
             JSONArray result = doWithImportedOntologies(context, ontologyIdStr, branchIdStr, commitIdStr,
                     this::getDatatypeArray);
-            return Response.ok().entity(result).build();
+            return Response.ok(result).build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         }
@@ -481,7 +481,7 @@ public class OntologyRestImpl implements OntologyRest {
         try {
             JSONArray result = doWithImportedOntologies(context, ontologyIdStr, branchIdStr, commitIdStr,
                     this::getObjectPropertyArray);
-            return Response.ok().entity(result).build();
+            return Response.ok(result).build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         }
@@ -493,7 +493,7 @@ public class OntologyRestImpl implements OntologyRest {
         try {
             JSONArray result = doWithImportedOntologies(context, ontologyIdStr, branchIdStr, commitIdStr,
                     this::getDataPropertyArray);
-            return Response.ok().entity(result).build();
+            return Response.ok(result).build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         }
@@ -505,7 +505,7 @@ public class OntologyRestImpl implements OntologyRest {
         try {
             JSONArray result = doWithImportedOntologies(context, ontologyIdStr, branchIdStr, commitIdStr,
                     this::getNamedIndividualArray);
-            return Response.ok().entity(result).build();
+            return Response.ok(result).build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         }
@@ -519,7 +519,7 @@ public class OntologyRestImpl implements OntologyRest {
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
             TupleQueryResult results = ontologyManager.getSubClassesOf(ontology);
             JSONObject response = getHierarchy(results);
-            return Response.ok().entity(response).build();
+            return Response.ok(response).build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         }
@@ -533,7 +533,7 @@ public class OntologyRestImpl implements OntologyRest {
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
             TupleQueryResult results = ontologyManager.getSubObjectPropertiesOf(ontology);
             JSONObject response = getHierarchy(results);
-            return Response.ok().entity(response).build();
+            return Response.ok(response).build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         }
@@ -547,7 +547,7 @@ public class OntologyRestImpl implements OntologyRest {
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
             TupleQueryResult results = ontologyManager.getSubDatatypePropertiesOf(ontology);
             JSONObject response = getHierarchy(results);
-            return Response.ok().entity(response).build();
+            return Response.ok(response).build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         }
@@ -561,7 +561,7 @@ public class OntologyRestImpl implements OntologyRest {
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
             TupleQueryResult results = ontologyManager.getConceptRelationships(ontology);
             JSONObject response = getHierarchy(results);
-            return Response.ok().entity(response).build();
+            return Response.ok(response).build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         }
@@ -575,7 +575,7 @@ public class OntologyRestImpl implements OntologyRest {
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
             TupleQueryResult results = ontologyManager.getClassesWithIndividuals(ontology);
             JSONObject response = getHierarchy(results);
-            return Response.ok().entity(response).build();
+            return Response.ok(response).build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         }
@@ -589,7 +589,7 @@ public class OntologyRestImpl implements OntologyRest {
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
             TupleQueryResult results = ontologyManager.getEntityUsages(ontology, valueFactory.createIRI(entityIRIStr));
             JSONObject response = JSONQueryResults.getResponse(results);
-            return Response.ok().entity(response).build();
+            return Response.ok(response).build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         }
