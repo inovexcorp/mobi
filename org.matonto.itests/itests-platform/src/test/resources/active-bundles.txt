@@ -21,6 +21,7 @@ org.matonto.web
 org.matonto.sparql.rest
 org.matonto.catalog.api
 org.matonto.catalog.impl
+org.matonto.catalog.rest
 org.matonto.jaas
 org.matonto.web.security
 org.matonto.rdf.orm

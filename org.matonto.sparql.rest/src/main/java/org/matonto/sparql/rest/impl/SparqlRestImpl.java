@@ -109,7 +109,7 @@ public class SparqlRestImpl implements SparqlRest {
 
     @Override
     public SparqlPaginatedResults<JSONObject> getPagedResults(String queryString, UriInfo uriInfo, int limit,
-                                                              int start) {
+                                                              int offset) {
         TupleQueryResult queryResults = getQueryResults(queryString);
 
         if (queryResults.hasNext()) {
@@ -118,19 +118,19 @@ public class SparqlRestImpl implements SparqlRest {
             PaginatedResults<JSONObject> paginatedResults = new PaginatedResults<>();
             int size;
 
-            if ((start + limit) > bindings.size()) {
-                paginatedResults.setResults(bindings.subList(start, bindings.size()));
-                size = bindings.size() - start;
+            if ((offset + limit) > bindings.size()) {
+                paginatedResults.setResults(bindings.subList(offset, bindings.size()));
+                size = bindings.size() - offset;
             } else {
-                paginatedResults.setResults(bindings.subList(start, start + limit));
+                paginatedResults.setResults(bindings.subList(offset, offset + limit));
                 size = limit;
             }
 
             paginatedResults.setLimit(limit);
-            paginatedResults.setStart(start);
+            paginatedResults.setStart(offset);
             paginatedResults.setTotalSize(bindings.size());
             paginatedResults.setSize(size);
-            paginatedResults.setLinks(LinksUtils.buildLinks(uriInfo, size, bindings.size(), limit, start));
+            paginatedResults.setLinks(LinksUtils.buildLinks(uriInfo, size, bindings.size(), limit, offset));
 
             SparqlPaginatedResults<JSONObject> response = new SparqlPaginatedResults<>();
             response.setBindingNames(queryResults.getBindingNames());
