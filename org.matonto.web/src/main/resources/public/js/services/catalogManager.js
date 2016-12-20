@@ -50,9 +50,9 @@
          */
         .service('catalogManagerService', catalogManagerService);
 
-        catalogManagerService.$inject = ['$rootScope', '$http', '$q', 'prefixes', 'ontologyManagerService'];
+        catalogManagerService.$inject = ['$rootScope', '$http', '$q', 'prefixes', 'utilService'];
 
-        function catalogManagerService($rootScope, $http, $q, prefixes, ontologyManagerService) {
+        function catalogManagerService($rootScope, $http, $q, prefixes, utilService) {
             var self = this,
                 prefix = '/matontorest/catalogs';
 
@@ -126,7 +126,7 @@
                 self.getSortOptions()
                     .then(options => {
                         _.forEach(options, option => {
-                            var label = ontologyManagerService.getBeautifulIRI(option);
+                            var label = utilService.getBeautifulIRI(option);
                             if (!_.includes(self.sortOptions, {field: option})) {
                                 self.sortOptions.push({
                                     field: option,
@@ -281,15 +281,16 @@
              * new Record if successful or rejects with an error message.
              *
              * @param {string} catalogId The id of the Catalog to create the Record in
-             * @param {string} recordType A record type IRI string from the `recordTypes` array
-             * @param {string} title The required title of the new Record
-             * @param {string} identifier The required identifier string for the new Record
-             * @param {string=''} description The optional description of the new Record
-             * @param {string[]=[]} keywords The optional keywords to associate with the new Record.
+             * @param {Object} recordConfig A configuration object containing metadata for the new Record
+             * @param {string} recordConfig.type A record type IRI string from the `recordTypes` array
+             * @param {string} recordConfig.title The required title of the new Record
+             * @param {string} recordConfig.identifier The required identifier string for the new Record
+             * @param {string} recordConfig.description The optional description of the new Record
+             * @param {string[]} recordConfig.keywords The optional keywords to associate with the new Record.
              * @return {Promise} A promise that resolves to the IRI of the new Record or is rejected with an error
              * message
              */
-            self.createRecord = function(catalogId, recordType, title, identifier, description = '', keywords = []) {
+            self.createRecord = function(catalogId, recordConfig) {
                 var deferred = $q.defer(),
                     fd = new FormData(),
                     config = {
@@ -299,14 +300,14 @@
                             'Accept': 'text/plain'
                         }
                     };
-                fd.append('type', recordType);
-                fd.append('title', title);
-                fd.append('identifier', identifier);
-                if (description) {
-                    fd.append('description', description);
+                fd.append('type', recordConfig.recordType);
+                fd.append('title', recordConfig.title);
+                fd.append('identifier', recordConfig.identifier);
+                if (_.has(recordConfig, 'description')) {
+                    fd.append('description', recordConfig.description);
                 }
-                if (keywords.length > 0) {
-                    fd.append('keywords', _.join(keywords, ','));
+                if (_.get(recordConfig, 'keywords', []).length > 0) {
+                    fd.append('keywords', _.join(recordConfig.keywords, ','));
                 }
                 $rootScope.showSpinner = true;
                 $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records', fd, config)
@@ -433,15 +434,16 @@
              *
              * @param {string} recordId The id of the Record to create the Distribution in
              * @param {string} catalogId The id of the Catalog the Record should be a part of
-             * @param {string} title The required title of the new Distribution
-             * @param {string=''} description The optional description of the new Distribution
-             * @param {string=''} format The optional format of the new Distribution (should be a MIME type)
-             * @param {string=''} accessURL The optional access URL of the new Distribution
-             * @param {string=''} downloadURL The optional download URL of the new Distribution
+             * @param {Object} distributionConfig A configuration object containing metadata for the new Distribution
+             * @param {string} distributionConfig.title The required title of the new Distribution
+             * @param {string} distributionConfig.description The optional description of the new Distribution
+             * @param {string} distributionConfig.format The optional format of the new Distribution (should be a MIME type)
+             * @param {string} distributionConfig.accessURL The optional access URL of the new Distribution
+             * @param {string} distributionConfig.downloadURL The optional download URL of the new Distribution
              * @return {Promise} A promise the resolves to the IRI of the new Distribution or is rejected with an error
              * message
              */
-            self.createRecordDistribution = function(recordId, catalogId, title, identifier, description = '', format = '', accessURL = '', downloadURL = '') {
+            self.createRecordDistribution = function(recordId, catalogId, distributionConfig) {
                 var deferred = $q.defer(),
                     fd = new FormData(),
                     config = {
@@ -451,18 +453,18 @@
                             'Accept': 'text/plain'
                         }
                     };
-                fd.append('title', title);
-                if (description) {
-                    fd.append('description', description);
+                fd.append('title', distributionConfig.title);
+                if (_.has(distributionConfig, 'description')) {
+                    fd.append('description', distributionConfig.description);
                 }
-                if (format) {
-                    fd.append('format', format);
+                if (_.has(distributionConfig, 'format')) {
+                    fd.append('format', distributionConfig.format);
                 }
-                if (accessURL) {
-                    fd.append('accessURL', accessURL);
+                if (_.has(distributionConfig, 'accessURL')) {
+                    fd.append('accessURL', distributionConfig.accessURL);
                 }
-                if (downloadURL) {
-                    fd.append('format', downloadURL);
+                if (_.has(distributionConfig, 'downloadURL')) {
+                    fd.append('downloadURL', distributionConfig.downloadURL);
                 }
                 $rootScope.showSpinner = true;
                 $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions', fd, config)
@@ -593,14 +595,16 @@
              *
              * @param {string} recordId The id of the Record to create the Branch for
              * @param {string} catalogId The id of the Catalog the Record should be a part of
-             * @param {string} title The required title of the new Branch
+             * @param {Object} branchConfig A configuration object containing metadata for the new Branch
+             * @param {string} branchConfig.title The required title of the new Branch
+             * @param {string} branchConfig.description The optional description of the new Branch
              * @param {string} commitId The id of the Commit to associate with the new Branch
-             * @param {string=''} description The optional description of the new Branch
              * @return {Promise} A promise the resolves to the IRI of the new Branch or is rejected with an error
              * message
              */
-            self.createRecordBranch = function(recordId, catalogId, title, commitId, description = '') {
-                return createBranch(recordId, catalogId, prefixes.catalog + 'Branch', title, description)
+            self.createRecordBranch = function(recordId, catalogId, branchConfig, commitId) {
+                branchConfig.type = prefixes.catalog + 'Branch';
+                return createBranch(recordId, catalogId, branchConfig)
                     .then(iri => getRecordBranch(iri, recordId, catalogId), error => $q.reject(error))
                     .then(branch => {
                         branch[prefixes.catalog + 'head'] = [{'@id': commitId}];
@@ -620,15 +624,17 @@
              *
              * @param {string} recordId The id of the Record to create the UserBranch for
              * @param {string} catalogId The id of the Catalog the Record should be a part of
-             * @param {string} title The required title of the new UserBranch
-             * @param {string} commitId The id of the Commit to associate with the new UserBranch
-             * @param {string} commitId The id of the parent Branch the UserBranch was created from
-             * @param {string=''} description The optional description of the new UserBranch
+             * @param {Object} branchConfig A configuration object containing metadata for the new Branch
+             * @param {string} branchConfig.title The required title of the new Branch
+             * @param {string} branchConfig.description The optional description of the new Branch
+             * @param {string} commitId The id of the Commit to associate with the new Branch
+             * @param {string} parentBranchId The id of the parent Branch the UserBranch was created from
              * @return {Promise} A promise the resolves to the IRI of the new UserBranch or is rejected with an error
              * message
              */
-            self.createRecordUserBranch = function(recordId, catalogId, title, commitId, parentBranchId, description = '') {
-                return createBranch(recordId, catalogId, prefixes.catalog + 'Branch', title, description)
+            self.createRecordUserBranch = function(recordId, catalogId, branchConfig, commitId, parentBranchId) {
+                branchConfig.type = prefixes.catalog + 'UserBranch';
+                return createBranch(recordId, catalogId, branchConfig)
                     .then(iri => getRecordBranch(iri, recordId, catalogId), error => $q.reject(error))
                     .then(branch => {
                         branch[prefixes.catalog + 'head'] = [{'@id': commitId}];
@@ -759,13 +765,15 @@
              *
              * @param {string} recordId The id of the Record to create the Version for
              * @param {string} catalogId The id of the Catalog the Record should be a part of
-             * @param {string} title The required title of the new Version
-             * @param {string=''} description The optional description of the new Version
+             * @param {Object} versionConfig A configuration object containing metadata for the new Version
+             * @param {string} versionConfig.title The required title of the new Version
+             * @param {string} versionConfig.description The optional description of the new Version
              * @return {Promise} A promise the resolves to the IRI of the new Version or is rejected with an error
              * message
              */
-            self.createRecordVersion = function(recordId, catalogId, title, description = '') {
-                return createVersion(recordId, catalogId, prefixes.catalog + 'Version', title, description);
+            self.createRecordVersion = function(recordId, catalogId, versionConfig) {
+                versionConfig.type = prefixes.catalog + 'Version';
+                return createVersion(recordId, catalogId, versionConfig);
             }
 
             /**
@@ -780,14 +788,16 @@
              *
              * @param {string} recordId The id of the Record to create the Tag for
              * @param {string} catalogId The id of the Catalog the Record should be a part of
-             * @param {string} title The required title of the new Tag
+             * @param {Object} versionConfig A configuration object containing metadata for the new Version
+             * @param {string} versionConfig.title The required title of the new Version
+             * @param {string} versionConfig.description The optional description of the new Version
              * @param {string} commitId The id of the Commit to associate with the new Tag
-             * @param {string=''} description The optional description of the new Tag
              * @return {Promise} A promise the resolves to the IRI of the new Tag or is rejected with an error
              * message
              */
-            self.createRecordTag = function(recordId, catalogId, title, commitId, description = '') {
-                return createVersion(recordId, catalogId, prefixes.catalog + 'Version', title, description)
+            self.createRecordTag = function(recordId, catalogId, versionConfig, commitId) {
+                versionConfig.type = prefixes.catalog + 'Tag';
+                return createVersion(recordId, catalogId, versionConfig)
                     .then(iri => getRecordVersion(iri, recordId, catalogId), error => $q.reject(error))
                     .then(version => {
                         version[prefixes.catalog + 'commit'] = [{'@id': commitId}];
@@ -921,15 +931,16 @@
              * @param {string} version The id of the Version to create the Distribution for
              * @param {string} recordId The id of the Record the Version should be part of
              * @param {string} catalogId The id of the Catalog the Record should be a part of
-             * @param {string} title The required title of the new Distribution
-             * @param {string=''} description The optional description of the new Distribution
-             * @param {string=''} format The optional format of the new Distribution (should be a MIME type)
-             * @param {string=''} accessURL The optional access URL of the new Distribution
-             * @param {string=''} downloadURL The optional download URL of the new Distribution
+             * @param {Object} distributionConfig A configuration object containing metadata for the new Distribution
+             * @param {string} distributionConfig.title The required title of the new Distribution
+             * @param {string} distributionConfig.description The optional description of the new Distribution
+             * @param {string} distributionConfig.format The optional format of the new Distribution (should be a MIME type)
+             * @param {string} distributionConfig.accessURL The optional access URL of the new Distribution
+             * @param {string} distributionConfig.downloadURL The optional download URL of the new Distribution
              * @return {Promise} A promise the resolves to the IRI of the new Distribution or is rejected with an error
              * message
              */
-            self.createVersionDistribution = function(versionId, recordId, catalogId, title, identifier, description = '', format = '', accessURL = '', downloadURL = '') {
+            self.createVersionDistribution = function(versionId, recordId, catalogId, distributionConfig) {
                 var deferred = $q.defer(),
                     fd = new FormData(),
                     config = {
@@ -939,18 +950,18 @@
                             'Accept': 'text/plain'
                         }
                     };
-                fd.append('title', title);
-                if (description) {
-                    fd.append('description', description);
+                fd.append('title', distributionConfig.title);
+                if (_.has(distributionConfig, 'description')) {
+                    fd.append('description', distributionConfig.description);
                 }
-                if (format) {
-                    fd.append('format', format);
+                if (_.has(distributionConfig, 'format')) {
+                    fd.append('format', distributionConfig.format);
                 }
-                if (accessURL) {
-                    fd.append('accessURL', accessURL);
+                if (_.has(distributionConfig, 'accessURL')) {
+                    fd.append('accessURL', distributionConfig.accessURL);
                 }
-                if (downloadURL) {
-                    fd.append('format', downloadURL);
+                if (_.has(distributionConfig, 'downloadURL')) {
+                    fd.append('format', distributionConfig.downloadURL);
                 }
                 $rootScope.showSpinner = true;
                 $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions', fd, config)
@@ -1085,7 +1096,7 @@
                 return _.includes(_.get(entity, '@type', []), prefixes.catalog + 'Branch');
             }
 
-            function createVersion(recordId, catalogId, versionType, title, description) {
+            function createVersion(recordId, catalogId, versionConfig) {
                 var deferred = $q.defer(),
                     fd = new FormData(),
                     config = {
@@ -1095,10 +1106,10 @@
                             'Accept': 'text/plain'
                         }
                     };
-                fd.append('title', title);
-                fd.append('type', versionType);
-                if (description) {
-                    fd.append('description', description);
+                fd.append('title', versionConfig.title);
+                fd.append('type', versionConfig.versionType);
+                if (_.has(versionConfig, 'description')) {
+                    fd.append('description', versionConfig.description);
                 }
                 $rootScope.showSpinner = true;
                 $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions', fd, config)
@@ -1107,7 +1118,7 @@
                 return deferred.promise;
             }
 
-            function createBranch(recordId, catalogId, branchType, title, description) {
+            function createBranch(recordId, catalogId, branchConfig) {
                 var deferred = $q.defer(),
                     fd = new FormData(),
                     config = {
@@ -1117,10 +1128,10 @@
                             'Accept': 'text/plain'
                         }
                     };
-                fd.append('title', title);
-                fd.append('type', branchType);
-                if (description) {
-                    fd.append('description', description);
+                fd.append('title', branchConfig.title);
+                fd.append('type', branchConfig.branchType);
+                if (_.has(branchConfig, 'description')) {
+                    fd.append('description', branchConfig.description);
                 }
                 $rootScope.showSpinner = true;
                 $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches', fd, config)

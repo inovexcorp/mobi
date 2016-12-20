@@ -36,6 +36,7 @@ describe('Individual Tree directive', function() {
         mockOntologyManager();
         mockOntologyState();
         mockSettingsManager();
+        mockUtil();
 
         inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_, _settingsManagerService_) {
             $compile = _$compile_;

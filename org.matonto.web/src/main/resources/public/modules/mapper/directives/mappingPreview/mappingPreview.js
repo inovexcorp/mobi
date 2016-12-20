@@ -52,9 +52,9 @@
          */
         .directive('mappingPreview', mappingPreview);
 
-        mappingPreview.$inject = ['prefixes', 'mappingManagerService', 'mapperStateService', 'ontologyManagerService', 'delimitedManagerService'];
+        mappingPreview.$inject = ['prefixes', 'utilService', 'mappingManagerService', 'mapperStateService', 'ontologyManagerService', 'delimitedManagerService'];
 
-        function mappingPreview(prefixes, mappingManagerService, mapperStateService, ontologyManagerService, delimitedManagerService) {
+        function mappingPreview(prefixes, utilService, mappingManagerService, mapperStateService, ontologyManagerService, delimitedManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -66,6 +66,7 @@
                     dvm.mm = mappingManagerService;
                     dvm.om = ontologyManagerService;
                     dvm.dm = delimitedManagerService;
+                    dvm.util = utilService;
 
                     dvm.ontologyExists = function() {
                         var objs = angular.copy(dvm.om.list);
@@ -73,10 +74,10 @@
                         return _.includes(ids, dvm.mm.getSourceOntologyId(dvm.state.mapping.jsonld));
                     }
                     dvm.getClassName = function(classMapping) {
-                        return dvm.om.getBeautifulIRI(dvm.mm.getClassIdByMapping(classMapping));
+                        return dvm.util.getBeautifulIRI(dvm.mm.getClassIdByMapping(classMapping));
                     }
                     dvm.getPropName = function(propMapping) {
-                        return dvm.om.getBeautifulIRI(dvm.mm.getPropIdByMapping(propMapping));
+                        return dvm.util.getBeautifulIRI(dvm.mm.getPropIdByMapping(propMapping));
                     }
                     dvm.getColumnIndex = function(propMapping) {
                         return propMapping[prefixes.delim + 'columnIndex'][0]['@value'];

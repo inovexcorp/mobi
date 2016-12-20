@@ -155,9 +155,7 @@ function mockOntologyManager() {
             this.hasClassIndividuals = jasmine.createSpy('hasClassIndividuals').and.returnValue(true);
             this.getClassIndividuals = jasmine.createSpy('getClassIndividuals').and.returnValue([]);
             this.findOntologyWithClass = jasmine.createSpy('findOntologyWithClass').and.returnValue({});
-            this.getBeautifulIRI = jasmine.createSpy('getBeautifulIRI').and.callFake(function(iri) {
-                return iri;
-            });
+            // this.getBeautifulIRI = jasmine.createSpy('getBeautifulIRI').and.callFake(_.identity);
             this.addEntity = jasmine.createSpy('addEntity');
             this.removeEntity = jasmine.createSpy('removeEntity');
             this.getEntity = jasmine.createSpy('getEntity').and.returnValue({});
@@ -388,9 +386,7 @@ function mockSettingsManager() {
     module(function($provide) {
         $provide.service('settingsManagerService', function() {
             this.getSettings = jasmine.createSpy('getSettings').and.returnValue({});
-            this.setSettings = jasmine.createSpy('setSettings').and.callFake(function(settings) {
-                return settings;
-            });
+            this.setSettings = jasmine.createSpy('setSettings').and.callFake(_.identity);
             this.getTreeDisplay = jasmine.createSpy('getTreeDisplay').and.returnValue('');
             this.getTooltipDisplay = jasmine.createSpy('getTooltipDisplay').and.returnValue('');
         });
@@ -576,6 +572,14 @@ function mockUserState() {
             this.displayEditUserProfileOverlay = false;
             this.displayChangePasswordOverlay = false;
             this.reset = jasmine.createSpy('reset');
+        });
+    });
+}
+
+function mockUtil() {
+    module(function($provide) {
+        $provide.service('utilService', function() {
+            this.getBeautifulIRI = jasmine.createSpy('getBeautifulIRI').and.callFake(_.identity);
         });
     });
 }
