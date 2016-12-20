@@ -319,34 +319,25 @@ function mockMapperState() {
 function mockCatalogManager() {
     module(function($provide) {
         $provide.service('catalogManagerService', function($q) {
-            this.selectedResource = undefined;
-            this.currentPage = 0;
-            this.filters = {
-                Resources: []
-            };
-            this.sortBy = '';
-            this.asc = false;
-            this.errorMessage = '';
-            this.results = {
-                size: 0,
-                totalSize: 0,
-                results: [],
-                limit: 0,
-                start: 0,
-                links: {
-                    base: '',
-                    next: '',
-                    prev: ''
-                }
-            };
-            this.getResources = jasmine.createSpy('getResources');
-            this.getSortOptions = jasmine.createSpy('getSortOptions').and.callFake(function() {
-                return $q.when([]);
-            });
+            this.sortOptions = [];
+            this.recordTypes = [];
+            this.localCatalog = undefined;
+            this.distributedCatalog = undefined;
+            this.initialize = jasmine.createSpy('initialize');
+            this.getRecords = jasmine.createSpy('getRecords');
+            this.getSortOptions = jasmine.createSpy('getSortOptions').and.returnValue($q.when([]));
+            this.getRecordTypes = jasmine.createSpy('getRecordTypes').and.returnValue($q.when([]));
             this.getResultsPage = jasmine.createSpy('getResultsPage');
-            this.downloadResource = jasmine.createSpy('downloadResource');
-            this.getType = jasmine.createSpy('getType').and.returnValue('');
-            this.getDate = jasmine.createSpy('getDate').and.returnValue(new Date());
+            this.getRecord = jasmine.createSpy('getRecord').and.returnValue($q.when({}));
+            this.getRecordDistributions = jasmine.createSpy('getRecordDistributions');
+            this.getRecordDistribution = jasmine.createSpy('getRecordDistribution').and.returnValue($q.when({}));
+            this.getRecordBranches = jasmine.createSpy('getRecordBranches');
+            this.getRecordBranch = jasmine.createSpy('getRecordBranch').and.returnValue($q.when({}));
+            this.getEntityName = jasmine.createSpy('getEntityName');
+            this.isRecord = jasmine.createSpy('isRecord');
+            this.isVersionedRDFRecord = jasmine.createSpy('isVersionedRDFRecord');
+            this.isDistribution = jasmine.createSpy('isDistribution');
+            this.isBranch = jasmine.createSpy('isBranch');
         });
     });
 }

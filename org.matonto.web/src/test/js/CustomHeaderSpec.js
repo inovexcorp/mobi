@@ -23,6 +23,7 @@
 describe('Custom Header directive', function() {
     var $compile,
         scope,
+        catalogManagerSvc,
         ontologyManagerSvc,
         ontologyStateSvc,
         mappingManagerSvc,
@@ -37,6 +38,7 @@ describe('Custom Header directive', function() {
     beforeEach(function() {
         module('templates');
         module('customHeader');
+        mockCatalogManager();
         mockOntologyManager();
         mockOntologyState();
         mockMappingManager();
@@ -47,9 +49,10 @@ describe('Custom Header directive', function() {
         mockUserState();
         mockUserManager();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_, _sparqlManagerService_, _loginManagerService_, _userStateService_, _userManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _catalogManagerService_, _ontologyManagerService_, _ontologyStateService_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_, _sparqlManagerService_, _loginManagerService_, _userStateService_, _userManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            catalogManagerSvc = _catalogManagerService_;
             ontologyManagerSvc = _ontologyManagerService_;
             ontologyStateSvc = _ontologyStateService_;
             mappingManagerSvc = _mappingManagerService_;
