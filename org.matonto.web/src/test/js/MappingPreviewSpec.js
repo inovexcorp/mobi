@@ -23,6 +23,7 @@
 describe('Mapping Preview directive', function() {
     var $compile,
         scope,
+        utilSvc,
         ontologyManagerSvc,
         mappingManagerSvc,
         mapperStateSvc,
@@ -35,14 +36,16 @@ describe('Mapping Preview directive', function() {
         module('templates');
         module('mappingPreview');
         mockPrefixes();
+        mockUtil();
         mockOntologyManager();
         mockMappingManager();
         mockMapperState();
         mockDelimitedManager();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_, _prefixes_, _$timeout_) {
+        inject(function(_$compile_, _$rootScope_, _utilService_, _ontologyManagerService_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_, _prefixes_, _$timeout_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            utilSvc = _utilService_;
             ontologyManagerSvc = _ontologyManagerService_;
             mappingManagerSvc = _mappingManagerService_;
             mapperStateSvc = _mapperStateService_;
@@ -78,14 +81,14 @@ describe('Mapping Preview directive', function() {
             var classMapping = {};
             var result = controller.getClassName(classMapping);
             expect(mappingManagerSvc.getClassIdByMapping).toHaveBeenCalledWith(classMapping);
-            expect(ontologyManagerSvc.getBeautifulIRI).toHaveBeenCalled();
+            expect(utilSvc.getBeautifulIRI).toHaveBeenCalled();
             expect(typeof result).toBe('string');
         });
         it('should get a prop name', function() {
             var propMapping = {};
             var result = controller.getPropName(propMapping);
             expect(mappingManagerSvc.getPropIdByMapping).toHaveBeenCalledWith(propMapping);
-            expect(ontologyManagerSvc.getBeautifulIRI).toHaveBeenCalled();
+            expect(utilSvc.getBeautifulIRI).toHaveBeenCalled();
             expect(typeof result).toBe('string');
         });
         it('should get the column index of a data mapping', function() {

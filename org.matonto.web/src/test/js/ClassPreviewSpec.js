@@ -23,7 +23,7 @@
 describe('Class Preview directive', function() {
     var $compile,
         scope,
-        ontologyManagerSvc,
+        utilSvc,
         mapperStateSvc,
         controller;
 
@@ -31,13 +31,13 @@ describe('Class Preview directive', function() {
         module('templates');
         module('classPreview');
         mockPrefixes();
-        mockOntologyManager();
+        mockUtil();
         mockMapperState();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _mapperStateService_) {
+        inject(function(_$compile_, _$rootScope_, _utilService_, _mapperStateService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            ontologyManagerSvc = _ontologyManagerService_;
+            utilSvc = _utilService_;
             mapperStateSvc = _mapperStateService_;
         });
     });
@@ -78,21 +78,21 @@ describe('Class Preview directive', function() {
             beforeEach(function() {
                 this.properties = [{}, {}, {}, {}, {}, {}, {}];
                 spyOn(controller, 'getProps').and.returnValue(this.properties);
-                ontologyManagerSvc.getEntityName.calls.reset();
+                utilSvc.getBeautifulIRI.calls.reset();
             });
             it('if the list is full', function() {
                 controller.full = true;
                 var result = controller.getPropList();
                 expect(_.isArray(result)).toBe(true);
                 expect(result.length).toBe(this.properties.length);
-                expect(ontologyManagerSvc.getBeautifulIRI.calls.count()).toBe(this.properties.length);
+                expect(utilSvc.getBeautifulIRI.calls.count()).toBe(this.properties.length);
             });
             it('if the list is not full', function() {
                 controller.full = false;
                 var result = controller.getPropList();
                 expect(_.isArray(result)).toBe(true);
                 expect(result.length).toBe(controller.numPropPreview);
-                expect(ontologyManagerSvc.getBeautifulIRI.calls.count()).toBe(controller.numPropPreview);
+                expect(utilSvc.getBeautifulIRI.calls.count()).toBe(controller.numPropPreview);
             });
         });
     });

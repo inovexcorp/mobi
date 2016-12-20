@@ -29,6 +29,7 @@ describe('Ontology Manager service', function() {
         mockUpdateRefs();
         mockResponseObj();
         mockPropertyManager();
+        mockUtil();
 
         inject(function(ontologyManagerService, _$httpBackend_) {
             ontologyManagerSvc = ontologyManagerService;

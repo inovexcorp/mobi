@@ -56,9 +56,9 @@
          */
         .directive('propSelect', propSelect);
 
-        propSelect.$inject = ['ontologyManagerService'];
+        propSelect.$inject = ['utilService'];
 
-        function propSelect(ontologyManagerService) {
+        function propSelect(utilService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -73,7 +73,7 @@
                 },
                 controller: function() {
                     var dvm = this;
-                    dvm.om = ontologyManagerService;
+                    dvm.util = utilService;
                 },
                 templateUrl: 'modules/mapper/directives/propSelect/propSelect.html'
             }
