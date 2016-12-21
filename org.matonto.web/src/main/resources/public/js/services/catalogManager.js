@@ -334,7 +334,7 @@
                 var deferred = $q.defer();
                 $rootScope.showSpinner = true;
                 $http.put(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId), angular.toJson(newRecord))
-                    .then(response => deferred.resolve(), error => deferred.reject(error.statusText))
+                    .then(response => deferred.resolve(recordId), error => deferred.reject(error.statusText))
                     .then(() => $rootScope.showSpinner = false);
                 return deferred.promise;
             }
@@ -493,7 +493,7 @@
                 var deferred = $q.defer();
                 $rootScope.showSpinner = true;
                 $http.put(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions/' + encodeURIComponent(distributionId), angular.toJson(newDistribution))
-                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText))
+                    .then(response => deferred.resolve(distributionId), error => deferred.reject(error.statusText))
                     .then(() => $rootScope.showSpinner = false);
                 return deferred.promise;
             }
@@ -605,10 +605,10 @@
             self.createRecordBranch = function(recordId, catalogId, branchConfig, commitId) {
                 branchConfig.type = prefixes.catalog + 'Branch';
                 return createBranch(recordId, catalogId, branchConfig)
-                    .then(iri => getRecordBranch(iri, recordId, catalogId), error => $q.reject(error))
+                    .then(iri => self.getRecordBranch(iri, recordId, catalogId), error => $q.reject(error))
                     .then(branch => {
                         branch[prefixes.catalog + 'head'] = [{'@id': commitId}];
-                        return updateRecordBranch(branchId, recordId, catalogId, branch);
+                        return self.updateRecordBranch(branch['@id'], recordId, catalogId, branch);
                     }, error => $q.reject(error));
             }
 
@@ -635,11 +635,11 @@
             self.createRecordUserBranch = function(recordId, catalogId, branchConfig, commitId, parentBranchId) {
                 branchConfig.type = prefixes.catalog + 'UserBranch';
                 return createBranch(recordId, catalogId, branchConfig)
-                    .then(iri => getRecordBranch(iri, recordId, catalogId), error => $q.reject(error))
+                    .then(iri => self.getRecordBranch(iri, recordId, catalogId), error => $q.reject(error))
                     .then(branch => {
                         branch[prefixes.catalog + 'head'] = [{'@id': commitId}];
                         branch[prefixes.catalog + 'createdFrom'] = [{'@id': parentBranchId}];
-                        return updateRecordBranch(branchId, recordId, catalogId, branch);
+                        return self.updateRecordBranch(branch['@id'], recordId, catalogId, branch);
                     }, error => $q.reject(error));
             }
 
@@ -657,13 +657,14 @@
              * @param {string} recordId The id of the Record the Branch should be part of
              * @param {string} catalogId The id of the Catalog the Record should be part of
              * @param {Object} newBranch The JSON-LD object of the new Branch
-             * @return {Promise} A promise that resolves if the update was successful or rejects with an error message
+             * @return {Promise} A promise that resolves with the IRI of the Branch if the update was successful or
+             * rejects with an error message
              */
             self.updateRecordBranch = function(branchId, recordId, catalogId, newBranch) {
                 var deferred = $q.defer();
                 $rootScope.showSpinner = true;
                 $http.put(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId), angular.toJson(newBranch))
-                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText))
+                    .then(response => deferred.resolve(branchId), error => deferred.reject(error.statusText))
                     .then(() => $rootScope.showSpinner = false);
                 return deferred.promise;
             }
@@ -798,10 +799,10 @@
             self.createRecordTag = function(recordId, catalogId, versionConfig, commitId) {
                 versionConfig.type = prefixes.catalog + 'Tag';
                 return createVersion(recordId, catalogId, versionConfig)
-                    .then(iri => getRecordVersion(iri, recordId, catalogId), error => $q.reject(error))
+                    .then(iri => self.getRecordVersion(iri, recordId, catalogId), error => $q.reject(error))
                     .then(version => {
                         version[prefixes.catalog + 'commit'] = [{'@id': commitId}];
-                        return updateRecordVersion(versionId, recordId, catalogId, version);
+                        return self.updateRecordVersion(version['@id'], recordId, catalogId, version);
                     }, error => $q.reject(error))
             }
 
@@ -1094,6 +1095,21 @@
              */
             self.isBranch = function(entity) {
                 return _.includes(_.get(entity, '@type', []), prefixes.catalog + 'Branch');
+            }
+
+            /**
+             * @ngdoc method
+             * @name isVersion
+             * @methodOf catalogManager.service:catalogManagerService
+             *
+             * @description
+             * Tests whether the passed entity is a Version or not.
+             *
+             * @param {Object} entity A JSON-LD object
+             * @return {boolean} True if the entity contains the Version type; false otherwise
+             */
+            self.isVersion = function(entity) {
+                return _.includes(_.get(entity, '@type', []), prefixes.catalog + 'Version');
             }
 
             function createVersion(recordId, catalogId, versionConfig) {
