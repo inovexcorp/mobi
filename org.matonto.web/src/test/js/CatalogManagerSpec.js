@@ -25,6 +25,7 @@ describe('Catalog Manager service', function() {
         catalogManagerSvc,
         prefixes,
         $q,
+        windowSvc,
         catalogId = 'http://matonto.org/catalogs/local',
         recordId = 'http://matonto.org/records/test',
         distributionId = 'http://matonto.org/distributions/test',
@@ -37,12 +38,19 @@ describe('Catalog Manager service', function() {
         mockPrefixes();
         mockUtil();
 
-        inject(function(catalogManagerService, _prefixes_, _$httpBackend_, _$httpParamSerializer_, _$q_) {
+        module(function($provide) {
+            $provide.service('$window', function() {
+                this.location = '';
+            });
+        });
+
+        inject(function(catalogManagerService, _prefixes_, _$httpBackend_, _$httpParamSerializer_, _$q_, _$window_) {
             catalogManagerSvc = catalogManagerService;
             prefixes = _prefixes_;
             $httpBackend = _$httpBackend_;
             $httpParamSerializer = _$httpParamSerializer_;
             $q = _$q_;
+            windowSvc = _$window_;
         });
     });
 
@@ -459,6 +467,451 @@ describe('Catalog Manager service', function() {
             $httpBackend.flush();
         });
     });
+    describe('should retrieve a list of Record Versions', function() {
+        beforeEach(function(){
+            this.limit = 10;
+            this.currentPage = 0;
+            this.sortOption = {
+                field: 'http://purl.org/dc/terms/title',
+                asc: true
+            };
+        });
+        it('unless an error occurs', function(done) {
+            var params = $httpParamSerializer({
+                asc: this.sortOption.asc,
+                limit: this.limit,
+                offset: this.currentPage * 10,
+                sort: this.sortOption.field
+            });
+            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions?' + params).respond(function(method, url, data, headers) {
+                return [400, '', {}, 'Error Message'];
+            });
+            catalogManagerSvc.getRecordVersions(recordId, catalogId, this.currentPage, this.limit, this.sortOption).then(function(response) {
+                fail('Promise should have rejected');
+                done();
+            }, function(response) {
+                expect(response).toBe('Error Message');
+                done();
+            });
+            $httpBackend.flush();
+        });
+        it('successfully', function(done) {
+            var params = $httpParamSerializer({
+                asc: this.sortOption.asc,
+                limit: this.limit,
+                offset: this.currentPage * 10,
+                sort: this.sortOption.field
+            });
+            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions?' + params).respond(200, []);
+            catalogManagerSvc.getRecordVersions(recordId, catalogId, this.currentPage, this.limit, this.sortOption).then(function(response) {
+                expect(response.data).toEqual([]);
+                done();
+            });
+            $httpBackend.flush();
+        });
+    });
+    describe('should retrieve the latest Record Version', function() {
+        it('unless an error occurs', function(done) {
+            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/latest').respond(function(method, url, data, headers) {
+                return [400, '', {}, 'Error Message'];
+            });
+            catalogManagerSvc.getRecordLatestVersion(recordId, catalogId).then(function(response) {
+                fail('Promise should have rejected');
+                done();
+            }, function(response) {
+                expect(response).toBe('Error Message');
+                done();
+            });
+            $httpBackend.flush();
+        });
+        it('successfully', function(done) {
+            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/latest').respond(200, {});
+            catalogManagerSvc.getRecordLatestVersion(recordId, catalogId).then(function(response) {
+                expect(response).toEqual({});
+                done();
+            });
+            $httpBackend.flush();
+        });
+    });
+    describe('should retrieve a Record Version', function() {
+        it('unless an error occurs', function(done) {
+            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId)).respond(function(method, url, data, headers) {
+                return [400, '', {}, 'Error Message'];
+            });
+            catalogManagerSvc.getRecordVersion(versionId, recordId, catalogId).then(function(response) {
+                fail('Promise should have rejected');
+                done();
+            }, function(response) {
+                expect(response).toBe('Error Message');
+                done();
+            });
+            $httpBackend.flush();
+        });
+        it('successfully', function(done) {
+            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId)).respond(200, {});
+            catalogManagerSvc.getRecordVersion(versionId, recordId, catalogId).then(function(response) {
+                expect(response).toEqual({});
+                done();
+            });
+            $httpBackend.flush();
+        });
+    });
+    describe('should create a new Version', function() {
+        beforeEach(function() {
+            this.versionConfig = {
+                title: 'Title',
+                description: 'Description'
+            };
+        });
+        it('unless an error occurs', function(done) {
+            $httpBackend.expectPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions',
+                function(data) {
+                    return data instanceof FormData;
+                }).respond(function(method, url, data, headers) {
+                    return [400, '', {}, 'Error Message'];
+                });
+            catalogManagerSvc.createRecordVersion(recordId, catalogId, this.versionConfig).then(function() {
+                fail('Promise should have rejected');
+                done();
+            }, function(response) {
+                expect(response).toBe('Error Message');
+                done();
+            });
+            $httpBackend.flush();
+        });
+        it('with a description', function(done) {
+            $httpBackend.expectPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions',
+                function(data) {
+                    return data instanceof FormData;
+                }).respond(200, versionId);
+            catalogManagerSvc.createRecordVersion(recordId, catalogId, this.versionConfig).then(function(response) {
+                expect(response).toBe(versionId);
+                done();
+            });
+            $httpBackend.flush();
+        });
+        it('without a description', function(done) {
+            delete this.versionConfig.description;
+            $httpBackend.expectPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions',
+                function(data) {
+                    return data instanceof FormData;
+                }).respond(200, versionId);
+            catalogManagerSvc.createRecordVersion(recordId, catalogId, this.versionConfig).then(function(response) {
+                expect(response).toBe(versionId);
+                done();
+            });
+            $httpBackend.flush();
+        });
+    });
+    describe('should create a new Tag', function() {
+        beforeEach(function() {
+            this.versionConfig = {
+                title: 'Title',
+                description: 'Description'
+            };
+            this.version = {'@id': versionId};
+            spyOn(catalogManagerSvc, 'getRecordVersion').and.returnValue($q.when(this.version));
+            spyOn(catalogManagerSvc, 'updateRecordVersion').and.returnValue($q.when(versionId));
+        });
+        it('unless an error occurs', function(done) {
+            $httpBackend.expectPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions',
+                function(data) {
+                    return data instanceof FormData;
+                }).respond(function(method, url, data, headers) {
+                    return [400, '', {}, 'Error Message'];
+                });
+            catalogManagerSvc.createRecordTag(recordId, catalogId, this.versionConfig, commitId).then(function() {
+                fail('Promise should have rejected');
+                done();
+            }, function(response) {
+                expect(response).toBe('Error Message');
+                done();
+            });
+            $httpBackend.flush();
+        });
+        it('with a description', function(done) {
+            var expectedVersion = angular.copy(this.version);
+            expectedVersion[prefixes.catalog + 'commit'] = [{'@id': commitId}];
+            $httpBackend.expectPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions',
+                function(data) {
+                    return data instanceof FormData;
+                }).respond(200, versionId);
+            catalogManagerSvc.createRecordTag(recordId, catalogId, this.versionConfig, commitId).then(function(response) {
+                expect(catalogManagerSvc.getRecordVersion).toHaveBeenCalledWith(versionId, recordId, catalogId);
+                expect(catalogManagerSvc.updateRecordVersion).toHaveBeenCalledWith(versionId, recordId, catalogId, expectedVersion);
+                expect(response).toBe(versionId);
+                done();
+            });
+            $httpBackend.flush();
+        });
+        it('without a description', function(done) {
+            delete this.versionConfig.description;
+            var expectedVersion = angular.copy(this.version);
+            expectedVersion[prefixes.catalog + 'commit'] = [{'@id': commitId}];
+            $httpBackend.expectPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions',
+                function(data) {
+                    return data instanceof FormData;
+                }).respond(200, versionId);
+            catalogManagerSvc.createRecordTag(recordId, catalogId, this.versionConfig, commitId).then(function(response) {
+                expect(catalogManagerSvc.getRecordVersion).toHaveBeenCalledWith(versionId, recordId, catalogId);
+                expect(catalogManagerSvc.updateRecordVersion).toHaveBeenCalledWith(versionId, recordId, catalogId, expectedVersion);
+                expect(response).toBe(versionId);
+                done();
+            });
+            $httpBackend.flush();
+        });
+    });
+    describe('should update a Record Version', function() {
+        beforeEach(function() {
+            this.newVersion = {};
+        });
+        it('unless an error occurs', function(done) {
+            $httpBackend.expectPUT('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId), this.newVersion).respond(function(method, url, data, headers) {
+                return [400, '', {}, 'Error Message'];
+            });
+            catalogManagerSvc.updateRecordVersion(versionId, recordId, catalogId, this.newVersion).then(function() {
+                fail('Promise should have rejected');
+                done();
+            }, function(response) {
+                expect(response).toBe('Error Message');
+                done();
+            });
+            $httpBackend.flush();
+        });
+        it('successfully', function(done) {
+            $httpBackend.expectPUT('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId), this.newVersion).respond(200);
+            catalogManagerSvc.updateRecordVersion(versionId, recordId, catalogId, this.newVersion).then(function() {
+                expect(true).toBe(true);
+                done();
+            });
+            $httpBackend.flush();
+        });
+    });
+    describe('should delete a Record Version', function() {
+        it('unless an error occurs', function(done) {
+            $httpBackend.whenDELETE('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId)).respond(function(method, url, data, headers) {
+                return [400, '', {}, 'Error Message'];
+            });
+            catalogManagerSvc.deleteRecordVersion(versionId, recordId, catalogId).then(function() {
+                fail('Promise should have rejected');
+                done();
+            }, function(response) {
+                expect(response).toBe('Error Message');
+                done();
+            });
+            $httpBackend.flush();
+        });
+        it('successfully', function(done) {
+            $httpBackend.whenDELETE('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId)).respond(200);
+            catalogManagerSvc.deleteRecordVersion(versionId, recordId, catalogId).then(function() {
+                expect(true).toBe(true);
+                done();
+            });
+            $httpBackend.flush();
+        });
+    });
+    describe('should retrieve the Commit of a Version', function() {
+        it('unless an error occurs', function(done) {
+            var params = $httpParamSerializer({format: 'jsonld'});
+            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/commit?' + params).respond(function(method, url, data, headers) {
+                return [400, '', {}, 'Error Message'];
+            });
+            catalogManagerSvc.getVersionCommit(versionId, recordId, catalogId, 'jsonld').then(function() {
+                fail('Promise should have rejected');
+                done();
+            }, function(response) {
+                expect(response).toBe('Error Message');
+                done();
+            });
+            $httpBackend.flush();
+        });
+        it('with a format', function(done) {
+            var params = $httpParamSerializer({format: 'turtle'});
+            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/commit?' + params).respond(200, {});
+            catalogManagerSvc.getVersionCommit(versionId, recordId, catalogId, 'turtle').then(function(response) {
+                expect(response).toEqual({});
+                done();
+            });
+            $httpBackend.flush();
+        });
+        it('without a format', function(done) {
+            var params = $httpParamSerializer({format: 'jsonld'});
+            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/commit?' + params).respond(200, {});
+            catalogManagerSvc.getVersionCommit(versionId, recordId, catalogId).then(function(response) {
+                expect(response).toEqual({});
+                done();
+            });
+            $httpBackend.flush();
+        });
+    });
+    describe('should retrieve a list of Version Distributions', function() {
+        beforeEach(function(){
+            this.limit = 10;
+            this.currentPage = 0;
+            this.sortOption = {
+                field: 'http://purl.org/dc/terms/title',
+                asc: true
+            };
+        });
+        it('unless an error occurs', function(done) {
+            var params = $httpParamSerializer({
+                asc: this.sortOption.asc,
+                limit: this.limit,
+                offset: this.currentPage * 10,
+                sort: this.sortOption.field
+            });
+            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions?' + params).respond(function(method, url, data, headers) {
+                return [400, '', {}, 'Error Message'];
+            });
+            catalogManagerSvc.getVersionDistributions(versionId, recordId, catalogId, this.currentPage, this.limit, this.sortOption).then(function(response) {
+                fail('Promise should have rejected');
+                done();
+            }, function(response) {
+                expect(response).toBe('Error Message');
+                done();
+            });
+            $httpBackend.flush();
+        });
+        it('successfully', function(done) {
+            var params = $httpParamSerializer({
+                asc: this.sortOption.asc,
+                limit: this.limit,
+                offset: this.currentPage * 10,
+                sort: this.sortOption.field
+            });
+            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions?' + params).respond(200, []);
+            catalogManagerSvc.getVersionDistributions(versionId, recordId, catalogId, this.currentPage, this.limit, this.sortOption).then(function(response) {
+                expect(response.data).toEqual([]);
+                done();
+            });
+            $httpBackend.flush();
+        });
+    });
+    describe('should retrieve a Version Distribution', function() {
+        it('unless an error occurs', function(done) {
+            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId)).respond(function(method, url, data, headers) {
+                return [400, '', {}, 'Error Message'];
+            });
+            catalogManagerSvc.getVersionDistribution(distributionId, versionId, recordId, catalogId).then(function(response) {
+                fail('Promise should have rejected');
+                done();
+            }, function(response) {
+                expect(response).toBe('Error Message');
+                done();
+            });
+            $httpBackend.flush();
+        });
+        it('successfully', function(done) {
+            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId)).respond(200, {});
+            catalogManagerSvc.getVersionDistribution(distributionId, versionId, recordId, catalogId).then(function(response) {
+                expect(response).toEqual({});
+                done();
+            });
+            $httpBackend.flush();
+        });
+    });
+    describe('should create a new Version Distribution', function() {
+        beforeEach(function() {
+            this.distributionConfig = {
+                title: 'Title',
+                description: 'Description',
+                format: 'text/plain',
+                accessURL: 'http://example.com/access',
+                downloadURL: 'http://example.com/download',
+            };
+        });
+        it('unless an error occurs', function(done) {
+            $httpBackend.expectPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions',
+                function(data) {
+                    return data instanceof FormData;
+                }).respond(function(method, url, data, headers) {
+                    return [400, '', {}, 'Error Message'];
+                });
+            catalogManagerSvc.createVersionDistribution(versionId, recordId, catalogId, this.distributionConfig).then(function() {
+                fail('Promise should have rejected');
+                done();
+            }, function(response) {
+                expect(response).toBe('Error Message');
+                done();
+            });
+            $httpBackend.flush();
+        });
+        it('with a description, format, access URL, and download URL', function(done) {
+            $httpBackend.expectPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions',
+                function(data) {
+                    return data instanceof FormData;
+                }).respond(200, distributionId);
+            catalogManagerSvc.createVersionDistribution(versionId, recordId, catalogId, this.distributionConfig).then(function(response) {
+                expect(response).toBe(distributionId);
+                done();
+            });
+            $httpBackend.flush();
+        });
+        it('without a description, format, access URL, or download URL', function(done) {
+            delete this.distributionConfig.description;
+            delete this.distributionConfig.format;
+            delete this.distributionConfig.accessURL;
+            delete this.distributionConfig.downloadURL;
+            $httpBackend.expectPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions',
+                function(data) {
+                    return data instanceof FormData;
+                }).respond(200, distributionId);
+            catalogManagerSvc.createVersionDistribution(versionId, recordId, catalogId, this.distributionConfig).then(function(response) {
+                expect(response).toBe(distributionId);
+                done();
+            });
+            $httpBackend.flush();
+        });
+    });
+    describe('should update a Version Distribution', function() {
+        beforeEach(function() {
+            this.newDistribution = {};
+        });
+        it('unless an error occurs', function(done) {
+            $httpBackend.expectPUT('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId), this.newDistribution).respond(function(method, url, data, headers) {
+                return [400, '', {}, 'Error Message'];
+            });
+            catalogManagerSvc.updateVersionDistribution(distributionId, versionId, recordId, catalogId, this.newDistribution).then(function() {
+                fail('Promise should have rejected');
+                done();
+            }, function(response) {
+                expect(response).toBe('Error Message');
+                done();
+            });
+            $httpBackend.flush();
+        });
+        it('successfully', function(done) {
+            $httpBackend.expectPUT('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId), this.newDistribution).respond(200);
+            catalogManagerSvc.updateVersionDistribution(distributionId, versionId, recordId, catalogId, this.newDistribution).then(function() {
+                expect(true).toBe(true);
+                done();
+            });
+            $httpBackend.flush();
+        });
+    });
+    describe('should delete a Version Distribution', function() {
+        it('unless an error occurs', function(done) {
+            $httpBackend.whenDELETE('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId)).respond(function(method, url, data, headers) {
+                return [400, '', {}, 'Error Message'];
+            });
+            catalogManagerSvc.deleteVersionDistribution(distributionId, versionId, recordId, catalogId).then(function() {
+                fail('Promise should have rejected');
+                done();
+            }, function(response) {
+                expect(response).toBe('Error Message');
+                done();
+            });
+            $httpBackend.flush();
+        });
+        it('successfully', function(done) {
+            $httpBackend.whenDELETE('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId)).respond(200);
+            catalogManagerSvc.deleteVersionDistribution(distributionId, versionId, recordId, catalogId).then(function() {
+                expect(true).toBe(true);
+                done();
+            });
+            $httpBackend.flush();
+        });
+    });
     describe('should retrieve a list of Record Branches', function() {
         beforeEach(function(){
             this.limit = 10;
@@ -497,6 +950,29 @@ describe('Catalog Manager service', function() {
             $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches?' + params).respond(200, []);
             catalogManagerSvc.getRecordBranches(recordId, catalogId, this.currentPage, this.limit, this.sortOption).then(function(response) {
                 expect(response.data).toEqual([]);
+                done();
+            });
+            $httpBackend.flush();
+        });
+    });
+    describe('should retrieve the master Branch of a Record', function() {
+        it('unless an error occurs', function(done) {
+            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/master').respond(function(method, url, data, headers) {
+                return [400, '', {}, 'Error Message'];
+            });
+            catalogManagerSvc.getRecordMasterBranch(recordId, catalogId).then(function(response) {
+                fail('Promise should have rejected');
+                done();
+            }, function(response) {
+                expect(response).toBe('Error Message');
+                done();
+            });
+            $httpBackend.flush();
+        });
+        it('successfully', function(done) {
+            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/master').respond(200, {});
+            catalogManagerSvc.getRecordMasterBranch(recordId, catalogId).then(function(response) {
+                expect(response).toEqual({});
                 done();
             });
             $httpBackend.flush();
@@ -692,26 +1168,12 @@ describe('Catalog Manager service', function() {
             $httpBackend.flush();
         });
     });
-    describe('should retrieve a list of Record Versions', function() {
-        beforeEach(function(){
-            this.limit = 10;
-            this.currentPage = 0;
-            this.sortOption = {
-                field: 'http://purl.org/dc/terms/title',
-                asc: true
-            };
-        });
+    describe('should retrieve Branch Commits', function() {
         it('unless an error occurs', function(done) {
-            var params = $httpParamSerializer({
-                asc: this.sortOption.asc,
-                limit: this.limit,
-                offset: this.currentPage * 10,
-                sort: this.sortOption.field
-            });
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions?' + params).respond(function(method, url, data, headers) {
+            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits').respond(function(method, url, data, headers) {
                 return [400, '', {}, 'Error Message'];
             });
-            catalogManagerSvc.getRecordVersions(recordId, catalogId, this.currentPage, this.limit, this.sortOption).then(function(response) {
+            catalogManagerSvc.getBranchCommits(branchId, recordId, catalogId).then(function(response) {
                 fail('Promise should have rejected');
                 done();
             }, function(response) {
@@ -721,26 +1183,24 @@ describe('Catalog Manager service', function() {
             $httpBackend.flush();
         });
         it('successfully', function(done) {
-            var params = $httpParamSerializer({
-                asc: this.sortOption.asc,
-                limit: this.limit,
-                offset: this.currentPage * 10,
-                sort: this.sortOption.field
-            });
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions?' + params).respond(200, []);
-            catalogManagerSvc.getRecordVersions(recordId, catalogId, this.currentPage, this.limit, this.sortOption).then(function(response) {
-                expect(response.data).toEqual([]);
+            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits').respond(200, []);
+            catalogManagerSvc.getBranchCommits(branchId, recordId, catalogId).then(function(response) {
+                expect(response).toEqual([]);
                 done();
             });
             $httpBackend.flush();
         });
     });
-    describe('should retrieve a Record Version', function() {
+    describe('should create a new commit on a Branch', function() {
+        beforeEach(function() {
+            this.message = 'Message';
+        });
         it('unless an error occurs', function(done) {
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId)).respond(function(method, url, data, headers) {
+            var params = $httpParamSerializer({message: this.message});
+            $httpBackend.expectPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits?' + params).respond(function(method, url, data, headers) {
                 return [400, '', {}, 'Error Message'];
             });
-            catalogManagerSvc.getRecordVersion(versionId, recordId, catalogId).then(function(response) {
+            catalogManagerSvc.createBranchCommit(branchId, recordId, catalogId, this.message).then(function(response) {
                 fail('Promise should have rejected');
                 done();
             }, function(response) {
@@ -750,128 +1210,56 @@ describe('Catalog Manager service', function() {
             $httpBackend.flush();
         });
         it('successfully', function(done) {
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId)).respond(200, {});
-            catalogManagerSvc.getRecordVersion(versionId, recordId, catalogId).then(function(response) {
+            var params = $httpParamSerializer({message: this.message});
+            $httpBackend.expectPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits?' + params).respond(200, commitId);
+            catalogManagerSvc.createBranchCommit(branchId, recordId, catalogId, this.message).then(function(response) {
+                expect(response).toBe(commitId);
+                done();
+            });
+            $httpBackend.flush();
+        });
+    });
+    describe('should retrieve the head Commit of a Branch', function() {
+        it('unless an error occurs', function(done) {
+            var params = $httpParamSerializer({format: 'jsonld'});
+            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/head?' + params).respond(function(method, url, data, headers) {
+                return [400, '', {}, 'Error Message'];
+            });
+            catalogManagerSvc.getBranchHeadCommit(branchId, recordId, catalogId, 'jsonld').then(function() {
+                fail('Promise should have rejected');
+                done();
+            }, function(response) {
+                expect(response).toBe('Error Message');
+                done();
+            });
+            $httpBackend.flush();
+        });
+        it('with a format', function(done) {
+            var params = $httpParamSerializer({format: 'turtle'});
+            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/head?' + params).respond(200, {});
+            catalogManagerSvc.getBranchHeadCommit(branchId, recordId, catalogId, 'turtle').then(function(response) {
+                expect(response).toEqual({});
+                done();
+            });
+            $httpBackend.flush();
+        });
+        it('without a format', function(done) {
+            var params = $httpParamSerializer({format: 'jsonld'});
+            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/head?' + params).respond(200, {});
+            catalogManagerSvc.getBranchHeadCommit(branchId, recordId, catalogId).then(function(response) {
                 expect(response).toEqual({});
                 done();
             });
             $httpBackend.flush();
         });
     });
-    describe('should create a new Version', function() {
-        beforeEach(function() {
-            this.versionConfig = {
-                title: 'Title',
-                description: 'Description'
-            };
-        });
+    describe('should retrieve a Branch Commit', function() {
         it('unless an error occurs', function(done) {
-            $httpBackend.expectPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions',
-                function(data) {
-                    return data instanceof FormData;
-                }).respond(function(method, url, data, headers) {
-                    return [400, '', {}, 'Error Message'];
-                });
-            catalogManagerSvc.createRecordVersion(recordId, catalogId, this.versionConfig).then(function() {
-                fail('Promise should have rejected');
-                done();
-            }, function(response) {
-                expect(response).toBe('Error Message');
-                done();
-            });
-            $httpBackend.flush();
-        });
-        it('with a description', function(done) {
-            $httpBackend.expectPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions',
-                function(data) {
-                    return data instanceof FormData;
-                }).respond(200, versionId);
-            catalogManagerSvc.createRecordVersion(recordId, catalogId, this.versionConfig).then(function(response) {
-                expect(response).toBe(versionId);
-                done();
-            });
-            $httpBackend.flush();
-        });
-        it('without a description', function(done) {
-            delete this.versionConfig.description;
-            $httpBackend.expectPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions',
-                function(data) {
-                    return data instanceof FormData;
-                }).respond(200, versionId);
-            catalogManagerSvc.createRecordVersion(recordId, catalogId, this.versionConfig).then(function(response) {
-                expect(response).toBe(versionId);
-                done();
-            });
-            $httpBackend.flush();
-        });
-    });
-    describe('should create a new Tag', function() {
-        beforeEach(function() {
-            this.versionConfig = {
-                title: 'Title',
-                description: 'Description'
-            };
-            this.version = {'@id': versionId};
-            spyOn(catalogManagerSvc, 'getRecordVersion').and.returnValue($q.when(this.version));
-            spyOn(catalogManagerSvc, 'updateRecordVersion').and.returnValue($q.when(versionId));
-        });
-        it('unless an error occurs', function(done) {
-            $httpBackend.expectPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions',
-                function(data) {
-                    return data instanceof FormData;
-                }).respond(function(method, url, data, headers) {
-                    return [400, '', {}, 'Error Message'];
-                });
-            catalogManagerSvc.createRecordTag(recordId, catalogId, this.versionConfig, commitId).then(function() {
-                fail('Promise should have rejected');
-                done();
-            }, function(response) {
-                expect(response).toBe('Error Message');
-                done();
-            });
-            $httpBackend.flush();
-        });
-        it('with a description', function(done) {
-            var expectedVersion = angular.copy(this.version);
-            expectedVersion[prefixes.catalog + 'commit'] = [{'@id': commitId}];
-            $httpBackend.expectPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions',
-                function(data) {
-                    return data instanceof FormData;
-                }).respond(200, versionId);
-            catalogManagerSvc.createRecordTag(recordId, catalogId, this.versionConfig, commitId).then(function(response) {
-                expect(catalogManagerSvc.getRecordVersion).toHaveBeenCalledWith(versionId, recordId, catalogId);
-                expect(catalogManagerSvc.updateRecordVersion).toHaveBeenCalledWith(versionId, recordId, catalogId, expectedVersion);
-                expect(response).toBe(versionId);
-                done();
-            });
-            $httpBackend.flush();
-        });
-        it('without a description', function(done) {
-            delete this.versionConfig.description;
-            var expectedVersion = angular.copy(this.version);
-            expectedVersion[prefixes.catalog + 'commit'] = [{'@id': commitId}];
-            $httpBackend.expectPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions',
-                function(data) {
-                    return data instanceof FormData;
-                }).respond(200, versionId);
-            catalogManagerSvc.createRecordTag(recordId, catalogId, this.versionConfig, commitId).then(function(response) {
-                expect(catalogManagerSvc.getRecordVersion).toHaveBeenCalledWith(versionId, recordId, catalogId);
-                expect(catalogManagerSvc.updateRecordVersion).toHaveBeenCalledWith(versionId, recordId, catalogId, expectedVersion);
-                expect(response).toBe(versionId);
-                done();
-            });
-            $httpBackend.flush();
-        });
-    });
-    describe('should update a Record Version', function() {
-        beforeEach(function() {
-            this.newVersion = {};
-        });
-        it('unless an error occurs', function(done) {
-            $httpBackend.expectPUT('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId), this.newVersion).respond(function(method, url, data, headers) {
+            var params = $httpParamSerializer({format: 'jsonld'});
+            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId) + '?' + params).respond(function(method, url, data, headers) {
                 return [400, '', {}, 'Error Message'];
             });
-            catalogManagerSvc.updateRecordVersion(versionId, recordId, catalogId, this.newVersion).then(function() {
+            catalogManagerSvc.getBranchCommit(commitId, branchId, recordId, catalogId, 'jsonld').then(function() {
                 fail('Promise should have rejected');
                 done();
             }, function(response) {
@@ -880,122 +1268,79 @@ describe('Catalog Manager service', function() {
             });
             $httpBackend.flush();
         });
-        it('successfully', function(done) {
-            $httpBackend.expectPUT('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId), this.newVersion).respond(200);
-            catalogManagerSvc.updateRecordVersion(versionId, recordId, catalogId, this.newVersion).then(function() {
-                expect(true).toBe(true);
+        it('with a format', function(done) {
+            var params = $httpParamSerializer({format: 'turtle'});
+            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId) + '?' + params).respond(200, {});
+            catalogManagerSvc.getBranchCommit(commitId, branchId, recordId, catalogId, 'turtle').then(function(response) {
+                expect(response).toEqual({});
                 done();
             });
             $httpBackend.flush();
         });
-    });
-    describe('should delete a Record Version', function() {
-        it('unless an error occurs', function(done) {
-            $httpBackend.whenDELETE('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId)).respond(function(method, url, data, headers) {
-                return [400, '', {}, 'Error Message'];
-            });
-            catalogManagerSvc.deleteRecordVersion(versionId, recordId, catalogId).then(function() {
-                fail('Promise should have rejected');
-                done();
-            }, function(response) {
-                expect(response).toBe('Error Message');
-                done();
-            });
-            $httpBackend.flush();
-        });
-        it('successfully', function(done) {
-            $httpBackend.whenDELETE('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId)).respond(200);
-            catalogManagerSvc.deleteRecordVersion(versionId, recordId, catalogId).then(function() {
-                expect(true).toBe(true);
-                done();
-            });
-            $httpBackend.flush();
-        });
-    });
-    describe('should retrieve a list of Version Distributions', function() {
-        beforeEach(function(){
-            this.limit = 10;
-            this.currentPage = 0;
-            this.sortOption = {
-                field: 'http://purl.org/dc/terms/title',
-                asc: true
-            };
-        });
-        it('unless an error occurs', function(done) {
-            var params = $httpParamSerializer({
-                asc: this.sortOption.asc,
-                limit: this.limit,
-                offset: this.currentPage * 10,
-                sort: this.sortOption.field
-            });
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions?' + params).respond(function(method, url, data, headers) {
-                return [400, '', {}, 'Error Message'];
-            });
-            catalogManagerSvc.getVersionDistributions(versionId, recordId, catalogId, this.currentPage, this.limit, this.sortOption).then(function(response) {
-                fail('Promise should have rejected');
-                done();
-            }, function(response) {
-                expect(response).toBe('Error Message');
-                done();
-            });
-            $httpBackend.flush();
-        });
-        it('successfully', function(done) {
-            var params = $httpParamSerializer({
-                asc: this.sortOption.asc,
-                limit: this.limit,
-                offset: this.currentPage * 10,
-                sort: this.sortOption.field
-            });
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions?' + params).respond(200, []);
-            catalogManagerSvc.getVersionDistributions(versionId, recordId, catalogId, this.currentPage, this.limit, this.sortOption).then(function(response) {
-                expect(response.data).toEqual([]);
-                done();
-            });
-            $httpBackend.flush();
-        });
-    });
-    describe('should retrieve a Version Distribution', function() {
-        it('unless an error occurs', function(done) {
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId)).respond(function(method, url, data, headers) {
-                return [400, '', {}, 'Error Message'];
-            });
-            catalogManagerSvc.getVersionDistribution(distributionId, versionId, recordId, catalogId).then(function(response) {
-                fail('Promise should have rejected');
-                done();
-            }, function(response) {
-                expect(response).toBe('Error Message');
-                done();
-            });
-            $httpBackend.flush();
-        });
-        it('successfully', function(done) {
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId)).respond(200, {});
-            catalogManagerSvc.getVersionDistribution(distributionId, versionId, recordId, catalogId).then(function(response) {
+        it('without a format', function(done) {
+            var params = $httpParamSerializer({format: 'jsonld'});
+            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId) + '?' + params).respond(200, {});
+            catalogManagerSvc.getBranchCommit(commitId, branchId, recordId, catalogId).then(function(response) {
                 expect(response).toEqual({});
                 done();
             });
             $httpBackend.flush();
         });
     });
-    describe('should create a new Version Distribution', function() {
-        beforeEach(function() {
-            this.distributionConfig = {
-                title: 'Title',
-                description: 'Description',
-                format: 'text/plain',
-                accessURL: 'http://example.com/access',
-                downloadURL: 'http://example.com/download',
-            };
-        });
+    describe('should get the conflicts between two Branches', function() {
         it('unless an error occurs', function(done) {
-            $httpBackend.expectPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions',
+            var params = $httpParamSerializer({
+                format: 'jsonld',
+                targetId: branchId
+            });
+            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/conflicts?' + params).respond(function(method, url, data, headers) {
+                return [400, '', {}, 'Error Message'];
+            });
+            catalogManagerSvc.getBranchConflicts(branchId, branchId, recordId, catalogId, 'jsonld').then(function() {
+                fail('Promise should have rejected');
+                done();
+            }, function(response) {
+                expect(response).toBe('Error Message');
+                done();
+            });
+            $httpBackend.flush();
+        });
+        it('with a format', function(done) {
+            var params = $httpParamSerializer({
+                format: 'turtle',
+                targetId: branchId
+            });
+            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/conflicts?' + params).respond(200, []);
+            catalogManagerSvc.getBranchConflicts(branchId, branchId, recordId, catalogId, 'turtle').then(function(response) {
+                expect(response).toEqual([]);
+                done();
+            });
+            $httpBackend.flush();
+        });
+        it('with a format', function(done) {
+            var params = $httpParamSerializer({
+                format: 'jsonld',
+                targetId: branchId
+            });
+            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/conflicts?' + params).respond(200, []);
+            catalogManagerSvc.getBranchConflicts(branchId, branchId, recordId, catalogId).then(function(response) {
+                expect(response).toEqual([]);
+                done();
+            });
+            $httpBackend.flush();
+        });
+    });
+    describe('should merge two Branches', function() {
+        it('unless an error occurs', function(done) {
+            var differenceObj = {};
+            var params = $httpParamSerializer({targetId: branchId});
+            $httpBackend.expectPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/conflicts/resolution?' + params,
                 function(data) {
                     return data instanceof FormData;
                 }).respond(function(method, url, data, headers) {
                     return [400, '', {}, 'Error Message'];
                 });
-            catalogManagerSvc.createVersionDistribution(versionId, recordId, catalogId, this.distributionConfig).then(function() {
+            catalogManagerSvc.mergeBranches(branchId, branchId, recordId, catalogId, differenceObj).then(function(response) {
                 fail('Promise should have rejected');
                 done();
             }, function(response) {
@@ -1004,42 +1349,92 @@ describe('Catalog Manager service', function() {
             });
             $httpBackend.flush();
         });
-        it('with a description, format, access URL, and download URL', function(done) {
-            $httpBackend.expectPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions',
+        it('with additions and deletions', function(done) {
+            var differenceObj = {additions: [], deletions: []};
+            var params = $httpParamSerializer({targetId: branchId});
+            $httpBackend.expectPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/conflicts/resolution?' + params,
                 function(data) {
                     return data instanceof FormData;
-                }).respond(200, distributionId);
-            catalogManagerSvc.createVersionDistribution(versionId, recordId, catalogId, this.distributionConfig).then(function(response) {
-                expect(response).toBe(distributionId);
+                }).respond(200, commitId);
+            catalogManagerSvc.mergeBranches(branchId, branchId, recordId, catalogId, differenceObj).then(function(response) {
+                expect(response).toEqual(commitId);
                 done();
             });
             $httpBackend.flush();
         });
-        it('without a description, format, access URL, or download URL', function(done) {
-            delete this.distributionConfig.description;
-            delete this.distributionConfig.format;
-            delete this.distributionConfig.accessURL;
-            delete this.distributionConfig.downloadURL;
-            $httpBackend.expectPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions',
+        it('without additions and deletions', function(done) {
+            var differenceObj = {};
+            var params = $httpParamSerializer({targetId: branchId});
+            $httpBackend.expectPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/conflicts/resolution?' + params,
                 function(data) {
                     return data instanceof FormData;
-                }).respond(200, distributionId);
-            catalogManagerSvc.createVersionDistribution(versionId, recordId, catalogId, this.distributionConfig).then(function(response) {
-                expect(response).toBe(distributionId);
+                }).respond(200, commitId);
+            catalogManagerSvc.mergeBranches(branchId, branchId, recordId, catalogId, differenceObj).then(function(response) {
+                expect(response).toEqual(commitId);
                 done();
             });
             $httpBackend.flush();
         });
     });
-    describe('should update a Version Distribution', function() {
-        beforeEach(function() {
-            this.newDistribution = {};
-        });
+    describe('should retrieve the compiled resource from a Branch Commit', function() {
         it('unless an error occurs', function(done) {
-            $httpBackend.expectPUT('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId), this.newDistribution).respond(function(method, url, data, headers) {
+            var params = $httpParamSerializer({
+                applyInProgressCommit: true,
+                format: 'jsonld'
+            });
+            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId) + '/resource?' + params).respond(function(method, url, data, headers) {
                 return [400, '', {}, 'Error Message'];
             });
-            catalogManagerSvc.updateVersionDistribution(distributionId, versionId, recordId, catalogId, this.newDistribution).then(function() {
+            catalogManagerSvc.getResource(commitId, branchId, recordId, catalogId, true, 'jsonld').then(function() {
+                fail('Promise should have rejected');
+                done();
+            }, function(response) {
+                expect(response).toBe('Error Message');
+                done();
+            });
+            $httpBackend.flush();
+        });
+        it('with a format', function(done) {
+            var params = $httpParamSerializer({
+                applyInProgressCommit: true,
+                format: 'turtle'
+            });
+            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId) + '/resource?' + params).respond(200, '');
+            catalogManagerSvc.getResource(commitId, branchId, recordId, catalogId, true, 'turtle').then(function(response) {
+                expect(response).toBe('');
+                done();
+            });
+            $httpBackend.flush();
+        });
+        it('without a format', function(done) {
+            var params = $httpParamSerializer({
+                applyInProgressCommit: true,
+                format: 'jsonld'
+            });
+            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId) + '/resource?' + params).respond(200, '');
+            catalogManagerSvc.getResource(commitId, branchId, recordId, catalogId, true).then(function(response) {
+                expect(response).toBe('');
+                done();
+            });
+            $httpBackend.flush();
+        });
+    });
+    describe('should download the compiled resource from a Branch Commit', function() {
+        it('with a format', function() {
+            catalogManagerSvc.downloadResource(commitId, branchId, recordId, catalogId, true, 'turtle');
+            expect(windowSvc.location).toBe('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId) + '/resource?applyInProgressCommit=true&format=turtle');
+        });
+        it('with a format', function() {
+            catalogManagerSvc.downloadResource(commitId, branchId, recordId, catalogId, true);
+            expect(windowSvc.location).toBe('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId) + '/resource?applyInProgressCommit=true&format=jsonld');
+        });
+    });
+    describe('should create a new InProgressCommit for the logged-in User', function() {
+        it('unless an error occurs', function(done) {
+            $httpBackend.whenPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit').respond(function(method, url, data, headers) {
+                return [400, '', {}, 'Error Message'];
+            });
+            catalogManagerSvc.createInProgressCommit(recordId, catalogId).then(function(response) {
                 fail('Promise should have rejected');
                 done();
             }, function(response) {
@@ -1049,20 +1444,20 @@ describe('Catalog Manager service', function() {
             $httpBackend.flush();
         });
         it('successfully', function(done) {
-            $httpBackend.expectPUT('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId), this.newDistribution).respond(200);
-            catalogManagerSvc.updateVersionDistribution(distributionId, versionId, recordId, catalogId, this.newDistribution).then(function() {
+            $httpBackend.whenPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit').respond(200);
+            catalogManagerSvc.createInProgressCommit(recordId, catalogId).then(function(response) {
                 expect(true).toBe(true);
                 done();
             });
             $httpBackend.flush();
         });
     });
-    describe('should delete a Version Distribution', function() {
+    describe('should retrieve an InProgressCommit for the logged-in User', function() {
         it('unless an error occurs', function(done) {
-            $httpBackend.whenDELETE('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId)).respond(function(method, url, data, headers) {
+            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit').respond(function(method, url, data, headers) {
                 return [400, '', {}, 'Error Message'];
             });
-            catalogManagerSvc.deleteVersionDistribution(distributionId, versionId, recordId, catalogId).then(function() {
+            catalogManagerSvc.getInProgressCommit(recordId, catalogId).then(function(response) {
                 fail('Promise should have rejected');
                 done();
             }, function(response) {
@@ -1072,9 +1467,75 @@ describe('Catalog Manager service', function() {
             $httpBackend.flush();
         });
         it('successfully', function(done) {
-            $httpBackend.whenDELETE('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId)).respond(200);
-            catalogManagerSvc.deleteVersionDistribution(distributionId, versionId, recordId, catalogId).then(function() {
-                expect(true).toBe(true);
+            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit').respond(200, {});
+            catalogManagerSvc.getInProgressCommit(recordId, catalogId).then(function(response) {
+                expect(response).toEqual({});
+                done();
+            });
+            $httpBackend.flush();
+        });
+    });
+    describe('should update an InProgressCommit for the logged-in User', function() {
+        it('unless an error occurs', function(done) {
+            var differenceObj = {};
+            $httpBackend.whenPUT('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit',
+                function(data) {
+                    return data instanceof FormData;
+                }).respond(function(method, url, data, headers) {
+                    return [400, '', {}, 'Error Message'];
+                });
+            catalogManagerSvc.updateInProgressCommit(recordId, catalogId, differenceObj).then(function(response) {
+                fail('Promise should have rejected');
+                done();
+            }, function(response) {
+                expect(response).toBe('Error Message');
+                done();
+            });
+            $httpBackend.flush();
+        });
+        it('with additions and deletions', function(done) {
+            var differenceObj = {additions: [], deletions: []};
+            $httpBackend.whenPUT('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit',
+                function(data) {
+                    return data instanceof FormData;
+                }).respond(200);
+            catalogManagerSvc.updateInProgressCommit(recordId, catalogId, differenceObj).then(function(response) {
+                expect(true).toEqual(true);
+                done();
+            });
+            $httpBackend.flush();
+        });
+        it('without additions and deletions', function(done) {
+            var differenceObj = {};
+            $httpBackend.whenPUT('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit',
+                function(data) {
+                    return data instanceof FormData;
+                }).respond(200);
+            catalogManagerSvc.updateInProgressCommit(recordId, catalogId, differenceObj).then(function(response) {
+                expect(true).toEqual(true);
+                done();
+            });
+            $httpBackend.flush();
+        });
+    });
+    describe('should remove an InProgressCommit for the logged-in User', function() {
+        it('unless an error occurs', function(done) {
+            $httpBackend.whenDELETE('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit').respond(function(method, url, data, headers) {
+                return [400, '', {}, 'Error Message'];
+            });
+            catalogManagerSvc.deleteInProgressCommit(recordId, catalogId).then(function(response) {
+                fail('Promise should have rejected');
+                done();
+            }, function(response) {
+                expect(response).toBe('Error Message');
+                done();
+            });
+            $httpBackend.flush();
+        });
+        it('successfully', function(done) {
+            $httpBackend.whenDELETE('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit').respond(200);
+            catalogManagerSvc.deleteInProgressCommit(recordId, catalogId).then(function(response) {
+                expect(true).toEqual(true);
                 done();
             });
             $httpBackend.flush();

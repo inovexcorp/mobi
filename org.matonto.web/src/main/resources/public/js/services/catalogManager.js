@@ -50,9 +50,9 @@
          */
         .service('catalogManagerService', catalogManagerService);
 
-        catalogManagerService.$inject = ['$rootScope', '$http', '$q', 'prefixes', 'utilService'];
+        catalogManagerService.$inject = ['$window', '$rootScope', '$http', '$q', 'prefixes', 'utilService'];
 
-        function catalogManagerService($rootScope, $http, $q, prefixes, utilService) {
+        function catalogManagerService($window, $rootScope, $http, $q, prefixes, utilService) {
             var self = this,
                 prefix = '/matontorest/catalogs';
 
@@ -257,7 +257,7 @@
              * Catalog and Record ids and returns the matching Record object if it exists.
              *
              * @param {string} recordId The id of the Record to retrieve
-             * @param {string} catalogId The id of the Catalog the Record should be part of
+             * @param {string} catalogId The id of the Catalog with the specified Record
              * @return {Promise} A promise that resolves to the Record if it exists or is rejected with
              * an error message
              */
@@ -326,7 +326,7 @@
              * Record ids and updates the identified Record with the passed Record JSON-LD object.
              *
              * @param {string} recordId The id of the Record to update
-             * @param {string} catalogId The id of the Catalog the Record should be part of
+             * @param {string} catalogId The id of the Catalog with the specified Record
              * @param {Object} newRecord The JSON-LD object of the new Record
              * @return {Promise} A promise that resolves if the update was successful or rejects with an error message
              */
@@ -345,8 +345,8 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the DELETE /matontorest/catalogs/{catalogId}/records/{recordId} with the passed Catalog and Record
-             * ids and removes the identified Record and all associated entities from MatOnto.
+             * Calls the DELETE /matontorest/catalogs/{catalogId}/records/{recordId} endpoint with the passed Catalog
+             * and Record ids and removes the identified Record and all associated entities from MatOnto.
              *
              * @param {string} recordId The id of the Record to delete
              * @param {string} catalogId The id of the Catalog the Record should be part of
@@ -432,7 +432,7 @@
              * Catalog and Record id and metadata and creates a new Distribution for the identified Record. Returns a
              * Promise with the IRI of the new Distribution if successful or rejects with an error message.
              *
-             * @param {string} recordId The id of the Record to create the Distribution in
+             * @param {string} recordId The id of the Record to create the Distribution for
              * @param {string} catalogId The id of the Catalog the Record should be a part of
              * @param {Object} distributionConfig A configuration object containing metadata for the new Distribution
              * @param {string} distributionConfig.title The required title of the new Distribution
@@ -484,7 +484,7 @@
              * Distribution JSON-LD object.
              *
              * @param {string} distributionId The id of the Distribution to update
-             * @param {string} recordId The id of the Record the Distribution should be part of
+             * @param {string} recordId The id of the Record with the specified Distribution
              * @param {string} catalogId The id of the Catalog the Record should be part of
              * @param {Object} newDistribution The JSON-LD object of the new Distribution
              * @return {Promise} A promise that resolves if the update was successful or rejects with an error message
@@ -504,12 +504,12 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the DELETE /matontorest/catalogs/{catalogId}/records/{recordId}/distributions/{distributionId} with the
-             * passed Catalog, Record, and Distribution ids and removes the identified Distribution and all associated entities
-             * from MatOnto.
+             * Calls the DELETE /matontorest/catalogs/{catalogId}/records/{recordId}/distributions/{distributionId} endpoint
+             * with the passed Catalog, Record, and Distribution ids and removes the identified Distribution and all associated
+             * entities from MatOnto.
              *
              * @param {string} distributionId The id of the Distribution to delete
-             * @param {string} recordId The id of the Record the Distribution should be part of
+             * @param {string} recordId The id of the Record with the specified Distribution
              * @param {string} catalogId The id of the Catalog the Record should be part of
              * @return {Promise} A promise that resolves if the deletion was successful or rejects with an error message
              */
@@ -517,177 +517,6 @@
                 var deferred = $q.defer();
                 $rootScope.showSpinner = true;
                 $http.delete(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions/' + encodeURIComponent(distributionId))
-                    .then(response => deferred.resolve(), error => deferred.reject(error.statusText))
-                    .then(() => $rootScope.showSpinner = false);
-                return deferred.promise;
-            }
-
-            /**
-             * @ngdoc method
-             * @name getRecordBranches
-             * @methodOf catalogManager.service:catalogManagerService
-             *
-             * @description
-             * Calls the GET /matontorest/catalogs/{catalogId}/records/{recordId}/branches endpoint and
-             * returns the paginated response using the passed page index, limit, and sort option from the
-             * `sortOption` array. The data of the response will be the array of Branches, the
-             * "x-total-count" headers will contain the total number of Branches matching the query, and
-             * the "link" header will contain the URLs for the next and previous page if present.
-             *
-             * @param {string} recordId The id of the Record to retrieve the Branches of
-             * @param {string} catalogId The id of the Catalog the Record should be part of
-             * @param {number} pageIndex The index of the page of results to retrieve
-             * @param {number} limit The number of results per page
-             * @param {Object} sortOption A sort option object from the `sortOptions` array
-             * @return {Promise} A promise that resolves to the paginated response or is rejected
-             * with a error message
-             */
-            self.getRecordBranches = function(recordId, catalogId, pageIndex, limit, sortOption) {
-                var deferred = $q.defer(),
-                    config = {
-                        params: {
-                            limit: limit,
-                            offset: pageIndex * limit,
-                            sort: sortOption.field,
-                            asc: sortOption.asc
-                        }
-                    };
-                $rootScope.showSpinner = true;
-                $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches', config)
-                    .then(response => deferred.resolve(response), error => deferred.reject(error.statusText))
-                    .then(() => $rootScope.showSpinner = false);
-                return deferred.promise;
-            }
-
-            /**
-             * @ngdoc method
-             * @name getRecordBranch
-             * @methodOf catalogManager.service:catalogManagerService
-             *
-             * @description
-             * Calls the GET /matontorest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}
-             * endpoint and returns the matching Branch JSON-LD object.
-             *
-             * @param {string} branchId The id of the Branch to retrieve
-             * @param {string} recordId The id of the Record with the specified Branch
-             * @param {string} catalogId The id of the Catalog the Record should be part of
-             * @return {Promise} A promise that resolves to the Branch if it is found or is rejected
-             * with an error message
-             */
-            self.getRecordBranch = function(branchId, recordId, catalogId) {
-                var deferred = $q.defer();
-                $rootScope.showSpinner = true;
-                $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId))
-                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText))
-                    .then(() => $rootScope.showSpinner = false);
-                return deferred.promise;
-            }
-
-            /**
-             * @ngdoc method
-             * @name createRecordBranch
-             * @methodOf catalogManager.service:catalogManagerService
-             *
-             * @description
-             * Calls the POST /matontorest/catalogs/{catalogId}/records/{recordId}/branches endpoint with the passed
-             * Catalog and Record ids, metadata, and associated Commit id and creates a new Branch for the identified
-             * Record. Returns a Promise with the IRI of the new Branch if successful or rejects with an error message.
-             *
-             * @param {string} recordId The id of the Record to create the Branch for
-             * @param {string} catalogId The id of the Catalog the Record should be a part of
-             * @param {Object} branchConfig A configuration object containing metadata for the new Branch
-             * @param {string} branchConfig.title The required title of the new Branch
-             * @param {string} branchConfig.description The optional description of the new Branch
-             * @param {string} commitId The id of the Commit to associate with the new Branch
-             * @return {Promise} A promise the resolves to the IRI of the new Branch or is rejected with an error
-             * message
-             */
-            self.createRecordBranch = function(recordId, catalogId, branchConfig, commitId) {
-                branchConfig.type = prefixes.catalog + 'Branch';
-                return createBranch(recordId, catalogId, branchConfig)
-                    .then(iri => self.getRecordBranch(iri, recordId, catalogId), error => $q.reject(error))
-                    .then(branch => {
-                        branch[prefixes.catalog + 'head'] = [{'@id': commitId}];
-                        return self.updateRecordBranch(branch['@id'], recordId, catalogId, branch);
-                    }, error => $q.reject(error));
-            }
-
-            /**
-             * @ngdoc method
-             * @name createRecordBranch
-             * @methodOf catalogManager.service:catalogManagerService
-             *
-             * @description
-             * Calls the POST /matontorest/catalogs/{catalogId}/records/{recordId}/branches endpoint with the passed
-             * Catalog and Record ids, metadata, and associated Commit id and creates a new UserBranch for the identified
-             * Record. Returns a Promise with the IRI of the new UserBranch if successful or rejects with an error message.
-             *
-             * @param {string} recordId The id of the Record to create the UserBranch for
-             * @param {string} catalogId The id of the Catalog the Record should be a part of
-             * @param {Object} branchConfig A configuration object containing metadata for the new Branch
-             * @param {string} branchConfig.title The required title of the new Branch
-             * @param {string} branchConfig.description The optional description of the new Branch
-             * @param {string} commitId The id of the Commit to associate with the new Branch
-             * @param {string} parentBranchId The id of the parent Branch the UserBranch was created from
-             * @return {Promise} A promise the resolves to the IRI of the new UserBranch or is rejected with an error
-             * message
-             */
-            self.createRecordUserBranch = function(recordId, catalogId, branchConfig, commitId, parentBranchId) {
-                branchConfig.type = prefixes.catalog + 'UserBranch';
-                return createBranch(recordId, catalogId, branchConfig)
-                    .then(iri => self.getRecordBranch(iri, recordId, catalogId), error => $q.reject(error))
-                    .then(branch => {
-                        branch[prefixes.catalog + 'head'] = [{'@id': commitId}];
-                        branch[prefixes.catalog + 'createdFrom'] = [{'@id': parentBranchId}];
-                        return self.updateRecordBranch(branch['@id'], recordId, catalogId, branch);
-                    }, error => $q.reject(error));
-            }
-
-            /**
-             * @ngdoc method
-             * @name updateRecordBranch
-             * @methodOf catalogManager.service:catalogManagerService
-             *
-             * @description
-             * Calls the PUT /matontorest/catalogs/{catalogId}/records/{recordId}/branches/{branchId} endpoint with
-             * the passed Catalog, Record, and Branch ids and updates the identified Branch with the passed
-             * Branch JSON-LD object.
-             *
-             * @param {string} branchId The id of the Branch to update
-             * @param {string} recordId The id of the Record the Branch should be part of
-             * @param {string} catalogId The id of the Catalog the Record should be part of
-             * @param {Object} newBranch The JSON-LD object of the new Branch
-             * @return {Promise} A promise that resolves with the IRI of the Branch if the update was successful or
-             * rejects with an error message
-             */
-            self.updateRecordBranch = function(branchId, recordId, catalogId, newBranch) {
-                var deferred = $q.defer();
-                $rootScope.showSpinner = true;
-                $http.put(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId), angular.toJson(newBranch))
-                    .then(response => deferred.resolve(branchId), error => deferred.reject(error.statusText))
-                    .then(() => $rootScope.showSpinner = false);
-                return deferred.promise;
-            }
-
-            /**
-             * @ngdoc method
-             * @name deleteRecordBranch
-             * @methodOf catalogManager.service:catalogManagerService
-             *
-             * @description
-             * Calls the DELETE /matontorest/catalogs/{catalogId}/records/{recordId}/branches/{branchId} with the
-             * passed Catalog, Record, and Branch ids and removes the identified Branch and all associated entities
-             * from MatOnto.
-             *
-             * @param {string} branchId The id of the Branch to delete
-             * @param {string} recordId The id of the Record the Branch should be part of
-             * @param {string} catalogId The id of the Catalog the Record should be part of
-             * @return {Promise} A promise that resolves if the deletion was successful or rejects with an error message
-             */
-            self.deleteRecordBranch = function(branchId, recordId, catalogId) {
-                var deferred = $q.defer();
-                $rootScope.showSpinner = true;
-                $http.delete(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId))
                     .then(response => deferred.resolve(), error => deferred.reject(error.statusText))
                     .then(() => $rootScope.showSpinner = false);
                 return deferred.promise;
@@ -732,6 +561,29 @@
 
             /**
              * @ngdoc method
+             * @name getRecordLatestVersion
+             * @methodOf catalogManager.service:catalogManagerService
+             *
+             * @description
+             * Calls the GET /matontorest/catalogs/{catalogId}/records/{recordId}/versions/latest
+             * endpoint and returns the matching Version JSON-LD object for the Record's latest Version.
+             *
+             * @param {string} recordId The id of the Record to retrieve the latest Version of
+             * @param {string} catalogId The id of the Catalog the Record should be part of
+             * @return {Promise} A promise that resolves to the Version if it is found or is rejected
+             * with an error message
+             */
+            self.getRecordLatestVersion = function(recordId, catalogId) {
+                var deferred = $q.defer();
+                $rootScope.showSpinner = true;
+                $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/latest')
+                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText))
+                    .then(() => $rootScope.showSpinner = false);
+                return deferred.promise;
+            }
+
+            /**
+             * @ngdoc method
              * @name getRecordVersion
              * @methodOf catalogManager.service:catalogManagerService
              *
@@ -753,6 +605,7 @@
                     .then(() => $rootScope.showSpinner = false);
                 return deferred.promise;
             }
+
 
             /**
              * @ngdoc method
@@ -817,7 +670,7 @@
              * Version JSON-LD object.
              *
              * @param {string} versionId The id of the Version to update
-             * @param {string} recordId The id of the Record the Version should be part of
+             * @param {string} recordId The id of the Record with the specified Version
              * @param {string} catalogId The id of the Catalog the Record should be part of
              * @param {Object} newVersion The JSON-LD object of the new Version
              * @return {Promise} A promise that resolves if the update was successful or rejects with an error message
@@ -837,12 +690,12 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the DELETE /matontorest/catalogs/{catalogId}/records/{recordId}/branches/{branchId} with the
-             * passed Catalog, Record, and Version ids and removes the identified Version and all associated entities
-             * from MatOnto.
+             * Calls the DELETE /matontorest/catalogs/{catalogId}/records/{recordId}/versions/{versionId} endpoint
+             * with the passed Catalog, Record, and Version ids and removes the identified Version and all associated
+             * entities from MatOnto.
              *
              * @param {string} versionId The id of the Version to delete
-             * @param {string} recordId The id of the Record the Version should be part of
+             * @param {string} recordId The id of the Record with the specified Version
              * @param {string} catalogId The id of the Catalog the Record should be part of
              * @return {Promise} A promise that resolves if the deletion was successful or rejects with an error message
              */
@@ -851,6 +704,34 @@
                 $rootScope.showSpinner = true;
                 $http.delete(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId))
                     .then(response => deferred.resolve(), error => deferred.reject(error.statusText))
+                    .then(() => $rootScope.showSpinner = false);
+                return deferred.promise;
+            }
+
+            /**
+             * @ngdoc method
+             * @name getVersionCommit
+             * @methodOf catalogManager.service:catalogManagerService
+             *
+             * @description
+             * Calls the GET /matontorest/catalogs/{catalogId}/records/{recordId}/versions/{versionId}/commit endpoint
+             * with the passed Catalog, Record, and Version ids and retrieves the associated Commit for the identified
+             * Version in the passed RDF format.
+             *
+             * @param {string} versionId The id of the Version to retrieve the Commit of
+             * @param {string} recordId The id of the Record with the specified Version
+             * @param {string} catalogId The id of the Catalog the Record should be part of
+             * @param {string='jsonld'} format The RDF format to return the Commit additions and deletions in
+             * @return {Promise} A promise that resolves to the Version's Commit if found or rejects with an error message
+             */
+            self.getVersionCommit = function(versionId, recordId, catalogId, format = 'jsonld') {
+                var deferred = $q.defer(),
+                    config = {
+                        params: {format}
+                    };
+                $rootScope.showSpinner = true;
+                $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/commit', config)
+                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText))
                     .then(() => $rootScope.showSpinner = false);
                 return deferred.promise;
             }
@@ -982,7 +863,7 @@
              * the passed Distribution JSON-LD object.
              *
              * @param {string} distributionId The id of the Distribution to update
-             * @param {string} versionId The id of the Version the Distribution should be part of
+             * @param {string} versionId The id of the Version with the specified Distribution
              * @param {string} recordId The id of the Record the Version should be part of
              * @param {string} catalogId The id of the Catalog the Record should be part of
              * @param {Object} newDistribution The JSON-LD object of the new Distribution
@@ -1004,11 +885,11 @@
              *
              * @description
              * Calls the DELETE /matontorest/catalogs/{catalogId}/records/{recordId}/versions/{versionId}/distributions/{distributionId}
-             * with the passed Catalog, Record, Version, and Distribution ids and removes the identified Distribution and all associated
-             * entities from MatOnto.
+             * endpoint with the passed Catalog, Record, Version, and Distribution ids and removes the identified Distribution and all
+             * associated entities from MatOnto.
              *
              * @param {string} distributionId The id of the Distribution to delete
-             * @param {string} versionId The id of the Version the Distribution should be part of
+             * @param {string} versionId The id of the Version with the specified Distribution
              * @param {string} recordId The id of the Record the Version should be part of
              * @param {string} catalogId The id of the Catalog the Record should be part of
              * @return {Promise} A promise that resolves if the deletion was successful or rejects with an error message
@@ -1017,6 +898,545 @@
                 var deferred = $q.defer();
                 $rootScope.showSpinner = true;
                 $http.delete(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId))
+                    .then(response => deferred.resolve(), error => deferred.reject(error.statusText))
+                    .then(() => $rootScope.showSpinner = false);
+                return deferred.promise;
+            }
+
+            /**
+             * @ngdoc method
+             * @name getRecordBranches
+             * @methodOf catalogManager.service:catalogManagerService
+             *
+             * @description
+             * Calls the GET /matontorest/catalogs/{catalogId}/records/{recordId}/branches endpoint and
+             * returns the paginated response using the passed page index, limit, and sort option from the
+             * `sortOption` array. The data of the response will be the array of Branches, the
+             * "x-total-count" headers will contain the total number of Branches matching the query, and
+             * the "link" header will contain the URLs for the next and previous page if present.
+             *
+             * @param {string} recordId The id of the Record to retrieve the Branches of
+             * @param {string} catalogId The id of the Catalog the Record should be part of
+             * @param {number} pageIndex The index of the page of results to retrieve
+             * @param {number} limit The number of results per page
+             * @param {Object} sortOption A sort option object from the `sortOptions` array
+             * @return {Promise} A promise that resolves to the paginated response or is rejected
+             * with a error message
+             */
+            self.getRecordBranches = function(recordId, catalogId, pageIndex, limit, sortOption) {
+                var deferred = $q.defer(),
+                    config = {
+                        params: {
+                            limit: limit,
+                            offset: pageIndex * limit,
+                            sort: sortOption.field,
+                            asc: sortOption.asc
+                        }
+                    };
+                $rootScope.showSpinner = true;
+                $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches', config)
+                    .then(response => deferred.resolve(response), error => deferred.reject(error.statusText))
+                    .then(() => $rootScope.showSpinner = false);
+                return deferred.promise;
+            }
+
+            /**
+             * @ngdoc method
+             * @name getRecordMasterBranch
+             * @methodOf catalogManager.service:catalogManagerService
+             *
+             * @description
+             * Calls the GET /matontorest/catalogs/{catalogId}/records/{recordId}/branches/master endpoint and
+             * returns the matching Branch JSON-LD object for the Record's master Branch.
+             *
+             * @param {string} recordId The id of the Record to retrieve the master Branch of
+             * @param {string} catalogId The id of the Catalog the Record should be part of
+             * @return {Promise} A promise that resolves to the Branch if it is found or is rejected
+             * with an error message
+             */
+            self.getRecordMasterBranch = function(recordId, catalogId) {
+                var deferred = $q.defer();
+                $rootScope.showSpinner = true;
+                $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/master')
+                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText))
+                    .then(() => $rootScope.showSpinner = false);
+                return deferred.promise;
+            }
+
+            /**
+             * @ngdoc method
+             * @name getRecordBranch
+             * @methodOf catalogManager.service:catalogManagerService
+             *
+             * @description
+             * Calls the GET /matontorest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}
+             * endpoint and returns the matching Branch JSON-LD object.
+             *
+             * @param {string} branchId The id of the Branch to retrieve
+             * @param {string} recordId The id of the Record with the specified Branch
+             * @param {string} catalogId The id of the Catalog the Record should be part of
+             * @return {Promise} A promise that resolves to the Branch if it is found or is rejected
+             * with an error message
+             */
+            self.getRecordBranch = function(branchId, recordId, catalogId) {
+                var deferred = $q.defer();
+                $rootScope.showSpinner = true;
+                $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId))
+                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText))
+                    .then(() => $rootScope.showSpinner = false);
+                return deferred.promise;
+            }
+
+            /**
+             * @ngdoc method
+             * @name createRecordBranch
+             * @methodOf catalogManager.service:catalogManagerService
+             *
+             * @description
+             * Calls the POST /matontorest/catalogs/{catalogId}/records/{recordId}/branches endpoint with the passed
+             * Catalog and Record ids, metadata, and associated Commit id and creates a new Branch for the identified
+             * Record. Returns a Promise with the IRI of the new Branch if successful or rejects with an error message.
+             *
+             * @param {string} recordId The id of the Record to create the Branch for
+             * @param {string} catalogId The id of the Catalog the Record should be a part of
+             * @param {Object} branchConfig A configuration object containing metadata for the new Branch
+             * @param {string} branchConfig.title The required title of the new Branch
+             * @param {string} branchConfig.description The optional description of the new Branch
+             * @param {string} commitId The id of the Commit to associate with the new Branch
+             * @return {Promise} A promise the resolves to the IRI of the new Branch or is rejected with an error
+             * message
+             */
+            self.createRecordBranch = function(recordId, catalogId, branchConfig, commitId) {
+                branchConfig.type = prefixes.catalog + 'Branch';
+                return createBranch(recordId, catalogId, branchConfig)
+                    .then(iri => self.getRecordBranch(iri, recordId, catalogId), error => $q.reject(error))
+                    .then(branch => {
+                        branch[prefixes.catalog + 'head'] = [{'@id': commitId}];
+                        return self.updateRecordBranch(branch['@id'], recordId, catalogId, branch);
+                    }, error => $q.reject(error));
+            }
+
+            /**
+             * @ngdoc method
+             * @name createRecordBranch
+             * @methodOf catalogManager.service:catalogManagerService
+             *
+             * @description
+             * Calls the POST /matontorest/catalogs/{catalogId}/records/{recordId}/branches endpoint with the passed
+             * Catalog and Record ids, metadata, and associated Commit id and creates a new UserBranch for the identified
+             * Record. Returns a Promise with the IRI of the new UserBranch if successful or rejects with an error message.
+             *
+             * @param {string} recordId The id of the Record to create the UserBranch for
+             * @param {string} catalogId The id of the Catalog the Record should be a part of
+             * @param {Object} branchConfig A configuration object containing metadata for the new Branch
+             * @param {string} branchConfig.title The required title of the new Branch
+             * @param {string} branchConfig.description The optional description of the new Branch
+             * @param {string} commitId The id of the Commit to associate with the new Branch
+             * @param {string} parentBranchId The id of the parent Branch the UserBranch was created from
+             * @return {Promise} A promise the resolves to the IRI of the new UserBranch or is rejected with an error
+             * message
+             */
+            self.createRecordUserBranch = function(recordId, catalogId, branchConfig, commitId, parentBranchId) {
+                branchConfig.type = prefixes.catalog + 'UserBranch';
+                return createBranch(recordId, catalogId, branchConfig)
+                    .then(iri => self.getRecordBranch(iri, recordId, catalogId), error => $q.reject(error))
+                    .then(branch => {
+                        branch[prefixes.catalog + 'head'] = [{'@id': commitId}];
+                        branch[prefixes.catalog + 'createdFrom'] = [{'@id': parentBranchId}];
+                        return self.updateRecordBranch(branch['@id'], recordId, catalogId, branch);
+                    }, error => $q.reject(error));
+            }
+
+            /**
+             * @ngdoc method
+             * @name updateRecordBranch
+             * @methodOf catalogManager.service:catalogManagerService
+             *
+             * @description
+             * Calls the PUT /matontorest/catalogs/{catalogId}/records/{recordId}/branches/{branchId} endpoint with
+             * the passed Catalog, Record, and Branch ids and updates the identified Branch with the passed
+             * Branch JSON-LD object.
+             *
+             * @param {string} branchId The id of the Branch to update
+             * @param {string} recordId The id of the Record with the specified Branch
+             * @param {string} catalogId The id of the Catalog the Record should be part of
+             * @param {Object} newBranch The JSON-LD object of the new Branch
+             * @return {Promise} A promise that resolves with the IRI of the Branch if the update was successful or
+             * rejects with an error message
+             */
+            self.updateRecordBranch = function(branchId, recordId, catalogId, newBranch) {
+                var deferred = $q.defer();
+                $rootScope.showSpinner = true;
+                $http.put(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId), angular.toJson(newBranch))
+                    .then(response => deferred.resolve(branchId), error => deferred.reject(error.statusText))
+                    .then(() => $rootScope.showSpinner = false);
+                return deferred.promise;
+            }
+
+            /**
+             * @ngdoc method
+             * @name deleteRecordBranch
+             * @methodOf catalogManager.service:catalogManagerService
+             *
+             * @description
+             * Calls the DELETE /matontorest/catalogs/{catalogId}/records/{recordId}/branches/{branchId} endpoint
+             * with the passed Catalog, Record, and Branch ids and removes the identified Branch and all associated
+             * entities from MatOnto.
+             *
+             * @param {string} branchId The id of the Branch to delete
+             * @param {string} recordId The id of the Record with the specified Branch
+             * @param {string} catalogId The id of the Catalog the Record should be part of
+             * @return {Promise} A promise that resolves if the deletion was successful or rejects with an error message
+             */
+            self.deleteRecordBranch = function(branchId, recordId, catalogId) {
+                var deferred = $q.defer();
+                $rootScope.showSpinner = true;
+                $http.delete(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId))
+                    .then(response => deferred.resolve(), error => deferred.reject(error.statusText))
+                    .then(() => $rootScope.showSpinner = false);
+                return deferred.promise;
+            }
+
+            /**
+             * @ngdoc method
+             * @name getBranchCommits
+             * @methodOf catalogManager.service:catalogManagerService
+             *
+             * @description
+             * Calls the GET /matontorest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}/commits endpoint
+             * with the passed Catalog, Record, and Branch ids and retrieves the list of Commits in that Branch.
+             *
+             * @param {string} branchId The id of the Branch to retrieve the Commits of
+             * @param {string} recordId The id of the Record with the specified Branch
+             * @param {string} catalogId The id of the Catalog the Record should be part of
+             * @return {Promise} A promise that resolves with the list of Branch Commits or rejects with an error message
+             */
+            self.getBranchCommits = function(branchId, recordId, catalogId) {
+                var deferred = $q.defer();
+                $rootScope.showSpinner = true;
+                $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits')
+                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText))
+                    .then(() => $rootScope.showSpinner = false);
+                return deferred.promise;
+            }
+
+            /**
+             * @ngdoc method
+             * @name createBranchCommit
+             * @methodOf catalogManager.service:catalogManagerService
+             *
+             * @description
+             * Calls the POST /matontorest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}/commits endpoint
+             * with the passed Catalog, Record, and Branch ids and string message and creates a Commit on the identified
+             * Branch using the logged in User's InProgressCommit with the passed message.
+             *
+             * @param {string} branchId The id of the Branch to create the Commit for
+             * @param {string} recordId The id of the Record with the specified Branch
+             * @param {string} catalogId The id of the Catalog the Record should be part of
+             * @param {string} message The message for the new Commit
+             * @return {Promise} A promise that resolves to the if of the new Commit or rejects with an error message
+             */
+            self.createBranchCommit = function(branchId, recordId, catalogId, message) {
+                var deferred = $q.defer(),
+                    config = {
+                        params: {
+                            message
+                        }
+                    };
+                $rootScope.showSpinner = true;
+                $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits', null, config)
+                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText))
+                    .then(() => $rootScope.showSpinner = false);
+                return deferred.promise;
+            }
+
+            /**
+             * @ngdoc method
+             * @name getBranchHeadCommit
+             * @methodOf catalogManager.service:catalogManagerService
+             *
+             * @description
+             * Calls the GET /matontorest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}/commits/head endpoint
+             * and returns the matching Commit JSON object of the Branch's head Commit in the passed RDF format.
+             *
+             * @param {string} branchId The id of the Branch to retrieve the head Commit of
+             * @param {string} recordId The id of the Record with the specified Branch
+             * @param {string} catalogId The id of the Catalog the Record should be part of
+             * @param {string='jsonld'} format The RDF format to return the Commit additions and deletions in
+             * @return {Promise} A promise that resolves to the Commit if found or rejects with an error message
+             */
+            self.getBranchHeadCommit = function(branchId, recordId, catalogId, format = 'jsonld') {
+                var deferred = $q.defer(),
+                    config = {
+                        params: {format}
+                    };
+                $rootScope.showSpinner = true;
+                $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/head', config)
+                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText))
+                    .then(() => $rootScope.showSpinner = false);
+                return deferred.promise;
+            }
+
+            /**
+             * @ngdoc method
+             * @name getBranchCommit
+             * @methodOf catalogManager.service:catalogManagerService
+             *
+             * @description
+             * Calls the GET /matontorest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}/commits/{commitId} endpoint
+             * and returns the matching Commit JSON object in the passed RDF format.
+             *
+             * @param {string} commitId The id of the Commit to retrieve
+             * @param {string} branchId The id of the Branch with the specified Commit
+             * @param {string} recordId The id of the Record the Branch should be part of
+             * @param {string} catalogId The id of the Catalog the Record should be part of
+             * @param {string='jsonld'} format The RDF format to return the Commit additions and deletions in
+             * @return {Promise} A promise that resolves to the Commit if found or rejects with an error message
+             */
+            self.getBranchCommit = function(commitId, branchId, recordId, catalogId, format = 'jsonld') {
+                var deferred = $q.defer(),
+                    config = {
+                        params: {format}
+                    };
+                $rootScope.showSpinner = true;
+                $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId), config)
+                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText))
+                    .then(() => $rootScope.showSpinner = false);
+                return deferred.promise;
+            }
+
+            /**
+             * @ngdoc method
+             * @name getBranchConflicts
+             * @methodOf catalogManager.service:catalogManagerService
+             *
+             * @description
+             * Calls the GET /matontorest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}/conflicts endpoint
+             * and returns an array of conflicts between the identified source Branch and the target Branch identified by
+             * the passed id.
+             *
+             * @param {string} sourceId The id of the source Branch to retrieve conflicts for
+             * @param {string} targetId The id of the target Branch to retrieve conflicts for
+             * @param {[type]} recordId The id of the Record with both specified Records
+             * @param {[type]} catalogId The id of the Catalog the Record should be part of
+             * @param {string='jsonld'} format The RDF format to return the Conflict additions and deletions in
+             * @return {Promise} A promise that resolves to the array of Conflict objects or rejects with an error message
+             */
+            self.getBranchConflicts = function(sourceId, targetId, recordId, catalogId, format = 'jsonld') {
+                var deferred = $q.defer(),
+                    config = {
+                        params: {
+                            format,
+                            targetId
+                        }
+                    };
+                $rootScope.showSpinner = true;
+                $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(sourceId) + '/conflicts', config)
+                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText))
+                    .then(() => $rootScope.showSpinner = false);
+                return deferred.promise;
+            }
+
+            /**
+             * @ngdoc method
+             * @name mergeBranches
+             * @methodOf catalogManager.service:catalogManagerService
+             *
+             * @description
+             * Calls the POST /matontorest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}/conflicts/resolution endpoint
+             * and performs a merge between the two identified Branches, creating a Commit using the additions and deletions JSON-LD
+             * provided in the passed difference object.
+             *
+             * @param {string} sourceId The id of the source Branch to merge
+             * @param {string} targetId The id of the target Branch to merge
+             * @param {string} recordId The id of the Record with both specified Records
+             * @param {string} catalogId The id of the Catalog the Record should be part of
+             * @param {Object} differenceObj An object representing a collection of added and deleted statements
+             * @param {Object[]} differenceObj.additions The JSON-LD array of added statements
+             * @param {Object[]} differenceObj.deletions The JSON-LD array of deleted statements
+             * @return {Promise} A promise that resolves with the id of the Commit resulting from the merge or rejects with an error
+             * message
+             */
+            self.mergeBranches = function(sourceId, targetId, recordId, catalogId, differenceObj) {
+                var deferred = $q.defer(),
+                    fd = new FormData(),
+                    config = {
+                        params: {targetId},
+                        transformRequest: _.identity,
+                        headers: {
+                            'Content-Type': undefined,
+                            'Accept': 'text/plain'
+                        }
+                    };
+                if (_.has(differenceObj, 'additions')) {
+                    fd.append('additions', differenceObj.additions);
+                }
+                if (_.has(differenceObj, 'deletions')) {
+                    fd.append('deletions', differenceObj.deletions);
+                }
+                $rootScope.showSpinner = true;
+                $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(sourceId) + '/conflicts/resolution', fd, config)
+                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText))
+                    .then(() => $rootScope.showSpinner = false);
+                return deferred.promise;
+            }
+
+            /**
+             * @ngdoc method
+             * @name getResource
+             * @methodOf catalogManager.service:catalogManagerService
+             *
+             * @description
+             * Calls the GET /matontorest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}/commits/{commitId}/resource
+             * endpoint and returns the resource compiled starting at the identified Commit.
+             *
+             * @param {string} commitId The id of the Commit to retrieve the compiled resource from
+             * @param {string} branchId The id of the Branch with the specified Commit
+             * @param {string} recordId The id of the Record the Branch should be part of
+             * @param {string} catalogId The id of the Catalog the Record should be part of
+             * @param {boolean} applyInProgressCommit Whether or not the saved changes in the logged-in User's InProgressCommit
+             * should be applied to the resource
+             * @param {String} format The RDF format to return the compiled resource in
+             * @return {Promise} A promise that resolves to the compiled resource or rejects with an error message.
+             */
+            self.getResource = function(commitId, branchId, recordId, catalogId, applyInProgressCommit, format = 'jsonld') {
+                var deferred = $q.defer(),
+                    config = {
+                        params: {
+                            format,
+                            applyInProgressCommit
+                        }
+                    };
+                $rootScope.showSpinner = true;
+                $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId) + '/resource', config)
+                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText))
+                    .then(() => $rootScope.showSpinner = false);
+                return deferred.promise;
+            }
+
+            /**
+             * @ngdoc method
+             * @name downloadResource
+             * @methodOf catalogManager.service:catalogManagerService
+             *
+             * @description
+             * Calls the GET /matontorest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}/commits/{commitId}/resource
+             * endpoint using the `window.location` variable which will start a download of the compiled resource starting at the
+             * identified Commit.
+             *
+             * @param {string} commitId The id of the Commit to retrieve the compiled resource from
+             * @param {string} branchId The id of the Branch with the specified Commit
+             * @param {string} recordId The id of the Record the Branch should be part of
+             * @param {string} catalogId The id of the Catalog the Record should be part of
+             * @param {boolean} applyInProgressCommit Whether or not the saved changes in the logged-in User's InProgressCommit
+             * should be applied to the resource
+             * @param {String} format The RDF format to return the compiled resource in
+             */
+            self.downloadResource = function(commitId, branchId, recordId, catalogId, applyInProgressCommit, format = 'jsonld') {
+                $window.location = prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId) + '/resource?applyInProgressCommit=' + applyInProgressCommit + '&format=' + format;
+            }
+
+            /**
+             * @ngdoc method
+             * @name createInProgressCommit
+             * @methodOf catalogManager.service:catalogManagerService
+             *
+             * @description
+             * Calls the POST /matontorest/catalogs/{catalogId}/records/{recordId}/in-progress-commit endpoint and creates
+             * a new InProgressCommit for the logged-in User for the identified Record.
+             *
+             * @param {string} recordId The id of the Record to create an InProgressCommit for
+             * @param {string} catalogId The id of the Catalog the Record should be part of
+             * @return {Promise} A promise that resolves if the creation was successful or rejects with an error message
+             */
+            self.createInProgressCommit = function(recordId, catalogId) {
+                var deferred = $q.defer();
+                $rootScope.showSpinner = true;
+                $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit')
+                    .then(response => deferred.resolve(), error => deferred.reject(error.statusText))
+                    .then(() => $rootScope.showSpinner = false);
+                return deferred.promise;
+            }
+
+            /**
+             * @ngdoc method
+             * @name getInProgressCommit
+             * @methodOf catalogManager.service:catalogManagerService
+             *
+             * @description
+             * Calls the GET /matontorest/catalogs/{catalogId}/records/{recordId}/in-progress-commit endpoint and
+             * retrieves the InProgressCommit for the logged-in User for the identified Record.
+             *
+             * @param {string} recordId The id of the Record to retrieve the InProgressCommit from
+             * @param {string} catalogId The id of the Catalog the Record should be part of
+             * @return {Promise} A promise that resolves with the InProgessCommit or rejects with an error message
+             */
+            self.getInProgressCommit = function(recordId, catalogId) {
+                var deferred = $q.defer();
+                $rootScope.showSpinner = true;
+                $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit')
+                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText))
+                    .then(() => $rootScope.showSpinner = false);
+                return deferred.promise;
+            }
+
+            /**
+             * @ngdoc method
+             * @name updateInProgressCommit
+             * @methodOf catalogManager.service:catalogManagerService
+             *
+             * @description
+             * Calls the PUT /matontorest/catalogs/{catalogId}/records/{recordId}/in-progress-commit endpoint and
+             * updates the InProgressCommit for the logged-in User for the identified Record using the additions and
+             * deletions JSON-LD provided in the passed difference object.
+             *
+             * @param {string} recordId The id of the Record to update the InProgressCommit for
+             * @param {string} catalogId The id of the Catalog the Record should be part of
+             * @param {Object} differenceObj An object representing a collection of added and deleted statements
+             * @param {Object[]} differenceObj.additions The JSON-LD array of added statements
+             * @param {Object[]} differenceObj.deletions The JSON-LD array of deleted statements
+             * @return {Promise} A promise that resolves if the update was successful or rejects with an error message
+             */
+            self.updateInProgressCommit = function(recordId, catalogId, differenceObj) {
+                var deferred = $q.defer(),
+                    fd = new FormData(),
+                    config = {
+                        transformRequest: _.identity,
+                        headers: {
+                            'Content-Type': undefined,
+                            'Accept': 'text/plain'
+                        }
+                    };
+                if (_.has(differenceObj, 'additions')) {
+                    fd.append('additions', differenceObj.additions);
+                }
+                if (_.has(differenceObj, 'deletions')) {
+                    fd.append('deletions', differenceObj.deletions);
+                }
+                $rootScope.showSpinner = true;
+                $http.put(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit', fd, config)
+                    .then(response => deferred.resolve(), error => deferred.reject(error.statusText))
+                    .then(() => $rootScope.showSpinner = false);
+                return deferred.promise;
+            }
+
+            /**
+             * @ngdoc method
+             * @name deleteInProgressCommit
+             * @methodOf catalogManager.service:catalogManagerService
+             *
+             * @description
+             * Calls the DELETE /matontorest/catalogs/{catalogId}/records/{recordId}/in-progress-commit endpoint and deletes
+             * the InProgressCommit for the logged-in User for the identified Record.
+             *
+             * @param {string} recordId The id of the Record to delete the InProgressCommit from
+             * @param {string} catalogId The id of the Catalog the Record should be part of
+             * @return {Promise} A promise that resolves if the deletion was successful or rejects with an error message
+             */
+            self.deleteInProgressCommit = function(recordId, catalogId) {
+                var deferred = $q.defer();
+                $rootScope.showSpinner = true;
+                $http.delete(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit')
                     .then(response => deferred.resolve(), error => deferred.reject(error.statusText))
                     .then(() => $rootScope.showSpinner = false);
                 return deferred.promise;
@@ -1116,7 +1536,7 @@
                 var deferred = $q.defer(),
                     fd = new FormData(),
                     config = {
-                        transformRequest: angular.identity,
+                        transformRequest: _.identity,
                         headers: {
                             'Content-Type': undefined,
                             'Accept': 'text/plain'
@@ -1138,7 +1558,7 @@
                 var deferred = $q.defer(),
                     fd = new FormData(),
                     config = {
-                        transformRequest: angular.identity,
+                        transformRequest: _.identity,
                         headers: {
                             'Content-Type': undefined,
                             'Accept': 'text/plain'
