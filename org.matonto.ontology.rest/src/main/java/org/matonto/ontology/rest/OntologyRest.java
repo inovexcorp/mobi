@@ -55,10 +55,10 @@ public interface OntologyRest {
      * @param context the context of the request.
      * @param fileInputStream the ontology file to upload.
      * @param title the title for the OntologyRecord.
-     * @param description the description for the OntologyRecord
-     * @param keywords the comma separated list of keywords associated with the OntologyRecord
-     * @return OK if persisted, BAD REQUEST if publishers can't be found, or INTERNAL SERVER ERROR if there is a problem
-     *         creating the OntologyRecord.
+     * @param description the description for the OntologyRecord.
+     * @param keywords the comma separated list of keywords associated with the OntologyRecord.
+     * @return OK with ontology ID in the data if persisted, BAD REQUEST if publishers can't be found, or INTERNAL
+     *         SERVER ERROR if there is a problem creating the OntologyRecord.
      */
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
@@ -70,6 +70,30 @@ public interface OntologyRest {
                         @FormDataParam("title") String title,
                         @FormDataParam("description") String description,
                         @FormDataParam("keywords") String keywords);
+
+    /**
+     * Ingests/uploads the JSON-LD of an ontology to a data store and creates and stores an OntologyRecord using the
+     * form data in the repository to track the work done on it. A master Branch is created and stored with an initial
+     * Commit containing the data provided in the JSON-LD for the ontology.
+     *
+     * @param context the context of the request.
+     * @param title the title for the OntologyRecord.
+     * @param description the description for the OntologyRecord.
+     * @param keywords the comma separated list of keywords associated with the OntologyRecord.
+     * @param ontologyJson the ontology JSON-LD to upload.
+     * @return OK with ontology ID in the data if persisted, BAD REQUEST if publishers can't be found, or INTERNAL
+     *         SERVER ERROR if there is a problem creating the OntologyRecord.
+     */
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Uploads ontology JSON-LD to the data store.")
+    Response uploadOntologyJson(@Context ContainerRequestContext context,
+                                @QueryParam("title") String title,
+                                @QueryParam("description") String description,
+                                @QueryParam("keywords") String keywords,
+                                String ontologyJson);
 
     /**
      * Updates the InProgressCommit associated with the User making the request for the OntologyRecord identified by the

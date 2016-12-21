@@ -114,6 +114,21 @@ function injectPrefixationFilter() {
     });
 }
 
+function mockStateManager() {
+    module(function($provide) {
+        $provide.service('stateManagerService', function($q) {
+            this.states = [];
+            this.getStates = jasmine.createSpy('getStates').and.returnValue($q.when());
+            this.createState = jasmine.createSpy('createStates').and.returnValue($q.when());
+            this.createOntologyState = jasmine.createSpy('createOntologyState').and.returnValue($q.when());
+            this.getState = jasmine.createSpy('getState').and.returnValue($q.when());
+            this.updateState = jasmine.createSpy('updateState').and.returnValue($q.when());
+            this.deleteState = jasmine.createSpy('deleteState').and.returnValue($q.when());
+            this.initialize = jasmine.createSpy('initialize');
+        });
+    });
+}
+
 function mockOntologyManager() {
     module(function($provide) {
         $provide.service('ontologyManagerService', function($q) {
@@ -343,11 +358,11 @@ function mockCatalogManager() {
 function mockPrefixes() {
     module(function($provide) {
         $provide.service('prefixes', function() {
-            this.owl = this.rdf = this.delim = this.data = this.mappings = this.catalog = '';
+            this.owl = this.rdf = this.delim = this.data = this.mappings = this.catalog = this.ontologyState = '';
             this.rdfs = 'rdfs:';
             this.dc = 'dc:';
             this.dcterms = 'dcterms:';
-            this.rdf = 'rdf';
+            this.rdf = 'rdf:';
         });
     });
 }

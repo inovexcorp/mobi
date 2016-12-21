@@ -48,32 +48,26 @@
                     dvm.type = 'ontology';
                     dvm.ontology = {
                         '@id': prefix,
-                        '@type': [prefixes.owl + 'Ontology'],
-                        [prefixes.dcterms + 'title']: [{
-                            '@value': ''
-                        }],
-                        [prefixes.dcterms + 'description']: [{
-                            '@value': ''
-                        }]
+                        '@type': [prefixes.owl + 'Ontology']
                     };
 
                     dvm.nameChanged = function() {
                         if (!dvm.iriHasChanged) {
-                            dvm.ontology['@id'] = prefix + $filter('camelCase')(
-                                dvm.ontology[prefixes.dcterms + 'title'][0]['@value'], 'class');
+                            dvm.ontology['@id'] = prefix + $filter('camelCase')(dvm.title, 'class');
                         }
                     }
 
                     dvm.create = function() {
-                        if (_.get(dvm.ontology, "['" + prefixes.dcterms + "description'][0]['@value']") === '') {
-                            _.unset(dvm.ontology, prefixes.dcterms + 'description');
+                        _.set(dvm.ontology, "['" + prefixes.dcterms + "title'][0]['@value']", dvm.title);
+                        if (dvm.description) {
+                            _.set(dvm.ontology, "['" + prefixes.dcterms + "description'][0]['@value']", dvm.description);
                         }
                         if (dvm.type === 'vocabulary') {
                             dvm.ontology[prefixes.owl + 'imports'] = [{
                                 '@id': prefixes.skos
                             }];
                         }
-                        dvm.om.createOntology(dvm.ontology, dvm.type)
+                        dvm.om.createOntology(dvm.ontology, dvm.title, dvm.description, dvm.keywords, dvm.type)
                             .then(response => {
                                 dvm.sm.addState(response.ontologyId, response.entityIRI, dvm.type);
                                 dvm.sm.setState(response.ontologyId);

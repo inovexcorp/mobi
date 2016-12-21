@@ -27,9 +27,9 @@
         .module('login', [])
         .controller('LoginController', LoginController);
 
-    LoginController.$inject = ['loginManagerService', 'catalogManagerService', 'ontologyManagerService', 'mappingManagerService', 'userManagerService'];
+    LoginController.$inject = ['loginManagerService', 'catalogManagerService', 'ontologyManagerService', 'mappingManagerService', 'userManagerService', 'stateManagerService'];
 
-    function LoginController(loginManagerService, catalogManagerService, ontologyManagerService, mappingManagerService, userManagerService) {
+    function LoginController(loginManagerService, catalogManagerService, ontologyManagerService, mappingManagerService, userManagerService, stateManagerService) {
         var vm = this;
         vm.errorMessage = '';
 
@@ -41,6 +41,7 @@
                     ontologyManagerService.initialize();
                     mappingManagerService.initialize();
                     userManagerService.initialize();
+                    stateManagerService.initialize();
                 }, errorMessage => {
                     vm.errorMessage = errorMessage;
                 });

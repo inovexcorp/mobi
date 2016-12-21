@@ -43,7 +43,7 @@
                     dvm.type = 'ontology';
 
                     dvm.upload = function() {
-                        dvm.om.uploadThenGet(dvm.file, dvm.type)
+                        dvm.om.uploadThenGet(dvm.file, dvm.title, dvm.description, dvm.keywords, dvm.type)
                             .then(ontologyId => {
                                 var listItem = dvm.om.getListItemById(ontologyId);
                                 dvm.sm.addState(ontologyId, dvm.om.getOntologyIRI(listItem.ontology), dvm.type);

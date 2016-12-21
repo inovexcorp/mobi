@@ -22,6 +22,7 @@
  */
 describe('Ontology Manager service', function() {
     var $httpBackend;
+    var ontologyManagerSvc;
 
     beforeEach(function() {
         module('ontologyManager');
@@ -35,14 +36,35 @@ describe('Ontology Manager service', function() {
             ontologyManagerSvc = ontologyManagerService;
             $httpBackend = _$httpBackend_;
         });
+
+        ontologyManagerSvc.catalogId = 'local-catalog';
     });
 
-    //TODO: I'm not sure what to expect here.
-    /*it('the getAllOntologyIds function should call correct REST endpoint', function() {
-        var ontologyIds = ['id1', 'id2'];
-        $httpBackend.whenGET('/matontorest/ontologies/ontologyids').respond(200, ontologyIds);
+    /*it('getAllOntologyIds parses out the dcterms:identifier from each record', function(done) {
+        var ontologyIds = [{
+            "@id": "https://matonto.org/records#931c73f0-31dd-4bcf-b40b-30586930d60d",
+            "@type": ["http://matonto.org/ontologies/catalog#OntologyRecord"],
+            "http://purl.org/dc/terms/identifier": [{"@value": "http://matonto.org/ontology/1.0"}]
+        }, {
+            "@id": "https://matonto.org/records#931c73f0-31dd-4bcf-b40b-30586930d60d2",
+            "@type": ["http://matonto.org/ontologies/catalog#OntologyRecord"],
+            "http://purl.org/dc/terms/identifier": [{"@value": "http://matonto.org/ontology/2.0"}]
+        }];
+        var expected = ["http://matonto.org/ontology/1.0", "http://matonto.org/ontology/2.0"];
+        var config = {
+            params: {
+                type: 'http://matonto.org/ontologies/catalog#OntologyRecord'
+            }
+        }
+        $httpBackend.whenGET('/matontorest/catalogs/' + ontologyManagerSvc.catalogId + '/records').respond(200,
+            ontologyIds);
+        ontologyManagerSvc.getAllOntologyIds().then(function(response) {
+            expect(_.get(response, 'data', [])).toBe(expected);
+            done();
+        }, function(response) {
+            fail('Promise should have resolved');
+            done();
+        });
         $httpBackend.flush();
     });*/
-
-
 });

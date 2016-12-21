@@ -28,6 +28,7 @@ describe('Login controller', function() {
         ontologyManagerSvc,
         mappingManagerSvc,
         userManagerSvc,
+        stateManagerSvc,
         $q,
         controller;
 
@@ -38,8 +39,9 @@ describe('Login controller', function() {
         mockMappingManager();
         mockLoginManager();
         mockUserManager();
+        mockStateManager();
 
-        inject(function(_$rootScope_, _$controller_, _loginManagerService_, _catalogManagerService_, _ontologyManagerService_, _mappingManagerService_, _userManagerService_, _$q_) {
+        inject(function(_$rootScope_, _$controller_, _loginManagerService_, _catalogManagerService_, _ontologyManagerService_, _mappingManagerService_, _userManagerService_, _$q_, _stateManagerService_) {
             scope = _$rootScope_;
             $controller = _$controller_;
             loginManagerSvc = _loginManagerService_;
@@ -47,6 +49,7 @@ describe('Login controller', function() {
             ontologyManagerSvc = _ontologyManagerService_;
             mappingManagerSvc = _mappingManagerService_;
             userManagerSvc = _userManagerService_;
+            stateManagerSvc = _stateManagerService_;
             $q = _$q_;
         });
 
@@ -70,6 +73,7 @@ describe('Login controller', function() {
             expect(ontologyManagerSvc.initialize).not.toHaveBeenCalled();
             expect(mappingManagerSvc.initialize).not.toHaveBeenCalled();
             expect(userManagerSvc.initialize).not.toHaveBeenCalled();
+            expect(stateManagerSvc.initialize).not.toHaveBeenCalled();
         });
         it('successfully', function() {
             controller.login();
@@ -80,6 +84,7 @@ describe('Login controller', function() {
             expect(ontologyManagerSvc.initialize).toHaveBeenCalled();
             expect(mappingManagerSvc.initialize).toHaveBeenCalled();
             expect(userManagerSvc.initialize).toHaveBeenCalled();
+            expect(stateManagerSvc.initialize).toHaveBeenCalled();
         });
     });
 });

@@ -44,7 +44,6 @@
          * @requires $timeout
          * @requires $filter
          * @requires prefixes.service:prefixes
-         * @requires uuid
          * @requires propertyManager.service:propertyManagerService
          *
          * @description
@@ -55,12 +54,14 @@
         .service('ontologyManagerService', ontologyManagerService);
 
         ontologyManagerService.$inject = ['$rootScope', '$window', '$http', '$q', '$timeout', '$filter', 'prefixes',
-            'uuid', 'propertyManagerService', 'utilService'];
+            'propertyManagerService', 'catalogManagerService', 'utilService'];
 
-        function ontologyManagerService($rootScope, $window, $http, $q, $timeout, $filter, prefixes, uuid,
-            propertyManagerService, utilService) {
+        function ontologyManagerService($rootScope, $window, $http, $q, $timeout, $filter, prefixes,
+            propertyManagerService, catalogManagerService, utilService) {
             var self = this;
-            var prefix = '/matontorest/ontologies/';
+            var prefix = '/matontorest/';
+            var ontologyPrefix = prefix + 'ontologies/';
+            var catalogPrefix = prefix + 'catalogs/';
             var defaultDatatypes = _.map(['anyURI', 'boolean', 'byte', 'dateTime', 'decimal', 'double', 'float', 'int',
                 'integer', 'language', 'long', 'string'], function(item) {
                 return {
@@ -96,7 +97,9 @@
                 conceptIndex: {},
                 index: {}
             };
+            var cm = catalogManagerService;
 
+            self.ontologyRecords = [];
             /**
              * @ngdoc property
              * @name ontologyIds
@@ -208,7 +211,6 @@
                     values: 'conceptList'
                 }
             ];
-
             /**
              * @ngdoc method
              * @name reset
@@ -230,18 +232,7 @@
              * Initializes the `ontologyManagerService` by setting the list of
              * {@link ontologyManager.service:ontologyManagerService#ontologyIds ontology ids}.
              */
-            self.initialize = function() {
-                $rootScope.showSpinner = true;
-                self.getAllOntologyIds()
-                    .then(response => {
-                        self.ontologyIds = _.get(response, 'data', []);
-                    }, response => {
-                        console.log(_.get(response, 'statusText'), 'Something went wrong. Could not load ontology ids.');
-                    })
-                    .then(() => {
-                        $rootScope.showSpinner = false;
-                    });
-            }
+            self.initialize = function() {}
             /**
              * @ngdoc method
              * @name getAllOntologyIds
@@ -253,8 +244,26 @@
              *
              * @returns {Promise} A promise with an array of the ontology ids.
              */
-            self.getAllOntologyIds = function() {
-                return $http.get(prefix + 'ontologyids');
+            self.getAllOntologyIds = function(sortingOption) {
+                var deferred = $q.defer();
+               getAllRecords(sortingOption)
+                    .then(resolve => {
+                        var recordIds = _.map(_.get(response, 'data', []), record => _.get(record, "['"
+                            + prefixes.dcterms + "']identifier[0]['@value']"));
+                        deferred.resolve(recordIds);
+                    }, response => deferred.reject(response));
+                return deferred.promise;
+            }
+            self.getAllOntologyRecords = function(sortingOption) {
+                var deferred = $q.defer();
+                getAllRecords(sortingOption)
+                    .then(response => deferred.resolve(response), response => deferred.reject(response));
+                return deferred.promise;
+            }
+            function getAllRecords(sortingOption = _.find(cm.sortOptions, {label: 'Title (desc)'})) {
+                var catalogId = _.get(cm.localCatalog, '@id', '');
+                var ontologyRecordType = 'http://matonto.org/ontologies/catalog#OntologyRecord';
+                return cm.getRecords(catalogId, 0, 100, sortingOption, ontologyRecordType);
             }
             /**
              * @ngdoc method
@@ -263,12 +272,16 @@
              *
              * @description
              * Calls the POST /matontorest/ontologies endpoint which uploads an ontology to the MatOnto repository
-             * with the file provided. Returns a promise indicating whether the ontology was persisted.
+             * with the file provided. This creates a new OntologyRecord associated with this ontology. Returns a
+             * promise indicating whether the ontology was persisted.
              *
              * @param {File} file The ontology file.
+             * @param {string} title The record title.
+             * @param {string} description The record description.
+             * @param {string} keywords The record list of keywords separated by commas.
              * @returns {Promise} A promise indicating whether the ontology was persisted.
              */
-            self.uploadFile = function(file) {
+            self.uploadFile = function(file, title, description, keywords) {
                 var fd = new FormData(),
                     config = {
                         transformRequest: angular.identity,
@@ -277,7 +290,14 @@
                         }
                     };
                 fd.append('file', file);
-                return $http.post(prefix, fd, config);
+                fd.append('title', title);
+                if (description) {
+                    fd.append('description', description);
+                }
+                if (keywords) {
+                    fd.append('keywords', keywords);
+                }
+                return $http.post(ontologyPrefix, fd, config);
             }
             /**
              * @ngdoc method
@@ -293,13 +313,15 @@
              * @param {string} [rdfFormat='jsonld'] The format string to identify the serialization requested.
              * @returns {Promise} A promise containing the ontology id and JSON-LD serialization of the ontology.
              */
-            self.getOntology = function(ontologyId, rdfFormat = 'jsonld') {
-                var config = {
+            self.getOntology = function(recordId, rdfFormat = 'jsonld') {
+
+
+                /*var config = {
                     params: {
                         rdfformat: rdfFormat
                     }
                 };
-                return $http.get(prefix + encodeURIComponent(ontologyId), config);
+                return $http.get(ontologyPrefix + encodeURIComponent(ontologyId), config);*/
             }
             /**
              * @ngdoc method
@@ -316,10 +338,9 @@
              * @returns {Promise} A promise indicating whether the ontology was persisted.
              */
             self.downloadOntologyFile = function(ontologyId, rdfFormat = 'jsonld', fileName = 'ontology') {
-                $window.location = prefix + encodeURIComponent(ontologyId)
+                $window.location = ontologyPrefix + encodeURIComponent(ontologyId)
                     + `?rdfFormat=${rdfFormat}&fileName=${fileName}`;
             }
-
             /**
              * @ngdoc method
              * @name uploadThenGet
@@ -327,13 +348,18 @@
              *
              * @description
              * Calls the POST /matontorest/ontologies endpoint which uploads an ontology to the MatOnto repository
-             * with the file provided and then calls {@link ontologyManager.service:ontologyManagerService#getOntology getOntology}
-             * to get the ontology they just uploaded. Returns a promise.
+             * with the file provided and then calls
+             * {@link ontologyManager.service:ontologyManagerService#getOntology getOntology} to get the ontology they
+             * just uploaded. Returns a promise.
              *
              * @param {File} file The ontology file.
+             * @param {string} title The record title.
+             * @param {string} description The record description.
+             * @param {string} keywords The record list of keywords separated by commas.
+             * @param {string} type The type identifier for the file uploaded.
              * @returns {Promise} A promise with the ontology ID or error message.
              */
-            self.uploadThenGet = function(file, type='ontology') {
+            self.uploadThenGet = function(file, title, description, keywords, type='ontology') {
                 $rootScope.showSpinner = true;
                 var deferred = $q.defer();
                 var onError = function(response) {
@@ -361,10 +387,9 @@
                             onError(response);
                         });
                 };
-                self.uploadFile(file)
+                self.uploadFile(file, title, description, keywords)
                     .then(response => {
-                        if (_.get(response, 'status') === 200 && _.get(response, 'data.persisted')
-                            && _.has(response, 'data.ontologyId')) {
+                        if (_.get(response, 'status') === 200 && _.has(response, 'data.ontologyId')) {
                             onUploadSuccess(response.data.ontologyId);
                         } else {
                             onError(response);
@@ -380,8 +405,9 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Used to open an ontology from the MatOnto repository. It calls {@link ontologyManager.service:ontologyManagerService#getOntology getOntology}
-             * to get the specified ontology from the MatOnto repository. Returns a promise.
+             * Used to open an ontology from the MatOnto repository. It calls
+             * {@link ontologyManager.service:ontologyManagerService#getOntology getOntology} to get the specified
+             * ontology from the MatOnto repository. Returns a promise.
              *
              * @param {string} ontologyId The ontology ID of the requested ontology.
              * @returns {Promise} A promise with with the ontology ID or error message.
@@ -489,7 +515,7 @@
                             resourcejson: $filter('removeMatonto')(entity)
                         }
                     };
-                    promises.push($http.post(prefix + encodeURIComponent(ontologyId), null, config));
+                    promises.push($http.post(ontologyPrefix + encodeURIComponent(ontologyId), null, config));
                     // TODO: the following calls should only be done on successful save
                     // This will be addressed in a future branch dealing with $q.all()
                     _.set(entity, 'matonto.unsaved', false);
@@ -665,13 +691,13 @@
              * Calls the DELETE /matontorest/ontology/{ontologyId} endpoint which deletes the specified ontology from
              * the MatOnto repository. Returns a promise with the success of the deletion.
              *
-             * @param {string} ontologyId The ontology ID of the requested ontology.
+             * @param {string} recordId The record ID of the ontology you want to delete.
              * @returns {Promise} A promise with a boolean indicating the success of the deletion.
              */
-            self.deleteOntology = function(ontologyId) {
+            /*self.deleteOntology = function(recordId) {
                 $rootScope.showSpinner = true;
                 var deferred = $q.defer();
-                $http.delete(prefix + encodeURIComponent(ontologyId))
+                $http.delete(ontologyPrefix + encodeURIComponent(ontologyId))
                     .then(response => {
                         if (_.get(response, 'data.deleted')) {
                             _.remove(self.ontologyIds, id => id === ontologyId);
@@ -686,7 +712,7 @@
                         $rootScope.showSpinner = false;
                     });
                 return deferred.promise;
-            }
+            }*/
             /**
              * @ngdoc method
              * @name createOntology
@@ -701,17 +727,23 @@
              * @returns {Promise} A promise with the entityIRI and ontologyId for the state of the newly created
              * ontology.
              */
-            self.createOntology = function(ontologyJSON, type='ontology') {
+            self.createOntology = function(ontologyJson, title, description, keywords, type='ontology') {
                 $rootScope.showSpinner = true;
                 var deferred = $q.defer();
                 var config = {
                     params: {
-                        ontologyjson: ontologyJSON
+                        title
                     }
                 };
-                $http.post(prefix, null, config)
+                if (description) {
+                    config.params.description = description;
+                }
+                if (keywords) {
+                    config.params.keywords = keywords;
+                }
+                $http.post(ontologyPrefix, ontologyJson, config)
                     .then(response => {
-                        if (_.has(response, 'data.persisted') && _.has(response, 'data.ontologyId')) {
+                        if (_.has(response, 'data.ontologyId')) {
                             _.set(ontologyJSON, 'matonto.originalIRI', ontologyJSON['@id']);
                             var listItem = (type === 'ontology') ? angular.copy(ontologyListItemTemplate)
                                 : angular.copy(vocabularyListItemTemplate);
@@ -806,7 +838,7 @@
              * @returns {Promise} A promise with a boolean indicating the success of the deletion.
              */
             self.deleteClass = function(ontologyId, classIRI) {
-                return $http.delete(prefix + encodeURIComponent(ontologyId) + '/classes/' + encodeURIComponent(classIRI));
+                return $http.delete(ontologyPrefix + encodeURIComponent(ontologyId) + '/classes/' + encodeURIComponent(classIRI));
             }
             /**
              * @ngdoc method
@@ -828,7 +860,7 @@
                         resourcejson: classJSON
                     }
                 };
-                return $http.post(prefix + encodeURIComponent(ontologyId) + '/classes', null, config);
+                return $http.post(ontologyPrefix + encodeURIComponent(ontologyId) + '/classes', null, config);
             }
             /**
              * @ngdoc method
@@ -845,7 +877,7 @@
              */
             self.updateClassHierarchies = function(ontologyId) {
                 var deferred = $q.defer();
-                $http.get(prefix + encodeURIComponent(ontologyId) + '/class-hierarchies')
+                $http.get(ontologyPrefix + encodeURIComponent(ontologyId) + '/class-hierarchies')
                     .then(hierarchyResponse => {
                         if (_.get(hierarchyResponse, 'status') === 200) {
                             var listItem = self.getListItemById(ontologyId);
@@ -1059,7 +1091,7 @@
              * @returns {Promise} A promise with a boolean indicating the success of the deletion.
              */
             self.deleteObjectProperty = function(ontologyId, propertyIRI) {
-                return $http.delete(prefix + encodeURIComponent(ontologyId) + '/object-properties/' + encodeURIComponent(propertyIRI));
+                return $http.delete(ontologyPrefix + encodeURIComponent(ontologyId) + '/object-properties/' + encodeURIComponent(propertyIRI));
             }
             /**
              * @ngdoc method
@@ -1082,7 +1114,7 @@
                         resourcejson: propertyJSON
                     }
                 };
-                return $http.post(prefix + encodeURIComponent(ontologyId) + '/object-properties', null, config);
+                return $http.post(ontologyPrefix + encodeURIComponent(ontologyId) + '/object-properties', null, config);
             }
             /**
              * @ngdoc method
@@ -1144,7 +1176,7 @@
              * @returns {Promise} A promise with a boolean indicating the success of the deletion.
              */
             self.deleteDataTypeProperty = function(ontologyId, propertyIRI) {
-                return $http.delete(prefix + encodeURIComponent(ontologyId) + '/data-properties/' + encodeURIComponent(propertyIRI));
+                return $http.delete(ontologyPrefix + encodeURIComponent(ontologyId) + '/data-properties/' + encodeURIComponent(propertyIRI));
             }
             /**
              * @ngdoc method
@@ -1167,7 +1199,7 @@
                         resourcejson: propertyJSON
                     }
                 };
-                return $http.post(prefix + encodeURIComponent(ontologyId) + '/data-properties', null, config);
+                return $http.post(ontologyPrefix + encodeURIComponent(ontologyId) + '/data-properties', null, config);
             }
             /**
              * @ngdoc method
@@ -1333,7 +1365,7 @@
              * @returns {Promise} A promise with a boolean indicating the success of the deletion.
              */
             self.deleteIndividual = function(ontologyId, individualIRI) {
-                return $http.delete(prefix + encodeURIComponent(ontologyId) + '/named-individuals/' + encodeURIComponent(individualIRI));
+                return $http.delete(ontologyPrefix + encodeURIComponent(ontologyId) + '/named-individuals/' + encodeURIComponent(individualIRI));
             }
             /**
              * @ngdoc method
@@ -1356,7 +1388,7 @@
                         resourcejson: individualJSON
                     }
                 };
-                return $http.post(prefix + encodeURIComponent(ontologyId) + '/named-individuals', null, config);
+                return $http.post(ontologyPrefix + encodeURIComponent(ontologyId) + '/named-individuals', null, config);
             }
             /**
              * @ngdoc method
@@ -1550,7 +1582,7 @@
                         rdfformat: rdfFormat
                     }
                 };
-                $http.get(prefix + encodeURIComponent(ontologyId) + '/imported-ontologies', null, config)
+                $http.get(ontologyPrefix + encodeURIComponent(ontologyId) + '/imported-ontologies', null, config)
                     .then(response => {
                         if(_.get(response, 'status') === 200 && _.has(response, 'data')) {
                             deferred.resolve(response.data);
@@ -1582,7 +1614,7 @@
              */
             self.getEntityUsages = function(ontologyId, entityIRI) {
                 var deferred = $q.defer();
-                $http.get(prefix + encodeURIComponent(ontologyId) + '/entity-usages/' + encodeURIComponent(entityIRI))
+                $http.get(ontologyPrefix + encodeURIComponent(ontologyId) + '/entity-usages/' + encodeURIComponent(entityIRI))
                     .then(response => {
                         if(_.get(response, 'status') === 200) {
                             deferred.resolve(response.data.results.bindings);
@@ -1731,7 +1763,7 @@
                     params: {searchText}
                 };
                 $rootScope.showSpinner = true;
-                $http.get(prefix + encodeURIComponent(ontologyId) + '/search-results', config)
+                $http.get(ontologyPrefix + encodeURIComponent(ontologyId) + '/search-results', config)
                     .then(response => {
                         if(_.get(response, 'status') === 200) {
                             deferred.resolve(response.data);
@@ -1885,12 +1917,12 @@
                 var deferred = $q.defer();
                 var listItem = setupListItem(ontologyId, ontology, ontologyListItemTemplate);
                 $q.all([
-                    $http.get(prefix + encodeURIComponent(ontologyId) + '/iris'),
-                    $http.get(prefix + encodeURIComponent(ontologyId) + '/imported-iris'),
-                    $http.get(prefix + encodeURIComponent(ontologyId) + '/class-hierarchies'),
-                    $http.get(prefix + encodeURIComponent(ontologyId) + '/classes-with-individuals'),
-                    $http.get(prefix + encodeURIComponent(ontologyId) + '/data-property-hierarchies'),
-                    $http.get(prefix + encodeURIComponent(ontologyId) + '/object-property-hierarchies')
+                    $http.get(ontologyPrefix + encodeURIComponent(ontologyId) + '/iris'),
+                    $http.get(ontologyPrefix + encodeURIComponent(ontologyId) + '/imported-iris'),
+                    $http.get(ontologyPrefix + encodeURIComponent(ontologyId) + '/class-hierarchies'),
+                    $http.get(ontologyPrefix + encodeURIComponent(ontologyId) + '/classes-with-individuals'),
+                    $http.get(ontologyPrefix + encodeURIComponent(ontologyId) + '/data-property-hierarchies'),
+                    $http.get(ontologyPrefix + encodeURIComponent(ontologyId) + '/object-property-hierarchies')
                 ]).then(response => {
                     var irisResponse = response[0];
                     if (_.get(irisResponse, 'status') === 200) {
@@ -1982,9 +2014,9 @@
                 var deferred = $q.defer();
                 var listItem = setupListItem(ontologyId, ontology, vocabularyListItemTemplate);
                 $q.all([
-                    $http.get(prefix + encodeURIComponent(ontologyId) + '/iris'),
-                    $http.get(prefix + encodeURIComponent(ontologyId) + '/imported-iris'),
-                    $http.get(prefix + encodeURIComponent(ontologyId) + '/concept-hierarchies')
+                    $http.get(ontologyPrefix + encodeURIComponent(ontologyId) + '/iris'),
+                    $http.get(ontologyPrefix + encodeURIComponent(ontologyId) + '/imported-iris'),
+                    $http.get(ontologyPrefix + encodeURIComponent(ontologyId) + '/concept-hierarchies')
                 ]).then(response => {
                     var irisResponse = response[0];
                     if (_.get(irisResponse, 'status') === 200) {

@@ -38,13 +38,9 @@
                                 <ng-message when="pattern">The value provided is not a valid IRI.</ng-message>
                             </p>
                         </div>
-                        <div class="form-group">
-                            <custom-label>Name</custom-label>
-                            <input type="text" class="form-control" ng-trim="false" ng-keyup="dvm.nameChanged()"
-                                   ng-model="dvm.ontology[dvm.prefixes.dcterms + 'title'][0]['@value']" required />
-                        </div>
-                        <text-area ng-model="dvm.ontology[dvm.prefixes.dcterms + 'description'][0]['@value']"
-                                   display-text="'Description'" muted-text="'(Optional)'"></text-area>
+                        <text-input ng-model="dvm.title" input-name="title" required="true" display-text="'Title'"></text-input>
+                        <text-area ng-model="dvm.description" input-name="description" display-text="'Description'" muted-text="'(Optional)'"></text-area>
+                        <text-area ng-model="dvm.keywords" input-name="keywords" display-text="'Keywords'" muted-text="'(Optional)'"></text-area>
                         <editor-radio-buttons ng-model="dvm.type"></editor-radio-buttons>
                         <div class="btn-container clearfix">
                             <button type="button" class="btn btn-primary pull-right" ng-click="dvm.create()"
