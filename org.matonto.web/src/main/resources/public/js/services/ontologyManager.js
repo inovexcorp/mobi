@@ -55,10 +55,10 @@
         .service('ontologyManagerService', ontologyManagerService);
 
         ontologyManagerService.$inject = ['$rootScope', '$window', '$http', '$q', '$timeout', '$filter', 'prefixes',
-            'uuid', 'propertyManagerService'];
+            'uuid', 'propertyManagerService', 'utilService'];
 
         function ontologyManagerService($rootScope, $window, $http, $q, $timeout, $filter, prefixes, uuid,
-            propertyManagerService) {
+            propertyManagerService, utilService) {
             var self = this;
             var prefix = '/matontorest/ontologies/';
             var defaultDatatypes = _.map(['anyURI', 'boolean', 'byte', 'dateTime', 'decimal', 'double', 'float', 'int',
@@ -1483,21 +1483,6 @@
             }
             /**
              * @ngdoc method
-             * @name getBeautifulIRI
-             * @methodOf ontologyManager.service:ontologyManagerService
-             *
-             * @description
-             * Gets the "beautified" IRI representation for the iri passed. Returns the modified IRI.
-             *
-             * @param {string} iri The IRI string that you want to beautify.
-             * @returns {string} The beautified IRI string.
-             */
-            self.getBeautifulIRI = function(iri) {
-                var splitEnd = $filter('splitIRI')(iri).end;
-                return splitEnd ? $filter('beautify')(splitEnd) : iri;
-            }
-            /**
-             * @ngdoc method
              * @name getEntityName
              * @methodOf ontologyManager.service:ontologyManagerService
              *
@@ -1515,7 +1500,7 @@
                     + "title'][0]['@value']");
                 if (!result) {
                     if (_.has(entity, '@id')) {
-                        result = self.getBeautifulIRI(entity['@id']);
+                        result = utilService.getBeautifulIRI(entity['@id']);
                     } else {
                         result = _.get(entity, 'matonto.anonymous');
                     }

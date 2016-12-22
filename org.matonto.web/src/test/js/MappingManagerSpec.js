@@ -35,6 +35,7 @@ describe('Mapping Manager service', function() {
         mockPrefixes();
         injectSplitIRIFilter();
         mockOntologyManager();
+        mockUtil();
 
         module(function($provide) {
             $provide.service('$window', function() {

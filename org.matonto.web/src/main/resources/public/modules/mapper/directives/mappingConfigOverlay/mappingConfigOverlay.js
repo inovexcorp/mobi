@@ -52,9 +52,9 @@
          */
         .directive('mappingConfigOverlay', mappingConfigOverlay);
 
-        mappingConfigOverlay.$inject = ['ontologyManagerService', 'mapperStateService', 'mappingManagerService'];
+        mappingConfigOverlay.$inject = ['utilService', 'ontologyManagerService', 'mapperStateService', 'mappingManagerService'];
 
-        function mappingConfigOverlay(ontologyManagerService, mapperStateService, mappingManagerService) {
+        function mappingConfigOverlay(utilService, ontologyManagerService, mapperStateService, mappingManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -108,7 +108,7 @@
                         if (_.has(dvm.ontologies, encodeURIComponent(ontologyId))) {
                             return dvm.om.getEntityName(dvm.om.getOntologyEntity(dvm.getOntology(ontologyId).entities));
                         } else {
-                            return dvm.om.getBeautifulIRI(ontologyId);
+                            return utilService.getBeautifulIRI(ontologyId);
                         }
                     }
                     dvm.getOntology = function(ontologyId) {

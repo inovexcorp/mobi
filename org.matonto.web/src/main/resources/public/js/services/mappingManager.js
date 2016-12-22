@@ -53,9 +53,9 @@
          */
         .service('mappingManagerService', mappingManagerService);
 
-        mappingManagerService.$inject = ['$window', '$rootScope', '$filter', '$http', '$q', 'ontologyManagerService', 'prefixes', 'uuid'];
+        mappingManagerService.$inject = ['$window', '$rootScope', '$filter', '$http', '$q', 'utilService', 'ontologyManagerService', 'prefixes', 'uuid'];
 
-        function mappingManagerService($window, $rootScope, $filter, $http, $q, ontologyManagerService, prefixes, uuid) {
+        function mappingManagerService($window, $rootScope, $filter, $http, $q, utilService, ontologyManagerService, prefixes, uuid) {
             var self = this,
                 prefix = '/matontorest/mappings';
 
@@ -312,7 +312,7 @@
                 if (ontologyManagerService.getEntity(ontology, classId)) {
                     // Collect IRI sections for prefix and create class mapping
                     var splitIri = $filter('splitIRI')(classId);
-                    var ontologyDataName = ontologyManagerService.getBeautifulIRI(self.getSourceOntologyId(mapping)).toLowerCase();
+                    var ontologyDataName = utilService.getBeautifulIRI(self.getSourceOntologyId(mapping)).toLowerCase();
                     classEntity = {
                         '@id': getMappingEntity(mapping)['@id'] + '/' + uuid.v4(),
                         '@type': [prefixes.delim + 'ClassMapping']
@@ -344,7 +344,7 @@
                 // Check if class mapping exists in mapping
                 if (entityExists(mapping, classMappingId)) {
                     var classMapping = getEntityById(mapping, classMappingId);
-                    var ontologyDataName = ontologyManagerService.getBeautifulIRI(self.getSourceOntologyId(mapping)).toLowerCase();
+                    var ontologyDataName = utilService.getBeautifulIRI(self.getSourceOntologyId(mapping)).toLowerCase();
                     classMapping[prefixes.delim + 'hasPrefix'] = [{'@value': prefixes.data + ontologyDataName + '/' + prefixEnd}];
                     classMapping[prefixes.delim + 'localName'] = [{'@value': localNamePattern}];
                 }

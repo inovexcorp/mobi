@@ -27,9 +27,9 @@
         .module('individualTree', [])
         .directive('individualTree', individualTree);
 
-        individualTree.$inject = ['ontologyManagerService', 'ontologyStateService', 'settingsManagerService'];
+        individualTree.$inject = ['ontologyManagerService', 'ontologyStateService', 'settingsManagerService', 'utilService'];
 
-        function individualTree(ontologyManagerService, ontologyStateService, settingsManagerService) {
+        function individualTree(ontologyManagerService, ontologyStateService, settingsManagerService, utilService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -41,6 +41,7 @@
                     var treeDisplay = settingsManagerService.getTreeDisplay();
                     dvm.om = ontologyManagerService;
                     dvm.sm = ontologyStateService;
+                    dvm.util = utilService;
 
                     dvm.getTreeDisplay = function(entity) {
                         if (treeDisplay === 'pretty') {

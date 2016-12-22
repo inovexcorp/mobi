@@ -100,7 +100,8 @@
             'sparqlManager',
             'updateRefs',
             'userManager',
-            'userState'
+            'userState',
+            'util'
         ])
         .constant('_', window._)
         .constant('REGEX', {

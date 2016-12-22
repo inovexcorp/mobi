@@ -53,9 +53,9 @@
          */
         .directive('classPreview', classPreview);
 
-        classPreview.$inject = ['prefixes', 'ontologyManagerService', 'mapperStateService'];
+        classPreview.$inject = ['prefixes', 'utilService', 'mapperStateService'];
 
-        function classPreview(prefixes, ontologyManagerService, mapperStateService) {
+        function classPreview(prefixes, utilService, mapperStateService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -67,7 +67,6 @@
                 },
                 controller: function() {
                     var dvm = this;
-                    dvm.om = ontologyManagerService;
                     dvm.state = mapperStateService;
                     dvm.numPropPreview = 5;
                     dvm.full = false;
@@ -80,7 +79,7 @@
                         if (!dvm.full) {
                             props = _.take(props, dvm.numPropPreview);
                         }
-                        return _.map(props, prop => dvm.om.getBeautifulIRI(prop['@id']));
+                        return _.map(props, prop => utilService.getBeautifulIRI(prop['@id']));
                     }
                 },
                 templateUrl: 'modules/mapper/directives/classPreview/classPreview.html'

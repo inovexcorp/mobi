@@ -23,6 +23,7 @@
 describe('Mapping Config Overlay directive', function() {
     var $compile,
         scope,
+        utilSvc,
         ontologyManagerSvc,
         mappingManagerSvc,
         mapperStateSvc,
@@ -35,14 +36,16 @@ describe('Mapping Config Overlay directive', function() {
         module('mappingConfigOverlay');
         injectHighlightFilter();
         injectTrustedFilter();
+        mockUtil();
         mockOntologyManager();
         mockMappingManager();
         mockMapperState();
         injectSplitIRIFilter();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _mappingManagerService_, _mapperStateService_, _$q_, _$timeout_) {
+        inject(function(_$compile_, _$rootScope_, _utilService_, _ontologyManagerService_, _mappingManagerService_, _mapperStateService_, _$q_, _$timeout_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            utilSvc = _utilService_;
             ontologyManagerSvc = _ontologyManagerService_;
             mapperStateSvc = _mapperStateService_;
             mappingManagerSvc = _mappingManagerService_;
@@ -178,7 +181,7 @@ describe('Mapping Config Overlay directive', function() {
             });
             it('if it has not been opened', function() {
                 var result = controller.getName(this.id);
-                expect(ontologyManagerSvc.getBeautifulIRI).toHaveBeenCalledWith(this.id);
+                expect(utilSvc.getBeautifulIRI).toHaveBeenCalledWith(this.id);
                 expect(typeof result).toBe('string');
             });
         });
