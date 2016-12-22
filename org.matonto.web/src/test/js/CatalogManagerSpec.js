@@ -24,6 +24,7 @@ describe('Catalog Manager service', function() {
     var $httpBackend,
         catalogManagerSvc,
         prefixes,
+        utilSvc,
         $q,
         windowSvc,
         catalogId = 'http://matonto.org/catalogs/local',
@@ -44,9 +45,10 @@ describe('Catalog Manager service', function() {
             });
         });
 
-        inject(function(catalogManagerService, _prefixes_, _$httpBackend_, _$httpParamSerializer_, _$q_, _$window_) {
+        inject(function(catalogManagerService, _prefixes_, _utilService_, _$httpBackend_, _$httpParamSerializer_, _$q_, _$window_) {
             catalogManagerSvc = catalogManagerService;
             prefixes = _prefixes_;
+            utilSvc = _utilService_;
             $httpBackend = _$httpBackend_;
             $httpParamSerializer = _$httpParamSerializer_;
             $q = _$q_;
@@ -61,8 +63,8 @@ describe('Catalog Manager service', function() {
         localCatalog[prefixes.dcterms + 'title'] = [{'@value': 'MatOnto Catalog (Local)'}];
         var distributedCatalog = {};
         distributedCatalog[prefixes.dcterms + 'title'] = [{'@value': 'MatOnto Catalog (Distributed)'}];
-        $httpBackend.whenGET('/matontorest/catalogs/record-types').respond(200, types);
-        $httpBackend.whenGET('/matontorest/catalogs/sort-options').respond(200, sortOptions);
+        spyOn(catalogManagerSvc, 'getRecordTypes').and.returnValue($q.when(types));
+        spyOn(catalogManagerSvc, 'getSortOptions').and.returnValue($q.when(sortOptions));
         $httpBackend.whenGET('/matontorest/catalogs').respond(200, [localCatalog, distributedCatalog]);
         catalogManagerSvc.initialize();
         $httpBackend.flush();
@@ -119,25 +121,31 @@ describe('Catalog Manager service', function() {
     });
     describe('should retrieve a list of Records', function() {
         beforeEach(function(){
-            this.limit = 10;
-            this.currentPage = 0;
-            this.sortOption = {
-                field: 'http://purl.org/dc/terms/title',
-                asc: true
+            this.config = {
+                limit: 10,
+                pageIndex: 0,
+                sortOption: {
+                    field: 'http://purl.org/dc/terms/title',
+                    asc: true
+                },
+                recordType: prefixes.catalog + 'Record',
+                searchText: 'Text'
             };
-            this.type = prefixes.catalog + 'Record';
+            catalogManagerSvc.sortOptions = [{field: 'http://purl.org/dc/terms/title'}];
         });
         it('unless an error occurs', function(done) {
             var params = $httpParamSerializer({
-                asc: this.sortOption.asc,
-                limit: this.limit,
-                offset: this.currentPage * 10,
-                sort: this.sortOption.field
+                ascending: this.config.sortOption.asc,
+                limit: this.config.limit,
+                offset: this.config.pageIndex * this.config.limit,
+                searchText: this.config.searchText,
+                sort: this.config.sortOption.field,
+                type: this.config.recordType
             });
             $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records?' + params).respond(function(method, url, data, headers) {
                 return [400, '', {}, 'Error Message'];
             });
-            catalogManagerSvc.getRecords(catalogId, this.currentPage, this.limit, this.sortOption, '').then(function(response) {
+            catalogManagerSvc.getRecords(catalogId, this.config).then(function(response) {
                 fail('Promise should have rejected');
                 done();
             }, function(response) {
@@ -146,30 +154,28 @@ describe('Catalog Manager service', function() {
             });
             $httpBackend.flush();
         });
-        it('with a type filter', function(done) {
+        it('with all config passed', function(done) {
             var params = $httpParamSerializer({
-                asc: this.sortOption.asc,
-                limit: this.limit,
-                offset: this.currentPage * this.limit,
-                sort: this.sortOption.field,
-                type: this.type
+                ascending: this.config.sortOption.asc,
+                limit: this.config.limit,
+                offset: this.config.pageIndex * this.config.limit,
+                searchText: this.config.searchText,
+                sort: this.config.sortOption.field,
+                type: this.config.recordType
             });
             $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records?' + params).respond(200, []);
-            catalogManagerSvc.getRecords(catalogId, this.currentPage, this.limit, this.sortOption, this.type).then(function(response) {
+            catalogManagerSvc.getRecords(catalogId, this.config).then(function(response) {
                 expect(response.data).toEqual([]);
                 done();
             });
             $httpBackend.flush();
         });
-        it('without a type filter', function(done) {
+        it('without any config', function(done) {
             var params = $httpParamSerializer({
-                asc: this.sortOption.asc,
-                limit: this.limit,
-                offset: this.currentPage * this.limit,
-                sort: this.sortOption.field
+                sort: catalogManagerSvc.sortOptions[0].field
             });
             $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records?' + params).respond(200, []);
-            catalogManagerSvc.getRecords(catalogId, this.currentPage, this.limit, this.sortOption, '').then(function(response) {
+            catalogManagerSvc.getRecords(catalogId, {}).then(function(response) {
                 expect(response.data).toEqual([]);
                 done();
             });
@@ -301,24 +307,27 @@ describe('Catalog Manager service', function() {
     });
     describe('should retrieve a list of Record Distributions', function() {
         beforeEach(function(){
-            this.limit = 10;
-            this.currentPage = 0;
-            this.sortOption = {
-                field: 'http://purl.org/dc/terms/title',
-                asc: true
+            this.config = {
+                limit: 10,
+                pageIndex: 0,
+                sortOption: {
+                    field: 'http://purl.org/dc/terms/title',
+                    asc: true
+                }
             };
+            catalogManagerSvc.sortOptions = [{field: 'http://purl.org/dc/terms/title'}];
         });
         it('unless an error occurs', function(done) {
             var params = $httpParamSerializer({
-                asc: this.sortOption.asc,
-                limit: this.limit,
-                offset: this.currentPage * 10,
-                sort: this.sortOption.field
+                ascending: this.config.sortOption.asc,
+                limit: this.config.limit,
+                offset: this.config.pageIndex * this.config.limit,
+                sort: this.config.sortOption.field
             });
             $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions?' + params).respond(function(method, url, data, headers) {
                 return [400, '', {}, 'Error Message'];
             });
-            catalogManagerSvc.getRecordDistributions(recordId, catalogId, this.currentPage, this.limit, this.sortOption).then(function(response) {
+            catalogManagerSvc.getRecordDistributions(recordId, catalogId, this.config).then(function(response) {
                 fail('Promise should have rejected');
                 done();
             }, function(response) {
@@ -327,15 +336,26 @@ describe('Catalog Manager service', function() {
             });
             $httpBackend.flush();
         });
-        it('successfully', function(done) {
+        it('with all config passed', function(done) {
             var params = $httpParamSerializer({
-                asc: this.sortOption.asc,
-                limit: this.limit,
-                offset: this.currentPage * 10,
-                sort: this.sortOption.field
+                ascending: this.config.sortOption.asc,
+                limit: this.config.limit,
+                offset: this.config.pageIndex * this.config.limit,
+                sort: this.config.sortOption.field
             });
             $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions?' + params).respond(200, []);
-            catalogManagerSvc.getRecordDistributions(recordId, catalogId, this.currentPage, this.limit, this.sortOption).then(function(response) {
+            catalogManagerSvc.getRecordDistributions(recordId, catalogId, this.config).then(function(response) {
+                expect(response.data).toEqual([]);
+                done();
+            });
+            $httpBackend.flush();
+        });
+        it('without any config passed', function(done) {
+            var params = $httpParamSerializer({
+                sort: catalogManagerSvc.sortOptions[0].field
+            });
+            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions?' + params).respond(200, []);
+            catalogManagerSvc.getRecordDistributions(recordId, catalogId, {}).then(function(response) {
                 expect(response.data).toEqual([]);
                 done();
             });
@@ -469,24 +489,27 @@ describe('Catalog Manager service', function() {
     });
     describe('should retrieve a list of Record Versions', function() {
         beforeEach(function(){
-            this.limit = 10;
-            this.currentPage = 0;
-            this.sortOption = {
-                field: 'http://purl.org/dc/terms/title',
-                asc: true
+            this.config = {
+                limit: 10,
+                pageIndex: 0,
+                sortOption: {
+                    field: 'http://purl.org/dc/terms/title',
+                    asc: true
+                }
             };
+            catalogManagerSvc.sortOptions = [{field: 'http://purl.org/dc/terms/title'}];
         });
         it('unless an error occurs', function(done) {
             var params = $httpParamSerializer({
-                asc: this.sortOption.asc,
-                limit: this.limit,
-                offset: this.currentPage * 10,
-                sort: this.sortOption.field
+                ascending: this.config.sortOption.asc,
+                limit: this.config.limit,
+                offset: this.config.pageIndex * this.config.limit,
+                sort: this.config.sortOption.field
             });
             $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions?' + params).respond(function(method, url, data, headers) {
                 return [400, '', {}, 'Error Message'];
             });
-            catalogManagerSvc.getRecordVersions(recordId, catalogId, this.currentPage, this.limit, this.sortOption).then(function(response) {
+            catalogManagerSvc.getRecordVersions(recordId, catalogId, this.config).then(function(response) {
                 fail('Promise should have rejected');
                 done();
             }, function(response) {
@@ -495,15 +518,26 @@ describe('Catalog Manager service', function() {
             });
             $httpBackend.flush();
         });
-        it('successfully', function(done) {
+        it('with all config passed', function(done) {
             var params = $httpParamSerializer({
-                asc: this.sortOption.asc,
-                limit: this.limit,
-                offset: this.currentPage * 10,
-                sort: this.sortOption.field
+                ascending: this.config.sortOption.asc,
+                limit: this.config.limit,
+                offset: this.config.pageIndex * this.config.limit,
+                sort: this.config.sortOption.field
             });
             $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions?' + params).respond(200, []);
-            catalogManagerSvc.getRecordVersions(recordId, catalogId, this.currentPage, this.limit, this.sortOption).then(function(response) {
+            catalogManagerSvc.getRecordVersions(recordId, catalogId, this.config).then(function(response) {
+                expect(response.data).toEqual([]);
+                done();
+            });
+            $httpBackend.flush();
+        });
+        it('without any config', function(done) {
+            var params = $httpParamSerializer({
+                sort: catalogManagerSvc.sortOptions[0].field
+            });
+            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions?' + params).respond(200, []);
+            catalogManagerSvc.getRecordVersions(recordId, catalogId, {}).then(function(response) {
                 expect(response.data).toEqual([]);
                 done();
             });
@@ -746,24 +780,27 @@ describe('Catalog Manager service', function() {
     });
     describe('should retrieve a list of Version Distributions', function() {
         beforeEach(function(){
-            this.limit = 10;
-            this.currentPage = 0;
-            this.sortOption = {
-                field: 'http://purl.org/dc/terms/title',
-                asc: true
+            this.config = {
+                limit: 10,
+                pageIndex: 0,
+                sortOption: {
+                    field: 'http://purl.org/dc/terms/title',
+                    asc: true
+                }
             };
+            catalogManagerSvc.sortOptions = [{field: 'http://purl.org/dc/terms/title'}];
         });
         it('unless an error occurs', function(done) {
             var params = $httpParamSerializer({
-                asc: this.sortOption.asc,
-                limit: this.limit,
-                offset: this.currentPage * 10,
-                sort: this.sortOption.field
+                ascending: this.config.sortOption.asc,
+                limit: this.config.limit,
+                offset: this.config.pageIndex * this.config.limit,
+                sort: this.config.sortOption.field
             });
             $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions?' + params).respond(function(method, url, data, headers) {
                 return [400, '', {}, 'Error Message'];
             });
-            catalogManagerSvc.getVersionDistributions(versionId, recordId, catalogId, this.currentPage, this.limit, this.sortOption).then(function(response) {
+            catalogManagerSvc.getVersionDistributions(versionId, recordId, catalogId, this.config).then(function(response) {
                 fail('Promise should have rejected');
                 done();
             }, function(response) {
@@ -772,15 +809,26 @@ describe('Catalog Manager service', function() {
             });
             $httpBackend.flush();
         });
-        it('successfully', function(done) {
+        it('with all config passed', function(done) {
             var params = $httpParamSerializer({
-                asc: this.sortOption.asc,
-                limit: this.limit,
-                offset: this.currentPage * 10,
-                sort: this.sortOption.field
+                ascending: this.config.sortOption.asc,
+                limit: this.config.limit,
+                offset: this.config.pageIndex * this.config.limit,
+                sort: this.config.sortOption.field
             });
             $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions?' + params).respond(200, []);
-            catalogManagerSvc.getVersionDistributions(versionId, recordId, catalogId, this.currentPage, this.limit, this.sortOption).then(function(response) {
+            catalogManagerSvc.getVersionDistributions(versionId, recordId, catalogId, this.config).then(function(response) {
+                expect(response.data).toEqual([]);
+                done();
+            });
+            $httpBackend.flush();
+        });
+        it('without any config', function(done) {
+            var params = $httpParamSerializer({
+                sort: catalogManagerSvc.sortOptions[0].field
+            });
+            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions?' + params).respond(200, []);
+            catalogManagerSvc.getVersionDistributions(versionId, recordId, catalogId, {}).then(function(response) {
                 expect(response.data).toEqual([]);
                 done();
             });
@@ -914,24 +962,27 @@ describe('Catalog Manager service', function() {
     });
     describe('should retrieve a list of Record Branches', function() {
         beforeEach(function(){
-            this.limit = 10;
-            this.currentPage = 0;
-            this.sortOption = {
-                field: 'http://purl.org/dc/terms/title',
-                asc: true
+            this.config = {
+                limit: 10,
+                pageIndex: 0,
+                sortOption: {
+                    field: 'http://purl.org/dc/terms/title',
+                    asc: true
+                }
             };
+            catalogManagerSvc.sortOptions = [{field: 'http://purl.org/dc/terms/title'}];
         });
         it('unless an error occurs', function(done) {
             var params = $httpParamSerializer({
-                asc: this.sortOption.asc,
-                limit: this.limit,
-                offset: this.currentPage * 10,
-                sort: this.sortOption.field
+                ascending: this.config.sortOption.asc,
+                limit: this.config.limit,
+                offset: this.config.pageIndex * this.config.limit,
+                sort: this.config.sortOption.field
             });
             $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches?' + params).respond(function(method, url, data, headers) {
                 return [400, '', {}, 'Error Message'];
             });
-            catalogManagerSvc.getRecordBranches(recordId, catalogId, this.currentPage, this.limit, this.sortOption).then(function(response) {
+            catalogManagerSvc.getRecordBranches(recordId, catalogId, this.config).then(function(response) {
                 fail('Promise should have rejected');
                 done();
             }, function(response) {
@@ -940,15 +991,26 @@ describe('Catalog Manager service', function() {
             });
             $httpBackend.flush();
         });
-        it('successfully', function(done) {
+        it('with all config passed', function(done) {
             var params = $httpParamSerializer({
-                asc: this.sortOption.asc,
-                limit: this.limit,
-                offset: this.currentPage * 10,
-                sort: this.sortOption.field
+                ascending: this.config.sortOption.asc,
+                limit: this.config.limit,
+                offset: this.config.pageIndex * this.config.limit,
+                sort: this.config.sortOption.field
             });
             $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches?' + params).respond(200, []);
-            catalogManagerSvc.getRecordBranches(recordId, catalogId, this.currentPage, this.limit, this.sortOption).then(function(response) {
+            catalogManagerSvc.getRecordBranches(recordId, catalogId, this.config).then(function(response) {
+                expect(response.data).toEqual([]);
+                done();
+            });
+            $httpBackend.flush();
+        });
+        it('without any config', function(done) {
+            var params = $httpParamSerializer({
+                sort: catalogManagerSvc.sortOptions[0].field
+            });
+            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches?' + params).respond(200, []);
+            catalogManagerSvc.getRecordBranches(recordId, catalogId, {}).then(function(response) {
                 expect(response.data).toEqual([]);
                 done();
             });
@@ -1543,10 +1605,9 @@ describe('Catalog Manager service', function() {
     });
     describe('should get an entity name', function() {
         it('if it has a title', function() {
-            var entity = {},
-                title = 'Title';
-            entity[prefixes.dcterms + 'title'] = [{'@value': title}];
-            expect(catalogManagerSvc.getEntityName(entity)).toBe(title);
+            var title = 'Title';
+            utilSvc.getDctermsValue.and.returnValue(title);
+            expect(catalogManagerSvc.getEntityName({})).toBe(title);
         });
         it('if it does not have a title', function() {
             expect(catalogManagerSvc.getEntityName({})).toBe('(Anonymous)');

@@ -54,6 +54,7 @@
 
         function catalogManagerService($window, $rootScope, $http, $q, prefixes, utilService) {
             var self = this,
+                util = utilService,
                 prefix = '/matontorest/catalogs';
 
             /**
@@ -68,7 +69,7 @@
              * ```
              * {
              *     field: 'http://purl.org/dc/terms/title',
-             *     asc: true,
+             *     ascending: true,
              *     label: 'Title (asc)'
              * }
              * ```
@@ -126,7 +127,7 @@
                 self.getSortOptions()
                     .then(options => {
                         _.forEach(options, option => {
-                            var label = utilService.getBeautifulIRI(option);
+                            var label = util.getBeautifulIRI(option);
                             if (!_.includes(self.sortOptions, {field: option})) {
                                 self.sortOptions.push({
                                     field: option,
@@ -220,25 +221,25 @@
              * if present.
              *
              * @param {string} catalogId The id of the Catalog to retrieve Records from
-             * @param {number} pageIndex The index of the page of results to retrieve
-             * @param {number} limit The number of results per page
-             * @param {Object} sortOption A sort option object from the `sortOptions` array
-             * @param {stirng} recordType A record type IRI string from the `recordTypes` array
+             * @param {Object} paginatedConfig A configuration object for paginated requests
+             * @param {number} paginatedConfig.pageIndex The index of the page of results to retrieve
+             * @param {number} paginatedConfig.limit The number of results per page
+             * @param {Object} paginatedConfig.sortOption A sort option object from the `sortOptions` array
+             * @param {string} paginatedConfig.recordType A record type IRI string from the `recordTypes` array
+             * @param {string} paginatedConfig.searchTest The text to search for within the list of Records
              * @returns {Promise} A promise that either resolves with the paginated response or is rejected
              * with a error message
              */
-            self.getRecords = function(catalogId, pageIndex, limit, sortOption, recordType) {
+            self.getRecords = function(catalogId, paginatedConfig) {
                 var deferred = $q.defer(),
                     config = {
-                        params: {
-                            limit: limit,
-                            offset: pageIndex * limit,
-                            sort: sortOption.field,
-                            asc: sortOption.asc
-                        }
+                        params: paginatedConfigToParams(paginatedConfig)
                     };
-                if (recordType) {
-                    config.params.type = recordType;
+                if (_.get(paginatedConfig, 'searchText')) {
+                    config.params.searchText = paginatedConfig.searchText;
+                }
+                if (_.get(paginatedConfig, 'recordType')) {
+                    config.params.type = paginatedConfig.recordType;
                 }
                 $rootScope.showSpinner = true;
                 $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records', config)
@@ -375,21 +376,17 @@
              *
              * @param {string} recordId The id of the Record to retrieve the Distributions of
              * @param {string} catalogId The id of the Catalog the Record should be part of
-             * @param {number} pageIndex The index of the page of results to retrieve
-             * @param {number} limit The number of results per page
-             * @param {Object} sortOption A sort option object from the `sortOptions` array
+             * @param {Object} paginatedConfig A configuration object for paginated requests
+             * @param {number} paginatedConfig.pageIndex The index of the page of results to retrieve
+             * @param {number} paginatedConfig.limit The number of results per page
+             * @param {Object} paginatedConfig.sortOption A sort option object from the `sortOptions` array
              * @return {Promise} A promise that resolves to the paginated response or is rejected
              * with a error message
              */
-            self.getRecordDistributions = function(recordId, catalogId, currentPage, limit, sortOption) {
+            self.getRecordDistributions = function(recordId, catalogId, paginatedConfig) {
                 var deferred = $q.defer(),
                     config = {
-                        params: {
-                            limit: limit,
-                            offset: currentPage * limit,
-                            sort: sortOption.field,
-                            asc: sortOption.asc
-                        }
+                        params: paginatedConfigToParams(paginatedConfig)
                     };
                 $rootScope.showSpinner = true;
                 $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions', config)
@@ -536,21 +533,17 @@
              *
              * @param {string} recordId The id of the Record to retrieve the Versions of
              * @param {string} catalogId The id of the Catalog the Record should be part of
-             * @param {number} pageIndex The index of the page of results to retrieve
-             * @param {number} limit The number of results per page
-             * @param {Object} sortOption A sort option object from the `sortOptions` array
+             * @param {Object} paginatedConfig A configuration object for paginated requests
+             * @param {number} paginatedConfig.pageIndex The index of the page of results to retrieve
+             * @param {number} paginatedConfig.limit The number of results per page
+             * @param {Object} paginatedConfig.sortOption A sort option object from the `sortOptions` array
              * @return {Promise} A promise that resolves to the paginated response or is rejected
              * with a error message
              */
-            self.getRecordVersions = function(recordId, catalogId, pageIndex, limit, sortOption) {
+            self.getRecordVersions = function(recordId, catalogId, paginatedConfig) {
                 var deferred = $q.defer(),
                     config = {
-                        params: {
-                            limit: limit,
-                            offset: pageIndex * limit,
-                            sort: sortOption.field,
-                            asc: sortOption.asc
-                        }
+                        params: paginatedConfigToParams(paginatedConfig)
                     };
                 $rootScope.showSpinner = true;
                 $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions', config)
@@ -574,12 +567,7 @@
              * with an error message
              */
             self.getRecordLatestVersion = function(recordId, catalogId) {
-                var deferred = $q.defer();
-                $rootScope.showSpinner = true;
-                $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/latest')
-                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText))
-                    .then(() => $rootScope.showSpinner = false);
-                return deferred.promise;
+                return getRecordVersion('latest', recordId, catalogId);
             }
 
             /**
@@ -598,12 +586,7 @@
              * with an error message
              */
             self.getRecordVersion = function(versionId, recordId, catalogId) {
-                var deferred = $q.defer();
-                $rootScope.showSpinner = true;
-                $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId))
-                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText))
-                    .then(() => $rootScope.showSpinner = false);
-                return deferred.promise;
+                return getRecordVersion(encodeURIComponent(versionId), recordId, catalogId);
             }
 
 
@@ -751,21 +734,17 @@
              * @param {string} versionId The id of the Version to retrieve the Distributions of
              * @param {string} recordId The id of the Record to the Version should be part of
              * @param {string} catalogId The id of the Catalog the Record should be part of
-             * @param {number} pageIndex The index of the page of results to retrieve
-             * @param {number} limit The number of results per page
-             * @param {Object} sortOption A sort option object from the `sortOptions` array
+             * @param {Object} paginatedConfig A configuration object for paginated requests
+             * @param {number} paginatedConfig.pageIndex The index of the page of results to retrieve
+             * @param {number} paginatedConfig.limit The number of results per page
+             * @param {Object} paginatedConfig.sortOption A sort option object from the `sortOptions` array
              * @return {Promise} A promise that resolves to the paginated response or is rejected
              * with a error message
              */
-            self.getVersionDistributions = function(versionId, recordId, catalogId, currentPage, limit, sortOption) {
+            self.getVersionDistributions = function(versionId, recordId, catalogId, paginatedConfig) {
                 var deferred = $q.defer(),
                     config = {
-                        params: {
-                            limit: limit,
-                            offset: currentPage * limit,
-                            sort: sortOption.field,
-                            asc: sortOption.asc
-                        }
+                        params: paginatedConfigToParams(paginatedConfig)
                     };
                 $rootScope.showSpinner = true;
                 $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions', config)
@@ -917,21 +896,17 @@
              *
              * @param {string} recordId The id of the Record to retrieve the Branches of
              * @param {string} catalogId The id of the Catalog the Record should be part of
-             * @param {number} pageIndex The index of the page of results to retrieve
-             * @param {number} limit The number of results per page
-             * @param {Object} sortOption A sort option object from the `sortOptions` array
+             * @param {Object} paginatedConfig A configuration object for paginated requests
+             * @param {number} paginatedConfig.pageIndex The index of the page of results to retrieve
+             * @param {number} paginatedConfig.limit The number of results per page
+             * @param {Object} paginatedConfig.sortOption A sort option object from the `sortOptions` array
              * @return {Promise} A promise that resolves to the paginated response or is rejected
              * with a error message
              */
-            self.getRecordBranches = function(recordId, catalogId, pageIndex, limit, sortOption) {
+            self.getRecordBranches = function(recordId, catalogId, paginatedConfig) {
                 var deferred = $q.defer(),
                     config = {
-                        params: {
-                            limit: limit,
-                            offset: pageIndex * limit,
-                            sort: sortOption.field,
-                            asc: sortOption.asc
-                        }
+                        params: paginatedConfigToParams(paginatedConfig)
                     };
                 $rootScope.showSpinner = true;
                 $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches', config)
@@ -955,12 +930,7 @@
              * with an error message
              */
             self.getRecordMasterBranch = function(recordId, catalogId) {
-                var deferred = $q.defer();
-                $rootScope.showSpinner = true;
-                $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/master')
-                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText))
-                    .then(() => $rootScope.showSpinner = false);
-                return deferred.promise;
+                return getRecordBranch('master', recordId, catalogId);
             }
 
             /**
@@ -979,12 +949,7 @@
              * with an error message
              */
             self.getRecordBranch = function(branchId, recordId, catalogId) {
-                var deferred = $q.defer();
-                $rootScope.showSpinner = true;
-                $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId))
-                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText))
-                    .then(() => $rootScope.showSpinner = false);
-                return deferred.promise;
+                return getRecordBranch(encodeURIComponent(branchId), recordId, catalogId);
             }
 
             /**
@@ -1454,7 +1419,7 @@
              * @return {string} A name to represent the passed entity
              */
             self.getEntityName = function(entity) {
-                return _.get(entity, "['" + prefixes.dcterms + "title'][0]['@value']") || '(Anonymous)';
+                return util.getDctermsValue(entity, 'title') || '(Anonymous)';
             }
 
             /**
@@ -1574,6 +1539,40 @@
                     .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText))
                     .then(() => $rootScope.showSpinner = false);
                 return deferred.promise;
+            }
+
+            function getRecordVersion(versionIdentifier, recordId, catalogId) {
+                var deferred = $q.defer();
+                $rootScope.showSpinner = true;
+                $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + versionIdentifier)
+                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText))
+                    .then(() => $rootScope.showSpinner = false);
+                return deferred.promise;
+            }
+
+            function getRecordBranch(branchIdentifier, recordId, catalogId) {
+                var deferred = $q.defer();
+                $rootScope.showSpinner = true;
+                $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + branchIdentifier)
+                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText))
+                    .then(() => $rootScope.showSpinner = false);
+                return deferred.promise;
+            }
+
+            function paginatedConfigToParams(paginatedConfig) {
+                var params = {
+                    sort: _.get(paginatedConfig, 'sortOption.field', self.sortOptions[0].field)
+                };
+                if (_.has(paginatedConfig, 'sortOption.asc')) {
+                    params.ascending = paginatedConfig.sortOption.asc;
+                }
+                if (_.has(paginatedConfig, 'limit')) {
+                    params.limit = paginatedConfig.limit;
+                    if (_.has(paginatedConfig, 'pageIndex')) {
+                        params.offset = paginatedConfig.pageIndex * paginatedConfig.limit;
+                    }
+                }
+                return params;
             }
         }
 })();
