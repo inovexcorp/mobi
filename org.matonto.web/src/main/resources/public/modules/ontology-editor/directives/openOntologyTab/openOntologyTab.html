@@ -26,8 +26,8 @@
             <div class="form-group">
                 <input type="text" class="form-control" placeholder="Filter by text" ng-model="dvm.filterText" ng-keyup="dvm.begin = 0" />
             </div>
-            <button type="button" class="btn btn-primary" ng-click="dvm.sm.showNewTab = true">New Ontology</button>
-            <button type="button" class="btn btn-primary" ng-click="dvm.sm.showUploadTab = true">Upload Ontology</button>
+            <button type="button" class="btn btn-primary" ng-click="dvm.os.showNewTab = true">New Ontology</button>
+            <button type="button" class="btn btn-primary" ng-click="dvm.os.showUploadTab = true">Upload Ontology</button>
         </form>
     </div>
     <div class="list row">
@@ -35,11 +35,11 @@
             <block>
                 <block-content class="open-ontology-content">
                     <div class="ontologies">
-                        <div class="ontology" ng-click="dvm.openId = id; dvm.showOpenOverlay = true" ng-repeat="record in dvm.ontologyRecords | limitTo:dvm.limit:dvm.begin">
+                        <div class="ontology" ng-click="dvm.ontologyId = ontologyId; dvm.recordId = record['@id']; dvm.showOpenOverlay = true" ng-repeat="record in dvm.ontologyRecords | limitTo:dvm.limit:dvm.begin" ng-init="ontologyId = dvm.getRecordValue(record, 'identifier')">
                             <div class="details">
                                 <h2 class="header" ng-bind-html="dvm.getRecordValue(record, 'title') | highlight:dvm.filterText | trusted"></h2>
                                 <p class="description" ng-bind-html="dvm.getRecordValue(record, 'description') | highlight:dvm.filterText | trusted"></p>
-                                <small class="text-muted" ng-bind-html="dvm.getRecordValue(record, 'identifier') | highlight:dvm.filterText | trusted"></small>
+                                <small class="text-muted" ng-bind-html="ontologyId | highlight:dvm.filterText | trusted"></small>
                             </div>
                             <div class="action-container">
                                 <!--<a ng-click="dvm.download(id); $event.stopPropagation()" class="action"><i class="fa fa-2x fa-fw fa-download"></i></a>-->
@@ -66,17 +66,17 @@
         <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
         <p>Are you sure that you want to delete <strong>{{dvm.recordTitle}}</strong>?</p>
     </confirmation-overlay>
-    <confirmation-overlay ng-if="dvm.showOpenOverlay" header-text="'Open'" confirm-click="dvm.open(dvm.openId, dvm.type)"
+    <confirmation-overlay ng-if="dvm.showOpenOverlay" header-text="'Open'" confirm-click="dvm.open()"
                           cancel-click="dvm.showOpenOverlay = false" confirm-text="'Open'" cancel-text="'Cancel'">
         <div class="type-container">
             <button ng-click="dvm.type = 'ontology'" ng-class="{'active': dvm.type === 'ontology'}" class="type"
-                    ng-dblclick="dvm.open(dvm.openId, dvm.type)">
+                    ng-dblclick="dvm.open()">
                 <div class="text-wrapper">
                     <i class="fa fa-fw fa-file-code-o fa-2x"></i><span class="text">Ontology Editor</span>
                 </div>
             </button>
             <button ng-click="dvm.type = 'vocabulary'" ng-class="{'active': dvm.type === 'vocabulary'}" class="type"
-                    ng-dblclick="dvm.open(dvm.openId, dvm.type)">
+                    ng-dblclick="dvm.open()">
                 <div class="text-wrapper">
                     <i class="fa fa-fw fa-file-text-o fa-2x"></i><span class="text">Vocabulary Editor</span>
                 </div>

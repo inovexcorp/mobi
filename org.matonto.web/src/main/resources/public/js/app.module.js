@@ -98,6 +98,7 @@
             'responseObj',
             'settingsManager',
             'sparqlManager',
+            'stateManager',
             'updateRefs',
             'userManager',
             'userState',

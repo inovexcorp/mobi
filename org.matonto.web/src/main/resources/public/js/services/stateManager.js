@@ -32,7 +32,6 @@
     function stateManagerService($http, $q, $httpParamSerializer, uuid, prefixes) {
         var self = this;
         var prefix = '/matontorest/states';
-        var applicationId = 'ontology-editor';
 
         self.states = [];
 
@@ -43,21 +42,17 @@
         }
 
         self.createState = function(stateJson, application) {
-            var config = {};
+            var config = {
+                transformResponse: undefined,
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            };
             if (application) {
                 config.params = {application};
             }
-            return $http.post(prefix, angular.toJson(stateJson), config);
-        }
-
-        self.createOntologyState = function(recordId, branchId, commitId) {
-            var ontologyState = {
-                '@id': 'http://matonto.org/states/ontology-editor/' + uuid.v4(),
-                [prefixes.ontologyState + 'record']: [{'@id': recordId}],
-                [prefixes.ontologyState + 'branch']: [{'@id': branchId}],
-                [prefixes.ontologyState + 'commit']: [{'@id': commitId}]
-            }
-            return self.createState(ontologyState, applicationId);
+            return $http.post(prefix, angular.toJson(stateJson), config)
+                .then(response => self.states.push({id: response.data, model: [stateJson]}));
         }
 
         self.getState = function(stateId) {
@@ -66,16 +61,54 @@
         }
 
         self.updateState = function(stateId, stateJson) {
-            return $http.post(prefix + '/' + encodeURIComponent(stateId), angular.toJson(stateJson));
+            return $http.post(prefix + '/' + encodeURIComponent(stateId), angular.toJson(stateJson))
+                .then(() => _.forEach(self.states, state => {
+                    if (_.get(state, 'id', '') === stateId) {
+                        _.set(state, 'model', stateJson);
+                        return false;
+                    }
+                }));
         }
 
         self.deleteState = function(stateId) {
-            return $http.delete(prefix + '/' + encodeURIComponent(stateId));
+            return $http.delete(prefix + '/' + encodeURIComponent(stateId))
+                .then(() => _.remove(self.states, state => _.get(state, 'id', '') === stateId));
         }
 
         self.initialize = function() {
             self.getStates()
                 .then(states => self.states = states, () => console.log('Problem getting states'));
+        }
+
+        function makeOntologyState(recordId, branchId, commitId) {
+            return {
+                '@id': 'http://matonto.org/states/ontology-editor/' + uuid.v4(),
+                [prefixes.ontologyState + 'record']: [{'@id': recordId}],
+                [prefixes.ontologyState + 'branch']: [{'@id': branchId}],
+                [prefixes.ontologyState + 'commit']: [{'@id': commitId}]
+            }
+        }
+
+        self.createOntologyState = function(recordId, branchId, commitId) {
+            return self.createState(makeOntologyState(recordId, branchId, commitId), 'ontology-editor');
+        }
+
+        self.getOntologyStateByRecordId = function(recordId) {
+            return _.find(self.states, {
+                model: [{
+                    [prefixes.ontologyState + 'record']: [{'@id': recordId}]
+                }]
+            });
+        }
+
+        self.updateOntologyState = function(recordId, branchId, commitId) {
+            var stateId = _.get(self.getOntologyStateByRecordId(recordId), 'id', '');
+            self.updateState(stateId, makeOntologyState(recordId, branchId, commitId));
+        }
+
+        self.deleteOntologyState = function(recordId) {
+            var stateId = _.get(self.getOntologyStateByRecordId(recordId), 'id', '');
+            self.deleteState(stateId);
         }
     }
 })();

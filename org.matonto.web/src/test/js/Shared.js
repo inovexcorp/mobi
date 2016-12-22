@@ -122,6 +122,7 @@ function mockStateManager() {
             this.createState = jasmine.createSpy('createStates').and.returnValue($q.when());
             this.createOntologyState = jasmine.createSpy('createOntologyState').and.returnValue($q.when());
             this.getState = jasmine.createSpy('getState').and.returnValue($q.when());
+            this.getOntologyStateByRecordId = jasmine.createSpy('getOntologyStateByRecordId').and.returnValue({});
             this.updateState = jasmine.createSpy('updateState').and.returnValue($q.when());
             this.deleteState = jasmine.createSpy('deleteState').and.returnValue($q.when());
             this.initialize = jasmine.createSpy('initialize');
@@ -351,6 +352,9 @@ function mockCatalogManager() {
             this.isVersionedRDFRecord = jasmine.createSpy('isVersionedRDFRecord');
             this.isDistribution = jasmine.createSpy('isDistribution');
             this.isBranch = jasmine.createSpy('isBranch');
+            this.getResource = jasmine.createSpy('getResource').and.returnValue($q.when({}));
+            this.getRecordMasterBranch = jasmine.createSpy('getRecordMasterBranch').and.returnValue($q.when({}));
+            this.getBranchHeadCommit = jasmine.createSpy('getBranchHeadCommit').and.returnValue($q.when({}));
         });
     });
 }

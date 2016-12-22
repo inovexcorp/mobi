@@ -21,12 +21,7 @@
  * #L%
  */
 describe('State Manager service', function() {
-    var $httpBackend;
-    var stateManagerSvc;
-    var deferred;
-    var scope;
-    var uuidSvc;
-    var $httpParamSerializer;
+    var $httpBackend, stateManagerSvc, deferred, scope, uuidSvc, $httpParamSerializer;
     var state = {
         '@id': 'http://matonto.org/new-state',
         '@type': 'http://matonto.org/state'
@@ -35,6 +30,12 @@ describe('State Manager service', function() {
     var application = 'app';
     var subjects = ['subject1', 'subject2'];
     var states = ['state1', 'state2'];
+    var recordId = 'recordId';
+    var branchId = 'branchId';
+    var commitId = 'commitId';
+    var ontologyState = {
+        [prefixes.ontologyState + 'record']: [{'@id': recordId}]
+    }
 
     beforeEach(function() {
         module('stateManager');
@@ -105,27 +106,27 @@ describe('State Manager service', function() {
         it('with no application', function() {
             $httpBackend.expectPOST('/matontorest/states', function(data) {
                 return _.isEqual(data, JSON.stringify(state));
-            }).respond(200, '');
-            stateManagerSvc.createState(state);
+            }, function(headers) {
+                return headers['Content-Type'] === undefined;
+            }).respond(200, stateId);
+            stateManagerSvc.createState(state).then(function() {
+                expect(stateManagerSvc.states.length).toBe(1);
+                expect(stateManagerSvc.states[0]).toEqual({id: stateId, model: state});
+            });
             flushAndVerify();
         });
         it('with application', function() {
             $httpBackend.expectPOST('/matontorest/states?application=' + application, function(data) {
                 return _.isEqual(data, JSON.stringify(state));
-            }).respond(200, '');
-            stateManagerSvc.createState(state, application);
+            }, function(headers) {
+                return headers['Content-Type'] === undefined;
+            }).respond(200, stateId);
+            stateManagerSvc.createState(state, application).then(function() {
+                expect(stateManagerSvc.states.length).toBe(1);
+                expect(stateManagerSvc.states[0]).toEqual({id: stateId, model: state});
+            });
             flushAndVerify();
         });
-    });
-
-    it('createOntologyState calls the correct method', function() {
-        spyOn(stateManagerSvc, 'createState');
-        var recordId = 'recordId';
-        var branchId = 'branchId';
-        var commitId = 'commitId';
-        stateManagerSvc.createOntologyState(recordId, branchId, commitId);
-        expect(uuidSvc.v4).toHaveBeenCalled();
-        expect(stateManagerSvc.createState).toHaveBeenCalled();
     });
 
     it('getState hits the correct endpoint', function() {
@@ -137,16 +138,23 @@ describe('State Manager service', function() {
     });
 
     it('updateState hits the correct endpoint', function() {
+        stateManagerSvc.states = [{id: stateId, model: 'old-model'}];
         $httpBackend.expectPOST('/matontorest/states/' + encodeURIComponent(stateId), function(data) {
             return _.isEqual(data, JSON.stringify(state));
         }).respond(200, '');
-        stateManagerSvc.updateState(stateId, state);
+        stateManagerSvc.updateState(stateId, state).then(function() {
+            expect(stateManagerSvc.states.length).toBe(1);
+            expect(stateManagerSvc.states[0]).toEqual({id: stateId, model: state});
+        });
         flushAndVerify();
     });
 
     it('deleteState hits the correct endpoint', function() {
+        stateManagerSvc.states = [{id: stateId, model: 'old-model'}];
         $httpBackend.expectDELETE('/matontorest/states/' + encodeURIComponent(stateId)).respond(200, '');
-        stateManagerSvc.deleteState(stateId);
+        stateManagerSvc.deleteState(stateId).then(function() {
+            expect(stateManagerSvc.states.length).toBe(0);
+        });
         flushAndVerify();
     });
 
@@ -166,5 +174,44 @@ describe('State Manager service', function() {
             scope.$apply();
             expect(console.log).toHaveBeenCalledWith('Problem getting states');
         });
+    });
+
+    it('createOntologyState calls the correct method', function() {
+        spyOn(stateManagerSvc, 'createState');
+        stateManagerSvc.createOntologyState(recordId, branchId, commitId);
+        expect(uuidSvc.v4).toHaveBeenCalled();
+        expect(stateManagerSvc.createState).toHaveBeenCalledWith(jasmine.any(Object), 'ontology-editor');
+    });
+
+    describe('getOntologyStateByRecordId', function() {
+        it('when state is not present', function() {
+            var result = stateManagerSvc.getOntologyStateByRecordId(recordId);
+            expect(result).toEqual({});
+        });
+        it('when state is present', function() {
+            stateManagerSvc.states = [{id: stateId, model: ontologyState}];
+            var result = stateManagerSvc.getOntologyStateByRecordId(recordId);
+            expect(result).toEqual(ontologyState);
+        });
+    });
+
+    it('updateOntologyState calls the correct method', function() {
+        spyOn(stateManagerSvc, 'updateState');
+        spyOn(stateManagerSvc, 'getOntologyStateByRecordId').and.returnValue({
+            id: stateId,
+            model: ontologyState
+        });
+        stateManagerSvc.updateOntologyState(recordId, branchId, commitId);
+        expect(stateManagerSvc.updateState).toHaveBeenCalledWith(stateId, jasmine.any(Object));
+    });
+
+    it('deleteOntologyState calls the correct method', function() {
+        spyOn(stateManagerSvc, 'deleteState');
+        spyOn(stateManagerSvc, 'getOntologyStateByRecordId').and.returnValue({
+            id: stateId,
+            model: ontologyState
+        });
+        stateManagerSvc.deleteOntologyState(recordId);
+        expect(stateManagerSvc.deleteState).toHaveBeenCalledWith(stateId);
     });
 });
