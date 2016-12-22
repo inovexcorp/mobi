@@ -23,23 +23,23 @@
 describe('Prop Select directive', function() {
     var $compile,
         scope,
-        ontologyManagerSvc,
+        utilSvc,
         controller;
 
     beforeEach(function() {
         module('templates');
         module('propSelect');
-        mockOntologyManager();
+        mockUtil();
 
         module(function($provide) {
             $provide.value('highlightFilter', jasmine.createSpy('highlightFilter'));
             $provide.value('trustedFilter', jasmine.createSpy('trustedFilter'));
         });
 
-        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _utilService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            ontologyManagerSvc = _ontologyManagerService_;
+            utilSvc = _utilService_;
         });
     });
 
