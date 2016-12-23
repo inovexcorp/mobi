@@ -4,4 +4,10 @@
 .ontology-tab {
     height: 100%;
     position: relative;
+
+    .circle-button-stack {
+        bottom: 25px;
+        position: absolute;
+        right: 25px;
+    }
 }

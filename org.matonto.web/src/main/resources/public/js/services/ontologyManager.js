@@ -337,7 +337,7 @@
                         });
                 }
                 var resolve = function(ontology) {
-                    deferred.resolve({recordId, ontologyId, ontology});
+                    deferred.resolve({recordId, ontologyId, ontology, branchId});
                 }
                 deferred.promise.then(() => {
                     $rootScope.showSpinner = false;
@@ -395,9 +395,11 @@
                     self.getOntology(ontologyId, recordId)
                         .then(response => {
                             if (type === 'ontology') {
-                                addOntologyToList(ontologyId, response.ontology).then(() => onAddSuccess(ontologyId));
+                                addOntologyToList(ontologyId, recordId, response.branchId, response.ontology)
+                                    .then(() => onAddSuccess(ontologyId));
                             } else if (type === 'vocabulary') {
-                                addVocabularyToList(ontologyId, response.ontology).then(() => onAddSuccess(ontologyId));
+                                addVocabularyToList(ontologyId, recordId, response.branchId, response.ontology)
+                                    .then(() => onAddSuccess(ontologyId));
                             }
                         }, response => {
                             onError(response);
@@ -439,9 +441,11 @@
                 self.getOntology(ontologyId, recordId)
                     .then(response => {
                         if (type === 'ontology') {
-                            addOntologyToList(response.ontologyId, response.ontology).then(onAddSuccess);
+                            addOntologyToList(response.ontologyId, response.recordId, response.branchId,
+                                response.ontology).then(onAddSuccess);
                         } else if (type === 'vocabulary') {
-                            addVocabularyToList(response.ontologyId, response.ontology).then(onAddSuccess);
+                            addVocabularyToList(response.ontologyId, response.recordId, response.branchId,
+                                response.ontology).then(onAddSuccess);
                         }
                     }, response => {
                         deferred.reject(_.get(response, 'statusText'));
@@ -724,16 +728,19 @@
                     .then(response => {
                         if (_.has(response, 'data.ontologyId') && _.has(response, 'data.recordId')) {
                             _.set(ontologyJson, 'matonto.originalIRI', ontologyJson['@id']);
-                            var listItem = (type === 'ontology') ? angular.copy(ontologyListItemTemplate)
-                                : angular.copy(vocabularyListItemTemplate);
-                            listItem.ontology.push(ontologyJson);
-                            listItem.ontologyId = response.data.ontologyId;
+                             var listItem = {};
+                            if (type === 'ontology') {
+                                listItem = setupListItem(response.data.ontologyId, response.data.recordId,
+                                    response.data.branchId, [ontologyJson], ontologyListItemTemplate);
+                            } else if (type === 'vocabulary') {
+                                listItem = setupListItem(response.data.ontologyId, response.data.recordId,
+                                    response.data.branchId, [ontologyJson], vocabularyListItemTemplate);
+                            }
                             self.list.push(listItem);
-                            sm.createOntologyState(response.data.recordId, response.data.branchId,
-                                response.data.commitId).then(() => deferred.resolve({
-                                    entityIRI: ontologyJson['@id'],
-                                    ontologyId: response.data.ontologyId
-                                }));
+                            deferred.resolve({
+                                entityIRI: ontologyJson['@id'],
+                                ontologyId: response.data.ontologyId
+                            });
                         } else {
                             deferred.reject(_.get(response, 'statusText', defaultErrorMessage));
                         }
@@ -1866,7 +1873,7 @@
                 }
                 return readableText;
             }
-            function setupListItem(ontologyId, ontology, template) {
+            function setupListItem(ontologyId, recordId, branchId, ontology, template) {
                 var listItem = angular.copy(template);
                 var blankNodes = {};
                 var index = {};
@@ -1888,14 +1895,16 @@
                     }
                 });
                 listItem.ontologyId = ontologyId;
+                listItem.recordId = recordId;
+                listItem.branchId = branchId;
                 listItem.ontology = ontology;
                 listItem.blankNodes = blankNodes;
                 listItem.index = index;
                 return listItem;
             }
-            function addOntologyToList(ontologyId, ontology) {
+            function addOntologyToList(ontologyId, recordId, branchId, ontology) {
                 var deferred = $q.defer();
-                var listItem = setupListItem(ontologyId, ontology, ontologyListItemTemplate);
+                var listItem = setupListItem(ontologyId, recordId, branchId, ontology, ontologyListItemTemplate);
                 $q.all([
                     $http.get(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/iris'),
                     $http.get(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/imported-iris'),
@@ -1990,9 +1999,9 @@
                 });
                 return deferred.promise;
             }
-            function addVocabularyToList(ontologyId, ontology) {
+            function addVocabularyToList(ontologyId, recordId, branchId, ontology) {
                 var deferred = $q.defer();
-                var listItem = setupListItem(ontologyId, ontology, vocabularyListItemTemplate);
+                var listItem = setupListItem(ontologyId, recordId, branchId, ontology, vocabularyListItemTemplate);
                 $q.all([
                     $http.get(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/iris'),
                     $http.get(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/imported-iris'),

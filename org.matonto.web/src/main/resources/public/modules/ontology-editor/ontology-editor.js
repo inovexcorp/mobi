@@ -31,6 +31,7 @@
             'associationBlock',
             'axiomBlock',
             'axiomOverlay',
+            'branchSelect',
             'classAxioms',
             'classesTab',
             'classHierarchyBlock',

@@ -55,6 +55,7 @@
             'blockSearch',
             'checkbox',
             'circleButton',
+            'circleButtonStack',
             'clickAnywhereButHere',
             'confirmationOverlay',
             'customHeader',

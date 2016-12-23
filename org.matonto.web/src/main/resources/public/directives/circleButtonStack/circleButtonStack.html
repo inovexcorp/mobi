@@ -20,7 +20,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<button type="button" class="btn btn-circle" ng-class="{'small': btnSmall}">
-    <i class="fa fa-fw {{btnIcon}}"></i>
-    <span class="display-text">{{displayText}}</span>
-</button>
+<div class="circle-button-stack">
+    <div class="hidden-buttons" ng-transclude></div>
+    <circle-button class="btn-primary base-btn" btn-icon="'fa-plus'"></circle-button>
+</div>

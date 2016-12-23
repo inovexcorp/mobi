@@ -1,0 +1,25 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.branch-select {
+    left: 10px;
+    position: absolute;
+    top: 10px;
+    width: 18%;
+
+    .ui-select-bootstrap .ui-select-choices-row > span {
+        padding: 3px 8px;
+    }
+
+    .branch-display {
+        .pull-right {
+            color: #fff;
+            line-height: 20px;
+            text-decoration: none;
+
+            &:hover {
+                color: $gray-dark;
+            }
+        }
+    }
+}

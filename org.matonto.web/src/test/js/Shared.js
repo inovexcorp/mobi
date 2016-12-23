@@ -418,7 +418,10 @@ function mockOntologyState() {
                 subDataProperties: [],
                 blankNodes: {},
                 individuals: [],
-                index: {}
+                index: {},
+                recordId: '',
+                branchId: '',
+                commitId: ''
             };
             this.reset = jasmine.createSpy('reset');
             this.setTreeTab = jasmine.createSpy('setTreeTab');

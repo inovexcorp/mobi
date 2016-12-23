@@ -98,7 +98,8 @@ describe('Ontology Manager service', function() {
         var expected = {
             recordId: recordId,
             ontologyId: ontologyId,
-            ontology: ontology
+            ontology: ontology,
+            branchId: branchId
         }
         beforeEach(function() {
             catalogManagerSvc.getResource.and.returnValue($q.resolve(ontology));

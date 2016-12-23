@@ -27,72 +27,47 @@
         .module('branchSelect', [])
         .directive('branchSelect', branchSelect);
 
-        branchSelect.$inject = ['ontologyManagerService', 'responseObj', 'settingsManagerService',
-            'ontologyStateService', 'prefixes'];
+        branchSelect.$inject = ['catalogManagerService', 'ontologyStateService', 'utilService'];
 
-        function branchSelect(ontologyManagerService, responseObj, settingsManagerService, ontologyStateService,
-            prefixes) {
+        function branchSelect(catalogManagerService, ontologyStateService, utilService) {
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/objectSelect/objectSelect.html',
-                scope: {
-                    displayText: '<',
-                    selectList: '<',
-                    mutedText: '<',
-                    isDisabledWhen: '<',
-                    isRequiredWhen: '<',
-                    multiSelect: '<?',
-                    onChange: '&'
-                },
+                templateUrl: 'modules/ontology-editor/directives/branchSelect/branchSelect.html',
+                scope: {},
                 bindToController: {
                     bindModel: '=ngModel'
                 },
                 controllerAs: 'dvm',
-                controller: ['$scope', function($scope) {
+                controller: function($scope) {
                     var dvm = this;
-                    $scope.multiSelect = angular.isDefined($scope.multiSelect) ? $scope.multiSelect : true;
+                    var os = ontologyStateService;
+                    var cm = catalogManagerService;
+                    var catalogId = _.get(cm.localCatalog, '@id', '');
 
-                    dvm.sm = ontologyStateService;
-                    dvm.om = ontologyManagerService;
-                    dvm.tooltipDisplay = settingsManagerService.getTooltipDisplay();
+                    dvm.util = utilService;
+                    dvm.list = [];
+                    dvm.showDeleteConfirmation = false;
 
-                    dvm.getItemOntologyIri = function(item) {
-                        return _.get(item, 'ontologyId', dvm.sm.state.ontologyId);
+                    cm.getRecordBranches(os.listItem.recordId, catalogId)
+                        .then(response => dvm.list = response.data);
+
+                    dvm.openDeleteConfirmation = function($event, branchId) {
+                        $event.stopPropagation();
+                        dvm.branch = branch;
+                        dvm.showDeleteConfirmation = true;
                     }
 
-                    dvm.getItemIri = function(item) {
-                        return _.get(item, '@id', responseObj.getItemIri(item));
+                    dvm.delete = function() {
+                        cm.deleteRecordBranch(dvm.branch['@id'], os.listItem.recordId, catalogId)
+                            .then(() => {
+                                // TODO: make this the master branch
+                                /*if (dvm.branch['@id'] === os.listItem.branchId) {
+                                    os.listItem.branchId = master branch;
+                                }*/
+                            });
                     }
-
-                    dvm.getTooltipDisplay = function(item) {
-                        var itemIri = dvm.getItemIri(item);
-                        var result = itemIri;
-                        if (!_.has(item, 'ontologyId')) {
-                            var selectedObject = dvm.om.getEntityById(dvm.sm.listItem.ontologyId, itemIri);
-                            if (dvm.tooltipDisplay === 'comment') {
-                                result = dvm.om.getEntityDescription(selectedObject) || itemIri;
-                            } else if (dvm.tooltipDisplay === 'label') {
-                                result = dvm.om.getEntityName(selectedObject, dvm.sm.state.type) || itemIri;
-                            } else if (_.has(selectedObject, '@id')) {
-                                result = selectedObject['@id'];
-                            }
-                        }
-                        return result;
-                    }
-
-                    dvm.isBlankNode = function(id) {
-                        return typeof id === 'string' && _.includes(id, '_:b');
-                    }
-
-                    dvm.getBlankNodeValue = function(id) {
-                        var result;
-                        if (dvm.isBlankNode(id)) {
-                            result = _.get(dvm.sm.listItem.blankNodes, id, id);
-                        }
-                        return result;
-                    }
-                }]
+                }
             }
         }
 })();

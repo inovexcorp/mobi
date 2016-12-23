@@ -64,10 +64,9 @@
                 restrict: 'E',
                 replace: true,
                 scope: {
-                    btnIcon: '=',
-                    btnSmall: '=',
-                    isEnabled: '=',
-                    onClick: '&'
+                    btnIcon: '<',
+                    btnSmall: '<',
+                    displayText: '<'
                 },
                 templateUrl: 'directives/circleButton/circleButton.html'
             }

@@ -442,6 +442,7 @@ ul {
     border-radius: 28px;
     box-shadow: 0 0 4px rgba(0,0,0,.14), 0 4px 8px rgba(0,0,0,.28);
     padding: 16px 14px;
+    position: relative;
 
     &.small {
         border-radius: 25px;
@@ -450,12 +451,21 @@ ul {
         .fa {
             font-size: 1.25em;
         }
+
+        .display-text {
+            right: 62px;
+            top: 9px;
+        }
     }
 
     &:hover {
         box-shadow: 0 0 6px rgba(0,0,0,.16),0 6px 12px rgba(0,0,0,.32);
         -webkit-transition: box-shadow 150ms cubic-bezier(0,0,.2,1);
                 transition: box-shadow 150ms cubic-bezier(0,0,.2,1);
+
+        .display-text {
+            display: inline-block;
+        }
     }
 
     &:focus {
@@ -465,6 +475,17 @@ ul {
     .fa {
         font-size: 1.5em;
         margin: 0;
+    }
+
+    .display-text {
+        background-color: $gray;
+        box-shadow: 0 0 2px rgba(0,0,0,.14), 0 2px 4px rgba(0,0,0,.28);
+        color: #fff;
+        display: none;
+        padding: 5px 8px;
+        position: absolute;
+        right: 72px;
+        top: 13px;
     }
 }
 

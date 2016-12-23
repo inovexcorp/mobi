@@ -50,6 +50,7 @@
                     dvm.begin = 0;
                     dvm.limit = 10;
                     dvm.ontologyRecords = [];
+                    dvm.filteredList = [];
                     dvm.type = 'ontology';
 
                     dvm.open = function() {
@@ -86,7 +87,10 @@
                         cm.deleteRecord(dvm.recordId, catalogId)
                             .then(response => {
                                 _.remove(dvm.ontologyRecords, record => _.get(record, '@id', '') === dvm.recordId);
-                                sm.deleteState(_.get(sm.getOntologyStateByRecordId(dvm.recordId), 'id', ''));
+                                var state = sm.getOntologyStateByRecordId(dvm.recordId);
+                                if (!_.isEmpty(state)) {
+                                    sm.deleteState(_.get(state, 'id', ''));
+                                }
                                 dvm.showDeleteConfirmation = false;
                             }, errorMessage => dvm.errorMessage = errorMessage);
                     }
@@ -98,23 +102,22 @@
 
                     dvm.getAllOntologyRecords = function(sortingOption) {
                         dvm.om.getAllOntologyRecords(sortingOption)
-                            .then(response => dvm.ontologyRecords = _.get(response, 'data', []));
+                            .then(response => {
+                                var data = _.get(response, 'data', []);
+                                dvm.ontologyRecords = data;
+                                dvm.filteredList = data;
+                            });
                     }
 
-                    $scope.$watch(
-                        function watchFilterText(scope) {
-                            return(dvm.filterText + dvm.ontologyRecords);
-                        },
-                        function handleFilterTextChange(newValue, oldValue) {
-                            dvm.ontologyRecords = $filter('filter')(dvm.ontologyRecords, dvm.filterText,
-                                (actual, expected) => {
-                                    expected = _.lowerCase(expected);
-                                    return _.includes(_.lowerCase(dvm.getRecordValue(actual, 'title')), expected)
-                                        || _.includes(_.lowerCase(dvm.getRecordValue(actual, 'description')), expected)
-                                        || _.includes(_.lowerCase(dvm.getRecordValue(actual, 'identifier')), expected);
-                                });
-                        }
-                    );
+                    $scope.$watch('dvm.filterText', function handleFilterTextChange(newValue, oldValue) {
+                        dvm.filteredList = $filter('filter')(dvm.ontologyRecords, dvm.filterText,
+                            (actual, expected) => {
+                                expected = _.lowerCase(expected);
+                                return _.includes(_.lowerCase(dvm.getRecordValue(actual, 'title')), expected)
+                                    || _.includes(_.lowerCase(dvm.getRecordValue(actual, 'description')), expected)
+                                    || _.includes(_.lowerCase(dvm.getRecordValue(actual, 'identifier')), expected);
+                            });
+                    });
 
                     dvm.getAllOntologyRecords();
                 }]
