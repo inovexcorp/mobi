@@ -240,6 +240,7 @@ public class SimpleCatalogManager implements CatalogManager {
     private static final String CATALOG_BINDING = "catalog";
     private static final String RECORD_COUNT_BINDING = "record_count";
     private static final String TYPE_FILTER_BINDING = "type_filter";
+    private static final String SEARCH_BINDING = "search_text";
     private static final String USER_BINDING = "user";
 
     static {
@@ -311,9 +312,7 @@ public class SimpleCatalogManager implements CatalogManager {
             // Get Total Count
             TupleQuery countQuery = conn.prepareTupleQuery(COUNT_RECORDS_QUERY);
             countQuery.setBinding(CATALOG_BINDING, catalogId);
-            if (typeParam.isPresent()) {
-                countQuery.setBinding(TYPE_FILTER_BINDING, typeParam.get());
-            }
+            typeParam.ifPresent(resource -> countQuery.setBinding(TYPE_FILTER_BINDING, resource));
 
             TupleQueryResult countResults = countQuery.evaluate();
 
@@ -359,9 +358,9 @@ public class SimpleCatalogManager implements CatalogManager {
             String queryString = FIND_RECORDS_QUERY + querySuffix;
             TupleQuery query = conn.prepareTupleQuery(queryString);
             query.setBinding(CATALOG_BINDING, catalogId);
-            if (typeParam.isPresent()) {
-                query.setBinding(TYPE_FILTER_BINDING, typeParam.get());
-            }
+            typeParam.ifPresent(resource -> query.setBinding(TYPE_FILTER_BINDING, resource));
+            searchParams.getSearchText().ifPresent(searchText -> query.setBinding(SEARCH_BINDING,
+                    vf.createLiteral(searchText)));
 
             log.debug("Query String:\n" + queryString);
             log.debug("Query Plan:\n" + query);
@@ -1308,7 +1307,7 @@ public class SimpleCatalogManager implements CatalogManager {
         bindingSet.getBinding("description").ifPresent(binding ->
                 builder.description(binding.getValue().stringValue()));
 
-        bindingSet.getBinding("keyword").ifPresent(binding ->
+        bindingSet.getBinding("keywords").ifPresent(binding ->
                 builder.keywords(new HashSet<>(Arrays.asList(StringUtils.split(binding.getValue().stringValue(),
                         ",")))));
 

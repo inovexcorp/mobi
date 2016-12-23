@@ -242,7 +242,7 @@ public class CatalogRestImpl implements CatalogRest {
                 builder.typeFilter(factory.createIRI(recordType));
             }
             if (searchText != null) {
-                builder.searchTerm(searchText);
+                builder.searchText(searchText);
             }
             PaginatedSearchResults<Record> records = catalogManager.findRecord(factory.createIRI(catalogId),
                     builder.build());
