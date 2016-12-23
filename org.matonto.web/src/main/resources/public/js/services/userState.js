@@ -89,7 +89,7 @@
              *
              * @description
              * `showGroups` holds a boolean indicating whether the
-             * {@link groupsTab.directive:groupsTab groups tab} should be shown.
+             * {@link groupsPage.directive:groupsPage groups page} should be shown.
              */
             self.showGroups = true;
             /**
@@ -100,7 +100,7 @@
              *
              * @description
              * `showUsers` holds a boolean indicating whether the
-             * {@link usersTab.directive:usersTab users tab} should be shown.
+             * {@link usersPage.directive:usersPage users page} should be shown.
              */
             self.showUsers = false;
             /**

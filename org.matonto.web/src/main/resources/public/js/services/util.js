@@ -97,5 +97,33 @@
             self.getDctermsValue = function(entity, property) {
                 return self.getPropertyValue(entity, prefixes.dcterms + property);
             }
+
+            /**
+             * @ngdoc method
+             * @name parseLinks
+             * @methodOf util.service:utilService
+             *
+             * @description
+             * Parses through the passed "link" header string to retrieve each individual link and its rel label.
+             * Return an object with keys of the link rel labels and values of the link URLs.
+             *
+             * @param {string} header A "link" header string from an HTTP response
+             * @return {Object} An object with keys of the rel labels and values of URLs
+             */
+            self.parseLinks = function(header){
+                // Split parts by comma
+                var parts = header.split(',');
+                var links = {};
+                // Parse each part into a named link
+                _.forEach(parts, p => {
+                    var section = p.split(';');
+                    if (section.length === 2) {
+                        var url = section[0].replace(/<(.*)>/, '$1').trim();
+                        var name = section[1].replace(/rel="(.*)"/, '$1').trim();
+                        links[name] = url;
+                    }
+                });
+                return links;
+            }
         }
 })();

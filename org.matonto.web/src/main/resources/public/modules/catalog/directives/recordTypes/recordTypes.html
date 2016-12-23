@@ -20,7 +20,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<!-- catalog.html -->
-<div class="catalog clearfix full-height">
-    <catalog-tabset></catalog-tabset>
+<div class="record-types">
+    <record-type ng-repeat="type in record['@type'] | inArray:dvm.cm.recordTypes | orderBy" type="type"></record-type>
 </div>

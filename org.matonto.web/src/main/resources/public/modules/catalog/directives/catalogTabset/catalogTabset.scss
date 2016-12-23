@@ -1,0 +1,10 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.catalog-tabset {
+    height: 100%;
+
+    > .tabset > .tabset-headings {
+        background-color: $highlight-blue;
+    }
+}

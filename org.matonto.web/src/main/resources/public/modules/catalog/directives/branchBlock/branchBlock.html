@@ -20,7 +20,17 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<!-- catalog.html -->
-<div class="catalog clearfix full-height">
-    <catalog-tabset></catalog-tabset>
+<div class="branch-block col-xs-12">
+    <block>
+        <block-header>
+            <catalog-breadcrumb></catalog-breadcrumb>
+            <h3 class="entity-title">{{dvm.util.getDctermsValue(dvm.branch, 'title')}}</h3>
+        </block-header>
+        <block-content class="padding">
+            <!-- <p><span class="field-name">Publisher:</span> <span></span></p> -->
+            <entity-dates entity="dvm.branch"></entity-dates>
+            <entity-description entity="dvm.branch"></entity-description>
+            <p><span class="field-name">Head: </span> <span>{{dvm.branch[dvm.prefixes.catalog + 'head'][0]['@id']}}</span></p>
+        </block-content>
+    </block>
 </div>

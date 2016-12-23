@@ -94,9 +94,7 @@ function injectShowPropertiesFilter() {
 
 function injectRemoveIriFromArrayFilter() {
     module(function($provide) {
-        $provide.value('removeIriFromArrayFilter', jasmine.createSpy('removeIriFromArrayFilter').and.callFake(function(arr) {
-            return arr;
-        }));
+        $provide.value('removeIriFromArrayFilter', jasmine.createSpy('removeIriFromArrayFilter').and.callFake(_.identity));
     });
 }
 
@@ -109,6 +107,12 @@ function injectRemoveMatontoFilter() {
 function injectPrefixationFilter() {
     module(function($provide) {
         $provide.value('prefixationFilter', jasmine.createSpy('prefixationFilter'));
+    });
+}
+
+function injectInArrayFilter() {
+    module(function($provide) {
+        $provide.value('inArrayFilter', jasmine.createSpy('inArrayFilter').and.callFake(_.identity));
     });
 }
 
@@ -609,12 +613,59 @@ function mockCatalogManager() {
     });
 }
 
+function mockCatalogState() {
+    module(function($provide) {
+        $provide.service('catalogStateService', function() {
+            this.catalogs = {
+                local: {
+                    show: false,
+                    catalog: {},
+                    openedPath: [],
+                    records: {
+                        filterType: '',
+                        sortOption: {},
+                        searchText: '',
+                        limit: 10
+                    },
+                    branches: {
+                        sortOption: {},
+                        limit: 10
+                    }
+                },
+                distributed: {
+                    show: false,
+                    catalog: {},
+                    openedPath: [],
+                    records: {
+                        filterType: '',
+                        sortOption: {},
+                        searchText: '',
+                        limit: 10
+                    }
+                }
+            };
+            self.currentPage = 0;
+            self.links = {
+                prev: '',
+                next: ''
+            };
+            self.totalSize = 0;
+            self.results = [];
+            this.reset = jasmine.createSpy('reset');
+            this.resetPagination = jasmine.createSpy('resetPagination');
+            this.setPagination = jasmine.createSpy('setPagination');
+            this.getCurrentCatalog = jasmine.createSpy('getCurrentCatalog').and.returnValue({});
+        });
+    });
+}
+
 function mockUtil() {
     module(function($provide) {
         $provide.service('utilService', function() {
             this.getBeautifulIRI = jasmine.createSpy('getBeautifulIRI').and.callFake(_.identity);
             this.getPropertyValue = jasmine.createSpy('getPropertyValue').and.returnValue('');
             this.getDctermsValue = jasmine.createSpy('getPropertyValue').and.returnValue('');
+            this.parseLinks = jasmine.createSpy('parseLinks').and.returnValue({});
         });
     });
 }

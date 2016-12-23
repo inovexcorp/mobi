@@ -20,26 +20,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-(function() {
+(function () {
     'use strict';
 
     angular
-        .module('catalog', [
-            /* Custom Directives */
-            'branchBlock',
-            'catalogBreadcrumb',
-            'catalogPagination',
-            'catalogTabset',
-            'entityDates',
-            'entityDescription',
-            'localTab',
-            'paginationHeader',
-            'recordBlock',
-            'recordKeywords',
-            'recordType',
-            'recordTypes',
-            'resultsBlock',
-            'searchRow',
-            'sortOptions'
-        ]);
+        .module('recordKeywords', [])
+        .directive('recordKeywords', recordKeywords);
+
+    recordKeywords.$inject = ['prefixes'];
+
+    function recordKeywords(prefixes) {
+        return {
+            restrict: 'E',
+            replace: true,
+            controllerAs: 'dvm',
+            scope: {
+                record: '<'
+            },
+            controller: function() {
+                var dvm = this;
+
+                dvm.getKeywords = function(record) {
+                    return _.join(_.map(_.get(record, prefixes.catalog + 'keyword', []), '@value'), ', ');
+                }
+            },
+            templateUrl: 'modules/catalog/directives/recordKeywords/recordKeywords.html'
+        };
+    }
 })();

@@ -79,4 +79,14 @@ describe('Util service', function() {
             expect(utilSvc.getDctermsValue({}, 'prop')).toBe('');
         });
     });
+    describe('should parse a link header string', function() {
+        it('unless it is empty', function() {
+            expect(utilSvc.parseLinks('')).toEqual({});
+        })
+        it('correctly', function() {
+            var link = 'http://example.com';
+            var links = '<' + link + '>; rel="test"';
+            expect(utilSvc.parseLinks(links)).toEqual({test: link});
+        });
+    });
 });

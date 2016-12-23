@@ -20,26 +20,27 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-(function() {
+(function () {
     'use strict';
 
     angular
-        .module('catalog', [
-            /* Custom Directives */
-            'branchBlock',
-            'catalogBreadcrumb',
-            'catalogPagination',
-            'catalogTabset',
-            'entityDates',
-            'entityDescription',
-            'localTab',
-            'paginationHeader',
-            'recordBlock',
-            'recordKeywords',
-            'recordType',
-            'recordTypes',
-            'resultsBlock',
-            'searchRow',
-            'sortOptions'
-        ]);
+        .module('localTab', [])
+        .directive('localTab', localTab);
+
+    localTab.$inject = ['catalogStateService', 'catalogManagerService'];
+
+    function localTab(catalogStateService, catalogManagerService) {
+        return {
+            restrict: 'E',
+            replace: true,
+            controllerAs: 'dvm',
+            scope: {},
+            controller: function() {
+                var dvm = this;
+                dvm.state = catalogStateService;
+                dvm.cm = catalogManagerService;
+            },
+            templateUrl: 'modules/catalog/directives/localTab/localTab.html'
+        };
+    }
 })();

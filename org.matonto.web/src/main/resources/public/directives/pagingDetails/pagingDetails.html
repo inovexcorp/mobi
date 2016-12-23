@@ -20,7 +20,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<!-- catalog.html -->
-<div class="catalog clearfix full-height">
-    <catalog-tabset></catalog-tabset>
+<div class="paging-details">
+    <p>Showing {{(pageSize > 0 ? ((pageIndex * limit) + 1) : 0) | number}} to {{Math.min(totalSize, (pageIndex + 1) * limit) | number}} of {{totalSize | number}}</p>
 </div>

@@ -20,7 +20,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<!-- catalog.html -->
-<div class="catalog clearfix full-height">
-    <catalog-tabset></catalog-tabset>
+<div class="entity-description">
+    <span class="field-name">Description:</span>
+    <p class="description">{{limited ? dvm.getLimitedDescription() : dvm.getDescription()}} <a ng-if="limited && dvm.getDescription().length > dvm.descriptionLimit" ng-click="dvm.full = !dvm.full; $event.stopPropagation()">Show {{dvm.full ? 'less' : 'more'}}</a></p>
 </div>

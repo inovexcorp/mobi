@@ -20,26 +20,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-(function() {
+(function () {
     'use strict';
 
     angular
-        .module('catalog', [
-            /* Custom Directives */
-            'branchBlock',
-            'catalogBreadcrumb',
-            'catalogPagination',
-            'catalogTabset',
-            'entityDates',
-            'entityDescription',
-            'localTab',
-            'paginationHeader',
-            'recordBlock',
-            'recordKeywords',
-            'recordType',
-            'recordTypes',
-            'resultsBlock',
-            'searchRow',
-            'sortOptions'
-        ]);
+        .module('sortOptions', [])
+        .directive('sortOptions', sortOptions);
+
+    sortOptions.$inject = ['catalogStateService', 'catalogManagerService', 'prefixes'];
+
+    function sortOptions(catalogStateService, catalogManagerService, prefixes) {
+        return {
+            restrict: 'E',
+            replace: true,
+            controllerAs: 'dvm',
+            scope: {
+                listKey: '<',
+                changeSort: '&'
+            },
+            controller: function() {
+                var dvm = this;
+                dvm.state = catalogStateService;
+                dvm.cm = catalogManagerService;
+            },
+            templateUrl: 'modules/catalog/directives/sortOptions/sortOptions.html'
+        };
+    }
 })();

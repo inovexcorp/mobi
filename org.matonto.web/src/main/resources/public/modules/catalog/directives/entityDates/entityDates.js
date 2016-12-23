@@ -20,26 +20,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-(function() {
+(function () {
     'use strict';
 
     angular
-        .module('catalog', [
-            /* Custom Directives */
-            'branchBlock',
-            'catalogBreadcrumb',
-            'catalogPagination',
-            'catalogTabset',
-            'entityDates',
-            'entityDescription',
-            'localTab',
-            'paginationHeader',
-            'recordBlock',
-            'recordKeywords',
-            'recordType',
-            'recordTypes',
-            'resultsBlock',
-            'searchRow',
-            'sortOptions'
-        ]);
+        .module('entityDates', [])
+        .directive('entityDates', entityDates);
+
+    entityDates.$inject = ['$filter', 'utilService'];
+
+    function entityDates($filter, utilService) {
+        return {
+            restrict: 'E',
+            replace: true,
+            controllerAs: 'dvm',
+            scope: {
+                entity: '<'
+            },
+            controller: function() {
+                var dvm = this;
+
+                dvm.getDate = function(entity, key) {
+                    var dateStr = utilService.getDctermsValue(entity, key);
+                    return dateStr ? $filter('date')(new Date(dateStr), 'short') : '(No Date Specified)';
+                }
+            },
+            templateUrl: 'modules/catalog/directives/entityDates/entityDates.html'
+        };
+    }
 })();

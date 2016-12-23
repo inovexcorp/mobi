@@ -20,7 +20,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<!-- catalog.html -->
-<div class="catalog clearfix full-height">
-    <catalog-tabset></catalog-tabset>
+<div class="sort-options">
+    <select class="order-select form-control" ng-options="option as option.label for option in dvm.cm.sortOptions" ng-model="dvm.state.getCurrentCatalog()[listKey].sortOption" ng-change="changeSort()"></select>
 </div>

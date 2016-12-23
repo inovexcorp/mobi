@@ -20,7 +20,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<!-- catalog.html -->
-<div class="catalog clearfix full-height">
-    <catalog-tabset></catalog-tabset>
+<div class="pagination-header">
+    <paging-details page-size="dvm.state.results.length" total-size="dvm.state.totalSize" page-index="dvm.state.currentPage" limit="dvm.state.getCurrentCatalog()[listKey].limit"></paging-details>
+    <sort-options list-key="listKey" change-sort="changeSort()"></sort-options>
 </div>

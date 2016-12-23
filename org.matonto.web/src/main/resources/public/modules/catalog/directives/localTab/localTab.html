@@ -20,7 +20,13 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<!-- catalog.html -->
-<div class="catalog clearfix full-height">
-    <catalog-tabset></catalog-tabset>
+<div class="local-tab row">
+    <div class="col-xs-12">
+        <search-row></search-row>
+        <div class="row">
+            <results-block ng-if="dvm.state.catalogs.local.openedPath.length === 1"></results-block>
+            <record-block ng-if="dvm.cm.isRecord(dvm.state.catalogs.local.openedPath[dvm.state.catalogs.local.openedPath.length - 1])"></record-block>
+            <branch-block ng-if="dvm.cm.isBranch(dvm.state.catalogs.local.openedPath[dvm.state.catalogs.local.openedPath.length - 1])"></branch-block>
+        </div>
+    </div>
 </div>
