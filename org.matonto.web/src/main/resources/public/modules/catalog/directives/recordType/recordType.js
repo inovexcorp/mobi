@@ -32,7 +32,7 @@
          * @description
          * The `recordType` module only provides the `recordType` directive which
          * creates a span with the Bootstrap 'label' class with different colors for
-         * different resource type IRIs.
+         * different record type IRIs.
          */
         .module('recordType', [])
         /**
@@ -40,14 +40,14 @@
          * @name recordType.directive:recordType
          * @scope
          * @restrict E
-         * @requires catalogManager.catalogManagerService
+         * @requires catalogManager.service:catalogManagerService
          *
          * @description
          * `recordType` is a directive that creates a span with the Bootstrap 'label'
-         * class with different background colors for different resource type IRIs. The
+         * class with different background colors for different record type IRIs. The
          * directive is replaced with the content of the template.
          *
-         * @param {string} type The resource type IRI for a resource object
+         * @param {string} type The record type IRI for record
          */
         .directive('recordType', recordType);
 

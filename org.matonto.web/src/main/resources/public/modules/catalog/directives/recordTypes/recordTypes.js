@@ -30,9 +30,9 @@
          * @requires catalogManager
          *
          * @description
-         * The `recordTypes` module only provides the `recordTypes` directive which
-         * creates a span with the Bootstrap 'label' class with different colors for
-         * different resource type IRIs.
+         * The `recordTypes` module only provides the `recordTypes` directive which creates a div with
+         * a collection of {@link recordType.directive:recordType recordTypes} for the sorted and filtered
+         * passed record's type IRI strings.
          */
         .module('recordTypes', [])
         /**
@@ -40,14 +40,15 @@
          * @name recordTypes.directive:recordTypes
          * @scope
          * @restrict E
-         * @requires catalogManager.catalogManagerService
+         * @requires catalogManager.service:catalogManagerService
          *
          * @description
-         * `recordTypes` is a directive that creates a span with the Bootstrap 'label'
-         * class with different background colors for different resource type IRIs. The
-         * directive is replaced with the content of the template.
+         * `recordTypes` is a directive that creates a div with a {@link recordType.directive:recordType recordType}
+         * for each of the passed record's "@type" values. The types are filtered based on whether they are in the list
+         * of record types in the {@link catalogManager.service:catalogMangerService catalogManagerService} and sorted
+         * alphabetically. The directive is replaced with the content of the template.
          *
-         * @param {string} type The resource type IRI for a resource object
+         * @param {Object} record The JSON-LD object representing the record
          */
         .directive('recordTypes', recordTypes);
 

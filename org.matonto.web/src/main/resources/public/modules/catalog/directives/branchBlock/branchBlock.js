@@ -24,7 +24,36 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name branchBlock
+         *
+         * @description
+         * The `branchBlock` module only provides the `branchBlock` directive which creates
+         * a div with a {@link block.directive:block block} containing all information about the
+         * currently opened branch in the current
+         * {@link catalogState.service:catalogStateService#catalogs catalog}.
+         */
         .module('branchBlock', [])
+        /**
+         * @ngdoc directive
+         * @name branchBlock.directive:branchBlock
+         * @scope
+         * @restrict E
+         * @requires catalogState.service:cataStateService
+         * @requires catalogManager.service:catalogManagerService
+         * @requires prefixes.service:prefixes
+         * @requires utilService.service:utilService
+         *
+         * @description
+         * `branchBlock` is a directive which creates a div with a {@link block.directive:block block}
+         * containing all information about the currently opened branch in the current
+         * {@link catalogState.service:catalogStateService#catalogs catalog}. This branch is retrieved from the
+         * current catalog's opened path. Information displayed includes the
+         * branch's title, issued and modified {@link entityDates.directive:entityDates dates},
+         * {@link entityDescription.directive:entityDescription description}, and its head commit.
+         * The directive is replaced by the contents of its template.
+         */
         .directive('branchBlock', branchBlock);
 
     branchBlock.$inject = ['catalogStateService', 'catalogManagerService', 'prefixes', 'utilService'];

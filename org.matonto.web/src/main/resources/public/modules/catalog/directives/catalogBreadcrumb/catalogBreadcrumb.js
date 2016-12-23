@@ -24,7 +24,29 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name catalogBreadcrumb
+         *
+         * @description
+         * The `catalogBreadcrumb` module only provides the `catalogBreadcrumb` directive
+         * which creates a Bootstrap "breadcrumb" ordered list for navigating through a catalog.
+         */
         .module('catalogBreadcrumb', [])
+        /**
+         * @ngdoc directive
+         * @name catalogBreadcrumb.directive:catalogBreadcrumb
+         * @scope
+         * @restrict E
+         * @requires  catalogState.service:catalogStateService
+         * @requires  catalogManager.service:catalogManagerService
+         *
+         * @description
+         * `catalogBreadcrumb` is a directive which creates an ordered list with the Bootstrap
+         * "breadcrumb" class for navigating through a catalog. Creates the breadcrumb based on the
+         * `openedPath` of the current {@link catalogState.service:catalogStateService#catalogs catalog}.
+         * The directive is replaced by the contents of its template.
+         */
         .directive('catalogBreadcrumb', catalogBreadcrumb);
 
     catalogBreadcrumb.$inject = ['catalogStateService', 'catalogManagerService'];

@@ -644,13 +644,13 @@ function mockCatalogState() {
                     }
                 }
             };
-            self.currentPage = 0;
-            self.links = {
+            this.currentPage = 0;
+            this.links = {
                 prev: '',
                 next: ''
             };
-            self.totalSize = 0;
-            self.results = [];
+            this.totalSize = 0;
+            this.results = [];
             this.reset = jasmine.createSpy('reset');
             this.resetPagination = jasmine.createSpy('resetPagination');
             this.setPagination = jasmine.createSpy('setPagination');
@@ -666,6 +666,17 @@ function mockUtil() {
             this.getPropertyValue = jasmine.createSpy('getPropertyValue').and.returnValue('');
             this.getDctermsValue = jasmine.createSpy('getPropertyValue').and.returnValue('');
             this.parseLinks = jasmine.createSpy('parseLinks').and.returnValue({});
+        });
+    });
+}
+
+function mockToastr() {
+    module(function($provide) {
+        $provide.service('toastr', function() {
+            this.error = jasmine.createSpy('error');
+            this.success = jasmine.createSpy('success');
+            this.info = jasmine.createSpy('info');
+            this.warning = jasmine.createSpy('warning');
         });
     });
 }

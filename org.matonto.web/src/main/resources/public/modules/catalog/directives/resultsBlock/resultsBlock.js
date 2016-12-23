@@ -24,12 +24,40 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name resultsBlock
+         *
+         * @description
+         * The `resultsBlock` module only provides the `resultsBlock` directive which creates
+         * a div with a {@link block.directive:block block} containing a paginated list of records
+         * in the current {@link catalogState.service:catalogStateService#catalogs catalog}.
+         */
         .module('resultsBlock', [])
+        /**
+         * @ngdoc directive
+         * @name resultsBlock.directive:resultsBlock
+         * @scope
+         * @restrict E
+         * @requires catalogState.service:cataStateService
+         * @requires catalogManager.service:catalogManagerService
+         * @requires utilService.service:utilService
+         * @requires toastr
+         *
+         * @description
+         * `resultsBlock` is a directive which creates a div with a {@link block.directive:block block}
+         * containing a paginated list of records in the current
+         * {@link catalogState.service:catalogStateService#catalogs catalog}. The paginated list includes a
+         * {@link paginationHeader.directive:paginationHeader paginationHeader} and a
+         * {@link catalogPagination.directive:catalogPagination catalogPagination}. Clicking a record in the
+         * list will add it to the current catalog's `openedPath`. The directive is replaced by the contents
+         * of its template.
+         */
         .directive('resultsBlock', resultsBlock);
 
-    resultsBlock.$inject = ['catalogStateService', 'catalogManagerService', 'prefixes', 'utilService', 'toastr'];
+    resultsBlock.$inject = ['catalogStateService', 'catalogManagerService', 'utilService', 'toastr'];
 
-    function resultsBlock(catalogStateService, catalogManagerService, prefixes, utilService, toastr) {
+    function resultsBlock(catalogStateService, catalogManagerService, utilService, toastr) {
         return {
             restrict: 'E',
             replace: true,
@@ -39,7 +67,6 @@
                 var dvm = this;
                 dvm.state = catalogStateService;
                 dvm.cm = catalogManagerService;
-                dvm.prefixes = prefixes;
                 dvm.util = utilService;
 
                 getRecords();

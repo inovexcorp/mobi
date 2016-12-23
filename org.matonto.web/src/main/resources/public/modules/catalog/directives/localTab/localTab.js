@@ -24,7 +24,34 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name localTab
+         *
+         * @description
+         * The `localTab` module only provides the `localTab` directive which creates
+         * a Bootstrap `row` with a search bar and different {@link block.directive:block blocks}
+         * depending on what type of entity is current open.
+         */
         .module('localTab', [])
+        /**
+         * @ngdoc directive
+         * @name localTab.directive:localTab
+         * @scope
+         * @restrict E
+         * @requires catalogState.service:catalogStateService
+         * @requires catalogManager.service:catalogManagerService
+         *
+         * @description
+         * `localTab` is a directive that creates a Bootstrap `row` div with one column containing
+         * a {@link searchRow.directive:searchRow search row} for records and different
+         * {@link block.directive:block block} directives depending on the length of the opened path
+         * of the local catalog and the type of the opened entity. The three block directives are
+         * {@link resultsBlock.directive:resultsBlock resultsBlock},
+         * {@link recordBlock.directive:recordBlock recordBlock},
+         * and {@link branchBlock.directive:branchBlock branchBlock}. The directive is replaced by
+         * the contents of its template.
+         */
         .directive('localTab', localTab);
 
     localTab.$inject = ['catalogStateService', 'catalogManagerService'];

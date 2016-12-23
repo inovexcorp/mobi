@@ -20,66 +20,61 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Record Type directive', function() {
+describe('Record Keywords directive', function() {
     var $compile,
         scope,
-        catalogManagerSvc,
+        prefixes,
         controller;
 
     beforeEach(function() {
         module('templates');
-        module('recordType');
-        mockCatalogManager();
-        injectSplitIRIFilter();
+        module('recordKeywords');
+        mockPrefixes();
 
-        inject(function(_$compile_, _$rootScope_, _catalogManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _prefixes_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            catalogManagerSvc = _catalogManagerService_;
+            prefixes = _prefixes_;
         });
     });
 
     describe('in isolated scope', function() {
         beforeEach(function() {
-            scope.type = '';
-            this.element = $compile(angular.element('<record-type type="type"></record-type>'))(scope);
+            scope.record = {};
+            this.element = $compile(angular.element('<record-keywords record="record"></record-keywords>'))(scope);
             scope.$digest();
         });
-        it('type should be one way bound', function() {
+        it('record should be one way bound', function() {
             var isolatedScope = this.element.isolateScope();
-            isolatedScope.type = 'test';
+            isolatedScope.record = {'@id': ''};
             scope.$digest();
-            expect(scope.type).toEqual('');
+            expect(scope.record).toEqual({});
         });
     });
     describe('controller methods', function() {
         beforeEach(function() {
-            scope.type = '';
-            this.element = $compile(angular.element('<record-type type="type"></record-type>'))(scope);
+            scope.record = {};
+            scope.record[prefixes.catalog + 'keyword'] = [{'@value': '0'}, {'@value': '1'}];
+            this.element = $compile(angular.element('<record-keywords record="record"></record-keywords>'))(scope);
             scope.$digest();
-            controller = this.element.controller('recordType');
+            controller = this.element.controller('recordKeywords');
         });
-        it('should get the color for a type', function() {
-            catalogManagerSvc.recordTypes = ['type'];
-            var result = controller.getColor('type');
-            expect(typeof result).toBe('string');
+        it('should collect the keywords in a single string', function() {
+            expect(controller.getKeywords(scope.record)).toBe('0, 1');
         });
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            scope.type = '';
-            this.element = $compile(angular.element('<record-type type="type"></record-type>'))(scope);
+            scope.record = {};
+            scope.record[prefixes.catalog + 'keyword'] = [{'@value': '0'}, {'@value': '1'}];
+            this.element = $compile(angular.element('<record-keywords record="record"></record-keywords>'))(scope);
             scope.$digest();
         });
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('record-type')).toBe(true);
-            expect(this.element.hasClass('label')).toBe(true);
+            expect(this.element.hasClass('record-keywords')).toBe(true);
         });
-        it('with the correct background color depending on the record type', function() {
-            controller = this.element.controller('recordType');
-            spyOn(controller, 'getColor').and.returnValue('white');
-            scope.$digest();
-            expect(this.element.css('background-color')).toBe('white');
+        it('with a field-name span', function() {
+            expect(this.element.querySelectorAll('span.field-name').length).toBe(1);
         });
     });
 });

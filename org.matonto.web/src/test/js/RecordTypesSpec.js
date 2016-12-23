@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Records Type directive', function() {
+describe('Record Types directive', function() {
     var $compile,
         scope,
         catalogManagerSvc,
@@ -33,11 +33,11 @@ describe('Records Type directive', function() {
         mockCatalogManager();
         injectInArrayFilter();
 
-        inject(function(_catalogManagerService_, _inArrayFilter_, _$compile_, _$rootScope_) {
-            catalogManagerSvc = _catalogManagerService_;
-            inArrayFilter = _inArrayFilter_;
+        inject(function(_$compile_, _$rootScope_, _catalogManagerService_, _inArrayFilter_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            catalogManagerSvc = _catalogManagerService_;
+            inArrayFilter = _inArrayFilter_;
         });
     });
 

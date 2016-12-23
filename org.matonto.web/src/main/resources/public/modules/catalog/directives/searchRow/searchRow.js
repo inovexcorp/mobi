@@ -24,7 +24,36 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name searchRow
+         *
+         * @description
+         * The `searchRow` module only provides the `searchRow` directive which creates
+         * a Bootstrap `row` with a for for searching through the records in the current
+         * {@link catalogState.service:catalogStateService#catalogs catalog}.
+         */
         .module('searchRow', [])
+        /**
+         * @ngdoc directive
+         * @name searchRow.directive:searchRow
+         * @scope
+         * @restrict E
+         * @requires catalogState.service:cataStateService
+         * @requires catalogManager.service:catalogManagerService
+         * @requires utilService.service:utilService
+         * @requires toastr
+         *
+         * @description
+         * `searchRow` is a directive which creates a Bootstrap `row` with a
+         * {@link catalogManager.service:catalogManagerService#recordTypes record type} filter select, a
+         * {@link catalogState.service:catalogStateService search text} input, and a submit button. A
+         * submission of this form will affect the
+         * {@link catalogState.service:catalogStateService#results list of records} shown in a
+         * {@link resultsBlock.directive:resultsBlock resultsBlock} and navigate back to the current
+         * {@link catalogState.service:catalogStateService#catalogs catalog}. The directive is replaced by
+         * the contents of its template.
+         */
         .directive('searchRow', searchRow);
 
     searchRow.$inject = ['catalogStateService', 'catalogManagerService'];

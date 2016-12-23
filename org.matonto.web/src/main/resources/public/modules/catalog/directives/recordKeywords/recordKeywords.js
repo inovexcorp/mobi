@@ -24,7 +24,29 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name recordKeywords
+         * @requires catalogManager
+         *
+         * @description
+         * The `recordKeywords` module only provides the `recordKeywords` directive which creates a div with
+         * a display of all the keywords in the passed record JSON-LD object.
+         */
         .module('recordKeywords', [])
+        /**
+         * @ngdoc directive
+         * @name recordKeywords.directive:recordKeywords
+         * @scope
+         * @restrict E
+         * @requires prefixes.service:prefixes
+         *
+         * @description
+         * `recordKeywords` is a directive that creates a div containing a display of all the keyword property
+         * values of the pased JSON-LD record object. The directive is replaced with the content of the template.
+         *
+         * @param {Object} record The JSON-LD object for a record
+         */
         .directive('recordKeywords', recordKeywords);
 
     recordKeywords.$inject = ['prefixes'];

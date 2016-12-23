@@ -24,12 +24,42 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name sortOptions
+         *
+         * @description
+         * The `sortOptions` module only provides the `sortOptions` directive which creates
+         * a div with a select for sorting by
+         * {@link catalogManager.service:catalogManagerService#recordTypes record types} for
+         * the specified paginated list in the current
+         * {@link catalogState.service:catalogStateService#catalogs catalog}.
+         */
         .module('sortOptions', [])
+        /**
+         * @ngdoc directive
+         * @name sortOptions.directive:sortOptions
+         * @scope
+         * @restrict E
+         * @requires catalogState.service:cataStateService
+         * @requires catalogManager.service:catalogManagerService
+         *
+         * @description
+         * `sortOptions` is a directive which creates a div with a select containing all
+         * {@link catalogManager.service:catalogManagerService#recordTypes record types} to set the sort
+         * option for the list determined by the passed `listKey` in the current
+         * {@link catalogState.service:catalogStateService#catalogs catalog}. An optional function can be
+         * passed in to be called when the value changes. The directive is replaced by the contents of its
+         * template.
+         *
+         * @param {string} listKey The key for the state for the paginated ist to set the sort option of
+         * @param {Function=undefined} changeSort The function to call when the sort option value changes
+         */
         .directive('sortOptions', sortOptions);
 
-    sortOptions.$inject = ['catalogStateService', 'catalogManagerService', 'prefixes'];
+    sortOptions.$inject = ['catalogStateService', 'catalogManagerService'];
 
-    function sortOptions(catalogStateService, catalogManagerService, prefixes) {
+    function sortOptions(catalogStateService, catalogManagerService) {
         return {
             restrict: 'E',
             replace: true,

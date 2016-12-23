@@ -24,7 +24,31 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name catalogPagination
+         *
+         * @description
+         * The `catalogPagination` module only provides the `catalogPagination` directive
+         * which creates a wrapper for a {@link pagination.directive:pagination pagination}
+         * directive with functionality specifically for the catalog module.
+         */
         .module('catalogPagination', [])
+        /**
+         * @ngdoc directive
+         * @name catalogPagination.directive:catalogPagination
+         * @scope
+         * @restrict E
+         * @requires  catalogState.service:catalogStateService
+         * @requires  catalogManager.service:catalogManagerService
+         *
+         * @description
+         * `catalogPagination` is a directive which creates a div with a
+         * {@link pagination.directive:pagination pagination} directive passing a `getPage` method
+         * that retrieves a new set of pagination results using the
+         * {@link catalogManager.service:catalogManagerService catalogManagerService}.
+         * The directive is replaced by the contents of its template.
+         */
         .directive('catalogPagination', catalogPagination);
 
     catalogPagination.$inject = ['catalogStateService', 'catalogManagerService'];
@@ -42,13 +66,17 @@
 
                 dvm.getPage = function(direction) {
                     if (direction === 'next') {
-                        dvm.state.currentPage += 1;
                         dvm.cm.getResultsPage(dvm.state.links.next)
-                            .then(response => dvm.state.setPagination(response), error => console.error(error));
+                            .then(response => {
+                                dvm.state.currentPage += 1;
+                                dvm.state.setPagination(response);
+                            }, error => toastr.error(error, 'Error', {timeOut: 0}));
                     } else {
-                        dvm.state.currentPage -= 1;
                         dvm.cm.getResultsPage(dvm.state.links.prev)
-                            .then(response => dvm.state.setPagination(response), error => console.error(error));
+                            .then(response => {
+                                dvm.state.currentPage -= 1;
+                                dvm.state.setPagination(response);
+                            }, error => toastr.error(error, 'Error', {timeOut: 0}));
                     }
                 }
             },

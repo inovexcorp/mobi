@@ -24,7 +24,37 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name paginationHeader
+         *
+         * @description
+         * The `paginationHeader` module only provides the `paginationHeader` directive which creates
+         * a div with {@link pagingDetails.directive:pagingDetails pagingDetails} and
+         * {@link sortOptions.directive:sortOptions sortOptions} for a pagination display in the catalog
+         * module.
+         */
         .module('paginationHeader', [])
+        /**
+         * @ngdoc directive
+         * @name paginationHeader.directive:paginationHeader
+         * @scope
+         * @restrict E
+         * @requires catalogState.service:cataStateService
+         * @requires catalogManager.service:catalogManagerService
+         *
+         * @description
+         * `paginationHeader` is a directive which creates a div with a
+         * {@link pagingDetails.directive:pagingDetails pagingDetails} directive and a
+         * {@link sortOptions.directive:sortOptions sortOptions} for the paginated display of results mathcing
+         * the passed `listKey` in the current {@link catalogState.service:catalogStateService#catalogs catalog}. Takes
+         * the function to call when the sort option is changed. The directive is replaced by the contents of
+         * its template.
+         *
+         * @param {string} listKey The key for the state of the paginated results to display information about
+         * in the current catalog
+         * @param {Function} changeSort The function to pass to the `sortOptions` directive
+         */
         .directive('paginationHeader', paginationHeader);
 
     paginationHeader.$inject = ['catalogStateService', 'catalogManagerService'];

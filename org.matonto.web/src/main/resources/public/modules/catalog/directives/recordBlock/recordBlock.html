@@ -47,7 +47,7 @@
             </div>
         </block-content>
         <block-footer>
-            <catalog-pagination></catalog-pagination>
+            <catalog-pagination ng-if="dvm.cm.isVersionedRDFRecord(dvm.record)"></catalog-pagination>
         </block-footer>
     </block>
 </div>

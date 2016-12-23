@@ -24,12 +24,47 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name recordBlock
+         *
+         * @description
+         * The `recordBlock` module only provides the `recordBlock` directive which creates
+         * a div with a {@link block.directive:block block} containing all information about the
+         * currently opened record in the current
+         * {@link catalogState.service:catalogStateService#catalogs catalog}.
+         */
         .module('recordBlock', [])
+        /**
+         * @ngdoc directive
+         * @name recordBlock.directive:recordBlock
+         * @scope
+         * @restrict E
+         * @requires catalogState.service:cataStateService
+         * @requires catalogManager.service:catalogManagerService
+         * @requires utilService.service:utilService
+         * @requires toastr
+         *
+         * @description
+         * `recordBlock` is a directive which creates a div with a {@link block.directive:block block}
+         * containing all information about the currently opened record in the current
+         * {@link catalogState.service:catalogStateService#catalogs catalog}. This record is retrieved from the
+         * current catalog's opened path. Information displayed includes the
+         * record's title, {@link recordTypes.directive:recordTypes types}, issued and modified
+         * {@link entityDates.directive:entityDates dates},
+         * {@link entityDescription.directive:entityDescription description}, and
+         * {@link recordKeywords.directive:recordKeywords keywords}. If the record is a `VersionedRdfRecord`,
+         * displays a paginated list of the record's branches with a
+         * {@link paginationHeader.directive:paginationHeader paginationHeader} and
+         * {@link catalogPagination.directive:catalogPagination catalogPagination}. Clicking a branch in the
+         * list will add it to the current catalog's `openedPath`. The directive is replaced by the contents
+         * of its template.
+         */
         .directive('recordBlock', recordBlock);
 
-    recordBlock.$inject = ['catalogStateService', 'catalogManagerService', 'prefixes', 'utilService'];
+    recordBlock.$inject = ['catalogStateService', 'catalogManagerService', 'utilService', 'toastr'];
 
-    function recordBlock(catalogStateService, catalogManagerService, prefixes, utilService) {
+    function recordBlock(catalogStateService, catalogManagerService, utilService, toastr) {
         return {
             restrict: 'E',
             replace: true,
@@ -39,14 +74,17 @@
                 var dvm = this;
                 dvm.state = catalogStateService;
                 dvm.cm = catalogManagerService;
-                dvm.prefixes = prefixes;
                 dvm.util = utilService;
                 dvm.record = dvm.state.getCurrentCatalog().openedPath[dvm.state.getCurrentCatalog().openedPath.length - 1];
 
-                getBranches();
+                if (dvm.cm.isVersionedRDFRecord(dvm.record)) {
+                    getBranches();
+                }
 
                 dvm.changeSort = function() {
-                    getBranches();
+                    if (dvm.cm.isVersionedRDFRecord(dvm.record)) {
+                        getBranches();
+                    }
                 }
                 dvm.openBranch = function(branch) {
                     dvm.state.resetPagination();
