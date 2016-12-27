@@ -632,7 +632,9 @@ function mockUtil() {
         $provide.service('utilService', function() {
             this.getBeautifulIRI = jasmine.createSpy('getBeautifulIRI').and.callFake(_.identity);
             this.getPropertyValue = jasmine.createSpy('getPropertyValue').and.returnValue('');
-            this.getDctermsValue = jasmine.createSpy('getPropertyValue').and.returnValue('');
+            this.setPropertyValue = jasmine.createSpy('setPropertyValue').and.returnValue({});
+            this.getDctermsValue = jasmine.createSpy('getDctermsValue').and.returnValue('');
+            this.setDctermsValue = jasmine.createSpy('setDctermsValue').and.returnValue({});
         });
     });
 }

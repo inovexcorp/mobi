@@ -41,31 +41,37 @@
                 controllerAs: 'dvm',
                 controller: function($scope) {
                     var dvm = this;
-                    var os = ontologyStateService;
                     var cm = catalogManagerService;
                     var catalogId = _.get(cm.localCatalog, '@id', '');
 
+                    dvm.os = ontologyStateService;
                     dvm.util = utilService;
                     dvm.list = [];
                     dvm.showDeleteConfirmation = false;
+                    dvm.showEditOverlay = false;
+                    dvm.deleteError = '';
 
-                    cm.getRecordBranches(os.listItem.recordId, catalogId)
+                    cm.getRecordBranches(dvm.os.listItem.recordId, catalogId)
                         .then(response => dvm.list = response.data);
 
-                    dvm.openDeleteConfirmation = function($event, branchId) {
+                    dvm.openDeleteConfirmation = function($event, branch) {
                         $event.stopPropagation();
                         dvm.branch = branch;
                         dvm.showDeleteConfirmation = true;
                     }
 
+                    dvm.openEditOverlay = function($event, branch) {
+                        $event.stopPropagation();
+                        dvm.branch = branch;
+                        dvm.showEditOverlay = true;
+                    }
+
                     dvm.delete = function() {
-                        cm.deleteRecordBranch(dvm.branch['@id'], os.listItem.recordId, catalogId)
+                        cm.deleteRecordBranch(dvm.branch['@id'], dvm.os.listItem.recordId, catalogId)
                             .then(() => {
-                                // TODO: make this the master branch
-                                /*if (dvm.branch['@id'] === os.listItem.branchId) {
-                                    os.listItem.branchId = master branch;
-                                }*/
-                            });
+                                _.remove(dvm.list, branch => _.isEqual(branch, dvm.branch));
+                                dvm.showDeleteConfirmation = false;
+                            }, errorMessage => dvm.deleteError = errorMessage);
                     }
                 }
             }

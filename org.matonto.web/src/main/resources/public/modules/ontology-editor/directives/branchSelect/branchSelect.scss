@@ -13,13 +13,25 @@
 
     .branch-display {
         .pull-right {
-            color: #fff;
+            color: $gray-light;
             line-height: 20px;
             text-decoration: none;
 
             &:hover {
                 color: $gray-dark;
             }
+        }
+
+        &.master .pull-right {
+            display: none;
+        }
+    }
+
+    .active .branch-display .pull-right {
+        color: #fff;
+
+        &:hover {
+            color: $gray-light;
         }
     }
 }

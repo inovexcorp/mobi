@@ -46,6 +46,7 @@
             'datatypePropertyAxioms',
             'datatypePropertyBlock',
             'datatypePropertyOverlay',
+            'editBranchOverlay',
             'editorRadioButtons',
             'everythingTree',
             'hierarchyTree',

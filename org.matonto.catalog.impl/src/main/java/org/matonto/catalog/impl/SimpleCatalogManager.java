@@ -688,10 +688,7 @@ public class SimpleCatalogManager implements CatalogManager {
             if (conn.getStatements(versionedRDFRecordId, masterBranchIRI, null, versionedRDFRecordId).hasNext()) {
                 throw new MatOntoException("The Record already has a master Branch.");
             } else if (resourceExists(versionedRDFRecordId, VersionedRDFRecord.TYPE)) {
-                Branch branch = branchFactory.createNew(vf.createIRI(BRANCH_NAMESPACE + UUID.randomUUID()));
-                branch.setProperty(vf.createLiteral("MASTER"), vf.createIRI(DCTERMS.TITLE.stringValue()));
-                branch.setProperty(vf.createLiteral("The master branch."),
-                        vf.createIRI(DCTERMS.DESCRIPTION.stringValue()));
+                Branch branch = createBranch("MASTER", "The master branch.", branchFactory);
                 conn.begin();
                 conn.add(versionedRDFRecordId, vf.createIRI(VersionedRDFRecord.branch_IRI), branch.getResource(),
                         versionedRDFRecordId);

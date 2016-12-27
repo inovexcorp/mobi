@@ -92,7 +92,8 @@
             var vocabularyListItemTemplate = {
                 ontology: [],
                 ontologyId: '',
-                annotations: angular.copy(_.union(propertyManagerService.defaultAnnotations, propertyManagerService.skosAnnotations)),
+                annotations: angular.copy(_.union(propertyManagerService.defaultAnnotations,
+                    propertyManagerService.skosAnnotations)),
                 conceptHierarchy: [],
                 conceptIndex: {},
                 index: {}
@@ -561,7 +562,8 @@
                 $q.all(promises)
                     .then(responses => {
                         if (!_.some(responses, {data: {updated: false}})) {
-                            var newId = _.get(_.find(responses, response => _.has(response, 'data.id')), 'data.id', ontologyId);
+                            var newId = _.get(_.find(responses, response => _.has(response, 'data.id')), 'data.id',
+                                ontologyId);
                             if (ontologyId !== newId) {
                                 self.setOntologyId(ontologyId, newId);
                             }
@@ -825,7 +827,8 @@
              * @returns {Promise} A promise with a boolean indicating the success of the deletion.
              */
             self.deleteClass = function(ontologyId, classIRI) {
-                return $http.delete(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/classes/' + encodeURIComponent(classIRI));
+                return $http.delete(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/classes/'
+                    + encodeURIComponent(classIRI));
             }
             /**
              * @ngdoc method
@@ -1078,7 +1081,8 @@
              * @returns {Promise} A promise with a boolean indicating the success of the deletion.
              */
             self.deleteObjectProperty = function(ontologyId, propertyIRI) {
-                return $http.delete(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/object-properties/' + encodeURIComponent(propertyIRI));
+                return $http.delete(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/object-properties/'
+                    + encodeURIComponent(propertyIRI));
             }
             /**
              * @ngdoc method
@@ -1101,7 +1105,8 @@
                         resourcejson: propertyJSON
                     }
                 };
-                return $http.post(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/object-properties', null, config);
+                return $http.post(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/object-properties', null,
+                    config);
             }
             /**
              * @ngdoc method
@@ -1163,7 +1168,8 @@
              * @returns {Promise} A promise with a boolean indicating the success of the deletion.
              */
             self.deleteDataTypeProperty = function(ontologyId, propertyIRI) {
-                return $http.delete(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/data-properties/' + encodeURIComponent(propertyIRI));
+                return $http.delete(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/data-properties/'
+                    + encodeURIComponent(propertyIRI));
             }
             /**
              * @ngdoc method
@@ -1186,7 +1192,8 @@
                         resourcejson: propertyJSON
                     }
                 };
-                return $http.post(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/data-properties', null, config);
+                return $http.post(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/data-properties', null,
+                    config);
             }
             /**
              * @ngdoc method
@@ -1352,7 +1359,8 @@
              * @returns {Promise} A promise with a boolean indicating the success of the deletion.
              */
             self.deleteIndividual = function(ontologyId, individualIRI) {
-                return $http.delete(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/named-individuals/' + encodeURIComponent(individualIRI));
+                return $http.delete(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/named-individuals/'
+                    + encodeURIComponent(individualIRI));
             }
             /**
              * @ngdoc method
@@ -1375,7 +1383,8 @@
                         resourcejson: individualJSON
                     }
                 };
-                return $http.post(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/named-individuals', null, config);
+                return $http.post(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/named-individuals', null,
+                    config);
             }
             /**
              * @ngdoc method
@@ -1601,8 +1610,8 @@
              */
             self.getEntityUsages = function(ontologyId, entityIRI) {
                 var deferred = $q.defer();
-                $http.get(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/entity-usages/' + encodeURIComponent(entityIRI))
-                    .then(response => {
+                $http.get(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/entity-usages/'
+                    + encodeURIComponent(entityIRI)).then(response => {
                         if(_.get(response, 'status') === 200) {
                             deferred.resolve(response.data.results.bindings);
                         } else if (_.get(response, 'status') === 204) {

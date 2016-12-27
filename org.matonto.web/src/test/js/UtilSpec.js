@@ -68,6 +68,14 @@ describe('Util service', function() {
             expect(utilSvc.getPropertyValue({}, 'prop')).toBe('');
         });
     });
+    it('should set a property value for an entity', function() {
+        var prop = 'property';
+        var value = 'value';
+        var entity = {};
+        var expected = {'property': [{'@value': value}]};
+        utilSvc.setPropertyValue(entity, prop, value);
+        expect(entity).toEqual(expected);
+    });
     describe('should get a dcterms property value from an entity', function() {
         it('if it contains the property', function() {
             var prop = 'prop',
@@ -78,5 +86,13 @@ describe('Util service', function() {
         it('if it does not contain the property', function() {
             expect(utilSvc.getDctermsValue({}, 'prop')).toBe('');
         });
+    });
+    describe('should set a dcterms property value for an entity', function() {
+        var prop = 'prop';
+        var value = 'value';
+        var entity = {};
+        var expected = {[prefixes.dcterms + 'property']: [{'@value': value}]};
+        utilSvc.setDctermsValue(entity, prop, value);
+        expect(entity).toEqual(expected);
     });
 });

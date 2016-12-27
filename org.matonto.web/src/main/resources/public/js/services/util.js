@@ -81,6 +81,10 @@
                 return _.get(entity, "['" + propertyIRI + "'][0]['@value']", '');
             }
 
+            self.setPropertyValue = function(entity, propertyIRI, value) {
+                _.set(entity, "['" + propertyIRI + "'][0]['@value']", value);
+            }
+
             /**
              * @ngdoc method
              * @name getPropertyValue
@@ -96,6 +100,10 @@
              */
             self.getDctermsValue = function(entity, property) {
                 return self.getPropertyValue(entity, prefixes.dcterms + property);
+            }
+
+            self.setDctermsValue = function(entity, property, value) {
+                self.setPropertyValue(entity, prefixes.dcterms + property, value);
             }
         }
 })();

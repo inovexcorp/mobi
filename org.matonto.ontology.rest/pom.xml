@@ -41,7 +41,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rest.util</artifactId>
-            <version>1.4.10-SNAPSHOT</version>
+            <version>1.4.11-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>biz.aQute.bnd</groupId>
@@ -50,27 +50,27 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.api</artifactId>
-            <version>1.4.10-SNAPSHOT</version>
+            <version>1.4.11-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>persistence.api</artifactId>
-            <version>1.4.10-SNAPSHOT</version>
+            <version>1.4.11-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>persistence.utils</artifactId>
-            <version>1.4.10-SNAPSHOT</version>
+            <version>1.4.11-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>catalog.api</artifactId>
-            <version>1.4.10-SNAPSHOT</version>
+            <version>1.4.11-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>web.security</artifactId>
-            <version>1.4.10-SNAPSHOT</version>
+            <version>1.4.11-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.apache.servicemix.bundles</groupId>
@@ -91,7 +91,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>jaas</artifactId>
-            <version>1.4.10-SNAPSHOT</version>
+            <version>1.4.11-SNAPSHOT</version>
         </dependency>
 
         <!-- Test dependencies -->
@@ -110,13 +110,13 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>catalog.impl</artifactId>
-            <version>1.4.10-SNAPSHOT</version>
+            <version>1.4.11-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.core.impl.owlapi</artifactId>
-            <version>1.4.10-SNAPSHOT</version>
+            <version>1.4.11-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
