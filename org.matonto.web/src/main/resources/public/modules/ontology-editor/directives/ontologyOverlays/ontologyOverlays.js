@@ -47,12 +47,11 @@
                     }
 
                     dvm.save = function() {
-                        dvm.om.saveChanges(dvm.sm.state.ontologyId, dvm.sm.getUnsavedEntities(dvm.sm.ontology),
-                            dvm.sm.getCreatedEntities(dvm.sm.ontology), dvm.sm.state.deletedEntities)
-                            .then(newId => {
-                                dvm.sm.afterSave(newId);
+                        dvm.om.saveChanges(dvm.sm.listItem.recordId, {additions: dvm.sm.listItem.additions,
+                            deletions: dvm.sm.listItem.deletions}).then(() => {
+                                dvm.sm.afterSave();
                                 dvm.sm.showSaveOverlay = false;
-                            }, onError);
+                            }, onError)
                     }
 
                     dvm.removeIndividualProperty = function() {
@@ -60,7 +59,7 @@
                         if (!dvm.sm.selected[dvm.sm.key].length) {
                             _.unset(dvm.sm.selected, dvm.sm.key);
                         }
-                        dvm.sm.setUnsaved(dvm.sm.state.ontology, dvm.sm.state.entityIRI, true);
+                        dvm.sm.setUnsaved(dvm.sm.listItem.ontologyId, dvm.sm.state.entityIRI, true);
                         dvm.sm.showRemoveIndividualPropertyOverlay = false;
                     }
                 }

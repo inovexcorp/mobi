@@ -150,6 +150,8 @@ describe('Create Individual Overlay directive', function() {
             controller.create();
             expect(controller.individual['@type']).toContain(prefixes.owl + 'NamedIndividual');
             expect(ontologyManagerSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.ontology, controller.individual);
+            expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
+                controller.individual);
             expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(controller.individual['@id']);
             expect(ontologyStateSvc.showCreateIndividualOverlay).toBe(false);
         });

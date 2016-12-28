@@ -124,6 +124,8 @@ describe('Create Property Overlay directive', function() {
                 controller.property);
             expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(controller.property);
             expect(ontologyManagerSvc.getListItemById).toHaveBeenCalledWith(ontologyStateSvc.state.ontologyId);
+            expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
+                controller.property);
             expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(controller.property['@id']);
             expect(ontologyStateSvc.showCreatePropertyOverlay).toBe(false);
         });

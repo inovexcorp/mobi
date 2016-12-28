@@ -90,6 +90,7 @@
                         var listItem = dvm.om.getListItemById(dvm.sm.state.ontologyId);
                         _.get(listItem, 'conceptHierarchy').push({'entityIRI': dvm.concept['@id']});
                         _.set(_.get(listItem, 'index'), dvm.concept['@id'], dvm.sm.ontology.length - 1);
+                        dvm.om.addToAdditions(dvm.sm.listItem.ontologyId, dvm.concept);
                         // select the new class
                         dvm.sm.selectItem(_.get(dvm.concept, '@id'));
                         // hide the overlay

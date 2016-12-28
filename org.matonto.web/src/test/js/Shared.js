@@ -102,7 +102,9 @@ function injectRemoveIriFromArrayFilter() {
 
 function injectRemoveMatontoFilter() {
     module(function($provide) {
-        $provide.value('removeMatontoFilter', jasmine.createSpy('removeMatontoFilter'));
+        $provide.value('removeMatontoFilter', jasmine.createSpy('removeMatontoFilter').and.callFake(function(word) {
+            return word;
+        }));
     });
 }
 
@@ -202,6 +204,8 @@ function mockOntologyManager() {
             this.closeOntology = jasmine.createSpy('closeOntology');
             this.getEntityById = jasmine.createSpy('getEntityById');
             this.getSearchResults = jasmine.createSpy('getSearchResults');
+            this.addToAdditions = jasmine.createSpy('addToAdditions');
+            this.addToDeletions = jasmine.createSpy('addToDeletions');
         });
     });
 }
@@ -421,7 +425,8 @@ function mockOntologyState() {
                 index: {},
                 recordId: '',
                 branchId: '',
-                commitId: ''
+                commitId: '',
+                ontologyId: ''
             };
             this.reset = jasmine.createSpy('reset');
             this.setTreeTab = jasmine.createSpy('setTreeTab');

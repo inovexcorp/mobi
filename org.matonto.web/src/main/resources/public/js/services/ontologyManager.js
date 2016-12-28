@@ -516,7 +516,7 @@
              * @param {Object[]} unsavedEntities The array of ontology entities with unsaved changes.
              * @returns {Promise} A promise with the ontology ID.
              */
-            self.saveChanges = function(ontologyId, unsavedEntities, createdEntities, deletedEntities) {
+            /*self.saveChanges = function(ontologyId, unsavedEntities, createdEntities, deletedEntities) {
                 var deferred = $q.defer();
                 var promises = [];
                 var config = {};
@@ -577,6 +577,43 @@
                         deferred.reject('An error has occurred.');
                     });
                 return deferred.promise;
+            }*/
+            self.saveChanges = function(recordId, differenceObj) {
+                var deferred = $q.defer();
+                var catalogId = _.get(cm.localCatalog, '@id', '');
+                var onSuccess = function() {
+                    cm.updateInProgressCommit(recordId, catalogId, differenceObj)
+                        .then(deferred.resolve, deferred.reject);
+                }
+                cm.getInProgressCommit(recordId, catalogId)
+                    .then(onSuccess, errorMessage => {
+                        if (errorMessage === 'User has no InProgressCommit') {
+                            cm.createInProgressCommit(recordId, catalogId)
+                                .then(onSuccess, errorMessage => deferred.reject(errorMessage));
+                        } else {
+                            deferred.reject(errorMessage);
+                        }
+                    });
+                return deferred.promise;
+            }
+
+            function addToInProgress(ontologyId, json, prop) {
+                var listItem = self.getListItemById(ontologyId);
+                var entity = _.find(listItem[prop], {'@id': json['@id']});
+                json = $filter('removeMatonto')(json);
+                if (entity) {
+                    _.merge(entity, json);
+                } else {
+                    listItem[prop].push(json);
+                }
+            }
+
+            self.addToAdditions = function(ontologyId, json) {
+                addToInProgress(ontologyId, json, 'additions');
+            }
+
+            self.addToDeletions = function(ontologyId, json) {
+                addToInProgress(ontologyId, json, 'deletions');
             }
             /**
              * @ngdoc method
@@ -716,9 +753,7 @@
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    params: {
-                        title
-                    }
+                    params: {title}
                 };
                 if (description) {
                     config.params.description = description;
@@ -1909,6 +1944,8 @@
                 listItem.ontology = ontology;
                 listItem.blankNodes = blankNodes;
                 listItem.index = index;
+                listItem.additions = [];
+                listItem.deletions = [];
                 return listItem;
             }
             function addOntologyToList(ontologyId, recordId, branchId, ontology) {

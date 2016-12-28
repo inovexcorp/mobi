@@ -83,10 +83,11 @@
                         dvm.om.addEntity(dvm.sm.ontology, dvm.clazz);
                         // update relevant lists
                         var split = $filter('splitIRI')(dvm.clazz['@id']);
-                        var listItem = dvm.om.getListItemById(dvm.sm.state.ontologyId);
-                        _.get(listItem, 'subClasses').push({namespace:split.begin + split.then, localName: split.end});
-                        _.get(listItem, 'classHierarchy').push({'entityIRI': dvm.clazz['@id']});
-                        _.set(_.get(listItem, 'index'), dvm.clazz['@id'], dvm.sm.ontology.length - 1);
+                        _.get(dvm.sm.listItem, 'subClasses').push({namespace:split.begin + split.then,
+                            localName: split.end});
+                        _.get(dvm.sm.listItem, 'classHierarchy').push({'entityIRI': dvm.clazz['@id']});
+                        _.set(_.get(dvm.sm.listItem, 'index'), dvm.clazz['@id'], dvm.sm.ontology.length - 1);
+                        dvm.om.addToAdditions(dvm.sm.listItem.ontologyId, dvm.clazz);
                         // select the new class
                         dvm.sm.selectItem(_.get(dvm.clazz, '@id'));
                         // hide the overlay

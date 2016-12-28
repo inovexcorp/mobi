@@ -50,6 +50,7 @@ describe('Ontology Manager service', function() {
         mockCatalogManager();
         mockUtil();
         mockStateManager();
+        injectRemoveMatontoFilter();
 
         inject(function(ontologyManagerService, _$httpBackend_, _$q_, _$rootScope_, _catalogManagerService_,
             _stateManagerService_, _prefixes_) {
@@ -129,6 +130,159 @@ describe('Ontology Manager service', function() {
             expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(branchId, recordId, catalogId);
             expect(catalogManagerSvc.getResource).toHaveBeenCalledWith(commitId, branchId, recordId, catalogId, false,
                 format);
+        });
+    });
+
+    describe('addToAdditions should call the correct functions', function() {
+        it('when entity is in the additions list', function() {
+            var statement = {'@id': 'id', 'prop': 'value'};
+            var listItem = {'additions': [{'@id': 'id'}]};
+            spyOn(ontologyManagerSvc, 'getListItemById').and.returnValue(listItem);
+            ontologyManagerSvc.addToAdditions(ontologyId, statement);
+            expect(ontologyManagerSvc.getListItemById).toHaveBeenCalledWith(ontologyId);
+            expect(listItem.additions[0]).toEqual(statement);
+        });
+        it('when entity is not in the additions list', function() {
+            var statement = {'@id': 'id', 'prop': 'value'};
+            var listItem = {'additions': []};
+            spyOn(ontologyManagerSvc, 'getListItemById').and.returnValue(listItem);
+            ontologyManagerSvc.addToAdditions(ontologyId, statement);
+            expect(ontologyManagerSvc.getListItemById).toHaveBeenCalledWith(ontologyId);
+            expect(listItem.additions[0]).toEqual(statement);
+        });
+    });
+
+    describe('addToDeletions should call the correct functions', function() {
+        it('when entity is in the deletions list', function() {
+            var statement = {'@id': 'id', 'prop': 'value'};
+            var listItem = {'deletions': [{'@id': 'id'}]};
+            spyOn(ontologyManagerSvc, 'getListItemById').and.returnValue(listItem);
+            ontologyManagerSvc.addToDeletions(ontologyId, statement);
+            expect(ontologyManagerSvc.getListItemById).toHaveBeenCalledWith(ontologyId);
+            expect(listItem.deletions[0]).toEqual(statement);
+        });
+        it('when entity is not in the deletions list', function() {
+            var statement = {'@id': 'id', 'prop': 'value'};
+            var listItem = {'deletions': []};
+            spyOn(ontologyManagerSvc, 'getListItemById').and.returnValue(listItem);
+            ontologyManagerSvc.addToDeletions(ontologyId, statement);
+            expect(ontologyManagerSvc.getListItemById).toHaveBeenCalledWith(ontologyId);
+            expect(listItem.deletions[0]).toEqual(statement);
+        });
+    });
+
+    describe('saveChanges calls the correct methods when the user', function() {
+        var getDeferred, createDeferred, updateDeferred;
+        var differenceObj = {additions: '', deletions: ''};
+        beforeEach(function() {
+            getDeferred = $q.defer();
+            createDeferred = $q.defer();
+            updateDeferred = $q.defer();
+            catalogManagerSvc.getInProgressCommit.and.returnValue(getDeferred.promise);
+            catalogManagerSvc.createInProgressCommit.and.returnValue(createDeferred.promise);
+            catalogManagerSvc.updateInProgressCommit.and.returnValue(updateDeferred.promise);
+        });
+        describe('has an InProgressCommit', function() {
+            beforeEach(function() {
+                getDeferred.resolve();
+            });
+            it('and update is successful', function() {
+                var update = 'update';
+                updateDeferred.resolve(update);
+                ontologyManagerSvc.saveChanges(recordId, differenceObj)
+                    .then(function(response) {
+                        expect(response).toEqual(update);
+                    }, function(response) {
+                        fail('Promise should have resolved');
+                    });
+                scope.$apply();
+                expect(catalogManagerSvc.getInProgressCommit).toHaveBeenCalledWith(recordId, catalogId);
+                expect(catalogManagerSvc.updateInProgressCommit).toHaveBeenCalledWith(recordId, catalogId, differenceObj);
+                expect(catalogManagerSvc.createInProgressCommit).not.toHaveBeenCalled();
+            });
+            it('and update is not successful', function() {
+                var error = 'error';
+                updateDeferred.reject(error);
+                ontologyManagerSvc.saveChanges(recordId, differenceObj)
+                    .then(function() {
+                        fail('Promise should have rejected');
+                    }, function(response) {
+                        expect(response).toEqual(error);
+                    });
+                scope.$apply();
+                expect(catalogManagerSvc.getInProgressCommit).toHaveBeenCalledWith(recordId, catalogId);
+                expect(catalogManagerSvc.updateInProgressCommit).toHaveBeenCalledWith(recordId, catalogId,
+                    differenceObj);
+                expect(catalogManagerSvc.createInProgressCommit).not.toHaveBeenCalled();
+            });
+        });
+        describe('does not have an InProgressCommit', function() {
+            beforeEach(function() {
+                getDeferred.reject('User has no InProgressCommit');
+            });
+            describe('and creation is successful', function() {
+                beforeEach(function() {
+                    createDeferred.resolve();
+                });
+                it('and update is successful', function() {
+                    var update = 'update';
+                    updateDeferred.resolve(update);
+                    ontologyManagerSvc.saveChanges(recordId, differenceObj)
+                        .then(function(response) {
+                            expect(response).toEqual(update);
+                        }, function(response) {
+                            fail('Promise should have resolved');
+                        });
+                    scope.$apply();
+                    expect(catalogManagerSvc.getInProgressCommit).toHaveBeenCalledWith(recordId, catalogId);
+                    expect(catalogManagerSvc.createInProgressCommit).toHaveBeenCalledWith(recordId, catalogId);
+                    expect(catalogManagerSvc.updateInProgressCommit).toHaveBeenCalledWith(recordId, catalogId,
+                        differenceObj);
+                });
+                it('and update is not successful', function() {
+                    var error = 'error';
+                    updateDeferred.reject(error);
+                    ontologyManagerSvc.saveChanges(recordId, differenceObj)
+                        .then(function() {
+                            fail('Promise should have rejected');
+                        }, function(response) {
+                            expect(response).toEqual(error);
+                        });
+                    scope.$apply();
+                    expect(catalogManagerSvc.getInProgressCommit).toHaveBeenCalledWith(recordId, catalogId);
+                    expect(catalogManagerSvc.createInProgressCommit).toHaveBeenCalledWith(recordId, catalogId);
+                    expect(catalogManagerSvc.updateInProgressCommit).toHaveBeenCalledWith(recordId, catalogId,
+                        differenceObj);
+                });
+            });
+            it('and creation is not successful', function() {
+                var error = 'error';
+                createDeferred.reject(error);
+                ontologyManagerSvc.saveChanges(recordId, differenceObj)
+                    .then(function() {
+                        fail('Promise should have rejected');
+                    }, function(response) {
+                        expect(response).toEqual(error);
+                    });
+                scope.$apply();
+                expect(catalogManagerSvc.getInProgressCommit).toHaveBeenCalledWith(recordId, catalogId);
+                expect(catalogManagerSvc.createInProgressCommit).toHaveBeenCalledWith(recordId, catalogId);
+                expect(catalogManagerSvc.updateInProgressCommit).not.toHaveBeenCalled();
+            });
+        });
+        it('get InProgressCommit has an error', function() {
+            var error = 'error';
+            getDeferred.reject(error);
+            ontologyManagerSvc.saveChanges(recordId, differenceObj)
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toEqual(error);
+                });
+            scope.$apply();
+            expect(catalogManagerSvc.getInProgressCommit).toHaveBeenCalledWith(recordId, catalogId);
+            expect(catalogManagerSvc.updateInProgressCommit).not.toHaveBeenCalled();
+            expect(catalogManagerSvc.createInProgressCommit).not.toHaveBeenCalled();
         });
     });
 

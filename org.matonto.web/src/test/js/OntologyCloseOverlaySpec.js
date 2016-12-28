@@ -101,24 +101,14 @@ describe('Ontology Close Overlay directive', function() {
                 controller.saveThenClose();
             });
             it('calls the correct manager functions', function() {
-                ontologyManagerSvc.getOntologyById.and.returnValue([]);
-                expect(ontologyManagerSvc.getOntologyById).toHaveBeenCalledWith(ontologyStateSvc.ontologyIdToClose);
-                expect(ontologyStateSvc.getUnsavedEntities).toHaveBeenCalledWith(ontologyManagerSvc.getOntologyById());
-                expect(ontologyStateSvc.getCreatedEntities).toHaveBeenCalledWith(ontologyManagerSvc.getOntologyById());
-                expect(ontologyStateSvc.getState).toHaveBeenCalledWith(ontologyStateSvc.ontologyIdToClose);
-                expect(ontologyManagerSvc.saveChanges).toHaveBeenCalledWith(
-                    ontologyStateSvc.ontologyIdToClose,
-                    ontologyStateSvc.getUnsavedEntities(ontologyManagerSvc.getOntologyById()),
-                    ontologyStateSvc.getCreatedEntities(ontologyManagerSvc.getOntologyById()),
-                    ontologyStateSvc.getState().deletedEntities
-                );
+                expect(ontologyManagerSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
+                    {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});
             });
             it('when resolved, calls the correct controller function', function() {
                 controller.close = jasmine.createSpy('close');
                 deferred.resolve('id');
                 scope.$apply();
                 expect(controller.close).toHaveBeenCalled();
-                expect(ontologyStateSvc.afterSave).toHaveBeenCalledWith('id');
             });
             it('when rejected, sets the correct variable', function() {
                 deferred.reject('error');

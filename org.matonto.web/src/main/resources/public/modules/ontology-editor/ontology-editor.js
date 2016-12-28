@@ -77,6 +77,7 @@
             'relationshipOverlay',
             'relationshipsBlock',
             'removePropertyOverlay',
+            'saveChangesTab',
             'searchTab',
             'selectedDetails',
             'serializationSelect',

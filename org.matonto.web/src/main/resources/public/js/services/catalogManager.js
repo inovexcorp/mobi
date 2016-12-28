@@ -1368,15 +1368,14 @@
                     config = {
                         transformRequest: _.identity,
                         headers: {
-                            'Content-Type': undefined,
-                            'Accept': 'text/plain'
+                            'Content-Type': undefined
                         }
                     };
                 if (_.has(differenceObj, 'additions')) {
-                    fd.append('additions', differenceObj.additions);
+                    fd.append('additions', JSON.stringify(differenceObj.additions));
                 }
                 if (_.has(differenceObj, 'deletions')) {
-                    fd.append('deletions', differenceObj.deletions);
+                    fd.append('deletions', JSON.stringify(differenceObj.deletions));
                 }
                 $rootScope.showSpinner = true;
                 $http.put(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit', fd, config)

@@ -48,6 +48,7 @@
                     dvm.create = function() {
                         dvm.pm.create(dvm.sm.state.ontologyId, dvm.om.getAnnotationIRIs(dvm.sm.ontology), dvm.iri)
                             .then(annotationJSON => {
+                                dvm.om.addToAdditions(dvm.sm.listItem.ontologyId, annotationJSON);
                                 _.set(annotationJSON, 'matonto.originalIRI', angular.copy(annotationJSON['@id']));
                                 dvm.om.addEntity(dvm.sm.ontology, annotationJSON);
                                 dvm.sm.showCreateAnnotationOverlay = false;

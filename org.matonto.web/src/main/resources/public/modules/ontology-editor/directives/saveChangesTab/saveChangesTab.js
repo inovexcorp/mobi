@@ -24,55 +24,22 @@
     'use strict';
 
     angular
-        .module('searchTab', [])
-        .directive('searchTab', searchTab);
+        .module('saveChangesTab', [])
+        .directive('saveChangesTab', saveChangesTab);
 
-        searchTab.$inject = ['ontologyStateService', 'ontologyUtilsManagerService', 'ontologyManagerService'];
+        saveChangesTab.$inject = ['ontologyStateService'];
 
-        function searchTab(ontologyStateService, ontologyUtilsManagerService, ontologyManagerService) {
+        function saveChangesTab(ontologyStateService) {
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/searchTab/searchTab.html',
+                templateUrl: 'modules/ontology-editor/directives/saveChangesTab/saveChangesTab.html',
                 scope: {},
                 controllerAs: 'dvm',
-                controller: ['$scope', function($scope) {
+                controller: function($scope) {
                     var dvm = this;
-                    dvm.sm = ontologyStateService;
-                    dvm.um = ontologyUtilsManagerService;
-                    dvm.om = ontologyManagerService;
-
-                    dvm.onKeyup = function($event) {
-                        if ($event.keyCode === 13) {
-                            dvm.sm.unSelectItem();
-                            dvm.om.getSearchResults(dvm.sm.listItem.ontologyId, dvm.sm.state.searchText)
-                                .then(results => {
-                                    dvm.sm.state.errorMessage = '';
-                                    dvm.sm.state.results = results;
-                                    dvm.sm.state.infoMessage = !_.isEmpty(results) ? '' : 'There were no results for your search text.';
-                                    dvm.sm.state.highlightText = dvm.sm.state.searchText;
-                                }, errorMessage => {
-                                    dvm.sm.state.errorMessage = errorMessage;
-                                    dvm.sm.state.infoMessage = '';
-                                });
-                        }
-                    }
-
-                    dvm.onClear = function() {
-                        dvm.sm.state.errorMessage = '';
-                        dvm.sm.state.highlightText = '';
-                        dvm.sm.state.infoMessage = '';
-                        dvm.sm.state.results = {};
-                        dvm.sm.state.searchText = '';
-                        dvm.sm.state.selected = {};
-                    }
-
-                    function setSelected() {
-                        dvm.sm.state.selected = _.omit(angular.copy(dvm.sm.selected), '@id', '@type', 'matonto');
-                    }
-
-                    $scope.$watch('dvm.sm.selected', setSelected);
-                }]
+                    dvm.os = ontologyStateService;
+                }
             }
         }
 })();

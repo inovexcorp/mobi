@@ -1,20 +1,6 @@
 /* Core variables */
 @import "./src/main/resources/public/css/variables";
 
-.search-tab {
-    .ui-select-highlight {
-        background-color: yellow;
-    }
+.save-changes-tab {
 
-    .padding {
-        padding-top: 10px;
-    }
-
-    .result-header {
-        border-bottom: 1px solid $gray-light;
-        cursor: pointer;
-        display: inline-block;
-        padding: 5px 0;
-        width: 100%;
-    }
 }

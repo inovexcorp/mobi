@@ -95,18 +95,19 @@ describe('Ontology Overlays directive', function() {
                 controller.save();
             });
             it('calls the correct manager function', function() {
-                expect(ontologyStateSvc.getUnsavedEntities).toHaveBeenCalledWith(ontologyStateSvc.ontology);
-                expect(ontologyStateSvc.getCreatedEntities).toHaveBeenCalledWith(ontologyStateSvc.ontology);
-                expect(ontologyManagerSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.state.ontologyId,
-                    ontologyStateSvc.getUnsavedEntities(ontologyStateSvc.ontology),
-                    ontologyStateSvc.getCreatedEntities(ontologyStateSvc.ontology),
-                    ontologyStateSvc.state.deletedEntities);
+                expect(ontologyManagerSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
+                    {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});
             });
             it('when resolved, sets the correct variable and calls correct manager function', function() {
                 deferred.resolve('id');
                 scope.$apply();
                 expect(ontologyStateSvc.showSaveOverlay).toBe(false);
-                expect(ontologyStateSvc.afterSave).toHaveBeenCalledWith('id');
+                expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
+            });
+            it('when rejected, sets the correct variable', function() {
+                deferred.reject('error');
+                scope.$apply();
+                expect(controller.error).toEqual('error');
             });
         });
         it('removeIndividualProperty calls the correct manager functions and sets the correct manager variables', function() {

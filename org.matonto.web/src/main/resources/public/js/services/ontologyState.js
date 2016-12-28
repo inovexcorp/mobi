@@ -47,12 +47,13 @@
                 self.state.active = true;
                 self.listItem = {};
             }
-            self.afterSave = function(newId) {
-                if (self.state.ontologyId !== newId) {
+            self.afterSave = function() {
+                /*if (self.state.ontologyId !== newId) {
                     self.state.ontologyId = newId;
                     self.state.project.entityIRI = om.getOntologyIRI(self.ontology);
-                }
-                _.unset(self.state, 'deletedEntities');
+                }*/
+                self.listItem.additions = [];
+                self.listItem.deletions = [];
             }
 
             self.setUnsaved = function(ontologyId, entityIRI, isUnsaved) {

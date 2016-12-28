@@ -43,15 +43,9 @@
                     dvm.sm = ontologyStateService;
 
                     dvm.saveThenClose = function() {
-                        var ontology = dvm.om.getOntologyById(dvm.sm.ontologyIdToClose);
-                        dvm.om.saveChanges(dvm.sm.ontologyIdToClose, dvm.sm.getUnsavedEntities(ontology),
-                            dvm.sm.getCreatedEntities(ontology), dvm.sm.getState(dvm.sm.ontologyIdToClose).deletedEntities)
-                            .then(newId => {
-                                dvm.sm.afterSave(newId);
-                                dvm.close();
-                            }, errorMessage => {
-                                dvm.error = errorMessage;
-                            });
+                        dvm.om.saveChanges(dvm.sm.listItem.recordId, {additions: dvm.sm.listItem.additions,
+                            deletions: dvm.sm.listItem.deletions}).then(() => dvm.close(),
+                                errorMessage => dvm.error = errorMessage);
                     }
 
                     dvm.close = function() {

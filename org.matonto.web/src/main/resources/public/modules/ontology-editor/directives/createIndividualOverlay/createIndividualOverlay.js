@@ -88,6 +88,7 @@
                         dvm.individual['@type'].push(prefixes.owl + 'NamedIndividual');
                         dvm.om.addEntity(dvm.sm.ontology, dvm.individual);
                         _.set(_.get(listItem, 'index'), dvm.individual['@id'], dvm.sm.ontology.length - 1);
+                        dvm.om.addToAdditions(dvm.sm.listItem.ontologyId, dvm.individual);
                         // select the new individual
                         dvm.sm.selectItem(dvm.individual['@id']);
                         // hide the overlay
