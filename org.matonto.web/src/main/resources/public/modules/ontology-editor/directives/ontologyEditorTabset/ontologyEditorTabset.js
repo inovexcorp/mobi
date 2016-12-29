@@ -43,7 +43,7 @@
 
                     dvm.onClose = function(ontologyId) {
                         var ontology = dvm.om.getOntologyById(ontologyId);
-                        if (dvm.sm.hasChanges(ontology, ontologyId)) {
+                        if (dvm.sm.hasChanges(ontologyId)) {
                             dvm.sm.ontologyIdToClose = ontologyId;
                             dvm.sm.showCloseOverlay = true;
                         } else {

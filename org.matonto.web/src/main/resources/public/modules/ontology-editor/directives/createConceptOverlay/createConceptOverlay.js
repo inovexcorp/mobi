@@ -50,10 +50,7 @@
                         '@type': [prefixes.owl + 'NamedIndividual', prefixes.skos + 'Concept'],
                         [prefixes.skos + 'prefLabel']: [{
                             '@value': ''
-                        }],
-                        matonto: {
-                            created: true
-                        }
+                        }]
                     }
 
                     dvm.nameChanged = function() {

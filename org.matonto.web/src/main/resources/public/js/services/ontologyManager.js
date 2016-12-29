@@ -338,7 +338,7 @@
                         });
                 }
                 var resolve = function(ontology) {
-                    deferred.resolve({recordId, ontologyId, ontology, branchId});
+                    deferred.resolve({recordId, ontologyId, ontology, branchId, commitId});
                 }
                 deferred.promise.then(() => {
                     $rootScope.showSpinner = false;
@@ -396,11 +396,11 @@
                     self.getOntology(ontologyId, recordId)
                         .then(response => {
                             if (type === 'ontology') {
-                                addOntologyToList(ontologyId, recordId, response.branchId, response.ontology)
-                                    .then(() => onAddSuccess(ontologyId));
+                                addOntologyToList(ontologyId, recordId, response.branchId, response.commitId,
+                                    response.ontology).then(() => onAddSuccess(ontologyId));
                             } else if (type === 'vocabulary') {
-                                addVocabularyToList(ontologyId, recordId, response.branchId, response.ontology)
-                                    .then(() => onAddSuccess(ontologyId));
+                                addVocabularyToList(ontologyId, recordId, response.branchId, response.commitId,
+                                    response.ontology).then(() => onAddSuccess(ontologyId));
                             }
                         }, response => {
                             onError(response);
@@ -443,10 +443,10 @@
                     .then(response => {
                         if (type === 'ontology') {
                             addOntologyToList(response.ontologyId, response.recordId, response.branchId,
-                                response.ontology).then(onAddSuccess);
+                                response.commitId, response.ontology).then(onAddSuccess);
                         } else if (type === 'vocabulary') {
                             addVocabularyToList(response.ontologyId, response.recordId, response.branchId,
-                                response.ontology).then(onAddSuccess);
+                                response.commitId, response.ontology).then(onAddSuccess);
                         }
                     }, response => {
                         deferred.reject(_.get(response, 'statusText'));
@@ -602,7 +602,11 @@
                 var entity = _.find(listItem[prop], {'@id': json['@id']});
                 json = $filter('removeMatonto')(json);
                 if (entity) {
-                    _.merge(entity, json);
+                    _.mergeWith(entity, json, function(objValue, srcValue) {
+                        if (_.isArray(objValue)) {
+                            return objValue.concat(srcValue);
+                        }
+                    });
                 } else {
                     listItem[prop].push(json);
                 }
@@ -1917,7 +1921,7 @@
                 }
                 return readableText;
             }
-            function setupListItem(ontologyId, recordId, branchId, ontology, template) {
+            function setupListItem(ontologyId, recordId, branchId, commitId, ontology, template) {
                 var listItem = angular.copy(template);
                 var blankNodes = {};
                 var index = {};
@@ -1941,6 +1945,7 @@
                 listItem.ontologyId = ontologyId;
                 listItem.recordId = recordId;
                 listItem.branchId = branchId;
+                listItem.commitId = commitId;
                 listItem.ontology = ontology;
                 listItem.blankNodes = blankNodes;
                 listItem.index = index;
@@ -1948,9 +1953,10 @@
                 listItem.deletions = [];
                 return listItem;
             }
-            function addOntologyToList(ontologyId, recordId, branchId, ontology) {
+            function addOntologyToList(ontologyId, recordId, branchId, commitId, ontology) {
                 var deferred = $q.defer();
-                var listItem = setupListItem(ontologyId, recordId, branchId, ontology, ontologyListItemTemplate);
+                var listItem = setupListItem(ontologyId, recordId, branchId, commitId, ontology,
+                    ontologyListItemTemplate);
                 $q.all([
                     $http.get(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/iris'),
                     $http.get(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/imported-iris'),
@@ -2045,9 +2051,10 @@
                 });
                 return deferred.promise;
             }
-            function addVocabularyToList(ontologyId, recordId, branchId, ontology) {
+            function addVocabularyToList(ontologyId, recordId, branchId, commitId, ontology) {
                 var deferred = $q.defer();
-                var listItem = setupListItem(ontologyId, recordId, branchId, ontology, vocabularyListItemTemplate);
+                var listItem = setupListItem(ontologyId, recordId, branchId, commitId, ontology,
+                    vocabularyListItemTemplate);
                 $q.all([
                     $http.get(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/iris'),
                     $http.get(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/imported-iris'),

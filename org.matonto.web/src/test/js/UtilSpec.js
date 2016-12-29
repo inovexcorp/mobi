@@ -95,4 +95,14 @@ describe('Util service', function() {
         utilSvc.setDctermsValue(entity, prop, value);
         expect(entity).toEqual(expected);
     });
+    describe('getItemNamespace returns', function() {
+        it('item.namespace value when present', function() {
+            var result = utilSvc.getItemNamespace({namespace: 'namespace'});
+            expect(result).toEqual('namespace');
+        });
+        it("'No namespace' when item.namespace is not present", function() {
+            var result = utilSvc.getItemNamespace({});
+            expect(result).toEqual('No namespace');
+        });
+    });
 });

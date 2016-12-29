@@ -27,7 +27,7 @@
             <custom-label>Axiom</custom-label>
             <ui-select ng-model="dvm.axiom" on-select="dvm.values = []">
                 <ui-select-match placeholder="Select an axiom">{{dvm.ro.getItemIri($select.selected)}}</ui-select-match>
-                <ui-select-choices group-by="dvm.getItemNamespace" repeat="axiom in axiomList | filter:$select.search | orderBy:'localName'">
+                <ui-select-choices group-by="dvm.util.getItemNamespace" repeat="axiom in axiomList | filter:$select.search | orderBy:'localName'">
                     <div ng-bind-html="axiom.localName | highlight: $select.search | trusted"></div>
                 </ui-select-choices>
             </ui-select>
@@ -38,7 +38,7 @@
                 <ui-select-match placeholder="Select values">
                     <span title="{{dvm.ro.getItemIri($item)}}">{{$item.localName}}</span>
                 </ui-select-match>
-                <ui-select-choices group-by="dvm.getItemNamespace" repeat="value in dvm.sm.listItem[dvm.axiom.valuesKey] | removeIriFromArray:dvm.sm.selected['@id'] | filter:$select.search | orderBy:'localName'">
+                <ui-select-choices group-by="dvm.util.getItemNamespace" repeat="value in dvm.sm.listItem[dvm.axiom.valuesKey] | removeIriFromArray:dvm.sm.selected['@id'] | filter:$select.search | orderBy:'localName'">
                     <div title="{{dvm.ro.getItemIri(value)}}" ng-bind-html="value.localName | highlight: $select.search | trusted"></div>
                 </ui-select-choices>
             </ui-select>

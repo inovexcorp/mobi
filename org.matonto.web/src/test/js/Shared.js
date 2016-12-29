@@ -206,6 +206,8 @@ function mockOntologyManager() {
             this.getSearchResults = jasmine.createSpy('getSearchResults');
             this.addToAdditions = jasmine.createSpy('addToAdditions');
             this.addToDeletions = jasmine.createSpy('addToDeletions');
+            this.getConceptIRIs = jasmine.createSpy('getConceptsIRIs');
+            this.getConceptSchemeIRIs = jasmine.createSpy('getConceptSchemeIRIs');
         });
     });
 }
@@ -385,7 +387,7 @@ function mockSettingsManager() {
 
 function mockOntologyState() {
     module(function($provide) {
-        $provide.service('ontologyStateService', function() {
+        $provide.service('ontologyStateService', function($q) {
             this.states = {};
             this.ontologyIdToClose = '';
             this.state = {
@@ -406,13 +408,14 @@ function mockOntologyState() {
                     originalIri: 'iri'
                 }
             };
-            this.annotationSelect = '';
-            this.annotationValue = '';
-            this.annotationType = {'@id': ''};
-            this.key = '';
+            this.annotationSelect = 'select';
+            this.annotationValue = 'value';
+            this.annotationType = {'@id': 'annotationId'};
+            this.key = 'key';
             this.index = 0;
             this.annotationIndex = 0;
             this.listItem = {
+                annotations: [],
                 dataPropertyRange: [],
                 classHierarchy: [],
                 subClasses: [],
@@ -451,7 +454,7 @@ function mockOntologyState() {
             this.getNoDomainsOpened = jasmine.createSpy('getNoDomainsOpened').and.returnValue(true);
             this.onEdit = jasmine.createSpy('onEdit');
             this.getUnsavedEntities = jasmine.createSpy('getUnsavedEntities');
-            this.afterSave = jasmine.createSpy('afterSave');
+            this.afterSave = jasmine.createSpy('afterSave').and.returnValue($q.when([]));
             this.setIndividualsOpened = jasmine.createSpy('setIndividualsOpened');
             this.getIndividualsOpened = jasmine.createSpy('getIndividualsOpened').and.returnValue(false);
             this.deleteState = jasmine.createSpy('deleteState');

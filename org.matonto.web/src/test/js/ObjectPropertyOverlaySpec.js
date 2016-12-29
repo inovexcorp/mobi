@@ -39,6 +39,7 @@ describe('Object Property Overlay directive', function() {
         mockOntologyManager();
         mockOntologyState();
         mockResponseObj();
+        mockUtil();
 
         inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyManagerService_, _responseObj_) {
             $compile = _$compile_;
@@ -113,9 +114,8 @@ describe('Object Property Overlay directive', function() {
             expect(ontologyStateSvc.selected.prop).toBeDefined();
             expect(ontologyStateSvc.selected.prop).toContain(value);
             expect(ontologyStateSvc.showObjectPropertyOverlay).toBe(false);
-            expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
-            expect(ontologyStateSvc.setUnsaved).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
-                ontologyStateSvc.getActiveEntityIRI(), true);
+            expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
+                jasmine.any(Object));
         });
         it('should edit an object property', function() {
             var value = {'@id': 'value'};
@@ -123,17 +123,12 @@ describe('Object Property Overlay directive', function() {
             ontologyStateSvc.propertyIndex = 0;
             responseObj.getItemIri.and.returnValue('prop');
             controller.editProperty({}, value);
+            expect(ontologyManagerSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
+                jasmine.any(Object));
             expect(ontologyStateSvc.selected.prop[ontologyStateSvc.propertyIndex]).toEqual(value);
             expect(ontologyStateSvc.showObjectPropertyOverlay).toBe(false);
-            expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
-            expect(ontologyStateSvc.setUnsaved).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
-                ontologyStateSvc.getActiveEntityIRI(), true);
-        });
-        it('should return the namespace is present', function() {
-            var result = controller.getItemNamespace({namespace: 'namespace'});
-            expect(result).toEqual('namespace');
-            result = controller.getItemNamespace({});
-            expect(result).toEqual('No namespace');
+            expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
+                jasmine.any(Object));
         });
     });
 });

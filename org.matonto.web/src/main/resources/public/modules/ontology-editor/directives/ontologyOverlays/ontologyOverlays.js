@@ -49,18 +49,9 @@
                     dvm.save = function() {
                         dvm.om.saveChanges(dvm.sm.listItem.recordId, {additions: dvm.sm.listItem.additions,
                             deletions: dvm.sm.listItem.deletions}).then(() => {
-                                dvm.sm.afterSave();
-                                dvm.sm.showSaveOverlay = false;
+                                dvm.sm.afterSave()
+                                    .then(() => dvm.sm.showSaveOverlay = false, onError);
                             }, onError)
-                    }
-
-                    dvm.removeIndividualProperty = function() {
-                        _.pullAt(dvm.sm.selected[dvm.sm.key], dvm.sm.index);
-                        if (!dvm.sm.selected[dvm.sm.key].length) {
-                            _.unset(dvm.sm.selected, dvm.sm.key);
-                        }
-                        dvm.sm.setUnsaved(dvm.sm.listItem.ontologyId, dvm.sm.state.entityIRI, true);
-                        dvm.sm.showRemoveIndividualPropertyOverlay = false;
                     }
                 }
             }

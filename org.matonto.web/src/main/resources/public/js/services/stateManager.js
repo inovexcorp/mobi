@@ -61,10 +61,10 @@
         }
 
         self.updateState = function(stateId, stateJson) {
-            return $http.post(prefix + '/' + encodeURIComponent(stateId), angular.toJson(stateJson))
+            return $http.put(prefix + '/' + encodeURIComponent(stateId), angular.toJson(stateJson))
                 .then(() => _.forEach(self.states, state => {
                     if (_.get(state, 'id', '') === stateId) {
-                        _.set(state, 'model', stateJson);
+                        _.set(state, 'model', [stateJson]);
                         return false;
                     }
                 }));
@@ -103,12 +103,12 @@
 
         self.updateOntologyState = function(recordId, branchId, commitId) {
             var stateId = _.get(self.getOntologyStateByRecordId(recordId), 'id', '');
-            self.updateState(stateId, makeOntologyState(recordId, branchId, commitId));
+            return self.updateState(stateId, makeOntologyState(recordId, branchId, commitId));
         }
 
         self.deleteOntologyState = function(recordId) {
             var stateId = _.get(self.getOntologyStateByRecordId(recordId), 'id', '');
-            self.deleteState(stateId);
+            return self.deleteState(stateId);
         }
     }
 })();

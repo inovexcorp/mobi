@@ -50,10 +50,7 @@
 
                     dvm.individual = {
                         '@id': dvm.prefix,
-                        '@type': [],
-                        matonto: {
-                            created: true
-                        }
+                        '@type': []
                     };
 
                     dvm.subClasses = _.map(dvm.sm.state.subClasses, obj => dvm.ro.getItemIri(obj));
@@ -80,10 +77,8 @@
                         var listItem = dvm.om.getListItemById(dvm.sm.state.ontologyId);
                         _.get(listItem, 'individuals').push({namespace:split.begin + split.then, localName: split.end});
                         var classesWithIndividuals = _.get(listItem, 'classesWithIndividuals');
-                        _.forEach(dvm.individual['@type'], type => {
-                            _.set(listItem, 'classesWithIndividuals', _.union(classesWithIndividuals,
-                                [{ entityIRI: type }]));
-                        });
+                        _.set(listItem, 'classesWithIndividuals', _.unionWith(classesWithIndividuals,
+                            _.map(dvm.individual['@type'], type => {return {entityIRI: type}}), _.isEqual));
                         // add the entity to the ontology
                         dvm.individual['@type'].push(prefixes.owl + 'NamedIndividual');
                         dvm.om.addEntity(dvm.sm.ontology, dvm.individual);

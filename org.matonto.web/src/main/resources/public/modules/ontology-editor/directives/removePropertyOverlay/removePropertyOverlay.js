@@ -53,13 +53,12 @@
                         if (dvm.onSubmit) {
                             dvm.onSubmit({axiomObject: dvm.sm.selected[dvm.key][dvm.index]});
                         }
-                        var statement = {
+                        var json = {
                             '@id': dvm.sm.selected['@id'],
                             [dvm.key]: [angular.copy(dvm.sm.selected[dvm.key][dvm.index])]
                         }
-                        om.addToDeletions(dvm.sm.listItem.ontologyId, statement);
+                        om.addToDeletions(dvm.sm.listItem.ontologyId, json);
                         dvm.pm.remove(dvm.sm.selected, dvm.key, dvm.index);
-                        dvm.sm.setUnsaved(dvm.sm.listItem.ontologyId, dvm.sm.selected.matonto.originalIRI, true);
                         dvm.overlayFlag = false;
                     }
                 }

@@ -105,5 +105,9 @@
             self.setDctermsValue = function(entity, property, value) {
                 self.setPropertyValue(entity, prefixes.dcterms + property, value);
             }
+
+            self.getItemNamespace = function(item) {
+                return _.get(item, 'namespace', 'No namespace');
+            }
         }
 })();

@@ -57,10 +57,7 @@
                         }],
                         [prefixes.dcterms + 'description']: [{
                             '@value': ''
-                        }],
-                        matonto: {
-                            created: true
-                        }
+                        }]
                     }
 
                     dvm.nameChanged = function() {

@@ -32,6 +32,7 @@ describe('Ontology State service', function() {
         module('ontologyState');
         mockOntologyManager();
         mockUpdateRefs();
+        mockStateManager();
 
         inject(function(ontologyStateService, _updateRefsService_, _ontologyManagerService_) {
             ontologyStateSvc = ontologyStateService;

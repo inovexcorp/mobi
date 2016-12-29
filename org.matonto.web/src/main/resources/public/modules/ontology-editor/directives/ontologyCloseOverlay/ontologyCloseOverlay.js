@@ -41,11 +41,14 @@
 
                     dvm.om = ontologyManagerService;
                     dvm.sm = ontologyStateService;
+                    dvm.error = '';
 
                     dvm.saveThenClose = function() {
                         dvm.om.saveChanges(dvm.sm.listItem.recordId, {additions: dvm.sm.listItem.additions,
-                            deletions: dvm.sm.listItem.deletions}).then(() => dvm.close(),
-                                errorMessage => dvm.error = errorMessage);
+                            deletions: dvm.sm.listItem.deletions}).then(() => {
+                                dvm.sm.afterSave()
+                                    .then(() => dvm.close(), errorMessage => dvm.error = errorMessage);
+                            }, errorMessage => dvm.error = errorMessage);
                     }
 
                     dvm.close = function() {

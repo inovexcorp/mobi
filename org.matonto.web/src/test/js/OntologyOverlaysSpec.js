@@ -71,7 +71,7 @@ describe('Ontology Overlays directive', function() {
         });
         it('based on confirmation-overlays', function() {
             var confirmations = element.find('confirmation-overlay');
-            expect(confirmations.length).toBe(2);
+            expect(confirmations.length).toBe(1);
         });
         _.forEach(['annotation-overlay', 'datatype-property-overlay', 'object-property-overlay',
         'ontology-download-overlay', 'create-annotation-overlay', 'create-class-overlay', 'create-property-overlay',
@@ -98,34 +98,33 @@ describe('Ontology Overlays directive', function() {
                 expect(ontologyManagerSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                     {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});
             });
-            it('when resolved, sets the correct variable and calls correct manager function', function() {
-                deferred.resolve('id');
-                scope.$apply();
-                expect(ontologyStateSvc.showSaveOverlay).toBe(false);
-                expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
+            describe('when resolved, sets the correct variable and calls correct manager function', function() {
+                var afterDeferred;
+                beforeEach(function() {
+                    deferred.resolve('id');
+                    afterDeferred = $q.defer();
+                    ontologyStateSvc.afterSave.and.returnValue(afterDeferred.promise);
+                });
+                it('when afterSave is resolved', function() {
+                    afterDeferred.resolve();
+                    scope.$apply();
+                    expect(ontologyStateSvc.showSaveOverlay).toBe(false);
+                    expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
+                });
+                it('when afterSave is rejected', function() {
+                    var error = 'error';
+                    afterDeferred.reject(error);
+                    scope.$apply();
+                    expect(ontologyStateSvc.showSaveOverlay).not.toBe(false);
+                    expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
+                    expect(controller.error).toEqual(error);
+                });
             });
             it('when rejected, sets the correct variable', function() {
                 deferred.reject('error');
                 scope.$apply();
                 expect(controller.error).toEqual('error');
             });
-        });
-        it('removeIndividualProperty calls the correct manager functions and sets the correct manager variables', function() {
-            ontologyStateSvc.selected = {key: ['value0', 'value1']};
-            ontologyStateSvc.key = 'key';
-            ontologyStateSvc.index = 0;
-            controller.removeIndividualProperty();
-            expect(ontologyStateSvc.selected.key).toBeDefined();
-            expect(ontologyStateSvc.selected.key).not.toContain('value0');
-            expect(ontologyStateSvc.setUnsaved).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
-                ontologyStateSvc.state.entityIRI, true);
-            expect(ontologyStateSvc.showRemoveIndividualPropertyOverlay).toBe(false);
-
-            controller.removeIndividualProperty();
-            expect(ontologyStateSvc.selected.key).toBeUndefined();
-            expect(ontologyStateSvc.setUnsaved).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
-                ontologyStateSvc.state.entityIRI, true);
-            expect(ontologyStateSvc.showRemoveIndividualPropertyOverlay).toBe(false);
         });
     });
 });

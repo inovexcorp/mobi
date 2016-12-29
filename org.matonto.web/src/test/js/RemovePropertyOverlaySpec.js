@@ -101,8 +101,6 @@ describe('Remove Property Overlay directive', function() {
                 jasmine.any(Object));
             expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.selected, controller.key,
                 controller.index);
-            expect(ontologyStateSvc.setUnsaved).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
-                ontologyStateSvc.selected.matonto.originalIRI, true);
             expect(controller.overlayFlag).toBe(false);
         });
     });

@@ -100,7 +100,8 @@ describe('Ontology Manager service', function() {
             recordId: recordId,
             ontologyId: ontologyId,
             ontology: ontology,
-            branchId: branchId
+            branchId: branchId,
+            commitId: commitId
         }
         beforeEach(function() {
             catalogManagerSvc.getResource.and.returnValue($q.resolve(ontology));

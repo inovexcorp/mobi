@@ -27,11 +27,15 @@
         .module('ontologyState', [])
         .service('ontologyStateService', ontologyStateService);
 
-        ontologyStateService.$inject = ['$rootScope', '$timeout', 'ontologyManagerService', 'updateRefsService'];
+        ontologyStateService.$inject = ['$rootScope', '$timeout', '$q', 'ontologyManagerService', 'updateRefsService',
+            'stateManagerService'];
 
-        function ontologyStateService($rootScope, $timeout, ontologyManagerService, updateRefsService) {
+        function ontologyStateService($rootScope, $timeout, $q, ontologyManagerService, updateRefsService,
+            stateManagerService) {
             var self = this;
             var om = ontologyManagerService;
+            var sm = stateManagerService;
+
             self.states = [];
             self.newState = {active: true};
             self.state = self.newState;
@@ -54,9 +58,19 @@
                 }*/
                 self.listItem.additions = [];
                 self.listItem.deletions = [];
+
+                var deferred = $q.defer();
+                if (_.isEmpty(sm.getOntologyStateByRecordId(self.listItem.recordId))) {
+                    sm.createOntologyState(self.listItem.recordId, self.listItem.branchId, self.listItem.commitId)
+                        .then(deferred.resolve, response => deferred.reject(response.statusText));
+                } else {
+                    sm.updateOntologyState(self.listItem.recordId, self.listItem.branchId, self.listItem.commitId)
+                        .then(deferred.resolve, response => deferred.reject(response.statusText));
+                }
+                return deferred.promise;
             }
 
-            self.setUnsaved = function(ontologyId, entityIRI, isUnsaved) {
+            /*self.setUnsaved = function(ontologyId, entityIRI, isUnsaved) {
                 _.set(om.getEntityById(ontologyId, entityIRI), 'matonto.unsaved', isUnsaved);
             }
 
@@ -70,15 +84,7 @@
 
             self.getUnsavedEntities = function(ontology) {
                 return _.filter(ontology, {matonto:{unsaved: true}});
-            }
-
-            self.hasCreatedEntities = function(ontology) {
-                return _.some(ontology, {matonto:{created: true}});
-            }
-
-            self.getCreatedEntities = function(ontology) {
-                return _.filter(ontology, {matonto:{created: true}});
-            }
+            }*/
 
             self.setValid = function(ontologyId, entityIRI, isValid) {
                 _.set(om.getEntityById(ontologyId, entityIRI), 'matonto.valid', isValid);
@@ -284,19 +290,12 @@
                 _.unset(activePage, 'usages');
                 self.selected = undefined;
             }
-            self.addDeletedEntity = function() {
-                if (_.has(self.state, 'deletedEntities')) {
-                    self.state.deletedEntities.push(angular.copy(self.selected));
-                } else {
-                    _.set(self.state, 'deletedEntities', [angular.copy(self.selected)]);
-                }
-            }
-            self.hasChanges = function(ontology, ontologyId) {
-                return self.hasUnsavedEntities(ontology) || self.hasCreatedEntities(ontology)
-                    || _.get(self.getState(ontologyId), 'deletedEntities', []).length;
+            self.hasChanges = function(ontologyId) {
+                var listItem = om.getListItemById(ontologyId);
+                return _.get(listItem, 'additions', []).length || _.get(listItem, 'deletions', []).length;
             }
             self.isSavable = function(ontology, ontologyId) {
-                return self.hasChanges(ontology, ontologyId) && !self.hasInvalidEntities(ontology);
+                return self.hasChanges(ontologyId) && !self.hasInvalidEntities(ontology);
             }
             self.addEntityToHierarchy = function(hierarchy, entityIRI, indexObject, parentIRI) {
                 var hierarchyItem = {entityIRI};

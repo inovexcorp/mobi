@@ -27,9 +27,10 @@
         .module('datatypePropertyOverlay', [])
         .directive('datatypePropertyOverlay', datatypePropertyOverlay);
 
-        datatypePropertyOverlay.$inject = ['responseObj', 'ontologyManagerService', 'ontologyStateService'];
+        datatypePropertyOverlay.$inject = ['responseObj', 'ontologyManagerService', 'ontologyStateService',
+            'utilService'];
 
-        function datatypePropertyOverlay(responseObj, ontologyManagerService, ontologyStateService) {
+        function datatypePropertyOverlay(responseObj, ontologyManagerService, ontologyStateService, utilService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -41,10 +42,13 @@
                     dvm.om = ontologyManagerService;
                     dvm.ro = responseObj;
                     dvm.sm = ontologyStateService;
+                    dvm.util = utilService;
 
-                    function closeAndMark() {
-                        dvm.sm.setUnsaved(dvm.sm.listItem.ontologyId, dvm.sm.getActiveEntityIRI(), true);
-                        dvm.sm.showDataPropertyOverlay = false;
+                    function createJson(property, valueObj) {
+                        return {
+                            '@id': dvm.sm.selected['@id'],
+                            [property]: [valueObj]
+                        }
                     }
 
                     dvm.addProperty = function(select, value, type) {
@@ -60,26 +64,27 @@
                                 dvm.sm.selected[property] = [valueObj];
                             }
                         }
-                        closeAndMark();
+                        dvm.om.addToAdditions(dvm.sm.listItem.ontologyId, createJson(property, valueObj));
+                        dvm.sm.showDataPropertyOverlay = false;
                     }
 
                     dvm.editProperty = function(select, value, type) {
                         var property = dvm.ro.getItemIri(select);
                         if (property) {
+                            dvm.om.addToDeletions(dvm.sm.listItem.ontologyId, createJson(property,
+                                dvm.sm.selected[property][dvm.sm.propertyIndex]));
                             dvm.sm.selected[property][dvm.sm.propertyIndex]['@value'] = value;
-                        }
-                        if (_.get(type, '@id') !== dvm.sm.selected[property][dvm.sm.propertyIndex]['@type']) {
-                            if (type) {
-                                dvm.sm.selected[property][dvm.sm.propertyIndex]['@type'] = type['@id'];
-                            } else {
-                                _.unset(dvm.sm.selected[property][dvm.sm.propertyIndex], '@type');
+                            if (_.get(type, '@id') !== dvm.sm.selected[property][dvm.sm.propertyIndex]['@type']) {
+                                if (type) {
+                                    dvm.sm.selected[property][dvm.sm.propertyIndex]['@type'] = type['@id'];
+                                } else {
+                                    _.unset(dvm.sm.selected[property][dvm.sm.propertyIndex], '@type');
+                                }
                             }
+                            dvm.om.addToAdditions(dvm.sm.listItem.ontologyId, createJson(property,
+                                dvm.sm.selected[property][dvm.sm.propertyIndex]));
                         }
-                        closeAndMark();
-                    }
-
-                    dvm.getItemNamespace = function(item) {
-                        return _.get(item, 'namespace', 'No namespace');
+                        dvm.sm.showDataPropertyOverlay = false;
                     }
                 }
             }

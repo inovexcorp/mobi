@@ -27,9 +27,9 @@
         .module('axiomOverlay', [])
         .directive('axiomOverlay', axiomOverlay);
 
-        axiomOverlay.$inject = ['responseObj', 'ontologyManagerService', 'ontologyStateService'];
+        axiomOverlay.$inject = ['responseObj', 'ontologyManagerService', 'ontologyStateService', 'utilService'];
 
-        function axiomOverlay(responseObj, ontologyManagerService, ontologyStateService) {
+        function axiomOverlay(responseObj, ontologyManagerService, ontologyStateService, utilService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -44,11 +44,7 @@
                     dvm.om = ontologyManagerService;
                     dvm.ro = responseObj;
                     dvm.sm = ontologyStateService;
-
-                    function closeAndMark() {
-                        dvm.sm.setUnsaved(dvm.sm.listItem.ontologyId, dvm.sm.selected.matonto.originalIRI, true);
-                        dvm.sm.showAxiomOverlay = false;
-                    }
+                    dvm.util = utilService;
 
                     dvm.addAxiom = function() {
                         var values = [];
@@ -59,11 +55,9 @@
                         } else {
                             dvm.sm.selected[axiom] = values;
                         }
-                        closeAndMark();
-                    }
-
-                    dvm.getItemNamespace = function(item) {
-                        return _.get(item, 'namespace', 'No namespace');
+                        dvm.om.addToAdditions(dvm.sm.listItem.ontologyId, {'@id': dvm.sm.selected['@id'],
+                            [axiom]: values});
+                        dvm.sm.showAxiomOverlay = false;
                     }
                 }
             }

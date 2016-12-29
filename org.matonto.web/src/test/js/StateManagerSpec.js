@@ -139,12 +139,12 @@ describe('State Manager service', function() {
 
     it('updateState hits the correct endpoint', function() {
         stateManagerSvc.states = [{id: stateId, model: 'old-model'}];
-        $httpBackend.expectPOST('/matontorest/states/' + encodeURIComponent(stateId), function(data) {
+        $httpBackend.expectPUT('/matontorest/states/' + encodeURIComponent(stateId), function(data) {
             return _.isEqual(data, JSON.stringify(state));
         }).respond(200, '');
         stateManagerSvc.updateState(stateId, state).then(function() {
             expect(stateManagerSvc.states.length).toBe(1);
-            expect(stateManagerSvc.states[0]).toEqual({id: stateId, model: state});
+            expect(stateManagerSvc.states[0]).toEqual([{id: stateId, model: state}]);
         });
         flushAndVerify();
     });

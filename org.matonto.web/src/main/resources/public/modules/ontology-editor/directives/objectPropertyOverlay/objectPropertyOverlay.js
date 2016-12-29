@@ -27,9 +27,11 @@
         .module('objectPropertyOverlay', [])
         .directive('objectPropertyOverlay', objectPropertyOverlay);
 
-        objectPropertyOverlay.$inject = ['$filter', 'responseObj', 'ontologyManagerService', 'ontologyStateService'];
+        objectPropertyOverlay.$inject = ['$filter', 'responseObj', 'ontologyManagerService', 'ontologyStateService',
+            'utilService'];
 
-        function objectPropertyOverlay($filter, responseObj, ontologyManagerService, ontologyStateService) {
+        function objectPropertyOverlay($filter, responseObj, ontologyManagerService, ontologyStateService,
+            utilService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -41,12 +43,17 @@
                     dvm.om = ontologyManagerService;
                     dvm.ro = responseObj;
                     dvm.sm = ontologyStateService;
-                    dvm.individuals = $filter('removeIriFromArray')(dvm.sm.listItem.individuals, dvm.sm.getActiveEntityIRI());
-                    dvm.valueSelect = _.find(dvm.individuals, individual => dvm.ro.getItemIri(individual) === dvm.sm.propertyValue);
+                    dvm.util = utilService;
+                    dvm.individuals = $filter('removeIriFromArray')(dvm.sm.listItem.individuals,
+                        dvm.sm.getActiveEntityIRI());
+                    dvm.valueSelect = _.find(dvm.individuals, individual =>
+                        dvm.ro.getItemIri(individual) === dvm.sm.propertyValue);
 
-                    function closeAndMark() {
-                        dvm.sm.setUnsaved(dvm.sm.listItem.ontologyId, dvm.sm.getActiveEntityIRI(), true);
-                        dvm.sm.showObjectPropertyOverlay = false;
+                    function createJson(property, valueObj) {
+                        return {
+                            '@id': dvm.sm.selected['@id'],
+                            [property]: [valueObj]
+                        }
                     }
 
                     dvm.addProperty = function(select, value) {
@@ -58,19 +65,19 @@
                                 dvm.sm.selected[property] = [value];
                             }
                         }
-                        closeAndMark();
+                        dvm.om.addToAdditions(dvm.sm.listItem.ontologyId, createJson(property, value));
+                        dvm.sm.showObjectPropertyOverlay = false;
                     }
 
                     dvm.editProperty = function(select, value) {
                         var property = dvm.ro.getItemIri(select);
                         if (property) {
+                            dvm.om.addToDeletions(dvm.sm.listItem.ontologyId, createJson(property,
+                                dvm.sm.selected[property][dvm.sm.propertyIndex]));
                             dvm.sm.selected[property][dvm.sm.propertyIndex] = value;
+                            dvm.om.addToAdditions(dvm.sm.listItem.ontologyId, createJson(property, value));
                         }
-                        closeAndMark();
-                    }
-
-                    dvm.getItemNamespace = function(item) {
-                        return _.get(item, 'namespace', 'No namespace');
+                        dvm.sm.showObjectPropertyOverlay = false;
                     }
                 }
             }

@@ -38,6 +38,7 @@ describe('Datatype Property Overlay directive', function() {
         mockOntologyManager();
         mockOntologyState();
         mockResponseObj();
+        mockUtil();
 
         inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyManagerService_, _responseObj_) {
             $compile = _$compile_;
@@ -110,20 +111,17 @@ describe('Datatype Property Overlay directive', function() {
                 expect(ontologyStateSvc.selected.prop).toBeDefined();
                 expect(ontologyStateSvc.selected.prop).toContain({'@value': this.value, '@type': type['@id']});
                 expect(ontologyStateSvc.showDataPropertyOverlay).toBe(false);
-                expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
-                expect(ontologyStateSvc.setUnsaved).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
-                    ontologyStateSvc.getActiveEntityIRI(), true);
+                expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
+                    jasmine.any(Object));
             });
             it('without a type', function() {
                 controller.addProperty({}, this.value);
                 expect(ontologyStateSvc.selected.prop).toBeDefined();
                 expect(ontologyStateSvc.selected.prop).toContain({'@value': this.value});
                 expect(ontologyStateSvc.showDataPropertyOverlay).toBe(false);
-                expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
-                expect(ontologyStateSvc.setUnsaved).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
-                    ontologyStateSvc.getActiveEntityIRI(), true);
+                expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
+                    jasmine.any(Object));
             });
-            
         });
         describe('should edit a data property', function() {
             beforeEach(function() {
@@ -135,33 +133,30 @@ describe('Datatype Property Overlay directive', function() {
             it('if the type has changed', function() {
                 var type = {'@id': 'type'};
                 controller.editProperty({}, this.value, type);
+                expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
+                    jasmine.any(Object));
                 expect(ontologyStateSvc.selected.prop[ontologyStateSvc.propertyIndex]).toEqual({'@value': this.value, '@type': type['@id']});
                 expect(ontologyStateSvc.showDataPropertyOverlay).toBe(false);
-                expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
-                expect(ontologyStateSvc.setUnsaved).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
-                    ontologyStateSvc.getActiveEntityIRI(), true);
+                expect(ontologyManagerSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
+                    jasmine.any(Object));
 
                 controller.editProperty({}, this.value);
+                expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
+                    jasmine.any(Object));
                 expect(ontologyStateSvc.selected.prop[ontologyStateSvc.propertyIndex]).toEqual({'@value': this.value});
                 expect(ontologyStateSvc.showDataPropertyOverlay).toBe(false);
-                expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
-                expect(ontologyStateSvc.setUnsaved).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
-                    ontologyStateSvc.getActiveEntityIRI(), true);
+                expect(ontologyManagerSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
+                    jasmine.any(Object));
             });
             it('if the type has not changed', function() {
                 controller.editProperty({}, this.value);
+                expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
+                    jasmine.any(Object));
                 expect(ontologyStateSvc.selected.prop[ontologyStateSvc.propertyIndex]).toEqual({'@value': this.value});
                 expect(ontologyStateSvc.showDataPropertyOverlay).toBe(false);
-                expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
-                expect(ontologyStateSvc.setUnsaved).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
-                    ontologyStateSvc.getActiveEntityIRI(), true);
+                expect(ontologyManagerSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
+                    jasmine.any(Object));
             });
-        });
-        it('should return the namespace is present', function() {
-            var result = controller.getItemNamespace({namespace: 'namespace'});
-            expect(result).toEqual('namespace');
-            result = controller.getItemNamespace({});
-            expect(result).toEqual('No namespace');
         });
     });
 });

@@ -104,11 +104,28 @@ describe('Ontology Close Overlay directive', function() {
                 expect(ontologyManagerSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                     {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});
             });
-            it('when resolved, calls the correct controller function', function() {
-                controller.close = jasmine.createSpy('close');
-                deferred.resolve('id');
-                scope.$apply();
-                expect(controller.close).toHaveBeenCalled();
+            describe('when resolved, calls the correct controller function', function() {
+                var afterDeferred;
+                beforeEach(function() {
+                    controller.close = jasmine.createSpy('close');
+                    deferred.resolve('id');
+                    afterDeferred = $q.defer();
+                    ontologyStateSvc.afterSave.and.returnValue(afterDeferred.promise);
+                });
+                it('when afterSave is resolved', function() {
+                    afterDeferred.resolve();
+                    scope.$apply();
+                    expect(controller.close).toHaveBeenCalled();
+                    expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
+                });
+                it('when afterSave is rejected', function() {
+                    var error = 'error';
+                    afterDeferred.reject(error);
+                    scope.$apply();
+                    expect(controller.close).not.toHaveBeenCalled();
+                    expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
+                    expect(controller.error).toEqual(error);
+                });
             });
             it('when rejected, sets the correct variable', function() {
                 deferred.reject('error');
