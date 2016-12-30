@@ -109,5 +109,11 @@
             self.getItemNamespace = function(item) {
                 return _.get(item, 'namespace', 'No namespace');
             }
+
+            self.mergingArrays = function(objValue, srcValue) {
+                if (_.isArray(objValue)) {
+                    return objValue.concat(srcValue);
+                }
+            }
         }
 })();

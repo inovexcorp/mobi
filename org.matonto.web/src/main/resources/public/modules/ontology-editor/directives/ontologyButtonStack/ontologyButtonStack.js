@@ -24,19 +24,19 @@
     'use strict';
 
     angular
-        .module('saveChangesTab', [])
-        .directive('saveChangesTab', saveChangesTab);
+        .module('ontologyButtonStack', [])
+        .directive('ontologyButtonStack', ontologyButtonStack);
 
-        saveChangesTab.$inject = ['ontologyStateService'];
+        ontologyButtonStack.$inject = ['ontologyStateService'];
 
-        function saveChangesTab(ontologyStateService) {
+        function ontologyButtonStack(ontologyStateService) {
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/saveChangesTab/saveChangesTab.html',
+                templateUrl: 'modules/ontology-editor/directives/ontologyButtonStack/ontologyButtonStack.html',
                 scope: {},
                 controllerAs: 'dvm',
-                controller: function($scope) {
+                controller: function() {
                     var dvm = this;
                     dvm.os = ontologyStateService;
                 }

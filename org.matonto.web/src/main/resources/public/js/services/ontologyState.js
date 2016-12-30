@@ -28,10 +28,10 @@
         .service('ontologyStateService', ontologyStateService);
 
         ontologyStateService.$inject = ['$rootScope', '$timeout', '$q', 'ontologyManagerService', 'updateRefsService',
-            'stateManagerService'];
+            'stateManagerService', 'utilService'];
 
         function ontologyStateService($rootScope, $timeout, $q, ontologyManagerService, updateRefsService,
-            stateManagerService) {
+            stateManagerService, utilService) {
             var self = this;
             var om = ontologyManagerService;
             var sm = stateManagerService;
@@ -56,6 +56,9 @@
                     self.state.ontologyId = newId;
                     self.state.project.entityIRI = om.getOntologyIRI(self.ontology);
                 }*/
+                _.mergeWith(self.listItem.inProgressCommit.additions, self.listItem.additions);
+                _.mergeWith(self.listItem.inProgressCommit.deletions, self.listItem.deletions);
+
                 self.listItem.additions = [];
                 self.listItem.deletions = [];
 
@@ -69,22 +72,6 @@
                 }
                 return deferred.promise;
             }
-
-            /*self.setUnsaved = function(ontologyId, entityIRI, isUnsaved) {
-                _.set(om.getEntityById(ontologyId, entityIRI), 'matonto.unsaved', isUnsaved);
-            }
-
-            self.getUnsaved = function(ontologyId, entityIRI) {
-                return _.get(om.getEntityById(ontologyId, entityIRI), 'matonto.unsaved', false);
-            }
-
-            self.hasUnsavedEntities = function(ontology) {
-                return _.some(ontology, {matonto:{unsaved: true}});
-            }
-
-            self.getUnsavedEntities = function(ontology) {
-                return _.filter(ontology, {matonto:{unsaved: true}});
-            }*/
 
             self.setValid = function(ontologyId, entityIRI, isValid) {
                 _.set(om.getEntityById(ontologyId, entityIRI), 'matonto.valid', isValid);
@@ -296,6 +283,11 @@
             }
             self.isSavable = function(ontology, ontologyId) {
                 return self.hasChanges(ontologyId) && !self.hasInvalidEntities(ontology);
+            }
+            self.isCommittable = function(ontologyId) {
+                var listItem = om.getListItemById(ontologyId);
+                return !!_.get(listItem, 'inProgressCommit.additions', []).length || !!_.get(listItem,
+                    'inProgressCommit.deletions', []).length;
             }
             self.addEntityToHierarchy = function(hierarchy, entityIRI, indexObject, parentIRI) {
                 var hierarchyItem = {entityIRI};

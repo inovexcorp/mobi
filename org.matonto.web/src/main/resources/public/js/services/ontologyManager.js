@@ -87,7 +87,13 @@
                 objectPropertyIndex: {},
                 classesWithIndividuals: [],
                 blankNodes: {},
-                index: {}
+                index: {},
+                additions: [],
+                deletions: [],
+                inProgressCommit: {
+                    additions: [],
+                    deletions: []
+                }
             };
             var vocabularyListItemTemplate = {
                 ontology: [],
@@ -96,10 +102,17 @@
                     propertyManagerService.skosAnnotations)),
                 conceptHierarchy: [],
                 conceptIndex: {},
-                index: {}
+                index: {},
+                additions: [],
+                deletions: [],
+                inProgressCommit: {
+                    additions: [],
+                    deletions: []
+                }
             };
             var cm = catalogManagerService;
             var sm = stateManagerService;
+            var util = utilService;
 
             self.ontologyRecords = [];
             /**
@@ -320,11 +333,20 @@
                 var branchId, commitId;
                 var state = sm.getOntologyStateByRecordId(recordId);
                 var deferred = $q.defer();
+                var emptyInProgressCommit = {additions: [], deletions: []};
                 if (!_.isEmpty(state)) {
                     branchId = _.get(state, "model[0]['" + prefixes.ontologyState + "branch'][0]['@id']");
                     commitId = _.get(state, "model[0]['" + prefixes.ontologyState + "commit'][0]['@id']");
-                    cm.getResource(commitId, branchId, recordId, catalogId, true, rdfFormat)
-                        .then(ontology => resolve(ontology));
+                    cm.getInProgressCommit(recordId, catalogId)
+                        .then(inProgressCommit => cm.getResource(commitId, branchId, recordId, catalogId, true, rdfFormat)
+                            .then(ontology => resolve(ontology, inProgressCommit), deferred.reject), errorMessage => {
+                                if (errorMessage === 'User has no InProgressCommit') {
+                                    cm.getResource(commitId, branchId, recordId, catalogId, false, rdfFormat)
+                                        .then(ontology => resolve(ontology, emptyInProgressCommit), deferred.reject);
+                                } else {
+                                    deferred.reject(errorMessage);
+                                }
+                            });
                 } else {
                     cm.getRecordMasterBranch(recordId, catalogId)
                         .then(masterBranch => {
@@ -333,12 +355,12 @@
                                 .then(headCommit => {
                                     commitId = _.get(headCommit, "commit[0]['@graph'][0]['@id']", '');
                                     cm.getResource(commitId, branchId, recordId, catalogId, false, rdfFormat)
-                                        .then(ontology => resolve(ontology));
-                                });
-                        });
+                                        .then(ontology => resolve(ontology, emptyInProgressCommit), deferred.reject);
+                                }, deferred.reject);
+                        }, deferred.reject);
                 }
-                var resolve = function(ontology) {
-                    deferred.resolve({recordId, ontologyId, ontology, branchId, commitId});
+                var resolve = function(ontology, inProgressCommit) {
+                    deferred.resolve({recordId, ontologyId, ontology, branchId, commitId, inProgressCommit});
                 }
                 deferred.promise.then(() => {
                     $rootScope.showSpinner = false;
@@ -397,10 +419,10 @@
                         .then(response => {
                             if (type === 'ontology') {
                                 addOntologyToList(ontologyId, recordId, response.branchId, response.commitId,
-                                    response.ontology).then(() => onAddSuccess(ontologyId));
+                                    response.ontology, response.inProgressCommit).then(() => onAddSuccess(ontologyId));
                             } else if (type === 'vocabulary') {
                                 addVocabularyToList(ontologyId, recordId, response.branchId, response.commitId,
-                                    response.ontology).then(() => onAddSuccess(ontologyId));
+                                    response.ontology, response.inProgressCommit).then(() => onAddSuccess(ontologyId));
                             }
                         }, response => {
                             onError(response);
@@ -443,10 +465,10 @@
                     .then(response => {
                         if (type === 'ontology') {
                             addOntologyToList(response.ontologyId, response.recordId, response.branchId,
-                                response.commitId, response.ontology).then(onAddSuccess);
+                                response.commitId, response.ontology, response.inProgressCommit).then(onAddSuccess);
                         } else if (type === 'vocabulary') {
                             addVocabularyToList(response.ontologyId, response.recordId, response.branchId,
-                                response.commitId, response.ontology).then(onAddSuccess);
+                                response.commitId, response.ontology, response.inProgressCommit).then(onAddSuccess);
                         }
                     }, response => {
                         deferred.reject(_.get(response, 'statusText'));
@@ -516,68 +538,6 @@
              * @param {Object[]} unsavedEntities The array of ontology entities with unsaved changes.
              * @returns {Promise} A promise with the ontology ID.
              */
-            /*self.saveChanges = function(ontologyId, unsavedEntities, createdEntities, deletedEntities) {
-                var deferred = $q.defer();
-                var promises = [];
-                var config = {};
-                _.forEach(unsavedEntities, entity => {
-                    config = {
-                        params: {
-                            resourceid: _.get(entity, 'matonto.originalIRI'),
-                            resourcejson: $filter('removeMatonto')(entity)
-                        }
-                    };
-                    promises.push($http.post(ontologyPrefix + '/' + encodeURIComponent(ontologyId), null, config));
-                    // TODO: the following calls should only be done on successful save
-                    // This will be addressed in a future branch dealing with $q.all()
-                    _.set(entity, 'matonto.unsaved', false);
-                    if (_.has(entity, '@id')) {
-                        _.set(entity, 'matonto.originalIRI', entity['@id']);
-                    }
-                });
-                _.forEach(createdEntities, entity => {
-                    var newEntity = $filter('removeMatonto')(entity);
-                    if (self.isClass(entity)) {
-                        promises.push(self.createClass(ontologyId, newEntity));
-                    } else if (self.isObjectProperty(entity)) {
-                        promises.push(self.createObjectProperty(ontologyId, newEntity));
-                    } else if (self.isDataTypeProperty(entity)) {
-                        promises.push(self.createDataTypeProperty(ontologyId, newEntity));
-                    } else if (self.isIndividual(entity)) {
-                        promises.push(self.createIndividual(ontologyId, newEntity));
-                    }
-                    _.set(entity, 'matonto.created', false);
-                });
-                _.forEach(deletedEntities, entity => {
-                    if (self.isClass(entity)) {
-                        promises.push(self.deleteClass(ontologyId, entity.matonto.originalIRI));
-                    } else if (self.isObjectProperty(entity)) {
-                        promises.push(self.deleteObjectProperty(ontologyId, entity.matonto.originalIRI));
-                    } else if (self.isDataTypeProperty(entity)) {
-                        promises.push(self.deleteDataTypeProperty(ontologyId, entity.matonto.originalIRI));
-                    } else if (self.isIndividual(entity)) {
-                        promises.push(self.deleteIndividual(ontologyId, entity.matonto.originalIRI));
-                    }
-                });
-                $q.all(promises)
-                    .then(responses => {
-                        if (!_.some(responses, {data: {updated: false}})) {
-                            var newId = _.get(_.find(responses, response => _.has(response, 'data.id')), 'data.id',
-                                ontologyId);
-                            if (ontologyId !== newId) {
-                                self.setOntologyId(ontologyId, newId);
-                            }
-                            deferred.resolve(newId);
-                        } else {
-                            // TODO: find a useful error message if this did go wrong
-                            deferred.reject('An error has occurred.');
-                        }
-                    }, response => {
-                        // TODO: find a more useful error message
-                        deferred.reject('An error has occurred.');
-                    });
-                return deferred.promise;
-            }*/
             self.saveChanges = function(recordId, differenceObj) {
                 var deferred = $q.defer();
                 var catalogId = _.get(cm.localCatalog, '@id', '');
@@ -602,11 +562,7 @@
                 var entity = _.find(listItem[prop], {'@id': json['@id']});
                 json = $filter('removeMatonto')(json);
                 if (entity) {
-                    _.mergeWith(entity, json, function(objValue, srcValue) {
-                        if (_.isArray(objValue)) {
-                            return objValue.concat(srcValue);
-                        }
-                    });
+                    _.mergeWith(entity, json, util.mergingArrays);
                 } else {
                     listItem[prop].push(json);
                 }
@@ -634,6 +590,9 @@
              */
             self.getListItemById = function(ontologyId) {
                 return _.find(self.list, {ontologyId: ontologyId});
+            }
+            self.getListItemByRecordId = function(recordId) {
+                return _.find(self.list, {recordId: recordId});
             }
             /**
              * @ngdoc method
@@ -1921,7 +1880,7 @@
                 }
                 return readableText;
             }
-            function setupListItem(ontologyId, recordId, branchId, commitId, ontology, template) {
+            function setupListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, template) {
                 var listItem = angular.copy(template);
                 var blankNodes = {};
                 var index = {};
@@ -1949,13 +1908,13 @@
                 listItem.ontology = ontology;
                 listItem.blankNodes = blankNodes;
                 listItem.index = index;
-                listItem.additions = [];
-                listItem.deletions = [];
+                listItem.inProgressCommit = inProgressCommit;
                 return listItem;
             }
-            function addOntologyToList(ontologyId, recordId, branchId, commitId, ontology) {
+            function addOntologyToList(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit) {
                 var deferred = $q.defer();
-                var listItem = setupListItem(ontologyId, recordId, branchId, commitId, ontology,
+                var catalogId = _.get(cm.localCatalog, '@id', '');
+                var listItem = setupListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit,
                     ontologyListItemTemplate);
                 $q.all([
                     $http.get(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/iris'),
@@ -2051,14 +2010,16 @@
                 });
                 return deferred.promise;
             }
-            function addVocabularyToList(ontologyId, recordId, branchId, commitId, ontology) {
+            function addVocabularyToList(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit) {
                 var deferred = $q.defer();
-                var listItem = setupListItem(ontologyId, recordId, branchId, commitId, ontology,
+                var catalogId = _.get(cm.localCatalog, '@id', '');
+                var listItem = setupListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit,
                     vocabularyListItemTemplate);
                 $q.all([
                     $http.get(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/iris'),
                     $http.get(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/imported-iris'),
-                    $http.get(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/concept-hierarchies')
+                    $http.get(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/concept-hierarchies'),
+                    cm.getInProgressCommit(recordId, catalogId)
                 ]).then(response => {
                     var irisResponse = response[0];
                     if (_.get(irisResponse, 'status') === 200) {
@@ -2100,6 +2061,7 @@
                             listItem.conceptHierarchy = conceptHierarchyResponse.data.hierarchy;
                             listItem.conceptIndex = conceptHierarchyResponse.data.index;
                         }
+                        listItem.inProgressCommit = response[3];
                         _.pullAllWith(
                             listItem.annotations,
                             _.concat(self.ontologyProperties, listItem.subDataProperties, listItem.subObjectProperties,

@@ -1,0 +1,12 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.save-changes-tab {
+    .deletion {
+        background-color: $brand-danger-light;
+    }
+
+    .addition {
+        background-color: $brand-success;
+    }
+}

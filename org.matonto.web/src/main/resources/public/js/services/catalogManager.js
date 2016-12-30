@@ -1104,6 +1104,9 @@
             self.createBranchCommit = function(branchId, recordId, catalogId, message) {
                 var deferred = $q.defer(),
                     config = {
+                        headers: {
+                            'Accept': 'text/plain'
+                        },
                         params: {
                             message
                         }

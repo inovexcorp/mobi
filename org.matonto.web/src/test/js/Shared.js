@@ -120,12 +120,14 @@ function mockStateManager() {
             this.states = [];
             this.getStates = jasmine.createSpy('getStates').and.returnValue($q.when());
             this.createState = jasmine.createSpy('createStates').and.returnValue($q.when());
-            this.createOntologyState = jasmine.createSpy('createOntologyState').and.returnValue($q.when());
             this.getState = jasmine.createSpy('getState').and.returnValue($q.when());
-            this.getOntologyStateByRecordId = jasmine.createSpy('getOntologyStateByRecordId').and.returnValue({});
             this.updateState = jasmine.createSpy('updateState').and.returnValue($q.when());
             this.deleteState = jasmine.createSpy('deleteState').and.returnValue($q.when());
             this.initialize = jasmine.createSpy('initialize');
+            this.createOntologyState = jasmine.createSpy('createOntologyState').and.returnValue($q.when());
+            this.getOntologyStateByRecordId = jasmine.createSpy('getOntologyStateByRecordId').and.returnValue({});
+            this.updateOntologyState = jasmine.createSpy('updateOntologyState').and.returnValue($q.when());
+            this.deleteOntologyState = jasmine.createSpy('deleteOntologyState').and.returnValue($q.when());
         });
     });
 }
@@ -140,6 +142,7 @@ function mockOntologyManager() {
             this.initialize = jasmine.createSpy('initialize');
             this.getOntology = jasmine.createSpy('getOntology').and.returnValue($q.when({}));
             this.getListItemById = jasmine.createSpy('getListItemById').and.returnValue({});
+            this.getListItemByRecordId = jasmine.createSpy('getListItemByRecordId');
             this.isOntology = jasmine.createSpy('isOntology');
             this.getOntologyById = jasmine.createSpy('getOntologyById').and.returnValue([]);
             this.getOntologyEntity = jasmine.createSpy('getOntologyEntity').and.returnValue({});
@@ -332,14 +335,16 @@ function mockMapperState() {
         });
     });
 }
+
 function mockPrefixes() {
     module(function($provide) {
         $provide.service('prefixes', function() {
-            this.owl = this.rdf = this.delim = this.data = this.mappings = this.catalog = this.ontologyState = '';
+            this.owl = this.rdf = this.delim = this.data = this.mappings = this.catalog = '';
             this.rdfs = 'rdfs:';
             this.dc = 'dc:';
             this.dcterms = 'dcterms:';
             this.rdf = 'rdf:';
+            this.ontologyState = 'ontologyState:';
         });
     });
 }
@@ -429,7 +434,13 @@ function mockOntologyState() {
                 recordId: '',
                 branchId: '',
                 commitId: '',
-                ontologyId: ''
+                ontologyId: '',
+                additions: [],
+                deletions: [],
+                inProgressCommit: {
+                    additions: [],
+                    deletions: []
+                }
             };
             this.reset = jasmine.createSpy('reset');
             this.setTreeTab = jasmine.createSpy('setTreeTab');
@@ -643,6 +654,7 @@ function mockUtil() {
             this.setPropertyValue = jasmine.createSpy('setPropertyValue').and.returnValue({});
             this.getDctermsValue = jasmine.createSpy('getDctermsValue').and.returnValue('');
             this.setDctermsValue = jasmine.createSpy('setDctermsValue').and.returnValue({});
+            this.mergingArrays = jasmine.createSpy('mergingArrays');
         });
     });
 }
