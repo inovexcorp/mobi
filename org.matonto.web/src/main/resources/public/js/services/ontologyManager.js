@@ -486,12 +486,8 @@
                             addVocabularyToList(response.ontologyId, response.recordId, response.branchId,
                                 response.commitId, response.ontology, response.inProgressCommit).then(onAddSuccess);
                         }
-                    }, response => {
-                        deferred.reject(_.get(response, 'statusText'));
-                    });
-                deferred.promise.then(() => {
-                    $rootScope.showSpinner = false;
-                });
+                    }, response => deferred.reject(response.statusText));
+                deferred.promise.then(() => $rootScope.showSpinner = false);
                 return deferred.promise;
             }
             /**
@@ -727,6 +723,7 @@
              */
             self.createOntology = function(ontologyJson, title, description, keywords, type='ontology') {
                 $rootScope.showSpinner = true;
+                var catalogId = _.get(cm.localCatalog, '@id', '');
                 var deferred = $q.defer();
                 var config = {
                     headers: {
@@ -742,30 +739,27 @@
                 }
                 $http.post(ontologyPrefix, ontologyJson, config)
                     .then(response => {
-                        _.set(ontologyJson, 'matonto.originalIRI', ontologyJson['@id']);
                         var listItem = {};
                         if (type === 'ontology') {
                             listItem = setupListItem(response.data.ontologyId, response.data.recordId,
-                                response.data.branchId, [ontologyJson], ontologyListItemTemplate);
+                                response.data.branchId, response.data.commitId, [ontologyJson], emptyInProgressCommit,
+                                ontologyListItemTemplate);
                         } else if (type === 'vocabulary') {
                             listItem = setupListItem(response.data.ontologyId, response.data.recordId,
-                                response.data.branchId, [ontologyJson], vocabularyListItemTemplate);
+                                response.data.branchId, response.data.commitId, [ontologyJson], emptyInProgressCommit,
+                                vocabularyListItemTemplate);
                         }
                         cm.getRecordBranch(response.data.branchId, response.data.recordId, catalogId)
                             .then(branch => {
                                 listItem.branches = [branch];
-                                self.listItem.push(listItem);
+                                self.list.push(listItem);
                                 deferred.resolve({
                                     entityIRI: ontologyJson['@id'],
                                     ontologyId: response.data.ontologyId
                                 });
                             }, deferred.reject);
-                    }, response => {
-                        deferred.reject(_.get(response, 'statusText', defaultErrorMessage));
-                    })
-                    .then(() => {
-                        $rootScope.showSpinner = false;
-                    });
+                    }, response => deferred.reject(response.statusText))
+                    .then(() => $rootScope.showSpinner = false);
                 return deferred.promise;
             }
             /**
@@ -2019,6 +2013,7 @@
                 return deferred.promise;
             }
             function createVocabularyListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit) {
+                var deferred = $q.defer();
                 var catalogId = _.get(cm.localCatalog, '@id', '');
                 var listItem = setupListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit,
                     vocabularyListItemTemplate);
