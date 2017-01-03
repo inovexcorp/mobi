@@ -39,10 +39,9 @@
          * @name searchRow.directive:searchRow
          * @scope
          * @restrict E
-         * @requires catalogState.service:cataStateService
+         * @requires catalogState.service:catalogStateService
          * @requires catalogManager.service:catalogManagerService
-         * @requires utilService.service:utilService
-         * @requires toastr
+         * @requires util.service:utilService
          *
          * @description
          * `searchRow` is a directive which creates a Bootstrap `row` with a
@@ -56,9 +55,9 @@
          */
         .directive('searchRow', searchRow);
 
-    searchRow.$inject = ['catalogStateService', 'catalogManagerService'];
+    searchRow.$inject = ['catalogStateService', 'catalogManagerService', 'utilService'];
 
-    function searchRow(catalogStateService, catalogManagerService) {
+    function searchRow(catalogStateService, catalogManagerService, utilService) {
         return {
             restrict: 'E',
             replace: true,
@@ -68,6 +67,7 @@
                 var dvm = this;
                 dvm.state = catalogStateService;
                 dvm.cm = catalogManagerService;
+                dvm.util = utilService;
 
                 dvm.search = function() {
                     dvm.state.currentPage = 0;
@@ -83,7 +83,7 @@
                         .then(response => {
                             dvm.state.setPagination(response);
                             currentCatalog.openedPath = _.slice(currentCatalog.openedPath, 0, 1);
-                        }, error => toastr.error(error, 'Error', {timeOut: 0}));
+                        }, error => dvm.util.createErrorToast(error));
                 }
             },
             templateUrl: 'modules/catalog/directives/searchRow/searchRow.html'

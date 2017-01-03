@@ -43,9 +43,9 @@
          */
         .service('utilService', utilService);
 
-        utilService.$inject = ['$filter', 'prefixes'];
+        utilService.$inject = ['$filter', 'prefixes', 'toastr'];
 
-        function utilService($filter, prefixes) {
+        function utilService($filter, prefixes, toastr) {
             var self = this;
 
             /**
@@ -124,6 +124,20 @@
                     }
                 });
                 return links;
+            }
+
+            /**
+             * @ngdoc method
+             * @name createErrorToast
+             * @methodOf util.service:utilService
+             *
+             * @description
+             * Creates an error toast with the passed error text that will not disappear until it is dismissed.
+             *
+             * @param {string} text The text for the body of the error toast
+             */
+            self.createErrorToast = function(text) {
+                toastr.error(text, 'Error', {timeOut: 0});
             }
         }
 })();

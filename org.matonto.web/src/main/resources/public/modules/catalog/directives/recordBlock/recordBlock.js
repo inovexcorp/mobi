@@ -43,7 +43,6 @@
          * @requires catalogState.service:cataStateService
          * @requires catalogManager.service:catalogManagerService
          * @requires utilService.service:utilService
-         * @requires toastr
          *
          * @description
          * `recordBlock` is a directive which creates a div with a {@link block.directive:block block}
@@ -62,9 +61,9 @@
          */
         .directive('recordBlock', recordBlock);
 
-    recordBlock.$inject = ['catalogStateService', 'catalogManagerService', 'utilService', 'toastr'];
+    recordBlock.$inject = ['catalogStateService', 'catalogManagerService', 'utilService'];
 
-    function recordBlock(catalogStateService, catalogManagerService, utilService, toastr) {
+    function recordBlock(catalogStateService, catalogManagerService, utilService) {
         return {
             restrict: 'E',
             replace: true,
@@ -100,7 +99,7 @@
                         sortOption: currentCatalog.branches.sortOption,
                     }
                     dvm.cm.getRecordBranches(dvm.record['@id'], currentCatalog.catalog['@id'], paginatedConfig)
-                        .then(response => dvm.state.setPagination(response), error => toastr.error(error, 'Error', {timeOut: 0}));
+                        .then(response => dvm.state.setPagination(response), error => dvm.util.createErrorToast(error));
                 }
             },
             templateUrl: 'modules/catalog/directives/recordBlock/recordBlock.html'

@@ -38,6 +38,21 @@ describe('Catalog State service', function() {
         });
     });
 
+    it('should initialize catalogs state', function() {
+        catalogManagerSvc.sortOptions = [{}];
+        catalogManagerSvc.localCatalog = {};
+        catalogManagerSvc.distributedCatalog = {};
+        catalogStateSvc.initialize();
+        expect(catalogStateSvc.catalogs.local.catalog).toBe(catalogManagerSvc.localCatalog);
+        expect(catalogStateSvc.catalogs.local.openedPath).toEqual([catalogManagerSvc.localCatalog]);
+        expect(catalogStateSvc.catalogs.distributed.catalog).toBe(catalogManagerSvc.distributedCatalog);
+        expect(catalogStateSvc.catalogs.distributed.openedPath).toEqual([catalogManagerSvc.distributedCatalog]);
+        _.forEach(_.filter(catalogStateSvc.catalogs.local, function(val) {
+            return _.has(val, 'sortOption');
+        }), function(obj) {
+            expect(obj.sortOption).toBe(catalogManagerSvc.sortOptions[0]);
+        });
+    });
     it('should reset all state variables', function() {
         spyOn(catalogStateSvc, 'resetPagination');
         catalogStateSvc.reset();

@@ -23,7 +23,6 @@
 describe('Record Block directive', function() {
     var $compile,
         scope,
-        toastr,
         catalogManagerSvc,
         catalogStateSvc,
         utilSvc,
@@ -37,12 +36,10 @@ describe('Record Block directive', function() {
         mockCatalogManager();
         mockCatalogState();
         mockUtil();
-        mockToastr();
 
-        inject(function(_$compile_, _$rootScope_, _toastr_, _catalogManagerService_, _catalogStateService_, _utilService_, _$timeout_, _$q_) {
+        inject(function(_$compile_, _$rootScope_, _catalogManagerService_, _catalogStateService_, _utilService_, _$timeout_, _$q_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            toastr = _toastr_;
             catalogManagerSvc = _catalogManagerService_;
             catalogStateSvc = _catalogStateService_;
             utilSvc = _utilService_;
@@ -103,7 +100,7 @@ describe('Record Block directive', function() {
                     expect(catalogManagerSvc.getRecordBranches).toHaveBeenCalledWith(controller.record['@id'], catalogStateSvc.catalogs.local['@id'], this.expectedPaginationConfig);
                     expect(catalogStateSvc.currentPage).toBe(0);
                     expect(catalogStateSvc.setPagination).not.toHaveBeenCalled();
-                    expect(toastr.error).toHaveBeenCalledWith('Error Message', 'Error', {timeOut: 0});
+                    expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error Message');
                 });
                 it('succesfully', function() {
                     controller.changeSort();
@@ -111,7 +108,7 @@ describe('Record Block directive', function() {
                     expect(catalogManagerSvc.getRecordBranches).toHaveBeenCalledWith(controller.record['@id'], catalogStateSvc.catalogs.local['@id'], this.expectedPaginationConfig);
                     expect(catalogStateSvc.currentPage).toBe(0);
                     expect(catalogStateSvc.setPagination).toHaveBeenCalled();
-                    expect(toastr.error).not.toHaveBeenCalled();
+                    expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
                 });
             });
         });

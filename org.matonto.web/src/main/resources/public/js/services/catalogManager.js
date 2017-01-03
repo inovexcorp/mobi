@@ -118,15 +118,25 @@
              * @description
              * Initializes the `sortOptions`, `recordTypes`, `localCatalog`, and `distributedCatalog` of the
              * catalogManagerService using the `getSortOptions` and `getRecordTypes` methods along with the
-             * GET /matontorest/catalogs endpoint.
+             * GET /matontorest/catalogs endpoint. If the local or distributed Catalog cannot be found, rejects
+             * with an error message.
+             *
+             * @returns {Promise} A promise that resolves if initialization was successful or is rejected
+             * with an error message
              */
             self.initialize = function() {
-                self.getRecordTypes()
-                    .then(types => self.recordTypes = types);
-
-                self.getSortOptions()
-                    .then(options => {
-                        _.forEach(options, option => {
+                return $q.all([self.getRecordTypes(), self.getSortOptions(), $http.get(prefix)])
+                    .then(responses => {
+                        self.localCatalog = _.find(responses[2].data, {[prefixes.dcterms + 'title']: [{'@value': 'MatOnto Catalog (Local)'}]});
+                        self.distributedCatalog = _.find(responses[2].data, {[prefixes.dcterms + 'title']: [{'@value': 'MatOnto Catalog (Distributed)'}]});
+                        if (!self.localCatalog) {
+                            return $q.reject('Could not find local catalog');
+                        }
+                        if (!self.distributedCatalog) {
+                            return $q.reject('Could not find distributed catalog');
+                        }
+                        self.recordTypes = responses[0];
+                        _.forEach(responses[1], option => {
                             var label = util.getBeautifulIRI(option);
                             if (!_.includes(self.sortOptions, {field: option})) {
                                 self.sortOptions.push({
@@ -140,12 +150,8 @@
                                 });
                             }
                         });
-                    });
-
-                $http.get(prefix)
-                    .then(response => {
-                        self.localCatalog = _.find(response.data, {[prefixes.dcterms + 'title']: [{'@value': 'MatOnto Catalog (Local)'}]});
-                        self.distributedCatalog = _.find(response.data, {[prefixes.dcterms + 'title']: [{'@value': 'MatOnto Catalog (Distributed)'}]});
+                    }, error => {
+                        return $q.reject('Error in catalogManager initialization');
                     });
             }
 

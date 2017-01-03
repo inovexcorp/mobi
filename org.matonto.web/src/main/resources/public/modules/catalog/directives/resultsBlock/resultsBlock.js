@@ -42,7 +42,6 @@
          * @requires catalogState.service:cataStateService
          * @requires catalogManager.service:catalogManagerService
          * @requires utilService.service:utilService
-         * @requires toastr
          *
          * @description
          * `resultsBlock` is a directive which creates a div with a {@link block.directive:block block}
@@ -55,9 +54,9 @@
          */
         .directive('resultsBlock', resultsBlock);
 
-    resultsBlock.$inject = ['catalogStateService', 'catalogManagerService', 'utilService', 'toastr'];
+    resultsBlock.$inject = ['catalogStateService', 'catalogManagerService', 'utilService'];
 
-    function resultsBlock(catalogStateService, catalogManagerService, utilService, toastr) {
+    function resultsBlock(catalogStateService, catalogManagerService, utilService) {
         return {
             restrict: 'E',
             replace: true,
@@ -80,7 +79,7 @@
                         .then(response => {
                             dvm.state.resetPagination();
                             currentCatalog.openedPath.push(response);
-                        }, error => toastr.error(error, 'Error', {timeOut: 0}));
+                        }, error => dvm.util.createErrorToast(error));
                 }
 
                 function getRecords() {
@@ -94,7 +93,7 @@
                         searchText: currentCatalog.records.searchText
                     };
                     dvm.cm.getRecords(currentCatalog.catalog['@id'], paginatedConfig)
-                        .then(response => dvm.state.setPagination(response), error => toastr.error(error, 'Error', {timeOut: 0}));
+                        .then(response => dvm.state.setPagination(response), error => dvm.util.createErrorToast(error));
                 }
             },
             templateUrl: 'modules/catalog/directives/resultsBlock/resultsBlock.html'

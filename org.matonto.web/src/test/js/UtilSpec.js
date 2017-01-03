@@ -23,6 +23,7 @@
 describe('Util service', function() {
     var utilSvc,
         prefixes,
+        toastr,
         splitIRIFilter,
         beautifyFilter;
 
@@ -31,10 +32,12 @@ describe('Util service', function() {
         mockPrefixes();
         injectSplitIRIFilter();
         injectBeautifyFilter();
+        mockToastr();
 
-        inject(function(utilService, _prefixes_, _splitIRIFilter_, _beautifyFilter_) {
+        inject(function(utilService, _prefixes_, _toastr_, _splitIRIFilter_, _beautifyFilter_) {
             utilSvc = utilService;
             prefixes = _prefixes_;
+            toastr = _toastr_;
             splitIRIFilter = _splitIRIFilter_;
             beautifyFilter = _beautifyFilter_;
         });
@@ -88,5 +91,9 @@ describe('Util service', function() {
             var links = '<' + link + '>; rel="test"';
             expect(utilSvc.parseLinks(links)).toEqual({test: link});
         });
+    });
+    it('should create an error toast', function() {
+        utilSvc.createErrorToast('Text');
+        expect(toastr.error).toHaveBeenCalledWith('Text', 'Error', {timeOut: 0});
     });
 });

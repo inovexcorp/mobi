@@ -69,26 +69,26 @@
             self.catalogs = {
                 local: {
                     show: true,
-                    catalog: cm.localCatalog,
-                    openedPath: [cm.localCatalog],
+                    catalog: undefined,
+                    openedPath: [],
                     records: {
                         filterType: '',
-                        sortOption: _.get(cm.sortOptions, 0),
+                        sortOption: undefined,
                         searchText: '',
                         limit: 10
                     },
                     branches: {
-                        sortOption: _.get(cm.sortOptions, 0),
+                        sortOption: undefined,
                         limit: 10
                     }
                 },
                 distributed: {
                     show: false,
-                    catalog: cm.distributedCatalog,
-                    openedPath: [cm.distributedCatalog],
+                    catalog: undefined,
+                    openedPath: [],
                     records: {
                         filterType: '',
-                        sortOption: _.get(cm.sortOptions, 0),
+                        sortOption: undefined,
                         searchText: '',
                         limit: 10
                     }
@@ -142,6 +142,22 @@
              */
             self.results = [];
 
+            /**
+             * @ngdoc method
+             * @name initialize
+             * @methodOf catalogState.service:catalogStateService
+             *
+             * @description
+             * Initializes `catalogs` using information retrieved from
+             * {@link catalogManager.service:catalogManagerService catalogManagerService}.
+             */
+            self.initialize = function() {
+                self.catalogs.local.catalog = cm.localCatalog;
+                self.catalogs.local.openedPath = [cm.localCatalog];
+                self.catalogs.distributed.catalog = cm.distributedCatalog;
+                self.catalogs.distributed.openedPath = [cm.distributedCatalog];
+                _.forEach(_.flatten(_.map(self.catalogs, catalog => _.filter(catalog, val => _.has(val, 'sortOption')))), obj => obj.sortOption = _.get(cm.sortOptions, 0));
+            }
             /**
              * @ngdoc method
              * @name catalogState.service:catalogStateService#reset

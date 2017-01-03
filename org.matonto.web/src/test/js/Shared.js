@@ -558,7 +558,7 @@ function mockCatalogManager() {
             this.recordTypes = [];
             this.localCatalog = undefined;
             this.distributedCatalog = undefined;
-            this.initialize = jasmine.createSpy('initialize');
+            this.initialize = jasmine.createSpy('initialize').and.returnValue($q.when());
             this.getSortOptions = jasmine.createSpy('getSortOptions').and.returnValue($q.when([]));
             this.getRecordTypes = jasmine.createSpy('getRecordTypes').and.returnValue($q.when([]));
             this.getResultsPage = jasmine.createSpy('getResultsPage').and.returnValue($q.when({}));
@@ -651,6 +651,7 @@ function mockCatalogState() {
             };
             this.totalSize = 0;
             this.results = [];
+            this.initialize = jasmine.createSpy('initialize');
             this.reset = jasmine.createSpy('reset');
             this.resetPagination = jasmine.createSpy('resetPagination');
             this.setPagination = jasmine.createSpy('setPagination');
@@ -666,6 +667,7 @@ function mockUtil() {
             this.getPropertyValue = jasmine.createSpy('getPropertyValue').and.returnValue('');
             this.getDctermsValue = jasmine.createSpy('getPropertyValue').and.returnValue('');
             this.parseLinks = jasmine.createSpy('parseLinks').and.returnValue({});
+            this.createErrorToast = jasmine.createSpy('createErrorToast');
         });
     });
 }
