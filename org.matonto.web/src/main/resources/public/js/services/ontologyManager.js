@@ -93,7 +93,8 @@
                 inProgressCommit: {
                     additions: [],
                     deletions: []
-                }
+                },
+                branches: []
             };
             var vocabularyListItemTemplate = {
                 ontology: [],
@@ -108,7 +109,12 @@
                 inProgressCommit: {
                     additions: [],
                     deletions: []
-                }
+                },
+                branches: []
+            };
+            var emptyInProgressCommit = {
+                additions: [],
+                deletions: []
             };
             var cm = catalogManagerService;
             var sm = stateManagerService;
@@ -333,7 +339,6 @@
                 var branchId, commitId;
                 var state = sm.getOntologyStateByRecordId(recordId);
                 var deferred = $q.defer();
-                var emptyInProgressCommit = {additions: [], deletions: []};
                 if (!_.isEmpty(state)) {
                     branchId = _.get(state, "model[0]['" + prefixes.ontologyState + "branch'][0]['@id']");
                     commitId = _.get(state, "model[0]['" + prefixes.ontologyState + "commit'][0]['@id']");
@@ -403,7 +408,7 @@
              * @param {string} type The type identifier for the file uploaded.
              * @returns {Promise} A promise with the ontology ID or error message.
              */
-            self.uploadThenGet = function(file, title, description, keywords, type='ontology') {
+            self.uploadThenGet = function(file, title, description, keywords, type = 'ontology') {
                 $rootScope.showSpinner = true;
                 var deferred = $q.defer();
                 var onError = function(response) {
@@ -424,21 +429,32 @@
                                 addVocabularyToList(ontologyId, recordId, response.branchId, response.commitId,
                                     response.ontology, response.inProgressCommit).then(() => onAddSuccess(ontologyId));
                             }
-                        }, response => {
-                            onError(response);
-                        });
+                        }, onError);
                 };
                 self.uploadFile(file, title, description, keywords)
-                    .then(response => {
-                        if (_.get(response, 'status') === 200 && _.has(response, 'data.recordId')
-                            && _.has(response, 'data.ontologyId')) {
-                            onUploadSuccess(response.data.recordId, response.data.ontologyId);
-                        } else {
-                            onError(response);
+                    .then(response => onUploadSuccess(response.data.recordId, response.data.ontologyId), onError);
+                return deferred.promise;
+            }
+            self.changeBranch = function(ontologyId, recordId, branchId, commitId, type = 'ontology') {
+                var deferred = $q.defer();
+                var catalogId = _.get(cm.localCatalog, '@id', '');
+                var onSuccess = function(listItem) {
+                    updateListItem(ontologyId, listItem);
+                    deferred.resolve();
+                }
+                cm.getResource(commitId, branchId, recordId, catalogId, false)
+                    .then(ontology => {
+                        if (type === 'ontology') {
+                            createOntologyListItem(ontologyId, recordId, branchId, commitId, ontology,
+                                emptyInProgressCommit).then(onSuccess,
+                                    response => deferred.reject(response.statusText));
+                        } else if (type === 'vocabulary') {
+                            createVocabularyListItem(ontologyId, recordId, branchId, commitId, ontology,
+                                emptyInProgressCommit).then(onSuccess,
+                                    response => deferred.reject(response.statusText));
                         }
-                    }, response => {
-                        onError(response);
-                    });
+                        deferred.resolve();
+                    }, deferred.reject);
                 return deferred.promise;
             }
             /**
@@ -726,24 +742,24 @@
                 }
                 $http.post(ontologyPrefix, ontologyJson, config)
                     .then(response => {
-                        if (_.has(response, 'data.ontologyId') && _.has(response, 'data.recordId')) {
-                            _.set(ontologyJson, 'matonto.originalIRI', ontologyJson['@id']);
-                             var listItem = {};
-                            if (type === 'ontology') {
-                                listItem = setupListItem(response.data.ontologyId, response.data.recordId,
-                                    response.data.branchId, [ontologyJson], ontologyListItemTemplate);
-                            } else if (type === 'vocabulary') {
-                                listItem = setupListItem(response.data.ontologyId, response.data.recordId,
-                                    response.data.branchId, [ontologyJson], vocabularyListItemTemplate);
-                            }
-                            self.list.push(listItem);
-                            deferred.resolve({
-                                entityIRI: ontologyJson['@id'],
-                                ontologyId: response.data.ontologyId
-                            });
-                        } else {
-                            deferred.reject(_.get(response, 'statusText', defaultErrorMessage));
+                        _.set(ontologyJson, 'matonto.originalIRI', ontologyJson['@id']);
+                        var listItem = {};
+                        if (type === 'ontology') {
+                            listItem = setupListItem(response.data.ontologyId, response.data.recordId,
+                                response.data.branchId, [ontologyJson], ontologyListItemTemplate);
+                        } else if (type === 'vocabulary') {
+                            listItem = setupListItem(response.data.ontologyId, response.data.recordId,
+                                response.data.branchId, [ontologyJson], vocabularyListItemTemplate);
                         }
+                        cm.getRecordBranch(response.data.branchId, response.data.recordId, catalogId)
+                            .then(branch => {
+                                listItem.branches = [branch];
+                                self.listItem.push(listItem);
+                                deferred.resolve({
+                                    entityIRI: ontologyJson['@id'],
+                                    ontologyId: response.data.ontologyId
+                                });
+                            }, deferred.reject);
                     }, response => {
                         deferred.reject(_.get(response, 'statusText', defaultErrorMessage));
                     })
@@ -1750,12 +1766,10 @@
              * @param {string} searchText The text that you are searching for in the ontology entity literal values.
              * @returns {Promise} A promise containing the SPARQL query results.
              */
-            self.getSearchResults = function(ontologyId, searchText) {
+            self.getSearchResults = function(ontologyId, branchId, commitId, searchText) {
                 var defaultErrorMessage = 'An error has occurred with your search.';
                 var deferred = $q.defer();
-                var config = {
-                    params: {searchText}
-                };
+                var config = {params: {searchText, branchId, commitId}};
                 $rootScope.showSpinner = true;
                 $http.get(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/search-results', config)
                     .then(response => {
@@ -1911,107 +1925,100 @@
                 listItem.inProgressCommit = inProgressCommit;
                 return listItem;
             }
-            function addOntologyToList(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit) {
+            function createOntologyListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit) {
                 var deferred = $q.defer();
                 var catalogId = _.get(cm.localCatalog, '@id', '');
                 var listItem = setupListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit,
                     ontologyListItemTemplate);
+                var config = {params: {branchId, commitId}};
                 $q.all([
-                    $http.get(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/iris'),
-                    $http.get(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/imported-iris'),
-                    $http.get(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/class-hierarchies'),
-                    $http.get(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/classes-with-individuals'),
-                    $http.get(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/data-property-hierarchies'),
-                    $http.get(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/object-property-hierarchies')
+                    $http.get(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/iris', config),
+                    $http.get(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/imported-iris', config),
+                    $http.get(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/class-hierarchies', config),
+                    $http.get(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/classes-with-individuals',
+                        config),
+                    $http.get(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/data-property-hierarchies',
+                        config),
+                    $http.get(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/object-property-hierarchies',
+                        config),
+                    cm.getRecordBranches(recordId, catalogId)
                 ]).then(response => {
-                    var irisResponse = response[0];
-                    if (_.get(irisResponse, 'status') === 200) {
-                        listItem.annotations = _.unionWith(
-                            _.get(irisResponse, 'data.annotationProperties'),
-                            propertyManagerService.defaultAnnotations,
-                            _.isMatch
-                        );
-                        listItem.subClasses = _.get(irisResponse, 'data.classes');
-                        listItem.subDataProperties = _.get(irisResponse, 'data.dataProperties');
-                        listItem.subObjectProperties = _.get(irisResponse, 'data.objectProperties');
-                        listItem.individuals = _.get(irisResponse, 'data.namedIndividuals');
-                        listItem.dataPropertyRange = _.unionWith(
-                            _.get(irisResponse, 'data.datatypes'),
-                            defaultDatatypes,
-                            _.isMatch
-                        );
-                        var importedIrisResponse = response[1];
-                        if (_.get(importedIrisResponse, 'status') === 200) {
-                            _.forEach(importedIrisResponse.data, iriList => {
-                                listItem.annotations = _.unionWith(
-                                    addOntologyIdToArray(iriList.annotationProperties, iriList.id),
-                                    listItem.annotations,
-                                    compareListItems
-                                );
-                                listItem.subClasses = _.unionWith(
-                                    addOntologyIdToArray(iriList.classes, iriList.id),
-                                    listItem.subClasses,
-                                    compareListItems
-                                );
-                                listItem.subDataProperties = _.unionWith(
-                                    addOntologyIdToArray(iriList.dataProperties, iriList.id),
-                                    listItem.subDataProperties,
-                                    compareListItems
-                                );
-                                listItem.subObjectProperties = _.unionWith(
-                                    addOntologyIdToArray(iriList.objectProperties, iriList.id),
-                                    listItem.subObjectProperties,
-                                    compareListItems
-                                );
-                                listItem.individuals = _.unionWith(
-                                    addOntologyIdToArray(iriList.individuals, iriList.id),
-                                    listItem.individuals,
-                                    compareListItems
-                                );
-                                listItem.dataPropertyRange = _.unionWith(
-                                    addOntologyIdToArray(iriList.datatypes, iriList.id),
-                                    listItem.dataPropertyRange,
-                                    compareListItems
-                                );
-                            });
-                        }
-                        var classHierarchyResponse = response[2];
-                        if (_.get(classHierarchyResponse, 'status') === 200) {
-                            listItem.classHierarchy = classHierarchyResponse.data.hierarchy;
-                            listItem.classIndex = classHierarchyResponse.data.index;
-                        }
-                        var classesWithIndividualsResponse = response[3];
-                        if (_.get(classesWithIndividualsResponse, 'status') === 200) {
-                            listItem.classesWithIndividuals = classesWithIndividualsResponse.data.hierarchy;
-                            listItem.classesWithIndividualsIndex = classesWithIndividualsResponse.data.index;
-                        }
-                        var dataPropertyHierarchyResponse = response[4];
-                        if (_.get(dataPropertyHierarchyResponse, 'status') === 200) {
-                            listItem.dataPropertyHierarchy = dataPropertyHierarchyResponse.data.hierarchy;
-                            listItem.dataPropertyIndex = dataPropertyHierarchyResponse.data.index;
-                        }
-                        var objectPropertyHierarchyResponse = response[5];
-                        if (_.get(objectPropertyHierarchyResponse, 'status') === 200) {
-                            listItem.objectPropertyHierarchy = objectPropertyHierarchyResponse.data.hierarchy;
-                            listItem.objectPropertyIndex = objectPropertyHierarchyResponse.data.index;
-                        }
-                        _.pullAllWith(
-                            listItem.annotations,
-                            _.concat(self.ontologyProperties, listItem.subDataProperties, listItem.subObjectProperties),
-                            compareListItems
-                        );
-                        self.list.push(listItem);
-                        deferred.resolve();
-                    } else {
-                        deferred.reject();
+                    listItem.annotations = _.unionWith(
+                        _.get(response[0], 'data.annotationProperties'),
+                        propertyManagerService.defaultAnnotations,
+                        _.isMatch
+                    );
+                    listItem.subClasses = _.get(response[0], 'data.classes');
+                    listItem.subDataProperties = _.get(response[0], 'data.dataProperties');
+                    listItem.subObjectProperties = _.get(response[0], 'data.objectProperties');
+                    listItem.individuals = _.get(response[0], 'data.namedIndividuals');
+                    listItem.dataPropertyRange = _.unionWith(
+                        _.get(response[0], 'data.datatypes'),
+                        defaultDatatypes,
+                        _.isMatch
+                    );
+                    if (_.get(response[1], 'status') === 200) {
+                        _.forEach(response[1].data, iriList => {
+                            listItem.annotations = _.unionWith(
+                                addOntologyIdToArray(iriList.annotationProperties, iriList.id),
+                                listItem.annotations,
+                                compareListItems
+                            );
+                            listItem.subClasses = _.unionWith(
+                                addOntologyIdToArray(iriList.classes, iriList.id),
+                                listItem.subClasses,
+                                compareListItems
+                            );
+                            listItem.subDataProperties = _.unionWith(
+                                addOntologyIdToArray(iriList.dataProperties, iriList.id),
+                                listItem.subDataProperties,
+                                compareListItems
+                            );
+                            listItem.subObjectProperties = _.unionWith(
+                                addOntologyIdToArray(iriList.objectProperties, iriList.id),
+                                listItem.subObjectProperties,
+                                compareListItems
+                            );
+                            listItem.individuals = _.unionWith(
+                                addOntologyIdToArray(iriList.individuals, iriList.id),
+                                listItem.individuals,
+                                compareListItems
+                            );
+                            listItem.dataPropertyRange = _.unionWith(
+                                addOntologyIdToArray(iriList.datatypes, iriList.id),
+                                listItem.dataPropertyRange,
+                                compareListItems
+                            );
+                        });
                     }
-                }, () => {
-                    deferred.reject();
-                });
+                    listItem.classHierarchy = response[2].data.hierarchy;
+                    listItem.classIndex = response[2].data.index;
+                    listItem.classesWithIndividuals = response[3].data.hierarchy;
+                    listItem.classesWithIndividualsIndex = response[3].data.index;
+                    listItem.dataPropertyHierarchy = response[4].data.hierarchy;
+                    listItem.dataPropertyIndex = response[4].data.index;
+                    listItem.objectPropertyHierarchy = response[5].data.hierarchy;
+                    listItem.objectPropertyIndex = response[5].data.index;
+                    listItem.branches = response[6].data;
+                    _.pullAllWith(
+                        listItem.annotations,
+                        _.concat(self.ontologyProperties, listItem.subDataProperties, listItem.subObjectProperties),
+                        compareListItems
+                    );
+                    deferred.resolve(listItem);
+                }, deferred.reject);
                 return deferred.promise;
             }
-            function addVocabularyToList(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit) {
+            function addOntologyToList(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit) {
                 var deferred = $q.defer();
+                createOntologyListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit)
+                    .then(listItem => {
+                        self.list.push(listItem);
+                        deferred.resolve();
+                    }, deferred.reject);
+                return deferred.promise;
+            }
+            function createVocabularyListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit) {
                 var catalogId = _.get(cm.localCatalog, '@id', '');
                 var listItem = setupListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit,
                     vocabularyListItemTemplate);
@@ -2019,64 +2026,64 @@
                     $http.get(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/iris'),
                     $http.get(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/imported-iris'),
                     $http.get(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/concept-hierarchies'),
-                    cm.getInProgressCommit(recordId, catalogId)
+                    cm.getRecordBranches(recordId, catalogId)
                 ]).then(response => {
-                    var irisResponse = response[0];
-                    if (_.get(irisResponse, 'status') === 200) {
-                        listItem.subDataProperties = _.get(irisResponse, 'data.dataProperties');
-                        listItem.subObjectProperties = _.get(irisResponse, 'data.objectProperties');
-                        listItem.annotations = _.unionWith(
-                            _.get(irisResponse, 'data.annotationProperties'),
-                            propertyManagerService.defaultAnnotations,
-                            angular.copy(propertyManagerService.skosAnnotations),
-                            _.isMatch
-                        );
-                        listItem.dataPropertyRange = _.unionWith(
-                            _.get(irisResponse, 'data.datatypes'),
-                            defaultDatatypes,
-                            _.isMatch
-                        );
-                        var importedIrisResponse = response[1];
-                        if (_.get(importedIrisResponse, 'status') === 200) {
-                            _.forEach(importedIrisResponse.data, iriList => {
-                                listItem.annotations = _.unionWith(
-                                    addOntologyIdToArray(iriList.annotationProperties, iriList.id),
-                                    listItem.annotations,
-                                    compareListItems
-                                );
-                                listItem.subDataProperties = _.unionWith(
-                                    addOntologyIdToArray(iriList.dataProperties, iriList.id),
-                                    listItem.subDataProperties,
-                                    compareListItems
-                                );
-                                listItem.subObjectProperties = _.unionWith(
-                                    addOntologyIdToArray(iriList.objectProperties, iriList.id),
-                                    listItem.subObjectProperties,
-                                    compareListItems
-                                );
-                            });
-                        }
-                        var conceptHierarchyResponse = response[2];
-                        if (_.get(conceptHierarchyResponse, 'status') === 200) {
-                            listItem.conceptHierarchy = conceptHierarchyResponse.data.hierarchy;
-                            listItem.conceptIndex = conceptHierarchyResponse.data.index;
-                        }
-                        listItem.inProgressCommit = response[3];
-                        _.pullAllWith(
-                            listItem.annotations,
-                            _.concat(self.ontologyProperties, listItem.subDataProperties, listItem.subObjectProperties,
-                                angular.copy(self.conceptRelationshipList), angular.copy(self.schemeRelationshipList)),
-                            compareListItems
-                        );
+                    listItem.subDataProperties = _.get(response[0], 'data.dataProperties');
+                    listItem.subObjectProperties = _.get(response[0], 'data.objectProperties');
+                    listItem.annotations = _.unionWith(
+                        _.get(irisResponse, 'data.annotationProperties'),
+                        propertyManagerService.defaultAnnotations,
+                        angular.copy(propertyManagerService.skosAnnotations),
+                        _.isMatch
+                    );
+                    listItem.dataPropertyRange = _.unionWith(
+                        _.get(irisResponse, 'data.datatypes'),
+                        defaultDatatypes,
+                        _.isMatch
+                    );
+                    if (_.get(response[1], 'status') === 200) {
+                        _.forEach(response[1].data, iriList => {
+                            listItem.annotations = _.unionWith(
+                                addOntologyIdToArray(iriList.annotationProperties, iriList.id),
+                                listItem.annotations,
+                                compareListItems
+                            );
+                            listItem.subDataProperties = _.unionWith(
+                                addOntologyIdToArray(iriList.dataProperties, iriList.id),
+                                listItem.subDataProperties,
+                                compareListItems
+                            );
+                            listItem.subObjectProperties = _.unionWith(
+                                addOntologyIdToArray(iriList.objectProperties, iriList.id),
+                                listItem.subObjectProperties,
+                                compareListItems
+                            );
+                        });
+                    }
+                    listItem.conceptHierarchy = response[2].data.hierarchy;
+                    listItem.conceptIndex = response[2].data.index;
+                    listItem.branches = response[3];
+                    _.pullAllWith(
+                        listItem.annotations,
+                        _.concat(self.ontologyProperties, listItem.subDataProperties, listItem.subObjectProperties,
+                            angular.copy(self.conceptRelationshipList), angular.copy(self.schemeRelationshipList)),
+                        compareListItems
+                    );
+                    deferred.resolve(listItem);
+                }, deferred.reject);
+            }
+            function addVocabularyToList(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit) {
+                var deferred = $q.defer();
+                createVocabularyListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit)
+                    .then(listItem => {
                         self.list.push(listItem);
                         deferred.resolve();
-                    } else {
-                        deferred.reject();
-                    }
-                }, () => {
-                    deferred.reject();
-                });
+                    }, deferred.reject);
                 return deferred.promise;
+            }
+            function updateListItem(ontologyId, newListItem) {
+                var oldListItem = self.getListItemById(ontologyId);
+                _.assign(oldListItem, newListItem);
             }
         }
 })();

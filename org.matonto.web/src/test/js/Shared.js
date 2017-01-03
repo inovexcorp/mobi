@@ -211,6 +211,7 @@ function mockOntologyManager() {
             this.addToDeletions = jasmine.createSpy('addToDeletions');
             this.getConceptIRIs = jasmine.createSpy('getConceptsIRIs');
             this.getConceptSchemeIRIs = jasmine.createSpy('getConceptSchemeIRIs');
+            this.changeBranch = jasmine.createSpy('changeBranch');
         });
     });
 }
@@ -339,12 +340,13 @@ function mockMapperState() {
 function mockPrefixes() {
     module(function($provide) {
         $provide.service('prefixes', function() {
-            this.owl = this.rdf = this.delim = this.data = this.mappings = this.catalog = '';
+            this.owl = this.rdf = this.delim = this.data = this.mappings = '';
             this.rdfs = 'rdfs:';
             this.dc = 'dc:';
             this.dcterms = 'dcterms:';
             this.rdf = 'rdf:';
             this.ontologyState = 'ontologyState:';
+            this.catalog = 'catalog:';
         });
     });
 }
@@ -440,7 +442,8 @@ function mockOntologyState() {
                 inProgressCommit: {
                     additions: [],
                     deletions: []
-                }
+                },
+                branches: []
             };
             this.reset = jasmine.createSpy('reset');
             this.setTreeTab = jasmine.createSpy('setTreeTab');
@@ -477,6 +480,8 @@ function mockOntologyState() {
             this.openAt = jasmine.createSpy('openAt');
             this.goTo = jasmine.createSpy('goTo');
             this.unSelectItem = jasmine.createSpy('unSelectItem');
+            this.clearInProgressCommit = jasmine.createSpy('clearInProgressCommit');
+            this.resetStateTabs = jasmine.createSpy('resetStateTabs');
         });
     });
 }

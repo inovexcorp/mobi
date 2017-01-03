@@ -1105,6 +1105,7 @@
                 var deferred = $q.defer(),
                     config = {
                         headers: {
+                            'Content-Type': undefined,
                             'Accept': 'text/plain'
                         },
                         params: {
@@ -1532,7 +1533,7 @@
                         }
                     };
                 fd.append('title', branchConfig.title);
-                fd.append('type', branchConfig.branchType);
+                fd.append('type', branchConfig.type);
                 if (_.has(branchConfig, 'description')) {
                     fd.append('description', branchConfig.description);
                 }

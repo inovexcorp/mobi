@@ -64,6 +64,7 @@ describe('Ontology Overlays directive', function() {
             ontologyStateSvc.showRemoveIndividualPropertyOverlay = true;
             ontologyStateSvc.showSaveOverlay = true;
             ontologyStateSvc.showCommitOverlay = true;
+            ontologyStateSvc.showCreateBranchOverlay = true;
             element = $compile(angular.element('<ontology-overlays></ontology-overlays>'))(scope);
             scope.$digest();
         });
@@ -76,7 +77,8 @@ describe('Ontology Overlays directive', function() {
         });
         _.forEach(['annotation-overlay', 'datatype-property-overlay', 'object-property-overlay',
         'ontology-download-overlay', 'create-annotation-overlay', 'create-class-overlay', 'create-property-overlay',
-        'create-individual-overlay', 'ontology-close-overlay', 'commit-overlay'], function(item) {
+        'create-individual-overlay', 'ontology-close-overlay', 'commit-overlay', 'create-branch-overlay'],
+        function(item) {
             it('based on ' + item, function() {
                 var items = element.find(item);
                 expect(items.length).toBe(1);

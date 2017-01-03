@@ -21,8 +21,18 @@
  * #L%
  */
 describe('Branch Select directive', function() {
-    var $compile, scope, isolatedScope, element, controller, catalogManagerSvc, ontologyStateSvc, $q;
-    var branch = {'@id': 'id'};
+    var $compile, scope, isolatedScope, element, controller, catalogManagerSvc, ontologyStateSvc, $q, stateManagerSvc,
+        ontologyStateSvc, catalogId;
+    var branchId = 'branchId';
+    var branch = {'@id': branchId};
+    var commitId = 'commitId';
+    var headCommit = {
+        commit: [{
+            '@graph': [{
+                '@id': commitId
+            }]
+        }]
+    }
 
     beforeEach(function() {
         module('templates');
@@ -30,15 +40,20 @@ describe('Branch Select directive', function() {
         mockCatalogManager();
         mockOntologyState();
         mockUtil();
+        mockStateManager();
+        mockOntologyManager();
         injectTrustedFilter();
         injectHighlightFilter();
 
-        inject(function(_$compile_, _$rootScope_, _catalogManagerService_, _ontologyStateService_, _$q_) {
+        inject(function(_$compile_, _$rootScope_, _catalogManagerService_, _ontologyStateService_, _$q_,
+            _stateManagerService_, _ontologyManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             catalogManagerSvc = _catalogManagerService_;
             ontologyStateSvc = _ontologyStateService_;
             $q = _$q_;
+            stateManagerSvc = _stateManagerService_;
+            ontologyManagerSvc = _ontologyManagerService_;
         });
 
         scope.bindModel = {};
@@ -48,6 +63,7 @@ describe('Branch Select directive', function() {
 
         controller = element.controller('branchSelect');
         isolatedScope = element.isolateScope();
+        catalogId = _.get(catalogManagerSvc.localCatalog, '@id', '');
     });
 
     describe('controller bound variables', function() {
@@ -75,8 +91,35 @@ describe('Branch Select directive', function() {
         });
     });
     describe('controller methods', function() {
-        it('catalogManager.getRecordBranches is called initially', function() {
-            expect(catalogManagerSvc.getRecordBranches).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, '');
+        describe('changeBranch calls the correct methods', function() {
+            var getDeferred;
+            beforeEach(function() {
+                getDeferred = $q.defer();
+                catalogManagerSvc.getBranchHeadCommit.and.returnValue(getDeferred.promise);
+            });
+            describe('when getBranchHeadCommit is resolved', function() {
+                var updateDeferred, changeDeferred;
+                beforeEach(function() {
+                    getDeferred.resolve(headCommit);
+                    updateDeferred = $q.defer();
+                    stateManagerSvc.updateOntologyState.and.returnValue(updateDeferred.promise);
+                    changeDeferred = $q.defer();
+                    ontologyManagerSvc.changeBranch.and.returnValue(changeDeferred.promise)
+                });
+                it('when updateOntologyState and changeBranch are resolved', function() {
+                    controller.changeBranch(branch);
+                    updateDeferred.resolve();
+                    changeDeferred.resolve();
+                    scope.$apply();
+                    expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(branchId,
+                        ontologyStateSvc.listItem.recordId, catalogId);
+                    expect(stateManagerSvc.updateOntologyState).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
+                        branchId, commitId);
+                    expect(ontologyManagerSvc.changeBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
+                        ontologyStateSvc.listItem.recordId, branchId, commitId);
+                    expect(ontologyStateSvc.resetStateTabs).toHaveBeenCalled();
+                });
+            });
         });
         it('openDeleteConfirmation calls the correct methods', function() {
             var event = scope.$emit('click');
@@ -100,14 +143,14 @@ describe('Branch Select directive', function() {
                 deferred = $q.defer();
                 controller.showDeleteConfirmation = true;
                 controller.branch = branch;
-                controller.list = [branch];
+                ontologyStateSvc.listItem.branches = [branch];
                 catalogManagerSvc.deleteRecordBranch.and.returnValue(deferred.promise);
             });
             it('when resolved', function() {
                 controller.delete();
                 deferred.resolve();
                 scope.$apply();
-                expect(controller.list.length).toBe(0);
+                expect(ontologyStateSvc.listItem.branches.length).toBe(0);
                 expect(controller.showDeleteConfirmation).toBe(false);
             });
             it('when rejected', function() {

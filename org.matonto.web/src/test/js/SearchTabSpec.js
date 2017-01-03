@@ -151,8 +151,9 @@ describe('Search Tab directive', function() {
                 });
                 it('calls the correct manager function', function() {
                     expect(ontologyStateSvc.unSelectItem).toHaveBeenCalled();
-                    expect(ontologyManagerSvc.getSearchResults).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
-                        ontologyStateSvc.state.searchText);
+                    expect(ontologyManagerSvc.getSearchResults).toHaveBeenCalledWith(
+                        ontologyStateSvc.listItem.ontologyId, ontologyStateSvc.listItem.branchId,
+                        ontologyStateSvc.listItem.commitId, ontologyStateSvc.state.searchText);
                 });
                 describe('when resolved', function() {
                     it('it sets the correct variables', function() {

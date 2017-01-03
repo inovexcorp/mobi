@@ -27,9 +27,11 @@
         .module('branchSelect', [])
         .directive('branchSelect', branchSelect);
 
-        branchSelect.$inject = ['catalogManagerService', 'ontologyStateService', 'utilService'];
+        branchSelect.$inject = ['$q', '$rootScope', 'catalogManagerService', 'ontologyStateService', 'utilService',
+            'stateManagerService', 'ontologyManagerService'];
 
-        function branchSelect(catalogManagerService, ontologyStateService, utilService) {
+        function branchSelect($q, $rootScope, catalogManagerService, ontologyStateService, utilService,
+            stateManagerService, ontologyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -39,20 +41,35 @@
                     bindModel: '=ngModel'
                 },
                 controllerAs: 'dvm',
-                controller: function($scope) {
+                controller: function() {
                     var dvm = this;
                     var cm = catalogManagerService;
+                    var sm = stateManagerService;
+                    var om = ontologyManagerService;
                     var catalogId = _.get(cm.localCatalog, '@id', '');
 
                     dvm.os = ontologyStateService;
                     dvm.util = utilService;
-                    dvm.list = [];
                     dvm.showDeleteConfirmation = false;
                     dvm.showEditOverlay = false;
                     dvm.deleteError = '';
 
-                    cm.getRecordBranches(dvm.os.listItem.recordId, catalogId)
-                        .then(response => dvm.list = response.data);
+                    dvm.changeBranch = function(item) {
+                        var branchId = item['@id'];
+                        $rootScope.showSpinner = true;
+                        cm.getBranchHeadCommit(branchId, dvm.os.listItem.recordId, catalogId)
+                            .then(headCommit => {
+                                var commitId = _.get(headCommit, "commit[0]['@graph'][0]['@id']", '');
+                                $q.all([
+                                    sm.updateOntologyState(dvm.os.listItem.recordId, branchId, commitId),
+                                    om.changeBranch(dvm.os.listItem.ontologyId, dvm.os.listItem.recordId, branchId,
+                                        commitId)
+                                ]).then(() => {
+                                    dvm.os.resetStateTabs();
+                                    $rootScope.showSpinner = false;
+                                });
+                            });
+                    }
 
                     dvm.openDeleteConfirmation = function($event, branch) {
                         $event.stopPropagation();
@@ -69,7 +86,7 @@
                     dvm.delete = function() {
                         cm.deleteRecordBranch(dvm.branch['@id'], dvm.os.listItem.recordId, catalogId)
                             .then(() => {
-                                _.remove(dvm.list, branch => _.isEqual(branch, dvm.branch));
+                                _.remove(dvm.os.listItem.branches, branch => _.isEqual(branch, dvm.branch));
                                 dvm.showDeleteConfirmation = false;
                             }, errorMessage => dvm.deleteError = errorMessage);
                     }

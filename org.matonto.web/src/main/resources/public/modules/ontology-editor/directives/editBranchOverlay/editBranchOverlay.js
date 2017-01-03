@@ -48,14 +48,13 @@
                     var catalogId = _.get(cm.localCatalog, '@id', '');
 
                     dvm.error = '';
-                    dvm.prefixes = prefixes;
                     dvm.branchTitle = util.getDctermsValue(dvm.branch, 'title');
                     dvm.branchDescription = util.getDctermsValue(dvm.branch, 'description');
 
                     dvm.edit = function() {
                         util.setDctermsValue(dvm.branch, 'title', dvm.branchTitle);
                         if (dvm.branchDescription === '') {
-                            _.unset(dvm.branch, dvm.prefixes.dcterms + 'description');
+                            _.unset(dvm.branch, prefixes.dcterms + 'description');
                         } else {
                             util.setDctermsValue(dvm.branch, 'description', dvm.branchDescription);
                         }

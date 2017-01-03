@@ -38,7 +38,7 @@
         self.getStates = function(stateConfig) {
             var params = $httpParamSerializer(stateConfig);
             return $http.get(prefix + '?' + params)
-                .then(response => $q.resolve(_.get(response, 'data', [])));
+                .then(response => $q.resolve(_.get(response, 'data', [])), onError);
         }
 
         self.createState = function(stateJson, application) {
@@ -52,12 +52,12 @@
                 config.params = {application};
             }
             return $http.post(prefix, angular.toJson(stateJson), config)
-                .then(response => self.states.push({id: response.data, model: [stateJson]}));
+                .then(response => self.states.push({id: response.data, model: [stateJson]}), onError);
         }
 
         self.getState = function(stateId) {
             return $http.get(prefix + '/' + encodeURIComponent(stateId))
-                .then(response => $q.resolve(_.get(response, 'data', {})));
+                .then(response => $q.resolve(_.get(response, 'data', {})), onError);
         }
 
         self.updateState = function(stateId, stateJson) {
@@ -67,26 +67,17 @@
                         _.set(state, 'model', [stateJson]);
                         return false;
                     }
-                }));
+                }), onError);
         }
 
         self.deleteState = function(stateId) {
             return $http.delete(prefix + '/' + encodeURIComponent(stateId))
-                .then(() => _.remove(self.states, state => _.get(state, 'id', '') === stateId));
+                .then(() => _.remove(self.states, state => _.get(state, 'id', '') === stateId), onError);
         }
 
         self.initialize = function() {
             self.getStates()
                 .then(states => self.states = states, () => console.log('Problem getting states'));
-        }
-
-        function makeOntologyState(recordId, branchId, commitId) {
-            return {
-                '@id': 'http://matonto.org/states/ontology-editor/' + uuid.v4(),
-                [prefixes.ontologyState + 'record']: [{'@id': recordId}],
-                [prefixes.ontologyState + 'branch']: [{'@id': branchId}],
-                [prefixes.ontologyState + 'commit']: [{'@id': commitId}]
-            }
         }
 
         self.createOntologyState = function(recordId, branchId, commitId) {
@@ -109,6 +100,19 @@
         self.deleteOntologyState = function(recordId) {
             var stateId = _.get(self.getOntologyStateByRecordId(recordId), 'id', '');
             return self.deleteState(stateId);
+        }
+
+        function makeOntologyState(recordId, branchId, commitId) {
+            return {
+                '@id': 'http://matonto.org/states/ontology-editor/' + uuid.v4(),
+                [prefixes.ontologyState + 'record']: [{'@id': recordId}],
+                [prefixes.ontologyState + 'branch']: [{'@id': branchId}],
+                [prefixes.ontologyState + 'commit']: [{'@id': commitId}]
+            }
+        }
+
+        function onError(response) {
+            return $q.reject(response.statusText);
         }
     }
 })();

@@ -73,6 +73,11 @@
                 return deferred.promise;
             }
 
+            self.clearInProgressCommit = function() {
+                _.set(self.listItem, 'inProgressCommit.additions', []);
+                _.set(self.listItem, 'inProgressCommit.deletions', []);
+            }
+
             self.setValid = function(ontologyId, entityIRI, isValid) {
                 _.set(om.getEntityById(ontologyId, entityIRI), 'matonto.valid', isValid);
             }
@@ -244,6 +249,10 @@
                     self.ontology = undefined;
                 }
                 _.remove(self.states, {ontologyId});
+            }
+            self.resetStateTabs = function() {
+                _.forOwn(self.state.tabs, tab => _.unset(tab, 'entityIRI'));
+                self.selected = undefined;
             }
             self.getActiveKey = function() {
                 return _.findKey(self.state, ['active', true], 'project');

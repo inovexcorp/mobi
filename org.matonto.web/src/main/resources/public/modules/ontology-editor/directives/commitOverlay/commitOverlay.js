@@ -55,8 +55,7 @@
                             dvm.comment).then(commitId =>
                                 sm.updateOntologyState(dvm.os.listItem.recordId, dvm.os.listItem.branchId, commitId)
                                     .then(() => {
-                                        _.set(dvm.os.listItem, 'inProgressCommit.additions', []);
-                                        _.set(dvm.os.listItem, 'inProgressCommit.deletions', []);
+                                        dvm.os.clearInProgressCommit();
                                         dvm.os.showCommitOverlay = false;
                                     }, onError), onError);
                     }

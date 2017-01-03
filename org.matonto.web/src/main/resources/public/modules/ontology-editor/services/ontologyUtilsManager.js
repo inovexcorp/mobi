@@ -37,9 +37,10 @@
             var ur = updateRefsService;
 
             function commonDelete(entityIRI) {
-                sm.addDeletedEntity();
+                om.addToDeletions(sm.listItem.ontologyId, sm.selected);
                 om.removeEntity(sm.ontology, entityIRI);
-                ur.remove(sm.ontology, sm.selected['@id']);
+                // TODO: determine if we should remove references to this entity
+                // ur.remove(sm.ontology, sm.selected['@id']);
                 var entityIndex = _.get(sm.listItem.index, entityIRI);
                 _.unset(sm.listItem.index, entityIRI);
                 _.forOwn(sm.listItem.index, (value, key) => {

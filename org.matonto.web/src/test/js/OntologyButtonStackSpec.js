@@ -21,22 +21,34 @@
  * #L%
  */
 describe('Ontology Button Stack directive', function() {
-    var $compile, scope, element, ontologyStateSvc;
-
+    var $compile, scope, $q, ontologyStateSvc, catalogManagerSvc, ontologyManagerSvc, element, catalogId, controller;
+    var error = 'error';
+    var id = 'id';
 
     beforeEach(function() {
         module('templates');
         module('ontologyButtonStack');
         mockOntologyState();
+        mockOntologyManager();
+        mockCatalogManager();
+        mockUtil();
+        mockUpdateRefs();
+        injectRemoveMatontoFilter();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _catalogManagerService_,
+            _ontologyManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            $q = _$q_;
             ontologyStateSvc = _ontologyStateService_;
+            catalogManagerSvc = _catalogManagerService_;
+            ontologyManagerSvc = _ontologyManagerService_;
         });
 
         element = $compile(angular.element('<ontology-button-stack></ontology-button-stack>'))(scope);
         scope.$digest();
+        catalogId = _.get(catalogManagerSvc.localCatalog, '@id', '');
+        controller = element.controller('ontologyButtonStack');
     });
 
     describe('replaces the element with the correct html', function() {
@@ -50,8 +62,39 @@ describe('Ontology Button Stack directive', function() {
             expect(element.find('circle-button-stack').length).toBe(1);
         });
         it('based on circle-button', function() {
-            expect(element.find('circle-button').length).toBe(3);
+            expect(element.find('circle-button').length).toBe(4);
         });
-
+    });
+    describe('controller methods', function() {
+        describe('delete calls the correct manager methods and sets the correct variables', function() {
+            var deleteDeferred;
+            beforeEach(function() {
+                deleteDeferred = $q.defer();
+                catalogManagerSvc.deleteInProgressCommit.and.returnValue(deleteDeferred.promise);
+                controller.showDeleteOverlay = true;
+                ontologyStateSvc.listItem.inProgressCommit.additions = [{'@id': id}];
+                ontologyStateSvc.listItem.inProgressCommit.deletions = [{'@id': id}];
+            });
+            it('when deleteInProgressCommit resolves', function() {
+                deleteDeferred.resolve();
+                controller.delete();
+                scope.$digest();
+                expect(catalogManagerSvc.deleteInProgressCommit).toHaveBeenCalledWith(
+                    ontologyStateSvc.listItem.recordId, catalogId);
+                expect(ontologyManagerSvc.getOntologyById).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId);
+                expect(ontologyManagerSvc.getEntity).toHaveBeenCalledWith(ontologyManagerSvc.getOntologyById(
+                    ontologyStateSvc.listItem.ontologyId), id);
+                expect(ontologyStateSvc.clearInProgressCommit).toHaveBeenCalled();
+                expect(controller.showDeleteOverlay).toBe(false);
+            });
+            it('when deleteInProgressCommit rejects', function() {
+                deleteDeferred.reject(error);
+                controller.delete();
+                scope.$digest();
+                expect(catalogManagerSvc.deleteInProgressCommit).toHaveBeenCalledWith(
+                    ontologyStateSvc.listItem.recordId, catalogId);
+                expect(controller.error).toBe(error);
+            });
+        });
     });
 });

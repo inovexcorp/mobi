@@ -27,9 +27,9 @@
         .module('savedChangesTab', [])
         .directive('savedChangesTab', savedChangesTab);
 
-        savedChangesTab.$inject = ['ontologyStateService', 'ontologyManagerService'];
+        savedChangesTab.$inject = ['ontologyStateService', 'ontologyManagerService', 'utilService'];
 
-        function savedChangesTab(ontologyStateService, ontologyManagerService) {
+        function savedChangesTab(ontologyStateService, ontologyManagerService, utilService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -40,6 +40,7 @@
                     var dvm = this;
                     dvm.os = ontologyStateService;
                     dvm.om = ontologyManagerService;
+                    dvm.util = utilService;
 
                     function getList() {
                         var inProgressCommit = dvm.os.listItem.inProgressCommit;
@@ -47,22 +48,23 @@
                             _.map(inProgressCommit.deletions, '@id'), _.isEqual);
                     }
 
-                    function contains(id, entityProp, listItemProp) {
-                        return _.has(_.find(dvm.os.listItem.inProgressCommit[listItemProp], {'@id': id}), entityProp);
-                    }
-
-                    dvm.isDeletion = function(id, property) {
-                        return contains(id, property, 'deletions');
-                    }
-
-                    dvm.isAddition = function(id, property) {
-                        return contains(id, property, 'additions');
+                    function getInProgressCommitComponent(id, prop) {
+                        var entity = angular.copy(_.find(dvm.os.listItem.inProgressCommit[prop], {'@id': id}));
+                        _.unset(entity, '@id');
+                        return entity;
                     }
 
                     dvm.getAdditions = function(id) {
-                        var entity = angular.copy(_.find(dvm.os.listItem.inProgressCommit.additions, {'@id': id}));
-                        _.unset(entity, '@id');
-                        return entity;
+                        return getInProgressCommitComponent(id, 'additions');
+                    }
+
+                    dvm.getDeletions = function(id) {
+                        return getInProgressCommitComponent(id, 'deletions');
+                    }
+
+                    dvm.go = function($event, id) {
+                        $event.stopPropagation();
+                        dvm.os.goTo(id);
                     }
 
                     dvm.list = getList();

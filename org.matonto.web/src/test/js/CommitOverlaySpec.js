@@ -105,8 +105,7 @@ describe('Commit Overlay directive', function() {
                         controller.comment);
                     expect(stateManagerSvc.updateOntologyState).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                         ontologyStateSvc.listItem.branchId, commitId);
-                    expect(ontologyStateSvc.listItem.inProgressCommit.additions.length).toBe(0);
-                    expect(ontologyStateSvc.listItem.inProgressCommit.deletions.length).toBe(0);
+                    expect(ontologyStateSvc.clearInProgressCommit).toHaveBeenCalled();
                     expect(ontologyStateSvc.showCommitOverlay).toBe(false);
                 });
                 it('and when updateOntologyState is rejected', function() {

@@ -27,9 +27,11 @@
         .module('ontologyButtonStack', [])
         .directive('ontologyButtonStack', ontologyButtonStack);
 
-        ontologyButtonStack.$inject = ['ontologyStateService'];
+        ontologyButtonStack.$inject = ['$filter', 'ontologyStateService', 'ontologyManagerService',
+            'catalogManagerService', 'utilService', 'updateRefsService'];
 
-        function ontologyButtonStack(ontologyStateService) {
+        function ontologyButtonStack($filter, ontologyStateService, ontologyManagerService, catalogManagerService,
+            utilService, updateRefsService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,7 +40,47 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
+                    var om = ontologyManagerService;
+                    var cm = catalogManagerService;
+                    var util = utilService;
+                    var update = updateRefsService;
+                    var catalogId = _.get(cm.localCatalog, '@id', '');
+
                     dvm.os = ontologyStateService;
+                    dvm.showDeleteOverlay = false;
+                    dvm.error = '';
+
+                    dvm.delete = function() {
+                        cm.deleteInProgressCommit(dvm.os.listItem.recordId, catalogId)
+                            .then(() => {
+                                var ontology = om.getOntologyById(dvm.os.listItem.ontologyId);
+                                _.forEach(dvm.os.listItem.inProgressCommit.additions, statements => {
+                                    var entityIRI = statements['@id'];
+                                    var entity = om.getEntity(ontology, entityIRI);
+                                    if (_.isEqual(statements, $filter('removeMatonto')(entity))) {
+                                        om.removeEntity(ontology, entityIRI)
+                                    } else {
+                                        _.unset(statements, '@id');
+                                        _.forOwn(statements, (value, key) => update.remove(entity[key], value));
+                                    }
+                                });
+                                _.forEach(dvm.os.listItem.inProgressCommit.deletions, statements => {
+                                    var entity = om.getEntity(ontology, statements['@id']);
+                                    if (_.isEmpty(entity)) {
+                                        om.addEntity(ontology, statements);
+                                    } else {
+                                        _.mergeWith(entity, statements, util.mergingArrays);
+                                    }
+                                });
+                                /*om.getOntology(dvm.os.listItem.ontologyId, dvm.os.listItem.recordId)
+                                    .then(response => {
+                                        dvm.os.state.ontology = response.ontology;
+                                        dvm.showDeleteOverlay = false;
+                                    }, errorMessage => dvm.error = errorMessage);*/
+                                dvm.os.clearInProgressCommit();
+                                dvm.showDeleteOverlay = false;
+                            }, errorMessage => dvm.error = errorMessage);
+                    }
                 }
             }
         }
