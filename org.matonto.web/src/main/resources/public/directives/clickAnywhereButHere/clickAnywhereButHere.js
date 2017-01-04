@@ -55,7 +55,7 @@
          * @requires clickAnywhereButHereService.service:clickAnywhereButHereService
          *
          * @description
-         * `clickAnywhereButHere` isi a directive that creates a click handler for the parent element such
+         * `clickAnywhereButHere` is a directive that creates a click handler for the parent element such
          * that the click event does not propogate and calls the
          * {@link clickAnywhereButHereService.service:clickAnywhereButHereService clickAnywhereButHereService}
          * attaching a click handler to the document to call the passed expression from the directive.
