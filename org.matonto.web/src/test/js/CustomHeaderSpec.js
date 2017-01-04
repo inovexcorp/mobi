@@ -66,26 +66,24 @@ describe('Custom Header directive', function() {
             userStateSvc = _userStateService_;
             userManagerSvc = _userManagerService_;
         });
+
+        scope.pageTitle = '';
+        this.element = $compile(angular.element('<custom-header page-title="pageTitle"></custom-header>'))(scope);
+        scope.$digest();
     });
 
     describe('in isolated scope', function() {
         beforeEach(function() {
-            scope.pageTitle = '';
-            this.element = $compile(angular.element('<custom-header page-title="pageTitle"></custom-header>'))(scope);
-            scope.$digest();
+            this.isolatedScope = this.element.isolateScope();
         });
         it('pageTitle should be one way bound', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.pageTitle = 'Title';
+            this.isolatedScope.pageTitle = 'Title';
             scope.$digest();
             expect(scope.pageTitle).toEqual('');
         });
     });
     describe('controller methods', function() {
         beforeEach(function() {
-            scope.pageTitle = '';
-            this.element = $compile(angular.element('<custom-header page-title="pageTitle"></custom-header>'))(scope);
-            scope.$digest();
             controller = this.element.controller('customHeader');
         });
         it('should log out of the application', function() {
@@ -104,11 +102,6 @@ describe('Custom Header directive', function() {
         });
     });
     describe('contains the correct html', function() {
-        beforeEach(function() {
-            scope.pageTitle = '';
-            this.element = $compile(angular.element('<custom-header page-title="pageTitle"></custom-header>'))(scope);
-            scope.$digest();
-        });
         it('for wrapping containers', function() {
             expect(this.element.hasClass('main-header')).toBe(true);
             expect(this.element.querySelectorAll('.actions').length).toBe(1);

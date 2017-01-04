@@ -35,13 +35,12 @@ describe('Catalog Tabset directive', function() {
             scope = _$rootScope_;
             catalogStateSvc = _catalogStateService_;
         });
+
+        this.element = $compile(angular.element('<catalog-tabset></catalog-tabset>'))(scope);
+        scope.$digest();
     });
 
     describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
-            this.element = $compile(angular.element('<catalog-tabset></catalog-tabset>'))(scope);
-            scope.$digest();
-        });
         it('for wrapping containers', function() {
             expect(this.element.hasClass('catalog-tabset')).toBe(true);
         });

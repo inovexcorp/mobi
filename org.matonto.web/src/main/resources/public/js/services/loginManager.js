@@ -165,7 +165,7 @@
                     } else {
                         return handleError(data);
                     }
-                }, data => handleError(data));
+                }, handleError);
             };
 
             /**

@@ -150,9 +150,7 @@
                                 });
                             }
                         });
-                    }, error => {
-                        return $q.reject('Error in catalogManager initialization');
-                    });
+                    }, error => $q.reject('Error in catalogManager initialization'));
             }
 
             /**
@@ -208,7 +206,7 @@
                 var deferred = $q.defer();
                 $rootScope.showSpinner = true;
                 $http.get(url)
-                    .then(response => deferred.resolve(response), error => deferred.reject(error.statusText))
+                    .then(deferred.resolve, error => deferred.reject(error.statusText))
                     .then(() => $rootScope.showSpinner = false);
                 return deferred.promise;
             }
@@ -249,7 +247,7 @@
                 }
                 $rootScope.showSpinner = true;
                 $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records', config)
-                    .then(response => deferred.resolve(response), error => deferred.reject(error.statusText))
+                    .then(deferred.resolve, error => deferred.reject(error.statusText))
                     .then(() => $rootScope.showSpinner = false);
                 return deferred.promise;
             }
@@ -396,7 +394,7 @@
                     };
                 $rootScope.showSpinner = true;
                 $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions', config)
-                    .then(response => deferred.resolve(response), error => deferred.reject(error.statusText))
+                    .then(deferred.resolve, error => deferred.reject(error.statusText))
                     .then(() => $rootScope.showSpinner = false);
                 return deferred.promise;
             }
@@ -553,7 +551,7 @@
                     };
                 $rootScope.showSpinner = true;
                 $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions', config)
-                    .then(response => deferred.resolve(response), error => deferred.reject(error.statusText))
+                    .then(deferred.resolve, error => deferred.reject(error.statusText))
                     .then(() => $rootScope.showSpinner = false);
                 return deferred.promise;
             }
@@ -754,7 +752,7 @@
                     };
                 $rootScope.showSpinner = true;
                 $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions', config)
-                    .then(response => deferred.resolve(response), error => deferred.reject(error.statusText))
+                    .then(deferred.resolve, error => deferred.reject(error.statusText))
                     .then(() => $rootScope.showSpinner = false);
                 return deferred.promise;
             }
@@ -916,7 +914,7 @@
                     };
                 $rootScope.showSpinner = true;
                 $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches', config)
-                    .then(response => deferred.resolve(response), error => deferred.reject(error.statusText))
+                    .then(deferred.resolve, error => deferred.reject(error.statusText))
                     .then(() => $rootScope.showSpinner = false);
                 return deferred.promise;
             }
@@ -980,11 +978,11 @@
             self.createRecordBranch = function(recordId, catalogId, branchConfig, commitId) {
                 branchConfig.type = prefixes.catalog + 'Branch';
                 return createBranch(recordId, catalogId, branchConfig)
-                    .then(iri => self.getRecordBranch(iri, recordId, catalogId), error => $q.reject(error))
+                    .then(iri => self.getRecordBranch(iri, recordId, catalogId), $q.reject)
                     .then(branch => {
                         branch[prefixes.catalog + 'head'] = [{'@id': commitId}];
                         return self.updateRecordBranch(branch['@id'], recordId, catalogId, branch);
-                    }, error => $q.reject(error));
+                    }, $q.reject);
             }
 
             /**
@@ -1010,12 +1008,12 @@
             self.createRecordUserBranch = function(recordId, catalogId, branchConfig, commitId, parentBranchId) {
                 branchConfig.type = prefixes.catalog + 'UserBranch';
                 return createBranch(recordId, catalogId, branchConfig)
-                    .then(iri => self.getRecordBranch(iri, recordId, catalogId), error => $q.reject(error))
+                    .then(iri => self.getRecordBranch(iri, recordId, catalogId), $q.reject)
                     .then(branch => {
                         branch[prefixes.catalog + 'head'] = [{'@id': commitId}];
                         branch[prefixes.catalog + 'createdFrom'] = [{'@id': parentBranchId}];
                         return self.updateRecordBranch(branch['@id'], recordId, catalogId, branch);
-                    }, error => $q.reject(error));
+                    }, $q.reject);
             }
 
             /**

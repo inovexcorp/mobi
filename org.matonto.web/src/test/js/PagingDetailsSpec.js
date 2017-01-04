@@ -32,53 +32,41 @@ describe('Paging Details directive', function() {
             $compile = _$compile_;
             scope = _$rootScope_;
         });
+
+        scope.pageSize = 0;
+        scope.totalSize = 0;
+        scope.pageIndex = 0;
+        scope.limit = 0;
+        this.element = $compile(angular.element('<paging-details page-size="pageSize" total-size="totalSize" page-index="pageIndex" limit="limit"></paging-details>'))(scope);
+        scope.$digest();
     });
 
     describe('in isolated scope', function() {
         beforeEach(function() {
-            scope.pageSize = 0;
-            scope.totalSize = 0;
-            scope.pageIndex = 0;
-            scope.limit = 0;
-
-            this.element = $compile(angular.element('<paging-details page-size="pageSize" total-size="totalSize" page-index="pageIndex" limit="limit"></paging-details>'))(scope);
-            scope.$digest();
+            this.isolatedScope = this.element.isolateScope();
         });
         it('pageSize should be one way bound', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.pageSize = 1;
+            this.isolatedScope.pageSize = 1;
             scope.$digest();
             expect(scope.pageSize).toEqual(0);
         });
         it('totalSize should be one way bound', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.totalSize = 1;
+            this.isolatedScope.totalSize = 1;
             scope.$digest();
             expect(scope.totalSize).toBe(0);
         });
         it('pageIndex should be one way bound', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.pageIndex = 1;
+            this.isolatedScope.pageIndex = 1;
             scope.$digest();
             expect(scope.pageIndex).toBe(0);
         });
         it('limit should be one way bound', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.limit = 1;
+            this.isolatedScope.limit = 1;
             scope.$digest();
             expect(scope.limit).toBe(0);
         });
     });
     describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
-            scope.pageSize = 0;
-            scope.totalSize = 0;
-            scope.pageIndex = 0;
-            scope.limit = 0;
-
-            this.element = $compile(angular.element('<paging-details page-size="pageSize" total-size="totalSize" page-index="pageIndex" limit="limit"></paging-details>'))(scope);
-            scope.$digest();
-        });
         it('for wrapping containers', function() {
             expect(this.element.hasClass('paging-details')).toBe(true);
         });

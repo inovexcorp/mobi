@@ -66,6 +66,10 @@
                 var dvm = this;
                 dvm.state = catalogStateService;
                 dvm.cm = catalogManagerService;
+
+                dvm.getOpenedEntity = function() {
+                    return dvm.state.catalogs.local.openedPath[dvm.state.catalogs.local.openedPath.length - 1];
+                }
             },
             templateUrl: 'modules/catalog/directives/localTab/localTab.html'
         };

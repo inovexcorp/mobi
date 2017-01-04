@@ -37,40 +37,33 @@ describe('Record Type directive', function() {
             scope = _$rootScope_;
             catalogManagerSvc = _catalogManagerService_;
         });
+
+        catalogManagerSvc.recordTypes = ['type'];
+        scope.type = '';
+        this.element = $compile(angular.element('<record-type type="type"></record-type>'))(scope);
+        scope.$digest();
     });
 
     describe('in isolated scope', function() {
         beforeEach(function() {
-            scope.type = '';
-            this.element = $compile(angular.element('<record-type type="type"></record-type>'))(scope);
-            scope.$digest();
+            this.isolatedScope = this.element.isolateScope();
         });
         it('type should be one way bound', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.type = 'test';
+            this.isolatedScope.type = 'test';
             scope.$digest();
             expect(scope.type).toEqual('');
         });
     });
     describe('controller methods', function() {
         beforeEach(function() {
-            scope.type = '';
-            this.element = $compile(angular.element('<record-type type="type"></record-type>'))(scope);
-            scope.$digest();
             controller = this.element.controller('recordType');
         });
         it('should get the color for a type', function() {
-            catalogManagerSvc.recordTypes = ['type'];
             var result = controller.getColor('type');
             expect(typeof result).toBe('string');
         });
     });
     describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
-            scope.type = '';
-            this.element = $compile(angular.element('<record-type type="type"></record-type>'))(scope);
-            scope.$digest();
-        });
         it('for wrapping containers', function() {
             expect(this.element.hasClass('record-type')).toBe(true);
             expect(this.element.hasClass('label')).toBe(true);

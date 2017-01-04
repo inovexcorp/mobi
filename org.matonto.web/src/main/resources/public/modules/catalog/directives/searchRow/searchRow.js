@@ -76,14 +76,14 @@
                         pageIndex: dvm.state.currentPage,
                         limit: currentCatalog.records.limit,
                         sortOption: currentCatalog.records.sortOption,
-                        recordType: currentCatalog.records.filterType,
+                        recordType: currentCatalog.records.recordType,
                         searchText: currentCatalog.records.searchText
                     };
                     dvm.cm.getRecords(currentCatalog.catalog['@id'], paginatedConfig)
                         .then(response => {
                             dvm.state.setPagination(response);
-                            currentCatalog.openedPath = _.slice(currentCatalog.openedPath, 0, 1);
-                        }, error => dvm.util.createErrorToast(error));
+                            currentCatalog.openedPath = _.take(currentCatalog.openedPath, 1);
+                        }, dvm.util.createErrorToast);
                 }
             },
             templateUrl: 'modules/catalog/directives/searchRow/searchRow.html'

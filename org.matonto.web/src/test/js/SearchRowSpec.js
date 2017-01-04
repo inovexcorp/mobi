@@ -49,12 +49,12 @@ describe('Search Row directive', function() {
         });
 
         catalogStateSvc.getCurrentCatalog.and.returnValue(catalogStateSvc.catalogs.local);
+        this.element = $compile(angular.element('<search-row></search-row>'))(scope);
+        scope.$digest();
     });
 
     describe('controller methods', function() {
         beforeEach(function() {
-            this.element = $compile(angular.element('<search-row></search-row>'))(scope);
-            scope.$digest();
             controller = this.element.controller('searchRow');
         });
         describe('should search for records', function() {
@@ -64,7 +64,7 @@ describe('Search Row directive', function() {
                     pageIndex: 0,
                     limit: catalogStateSvc.catalogs.local.records.limit,
                     sortOption: catalogStateSvc.catalogs.local.records.sortOption,
-                    recordType: catalogStateSvc.catalogs.local.records.filterType,
+                    recordType: catalogStateSvc.catalogs.local.records.recordType,
                     searchText: catalogStateSvc.catalogs.local.records.searchText,
                 };
             });
@@ -90,11 +90,6 @@ describe('Search Row directive', function() {
         });
     });
     describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
-            this.element = $compile(angular.element('<search-row></search-row>'))(scope);
-            scope.$digest();
-            controller = this.element.controller('searchRow');
-        });
         it('for wrapping containers', function() {
             expect(this.element.hasClass('search-row')).toBe(true);
             expect(this.element.hasClass('row')).toBe(true);
@@ -120,12 +115,10 @@ describe('Search Row directive', function() {
         });
     });
     it('should call search when the button is clicked', function() {
-        var element = $compile(angular.element('<search-row></search-row>'))(scope);
-        scope.$digest();
-        controller = element.controller('searchRow');
+        controller = this.element.controller('searchRow');
         spyOn(controller, 'search');
 
-        var button = element.find('button');
+        var button = this.element.find('button');
         button.triggerHandler('click');
         expect(controller.search).toHaveBeenCalled();
     });

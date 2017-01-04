@@ -64,9 +64,9 @@
                 controller: function() {
                     var dvm = this;
                     dvm.cm = catalogManagerService;
+                    var colors = chroma.scale('Set1').colors(dvm.cm.recordTypes.length);
 
                     dvm.getColor = function(type) {
-                        var colors = chroma.scale('Set1').colors(dvm.cm.recordTypes.length);
                         return _.get(colors, dvm.cm.recordTypes.indexOf(type));
                     }
                 },

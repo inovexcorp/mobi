@@ -622,7 +622,7 @@ function mockCatalogState() {
                     catalog: {},
                     openedPath: [],
                     records: {
-                        filterType: '',
+                        recordType: '',
                         sortOption: {},
                         searchText: '',
                         limit: 10
@@ -637,7 +637,7 @@ function mockCatalogState() {
                     catalog: {},
                     openedPath: [],
                     records: {
-                        filterType: '',
+                        recordType: '',
                         sortOption: {},
                         searchText: '',
                         limit: 10

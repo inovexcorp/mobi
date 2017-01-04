@@ -25,9 +25,9 @@
         <form name="dvm.form" class="form-horizontal">
             <div class="col-xs-2">
                 <div class="form-group">
-                    <select class="form-control" ng-model="dvm.state.getCurrentCatalog().records.filterType">
-                        <option value="" selected>Filter</option>
-                        <option ng-repeat="type in dvm.cm.recordTypes" ng-value="type">{{(type | splitIRI).end}}</option>
+                    <select class="form-control" ng-model="dvm.state.getCurrentCatalog().records.recordType">
+                        <option value="">Filter</option>
+                        <option ng-repeat="type in dvm.cm.recordTypes" value="{{type}}">{{(type | splitIRI).end}}</option>
                     </select>
                 </div>
             </div>

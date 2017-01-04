@@ -76,30 +76,28 @@
                 dvm.util = utilService;
                 dvm.record = dvm.state.getCurrentCatalog().openedPath[dvm.state.getCurrentCatalog().openedPath.length - 1];
 
-                if (dvm.cm.isVersionedRDFRecord(dvm.record)) {
-                    getBranches();
-                }
+                tryToGetBranches();
 
                 dvm.changeSort = function() {
-                    if (dvm.cm.isVersionedRDFRecord(dvm.record)) {
-                        getBranches();
-                    }
+                    tryToGetBranches();
                 }
                 dvm.openBranch = function(branch) {
                     dvm.state.resetPagination();
                     dvm.state.getCurrentCatalog().openedPath.push(branch);
                 }
 
-                function getBranches() {
-                    dvm.state.currentPage = 0;
-                    var currentCatalog = dvm.state.getCurrentCatalog();
-                    var paginatedConfig = {
-                        pageIndex: dvm.state.currentPage,
-                        limit: currentCatalog.branches.limit,
-                        sortOption: currentCatalog.branches.sortOption,
+                function tryToGetBranches() {
+                    if (dvm.cm.isVersionedRDFRecord(dvm.record)) {
+                        dvm.state.currentPage = 0;
+                        var currentCatalog = dvm.state.getCurrentCatalog();
+                        var paginatedConfig = {
+                            pageIndex: dvm.state.currentPage,
+                            limit: currentCatalog.branches.limit,
+                            sortOption: currentCatalog.branches.sortOption,
+                        }
+                        dvm.cm.getRecordBranches(dvm.record['@id'], currentCatalog.catalog['@id'], paginatedConfig)
+                            .then(dvm.state.setPagination, dvm.util.createErrorToast);
                     }
-                    dvm.cm.getRecordBranches(dvm.record['@id'], currentCatalog.catalog['@id'], paginatedConfig)
-                        .then(response => dvm.state.setPagination(response), error => dvm.util.createErrorToast(error));
                 }
             },
             templateUrl: 'modules/catalog/directives/recordBlock/recordBlock.html'

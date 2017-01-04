@@ -39,8 +39,9 @@
          * @name catalogPagination.directive:catalogPagination
          * @scope
          * @restrict E
-         * @requires  catalogState.service:catalogStateService
-         * @requires  catalogManager.service:catalogManagerService
+         * @requires catalogState.service:catalogStateService
+         * @requires catalogManager.service:catalogManagerService
+         * @requires util.service:utilService
          *
          * @description
          * `catalogPagination` is a directive which creates a div with a
@@ -51,9 +52,9 @@
          */
         .directive('catalogPagination', catalogPagination);
 
-    catalogPagination.$inject = ['catalogStateService', 'catalogManagerService'];
+    catalogPagination.$inject = ['catalogStateService', 'catalogManagerService', 'utilService'];
 
-    function catalogPagination(catalogStateService, catalogManagerService) {
+    function catalogPagination(catalogStateService, catalogManagerService, utilService) {
         return {
             restrict: 'E',
             replace: true,
@@ -63,6 +64,7 @@
                 var dvm = this;
                 dvm.state = catalogStateService;
                 dvm.cm = catalogManagerService;
+                dvm.util = utilService;
 
                 dvm.getPage = function(direction) {
                     if (direction === 'next') {
@@ -70,13 +72,13 @@
                             .then(response => {
                                 dvm.state.currentPage += 1;
                                 dvm.state.setPagination(response);
-                            }, error => toastr.error(error, 'Error', {timeOut: 0}));
+                            }, dvm.util.createErrorToast);
                     } else {
                         dvm.cm.getResultsPage(dvm.state.links.prev)
                             .then(response => {
                                 dvm.state.currentPage -= 1;
                                 dvm.state.setPagination(response);
-                            }, error => toastr.error(error, 'Error', {timeOut: 0}));
+                            }, dvm.util.createErrorToast);
                     }
                 }
             },

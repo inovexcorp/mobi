@@ -79,7 +79,7 @@
                         .then(response => {
                             dvm.state.resetPagination();
                             currentCatalog.openedPath.push(response);
-                        }, error => dvm.util.createErrorToast(error));
+                        }, dvm.util.createErrorToast);
                 }
 
                 function getRecords() {
@@ -89,11 +89,11 @@
                         pageIndex: dvm.state.currentPage,
                         limit: currentCatalog.records.limit,
                         sortOption: currentCatalog.records.sortOption,
-                        recordType: currentCatalog.records.filterType,
+                        recordType: currentCatalog.records.recordType,
                         searchText: currentCatalog.records.searchText
                     };
                     dvm.cm.getRecords(currentCatalog.catalog['@id'], paginatedConfig)
-                        .then(response => dvm.state.setPagination(response), error => dvm.util.createErrorToast(error));
+                        .then(dvm.state.setPagination, dvm.util.createErrorToast);
                 }
             },
             templateUrl: 'modules/catalog/directives/resultsBlock/resultsBlock.html'

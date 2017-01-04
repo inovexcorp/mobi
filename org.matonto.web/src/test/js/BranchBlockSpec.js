@@ -47,22 +47,17 @@ describe('Branch Block directive', function() {
         });
 
         catalogStateSvc.getCurrentCatalog.and.returnValue(catalogStateSvc.catalogs.local);
+        this.branch = {'@id': 'branch'};
+        catalogStateSvc.catalogs.local.openedPath = [this.branch];
+        this.element = $compile(angular.element('<branch-block></branch-block>'))(scope);
+        scope.$digest();
+        controller = this.element.controller('branchBlock');
     });
 
     it('should initialize with the correct entity for the branch', function() {
-        this.branch = {'@id': 'branch'};
-        catalogStateSvc.catalogs.local.openedPath = [this.branch];
-        var element = $compile(angular.element('<branch-block></branch-block>'))(scope);
-        scope.$digest();
-        controller = element.controller('branchBlock');
         expect(controller.branch).toEqual(this.branch);
-    })
+    });
     describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
-            this.element = $compile(angular.element('<branch-block></branch-block>'))(scope);
-            scope.$digest();
-            controller = this.element.controller('branchBlock');
-        });
         it('for wrapping containers', function() {
             expect(this.element.hasClass('branch-block')).toBe(true);
             expect(this.element.hasClass('col-xs-12')).toBe(true);

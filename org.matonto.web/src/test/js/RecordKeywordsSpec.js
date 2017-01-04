@@ -36,14 +36,13 @@ describe('Record Keywords directive', function() {
             scope = _$rootScope_;
             prefixes = _prefixes_;
         });
+
+        scope.record = {};
+        this.element = $compile(angular.element('<record-keywords record="record"></record-keywords>'))(scope);
+        scope.$digest();
     });
 
     describe('in isolated scope', function() {
-        beforeEach(function() {
-            scope.record = {};
-            this.element = $compile(angular.element('<record-keywords record="record"></record-keywords>'))(scope);
-            scope.$digest();
-        });
         it('record should be one way bound', function() {
             var isolatedScope = this.element.isolateScope();
             isolatedScope.record = {'@id': ''};
@@ -53,9 +52,7 @@ describe('Record Keywords directive', function() {
     });
     describe('controller methods', function() {
         beforeEach(function() {
-            scope.record = {};
             scope.record[prefixes.catalog + 'keyword'] = [{'@value': '0'}, {'@value': '1'}];
-            this.element = $compile(angular.element('<record-keywords record="record"></record-keywords>'))(scope);
             scope.$digest();
             controller = this.element.controller('recordKeywords');
         });
@@ -65,9 +62,7 @@ describe('Record Keywords directive', function() {
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            scope.record = {};
             scope.record[prefixes.catalog + 'keyword'] = [{'@value': '0'}, {'@value': '1'}];
-            this.element = $compile(angular.element('<record-keywords record="record"></record-keywords>'))(scope);
             scope.$digest();
         });
         it('for wrapping containers', function() {

@@ -39,30 +39,25 @@ describe('Catalog Breadcrumb directive', function() {
             catalogManagerSvc = _catalogManagerService_;
             catalogStateSvc = _catalogStateService_;
         });
+
+        this.catalog = {openedPath: [{}, {}]};
+        catalogStateSvc.getCurrentCatalog.and.returnValue(this.catalog);
+        this.element = $compile(angular.element('<catalog-breadcrumb></catalog-breadcrumb>'))(scope);
+        scope.$digest();
     });
 
     describe('controller methods', function() {
         beforeEach(function() {
-            this.element = $compile(angular.element('<catalog-breadcrumb></catalog-breadcrumb>'))(scope);
-            scope.$digest();
             controller = this.element.controller('catalogBreadcrumb');
         });
         it('should navigate to the selected crumb', function() {
-            var catalog = {openedPath: [{}, {}]};
-            catalogStateSvc.getCurrentCatalog.and.returnValue(catalog);
             controller.clickCrumb(0);
             expect(catalogStateSvc.resetPagination).toHaveBeenCalled();
             expect(catalogStateSvc.getCurrentCatalog).toHaveBeenCalled();
-            expect(catalog.openedPath.length).toBe(1);
+            expect(this.catalog.openedPath.length).toBe(1);
         });
     });
     describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
-            this.catalog = {openedPath: [{}, {}]};
-            catalogStateSvc.getCurrentCatalog.and.returnValue(this.catalog);
-            this.element = $compile(angular.element('<catalog-breadcrumb></catalog-breadcrumb>'))(scope);
-            scope.$digest();
-        });
         it('for wrapping containers', function() {
             expect(this.element.hasClass('catalog-breadcrumb')).toBe(true);
             expect(this.element.hasClass('breadcrumb')).toBe(true);

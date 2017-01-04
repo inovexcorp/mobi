@@ -38,13 +38,22 @@ describe('Entity Dates directive', function() {
             utilSvc = _utilService_;
             $filter = _$filter_;
         });
+
+        scope.entity = {};
+        this.element = $compile(angular.element('<entity-dates entity="entity"></entity-dates>'))(scope);
+        scope.$digest();
     });
 
+    describe('in isolated scope', function() {
+        it('entity should be one way bound', function() {
+            var isolatedScope = this.element.isolateScope();
+            isolatedScope.entity = {a: 'b'};
+            scope.$digest();
+            expect(scope.entity).toEqual({});
+        });
+    });
     describe('controller methods', function() {
         beforeEach(function() {
-            var entity = {};
-            this.element = $compile(angular.element('<entity-dates entity="entity"></entity-dates>'))(scope);
-            scope.$digest();
             controller = this.element.controller('entityDates');
         });
         describe('should get the specified date of an entity', function() {
@@ -63,11 +72,6 @@ describe('Entity Dates directive', function() {
         });
     });
     describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
-            var entity = {};
-            this.element = $compile(angular.element('<entity-dates entity="entity"></entity-dates>'))(scope);
-            scope.$digest();
-        });
         it('for wrapping containers', function() {
             expect(this.element.hasClass('entity-dates')).toBe(true);
         });

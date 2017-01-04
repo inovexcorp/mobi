@@ -38,14 +38,35 @@ describe('Entity Description directive', function() {
             utilSvc = _utilService_;
             $filter = _$filter_;
         });
+
+        scope.entity = {};
+        scope.limited = true;
+        this.element = $compile(angular.element('<entity-description entity="entity" limited="limited"></entity-description>'))(scope);
+        scope.$digest();
     });
 
+    describe('in isolated scope', function() {
+        beforeEach(function() {
+            this.isolatedScope = this.element.isolateScope();
+        });
+        it('entity should be one way bound', function() {
+            this.isolatedScope.entity = {a: 'b'};
+            scope.$digest();
+            expect(scope.entity).toEqual({});
+        });
+    });
+    describe('controller bound variable', function() {
+        beforeEach(function() {
+            controller = this.element.controller('entityDescription');
+        });
+        it('limited should be one way bound', function() {
+            controller.limited = false;
+            scope.$digest();
+            expect(scope.limited).toBe(true);
+        });
+    });
     describe('controller methods', function() {
         beforeEach(function() {
-            scope.entity = {};
-            scope.limited = true;
-            this.element = $compile(angular.element('<entity-description entity="entity" limited="limited"></entity-description>'))(scope);
-            scope.$digest();
             controller = this.element.controller('entityDescription');
         });
         describe('should get the limited description of the entity', function() {
@@ -88,10 +109,6 @@ describe('Entity Description directive', function() {
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            scope.entity = {};
-            scope.limited = true;
-            this.element = $compile(angular.element('<entity-description entity="entity" limited="limited"></entity-description>'))(scope);
-            scope.$digest();
             controller = this.element.controller('entityDescription');
         });
         it('for wrapping containers', function() {
@@ -135,16 +152,12 @@ describe('Entity Description directive', function() {
         });
     });
     it('should toggle full when the Show link is clicked', function() {
-        scope.entity = {};
-        scope.limited = true;
-        var element = $compile(angular.element('<entity-description entity="entity" limited="limited"></entity-description>'))(scope);
-        scope.$digest();
-        controller = element.controller('entityDescription');
+        controller = this.element.controller('entityDescription');
         controller.descriptionLimit = 10;
         spyOn(controller, 'getDescription').and.returnValue('AAAAAAAAAAAAAAA');
         scope.$digest();
 
-        var link = element.find('a');
+        var link = this.element.find('a');
         link.triggerHandler('click');
         expect(controller.full).toBe(true);
     });

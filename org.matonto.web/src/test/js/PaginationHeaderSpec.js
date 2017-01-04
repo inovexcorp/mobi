@@ -39,15 +39,28 @@ describe('Pagination Header directive', function() {
             catalogStateSvc = _catalogStateService_;
             catalogManagerSvc = _catalogManagerService_;
         });
+
+        scope.listKey = '';
+        scope.changeSort = jasmine.createSpy('changeSort');
+        this.element = $compile(angular.element('<pagination-header list-key="listKey" change-sort="changeSort()"></pagination-header>'))(scope);
+        scope.$digest();
     });
 
-    describe('replaces the element with the correct html', function() {
+    describe('in isolated scope', function() {
         beforeEach(function() {
-            scope.listKey = '';
-            scope.changeSort = jasmine.createSpy('changeSort');
-            this.element = $compile(angular.element('<pagination-header list-key="listKey" change-sort="changeSort()"></pagination-header>'))(scope);
-            scope.$digest();
+            this.isolatedScope = this.element.isolateScope();
         });
+        it('listKey should be one way bound', function() {
+            this.isolatedScope.listKey = 'test';
+            scope.$digest();
+            expect(scope.listKey).toBe('');
+        });
+        it('changeSort should be called in parent scope when invoked', function() {
+            this.isolatedScope.changeSort();
+            expect(scope.changeSort).toHaveBeenCalled();
+        });
+    });
+    describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.hasClass('pagination-header')).toBe(true);
         });

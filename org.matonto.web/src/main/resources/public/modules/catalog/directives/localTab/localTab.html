@@ -25,8 +25,8 @@
         <search-row></search-row>
         <div class="row">
             <results-block ng-if="dvm.state.catalogs.local.openedPath.length === 1"></results-block>
-            <record-block ng-if="dvm.cm.isRecord(dvm.state.catalogs.local.openedPath[dvm.state.catalogs.local.openedPath.length - 1])"></record-block>
-            <branch-block ng-if="dvm.cm.isBranch(dvm.state.catalogs.local.openedPath[dvm.state.catalogs.local.openedPath.length - 1])"></branch-block>
+            <record-block ng-if="dvm.cm.isRecord(dvm.getOpenedEntity())"></record-block>
+            <branch-block ng-if="dvm.cm.isBranch(dvm.getOpenedEntity())"></branch-block>
         </div>
     </div>
 </div>

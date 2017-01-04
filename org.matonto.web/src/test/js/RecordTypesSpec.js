@@ -39,27 +39,23 @@ describe('Record Types directive', function() {
             catalogManagerSvc = _catalogManagerService_;
             inArrayFilter = _inArrayFilter_;
         });
+
+        scope.record = {};
+        this.element = $compile(angular.element('<record-types record="record"></record-types>'))(scope);
+        scope.$digest();
     });
 
     describe('in isolated scope', function() {
         beforeEach(function() {
-            scope.record = {};
-            this.element = $compile(angular.element('<record-types record="record"></record-types>'))(scope);
-            scope.$digest();
+            this.isolatedScope = this.element.isolateScope();
         });
         it('record should be one way bound', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.record = {'@type': []};
+            this.isolatedScope.record = {'@type': []};
             scope.$digest();
             expect(scope.record).toEqual({});
         });
     });
     describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
-            scope.record = {'@type': []};
-            this.element = $compile(angular.element('<record-types record="record"></record-types>'))(scope);
-            scope.$digest();
-        });
         it('for wrapping containers', function() {
             expect(this.element.hasClass('record-types')).toBe(true);
         });

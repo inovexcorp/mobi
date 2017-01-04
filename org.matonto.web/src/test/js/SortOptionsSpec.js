@@ -41,34 +41,27 @@ describe('Sort Options directive', function() {
 
         catalogStateSvc.getCurrentCatalog.and.returnValue(catalogStateSvc.catalogs.local);
         catalogManagerSvc.sortOptions = [{label: 'test'}];
+        scope.listKey = '';
+        scope.changeSort = jasmine.createSpy('changeSort');
+        this.element = $compile(angular.element('<sort-options list-key="listKey" change-sort="changeSort()"></sort-options>'))(scope);
+        scope.$digest();
     });
 
     describe('in isolated scope', function() {
         beforeEach(function() {
-            scope.listKey = '';
-            scope.changeSort = jasmine.createSpy('changeSort');
-            this.element = $compile(angular.element('<sort-options list-key="listKey" change-sort="changeSort()"></sort-options>'))(scope);
-            scope.$digest();
+            this.isolatedScope = this.element.isolateScope();
         });
         it('listKey should be one way bound', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.listKey = 'test';
+            this.isolatedScope.listKey = 'test';
             scope.$digest();
             expect(scope.listKey).toBe('');
         });
         it('changeSort should be called in parent scope when invoked', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.changeSort();
+            this.isolatedScope.changeSort();
             expect(scope.changeSort).toHaveBeenCalled();
         });
     });
     describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
-            scope.listKey = '';
-            scope.changeSort = jasmine.createSpy('changeSort');
-            this.element = $compile(angular.element('<sort-options list-key="listKey" change-sort="changeSort()"></sort-options>'))(scope);
-            scope.$digest();
-        });
         it('for wrapping containers', function() {
             expect(this.element.hasClass('sort-options')).toBe(true);
         });

@@ -51,19 +51,17 @@ describe('Results Block directive', function() {
         });
 
         catalogStateSvc.getCurrentCatalog.and.returnValue(catalogStateSvc.catalogs.local);
+        this.element = $compile(angular.element('<results-block></results-block>'))(scope);
+        scope.$digest();
     });
 
     describe('should initialize', function() {
         it('with the list of records', function() {
-            var element = $compile(angular.element('<results-block></results-block>'))(scope);
-            scope.$digest();
             expect(catalogManagerSvc.getRecords).toHaveBeenCalled();
         });
     });
     describe('controller methods', function() {
         beforeEach(function() {
-            this.element = $compile(angular.element('<results-block></results-block>'))(scope);
-            scope.$digest();
             controller = this.element.controller('resultsBlock');
         });
         describe('should change the sort', function() {
@@ -75,7 +73,7 @@ describe('Results Block directive', function() {
                     pageIndex: 0,
                     limit: catalogStateSvc.catalogs.local.records.limit,
                     sortOption: catalogStateSvc.catalogs.local.records.sortOption,
-                    recordType: catalogStateSvc.catalogs.local.records.filterType,
+                    recordType: catalogStateSvc.catalogs.local.records.recordType,
                     searchText: catalogStateSvc.catalogs.local.records.searchText,
                 };
             });
@@ -122,11 +120,6 @@ describe('Results Block directive', function() {
         });
     });
     describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
-            this.element = $compile(angular.element('<results-block></results-block>'))(scope);
-            scope.$digest();
-            controller = this.element.controller('resultsBlock');
-        });
         it('for wrapping containers', function() {
             expect(this.element.hasClass('results-block')).toBe(true);
             expect(this.element.hasClass('col-xs-12')).toBe(true);
@@ -168,12 +161,11 @@ describe('Results Block directive', function() {
     });
     it('should call openRecord when a record button is clicked', function() {
         catalogStateSvc.results = [{}];
-        var element = $compile(angular.element('<results-block></results-block>'))(scope);
-        scope.$digest();
-        controller = element.controller('resultsBlock');
+        controller = this.element.controller('resultsBlock');
         spyOn(controller, 'openRecord');
+        scope.$digest();
 
-        var button = angular.element(element.querySelectorAll('.results-list button.record')[0]);
+        var button = angular.element(this.element.querySelectorAll('.results-list button.record')[0]);
         button.triggerHandler('click');
         expect(controller.openRecord).toHaveBeenCalledWith(catalogStateSvc.results[0]);
     });

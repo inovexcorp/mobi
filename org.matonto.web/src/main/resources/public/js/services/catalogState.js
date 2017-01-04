@@ -72,7 +72,7 @@
                     catalog: undefined,
                     openedPath: [],
                     records: {
-                        filterType: '',
+                        recordType: '',
                         sortOption: undefined,
                         searchText: '',
                         limit: 10
@@ -87,7 +87,7 @@
                     catalog: undefined,
                     openedPath: [],
                     records: {
-                        filterType: '',
+                        recordType: '',
                         sortOption: undefined,
                         searchText: '',
                         limit: 10

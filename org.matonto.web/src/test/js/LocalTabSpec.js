@@ -24,7 +24,8 @@ describe('Local Tab directive', function() {
     var $compile,
         scope,
         catalogStateSvc,
-        catalogManagerSvc;
+        catalogManagerSvc,
+        controller;
 
     beforeEach(function() {
         module('templates');
@@ -38,13 +39,26 @@ describe('Local Tab directive', function() {
             catalogStateSvc = _catalogStateService_;
             catalogManagerSvc = _catalogManagerService_;
         });
+
+        this.element = $compile(angular.element('<local-tab></local-tab>'))(scope);
+        scope.$digest();
     });
 
-    describe('replaces the element with the correct html', function() {
+    describe('controller methods', function() {
         beforeEach(function() {
-            this.element = $compile(angular.element('<local-tab></local-tab>'))(scope);
-            scope.$digest();
+            controller = this.element.controller('localTab');
         });
+        it('should get the opened entity in the local catalog', function() {
+            expect(controller.getOpenedEntity()).toBeUndefined();
+
+            catalogStateSvc.catalogs.local.openedPath = [{'@id': '1'}];
+            expect(controller.getOpenedEntity()).toEqual({'@id': '1'});
+
+            catalogStateSvc.catalogs.local.openedPath = [{'@id': '1'}, {'@id': '2'}];
+            expect(controller.getOpenedEntity()).toEqual({'@id': '2'});
+        });
+    });
+    describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.hasClass('local-tab')).toBe(true);
             expect(this.element.hasClass('row')).toBe(true);
