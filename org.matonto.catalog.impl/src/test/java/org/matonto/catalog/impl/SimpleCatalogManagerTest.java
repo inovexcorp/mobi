@@ -243,6 +243,7 @@ public class SimpleCatalogManagerTest {
         manager.setRepository(repo);
         manager.setValueFactory(vf);
         manager.setModelFactory(mf);
+        manager.setUserFactory(userFactory);
         manager.setCatalogFactory(catalogFactory);
         manager.setRecordFactory(recordFactory);
         manager.setDistributionFactory(distributionFactory);
@@ -968,6 +969,22 @@ public class SimpleCatalogManagerTest {
         Assert.assertThat(resources4.getPage().iterator().next().getResource().stringValue(), equalTo("http://matonto.org/test/records#get"));
         Assert.assertThat(resources5.getPage().iterator().next().getResource().stringValue(), equalTo("http://matonto.org/test/records#dataset"));
         Assert.assertThat(resources6.getPage().iterator().next().getResource().stringValue(), equalTo("http://matonto.org/test/records#versionedRDF"));
+    }
+
+    @Test
+    public void testFindRecordsWithSearchText() throws Exception {
+        // given
+        int limit = 10;
+        int offset = 0;
+        IRI modified = vf.createIRI(DC_MODIFIED);
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder(limit, offset, modified).searchText("Get").build();
+        // when
+        PaginatedSearchResults<Record> records = manager.findRecord(distributedCatalogId, searchParams);
+        // then
+        Assert.assertThat(records.getPage().size(), equalTo(1));
+        Assert.assertThat(records.getTotalSize(), equalTo(TOTAL_SIZE));
+        Assert.assertThat(records.getPageSize(), equalTo(10));
+        Assert.assertThat(records.getPageNumber(), equalTo(1));
     }
 
     @Test
