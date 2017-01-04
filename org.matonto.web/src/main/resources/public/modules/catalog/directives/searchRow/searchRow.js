@@ -68,6 +68,8 @@
                 dvm.state = catalogStateService;
                 dvm.cm = catalogManagerService;
                 dvm.util = utilService;
+                dvm.searchText = _.get(dvm.state.getCurrentCatalog(), 'records.searchText', '');
+                dvm.recordType = _.get(dvm.state.getCurrentCatalog(), 'records.recordType', '');
 
                 dvm.search = function() {
                     dvm.state.currentPage = 0;
@@ -76,11 +78,13 @@
                         pageIndex: dvm.state.currentPage,
                         limit: currentCatalog.records.limit,
                         sortOption: currentCatalog.records.sortOption,
-                        recordType: currentCatalog.records.recordType,
-                        searchText: currentCatalog.records.searchText
+                        recordType: dvm.recordType,
+                        searchText: dvm.searchText
                     };
                     dvm.cm.getRecords(currentCatalog.catalog['@id'], paginatedConfig)
                         .then(response => {
+                            currentCatalog.records.recordType = dvm.recordType;
+                            currentCatalog.records.searchText = dvm.searchText;
                             dvm.state.setPagination(response);
                             currentCatalog.openedPath = _.take(currentCatalog.openedPath, 1);
                         }, dvm.util.createErrorToast);

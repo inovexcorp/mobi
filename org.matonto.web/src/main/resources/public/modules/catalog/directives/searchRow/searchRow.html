@@ -25,7 +25,7 @@
         <form name="dvm.form" class="form-horizontal">
             <div class="col-xs-2">
                 <div class="form-group">
-                    <select class="form-control" ng-model="dvm.state.getCurrentCatalog().records.recordType">
+                    <select class="form-control" ng-model="dvm.recordType">
                         <option value="">Filter</option>
                         <option ng-repeat="type in dvm.cm.recordTypes" value="{{type}}">{{(type | splitIRI).end}}</option>
                     </select>
@@ -34,9 +34,9 @@
             <div class="col-xs-10">
                 <div class="form-group">
                     <div class="input-group">
-                        <input type="text" class="form-control" placeholder="Search for..." ng-model="dvm.state.getCurrentCatalog().records.searchText" />
+                        <input type="text" class="form-control" placeholder="Search for..." ng-model="dvm.searchText" />
                         <span class="input-group-btn">
-                            <button class="btn btn-primary" type="button" ng-click="dvm.search()">Search</button>
+                            <button class="btn btn-primary" type="submit" ng-click="dvm.search()">Search</button>
                         </span>
                     </div>
                 </div>

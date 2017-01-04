@@ -53,6 +53,17 @@ describe('Search Row directive', function() {
         scope.$digest();
     });
 
+    describe('should initialize', function() {
+        beforeEach(function() {
+            controller = this.element.controller('searchRow');
+        });
+        it('the current catalog record type filter', function() {
+            expect(controller.recordType).toBe(catalogStateSvc.catalogs.local.records.recordType);
+        });
+        it('the current catalog search text', function() {
+            expect(controller.searchText).toBe(catalogStateSvc.catalogs.local.records.searchText);
+        });
+    });
     describe('controller methods', function() {
         beforeEach(function() {
             controller = this.element.controller('searchRow');
@@ -60,12 +71,14 @@ describe('Search Row directive', function() {
         describe('should search for records', function() {
             beforeEach(function() {
                 catalogStateSvc.catalogs.local.openedPath = [{}, {}];
+                controller.searchText = 'text';
+                controller.recordType = 'type';
                 this.expectedPaginationConfig = {
                     pageIndex: 0,
                     limit: catalogStateSvc.catalogs.local.records.limit,
                     sortOption: catalogStateSvc.catalogs.local.records.sortOption,
-                    recordType: catalogStateSvc.catalogs.local.records.recordType,
-                    searchText: catalogStateSvc.catalogs.local.records.searchText,
+                    recordType: controller.recordType,
+                    searchText: controller.searchText,
                 };
             });
             it('unless an error occurs', function() {
@@ -74,6 +87,8 @@ describe('Search Row directive', function() {
                 $timeout.flush();
                 expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith(catalogStateSvc.catalogs.local['@id'], this.expectedPaginationConfig);
                 expect(catalogStateSvc.currentPage).toBe(0);
+                expect(catalogStateSvc.catalogs.local.records.recordType).not.toBe(controller.recordType);
+                expect(catalogStateSvc.catalogs.local.records.searchText).not.toBe(controller.searchText);
                 expect(catalogStateSvc.setPagination).not.toHaveBeenCalled();
                 expect(catalogStateSvc.catalogs.local.openedPath.length).toBe(2);
                 expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error Message');
@@ -83,6 +98,8 @@ describe('Search Row directive', function() {
                 $timeout.flush();
                 expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith(catalogStateSvc.catalogs.local['@id'], this.expectedPaginationConfig);
                 expect(catalogStateSvc.currentPage).toBe(0);
+                expect(catalogStateSvc.catalogs.local.records.recordType).toBe(controller.recordType);
+                expect(catalogStateSvc.catalogs.local.records.searchText).toBe(controller.searchText);
                 expect(catalogStateSvc.setPagination).toHaveBeenCalled();
                 expect(catalogStateSvc.catalogs.local.openedPath.length).toBe(1);
                 expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
