@@ -23,7 +23,6 @@ package org.matonto.catalog.impl;
  */
 
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.matonto.catalog.api.Conflict;
@@ -105,7 +104,6 @@ import java.util.stream.Stream;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
-import static org.hamcrest.Matchers.equalTo;
 
 public class SimpleCatalogManagerTest {
 
