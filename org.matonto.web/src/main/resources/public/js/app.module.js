@@ -31,6 +31,7 @@
             'ngCookies',
             'ngHandsontable',
             'ngMessages',
+            'toastr',
             'ui.bootstrap',
             'ui.codemirror',
             'ui.router',
@@ -40,6 +41,7 @@
             'beautify',
             'camelCase',
             'escapeHTML',
+            'inArray',
             'prefixation',
             'removeIriFromArray',
             'removeMatonto',
@@ -64,6 +66,7 @@
             'fileInput',
             'infoMessage',
             'pagination',
+            'pagingDetails',
             'passwordConfirmInput',
             'radioButton',
             'stepProgressBar',
@@ -87,6 +90,7 @@
 
             /* Custom Services */
             'catalogManager',
+            'catalogState',
             'delimitedManager',
             'loginManager',
             'mapperState',

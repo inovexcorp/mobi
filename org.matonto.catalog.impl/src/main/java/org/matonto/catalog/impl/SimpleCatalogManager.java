@@ -308,11 +308,13 @@ public class SimpleCatalogManager implements CatalogManager {
             MatOntoException {
         try (RepositoryConnection conn = repository.getConnection()) {
             Optional<Resource> typeParam = searchParams.getTypeFilter();
+            Optional<String> searchTextParam = searchParams.getSearchText();
 
             // Get Total Count
             TupleQuery countQuery = conn.prepareTupleQuery(COUNT_RECORDS_QUERY);
             countQuery.setBinding(CATALOG_BINDING, catalogId);
             typeParam.ifPresent(resource -> countQuery.setBinding(TYPE_FILTER_BINDING, resource));
+            searchTextParam.ifPresent(s -> countQuery.setBinding(SEARCH_BINDING, vf.createLiteral(s)));
 
             TupleQueryResult countResults = countQuery.evaluate();
 
@@ -359,8 +361,7 @@ public class SimpleCatalogManager implements CatalogManager {
             TupleQuery query = conn.prepareTupleQuery(queryString);
             query.setBinding(CATALOG_BINDING, catalogId);
             typeParam.ifPresent(resource -> query.setBinding(TYPE_FILTER_BINDING, resource));
-            searchParams.getSearchText().ifPresent(searchText -> query.setBinding(SEARCH_BINDING,
-                    vf.createLiteral(searchText)));
+            searchTextParam.ifPresent(searchText -> query.setBinding(SEARCH_BINDING, vf.createLiteral(searchText)));
 
             log.debug("Query String:\n" + queryString);
             log.debug("Query Plan:\n" + query);

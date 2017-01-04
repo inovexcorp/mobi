@@ -118,15 +118,25 @@
              * @description
              * Initializes the `sortOptions`, `recordTypes`, `localCatalog`, and `distributedCatalog` of the
              * catalogManagerService using the `getSortOptions` and `getRecordTypes` methods along with the
-             * GET /matontorest/catalogs endpoint.
+             * GET /matontorest/catalogs endpoint. If the local or distributed Catalog cannot be found, rejects
+             * with an error message.
+             *
+             * @returns {Promise} A promise that resolves if initialization was successful or is rejected
+             * with an error message
              */
             self.initialize = function() {
-                self.getRecordTypes()
-                    .then(types => self.recordTypes = types);
-
-                self.getSortOptions()
-                    .then(options => {
-                        _.forEach(options, option => {
+                return $q.all([self.getRecordTypes(), self.getSortOptions(), $http.get(prefix)])
+                    .then(responses => {
+                        self.localCatalog = _.find(responses[2].data, {[prefixes.dcterms + 'title']: [{'@value': 'MatOnto Catalog (Local)'}]});
+                        self.distributedCatalog = _.find(responses[2].data, {[prefixes.dcterms + 'title']: [{'@value': 'MatOnto Catalog (Distributed)'}]});
+                        if (!self.localCatalog) {
+                            return $q.reject('Could not find local catalog');
+                        }
+                        if (!self.distributedCatalog) {
+                            return $q.reject('Could not find distributed catalog');
+                        }
+                        self.recordTypes = responses[0];
+                        _.forEach(responses[1], option => {
                             var label = util.getBeautifulIRI(option);
                             if (!_.includes(self.sortOptions, {field: option})) {
                                 self.sortOptions.push({
@@ -140,13 +150,7 @@
                                 });
                             }
                         });
-                    });
-
-                $http.get(prefix)
-                    .then(response => {
-                        self.localCatalog = _.find(response.data, {[prefixes.dcterms + 'title']: [{'@value': 'MatOnto Catalog (Local)'}]});
-                        self.distributedCatalog = _.find(response.data, {[prefixes.dcterms + 'title']: [{'@value': 'MatOnto Catalog (Distributed)'}]});
-                    });
+                    }, error => $q.reject('Error in catalogManager initialization'));
             }
 
             /**
@@ -202,7 +206,7 @@
                 var deferred = $q.defer();
                 $rootScope.showSpinner = true;
                 $http.get(url)
-                    .then(response => deferred.resolve(response), error => deferred.reject(error.statusText))
+                    .then(deferred.resolve, error => deferred.reject(error.statusText))
                     .then(() => $rootScope.showSpinner = false);
                 return deferred.promise;
             }
@@ -243,7 +247,7 @@
                 }
                 $rootScope.showSpinner = true;
                 $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records', config)
-                    .then(response => deferred.resolve(response), error => deferred.reject(error.statusText))
+                    .then(deferred.resolve, error => deferred.reject(error.statusText))
                     .then(() => $rootScope.showSpinner = false);
                 return deferred.promise;
             }
@@ -390,7 +394,7 @@
                     };
                 $rootScope.showSpinner = true;
                 $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions', config)
-                    .then(response => deferred.resolve(response), error => deferred.reject(error.statusText))
+                    .then(deferred.resolve, error => deferred.reject(error.statusText))
                     .then(() => $rootScope.showSpinner = false);
                 return deferred.promise;
             }
@@ -547,7 +551,7 @@
                     };
                 $rootScope.showSpinner = true;
                 $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions', config)
-                    .then(response => deferred.resolve(response), error => deferred.reject(error.statusText))
+                    .then(deferred.resolve, error => deferred.reject(error.statusText))
                     .then(() => $rootScope.showSpinner = false);
                 return deferred.promise;
             }
@@ -748,7 +752,7 @@
                     };
                 $rootScope.showSpinner = true;
                 $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions', config)
-                    .then(response => deferred.resolve(response), error => deferred.reject(error.statusText))
+                    .then(deferred.resolve, error => deferred.reject(error.statusText))
                     .then(() => $rootScope.showSpinner = false);
                 return deferred.promise;
             }
@@ -910,7 +914,7 @@
                     };
                 $rootScope.showSpinner = true;
                 $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches', config)
-                    .then(response => deferred.resolve(response), error => deferred.reject(error.statusText))
+                    .then(deferred.resolve, error => deferred.reject(error.statusText))
                     .then(() => $rootScope.showSpinner = false);
                 return deferred.promise;
             }
@@ -974,11 +978,11 @@
             self.createRecordBranch = function(recordId, catalogId, branchConfig, commitId) {
                 branchConfig.type = prefixes.catalog + 'Branch';
                 return createBranch(recordId, catalogId, branchConfig)
-                    .then(iri => self.getRecordBranch(iri, recordId, catalogId), error => $q.reject(error))
+                    .then(iri => self.getRecordBranch(iri, recordId, catalogId), $q.reject)
                     .then(branch => {
                         branch[prefixes.catalog + 'head'] = [{'@id': commitId}];
                         return self.updateRecordBranch(branch['@id'], recordId, catalogId, branch);
-                    }, error => $q.reject(error));
+                    }, $q.reject);
             }
 
             /**
@@ -1004,12 +1008,12 @@
             self.createRecordUserBranch = function(recordId, catalogId, branchConfig, commitId, parentBranchId) {
                 branchConfig.type = prefixes.catalog + 'UserBranch';
                 return createBranch(recordId, catalogId, branchConfig)
-                    .then(iri => self.getRecordBranch(iri, recordId, catalogId), error => $q.reject(error))
+                    .then(iri => self.getRecordBranch(iri, recordId, catalogId), $q.reject)
                     .then(branch => {
                         branch[prefixes.catalog + 'head'] = [{'@id': commitId}];
                         branch[prefixes.catalog + 'createdFrom'] = [{'@id': parentBranchId}];
                         return self.updateRecordBranch(branch['@id'], recordId, catalogId, branch);
-                    }, error => $q.reject(error));
+                    }, $q.reject);
             }
 
             /**
