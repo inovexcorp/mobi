@@ -56,6 +56,7 @@
             'individualsTab',
             'individualHierarchyBlock',
             'individualTree',
+            'mergeTab',
             'newOntologyTab',
             'objectPropertyAxioms',
             'objectPropertyBlock',

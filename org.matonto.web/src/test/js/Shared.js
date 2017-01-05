@@ -400,7 +400,8 @@ function mockOntologyState() {
             this.state = {
                 ontologyId: '',
                 entityIRI: '',
-                deletedEntities: []
+                deletedEntities: [],
+                type: ''
             };
             this.ontology = {
                 '@id': 'id',

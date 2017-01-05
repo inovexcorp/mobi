@@ -2834,6 +2834,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     public void mergeTest() {
         // Setup:
         when((catalogManager.getInProgressCommitIRI(any(Resource.class), any(Resource.class)))).thenReturn(Optional.empty());
+        when((catalogManager.getBranch(any(Resource.class), eq(branchFactory)))).thenReturn(Optional.of(testBranch));
         JSONArray adds = new JSONArray();
         adds.add(new JSONObject().element("@id", "http://example.com/add").element("@type", new JSONArray().element("http://example.com/Add")));
         JSONArray deletes = new JSONArray();
@@ -2855,6 +2856,8 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         verify(catalogManager).removeInProgressCommit(any(Resource.class));
         verify(catalogManager).createCommit(eq(testInProgressCommit), anySetOf(Commit.class), anyString());
         verify(catalogManager).addCommitToBranch(any(Commit.class), eq(vf.createIRI(BRANCH_IRI)));
+        verify(catalogManager, atLeastOnce()).getBranch(eq(vf.createIRI(BRANCH_IRI)), eq(branchFactory));
+        verify(catalogManager).updateBranch(any(Branch.class));
     }
 
     @Test

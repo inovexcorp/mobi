@@ -251,7 +251,7 @@
                 _.remove(self.states, {ontologyId});
             }
             self.resetStateTabs = function() {
-                _.forOwn(self.state.tabs, tab => _.unset(tab, 'entityIRI'));
+                _.forOwn(self.state, prop => _.unset(self.state[prop], 'entityIRI'));
                 self.selected = undefined;
             }
             self.getActiveKey = function() {

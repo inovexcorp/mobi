@@ -866,6 +866,8 @@ public class CatalogRestImpl implements CatalogRest {
                 throw ErrorUtils.sendError("User already has an InProgressCommit for Record " + recordId,
                         Response.Status.BAD_REQUEST);
             }
+            Branch branch = catalogManager.getBranch(factory.createIRI(branchId), branchFactories.get(Branch.TYPE))
+                    .orElseThrow(() -> ErrorUtils.sendError("Branch not found", Response.Status.BAD_REQUEST));
             InProgressCommit inProgressCommit = catalogManager.createInProgressCommit(activeUser,
                     factory.createIRI(recordId));
             catalogManager.addInProgressCommit(inProgressCommit);
@@ -879,6 +881,8 @@ public class CatalogRestImpl implements CatalogRest {
                     Stream.of(sourceHead, targetHead).collect(Collectors.toSet()),
                     getMergeMessage(branchId, targetBranchId));
             catalogManager.addCommitToBranch(newCommit, factory.createIRI(targetBranchId));
+            branch.setHead(newCommit);
+            catalogManager.updateBranch(branch);
             catalogManager.removeInProgressCommit(inProgressCommit.getResource());
             return Response.ok(newCommit.getResource().stringValue()).build();
         } catch (MatOntoException e) {

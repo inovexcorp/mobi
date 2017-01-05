@@ -225,13 +225,11 @@
              * `schemeRelationshipList` holds an array of the relationships that skos:ConceptSchemes can have with other
              * entities.
              */
-            self.schemeRelationshipList = [
-                {
-                    namespace: prefixes.skos,
-                    localName: 'hasTopConcept',
-                    values: 'conceptList'
-                }
-            ];
+            self.schemeRelationshipList = [{
+                namespace: prefixes.skos,
+                localName: 'hasTopConcept',
+                values: 'conceptList'
+            }];
             /**
              * @ngdoc method
              * @name reset
@@ -454,7 +452,7 @@
                                     response => deferred.reject(response.statusText));
                         }
                         deferred.resolve();
-                    }, deferred.reject);
+                    }, response => deferred.reject(response.statusText));
                 return deferred.promise;
             }
             /**
@@ -2026,13 +2024,13 @@
                     listItem.subDataProperties = _.get(response[0], 'data.dataProperties');
                     listItem.subObjectProperties = _.get(response[0], 'data.objectProperties');
                     listItem.annotations = _.unionWith(
-                        _.get(irisResponse, 'data.annotationProperties'),
+                        _.get(response[0], 'data.annotationProperties'),
                         propertyManagerService.defaultAnnotations,
                         angular.copy(propertyManagerService.skosAnnotations),
                         _.isMatch
                     );
                     listItem.dataPropertyRange = _.unionWith(
-                        _.get(irisResponse, 'data.datatypes'),
+                        _.get(response[0], 'data.datatypes'),
                         defaultDatatypes,
                         _.isMatch
                     );

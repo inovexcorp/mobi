@@ -1231,7 +1231,6 @@
                     fd = new FormData(),
                     config = {
                         params: {targetId},
-                        transformRequest: _.identity,
                         headers: {
                             'Content-Type': undefined,
                             'Accept': 'text/plain'

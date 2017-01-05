@@ -27,8 +27,8 @@
         .module('branchSelect', [])
         .directive('branchSelect', branchSelect);
 
-        branchSelect.$inject = ['$q', '$rootScope', 'catalogManagerService', 'ontologyStateService', 'utilService',
-            'stateManagerService', 'ontologyManagerService'];
+        branchSelect.$inject = ['$q', '$rootScope', 'catalogManagerService', 'ontologyStateService',
+            'utilService', 'stateManagerService', 'ontologyManagerService'];
 
         function branchSelect($q, $rootScope, catalogManagerService, ontologyStateService, utilService,
             stateManagerService, ontologyManagerService) {
@@ -69,6 +69,7 @@
                                     $rootScope.showSpinner = false;
                                 });
                             });
+
                     }
 
                     dvm.openDeleteConfirmation = function($event, branch) {

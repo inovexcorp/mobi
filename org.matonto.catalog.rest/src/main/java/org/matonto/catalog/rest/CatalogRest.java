@@ -879,7 +879,6 @@ public interface CatalogRest {
      */
     @POST
     @Path("{catalogId}/records/{recordId}/branches/{branchId}/conflicts/resolution")
-    @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
     @ApiOperation("Merges the two commits identified by the provided IDs.")
