@@ -30,7 +30,7 @@
             <!-- <p><span class="field-name">Publisher:</span> <span></span></p> -->
             <entity-dates entity="dvm.branch"></entity-dates>
             <entity-description entity="dvm.branch"></entity-description>
-            <p><span class="field-name">Head: </span> <span>{{dvm.branch[dvm.prefixes.catalog + 'head'][0]['@id']}}</span></p>
+            <p><span class="field-name">Head: </span> <span>{{(dvm.branch[dvm.prefixes.catalog + 'head'][0]['@id'] | splitIRI).end}}</span></p>
         </block-content>
     </block>
 </div>

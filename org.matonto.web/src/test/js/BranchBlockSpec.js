@@ -36,6 +36,7 @@ describe('Branch Block directive', function() {
         mockCatalogState();
         mockUtil();
         mockPrefixes();
+        injectSplitIRIFilter();
 
         inject(function(_$compile_, _$rootScope_, _catalogManagerService_, _catalogStateService_, _utilService_, _prefixes_) {
             $compile = _$compile_;
