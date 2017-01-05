@@ -37,7 +37,6 @@
         /**
          * @ngdoc service
          * @name ontologyManager.service:ontologyManagerService
-         * @requires $rootScope
          * @requires $window
          * @requires $http
          * @requires $q
@@ -54,10 +53,10 @@
          */
         .service('ontologyManagerService', ontologyManagerService);
 
-        ontologyManagerService.$inject = ['$rootScope', '$window', '$http', '$q', '$timeout', '$filter', 'prefixes',
+        ontologyManagerService.$inject = ['$window', '$http', '$q', '$timeout', '$filter', 'prefixes',
             'uuid', 'propertyManagerService', 'utilService'];
 
-        function ontologyManagerService($rootScope, $window, $http, $q, $timeout, $filter, prefixes, uuid,
+        function ontologyManagerService($window, $http, $q, $timeout, $filter, prefixes, uuid,
             propertyManagerService, utilService) {
             var self = this;
             var prefix = '/matontorest/ontologies/';
@@ -231,16 +230,8 @@
              * {@link ontologyManager.service:ontologyManagerService#ontologyIds ontology ids}.
              */
             self.initialize = function() {
-                $rootScope.showSpinner = true;
                 self.getAllOntologyIds()
-                    .then(response => {
-                        self.ontologyIds = _.get(response, 'data', []);
-                    }, response => {
-                        console.log(_.get(response, 'statusText'), 'Something went wrong. Could not load ontology ids.');
-                    })
-                    .then(() => {
-                        $rootScope.showSpinner = false;
-                    });
+                    .then(response => self.ontologyIds = _.get(response, 'data', []), error => console.log(_.get(error, 'statusText'), 'Something went wrong. Could not load ontology ids.'));
             }
             /**
              * @ngdoc method
@@ -334,14 +325,11 @@
              * @returns {Promise} A promise with the ontology ID or error message.
              */
             self.uploadThenGet = function(file, type='ontology') {
-                $rootScope.showSpinner = true;
                 var deferred = $q.defer();
                 var onError = function(response) {
                     deferred.reject(response);
-                    $rootScope.showSpinner = false;
                 };
                 var onAddSuccess = function(ontologyId) {
-                    $rootScope.showSpinner = false;
                     deferred.resolve(ontologyId);
                 }
                 var onUploadSuccess = function(ontologyId) {
@@ -357,9 +345,7 @@
                             } else {
                                 onError(response);
                             }
-                        }, response => {
-                            onError(response);
-                        });
+                        }, onError);
                 };
                 self.uploadFile(file)
                     .then(response => {
@@ -369,9 +355,7 @@
                         } else {
                             onError(response);
                         }
-                    }, response => {
-                        onError(response);
-                    });
+                    }, onError);
                 return deferred.promise;
             }
             /**
@@ -387,7 +371,6 @@
              * @returns {Promise} A promise with with the ontology ID or error message.
              */
             self.openOntology = function(ontologyId, type='ontology') {
-                $rootScope.showSpinner = true;
                 var deferred = $q.defer();
                 var onAddSuccess = function() {
                     _.pull(self.ontologyIds, ontologyId);
@@ -405,12 +388,7 @@
                         } else {
                             deferred.reject(_.get(response, 'statusText'));
                         }
-                    }, response => {
-                        deferred.reject(_.get(response, 'statusText'));
-                    });
-                deferred.promise.then(() => {
-                    $rootScope.showSpinner = false;
-                });
+                    }, response => deferred.reject(_.get(response, 'statusText')));
                 return deferred.promise;
             }
             /**
@@ -445,7 +423,6 @@
              * @returns {Promise} A promise with the string representation of the ontology.
              */
             self.getPreview = function(ontologyId, rdfFormat = 'jsonld') {
-                $rootScope.showSpinner = true;
                 var deferred = $q.defer();
                 self.getOntology(ontologyId, rdfFormat)
                     .then(response => {
@@ -456,12 +433,7 @@
                             deferred.reject('No data was returned. This typically happens whenever you try to preview'
                                 + 'a new, unsaved ontology. Please try again after you save the ontology.');
                         }
-                    }, response => {
-                        deferred.reject('An error has occurred, please try again later');
-                    })
-                    .then(() => {
-                        $rootScope.showSpinner = false;
-                    });
+                    }, response => deferred.reject('An error has occurred, please try again later'));
                 return deferred.promise;
             }
             /**
@@ -669,7 +641,6 @@
              * @returns {Promise} A promise with a boolean indicating the success of the deletion.
              */
             self.deleteOntology = function(ontologyId) {
-                $rootScope.showSpinner = true;
                 var deferred = $q.defer();
                 $http.delete(prefix + encodeURIComponent(ontologyId))
                     .then(response => {
@@ -679,12 +650,7 @@
                         } else {
                             deferred.reject(_.get(response, 'statusText', defaultErrorMessage));
                         }
-                    }, response => {
-                        deferred.reject(_.get(response, 'data.error', defaultErrorMessage));
-                    })
-                    .then(() => {
-                        $rootScope.showSpinner = false;
-                    });
+                    }, response => deferred.reject(_.get(response, 'data.error', defaultErrorMessage)));
                 return deferred.promise;
             }
             /**
@@ -702,7 +668,6 @@
              * ontology.
              */
             self.createOntology = function(ontologyJSON, type='ontology') {
-                $rootScope.showSpinner = true;
                 var deferred = $q.defer();
                 var config = {
                     params: {
@@ -725,12 +690,7 @@
                         } else {
                             deferred.reject(_.get(response, 'statusText', defaultErrorMessage));
                         }
-                    }, response => {
-                        deferred.reject(_.get(response, 'statusText', defaultErrorMessage));
-                    })
-                    .then(() => {
-                        $rootScope.showSpinner = false;
-                    });
+                    }, response => deferred.reject(_.get(response, 'statusText', defaultErrorMessage)));
                 return deferred.promise;
             }
             /**
@@ -1543,7 +1503,6 @@
              * ontology.
              */
             self.getImportedOntologies = function(ontologyId, rdfFormat = 'jsonld') {
-                $rootScope.showSpinner = true;
                 var deferred = $q.defer();
                 var config = {
                     params: {
@@ -1559,12 +1518,7 @@
                         } else {
                             deferred.reject(_.get(response, 'statusText', defaultErrorMessage));
                         }
-                    }, response => {
-                        deferred.reject(_.get(response, 'statusText', defaultErrorMessage))
-                    })
-                    .then(() => {
-                        $rootScope.showSpinner = false;
-                    });
+                    }, response => deferred.reject(_.get(response, 'statusText', defaultErrorMessage)));
                 return deferred.promise;
             }
             /**
@@ -1730,7 +1684,6 @@
                 var config = {
                     params: {searchText}
                 };
-                $rootScope.showSpinner = true;
                 $http.get(prefix + encodeURIComponent(ontologyId) + '/search-results', config)
                     .then(response => {
                         if(_.get(response, 'status') === 200) {
@@ -1740,12 +1693,7 @@
                         } else {
                             deferred.reject(defaultErrorMessage);
                         }
-                    }, response => {
-                        deferred.reject(_.get(response, 'statusText', defaultErrorMessage));
-                    })
-                    .then(() => {
-                        $rootScope.showSpinner = false;
-                    });
+                    }, response => deferred.reject(_.get(response, 'statusText', defaultErrorMessage)));
                 return deferred.promise;
             }
 
@@ -1973,9 +1921,7 @@
                     } else {
                         deferred.reject();
                     }
-                }, () => {
-                    deferred.reject();
-                });
+                }, () => deferred.reject());
                 return deferred.promise;
             }
             function addVocabularyToList(ontologyId, ontology) {
@@ -2037,9 +1983,7 @@
                     } else {
                         deferred.reject();
                     }
-                }, () => {
-                    deferred.reject();
-                });
+                }, () => deferred.reject());
                 return deferred.promise;
             }
         }

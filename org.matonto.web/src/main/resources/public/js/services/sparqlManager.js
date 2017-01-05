@@ -39,7 +39,6 @@
         /**
          * @ngdoc service
          * @name sparqlManager.service:sparqlManagerService
-         * @requires $rootScope
          * @requires $http
          *
          * @description
@@ -48,9 +47,9 @@
          */
         .service('sparqlManagerService', sparqlManagerService);
 
-        sparqlManagerService.$inject = ['$rootScope', '$http'];
+        sparqlManagerService.$inject = ['$http'];
 
-        function sparqlManagerService($rootScope, $http) {
+        function sparqlManagerService($http) {
             var prefix = '/matontorest/sparql/page';
             var self = this;
 
@@ -159,13 +158,8 @@
                         start: 0
                     }
                 }
-
-                $rootScope.showSpinner = true;
                 $http.get(prefix, config)
-                    .then(onSuccess, onError)
-                    .then(() => {
-                        $rootScope.showSpinner = false;
-                    });
+                    .then(onSuccess, onError);
             }
             /**
              * @ngdoc method
@@ -178,12 +172,8 @@
              * {@link sparqlManager.service:sparqlManagerService#data data}.
              */
             self.getResults = function(url) {
-                $rootScope.showSpinner = true;
                 $http.get(url)
-                    .then(onSuccess, onError)
-                    .then(() => {
-                        $rootScope.showSpinner = false;
-                    });
+                    .then(onSuccess, onError);
             }
 
             function getMessage(response, defaultMessage) {

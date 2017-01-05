@@ -27,9 +27,9 @@
         .module('propertyManager', [])
         .service('propertyManagerService', propertyManagerService);
 
-        propertyManagerService.$inject = ['$rootScope', '$filter', '$q', '$http', 'prefixes'];
+        propertyManagerService.$inject = ['$filter', '$q', '$http', 'prefixes'];
 
-        function propertyManagerService($rootScope, $filter, $q, $http, prefixes) {
+        function propertyManagerService($filter, $q, $http, prefixes) {
             var self = this;
             var prefix = '/matontorest/ontologies/';
 
@@ -168,7 +168,6 @@
             }
 
             self.create = function(ontologyId, annotationIRIs, iri) {
-                $rootScope.showSpinner = true;
                 var deferred = $q.defer();
                 var annotationJSON = {'@id': iri, '@type': [prefixes.owl + 'AnnotationProperty']};
                 if (_.indexOf(annotationIRIs, iri) === -1) {
@@ -184,15 +183,9 @@
                             } else {
                                 deferred.reject(_.get(response, 'statusText'));
                             }
-                        }, response => {
-                            deferred.reject(_.get(response, 'statusText'));
-                        })
-                        .then(() => {
-                            $rootScope.showSpinner = false;
-                        });
+                        }, response => deferred.reject(_.get(response, 'statusText')));
                 } else {
                     deferred.reject('This ontology already has an OWL Annotation declared with that IRI.');
-                    $rootScope.showSpinner = false;
                 }
                 return deferred.promise;
             }
