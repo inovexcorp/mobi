@@ -357,8 +357,10 @@
                             cm.getBranchHeadCommit(branchId, recordId, catalogId)
                                 .then(headCommit => {
                                     commitId = _.get(headCommit, "commit[0]['@graph'][0]['@id']", '');
-                                    cm.getResource(commitId, branchId, recordId, catalogId, false, rdfFormat)
-                                        .then(ontology => resolve(ontology, emptyInProgressCommit), deferred.reject);
+                                    sm.createOntologyState(recordId, branchId, commitId)
+                                        .then(() => cm.getResource(commitId, branchId, recordId, catalogId, false, rdfFormat)
+                                            .then(ontology => resolve(ontology, emptyInProgressCommit), deferred.reject),
+                                            deferred.reject);
                                 }, deferred.reject);
                         }, deferred.reject);
                 }
@@ -519,19 +521,13 @@
              * @param {string} [rdfFormat='jsonld'] The format string to identify the serialization requested.
              * @returns {Promise} A promise with the string representation of the ontology.
              */
-            self.getPreview = function(ontologyId, rdfFormat = 'jsonld') {
+            self.getPreview = function(ontologyId, recordId, rdfFormat = 'jsonld') {
                 $rootScope.showSpinner = true;
                 var deferred = $q.defer();
-                self.getOntology(ontologyId, rdfFormat)
-                    .then(response => {
-                        deferred.resolve((rdfFormat === 'jsonld') ? $filter('json')(response.ontology)
-                            : response.ontology);
-                    }, response => {
-                        deferred.reject('An error has occurred, please try again later');
-                    })
-                    .then(() => {
-                        $rootScope.showSpinner = false;
-                    });
+                self.getOntology(ontologyId, recordId, rdfFormat)
+                    .then(response => deferred.resolve((rdfFormat === 'jsonld') ? $filter('json')(response.ontology)
+                            : response.ontology), deferred.reject)
+                    .then(() => $rootScope.showSpinner = false);
                 return deferred.promise;
             }
             /**

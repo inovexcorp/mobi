@@ -112,7 +112,7 @@
 
             self.mergingArrays = function(objValue, srcValue) {
                 if (_.isArray(objValue)) {
-                    return objValue.concat(srcValue);
+                    return _.unionWith(objectValue, srcValue, _.isEqual);
                 }
             }
         }

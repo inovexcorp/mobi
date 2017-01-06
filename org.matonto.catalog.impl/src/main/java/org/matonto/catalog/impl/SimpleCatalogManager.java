@@ -103,6 +103,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -984,7 +985,6 @@ public class SimpleCatalogManager implements CatalogManager {
             try (RepositoryConnection conn = repository.getConnection()) {
                 Iterator<Value> commits = getCommitChainIterator(commitId, conn);
                 commits.forEachRemaining(commit -> results.add((Resource) commit));
-                results.add(commitId);
                 return results;
             } catch (RepositoryException e) {
                 throw new MatOntoException("Error in repository connection", e);
@@ -998,7 +998,7 @@ public class SimpleCatalogManager implements CatalogManager {
         if (resourceExists(commitId, Commit.TYPE)) {
             try (RepositoryConnection conn = repository.getConnection()) {
                 Iterator<Value> iterator = getCommitChainIterator(commitId, conn);
-                Model model = createModelFromIterator(iterator, commitId, conn);
+                Model model = createModelFromIterator(iterator, conn);
                 model.remove(null, null, null, vf.createIRI(DELETION_CONTEXT));
                 return Optional.of(model);
             } catch (RepositoryException e) {
@@ -1028,8 +1028,8 @@ public class SimpleCatalogManager implements CatalogManager {
                     throw new MatOntoException("There is no common parent between the provided Commits.");
                 }
 
-                Model left = createModelFromIterator(leftIterator, leftId, conn);
-                Model right = createModelFromIterator(rightIterator, rightId, conn);
+                Model left = createModelFromIterator(leftIterator, conn);
+                Model right = createModelFromIterator(rightIterator, conn);
 
                 Model duplicates = mf.createModel(left);
                 duplicates.retainAll(right);
@@ -1518,7 +1518,7 @@ public class SimpleCatalogManager implements CatalogManager {
 
     /**
      * Gets an iterator which contains all of the Resources (commits) leading up to the provided Resource identifying a
-     * commit. NOTE: this iterator does not contain the commit which you started at.
+     * commit.
      *
      * @param commitId The Resource identifying the commit that you want to get the chain for.
      * @param conn The RepositoryConnection which will be queried for the Commits.
@@ -1531,6 +1531,7 @@ public class SimpleCatalogManager implements CatalogManager {
         LinkedList<Value> commits = new LinkedList<>();
         result.forEach(bindingSet -> bindingSet.getBinding(PARENT_BINDING).ifPresent(binding ->
                 commits.add(binding.getValue())));
+        commits.addFirst(commitId);
         return commits.descendingIterator();
     }
 
@@ -1538,13 +1539,15 @@ public class SimpleCatalogManager implements CatalogManager {
      * Builds the Model based on the provided Iterator and Resource.
      *
      * @param iterator The Iterator of commits which are supposed to be contained in the Model.
-     * @param commitId The Resource identifying the Commit which you started with.
      * @param conn The RepositoryConnection which contains the requested Commits.
      * @return The Model containing the summation of all the Commits statements.
      */
-    private Model createModelFromIterator(Iterator<Value> iterator, Resource commitId, RepositoryConnection conn) {
+    private Model createModelFromIterator(Iterator<Value> iterator, /*Resource commitId, */RepositoryConnection conn) {
         Model model = mf.createModel();
-        iterator.forEachRemaining(value -> addRevisionStatementsToModel(model, (Resource)value, conn));
-        return addRevisionStatementsToModel(model, commitId, conn);
+        iterator.forEachRemaining(value -> {
+            addRevisionStatementsToModel(model, (Resource)value, conn);
+        });
+        // return addRevisionStatementsToModel(model, commitId, conn);
+        return model;
     }
 }

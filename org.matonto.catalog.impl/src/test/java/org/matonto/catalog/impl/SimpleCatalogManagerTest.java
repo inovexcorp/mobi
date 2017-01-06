@@ -2048,7 +2048,7 @@ public class SimpleCatalogManagerTest {
         Resource rightId = vf.createIRI("http://matonto.org/test/commits#conflict2-2");
 
         Set<Conflict> result = manager.getConflicts(leftId, rightId);
-        assertEquals(result.size(), 1);
+        assertEquals(1, result.size());
 
         String subject = "http://matonto.org/test/ontology";
         String predicate = DC_TITLE;
