@@ -1551,12 +1551,9 @@ public class SimpleCatalogManager implements CatalogManager {
      * @param conn The RepositoryConnection which contains the requested Commits.
      * @return The Model containing the summation of all the Commits statements.
      */
-    private Model createModelFromIterator(Iterator<Value> iterator, /*Resource commitId, */RepositoryConnection conn) {
+    private Model createModelFromIterator(Iterator<Value> iterator, RepositoryConnection conn) {
         Model model = mf.createModel();
-        iterator.forEachRemaining(value -> {
-            addRevisionStatementsToModel(model, (Resource)value, conn);
-        });
-        // return addRevisionStatementsToModel(model, commitId, conn);
+        iterator.forEachRemaining(value -> addRevisionStatementsToModel(model, (Resource)value, conn));
         return model;
     }
 }
