@@ -52,27 +52,6 @@ body {
         }
     }
 
-    &.beta {
-        /* adds extra space at the top for the banner */
-        > .view-container {
-            padding-top: 82px;
-        }
-        nav .nav {
-            margin-top: 30px;
-        }
-
-        /* beta banner styles */
-        .beta-banner {
-            background: #f00;
-            color: #fff;
-            margin: 0;
-            padding: 5px 10px;
-            position: absolute;
-            width: 100%;
-            z-index: 1;
-        }
-    }
-
     /* spinner background styles */
     .spinner {
         background: #fff;
