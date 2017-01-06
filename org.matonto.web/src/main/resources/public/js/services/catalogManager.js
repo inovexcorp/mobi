@@ -1236,12 +1236,8 @@
                             'Accept': 'text/plain'
                         }
                     };
-                if (_.has(differenceObj, 'additions')) {
-                    fd.append('additions', differenceObj.additions);
-                }
-                if (_.has(differenceObj, 'deletions')) {
-                    fd.append('deletions', differenceObj.deletions);
-                }
+                fd.append('additions', _.has(differenceObj, 'additions') ? differenceObj.additions : []);
+                fd.append('deletions', _.has(differenceObj, 'deletions') ? differenceObj.deletions : []);
                 $rootScope.showSpinner = true;
                 $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(sourceId) + '/conflicts/resolution', fd, config)
                     .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText))

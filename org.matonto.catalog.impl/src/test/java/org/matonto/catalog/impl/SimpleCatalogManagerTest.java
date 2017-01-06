@@ -2116,6 +2116,15 @@ public class SimpleCatalogManagerTest {
     }
 
     @Test
+    public void testGetConflictsWithOnlyOneCommit() throws Exception {
+        Resource leftId = vf.createIRI("http://matonto.org/test/commits#conflict1-4");
+        Resource rightId = vf.createIRI("http://matonto.org/test/commits#conflict0-4");
+
+        Set<Conflict> result = manager.getConflicts(leftId, rightId);
+        assertEquals(0, result.size());
+    }
+
+    @Test
     public void testGetDiff() throws Exception {
         RepositoryConnection conn = repo.getConnection();
 
