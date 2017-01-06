@@ -366,9 +366,6 @@
                 var resolve = function(ontology, inProgressCommit) {
                     deferred.resolve({recordId, ontologyId, ontology, branchId, commitId, inProgressCommit});
                 }
-                deferred.promise.then(() => {
-                    $rootScope.showSpinner = false;
-                });
                 return deferred.promise;
             }
             /**

@@ -21,7 +21,7 @@
  * #L%
  */
 describe('State Manager service', function() {
-    var $httpBackend, stateManagerSvc, deferred, scope, uuidSvc, $httpParamSerializer;
+    var $httpBackend, stateManagerSvc, deferred, scope, uuidSvc, $httpParamSerializer, prefixes;
     var state = {
         '@id': 'http://matonto.org/new-state',
         '@type': 'http://matonto.org/state'
@@ -33,9 +33,7 @@ describe('State Manager service', function() {
     var recordId = 'recordId';
     var branchId = 'branchId';
     var commitId = 'commitId';
-    var ontologyState = {
-        [prefixes.ontologyState + 'record']: [{'@id': recordId}]
-    }
+    var ontologyState = {};
 
     beforeEach(function() {
         module('stateManager');
@@ -45,14 +43,17 @@ describe('State Manager service', function() {
                 this.v4 = jasmine.createSpy('v4').and.returnValue('');
             });
         });
-        inject(function(stateManagerService, _$httpBackend_, _$q_, _$rootScope_, _uuid_, _$httpParamSerializer_) {
+        inject(function(stateManagerService, _$httpBackend_, _$q_, _$rootScope_, _uuid_, _$httpParamSerializer_,
+            _prefixes_) {
             $httpBackend = _$httpBackend_;
             stateManagerSvc = stateManagerService;
             deferred = _$q_.defer();
             scope = _$rootScope_;
             uuidSvc = _uuid_;
             $httpParamSerializer = _$httpParamSerializer_;
+            prefixes = _prefixes_;
         });
+        ontologyState[prefixes.ontologyState + 'record'] = [{'@id': recordId}];
     });
 
     function flushAndVerify() {
@@ -107,11 +108,11 @@ describe('State Manager service', function() {
             $httpBackend.expectPOST('/matontorest/states', function(data) {
                 return _.isEqual(data, JSON.stringify(state));
             }, function(headers) {
-                return headers['Content-Type'] === undefined;
+                return headers['Content-Type'] === 'application/json';
             }).respond(200, stateId);
             stateManagerSvc.createState(state).then(function() {
                 expect(stateManagerSvc.states.length).toBe(1);
-                expect(stateManagerSvc.states[0]).toEqual({id: stateId, model: state});
+                expect(stateManagerSvc.states[0]).toEqual({id: stateId, model: [state]});
             });
             flushAndVerify();
         });
@@ -119,11 +120,11 @@ describe('State Manager service', function() {
             $httpBackend.expectPOST('/matontorest/states?application=' + application, function(data) {
                 return _.isEqual(data, JSON.stringify(state));
             }, function(headers) {
-                return headers['Content-Type'] === undefined;
+                return headers['Content-Type'] === 'application/json';
             }).respond(200, stateId);
             stateManagerSvc.createState(state, application).then(function() {
                 expect(stateManagerSvc.states.length).toBe(1);
-                expect(stateManagerSvc.states[0]).toEqual({id: stateId, model: state});
+                expect(stateManagerSvc.states[0]).toEqual({id: stateId, model: [state]});
             });
             flushAndVerify();
         });
@@ -144,7 +145,7 @@ describe('State Manager service', function() {
         }).respond(200, '');
         stateManagerSvc.updateState(stateId, state).then(function() {
             expect(stateManagerSvc.states.length).toBe(1);
-            expect(stateManagerSvc.states[0]).toEqual([{id: stateId, model: state}]);
+            expect(stateManagerSvc.states[0]).toEqual({id: stateId, model: [state]});
         });
         flushAndVerify();
     });
@@ -186,12 +187,12 @@ describe('State Manager service', function() {
     describe('getOntologyStateByRecordId', function() {
         it('when state is not present', function() {
             var result = stateManagerSvc.getOntologyStateByRecordId(recordId);
-            expect(result).toEqual({});
+            expect(result).toEqual(undefined);
         });
         it('when state is present', function() {
-            stateManagerSvc.states = [{id: stateId, model: ontologyState}];
+            stateManagerSvc.states = [{id: stateId, model: [ontologyState]}];
             var result = stateManagerSvc.getOntologyStateByRecordId(recordId);
-            expect(result).toEqual(ontologyState);
+            expect(result).toEqual({id: stateId, model: [ontologyState]});
         });
     });
 

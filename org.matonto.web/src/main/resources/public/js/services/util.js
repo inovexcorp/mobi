@@ -128,7 +128,7 @@
              * @param {string} header A "link" header string from an HTTP response
              * @return {Object} An object with keys of the rel labels and values of URLs
              */
-            self.parseLinks = function(header){
+            self.parseLinks = function(header) {
                 // Split parts by comma
                 var parts = header.split(',');
                 var links = {};

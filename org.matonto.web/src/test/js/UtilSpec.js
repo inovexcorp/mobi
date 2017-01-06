@@ -21,11 +21,7 @@
  * #L%
  */
 describe('Util service', function() {
-    var utilSvc,
-        prefixes,
-        toastr,
-        splitIRIFilter,
-        beautifyFilter;
+    var utilSvc, prefixes, toastr, splitIRIFilter, beautifyFilter;
 
     beforeEach(function() {
         module('util');
@@ -81,8 +77,8 @@ describe('Util service', function() {
     });
     describe('should get a dcterms property value from an entity', function() {
         it('if it contains the property', function() {
-            var prop = 'prop',
-                entity = {};
+            var prop = 'prop';
+            var entity = {};
             entity[prefixes.dcterms + prop] = [{'@value': 'value'}];
             expect(utilSvc.getDctermsValue(entity, prop)).toBe('value');
         });
@@ -90,11 +86,12 @@ describe('Util service', function() {
             expect(utilSvc.getDctermsValue({}, 'prop')).toBe('');
         });
     });
-    describe('should set a dcterms property value for an entity', function() {
+    it('should set a dcterms property value for an entity', function() {
         var prop = 'prop';
         var value = 'value';
         var entity = {};
-        var expected = {[prefixes.dcterms + 'property']: [{'@value': value}]};
+        var expected = {};
+        expected[prefixes.dcterms + prop] = [{'@value': value}];
         utilSvc.setDctermsValue(entity, prop, value);
         expect(entity).toEqual(expected);
     });
