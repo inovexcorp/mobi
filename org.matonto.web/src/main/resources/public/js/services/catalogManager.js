@@ -264,8 +264,7 @@
             self.getRecord = function(recordId, catalogId) {
                 var deferred = $q.defer();
                 $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId))
-                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText))
-                    ;
+                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText));
                 return deferred.promise;
             }
 
