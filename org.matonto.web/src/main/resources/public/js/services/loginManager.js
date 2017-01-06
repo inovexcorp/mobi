@@ -40,6 +40,11 @@
          * @requires $http
          * @requires $q
          * @requires $state
+         * @requires catalogManager.service:catalogManagerService
+         * @requires catalogState.service:catalogStateService
+         * @requires ontologyManager.service:ontologyManagerService
+         * @requires mappingManager.service:mappingManagerService
+         * @requires userManager.service:userManagerService
          *
          * @description
          * `loginManagerService` is a service that provides access to the MatOnto login REST
@@ -47,9 +52,11 @@
          */
         .service('loginManagerService', loginManagerService);
 
-        loginManagerService.$inject = ['$q', '$http', '$state', 'catalogManagerService', 'ontologyManagerService', 'mappingManagerService', 'userManagerService', 'stateManagerService'];
+        loginManagerService.$inject = ['$q', '$http', '$state', 'catalogManagerService', 'catalogStateService',
+            'ontologyManagerService', 'mappingManagerService', 'userManagerService', 'stateManagerService'];
 
-        function loginManagerService($q, $http, $state, catalogManagerService, ontologyManagerService, mappingManagerService, userManagerService, stateManagerService) {
+        function loginManagerService($q, $http, $state, catalogManagerService, catalogStateService,
+            ontologyManagerService, mappingManagerService, userManagerService, stateManagerService) {
             var self = this,
                 anon = 'self anon';
 
@@ -133,7 +140,8 @@
              *
              * @description
              * Test whether a user is currently logged in and if not, navigates to the log in page. If a user
-             * is logged in, intitializes the {@link catalogManager.service:catalogManagerService catalogManagerService}
+             * is logged in, intitializes the {@link catalogManager.service:catalogManagerService catalogManagerService},
+             * {@link catalogState.service:catalogStateService catalogStateService},
              * {@link ontologyManager.service:ontologyManagerService ontologyManagerService},
              * {@link mappingManager.service:mappingManagerService mappingManagerService},
              * and the {@link userManager.service:userManagerService userManagerService}. Returns
@@ -151,7 +159,7 @@
                 return self.getCurrentLogin().then(data => {
                     if (data.scope !== anon) {
                         self.currentUser = data.sub;
-                        catalogManagerService.initialize();
+                        catalogManagerService.initialize().then(() => catalogStateService.initialize());
                         ontologyManagerService.initialize();
                         mappingManagerService.initialize();
                         userManagerService.initialize();
@@ -160,7 +168,7 @@
                     } else {
                         return handleError(data);
                     }
-                }, data => handleError(data));
+                }, handleError);
             };
 
             /**

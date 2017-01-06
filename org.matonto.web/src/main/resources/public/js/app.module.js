@@ -31,6 +31,7 @@
             'ngCookies',
             'ngHandsontable',
             'ngMessages',
+            'toastr',
             'ui.bootstrap',
             'ui.codemirror',
             'ui.router',
@@ -40,6 +41,7 @@
             'beautify',
             'camelCase',
             'escapeHTML',
+            'inArray',
             'prefixation',
             'removeIriFromArray',
             'removeMatonto',
@@ -65,6 +67,7 @@
             'fileInput',
             'infoMessage',
             'pagination',
+            'pagingDetails',
             'passwordConfirmInput',
             'radioButton',
             'stepProgressBar',
@@ -88,6 +91,7 @@
 
             /* Custom Services */
             'catalogManager',
+            'catalogState',
             'delimitedManager',
             'loginManager',
             'mapperState',
@@ -111,6 +115,8 @@
             'LOCALNAME': /^[a-zA-Z0-9._\-]+$/,
             'FILENAME': /^[\w\-. ]+$/
         })
+        .config(httpInterceptorConfig)
+        .factory('requestInterceptor', requestInterceptor)
         .service('beforeUnload', beforeUnload)
         .run(function(beforeUnload) {
             // We have to invoke the service at least once
@@ -127,5 +133,35 @@
                     return true;
                 }
             }
+        }
+
+        httpInterceptorConfig.$inject = ['$httpProvider'];
+
+        function httpInterceptorConfig($httpProvider) {
+            $httpProvider.interceptors.push('requestInterceptor');
+        }
+
+        requestInterceptor.$inject = ['$q', '$rootScope'];
+
+        function requestInterceptor($q, $rootScope) {
+            $rootScope.pendingRequests = 0;
+            return {
+               'request': function (config) {
+                    $rootScope.pendingRequests++;
+                    return config || $q.when(config);
+                },
+                'requestError': function(rejection) {
+                    $rootScope.pendingRequests--;
+                    return $q.reject(rejection);
+                },
+                'response': function(response) {
+                    $rootScope.pendingRequests--;
+                    return response || $q.when(response);
+                },
+                'responseError': function(rejection) {
+                    $rootScope.pendingRequests--;
+                    return $q.reject(rejection);
+                }
+            };
         }
 })();

@@ -94,9 +94,7 @@ function injectShowPropertiesFilter() {
 
 function injectRemoveIriFromArrayFilter() {
     module(function($provide) {
-        $provide.value('removeIriFromArrayFilter', jasmine.createSpy('removeIriFromArrayFilter').and.callFake(function(arr) {
-            return arr;
-        }));
+        $provide.value('removeIriFromArrayFilter', jasmine.createSpy('removeIriFromArrayFilter').and.callFake(_.identity));
     });
 }
 
@@ -111,6 +109,12 @@ function injectRemoveMatontoFilter() {
 function injectPrefixationFilter() {
     module(function($provide) {
         $provide.value('prefixationFilter', jasmine.createSpy('prefixationFilter'));
+    });
+}
+
+function injectInArrayFilter() {
+    module(function($provide) {
+        $provide.value('inArrayFilter', jasmine.createSpy('inArrayFilter').and.callFake(_.identity));
     });
 }
 
@@ -597,7 +601,7 @@ function mockCatalogManager() {
             this.recordTypes = [];
             this.localCatalog = undefined;
             this.distributedCatalog = undefined;
-            this.initialize = jasmine.createSpy('initialize');
+            this.initialize = jasmine.createSpy('initialize').and.returnValue($q.when());
             this.getSortOptions = jasmine.createSpy('getSortOptions').and.returnValue($q.when([]));
             this.getRecordTypes = jasmine.createSpy('getRecordTypes').and.returnValue($q.when([]));
             this.getResultsPage = jasmine.createSpy('getResultsPage').and.returnValue($q.when({}));
@@ -652,6 +656,53 @@ function mockCatalogManager() {
     });
 }
 
+function mockCatalogState() {
+    module(function($provide) {
+        $provide.service('catalogStateService', function() {
+            this.catalogs = {
+                local: {
+                    show: false,
+                    catalog: {},
+                    openedPath: [],
+                    records: {
+                        recordType: '',
+                        sortOption: {},
+                        searchText: '',
+                        limit: 10
+                    },
+                    branches: {
+                        sortOption: {},
+                        limit: 10
+                    }
+                },
+                distributed: {
+                    show: false,
+                    catalog: {},
+                    openedPath: [],
+                    records: {
+                        recordType: '',
+                        sortOption: {},
+                        searchText: '',
+                        limit: 10
+                    }
+                }
+            };
+            this.currentPage = 0;
+            this.links = {
+                prev: '',
+                next: ''
+            };
+            this.totalSize = 0;
+            this.results = [];
+            this.initialize = jasmine.createSpy('initialize');
+            this.reset = jasmine.createSpy('reset');
+            this.resetPagination = jasmine.createSpy('resetPagination');
+            this.setPagination = jasmine.createSpy('setPagination');
+            this.getCurrentCatalog = jasmine.createSpy('getCurrentCatalog').and.returnValue({});
+        });
+    });
+}
+
 function mockUtil() {
     module(function($provide) {
         $provide.service('utilService', function() {
@@ -661,6 +712,20 @@ function mockUtil() {
             this.getDctermsValue = jasmine.createSpy('getDctermsValue').and.returnValue('');
             this.setDctermsValue = jasmine.createSpy('setDctermsValue').and.returnValue({});
             this.mergingArrays = jasmine.createSpy('mergingArrays');
+            this.getDctermsValue = jasmine.createSpy('getPropertyValue').and.returnValue('');
+            this.parseLinks = jasmine.createSpy('parseLinks').and.returnValue({});
+            this.createErrorToast = jasmine.createSpy('createErrorToast');
+        });
+    });
+}
+
+function mockToastr() {
+    module(function($provide) {
+        $provide.service('toastr', function() {
+            this.error = jasmine.createSpy('error');
+            this.success = jasmine.createSpy('success');
+            this.info = jasmine.createSpy('info');
+            this.warning = jasmine.createSpy('warning');
         });
     });
 }

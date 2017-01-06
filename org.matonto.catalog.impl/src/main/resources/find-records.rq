@@ -19,7 +19,7 @@ WHERE {
 		dc:issued ?issued ;
 		dc:modified ?modified ;
 		dc:publisher ?publisher ;
-		?p ?o.
+		?p ?o .
 
 	FILTER(?type IN (mcat:Record, mcat:UnversionedRecord, mcat:VersionedRecord, mcat:VersionedRDFRecord, mcat:OntologyRecord, mcat:MappingRecord, mcat:DatasetRecord))
 

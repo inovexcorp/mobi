@@ -21,21 +21,13 @@
  * #L%
  */
 describe('Login Manager service', function() {
-    var $httpBackend,
-        loginManagerSvc,
-        catalogManagerSvc,
-        ontologyManagerSvc,
-        mappingManagerSvc,
-        userManagerSvc,
-        stateManagerSvc,
-        state,
-        timeout,
-        $q,
-        params;
+    var $httpBackend, loginManagerSvc, catalogManagerSvc, catalogStateSvc, ontologyManagerSvc, mappingManagerSvc,
+        userManagerSvc, stateManagerSvc, state, timeout, $q, params;
 
     beforeEach(function() {
         module('loginManager');
         mockCatalogManager();
+        mockCatalogState();
         mockUserManager();
         mockOntologyManager();
         mockMappingManager();
@@ -47,8 +39,11 @@ describe('Login Manager service', function() {
             });
         });
 
-        inject(function(loginManagerService, _$httpBackend_, _$state_, _$timeout_, _$q_, _catalogManagerService_, _ontologyManagerService_, _mappingManagerService_, _userManagerService_, _stateManagerService_) {
+        inject(function(loginManagerService, _$httpBackend_, _$state_, _$timeout_, _$q_, _catalogManagerService_,
+            _catalogStateService_, _ontologyManagerService_, _mappingManagerService_, _userManagerService_,
+            _stateManagerService_) {
             loginManagerSvc = loginManagerService;
+            catalogStateSvc = _catalogStateService_;
             catalogManagerSvc = _catalogManagerService_;
             ontologyManagerSvc = _ontologyManagerService_;
             mappingManagerSvc = _mappingManagerService_;
@@ -192,6 +187,7 @@ describe('Login Manager service', function() {
             loginManagerSvc.isAuthenticated().then(function(response) {
                 expect(loginManagerSvc.currentUser).toBe('user');
                 expect(catalogManagerSvc.initialize).toHaveBeenCalled();
+                expect(catalogStateSvc.initialize).toHaveBeenCalled();
                 expect(ontologyManagerSvc.initialize).toHaveBeenCalled();
                 expect(mappingManagerSvc.initialize).toHaveBeenCalled();
                 expect(userManagerSvc.initialize).toHaveBeenCalled();

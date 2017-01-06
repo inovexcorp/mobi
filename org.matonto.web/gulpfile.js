@@ -64,7 +64,9 @@ var jsFiles = function(prefix) {
             prefix + 'angular-ui-bootstrap/**/ui-bootstrap.js',
             prefix + 'ui-select/**/select.min.js',
             prefix + 'handsontable/**/handsontable.full.js',
-            prefix + 'ng-handsontable/**/ngHandsontable.min.js'
+            prefix + 'ng-handsontable/**/ngHandsontable.min.js',
+            prefix + 'chroma-js/**/chroma.min.js',
+            prefix + 'angular-toastr/**/angular-toastr.tpls.js'
         ]
     },
     styleFiles = function(prefix, suffix) {
@@ -80,7 +82,8 @@ var jsFiles = function(prefix) {
             prefix + 'font-awesome/**/font-awesome.min.css',
             prefix + 'ui-select/**/select.min.css',
             prefix + 'codemirror/**/codemirror.css',
-            prefix + 'handsontable/**/handsontable.full.css'
+            prefix + 'handsontable/**/handsontable.full.css',
+            prefix + 'angular-toastr/**/angular-toastr.min.css'
         ]
     };
 

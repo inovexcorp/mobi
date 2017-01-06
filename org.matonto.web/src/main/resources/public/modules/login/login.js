@@ -27,24 +27,15 @@
         .module('login', [])
         .controller('LoginController', LoginController);
 
-    LoginController.$inject = ['loginManagerService', 'catalogManagerService', 'ontologyManagerService', 'mappingManagerService', 'userManagerService', 'stateManagerService'];
+    LoginController.$inject = ['loginManagerService'];
 
-    function LoginController(loginManagerService, catalogManagerService, ontologyManagerService, mappingManagerService, userManagerService, stateManagerService) {
+    function LoginController(loginManagerService) {
         var vm = this;
         vm.errorMessage = '';
 
         vm.login = function() {
             loginManagerService.login(vm.form.username, vm.form.password)
-                .then(() => {
-                    vm.errorMessage = '';
-                    catalogManagerService.initialize();
-                    ontologyManagerService.initialize();
-                    mappingManagerService.initialize();
-                    userManagerService.initialize();
-                    stateManagerService.initialize();
-                }, errorMessage => {
-                    vm.errorMessage = errorMessage;
-                });
+                .then(() => vm.errorMessage = '', errorMessage => vm.errorMessage = errorMessage);
         }
     }
 })();

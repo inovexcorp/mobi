@@ -56,25 +56,59 @@ describe('Catalog Manager service', function() {
         });
     });
 
-    it('should set the correct initial state', function() {
-        var types = ['type1', 'type2'];
-        var sortOptions = ['sort1', 'sort2'];
-        var localCatalog = {};
-        localCatalog[prefixes.dcterms + 'title'] = [{'@value': 'MatOnto Catalog (Local)'}];
-        var distributedCatalog = {};
-        distributedCatalog[prefixes.dcterms + 'title'] = [{'@value': 'MatOnto Catalog (Distributed)'}];
-        spyOn(catalogManagerSvc, 'getRecordTypes').and.returnValue($q.when(types));
-        spyOn(catalogManagerSvc, 'getSortOptions').and.returnValue($q.when(sortOptions));
-        $httpBackend.whenGET('/matontorest/catalogs').respond(200, [localCatalog, distributedCatalog]);
-        catalogManagerSvc.initialize();
-        $httpBackend.flush();
-        expect(catalogManagerSvc.recordTypes).toEqual(types);
-        expect(catalogManagerSvc.localCatalog).toEqual(localCatalog);
-        expect(catalogManagerSvc.distributedCatalog).toEqual(distributedCatalog);
-        expect(catalogManagerSvc.sortOptions.length).toEqual(sortOptions.length * 2);
-        _.forEach(sortOptions, function(option) {
-            expect(_.find(catalogManagerSvc.sortOptions, {field: option, asc: true})).not.toBeUndefined();
-            expect(_.find(catalogManagerSvc.sortOptions, {field: option, asc: false})).not.toBeUndefined();
+    describe('should set the correct initial state', function() {
+        it('unless an error occurs', function(done) {
+            spyOn(catalogManagerSvc, 'getRecordTypes').and.returnValue($q.reject());
+            spyOn(catalogManagerSvc, 'getSortOptions').and.returnValue($q.reject());
+            $httpBackend.whenGET('/matontorest/catalogs').respond(400, '');
+            catalogManagerSvc.initialize().then(function(response) {
+                fail('Promise should have rejected');
+                done();
+            }, function() {
+                expect(true).toBe(true);
+                done();
+            });
+            $httpBackend.flush();
+        });
+        describe('successfully', function() {
+            beforeEach(function() {
+                this.types = ['type1', 'type2'];
+                this.sortOptions = ['sort1', 'sort2'];
+                spyOn(catalogManagerSvc, 'getRecordTypes').and.returnValue($q.when(this.types));
+                spyOn(catalogManagerSvc, 'getSortOptions').and.returnValue($q.when(this.sortOptions));
+            });
+            it('unless a catalog cannot be found', function(done) {
+                $httpBackend.whenGET('/matontorest/catalogs').respond(200, []);
+                catalogManagerSvc.initialize().then(function(response) {
+                    fail('Promise should have rejected');
+                    done();
+                }, function(error) {
+                    expect(error).toContain('Could not find');
+                    done();
+                });
+                $httpBackend.flush();
+            });
+            it('with all important data', function(done) {
+                var types = this.types;
+                var sortOptions = this.sortOptions;
+                var localCatalog = {};
+                localCatalog[prefixes.dcterms + 'title'] = [{'@value': 'MatOnto Catalog (Local)'}];
+                var distributedCatalog = {};
+                distributedCatalog[prefixes.dcterms + 'title'] = [{'@value': 'MatOnto Catalog (Distributed)'}];
+                $httpBackend.whenGET('/matontorest/catalogs').respond(200, [localCatalog, distributedCatalog]);
+                catalogManagerSvc.initialize().then(function(response) {
+                    expect(catalogManagerSvc.recordTypes).toEqual(types);
+                    expect(catalogManagerSvc.localCatalog).toEqual(localCatalog);
+                    expect(catalogManagerSvc.distributedCatalog).toEqual(distributedCatalog);
+                    expect(catalogManagerSvc.sortOptions.length).toEqual(sortOptions.length * 2);
+                    _.forEach(sortOptions, function(option) {
+                        expect(_.find(catalogManagerSvc.sortOptions, {field: option, asc: true})).not.toBeUndefined();
+                        expect(_.find(catalogManagerSvc.sortOptions, {field: option, asc: false})).not.toBeUndefined();
+                    });
+                    done();
+                });
+                $httpBackend.flush();
+            });
         });
     });
     it('should get the IRIs for all record types', function(done) {

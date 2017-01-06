@@ -37,7 +37,6 @@
         /**
          * @ngdoc service
          * @name delimitedManager.service:delimitedManagerService
-         * @requires $rootScope
          * @requires $http
          * @requires $q
          * @requires $window
@@ -49,9 +48,9 @@
          */
         .service('delimitedManagerService', delimitedManagerService);
 
-        delimitedManagerService.$inject = ['$rootScope', '$http', '$q', '$window'];
+        delimitedManagerService.$inject = ['$http', '$q', '$window'];
 
-        function delimitedManagerService($rootScope, $http, $q, $window) {
+        function delimitedManagerService($http, $q, $window) {
             var self = this,
                 prefix = '/matontorest/delimited-files';
 
@@ -153,16 +152,8 @@
                         }
                     };
                 fd.append('delimitedFile', file);
-
-                $rootScope.showSpinner = true;
                 $http.post(prefix, fd, config)
-                    .then(response => {
-                        deferred.resolve(response.data);
-                    }, response => {
-                        deferred.reject(_.get(response, 'statusText', ''));
-                    }).then(() => {
-                        $rootScope.showSpinner = false;
-                    });
+                    .then(response => deferred.resolve(response.data), response => deferred.reject(_.get(response, 'statusText', '')));
 
                 return deferred.promise;
             }
@@ -193,8 +184,6 @@
                             'separator': self.separator
                         }
                     };
-
-                $rootScope.showSpinner = true;
                 $http.get(prefix + '/' + encodeURIComponent(self.fileName), config)
                     .then(response => {
                         if (response.data.length === 0) {
@@ -207,8 +196,6 @@
                     }, response => {
                         self.dataRows = undefined;
                         deferred.reject(_.get(response, 'statusText', ''));
-                    }).then(() => {
-                        $rootScope.showSpinner = false;
                     });
 
                 return deferred.promise;
@@ -248,13 +235,8 @@
                         }
                     };
                 fd.append('jsonld', angular.toJson(jsonld));
-
                 $http.post(prefix + '/' + encodeURIComponent(self.fileName) + '/map-preview', fd, config)
-                    .then(response => {
-                        deferred.resolve(response.data);
-                    }, response => {
-                        deferred.reject(_.get(response, 'statusText', ''));
-                    });
+                    .then(response => deferred.resolve(response.data), response => deferred.reject(_.get(response, 'statusText', '')));
                 return deferred.promise;
             }
 

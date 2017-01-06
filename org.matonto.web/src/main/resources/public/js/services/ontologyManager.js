@@ -37,7 +37,6 @@
         /**
          * @ngdoc service
          * @name ontologyManager.service:ontologyManagerService
-         * @requires $rootScope
          * @requires $window
          * @requires $http
          * @requires $q
@@ -53,10 +52,10 @@
          */
         .service('ontologyManagerService', ontologyManagerService);
 
-        ontologyManagerService.$inject = ['$rootScope', '$window', '$http', '$q', '$timeout', '$filter', 'prefixes',
+        ontologyManagerService.$inject = ['$window', '$http', '$q', '$timeout', '$filter', 'prefixes',
             'propertyManagerService', 'catalogManagerService', 'utilService', 'stateManagerService'];
 
-        function ontologyManagerService($rootScope, $window, $http, $q, $timeout, $filter, prefixes,
+        function ontologyManagerService($window, $http, $q, $timeout, $filter, prefixes,
             propertyManagerService, catalogManagerService, utilService, stateManagerService) {
             var self = this;
             var prefix = '/matontorest/';
@@ -409,14 +408,11 @@
              * @returns {Promise} A promise with the ontology ID or error message.
              */
             self.uploadThenGet = function(file, title, description, keywords, type = 'ontology') {
-                $rootScope.showSpinner = true;
                 var deferred = $q.defer();
                 var onError = function(response) {
                     deferred.reject(response);
-                    $rootScope.showSpinner = false;
                 };
                 var onAddSuccess = function(ontologyId) {
-                    $rootScope.showSpinner = false;
                     deferred.resolve(ontologyId);
                 }
                 var onUploadSuccess = function(recordId, ontologyId) {
@@ -471,7 +467,6 @@
              * @returns {Promise} A promise with with the ontology ID or error message.
              */
             self.openOntology = function(ontologyId, recordId, type='ontology') {
-                $rootScope.showSpinner = true;
                 var deferred = $q.defer();
                 var onAddSuccess = function() {
                     _.pull(self.ontologyIds, ontologyId);
@@ -487,7 +482,6 @@
                                 response.commitId, response.ontology, response.inProgressCommit).then(onAddSuccess);
                         }
                     }, response => deferred.reject(response.statusText));
-                deferred.promise.then(() => $rootScope.showSpinner = false);
                 return deferred.promise;
             }
             /**
@@ -522,12 +516,10 @@
              * @returns {Promise} A promise with the string representation of the ontology.
              */
             self.getPreview = function(ontologyId, recordId, rdfFormat = 'jsonld') {
-                $rootScope.showSpinner = true;
                 var deferred = $q.defer();
                 self.getOntology(ontologyId, recordId, rdfFormat)
                     .then(response => deferred.resolve((rdfFormat === 'jsonld') ? $filter('json')(response.ontology)
-                            : response.ontology), deferred.reject)
-                    .then(() => $rootScope.showSpinner = false);
+                            : response.ontology), deferred.reject);
                 return deferred.promise;
             }
             /**
@@ -716,7 +708,6 @@
              * ontology.
              */
             self.createOntology = function(ontologyJson, title, description, keywords, type='ontology') {
-                $rootScope.showSpinner = true;
                 var catalogId = _.get(cm.localCatalog, '@id', '');
                 var deferred = $q.defer();
                 var config = {
@@ -752,8 +743,7 @@
                                     ontologyId: response.data.ontologyId
                                 });
                             }, deferred.reject);
-                    }, response => deferred.reject(response.statusText))
-                    .then(() => $rootScope.showSpinner = false);
+                    }, response => deferred.reject(response.statusText));
                 return deferred.promise;
             }
             /**
@@ -1573,7 +1563,6 @@
              * ontology.
              */
             self.getImportedOntologies = function(ontologyId, rdfFormat = 'jsonld') {
-                $rootScope.showSpinner = true;
                 var deferred = $q.defer();
                 var config = {
                     params: {
@@ -1589,12 +1578,7 @@
                         } else {
                             deferred.reject(_.get(response, 'statusText', defaultErrorMessage));
                         }
-                    }, response => {
-                        deferred.reject(_.get(response, 'statusText', defaultErrorMessage))
-                    })
-                    .then(() => {
-                        $rootScope.showSpinner = false;
-                    });
+                    }, response => deferred.reject(_.get(response, 'statusText', defaultErrorMessage)));
                 return deferred.promise;
             }
             /**
@@ -1758,7 +1742,6 @@
                 var defaultErrorMessage = 'An error has occurred with your search.';
                 var deferred = $q.defer();
                 var config = {params: {searchText, branchId, commitId}};
-                $rootScope.showSpinner = true;
                 $http.get(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/search-results', config)
                     .then(response => {
                         if(_.get(response, 'status') === 200) {
@@ -1768,12 +1751,7 @@
                         } else {
                             deferred.reject(defaultErrorMessage);
                         }
-                    }, response => {
-                        deferred.reject(_.get(response, 'statusText', defaultErrorMessage));
-                    })
-                    .then(() => {
-                        $rootScope.showSpinner = false;
-                    });
+                    }, response => deferred.reject(response.statusText));
                 return deferred.promise;
             }
 

@@ -21,35 +21,16 @@
  * #L%
  */
 describe('Login controller', function() {
-    var $controller,
-        scope,
-        loginManagerSvc,
-        catalogManagerSvc,
-        ontologyManagerSvc,
-        mappingManagerSvc,
-        userManagerSvc,
-        stateManagerSvc,
-        $q,
-        controller;
+    var $controller, scope, loginManagerSvc, $q, controller;
 
     beforeEach(function() {
         module('login');
-        mockCatalogManager();
-        mockOntologyManager();
-        mockMappingManager();
         mockLoginManager();
-        mockUserManager();
-        mockStateManager();
 
-        inject(function(_$rootScope_, _$controller_, _loginManagerService_, _catalogManagerService_, _ontologyManagerService_, _mappingManagerService_, _userManagerService_, _$q_, _stateManagerService_) {
+        inject(function(_$rootScope_, _$controller_, _loginManagerService_, _$q_) {
             scope = _$rootScope_;
             $controller = _$controller_;
             loginManagerSvc = _loginManagerService_;
-            catalogManagerSvc = _catalogManagerService_;
-            ontologyManagerSvc = _ontologyManagerService_;
-            mappingManagerSvc = _mappingManagerService_;
-            userManagerSvc = _userManagerService_;
-            stateManagerSvc = _stateManagerService_;
             $q = _$q_;
         });
 
@@ -69,22 +50,12 @@ describe('Login controller', function() {
             scope.$digest();
             expect(loginManagerSvc.login).toHaveBeenCalledWith(controller.form.username, controller.form.password);
             expect(controller.errorMessage).toBe('Error message');
-            expect(catalogManagerSvc.initialize).not.toHaveBeenCalled();
-            expect(ontologyManagerSvc.initialize).not.toHaveBeenCalled();
-            expect(mappingManagerSvc.initialize).not.toHaveBeenCalled();
-            expect(userManagerSvc.initialize).not.toHaveBeenCalled();
-            expect(stateManagerSvc.initialize).not.toHaveBeenCalled();
         });
         it('successfully', function() {
             controller.login();
             scope.$digest();
             expect(loginManagerSvc.login).toHaveBeenCalledWith(controller.form.username, controller.form.password);
             expect(controller.errorMessage).toBe('');
-            expect(catalogManagerSvc.initialize).toHaveBeenCalled();
-            expect(ontologyManagerSvc.initialize).toHaveBeenCalled();
-            expect(mappingManagerSvc.initialize).toHaveBeenCalled();
-            expect(userManagerSvc.initialize).toHaveBeenCalled();
-            expect(stateManagerSvc.initialize).toHaveBeenCalled();
         });
     });
 });
