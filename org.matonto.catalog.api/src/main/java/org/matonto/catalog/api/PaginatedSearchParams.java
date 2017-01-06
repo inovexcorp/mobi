@@ -32,7 +32,7 @@ import java.util.Optional;
  * optional ascending parameters.
  */
 public class PaginatedSearchParams {
-    private String searchTerm;
+    private String searchText;
     private Resource typeFilter;
     private Resource sortBy;
     private Boolean ascending;
@@ -40,7 +40,7 @@ public class PaginatedSearchParams {
     private int offset;
 
     private PaginatedSearchParams(Builder builder) {
-        this.searchTerm = builder.searchTerm;
+        this.searchText = builder.searchText;
         this.typeFilter = builder.typeFilter;
         this.sortBy = builder.sortBy;
         this.ascending = builder.ascending;
@@ -48,8 +48,8 @@ public class PaginatedSearchParams {
         this.offset = builder.offset;
     }
 
-    public Optional<String> getSearchTerm() {
-        return Optional.ofNullable(searchTerm);
+    public Optional<String> getSearchText() {
+        return Optional.ofNullable(searchText);
     }
 
     public Optional<Resource> getTypeFilter() {
@@ -77,7 +77,7 @@ public class PaginatedSearchParams {
         private final int offset;
         private final Resource sortBy;
 
-        private String searchTerm = null;
+        private String searchText = null;
         private Resource typeFilter = null;
         private Boolean ascending = null;
 
@@ -94,8 +94,8 @@ public class PaginatedSearchParams {
             this.sortBy = sortBy;
         }
 
-        public Builder searchTerm(String val) {
-            this.searchTerm = val;
+        public Builder searchText(String val) {
+            this.searchText = val;
             return this;
         }
 

@@ -47,9 +47,7 @@ function injectRegexConstant() {
 
 function injectBeautifyFilter() {
     module(function($provide) {
-        $provide.value('beautifyFilter', jasmine.createSpy('beautifyFilter').and.callFake(function(str) {
-            return '';
-        }));
+        $provide.value('beautifyFilter', jasmine.createSpy('beautifyFilter').and.callFake(_.identity));
     });
 }
 
@@ -96,9 +94,7 @@ function injectShowPropertiesFilter() {
 
 function injectRemoveIriFromArrayFilter() {
     module(function($provide) {
-        $provide.value('removeIriFromArrayFilter', jasmine.createSpy('removeIriFromArrayFilter').and.callFake(function(arr) {
-            return arr;
-        }));
+        $provide.value('removeIriFromArrayFilter', jasmine.createSpy('removeIriFromArrayFilter').and.callFake(_.identity));
     });
 }
 
@@ -111,6 +107,12 @@ function injectRemoveMatontoFilter() {
 function injectPrefixationFilter() {
     module(function($provide) {
         $provide.value('prefixationFilter', jasmine.createSpy('prefixationFilter'));
+    });
+}
+
+function injectInArrayFilter() {
+    module(function($provide) {
+        $provide.value('inArrayFilter', jasmine.createSpy('inArrayFilter').and.callFake(_.identity));
     });
 }
 
@@ -155,9 +157,6 @@ function mockOntologyManager() {
             this.hasClassIndividuals = jasmine.createSpy('hasClassIndividuals').and.returnValue(true);
             this.getClassIndividuals = jasmine.createSpy('getClassIndividuals').and.returnValue([]);
             this.findOntologyWithClass = jasmine.createSpy('findOntologyWithClass').and.returnValue({});
-            this.getBeautifulIRI = jasmine.createSpy('getBeautifulIRI').and.callFake(function(iri) {
-                return iri;
-            });
             this.addEntity = jasmine.createSpy('addEntity');
             this.removeEntity = jasmine.createSpy('removeEntity');
             this.getEntity = jasmine.createSpy('getEntity').and.returnValue({});
@@ -316,41 +315,6 @@ function mockMapperState() {
     });
 }
 
-function mockCatalogManager() {
-    module(function($provide) {
-        $provide.service('catalogManagerService', function($q) {
-            this.selectedResource = undefined;
-            this.currentPage = 0;
-            this.filters = {
-                Resources: []
-            };
-            this.sortBy = '';
-            this.asc = false;
-            this.errorMessage = '';
-            this.results = {
-                size: 0,
-                totalSize: 0,
-                results: [],
-                limit: 0,
-                start: 0,
-                links: {
-                    base: '',
-                    next: '',
-                    prev: ''
-                }
-            };
-            this.getResources = jasmine.createSpy('getResources');
-            this.getSortOptions = jasmine.createSpy('getSortOptions').and.callFake(function() {
-                return $q.when([]);
-            });
-            this.getResultsPage = jasmine.createSpy('getResultsPage');
-            this.downloadResource = jasmine.createSpy('downloadResource');
-            this.getType = jasmine.createSpy('getType').and.returnValue('');
-            this.getDate = jasmine.createSpy('getDate').and.returnValue(new Date());
-        });
-    });
-}
-
 function mockPrefixes() {
     module(function($provide) {
         $provide.service('prefixes', function() {
@@ -397,9 +361,7 @@ function mockSettingsManager() {
     module(function($provide) {
         $provide.service('settingsManagerService', function() {
             this.getSettings = jasmine.createSpy('getSettings').and.returnValue({});
-            this.setSettings = jasmine.createSpy('setSettings').and.callFake(function(settings) {
-                return settings;
-            });
+            this.setSettings = jasmine.createSpy('setSettings').and.callFake(_.identity);
             this.getTreeDisplay = jasmine.createSpy('getTreeDisplay').and.returnValue('');
             this.getTooltipDisplay = jasmine.createSpy('getTooltipDisplay').and.returnValue('');
         });
@@ -585,6 +547,138 @@ function mockUserState() {
             this.displayEditUserProfileOverlay = false;
             this.displayChangePasswordOverlay = false;
             this.reset = jasmine.createSpy('reset');
+        });
+    });
+}
+
+function mockCatalogManager() {
+    module(function($provide) {
+        $provide.service('catalogManagerService', function($q) {
+            this.sortOptions = [];
+            this.recordTypes = [];
+            this.localCatalog = undefined;
+            this.distributedCatalog = undefined;
+            this.initialize = jasmine.createSpy('initialize').and.returnValue($q.when());
+            this.getSortOptions = jasmine.createSpy('getSortOptions').and.returnValue($q.when([]));
+            this.getRecordTypes = jasmine.createSpy('getRecordTypes').and.returnValue($q.when([]));
+            this.getResultsPage = jasmine.createSpy('getResultsPage').and.returnValue($q.when({}));
+            this.getRecords = jasmine.createSpy('getRecords').and.returnValue($q.when({}));
+            this.getRecord = jasmine.createSpy('getRecord').and.returnValue($q.when({}));
+            this.createRecord = jasmine.createSpy('createRecord').and.returnValue($q.when());
+            this.updateRecord = jasmine.createSpy('updateRecord').and.returnValue($q.when());
+            this.deleteRecord = jasmine.createSpy('deleteRecord').and.returnValue($q.when());
+            this.getRecordDistributions = jasmine.createSpy('getRecordDistributions').and.returnValue($q.when({}));
+            this.getRecordDistribution = jasmine.createSpy('getRecordDistribution').and.returnValue($q.when({}));
+            this.createRecordDistribution = jasmine.createSpy('createRecordDistribution').and.returnValue($q.when());
+            this.updateRecordDistribution = jasmine.createSpy('updateRecordDistribution').and.returnValue($q.when());
+            this.deleteRecordDistribution = jasmine.createSpy('deleteRecordDistribution').and.returnValue($q.when());
+            this.getRecordVersions = jasmine.createSpy('getRecordVersions').and.returnValue($q.when({}));
+            this.getRecordLatestVersion = jasmine.createSpy('getRecordLatestVersion').and.returnValue($q.when({}));
+            this.getRecordVersion = jasmine.createSpy('getRecordVersion').and.returnValue($q.when({}));
+            this.createRecordVersion = jasmine.createSpy('createRecordVersion').and.returnValue($q.when());
+            this.createRecordTag = jasmine.createSpy('createRecordTag').and.returnValue($q.when());
+            this.updateRecordVersion = jasmine.createSpy('updateRecordVersion').and.returnValue($q.when());
+            this.deleteRecordVersion = jasmine.createSpy('deleteRecordVersion').and.returnValue($q.when());
+            this.getVersionCommit = jasmine.createSpy('getVersionCommit').and.returnValue($q.when({}));
+            this.getVersionDistributions = jasmine.createSpy('getVersionDistributions').and.returnValue($q.when({}));
+            this.getVersionDistribution = jasmine.createSpy('getVersionDistribution').and.returnValue($q.when({}));
+            this.createVersionDistribution = jasmine.createSpy('createVersionDistribution').and.returnValue($q.when());
+            this.updateVersionDistribution = jasmine.createSpy('updateVersionDistribution').and.returnValue($q.when());
+            this.deleteVersionDistribution = jasmine.createSpy('deleteVersionDistribution').and.returnValue($q.when());
+            this.getRecordBranches = jasmine.createSpy('getRecordBranches').and.returnValue($q.when({}));
+            this.getRecordMasterBranch = jasmine.createSpy('getRecordMasterBranch').and.returnValue($q.when({}));
+            this.getRecordBranch = jasmine.createSpy('getRecordBranch').and.returnValue($q.when({}));
+            this.createRecordBranch = jasmine.createSpy('createRecordBranch').and.returnValue($q.when());
+            this.createRecordUserBranch = jasmine.createSpy('createRecordUserBranch').and.returnValue($q.when());
+            this.updateRecordBranch = jasmine.createSpy('updateRecordBranch').and.returnValue($q.when());
+            this.deleteRecordBranch = jasmine.createSpy('deleteRecordBranch').and.returnValue($q.when());
+            this.getBranchCommits = jasmine.createSpy('getBranchCommits').and.returnValue($q.when([]));
+            this.createBranchCommit = jasmine.createSpy('createBranchCommit').and.returnValue($q.when());
+            this.getBranchHeadCommit = jasmine.createSpy('getBranchHeadCommit').and.returnValue($q.when({}));
+            this.getBranchCommit = jasmine.createSpy('getBranchCommit').and.returnValue($q.when({}));
+            this.getBranchConflicts = jasmine.createSpy('getBranchConflicts').and.returnValue($q.when([]));
+            this.mergeBranches = jasmine.createSpy('mergeBranches').and.returnValue($q.when(''));
+            this.getResource = jasmine.createSpy('getResource').and.returnValue($q.when(''));
+            this.downloadResource = jasmine.createSpy('downloadResource');
+            this.createInProgressCommit = jasmine.createSpy('createInProgressCommit').and.returnValue($q.when());
+            this.getInProgressCommit = jasmine.createSpy('getInProgressCommit').and.returnValue($q.when({}));
+            this.updateInProgressCommit = jasmine.createSpy('updateInProgressCommit').and.returnValue($q.when());
+            this.deleteInProgressCommit = jasmine.createSpy('deleteInProgressCommit').and.returnValue($q.when());
+            this.getEntityName = jasmine.createSpy('getEntityName');
+            this.isRecord = jasmine.createSpy('isRecord');
+            this.isVersionedRDFRecord = jasmine.createSpy('isVersionedRDFRecord');
+            this.isDistribution = jasmine.createSpy('isDistribution');
+            this.isBranch = jasmine.createSpy('isBranch');
+        });
+    });
+}
+
+function mockCatalogState() {
+    module(function($provide) {
+        $provide.service('catalogStateService', function() {
+            this.catalogs = {
+                local: {
+                    show: false,
+                    catalog: {},
+                    openedPath: [],
+                    records: {
+                        recordType: '',
+                        sortOption: {},
+                        searchText: '',
+                        limit: 10
+                    },
+                    branches: {
+                        sortOption: {},
+                        limit: 10
+                    }
+                },
+                distributed: {
+                    show: false,
+                    catalog: {},
+                    openedPath: [],
+                    records: {
+                        recordType: '',
+                        sortOption: {},
+                        searchText: '',
+                        limit: 10
+                    }
+                }
+            };
+            this.currentPage = 0;
+            this.links = {
+                prev: '',
+                next: ''
+            };
+            this.totalSize = 0;
+            this.results = [];
+            this.initialize = jasmine.createSpy('initialize');
+            this.reset = jasmine.createSpy('reset');
+            this.resetPagination = jasmine.createSpy('resetPagination');
+            this.setPagination = jasmine.createSpy('setPagination');
+            this.getCurrentCatalog = jasmine.createSpy('getCurrentCatalog').and.returnValue({});
+        });
+    });
+}
+
+function mockUtil() {
+    module(function($provide) {
+        $provide.service('utilService', function() {
+            this.getBeautifulIRI = jasmine.createSpy('getBeautifulIRI').and.callFake(_.identity);
+            this.getPropertyValue = jasmine.createSpy('getPropertyValue').and.returnValue('');
+            this.getDctermsValue = jasmine.createSpy('getPropertyValue').and.returnValue('');
+            this.parseLinks = jasmine.createSpy('parseLinks').and.returnValue({});
+            this.createErrorToast = jasmine.createSpy('createErrorToast');
+        });
+    });
+}
+
+function mockToastr() {
+    module(function($provide) {
+        $provide.service('toastr', function() {
+            this.error = jasmine.createSpy('error');
+            this.success = jasmine.createSpy('success');
+            this.info = jasmine.createSpy('info');
+            this.warning = jasmine.createSpy('warning');
         });
     });
 }

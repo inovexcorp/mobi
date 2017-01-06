@@ -38,7 +38,6 @@
          * @ngdoc service
          * @name mappingManager.service:mappingManagerService
          * @requires $window
-         * @requires $rootScope
          * @requires $filter
          * @requires $http
          * @requires $q
@@ -53,9 +52,9 @@
          */
         .service('mappingManagerService', mappingManagerService);
 
-        mappingManagerService.$inject = ['$window', '$rootScope', '$filter', '$http', '$q', 'ontologyManagerService', 'prefixes', 'uuid'];
+        mappingManagerService.$inject = ['$window', '$filter', '$http', '$q', 'utilService', 'ontologyManagerService', 'prefixes', 'uuid'];
 
-        function mappingManagerService($window, $rootScope, $filter, $http, $q, ontologyManagerService, prefixes, uuid) {
+        function mappingManagerService($window, $filter, $http, $q, utilService, ontologyManagerService, prefixes, uuid) {
             var self = this,
                 prefix = '/matontorest/mappings';
 
@@ -92,14 +91,8 @@
              * {@link mappingManager.service:mappingManagerService#mappingIds mapping ids}.
              */
             self.initialize = function() {
-                $rootScope.showSpinner = true;
                 $http.get(prefix)
-                    .then(response => {
-                        self.mappingIds = _.get(response, 'data', []);
-                    }, response => {
-                        console.log(_.get(response, 'statusText', 'Something went wrong. Could not load mapping ids'));
-                    })
-                    .then(() => $rootScope.showSpinner = false);
+                    .then(response => self.mappingIds = _.get(response, 'data', []), response => console.log(_.get(response, 'statusText', 'Something went wrong. Could not load mapping ids')));
             }
 
             // REST endpoint calls
@@ -127,17 +120,11 @@
                         }
                     };
                 fd.append('jsonld', angular.toJson(mapping));
-
-                $rootScope.showSpinner = true;
                 $http.post(prefix, fd, config)
                     .then(response => {
                         self.mappingIds = _.union(self.mappingIds, [response.data]);
                         deferred.resolve(response.data);
-                    }, response => {
-                        deferred.reject(_.get(response, 'statusText', ''));
-                    }).then(() => {
-                        $rootScope.showSpinner = false;
-                    });
+                    }, response => deferred.reject(_.get(response, 'statusText', '')));
                 return deferred.promise;
             }
 
@@ -155,15 +142,8 @@
              */
             self.getMapping = function(mappingId) {
                 var deferred = $q.defer();
-                $rootScope.showSpinner = true;
                 $http.get(prefix + '/' + encodeURIComponent(mappingId))
-                    .then(response => {
-                        deferred.resolve(_.get(response.data, '@graph', []));
-                    }, response => {
-                        deferred.reject(_.get(response, 'statusText', ''));
-                    }).then(() => {
-                        $rootScope.showSpinner = false;
-                    });
+                    .then(response => deferred.resolve(_.get(response.data, '@graph', [])), response => deferred.reject(_.get(response, 'statusText', '')));
                 return deferred.promise;
             }
             /**
@@ -195,16 +175,11 @@
              */
             self.deleteMapping = function(mappingId) {
                 var deferred = $q.defer();
-                $rootScope.showSpinner = true;
                 $http.delete(prefix + '/' + encodeURIComponent(mappingId))
                     .then(response => {
                         _.pull(self.mappingIds, mappingId);
                         deferred.resolve();
-                    }, response => {
-                        deferred.reject(_.get(response, 'statusText', ''));
-                    }).then(() => {
-                        $rootScope.showSpinner = false;
-                    });
+                    }, response => deferred.reject(_.get(response, 'statusText', '')));
                 return deferred.promise;
             }
 
@@ -312,7 +287,7 @@
                 if (ontologyManagerService.getEntity(ontology, classId)) {
                     // Collect IRI sections for prefix and create class mapping
                     var splitIri = $filter('splitIRI')(classId);
-                    var ontologyDataName = ontologyManagerService.getBeautifulIRI(self.getSourceOntologyId(mapping)).toLowerCase();
+                    var ontologyDataName = utilService.getBeautifulIRI(self.getSourceOntologyId(mapping)).toLowerCase();
                     classEntity = {
                         '@id': getMappingEntity(mapping)['@id'] + '/' + uuid.v4(),
                         '@type': [prefixes.delim + 'ClassMapping']
@@ -344,7 +319,7 @@
                 // Check if class mapping exists in mapping
                 if (entityExists(mapping, classMappingId)) {
                     var classMapping = getEntityById(mapping, classMappingId);
-                    var ontologyDataName = ontologyManagerService.getBeautifulIRI(self.getSourceOntologyId(mapping)).toLowerCase();
+                    var ontologyDataName = utilService.getBeautifulIRI(self.getSourceOntologyId(mapping)).toLowerCase();
                     classMapping[prefixes.delim + 'hasPrefix'] = [{'@value': prefixes.data + ontologyDataName + '/' + prefixEnd}];
                     classMapping[prefixes.delim + 'localName'] = [{'@value': localNamePattern}];
                 }
@@ -516,22 +491,19 @@
              * rejects otherwise
              */
             self.getOntology = function(ontologyId) {
-                $rootScope.showSpinner = true;
                 var deferred = $q.defer();
                 var onError = function(response) {
                     deferred.reject(_.get(response, 'statusText', ''));
-                    $rootScope.showSpinner = false;
                 };
-                ontologyManagerService.getOntology(ontologyId).then(response => {
-                    if (_.get(response, 'status') === 200) {
-                        var obj = _.pick(response.data, ['ontology', 'id']);
-                        deferred.resolve({id: obj.id, entities: obj.ontology});
-                    } else {
-                        onError(response);
-                    }
-                }, onError).then(() => {
-                    $rootScope.showSpinner = false;
-                });
+                ontologyManagerService.getOntology(ontologyId)
+                    .then(response => {
+                        if (_.get(response, 'status') === 200) {
+                            var obj = _.pick(response.data, ['ontology', 'id']);
+                            deferred.resolve({id: obj.id, entities: obj.ontology});
+                        } else {
+                            onError(response);
+                        }
+                    }, onError);
                 return deferred.promise;
             };
             /**

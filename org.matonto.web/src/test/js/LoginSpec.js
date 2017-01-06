@@ -24,26 +24,17 @@ describe('Login controller', function() {
     var $controller,
         scope,
         loginManagerSvc,
-        ontologyManagerSvc,
-        mappingManagerSvc,
-        userManagerSvc,
         $q,
         controller;
 
     beforeEach(function() {
         module('login');
-        mockOntologyManager();
-        mockMappingManager();
         mockLoginManager();
-        mockUserManager();
 
-        inject(function(_$rootScope_, _$controller_, _loginManagerService_,  _ontologyManagerService_, _mappingManagerService_, _userManagerService_, _$q_) {
+        inject(function(_$rootScope_, _$controller_, _loginManagerService_, _$q_) {
             scope = _$rootScope_;
             $controller = _$controller_;
             loginManagerSvc = _loginManagerService_;
-            ontologyManagerSvc = _ontologyManagerService_;
-            mappingManagerSvc = _mappingManagerService_;
-            userManagerSvc = _userManagerService_;
             $q = _$q_;
         });
 
@@ -63,17 +54,12 @@ describe('Login controller', function() {
             scope.$digest();
             expect(loginManagerSvc.login).toHaveBeenCalledWith(controller.form.username, controller.form.password);
             expect(controller.errorMessage).toBe('Error message');
-            expect(ontologyManagerSvc.initialize).not.toHaveBeenCalled();
-            expect(mappingManagerSvc.initialize).not.toHaveBeenCalled();
         });
         it('successfully', function() {
             controller.login();
             scope.$digest();
             expect(loginManagerSvc.login).toHaveBeenCalledWith(controller.form.username, controller.form.password);
             expect(controller.errorMessage).toBe('');
-            expect(ontologyManagerSvc.initialize).toHaveBeenCalled();
-            expect(mappingManagerSvc.initialize).toHaveBeenCalled();
-            expect(userManagerSvc.initialize).toHaveBeenCalled();
         });
     });
 });

@@ -1,22 +1,29 @@
 /* Core variables */
 @import "./src/main/resources/public/css/variables";
 
-$filters-width: 10%;
-$results-width: 45%;
-$preview-width: $results-width;
-
 .catalog {
-    > .row {
-        padding-left: $sidebar-width;
-        width: 100%;
+    background-color: $gray-lighter;
+
+    .field-name {
+        font-weight: bold;
+    }
+    .entity-title {
+        text-align: center;
+        clear: both;
         margin: 0;
     }
+    .list-group {
+        margin: 0 5%;
 
-    .filters, 
-    .results, 
-    .resource-preview {
-        float: left;
-        border: 1px solid $gray-lighter;
-        height: 100%;
+        .list-group-item {
+            outline: 0;
+            border-radius: 0;
+            border-bottom: 1px solid $gray-lighter;
+            padding: 0.5em;
+
+            h3 {
+                display: inline-block;
+            }
+        }
     }
 }

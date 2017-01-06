@@ -24,5 +24,22 @@
     'use strict';
 
     angular
-        .module('catalog', ['resourcePreview', 'resultList', 'filterList', 'resourceType', 'catalogSideBar']);
+        .module('catalog', [
+            /* Custom Directives */
+            'branchBlock',
+            'catalogBreadcrumb',
+            'catalogPagination',
+            'catalogTabset',
+            'entityDates',
+            'entityDescription',
+            'localTab',
+            'paginationHeader',
+            'recordBlock',
+            'recordKeywords',
+            'recordType',
+            'recordTypes',
+            'resultsBlock',
+            'searchRow',
+            'sortOptions'
+        ]);
 })();

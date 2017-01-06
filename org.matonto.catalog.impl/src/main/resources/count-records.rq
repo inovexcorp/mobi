@@ -4,7 +4,10 @@ SELECT
     (COUNT(distinct ?record) as ?record_count)
 WHERE {
 	?record a ?type ;
-	    mcat:catalog ?catalog .
+	    mcat:catalog ?catalog ;
+		?p ?o .
+
 	FILTER(?type IN (mcat:Record, mcat:UnversionedRecord, mcat:VersionedRecord, mcat:VersionedRDFRecord, mcat:OntologyRecord, mcat:MappingRecord, mcat:DatasetRecord))
     FILTER EXISTS { ?record a ?type_filter . }
+    FILTER IF(bound(?search_text), CONTAINS(lcase(?o), lcase(?search_text)), true)
 }
