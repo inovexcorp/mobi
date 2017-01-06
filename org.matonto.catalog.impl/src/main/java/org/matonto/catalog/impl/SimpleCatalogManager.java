@@ -1012,13 +1012,21 @@ public class SimpleCatalogManager implements CatalogManager {
     public Set<Conflict> getConflicts(Resource leftId, Resource rightId) throws MatOntoException {
         if (resourceExists(leftId, Commit.TYPE) && resourceExists(rightId, Commit.TYPE)) {
             try (RepositoryConnection conn = repository.getConnection()) {
-                Iterator<Value> leftIterator = getCommitChainIterator(leftId, conn);
-                Iterator<Value> rightIterator = getCommitChainIterator(rightId, conn);
+                LinkedList<Value> leftList = new LinkedList<>();
+                LinkedList<Value> rightList = new LinkedList<>();
+
+                getCommitChainIterator(leftId, conn).forEachRemaining(leftList::add);
+                getCommitChainIterator(rightId, conn).forEachRemaining(rightList::add);
+
+                ListIterator<Value> leftIterator = leftList.listIterator();
+                ListIterator<Value> rightIterator = rightList.listIterator();
 
                 Value originalEnd = null;
                 while (leftIterator.hasNext() && rightIterator.hasNext()) {
                     Value currentId = leftIterator.next();
                     if (!currentId.equals(rightIterator.next())) {
+                        leftIterator.previous();
+                        rightIterator.previous();
                         break;
                     } else {
                         originalEnd = currentId;
