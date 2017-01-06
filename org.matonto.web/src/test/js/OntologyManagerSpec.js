@@ -94,7 +94,11 @@ describe('Ontology Manager service', function() {
                 }, function(headers) {
                     return headers['Content-Type'] === undefined;
                 }).respond(200, {ontologyId: ontologyId, recordId: recordId});
-            ontologyManagerSvc.uploadFile(file, title, description, keywords);
+            ontologyManagerSvc.uploadFile(file, title, description, keywords).then(function() {
+                expect(true).toBe(true);
+            }, function() {
+                fail('Promise should have resolved');
+            });
             flushAndVerify();
         });
         it('with no description or keywords', function() {
@@ -104,7 +108,11 @@ describe('Ontology Manager service', function() {
                 }, function(headers) {
                     return headers['Content-Type'] === undefined;
                 }).respond(200, {ontologyId: ontologyId, recordId: recordId});
-            ontologyManagerSvc.uploadFile(file, title);
+            ontologyManagerSvc.uploadFile(file, title).then(function() {
+                expect(true).toBe(true);
+            }, function() {
+                fail('Promise should have resolved');
+            });
             flushAndVerify();
         });
     });

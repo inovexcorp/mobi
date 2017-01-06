@@ -96,9 +96,6 @@ describe('Merge Tab directive', function() {
                     scope.$apply();
                     expect(controller.merge).toHaveBeenCalled();
                 });
-                it('and is not empty', function() {
-                    // TODO: test whatever happens for resolution
-                });
             });
             it('when getBranchConflicts is rejected', function() {
                 getDeferred.reject(error);
