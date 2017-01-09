@@ -27,7 +27,9 @@
         .module('tabset', [])
         .directive('tabset', tabset);
 
-        function tabset() {
+        tabset.$inject = ['ontologyStateService'];
+
+        function tabset(ontologyStateService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,6 +40,7 @@
                 controller: function() {
                     var dvm = this;
 
+                    dvm.os = ontologyStateService;
                     dvm.tabs = [];
 
                     dvm.addTab = function(tab) {

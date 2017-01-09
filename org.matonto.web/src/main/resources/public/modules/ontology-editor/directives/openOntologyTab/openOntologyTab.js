@@ -103,15 +103,16 @@
 
                     dvm.getAllOntologyRecords = function(sortingOption) {
                         dvm.om.getAllOntologyRecords(sortingOption)
-                            .then(response => {
-                                var data = _.get(response, 'data', []);
-                                dvm.ontologyRecords = data;
-                                dvm.filteredList = data;
+                            .then(ontologyRecords => {
+                                dvm.ontologyRecords = ontologyRecords;
+                                dvm.filteredList = getFilteredRecords(dvm.ontologyRecords);
                             });
                     }
 
-                    $scope.$watch('dvm.filterText', function handleFilterTextChange(newValue, oldValue) {
-                        dvm.filteredList = $filter('filter')(dvm.ontologyRecords, dvm.filterText,
+                    $scope.$watch(function() {
+                        return dvm.filterText + dvm.om.list;
+                    }, function handleFilterTextChange(newValue, oldValue) {
+                        dvm.filteredList = $filter('filter')(getFilteredRecords(dvm.ontologyRecords), dvm.filterText,
                             (actual, expected) => {
                                 expected = _.lowerCase(expected);
                                 return _.includes(_.lowerCase(dvm.getRecordValue(actual, 'title')), expected)
@@ -121,6 +122,10 @@
                     });
 
                     dvm.getAllOntologyRecords();
+
+                    function getFilteredRecords(records) {
+                        return _.reject(records, record => _.find(dvm.om.list, {recordId: record['@id']}));
+                    }
                 }]
             }
         }

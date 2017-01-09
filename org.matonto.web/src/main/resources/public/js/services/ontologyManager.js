@@ -93,7 +93,8 @@
                     additions: [],
                     deletions: []
                 },
-                branches: []
+                branches: [],
+                upToDate: true
             };
             var vocabularyListItemTemplate = {
                 ontology: [],
@@ -109,7 +110,8 @@
                     additions: [],
                     deletions: []
                 },
-                branches: []
+                branches: [],
+                upToDate: true
             };
             var emptyInProgressCommit = {
                 additions: [],
@@ -275,13 +277,20 @@
             self.getAllOntologyRecords = function(sortingOption) {
                 var deferred = $q.defer();
                 getAllRecords(sortingOption)
-                    .then(response => deferred.resolve(response), response => deferred.reject(response));
+                    .then(response => deferred.resolve(response.data),
+                        response => deferred.reject(response.statusMessage));
                 return deferred.promise;
             }
             function getAllRecords(sortingOption = _.find(cm.sortOptions, {label: 'Title (desc)'})) {
                 var catalogId = _.get(cm.localCatalog, '@id', '');
                 var ontologyRecordType = 'http://matonto.org/ontologies/catalog#OntologyRecord';
-                return cm.getRecords(catalogId, 0, 100, sortingOption, ontologyRecordType);
+                var paginatedConfig = {
+                    pageIndex: 0,
+                    limit: 100,
+                    sortOption: sortingOption,
+                    recordType: ontologyRecordType
+                }
+                return cm.getRecords(catalogId, paginatedConfig);
             }
             /**
              * @ngdoc method
@@ -468,18 +477,26 @@
              */
             self.openOntology = function(ontologyId, recordId, type='ontology') {
                 var deferred = $q.defer();
+                var catalogId = _.get(cm.localCatalog, '@id', '');
                 var onAddSuccess = function() {
                     deferred.resolve(recordId);
                 }
                 self.getOntology(ontologyId, recordId)
                     .then(response => {
-                        if (type === 'ontology') {
-                            addOntologyToList(response.ontologyId, response.recordId, response.branchId,
-                                response.commitId, response.ontology, response.inProgressCommit).then(onAddSuccess);
-                        } else if (type === 'vocabulary') {
-                            addVocabularyToList(response.ontologyId, response.recordId, response.branchId,
-                                response.commitId, response.ontology, response.inProgressCommit).then(onAddSuccess);
-                        }
+                        cm.getBranchHeadCommit(response.branchId, recordId, catalogId)
+                            .then(headCommit => {
+                                var commitId = _.get(headCommit, "commit[0]['@graph'][0]['@id']", '');
+                                var upToDate = commitId === response.commitId;
+                                if (type === 'ontology') {
+                                    addOntologyToList(response.ontologyId, response.recordId, response.branchId,
+                                        response.commitId, response.ontology, response.inProgressCommit, upToDate)
+                                            .then(onAddSuccess);
+                                } else if (type === 'vocabulary') {
+                                    addVocabularyToList(response.ontologyId, response.recordId, response.branchId,
+                                        response.commitId, response.ontology, response.inProgressCommit, upToDate)
+                                            .then(onAddSuccess);
+                                }
+                            }, response => deferred.reject(response.statusText));
                     }, response => deferred.reject(response.statusText));
                 return deferred.promise;
             }
@@ -1891,7 +1908,8 @@
                 listItem.inProgressCommit = inProgressCommit;
                 return listItem;
             }
-            function createOntologyListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit) {
+            function createOntologyListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit,
+                upToDate) {
                 var deferred = $q.defer();
                 var catalogId = _.get(cm.localCatalog, '@id', '');
                 var listItem = setupListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit,
@@ -1966,6 +1984,7 @@
                     listItem.objectPropertyHierarchy = response[5].data.hierarchy;
                     listItem.objectPropertyIndex = response[5].data.index;
                     listItem.branches = response[6].data;
+                    listItem.upToDate = upToDate;
                     _.pullAllWith(
                         listItem.annotations,
                         _.concat(self.ontologyProperties, listItem.subDataProperties, listItem.subObjectProperties),
@@ -1975,9 +1994,10 @@
                 }, deferred.reject);
                 return deferred.promise;
             }
-            function addOntologyToList(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit) {
+            function addOntologyToList(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit,
+                upToDate = true) {
                 var deferred = $q.defer();
-                createOntologyListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit)
+                createOntologyListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate)
                     .then(listItem => {
                         self.list.push(listItem);
                         deferred.resolve();
@@ -2030,6 +2050,7 @@
                     listItem.conceptHierarchy = response[2].data.hierarchy;
                     listItem.conceptIndex = response[2].data.index;
                     listItem.branches = response[3];
+                    listItem.upToDate = upToDate;
                     _.pullAllWith(
                         listItem.annotations,
                         _.concat(self.ontologyProperties, listItem.subDataProperties, listItem.subObjectProperties,
@@ -2039,9 +2060,10 @@
                     deferred.resolve(listItem);
                 }, deferred.reject);
             }
-            function addVocabularyToList(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit) {
+            function addVocabularyToList(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit,
+                upToDate = true) {
                 var deferred = $q.defer();
-                createVocabularyListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit)
+                createVocabularyListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate)
                     .then(listItem => {
                         self.list.push(listItem);
                         deferred.resolve();
