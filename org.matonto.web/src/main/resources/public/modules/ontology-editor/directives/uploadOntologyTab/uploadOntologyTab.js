@@ -44,10 +44,10 @@
 
                     dvm.upload = function() {
                         dvm.om.uploadThenGet(dvm.file, dvm.title, dvm.description, dvm.keywords, dvm.type)
-                            .then(ontologyId => {
-                                var listItem = dvm.om.getListItemById(ontologyId);
-                                dvm.sm.addState(ontologyId, dvm.om.getOntologyIRI(listItem.ontology), dvm.type);
-                                dvm.sm.setState(ontologyId);
+                            .then(recordId => {
+                                var listItem = dvm.om.getListItemByRecordId(recordId);
+                                dvm.sm.addState(recordId, dvm.om.getOntologyIRI(listItem.ontology), dvm.type);
+                                dvm.sm.setState(recordId);
                                 dvm.sm.showUploadTab = false;
                             }, response => {
                                 dvm.error = response.statusText;

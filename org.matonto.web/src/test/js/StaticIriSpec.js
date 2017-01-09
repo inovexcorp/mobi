@@ -101,8 +101,8 @@ describe('Static IRI directive', function() {
     });
     describe('controller methods', function() {
         beforeEach(function() {
-            ontologyStateSvc.ontology.matonto.iriBegin = 'begin';
-            ontologyStateSvc.ontology.matonto.iriThen = 'then';
+            ontologyStateSvc.listItem.ontology[0].matonto.iriBegin = 'begin';
+            ontologyStateSvc.listItem.ontology[0].matonto.iriThen = 'then';
             controller = element.controller('staticIri');
         });
         it('setVariables changes the passed in variable', function() {
@@ -132,8 +132,8 @@ describe('Static IRI directive', function() {
             controller.iriBegin = 'new';
             controller.iriThen = 'new';
             controller.afterEdit();
-            expect(ontologyManagerSvc.getListItemById).toHaveBeenCalledWith(ontologyStateSvc.state.ontologyId);
-            var listItem = ontologyManagerSvc.getListItemById(ontologyStateSvc.state.ontologyId);
+            expect(ontologyManagerSvc.getListItemById).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId);
+            var listItem = ontologyManagerSvc.getListItemById(ontologyStateSvc.listItem.ontologyId);
             expect(listItem.iriBegin).toBe('new');
             expect(listItem.iriThen).toBe('new');
             expect(ontologyStateSvc.showIriOverlay).toBe(false);

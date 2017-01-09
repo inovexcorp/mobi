@@ -41,14 +41,14 @@
                     dvm.om = ontologyManagerService;
                     dvm.sm = ontologyStateService;
 
-                    dvm.onClose = function(ontologyId) {
-                        var ontology = dvm.om.getOntologyById(ontologyId);
-                        if (dvm.sm.hasChanges(ontologyId)) {
-                            dvm.sm.ontologyIdToClose = ontologyId;
+                    dvm.onClose = function(recordId) {
+                        var ontology = dvm.om.getOntologyByRecordId(recordId);
+                        if (dvm.sm.hasChanges(recordId)) {
+                            dvm.sm.recordIdToClose = recordId;
                             dvm.sm.showCloseOverlay = true;
                         } else {
-                            dvm.sm.deleteState(ontologyId);
-                            dvm.om.closeOntology(ontologyId);
+                            dvm.sm.deleteState(recordId);
+                            dvm.om.closeOntology(recordId);
                         }
                     }
                 }

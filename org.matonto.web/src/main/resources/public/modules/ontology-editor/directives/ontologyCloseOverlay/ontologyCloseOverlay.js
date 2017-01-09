@@ -52,8 +52,8 @@
                     }
 
                     dvm.close = function() {
-                        dvm.sm.deleteState(dvm.sm.ontologyIdToClose);
-                        dvm.om.closeOntology(dvm.sm.ontologyIdToClose);
+                        dvm.sm.deleteState(dvm.sm.recordIdToClose);
+                        dvm.om.closeOntology(dvm.sm.recordIdToClose);
                         dvm.sm.showCloseOverlay = false;
                     }
                 }

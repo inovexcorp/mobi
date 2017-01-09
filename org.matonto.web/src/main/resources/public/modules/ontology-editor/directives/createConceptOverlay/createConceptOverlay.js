@@ -42,8 +42,8 @@
                     dvm.om = ontologyManagerService;
                     dvm.sm = ontologyStateService;
                     dvm.schemes = [];
-                    dvm.prefix = _.get(dvm.om.getListItemById(dvm.sm.state.ontologyId), 'iriBegin',
-                        dvm.om.getOntologyIRI(dvm.sm.ontology)) + _.get(dvm.om.getListItemById(dvm.sm.state.ontologyId),
+                    dvm.prefix = _.get(dvm.om.getListItemById(dvm.sm.listItem.ontologyId), 'iriBegin',
+                        dvm.om.getOntologyIRI(dvm.sm.listItem.ontology)) + _.get(dvm.om.getListItemById(dvm.sm.listItem.ontologyId),
                         'iriThen', '#');
                     dvm.concept = {
                         '@id': dvm.prefix,
@@ -72,7 +72,7 @@
 
                     dvm.create = function() {
                         _.forEach(dvm.schemes, scheme => {
-                            var entity = dvm.om.getEntityById(dvm.sm.listItem.ontologyId, scheme['@id']);
+                            var entity = dvm.om.getEntityByRecordId(dvm.sm.listItem.recordId, scheme['@id']);
                             if (_.has(entity, prefixes.skos + 'hasTopConcept')) {
                                 entity[prefixes.skos + 'hasTopConcept'].push({'@id': dvm.concept['@id']});
                             } else {
@@ -82,11 +82,11 @@
                         });
                         _.set(dvm.concept, 'matonto.originalIRI', dvm.concept['@id']);
                         // add the entity to the ontology
-                        dvm.om.addEntity(dvm.sm.ontology, dvm.concept);
+                        dvm.om.addEntity(dvm.sm.listItem.ontology, dvm.concept);
                         // update relevant lists
-                        var listItem = dvm.om.getListItemById(dvm.sm.state.ontologyId);
+                        var listItem = dvm.om.getListItemById(dvm.sm.listItem.ontologyId);
                         _.get(listItem, 'conceptHierarchy').push({'entityIRI': dvm.concept['@id']});
-                        _.set(_.get(listItem, 'index'), dvm.concept['@id'], dvm.sm.ontology.length - 1);
+                        _.set(_.get(listItem, 'index'), dvm.concept['@id'], dvm.sm.listItem.ontology.length - 1);
                         dvm.om.addToAdditions(dvm.sm.listItem.ontologyId, dvm.concept);
                         // select the new class
                         dvm.sm.selectItem(_.get(dvm.concept, '@id'));

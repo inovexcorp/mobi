@@ -46,8 +46,8 @@
                     dvm.om = ontologyManagerService;
                     dvm.sm = ontologyStateService;
 
-                    dvm.prefix = _.get(dvm.om.getListItemById(dvm.sm.state.ontologyId), 'iriBegin',
-                        dvm.om.getOntologyIRI(dvm.sm.ontology)) + _.get(dvm.om.getListItemById(dvm.sm.state.ontologyId),
+                    dvm.prefix = _.get(dvm.om.getListItemById(dvm.sm.listItem.ontologyId), 'iriBegin',
+                        dvm.om.getOntologyIRI(dvm.sm.listItem.ontology)) + _.get(dvm.om.getListItemById(dvm.sm.listItem.ontologyId),
                         'iriThen', '#');
 
                     dvm.property = {
@@ -95,10 +95,10 @@
                         });
                         _.set(dvm.property, 'matonto.originalIRI', dvm.property['@id']);
                         // add the entity to the ontology
-                        dvm.om.addEntity(dvm.sm.ontology, dvm.property);
+                        dvm.om.addEntity(dvm.sm.listItem.ontology, dvm.property);
                         // update relevant lists
                         var split = $filter('splitIRI')(dvm.property['@id']);
-                        var listItem = dvm.om.getListItemById(dvm.sm.state.ontologyId);
+                        var listItem = dvm.om.getListItemById(dvm.sm.listItem.ontologyId);
                         if (dvm.om.isObjectProperty(dvm.property)) {
                             _.get(listItem, 'subObjectProperties').push({namespace:split.begin + split.then, localName: split.end});
                             _.get(listItem, 'objectPropertyHierarchy').push({'entityIRI': dvm.property['@id']});
@@ -106,7 +106,7 @@
                             _.get(listItem, 'subDataProperties').push({namespace:split.begin + split.then, localName: split.end});
                             _.get(listItem, 'dataPropertyHierarchy').push({'entityIRI': dvm.property['@id']});
                         }
-                        _.set(_.get(listItem, 'index'), dvm.property['@id'], dvm.sm.ontology.length - 1);
+                        _.set(_.get(listItem, 'index'), dvm.property['@id'], dvm.sm.listItem.ontology.length - 1);
                         dvm.om.addToAdditions(dvm.sm.listItem.ontologyId, dvm.property);
                         // select the new class
                         dvm.sm.selectItem(_.get(dvm.property, '@id'));

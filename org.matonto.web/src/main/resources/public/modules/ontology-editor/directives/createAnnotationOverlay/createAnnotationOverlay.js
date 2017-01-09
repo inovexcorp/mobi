@@ -46,11 +46,11 @@
                     dvm.om = ontologyManagerService;
 
                     dvm.create = function() {
-                        dvm.pm.create(dvm.sm.state.ontologyId, dvm.om.getAnnotationIRIs(dvm.sm.ontology), dvm.iri)
+                        dvm.pm.create(dvm.sm.listItem.ontologyId, dvm.om.getAnnotationIRIs(dvm.sm.listItem.ontology), dvm.iri)
                             .then(annotationJSON => {
                                 dvm.om.addToAdditions(dvm.sm.listItem.ontologyId, annotationJSON);
                                 _.set(annotationJSON, 'matonto.originalIRI', angular.copy(annotationJSON['@id']));
-                                dvm.om.addEntity(dvm.sm.ontology, annotationJSON);
+                                dvm.om.addEntity(dvm.sm.listItem.ontology, annotationJSON);
                                 dvm.sm.showCreateAnnotationOverlay = false;
                             }, errorMessage => {
                                 dvm.error = errorMessage;

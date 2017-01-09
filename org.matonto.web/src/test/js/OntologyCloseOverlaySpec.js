@@ -135,8 +135,8 @@ describe('Ontology Close Overlay directive', function() {
         });
         it('close calls the correct manager functions and sets the correct manager variable', function() {
             controller.close();
-            expect(ontologyStateSvc.deleteState).toHaveBeenCalledWith(ontologyStateSvc.ontologyIdToClose);
-            expect(ontologyManagerSvc.closeOntology).toHaveBeenCalledWith(ontologyStateSvc.ontologyIdToClose);
+            expect(ontologyStateSvc.deleteState).toHaveBeenCalledWith(ontologyStateSvc.recordIdToClose);
+            expect(ontologyManagerSvc.closeOntology).toHaveBeenCalledWith(ontologyStateSvc.recordIdToClose);
             expect(ontologyStateSvc.showCloseOverlay).toBe(false);
         });
     });

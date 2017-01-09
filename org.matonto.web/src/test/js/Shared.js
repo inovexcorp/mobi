@@ -210,12 +210,15 @@ function mockOntologyManager() {
             this.saveChanges = jasmine.createSpy('saveChanges').and.returnValue($q.resolve({}));
             this.closeOntology = jasmine.createSpy('closeOntology');
             this.getEntityById = jasmine.createSpy('getEntityById');
+            this.getEntityByRecordId = jasmine.createSpy('getEntityByRecordId');
             this.getSearchResults = jasmine.createSpy('getSearchResults');
             this.addToAdditions = jasmine.createSpy('addToAdditions');
             this.addToDeletions = jasmine.createSpy('addToDeletions');
             this.getConceptIRIs = jasmine.createSpy('getConceptsIRIs');
             this.getConceptSchemeIRIs = jasmine.createSpy('getConceptSchemeIRIs');
             this.changeBranch = jasmine.createSpy('changeBranch');
+            this.removeBranch = jasmine.createSpy('removeBranch');
+            this.getOntologyByRecordId = jasmine.createSpy('getOntologyByRecordId');
         });
     });
 }
@@ -400,19 +403,12 @@ function mockOntologyState() {
     module(function($provide) {
         $provide.service('ontologyStateService', function($q) {
             this.states = {};
-            this.ontologyIdToClose = '';
+            this.recordIdToClose = 'recordIdToClose';
             this.state = {
                 ontologyId: '',
                 entityIRI: '',
                 deletedEntities: [],
                 type: ''
-            };
-            this.ontology = {
-                '@id': 'id',
-                matonto: {
-                    id: 'id',
-                    jsAnnotations: [{}]
-                }
             };
             this.selected = {
                 '@id': 'id',
@@ -438,17 +434,24 @@ function mockOntologyState() {
                 blankNodes: {},
                 individuals: [],
                 index: {},
-                recordId: '',
-                branchId: '',
-                commitId: '',
-                ontologyId: '',
+                recordId: 'recordId',
+                branchId: 'branchId',
+                commitId: 'commitId',
+                ontologyId: 'ontologyId',
                 additions: [],
                 deletions: [],
                 inProgressCommit: {
                     additions: [],
                     deletions: []
                 },
-                branches: []
+                branches: [],
+                ontology: [{
+                    '@id': 'id',
+                    matonto: {
+                        id: 'id',
+                        jsAnnotations: [{}]
+                    }
+                }]
             };
             this.reset = jasmine.createSpy('reset');
             this.setTreeTab = jasmine.createSpy('setTreeTab');

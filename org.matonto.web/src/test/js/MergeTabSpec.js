@@ -138,6 +138,8 @@ describe('Merge Tab directive', function() {
                                 ontologyStateSvc.state.type);
                             expect(catalogManagerSvc.deleteRecordBranch).toHaveBeenCalledWith(branchId,
                                 ontologyStateSvc.listItem.recordId, catalogId);
+                            expect(ontologyManagerSvc.removeBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem
+                                .recordId, branchId);
                             expect(controller.targetId).toBe(undefined);
                         });
                         it('and deleteRecordBranch is rejected', function() {

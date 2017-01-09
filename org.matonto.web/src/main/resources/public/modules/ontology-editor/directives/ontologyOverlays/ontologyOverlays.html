@@ -32,7 +32,7 @@
 <confirmation-overlay ng-if="dvm.sm.showSaveOverlay" header-text="'Save Ontology Changes'" confirm-click="dvm.save()"
                       cancel-click="dvm.sm.showSaveOverlay = false" confirm-text="'Yes'" cancel-text="'No'">
     <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
-    <p>Are you sure that you want to save changes to <strong>{{dvm.om.getOntologyIRI(dvm.sm.ontology) || dvm.sm.state.ontologyId}}</strong>?</p>
+    <p>Are you sure that you want to save changes to <strong>{{dvm.om.getOntologyIRI(dvm.sm.listItem.ontology) || dvm.sm.listItem.ontologyId}}</strong>?</p>
 </confirmation-overlay>
 <commit-overlay ng-if="dvm.sm.showCommitOverlay"></commit-overlay>
 <create-branch-overlay ng-if="dvm.sm.showCreateBranchOverlay"></create-branch-overlay>

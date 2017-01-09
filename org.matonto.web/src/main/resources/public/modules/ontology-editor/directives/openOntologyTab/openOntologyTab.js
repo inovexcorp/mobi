@@ -45,6 +45,7 @@
                     var cm = catalogManagerService;
                     var sm = stateManagerService;
                     var catalogId = _.get(cm.localCatalog, '@id', '');
+
                     dvm.om = ontologyManagerService;
                     dvm.os = ontologyStateService;
                     dvm.begin = 0;
@@ -56,9 +57,9 @@
                     dvm.open = function() {
                         dvm.om.openOntology(dvm.ontologyId, dvm.recordId, dvm.type)
                             .then(ontologyId => {
-                                var listItem = dvm.om.getListItemById(ontologyId);
-                                dvm.os.addState(ontologyId, dvm.om.getOntologyIRI(listItem.ontology), dvm.type);
-                                dvm.os.setState(ontologyId);
+                                var listItem = dvm.om.getListItemByRecordId(dvm.recordId);
+                                dvm.os.addState(dvm.recordId, dvm.om.getOntologyIRI(listItem.ontology), dvm.type);
+                                dvm.os.setState(dvm.recordId);
                             }, errorMessage => {
                                 dvm.errorMessage = errorMessage;
                             });

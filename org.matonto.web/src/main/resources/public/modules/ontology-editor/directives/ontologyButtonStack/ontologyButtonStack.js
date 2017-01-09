@@ -53,7 +53,7 @@
                     dvm.delete = function() {
                         cm.deleteInProgressCommit(dvm.os.listItem.recordId, catalogId)
                             .then(() => {
-                                var ontology = om.getOntologyById(dvm.os.listItem.ontologyId);
+                                var ontology = om.getOntologyByRecordId(dvm.os.listItem.recordId);
                                 _.forEach(dvm.os.listItem.inProgressCommit.additions, statements => {
                                     var entityIRI = statements['@id'];
                                     var entity = om.getEntity(ontology, entityIRI);

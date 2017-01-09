@@ -93,7 +93,7 @@ describe('Ontology Overlays directive', function() {
         });
         describe('save', function() {
             beforeEach(function() {
-                ontologyStateSvc.state.ontologyId = 'id';
+                ontologyStateSvc.listItem.ontologyId = 'id';
                 ontologyManagerSvc.saveChanges.and.returnValue(deferred.promise);
                 controller.save();
             });

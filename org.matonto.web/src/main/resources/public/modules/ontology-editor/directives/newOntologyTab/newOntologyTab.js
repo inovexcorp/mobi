@@ -69,8 +69,8 @@
                         }
                         dvm.om.createOntology(dvm.ontology, dvm.title, dvm.description, dvm.keywords, dvm.type)
                             .then(response => {
-                                dvm.sm.addState(response.ontologyId, response.entityIRI, dvm.type);
-                                dvm.sm.setState(response.ontologyId);
+                                dvm.sm.addState(response.recordId, response.entityIRI, dvm.type);
+                                dvm.sm.setState(response.recordId);
                                 dvm.sm.showNewTab = false;
                             }, errorMessage => {
                                 dvm.error = errorMessage;

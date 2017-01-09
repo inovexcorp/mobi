@@ -119,17 +119,17 @@
             var sm = stateManagerService;
             var util = utilService;
 
-            self.ontologyRecords = [];
             /**
              * @ngdoc property
-             * @name ontologyIds
+             * @name ontologyRecords
              * @propertyOf ontologyManager.service:ontologyManagerService
-             * @type {string[]}
+             * @type {Object[]}
              *
              * @description
-             * `ontologyIds` holds an array of the unopened ontology ids in the MatOnto repository.
+             * 'ontologyRecords' holds an array of ontology record objects which contain properties for the metadata
+             * associated with that record.
              */
-            self.ontologyIds = [];
+            self.ontologyRecords = [];
             /**
              * @ngdoc property
              * @name list
@@ -238,7 +238,7 @@
              * Resets all state variables.
              */
             self.reset = function() {
-                self.ontologyIds = [];
+                self.ontologyRecords = [];
                 self.list = [];
             }
             /**
@@ -248,7 +248,7 @@
              *
              * @description
              * Initializes the `ontologyManagerService` by setting the list of
-             * {@link ontologyManager.service:ontologyManagerService#ontologyIds ontology ids}.
+             * {@link ontologyManager.service:ontologyManagerService#ontologyRecords ontology records}.
              */
             self.initialize = function() {}
             /**
@@ -409,18 +409,18 @@
                 var onError = function(response) {
                     deferred.reject(response);
                 };
-                var onAddSuccess = function(ontologyId) {
-                    deferred.resolve(ontologyId);
+                var onAddSuccess = function(recordId) {
+                    deferred.resolve(recordId);
                 }
                 var onUploadSuccess = function(recordId, ontologyId) {
                     self.getOntology(ontologyId, recordId)
                         .then(response => {
                             if (type === 'ontology') {
                                 addOntologyToList(ontologyId, recordId, response.branchId, response.commitId,
-                                    response.ontology, response.inProgressCommit).then(() => onAddSuccess(ontologyId));
+                                    response.ontology, response.inProgressCommit).then(() => onAddSuccess(recordId));
                             } else if (type === 'vocabulary') {
                                 addVocabularyToList(ontologyId, recordId, response.branchId, response.commitId,
-                                    response.ontology, response.inProgressCommit).then(() => onAddSuccess(ontologyId));
+                                    response.ontology, response.inProgressCommit).then(() => onAddSuccess(recordId));
                             }
                         }, onError);
                 };
@@ -432,8 +432,11 @@
                 var deferred = $q.defer();
                 var catalogId = _.get(cm.localCatalog, '@id', '');
                 var onSuccess = function(listItem) {
-                    updateListItem(ontologyId, listItem);
-                    deferred.resolve();
+                    sm.updateOntologyState(recordId, branchId, commitId)
+                        .then(() => {
+                            updateListItem(ontologyId, listItem);
+                            deferred.resolve();
+                        }, deferred.reject);
                 }
                 cm.getResource(commitId, branchId, recordId, catalogId, false)
                     .then(ontology => {
@@ -466,8 +469,7 @@
             self.openOntology = function(ontologyId, recordId, type='ontology') {
                 var deferred = $q.defer();
                 var onAddSuccess = function() {
-                    _.pull(self.ontologyIds, ontologyId);
-                    deferred.resolve(ontologyId);
+                    deferred.resolve(recordId);
                 }
                 self.getOntology(ontologyId, recordId)
                     .then(response => {
@@ -494,9 +496,11 @@
              *
              * @param {string} ontologyId The ontology ID of the requested ontology.
              */
-            self.closeOntology = function(ontologyId) {
-                _.remove(self.list, item => _.get(item, 'ontologyId') === ontologyId);
-                self.ontologyIds.push(ontologyId);
+            self.closeOntology = function(recordId) {
+                _.remove(self.list, item => _.get(item, 'recordId') === recordId);
+            }
+            self.removeBranch = function(recordId, branchId) {
+                _.remove(self.getListItemByRecordId(recordId).branches, branch => _.get(branch, '@id') === branchId);
             }
             /**
              * @ngdoc method
@@ -617,6 +621,9 @@
              */
             self.getOntologyById = function(ontologyId) {
                 return _.get(self.getListItemById(ontologyId), 'ontology', []);
+            }
+            self.getOntologyByRecordId = function(recordId) {
+                return _.get(self.getListItemByRecordId(recordId), 'ontology', []);
             }
             /**
              * @ngdoc method
@@ -1469,6 +1476,15 @@
                     return self.getEntity(ontology, entityIRI);
                 }
             }
+            self.getEntityByRecordId = function(recordId, entityIRI) {
+                var index = _.get(self.getListItemByRecordId(recordId), 'index');
+                var ontology = self.getOntologyByRecordId(recordId);
+                if (_.has(index, entityIRI)) {
+                    return ontology[_.get(index, entityIRI)];
+                } else {
+                    return self.getEntity(ontology, entityIRI);
+                }
+            }
             /**
              * @ngdoc method
              * @name removeEntity
@@ -1559,11 +1575,13 @@
              * @returns {Promise} A promise containing the list of ontologies that are imported by the requested
              * ontology.
              */
-            self.getImportedOntologies = function(ontologyId, rdfFormat = 'jsonld') {
+            self.getImportedOntologies = function(ontologyId, branchId, commitId, rdfFormat = 'jsonld') {
                 var deferred = $q.defer();
                 var config = {
                     params: {
-                        rdfformat: rdfFormat
+                        rdfFormat,
+                        branchId,
+                        commitId
                     }
                 };
                 $http.get(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/imported-ontologies', null, config)
@@ -1591,8 +1609,9 @@
              * @param {string} entityIRI The entity IRI of the entity you want the usages for from the repository.
              * @returns {Promise} A promise containing the JSON SPARQL query results bindings.
              */
-            self.getEntityUsages = function(ontologyId, entityIRI) {
+            self.getEntityUsages = function(recordId, entityIRI) {
                 var deferred = $q.defer();
+                var ontologyId = self.getListItemByRecordId(recordId).ontologyId;
                 $http.get(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/entity-usages/'
                     + encodeURIComponent(entityIRI)).then(response => {
                         if(_.get(response, 'status') === 200) {
@@ -1753,22 +1772,6 @@
             }
 
             /* Private helper functions */
-            function updateModels(response) {
-                if(_.has(response, 'data.models', [])) {
-                    _.forEach(response.data.models, model => {
-                        var ontology = self.getOntologyById(_.get(model, "[0]['@id']"));
-                        var newEntity = _.get(model, "[0]['@graph'][0]");
-                        var newEntityIRI = _.get(newEntity, '@id');
-                        var oldEntity = self.getEntity(ontology, newEntityIRI);
-                        if (_.has(oldEntity, 'matonto.icon')) {
-                            _.set(newEntity, 'matonto.icon', oldEntity.matonto.icon);
-                        }
-                        _.set(newEntity, 'matonto.originalIRI', newEntityIRI);
-                        self.removeEntity(ontology, oldEntity.matonto.originalIRI);
-                        self.addEntity(ontology, newEntity);
-                    });
-                }
-            }
             function getIcon(property) {
                 var range = _.get(property, prefixes.rdfs + 'range');
                 var icon = 'fa-square-o';

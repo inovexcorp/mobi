@@ -44,8 +44,8 @@
                     dvm.om = ontologyManagerService;
                     dvm.sm = ontologyStateService;
 
-                    dvm.prefix = _.get(dvm.om.getListItemById(dvm.sm.state.ontologyId), 'iriBegin',
-                        dvm.om.getOntologyIRI(dvm.sm.ontology)) + _.get(dvm.om.getListItemById(dvm.sm.state.ontologyId),
+                    dvm.prefix = _.get(dvm.om.getListItemById(dvm.sm.listItem.ontologyId), 'iriBegin',
+                        dvm.om.getOntologyIRI(dvm.sm.listItem.ontology)) + _.get(dvm.om.getListItemById(dvm.sm.listItem.ontologyId),
                         'iriThen', '#');
 
                     dvm.clazz = {
@@ -77,13 +77,13 @@
                         }
                         _.set(dvm.clazz, 'matonto.originalIRI', dvm.clazz['@id']);
                         // add the entity to the ontology
-                        dvm.om.addEntity(dvm.sm.ontology, dvm.clazz);
+                        dvm.om.addEntity(dvm.sm.listItem.ontology, dvm.clazz);
                         // update relevant lists
                         var split = $filter('splitIRI')(dvm.clazz['@id']);
                         _.get(dvm.sm.listItem, 'subClasses').push({namespace:split.begin + split.then,
                             localName: split.end});
                         _.get(dvm.sm.listItem, 'classHierarchy').push({'entityIRI': dvm.clazz['@id']});
-                        _.set(_.get(dvm.sm.listItem, 'index'), dvm.clazz['@id'], dvm.sm.ontology.length - 1);
+                        _.set(_.get(dvm.sm.listItem, 'index'), dvm.clazz['@id'], dvm.sm.listItem.ontology.length - 1);
                         dvm.om.addToAdditions(dvm.sm.listItem.ontologyId, dvm.clazz);
                         // select the new class
                         dvm.sm.selectItem(_.get(dvm.clazz, '@id'));

@@ -46,8 +46,8 @@
                     dvm.sm = ontologyStateService;
                     dvm.util = utilService;
                     dvm.concepts = [];
-                    dvm.conceptList = dvm.om.getConceptIRIs(dvm.sm.ontology);
-                    dvm.schemeList = dvm.om.getConceptSchemeIRIs(dvm.sm.ontology);
+                    dvm.conceptList = dvm.om.getConceptIRIs(dvm.sm.listItem.ontology);
+                    dvm.schemeList = dvm.om.getConceptSchemeIRIs(dvm.sm.listItem.ontology);
 
                     dvm.addRelationship = function() {
                         var axiom = dvm.ro.getItemIri(dvm.relationship);

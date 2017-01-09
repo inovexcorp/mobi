@@ -153,7 +153,7 @@ describe('Object Select directive', function() {
         var controller;
 
         beforeEach(function() {
-            ontologyStateSvc.state = {ontologyId: 'ontologyId'};
+            ontologyStateSvc.listItem.ontologyId = 'ontologyId';
             controller = element.controller('objectSelect');
         });
         describe('getItemOntologyIri', function() {
@@ -186,11 +186,11 @@ describe('Object Select directive', function() {
         });
         describe('getTooltipDisplay', function() {
             beforeEach(function() {
-                ontologyManagerService.getEntityById.and.returnValue({});
+                ontologyManagerService.getEntityByRecordId.and.returnValue({});
                 spyOn(controller, 'getItemIri').and.returnValue('test');
             });
             it('should return @id when tooltipDisplay is empty', function() {
-                ontologyManagerService.getEntityById.and.returnValue({'@id': 'id'});
+                ontologyManagerService.getEntityByRecordId.and.returnValue({'@id': 'id'});
                 var result = controller.getTooltipDisplay();
                 expect(result).toBe('id');
             });

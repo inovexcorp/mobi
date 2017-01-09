@@ -44,8 +44,8 @@
                     dvm.om = ontologyManagerService;
                     dvm.sm = ontologyStateService;
 
-                    dvm.prefix = _.get(dvm.om.getListItemById(dvm.sm.state.ontologyId), 'iriBegin',
-                        dvm.om.getOntologyIRI(dvm.sm.ontology)) + _.get(dvm.om.getListItemById(dvm.sm.state.ontologyId),
+                    dvm.prefix = _.get(dvm.om.getListItemById(dvm.sm.listItem.ontologyId), 'iriBegin',
+                        dvm.om.getOntologyIRI(dvm.sm.listItem.ontology)) + _.get(dvm.om.getListItemById(dvm.sm.listItem.ontologyId),
                         'iriThen', '#');
 
                     dvm.individual = {
@@ -67,22 +67,22 @@
                     }
 
                     dvm.getItemOntologyIri = function(item) {
-                        return _.get(item, 'ontologyId', dvm.sm.state.ontologyId);
+                        return _.get(item, 'ontologyId', dvm.sm.listItem.ontologyId);
                     }
 
                     dvm.create = function() {
                         _.set(dvm.individual, 'matonto.originalIRI', dvm.individual['@id']);
                         // update relevant lists
                         var split = $filter('splitIRI')(dvm.individual['@id']);
-                        var listItem = dvm.om.getListItemById(dvm.sm.state.ontologyId);
+                        var listItem = dvm.om.getListItemById(dvm.sm.listItem.ontologyId);
                         _.get(listItem, 'individuals').push({namespace:split.begin + split.then, localName: split.end});
                         var classesWithIndividuals = _.get(listItem, 'classesWithIndividuals');
                         _.set(listItem, 'classesWithIndividuals', _.unionWith(classesWithIndividuals,
                             _.map(dvm.individual['@type'], type => {return {entityIRI: type}}), _.isEqual));
                         // add the entity to the ontology
                         dvm.individual['@type'].push(prefixes.owl + 'NamedIndividual');
-                        dvm.om.addEntity(dvm.sm.ontology, dvm.individual);
-                        _.set(_.get(listItem, 'index'), dvm.individual['@id'], dvm.sm.ontology.length - 1);
+                        dvm.om.addEntity(dvm.sm.listItem.ontology, dvm.individual);
+                        _.set(_.get(listItem, 'index'), dvm.individual['@id'], dvm.sm.listItem.ontology.length - 1);
                         dvm.om.addToAdditions(dvm.sm.listItem.ontologyId, dvm.individual);
                         // select the new individual
                         dvm.sm.selectItem(dvm.individual['@id']);

@@ -33,7 +33,6 @@ var jsFiles = function(prefix) {
         return [
             prefix + 'js/services/responseObj.js',
             prefix + 'js/services/prefixes.js',
-            prefix + 'js/services/annotationManager.js',
             prefix + 'js/filters/*.js',
             prefix + 'js/services/*.js',
             prefix + 'directives/**/*.js',

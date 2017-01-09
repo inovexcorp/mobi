@@ -81,9 +81,10 @@ describe('Ontology Button Stack directive', function() {
                 scope.$digest();
                 expect(catalogManagerSvc.deleteInProgressCommit).toHaveBeenCalledWith(
                     ontologyStateSvc.listItem.recordId, catalogId);
-                expect(ontologyManagerSvc.getOntologyById).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId);
-                expect(ontologyManagerSvc.getEntity).toHaveBeenCalledWith(ontologyManagerSvc.getOntologyById(
-                    ontologyStateSvc.listItem.ontologyId), id);
+                expect(ontologyManagerSvc.getOntologyByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem
+                    .recordId);
+                expect(ontologyManagerSvc.getEntity).toHaveBeenCalledWith(ontologyManagerSvc.getOntologyByRecordId(
+                    ontologyStateSvc.listItem.recordId), id);
                 expect(ontologyStateSvc.clearInProgressCommit).toHaveBeenCalled();
                 expect(controller.showDeleteOverlay).toBe(false);
             });

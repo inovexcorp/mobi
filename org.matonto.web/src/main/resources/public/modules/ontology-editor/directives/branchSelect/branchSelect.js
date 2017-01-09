@@ -27,10 +27,10 @@
         .module('branchSelect', [])
         .directive('branchSelect', branchSelect);
 
-        branchSelect.$inject = ['$q', '$rootScope', 'catalogManagerService', 'ontologyStateService',
+        branchSelect.$inject = ['$q', 'catalogManagerService', 'ontologyStateService',
             'utilService', 'stateManagerService', 'ontologyManagerService'];
 
-        function branchSelect($q, $rootScope, catalogManagerService, ontologyStateService, utilService,
+        function branchSelect($q, catalogManagerService, ontologyStateService, utilService,
             stateManagerService, ontologyManagerService) {
             return {
                 restrict: 'E',
@@ -56,7 +56,6 @@
 
                     dvm.changeBranch = function(item) {
                         var branchId = item['@id'];
-                        $rootScope.showSpinner = true;
                         cm.getBranchHeadCommit(branchId, dvm.os.listItem.recordId, catalogId)
                             .then(headCommit => {
                                 var commitId = _.get(headCommit, "commit[0]['@graph'][0]['@id']", '');
@@ -64,10 +63,7 @@
                                     sm.updateOntologyState(dvm.os.listItem.recordId, branchId, commitId),
                                     om.changeBranch(dvm.os.listItem.ontologyId, dvm.os.listItem.recordId, branchId,
                                         commitId)
-                                ]).then(() => {
-                                    dvm.os.resetStateTabs();
-                                    $rootScope.showSpinner = false;
-                                });
+                                ]).then(dvm.os.resetStateTabs());
                             });
 
                     }

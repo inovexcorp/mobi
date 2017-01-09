@@ -27,11 +27,9 @@
         .module('mergeTab', [])
         .directive('mergeTab', mergeTab);
 
-        mergeTab.$inject = ['$rootScope', 'utilService', 'ontologyStateService', 'catalogManagerService',
-            'ontologyManagerService'];
+        mergeTab.$inject = ['utilService', 'ontologyStateService', 'catalogManagerService', 'ontologyManagerService'];
 
-        function mergeTab($rootScope, utilService, ontologyStateService, catalogManagerService,
-            ontologyManagerService) {
+        function mergeTab(utilService, ontologyStateService, catalogManagerService, ontologyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -53,7 +51,6 @@
                     dvm.checkbox = false;
 
                     dvm.attemptMerge = function() {
-                        $rootScope.showSpinner = true;
                         cm.getBranchConflicts(dvm.branch['@id'], dvm.targetId, dvm.os.listItem.recordId, catalogId)
                             .then(conflicts => {
                                 if (_.isEmpty(conflicts)) {
@@ -65,14 +62,16 @@
                     }
 
                     dvm.merge = function() {
-                        $rootScope.showSpinner = true;
                         cm.mergeBranches(dvm.branch['@id'], dvm.targetId, dvm.os.listItem.recordId, catalogId,
                             dvm.resolutions).then(commitId =>
                                 om.changeBranch(dvm.os.listItem.ontologyId, dvm.os.listItem.recordId, dvm.targetId,
                                     commitId, dvm.os.state.type).then(() => {
                                         if (dvm.checkbox) {
                                             cm.deleteRecordBranch(dvm.branch['@id'], dvm.os.listItem.recordId,
-                                                catalogId).then(onSuccess, onError);
+                                                catalogId).then(() => {
+                                                    om.removeBranch(dvm.os.listItem.recordId, dvm.branch['@id']);
+                                                    onSuccess();
+                                                }, onError)
                                         } else {
                                             onSuccess();
                                         }
@@ -85,12 +84,10 @@
 
                     function onSuccess() {
                         dvm.targetId = undefined;
-                        $rootScope.showSpinner = false;
                     }
 
                     function onError(errorMessage) {
                         dvm.error = errorMessage;
-                        $rootScope.showSpinner = false;
                     }
 
                     function setupVariables() {

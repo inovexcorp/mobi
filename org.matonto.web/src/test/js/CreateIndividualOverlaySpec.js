@@ -44,7 +44,8 @@ describe('Create Individual Overlay directive', function() {
         mockResponseObj();
         mockPrefixes();
 
-        inject(function(_$q_, _$compile_, _$rootScope_, _$timeout_, _ontologyManagerService_, _ontologyStateService_, _responseObj_, _prefixes_) {
+        inject(function(_$q_, _$compile_, _$rootScope_, _$timeout_, _ontologyManagerService_, _ontologyStateService_,
+            _responseObj_, _prefixes_) {
             $q = _$q_;
             $compile = _$compile_;
             scope = _$rootScope_;
@@ -149,7 +150,8 @@ describe('Create Individual Overlay directive', function() {
             controller.individual = {'@id': 'id', '@type': []};
             controller.create();
             expect(controller.individual['@type']).toContain(prefixes.owl + 'NamedIndividual');
-            expect(ontologyManagerSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.ontology, controller.individual);
+            expect(ontologyManagerSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontology,
+                controller.individual);
             expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
                 controller.individual);
             expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(controller.individual['@id']);

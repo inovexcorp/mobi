@@ -25,7 +25,7 @@
         <h6>Close Ontology</h6>
         <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
         <div class="main">
-            <p>Are you sure that you want to close <strong>{{dvm.sm.ontology['@id'] || dvm.sm.ontology.matonto.id}}</strong> from your workspace without saving?</p>
+            <p>Are you sure that you want to close <strong>{{dvm.sm.listItem.ontologyId}}</strong> from your workspace without saving?</p>
             <p><strong>NOTE: You will lose all unsaved changes.</strong></p>
         </div>
         <div class="btn-container clearfix">
