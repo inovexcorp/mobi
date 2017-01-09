@@ -41,7 +41,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>platform.config.api</artifactId>
-            <version>1.4.8</version>
+            <version>1.4.11-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
