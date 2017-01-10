@@ -9,6 +9,7 @@ SELECT
     ?modified
     ?description
     ?identifier
+    ?publisher
     (GROUP_CONCAT(DISTINCT ?keyword ; separator = ",") AS ?keywords)
 WHERE {
 	?record a ?type ;
@@ -16,12 +17,16 @@ WHERE {
 		dc:title ?title ;
 		dc:identifier ?identifier ;
 		dc:issued ?issued ;
-		dc:modified ?modified .
+		dc:modified ?modified ;
+		dc:publisher ?publisher ;
+		?p ?o .
 
 	FILTER(?type IN (mcat:Record, mcat:UnversionedRecord, mcat:VersionedRecord, mcat:VersionedRDFRecord, mcat:OntologyRecord, mcat:MappingRecord, mcat:DatasetRecord))
 
     FILTER EXISTS { ?record a ?type_filter . }
 
+    FILTER IF(bound(?search_text), CONTAINS(lcase(?o), lcase(?search_text)), true)
+
 	OPTIONAL { ?record dc:description ?description } .
     OPTIONAL { ?record mcat:keyword ?keyword } .
-} GROUP BY ?record ?title ?issued ?modified ?description ?identifier
+} GROUP BY ?record ?title ?issued ?modified ?description ?identifier ?publisher

@@ -23,6 +23,7 @@
 describe('Util service', function() {
     var utilSvc,
         prefixes,
+        toastr,
         splitIRIFilter,
         beautifyFilter;
 
@@ -31,10 +32,12 @@ describe('Util service', function() {
         mockPrefixes();
         injectSplitIRIFilter();
         injectBeautifyFilter();
+        mockToastr();
 
-        inject(function(utilService, _prefixes_, _splitIRIFilter_, _beautifyFilter_) {
+        inject(function(utilService, _prefixes_, _toastr_, _splitIRIFilter_, _beautifyFilter_) {
             utilSvc = utilService;
             prefixes = _prefixes_;
+            toastr = _toastr_;
             splitIRIFilter = _splitIRIFilter_;
             beautifyFilter = _beautifyFilter_;
         });
@@ -78,5 +81,19 @@ describe('Util service', function() {
         it('if it does not contain the property', function() {
             expect(utilSvc.getDctermsValue({}, 'prop')).toBe('');
         });
+    });
+    describe('should parse a link header string', function() {
+        it('unless it is empty', function() {
+            expect(utilSvc.parseLinks('')).toEqual({});
+        })
+        it('correctly', function() {
+            var link = 'http://example.com';
+            var links = '<' + link + '>; rel="test"';
+            expect(utilSvc.parseLinks(links)).toEqual({test: link});
+        });
+    });
+    it('should create an error toast', function() {
+        utilSvc.createErrorToast('Text');
+        expect(toastr.error).toHaveBeenCalledWith('Text', 'Error', {timeOut: 0});
     });
 });

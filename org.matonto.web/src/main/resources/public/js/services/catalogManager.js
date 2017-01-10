@@ -37,7 +37,6 @@
         /**
          * @ngdoc service
          * @name catalogManager.service:catalogManagerService
-         * @requires $rootScope
          * @requires $http
          * @requires $q
          * @requires prefixes.service:prefixes
@@ -50,9 +49,9 @@
          */
         .service('catalogManagerService', catalogManagerService);
 
-        catalogManagerService.$inject = ['$window', '$rootScope', '$http', '$q', 'prefixes', 'utilService'];
+        catalogManagerService.$inject = ['$window', '$http', '$q', 'prefixes', 'utilService'];
 
-        function catalogManagerService($window, $rootScope, $http, $q, prefixes, utilService) {
+        function catalogManagerService($window, $http, $q, prefixes, utilService) {
             var self = this,
                 util = utilService,
                 prefix = '/matontorest/catalogs';
@@ -118,15 +117,25 @@
              * @description
              * Initializes the `sortOptions`, `recordTypes`, `localCatalog`, and `distributedCatalog` of the
              * catalogManagerService using the `getSortOptions` and `getRecordTypes` methods along with the
-             * GET /matontorest/catalogs endpoint.
+             * GET /matontorest/catalogs endpoint. If the local or distributed Catalog cannot be found, rejects
+             * with an error message.
+             *
+             * @returns {Promise} A promise that resolves if initialization was successful or is rejected
+             * with an error message
              */
             self.initialize = function() {
-                self.getRecordTypes()
-                    .then(types => self.recordTypes = types);
-
-                self.getSortOptions()
-                    .then(options => {
-                        _.forEach(options, option => {
+                return $q.all([self.getRecordTypes(), self.getSortOptions(), $http.get(prefix)])
+                    .then(responses => {
+                        self.localCatalog = _.find(responses[2].data, {[prefixes.dcterms + 'title']: [{'@value': 'MatOnto Catalog (Local)'}]});
+                        self.distributedCatalog = _.find(responses[2].data, {[prefixes.dcterms + 'title']: [{'@value': 'MatOnto Catalog (Distributed)'}]});
+                        if (!self.localCatalog) {
+                            return $q.reject('Could not find local catalog');
+                        }
+                        if (!self.distributedCatalog) {
+                            return $q.reject('Could not find distributed catalog');
+                        }
+                        self.recordTypes = responses[0];
+                        _.forEach(responses[1], option => {
                             var label = util.getBeautifulIRI(option);
                             if (!_.includes(self.sortOptions, {field: option})) {
                                 self.sortOptions.push({
@@ -140,13 +149,7 @@
                                 });
                             }
                         });
-                    });
-
-                $http.get(prefix)
-                    .then(response => {
-                        self.localCatalog = _.find(response.data, {[prefixes.dcterms + 'title']: [{'@value': 'MatOnto Catalog (Local)'}]});
-                        self.distributedCatalog = _.find(response.data, {[prefixes.dcterms + 'title']: [{'@value': 'MatOnto Catalog (Distributed)'}]});
-                    });
+                    }, error => $q.reject('Error in catalogManager initialization'));
             }
 
             /**
@@ -200,10 +203,8 @@
              */
             self.getResultsPage = function(url) {
                 var deferred = $q.defer();
-                $rootScope.showSpinner = true;
                 $http.get(url)
-                    .then(response => deferred.resolve(response), error => deferred.reject(error.statusText))
-                    .then(() => $rootScope.showSpinner = false);
+                    .then(deferred.resolve, error => deferred.reject(error.statusText));
                 return deferred.promise;
             }
 
@@ -241,10 +242,8 @@
                 if (_.get(paginatedConfig, 'recordType')) {
                     config.params.type = paginatedConfig.recordType;
                 }
-                $rootScope.showSpinner = true;
                 $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records', config)
-                    .then(response => deferred.resolve(response), error => deferred.reject(error.statusText))
-                    .then(() => $rootScope.showSpinner = false);
+                    .then(deferred.resolve, error => deferred.reject(error.statusText));
                 return deferred.promise;
             }
 
@@ -264,10 +263,8 @@
              */
             self.getRecord = function(recordId, catalogId) {
                 var deferred = $q.defer();
-                $rootScope.showSpinner = true;
                 $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId))
-                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText))
-                    .then(() => $rootScope.showSpinner = false);
+                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText));
                 return deferred.promise;
             }
 
@@ -310,10 +307,8 @@
                 if (_.get(recordConfig, 'keywords', []).length > 0) {
                     fd.append('keywords', _.join(recordConfig.keywords, ','));
                 }
-                $rootScope.showSpinner = true;
                 $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records', fd, config)
-                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText))
-                    .then(() => $rootScope.showSpinner = false);
+                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText));
                 return deferred.promise;
             }
 
@@ -333,10 +328,8 @@
              */
             self.updateRecord = function(recordId, catalogId, newRecord) {
                 var deferred = $q.defer();
-                $rootScope.showSpinner = true;
                 $http.put(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId), angular.toJson(newRecord))
-                    .then(response => deferred.resolve(recordId), error => deferred.reject(error.statusText))
-                    .then(() => $rootScope.showSpinner = false);
+                    .then(response => deferred.resolve(recordId), error => deferred.reject(error.statusText));
                 return deferred.promise;
             }
 
@@ -355,10 +348,8 @@
              */
             self.deleteRecord = function(recordId, catalogId) {
                 var deferred = $q.defer();
-                $rootScope.showSpinner = true;
                 $http.delete(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId))
-                    .then(response => deferred.resolve(), error => deferred.reject(error.statusText))
-                    .then(() => $rootScope.showSpinner = false);
+                    .then(response => deferred.resolve(), error => deferred.reject(error.statusText));
                 return deferred.promise;
             }
 
@@ -388,10 +379,8 @@
                     config = {
                         params: paginatedConfigToParams(paginatedConfig)
                     };
-                $rootScope.showSpinner = true;
                 $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions', config)
-                    .then(response => deferred.resolve(response), error => deferred.reject(error.statusText))
-                    .then(() => $rootScope.showSpinner = false);
+                    .then(deferred.resolve, error => deferred.reject(error.statusText));
                 return deferred.promise;
             }
 
@@ -412,10 +401,8 @@
              */
             self.getRecordDistribution = function(distributionId, recordId, catalogId) {
                 var deferred = $q.defer();
-                $rootScope.showSpinner = true;
                 $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions/' + encodeURIComponent(distributionId))
-                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText))
-                    .then(() => $rootScope.showSpinner = false);
+                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText));
                 return deferred.promise;
             }
 
@@ -463,10 +450,8 @@
                 if (_.has(distributionConfig, 'downloadURL')) {
                     fd.append('downloadURL', distributionConfig.downloadURL);
                 }
-                $rootScope.showSpinner = true;
                 $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions', fd, config)
-                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText))
-                    .then(() => $rootScope.showSpinner = false);
+                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText));
                 return deferred.promise;
             }
 
@@ -488,10 +473,8 @@
              */
             self.updateRecordDistribution = function(distributionId, recordId, catalogId, newDistribution) {
                 var deferred = $q.defer();
-                $rootScope.showSpinner = true;
                 $http.put(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions/' + encodeURIComponent(distributionId), angular.toJson(newDistribution))
-                    .then(response => deferred.resolve(distributionId), error => deferred.reject(error.statusText))
-                    .then(() => $rootScope.showSpinner = false);
+                    .then(response => deferred.resolve(distributionId), error => deferred.reject(error.statusText));
                 return deferred.promise;
             }
 
@@ -512,10 +495,8 @@
              */
             self.deleteRecordDistribution = function(distributionId, recordId, catalogId) {
                 var deferred = $q.defer();
-                $rootScope.showSpinner = true;
                 $http.delete(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions/' + encodeURIComponent(distributionId))
-                    .then(response => deferred.resolve(), error => deferred.reject(error.statusText))
-                    .then(() => $rootScope.showSpinner = false);
+                    .then(response => deferred.resolve(), error => deferred.reject(error.statusText));
                 return deferred.promise;
             }
 
@@ -545,10 +526,8 @@
                     config = {
                         params: paginatedConfigToParams(paginatedConfig)
                     };
-                $rootScope.showSpinner = true;
                 $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions', config)
-                    .then(response => deferred.resolve(response), error => deferred.reject(error.statusText))
-                    .then(() => $rootScope.showSpinner = false);
+                    .then(deferred.resolve, error => deferred.reject(error.statusText));
                 return deferred.promise;
             }
 
@@ -660,10 +639,8 @@
              */
             self.updateRecordVersion = function(versionId, recordId, catalogId, newVersion) {
                 var deferred = $q.defer();
-                $rootScope.showSpinner = true;
                 $http.put(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId), angular.toJson(newVersion))
-                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText))
-                    .then(() => $rootScope.showSpinner = false);
+                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText));
                 return deferred.promise;
             }
 
@@ -684,10 +661,8 @@
              */
             self.deleteRecordVersion = function(versionId, recordId, catalogId) {
                 var deferred = $q.defer();
-                $rootScope.showSpinner = true;
                 $http.delete(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId))
-                    .then(response => deferred.resolve(), error => deferred.reject(error.statusText))
-                    .then(() => $rootScope.showSpinner = false);
+                    .then(response => deferred.resolve(), error => deferred.reject(error.statusText));
                 return deferred.promise;
             }
 
@@ -712,10 +687,8 @@
                     config = {
                         params: {format}
                     };
-                $rootScope.showSpinner = true;
                 $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/commit', config)
-                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText))
-                    .then(() => $rootScope.showSpinner = false);
+                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText));
                 return deferred.promise;
             }
 
@@ -746,10 +719,8 @@
                     config = {
                         params: paginatedConfigToParams(paginatedConfig)
                     };
-                $rootScope.showSpinner = true;
                 $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions', config)
-                    .then(response => deferred.resolve(response), error => deferred.reject(error.statusText))
-                    .then(() => $rootScope.showSpinner = false);
+                    .then(deferred.resolve, error => deferred.reject(error.statusText));
                 return deferred.promise;
             }
 
@@ -771,10 +742,8 @@
              */
             self.getVersionDistribution = function(distributionId, versionId, recordId, catalogId) {
                 var deferred = $q.defer();
-                $rootScope.showSpinner = true;
                 $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId))
-                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText))
-                    .then(() => $rootScope.showSpinner = false);
+                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText));
                 return deferred.promise;
             }
 
@@ -824,10 +793,8 @@
                 if (_.has(distributionConfig, 'downloadURL')) {
                     fd.append('format', distributionConfig.downloadURL);
                 }
-                $rootScope.showSpinner = true;
                 $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions', fd, config)
-                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText))
-                    .then(() => $rootScope.showSpinner = false);
+                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText));
                 return deferred.promise;
             }
 
@@ -850,10 +817,8 @@
              */
             self.updateVersionDistribution = function(distributionId, versionId, recordId, catalogId, newDistribution) {
                 var deferred = $q.defer();
-                $rootScope.showSpinner = true;
                 $http.put(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId), angular.toJson(newDistribution))
-                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText))
-                    .then(() => $rootScope.showSpinner = false);
+                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText));
                 return deferred.promise;
             }
 
@@ -875,10 +840,8 @@
              */
             self.deleteVersionDistribution = function(distributionId, versionId, recordId, catalogId) {
                 var deferred = $q.defer();
-                $rootScope.showSpinner = true;
                 $http.delete(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId))
-                    .then(response => deferred.resolve(), error => deferred.reject(error.statusText))
-                    .then(() => $rootScope.showSpinner = false);
+                    .then(response => deferred.resolve(), error => deferred.reject(error.statusText));
                 return deferred.promise;
             }
 
@@ -908,10 +871,8 @@
                     config = {
                         params: paginatedConfigToParams(paginatedConfig)
                     };
-                $rootScope.showSpinner = true;
                 $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches', config)
-                    .then(response => deferred.resolve(response), error => deferred.reject(error.statusText))
-                    .then(() => $rootScope.showSpinner = false);
+                    .then(deferred.resolve, error => deferred.reject(error.statusText));
                 return deferred.promise;
             }
 
@@ -974,11 +935,11 @@
             self.createRecordBranch = function(recordId, catalogId, branchConfig, commitId) {
                 branchConfig.type = prefixes.catalog + 'Branch';
                 return createBranch(recordId, catalogId, branchConfig)
-                    .then(iri => self.getRecordBranch(iri, recordId, catalogId), error => $q.reject(error))
+                    .then(iri => self.getRecordBranch(iri, recordId, catalogId), $q.reject)
                     .then(branch => {
                         branch[prefixes.catalog + 'head'] = [{'@id': commitId}];
                         return self.updateRecordBranch(branch['@id'], recordId, catalogId, branch);
-                    }, error => $q.reject(error));
+                    }, $q.reject);
             }
 
             /**
@@ -1004,12 +965,12 @@
             self.createRecordUserBranch = function(recordId, catalogId, branchConfig, commitId, parentBranchId) {
                 branchConfig.type = prefixes.catalog + 'UserBranch';
                 return createBranch(recordId, catalogId, branchConfig)
-                    .then(iri => self.getRecordBranch(iri, recordId, catalogId), error => $q.reject(error))
+                    .then(iri => self.getRecordBranch(iri, recordId, catalogId), $q.reject)
                     .then(branch => {
                         branch[prefixes.catalog + 'head'] = [{'@id': commitId}];
                         branch[prefixes.catalog + 'createdFrom'] = [{'@id': parentBranchId}];
                         return self.updateRecordBranch(branch['@id'], recordId, catalogId, branch);
-                    }, error => $q.reject(error));
+                    }, $q.reject);
             }
 
             /**
@@ -1031,10 +992,8 @@
              */
             self.updateRecordBranch = function(branchId, recordId, catalogId, newBranch) {
                 var deferred = $q.defer();
-                $rootScope.showSpinner = true;
                 $http.put(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId), angular.toJson(newBranch))
-                    .then(response => deferred.resolve(branchId), error => deferred.reject(error.statusText))
-                    .then(() => $rootScope.showSpinner = false);
+                    .then(response => deferred.resolve(branchId), error => deferred.reject(error.statusText));
                 return deferred.promise;
             }
 
@@ -1055,10 +1014,8 @@
              */
             self.deleteRecordBranch = function(branchId, recordId, catalogId) {
                 var deferred = $q.defer();
-                $rootScope.showSpinner = true;
                 $http.delete(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId))
-                    .then(response => deferred.resolve(), error => deferred.reject(error.statusText))
-                    .then(() => $rootScope.showSpinner = false);
+                    .then(response => deferred.resolve(), error => deferred.reject(error.statusText));
                 return deferred.promise;
             }
 
@@ -1078,10 +1035,8 @@
              */
             self.getBranchCommits = function(branchId, recordId, catalogId) {
                 var deferred = $q.defer();
-                $rootScope.showSpinner = true;
                 $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits')
-                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText))
-                    .then(() => $rootScope.showSpinner = false);
+                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText));
                 return deferred.promise;
             }
 
@@ -1108,10 +1063,8 @@
                             message
                         }
                     };
-                $rootScope.showSpinner = true;
                 $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits', null, config)
-                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText))
-                    .then(() => $rootScope.showSpinner = false);
+                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText));
                 return deferred.promise;
             }
 
@@ -1135,10 +1088,8 @@
                     config = {
                         params: {format}
                     };
-                $rootScope.showSpinner = true;
                 $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/head', config)
-                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText))
-                    .then(() => $rootScope.showSpinner = false);
+                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText));
                 return deferred.promise;
             }
 
@@ -1163,10 +1114,8 @@
                     config = {
                         params: {format}
                     };
-                $rootScope.showSpinner = true;
                 $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId), config)
-                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText))
-                    .then(() => $rootScope.showSpinner = false);
+                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText));
                 return deferred.promise;
             }
 
@@ -1195,10 +1144,8 @@
                             targetId
                         }
                     };
-                $rootScope.showSpinner = true;
                 $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(sourceId) + '/conflicts', config)
-                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText))
-                    .then(() => $rootScope.showSpinner = false);
+                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText));
                 return deferred.promise;
             }
 
@@ -1239,10 +1186,8 @@
                 if (_.has(differenceObj, 'deletions')) {
                     fd.append('deletions', differenceObj.deletions);
                 }
-                $rootScope.showSpinner = true;
                 $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(sourceId) + '/conflicts/resolution', fd, config)
-                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText))
-                    .then(() => $rootScope.showSpinner = false);
+                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText));
                 return deferred.promise;
             }
 
@@ -1272,10 +1217,8 @@
                             applyInProgressCommit
                         }
                     };
-                $rootScope.showSpinner = true;
                 $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId) + '/resource', config)
-                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText))
-                    .then(() => $rootScope.showSpinner = false);
+                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText));
                 return deferred.promise;
             }
 
@@ -1316,10 +1259,8 @@
              */
             self.createInProgressCommit = function(recordId, catalogId) {
                 var deferred = $q.defer();
-                $rootScope.showSpinner = true;
                 $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit')
-                    .then(response => deferred.resolve(), error => deferred.reject(error.statusText))
-                    .then(() => $rootScope.showSpinner = false);
+                    .then(response => deferred.resolve(), error => deferred.reject(error.statusText));
                 return deferred.promise;
             }
 
@@ -1338,10 +1279,8 @@
              */
             self.getInProgressCommit = function(recordId, catalogId) {
                 var deferred = $q.defer();
-                $rootScope.showSpinner = true;
                 $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit')
-                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText))
-                    .then(() => $rootScope.showSpinner = false);
+                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText));
                 return deferred.promise;
             }
 
@@ -1378,10 +1317,8 @@
                 if (_.has(differenceObj, 'deletions')) {
                     fd.append('deletions', differenceObj.deletions);
                 }
-                $rootScope.showSpinner = true;
                 $http.put(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit', fd, config)
-                    .then(response => deferred.resolve(), error => deferred.reject(error.statusText))
-                    .then(() => $rootScope.showSpinner = false);
+                    .then(response => deferred.resolve(), error => deferred.reject(error.statusText));
                 return deferred.promise;
             }
 
@@ -1400,10 +1337,8 @@
              */
             self.deleteInProgressCommit = function(recordId, catalogId) {
                 var deferred = $q.defer();
-                $rootScope.showSpinner = true;
                 $http.delete(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit')
-                    .then(response => deferred.resolve(), error => deferred.reject(error.statusText))
-                    .then(() => $rootScope.showSpinner = false);
+                    .then(response => deferred.resolve(), error => deferred.reject(error.statusText));
                 return deferred.promise;
             }
 
@@ -1512,10 +1447,8 @@
                 if (_.has(versionConfig, 'description')) {
                     fd.append('description', versionConfig.description);
                 }
-                $rootScope.showSpinner = true;
                 $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions', fd, config)
-                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText))
-                    .then(() => $rootScope.showSpinner = false);
+                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText));
                 return deferred.promise;
             }
 
@@ -1534,28 +1467,22 @@
                 if (_.has(branchConfig, 'description')) {
                     fd.append('description', branchConfig.description);
                 }
-                $rootScope.showSpinner = true;
                 $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches', fd, config)
-                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText))
-                    .then(() => $rootScope.showSpinner = false);
+                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText));
                 return deferred.promise;
             }
 
             function getRecordVersion(versionIdentifier, recordId, catalogId) {
                 var deferred = $q.defer();
-                $rootScope.showSpinner = true;
                 $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + versionIdentifier)
-                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText))
-                    .then(() => $rootScope.showSpinner = false);
+                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText));
                 return deferred.promise;
             }
 
             function getRecordBranch(branchIdentifier, recordId, catalogId) {
                 var deferred = $q.defer();
-                $rootScope.showSpinner = true;
                 $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + branchIdentifier)
-                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText))
-                    .then(() => $rootScope.showSpinner = false);
+                    .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText));
                 return deferred.promise;
             }
 

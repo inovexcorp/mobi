@@ -23,14 +23,44 @@ package org.matonto.catalog.impl;
  */
 
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.matonto.catalog.api.Conflict;
 import org.matonto.catalog.api.Difference;
 import org.matonto.catalog.api.PaginatedSearchParams;
 import org.matonto.catalog.api.PaginatedSearchResults;
-import org.matonto.catalog.api.ontologies.mcat.*;
+import org.matonto.catalog.api.ontologies.mcat.Branch;
+import org.matonto.catalog.api.ontologies.mcat.BranchFactory;
+import org.matonto.catalog.api.ontologies.mcat.Catalog;
+import org.matonto.catalog.api.ontologies.mcat.CatalogFactory;
+import org.matonto.catalog.api.ontologies.mcat.Commit;
+import org.matonto.catalog.api.ontologies.mcat.CommitFactory;
+import org.matonto.catalog.api.ontologies.mcat.DatasetRecord;
+import org.matonto.catalog.api.ontologies.mcat.DatasetRecordFactory;
+import org.matonto.catalog.api.ontologies.mcat.Distribution;
+import org.matonto.catalog.api.ontologies.mcat.DistributionFactory;
+import org.matonto.catalog.api.ontologies.mcat.InProgressCommit;
+import org.matonto.catalog.api.ontologies.mcat.InProgressCommitFactory;
+import org.matonto.catalog.api.ontologies.mcat.MappingRecord;
+import org.matonto.catalog.api.ontologies.mcat.MappingRecordFactory;
+import org.matonto.catalog.api.ontologies.mcat.OntologyRecord;
+import org.matonto.catalog.api.ontologies.mcat.OntologyRecordFactory;
+import org.matonto.catalog.api.ontologies.mcat.Record;
+import org.matonto.catalog.api.ontologies.mcat.RecordFactory;
+import org.matonto.catalog.api.ontologies.mcat.Revision;
+import org.matonto.catalog.api.ontologies.mcat.RevisionFactory;
+import org.matonto.catalog.api.ontologies.mcat.Tag;
+import org.matonto.catalog.api.ontologies.mcat.TagFactory;
+import org.matonto.catalog.api.ontologies.mcat.UnversionedRecord;
+import org.matonto.catalog.api.ontologies.mcat.UnversionedRecordFactory;
+import org.matonto.catalog.api.ontologies.mcat.UserBranch;
+import org.matonto.catalog.api.ontologies.mcat.UserBranchFactory;
+import org.matonto.catalog.api.ontologies.mcat.Version;
+import org.matonto.catalog.api.ontologies.mcat.VersionFactory;
+import org.matonto.catalog.api.ontologies.mcat.VersionedRDFRecord;
+import org.matonto.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
+import org.matonto.catalog.api.ontologies.mcat.VersionedRecord;
+import org.matonto.catalog.api.ontologies.mcat.VersionedRecordFactory;
 import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.jaas.api.ontologies.usermanagement.UserFactory;
@@ -74,7 +104,6 @@ import java.util.stream.Stream;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
-import static org.hamcrest.Matchers.equalTo;
 
 public class SimpleCatalogManagerTest {
 
@@ -243,6 +272,7 @@ public class SimpleCatalogManagerTest {
         manager.setRepository(repo);
         manager.setValueFactory(vf);
         manager.setModelFactory(mf);
+        manager.setUserFactory(userFactory);
         manager.setCatalogFactory(catalogFactory);
         manager.setRecordFactory(recordFactory);
         manager.setDistributionFactory(distributionFactory);
@@ -902,10 +932,10 @@ public class SimpleCatalogManagerTest {
         // when
         PaginatedSearchResults<Record> records = manager.findRecord(distributedCatalogId, searchParams);
         // then
-        Assert.assertThat(records.getPage().size(), equalTo(1));
-        Assert.assertThat(records.getTotalSize(), equalTo(TOTAL_SIZE));
-        Assert.assertThat(records.getPageSize(), equalTo(1));
-        Assert.assertThat(records.getPageNumber(), equalTo(1));
+        assertEquals(records.getPage().size(), 1);
+        assertEquals(records.getTotalSize(), TOTAL_SIZE);
+        assertEquals(records.getPageSize(), 1);
+        assertEquals(records.getPageNumber(), 1);
     }
 
     @Test
@@ -918,10 +948,10 @@ public class SimpleCatalogManagerTest {
         // when
         PaginatedSearchResults<Record> records = manager.findRecord(distributedCatalogId, searchParams);
         // then
-        Assert.assertThat(records.getPage().size(), equalTo(1));
-        Assert.assertThat(records.getTotalSize(), equalTo(TOTAL_SIZE));
-        Assert.assertThat(records.getPageSize(), equalTo(1));
-        Assert.assertThat(records.getPageNumber(), equalTo(2));
+        assertEquals(records.getPage().size(), 1);
+        assertEquals(records.getTotalSize(), TOTAL_SIZE);
+        assertEquals(records.getPageSize(), 1);
+        assertEquals(records.getPageNumber(), 2);
     }
 
     @Test
@@ -934,10 +964,10 @@ public class SimpleCatalogManagerTest {
         // when
         PaginatedSearchResults<Record> records = manager.findRecord(distributedCatalogId, searchParams);
         // then
-        Assert.assertThat(records.getPage().size(), equalTo(TOTAL_SIZE));
-        Assert.assertThat(records.getTotalSize(), equalTo(TOTAL_SIZE));
-        Assert.assertThat(records.getPageSize(), equalTo(1000));
-        Assert.assertThat(records.getPageNumber(), equalTo(1));
+        assertEquals(records.getPage().size(), TOTAL_SIZE);
+        assertEquals(records.getTotalSize(), TOTAL_SIZE);
+        assertEquals(records.getPageSize(), 1000);
+        assertEquals(records.getPageNumber(), 1);
     }
 
     @Test
@@ -962,12 +992,28 @@ public class SimpleCatalogManagerTest {
         PaginatedSearchResults<Record> resources5 = manager.findRecord(distributedCatalogId, searchParams5);
         PaginatedSearchResults<Record> resources6 = manager.findRecord(distributedCatalogId, searchParams6);
         // then
-        Assert.assertThat(resources1.getPage().iterator().next().getResource().stringValue(), equalTo("http://matonto.org/test/records#get"));
-        Assert.assertThat(resources2.getPage().iterator().next().getResource().stringValue(), equalTo("http://matonto.org/test/records#update"));
-        Assert.assertThat(resources3.getPage().iterator().next().getResource().stringValue(), equalTo("http://matonto.org/test/records#update"));
-        Assert.assertThat(resources4.getPage().iterator().next().getResource().stringValue(), equalTo("http://matonto.org/test/records#get"));
-        Assert.assertThat(resources5.getPage().iterator().next().getResource().stringValue(), equalTo("http://matonto.org/test/records#dataset"));
-        Assert.assertThat(resources6.getPage().iterator().next().getResource().stringValue(), equalTo("http://matonto.org/test/records#versionedRDF"));
+        assertEquals(resources1.getPage().iterator().next().getResource().stringValue(), "http://matonto.org/test/records#get");
+        assertEquals(resources2.getPage().iterator().next().getResource().stringValue(), "http://matonto.org/test/records#update");
+        assertEquals(resources3.getPage().iterator().next().getResource().stringValue(), "http://matonto.org/test/records#update");
+        assertEquals(resources4.getPage().iterator().next().getResource().stringValue(), "http://matonto.org/test/records#get");
+        assertEquals(resources5.getPage().iterator().next().getResource().stringValue(), "http://matonto.org/test/records#dataset");
+        assertEquals(resources6.getPage().iterator().next().getResource().stringValue(), "http://matonto.org/test/records#versionedRDF");
+    }
+
+    @Test
+    public void testFindRecordsWithSearchText() throws Exception {
+        // given
+        int limit = 10;
+        int offset = 0;
+        IRI modified = vf.createIRI(DC_MODIFIED);
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder(limit, offset, modified).searchText("Get").build();
+        // when
+        PaginatedSearchResults<Record> records = manager.findRecord(distributedCatalogId, searchParams);
+        // then
+        assertEquals(records.getPage().size(), 1);
+        assertEquals(records.getTotalSize(), 1);
+        assertEquals(records.getPageSize(), 10);
+        assertEquals(records.getPageNumber(), 1);
     }
 
     @Test
@@ -983,8 +1029,8 @@ public class SimpleCatalogManagerTest {
         // when
         PaginatedSearchResults<Record> records = manager.findRecord(distributedCatalogId, searchParams);
         // then
-        Assert.assertThat(records.getPage().size(), equalTo(0));
-        Assert.assertThat(records.getTotalSize(), equalTo(0));
+        assertEquals(records.getPage().size(), 0);
+        assertEquals(records.getTotalSize(), 0);
     }
 
     @Test
@@ -998,8 +1044,8 @@ public class SimpleCatalogManagerTest {
         // when
         PaginatedSearchResults<Record> records = manager.findRecord(localCatalogId, searchParams);
         // then
-        Assert.assertThat(records.getPage().size(), equalTo(0));
-        Assert.assertThat(records.getTotalSize(), equalTo(0));
+        assertEquals(records.getPage().size(), 0);
+        assertEquals(records.getTotalSize(), 0);
     }
 
     @Test
@@ -1016,12 +1062,12 @@ public class SimpleCatalogManagerTest {
         PaginatedSearchResults<Record> mappingRecords = manager.findRecord(distributedCatalogId, mappingSearchParams);
         PaginatedSearchResults<Record> fullRecords = manager.findRecord(distributedCatalogId, fullSearchParams);
         // then
-        Assert.assertThat(ontRecords.getPage().size(), equalTo(1));
-        Assert.assertThat(ontRecords.getTotalSize(), equalTo(1));
-        Assert.assertThat(mappingRecords.getPage().size(), equalTo(1));
-        Assert.assertThat(mappingRecords.getTotalSize(), equalTo(1));
-        Assert.assertThat(fullRecords.getPage().size(), equalTo(TOTAL_SIZE));
-        Assert.assertThat(fullRecords.getTotalSize(), equalTo(TOTAL_SIZE));
+        assertEquals(ontRecords.getPage().size(), 1);
+        assertEquals(ontRecords.getTotalSize(), 1);
+        assertEquals(mappingRecords.getPage().size(), 1);
+        assertEquals(mappingRecords.getTotalSize(), 1);
+        assertEquals(fullRecords.getPage().size(), TOTAL_SIZE);
+        assertEquals(fullRecords.getTotalSize(), TOTAL_SIZE);
     }
 
     @Test(expected = MatOntoException.class)
