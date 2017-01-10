@@ -55,6 +55,7 @@ import org.matonto.catalog.api.ontologies.mcat.OntologyRecord;
 import org.matonto.catalog.api.ontologies.mcat.Record;
 import org.matonto.catalog.api.ontologies.mcat.Tag;
 import org.matonto.catalog.api.ontologies.mcat.UnversionedRecord;
+import org.matonto.catalog.api.ontologies.mcat.UserBranch;
 import org.matonto.catalog.api.ontologies.mcat.Version;
 import org.matonto.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import org.matonto.catalog.api.ontologies.mcat.VersionedRecord;
@@ -67,6 +68,7 @@ import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.orm.OrmFactory;
 import org.matonto.rdf.orm.Thing;
@@ -75,6 +77,7 @@ import org.matonto.rest.util.LinksUtils;
 import org.matonto.rest.util.jaxb.Links;
 import org.matonto.web.security.util.AuthenticationProps;
 import org.openrdf.model.vocabulary.DCTERMS;
+import org.openrdf.model.vocabulary.RDF;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.RDFHandler;
 import org.openrdf.rio.Rio;
@@ -652,8 +655,14 @@ public class CatalogRestImpl implements CatalogRest {
             Function<Branch, Boolean> filterFunction = null;
             if (applyUserFilter) {
                 User activeUser = getActiveUser(context);
-                filterFunction = branch -> branch.getProperty(factory.createIRI(DCTERMS.PUBLISHER.stringValue())).get()
-                        .stringValue().equals(activeUser.getResource().stringValue());
+                filterFunction = branch -> {
+                    Set<String> types = branch.getProperties(factory.createIRI(RDF.TYPE.stringValue())).stream()
+                            .map(Value::stringValue)
+                            .collect(Collectors.toSet());
+                    return !types.contains(UserBranch.TYPE)
+                            || branch.getProperty(factory.createIRI(DCTERMS.PUBLISHER.stringValue())).get()
+                            .stringValue().equals(activeUser.getResource().stringValue());
+                };
             }
             return createPaginatedThingResponse(uriInfo, branchIRIs, this::getBranch, sort, offset, limit, asc,
                     filterFunction);
