@@ -116,7 +116,7 @@
 
             self.mergingArrays = function(objValue, srcValue) {
                 if (_.isArray(objValue)) {
-                    return _.unionWith(objectValue, srcValue, _.isEqual);
+                    return _.unionWith(objValue, srcValue, _.isEqual);
                 }
             }
 
@@ -160,6 +160,9 @@
              */
             self.createErrorToast = function(text) {
                 toastr.error(text, 'Error', {timeOut: 0});
+            }
+            self.createSuccessToast = function(text) {
+                toastr.success(text, 'Success', {timeOut: 0});
             }
         }
 })();

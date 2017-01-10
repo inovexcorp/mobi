@@ -54,9 +54,11 @@
                         cm.getBranchConflicts(dvm.branch['@id'], dvm.targetId, dvm.os.listItem.recordId, catalogId)
                             .then(conflicts => {
                                 if (_.isEmpty(conflicts)) {
-                                    dvm.merge();
+                                    console.log('no conflicts');
+                                    // dvm.merge();
                                 } else {
                                     // TODO: resolve them
+                                    console.log('conflicts:', conflicts);
                                 }
                             }, onError);
                     }
@@ -64,8 +66,8 @@
                     dvm.merge = function() {
                         cm.mergeBranches(dvm.branch['@id'], dvm.targetId, dvm.os.listItem.recordId, catalogId,
                             dvm.resolutions).then(commitId =>
-                                om.changeBranch(dvm.os.listItem.ontologyId, dvm.os.listItem.recordId, dvm.targetId,
-                                    commitId, dvm.os.state.type).then(() => {
+                                om.updateOntology(dvm.os.listItem.recordId, dvm.targetId, commitId, dvm.os.state.type)
+                                    .then(() => {
                                         if (dvm.checkbox) {
                                             cm.deleteRecordBranch(dvm.branch['@id'], dvm.os.listItem.recordId,
                                                 catalogId).then(() => {

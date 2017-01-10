@@ -159,8 +159,10 @@
                 return self.getCurrentLogin().then(data => {
                     if (data.scope !== anon) {
                         self.currentUser = data.sub;
-                        catalogManagerService.initialize().then(() => catalogStateService.initialize());
-                        ontologyManagerService.initialize();
+                        catalogManagerService.initialize().then(() => {
+                            catalogStateService.initialize();
+                            ontologyManagerService.initialize();
+                        });
                         mappingManagerService.initialize();
                         userManagerService.initialize();
                         stateManagerService.initialize();

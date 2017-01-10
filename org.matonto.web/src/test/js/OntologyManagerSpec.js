@@ -78,6 +78,7 @@ describe('Ontology Manager service', function() {
         ontologyState[prefixes.ontologyState + 'record'] = [{'@id': recordId}];
         ontologyState[prefixes.ontologyState + 'branch'] = [{'@id': branchId}];
         ontologyState[prefixes.ontologyState + 'commit'] = [{'@id': commitId}];
+        ontologyManagerSvc.initialize();
     });
 
     function flushAndVerify() {

@@ -61,8 +61,7 @@
                                 var commitId = _.get(headCommit, "commit[0]['@graph'][0]['@id']", '');
                                 $q.all([
                                     sm.updateOntologyState(dvm.os.listItem.recordId, branchId, commitId),
-                                    om.changeBranch(dvm.os.listItem.ontologyId, dvm.os.listItem.recordId, branchId,
-                                        commitId)
+                                    om.updateOntology(dvm.os.listItem.recordId, branchId, commitId)
                                 ]).then(dvm.os.resetStateTabs());
                             });
 

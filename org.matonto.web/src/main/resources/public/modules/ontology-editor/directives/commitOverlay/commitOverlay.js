@@ -27,9 +27,9 @@
         .module('commitOverlay', [])
         .directive('commitOverlay', commitOverlay);
 
-        commitOverlay.$inject = ['ontologyStateService', 'catalogManagerService', 'stateManagerService'];
+        commitOverlay.$inject = ['ontologyStateService', 'catalogManagerService', 'stateManagerService', 'utilService'];
 
-        function commitOverlay(ontologyStateService, catalogManagerService, stateManagerService) {
+        function commitOverlay(ontologyStateService, catalogManagerService, stateManagerService, utilService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -41,19 +41,40 @@
                     var cm = catalogManagerService;
                     var sm = stateManagerService;
                     var catalogId = _.get(cm.localCatalog, '@id', '');
+                    var util = utilService;
 
                     dvm.os = ontologyStateService;
-                    dvm.showMessage = false;
                     dvm.error = '';
+
+                    dvm.commit = function() {
+                        if (dvm.os.listItem.upToDate) {
+                            createCommit(dvm.os.listItem.branchId);
+                        } else {
+                            var branch = _.find(dvm.os.listItem.branches, branch => _.get(branch, '@id') === branchId);
+                            var branchConfig = {title: 'WIP:' +  util.getDctermsValue(branch, 'title')};
+                            var description = util.getDctermsValue(branch, 'description');
+                            if (description) {
+                                branchConfig.description = description;
+                            }
+                            cm.createRecordUserBranch(dvm.os.listItem.recordId, catalogId, branchConfig,
+                                dvm.os.listItem.commitId, dvm.os.listItem.branchId).then(branchId =>
+                                    cm.getRecordBranch(branchId, dvm.os.listItem.recordId, catalogId)
+                                        .then(branch => {
+                                            dvm.os.listItem.branches.push(branch);
+                                            dvm.os.listItem.branchId = branch['@id'];
+                                            createCommit(branchId);
+                                        }, onError), onError);
+                        }
+                    }
 
                     function onError(errorMessage) {
                         dvm.error = errorMessage;
                     }
 
-                    dvm.commit = function() {
-                        cm.createBranchCommit(dvm.os.listItem.branchId, dvm.os.listItem.recordId, catalogId,
+                    function createCommit(branchId) {
+                        cm.createBranchCommit(branchId, dvm.os.listItem.recordId, catalogId,
                             dvm.comment).then(commitId =>
-                                sm.updateOntologyState(dvm.os.listItem.recordId, dvm.os.listItem.branchId, commitId)
+                                sm.updateOntologyState(dvm.os.listItem.recordId, branchId, commitId)
                                     .then(() => {
                                         dvm.os.clearInProgressCommit();
                                         dvm.os.showCommitOverlay = false;

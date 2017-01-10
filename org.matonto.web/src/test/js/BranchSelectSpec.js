@@ -104,9 +104,9 @@ describe('Branch Select directive', function() {
                     updateDeferred = $q.defer();
                     stateManagerSvc.updateOntologyState.and.returnValue(updateDeferred.promise);
                     changeDeferred = $q.defer();
-                    ontologyManagerSvc.changeBranch.and.returnValue(changeDeferred.promise)
+                    ontologyManagerSvc.updateOntology.and.returnValue(changeDeferred.promise)
                 });
-                it('when updateOntologyState and changeBranch are resolved', function() {
+                it('when updateOntologyState and updateOntology are resolved', function() {
                     controller.changeBranch(branch);
                     updateDeferred.resolve();
                     changeDeferred.resolve();
@@ -115,8 +115,8 @@ describe('Branch Select directive', function() {
                         ontologyStateSvc.listItem.recordId, catalogId);
                     expect(stateManagerSvc.updateOntologyState).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                         branchId, commitId);
-                    expect(ontologyManagerSvc.changeBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
-                        ontologyStateSvc.listItem.recordId, branchId, commitId);
+                    expect(ontologyManagerSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
+                        branchId, commitId);
                     expect(ontologyStateSvc.resetStateTabs).toHaveBeenCalled();
                 });
             });
