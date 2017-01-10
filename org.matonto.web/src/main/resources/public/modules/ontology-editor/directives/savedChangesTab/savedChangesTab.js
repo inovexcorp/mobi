@@ -27,9 +27,10 @@
         .module('savedChangesTab', [])
         .directive('savedChangesTab', savedChangesTab);
 
-        savedChangesTab.$inject = ['ontologyStateService', 'ontologyManagerService', 'utilService'];
+        savedChangesTab.$inject = ['ontologyStateService', 'ontologyManagerService', 'utilService',
+            'catalogManagerService'];
 
-        function savedChangesTab(ontologyStateService, ontologyManagerService, utilService) {
+        function savedChangesTab(ontologyStateService, ontologyManagerService, utilService, catalogManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,6 +39,9 @@
                 controllerAs: 'dvm',
                 controller: ['$scope', function($scope) {
                     var dvm = this;
+                    var cm = catalogManagerService;
+                    var catalogId = _.get(cm.localCatalog, '@id', '');
+
                     dvm.os = ontologyStateService;
                     dvm.om = ontologyManagerService;
                     dvm.util = utilService;
@@ -65,6 +69,17 @@
                     dvm.go = function($event, id) {
                         $event.stopPropagation();
                         dvm.os.goTo(id);
+                    }
+
+                    dvm.update = function() {
+                        cm.getBranchHeadCommit(dvm.os.listItem.branchId, dvm.os.listItem.recordId, catalogId)
+                            .then(headCommit => {
+                                var commitId = _.get(headCommit, "commit[0]['@graph'][0]['@id']", '');
+                                dvm.om.updateOntology(dvm.os.listItem.recordId, dvm.os.listItem.branchId, commitId,
+                                    dvm.os.listItem.type).then(() =>
+                                        dvm.util.createSuccessToast('Your ontology has been updated.'),
+                                        dvm.util.createErrorToast);
+                            });
                     }
 
                     dvm.list = getList();

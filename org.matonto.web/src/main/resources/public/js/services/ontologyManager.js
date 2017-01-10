@@ -120,6 +120,7 @@
             var cm = catalogManagerService;
             var sm = stateManagerService;
             var util = utilService;
+            var catalogId = '';
 
             /**
              * @ngdoc property
@@ -252,7 +253,9 @@
              * Initializes the `ontologyManagerService` by setting the list of
              * {@link ontologyManager.service:ontologyManagerService#ontologyRecords ontology records}.
              */
-            self.initialize = function() {}
+            self.initialize = function() {
+                catalogId = _.get(cm.localCatalog, '@id', '');
+            }
             /**
              * @ngdoc method
              * @name getAllOntologyIds
@@ -282,7 +285,6 @@
                 return deferred.promise;
             }
             function getAllRecords(sortingOption = _.find(cm.sortOptions, {label: 'Title (desc)'})) {
-                var catalogId = _.get(cm.localCatalog, '@id', '');
                 var ontologyRecordType = 'http://matonto.org/ontologies/catalog#OntologyRecord';
                 var paginatedConfig = {
                     pageIndex: 0,
@@ -341,7 +343,6 @@
              * @returns {Promise} A promise containing the ontology id and JSON-LD serialization of the ontology.
              */
             self.getOntology = function(ontologyId, recordId, rdfFormat = 'jsonld') {
-                var catalogId = _.get(cm.localCatalog, '@id', '');
                 var branchId, commitId;
                 var state = sm.getOntologyStateByRecordId(recordId);
                 var deferred = $q.defer();
@@ -437,18 +438,18 @@
                     .then(response => onUploadSuccess(response.data.recordId, response.data.ontologyId), onError);
                 return deferred.promise;
             }
-            self.changeBranch = function(ontologyId, recordId, branchId, commitId, type = 'ontology') {
+            self.updateOntology = function(recordId, branchId, commitId, type = 'ontology') {
                 var deferred = $q.defer();
-                var catalogId = _.get(cm.localCatalog, '@id', '');
                 var onSuccess = function(listItem) {
                     sm.updateOntologyState(recordId, branchId, commitId)
                         .then(() => {
-                            updateListItem(ontologyId, listItem);
+                            updateListItem(recordId, listItem);
                             deferred.resolve();
                         }, deferred.reject);
                 }
                 cm.getResource(commitId, branchId, recordId, catalogId, false)
                     .then(ontology => {
+                        var ontologyId = self.getListItemByRecordId(recordId).ontologyId;
                         if (type === 'ontology') {
                             createOntologyListItem(ontologyId, recordId, branchId, commitId, ontology,
                                 emptyInProgressCommit).then(onSuccess,
@@ -477,7 +478,6 @@
              */
             self.openOntology = function(ontologyId, recordId, type='ontology') {
                 var deferred = $q.defer();
-                var catalogId = _.get(cm.localCatalog, '@id', '');
                 var onAddSuccess = function() {
                     deferred.resolve(recordId);
                 }
@@ -556,7 +556,6 @@
              */
             self.saveChanges = function(recordId, differenceObj) {
                 var deferred = $q.defer();
-                var catalogId = _.get(cm.localCatalog, '@id', '');
                 var onSuccess = function() {
                     cm.updateInProgressCommit(recordId, catalogId, differenceObj)
                         .then(deferred.resolve, deferred.reject);
@@ -729,7 +728,6 @@
              * ontology.
              */
             self.createOntology = function(ontologyJson, title, description, keywords, type='ontology') {
-                var catalogId = _.get(cm.localCatalog, '@id', '');
                 var deferred = $q.defer();
                 var config = {
                     headers: {
@@ -761,7 +759,7 @@
                                 self.list.push(listItem);
                                 deferred.resolve({
                                     entityIRI: ontologyJson['@id'],
-                                    ontologyId: response.data.ontologyId
+                                    recordId: response.data.recordId
                                 });
                             }, deferred.reject);
                     }, response => deferred.reject(response.statusText));
@@ -1909,9 +1907,8 @@
                 return listItem;
             }
             function createOntologyListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit,
-                upToDate) {
+                upToDate = true) {
                 var deferred = $q.defer();
-                var catalogId = _.get(cm.localCatalog, '@id', '');
                 var listItem = setupListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit,
                     ontologyListItemTemplate);
                 var config = {params: {branchId, commitId}};
@@ -2004,9 +2001,9 @@
                     }, deferred.reject);
                 return deferred.promise;
             }
-            function createVocabularyListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit) {
+            function createVocabularyListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit,
+                upToDate = true) {
                 var deferred = $q.defer();
-                var catalogId = _.get(cm.localCatalog, '@id', '');
                 var listItem = setupListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit,
                     vocabularyListItemTemplate);
                 $q.all([
@@ -2070,8 +2067,8 @@
                     }, deferred.reject);
                 return deferred.promise;
             }
-            function updateListItem(ontologyId, newListItem) {
-                var oldListItem = self.getListItemById(ontologyId);
+            function updateListItem(recordId, newListItem) {
+                var oldListItem = self.getListItemByRecordId(recordId);
                 _.assign(oldListItem, newListItem);
             }
         }

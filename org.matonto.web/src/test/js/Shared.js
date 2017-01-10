@@ -216,7 +216,7 @@ function mockOntologyManager() {
             this.addToDeletions = jasmine.createSpy('addToDeletions');
             this.getConceptIRIs = jasmine.createSpy('getConceptsIRIs');
             this.getConceptSchemeIRIs = jasmine.createSpy('getConceptSchemeIRIs');
-            this.changeBranch = jasmine.createSpy('changeBranch');
+            this.updateOntology = jasmine.createSpy('updateOntology');
             this.removeBranch = jasmine.createSpy('removeBranch');
             this.getOntologyByRecordId = jasmine.createSpy('getOntologyByRecordId');
         });
@@ -451,7 +451,8 @@ function mockOntologyState() {
                         id: 'id',
                         jsAnnotations: [{}]
                     }
-                }]
+                }],
+                upToDate: true
             };
             this.reset = jasmine.createSpy('reset');
             this.setTreeTab = jasmine.createSpy('setTreeTab');

@@ -23,7 +23,8 @@
 <div class="saved-changes-tab row">
     <div class="col-xs-8 col-xs-offset-2">
         <block>
-            <block-content>
+            <block-content class="padding">
+                <error-display ng-if="!dvm.os.listItem.upToDate">There have been other commits made on this Branch.</error-display>
                 <div class="property-values" ng-repeat="id in dvm.list">
                     <h5 ng-click="isClosed = !isClosed" class="clearfix">
                         <p class="text">{{dvm.util.getBeautifulIRI(id)}} <small><a ng-click="dvm.go($event, id)">{{id}}</a></small></p><i class="fa fa-fw" ng-class="{'fa-chevron-down': isClosed, 'fa-chevron-up': !isClosed}"></i>
@@ -33,8 +34,9 @@
                         <pre class="deletions">{{dvm.getDeletions(id) | json}}</pre>
                     </div>
                 </div>
-                <div ng-if="!dvm.list.length" class="padding text-center">
-                    <info-message>You don't have any unsaved changes.</info-message>
+                <div ng-if="!dvm.list.length" class="text-center">
+                    <info-message ng-if="dvm.os.listItem.upToDate">You don't have any unsaved changes.</info-message>
+                    <error-display ng-if="!dvm.os.listItem.upToDate">There have been other commits made on this Branch. Click <a ng-click="dvm.update()">here</a> to pull in the latest changes.</error-display>
                 </div>
             </block-content>
         </block>

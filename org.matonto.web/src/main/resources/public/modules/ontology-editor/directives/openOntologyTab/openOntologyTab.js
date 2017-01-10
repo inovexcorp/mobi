@@ -45,12 +45,12 @@
                     var cm = catalogManagerService;
                     var sm = stateManagerService;
                     var catalogId = _.get(cm.localCatalog, '@id', '');
+                    var ontologyRecords = [];
 
                     dvm.om = ontologyManagerService;
                     dvm.os = ontologyStateService;
                     dvm.begin = 0;
                     dvm.limit = 10;
-                    dvm.ontologyRecords = [];
                     dvm.filteredList = [];
                     dvm.type = 'ontology';
 
@@ -87,7 +87,7 @@
                     dvm.deleteOntology = function() {
                         cm.deleteRecord(dvm.recordId, catalogId)
                             .then(response => {
-                                _.remove(dvm.ontologyRecords, record => _.get(record, '@id', '') === dvm.recordId);
+                                _.remove(ontologyRecords, record => _.get(record, '@id', '') === dvm.recordId);
                                 var state = sm.getOntologyStateByRecordId(dvm.recordId);
                                 if (!_.isEmpty(state)) {
                                     sm.deleteState(_.get(state, 'id', ''));
@@ -103,16 +103,16 @@
 
                     dvm.getAllOntologyRecords = function(sortingOption) {
                         dvm.om.getAllOntologyRecords(sortingOption)
-                            .then(ontologyRecords => {
-                                dvm.ontologyRecords = ontologyRecords;
-                                dvm.filteredList = getFilteredRecords(dvm.ontologyRecords);
+                            .then(records => {
+                                ontologyRecords = records;
+                                dvm.filteredList = getFilteredRecords(ontologyRecords);
                             });
                     }
 
                     $scope.$watch(function() {
-                        return dvm.filterText + dvm.om.list;
+                        return dvm.filterText + dvm.om.list + ontologyRecords;
                     }, function handleFilterTextChange(newValue, oldValue) {
-                        dvm.filteredList = $filter('filter')(getFilteredRecords(dvm.ontologyRecords), dvm.filterText,
+                        dvm.filteredList = $filter('filter')(getFilteredRecords(ontologyRecords), dvm.filterText,
                             (actual, expected) => {
                                 expected = _.lowerCase(expected);
                                 return _.includes(_.lowerCase(dvm.getRecordValue(actual, 'title')), expected)
