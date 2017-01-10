@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Mapping Preview directive', function() {
+/*describe('Mapping Preview directive', function() {
     var $compile,
         scope,
         utilSvc,
@@ -168,4 +168,4 @@ describe('Mapping Preview directive', function() {
             expect(propItem.hasClass('error-msg')).toBe(true);
         });
     });
-});
+});*/

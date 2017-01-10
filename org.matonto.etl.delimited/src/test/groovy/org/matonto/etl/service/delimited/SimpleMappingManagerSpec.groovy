@@ -180,7 +180,7 @@ class SimpleMappingManagerSpec extends Specification {
         expect:
         mapping.getId() == mappingId;
         mapping.getModel().contains(mappingIRI, vf.createIRI(Resource.type_IRI), vf.createIRI(Mapping.TYPE));
-        mapping.getModel().contains(mappingIRI, vf.createIRI(Mapping.versionIRI_IRI), vf.createLiteral(versionIRI.stringValue(), vf.createIRI(XSD.ANYURI)));
+        mapping.getModel().contains(mappingIRI, vf.createIRI(Mapping.versionIRI_IRI), versionIRI);
     }
 
     def "Create a Mapping using a valid File"() {

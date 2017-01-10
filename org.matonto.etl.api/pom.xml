@@ -110,6 +110,7 @@
                                 <ontology>
                                     <ontologyFile>${project.basedir}/src/main/resources/delimited.ttl</ontologyFile>
                                     <outputPackage>org.matonto.etl.api.ontologies.delimited</outputPackage>
+                                    <ontologyName>Delimited</ontologyName>
                                 </ontology>
                             </generates>
                             <outputLocation>${project.basedir}/src/main/java</outputLocation>

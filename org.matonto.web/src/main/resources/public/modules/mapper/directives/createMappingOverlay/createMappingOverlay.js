@@ -83,15 +83,13 @@
                         } else {
                             dvm.mm.getMapping(dvm.savedMappingId).then(mapping => {
                                 deferred.resolve(dvm.mm.copyMapping(mapping, dvm.state.mapping.id));
-                            }, error => {
-                                deferred.reject(error);
-                            });
+                            }, deferred.reject);
                         }
 
                         deferred.promise.then(mapping => {
                             dvm.state.mapping.jsonld = mapping;
-                            return dvm.mm.getSourceOntologies(dvm.mm.getSourceOntologyId(dvm.state.mapping.jsonld));
-                        }, error => $q.reject(error)).then(ontologies => {
+                            return dvm.mm.getSourceOntologies(dvm.mm.getSourceOntologyInfo(mapping));
+                        }, $q.reject).then(ontologies => {
                             if (dvm.mm.areCompatible(dvm.state.mapping.jsonld, ontologies)) {
                                 dvm.state.sourceOntologies = ontologies;
                                 dvm.state.mappingSearchString = '';

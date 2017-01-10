@@ -174,10 +174,7 @@ public class SimpleMappingManager implements MappingManager {
         Mapping mapping = mappingFactory.createNew(mappingResource);
 
         Optional<IRI> versionIRI = id.getVersionIRI();
-        if (versionIRI.isPresent()) {
-            Value version = factory.createLiteral(versionIRI.get().stringValue(), factory.createIRI(XSD.ANYURI));
-            mapping.setVersionIRI(version);
-        }
+        versionIRI.ifPresent(mapping::setVersionIRI);
 
         return new SimpleMappingWrapper(id, mapping, Collections.emptySet(), mapping.getModel());
     }
@@ -304,15 +301,10 @@ public class SimpleMappingManager implements MappingManager {
         }
 
         Mapping mapping = mappings.iterator().next();
-        Optional<Value> versionIriOpt = mapping.getVersionIRI();
-
+        Optional<IRI> versionIriOpt = mapping.getVersionIRI();
         SimpleMappingId.Builder builder = new SimpleMappingId.Builder(factory)
                 .mappingIRI(factory.createIRI(mapping.getResource().stringValue()));
-
-        if (versionIriOpt.isPresent()) {
-            builder.versionIRI(factory.createIRI(versionIriOpt.get().stringValue()));
-        }
-
+        versionIriOpt.ifPresent(builder::versionIRI);
         Collection<ClassMapping> classMappings = classMappingFactory.getAllExisting(model);
 
         return new SimpleMappingWrapper(builder.build(), mapping, classMappings, model);

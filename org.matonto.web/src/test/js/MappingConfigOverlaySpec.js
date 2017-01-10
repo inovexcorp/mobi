@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Mapping Config Overlay directive', function() {
+/*describe('Mapping Config Overlay directive', function() {
     var $compile,
         scope,
         utilSvc,
@@ -329,4 +329,4 @@ describe('Mapping Config Overlay directive', function() {
         continueButton.triggerHandler('click');
         expect(controller.cancel).toHaveBeenCalled();
     });
-});
+});*/

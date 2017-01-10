@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Mapping Select Page directive', function() {
+/*describe('Mapping Select Page directive', function() {
     var $compile,
         scope,
         mappingManagerSvc,
@@ -234,4 +234,4 @@ describe('Mapping Select Page directive', function() {
         angular.element(runButton).triggerHandler('click');
         expect(controller.run).toHaveBeenCalled();
     });
-});
+});*/

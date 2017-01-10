@@ -712,6 +712,7 @@ function mockUtil() {
             this.getBeautifulIRI = jasmine.createSpy('getBeautifulIRI').and.callFake(_.identity);
             this.getPropertyValue = jasmine.createSpy('getPropertyValue').and.returnValue('');
             this.setPropertyValue = jasmine.createSpy('setPropertyValue').and.returnValue({});
+            this.getPropertyId = jasmine.createSpy('getPropertyId').and.returnValue('');
             this.getDctermsValue = jasmine.createSpy('getDctermsValue').and.returnValue('');
             this.setDctermsValue = jasmine.createSpy('setDctermsValue').and.returnValue({});
             this.mergingArrays = jasmine.createSpy('mergingArrays');

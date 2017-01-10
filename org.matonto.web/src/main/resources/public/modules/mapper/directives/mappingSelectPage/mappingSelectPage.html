@@ -61,7 +61,7 @@
                     <p class="lead">Welcome to the Mapping Tool!</p>
                     <p>If this is your first time here, you may want to check the <a href="http://docs.matonto.org/#mapping_tool" target="_blank">User's Guide</a>. Get started by clicking a mapping name in the list or creating a new mapping.</p>
                 </div>
-                <mapping-preview ng-if="dvm.state.mapping"></mapping-preview>
+                <mapping-preview ng-if="dvm.state.mapping" ontology-exists="dvm.ontologyExists()"></mapping-preview>
             </block-content>
         </block>
     </div>
