@@ -76,10 +76,13 @@ import org.matonto.rest.util.jaxb.Links;
 import org.matonto.web.security.util.AuthenticationProps;
 import org.openrdf.model.vocabulary.DCTERMS;
 import org.openrdf.rio.RDFFormat;
+import org.openrdf.rio.RDFHandler;
 import org.openrdf.rio.Rio;
+import org.openrdf.rio.helpers.BufferedGroupingRDFHandler;
 
 import java.io.BufferedWriter;
 import java.io.OutputStreamWriter;
+import java.io.StringWriter;
 import java.io.Writer;
 import java.util.Arrays;
 import java.util.Collection;
@@ -1483,16 +1486,17 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     /**
-     * Converts a Model into a string of the provided RDF format.
+     * Converts a Model into a string of the provided RDF format, grouping statements by subject and predicate.
      *
      * @param model The Model to convert.
      * @param format A string representing the RDF format to return the Model in.
      * @return A String of the converted Model in the requested RDF format.
      */
     private String getModelInFormat(Model model, String format) {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        Rio.write(transformer.sesameModel(model), out, getRDFFormat(format));
-        return out.toString();
+        StringWriter sw = new StringWriter();
+        RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(getRDFFormat(format), sw));
+        Rio.write(transformer.sesameModel(model), rdfWriter);
+        return sw.toString();
     }
 
     /**
