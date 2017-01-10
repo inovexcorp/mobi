@@ -86,7 +86,7 @@ public class SimpleStateManager implements StateManager {
     private static final String GET_STATES_QUERY;
     private static final String GET_APPLICATION_STATES_QUERY;
     private static final String STATE_ID_BINDING = "id";
-    private static final String USER_BINDING = "user";
+    private static final String USER_BINDING = "userId";
     private static final String APPLICATION_BINDING = "application";
     private static final String RESOURCES_BINDING = "resources";
 

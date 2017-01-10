@@ -910,7 +910,7 @@ public interface CatalogRest {
      */
     @GET
     @Path("{catalogId}/records/{recordId}/branches/{branchId}/commits/{commitId}/resource")
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
     @RolesAllowed("user")
     @ApiOperation("Gets the compiled resource for a the entity identified by a specific Commit.")
     Response getCompiledResource(@Context ContainerRequestContext context,
