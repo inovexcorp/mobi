@@ -112,6 +112,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static org.matonto.rest.util.RestUtils.encode;
 import static org.mockito.Matchers.any;
@@ -303,8 +304,10 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         testInProgressCommit = inProgressCommitFactory.createNew(vf.createIRI(COMMIT_IRIS[0]));
         testBranch = branchFactory.createNew(vf.createIRI(BRANCH_IRI));
         testBranch.setProperty(vf.createLiteral("Title"), vf.createIRI(DCTERMS.TITLE.stringValue()));
+        testBranch.setProperty(vf.createLiteral(USER_IRI), vf.createIRI(DCTERMS.PUBLISHER.stringValue()));
         testBranch.setHead(testCommits.get(0));
-        testUserBranch = userBranchFactory.createNew(vf.createIRI(BRANCH_IRI));
+        testUserBranch = userBranchFactory.createNew(vf.createIRI(BRANCH_IRI + "/user"));
+        testUserBranch.setProperty(vf.createLiteral(USER_IRI + "/0"), vf.createIRI(DCTERMS.PUBLISHER.stringValue()));
         testDistribution = distributionFactory.createNew(vf.createIRI(DISTRIBUTION_IRI));
         testDistribution.setProperty(vf.createLiteral("Title"), vf.createIRI(DCTERMS.TITLE.stringValue()));
         testVersion = versionFactory.createNew(vf.createIRI(VERSION_IRI));
@@ -322,7 +325,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         testVersionedRecord.setVersion(Collections.singleton(testVersion));
         testVersionedRDFRecord = versionedRDFRecordFactory.createNew(vf.createIRI(RECORD_IRI));
         testVersionedRDFRecord.setMasterBranch(testBranch);
-        testVersionedRDFRecord.setBranch(Collections.singleton(testBranch));
+        testVersionedRDFRecord.setBranch(Stream.of(testBranch, testUserBranch).collect(Collectors.toSet()));
         testOntologyRecord = ontologyRecordFactory.createNew(vf.createIRI(RECORD_IRI));
         testMappingRecord = mappingRecordFactory.createNew(vf.createIRI(RECORD_IRI));
         testDatasetRecord = datasetRecordFactory.createNew(vf.createIRI(RECORD_IRI));
@@ -2008,6 +2011,30 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         verify(catalogManager).getRecord(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), versionedRDFRecordFactory);
         verify(catalogManager, atLeastOnce()).getBranch(vf.createIRI(BRANCH_IRI), branchFactory);
         MultivaluedMap<String, Object> headers = response.getHeaders();
+        assertEquals(headers.get("X-Total-Count").get(0), "2");
+        assertEquals(response.getLinks().size(), 0);
+        try {
+            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            assertEquals(result.size(), 2);
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void getBranchesWithUserFilterTest() {
+        // Setup:
+        when(catalogManager.getBranch(testUserBranch.getResource(), branchFactory)).thenReturn(Optional.of(testUserBranch));
+
+        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/branches")
+                .queryParam("sort", DCTERMS.TITLE.stringValue())
+                .queryParam("offset", 0)
+                .queryParam("limit", 10)
+                .queryParam("applyUserFilter", true)
+                .request().get();
+        verify(catalogManager).getRecord(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), versionedRDFRecordFactory);
+        verify(catalogManager, atLeastOnce()).getBranch(vf.createIRI(BRANCH_IRI), branchFactory);
+        MultivaluedMap<String, Object> headers = response.getHeaders();
         assertEquals(headers.get("X-Total-Count").get(0), "1");
         assertEquals(response.getLinks().size(), 0);
         try {
@@ -3585,7 +3612,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/branches")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 200);
-        assertEquals(response.readEntity(String.class), BRANCH_IRI);
+        assertTrue(response.readEntity(String.class).contains(BRANCH_IRI));
         verify(catalogManager).createBranch(anyString(), anyString(), eq(ormFactory));
         verify(catalogManager).addBranch(any(Branch.class), eq(vf.createIRI(RECORD_IRI)));
     }
