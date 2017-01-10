@@ -303,6 +303,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         testInProgressCommit = inProgressCommitFactory.createNew(vf.createIRI(COMMIT_IRIS[0]));
         testBranch = branchFactory.createNew(vf.createIRI(BRANCH_IRI));
         testBranch.setProperty(vf.createLiteral("Title"), vf.createIRI(DCTERMS.TITLE.stringValue()));
+        testBranch.setProperty(vf.createLiteral(USER_IRI + "/0"), vf.createIRI(DCTERMS.PUBLISHER.stringValue()));
         testBranch.setHead(testCommits.get(0));
         testUserBranch = userBranchFactory.createNew(vf.createIRI(BRANCH_IRI));
         testDistribution = distributionFactory.createNew(vf.createIRI(DISTRIBUTION_IRI));
@@ -2013,6 +2014,27 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         try {
             JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
             assertEquals(result.size(), 1);
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void getBranchesWithUserFilterTest() {
+        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/branches")
+                .queryParam("sort", DCTERMS.TITLE.stringValue())
+                .queryParam("offset", 0)
+                .queryParam("limit", 10)
+                .queryParam("applyUserFilter", true)
+                .request().get();
+        verify(catalogManager).getRecord(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), versionedRDFRecordFactory);
+        verify(catalogManager, atLeastOnce()).getBranch(vf.createIRI(BRANCH_IRI), branchFactory);
+        MultivaluedMap<String, Object> headers = response.getHeaders();
+        assertEquals(headers.get("X-Total-Count").get(0), "0");
+        assertEquals(response.getLinks().size(), 0);
+        try {
+            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            assertEquals(result.size(), 0);
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
