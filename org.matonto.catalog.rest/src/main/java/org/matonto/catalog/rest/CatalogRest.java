@@ -606,6 +606,7 @@ public interface CatalogRest {
     /**
      * Gets a list of Branches associated with a VersionedRDFRecord identified by the provided IDs.
      *
+     * @param context The context of the request.
      * @param uriInfo The URI information of the request to be used in creating links to other pages of branches
      * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
@@ -615,6 +616,8 @@ public interface CatalogRest {
      * @param offset The offset for the page.
      * @param limit The number of Branches to return in one page.
      * @param asc Whether or not the list should be sorted ascending or descending.
+     * @param applyUserFilter Whether or not the list should be filtered to Branches associated with the user making
+     *                        the request.
      * @return A list of Branches for the identified VersionedRDFRecord.
      */
     @GET
@@ -622,13 +625,15 @@ public interface CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @ApiOperation("Gets list of Branches associated with a specific VersionedRDFRecord.")
-    Response getBranches(@Context UriInfo uriInfo,
+    Response getBranches(@Context ContainerRequestContext context,
+                         @Context UriInfo uriInfo,
                          @PathParam("catalogId") String catalogId,
                          @PathParam("recordId") String recordId,
                          @QueryParam("sort") String sort,
                          @DefaultValue("0") @QueryParam("offset") int offset,
                          @DefaultValue("100") @QueryParam("limit") int limit,
-                         @DefaultValue("true") @QueryParam("ascending") boolean asc);
+                         @DefaultValue("true") @QueryParam("ascending") boolean asc,
+                         @DefaultValue("false") @QueryParam("applyUserFilter") boolean applyUserFilter);
 
     /**
      * Creates a Branch for a VersionedRDFRecord identified by the IDs using the passed form data. Returns a Response
