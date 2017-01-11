@@ -385,11 +385,13 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
-    public Response createUnversionedDistribution(String catalogId, String recordId, String title, String description,
-                                                  String format, String accessURL, String downloadURL) {
+    public Response createUnversionedDistribution(ContainerRequestContext context, String catalogId, String recordId,
+                                                  String title, String description, String format, String accessURL,
+                                                  String downloadURL) {
         try {
             recordInCatalog(catalogId, recordId);
-            Distribution newDistribution = createDistribution(title, description, format, accessURL, downloadURL);
+            Distribution newDistribution = createDistribution(title, description, format, accessURL, downloadURL,
+                    context);
             catalogManager.addDistributionToUnversionedRecord(newDistribution, factory.createIRI(recordId));
             return Response.ok(newDistribution.getResource().stringValue()).build();
         } catch (MatOntoException e) {
@@ -447,7 +449,8 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
-    public Response createVersion(String catalogId, String recordId, String typeIRI, String title, String description) {
+    public Response createVersion(ContainerRequestContext context, String catalogId, String recordId, String typeIRI,
+                                  String title, String description) {
         try {
             recordInCatalog(catalogId, recordId);
             if (typeIRI == null || !versionFactories.keySet().contains(typeIRI)) {
@@ -458,6 +461,8 @@ public class CatalogRestImpl implements CatalogRest {
             }
 
             Version newVersion = catalogManager.createVersion(title, description, versionFactories.get(typeIRI));
+            newVersion.setProperty(getActiveUser(context).getResource(),
+                    factory.createIRI(DCTERMS.PUBLISHER.stringValue()));
             catalogManager.addVersion(newVersion, factory.createIRI(recordId));
             return Response.ok(newVersion.getResource().stringValue()).build();
         } catch (MatOntoException e) {
@@ -579,12 +584,13 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
-    public Response createVersionedDistribution(String catalogId, String recordId, String versionId, String title,
-                                                String description, String format, String accessURL,
-                                                String downloadURL) {
+    public Response createVersionedDistribution(ContainerRequestContext context, String catalogId, String recordId,
+                                                String versionId, String title, String description, String format,
+                                                String accessURL, String downloadURL) {
         try {
             testVersionPath(catalogId, recordId, versionId);
-            Distribution newDistribution = createDistribution(title, description, format, accessURL, downloadURL);
+            Distribution newDistribution = createDistribution(title, description, format, accessURL, downloadURL,
+                    context);
             catalogManager.addDistributionToVersion(newDistribution, factory.createIRI(versionId));
             return Response.ok(newDistribution.getResource().stringValue()).build();
         } catch (MatOntoException e) {
@@ -672,7 +678,8 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
-    public Response createBranch(String catalogId, String recordId, String typeIRI, String title, String description) {
+    public Response createBranch(ContainerRequestContext context, String catalogId, String recordId, String typeIRI,
+                                 String title, String description) {
         try {
             recordInCatalog(catalogId, recordId);
             if (typeIRI == null || !branchFactories.keySet().contains(typeIRI)) {
@@ -683,6 +690,8 @@ public class CatalogRestImpl implements CatalogRest {
             }
 
             Branch newBranch = catalogManager.createBranch(title, description, branchFactories.get(typeIRI));
+            newBranch.setProperty(getActiveUser(context).getResource(),
+                    factory.createIRI(DCTERMS.PUBLISHER.stringValue()));
             catalogManager.addBranch(newBranch, factory.createIRI(recordId));
             return Response.ok(newBranch.getResource().stringValue()).build();
         } catch (MatOntoException e) {
@@ -1385,7 +1394,7 @@ public class CatalogRestImpl implements CatalogRest {
      * @return The new Distribution if passed a title.
      */
     private Distribution createDistribution(String title, String description, String format, String accessURL,
-                                            String downloadURL) {
+                                            String downloadURL, ContainerRequestContext context) {
         if (title == null) {
             throw ErrorUtils.sendError("Distribution title is required", Response.Status.BAD_REQUEST);
         }
@@ -1402,7 +1411,10 @@ public class CatalogRestImpl implements CatalogRest {
         if (downloadURL != null) {
             builder.downloadURL(factory.createIRI(downloadURL));
         }
-        return catalogManager.createDistribution(builder.build());
+        Distribution distribution = catalogManager.createDistribution(builder.build());
+        distribution.setProperty(getActiveUser(context).getResource(),
+                factory.createIRI(DCTERMS.PUBLISHER.stringValue()));
+        return distribution;
     }
 
     /**
