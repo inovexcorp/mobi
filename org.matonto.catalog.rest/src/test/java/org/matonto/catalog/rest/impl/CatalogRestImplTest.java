@@ -307,7 +307,8 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         testBranch.setProperty(vf.createLiteral(USER_IRI), vf.createIRI(DCTERMS.PUBLISHER.stringValue()));
         testBranch.setHead(testCommits.get(0));
         testUserBranch = userBranchFactory.createNew(vf.createIRI(BRANCH_IRI + "/user"));
-        testUserBranch.setProperty(vf.createLiteral(USER_IRI + "/0"), vf.createIRI(DCTERMS.PUBLISHER.stringValue()));
+        testUserBranch.setProperty(vf.createLiteral("Title"), vf.createIRI(DCTERMS.TITLE.stringValue()));
+        testUserBranch.setProperty(vf.createLiteral(USER_IRI), vf.createIRI(DCTERMS.PUBLISHER.stringValue()));
         testDistribution = distributionFactory.createNew(vf.createIRI(DISTRIBUTION_IRI));
         testDistribution.setProperty(vf.createLiteral("Title"), vf.createIRI(DCTERMS.TITLE.stringValue()));
         testVersion = versionFactory.createNew(vf.createIRI(VERSION_IRI));
@@ -420,6 +421,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         when(catalogManager.createVersion(anyString(), anyString(), eq(versionFactory))).thenReturn(testVersion);
         when(catalogManager.createVersion(anyString(), anyString(), eq(tagFactory))).thenReturn(testTag);
         when(catalogManager.getBranch(any(Resource.class), eq(branchFactory))).thenReturn(Optional.of(testBranch));
+        when(catalogManager.getBranch(testUserBranch.getResource(), branchFactory)).thenReturn(Optional.of(testUserBranch));
         when(catalogManager.getBranch(any(Resource.class), eq(userBranchFactory))).thenReturn(Optional.of(testUserBranch));
         when(catalogManager.createBranch(anyString(), anyString(), eq(branchFactory))).thenReturn(testBranch);
         when(catalogManager.createBranch(anyString(), anyString(), eq(userBranchFactory))).thenReturn(testUserBranch);
@@ -2008,6 +2010,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
                 .queryParam("offset", 0)
                 .queryParam("limit", 10)
                 .request().get();
+        assertEquals(response.getStatus(), 200);
         verify(catalogManager).getRecord(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), versionedRDFRecordFactory);
         verify(catalogManager, atLeastOnce()).getBranch(vf.createIRI(BRANCH_IRI), branchFactory);
         MultivaluedMap<String, Object> headers = response.getHeaders();
@@ -2024,7 +2027,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     @Test
     public void getBranchesWithUserFilterTest() {
         // Setup:
-        when(catalogManager.getBranch(testUserBranch.getResource(), branchFactory)).thenReturn(Optional.of(testUserBranch));
+        testUserBranch.setProperty(vf.createLiteral(USER_IRI + "/0"), vf.createIRI(DCTERMS.PUBLISHER.stringValue()));
 
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/branches")
                 .queryParam("sort", DCTERMS.TITLE.stringValue())
@@ -2032,6 +2035,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
                 .queryParam("limit", 10)
                 .queryParam("applyUserFilter", true)
                 .request().get();
+        assertEquals(response.getStatus(), 200);
         verify(catalogManager).getRecord(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), versionedRDFRecordFactory);
         verify(catalogManager, atLeastOnce()).getBranch(vf.createIRI(BRANCH_IRI), branchFactory);
         MultivaluedMap<String, Object> headers = response.getHeaders();
