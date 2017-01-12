@@ -150,7 +150,8 @@ describe('Branch Select directive', function() {
                 controller.delete();
                 deferred.resolve();
                 scope.$apply();
-                expect(ontologyStateSvc.listItem.branches.length).toBe(0);
+                expect(ontologyManagerSvc.removeBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
+                    controller.branch['@id']);
                 expect(controller.showDeleteConfirmation).toBe(false);
             });
             it('when rejected', function() {

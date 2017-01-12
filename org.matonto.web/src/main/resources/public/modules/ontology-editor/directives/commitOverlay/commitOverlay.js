@@ -50,7 +50,8 @@
                         if (dvm.os.listItem.upToDate) {
                             createCommit(dvm.os.listItem.branchId);
                         } else {
-                            var branch = _.find(dvm.os.listItem.branches, branch => _.get(branch, '@id') === branchId);
+                            var branch = _.find(dvm.os.listItem.branches, branch =>
+                                _.get(branch, '@id') === dvm.os.listItem.branchId);
                             var branchConfig = {title: 'WIP:' +  util.getDctermsValue(branch, 'title')};
                             var description = util.getDctermsValue(branch, 'description');
                             if (description) {
@@ -62,7 +63,8 @@
                                         .then(branch => {
                                             dvm.os.listItem.branches.push(branch);
                                             dvm.os.listItem.branchId = branch['@id'];
-                                            createCommit(branchId);
+                                            dvm.os.listItem.upToDate = true;
+                                            createCommit(branch['@id']);
                                         }, onError), onError);
                         }
                     }
@@ -76,6 +78,7 @@
                             dvm.comment).then(commitId =>
                                 sm.updateOntologyState(dvm.os.listItem.recordId, branchId, commitId)
                                     .then(() => {
+                                        dvm.os.listItem.commitId = commitId;
                                         dvm.os.clearInProgressCommit();
                                         dvm.os.showCommitOverlay = false;
                                     }, onError), onError);

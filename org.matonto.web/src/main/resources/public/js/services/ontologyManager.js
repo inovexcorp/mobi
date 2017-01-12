@@ -85,6 +85,7 @@
                 objectPropertyHierarchy: [],
                 objectPropertyIndex: {},
                 classesWithIndividuals: [],
+                classesWithIndividualsIndex: {},
                 blankNodes: {},
                 index: {},
                 additions: [],
@@ -346,20 +347,7 @@
                 var branchId, commitId;
                 var state = sm.getOntologyStateByRecordId(recordId);
                 var deferred = $q.defer();
-                if (!_.isEmpty(state)) {
-                    branchId = _.get(state, "model[0]['" + prefixes.ontologyState + "branch'][0]['@id']");
-                    commitId = _.get(state, "model[0]['" + prefixes.ontologyState + "commit'][0]['@id']");
-                    cm.getInProgressCommit(recordId, catalogId)
-                        .then(inProgressCommit => cm.getResource(commitId, branchId, recordId, catalogId, true, rdfFormat)
-                            .then(ontology => resolve(ontology, inProgressCommit), deferred.reject), errorMessage => {
-                                if (errorMessage === 'User has no InProgressCommit') {
-                                    cm.getResource(commitId, branchId, recordId, catalogId, false, rdfFormat)
-                                        .then(ontology => resolve(ontology, emptyInProgressCommit), deferred.reject);
-                                } else {
-                                    deferred.reject(errorMessage);
-                                }
-                            });
-                } else {
+                var getLatest = function() {
                     cm.getRecordMasterBranch(recordId, catalogId)
                         .then(masterBranch => {
                             branchId = _.get(masterBranch, '@id', '');
@@ -372,6 +360,25 @@
                                             deferred.reject);
                                 }, deferred.reject);
                         }, deferred.reject);
+                }
+                if (!_.isEmpty(state)) {
+                    branchId = _.get(state, "model[0]['" + prefixes.ontologyState + "branch'][0]['@id']");
+                    commitId = _.get(state, "model[0]['" + prefixes.ontologyState + "commit'][0]['@id']");
+                    cm.getInProgressCommit(recordId, catalogId)
+                        .then(inProgressCommit => cm.getResource(commitId, branchId, recordId, catalogId, true, rdfFormat)
+                            .then(ontology => resolve(ontology, inProgressCommit), deferred.reject), errorMessage => {
+                                if (errorMessage === 'User has no InProgressCommit') {
+                                    cm.getResource(commitId, branchId, recordId, catalogId, false, rdfFormat)
+                                        .then(ontology => resolve(ontology, emptyInProgressCommit), deferred.reject);
+                                } else {
+                                    deferred.reject(errorMessage);
+                                }
+                            }, () => {
+                                sm.deleteOntologyState(recordId, branchId, commitId)
+                                    .then(getLatest, deferred.reject);
+                            });
+                } else {
+                    getLatest();
                 }
                 var resolve = function(ontology, inProgressCommit) {
                     deferred.resolve({recordId, ontologyId, ontology, branchId, commitId, inProgressCommit});
@@ -482,7 +489,7 @@
                     deferred.resolve(recordId);
                 }
                 self.getOntology(ontologyId, recordId)
-                    .then(response => {
+                    .then(response =>
                         cm.getBranchHeadCommit(response.branchId, recordId, catalogId)
                             .then(headCommit => {
                                 var commitId = _.get(headCommit, "commit[0]['@graph'][0]['@id']", '');
@@ -496,8 +503,7 @@
                                         response.commitId, response.ontology, response.inProgressCommit, upToDate)
                                             .then(onAddSuccess);
                                 }
-                            }, response => deferred.reject(response.statusText));
-                    }, response => deferred.reject(response.statusText));
+                            }, deferred.reject), deferred.reject);
                 return deferred.promise;
             }
             /**
@@ -727,7 +733,7 @@
              * @returns {Promise} A promise with the entityIRI and ontologyId for the state of the newly created
              * ontology.
              */
-            self.createOntology = function(ontologyJson, title, description, keywords, type='ontology') {
+            self.createOntology = function(ontologyJson, title, description, keywords, type = 'ontology') {
                 var deferred = $q.defer();
                 var config = {
                     headers: {
@@ -759,7 +765,9 @@
                                 self.list.push(listItem);
                                 deferred.resolve({
                                     entityIRI: ontologyJson['@id'],
-                                    recordId: response.data.recordId
+                                    recordId: response.data.recordId,
+                                    branchId: response.data.branchId,
+                                    commitId: response.data.commitId
                                 });
                             }, deferred.reject);
                     }, response => deferred.reject(response.statusText));
@@ -1922,7 +1930,7 @@
                         config),
                     $http.get(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/object-property-hierarchies',
                         config),
-                    cm.getRecordBranches(recordId, catalogId)
+                    cm.getRecordBranches(recordId, catalogId, {applyUserFilter: false})
                 ]).then(response => {
                     listItem.annotations = _.unionWith(
                         _.get(response[0], 'data.annotationProperties'),

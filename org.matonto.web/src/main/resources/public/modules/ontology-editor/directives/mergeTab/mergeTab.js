@@ -27,9 +27,11 @@
         .module('mergeTab', [])
         .directive('mergeTab', mergeTab);
 
-        mergeTab.$inject = ['utilService', 'ontologyStateService', 'catalogManagerService', 'ontologyManagerService'];
+        mergeTab.$inject = ['utilService', 'ontologyStateService', 'catalogManagerService', 'ontologyManagerService',
+            'prefixes', 'stateManagerService'];
 
-        function mergeTab(utilService, ontologyStateService, catalogManagerService, ontologyManagerService) {
+        function mergeTab(utilService, ontologyStateService, catalogManagerService, ontologyManagerService, prefixes,
+            stateManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -41,6 +43,7 @@
                     var om = ontologyManagerService;
                     var cm = catalogManagerService;
                     var catalogId = _.get(cm.localCatalog, '@id', '');
+                    var sm = stateManagerService;
 
                     dvm.os = ontologyStateService;
                     dvm.util = utilService;
@@ -48,16 +51,16 @@
                     dvm.branch = {};
                     dvm.branchTitle = '';
                     dvm.error = '';
+                    dvm.targetId = undefined;
+                    dvm.isUserBranch = false;
                     dvm.checkbox = false;
 
                     dvm.attemptMerge = function() {
                         cm.getBranchConflicts(dvm.branch['@id'], dvm.targetId, dvm.os.listItem.recordId, catalogId)
                             .then(conflicts => {
                                 if (_.isEmpty(conflicts)) {
-                                    console.log('no conflicts');
-                                    // dvm.merge();
+                                    dvm.merge();
                                 } else {
-                                    // TODO: resolve them
                                     console.log('conflicts:', conflicts);
                                 }
                             }, onError);
@@ -95,7 +98,15 @@
                     function setupVariables() {
                         dvm.branch = _.find(dvm.os.listItem.branches, {'@id': dvm.os.listItem.branchId});
                         dvm.branchTitle = dvm.util.getDctermsValue(dvm.branch, 'title');
-                        dvm.checkbox = false;
+                        if (_.includes(dvm.branch['@type'], prefixes.catalog + 'UserBranch')) {
+                            dvm.targetId = _.get(dvm.branch, "['" + prefixes.catalog + "createdFrom'][0]['@id']", '');
+                            dvm.isUserBranch = true;
+                            dvm.checkbox = true;
+                        } else {
+                            dvm.targetId = undefined;
+                            dvm.isUserBranch = false;
+                            dvm.checkbox = false;
+                        }
                     }
 
                     $scope.$watch('dvm.os.listItem.branchId', setupVariables);

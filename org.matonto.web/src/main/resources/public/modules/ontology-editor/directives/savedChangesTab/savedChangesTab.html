@@ -24,14 +24,16 @@
     <div class="col-xs-8 col-xs-offset-2">
         <block>
             <block-content class="padding">
-                <error-display ng-if="!dvm.os.listItem.upToDate">There have been other commits made on this Branch.</error-display>
-                <div class="property-values" ng-repeat="id in dvm.list">
-                    <h5 ng-click="isClosed = !isClosed" class="clearfix">
-                        <p class="text">{{dvm.util.getBeautifulIRI(id)}} <small><a ng-click="dvm.go($event, id)">{{id}}</a></small></p><i class="fa fa-fw" ng-class="{'fa-chevron-down': isClosed, 'fa-chevron-up': !isClosed}"></i>
-                    </h5>
-                    <div class="value-container" ng-hide="isClosed">
-                        <pre class="additions">{{dvm.getAdditions(id) | json}}</pre>
-                        <pre class="deletions">{{dvm.getDeletions(id) | json}}</pre>
+                <div ng-if="dvm.list.length">
+                    <error-display ng-if="!dvm.os.listItem.upToDate">There have been other commits made on this Branch.</error-display>
+                    <div class="property-values" ng-repeat="id in dvm.list">
+                        <h5 ng-click="isClosed = !isClosed" class="clearfix">
+                            <p class="text">{{dvm.util.getBeautifulIRI(id)}} <small><a ng-click="dvm.go($event, id)">{{id}}</a></small></p><i class="fa fa-fw" ng-class="{'fa-chevron-down': isClosed, 'fa-chevron-up': !isClosed}"></i>
+                        </h5>
+                        <div class="value-container" ng-hide="isClosed">
+                            <pre class="additions">{{dvm.getAdditions(id) | json}}</pre>
+                            <pre class="deletions">{{dvm.getDeletions(id) | json}}</pre>
+                        </div>
                     </div>
                 </div>
                 <div ng-if="!dvm.list.length" class="text-center">

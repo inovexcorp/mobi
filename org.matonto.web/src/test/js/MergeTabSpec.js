@@ -36,6 +36,8 @@ describe('Merge Tab directive', function() {
         mockOntologyState();
         mockCatalogManager();
         mockOntologyManager();
+        mockPrefixes();
+        mockStateManager();
         injectTrustedFilter();
         injectHighlightFilter();
 
@@ -94,7 +96,7 @@ describe('Merge Tab directive', function() {
                     spyOn(controller, 'merge');
                     getDeferred.resolve([]);
                     scope.$apply();
-                    // expect(controller.merge).toHaveBeenCalled();
+                    expect(controller.merge).toHaveBeenCalled();
                 });
             });
             it('when getBranchConflicts is rejected', function() {
