@@ -40,6 +40,7 @@ describe('Merge Tab directive', function() {
         mockStateManager();
         injectTrustedFilter();
         injectHighlightFilter();
+        injectBeautifyFilter();
 
         inject(function(_$q_, _$compile_, _$rootScope_, _ontologyStateService_, _ontologyManagerService_,
             _catalogManagerService_) {
@@ -134,7 +135,7 @@ describe('Merge Tab directive', function() {
                             deleteDefer.resolve();
                             scope.$apply();
                             expect(catalogManagerSvc.mergeBranches).toHaveBeenCalledWith(branchId, targetId,
-                                ontologyStateSvc.listItem.recordId, catalogId, controller.resolutions);
+                                ontologyStateSvc.listItem.recordId, catalogId, jasmine.any(Object));
                             expect(ontologyManagerSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem
                                 .recordId, targetId, commitId, ontologyStateSvc.state.type);
                             expect(catalogManagerSvc.deleteRecordBranch).toHaveBeenCalledWith(branchId,
@@ -147,7 +148,7 @@ describe('Merge Tab directive', function() {
                             deleteDefer.reject(error);
                             scope.$apply();
                             expect(catalogManagerSvc.mergeBranches).toHaveBeenCalledWith(branchId, targetId,
-                                ontologyStateSvc.listItem.recordId, catalogId, controller.resolutions);
+                                ontologyStateSvc.listItem.recordId, catalogId, jasmine.any(Object));
                             expect(ontologyManagerSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem
                                 .recordId, targetId, commitId, ontologyStateSvc.state.type);
                             expect(catalogManagerSvc.deleteRecordBranch).toHaveBeenCalledWith(branchId,
@@ -158,7 +159,7 @@ describe('Merge Tab directive', function() {
                     it('and controller.checkbox if falsy', function() {
                         scope.$apply();
                         expect(catalogManagerSvc.mergeBranches).toHaveBeenCalledWith(branchId, targetId,
-                            ontologyStateSvc.listItem.recordId, catalogId, controller.resolutions);
+                            ontologyStateSvc.listItem.recordId, catalogId, jasmine.any(Object));
                         expect(ontologyManagerSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem
                             .recordId, targetId, commitId, ontologyStateSvc.state.type);
                         expect(catalogManagerSvc.deleteRecordBranch).not.toHaveBeenCalled();
@@ -169,7 +170,7 @@ describe('Merge Tab directive', function() {
                     changeDefer.reject(error);
                     scope.$apply();
                     expect(catalogManagerSvc.mergeBranches).toHaveBeenCalledWith(branchId, targetId,
-                        ontologyStateSvc.listItem.recordId, catalogId, controller.resolutions);
+                        ontologyStateSvc.listItem.recordId, catalogId, jasmine.any(Object));
                     expect(ontologyManagerSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                         targetId, commitId, ontologyStateSvc.state.type);
                     expect(catalogManagerSvc.deleteRecordBranch).not.toHaveBeenCalled();
@@ -180,7 +181,7 @@ describe('Merge Tab directive', function() {
                 mergeDefer.reject(error);
                 scope.$apply();
                 expect(catalogManagerSvc.mergeBranches).toHaveBeenCalledWith(branchId, targetId,
-                    ontologyStateSvc.listItem.recordId, catalogId, controller.resolutions);
+                    ontologyStateSvc.listItem.recordId, catalogId, jasmine.any(Object));
                 expect(ontologyManagerSvc.updateOntology).not.toHaveBeenCalled();
                 expect(catalogManagerSvc.deleteRecordBranch).not.toHaveBeenCalled();
                 expect(controller.error).toEqual(error);

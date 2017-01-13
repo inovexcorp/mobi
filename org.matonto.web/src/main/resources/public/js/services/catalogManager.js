@@ -1185,8 +1185,8 @@
                             'Accept': 'text/plain'
                         }
                     };
-                fd.append('additions', _.has(differenceObj, 'additions') ? differenceObj.additions : []);
-                fd.append('deletions', _.has(differenceObj, 'deletions') ? differenceObj.deletions : []);
+                fd.append('additions', _.has(differenceObj, 'additions') ? JSON.stringify(differenceObj.additions) : []);
+                fd.append('deletions', _.has(differenceObj, 'deletions') ? JSON.stringify(differenceObj.deletions) : []);
                 $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(sourceId) + '/conflicts/resolution', fd, config)
                     .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText));
                 return deferred.promise;

@@ -28,9 +28,15 @@ import org.matonto.catalog.api.Difference;
 import org.matonto.rdf.api.Model;
 
 public class SimpleConflict implements Conflict {
+    private String iri;
     private Model original;
     private Difference left;
     private Difference right;
+
+    @Override
+    public String getIRI() {
+        return iri;
+    }
 
     @Override
     public Model getOriginal() {
@@ -48,6 +54,7 @@ public class SimpleConflict implements Conflict {
     }
 
     public static class Builder {
+        private final String iri;
         private final Model original;
         private Difference left;
         private Difference right;
@@ -58,9 +65,11 @@ public class SimpleConflict implements Conflict {
          * down into additions and deletions.
          *
          * @param original The Model identifying the original state for this conflict.
+         * @param iri The String identifying the entity for this conflict.
          */
-        public Builder(Model original) {
+        public Builder(Model original, String iri) {
             this.original = original;
+            this.iri = iri;
         }
 
         public Builder leftDifference(Difference left) {
@@ -79,6 +88,7 @@ public class SimpleConflict implements Conflict {
     }
 
     private SimpleConflict(Builder builder) {
+        this.iri = builder.iri;
         this.original = builder.original;
         this.left = builder.left;
         this.right = builder.right;

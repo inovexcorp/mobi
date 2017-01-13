@@ -1065,7 +1065,7 @@ public class SimpleCatalogManager implements CatalogManager {
                     if (predicate.equals(rdfType) || right.contains(subject, predicate, null)) {
                         result.add(createConflict(subject, predicate, original, left, leftDeletions, right,
                                 rightDeletions));
-                        Stream.of(left, leftDeletions, right, rightDeletions).forEach(item ->
+                        Stream.of(left, right, rightDeletions).forEach(item ->
                                 item.remove(subject, predicate, null));
                     }
                 });
@@ -1076,7 +1076,7 @@ public class SimpleCatalogManager implements CatalogManager {
                     if (predicate.equals(rdfType) || left.contains(subject, predicate, null)) {
                         result.add(createConflict(subject, predicate, original, left, leftDeletions, right,
                                 rightDeletions));
-                        Stream.of(left, leftDeletions, right, rightDeletions).forEach(item ->
+                        Stream.of(left, leftDeletions, right).forEach(item ->
                                 item.remove(subject, predicate, null));
                     }
                 });
@@ -1087,7 +1087,7 @@ public class SimpleCatalogManager implements CatalogManager {
                     if (right.contains(subject, predicate, null)) {
                         result.add(createConflict(subject, predicate, original, left, leftDeletions, right,
                                 rightDeletions));
-                        Stream.of(left, leftDeletions, right, rightDeletions).forEach(item ->
+                        Stream.of(leftDeletions, right, rightDeletions).forEach(item ->
                                 item.remove(subject, predicate, null));
                     }
                 });
@@ -1135,16 +1135,17 @@ public class SimpleCatalogManager implements CatalogManager {
     private Conflict createConflict(Resource subject, IRI predicate, Model original, Model left, Model leftDeletions,
                                     Model right, Model rightDeletions) {
         Difference leftDifference = new SimpleDifference.Builder()
-                .additions(mf.createModel(left.filter(subject, predicate, null)))
-                .deletions(mf.createModel(leftDeletions.filter(subject, predicate, null)))
+                .additions(mf.createModel(left).filter(subject, predicate, null))
+                .deletions(mf.createModel(leftDeletions).filter(subject, predicate, null))
                 .build();
 
         Difference rightDifference = new SimpleDifference.Builder()
-                .additions(mf.createModel(right.filter(subject, predicate, null)))
-                .deletions(mf.createModel(rightDeletions.filter(subject, predicate, null)))
+                .additions(mf.createModel(right).filter(subject, predicate, null))
+                .deletions(mf.createModel(rightDeletions).filter(subject, predicate, null))
                 .build();
 
-        return new SimpleConflict.Builder(mf.createModel(original.filter(subject, predicate, null)))
+        return new SimpleConflict.Builder(mf.createModel(original).filter(subject, predicate, null),
+                subject.stringValue())
                 .leftDifference(leftDifference)
                 .rightDifference(rightDifference)
                 .build();
