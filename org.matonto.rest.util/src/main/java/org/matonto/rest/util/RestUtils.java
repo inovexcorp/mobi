@@ -91,10 +91,7 @@ public class RestUtils {
      * @return A String of the serialized RDF from the Model.
      */
     public static String modelToString(Model model, String format) {
-        StringWriter sw = new StringWriter();
-        RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(getRDFFormat(format), sw));
-        Rio.write(model, rdfWriter);
-        return sw.toString();
+        return modelToString(model, getRDFFormat(format));
     }
 
     /**
