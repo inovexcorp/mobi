@@ -41,7 +41,7 @@ describe('Delimited Manager service', function() {
     });
 
     it('should upload a delimited file', function(done) {
-        $httpBackend.expectPOST('/matontorest/delimited-files', 
+        $httpBackend.expectPOST('/matontorest/delimited-files',
             function(data) {
                 return data instanceof FormData;
             }, function(headers) {
@@ -60,7 +60,7 @@ describe('Delimited Manager service', function() {
             delimitedManagerSvc.containsHeaders = true;
             var rowEnd = 5;
             var params = createQueryString({
-                'rowCount': rowEnd, 
+                'rowCount': rowEnd,
                 'separator': delimitedManagerSvc.separator
             });
             $httpBackend.expectGET('/matontorest/delimited-files/' + delimitedManagerSvc.fileName + params, undefined)
@@ -78,7 +78,7 @@ describe('Delimited Manager service', function() {
             var rowEnd = 5;
             var preview = [[''], [''], [''], [''], ['']];
             var params = createQueryString({
-                'rowCount': rowEnd, 
+                'rowCount': rowEnd,
                 'separator': delimitedManagerSvc.separator
             });
             $httpBackend.expectGET('/matontorest/delimited-files/' + delimitedManagerSvc.fileName + params, undefined)
@@ -99,7 +99,7 @@ describe('Delimited Manager service', function() {
         var params = createQueryString({
             'format': format,
             'mappingIRI': mappingId,
-            'containsHeaders': delimitedManagerSvc.containsHeaders, 
+            'containsHeaders': delimitedManagerSvc.containsHeaders,
             'separator': delimitedManagerSvc.separator,
             'fileName': fileName
         });
@@ -114,11 +114,11 @@ describe('Delimited Manager service', function() {
             var jsonld = '';
             var format = 'jsonld';
             var params = createQueryString({
-                'containsHeaders': delimitedManagerSvc.containsHeaders, 
+                'containsHeaders': delimitedManagerSvc.containsHeaders,
                 'format': format,
                 'separator': delimitedManagerSvc.separator
             });
-            $httpBackend.expectPOST('/matontorest/delimited-files/' + delimitedManagerSvc.fileName + '/map-preview' + params, 
+            $httpBackend.expectPOST('/matontorest/delimited-files/' + delimitedManagerSvc.fileName + '/map-preview' + params,
                 function(data) {
                     return data instanceof FormData;
                 }, function(headers) {
@@ -137,11 +137,11 @@ describe('Delimited Manager service', function() {
             var jsonld = '';
             var format = 'turtle';
             var params = createQueryString({
-                'containsHeaders': delimitedManagerSvc.containsHeaders, 
+                'containsHeaders': delimitedManagerSvc.containsHeaders,
                 'format': format,
                 'separator': delimitedManagerSvc.separator
             });
-            $httpBackend.expectPOST('/matontorest/delimited-files/' + delimitedManagerSvc.fileName + '/map-preview' + params, 
+            $httpBackend.expectPOST('/matontorest/delimited-files/' + delimitedManagerSvc.fileName + '/map-preview' + params,
                 function(data) {
                     return data instanceof FormData;
                 }, function(headers) {
@@ -161,7 +161,7 @@ describe('Delimited Manager service', function() {
         it('if there are no data rows', function() {
             delimitedManagerSvc.dataRows = undefined;
             var result = delimitedManagerSvc.getHeader(this.index);
-            expect(result).toContain(`${this.index}`);
+            expect(result).toContain('' + this.index);
         });
         it('if the data rows contain a header row', function() {
             delimitedManagerSvc.dataRows = [['']];
@@ -173,7 +173,7 @@ describe('Delimited Manager service', function() {
             delimitedManagerSvc.dataRows = [['']];
             delimitedManagerSvc.containsHeaders = false;
             var result = delimitedManagerSvc.getHeader(this.index);
-            expect(result).toContain(`${this.index}`);
+            expect(result).toContain('' + this.index);
         });
     });
     it('should reset important variables', function() {
