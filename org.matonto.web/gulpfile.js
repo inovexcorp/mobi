@@ -108,7 +108,7 @@ var runKarma = function(vendorFiles, isBuild, done) {
     new Karma({
         configFile: configFile,
         files: vendorFiles.concat(['./target/templates.js', './src/test/js/Shared.js', './src/test/js/*Spec.js'])
-    }, done).start();
+    }, done()).start();
 }
 
 // Inject method for minified and unminified
@@ -139,9 +139,9 @@ gulp.task('test-unminified', ['cacheTemplates', 'move-custom-js'], function(done
     return runKarma(nodeJsFiles(nodeDir).concat(jsFiles(dest)), true, done);
 });
 
-// Launch TDD jasmine test environment in Chrome
+// Launch TDD environment for jasmine tests in Chrome
 gulp.task('tdd', ['cacheTemplates'], function(done) {
-    return runKarma(nodeJsFiles(nodeDir).concat(src + '**/*.js'), false, done);
+    return runKarma(nodeJsFiles(nodeDir).concat(jsFiles(src)), false, done);
 });
 
 // Create ngDocs files for minified build
