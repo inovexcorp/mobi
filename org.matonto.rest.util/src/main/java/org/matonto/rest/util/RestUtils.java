@@ -23,8 +23,13 @@ package org.matonto.rest.util;
  * #L%
  */
 
+import org.openrdf.model.Model;
 import org.openrdf.rio.RDFFormat;
+import org.openrdf.rio.RDFHandler;
+import org.openrdf.rio.Rio;
+import org.openrdf.rio.helpers.BufferedGroupingRDFHandler;
 
+import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 
@@ -62,6 +67,34 @@ public class RestUtils {
             default:
                 return RDFFormat.JSONLD;
         }
+    }
+
+    /**
+     * Converts a Sesame Model into a string containing RDF in the specified RDFFormat.
+     *
+     * @param model A Sesame Model of RDF to convert.
+     * @param format The RDFFormat the RDF should be serialized into.
+     * @return A String of the serialized RDF from the Model.
+     */
+    public static String modelToString(Model model, RDFFormat format) {
+        StringWriter sw = new StringWriter();
+        RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(format, sw));
+        Rio.write(model, rdfWriter);
+        return sw.toString();
+    }
+
+    /**
+     * Converts a Sesame Model into a string containing RDF in the format specified by the passed string.
+     *
+     * @param model A Sesame Model of RDF to convert.
+     * @param format The abbreviated name of a RDFFormat.
+     * @return A String of the serialized RDF from the Model.
+     */
+    public static String modelToString(Model model, String format) {
+        StringWriter sw = new StringWriter();
+        RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(getRDFFormat(format), sw));
+        Rio.write(model, rdfWriter);
+        return sw.toString();
     }
 
     /**
