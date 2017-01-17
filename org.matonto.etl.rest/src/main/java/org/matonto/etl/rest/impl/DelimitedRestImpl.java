@@ -23,6 +23,8 @@ package org.matonto.etl.rest.impl;
  * #L%
  */
 
+import static java.nio.file.FileVisitResult.CONTINUE;
+
 import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Deactivate;
@@ -50,16 +52,13 @@ import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rest.util.CharsetUtils;
 import org.matonto.rest.util.ErrorUtils;
+import org.matonto.rest.util.RestUtils;
 import org.openrdf.model.Model;
 import org.openrdf.rio.RDFFormat;
-import org.openrdf.rio.RDFHandler;
 import org.openrdf.rio.Rio;
-import org.openrdf.rio.helpers.BufferedGroupingRDFHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -70,7 +69,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.io.StringWriter;
 import java.io.Writer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -84,8 +82,8 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
-import static java.nio.file.FileVisitResult.CONTINUE;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
 
 @Component(immediate = true)
 public class DelimitedRestImpl implements DelimitedRest {
@@ -290,10 +288,7 @@ public class DelimitedRestImpl implements DelimitedRest {
         } catch (IOException | MatOntoException e) {
             throw ErrorUtils.sendError(e, "Error converting delimited file", Response.Status.BAD_REQUEST);
         }
-        StringWriter sw = new StringWriter();
-        RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(getRDFFormat(format), sw));
-        Rio.write(model, rdfWriter);
-        return sw.toString();
+        return RestUtils.modelToString(model, format);
     }
 
     @Override
