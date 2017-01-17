@@ -36,13 +36,14 @@ describe('Mapper Serialization Select directive', function() {
             scope = _$rootScope_;
             mapperStateSvc = _mapperStateService_;
         });
+
+        scope.format = 'jsonld';
+        this.element = $compile(angular.element('<mapper-serialization-select format="format"></mapper-serialization-select>'))(scope);
+        scope.$digest();
     });
 
     describe('in insolated scope', function() {
         beforeEach(function() {
-            scope.format = '';
-            this.element = $compile(angular.element('<mapper-serialization-select format="format"></mapper-serialization-select>'))(scope);
-            scope.$digest();
             isolatedScope = this.element.isolateScope();
         });
         it('format should be two way bound', function() {
@@ -52,13 +53,6 @@ describe('Mapper Serialization Select directive', function() {
         });
     });
     describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
-            scope.format = 'jsonld';
-            scope.required = true;
-            this.element = $compile(angular.element('<mapper-serialization-select format="format"></mapper-serialization-select>'))(scope);
-            scope.$digest();
-            isolatedScope = this.element.isolateScope();
-        });
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('SELECT');
             expect(this.element.hasClass('mapper-serialization-select')).toBe(true);

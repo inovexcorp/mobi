@@ -40,15 +40,14 @@ describe('Mapping Name Overlay directive', function() {
             mappingManagerSvc = _mappingManagerService_;
             mapperStateSvc = _mapperStateService_;
         });
+
+        mapperStateSvc.mapping = {id: '', jsonld: []};
+        this.element = $compile(angular.element('<mapping-name-overlay></mapping-name-overlay>'))(scope);
+        scope.$digest();
     });
 
     describe('controller methods', function() {
         beforeEach(function() {
-            mapperStateSvc.mapping = {
-                id: ''
-            };
-            this.element = $compile(angular.element('<mapping-name-overlay></mapping-name-overlay>'))(scope);
-            scope.$digest();
             controller = this.element.controller('mappingNameOverlay');
         });
         describe('should set the correct state for setting the name', function() {
@@ -99,10 +98,6 @@ describe('Mapping Name Overlay directive', function() {
         });
     });
     describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
-            this.element = $compile(angular.element('<mapping-name-overlay></mapping-name-overlay>'))(scope);
-            scope.$digest();
-        });
         it('for wrapping containers', function() {
             expect(this.element.hasClass('mapping-name-overlay')).toBe(true);
             expect(this.element.querySelectorAll('form.content').length).toBe(1);
@@ -136,24 +131,18 @@ describe('Mapping Name Overlay directive', function() {
         });
     });
     it('should call cancel when the cancel button is clicked', function() {
-        mapperStateSvc.mapping = {id: '', jsonld: []};
-        var element = $compile(angular.element('<mapping-name-overlay></mapping-name-overlay>'))(scope);
-        scope.$digest();
-        controller = element.controller('mappingNameOverlay');
+        controller = this.element.controller('mappingNameOverlay');
         spyOn(controller, 'cancel');
 
-        var cancelButton = angular.element(element.querySelectorAll('.btn-container button.btn-default')[0]);
+        var cancelButton = angular.element(this.element.querySelectorAll('.btn-container button.btn-default')[0]);
         cancelButton.triggerHandler('click');
         expect(controller.cancel).toHaveBeenCalled();
     });
     it('should call set when the set button is clicked', function() {
-        mapperStateSvc.mapping = {id: '', jsonld: []};
-        var element = $compile(angular.element('<mapping-name-overlay></mapping-name-overlay>'))(scope);
-        scope.$digest();
-        controller = element.controller('mappingNameOverlay');
+        controller = this.element.controller('mappingNameOverlay');
         spyOn(controller, 'set');
 
-        var runButton = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
+        var runButton = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
         runButton.triggerHandler('click');
         expect(controller.set).toHaveBeenCalled();
     });

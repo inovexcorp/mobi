@@ -48,10 +48,10 @@
                     <button class="btn btn-link pull-right download-btn" ng-click="dvm.downloadMapping()">
                         <i class="fa fa-download"></i>Download
                     </button>
-                    <button class="btn btn-link pull-right run-btn" ng-click="dvm.run()" ng-disabled="!dvm.ontologyExists()">
+                    <button class="btn btn-link pull-right run-btn" ng-click="dvm.run()" ng-disabled="!dvm.state.mapping.record">
                         <i class="fa fa-play-circle-o"></i>Run
                     </button>
-                    <button class="btn btn-link pull-right edit-btn" ng-click="dvm.edit()" ng-disabled="!dvm.ontologyExists()">
+                    <button class="btn btn-link pull-right edit-btn" ng-click="dvm.edit()" ng-disabled="!dvm.state.mapping.record">
                         <i class="fa fa-pencil"></i>Edit
                     </button>
                 </div>
@@ -61,7 +61,7 @@
                     <p class="lead">Welcome to the Mapping Tool!</p>
                     <p>If this is your first time here, you may want to check the <a href="http://docs.matonto.org/#mapping_tool" target="_blank">User's Guide</a>. Get started by clicking a mapping name in the list or creating a new mapping.</p>
                 </div>
-                <mapping-preview ng-if="dvm.state.mapping" ontology-exists="dvm.ontologyExists()"></mapping-preview>
+                <mapping-preview ng-if="dvm.state.mapping"></mapping-preview>
             </block-content>
         </block>
     </div>

@@ -28,7 +28,7 @@
          * @ngdoc overview
          * @name mappingPreview
          *
-         * @description 
+         * @description
          * The `mappingPreview` module only provides the `mappingPreview` directive which creates
          * a "boxed" area with a preview of a mapping and a button to select it.
          */
@@ -44,10 +44,10 @@
          * @requires  mapperState.service:mapperStateService
          * @requires  delimitedManager.service:delimitedManagerService
          *
-         * @description 
-         * `mappingPreview` is a directive that creates a "boxed" div with a preview of a mapping with 
+         * @description
+         * `mappingPreview` is a directive that creates a "boxed" div with a preview of a mapping with
          * its source ontology and all its mapped classes and properties. It also provides a button to
-         * select the mapping for mapping delimited data. The directive is replaced by the contents of 
+         * select the mapping for mapping delimited data. The directive is replaced by the contents of
          * its template.
          */
         .directive('mappingPreview', mappingPreview);
@@ -59,9 +59,7 @@
                 restrict: 'E',
                 controllerAs: 'dvm',
                 replace: true,
-                scope: {
-                    ontologyExists: '<'
-                },
+                scope: {},
                 controller: function() {
                     var dvm = this;
                     dvm.state = mapperStateService;
@@ -76,7 +74,7 @@
                         return dvm.util.getBeautifulIRI(dvm.mm.getPropIdByMapping(propMapping));
                     }
                     dvm.getColumnIndex = function(propMapping) {
-                        return propMapping[prefixes.delim + 'columnIndex'][0]['@value'];
+                        return dvm.util.getPropertyValue(propMapping, prefixes.delim + 'columnIndex');
                     }
                     dvm.isInvalid = function(propMappingId) {
                         return _.some(dvm.state.invalidProps, {'@id': propMappingId});

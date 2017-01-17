@@ -38,10 +38,11 @@
          * @name iriTemplateOverlay.directive:iriTemplateOverlay
          * @scope
          * @restrict E
-         * @requires  prefixes.service:prefixes
-         * @requires  mappingManager.service:mappingManagerService
-         * @requires  mapperState.service:mapperStateService
-         * @requires  delimitedManager.service:delimitedManagerService
+         * @requires prefixes.service:prefixes
+         * @requires mappingManager.service:mappingManagerService
+         * @requires mapperState.service:mapperStateService
+         * @requires delimitedManager.service:delimitedManagerService
+         * @requires util.service:utilService
          *
          * @description
          * `iriTemplateOverlay` is a directive that creates an overlay with functionality to change the
@@ -52,9 +53,9 @@
          */
         .directive('iriTemplateOverlay', iriTemplateOverlay);
 
-        iriTemplateOverlay.$inject = ['prefixes', 'mapperStateService', 'mappingManagerService', 'delimitedManagerService'];
+        iriTemplateOverlay.$inject = ['prefixes', 'utilService', 'mapperStateService', 'mappingManagerService', 'delimitedManagerService'];
 
-        function iriTemplateOverlay(prefixes, mapperStateService, mappingManagerService, delimitedManagerService) {
+        function iriTemplateOverlay(prefixes, utilService, mapperStateService, mappingManagerService, delimitedManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -65,9 +66,10 @@
                     dvm.mm = mappingManagerService;
                     dvm.state = mapperStateService;
                     dvm.dm = delimitedManagerService;
+                    dvm.util = utilService;
 
                     var classMapping = _.find(dvm.state.mapping.jsonld, {'@id': dvm.state.selectedClassMappingId});
-                    var prefix = _.get(classMapping, "['" + prefixes.delim + "hasPrefix'][0]['@value']", '');
+                    var prefix = dvm.util.getPropertyValue(classMapping, prefixes.delim + 'hasPrefix');
                     var regex = new RegExp(prefixes.data + '(.*?)\/');
                     var prefixEnd = prefix.replace(regex, '');
                     dvm.beginning = _.pullAt(prefix.match(regex), 0)[0];
@@ -77,7 +79,7 @@
                     for (var idx = 0; idx < dvm.dm.dataRows[0].length; idx++) {
                         dvm.localNameOptions.push({text: dvm.dm.getHeader(idx), value: '${' + idx + '}'});
                     };
-                    var selectedIndex = _.findIndex(dvm.localNameOptions, {'value': _.get(classMapping, "['" + prefixes.delim + "localName'][0]['@value']")});
+                    var selectedIndex = _.findIndex(dvm.localNameOptions, {'value': dvm.util.getPropertyValue(classMapping, prefixes.delim + 'localName')});
                     dvm.endsWith = selectedIndex > 0 ? dvm.localNameOptions[selectedIndex] : dvm.localNameOptions[_.findIndex(dvm.localNameOptions, {'text': 'UUID'})];
 
                     dvm.set = function() {

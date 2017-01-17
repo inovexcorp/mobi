@@ -27,6 +27,7 @@ describe('IRI Template Overlay directive', function() {
         mappingManagerSvc,
         mapperStateSvc,
         delimitedManagerSvc,
+        utilSvc,
         controller;
 
     beforeEach(function() {
@@ -36,13 +37,16 @@ describe('IRI Template Overlay directive', function() {
         mockMapperState();
         mockMappingManager();
         mockDelimitedManager();
+        mockUtil();
 
-        inject(function(_$compile_, _$rootScope_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_, _prefixes_, _utilService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             mappingManagerSvc = _mappingManagerService_;
             mapperStateSvc = _mapperStateService_;
             delimitedManagerSvc = _delimitedManagerService_;
+            prefixes = _prefixes_;
+            utilSvc = _utilService_;
         });
     });
 
@@ -52,15 +56,22 @@ describe('IRI Template Overlay directive', function() {
             var then = '/';
             var localName = '${0}';
             var classMapping = {
-                '@id': mapperStateSvc.selectedClassMappingId,
-                'hasPrefix': [{'@value': begin + then}],
-                'localName': [{'@value': localName}]
+                '@id': mapperStateSvc.selectedClassMappingId
             };
             mapperStateSvc.selectedClassMappingId = classMapping['@id'];
             mapperStateSvc.mapping = {
                 jsonld: [classMapping]
             };
             delimitedManagerSvc.dataRows = [['a']];
+            utilSvc.getPropertyValue.and.callFake(function(obj, propertyIRI) {
+                if (propertyIRI === prefixes.delim + 'hasPrefix') {
+                    return begin + then;
+                } else if (propertyIRI === prefixes.delim + 'localName') {
+                    return localName;
+                } else {
+                    return '';
+                }
+            })
             var element = $compile(angular.element('<iri-template-overlay></iri-template-overlay>'))(scope);
             scope.$digest();
             controller = element.controller('iriTemplateOverlay');

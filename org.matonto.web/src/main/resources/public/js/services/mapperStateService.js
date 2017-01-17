@@ -73,7 +73,8 @@
              * ```
              * {
              *    id: '',
-             *    jsonld: []
+             *    jsonld: [],
+             *    record: {}
              * }
              * ```
              */
@@ -409,7 +410,8 @@
                 self.newMapping = true;
                 self.mapping = {
                     id: '',
-                    jsonld: []
+                    jsonld: [],
+                    record: undefined
                 };
                 self.sourceOntologies = [];
                 self.resetEdit();

@@ -39,7 +39,6 @@
          * @name mappingSelectPage.directive:mappingSelectPage
          * @scope
          * @restrict E
-         * @requires $q
          * @requires ontologyManager.service:ontologyManagerService
          * @requires mapperState.service:mapperStateService
          * @requires mappingManager.service:mappingManagerService
@@ -55,9 +54,9 @@
          */
         .directive('mappingSelectPage', mappingSelectPage);
 
-        mappingSelectPage.$inject = ['$q', 'mapperStateService', 'mappingManagerService', 'ontologyManagerService', 'utilService'];
+        mappingSelectPage.$inject = ['mapperStateService', 'mappingManagerService', 'ontologyManagerService', 'utilService'];
 
-        function mappingSelectPage($q, mapperStateService, mappingManagerService, ontologyManagerService, utilService) {
+        function mappingSelectPage(mapperStateService, mappingManagerService, ontologyManagerService, utilService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -66,17 +65,11 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    var recordIds = [];
                     dvm.state = mapperStateService;
                     dvm.mm = mappingManagerService;
                     dvm.om = ontologyManagerService;
                     dvm.util = utilService;
 
-                    dvm.om.getAllOntologyRecords().then(response => recordIds = _.map(response.data, '@id'), response => dvm.util.createErrorToast('Could not retrieve recordIds'));
-
-                    dvm.ontologyExists = function() {
-                        return _.includes(recordIds, _.get(dvm.mm.getSourceOntologyInfo(_.get(dvm.state.mapping, 'jsonld')), 'recordId'));
-                    }
                     dvm.run = function() {
                         dvm.state.mappingSearchString = '';
                         dvm.state.highlightIndexes = dvm.state.getMappedColumns();

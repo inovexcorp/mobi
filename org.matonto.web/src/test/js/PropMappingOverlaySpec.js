@@ -46,12 +46,11 @@ describe('Prop Mapping Overlay directive', function() {
             mappingManagerSvc = _mappingManagerService_;
             ontologyManagerSvc = _ontologyManagerService_;
         });
+
+        mapperStateSvc.mapping = {jsonld: []};
     });
 
     describe('should initialize with the correct values', function() {
-        beforeEach(function() {
-            mapperStateSvc.mapping = {jsonld: []};
-        })
         it('if a new property mapping is being created', function() {
             mapperStateSvc.newProp = true;
             var element = $compile(angular.element('<prop-mapping-overlay></prop-mapping-overlay>'))(scope);
@@ -78,7 +77,6 @@ describe('Prop Mapping Overlay directive', function() {
     });
     describe('controller methods', function() {
         beforeEach(function() {
-            mapperStateSvc.mapping = {jsonld: []};
             this.element = $compile(angular.element('<prop-mapping-overlay></prop-mapping-overlay>'))(scope);
             scope.$digest();
             controller = this.element.controller('propMappingOverlay');
@@ -88,10 +86,9 @@ describe('Prop Mapping Overlay directive', function() {
             var prop = {};
             prop[prefixes.rdfs + 'range'] = [{'@id': classObj['@id']}];
             ontologyManagerSvc.getEntity.and.returnValue(classObj);
-            var result = controller.getRangeClass(prop);
+            expect(controller.getRangeClass(prop)).toEqual(classObj);
             expect(mappingManagerSvc.findSourceOntologyWithClass).toHaveBeenCalledWith(classObj['@id'], mapperStateSvc.sourceOntologies)
             expect(ontologyManagerSvc.getEntity).toHaveBeenCalled();
-            expect(result).toEqual(classObj);
         });
         describe('should set the correct state for setting the property mapping', function() {
             beforeEach(function() {

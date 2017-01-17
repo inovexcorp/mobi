@@ -44,15 +44,14 @@ describe('Class Mapping Select directive', function() {
             mappingManagerSvc = _mappingManagerService_;
             mapperStateSvc = _mapperStateService_;
         });
+
+        scope.bindModel = '';
+        scope.onChange = jasmine.createSpy('onChange');
+        this.element = $compile(angular.element('<class-mapping-select ng-model="bindModel" on-change="onChange()"></class-mapping-select>'))(scope);
+        scope.$digest();
     });
 
     describe('in isolated scope', function() {
-        beforeEach(function() {
-            scope.bindModel = '';
-            scope.onChange = jasmine.createSpy('onChange');
-            this.element = $compile(angular.element('<class-mapping-select ng-model="bindModel" on-change="onChange()"></class-mapping-select>'))(scope);
-            scope.$digest();
-        });
         it('onChange should be called in the parent scope', function() {
             var isolatedScope = this.element.isolateScope();
             isolatedScope.onChange();
@@ -61,10 +60,6 @@ describe('Class Mapping Select directive', function() {
     });
     describe('controller bound variable', function() {
         beforeEach(function() {
-            scope.bindModel = '';
-            scope.onChange = jasmine.createSpy('onChange');
-            this.element = $compile(angular.element('<class-mapping-select ng-model="bindModel" on-change="onChange()"></class-mapping-select>'))(scope);
-            scope.$digest();
             controller = this.element.controller('classMappingSelect');
         });
         it('selectedProp should be two way bound', function() {
@@ -74,10 +69,6 @@ describe('Class Mapping Select directive', function() {
         });
     });
     describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
-            this.element = $compile(angular.element('<class-mapping-select ng-model="bindModel" on-change="onChange()"></class-mapping-select>'))(scope);
-            scope.$digest();
-        });
         it('for wrapping containers', function() {
             expect(this.element.hasClass('class-mapping-select')).toBe(true);
         });

@@ -20,6 +20,10 @@ body {
         resize: vertical;
     }
 
+    .field-name {
+        font-weight: bold;
+    }
+
     /* Error message font */
     .error-msg {
         color: #f00;
@@ -155,6 +159,11 @@ ul {
     /* large sized overlay */
     &.lg .content {
         width: 750px;
+    }
+
+    /* extra large sized overlay */
+    &.xlg .content {
+        width: 900px;
     }
 
     /* overlay content styles */
