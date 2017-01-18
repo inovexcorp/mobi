@@ -37,22 +37,21 @@ import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rest.util.ErrorUtils;
+import org.matonto.rest.util.RestUtils;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.Rio;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
 import java.io.BufferedWriter;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
 
 @Component(immediate = true)
 public class MappingRestImpl implements MappingRest {
@@ -219,9 +218,7 @@ public class MappingRestImpl implements MappingRest {
         String mapping;
         Optional<MappingWrapper> mappingModel = manager.retrieveMapping(mappingIRI);
         if (mappingModel.isPresent()) {
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            Rio.write(transformer.sesameModel(mappingModel.get().getModel()), out, format);
-            mapping = new String(out.toByteArray(), StandardCharsets.UTF_8);
+            mapping = RestUtils.modelToString(transformer.sesameModel(mappingModel.get().getModel()), format);
         } else {
             return Optional.empty();
         }

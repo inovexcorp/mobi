@@ -27,7 +27,6 @@ describe('Results Block directive', function() {
         catalogManagerSvc,
         catalogStateSvc,
         utilSvc,
-        $timeout,
         $q,
         controller;
 
@@ -39,14 +38,13 @@ describe('Results Block directive', function() {
         mockUtil();
         mockToastr();
 
-        inject(function(_$compile_, _$rootScope_, _toastr_, _catalogManagerService_, _catalogStateService_, _utilService_, _$timeout_, _$q_) {
+        inject(function(_$compile_, _$rootScope_, _toastr_, _catalogManagerService_, _catalogStateService_, _utilService_, _$q_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             toastr = _toastr_;
             catalogManagerSvc = _catalogManagerService_;
             catalogStateSvc = _catalogStateService_;
             utilSvc = _utilService_;
-            $timeout = _$timeout_;
             $q = _$q_;
         });
 
@@ -66,7 +64,7 @@ describe('Results Block directive', function() {
         });
         describe('should change the sort', function() {
             beforeEach(function() {
-                $timeout.flush();
+                scope.$apply();
                 catalogManagerSvc.getRecords.calls.reset();
                 catalogStateSvc.setPagination.calls.reset();
                 this.expectedPaginationConfig = {
@@ -80,7 +78,7 @@ describe('Results Block directive', function() {
             it('unless an error occurs', function() {
                 catalogManagerSvc.getRecords.and.returnValue($q.reject('Error Message'));
                 controller.changeSort();
-                $timeout.flush();
+                scope.$apply();
                 expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith(catalogStateSvc.catalogs.local['@id'], this.expectedPaginationConfig);
                 expect(catalogStateSvc.currentPage).toBe(0);
                 expect(catalogStateSvc.setPagination).not.toHaveBeenCalled();
@@ -88,7 +86,7 @@ describe('Results Block directive', function() {
             });
             it('succesfully', function() {
                 controller.changeSort();
-                $timeout.flush();
+                scope.$apply();
                 expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith(catalogStateSvc.catalogs.local['@id'], this.expectedPaginationConfig);
                 expect(catalogStateSvc.currentPage).toBe(0);
                 expect(catalogStateSvc.setPagination).toHaveBeenCalled();
@@ -102,7 +100,7 @@ describe('Results Block directive', function() {
             it('unless an error occurs', function() {
                 catalogManagerSvc.getRecord.and.returnValue($q.reject('Error Message'));
                 controller.openRecord(this.record);
-                $timeout.flush();
+                scope.$apply();
                 expect(catalogManagerSvc.getRecord).toHaveBeenCalledWith(this.record['@id'], catalogStateSvc.catalogs.local['@id']);
                 expect(catalogStateSvc.resetPagination).not.toHaveBeenCalled();
                 expect(catalogStateSvc.catalogs.local.openedPath).not.toContain(this.record);
@@ -111,7 +109,7 @@ describe('Results Block directive', function() {
             it('succesfully', function() {
                 catalogManagerSvc.getRecord.and.returnValue($q.when(this.record));
                 controller.openRecord(this.record);
-                $timeout.flush();
+                scope.$apply();
                 expect(catalogManagerSvc.getRecord).toHaveBeenCalledWith(this.record['@id'], catalogStateSvc.catalogs.local['@id']);
                 expect(catalogStateSvc.resetPagination).toHaveBeenCalled();
                 expect(catalogStateSvc.catalogs.local.openedPath).toContain(this.record);

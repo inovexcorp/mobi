@@ -26,7 +26,6 @@ describe('Search Row directive', function() {
         utilSvc,
         catalogManagerSvc,
         catalogStateSvc,
-        $timeout,
         $q,
         controller;
 
@@ -38,13 +37,12 @@ describe('Search Row directive', function() {
         mockUtil();
         injectSplitIRIFilter();
 
-        inject(function(_$compile_, _$rootScope_, _utilService_, _catalogManagerService_, _catalogStateService_, _$timeout_, _$q_) {
+        inject(function(_$compile_, _$rootScope_, _utilService_, _catalogManagerService_, _catalogStateService_, _$q_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             utilSvc = _utilService_;
             catalogManagerSvc = _catalogManagerService_;
             catalogStateSvc = _catalogStateService_;
-            $timeout = _$timeout_;
             $q = _$q_;
         });
 
@@ -84,7 +82,7 @@ describe('Search Row directive', function() {
             it('unless an error occurs', function() {
                 catalogManagerSvc.getRecords.and.returnValue($q.reject('Error Message'));
                 controller.search();
-                $timeout.flush();
+                scope.$apply();
                 expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith(catalogStateSvc.catalogs.local['@id'], this.expectedPaginationConfig);
                 expect(catalogStateSvc.currentPage).toBe(0);
                 expect(catalogStateSvc.catalogs.local.records.recordType).not.toBe(controller.recordType);
@@ -95,7 +93,7 @@ describe('Search Row directive', function() {
             });
             it('succesfully', function() {
                 controller.search();
-                $timeout.flush();
+                scope.$apply();
                 expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith(catalogStateSvc.catalogs.local['@id'], this.expectedPaginationConfig);
                 expect(catalogStateSvc.currentPage).toBe(0);
                 expect(catalogStateSvc.catalogs.local.records.recordType).toBe(controller.recordType);

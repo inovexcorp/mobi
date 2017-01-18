@@ -17,10 +17,10 @@ var gulp = require('gulp'),
     uglify = require('gulp-uglify'),
     ngAnnotate = require('gulp-ng-annotate'),
     strip = require('gulp-strip-comments'),
-    jasmine = require('gulp-jasmine-phantom'),
     ngdocs = require('gulp-ngdocs'),
     glob = require('glob-all'),
-    templateCache = require('gulp-angular-templatecache');
+    templateCache = require('gulp-angular-templatecache'),
+    Karma = require('karma').Server;
 
 // Project specific path variables
 var src = './src/main/resources/public/',
@@ -47,7 +47,7 @@ var jsFiles = function(prefix) {
     nodeJsFiles = function(prefix) {
         return [
             prefix + 'lodash/**/lodash.min.js',
-            prefix + 'codemirror/**/codemirror.js',
+            prefix + 'codemirror/lib/codemirror.js',
             prefix + 'codemirror/**/sparql.js',
             prefix + 'codemirror/**/turtle.js',
             prefix + 'codemirror/**/xml.js',
@@ -103,18 +103,12 @@ var createDocs = function(scripts) {
 }
 
 //Method to run jasmine tests
-var runJasmine = function(vendorFiles) {
-    return gulp.src('./src/test/js/*Spec.js')
-        .pipe(babel({
-            presets: ['es2015']
-        }))
-        .pipe(jasmine({
-            integration: true,
-            abortOnFail: true,
-            keepRunner: './target/',
-            vendor: vendorFiles.concat(['./target/templates.js', './src/test/js/Shared.js']),
-            jasmineVersion: '2.1'
-        }));
+var runKarma = function(vendorFiles, isBuild, done) {
+    var configFile = isBuild ? __dirname + '/karma.conf.build.js' : __dirname + '/karma.conf.tdd.js';
+    new Karma({
+        configFile: configFile,
+        files: vendorFiles.concat(['./target/templates.js', './src/test/js/Shared.js', './src/test/js/*Spec.js'])
+    }, done()).start();
 }
 
 // Inject method for minified and unminified
@@ -127,6 +121,7 @@ var injectFiles = function(files) {
         .pipe(gulp.dest(dest));
 };
 
+// Creates a cache of directive templates for use with test files
 gulp.task('cacheTemplates', function() {
     return gulp.src(src + '**/*.html')
         .pipe(strip.html())
@@ -134,19 +129,28 @@ gulp.task('cacheTemplates', function() {
         .pipe(gulp.dest('./target/'));
 });
 
-gulp.task('jasmine-minified', ['cacheTemplates', 'minify-scripts'], function() {
-    return runJasmine([dest + '**/*.js']);
+// Run jasmine tests in PhantomJS with minified source files
+gulp.task('test-minified', ['cacheTemplates', 'minify-scripts'], function(done) {
+    return runKarma([dest + '**/*.js'], true, done);
 });
 
-gulp.task('jasmine-unminified', ['cacheTemplates', 'move-custom-js'], function() {
-    return runJasmine(nodeJsFiles(nodeDir).concat(jsFiles(dest)));
+// Run jasmine tests in PhantomJS with unminified source files
+gulp.task('test-unminified', ['cacheTemplates', 'move-custom-js'], function(done) {
+    return runKarma(nodeJsFiles(nodeDir).concat(jsFiles(dest)), true, done);
 });
 
-gulp.task('ngdocs-minified', ['jasmine-minified'], function() {
+// Launch TDD environment for jasmine tests in Chrome
+gulp.task('tdd', ['cacheTemplates'], function(done) {
+    return runKarma(nodeJsFiles(nodeDir).concat(jsFiles(src)), false, done);
+});
+
+// Create ngDocs files for minified build
+gulp.task('ngdocs-minified', ['cacheTemplates'], function() {
     return createDocs([dest + '**/*.js']);
 });
 
-gulp.task('ngdocs-unminified', ['jasmine-unminified'], function() {
+// Create ngDocs files for unminified build
+gulp.task('ngdocs-unminified', ['cacheTemplates'], function() {
     return createDocs(nodeJsFiles(dest + 'js/').concat(jsFiles(dest)));
 });
 
@@ -229,15 +233,6 @@ gulp.task('move-custom-js', function() {
         .pipe(gulp.dest(dest));
 });
 
-// Moves all custom non-js files to build folder
-// gulp.task('move-custom-not-js', ['html'], function() {
-//     return gulp.src(src + '**/*')
-//         .pipe(ignore.exclude('**/*.scss'))
-//         .pipe(ignore.exclude('**/*.js'))
-//         .pipe(ignore.exclude('**/*.html'))
-//         .pipe(gulp.dest(dest));
-// });
-
 // Changes the css files to sass files
 gulp.task('change-to-css', function() {
     return gulp.src(styleFiles(src, 'scss'))
@@ -266,7 +261,7 @@ gulp.task('icons-unminified', function() {
 });
 
 // Production Task (minified)
-gulp.task('prod', ['jasmine-minified', 'minify-scripts', 'minify-css', 'html', 'images', 'inject-minified', 'icons-minified', 'ngdocs-minified']);
+gulp.task('prod', ['test-minified', 'minify-scripts', 'minify-css', 'html', 'images', 'inject-minified', 'icons-minified', 'ngdocs-minified']);
 
 // Default Task (un-minified)
-gulp.task('default', ['jasmine-unminified', 'move-custom-js', 'move-node-js', 'move-node-css', 'images', 'html', 'change-to-css', 'inject-unminified', 'icons-unminified', 'ngdocs-unminified']);
+gulp.task('default', ['test-unminified', 'move-custom-js', 'move-node-js', 'move-node-css', 'images', 'html', 'change-to-css', 'inject-unminified', 'icons-unminified', 'ngdocs-unminified']);
