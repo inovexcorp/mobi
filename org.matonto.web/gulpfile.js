@@ -47,7 +47,7 @@ var jsFiles = function(prefix) {
     nodeJsFiles = function(prefix) {
         return [
             prefix + 'lodash/**/lodash.min.js',
-            prefix + 'codemirror/lib/codemirror.js',
+            prefix + 'codemirror/' + (prefix === nodeDir ? 'lib' : '**') + '/codemirror.js',
             prefix + 'codemirror/**/sparql.js',
             prefix + 'codemirror/**/turtle.js',
             prefix + 'codemirror/**/xml.js',
