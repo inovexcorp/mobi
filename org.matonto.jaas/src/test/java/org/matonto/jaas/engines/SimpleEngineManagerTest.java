@@ -32,6 +32,8 @@ import org.matonto.jaas.api.engines.UserConfig;
 import org.matonto.jaas.api.ontologies.usermanagement.Group;
 import org.matonto.jaas.api.ontologies.usermanagement.Role;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
+import org.matonto.rdf.api.ValueFactory;
+import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -48,6 +50,7 @@ import static org.mockito.Mockito.verify;
 
 public class SimpleEngineManagerTest {
     private SimpleEngineManager engineManager;
+    private ValueFactory vf = SimpleValueFactory.getInstance();
 
     @Mock
     Engine engine;
@@ -82,6 +85,8 @@ public class SimpleEngineManagerTest {
         when(engine.groupExists(anyString())).thenReturn(true);
         when(engine.getUserRoles(anyString())).thenReturn(Collections.singleton(role));
         when(engine.checkPassword(anyString(), anyString())).thenReturn(true);
+        when(user.getResource()).thenReturn(vf.createIRI("http://matonto.org/users/tester"));
+        when(user.getUsername()).thenReturn(Optional.of(vf.createLiteral("tester")));
 
         engineManager = new SimpleEngineManager();
         engineManager.addEngine(engine);
@@ -301,5 +306,15 @@ public class SimpleEngineManagerTest {
         result = engineManager.checkPassword(engine.getClass().getName(), "user", "password");
         verify(engine, times(1)).checkPassword("user", "password");
         assertTrue(result);
+    }
+
+    @Test
+    public void testGetUsername() throws Exception {
+        Optional<String> result = engineManager.getUsername(user.getResource());
+        assertTrue(result.isPresent());
+        assertEquals(result.get(), user.getUsername().get().stringValue());
+
+        result = engineManager.getUsername(vf.createIRI("http://example.com/error"));
+        assertFalse(result.isPresent());
     }
 }

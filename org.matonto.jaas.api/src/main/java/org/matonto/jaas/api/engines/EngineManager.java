@@ -26,6 +26,7 @@ package org.matonto.jaas.api.engines;
 import org.matonto.jaas.api.ontologies.usermanagement.Group;
 import org.matonto.jaas.api.ontologies.usermanagement.Role;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
+import org.matonto.rdf.api.Resource;
 
 import java.util.Optional;
 import java.util.Set;
@@ -57,6 +58,8 @@ public interface EngineManager {
      * @return the Set of Users accessible by the specified Engine
      */
     Set<User> getUsers(String engine);
+
+    Set<User> getUsers();
 
     /**
      * Creates a new User object using the Engine with the passed name.
@@ -231,4 +234,13 @@ public interface EngineManager {
      * @return true if the passwords match; false otherwise
      */
     boolean checkPassword(String engine, String username, String password);
+
+    /**
+     * Attempts to find the username of a User associated with the passed IRI using all the
+     * Engines managed by the EngineManager.
+     *
+     * @param userIri the IRI to search
+     * @return an Optional with the username of the associated User if found; empty otherwise
+     */
+    Optional<String> getUsername(Resource userIri);
 }

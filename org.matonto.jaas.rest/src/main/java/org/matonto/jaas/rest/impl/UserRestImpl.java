@@ -31,8 +31,6 @@ import org.matonto.jaas.api.engines.UserConfig;
 import org.matonto.jaas.api.ontologies.usermanagement.Group;
 import org.matonto.jaas.api.ontologies.usermanagement.Role;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
-import org.matonto.jaas.api.principals.UserPrincipal;
-import org.matonto.jaas.api.utils.TokenUtils;
 import org.matonto.jaas.engines.RdfEngine;
 import org.matonto.jaas.rest.UserRest;
 import org.matonto.ontologies.foaf.Agent;
@@ -41,16 +39,13 @@ import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.orm.Thing;
 import org.matonto.rest.util.ErrorUtils;
 import org.matonto.web.security.util.AuthenticationProps;
-import org.matonto.web.security.util.RestSecurityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.security.Principal;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.security.auth.Subject;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.Response;
@@ -274,6 +269,13 @@ public class UserRestImpl implements UserRest {
         engineManager.updateGroup(RdfEngine.COMPONENT_NAME, savedGroup);
         logger.info("Removed user " + username + " from group " + groupTitle);
         return Response.ok().build();
+    }
+
+    @Override
+    public Response getUsername(String userIri) {
+        String username = engineManager.getUsername(factory.createIRI(userIri)).orElseThrow(() ->
+                ErrorUtils.sendError("User not found", Response.Status.NOT_FOUND));
+        return Response.ok(username).build();
     }
 
     /**

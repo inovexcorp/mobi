@@ -33,6 +33,9 @@ import org.matonto.jaas.api.engines.UserConfig;
 import org.matonto.jaas.api.ontologies.usermanagement.Group;
 import org.matonto.jaas.api.ontologies.usermanagement.Role;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
+import org.matonto.rdf.api.Literal;
+import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.Value;
 import org.matonto.rdf.orm.Thing;
 
 import java.util.HashMap;
@@ -79,6 +82,15 @@ public class SimpleEngineManager implements EngineManager {
             return engines.get(engine).getUsers();
         }
         return new HashSet<>();
+    }
+
+    @Override
+    public Set<User> getUsers() {
+        Set<User> users = new HashSet<>();
+        for (Engine engine : engines.values()) {
+            users.addAll(engine.getUsers());
+        }
+        return users;
     }
 
     @Override
@@ -212,12 +224,21 @@ public class SimpleEngineManager implements EngineManager {
                     .forEach(roles::add);
 
         }
-
         return roles;
     }
 
     @Override
     public boolean checkPassword(String engine, String username, String password) {
         return engines.containsKey(engine) && engines.get(engine).checkPassword(username, password);
+    }
+
+    @Override
+    public Optional<String> getUsername(Resource userIri) {
+        for (User user: getUsers()) {
+            if (user.getResource().equals(userIri)) {
+                return user.getUsername().map(Value::stringValue);
+            }
+        }
+        return Optional.empty();
     }
 }
