@@ -200,10 +200,10 @@ public class GroupRestImplTest extends MatontoRestTestNg {
     public void listGroupsTest() {
         Response response = target().path("groups").request().get();
         verify(engineManager, atLeastOnce()).getGroups(anyString());
-        assertEquals(200, response.getStatus());
+        assertEquals(response.getStatus(), 200);
         try {
             JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
-            assertTrue(result.size() == groups.size());
+            assertEquals(result.size(), groups.size());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -219,7 +219,7 @@ public class GroupRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("groups")
                 .request().post(Entity.entity(group.toString(), MediaType.APPLICATION_JSON));
-        assertEquals(200, response.getStatus());
+        assertEquals(response.getStatus(), 200);
         verify(engineManager).storeGroup(anyString(), any(Group.class));
     }
 
@@ -232,7 +232,7 @@ public class GroupRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("groups")
                 .request().post(Entity.entity(group.toString(), MediaType.APPLICATION_JSON));
-        assertEquals(400, response.getStatus());
+        assertEquals(response.getStatus(), 400);
     }
 
     @Test
@@ -244,16 +244,16 @@ public class GroupRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("groups")
                 .request().post(Entity.entity(group.toString(), MediaType.APPLICATION_JSON));
-        assertEquals(400, response.getStatus());
+        assertEquals(response.getStatus(), 400);
     }
 
     @Test
     public void getGroupTest() {
         Response response = target().path("groups/testGroup").request().get();
-        assertEquals(200, response.getStatus());
+        assertEquals(response.getStatus(), 200);
         verify(engineManager).retrieveGroup(anyString(), eq("testGroup"));
         JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-        assertTrue(result.get("title").equals("testGroup"));
+        assertEquals(result.get("title"), "testGroup");
     }
 
     @Test
@@ -262,7 +262,7 @@ public class GroupRestImplTest extends MatontoRestTestNg {
         when(engineManager.retrieveGroup(anyString(), anyString())).thenReturn(Optional.empty());
 
         Response response = target().path("groups/error").request().get();
-        assertEquals(400, response.getStatus());
+        assertEquals(response.getStatus(), 400);
     }
 
     @Test
@@ -274,7 +274,7 @@ public class GroupRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("groups/testGroup")
                 .request().put(Entity.entity(group.toString(), MediaType.APPLICATION_JSON));
-        assertEquals(200, response.getStatus());
+        assertEquals(response.getStatus(), 200);
         verify(engineManager).retrieveGroup(anyString(), eq("testGroup"));
         verify(engineManager).updateGroup(anyString(), any(Group.class));
     }
@@ -293,7 +293,7 @@ public class GroupRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("groups/testGroup")
                 .request().put(Entity.entity(group.toString(), MediaType.APPLICATION_JSON));
-        assertEquals(400, response.getStatus());
+        assertEquals(response.getStatus(), 400);
     }
 
     @Test
@@ -306,13 +306,13 @@ public class GroupRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("groups/error")
                 .request().put(Entity.entity(group.toString(), MediaType.APPLICATION_JSON));
-        assertEquals(400, response.getStatus());
+        assertEquals(response.getStatus(), 400);
     }
 
     @Test
     public void deleteGroupTest() {
         Response response = target().path("groups/testGroup").request().delete();
-        assertEquals(200, response.getStatus());
+        assertEquals(response.getStatus(), 200);
         verify(engineManager).deleteGroup(anyString(), eq("testGroup"));
     }
 
@@ -322,16 +322,16 @@ public class GroupRestImplTest extends MatontoRestTestNg {
         when(engineManager.groupExists(anyString())).thenReturn(false);
 
         Response response = target().path("groups/error").request().delete();
-        assertEquals(400, response.getStatus());
+        assertEquals(response.getStatus(), 400);
     }
 
     @Test
     public void getGroupRolesTest() {
         Response response = target().path("groups/testGroup/roles").request().get();
-        assertEquals(200, response.getStatus());
+        assertEquals(response.getStatus(), 200);
         try {
             JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
-            assertEquals(roles.size(), result.size());
+            assertEquals(result.size(), roles.size());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -343,14 +343,14 @@ public class GroupRestImplTest extends MatontoRestTestNg {
         when(engineManager.retrieveGroup(anyString(), anyString())).thenReturn(Optional.empty());
 
         Response response = target().path("groups/error/roles").request().get();
-        assertEquals(400, response.getStatus());
+        assertEquals(response.getStatus(), 400);
     }
 
     @Test
     public void addGroupRoleTest() {
         Response response = target().path("groups/testGroup/roles").queryParam("role", "testRole")
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        assertEquals(200, response.getStatus());
+        assertEquals(response.getStatus(), 200);
         verify(engineManager).retrieveGroup(anyString(), eq("testGroup"));
         verify(engineManager).updateGroup(anyString(), any(Group.class));
     }
@@ -362,7 +362,7 @@ public class GroupRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("groups/error/roles").queryParam("role", "testRole")
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        assertEquals(400, response.getStatus());
+        assertEquals(response.getStatus(), 400);
     }
 
     @Test
@@ -372,14 +372,14 @@ public class GroupRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("groups/testgroup/roles").queryParam("role", "error")
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        assertEquals(400, response.getStatus());
+        assertEquals(response.getStatus(), 400);
     }
 
     @Test
     public void removeGroupRoleTest() {
         Response response = target().path("groups/testGroup/roles").queryParam("role", "testRole")
                 .request().delete();
-        assertEquals(200, response.getStatus());
+        assertEquals(response.getStatus(), 200);
         verify(engineManager).retrieveGroup(anyString(), eq("testGroup"));
         verify(engineManager).updateGroup(anyString(), any(Group.class));
     }
@@ -391,7 +391,7 @@ public class GroupRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("groups/error/roles").queryParam("role", "testRole")
                 .request().delete();
-        assertEquals(400, response.getStatus());
+        assertEquals(response.getStatus(), 400);
     }
 
     @Test
@@ -401,16 +401,16 @@ public class GroupRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("groups/testGroup/roles").queryParam("role", "error")
                 .request().delete();
-        assertEquals(400, response.getStatus());
+        assertEquals(response.getStatus(), 400);
     }
 
     @Test
     public void getGroupUsersTest() {
         Response response = target().path("groups/testGroup/users").request().get();
-        assertEquals(200, response.getStatus());
+        assertEquals(response.getStatus(), 200);
         try {
             JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
-            assertTrue(result.size() == users.size());
+            assertEquals(result.size(), users.size());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -422,6 +422,6 @@ public class GroupRestImplTest extends MatontoRestTestNg {
         when(engineManager.retrieveGroup(anyString(), anyString())).thenReturn(Optional.empty());
 
         Response response = target().path("groups/testGroup/users").request().get();
-        assertEquals(400, response.getStatus());
+        assertEquals(response.getStatus(), 400);
     }
 }

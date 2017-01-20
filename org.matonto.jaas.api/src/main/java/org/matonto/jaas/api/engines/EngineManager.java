@@ -59,6 +59,11 @@ public interface EngineManager {
      */
     Set<User> getUsers(String engine);
 
+    /**
+     * Returns the Set of Users accessible by all Engines managed by the EngineManager.
+     *
+     * @return the Set of all Users accessible by the EngineManager
+     */
     Set<User> getUsers();
 
     /**
@@ -239,7 +244,7 @@ public interface EngineManager {
      * Attempts to find the username of a User associated with the passed IRI using all the
      * Engines managed by the EngineManager.
      *
-     * @param userIri the IRI to search
+     * @param userIri the IRI to search for
      * @return an Optional with the username of the associated User if found; empty otherwise
      */
     Optional<String> getUsername(Resource userIri);
