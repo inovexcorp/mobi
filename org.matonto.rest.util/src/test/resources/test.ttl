@@ -1,0 +1,5 @@
+
+<http://example.com/test/0> <http://example.com/prop1> "true" ;
+	<http://example.com/prop2> "true" .
+
+<http://example.com/test/1> <http://example.com/prop1> "true" .

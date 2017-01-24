@@ -23,6 +23,7 @@ package org.matonto.rest.util;
  * #L%
  */
 
+import org.apache.commons.io.IOUtils;
 import org.openrdf.model.Model;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.RDFHandler;
@@ -32,6 +33,7 @@ import org.openrdf.rio.helpers.BufferedGroupingRDFHandler;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import javax.ws.rs.core.Response;
 
 public class RestUtils {
 
@@ -92,6 +94,30 @@ public class RestUtils {
      */
     public static String modelToString(Model model, String format) {
         return modelToString(model, getRDFFormat(format));
+    }
+
+    /**
+     * Converts a JSON-LD string into a Sesame Model.
+     *
+     * @param jsonld A string of JSON-LD.
+     * @return A Model containing the RDF from the JSON-LD string.
+     */
+    public static Model jsonldToModel(String jsonld) {
+        try {
+            return Rio.parse(IOUtils.toInputStream(jsonld), "", RDFFormat.JSONLD);
+        } catch (Exception e) {
+            throw ErrorUtils.sendError("Invalid JSON-LD", Response.Status.BAD_REQUEST);
+        }
+    }
+
+    /**
+     * Converts a Sesame Model into a JSON-LD string.
+     *
+     * @param model A Sesame model containing RDF.
+     * @return A JSON-LD string containing the converted RDF from the Model.
+     */
+    public static String modelToJsonld(Model model) {
+        return modelToString(model, "jsonld");
     }
 
     /**

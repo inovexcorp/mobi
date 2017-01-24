@@ -23,16 +23,15 @@ package org.matonto.catalog.rest.impl;
  * #L%
  */
 
-import static org.matonto.rest.util.RestUtils.getRDFFormat;
 import static org.matonto.rest.util.RestUtils.getRDFFormatFileExtension;
 import static org.matonto.rest.util.RestUtils.getRDFFormatMimeType;
+import static org.matonto.rest.util.RestUtils.jsonldToModel;
+import static org.matonto.rest.util.RestUtils.modelToString;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.commons.lang3.StringUtils;
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.Conflict;
@@ -75,14 +74,9 @@ import org.matonto.rest.util.LinksUtils;
 import org.matonto.rest.util.jaxb.Links;
 import org.matonto.web.security.util.AuthenticationProps;
 import org.openrdf.model.vocabulary.DCTERMS;
-import org.openrdf.rio.RDFFormat;
-import org.openrdf.rio.RDFHandler;
-import org.openrdf.rio.Rio;
-import org.openrdf.rio.helpers.BufferedGroupingRDFHandler;
 
 import java.io.BufferedWriter;
 import java.io.OutputStreamWriter;
-import java.io.StringWriter;
 import java.io.Writer;
 import java.util.Arrays;
 import java.util.Collection;
@@ -873,10 +867,10 @@ public class CatalogRestImpl implements CatalogRest {
                     factory.createIRI(recordId));
             catalogManager.addInProgressCommit(inProgressCommit);
             if (additionsJson != null && !additionsJson.isEmpty()) {
-                catalogManager.addAdditions(jsonldToModel(additionsJson), inProgressCommit.getResource());
+                catalogManager.addAdditions(convertJsonld(additionsJson), inProgressCommit.getResource());
             }
             if (deletionsJson != null && !deletionsJson.isEmpty()) {
-                catalogManager.addDeletions(jsonldToModel(deletionsJson), inProgressCommit.getResource());
+                catalogManager.addDeletions(convertJsonld(deletionsJson), inProgressCommit.getResource());
             }
             Commit newCommit = catalogManager.createCommit(inProgressCommit,
                     Stream.of(sourceHead, targetHead).collect(Collectors.toSet()),
@@ -999,10 +993,10 @@ public class CatalogRestImpl implements CatalogRest {
                     factory.createIRI(recordId)).orElseThrow(() ->
                     ErrorUtils.sendError("User has no InProgressCommit", Response.Status.BAD_REQUEST));
             if (additionsJson != null && !additionsJson.isEmpty()) {
-                catalogManager.addAdditions(jsonldToModel(additionsJson), inProgressCommitIRI);
+                catalogManager.addAdditions(convertJsonld(additionsJson), inProgressCommitIRI);
             }
             if (deletionsJson != null && !deletionsJson.isEmpty()) {
-                catalogManager.addDeletions(jsonldToModel(deletionsJson), inProgressCommitIRI);
+                catalogManager.addDeletions(convertJsonld(deletionsJson), inProgressCommitIRI);
             }
             return Response.ok().build();
         } catch (MatOntoException ex) {
@@ -1396,7 +1390,7 @@ public class CatalogRestImpl implements CatalogRest {
      * @return The new Thing if the JSON-LD contains the correct ID Resource; throws a 400 otherwise.
      */
     private <T extends Thing> T validateNewThing(String newThingJson, Resource thingId, OrmFactory<T> ormFactory) {
-        Model newThingModel = jsonldToModel(newThingJson);
+        Model newThingModel = convertJsonld(newThingJson);
         T newThing = ormFactory.getExisting(thingId, newThingModel);
         if (newThing == null || newThingModel.filter(newThing.getResource(), null, null).isEmpty()) {
             throw ErrorUtils.sendError(ormFactory.getType().getSimpleName() + " ids must match",
@@ -1493,10 +1487,7 @@ public class CatalogRestImpl implements CatalogRest {
      * @return A String of the converted Model in the requested RDF format.
      */
     private String getModelInFormat(Model model, String format) {
-        StringWriter sw = new StringWriter();
-        RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(getRDFFormat(format), sw));
-        Rio.write(transformer.sesameModel(model), rdfWriter);
-        return sw.toString();
+        return modelToString(transformer.sesameModel(model), format);
     }
 
     /**
@@ -1505,12 +1496,8 @@ public class CatalogRestImpl implements CatalogRest {
      * @param jsonld The string of JSON-LD to convert.
      * @return A Model containing the statements from the JSON-LD string.
      */
-    private Model jsonldToModel(String jsonld) {
-        try {
-            return transformer.matontoModel(Rio.parse(IOUtils.toInputStream(jsonld), "", RDFFormat.JSONLD));
-        } catch (Exception e) {
-            throw ErrorUtils.sendError("Invalid JSON-LD", Response.Status.BAD_REQUEST);
-        }
+    private Model convertJsonld(String jsonld) {
+        return transformer.matontoModel(jsonldToModel(jsonld));
     }
 
     /**

@@ -418,6 +418,9 @@
                     <verbose>false</verbose>
                     <addSvnKeyWords>true</addSvnKeyWords>
                     <excludedGroups>org.matonto</excludedGroups>
+                    <excludes>
+                        <exclude>src/test/resources/**</exclude>
+                    </excludes>
                 </configuration>
                 <executions>
                     <execution>
