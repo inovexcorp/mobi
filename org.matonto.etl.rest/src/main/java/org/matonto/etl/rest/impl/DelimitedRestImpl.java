@@ -24,6 +24,8 @@ package org.matonto.etl.rest.impl;
  */
 
 import static java.nio.file.FileVisitResult.CONTINUE;
+import static org.matonto.rest.util.RestUtils.getRDFFormat;
+import static org.matonto.rest.util.RestUtils.modelToString;
 
 import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
@@ -52,7 +54,6 @@ import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rest.util.CharsetUtils;
 import org.matonto.rest.util.ErrorUtils;
-import org.matonto.rest.util.RestUtils;
 import org.openrdf.model.Model;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.Rio;
@@ -288,7 +289,7 @@ public class DelimitedRestImpl implements DelimitedRest {
         } catch (IOException | MatOntoException e) {
             throw ErrorUtils.sendError(e, "Error converting delimited file", Response.Status.BAD_REQUEST);
         }
-        return RestUtils.modelToString(model, format);
+        return modelToString(model, format);
     }
 
     @Override
@@ -331,30 +332,6 @@ public class DelimitedRestImpl implements DelimitedRest {
         } else {
             return Optional.empty();
         }
-    }
-
-    /**
-     * Returns the specified RDFFormat. Currently supports Turtle, RDF/XML, and JSON-LD.
-     *
-     * @param format the abbreviated name of a RDFFormat
-     * @return a RDFFormat object with the requested format
-     */
-    private RDFFormat getRDFFormat(String format) {
-        RDFFormat rdfformat;
-        switch (format.toLowerCase()) {
-            case "turtle":
-                rdfformat = RDFFormat.TURTLE;
-                break;
-            case "rdf/xml":
-                rdfformat = RDFFormat.RDFXML;
-                break;
-            case "jsonld":
-            default:
-                rdfformat = RDFFormat.JSONLD;
-                break;
-        }
-
-        return rdfformat;
     }
 
     /**

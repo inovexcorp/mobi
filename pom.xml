@@ -127,6 +127,9 @@
                     <useMissingFile>true</useMissingFile>
                     <missingFile>legal/THIRD-PARTY.properties</missingFile>
                     <excludedGroups>org.matonto</excludedGroups>
+                    <excludes>
+                        <exclude>**/test/resources/**</exclude>
+                    </excludes>
                 </configuration>
                 <inherited>false</inherited>
                 <executions>
