@@ -23,6 +23,9 @@ package org.matonto.ontology.rest.impl;
  * #L%
  */
 
+import static org.matonto.rest.util.RestUtils.getRDFFormatFileExtension;
+import static org.matonto.rest.util.RestUtils.getRDFFormatMimeType;
+
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.google.common.collect.Iterables;
@@ -56,16 +59,12 @@ import org.openrdf.rio.helpers.JSONLDSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -76,6 +75,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
 
 @Component(immediate = true)
 public class OntologyRestImpl implements OntologyRest {
@@ -847,34 +849,6 @@ public class OntologyRestImpl implements OntologyRest {
         return combineJsonObjects(getAnnotationArray(ontology), getClassArray(ontology), 
                 getDatatypeArray(ontology), getObjectPropertyArray(ontology), getDataPropertyArray(ontology),
                 getNamedIndividualArray(ontology));
-    }
-
-    private String getRDFFormatFileExtension(String format) {
-        switch (format.toLowerCase()) {
-            case "turtle":
-                return RDFFormat.TURTLE.getDefaultFileExtension();
-            case "rdf/xml":
-                return RDFFormat.RDFXML.getDefaultFileExtension();
-            case "owl/xml" :
-                return "owx";
-            case "jsonld":
-            default:
-                return RDFFormat.JSONLD.getDefaultFileExtension();
-        }
-    }
-
-    private String getRDFFormatMimeType(String format) {
-        switch (format.toLowerCase()) {
-            case "turtle":
-                return RDFFormat.TURTLE.getDefaultMIMEType();
-            case "rdf/xml":
-                return RDFFormat.RDFXML.getDefaultMIMEType();
-            case "owl/xml" :
-                return "application/owl+xml";
-            case "jsonld":
-            default:
-                return RDFFormat.JSONLD.getDefaultMIMEType();
-        }
     }
     
     private JSONObject combineJsonObjects(JSONObject... objects) {

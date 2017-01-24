@@ -29,7 +29,7 @@
 
     <groupId>org.matonto</groupId>
     <artifactId>root</artifactId>
-    <version>1.4.15</version>
+    <version>1.4.16</version>
 
     <packaging>pom</packaging>
 
@@ -127,6 +127,9 @@
                     <useMissingFile>true</useMissingFile>
                     <missingFile>legal/THIRD-PARTY.properties</missingFile>
                     <excludedGroups>org.matonto</excludedGroups>
+                    <excludes>
+                        <exclude>**/test/resources/**</exclude>
+                    </excludes>
                 </configuration>
                 <inherited>false</inherited>
                 <executions>

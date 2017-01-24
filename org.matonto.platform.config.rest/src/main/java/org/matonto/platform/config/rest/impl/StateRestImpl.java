@@ -23,6 +23,8 @@ package org.matonto.platform.config.rest.impl;
  * #L%
  */
 
+import static org.matonto.rest.util.RestUtils.modelToJsonld;
+
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import net.sf.json.JSONArray;
@@ -41,7 +43,6 @@ import org.matonto.web.security.util.AuthenticationProps;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.Rio;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -88,7 +89,7 @@ public class StateRestImpl implements StateRest {
         results.keySet().forEach(resource -> {
             JSONObject state = new JSONObject();
             state.put("id", resource.stringValue());
-            state.put("model", modelToJsonld(results.get(resource)));
+            state.put("model", convertModel(results.get(resource)));
             array.add(state);
         });
 
@@ -123,7 +124,7 @@ public class StateRestImpl implements StateRest {
             throw ErrorUtils.sendError(ex.getMessage(), Response.Status.FORBIDDEN);
         }
 
-        return Response.ok(modelToJsonld(state)).build();
+        return Response.ok(convertModel(state)).build();
     }
 
     @Override
@@ -157,9 +158,7 @@ public class StateRestImpl implements StateRest {
         return Response.ok().build();
     }
 
-    private String modelToJsonld(Model model) {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        Rio.write(transformer.sesameModel(model), out, RDFFormat.JSONLD);
-        return out.toString();
+    private String convertModel(Model model) {
+        return modelToJsonld(transformer.sesameModel(model));
     }
 }
