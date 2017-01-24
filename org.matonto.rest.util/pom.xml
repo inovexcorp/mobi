@@ -66,11 +66,6 @@
             <artifactId>jersey-test-framework-provider-jdk-http</artifactId>
             <scope>provided</scope>
         </dependency>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 
     <build>

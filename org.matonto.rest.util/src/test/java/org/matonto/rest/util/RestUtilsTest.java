@@ -47,7 +47,7 @@ public class RestUtilsTest {
     @Before
     public void setUp() throws Exception {
         org.matonto.rdf.api.Model temp = mf.createModel();
-            temp.add(vf.createIRI("http://example.com/test/0"), vf.createIRI("http://example.com/prop1"), vf.createLiteral("true"));
+        temp.add(vf.createIRI("http://example.com/test/0"), vf.createIRI("http://example.com/prop1"), vf.createLiteral("true"));
         temp.add(vf.createIRI("http://example.com/test/1"), vf.createIRI("http://example.com/prop1"), vf.createLiteral("true"));
         temp.add(vf.createIRI("http://example.com/test/0"), vf.createIRI("http://example.com/prop2"), vf.createLiteral("true"));
         model = Values.sesameModel(temp);
