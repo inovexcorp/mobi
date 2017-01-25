@@ -23,7 +23,9 @@ package org.matonto.vfs.basic;
  * #L%
  */
 
+import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
+import aQute.bnd.annotation.component.Deactivate;
 import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.FileSystemManager;
 import org.apache.commons.vfs2.VFS;
@@ -42,16 +44,8 @@ public class BasicVirtualFilesystem implements VirtualFilesystem {
 
     private static final Logger LOGGER = Logger.getLogger(BasicVirtualFilesystem.class);
 
-    private final FileSystemManager fsManager;
+    private FileSystemManager fsManager;
 
-    public BasicVirtualFilesystem() throws VirtualFilesystemException {
-        try {
-            this.fsManager = VFS.getManager();
-        } catch (FileSystemException e) {
-            throw new VirtualFilesystemException("Issue initializing virtual file system.", e);
-        }
-        LOGGER.debug("Initialized Basic Virtual Filesystem service");
-    }
 
     @Override
     public VirtualFile resolveVirtualFile(final URI uri) throws VirtualFilesystemException {
@@ -69,5 +63,21 @@ public class BasicVirtualFilesystem implements VirtualFilesystem {
         } catch (FileSystemException e) {
             throw new VirtualFilesystemException("Issue resolving file with URI: " + uri, e);
         }
+    }
+
+    @Activate
+    void activate() throws VirtualFilesystemException {
+        try {
+            this.fsManager = VFS.getManager();
+        } catch (FileSystemException e) {
+            throw new VirtualFilesystemException("Issue initializing virtual file system.", e);
+        }
+        LOGGER.debug("Initialized Basic Virtual Filesystem service");
+    }
+
+    @Deactivate
+    void deactivate() {
+        this.fsManager = null;
+        LOGGER.debug("Deactivated Basic Virtual Filesystem service");
     }
 }
