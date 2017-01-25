@@ -26,7 +26,7 @@ package org.matonto.vfs.api;
 import java.io.IOException;
 
 /**
- * Created by bdgould on 1/1/17.
+ * This {@link Exception} indicates an issue while working in the {@link VirtualFilesystem}.
  */
 public class VirtualFilesystemException extends IOException {
 
