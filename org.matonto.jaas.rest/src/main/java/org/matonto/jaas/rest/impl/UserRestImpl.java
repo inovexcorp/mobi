@@ -23,6 +23,8 @@ package org.matonto.jaas.rest.impl;
  * #L%
  */
 
+import static org.matonto.rest.util.RestUtils.getActiveUsername;
+
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import org.matonto.jaas.api.config.MatontoConfiguration;
@@ -38,7 +40,6 @@ import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.orm.Thing;
 import org.matonto.rest.util.ErrorUtils;
-import org.matonto.web.security.util.AuthenticationProps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -286,7 +287,7 @@ public class UserRestImpl implements UserRest {
      * @param username The required username if the user is not an admin
      */
     private void isAuthorizedUser(ContainerRequestContext context, String username) {
-        String activeUsername = context.getProperty(AuthenticationProps.USERNAME).toString();
+        String activeUsername = getActiveUsername(context);
         if (!engineManager.userExists(activeUsername)) {
             throw ErrorUtils.sendError("User not found", Response.Status.FORBIDDEN);
         }

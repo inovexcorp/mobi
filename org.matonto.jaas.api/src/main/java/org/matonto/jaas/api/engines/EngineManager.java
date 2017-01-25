@@ -97,6 +97,16 @@ public interface EngineManager {
     Optional<User> retrieveUser(String engine, String username);
 
     /**
+     * Attempts to retrieve the User with the passed username from one of the Engines the
+     * EngineManager manages. Returns an Optional with the User if it was found or empty if
+     * it could not be found.
+     *
+     * @param username the username of the User to retrieve
+     * @return an Optional that contains the User if present; empty otherwise
+     */
+    Optional<User> retrieveUser(String username);
+
+    /**
      * Removes the User with the passed username using the Engine with the passed name.
      * If the engine is not in the manager, does nothing.
      *

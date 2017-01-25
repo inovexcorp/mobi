@@ -23,6 +23,7 @@ package org.matonto.catalog.rest.impl;
  * #L%
  */
 
+import static org.matonto.rest.util.RestUtils.getActiveUser;
 import static org.matonto.rest.util.RestUtils.getRDFFormatFileExtension;
 import static org.matonto.rest.util.RestUtils.getRDFFormatMimeType;
 import static org.matonto.rest.util.RestUtils.jsonldToModel;
@@ -61,7 +62,6 @@ import org.matonto.catalog.rest.CatalogRest;
 import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
-import org.matonto.jaas.engines.RdfEngine;
 import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
@@ -72,7 +72,6 @@ import org.matonto.rdf.orm.Thing;
 import org.matonto.rest.util.ErrorUtils;
 import org.matonto.rest.util.LinksUtils;
 import org.matonto.rest.util.jaxb.Links;
-import org.matonto.web.security.util.AuthenticationProps;
 import org.openrdf.model.vocabulary.DCTERMS;
 
 import java.io.BufferedWriter;
@@ -263,7 +262,7 @@ public class CatalogRestImpl implements CatalogRest {
                 throw ErrorUtils.sendError("Record identifier is required", Response.Status.BAD_REQUEST);
             }
 
-            User activeUser = getActiveUser(context);
+            User activeUser = getActiveUser(context, engineManager);
             RecordConfig.Builder builder = new RecordConfig.Builder(title, identifierIRI,
                     Collections.singleton(activeUser));
             if (description != null) {
@@ -795,7 +794,7 @@ public class CatalogRestImpl implements CatalogRest {
             }
             Optional<Commit> headCommit = optHeadCommit(catalogId, recordId, branchId);
             Set<Commit> parents = headCommit.isPresent() ? Collections.singleton(headCommit.get()) : null;
-            User activeUser = getActiveUser(context);
+            User activeUser = getActiveUser(context, engineManager);
             Resource inProgressCommitIRI = catalogManager.getInProgressCommitIRI(activeUser.getResource(),
                     factory.createIRI(recordId)).orElseThrow(() ->
                     ErrorUtils.sendError("User has no InProgressCommit", Response.Status.BAD_REQUEST));
@@ -857,7 +856,7 @@ public class CatalogRestImpl implements CatalogRest {
         try {
             final Commit sourceHead = getHeadCommit(catalogId, recordId, branchId);
             final Commit targetHead = getHeadCommit(catalogId, recordId, targetBranchId);
-            User activeUser = getActiveUser(context);
+            User activeUser = getActiveUser(context, engineManager);
             if (catalogManager.getInProgressCommitIRI(activeUser.getResource(), factory.createIRI(recordId))
                     .isPresent()) {
                 throw ErrorUtils.sendError("User already has an InProgressCommit for Record " + recordId,
@@ -891,7 +890,7 @@ public class CatalogRestImpl implements CatalogRest {
             Model resource = catalogManager.getCompiledResource(factory.createIRI(commitId)).orElseThrow(() ->
                     ErrorUtils.sendError("Commit not found", Response.Status.BAD_REQUEST));
             if (apply) {
-                User activeUser = getActiveUser(context);
+                User activeUser = getActiveUser(context, engineManager);
                 Resource inProgressCommitIRI = catalogManager.getInProgressCommitIRI(activeUser.getResource(),
                         factory.createIRI(recordId)).orElseThrow(() ->
                         ErrorUtils.sendError("User has no InProgressCommit", Response.Status.BAD_REQUEST));
@@ -912,7 +911,7 @@ public class CatalogRestImpl implements CatalogRest {
             Model temp = catalogManager.getCompiledResource(factory.createIRI(commitId)).orElseThrow(() ->
                     ErrorUtils.sendError("Commit not found", Response.Status.BAD_REQUEST));
             if (apply) {
-                User activeUser = getActiveUser(context);
+                User activeUser = getActiveUser(context, engineManager);
                 Resource inProgressCommitIRI = catalogManager.getInProgressCommitIRI(activeUser.getResource(),
                         factory.createIRI(recordId)).orElseThrow(() ->
                         ErrorUtils.sendError("User has no InProgressCommit", Response.Status.BAD_REQUEST));
@@ -939,7 +938,7 @@ public class CatalogRestImpl implements CatalogRest {
     public Response createInProgressCommit(ContainerRequestContext context, String catalogId, String recordId) {
         try {
             VersionedRDFRecord record = getRecord(catalogId, recordId, VersionedRDFRecord.TYPE);
-            User activeUser = getActiveUser(context);
+            User activeUser = getActiveUser(context, engineManager);
             if (catalogManager.getInProgressCommitIRI(activeUser.getResource(), record.getResource()).isPresent()) {
                 throw ErrorUtils.sendError("User already has an InProgressCommit for Record " + recordId,
                         Response.Status.BAD_REQUEST);
@@ -957,7 +956,7 @@ public class CatalogRestImpl implements CatalogRest {
                                         String format) {
         try {
             recordInCatalog(catalogId, recordId);
-            User activeUser = getActiveUser(context);
+            User activeUser = getActiveUser(context, engineManager);
             Resource inProgressCommitIRI = catalogManager.getInProgressCommitIRI(activeUser.getResource(),
                     factory.createIRI(recordId)).orElseThrow(() ->
                     ErrorUtils.sendError("User has no InProgressCommit", Response.Status.BAD_REQUEST));
@@ -972,7 +971,7 @@ public class CatalogRestImpl implements CatalogRest {
     public Response deleteInProgressCommit(ContainerRequestContext context, String catalogId, String recordId) {
         try {
             recordInCatalog(catalogId, recordId);
-            User activeUser = getActiveUser(context);
+            User activeUser = getActiveUser(context, engineManager);
             Resource inProgressCommitIRI = catalogManager.getInProgressCommitIRI(activeUser.getResource(),
                     factory.createIRI(recordId)).orElseThrow(() ->
                     ErrorUtils.sendError("User has no InProgressCommit", Response.Status.BAD_REQUEST));
@@ -988,7 +987,7 @@ public class CatalogRestImpl implements CatalogRest {
                                            String additionsJson, String deletionsJson) {
         try {
             recordInCatalog(catalogId, recordId);
-            User activeUser = getActiveUser(context);
+            User activeUser = getActiveUser(context, engineManager);
             Resource inProgressCommitIRI = catalogManager.getInProgressCommitIRI(activeUser.getResource(),
                     factory.createIRI(recordId)).orElseThrow(() ->
                     ErrorUtils.sendError("User has no InProgressCommit", Response.Status.BAD_REQUEST));
@@ -1279,18 +1278,6 @@ public class CatalogRestImpl implements CatalogRest {
         if (!catalogManager.getRecordIds(factory.createIRI(catalogId)).contains(factory.createIRI(recordId))) {
             throw ErrorUtils.sendError("Record not found in Catalog " + catalogId, Response.Status.BAD_REQUEST);
         }
-    }
-
-    /**
-     * Retrieves the User associated with a Request. If the User cannot be found, throws a 400 Response.
-     *
-     * @param context The context of a Request.
-     * @return The User who made the Request if found; throws a 400 otherwise.
-     */
-    private User getActiveUser(ContainerRequestContext context) {
-        return engineManager.retrieveUser(RdfEngine.COMPONENT_NAME,
-                context.getProperty(AuthenticationProps.USERNAME).toString()).orElseThrow(() ->
-                ErrorUtils.sendError("User not found", Response.Status.BAD_REQUEST));
     }
 
     /**

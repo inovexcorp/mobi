@@ -117,6 +117,17 @@ public class SimpleEngineManager implements EngineManager {
     }
 
     @Override
+    public Optional<User> retrieveUser(String username) {
+        for (Engine engine : engines.values()) {
+            Optional<User> optional = engine.retrieveUser(username);
+            if (optional.isPresent()) {
+                return optional;
+            }
+        }
+        return Optional.empty();
+    }
+
+    @Override
     public void deleteUser(String engine, String username) {
         if (containsEngine(engine)) {
             engines.get(engine).deleteUser(username);
