@@ -25,6 +25,7 @@ package org.matonto.rest.util;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.fail;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.when;
 
@@ -174,11 +175,16 @@ public class RestUtilsTest {
         assertEquals("tester", result);
     }
 
-    @Test(expected = MatOntoWebException.class)
+    @Test
     public void getActiveUsernameThatDoesNotExistTest() {
         // Setup:
         when(context.getProperty(AuthenticationProps.USERNAME)).thenReturn(null);
-        RestUtils.getActiveUsername(context);
+        try {
+            RestUtils.getActiveUsername(context);
+            fail("Expected MatOntoWebException to have been thrown");
+        } catch (MatOntoWebException e) {
+            assertEquals(401, e.getResponse().getStatus());
+        }
     }
 
     @Test
@@ -187,10 +193,14 @@ public class RestUtilsTest {
         assertEquals(user, result);
     }
 
-    @Test(expected = MatOntoWebException.class)
+    @Test
     public void getActiveUserThatDoesNotExistTest() {
         // Setup:
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.empty());
-        RestUtils.getActiveUser(context, engineManager);
+        try {
+            RestUtils.getActiveUser(context, engineManager);
+        } catch (MatOntoWebException e) {
+            assertEquals(401, e.getResponse().getStatus());
+        }
     }
 }

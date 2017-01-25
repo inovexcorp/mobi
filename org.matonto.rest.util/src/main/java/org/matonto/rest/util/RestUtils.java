@@ -170,7 +170,7 @@ public class RestUtils {
      * throws a 401 Response.
      *
      * @param context The context of a Request.
-     * @param engineManager The EngineManager to use when attempting to retrieve the User
+     * @param engineManager The EngineManager to use when attempting to retrieve the User.
      * @return The User who made the Request if found; throws a 401 otherwise.
      */
     public static User getActiveUser(ContainerRequestContext context, EngineManager engineManager) {
@@ -187,7 +187,7 @@ public class RestUtils {
     public static String getActiveUsername(ContainerRequestContext context) {
         Object result = context.getProperty(AuthenticationProps.USERNAME);
         if (result == null) {
-            throw ErrorUtils.sendError("Missing username", Response.Status.FORBIDDEN);
+            throw ErrorUtils.sendError("Missing username", Response.Status.UNAUTHORIZED);
         } else {
             return result.toString();
         }
