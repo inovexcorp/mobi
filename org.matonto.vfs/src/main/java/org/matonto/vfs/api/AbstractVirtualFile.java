@@ -46,7 +46,6 @@ public abstract class AbstractVirtualFile implements VirtualFile {
                         else {
                             LOGGER.trace("Working on " + virtualFile.getIdentifier());
                             // Execute our consumer against the file.
-                            System.out.println(virtualFile.getIdentifier());
                             consumer.accept(virtualFile);
                         }
                     } catch (VirtualFilesystemException e) {
