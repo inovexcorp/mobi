@@ -96,6 +96,8 @@ public interface EngineManager {
      */
     Optional<User> retrieveUser(String engine, String username);
 
+    Optional<User> retrieveUser(String username);
+
     /**
      * Removes the User with the passed username using the Engine with the passed name.
      * If the engine is not in the manager, does nothing.

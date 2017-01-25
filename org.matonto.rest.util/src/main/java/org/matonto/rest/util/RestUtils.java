@@ -24,6 +24,9 @@ package org.matonto.rest.util;
  */
 
 import org.apache.commons.io.IOUtils;
+import org.matonto.jaas.api.engines.EngineManager;
+import org.matonto.jaas.api.ontologies.usermanagement.User;
+import org.matonto.web.security.util.AuthenticationProps;
 import org.openrdf.model.Model;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.RDFHandler;
@@ -33,6 +36,8 @@ import org.openrdf.rio.helpers.BufferedGroupingRDFHandler;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.Optional;
+import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Response;
 
 public class RestUtils {
@@ -157,6 +162,34 @@ public class RestUtils {
             case "jsonld":
             default:
                 return RDFFormat.JSONLD.getDefaultMIMEType();
+        }
+    }
+
+    /**
+     * Retrieves the User associated with a Request using the passed EngineManager. If the User cannot be found,
+     * throws a 401 Response.
+     *
+     * @param context The context of a Request.
+     * @param engineManager The EngineManager to use when attempting to retrieve the User
+     * @return The User who made the Request if found; throws a 401 otherwise.
+     */
+    public static User getActiveUser(ContainerRequestContext context, EngineManager engineManager) {
+        return engineManager.retrieveUser(getActiveUsername(context)).orElseThrow(() ->
+                ErrorUtils.sendError("User not found", Response.Status.UNAUTHORIZED));
+    }
+
+    /**
+     * Retrieves the username associated with a Request. If the username cannot be found, throws a 401 Response.
+     *
+     * @param context The context of a Request.
+     * @return The username of the User who made the Request if found; throws a 401 otherwise.
+     */
+    public static String getActiveUsername(ContainerRequestContext context) {
+        Object result = context.getProperty(AuthenticationProps.USERNAME);
+        if (result == null) {
+            throw ErrorUtils.sendError("Missing username", Response.Status.FORBIDDEN);
+        } else {
+            return result.toString();
         }
     }
 }
