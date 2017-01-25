@@ -86,6 +86,7 @@
         <bundle start-level="80">mvn:org.matonto/etl.api/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/etl.delimited/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/etl.rdf/${project.version}</bundle>
+        <bundle start-level="80">mvn:org.matonto/vfs/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/ontology.api/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/ontology.core.impl.owlapi/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/ontology.utils/${project.version}</bundle>
