@@ -25,16 +25,27 @@ package org.matonto.rest.util;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.fail;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.when;
 
 import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.Test;
+import org.matonto.jaas.api.engines.EngineManager;
+import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory;
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
 import org.matonto.rdf.core.utils.Values;
+import org.matonto.web.security.util.AuthenticationProps;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.openrdf.model.Model;
 import org.openrdf.rio.RDFFormat;
+
+import javax.ws.rs.container.ContainerRequestContext;
+import java.util.Optional;
 
 public class RestUtilsTest {
     private Model model;
@@ -43,6 +54,15 @@ public class RestUtilsTest {
     private String expectedRdfxml;
     private ValueFactory vf = SimpleValueFactory.getInstance();
     private org.matonto.rdf.api.ModelFactory mf = LinkedHashModelFactory.getInstance();
+
+    @Mock
+    ContainerRequestContext context;
+
+    @Mock
+    EngineManager engineManager;
+
+    @Mock
+    User user;
 
     @Before
     public void setUp() throws Exception {
@@ -55,6 +75,10 @@ public class RestUtilsTest {
         expectedJsonld = IOUtils.toString(getClass().getResourceAsStream("/test.json"));
         expectedTurtle = IOUtils.toString(getClass().getResourceAsStream("/test.ttl"));
         expectedRdfxml = IOUtils.toString(getClass().getResourceAsStream("/test.xml"));
+
+        MockitoAnnotations.initMocks(this);
+        when(context.getProperty(AuthenticationProps.USERNAME)).thenReturn("tester");
+        when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
     }
 
     @Test
@@ -143,5 +167,40 @@ public class RestUtilsTest {
     public void modelToJsonldTest() throws Exception {
         String result = RestUtils.modelToJsonld(model);
         assertEquals(expectedJsonld, result);
+    }
+
+    @Test
+    public void getActiveUsernameTest() throws Exception {
+        String result = RestUtils.getActiveUsername(context);
+        assertEquals("tester", result);
+    }
+
+    @Test
+    public void getActiveUsernameThatDoesNotExistTest() {
+        // Setup:
+        when(context.getProperty(AuthenticationProps.USERNAME)).thenReturn(null);
+        try {
+            RestUtils.getActiveUsername(context);
+            fail("Expected MatOntoWebException to have been thrown");
+        } catch (MatOntoWebException e) {
+            assertEquals(401, e.getResponse().getStatus());
+        }
+    }
+
+    @Test
+    public void getActiveUserTest() throws Exception {
+        User result = RestUtils.getActiveUser(context, engineManager);
+        assertEquals(user, result);
+    }
+
+    @Test
+    public void getActiveUserThatDoesNotExistTest() {
+        // Setup:
+        when(engineManager.retrieveUser(anyString())).thenReturn(Optional.empty());
+        try {
+            RestUtils.getActiveUser(context, engineManager);
+        } catch (MatOntoWebException e) {
+            assertEquals(401, e.getResponse().getStatus());
+        }
     }
 }
