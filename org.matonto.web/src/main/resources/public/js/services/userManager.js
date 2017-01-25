@@ -153,6 +153,30 @@
 
             /**
              * @ngdoc method
+             * @name getUsername
+             * @methodOf userManager.service:userManagerService
+             *
+             * @description
+             * Calls the GET /matontorest/users/username endpoint to find the username of the user associated with
+             * the passed IRI. Returns a Promise tht resolves with the username if the user was found and rejects
+             * if not.
+             *
+             * @param {string} iri The user IRI to search for
+             * @return {Promise} A Promise that resolves with the username if the user was found; rejects with an
+             * error message otherwise
+             */
+            self.getUsername = function(iri) {
+                var deferred = $q.defer(),
+                    config = {
+                        params: {iri}
+                    };
+                $http.get(userPrefix + '/username', config)
+                    .then(response => deferred.resolve(response.data), error => onError(error, deferred));
+                return deferred.promise;
+            }
+
+            /**
+             * @ngdoc method
              * @name addUser
              * @methodOf userManager.service:userManagerService
              *
@@ -169,15 +193,13 @@
             self.addUser = function(newUser, password) {
                 var deferred = $q.defer(),
                     config = {
-                        params: {
-                            password: password
-                        }
+                        params: {password}
                     };
                 $http.post(userPrefix, newUser, config)
                     .then(response => {
                         deferred.resolve();
                         self.users.push(newUser);
-                    }, error => deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.')));
+                    }, error => onError(error, deferred));
                 return deferred.promise;
             }
             /**
@@ -197,7 +219,7 @@
             self.getUser = function(username) {
                 var deferred = $q.defer();
                 $http.get(userPrefix + '/' + encodeURIComponent(username))
-                    .then(response => deferred.resolve(response.data), error => deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.')));
+                    .then(response => deferred.resolve(response.data), error => onError(error, deferred));
                 return deferred.promise;
             }
             /**
@@ -224,7 +246,7 @@
                     .then(response => {
                         deferred.resolve();
                         _.assign(_.find(self.users, {username}), newUser);
-                    }, error => deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.')));
+                    }, error => onError(error, deferred));
                 return deferred.promise;
             }
             /**
@@ -253,7 +275,7 @@
                         }
                     };
                 $http.put(userPrefix + '/' + encodeURIComponent(username) + '/password', null, config)
-                    .then(response => deferred.resolve(), error => deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.')));
+                    .then(response => deferred.resolve(), error => onError(error, deferred));
                 return deferred.promise;
             }
             /**
@@ -278,7 +300,7 @@
                         deferred.resolve();
                         _.remove(self.users, {username});
                         _.forEach(self.groups, group => _.pull(group.members, username));
-                    }, error => deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.')));
+                    }, error => onError(error, deferred));
                 return deferred.promise;
             }
             /**
@@ -310,7 +332,7 @@
                         deferred.resolve();
                         var user = _.find(self.users, {username});
                         user.roles = _.union(_.get(user, 'roles', []), [role]);
-                    }, error => deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.')));
+                    }, error => onError(error, deferred));
                 return deferred.promise;
             }
             /**
@@ -341,7 +363,7 @@
                     .then(response => {
                         deferred.resolve();
                         _.pull(_.get(_.find(self.users, {username}), 'roles'), role);
-                    }, error => deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.')));
+                    }, error => onError(error, deferred));
                 return deferred.promise;
             }
             /**
@@ -372,7 +394,7 @@
                         deferred.resolve();
                         var group = _.find(self.groups, {title: groupTitle});
                         group.members = _.union(_.get(group, 'members', []), [username]);
-                    }, error => deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.')));
+                    }, error => onError(error, deferred));
                 return deferred.promise;
             }
             /**
@@ -403,7 +425,7 @@
                     .then(response => {
                         deferred.resolve();
                         _.pull(_.get(_.find(self.groups, {title: groupTitle}), 'members'), username);
-                    }, error => deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.')));
+                    }, error => onError(error, deferred));
                 return deferred.promise;
             }
             /**
@@ -427,7 +449,7 @@
                     .then(response => {
                         deferred.resolve();
                         self.groups.push(newGroup);
-                    }, error => deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.')));
+                    }, error => onError(error, deferred));
                 return deferred.promise;
             }
             /**
@@ -447,7 +469,7 @@
             self.getGroup = function(groupTitle) {
                 var deferred = $q.defer();
                 $http.get(groupPrefix + '/' + encodeURIComponent(groupTitle))
-                    .then(response => deferred.resolve(response.data), error => deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.')));
+                    .then(response => deferred.resolve(response.data), error => onError(error, deferred));
                 return deferred.promise;
             }
             /**
@@ -474,7 +496,7 @@
                     .then(response => {
                         deferred.resolve();
                         _.assign(_.find(self.groups, {title: groupTitle}), newGroup);
-                    }, error => deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.')));
+                    }, error => onError(error, deferred));
                 return deferred.promise;
             }
             /**
@@ -498,7 +520,7 @@
                     .then(response => {
                         deferred.resolve();
                         _.remove(self.groups, {title: groupTitle});
-                    }, error => deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.')));
+                    }, error => onError(error, deferred));
                 return deferred.promise;
             }
             /**
@@ -530,7 +552,7 @@
                         deferred.resolve();
                         var group = _.find(self.groups, {title: groupTitle});
                         group.roles = _.union(_.get(group, 'roles', []), [role]);
-                    }, error => deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.')));
+                    }, error => onError(error, deferred));
                 return deferred.promise;
             }
             /**
@@ -561,7 +583,7 @@
                     .then(response => {
                         deferred.resolve();
                         _.pull(_.get(_.find(self.groups, {title: groupTitle}), 'roles'), role);
-                    }, error => deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.')));
+                    }, error => onError(error, deferred));
                 return deferred.promise;
             }
             /**
@@ -582,7 +604,7 @@
             self.getGroupUsers = function(groupTitle) {
                 var deferred = $q.defer();
                 $http.get(groupPrefix + '/' + encodeURIComponent(groupTitle) + '/users')
-                    .then(response => deferred.resolve(response.data), error => deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.')));
+                    .then(response => deferred.resolve(response.data), error => onError(error, deferred));
                 return deferred.promise;
             }
             /**
@@ -612,22 +634,26 @@
             function listUserRoles(username) {
                 var deferred = $q.defer();
                 $http.get(userPrefix + '/' + encodeURIComponent(username) + '/roles')
-                    .then(response => deferred.resolve(response.data), error => deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.')));
+                    .then(response => deferred.resolve(response.data), error => onError(error, deferred));
                 return deferred.promise;
             }
 
             function listUserGroups(username) {
                 var deferred = $q.defer();
                 $http.get(userPrefix + '/' + encodeURIComponent(username) + '/groups')
-                    .then(response => deferred.resolve(response.data), error => deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.')));
+                    .then(response => deferred.resolve(response.data), error => onError(error, deferred));
                 return deferred.promise;
             }
 
             function listGroupRoles(groupTitle) {
                 var deferred = $q.defer();
                 $http.get(groupPrefix + '/' + encodeURIComponent(groupTitle) + '/roles')
-                    .then(response => deferred.resolve(response.data), error => deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.')));
+                    .then(response => deferred.resolve(response.data), error => onError(error, deferred));
                 return deferred.promise;
+            }
+
+            function onError(error, deferred) {
+                deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.'));
             }
         }
 })();
