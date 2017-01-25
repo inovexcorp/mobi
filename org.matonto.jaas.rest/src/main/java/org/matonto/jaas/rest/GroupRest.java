@@ -32,6 +32,7 @@ import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.List;
 
 @Path("/groups")
 @Api( value = "/groups")
@@ -149,4 +150,16 @@ public interface GroupRest {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation("List users of a MatOnto group")
     Response getGroupUsers(@PathParam("groupTitle") String groupTitle);
+
+    @PUT
+    @Path("{groupTitle}/users")
+    @RolesAllowed("admin")
+    @ApiOperation("Add a MatOnto User to a Group")
+    Response addGroupUser(@PathParam("groupTitle") String groupTitle, @QueryParam("users") List<String> usernames);
+
+    @DELETE
+    @Path("{groupTitle}/users")
+    @RolesAllowed("admin")
+    @ApiOperation("Remove a MatOnto User from a Group")
+    Response removeGroupUser(@PathParam("groupTitle") String groupTitle, @QueryParam("user") String username);
 }
