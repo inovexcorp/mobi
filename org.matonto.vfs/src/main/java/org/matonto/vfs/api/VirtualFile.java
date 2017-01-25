@@ -32,7 +32,7 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 /**
- * Created by bdgould on 1/1/17.
+ * This interface describes a file in our Virtual Filesystem Abstraction.
  */
 public interface VirtualFile extends AutoCloseable {
 
