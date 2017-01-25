@@ -42,9 +42,7 @@ import java.util.Set;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Created by bdgould on 1/1/17.
- */
+
 @RunWith(BlockJUnit4ClassRunner.class)
 public class TestDefaultVirtualFilesystem extends TestCase {
 
