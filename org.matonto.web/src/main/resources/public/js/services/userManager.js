@@ -82,6 +82,7 @@
              * each object is:
              * ```
              * {
+             *    iri: '',
              *    username: '',
              *    firstName: '',
              *    lastName: '',
@@ -170,8 +171,16 @@
                     config = {
                         params: {iri}
                     };
-                $http.get(userPrefix + '/username', config)
-                    .then(response => deferred.resolve(response.data), error => onError(error, deferred));
+                var user = _.find(self.users, {iri});
+                if (user) {
+                    deferred.resolve(user.username);
+                } else {
+                    $http.get(userPrefix + '/username', config)
+                        .then(response => {
+                            deferred.resolve(response.data);
+                            _.set(_.find(self.users, {username: response.data}), 'iri', iri);
+                        }, error => onError(error, deferred));
+                }
                 return deferred.promise;
             }
 

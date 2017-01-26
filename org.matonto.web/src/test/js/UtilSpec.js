@@ -82,6 +82,17 @@ describe('Util service', function() {
             expect(utilSvc.getDctermsValue({}, 'prop')).toBe('');
         });
     });
+    describe('should get a dcterms property id value from an entity', function() {
+        it('if it contains the property', function() {
+            var prop = 'prop',
+                entity = {};
+            entity[prefixes.dcterms + prop] = [{'@id': 'value'}];
+            expect(utilSvc.getDctermsId(entity, prop)).toBe('value');
+        });
+        it('if it does not contain the property', function() {
+            expect(utilSvc.getDctermsId({}, 'prop')).toBe('');
+        });
+    });
     describe('should parse a link header string', function() {
         it('unless it is empty', function() {
             expect(utilSvc.parseLinks('')).toEqual({});

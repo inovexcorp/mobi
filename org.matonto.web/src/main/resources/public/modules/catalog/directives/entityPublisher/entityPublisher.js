@@ -59,22 +59,27 @@
             restrict: 'E',
             replace: true,
             controllerAs: 'dvm',
-            scope: {},
-            bindToController: {
+            scope: {
                 entity: '<'
             },
             controller: ['$scope', function($scope) {
                 var dvm = this;
                 dvm.util = utilService;
                 dvm.um = userManagerService;
-                dvm.username = '';
+                dvm.username = '(None)';
 
-                $scope.$watch('dvm.entity', function(newValue, oldValue) {
-                    if (dvm.util.getDctermsValue(newValue, 'publisher') !== dvm.util.getDctermsValue(oldValue, 'publisher')) {
-                        dvm.um.getUsername(dvm.util.getDctermsValue(dvm.entity, 'publisher'))
-                            .then(username => dvm.username = username, dvm.util.createErrorToast);
-                    }
+                setUsername(dvm.util.getDctermsId($scope.entity, 'publisher'));
+                $scope.$watch(() => dvm.util.getDctermsId($scope.entity, 'publisher'), function(newValue, oldValue) {
+                    setUsername(newValue);
                 });
+
+                function setUsername(iri) {
+                    if (iri) {
+                        dvm.um.getUsername(iri).then(username => dvm.username = username, dvm.util.createErrorToast);
+                    } else {
+                        dvm.username = '(None)';
+                    }
+                }
             }],
             templateUrl: 'modules/catalog/directives/entityPublisher/entityPublisher.html'
         };
