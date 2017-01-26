@@ -620,6 +620,67 @@
             }
             /**
              * @ngdoc method
+             * @name addGroupUsers
+             * @methodOf userManager.service:userManagerService
+             *
+             * @description
+             * Calls the PUT /matontorest/groups/{groupTitle}/users endpoint to add the MatOnto
+             * users specified by the passed array of usernames to the group specified by the
+             * passed group title. Returns a Promise that resolves if the addition was successful
+             * and rejects with an error message if not. Updates the
+             * {@link userManager.service:userManagerService#groups groups} list appropriately.
+             *
+             * @param {string} groupTitle the title of the group to add users to
+             * @param {string[]} users an array of usernames of users to add to the group
+             * @return {Promise} A Promise that resolves if the request is successful; rejects
+             * with an error message otherwise
+             */
+            self.addGroupUsers = function(groupTitle, users) {
+                var deferred = $q.defer(),
+                    config = {
+                        params: {users}
+                    };
+                $http.put(groupPrefix + '/' + encodeURIComponent(groupTitle) + '/users', null, config)
+                    .then(response => {
+                        deferred.resolve();
+                        var group = _.find(self.groups, {title: groupTitle});
+                        group.members = _.union(_.get(group, 'members', []), users);
+                    }, error => onError(error, deferred));
+                return deferred.promise;
+            }
+            /**
+             * @ngdoc method
+             * @name deleteGroupUser
+             * @methodOf userManager.service:userManagerService
+             *
+             * @description
+             * Calls the DELETE /matontorest/groups/{groupTitle}/users endpoint to remove the MatOnto
+             * user specified by the passed username from the group specified by the passed group
+             * title. Returns a Promise that resolves if the deletion was successful and rejects
+             * with an error message if not. Updates the
+             * {@link userManager.service:userManagerService#groups groups} list appropriately.
+             *
+             * @param {string} groupTitle the title of the group to remove the user from
+             * @param {string} username the username of the user to remove from the group
+             * @return {Promise} A Promise that resolves if the request is successful; rejects
+             * with an error message otherwise
+             */
+            self.deleteGroupUser = function(groupTitle, username) {
+                var deferred = $q.defer(),
+                    config = {
+                        params: {
+                            user: username
+                        }
+                    };
+                $http.delete(groupPrefix + '/' + encodeURIComponent(groupTitle) + '/users', config)
+                    .then(response => {
+                        deferred.resolve();
+                        _.pull(_.get(_.find(self.groups, {title: groupTitle}), 'members'), username);
+                    }, error => onError(error, deferred));
+                return deferred.promise;
+            }
+            /**
+             * @ngdoc method
              * @name isAdmin
              * @methodOf userManager.service:userManagerService
              *
