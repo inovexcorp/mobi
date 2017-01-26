@@ -388,14 +388,14 @@ public class GroupRestImplTest extends MatontoRestTestNg {
         when(engineManager.getRole(anyString(), anyString())).thenReturn(Optional.empty());
         String[] roles = {"testRole"};
 
-        Response response = target().path("groups/testgroup/roles").queryParam("roles", roles)
+        Response response = target().path("groups/testGroup/roles").queryParam("roles", roles)
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
 
     @Test
     public void addGroupRolesWithoutRolesTest() {
-        Response response = target().path("groups/testgroup/roles")
+        Response response = target().path("groups/testGroup/roles")
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }

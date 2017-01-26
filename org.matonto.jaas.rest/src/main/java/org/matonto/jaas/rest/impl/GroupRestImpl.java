@@ -178,7 +178,7 @@ public class GroupRestImpl implements GroupRest {
         allRoles.addAll(roleObjs);
         savedGroup.setHasGroupRole(allRoles);
         engineManager.updateGroup(RdfEngine.COMPONENT_NAME, savedGroup);
-        logger.info("Added role " + String.join(", ", roles) + " to group " + groupTitle);
+        logger.info("Role(s) " + String.join(", ", roles) + " to group " + groupTitle);
         return Response.ok().build();
     }
 

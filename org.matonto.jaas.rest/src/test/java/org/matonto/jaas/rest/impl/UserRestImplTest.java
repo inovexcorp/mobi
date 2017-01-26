@@ -444,7 +444,7 @@ public class UserRestImplTest extends MatontoRestTestNg {
         IntStream.range(1, 3)
                 .mapToObj(Integer::toString)
                 .forEach(s -> roles.put(s, roleFactory.createNew(vf.createIRI("http://matonto.org/roles/" + s))));
-        User newUser = userFactory.createNew(vf.createIRI("http://matonto.org/users/testUser"));
+        User newUser = userFactory.createNew(vf.createIRI("http://matonto.org/users/" + UsernameTestFilter.USERNAME));
         when(engineManager.getRole(anyString(), anyString())).thenAnswer(i -> Optional.of(roles.get(i.getArgumentAt(1, String.class))));
         when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.of(newUser));
 
