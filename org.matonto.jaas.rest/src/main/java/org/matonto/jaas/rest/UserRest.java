@@ -233,6 +233,7 @@ public interface UserRest {
     @GET
     @Path("username")
     @RolesAllowed("user")
+    @Produces(MediaType.TEXT_PLAIN)
     @ApiOperation("Retrieve a username based on the passed User IRI")
     Response getUsername(@QueryParam("iri") String userIri);
 }

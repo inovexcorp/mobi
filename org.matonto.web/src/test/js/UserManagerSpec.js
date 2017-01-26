@@ -23,15 +23,17 @@
 describe('User Manager service', function() {
     var $httpBackend,
         userManagerSvc,
+        $timeout,
         params;
 
     beforeEach(function() {
         module('userManager');
         mockLoginManager();
 
-        inject(function(userManagerService, _$httpBackend_) {
+        inject(function(userManagerService, _$httpBackend_, _$timeout_) {
             userManagerSvc = userManagerService;
             $httpBackend = _$httpBackend_;
+            $timeout = _$timeout_;
         });
     });
 
@@ -60,6 +62,48 @@ describe('User Manager service', function() {
             expect(group.title).toBe(groups[idx].title);
             expect(group.roles).toEqual(groupRoles);
             expect(group.members).toEqual(_.map(groupUsers, 'username'));
+        });
+    });
+    describe('should get the username of the user with the passed iri', function() {
+        beforeEach(function() {
+            params = {
+                iri: 'iri'
+            };
+        });
+        it('if it has been found before', function(done) {
+            userManagerSvc.users = [{iri: params.iri, username: 'username'}];
+            userManagerSvc.getUsername(params.iri).then(function(response) {
+                expect(response).toBe('username');
+                done();
+            });
+            $timeout.flush();
+            $httpBackend.verifyNoOutstandingRequest();
+        });
+        describe('if it has not been found before', function() {
+            it('unless an error occurs', function(done) {
+                $httpBackend.whenGET('/matontorest/users/username' + createQueryString(params)).respond(function(method, url, data, headers) {
+                    return [400, '', {}, 'Error Message'];
+                });
+                userManagerSvc.getUsername(params.iri).then(function(response) {
+                    fail('Promise should have rejected');
+                    done();
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                    done();
+                });
+                $httpBackend.flush();
+            });
+            it('successfully', function(done) {
+                var username = 'username';
+                userManagerSvc.users = [{username: username}];
+                $httpBackend.whenGET('/matontorest/users/username' + createQueryString(params)).respond(200, username);
+                userManagerSvc.getUsername(params.iri).then(function(response) {
+                    expect(response).toBe(username);
+                    expect(_.get(_.find(userManagerSvc.users, {username: username}), 'iri')).toBe(params.iri);
+                    done();
+                });
+                $httpBackend.flush();
+            });
         });
     });
     describe('should add a user', function() {

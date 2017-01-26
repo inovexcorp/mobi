@@ -506,6 +506,7 @@ function mockUserManager() {
             this.groups = [];
             this.reset = jasmine.createSpy('reset');
             this.initialize = jasmine.createSpy('initialize');
+            this.getUsername = jasmine.createSpy('getUsername').and.returnValue($q.when(''));
             this.setUsers = jasmine.createSpy('setUsers').and.returnValue($q.when());
             this.setGroups = jasmine.createSpy('setGroups').and.returnValue($q.when());
             this.addUser = jasmine.createSpy('addUser').and.returnValue($q.when());
@@ -666,6 +667,7 @@ function mockUtil() {
             this.getBeautifulIRI = jasmine.createSpy('getBeautifulIRI').and.callFake(_.identity);
             this.getPropertyValue = jasmine.createSpy('getPropertyValue').and.returnValue('');
             this.getDctermsValue = jasmine.createSpy('getPropertyValue').and.returnValue('');
+            this.getDctermsId = jasmine.createSpy('getDctermsId').and.returnValue('');
             this.parseLinks = jasmine.createSpy('parseLinks').and.returnValue({});
             this.createErrorToast = jasmine.createSpy('createErrorToast');
         });
