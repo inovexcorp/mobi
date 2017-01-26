@@ -167,7 +167,7 @@ public interface GroupRest {
     /**
      * Removes the user specified by username from the specified group in MatOnto.
      *
-     * @param groupTitle the title of the group to removea user from
+     * @param groupTitle the title of the group to remove a user from
      * @param username the username of the user to remove from the group
      * @return a Response indicating the success or failure of the request
      */
