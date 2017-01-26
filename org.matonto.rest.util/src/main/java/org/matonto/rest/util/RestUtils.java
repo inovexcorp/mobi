@@ -23,10 +23,22 @@ package org.matonto.rest.util;
  * #L%
  */
 
+import org.apache.commons.io.IOUtils;
+import org.matonto.jaas.api.engines.EngineManager;
+import org.matonto.jaas.api.ontologies.usermanagement.User;
+import org.matonto.web.security.util.AuthenticationProps;
+import org.openrdf.model.Model;
 import org.openrdf.rio.RDFFormat;
+import org.openrdf.rio.RDFHandler;
+import org.openrdf.rio.Rio;
+import org.openrdf.rio.helpers.BufferedGroupingRDFHandler;
 
+import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.Optional;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.Response;
 
 public class RestUtils {
 
@@ -62,6 +74,55 @@ public class RestUtils {
             default:
                 return RDFFormat.JSONLD;
         }
+    }
+
+    /**
+     * Converts a Sesame Model into a string containing RDF in the specified RDFFormat.
+     *
+     * @param model A Sesame Model of RDF to convert.
+     * @param format The RDFFormat the RDF should be serialized into.
+     * @return A String of the serialized RDF from the Model.
+     */
+    public static String modelToString(Model model, RDFFormat format) {
+        StringWriter sw = new StringWriter();
+        RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(format, sw));
+        Rio.write(model, rdfWriter);
+        return sw.toString();
+    }
+
+    /**
+     * Converts a Sesame Model into a string containing RDF in the format specified by the passed string.
+     *
+     * @param model A Sesame Model of RDF to convert.
+     * @param format The abbreviated name of a RDFFormat.
+     * @return A String of the serialized RDF from the Model.
+     */
+    public static String modelToString(Model model, String format) {
+        return modelToString(model, getRDFFormat(format));
+    }
+
+    /**
+     * Converts a JSON-LD string into a Sesame Model.
+     *
+     * @param jsonld A string of JSON-LD.
+     * @return A Model containing the RDF from the JSON-LD string.
+     */
+    public static Model jsonldToModel(String jsonld) {
+        try {
+            return Rio.parse(IOUtils.toInputStream(jsonld), "", RDFFormat.JSONLD);
+        } catch (Exception e) {
+            throw ErrorUtils.sendError("Invalid JSON-LD", Response.Status.BAD_REQUEST);
+        }
+    }
+
+    /**
+     * Converts a Sesame Model into a JSON-LD string.
+     *
+     * @param model A Sesame model containing RDF.
+     * @return A JSON-LD string containing the converted RDF from the Model.
+     */
+    public static String modelToJsonld(Model model) {
+        return modelToString(model, "jsonld");
     }
 
     /**
@@ -101,6 +162,34 @@ public class RestUtils {
             case "jsonld":
             default:
                 return RDFFormat.JSONLD.getDefaultMIMEType();
+        }
+    }
+
+    /**
+     * Retrieves the User associated with a Request using the passed EngineManager. If the User cannot be found,
+     * throws a 401 Response.
+     *
+     * @param context The context of a Request.
+     * @param engineManager The EngineManager to use when attempting to retrieve the User.
+     * @return The User who made the Request if found; throws a 401 otherwise.
+     */
+    public static User getActiveUser(ContainerRequestContext context, EngineManager engineManager) {
+        return engineManager.retrieveUser(getActiveUsername(context)).orElseThrow(() ->
+                ErrorUtils.sendError("User not found", Response.Status.UNAUTHORIZED));
+    }
+
+    /**
+     * Retrieves the username associated with a Request. If the username cannot be found, throws a 401 Response.
+     *
+     * @param context The context of a Request.
+     * @return The username of the User who made the Request if found; throws a 401 otherwise.
+     */
+    public static String getActiveUsername(ContainerRequestContext context) {
+        Object result = context.getProperty(AuthenticationProps.USERNAME);
+        if (result == null) {
+            throw ErrorUtils.sendError("Missing username", Response.Status.UNAUTHORIZED);
+        } else {
+            return result.toString();
         }
     }
 }

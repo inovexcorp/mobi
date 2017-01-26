@@ -452,7 +452,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         when(difference.getAdditions()).thenReturn(mf.createModel());
         when(difference.getDeletions()).thenReturn(mf.createModel());
 
-        when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.of(user));
+        when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
     }
 
     // GET catalogs
@@ -2485,12 +2485,12 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     @Test
     public void createBranchCommitForUserThatDoesNotExistTest() {
         // Setup:
-        when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.empty());
+        when(engineManager.retrieveUser(anyString())).thenReturn(Optional.empty());
 
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits")
                 .queryParam("message", "Message").request().post(Entity.json(""));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatus(), 401);
     }
 
     @Test
@@ -2961,7 +2961,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     @Test
     public void mergeForUserThatDoesNotExistTest() {
         // Setup:
-        when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.empty());
+        when(engineManager.retrieveUser(anyString())).thenReturn(Optional.empty());
         when((catalogManager.getInProgressCommitIRI(any(Resource.class), any(Resource.class)))).thenReturn(Optional.empty());
         JSONArray adds = new JSONArray();
         adds.add(new JSONObject().element("@id", "http://example.com/add").element("@type", new JSONArray().element("http://example.com/Add")));
@@ -2971,7 +2971,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/conflicts/resolution")
                 .queryParam("targetId", BRANCH_IRI).request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatus(), 401);
     }
 
     @Test
@@ -3261,11 +3261,11 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     public void createInProgressCommitForUserThatDoesNotExistTest() {
         // Setup:
         when((catalogManager.getInProgressCommitIRI(any(Resource.class), any(Resource.class)))).thenReturn(Optional.empty());
-        when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.empty());
+        when(engineManager.retrieveUser(anyString())).thenReturn(Optional.empty());
 
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(ERROR_IRI) + "/in-progress-commit")
                 .request().post(Entity.json(""));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatus(), 401);
     }
 
     @Test
@@ -3354,11 +3354,11 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     @Test
     public void getInProgressCommitForUserThatDoesNotExistTest() {
         // Setup:
-        when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.empty());
+        when(engineManager.retrieveUser(anyString())).thenReturn(Optional.empty());
 
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/in-progress-commit")
                 .request().get();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatus(), 401);
     }
 
     @Test
@@ -3405,11 +3405,11 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     @Test
     public void removeInProgressCommitForUserThatDoesNotExistTest() {
         // Setup:
-        when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.empty());
+        when(engineManager.retrieveUser(anyString())).thenReturn(Optional.empty());
 
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/in-progress-commit")
                 .request().delete();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatus(), 401);
     }
 
     @Test
@@ -3474,11 +3474,11 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         adds.add(new JSONObject().element("@id", "http://example.com/add").element("@type", new JSONArray().element("http://example.com/Add")));
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("additions", adds.toString());
-        when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.empty());
+        when(engineManager.retrieveUser(anyString())).thenReturn(Optional.empty());
 
         Response response = target().path("catalogs/" + encode(ERROR_IRI) + "/records/" + encode(RECORD_IRI) + "/in-progress-commit")
                 .request().put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatus(), 401);
     }
 
     @Test

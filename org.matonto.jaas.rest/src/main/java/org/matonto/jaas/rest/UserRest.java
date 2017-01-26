@@ -29,7 +29,16 @@ import io.swagger.annotations.ApiOperation;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
 
 import javax.annotation.security.RolesAllowed;
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -213,4 +222,17 @@ public interface UserRest {
     @RolesAllowed("admin")
     @ApiOperation("Remove a MatOnto user from a group")
     Response removeUserGroup(@PathParam("username") String username, @QueryParam("group") String groupTitle);
+
+    /**
+     * Attempts to retrieve the username for the user associated with the passed user IRI. Returns a 404 if
+     * a user with the passed IRI cannot be found.
+     *
+     * @param userIri the IRI to search for
+     * @return a Response with the username of the user associated with the IRI
+     */
+    @GET
+    @Path("username")
+    @RolesAllowed("user")
+    @ApiOperation("Retrieve a username based on the passed User IRI")
+    Response getUsername(@QueryParam("iri") String userIri);
 }

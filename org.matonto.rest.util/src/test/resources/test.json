@@ -1,0 +1,14 @@
+[ {
+  "@id" : "http://example.com/test/0",
+  "http://example.com/prop1" : [ {
+    "@value" : "true"
+  } ],
+  "http://example.com/prop2" : [ {
+    "@value" : "true"
+  } ]
+}, {
+  "@id" : "http://example.com/test/1",
+  "http://example.com/prop1" : [ {
+    "@value" : "true"
+  } ]
+} ]
