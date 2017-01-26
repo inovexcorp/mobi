@@ -254,19 +254,19 @@ describe('User Manager service', function() {
             $httpBackend.flush();
         });
     });
-    describe('should add a role to a user', function() {
+    describe('should add roles to a user', function() {
         beforeEach(function() {
-            userManagerSvc.users = [{username: 'username', roles: []}];
+            this.user = {username: 'username', roles: []};
+            userManagerSvc.users = [this.user];
             params = {
-                role: 'role'
+                roles: ['role1', 'role2']
             };
         });
         it('unless an error occurs', function(done) {
-            var username = userManagerSvc.users[0].username;
-            $httpBackend.whenPUT('/matontorest/users/' + username + '/roles?' + $httpParamSerializer(params)).respond(function(method, url, data, headers) {
+            $httpBackend.whenPUT('/matontorest/users/' + this.user.username + '/roles?' + $httpParamSerializer(params)).respond(function(method, url, data, headers) {
                 return [400, '', {}, 'Error Message'];
             });
-            userManagerSvc.addUserRole(username, params.role).then(function(response) {
+            userManagerSvc.addUserRoles(this.user.username, params.roles).then(function(response) {
                 fail('Promise should have rejected');
                 done();
             }, function(response) {
@@ -276,11 +276,10 @@ describe('User Manager service', function() {
             $httpBackend.flush();
         });
         it('using the passed parameters', function(done) {
-            var username = userManagerSvc.users[0].username;
-            $httpBackend.whenPUT('/matontorest/users/' + username + '/roles?' + $httpParamSerializer(params)).respond(200, []);
-            userManagerSvc.addUserRole(username, params.role).then(function(response) {
-                var user = _.find(userManagerSvc.users, {username: username});
-                expect(user.roles).toContain(params.role);
+            var test = this;
+            $httpBackend.whenPUT('/matontorest/users/' + test.user.username + '/roles?' + $httpParamSerializer(params)).respond(200, []);
+            userManagerSvc.addUserRoles(test.user.username, params.roles).then(function(response) {
+                expect(test.user.roles).toEqual(params.roles);
                 done();
             });
             $httpBackend.flush();
@@ -493,19 +492,19 @@ describe('User Manager service', function() {
             $httpBackend.flush();
         });
     });
-    describe('should add a role to a group', function() {
+    describe('should add roles to a group', function() {
         beforeEach(function() {
-            userManagerSvc.groups = [{title: 'group', roles: []}];
+            this.group = {title: 'group', roles: []};
+            userManagerSvc.groups = [this.group];
             params = {
-                role: 'role'
+                roles: ['role1', 'role2']
             };
         });
         it('unless an error occurs', function(done) {
-            var groupTitle = userManagerSvc.groups[0].title;
-            $httpBackend.whenPUT('/matontorest/groups/' + groupTitle + '/roles?' + $httpParamSerializer(params)).respond(function(method, url, data, headers) {
+            $httpBackend.whenPUT('/matontorest/groups/' + this.group.title + '/roles?' + $httpParamSerializer(params)).respond(function(method, url, data, headers) {
                 return [400, '', {}, 'Error Message'];
             });
-            userManagerSvc.addGroupRole(groupTitle, params.role).then(function(response) {
+            userManagerSvc.addGroupRoles(this.group.title, params.roles).then(function(response) {
                 fail('Promise should have rejected');
                 done();
             }, function(response) {
@@ -515,11 +514,10 @@ describe('User Manager service', function() {
             $httpBackend.flush();
         });
         it('using the passed parameters', function(done) {
-            var groupTitle = userManagerSvc.groups[0].title;
-            $httpBackend.whenPUT('/matontorest/groups/' + groupTitle + '/roles?' + $httpParamSerializer(params)).respond(200, []);
-            userManagerSvc.addGroupRole(groupTitle, params.role).then(function(response) {
-                var group = _.find(userManagerSvc.groups, {title: groupTitle});
-                expect(group.roles).toContain(params.role);
+            var test = this;
+            $httpBackend.whenPUT('/matontorest/groups/' + test.group.title + '/roles?' + $httpParamSerializer(params)).respond(200, []);
+            userManagerSvc.addGroupRoles(test.group.title, params.roles).then(function(response) {
+                expect(test.group.roles).toEqual(params.roles);
                 done();
             });
             $httpBackend.flush();

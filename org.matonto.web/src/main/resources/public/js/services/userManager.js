@@ -321,28 +321,26 @@
              *
              * @description
              * Calls the PUT /matontorest/users/{username}/roles endpoint to add the passed
-             * role to the MatOnto user specified by the passed username. Returns a Promise
+             * roles to the MatOnto user specified by the passed username. Returns a Promise
              * that resolves if the addition was successful and rejects with an error message
              * if not. Updates the {@link userManager.service:userManagerService#users users}
              * list appropriately.
              *
              * @param {string} username the username of the user to add a role to
-             * @param {string} role the role to add to the user
+             * @param {string[]} roles the roles to add to the user
              * @return {Promise} A Promise that resolves if the request is successful; rejects
              * with an error message otherwise
              */
-            self.addUserRole = function(username, role) {
+            self.addUserRoles = function(username, roles) {
                 var deferred = $q.defer(),
                     config = {
-                        params: {
-                            role: role
-                        }
+                        params: {roles}
                     };
                 $http.put(userPrefix + '/' + encodeURIComponent(username) + '/roles', null, config)
                     .then(response => {
                         deferred.resolve();
                         var user = _.find(self.users, {username});
-                        user.roles = _.union(_.get(user, 'roles', []), [role]);
+                        user.roles = _.union(_.get(user, 'roles', []), roles);
                     }, error => onError(error, deferred));
                 return deferred.promise;
             }
@@ -541,28 +539,26 @@
              *
              * @description
              * Calls the PUT /matontorest/groups/{groupTitle}/roles endpoint to add the passed
-             * role to the MatOnto group specified by the passed title. Returns a Promise
+             * roles to the MatOnto group specified by the passed title. Returns a Promise
              * that resolves if the addition was successful and rejects with an error message
              * if not. Updates the {@link userManager.service:userManagerService#groups groups}
              * list appropriately.
              *
              * @param {string} groupTitle the title of the group to add a role to
-             * @param {string} role the role to add to the group
+             * @param {string[]} roles the roles to add to the group
              * @return {Promise} A Promise that resolves if the request is successful; rejects
              * with an error message otherwise
              */
-            self.addGroupRole = function(groupTitle, role) {
+            self.addGroupRoles = function(groupTitle, roles) {
                 var deferred = $q.defer(),
                     config = {
-                        params: {
-                            role: role
-                        }
+                        params: {roles}
                     };
                 $http.put(groupPrefix + '/' + encodeURIComponent(groupTitle) + '/roles', null, config)
                     .then(response => {
                         deferred.resolve();
                         var group = _.find(self.groups, {title: groupTitle});
-                        group.roles = _.union(_.get(group, 'roles', []), [role]);
+                        group.roles = _.union(_.get(group, 'roles', []), roles);
                     }, error => onError(error, deferred));
                 return deferred.promise;
             }

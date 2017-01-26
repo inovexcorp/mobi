@@ -165,19 +165,20 @@ public class GroupRestImpl implements GroupRest {
     }
 
     @Override
-    public Response addGroupRole(String groupTitle, String role) {
-        if (groupTitle == null || role == null) {
-            throw ErrorUtils.sendError("Both group title and role must be provided", Response.Status.BAD_REQUEST);
+    public Response addGroupRoles(String groupTitle, List<String> roles) {
+        if (groupTitle == null || roles.isEmpty()) {
+            throw ErrorUtils.sendError("Both group title and roles must be provided", Response.Status.BAD_REQUEST);
         }
         Group savedGroup = engineManager.retrieveGroup(RdfEngine.COMPONENT_NAME, groupTitle).orElseThrow(() ->
                 ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
-        Role roleObj = engineManager.getRole(RdfEngine.COMPONENT_NAME, role).orElseThrow(() ->
-                ErrorUtils.sendError("Role " + role + " not found", Response.Status.BAD_REQUEST));
+        Set<Role> roleObjs = new HashSet<>();
+        roles.forEach(s -> roleObjs.add(engineManager.getRole(RdfEngine.COMPONENT_NAME, s).orElseThrow(() ->
+                ErrorUtils.sendError("Role " + s + " not found", Response.Status.BAD_REQUEST))));
         Set<Role> allRoles = savedGroup.getHasGroupRole();
-        allRoles.add(roleObj);
+        allRoles.addAll(roleObjs);
         savedGroup.setHasGroupRole(allRoles);
         engineManager.updateGroup(RdfEngine.COMPONENT_NAME, savedGroup);
-        logger.info("Added role " + role + " to group " + groupTitle);
+        logger.info("Role(s) " + String.join(", ", roles) + " to group " + groupTitle);
         return Response.ok().build();
     }
 

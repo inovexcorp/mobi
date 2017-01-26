@@ -353,11 +353,21 @@ public class GroupRestImplTest extends MatontoRestTestNg {
     }
 
     @Test
-    public void addGroupRoleTest() {
-        Response response = target().path("groups/testGroup/roles").queryParam("role", "testRole")
+    public void addGroupRolesTest() {
+        //Setup:
+        Map<String, Role> roles = new HashMap<>();
+        IntStream.range(1, 3)
+                .mapToObj(Integer::toString)
+                .forEach(s -> roles.put(s, roleFactory.createNew(vf.createIRI("http://matonto.org/roles/" + s))));
+        Group newGroup = groupFactory.createNew(vf.createIRI("http://matonto.org/groups/testGroup"));
+        when(engineManager.getRole(anyString(), anyString())).thenAnswer(i -> Optional.of(roles.get(i.getArgumentAt(1, String.class))));
+        when(engineManager.retrieveGroup(anyString(), anyString())).thenReturn(Optional.of(newGroup));
+
+        Response response = target().path("groups/testGroup/roles").queryParam("roles", roles.keySet().toArray())
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 200);
         verify(engineManager).retrieveGroup(anyString(), eq("testGroup"));
+        roles.keySet().forEach(s -> verify(engineManager).getRole(anyString(), eq(s)));
         verify(engineManager).updateGroup(anyString(), any(Group.class));
     }
 
@@ -365,8 +375,9 @@ public class GroupRestImplTest extends MatontoRestTestNg {
     public void addRoleToGroupThatDoesNotExistTest() {
         //Setup:
         when(engineManager.retrieveGroup(anyString(), anyString())).thenReturn(Optional.empty());
+        String[] roles = {"testRole"};
 
-        Response response = target().path("groups/error/roles").queryParam("role", "testRole")
+        Response response = target().path("groups/error/roles").queryParam("roles", roles)
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
@@ -375,8 +386,16 @@ public class GroupRestImplTest extends MatontoRestTestNg {
     public void addRoleThatDoesNotExistToGroupTest() {
         //Setup:
         when(engineManager.getRole(anyString(), anyString())).thenReturn(Optional.empty());
+        String[] roles = {"testRole"};
 
-        Response response = target().path("groups/testgroup/roles").queryParam("role", "error")
+        Response response = target().path("groups/testGroup/roles").queryParam("roles", roles)
+                .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void addGroupRolesWithoutRolesTest() {
+        Response response = target().path("groups/testGroup/roles")
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }

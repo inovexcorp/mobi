@@ -56,6 +56,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static org.mockito.Matchers.any;
@@ -437,30 +438,49 @@ public class UserRestImplTest extends MatontoRestTestNg {
     }
 
     @Test
-    public void addUserRoleTest() {
-        Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/roles").queryParam("role", "testRole")
+    public void addUserRolesTest() {
+        // Setup:
+        Map<String, Role> roles = new HashMap<>();
+        IntStream.range(1, 3)
+                .mapToObj(Integer::toString)
+                .forEach(s -> roles.put(s, roleFactory.createNew(vf.createIRI("http://matonto.org/roles/" + s))));
+        User newUser = userFactory.createNew(vf.createIRI("http://matonto.org/users/" + UsernameTestFilter.USERNAME));
+        when(engineManager.getRole(anyString(), anyString())).thenAnswer(i -> Optional.of(roles.get(i.getArgumentAt(1, String.class))));
+        when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.of(newUser));
+
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/roles").queryParam("roles", roles.keySet().toArray())
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 200);
         verify(engineManager).retrieveUser(anyString(), eq(UsernameTestFilter.USERNAME));
+        roles.keySet().forEach(s -> verify(engineManager).getRole(anyString(), eq(s)));
         verify(engineManager).updateUser(anyString(), any(User.class));
     }
 
     @Test
-    public void addRoleToUserThatDoesNotExistTest() {
+    public void addRolesToUserThatDoesNotExistTest() {
         //Setup:
         when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.empty());
+        String[] roles = {"testRole"};
 
-        Response response = target().path("users/error/roles").queryParam("role", "testRole")
+        Response response = target().path("users/error/roles").queryParam("roles", roles)
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
 
     @Test
-    public void addRoleThatDoesNotExistToUserTest() {
+    public void addRolesThatDoNotExistToUserTest() {
         //Setup:
         when(engineManager.getRole(anyString(), anyString())).thenReturn(Optional.empty());
+        String[] roles = {"testRole"};
 
-        Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/roles").queryParam("role", "error")
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/roles").queryParam("roles", roles)
+                .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void addUserRolesWithoutRolesTest() {
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/roles")
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }

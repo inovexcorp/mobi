@@ -26,7 +26,6 @@ describe('Users Page directive', function() {
         userStateSvc,
         userManagerSvc,
         loginManagerSvc,
-        $timeout,
         $q;
 
     beforeEach(function() {
@@ -36,14 +35,13 @@ describe('Users Page directive', function() {
         mockUserManager();
         mockLoginManager();
 
-        inject(function(_userStateService_, _userManagerService_, _loginManagerService_, _$timeout_, _$q_, _$compile_, _$rootScope_) {
+        inject(function(_$compile_, _$rootScope_, _userStateService_, _userManagerService_, _loginManagerService_, _$q_) {
+            $compile = _$compile_;
+            scope = _$rootScope_;
             userStateSvc = _userStateService_;
             userManagerSvc = _userManagerService_;
             loginManagerSvc = _loginManagerService_;
-            $timeout = _$timeout_;
             $q = _$q_;
-            $compile = _$compile_;
-            scope = _$rootScope_;
         });
     });
 
@@ -74,26 +72,26 @@ describe('Users Page directive', function() {
                 userStateSvc.selectedUser = {username: 'user'};
             });
             it('unless an error occurs', function() {
-                userManagerSvc.addUserRole.and.returnValue($q.reject('Error message'));
+                userManagerSvc.addUserRoles.and.returnValue($q.reject('Error message'));
                 userManagerSvc.deleteUserRole.and.returnValue($q.reject('Error message'));
                 controller.changeRoles();
-                $timeout.flush();
+                scope.$apply();
                 expect(controller.permissionErrorMessage).toBe('Error message');
             });
             it('if the role has been added', function() {
                 controller.roles.admin = true;
                 controller.changeRoles();
-                $timeout.flush();
-                expect(userManagerSvc.addUserRole).toHaveBeenCalledWith(userStateSvc.selectedUser.username, 'admin');
+                scope.$apply();
+                expect(userManagerSvc.addUserRoles).toHaveBeenCalledWith(userStateSvc.selectedUser.username, ['admin']);
                 expect(userManagerSvc.deleteUserRole).not.toHaveBeenCalled();
                 expect(controller.permissionErrorMessage).toBe('');
             });
             it('if the role has been removed', function() {
                 controller.roles.admin = false;
                 controller.changeRoles();
-                $timeout.flush();
+                scope.$apply();
                 expect(userManagerSvc.deleteUserRole).toHaveBeenCalledWith(userStateSvc.selectedUser.username, 'admin');
-                expect(userManagerSvc.addUserRole).not.toHaveBeenCalled();
+                expect(userManagerSvc.addUserRoles).not.toHaveBeenCalled();
                 expect(controller.permissionErrorMessage).toBe('');
             });
         });
