@@ -43,18 +43,17 @@
          *
          * @description
          * `entityPublisher` is a directive which creates a div with a display of a JSON-LD object's
-         * dcterms:description property value. Based on the limited variable, will optionally limit the
-         * display to the first 200 characters and provide a button to toggle the full display. The
+         * dcterms:publisher property value. Retrieves the username of the publisher using the
+         * {@link userManager.service:userManagerService userManagerService}. Updates automatically. The
          * directive is replaced by the contents of its template.
          *
-         * @param {boolean} limited Whether or not the display should be limited to the first 200 charaters
          * @param {Object} entity A JSON-LD object
          */
         .directive('entityPublisher', entityPublisher);
 
-    entityPublisher.$inject = ['userManagerService', 'prefixes', 'utilService'];
+    entityPublisher.$inject = ['userManagerService', 'utilService'];
 
-    function entityPublisher(userManagerService, prefixes, utilService) {
+    function entityPublisher(userManagerService, utilService) {
         return {
             restrict: 'E',
             replace: true,

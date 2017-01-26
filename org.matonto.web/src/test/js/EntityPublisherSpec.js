@@ -25,7 +25,6 @@ describe('Entity Publisher directive', function() {
         scope,
         userManagerSvc,
         utilSvc,
-        prefixes,
         $q,
         controller;
 
@@ -34,14 +33,12 @@ describe('Entity Publisher directive', function() {
         module('entityPublisher');
         mockUtil();
         mockUserManager();
-        mockPrefixes();
 
-        inject(function(_$compile_, _$rootScope_, _userManagerService_, _utilService_, _prefixes_, _$q_) {
+        inject(function(_$compile_, _$rootScope_, _userManagerService_, _utilService_, _$q_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             userManagerSvc = _userManagerService_;
             utilSvc = _utilService_;
-            prefixes = _prefixes_;
             $q = _$q_;
         });
 
@@ -67,7 +64,6 @@ describe('Entity Publisher directive', function() {
         describe('if the entity has the publisher property', function() {
             beforeEach(function() {
                 this.iri = 'iri';
-                scope.entity[prefixes.dcterms + 'publisher'] = [{'@id': this.iri}];
                 utilSvc.getDctermsId.and.returnValue(this.iri);
                 controller = this.element.controller('entityPublisher');
             });
@@ -93,7 +89,7 @@ describe('Entity Publisher directive', function() {
         it('the publisher changes', function() {
             controller = this.element.controller('entityPublisher');
             var iri = 'iri';
-            scope.entity[prefixes.dcterms + 'publisher'] = [{'@id': iri}];
+            scope.entity.test = true;
             utilSvc.getDctermsId.and.callFake(function(obj) {
                 return _.isEmpty(obj) ? '' : iri;
             });

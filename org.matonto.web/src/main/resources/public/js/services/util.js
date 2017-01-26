@@ -104,12 +104,12 @@
              * @methodOf util.service:utilService
              *
              * @description
-             * Getst ehe first id value of the specified dcterms property from the passed entity. Returns an
+             * Gets the first id value of the specified dcterms property from the passed entity. Returns an
              * empty string if not found.
              *
-             * @param {Object} entity THe entity to retrieve the property id value from
+             * @param {Object} entity The entity to retrieve the property id value from
              * @param {string} property The local name of a dcterms property IRI
-             * @return {string} The first id value of the dcterms property is found; empty string otherwise
+             * @return {string} The first id value of the dcterms property if found; empty string otherwise
              */
             self.getDctermsId = function(entity, property) {
                 return _.get(entity, "['" + prefixes.dcterms + property + "'][0]['@id']", '');

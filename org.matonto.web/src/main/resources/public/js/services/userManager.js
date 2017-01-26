@@ -158,9 +158,11 @@
              * @methodOf userManager.service:userManagerService
              *
              * @description
-             * Calls the GET /matontorest/users/username endpoint to find the username of the user associated with
-             * the passed IRI. Returns a Promise tht resolves with the username if the user was found and rejects
-             * if not.
+             * Finds the username of the user associated with the passed IRI. If it has not been found before,
+             * calls the GET /matontorest/users/username endpoint and saves the result in the
+             * {@link userManager.service:userManagerService#users users} list. If it has been found before,
+             * grabs the username from the users lists. Returns a Promise tht resolves with the username and rejects
+             * if the endpoint fails.
              *
              * @param {string} iri The user IRI to search for
              * @return {Promise} A Promise that resolves with the username if the user was found; rejects with an
