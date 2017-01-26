@@ -222,9 +222,8 @@ public class GroupRestImpl implements GroupRest {
                 ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
         Set<User> users = new HashSet<>();
         for (String username : usernames) {
-            User user = engineManager.retrieveUser(RdfEngine.COMPONENT_NAME, username).orElseThrow(() ->
-                    ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
-            users.add(user);
+            users.add(engineManager.retrieveUser(RdfEngine.COMPONENT_NAME, username).orElseThrow(() ->
+                    ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST)));
         }
         Set<Agent> newMembers = savedGroup.getMember();
         newMembers.addAll(users);

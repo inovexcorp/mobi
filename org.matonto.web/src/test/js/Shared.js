@@ -526,6 +526,7 @@ function mockUserManager() {
             this.deleteGroupRole = jasmine.createSpy('deleteGroupRole').and.returnValue($q.when());
             this.getGroupUsers = jasmine.createSpy('getGroupUsers').and.returnValue($q.when([]));
             this.addGroupUsers = jasmine.createSpy('addGroupUsers').and.returnValue($q.when());
+            this.deleteGroupUser = jasmine.createSpy('deleteGroupUser').and.returnValue($q.when());
             this.isAdmin = jasmine.createSpy('isAdmin');
         });
     });

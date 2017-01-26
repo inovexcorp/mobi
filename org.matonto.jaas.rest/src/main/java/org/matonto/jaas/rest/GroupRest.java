@@ -151,12 +151,26 @@ public interface GroupRest {
     @ApiOperation("List users of a MatOnto group")
     Response getGroupUsers(@PathParam("groupTitle") String groupTitle);
 
+    /**
+     * Adds the users specified by usernames to the specified group in MatOnto.
+     *
+     * @param groupTitle the title of the group to add users to
+     * @param usernames the list of usernames of users to add to the group
+     * @return a Response indicating the success or failure of the request
+     */
     @PUT
     @Path("{groupTitle}/users")
     @RolesAllowed("admin")
     @ApiOperation("Add a MatOnto User to a Group")
     Response addGroupUser(@PathParam("groupTitle") String groupTitle, @QueryParam("users") List<String> usernames);
 
+    /**
+     * Removes the user specified by username from the specified group in MatOnto.
+     *
+     * @param groupTitle the title of the group to removea user from
+     * @param username the username of the user to remove from the group
+     * @return a Response indicating the success or failure of the request
+     */
     @DELETE
     @Path("{groupTitle}/users")
     @RolesAllowed("admin")

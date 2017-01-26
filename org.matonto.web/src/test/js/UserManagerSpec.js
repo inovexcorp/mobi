@@ -644,7 +644,7 @@ describe('User Manager service', function() {
         it('successfully', function(done) {
             var test = this;
             $httpBackend.whenDELETE('/matontorest/groups/' + test.group.title + '/users?' + $httpParamSerializer(params)).respond(200, '');
-            userManagerSvc.deleteGroupUser(this.group.title, params.user).then(function(response) {
+            userManagerSvc.deleteGroupUser(test.group.title, params.user).then(function(response) {
                 expect(test.group.members).not.toContain(params.user);
                 done();
             });
