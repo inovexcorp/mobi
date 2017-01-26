@@ -75,10 +75,9 @@
                 dvm.getTitles = function() {
                     return _.map(dvm.um.groups, 'title');
                 }
-                dvm.add = function () {
-                    dvm.um.addGroup(dvm.newGroup).then(response => $q.all(_.map(dvm.newGroup.members, member => dvm.um.addUserGroup(member, dvm.newGroup.title))),
-                        error => $q.reject(error))
-                    .then(responses => {
+                dvm.add = function() {
+                    dvm.um.addGroup(dvm.newGroup).then(response => dvm.um.addGroupUsers(dvm.newGroup.title, dvm.newGroup.members), $q.reject)
+                    .then(response => {
                         dvm.errorMessage = '';
                         dvm.state.displayCreateGroupOverlay = false;
                     }, error => dvm.errorMessage = error);
