@@ -113,17 +113,17 @@ public interface GroupRest {
     Response getGroupRoles(@PathParam("groupTitle") String groupTitle);
 
     /**
-     * Adds a role to the specified group in MatOnto.
+     * Adds roles to the specified group in MatOnto.
      *
      * @param groupTitle the title of the group to add a role to
-     * @param role the name of the role to add to the specified group
+     * @param roles the name of the roles to add to the specified group
      * @return a Response indicating the success or failure of the request
      */
     @PUT
     @Path("{groupTitle}/roles")
     @RolesAllowed("admin")
-    @ApiOperation("Add role to a MatOnto group")
-    Response addGroupRole(@PathParam("groupTitle") String groupTitle, @QueryParam("role") String role);
+    @ApiOperation("Add roles to a MatOnto group")
+    Response addGroupRoles(@PathParam("groupTitle") String groupTitle, @QueryParam("roles") List<String> roles);
 
     /**
      * Removes a role from the specified group in MatOnto.

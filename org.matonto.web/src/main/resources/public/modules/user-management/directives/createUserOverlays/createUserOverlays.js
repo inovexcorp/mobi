@@ -77,15 +77,16 @@
                     return _.map(dvm.um.users, 'username');
                 }
                 dvm.add = function() {
-                    dvm.um.addUser(dvm.newUser, dvm.password).then(response => dvm.um.addUserRole(dvm.newUser.username, 'user'), $q.reject)
-                    .then(response => {
-                        return dvm.roles.admin ? dvm.um.addUserRole(dvm.newUser.username, 'admin') : $q.when();
-                    }, $q.reject)
-                    .then(response => {
-                        dvm.errorMessage = '';
-                        dvm.step = 2;
-                        dvm.state.displayCreateUserOverlay = false;
-                    }, error => dvm.errorMessage = error);
+                    var roles = ['user'];
+                    if (dvm.roles.admin) {
+                        roles.push('admin');
+                    }
+                    dvm.um.addUser(dvm.newUser, dvm.password).then(response => dvm.um.addUserRoles(dvm.newUser.username, roles), $q.reject)
+                        .then(response => {
+                            dvm.errorMessage = '';
+                            dvm.step = 2;
+                            dvm.state.displayCreateUserOverlay = false;
+                        }, error => dvm.errorMessage = error);
                 }
             },
             templateUrl: 'modules/user-management/directives/createUserOverlays/createUserOverlays.html'

@@ -89,7 +89,7 @@
                     dvm.state.displayChangePasswordOverlay = true;
                 }
                 dvm.changeRoles = function() {
-                    var request = dvm.roles.admin ? dvm.um.addUserRole(dvm.state.selectedUser.username, 'admin') : dvm.um.deleteUserRole(dvm.state.selectedUser.username, 'admin');
+                    var request = dvm.roles.admin ? dvm.um.addUserRoles(dvm.state.selectedUser.username, ['admin']) : dvm.um.deleteUserRole(dvm.state.selectedUser.username, 'admin');
                     request.then(response => dvm.permissionErrorMessage = '', error => dvm.permissionErrorMessage = error);
                 }
                 dvm.getUserGroups = function() {
