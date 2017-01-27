@@ -110,7 +110,7 @@ public class UserRestImpl implements UserRest {
             throw ErrorUtils.sendError("Username must be provided", Response.Status.BAD_REQUEST);
         }
         User user = engineManager.retrieveUser(RdfEngine.COMPONENT_NAME, username).orElseThrow(() ->
-                ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
+                ErrorUtils.sendError("User " + username + " not found", Response.Status.NOT_FOUND));
         return Response.status(200).entity(user).build();
     }
 

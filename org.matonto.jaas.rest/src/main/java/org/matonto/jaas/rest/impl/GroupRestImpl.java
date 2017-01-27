@@ -110,7 +110,7 @@ public class GroupRestImpl implements GroupRest {
         }
 
         Group group = engineManager.retrieveGroup(RdfEngine.COMPONENT_NAME, groupTitle).orElseThrow(() ->
-                ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
+                ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.NOT_FOUND));
 
         return Response.status(200).entity(group).build();
     }

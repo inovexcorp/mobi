@@ -31,7 +31,6 @@ import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.junit.Assert;
 import org.matonto.etl.api.delimited.MappingId;
 import org.matonto.etl.api.delimited.MappingManager;
 import org.matonto.etl.api.delimited.MappingWrapper;
@@ -54,8 +53,6 @@ import javax.ws.rs.core.Application;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -65,6 +62,9 @@ import static org.matonto.rest.util.RestUtils.encode;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.when;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 public class MappingRestImplTest extends MatontoRestTestNg {
     private MappingRestImpl rest;
@@ -140,10 +140,10 @@ public class MappingRestImplTest extends MatontoRestTestNg {
                 content, MediaType.APPLICATION_OCTET_STREAM_TYPE));
         fd.field("jsonld", "[]");
         Response response = target().path("mappings").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
-        Assert.assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatus(), 400);
 
         response = target().path("mappings").request().post(Entity.entity(null, MediaType.MULTIPART_FORM_DATA));
-        Assert.assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatus(), 400);
     }
 
     @Test
@@ -153,19 +153,19 @@ public class MappingRestImplTest extends MatontoRestTestNg {
         fd.bodyPart(new FormDataBodyPart(FormDataContentDisposition.name("file").fileName("mapping.jsonld").build(),
                 content, MediaType.APPLICATION_OCTET_STREAM_TYPE));
         Response response = target().path("mappings").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
-        Assert.assertEquals(200, response.getStatus());
-        Assert.assertTrue(response.readEntity(String.class).contains(MAPPING_IRI));
+        assertEquals(response.getStatus(), 200);
+        assertTrue(response.readEntity(String.class).contains(MAPPING_IRI));
     }
 
     @Test
     public void getMappingNamesTest() {
         Response response = target().path("mappings").request().get();
-        Assert.assertEquals(200, response.getStatus());
+        assertEquals(response.getStatus(), 200);
         try {
             JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
-            Assert.assertEquals(result.size(), manager.getMappingRegistry().size());
+            assertEquals(result.size(), manager.getMappingRegistry().size());
         } catch (Exception e) {
-            Assert.fail("Expected no exception, but got: " + e.getMessage());
+            fail("Expected no exception, but got: " + e.getMessage());
         }
     }
 
@@ -178,12 +178,12 @@ public class MappingRestImplTest extends MatontoRestTestNg {
             wt = wt.queryParam("ids", id);
         }
         Response response = wt.request().get();
-        Assert.assertEquals(200, response.getStatus());
+        assertEquals(response.getStatus(), 200);
         try {
             JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
-            Assert.assertEquals(ids.size(), result.size());
+            assertEquals(result.size(), ids.size());
         } catch (Exception e) {
-            Assert.fail("Expected no exception, but got: " + e.getMessage());
+            fail("Expected no exception, but got: " + e.getMessage());
         }
 
         ids = Arrays.asList(factory.createIRI("http://test.org/test1").toString(),
@@ -193,12 +193,12 @@ public class MappingRestImplTest extends MatontoRestTestNg {
             wt = wt.queryParam("ids", id);
         }
         response = wt.request().get();
-        Assert.assertEquals(200, response.getStatus());
+        assertEquals(response.getStatus(), 200);
         try {
             JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
-            Assert.assertEquals(ids.size() - 1, result.size());
+            assertEquals(result.size(), ids.size() - 1);
         } catch (Exception e) {
-            Assert.fail("Expected no exception, but got: " + e.getMessage());
+            fail("Expected no exception, but got: " + e.getMessage());
         }
     }
 
@@ -206,39 +206,38 @@ public class MappingRestImplTest extends MatontoRestTestNg {
     public void getMappingTest() {
         Response response = target().path("mappings/" + encode(factory.createIRI(MAPPING_IRI).toString()))
             .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
-        Assert.assertEquals(200, response.getStatus());
+        assertEquals(response.getStatus(), 200);
         try {
             JSONObject.fromObject(response.readEntity(String.class));
         } catch (Exception e) {
-            Assert.fail("Expected no exception, but got: " + e.getMessage());
+            fail("Expected no exception, but got: " + e.getMessage());
         }
 
         response = target().path("mappings/" + encode(factory.createIRI("http://test.org/error").toString())).request()
                 .accept(MediaType.APPLICATION_JSON_TYPE).get();
-        Assert.assertEquals(400, response.getStatus());
+        assertEquals(response.getStatus(), 404);
     }
 
     @Test
     public void downloadMappingTest() {
         Response response = target().path("mappings/" + encode(factory.createIRI(MAPPING_IRI).toString()))
                 .request().accept(MediaType.APPLICATION_OCTET_STREAM_TYPE).get();
-        Assert.assertEquals(200, response.getStatus());
+        assertEquals(response.getStatus(), 200);
 
         response = target().path("mappings/" + encode(factory.createIRI("http://test.org/error").toString()))
                 .request().accept(MediaType.APPLICATION_OCTET_STREAM_TYPE).get();
-        Assert.assertEquals(400, response.getStatus());
+        assertEquals(response.getStatus(), 404);
     }
 
     @Test
     public void deleteMappingTest() {
         Response response = target().path("mappings/" + encode(factory.createIRI(MAPPING_IRI).toString()))
                 .request().delete();
-        Assert.assertEquals(200, response.getStatus());
+        assertEquals(response.getStatus(), 200);
         try {
-            boolean result = response.readEntity(Boolean.class);
-            Assert.assertTrue(result);
+            assertTrue(response.readEntity(Boolean.class));
         } catch (Exception e) {
-            Assert.fail("Expected no exception, but got: " + e.getMessage());
+            fail("Expected no exception, but got: " + e.getMessage());
         }
     }
 }

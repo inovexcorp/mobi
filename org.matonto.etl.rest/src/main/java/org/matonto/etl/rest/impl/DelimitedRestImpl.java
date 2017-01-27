@@ -315,7 +315,7 @@ public class DelimitedRestImpl implements DelimitedRest {
 
             return Response.status(200).entity(json).build();
         } else {
-            throw ErrorUtils.sendError("Document not found", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError("Document not found", Response.Status.NOT_FOUND);
         }
     }
 

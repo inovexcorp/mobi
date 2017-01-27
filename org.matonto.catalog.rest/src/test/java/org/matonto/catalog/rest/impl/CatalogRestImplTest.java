@@ -537,7 +537,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     @Test
     public void getCatalogThatDoesNotExistTest() {
         Response response = target().path("catalogs/" + encode(ERROR_IRI)).request().get();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatus(), 404);
     }
 
     @Test
@@ -750,7 +750,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(ERROR_IRI))
                 .request().get();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatus(), 404);
     }
 
     @Test
@@ -1027,12 +1027,12 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     @Test
     public void getUnversionedDistributionThatDoesNotExistTest() {
         // Setup:
-        when(catalogManager.getDistribution(vf.createIRI(ERROR_IRI))).thenReturn(Optional.empty());
+        when(catalogManager.getDistribution(vf.createIRI(DISTRIBUTION_IRI))).thenReturn(Optional.empty());
 
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
-                + "/distributions/" + encode(ERROR_IRI))
+                + "/distributions/" + encode(DISTRIBUTION_IRI))
                 .request().get();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatus(), 404);
     }
 
     @Test
@@ -1334,7 +1334,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/versions/latest")
                 .request().get();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatus(), 404);
     }
 
     @Test
@@ -1344,7 +1344,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/versions/latest")
                 .request().get();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatus(), 404);
     }
 
     @Test
@@ -1398,12 +1398,12 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     @Test
     public void getVersionThatDoesNotExistTest() {
         // Setup:
-        when(catalogManager.getVersion(vf.createIRI(ERROR_IRI), versionFactory)).thenReturn(Optional.empty());
+        when(catalogManager.getVersion(vf.createIRI(VERSION_IRI), versionFactory)).thenReturn(Optional.empty());
 
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
-                + "/versions/" + encode(ERROR_IRI))
+                + "/versions/" + encode(VERSION_IRI))
                 .request().get();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatus(), 404);
     }
 
     @Test
@@ -1772,12 +1772,12 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     @Test
     public void getVersionedDistributionThatDoesNotExistTest() {
         // Setup:
-        when(catalogManager.getDistribution(vf.createIRI(ERROR_IRI))).thenReturn(Optional.empty());
+        when(catalogManager.getDistribution(vf.createIRI(DISTRIBUTION_IRI))).thenReturn(Optional.empty());
 
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
-                + "/versions/" + encode(VERSION_IRI) + "/distributions/" + encode(ERROR_IRI))
+                + "/versions/" + encode(VERSION_IRI) + "/distributions/" + encode(DISTRIBUTION_IRI))
                 .request().get();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatus(), 404);
     }
 
     @Test
@@ -1986,6 +1986,17 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     }
 
     @Test
+    public void getVersionCommitThatDoesNotExistTest() {
+        // Setup:
+        when(catalogManager.getCommit(any(Resource.class), eq(commitFactory))).thenReturn(Optional.empty());
+
+        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+                + "/versions/" + encode(VERSION_IRI) + "/commit")
+                .request().get();
+        assertEquals(response.getStatus(), 404);
+    }
+
+    @Test
     public void getVersionCommitWithErrorTest() {
         // Setup:
         doThrow(exception).when(catalogManager).getVersion(any(Resource.class), any(OrmFactory.class));
@@ -2179,7 +2190,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/branches/master")
                 .request().get();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatus(), 404);
     }
 
     @Test
@@ -2189,7 +2200,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/branches/master")
                 .request().get();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatus(), 404);
     }
 
     @Test
@@ -2243,12 +2254,12 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     @Test
     public void getBranchThatDoesNotExistTest() {
         // Setup:
-        when(catalogManager.getBranch(vf.createIRI(ERROR_IRI), branchFactory)).thenReturn(Optional.empty());
+        when(catalogManager.getBranch(vf.createIRI(BRANCH_IRI), branchFactory)).thenReturn(Optional.empty());
 
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
-                + "/branches/" + encode(ERROR_IRI))
+                + "/branches/" + encode(BRANCH_IRI))
                 .request().get();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatus(), 404);
     }
 
     @Test
@@ -2590,7 +2601,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     }
 
     @Test
-    public void getHeadThatDoesNotExistTest() {
+    public void getHeadForBranchWithNoHeadTest() {
         // Setup:
         Branch branch = branchFactory.createNew(vf.createIRI(BRANCH_IRI));
         when(catalogManager.getBranch(vf.createIRI(BRANCH_IRI), branchFactory)).thenReturn(Optional.of(branch));
@@ -2598,7 +2609,18 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits/head")
                 .request().get();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatus(), 404);
+    }
+
+    @Test
+    public void getHeadThatDoesNotExistTest() {
+        // Setup:
+        when(catalogManager.getCommit(any(Resource.class), eq(commitFactory))).thenReturn(Optional.empty());
+
+        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+                + "/branches/" + encode(BRANCH_IRI) + "/commits/head")
+                .request().get();
+        assertEquals(response.getStatus(), 404);
     }
 
     @Test
@@ -2705,7 +2727,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits/" + encode(COMMIT_IRIS[1]))
                 .request().get();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatus(), 404);
     }
 
     @Test
@@ -3368,7 +3390,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/in-progress-commit")
                 .request().get();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatus(), 404);
     }
 
     @Test

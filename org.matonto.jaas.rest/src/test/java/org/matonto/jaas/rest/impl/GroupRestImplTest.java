@@ -268,7 +268,7 @@ public class GroupRestImplTest extends MatontoRestTestNg {
         when(engineManager.retrieveGroup(anyString(), anyString())).thenReturn(Optional.empty());
 
         Response response = target().path("groups/error").request().get();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatus(), 404);
     }
 
     @Test
