@@ -24,8 +24,9 @@
     <h1>{{pageTitle}}</h1>
     <img src="images/triple_shadow.png">
     <span class="actions">
+        <a href="http://docs.matonto.org" target="_blank" title="MatOnto User Manual"><i class="fa fa-fw fa-question-circle"></i></a>
         <div uib-dropdown>
-            <a uib-dropdown-toggle ng-class="{'active': $state.is('root.settings') || $state.is('root.user-management')}">
+            <a uib-dropdown-toggle ng-class="{'active': $state.is('root.settings') || $state.is('root.user-management')}" title="Settings">
                 <i class="fa fa-cog fa-2x fa-fw"></i>
             </a>
             <ul uib-dropdown-menu>
@@ -34,6 +35,6 @@
                 <li><a ng-class="{'active': $state.is('root.user-management')}" ui-sref-active="active" ui-sref="root.user-management">User Management</a></li>
             </ul>
         </div>
-        <a ng-click="dvm.logout()"><i class="fa fa-sign-out fa-fw"></i></a>
+        <a ng-click="dvm.logout()" title="Logout"><i class="fa fa-sign-out fa-fw"></i></a>
     </span>
 </header>
