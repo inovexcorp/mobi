@@ -148,7 +148,7 @@ public class MappingRestImpl implements MappingRest {
         if (optMapping.isPresent()) {
             return Response.status(200).entity(getJsonObject(optMapping.get()).toString()).build();
         } else {
-            throw ErrorUtils.sendError("Mapping not found", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError("Mapping not found", Response.Status.NOT_FOUND);
         }
     }
 
@@ -184,7 +184,7 @@ public class MappingRestImpl implements MappingRest {
                     + rdfFormat.getDefaultFileExtension()).header("Content-Type", rdfFormat.getDefaultMIMEType())
                     .build();
         } else {
-            throw ErrorUtils.sendError("Mapping not found", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError("Mapping not found", Response.Status.NOT_FOUND);
         }
     }
 

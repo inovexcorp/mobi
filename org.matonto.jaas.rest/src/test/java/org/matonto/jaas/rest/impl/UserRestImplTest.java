@@ -303,7 +303,7 @@ public class UserRestImplTest extends MatontoRestTestNg {
         when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.empty());
 
         Response response = target().path("users/error").request().get();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatus(), 404);
         verify(engineManager).retrieveUser(anyString(), eq("error"));
     }
 
