@@ -1076,7 +1076,8 @@ public class CatalogRestImpl implements CatalogRest {
      */
     private Response createCommitResponse(Commit commit, String format) {
         JSONObject object = getCommitDifferenceObject(commit.getResource(), format);
-        object.put("commit", thingToJsonld(commit));
+        Model commitModel = commit.getModel().filter(commit.getResource(), null, null);
+        object.put("commit", getObjectFromJsonld(modelToJsonld(commitModel)));
         return Response.ok(object).build();
     }
 

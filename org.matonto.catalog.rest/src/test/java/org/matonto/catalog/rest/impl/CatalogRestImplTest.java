@@ -167,7 +167,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     private User user;
     private Model compiledResource;
     private Model compiledResourceWithChanges;
-    private MatOntoException exception = new MatOntoException("Test exception");
+//    private MatOntoException exception = new MatOntoException("Test exception");
     private static final String ERROR_IRI = "http://matonto.org/error";
     private static final String LOCAL_IRI = "http://matonto.org/catalogs/local";
     private static final String DISTRIBUTED_IRI = "http://matonto.org/catalogs/distributed";
@@ -1926,9 +1926,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
             assertTrue(result.containsKey("commit"));
             assertTrue(result.containsKey("additions"));
             assertTrue(result.containsKey("deletions"));
-            JSONArray commitArr = result.getJSONArray("commit");
-            assertEquals(commitArr.size(), 1);
-            JSONObject commit = commitArr.getJSONObject(0);
+            JSONObject commit = result.getJSONObject("commit");
             assertTrue(commit.containsKey("@id"));
             assertEquals(commit.getString("@id"), COMMIT_IRIS[0]);
         } catch (Exception e) {
@@ -2554,9 +2552,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
             assertTrue(result.containsKey("commit"));
             assertTrue(result.containsKey("additions"));
             assertTrue(result.containsKey("deletions"));
-            JSONArray commitArr = result.getJSONArray("commit");
-            assertEquals(commitArr.size(), 1);
-            JSONObject commit = commitArr.getJSONObject(0);
+            JSONObject commit = result.getJSONObject("commit");
             assertTrue(commit.containsKey("@id"));
             assertEquals(commit.getString("@id"), COMMIT_IRIS[0]);
         } catch (Exception e) {
@@ -2650,9 +2646,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
             assertTrue(result.containsKey("commit"));
             assertTrue(result.containsKey("additions"));
             assertTrue(result.containsKey("deletions"));
-            JSONArray commitArr = result.getJSONArray("commit");
-            assertEquals(commitArr.size(), 1);
-            JSONObject commit = commitArr.getJSONObject(0);
+            JSONObject commit = result.getJSONObject("commit");
             assertTrue(commit.containsKey("@id"));
             assertEquals(commit.getString("@id"), COMMIT_IRIS[1]);
         } catch (Exception e) {
