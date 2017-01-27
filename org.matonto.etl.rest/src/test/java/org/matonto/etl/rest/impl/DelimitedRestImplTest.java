@@ -55,7 +55,6 @@ import org.matonto.rest.util.MatontoRestTestNg;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.openrdf.model.Model;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.ws.rs.client.Entity;

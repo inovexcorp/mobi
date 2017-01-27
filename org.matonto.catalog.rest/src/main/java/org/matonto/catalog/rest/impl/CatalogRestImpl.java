@@ -825,7 +825,7 @@ public class CatalogRestImpl implements CatalogRest {
     public Response getHead(String catalogId, String recordId, String branchId, String format) {
         try {
             Commit headCommit = optHeadCommit(catalogId, recordId, branchId).orElseThrow(() ->
-                ErrorUtils.sendError("Commit not found", Response.Status.NOT_FOUND));
+                    ErrorUtils.sendError("Commit not found", Response.Status.NOT_FOUND));
             return createCommitResponse(headCommit, format);
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
@@ -1134,7 +1134,6 @@ public class CatalogRestImpl implements CatalogRest {
      * @param catalogId The ID of the Catalog the Version should be part of.
      * @param recordId The ID of the Record the Version should be part of.
      * @param versionId The ID of the Version to retrieve.
-     * @return The Version if found.
      */
     private void testVersionPath(String catalogId, String recordId, String versionId) {
         VersionedRecord record = getRecord(catalogId, recordId, VersionedRecord.TYPE);
@@ -1154,7 +1153,6 @@ public class CatalogRestImpl implements CatalogRest {
      * @param recordId The ID of the Record the Distribution should be part of.
      * @param versionId The ID of the Version the Distribution should be part of.
      * @param distributionId The ID of the Distribution to retrieve.
-     * @return The Distribution if found.
      */
     private void testVersionedDistributionPath(String catalogId, String recordId, String versionId,
                                                String distributionId) {
@@ -1182,7 +1180,6 @@ public class CatalogRestImpl implements CatalogRest {
      * @param catalogId The ID of the Catalog the Branch should be part of.
      * @param recordId The ID of the Record the Branch should be part of.
      * @param branchId The ID of the Branch to retrieve.
-     * @return The Branch if found.
      */
     private void testBranchPath(String catalogId, String recordId, String branchId) {
         VersionedRDFRecord record = getRecord(catalogId, recordId, VersionedRDFRecord.TYPE);
