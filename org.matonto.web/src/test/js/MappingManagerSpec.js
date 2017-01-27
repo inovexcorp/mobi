@@ -171,6 +171,35 @@ describe('Mapping Manager service', function() {
         mappingManagerSvc.downloadMapping('mapping', 'jsonld');
         expect(windowSvc.location).toBe('/matontorest/mappings/mapping?format=jsonld');
     });
+    describe('should update a mapping by id', function() {
+        beforeEach(function() {
+            this.id = 'mappingname';
+        });
+        it('unless an error occurs', function(done) {
+            $httpBackend.expectPUT('/matontorest/mappings/' + this.id).respond(function(method, url, data, headers) {
+                return [400, '', {}, 'Error Message'];
+            });
+            mappingManagerSvc.updateMapping(this.id, []).then(function(response) {
+                fail('Promise should have rejected');
+                done();
+            }, function(response) {
+                expect(response).toBe('Error Message');
+                done();
+            });
+            $httpBackend.flush();
+        });
+        it('successfully', function(done) {
+            $httpBackend.expectPUT('/matontorest/mappings/' + this.id,
+                function(data) {
+                    return data === '[]';
+                }).respond(200, '');
+            mappingManagerSvc.updateMapping(this.id, []).then(function(response) {
+                expect(true).toBe(true);
+                done();
+            });
+            $httpBackend.flush();
+        });
+    });
     describe('should delete a mapping by id', function() {
         beforeEach(function() {
             this.id = 'mappingname';

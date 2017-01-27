@@ -204,6 +204,7 @@ function mockMappingManager() {
             this.upload = jasmine.createSpy('upload').and.returnValue($q.when());
             this.getMapping = jasmine.createSpy('getMapping').and.returnValue($q.when([]));
             this.downloadMapping = jasmine.createSpy('downloadMapping');
+            this.updateMapping = jasmine.createSpy('updateMapping').and.returnValue($q.when());
             this.deleteMapping = jasmine.createSpy('deleteMapping').and.returnValue($q.when());
             this.getMappingId = jasmine.createSpy('getMappingId').and.returnValue('');
             this.createNewMapping = jasmine.createSpy('createNewMapping').and.returnValue([]);
