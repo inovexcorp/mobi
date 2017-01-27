@@ -122,7 +122,11 @@ public class StateRestImpl implements StateRest {
         try {
             state = stateManager.getState(factory.createIRI(stateId), username);
         } catch (MatOntoException ex) {
-            throw ErrorUtils.sendError(ex.getMessage(), Response.Status.FORBIDDEN);
+            if (ex.getMessage() != null && ex.getMessage().equals("State not found")) {
+                throw ErrorUtils.sendError(ex.getMessage(), Response.Status.NOT_FOUND);
+            } else {
+                throw ErrorUtils.sendError(ex.getMessage(), Response.Status.FORBIDDEN);
+            }
         }
 
         return Response.ok(convertModel(state)).build();

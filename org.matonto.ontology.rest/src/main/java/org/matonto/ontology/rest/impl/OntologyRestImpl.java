@@ -226,7 +226,7 @@ public class OntologyRestImpl implements OntologyRest {
     public Response getOntology(String ontologyIdStr, String rdfFormat) {
         logger.info("Getting ontology " + ontologyIdStr);
         JSONObject result = doWithOntology(ontologyIdStr,
-                ontology -> this.getOntologyAsJsonObject(ontology, rdfFormat));
+                ontology -> this.getOntologyAsJsonObject(ontology, rdfFormat), Response.Status.NOT_FOUND);
 
         return Response.status(200).entity(result.toString()).build();
     }
@@ -245,7 +245,7 @@ public class OntologyRestImpl implements OntologyRest {
             JSONObject json = new JSONObject();
             json.put("ontology", content);
             return json;
-        });
+        }, Response.Status.NOT_FOUND);
         StreamingOutput stream = os -> {
             Writer writer = new BufferedWriter(new OutputStreamWriter(os));
             writer.write(result.get("ontology").toString());
@@ -406,43 +406,43 @@ public class OntologyRestImpl implements OntologyRest {
 
     @Override
     public Response getIRIsInOntology(String ontologyIdStr) {
-        JSONObject result = doWithOntology(ontologyIdStr, this::getAllIRIs);      
+        JSONObject result = doWithOntology(ontologyIdStr, this::getAllIRIs, Response.Status.BAD_REQUEST);
         return Response.status(200).entity(result.toString()).build();
     }
 
     @Override
     public Response getAnnotationsInOntology(String ontologyIdStr) {
-        JSONObject result = doWithOntology(ontologyIdStr, this::getAnnotationArray);
+        JSONObject result = doWithOntology(ontologyIdStr, this::getAnnotationArray, Response.Status.BAD_REQUEST);
         return Response.status(200).entity(result.toString()).build();
     }
 
     @Override
     public Response getClassesInOntology(String ontologyIdStr) {
-        JSONObject result = doWithOntology(ontologyIdStr, this::getClassArray);
+        JSONObject result = doWithOntology(ontologyIdStr, this::getClassArray, Response.Status.BAD_REQUEST);
         return Response.status(200).entity(result.toString()).build();
     }
 
     @Override
     public Response getDatatypesInOntology(String ontologyIdStr) {
-        JSONObject result = doWithOntology(ontologyIdStr, this::getDatatypeArray);
+        JSONObject result = doWithOntology(ontologyIdStr, this::getDatatypeArray, Response.Status.BAD_REQUEST);
         return Response.status(200).entity(result.toString()).build();
     }
 
     @Override
     public Response getObjectPropertiesInOntology(String ontologyIdStr) {
-        JSONObject result = doWithOntology(ontologyIdStr, this::getObjectPropertyArray);
+        JSONObject result = doWithOntology(ontologyIdStr, this::getObjectPropertyArray, Response.Status.BAD_REQUEST);
         return Response.status(200).entity(result.toString()).build();
     }
 
     @Override
     public Response getDataPropertiesInOntology(String ontologyIdStr) {
-        JSONObject result = doWithOntology(ontologyIdStr, this::getDataPropertyArray);
+        JSONObject result = doWithOntology(ontologyIdStr, this::getDataPropertyArray, Response.Status.BAD_REQUEST);
         return Response.status(200).entity(result.toString()).build();
     }
 
     @Override
     public Response getNamedIndividualsInOntology(String ontologyIdStr) {
-        JSONObject result = doWithOntology(ontologyIdStr, this::getNamedIndividualArray);
+        JSONObject result = doWithOntology(ontologyIdStr, this::getNamedIndividualArray, Response.Status.BAD_REQUEST);
         return Response.status(200).entity(result.toString()).build();
     }
     
@@ -737,7 +737,8 @@ public class OntologyRestImpl implements OntologyRest {
      *                    an Ontology component.
      * @return The properly formatted JSON response with a List of a particular Ontology Component.
      */
-    private JSONObject doWithOntology(String ontologyIdStr, Function<Ontology, JSONObject> iriFunction) {
+    private JSONObject doWithOntology(String ontologyIdStr, Function<Ontology, JSONObject> iriFunction,
+                                      Response.Status failStatus) {
         throwErrorIfMissingParam(ontologyIdStr, "ontologyIdStr is missing");
 
         Optional<Ontology> optOntology;
@@ -752,7 +753,7 @@ public class OntologyRestImpl implements OntologyRest {
         if (optOntology.isPresent()) {
             return iriFunction.apply(optOntology.get());
         } else {
-            throw ErrorUtils.sendError("Ontology " + ontologyIdStr + " does not exist.", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError("Ontology " + ontologyIdStr + " does not exist.", failStatus);
         }
     }
     
