@@ -116,8 +116,7 @@ public interface MappingManager {
      *
      * @param mappingId the IRI Resource for a mapping
      * @return an Optional with a Mapping with the mapping RDF if it was found
-     * @throws MatOntoException thrown if a connection to the repository
-     *                          could not be made
+     * @throws MatOntoException thrown if a connection to the repository could not be made
      */
     Optional<MappingWrapper> retrieveMapping(@Nonnull Resource mappingId) throws MatOntoException;
 
@@ -125,21 +124,28 @@ public interface MappingManager {
      * Persist a mapping in the repository.
      *
      * @param mappingWrapper a MappingWrapper with an id and RDF data
-     * @return true if the mapping was persisted, false otherwise
-     * @throws MatOntoException thrown if a connection to the repository
-     *                          could not be made
+     * @throws MatOntoException thrown if a connection to the repository could not be made
      */
-    boolean storeMapping(@Nonnull MappingWrapper mappingWrapper) throws MatOntoException;
+    void storeMapping(@Nonnull MappingWrapper mappingWrapper) throws MatOntoException;
+
+    /**
+     * Updates a mapping in the repository with the new passed mapping.
+     *
+     * @param mappingId the id of a mapping
+     * @param newMapping a new mapping to replace the existing one with
+     * @throws MatOntoException thrown if the mapping does not exist or a connection to
+     *      the repository could not be made or mapping does not exist
+     */
+    void updateMapping(@Nonnull Resource mappingId, MappingWrapper newMapping) throws MatOntoException;
 
     /**
      * Delete a mapping from the repository.
      *
      * @param mappingId the id for a mapping
-     * @return true if deletion was successful, false otherwise
-     * @throws MatOntoException thrown is a connection to the repository
-     *                          could not be made or mapping does not exist
+     * @throws MatOntoException thrown if the mapping does not exist or a connection to
+     *      the repository could not be made or mapping does not exist
      */
-    boolean deleteMapping(@Nonnull Resource mappingId) throws MatOntoException;
+    void deleteMapping(@Nonnull Resource mappingId) throws MatOntoException;
 
     /**
      * Tests whether the passes mapping Resource IRI exists in the mapping registry.

@@ -174,10 +174,7 @@ public class SimpleMappingManager implements MappingManager {
         Mapping mapping = mappingFactory.createNew(mappingResource);
 
         Optional<IRI> versionIRI = id.getVersionIRI();
-        if (versionIRI.isPresent()) {
-            Value version = factory.createLiteral(versionIRI.get().stringValue(), factory.createIRI(XSD.ANYURI));
-            mapping.setVersionIRI(version);
-        }
+        versionIRI.ifPresent(mapping::setVersionIRI);
 
         return new SimpleMappingWrapper(id, mapping, Collections.emptySet(), mapping.getModel());
     }
@@ -199,7 +196,7 @@ public class SimpleMappingManager implements MappingManager {
     }
 
     @Override
-    public boolean storeMapping(@Nonnull MappingWrapper mappingWrapper) throws MatOntoException {
+    public void storeMapping(@Nonnull MappingWrapper mappingWrapper) throws MatOntoException {
         Resource mappingIdentifier = mappingWrapper.getId().getMappingIdentifier();
 
         if (mappingExists(mappingIdentifier)) {
@@ -213,8 +210,6 @@ public class SimpleMappingManager implements MappingManager {
         } catch (RepositoryException e) {
             throw new MatOntoException("Error in repository connection", e);
         }
-
-        return true;
     }
 
     @Override
@@ -233,23 +228,36 @@ public class SimpleMappingManager implements MappingManager {
     }
 
     @Override
-    public boolean deleteMapping(@Nonnull Resource mappingIRI) {
+    public void updateMapping(@Nonnull Resource mappingIRI, MappingWrapper newMapping) throws MatOntoException {
+        if (!mappingExists(mappingIRI)) {
+            throw new MatOntoException("Mapping with mapping ID does not exist");
+        }
+        Resource mappingIdentifier = newMapping.getId().getMappingIdentifier();
+        if (mappingIRI.equals(mappingIdentifier)) {
+            try (RepositoryConnection conn = repository.getConnection()) {
+                conn.clear(mappingIRI);
+                conn.add(newMapping.getModel(), mappingIRI);
+                newMapping.getClassMappings().forEach(cm -> conn.add(cm.getModel(), mappingIRI));
+            } catch (RepositoryException e) {
+                throw new MatOntoException("Error in repository connection", e);
+            }
+        } else {
+            throw new MatOntoException("Mapping could not be updated");
+        }
+    }
+
+    @Override
+    public void deleteMapping(@Nonnull Resource mappingIRI) throws MatOntoException {
         if (!mappingExists(mappingIRI)) {
             throw new MatOntoException("Mapping with mapping ID does not exist");
         }
 
-        RepositoryConnection conn = null;
-        try {
-            conn = repository.getConnection();
+        try (RepositoryConnection conn = repository.getConnection()) {
             conn.clear(mappingIRI);
             conn.remove(registrySubject, registryPredicate, mappingIRI, registryContext);
         } catch (RepositoryException e) {
             throw new MatOntoException("Error in repository connection", e);
-        } finally {
-            closeConnection(conn);
         }
-
-        return true;
     }
 
     @Override
@@ -304,17 +312,11 @@ public class SimpleMappingManager implements MappingManager {
         }
 
         Mapping mapping = mappings.iterator().next();
-        Optional<Value> versionIriOpt = mapping.getVersionIRI();
-
+        Optional<IRI> versionIriOpt = mapping.getVersionIRI();
         SimpleMappingId.Builder builder = new SimpleMappingId.Builder(factory)
                 .mappingIRI(factory.createIRI(mapping.getResource().stringValue()));
-
-        if (versionIriOpt.isPresent()) {
-            builder.versionIRI(factory.createIRI(versionIriOpt.get().stringValue()));
-        }
-
+        versionIriOpt.ifPresent(iri -> builder.versionIRI(factory.createIRI(iri.stringValue())));
         Collection<ClassMapping> classMappings = classMappingFactory.getAllExisting(model);
-
         return new SimpleMappingWrapper(builder.build(), mapping, classMappings, model);
     }
 }

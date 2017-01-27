@@ -96,6 +96,13 @@ public interface MappingRest {
     Response downloadMapping(@PathParam("mappingIRI") String mappingIRI,
                              @DefaultValue("jsonld") @QueryParam("format") String format);
 
+    @PUT
+    @Path("{mappingIRI}")
+    @RolesAllowed("user")
+    @ApiOperation("Updates an uploaded mapping")
+    Response updateMapping(@PathParam("mappingIRI") String mappingIRI,
+                           String newJsonld);
+
     /**
      * Deletes an uploaded mapping from the data store.
      *
