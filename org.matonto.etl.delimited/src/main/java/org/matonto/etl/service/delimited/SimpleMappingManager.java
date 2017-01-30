@@ -228,7 +228,8 @@ public class SimpleMappingManager implements MappingManager {
     }
 
     @Override
-    public void updateMapping(@Nonnull Resource mappingIRI, MappingWrapper newMapping) throws MatOntoException {
+    public void updateMapping(@Nonnull Resource mappingIRI, @Nonnull MappingWrapper newMapping)
+            throws MatOntoException {
         if (!mappingExists(mappingIRI)) {
             throw new MatOntoException("Mapping with mapping ID does not exist");
         }
@@ -306,7 +307,6 @@ public class SimpleMappingManager implements MappingManager {
 
     private MappingWrapper getWrapperFromModel(Model model) {
         Collection<Mapping> mappings = mappingFactory.getAllExisting(model);
-
         if (mappings.size() != 1) {
             throw new MatOntoException("Input source must contain exactly one Mapping resource.");
         }
@@ -315,7 +315,7 @@ public class SimpleMappingManager implements MappingManager {
         Optional<IRI> versionIriOpt = mapping.getVersionIRI();
         SimpleMappingId.Builder builder = new SimpleMappingId.Builder(factory)
                 .mappingIRI(factory.createIRI(mapping.getResource().stringValue()));
-        versionIriOpt.ifPresent(iri -> builder.versionIRI(factory.createIRI(iri.stringValue())));
+        versionIriOpt.ifPresent(builder::versionIRI);
         Collection<ClassMapping> classMappings = classMappingFactory.getAllExisting(model);
         return new SimpleMappingWrapper(builder.build(), mapping, classMappings, model);
     }

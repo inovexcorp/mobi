@@ -125,7 +125,7 @@ public class MappingRestImpl implements MappingRest {
                 .forEach(mappings::add);
         }
 
-        return Response.ok(mappings.toString()).build();
+        return Response.ok(mappings).build();
     }
 
     @Override
@@ -191,9 +191,8 @@ public class MappingRestImpl implements MappingRest {
     @Override
     public Response updateMapping(String mappingIRI, String newJsonld) {
         Resource mappingId = factory.createIRI(mappingIRI);
-        MappingWrapper newMapping;
         try {
-            newMapping = manager.createMapping(newJsonld);
+            MappingWrapper newMapping = manager.createMapping(newJsonld);
             manager.updateMapping(mappingId, newMapping);
         } catch (IOException e) {
             throw ErrorUtils.sendError("Error parsing mapping", Response.Status.BAD_REQUEST);

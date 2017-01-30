@@ -134,16 +134,16 @@ public interface MappingManager {
      * @param mappingId the id of a mapping
      * @param newMapping a new mapping to replace the existing one with
      * @throws MatOntoException thrown if the mapping does not exist or a connection to
-     *      the repository could not be made or mapping does not exist
+     *      the repository could not be made
      */
-    void updateMapping(@Nonnull Resource mappingId, MappingWrapper newMapping) throws MatOntoException;
+    void updateMapping(@Nonnull Resource mappingId, @Nonnull MappingWrapper newMapping) throws MatOntoException;
 
     /**
      * Delete a mapping from the repository.
      *
      * @param mappingId the id for a mapping
      * @throws MatOntoException thrown if the mapping does not exist or a connection to
-     *      the repository could not be made or mapping does not exist
+     *      the repository could not be made
      */
     void deleteMapping(@Nonnull Resource mappingId) throws MatOntoException;
 

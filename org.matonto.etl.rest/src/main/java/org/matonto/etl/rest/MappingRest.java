@@ -96,6 +96,13 @@ public interface MappingRest {
     Response downloadMapping(@PathParam("mappingIRI") String mappingIRI,
                              @DefaultValue("jsonld") @QueryParam("format") String format);
 
+    /**
+     * Updates an uploaded mapping using new JSON-LD.
+     *
+     * @param mappingIRI the id of an uploaded mapping
+     * @param newJsonld the JSON-LD to replace the mapping with
+     * @return a response indicating the success or failure of the request
+     */
     @PUT
     @Path("{mappingIRI}")
     @RolesAllowed("user")
@@ -107,7 +114,7 @@ public interface MappingRest {
      * Deletes an uploaded mapping from the data store.
      *
      * @param mappingIRI the id of an uploaded mapping
-     * @return a response with a boolean indicating the success of the deletion
+     * @return a response indicating the success or failure of the request
      */
     @DELETE
     @Path("{mappingIRI}")
