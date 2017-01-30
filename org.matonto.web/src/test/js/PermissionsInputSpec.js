@@ -20,14 +20,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('User Permissions Input directive', function() {
+describe('Permissions Input directive', function() {
     var $compile,
         $timeout,
         scope;
 
     beforeEach(function() {
         module('templates');
-        module('userPermissionsInput');
+        module('permissionsInput');
 
         inject(function(_$compile_, _$rootScope_, _$timeout_) {
             $compile = _$compile_;
@@ -41,7 +41,7 @@ describe('User Permissions Input directive', function() {
             scope.roles = {};
             scope.isDisabledWhen = false;
             scope.onChange = jasmine.createSpy('onChange');
-            this.element = $compile(angular.element('<user-permissions-input roles="roles" is-disabled-when="isDisabledWhen" on-change="onChange()"></user-permissions-input>'))(scope);
+            this.element = $compile(angular.element('<permissions-input roles="roles" is-disabled-when="isDisabledWhen" on-change="onChange()"></permissions-input>'))(scope);
             scope.$digest();
         });
         it('roles should be two way bound', function() {
@@ -67,11 +67,11 @@ describe('User Permissions Input directive', function() {
             scope.roles = {};
             scope.isDisabledWhen = false;
             scope.onChange = jasmine.createSpy('onChange');
-            this.element = $compile(angular.element('<user-permissions-input roles="roles" is-disabled-when="isDisabledWhen" on-change="onChange()"></user-permissions-input>'))(scope);
+            this.element = $compile(angular.element('<permissions-input roles="roles" is-disabled-when="isDisabledWhen" on-change="onChange()"></permissions-input>'))(scope);
             scope.$digest();
         });
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('user-permissions-input')).toBe(true);
+            expect(this.element.hasClass('permissions-input')).toBe(true);
         })
         it('with a checkbox for the admin role', function() {
             expect(this.element.querySelectorAll('checkbox[display-text="\'Admin\'"]').length).toBe(1);

@@ -165,11 +165,11 @@ describe('Create User Overlays directive', function() {
         it('with an email input', function() {
             expect(this.element.find('email-input').length).toBe(1);
         });
-        it('with a user permissions input', function() {
+        it('with a permissions input', function() {
             controller = this.element.controller('createUserOverlays');
             controller.step = 1;
             scope.$digest();
-            expect(this.element.find('user-permissions-input').length).toBe(1);
+            expect(this.element.find('permissions-input').length).toBe(1);
         });
         it('depending on whether there is an error', function() {
             controller = this.element.controller('createUserOverlays');
