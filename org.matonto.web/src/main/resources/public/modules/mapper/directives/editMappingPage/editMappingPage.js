@@ -74,24 +74,20 @@
 
                     dvm.save = function() {
                         if (_.includes(dvm.mm.mappingIds, dvm.state.mapping.id)) {
-                            dvm.mm.deleteMapping(dvm.state.mapping.id)
-                                .then(() => saveMapping(), errorMessage => dvm.errorMessage = errorMessage);
+                            dvm.mm.updateMapping(dvm.state.mapping.id, dvm.state.mapping.jsonld).then(success, error => dvm.errorMessage = error);
                         } else {
-                            saveMapping();
+                            dvm.mm.upload(dvm.state.mapping.jsonld).then(success, error => dvm.errorMessage = error);
                         }
                     }
                     dvm.cancel = function() {
                         dvm.state.displayCancelConfirm = true;
                     }
-                    function saveMapping() {
-                        dvm.mm.upload(dvm.state.mapping.jsonld, dvm.state.mapping.id)
-                            .then(() => {
-                                dvm.errorMessage = '';
-                                dvm.state.step = dvm.state.selectMappingStep;
-                                dvm.state.initialize();
-                                dvm.state.resetEdit();
-                                dvm.dm.reset();
-                            }, errorMessage => dvm.errorMessage = errorMessage);
+                    function success() {
+                        dvm.errorMessage = '';
+                        dvm.state.step = dvm.state.selectMappingStep;
+                        dvm.state.initialize();
+                        dvm.state.resetEdit();
+                        dvm.dm.reset();
                     }
                 }
             }
