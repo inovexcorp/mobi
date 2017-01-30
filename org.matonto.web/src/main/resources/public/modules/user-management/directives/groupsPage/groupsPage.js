@@ -42,6 +42,7 @@
          * @requires userState.service:userStateService
          * @requires userManager.service:userManagerService
          * @requires loginManager.service:loginManagerService
+         * @requires util.service:utilService
          *
          * @description
          * `groupsPage` is a directive that creates a Bootstrap `row` div with two columns
@@ -49,26 +50,34 @@
          * The left column contains a {@link groupsList.directive:groupsList groupsList} block
          * for selecting the current {@link userState.service:userStateService#selectedGroup group}
          * and buttons for creating, deleting, and searching for a group. The right column contains
-         * a block for previewing and editing a group's description and a block for viewing and
+         * a block for previewing and editing a group's description, a block for editing the group's
+         * {@link permissionsInput.directive:permissionsInput permission}, and a block for viewing and
          * editing the {@link memberTable.directive:memberTable members} of the group. The directive
          * is replaced by the contents of its template.
          */
         .directive('groupsPage', groupsPage);
 
-    groupsPage.$inject = ['userStateService', 'userManagerService', 'loginManagerService'];
+    groupsPage.$inject = ['userStateService', 'userManagerService', 'loginManagerService', 'utilService'];
 
-    function groupsPage(userStateService, userManagerService, loginManagerService) {
+    function groupsPage(userStateService, userManagerService, loginManagerService, utilService) {
         return {
             restrict: 'E',
             replace: true,
             controllerAs: 'dvm',
             scope: {},
-            controller: function() {
+            controller: ['$scope', function($scope) {
                 var dvm = this;
                 dvm.state = userStateService;
                 dvm.um = userManagerService;
                 dvm.lm = loginManagerService;
+                dvm.util = utilService;
+                dvm.roles = {admin: _.includes(_.get(dvm.state.selectedGroup, 'roles', []), 'admin')};
 
+                $scope.$watch('dvm.state.selectedGroup', function(newValue, oldValue) {
+                    if (!_.isEqual(newValue, oldValue)) {
+                        dvm.roles.admin = _.includes(_.get(dvm.state.selectedGroup, 'roles', []), 'admin');
+                    }
+                });
                 dvm.createGroup = function() {
                     dvm.state.displayCreateGroupOverlay = true;
                 }
@@ -77,6 +86,10 @@
                 }
                 dvm.editDescription = function() {
                     dvm.state.displayEditGroupInfoOverlay = true;
+                }
+                dvm.changeRoles = function() {
+                    var request = dvm.roles.admin ? dvm.um.addGroupRoles(dvm.state.selectedGroup.title, ['admin']) : dvm.um.deleteGroupRole(dvm.state.selectedGroup.title, 'admin');
+                    request.then(angular.noop, dvm.util.createErrorToast);
                 }
                 dvm.removeMember = function() {
                     dvm.state.displayRemoveMemberConfirm = true;
@@ -87,7 +100,7 @@
                         dvm.state.memberName = '';
                     }, error => dvm.errorMessage = error);
                 }
-            },
+            }],
             templateUrl: 'modules/user-management/directives/groupsPage/groupsPage.html'
         };
     }
