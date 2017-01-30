@@ -64,7 +64,6 @@
                         <block>
                             <block-header>
                                 <span>Permissions</span>
-                                </button>
                             </block-header>
                             <block-content class="padding">
                                 <permissions-input ng-if="dvm.state.selectedGroup" roles="dvm.roles" is-disabled-when="!dvm.um.isAdmin(dvm.lm.currentUser)" on-change="dvm.changeRoles()"></permissions-input>

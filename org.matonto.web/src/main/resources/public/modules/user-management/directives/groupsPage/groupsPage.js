@@ -50,7 +50,7 @@
          * The left column contains a {@link groupsList.directive:groupsList groupsList} block
          * for selecting the current {@link userState.service:userStateService#selectedGroup group}
          * and buttons for creating, deleting, and searching for a group. The right column contains
-         * a block for previewing and editing a group's description, a block for editing the groups
+         * a block for previewing and editing a group's description, a block for editing the group's
          * {@link permissionsInput.directive:permissionsInput permission}, and a block for viewing and
          * editing the {@link memberTable.directive:memberTable members} of the group. The directive
          * is replaced by the contents of its template.
