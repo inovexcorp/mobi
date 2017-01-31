@@ -507,13 +507,13 @@ public class OntologyRestImpl implements OntologyRest {
     @Override
     public Response getDataPropertiesInImportedOntologies(String ontologyIdStr) {
         JSONArray result = doWithImportedOntologies(ontologyIdStr, this::getDataPropertyArray);
-        return Response.ok(result.toString()).build();
+        return Response.ok(result).build();
     }
 
     @Override
     public Response getNamedIndividualsInImportedOntologies(String ontologyIdStr) {
         JSONArray result = doWithImportedOntologies(ontologyIdStr, this::getNamedIndividualArray);
-        return Response.ok(result.toString()).build();
+        return Response.ok(result).build();
     }
 
     @Override
