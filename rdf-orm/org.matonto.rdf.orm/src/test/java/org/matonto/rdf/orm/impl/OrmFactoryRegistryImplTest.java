@@ -66,13 +66,13 @@ public class OrmFactoryRegistryImplTest {
     }
 
     @Mock
-    OrmFactory<A> aFactory;
+    private OrmFactory<A> aFactory;
 
     @Mock
-    OrmFactory<B> bFactory;
+    private OrmFactory<B> bFactory;
 
     @Mock
-    OrmFactory<C> cFactory;
+    private OrmFactory<C> cFactory;
 
     @Before
     public void setUp() throws Exception {
@@ -146,11 +146,11 @@ public class OrmFactoryRegistryImplTest {
         List<OrmFactory> result = registry.getFactoriesOfType(Thing.class);
         assertEquals(1, result.size());
         result = registry.getFactoriesOfType(A.class);
-        assertEquals(1, result.size());
+        assertEquals(3, result.size());
         result = registry.getFactoriesOfType(B.class);
         assertEquals(2, result.size());
         result = registry.getFactoriesOfType(C.class);
-        assertEquals(3, result.size());
+        assertEquals(1, result.size());
     }
 
     @Test
@@ -164,11 +164,11 @@ public class OrmFactoryRegistryImplTest {
         List<OrmFactory> result = registry.getFactoriesOfType(Thing.TYPE);
         assertEquals(1, result.size());
         result = registry.getFactoriesOfType(A.TYPE);
-        assertEquals(1, result.size());
+        assertEquals(3, result.size());
         result = registry.getFactoriesOfType(B.TYPE);
         assertEquals(2, result.size());
         result = registry.getFactoriesOfType(C.TYPE);
-        assertEquals(3, result.size());
+        assertEquals(1, result.size());
     }
 
     @Test
@@ -182,11 +182,11 @@ public class OrmFactoryRegistryImplTest {
         List<OrmFactory> result = registry.getFactoriesOfType(thingIRI);
         assertEquals(1, result.size());
         result = registry.getFactoriesOfType(aIRI);
-        assertEquals(1, result.size());
+        assertEquals(3, result.size());
         result = registry.getFactoriesOfType(bIRI);
         assertEquals(2, result.size());
         result = registry.getFactoriesOfType(cIRI);
-        assertEquals(3, result.size());
+        assertEquals(1, result.size());
     }
 
     @Test

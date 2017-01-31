@@ -54,8 +54,8 @@ public interface OrmFactoryRegistry {
     OrmFactory getFactoryOfType(IRI typeIRI);
 
     /**
-     * A List of OrmFactories of types that extend the passed type, following the subclass
-     * relationships.
+     * A List of OrmFactories of types that extend the passed type include the OrmFactory of the
+     * type itself.
      *
      * @param type A Class that extends Thing
      * @param <T> A class that extends Thing
@@ -65,7 +65,7 @@ public interface OrmFactoryRegistry {
 
     /**
      * A List of OrmFactories of types that extend the type identified by the passed class IRI
-     * string, following the subclass relationships.
+     * string including the OrmFactory of the type itself.
      *
      * @param typeIRI An IRI string of a class
      * @return A List of OrmFactories of types that extend the type identified by the passed IRI
@@ -74,8 +74,8 @@ public interface OrmFactoryRegistry {
     List<OrmFactory> getFactoriesOfType(String typeIRI);
 
     /**
-     *  A List of OrmFactories of types that extend the type identified by the passed class IRI,
-     * following the subclass relationships.
+     * A List of OrmFactories of types that extend the type identified by the passed class IRI
+     * including the OrmFactory of the type itself.
      *
      * @param typeIRI An IRI of a class
      * @return A List of OrmFactories of types that extend the type identified by the passed IRI

@@ -80,8 +80,8 @@ public class OrmFactoryRegistryImpl implements OrmFactoryRegistry {
     @Override
     public <T extends Thing> List<OrmFactory> getFactoriesOfType(Class<T> type) {
         return factories.stream()
-                .filter(factory -> factory.getType().isAssignableFrom(type))
-                .filter(factory -> type.equals(Thing.class) || !factory.getType().equals(Thing.class))
+                .filter(factory -> type.equals(Thing.class)
+                        ? factory.getType().equals(Thing.class) : type.isAssignableFrom(factory.getType()))
                 .collect(Collectors.toList());
     }
 
@@ -92,16 +92,9 @@ public class OrmFactoryRegistryImpl implements OrmFactoryRegistry {
 
     @Override
     public List<OrmFactory> getFactoriesOfType(IRI typeIRI) {
-        OrmFactory typeFactory;
-        try {
-            typeFactory = getFactoryOfType(typeIRI);
-        } catch (MatOntoException e) {
-            return Collections.emptyList();
-        }
-        List<OrmFactory> parentFactories = factories.stream()
-                .filter(factory -> typeFactory.getParentTypeIRIs().contains(factory.getTypeIRI()))
+        return factories.stream()
+                .filter(factory -> factory.getParentTypeIRIs().contains(typeIRI)
+                        || factory.getTypeIRI().equals(typeIRI))
                 .collect(Collectors.toList());
-        parentFactories.add(typeFactory);
-        return parentFactories;
     }
 }
