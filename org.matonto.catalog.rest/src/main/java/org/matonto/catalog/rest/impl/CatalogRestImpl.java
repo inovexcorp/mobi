@@ -278,7 +278,7 @@ public class CatalogRestImpl implements CatalogRest {
                     || typeIRI.equals(MappingRecord.TYPE) || typeIRI.equals(DatasetRecord.TYPE)) {
                 catalogManager.addMasterBranch(newRecord.getResource());
             }
-            return Response.ok(newRecord.getResource().stringValue()).build();
+            return Response.status(201).entity(newRecord.getResource().stringValue()).build();
         } catch (MatOntoException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         }
@@ -382,7 +382,7 @@ public class CatalogRestImpl implements CatalogRest {
             recordInCatalog(catalogId, recordId);
             Distribution newDistribution = createDistribution(title, description, format, accessURL, downloadURL);
             catalogManager.addDistributionToUnversionedRecord(newDistribution, factory.createIRI(recordId));
-            return Response.ok(newDistribution.getResource().stringValue()).build();
+            return Response.status(201).entity(newDistribution.getResource().stringValue()).build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
         }
@@ -453,7 +453,7 @@ public class CatalogRestImpl implements CatalogRest {
 
             Version newVersion = catalogManager.createVersion(title, description, versionFactories.get(typeIRI));
             catalogManager.addVersion(newVersion, factory.createIRI(recordId));
-            return Response.ok(newVersion.getResource().stringValue()).build();
+            return Response.status(201).entity(newVersion.getResource().stringValue()).build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
         }
@@ -586,7 +586,7 @@ public class CatalogRestImpl implements CatalogRest {
             testVersionPath(catalogId, recordId, versionId);
             Distribution newDistribution = createDistribution(title, description, format, accessURL, downloadURL);
             catalogManager.addDistributionToVersion(newDistribution, factory.createIRI(versionId));
-            return Response.ok(newDistribution.getResource().stringValue()).build();
+            return Response.status(201).entity(newDistribution.getResource().stringValue()).build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
         }
@@ -674,7 +674,7 @@ public class CatalogRestImpl implements CatalogRest {
 
             Branch newBranch = catalogManager.createBranch(title, description, branchFactories.get(typeIRI));
             catalogManager.addBranch(newBranch, factory.createIRI(recordId));
-            return Response.ok(newBranch.getResource().stringValue()).build();
+            return Response.status(201).entity(newBranch.getResource().stringValue()).build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
         }
@@ -815,7 +815,7 @@ public class CatalogRestImpl implements CatalogRest {
             Commit newCommit = catalogManager.createCommit(inProgressCommit, parents, message);
             catalogManager.addCommitToBranch(newCommit, factory.createIRI(branchId));
             catalogManager.removeInProgressCommit(inProgressCommitIRI);
-            return Response.ok(newCommit.getResource().stringValue()).build();
+            return Response.status(201).entity(newCommit.getResource().stringValue()).build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
         }

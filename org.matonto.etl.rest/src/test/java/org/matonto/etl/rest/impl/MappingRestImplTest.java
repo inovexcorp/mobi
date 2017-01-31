@@ -163,7 +163,7 @@ public class MappingRestImplTest extends MatontoRestTestNg {
         fd.bodyPart(new FormDataBodyPart(FormDataContentDisposition.name("file").fileName("mapping.jsonld").build(),
                 content, MediaType.APPLICATION_OCTET_STREAM_TYPE));
         Response response = target().path("mappings").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 200);
+        assertEquals(response.getStatus(), 201);
         assertTrue(response.readEntity(String.class).contains(MAPPING_IRI));
     }
 
@@ -172,7 +172,7 @@ public class MappingRestImplTest extends MatontoRestTestNg {
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("jsonld", mappingJsonld);
         Response response = target().path("mappings").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 200);
+        assertEquals(response.getStatus(), 201);
         assertTrue(response.readEntity(String.class).contains(MAPPING_IRI));
     }
 

@@ -112,7 +112,7 @@ public class StateRestImpl implements StateRest {
         Resource stateId = (applicationId == null) ? stateManager.storeState(newState, username)
                 : stateManager.storeState(newState, username, applicationId);
 
-        return Response.ok(stateId.stringValue()).build();
+        return Response.status(201).entity(stateId.stringValue()).build();
     }
 
     @Override

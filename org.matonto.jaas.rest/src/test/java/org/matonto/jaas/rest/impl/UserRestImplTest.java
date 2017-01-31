@@ -239,7 +239,7 @@ public class UserRestImplTest extends MatontoRestTestNg {
         Response response = target().path("users")
                 .queryParam("password", "123")
                 .request().post(Entity.entity(user.toString(), MediaType.APPLICATION_JSON));
-        assertEquals(response.getStatus(), 200);
+        assertEquals(response.getStatus(), 201);
         verify(engineManager).storeUser(anyString(), any(User.class));
     }
 

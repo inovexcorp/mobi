@@ -225,7 +225,7 @@ public class GroupRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("groups")
                 .request().post(Entity.entity(group.toString(), MediaType.APPLICATION_JSON));
-        assertEquals(response.getStatus(), 200);
+        assertEquals(response.getStatus(), 201);
         verify(engineManager).storeGroup(anyString(), any(Group.class));
     }
 

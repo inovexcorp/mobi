@@ -101,7 +101,7 @@ public class UserRestImpl implements UserRest {
         user.setPassword(tempUser.getPassword().get());
         engineManager.storeUser(RdfEngine.COMPONENT_NAME, user);
         logger.info("Created user " + username.stringValue());
-        return Response.ok().build();
+        return Response.status(201).entity(username.stringValue()).build();
     }
 
     @Override

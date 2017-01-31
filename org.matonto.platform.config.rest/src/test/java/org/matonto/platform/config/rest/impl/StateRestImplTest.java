@@ -187,7 +187,7 @@ public class StateRestImplTest extends MatontoRestTestNg {
         state.add(vf.createIRI("http://example.com"), vf.createIRI(DCTERMS.TITLE.stringValue()), vf.createLiteral("Title"));
 
         Response response = target().path("states").request().post(Entity.json(modelToJsonld(state)));
-        assertEquals(response.getStatus(), 200);
+        assertEquals(response.getStatus(), 201);
         verify(stateManager).storeState(eq(state), anyString());
         try {
             String str = response.readEntity(String.class);
@@ -205,7 +205,7 @@ public class StateRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("states").queryParam("application", "app")
                 .request().post(Entity.json(modelToJsonld(state)));
-        assertEquals(response.getStatus(), 200);
+        assertEquals(response.getStatus(), 201);
         verify(stateManager).storeState(eq(state), anyString(), eq("app"));
         try {
             String str = response.readEntity(String.class);

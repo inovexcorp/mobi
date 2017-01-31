@@ -157,7 +157,7 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
                     MediaType.MULTIPART_FORM_DATA));
             String filename = response.readEntity(String.class);
 
-            assertEquals(response.getStatus(), 200);
+            assertEquals(response.getStatus(), 201);
             assertTrue(Files.exists(Paths.get(DelimitedRestImpl.TEMP_DIR + "/" + filename)));
         }
     }
