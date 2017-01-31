@@ -6,6 +6,7 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 
 <http://matonto.org/ontologies/delimited> a owl:Ontology ;
+    owl:versionIRI <http://matonto.org/ontologies/delimited#1.1>;
     rdfs:label "Delimited" ;
     rdfs:comment "An ontology which defines MatOnto Mappings and Datasets." .
 
