@@ -1,4 +1,4 @@
-@Version("3.3.1.${build}")
+@Version("3.4.0.${build}")
 
 package org.matonto.jaas.rest;
 

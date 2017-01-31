@@ -105,7 +105,7 @@ public class MappingRestImpl implements MappingRest {
         String mappingId = mapping.getId().getMappingIdentifier().stringValue();
 
         logger.info("Mapping Uploaded: " + mappingId);
-        return Response.ok(mappingId).build();
+        return Response.status(201).entity(mappingId).build();
     }
 
     @Override

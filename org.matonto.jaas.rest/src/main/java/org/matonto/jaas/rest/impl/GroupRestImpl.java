@@ -100,7 +100,7 @@ public class GroupRestImpl implements GroupRest {
 
         engineManager.storeGroup(RdfEngine.COMPONENT_NAME, group);
         logger.info("Created group " + title.stringValue());
-        return Response.ok().build();
+        return Response.status(201).entity(title.stringValue()).build();
     }
 
     @Override

@@ -943,7 +943,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/distributions")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 200);
+        assertEquals(response.getStatus(), 201);
         assertEquals(response.readEntity(String.class), DISTRIBUTION_IRI);
         verify(catalogManager).createDistribution(any(DistributionConfig.class));
         verify(catalogManager).addDistributionToUnversionedRecord(any(Distribution.class), eq(vf.createIRI(RECORD_IRI)));
@@ -1646,7 +1646,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI) + "/distributions")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 200);
+        assertEquals(response.getStatus(), 201);
         assertEquals(response.readEntity(String.class), DISTRIBUTION_IRI);
         verify(catalogManager).createDistribution(any(DistributionConfig.class));
         verify(catalogManager).addDistributionToVersion(any(Distribution.class), eq(vf.createIRI(VERSION_IRI)));
@@ -2445,7 +2445,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits")
                 .queryParam("message", "Message").request().post(Entity.json(""));
-        assertEquals(response.getStatus(), 200);
+        assertEquals(response.getStatus(), 201);
         assertEquals(response.readEntity(String.class), COMMIT_IRIS[0]);
         verify(catalogManager).getInProgressCommitIRI(vf.createIRI(USER_IRI), vf.createIRI(RECORD_IRI));
         verify(catalogManager).getCommit(testInProgressCommit.getResource(), inProgressCommitFactory);
@@ -3569,7 +3569,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 200);
+        assertEquals(response.getStatus(), 201);
         assertEquals(response.readEntity(String.class), RECORD_IRI);
         verify(catalogManager).createRecord(any(RecordConfig.class), eq(ormFactory));
         verify(catalogManager).addRecord(eq(vf.createIRI(LOCAL_IRI)), any(Record.class));
@@ -3584,7 +3584,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/versions")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 200);
+        assertEquals(response.getStatus(), 201);
         assertEquals(response.readEntity(String.class), VERSION_IRI);
         verify(catalogManager).createVersion(anyString(), anyString(), eq(ormFactory));
         verify(catalogManager).addVersion(any(Version.class), eq(vf.createIRI(RECORD_IRI)));
@@ -3599,7 +3599,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/branches")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 200);
+        assertEquals(response.getStatus(), 201);
         assertEquals(response.readEntity(String.class), BRANCH_IRI);
         verify(catalogManager).createBranch(anyString(), anyString(), eq(ormFactory));
         verify(catalogManager).addBranch(any(Branch.class), eq(vf.createIRI(RECORD_IRI)));
