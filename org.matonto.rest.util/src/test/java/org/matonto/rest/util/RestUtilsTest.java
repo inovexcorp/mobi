@@ -24,7 +24,6 @@ package org.matonto.rest.util;
  */
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.when;
@@ -56,13 +55,13 @@ public class RestUtilsTest {
     private org.matonto.rdf.api.ModelFactory mf = LinkedHashModelFactory.getInstance();
 
     @Mock
-    ContainerRequestContext context;
+    private ContainerRequestContext context;
 
     @Mock
-    EngineManager engineManager;
+    private EngineManager engineManager;
 
     @Mock
-    User user;
+    private User user;
 
     @Before
     public void setUp() throws Exception {

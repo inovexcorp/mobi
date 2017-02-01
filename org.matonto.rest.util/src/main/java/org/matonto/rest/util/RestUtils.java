@@ -32,19 +32,17 @@ import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.RDFHandler;
 import org.openrdf.rio.Rio;
 import org.openrdf.rio.helpers.BufferedGroupingRDFHandler;
-import org.springframework.web.util.UriUtils;
 
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.util.Optional;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Response;
 
 public class RestUtils {
 
     /**
-     * Encodes the passed string for use in a URL.
+     * Encodes the passed string using percent encoding for use in a URL.
      *
      * @param str The string to be encoded.
      * @return The URL encoded version of the passed string.
@@ -52,12 +50,12 @@ public class RestUtils {
     public static String encode(String str) {
         String encoded = null;
         try {
-            encoded = URLEncoder.encode(str, "UTF-8").replaceAll("\\%28", "(")
-                    .replaceAll("\\%29", ")")
+            encoded = URLEncoder.encode(str, "UTF-8").replaceAll("%28", "(")
+                    .replaceAll("%29", ")")
                     .replaceAll("\\+", "%20")
-                    .replaceAll("\\%27", "'")
-                    .replaceAll("\\%21", "!")
-                    .replaceAll("\\%7E", "~");
+                    .replaceAll("%27", "'")
+                    .replaceAll("%21", "!")
+                    .replaceAll("%7E", "~");
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
