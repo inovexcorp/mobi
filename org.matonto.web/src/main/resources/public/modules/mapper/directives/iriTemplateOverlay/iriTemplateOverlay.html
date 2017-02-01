@@ -47,7 +47,6 @@
             <p id="ends-with-help-block" class="help-block">Duplicate values will create a single individual with combined data.</p>
             <select id="endsWith" class="form-control" ng-model="dvm.endsWith" ng-options="localName as localName.text for localName in dvm.localNameOptions" aria-describedby="ends-with-help-block"></select>
         </div>
-        
         <div class="btn-container clearfix">
             <button class="btn btn-primary pull-right" ng-click="dvm.state.editIriTemplate = false; dvm.set()" ng-disabled="iriTemplateForm.$invalid">Set</button>
             <button class="btn btn-default pull-right" ng-click="dvm.state.editIriTemplate = false">Cancel</button>
