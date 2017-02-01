@@ -68,7 +68,6 @@ describe('Prop Mapping Overlay directive', function() {
             var columnIndex = '0';
             var propMapping = {'@id': 'propMap'};
             utilSvc.getPropertyValue.and.returnValue(columnIndex);
-            // propMapping[prefixes.delim + 'columnIndex'] = [{'@value': columnIndex}];
             mapperStateSvc.mapping.jsonld.push(propMapping);
             mapperStateSvc.selectedPropMappingId = propMapping['@id'];
             mappingManagerSvc.getPropIdByMapping.and.returnValue('prop');

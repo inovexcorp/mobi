@@ -367,7 +367,7 @@
              *
              * @description
              * `changedMapping` holds a boolean indicating whether or not the opened mapping has been changed.
-             * If the current mapping is a new mapping, this variable should be true always.
+             * If the current mapping is a new mapping, this variable should be true.
              */
             self.changedMapping = false;
 
