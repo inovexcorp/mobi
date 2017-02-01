@@ -48,8 +48,16 @@ public interface SparqlRest {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation(value = "Retrieves the results of the provided SPARQL query.")
+    @ApiOperation("Retrieves the results of the provided SPARQL query.")
     Response queryRdf(@QueryParam("query") String queryString);
+
+    @GET
+    @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*", "application/*"})
+    @RolesAllowed("user")
+    @ApiOperation("Download the resutls of the provided SPARQL query.")
+    Response downloadQuery(@QueryParam("query") String queryString,
+                           @QueryParam("fileType") String fileExtension,
+                           @DefaultValue("results") @QueryParam("fileName") String fileName);
 
     /**
      * Retrieves the paged results of the provided SPARQL query. Parameters can be passed to control paging.
@@ -62,7 +70,7 @@ public interface SparqlRest {
     @Path("/page")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation(value = "Retrieves the paged results of the provided SPARQL query.")
+    @ApiOperation("Retrieves the paged results of the provided SPARQL query.")
     SparqlPaginatedResults<JSONObject> getPagedResults(
             @QueryParam("query") String queryString,
             @Context UriInfo uriInfo,

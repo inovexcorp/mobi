@@ -41,7 +41,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>web.security</artifactId>
-            <version>1.4.9</version>
+            <version>1.4.17-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>biz.aQute.bnd</groupId>
@@ -91,10 +91,6 @@
                             org.matonto.rest.util,
                             org.matonto.rest.util.jaxb
                         </Export-Package>
-                        <Import-Package>
-                            !org.glassfish.jersey.test,
-                            *
-                        </Import-Package>
                         <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>
                         <_snapshot>${maven.build.timestamp}</_snapshot>

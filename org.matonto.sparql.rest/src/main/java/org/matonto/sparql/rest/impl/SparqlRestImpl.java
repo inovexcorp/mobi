@@ -26,9 +26,17 @@ package org.matonto.sparql.rest.impl;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import net.sf.json.JSONObject;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.matonto.exception.MatOntoException;
 import org.matonto.persistence.utils.JSONQueryResults;
 import org.matonto.query.TupleQueryResult;
+import org.matonto.query.api.Binding;
+import org.matonto.query.api.BindingSet;
 import org.matonto.query.api.TupleQuery;
 import org.matonto.query.exception.MalformedQueryException;
 import org.matonto.repository.api.Repository;
@@ -42,8 +50,14 @@ import org.matonto.sparql.rest.jaxb.SparqlPaginatedResults;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedWriter;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 
 @Component(immediate = true)
@@ -103,8 +117,40 @@ public class SparqlRestImpl implements SparqlRest {
                 throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
             }
         } else {
-            return null;
+            return Response.noContent().build();
         }
+    }
+
+    @Override
+    public Response downloadQuery(String queryString, String fileExtension, String fileName) {
+        if (queryString == null) {
+            throw ErrorUtils.sendError("Parameter 'queryString' must be set.", Response.Status.BAD_REQUEST);
+        }
+        TupleQueryResult queryResults = getQueryResults(queryString);
+        StreamingOutput stream;
+        String mimeType;
+        switch (fileExtension) {
+            case "xls":
+                stream = createExcelResults(queryResults, fileExtension);
+                mimeType = "application/vnd.ms-excel";
+                break;
+            case "xlsx":
+                stream = createExcelResults(queryResults, fileExtension);
+                mimeType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+                break;
+            case "csv":
+                stream = createDelimitedResults(queryResults, ",");
+                mimeType = "text/csv";
+                break;
+            case "tsv":
+                stream = createDelimitedResults(queryResults, "\t");
+                mimeType = "text/tab-separated-values";
+                break;
+            default:
+                throw ErrorUtils.sendError("Invalid file type", Response.Status.BAD_REQUEST);
+        }
+        return Response.ok(stream).header("Content-Disposition", "attachment;filename=" + fileName
+                +  "." + fileExtension).header("Content-Type", mimeType).build();
     }
 
     @Override
@@ -114,7 +160,7 @@ public class SparqlRestImpl implements SparqlRest {
 
         if (queryResults.hasNext()) {
             List<JSONObject> bindings = JSONQueryResults.getBindings(queryResults);
-
+            
             PaginatedResults<JSONObject> paginatedResults = new PaginatedResults<>();
             int size;
 
@@ -140,5 +186,74 @@ public class SparqlRestImpl implements SparqlRest {
         } else {
             return null;
         }
+    }
+
+    private StreamingOutput createDelimitedResults(TupleQueryResult result, String delimiter) {
+        List<String> bindings = result.getBindingNames();
+        StringBuilder file = new StringBuilder(String.join(delimiter, bindings));
+        BindingSet bindingSet;
+        Iterator<String> bindingIt;
+        while (result.hasNext()) {
+            file.append("\n");
+            bindingSet = result.next();
+            bindingIt = bindings.iterator();
+            while (bindingIt.hasNext()) {
+                bindingSet.getBinding(bindingIt.next()).ifPresent(binding -> file.append(binding.getValue().stringValue()));
+                if (bindingIt.hasNext()) {
+                    file.append(delimiter);
+                }
+            }
+        }
+        return os -> {
+            Writer writer = new BufferedWriter(new OutputStreamWriter(os));
+            writer.write(file.toString());
+            writer.flush();
+            writer.close();
+        };
+    }
+
+    private StreamingOutput createExcelResults(TupleQueryResult result, String type) {
+        List<String> bindings = result.getBindingNames();
+        Workbook wb;
+        if (type.equals("xls")) {
+            wb = new HSSFWorkbook();
+        } else {
+            wb = new XSSFWorkbook();
+        }
+        Sheet sheet = wb.createSheet();
+        Row row;
+        Cell cell;
+        BindingSet bindingSet;
+        int rowIt = 0;
+        int cellIt = 0;
+
+        row = sheet.createRow(rowIt);
+        for (String bindingName : bindings) {
+            cell = row.createCell(cellIt);
+            cell.setCellValue(bindingName);
+            cellIt++;
+        }
+        rowIt++;
+        while (result.hasNext()) {
+            bindingSet = result.next();
+            cellIt = 0;
+            row = sheet.createRow(rowIt);
+            for (String bindingName : bindings) {
+                cell = row.createCell(cellIt);
+                Optional<Binding> bindingOpt = bindingSet.getBinding(bindingName);
+                if (bindingOpt.isPresent()) {
+                    cell.setCellValue(bindingOpt.get().getValue().stringValue());
+                }
+                cellIt++;
+            }
+            rowIt++;
+        }
+
+        return os -> {
+            wb.write(os);
+            os.flush();
+            os.close();
+        };
+
     }
 }
