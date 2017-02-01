@@ -32,6 +32,7 @@ import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.RDFHandler;
 import org.openrdf.rio.Rio;
 import org.openrdf.rio.helpers.BufferedGroupingRDFHandler;
+import org.springframework.web.util.UriUtils;
 
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
@@ -51,7 +52,12 @@ public class RestUtils {
     public static String encode(String str) {
         String encoded = null;
         try {
-            encoded = URLEncoder.encode(str, "UTF-8");
+            encoded = URLEncoder.encode(str, "UTF-8").replaceAll("\\%28", "(")
+                    .replaceAll("\\%29", ")")
+                    .replaceAll("\\+", "%20")
+                    .replaceAll("\\%27", "'")
+                    .replaceAll("\\%21", "!")
+                    .replaceAll("\\%7E", "~");
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }

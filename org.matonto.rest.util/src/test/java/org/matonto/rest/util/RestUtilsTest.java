@@ -83,14 +83,8 @@ public class RestUtilsTest {
 
     @Test
     public void encodeTest() throws Exception {
-        String url = "http://example.com#test?param1=true&param2=false";
-        String result = RestUtils.encode(url);
-        assertFalse(result.contains(":"));
-        assertFalse(result.contains("/"));
-        assertFalse(result.contains("#"));
-        assertFalse(result.contains("?"));
-        assertFalse(result.contains("&"));
-        assertFalse(result.contains("="));
+        String test = ":/#?=& +;\"{[}]@$%^\t";
+        assertEquals("%3A%2F%23%3F%3D%26%20%2B%3B%22%7B%5B%7D%5D%40%24%25%5E%09", RestUtils.encode(test));
     }
 
     @Test
