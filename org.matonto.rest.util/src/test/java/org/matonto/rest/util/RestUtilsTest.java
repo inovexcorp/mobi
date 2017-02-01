@@ -24,7 +24,6 @@ package org.matonto.rest.util;
  */
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.when;
@@ -56,13 +55,13 @@ public class RestUtilsTest {
     private org.matonto.rdf.api.ModelFactory mf = LinkedHashModelFactory.getInstance();
 
     @Mock
-    ContainerRequestContext context;
+    private ContainerRequestContext context;
 
     @Mock
-    EngineManager engineManager;
+    private EngineManager engineManager;
 
     @Mock
-    User user;
+    private User user;
 
     @Before
     public void setUp() throws Exception {
@@ -83,14 +82,8 @@ public class RestUtilsTest {
 
     @Test
     public void encodeTest() throws Exception {
-        String url = "http://example.com#test?param1=true&param2=false";
-        String result = RestUtils.encode(url);
-        assertFalse(result.contains(":"));
-        assertFalse(result.contains("/"));
-        assertFalse(result.contains("#"));
-        assertFalse(result.contains("?"));
-        assertFalse(result.contains("&"));
-        assertFalse(result.contains("="));
+        String test = ":/#?=& +;\"{[}]@$%^\t";
+        assertEquals("%3A%2F%23%3F%3D%26%20%2B%3B%22%7B%5B%7D%5D%40%24%25%5E%09", RestUtils.encode(test));
     }
 
     @Test
