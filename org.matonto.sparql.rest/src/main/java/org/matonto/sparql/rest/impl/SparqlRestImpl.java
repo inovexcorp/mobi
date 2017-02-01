@@ -44,9 +44,8 @@ import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.api.RepositoryManager;
 import org.matonto.rest.util.ErrorUtils;
 import org.matonto.rest.util.LinksUtils;
-import org.matonto.rest.util.jaxb.PaginatedResults;
+import org.matonto.rest.util.jaxb.Links;
 import org.matonto.sparql.rest.SparqlRest;
-import org.matonto.sparql.rest.jaxb.SparqlPaginatedResults;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -154,37 +153,40 @@ public class SparqlRestImpl implements SparqlRest {
     }
 
     @Override
-    public SparqlPaginatedResults<JSONObject> getPagedResults(String queryString, UriInfo uriInfo, int limit,
+    public Response getPagedResults(String queryString, UriInfo uriInfo, int limit,
                                                               int offset) {
+        if (offset < 0) {
+            throw ErrorUtils.sendError("Offset cannot be negative.", Response.Status.BAD_REQUEST);
+        }
+        if (limit <= 0) {
+            throw ErrorUtils.sendError("Limit must be positive", Response.Status.BAD_REQUEST);
+        }
         TupleQueryResult queryResults = getQueryResults(queryString);
-
         if (queryResults.hasNext()) {
             List<JSONObject> bindings = JSONQueryResults.getBindings(queryResults);
-            
-            PaginatedResults<JSONObject> paginatedResults = new PaginatedResults<>();
+            if (offset > bindings.size()) {
+                throw ErrorUtils.sendError("Offset exceeds total size", Response.Status.BAD_REQUEST);
+            }
+            List<JSONObject> results;
             int size;
-
             if ((offset + limit) > bindings.size()) {
-                paginatedResults.setResults(bindings.subList(offset, bindings.size()));
+                results = bindings.subList(offset, bindings.size());
                 size = bindings.size() - offset;
             } else {
-                paginatedResults.setResults(bindings.subList(offset, offset + limit));
+                results = bindings.subList(offset, offset + limit);
                 size = limit;
             }
-
-            paginatedResults.setLimit(limit);
-            paginatedResults.setStart(offset);
-            paginatedResults.setTotalSize(bindings.size());
-            paginatedResults.setSize(size);
-            paginatedResults.setLinks(LinksUtils.buildLinks(uriInfo, size, bindings.size(), limit, offset));
-
-            SparqlPaginatedResults<JSONObject> response = new SparqlPaginatedResults<>();
-            response.setBindingNames(queryResults.getBindingNames());
-            response.setPaginatedResults(paginatedResults);
-
-            return response;
+            Links links = LinksUtils.buildLinks(uriInfo, size, bindings.size(), limit, offset);
+            Response.ResponseBuilder response = Response.ok(results).header("X-Total-Count", bindings.size());
+            if (links.getNext() != null) {
+                response = response.link(links.getBase() + links.getNext(), "next");
+            }
+            if (links.getPrev() != null) {
+                response = response.link(links.getBase() + links.getPrev(), "prev");
+            }
+            return response.build();
         } else {
-            return null;
+            return Response.ok().header("X-Total-Count", 0).build();
         }
     }
 

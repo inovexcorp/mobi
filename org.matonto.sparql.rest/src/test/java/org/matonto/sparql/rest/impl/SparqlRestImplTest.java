@@ -23,12 +23,16 @@ package org.matonto.sparql.rest.impl;
  * #L%
  */
 
+import net.sf.json.JSONArray;
 import org.apache.commons.io.IOUtils;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.junit.Test;
+import org.matonto.rdf.api.Model;
+import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.ValueFactory;
+import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory;
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
@@ -43,22 +47,29 @@ import org.openrdf.sail.memory.MemoryStore;
 
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Application;
+import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
+import static org.matonto.rest.util.RestUtils.encode;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 public class SparqlRestImplTest extends MatontoRestTestNg {
     private SparqlRestImpl rest;
     private Repository repo;
     private ValueFactory vf;
+    private ModelFactory mf;
 
     private String ALL_QUERY;
+    private Model testModel;
 
     @Mock
     private RepositoryManager repositoryManager;
@@ -66,17 +77,20 @@ public class SparqlRestImplTest extends MatontoRestTestNg {
     @Override
     protected Application configureApp() throws Exception {
         vf = SimpleValueFactory.getInstance();
+        mf = LinkedHashModelFactory.getInstance();
         repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
         repo.initialize();
+        testModel= mf.createModel();
+        testModel.add(vf.createIRI("http://example.com/Example"), vf.createIRI("http://example.com/propertyA"), vf.createLiteral("true"));
+        testModel.add(vf.createIRI("http://example.com/Example"), vf.createIRI("http://example.com/propertyB"), vf.createLiteral("true"));
+        testModel.add(vf.createIRI("http://example.com/Example"), vf.createIRI("http://example.com/propertyC"), vf.createLiteral("true"));
+        testModel.add(vf.createIRI("http://example.com/Example"), vf.createIRI("http://example.com/propertyD"), vf.createLiteral("true"));
+        testModel.add(vf.createIRI("http://example.com/Example"), vf.createIRI("http://example.com/propertyE"), vf.createLiteral("true"));
         RepositoryConnection conn = repo.getConnection();
-        conn.add(vf.createIRI("http://example.com/Example"), vf.createIRI("http://example.com/propertyA"), vf.createLiteral("true"));
-        conn.add(vf.createIRI("http://example.com/Example"), vf.createIRI("http://example.com/propertyB"), vf.createLiteral("true"));
-        conn.add(vf.createIRI("http://example.com/Example"), vf.createIRI("http://example.com/propertyC"), vf.createLiteral("true"));
-        conn.add(vf.createIRI("http://example.com/Example"), vf.createIRI("http://example.com/propertyD"), vf.createLiteral("true"));
-        conn.add(vf.createIRI("http://example.com/Example"), vf.createIRI("http://example.com/propertyE"), vf.createLiteral("true"));
+        conn.add(testModel);
+        conn.close();
 
         MockitoAnnotations.initMocks(this);
-
         when(repositoryManager.getRepository(anyString())).thenReturn(Optional.of(repo));
 
         rest = new SparqlRestImpl();
@@ -131,6 +145,73 @@ public class SparqlRestImplTest extends MatontoRestTestNg {
     public void downloadQueryWithInvalidFileTypeTest() {
         Response response = target().path("sparql").queryParam("query", ALL_QUERY)
                 .queryParam("fileType", "error").request().get();
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void getPagedResultsTest() {
+        Response response = target().path("sparql/page").queryParam("query", ALL_QUERY).request().get();
+        assertEquals(response.getStatus(), 200);
+        MultivaluedMap<String, Object> headers = response.getHeaders();
+        assertEquals(headers.get("X-Total-Count").get(0), "" + testModel.size());
+        assertEquals(response.getLinks().size(), 0);
+        try {
+            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            assertEquals(result.size(), testModel.size());
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void getPagedResultsWithLinksTest() {
+        Response response = target().path("sparql/page").queryParam("query", ALL_QUERY)
+                .queryParam("limit", 1).queryParam("offset", 1).request().get();
+        assertEquals(response.getStatus(), 200);
+        MultivaluedMap<String, Object> headers = response.getHeaders();
+        assertEquals(headers.get("X-Total-Count").get(0), "" + testModel.size());
+        Set<Link> links = response.getLinks();
+        assertEquals(links.size(), 2);
+        links.forEach(link -> {
+            assertTrue(link.getUri().getRawPath().contains("sparql/page"));
+            assertTrue(link.getRel().equals("prev") || link.getRel().equals("next"));
+        });
+        try {
+            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            assertEquals(result.size(), 1);
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void getPagedResultsWithNegativeOffsetTest() {
+        Response response = target().path("sparql/page").queryParam("query", ALL_QUERY)
+                .queryParam("offset", -1).request().get();
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void getPagedResultsWithNonPositiveLimitTest() {
+        Response response = target().path("sparql/page").queryParam("query", ALL_QUERY)
+                .queryParam("limit", 0).request().get();
+        assertEquals(response.getStatus(), 400);
+
+        response = target().path("sparql/page").queryParam("query", ALL_QUERY)
+                .queryParam("limit", -1).request().get();
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void getPagedResultsWithOffsetThatIsTooLargeTest() {
+        Response response = target().path("sparql/page").queryParam("query", ALL_QUERY)
+                .queryParam("offset", 10).request().get();
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void getPagedResultsWithInvalidQueryTest() {
+        Response response = target().path("sparql/page").queryParam("query", encode("+")).request().get();
         assertEquals(response.getStatus(), 400);
     }
 }

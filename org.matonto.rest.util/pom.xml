@@ -91,6 +91,10 @@
                             org.matonto.rest.util,
                             org.matonto.rest.util.jaxb
                         </Export-Package>
+                        <Import-Package>
+                            !org.glassfish.jersey.test,
+                            *
+                        </Import-Package>
                         <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>
                         <_snapshot>${maven.build.timestamp}</_snapshot>
