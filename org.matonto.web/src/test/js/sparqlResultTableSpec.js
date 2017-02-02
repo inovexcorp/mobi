@@ -22,109 +22,81 @@
  */
 describe('SPARQL Result Table directive', function() {
     var $compile,
-        $window,
         scope,
-        sparqlManagerSvc,
-        element;
+        sparqlManagerSvc;
 
     beforeEach(function() {
         module('templates');
         module('sparqlResultTable');
         mockSparqlManager();
 
-        inject(function(_sparqlManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _sparqlManagerService_) {
+            $compile = _$compile_;
+            scope = _$rootScope_;
             sparqlManagerSvc = _sparqlManagerService_;
         });
 
-        inject(function(_$compile_, _$rootScope_, _$window_) {
-            $compile = _$compile_;
-            scope = _$rootScope_;
-            $window = _$window_;
-        });
-
-        sparqlManagerSvc.data = {
-            paginatedResults: {
-                results: [
-                    {
-                        var1: {type: 'a-type1', value: 'a-value1'},
-                        var2: {type: 'a-type2', value: 'a-value2'}
-                    },
-                    {
-                        var1: {type: 'b-type1', value: 'b-value1'},
-                        var2: {type: 'b-type2', value: 'b-value2'}
-                    }
-                ]
+        sparqlManagerSvc.data = [
+            {
+                var1: {type: 'a-type1', value: 'a-value1'},
+                var2: {type: 'a-type2', value: 'a-value2'}
             },
-            bindingNames: ['var1', 'var2']
-        }
-
-        sparqlManagerSvc.results = [
-
+            {
+                var1: {type: 'b-type1', value: 'b-value1'},
+                var2: {type: 'b-type2', value: 'b-value2'}
+            }
         ];
+        sparqlManagerSvc.bindings = ['var1', 'var2'];
+        this.element = $compile(angular.element('<sparql-result-table></sparql-result-table>'))(scope);
+        scope.$digest();
     });
 
     describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
-            scope.sparqlManagerService = sparqlManagerSvc;
-            element = $compile(angular.element('<sparql-result-table></sparql-result-table>'))(scope);
-            scope.$digest();
-        });
         it('for a div', function() {
-            expect(element.prop('tagName')).toBe('DIV');
+            expect(this.element.prop('tagName')).toBe('DIV');
         });
         it('based on block', function() {
-            var block = element.find('block');
-            expect(block.length).toBe(1);
+            expect(this.element.find('block').length).toBe(1);
         });
         it('based on block-content', function() {
-            var blockFooter = element.find('block-content');
-            expect(blockFooter.length).toBe(1);
+            expect(this.element.find('block-content').length).toBe(1);
         });
         it('based on block-footer', function() {
-            var blockFooter = element.find('block-footer');
-            expect(blockFooter.length).toBe(1);
+            expect(this.element.find('block-footer').length).toBe(1);
         });
         it('based on table', function() {
-            var table = element.querySelectorAll('.table');
-            expect(table.length).toBe(1);
+            expect(this.element.querySelectorAll('.table').length).toBe(1);
         });
         it('based on pagination directive', function() {
-            var pagination = element.find('pagination');
-            expect(pagination.length).toBe(1);
+            expect(this.element.find('pagination').length).toBe(1);
         });
         it('<th>s should match bindingNames length', function() {
-            var theadList = element.querySelectorAll('thead');
-            expect(element.html()).not.toContain('None');
+            var theadList = this.element.querySelectorAll('thead');
+            expect(this.element.html()).not.toContain('None');
             expect(theadList.length).toBe(1);
             var thead = theadList[0];
-            expect(thead.querySelectorAll('th').length).toBe(scope.sparqlManagerService.data.bindingNames.length);
+            expect(thead.querySelectorAll('th').length).toBe(sparqlManagerSvc.bindings.length);
         });
         it('<tr>s should match results length', function() {
-            var tbodyList = element.querySelectorAll('tbody');
-            expect(element.html()).not.toContain('None');
+            var tbodyList = this.element.querySelectorAll('tbody');
+            expect(this.element.html()).not.toContain('None');
             expect(tbodyList.length).toBe(1);
             var tbody = tbodyList[0];
-            expect(tbody.querySelectorAll('tr').length).toBe(scope.sparqlManagerService.data.paginatedResults.results.length);
+            expect(tbody.querySelectorAll('tr').length).toBe(sparqlManagerSvc.data.length);
         });
         it('shows error message if populated', function() {
-            var errorP = element.find('error-display');
-            expect(errorP.length).toBe(0);
+            expect(this.element.find('error-display').length).toBe(0);
 
-            scope.sparqlManagerService.errorMessage = 'Error message';
+            sparqlManagerSvc.errorMessage = 'Error message';
             scope.$digest();
-
-            errorP = element.find('error-display');
-            expect(errorP.length).toBe(1);
+            expect(this.element.find('error-display').length).toBe(1);
         });
         it('shows info message if populated', function() {
-            var errorP = element.find('info-message');
-            expect(errorP.length).toBe(0);
+            expect(this.element.find('info-message').length).toBe(0);
 
-            scope.sparqlManagerService.infoMessage = 'Info message';
+            sparqlManagerSvc.infoMessage = 'Info message';
             scope.$digest();
-
-            errorP = element.find('info-message');
-            expect(errorP.length).toBe(1);
+            expect(this.element.find('info-message').length).toBe(1);
         });
     });
 });

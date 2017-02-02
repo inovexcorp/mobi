@@ -24,6 +24,7 @@ package org.matonto.sparql.rest.impl;
  */
 
 import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
@@ -45,7 +46,6 @@ import org.mockito.MockitoAnnotations;
 import org.openrdf.repository.sail.SailRepository;
 import org.openrdf.sail.memory.MemoryStore;
 
-import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MultivaluedMap;
@@ -177,8 +177,11 @@ public class SparqlRestImplTest extends MatontoRestTestNg {
             assertTrue(link.getRel().equals("prev") || link.getRel().equals("next"));
         });
         try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
-            assertEquals(result.size(), 1);
+            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
+            assertTrue(result.containsKey("bindings"));
+            assertTrue(result.containsKey("data"));
+            JSONArray data = result.getJSONArray("data");
+            assertEquals(data.size(), 1);
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }

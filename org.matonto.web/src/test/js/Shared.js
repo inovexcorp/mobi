@@ -341,15 +341,16 @@ function mockUpdateRefs() {
 function mockSparqlManager() {
     module(function($provide) {
         $provide.service('sparqlManagerService', function($q) {
-            this.data = {
-                head: {
-                    vars: []
-                },
-                results: {
-                    bindings: []
-                }
-            }
-            this.prefixes = [];
+            this.data = undefined;
+            this.bindings = [];
+            this.limit = 100;
+            this.links = {
+                next: '',
+                prev: ''
+            };
+            this.currentPage = 0;
+            this.totalSize = 0;
+            this.bindings = [];
             this.queryString = '';
             this.errorMessage = '';
             this.infoMessage = '';

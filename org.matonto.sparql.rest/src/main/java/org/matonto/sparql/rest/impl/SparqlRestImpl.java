@@ -25,6 +25,7 @@ package org.matonto.sparql.rest.impl;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
+import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
@@ -167,24 +168,26 @@ public class SparqlRestImpl implements SparqlRest {
             if (offset > bindings.size()) {
                 throw ErrorUtils.sendError("Offset exceeds total size", Response.Status.BAD_REQUEST);
             }
-            List<JSONObject> results;
+            JSONArray results;
             int size;
             if ((offset + limit) > bindings.size()) {
-                results = bindings.subList(offset, bindings.size());
+                results = JSONArray.fromObject(bindings.subList(offset, bindings.size()));
                 size = bindings.size() - offset;
             } else {
-                results = bindings.subList(offset, offset + limit);
+                results = JSONArray.fromObject(bindings.subList(offset, offset + limit));
                 size = limit;
             }
+            JSONObject response = new JSONObject().element("data", results)
+                    .element("bindings", JSONArray.fromObject(queryResults.getBindingNames()));
+            Response.ResponseBuilder builder = Response.ok(response).header("X-Total-Count", bindings.size());
             Links links = LinksUtils.buildLinks(uriInfo, size, bindings.size(), limit, offset);
-            Response.ResponseBuilder response = Response.ok(results).header("X-Total-Count", bindings.size());
             if (links.getNext() != null) {
-                response = response.link(links.getBase() + links.getNext(), "next");
+                builder = builder.link(links.getBase() + links.getNext(), "next");
             }
             if (links.getPrev() != null) {
-                response = response.link(links.getBase() + links.getPrev(), "prev");
+                builder = builder.link(links.getBase() + links.getPrev(), "prev");
             }
-            return response.build();
+            return builder.build();
         } else {
             return Response.ok().header("X-Total-Count", 0).build();
         }

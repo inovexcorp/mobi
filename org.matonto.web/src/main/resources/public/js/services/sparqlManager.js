@@ -47,11 +47,12 @@
          */
         .service('sparqlManagerService', sparqlManagerService);
 
-        sparqlManagerService.$inject = ['$http'];
+        sparqlManagerService.$inject = ['$http', 'utilService'];
 
-        function sparqlManagerService($http) {
+        function sparqlManagerService($http, utilService) {
             var prefix = '/matontorest/sparql/page';
             var self = this;
+            var util = utilService;
 
             /**
              * @ngdoc property
@@ -79,12 +80,12 @@
              * @ngdoc property
              * @name data
              * @propertyOf sparqlManager.service:sparqlManagerService
-             * @type {Object}
+             * @type {Object[]}
              *
              * @description
              * The results from the running the {@link sparqlManager.service:sparqlManagerService#queryString}.
              */
-            self.data = {};
+            self.data = undefined;
             /**
              * @ngdoc property
              * @name errorMessage
@@ -116,6 +117,52 @@
              * displayed in the {@link sparqlResultTable.directive:sparqlResultTable SPARQL result table}.
              */
             self.currentPage = 0;
+            /**
+             * @ngdoc property
+             * @name links
+             * @propertyOf sparqlManager.service:sparqlManagerService
+             * @type {Object}
+             *
+             * @description
+             * The URLs for the next and previous page of results from running the
+             * {@link sparqlManager.service:sparqlManagerService#queryString query}.
+             */
+            self.links = {
+                next: '',
+                prev: ''
+            };
+            /**
+             * @ngdoc property
+             * @name limit
+             * @propertyOf sparqlManager.service:sparqlManagerService
+             * @type {number}
+             *
+             * @description
+             * The number of results to return at one time from {@link sparqlManager.service:sparqlManager#queryRdf querying}
+             * the repository.
+             */
+            self.limit = 100;
+            /**
+             * @ngdoc property
+             * @name totalSize
+             * @propertyOf sparqlManager.service:sparqlManagerService
+             * @type {number}
+             *
+             * @description
+             * The total number of results from running the {@link sparqlManager.service:sparqlManagerService#queryString query}
+             * with {@link sparqlManager.service:sparqlManager#queryRdf queryRdf}.
+             */
+            self.totalSize = 0;
+            /**
+             * @ngdoc property
+             * @name bindings
+             * @propertyOf sparqlManager.service:sparqlManagerService
+             * @type {string[]}
+             *
+             * @description
+             * The binding names in the result of running the {@link sparqlManager.service:sparqlManagerService#queryString query}.
+             */
+            self.bindings = [];
 
             /**
              * @ngdoc method
@@ -154,8 +201,8 @@
                 var config = {
                     params: {
                         query: prefixes + self.queryString,
-                        limit: 100,
-                        start: 0
+                        limit: self.limit,
+                        offset: self.currentPage * self.limit
                     }
                 }
                 $http.get(prefix, config)
@@ -181,7 +228,13 @@
             }
             function onSuccess(response) {
                 if (_.get(response, 'status') === 200) {
-                    self.data = response.data;
+                    self.bindings = response.data.bindings;
+                    self.data = response.data.data;
+                    var headers = response.headers();
+                    self.totalSize = _.get(headers, 'x-total-count', 0);
+                    var links = util.parseLinks(_.get(headers, 'link', ''));
+                    self.links.prev = _.get(links, 'prev', '');
+                    self.links.next = _.get(links, 'next', '');
                 } else {
                     self.infoMessage = getMessage(response, 'There was a problem getting the results.');
                 }

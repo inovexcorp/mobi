@@ -23,38 +23,38 @@
 describe('SPARQL Manager service', function() {
     var $httpBackend,
         sparqlManagerSvc,
-        url;
+        url,
+        utilSvc;
 
     beforeEach(function() {
         module('sparqlManager');
+        mockUtil();
 
-        inject(function(sparqlManagerService, _$httpBackend_) {
+        inject(function(sparqlManagerService, _$httpBackend_, _utilService_) {
             sparqlManagerSvc = sparqlManagerService;
             $httpBackend = _$httpBackend_;
+            utilSvc = _utilService_;
         });
 
-        url = '/matontorest/sparql/page?limit=100&query=&start=0';
+        url = '/matontorest/sparql/page?limit=100&query=&offset=0';
     });
 
     it('should query the repository', function(done) {
-        var response = {
-            paginatedResults: {
-                links: {},
-                limit: 100,
-                start: 0,
-                results: [],
-                totalSize: 0
-            },
-            bindingNames: []
+        var nextLink = 'http://example.com/next';
+        var prevLink = 'http://example.com/prev';
+        var headers = {
+            'X-Total-Count': '10'
         };
-
-        $httpBackend
-            .expectGET(url)
-            .respond(200, response);
+        utilSvc.parseLinks.and.returnValue({next: nextLink, prev: prevLink});
+        $httpBackend.expectGET(url).respond(200, {bindings: [], data: []}, headers);
         sparqlManagerSvc.queryRdf();
         $httpBackend.flush();
 
-        expect(sparqlManagerSvc.data).toEqual(response);
+        expect(sparqlManagerSvc.data).toEqual([]);
+        expect(sparqlManagerSvc.bindings).toEqual([]);
+        expect(sparqlManagerSvc.totalSize).toEqual(headers['X-Total-Count']);
+        expect(sparqlManagerSvc.links.next).toEqual(nextLink);
+        expect(sparqlManagerSvc.links.prev).toEqual(prevLink);
         done();
     });
     it('should set infoMessage', function(done) {

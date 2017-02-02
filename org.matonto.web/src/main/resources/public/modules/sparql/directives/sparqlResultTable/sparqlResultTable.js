@@ -27,9 +27,9 @@
         .module('sparqlResultTable', [])
         .directive('sparqlResultTable', sparqlResultTable);
 
-        sparqlResultTable.$inject = ['$window', '$timeout', 'sparqlManagerService'];
+        sparqlResultTable.$inject = ['sparqlManagerService'];
 
-        function sparqlResultTable($window, $timeout, sparqlManagerService) {
+        function sparqlResultTable(sparqlManagerService) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/sparql/directives/sparqlResultTable/sparqlResultTable.html',
@@ -43,10 +43,10 @@
                     dvm.getPage = function(direction) {
                         if (direction === 'next') {
                             dvm.sparql.currentPage += 1;
-                            sparqlManagerService.getResults(dvm.sparql.data.paginatedResults.links.base + dvm.sparql.data.paginatedResults.links.next);
+                            dvm.sparql.getResults(dvm.sparql.links.next);
                         } else {
                             dvm.sparql.currentPage -= 1;
-                            sparqlManagerService.getResults(dvm.sparql.data.paginatedResults.links.base + dvm.sparql.data.paginatedResults.links.prev);
+                            dvm.sparql.getResults(dvm.sparql.links.prev);
                         }
                     }
                 }

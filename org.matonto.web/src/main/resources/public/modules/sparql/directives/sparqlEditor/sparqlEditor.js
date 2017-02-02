@@ -24,7 +24,7 @@
     'use strict';
 
     angular
-        .module('sparqlEditor', ['sparqlManager', 'prefixes'])
+        .module('sparqlEditor', [])
         .directive('sparqlEditor', sparqlEditor);
 
         sparqlEditor.$inject = ['sparqlManagerService', 'prefixes'];
