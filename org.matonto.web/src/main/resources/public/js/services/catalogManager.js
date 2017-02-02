@@ -1213,6 +1213,10 @@
             self.getResource = function(commitId, branchId, recordId, catalogId, applyInProgressCommit, format = 'jsonld') {
                 var deferred = $q.defer(),
                     config = {
+                        headers: {
+                            'Content-Type': undefined,
+                            'Accept': 'text/plain'
+                        },
                         params: {
                             format,
                             applyInProgressCommit

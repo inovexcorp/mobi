@@ -60,7 +60,7 @@ describe('Serialization Select directive', function() {
         });
         it('based on options', function() {
             var options = element.find('option');
-            expect(options.length).toBe(5);
+            expect(options.length).toBe(4);
         });
     });
 });
