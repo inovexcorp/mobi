@@ -355,7 +355,8 @@ function mockSparqlManager() {
             this.errorMessage = '';
             this.infoMessage = '';
             this.reset = jasmine.createSpy('reset');
-            this.queryRdf = jasmine.createSpy('queryRdf').and.returnValue($q.when({}));
+            this.queryRdf = jasmine.createSpy('queryRdf');
+            this.downloadResults = jasmine.createSpy('downloadResults');
         });
     });
 }

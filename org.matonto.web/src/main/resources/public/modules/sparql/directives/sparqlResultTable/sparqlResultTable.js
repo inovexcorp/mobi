@@ -24,7 +24,30 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name sparqlResultTable
+         *
+         * @description
+         * The `sparqlResultTable` module only provides the `sparqlResultTable` directive which creates
+         * a tabular view of the SPARQL query {@link sparqlManager.service:sparqlManagerService#data results}.
+         */
         .module('sparqlResultTable', [])
+        /**
+         * @ngdoc directive
+         * @name sparqlResultTable.directive:sparqlResultTable
+         * @scope
+         * @restrict E
+         * @requires sparqlManager.service:sparqlManagerService
+         *
+         * @description
+         * `sparqlResultTable` is a directive that creates a {@link block.directive:block block} with a table of
+         * the {@link sparqlManager.service:sparqlManagerService#data results} of the latest SPARQL query,
+         * {@link pagination.directive:pagination pagination} buttons for the results,
+         * {@link pagingDetails.directive:pagingDetails details} about the current page of results, and a button
+         * to {@link downloadQueryOverlay.directive:downloadQueryOverlay download} the full results. The directive
+         * is replaced by the contents of its template.
+         */
         .directive('sparqlResultTable', sparqlResultTable);
 
         sparqlResultTable.$inject = ['sparqlManagerService'];

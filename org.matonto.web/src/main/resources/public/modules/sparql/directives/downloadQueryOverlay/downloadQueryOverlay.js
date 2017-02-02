@@ -26,53 +26,51 @@
     angular
         /**
          * @ngdoc overview
-         * @name sparqlEditor
+         * @name downloadQueryOverlay
          *
          * @description
-         * The `sparqlEditor` module only provides the `sparqlEditor` directive which creates a form
-         * to input a SPARQL query, its prefixes, and submit it.
+         * The `downloadQueryOverlay` module only provides the `downloadQueryOverlay` directive which creates
+         * an overlay to download the results of a SPARQL query.
          */
-        .module('sparqlEditor', [])
+        .module('downloadQueryOverlay', [])
         /**
          * @ngdoc directive
-         * @name sparqlEditor.directive:sparqlEditor
+         * @name downloadQueryOverlay.directive:downloadQueryOverlay
          * @scope
          * @restrict E
          * @requires sparqlManager.service:sparqlManagerService
-         * @requires prefixes.service:prefixes
          *
          * @description
-         * `sparqlEditor` is a directive that creates a {@link block.directive:block block} with a form for creating
-         * a {@link sparqlManager.service:sparqlManagerService#queryString SPARQL query} and submitting it. The
-         * directive is replaced by the contents of its template.
+         * `downloadQueryOverlay` is a directive that creates an overlay with a form to download the results
+         * of a {@link sparqlManager.service:sparqlManagerService#queryString SPARQL query}. The form includes
+         * a selector for the file type and the file name. The directive is replaced by the contents of its
+         * template.
          */
-        .directive('sparqlEditor', sparqlEditor);
+        .directive('downloadQueryOverlay', downloadQueryOverlay);
 
-        sparqlEditor.$inject = ['sparqlManagerService', 'prefixes'];
+        downloadQueryOverlay.$inject = ['sparqlManagerService'];
 
-        function sparqlEditor(sparqlManagerService, prefixes) {
+        function downloadQueryOverlay(sparqlManagerService) {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/sparql/directives/sparqlEditor/sparqlEditor.html',
                 replace: true,
                 scope: {},
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
                     dvm.sparql = sparqlManagerService;
+                    dvm.fileName = 'results';
+                    dvm.fileType = 'csv';
 
-                    dvm.prefixList = _.map(prefixes, function(value, key) {
-                        return key + ': <' + value + '>';
-                    });
-                    dvm.editorOptions = {
-                        mode: 'application/sparql-query',
-                        indentUnit: 4,
-                        tabMode: 'indent',
-                        lineNumbers: true,
-                        lineWrapping: true,
-                        matchBrackets: true
+                    dvm.download = function() {
+                        dvm.sparql.downloadResults(dvm.fileType, dvm.fileName);
+                        dvm.sparql.displayDownloadOverlay = false;
                     }
-                }
+                    dvm.cancel = function() {
+                        dvm.sparql.displayDownloadOverlay = false;
+                    }
+                },
+                templateUrl: 'modules/sparql/directives/downloadQueryOverlay/downloadQueryOverlay.html'
             }
         }
 })();

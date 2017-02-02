@@ -70,6 +70,9 @@ describe('SPARQL Result Table directive', function() {
         it('based on pagination directive', function() {
             expect(this.element.find('pagination').length).toBe(1);
         });
+        it('with a download button', function() {
+            expect(this.element.querySelectorAll('button.download-button').length).toBe(1);
+        });
         it('<th>s should match bindingNames length', function() {
             var theadList = this.element.querySelectorAll('thead');
             expect(this.element.html()).not.toContain('None');

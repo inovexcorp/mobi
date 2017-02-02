@@ -47,10 +47,10 @@
          */
         .service('sparqlManagerService', sparqlManagerService);
 
-        sparqlManagerService.$inject = ['$http', 'utilService'];
+        sparqlManagerService.$inject = ['$http', '$window', '$httpParamSerializer', 'utilService'];
 
-        function sparqlManagerService($http, utilService) {
-            var prefix = '/matontorest/sparql/page';
+        function sparqlManagerService($http, $window, $httpParamSerializer, utilService) {
+            var prefix = '/matontorest/sparql';
             var self = this;
             var util = utilService;
 
@@ -182,6 +182,31 @@
             }
             /**
              * @ngdoc method
+             * @name downloadResults
+             * @methodOf sparqlManager.service:sparqlManagerService
+             *
+             * @description
+             * Calls the GET /matontorest/sparql endpoint using the `window.location` variable which will start
+             * a download of the results of running the current
+             * {@link sparqlManager.service:sparqlManagerService#queryString query} and
+             * {@link sparqlManager.service:sparqlManagerService#prefixes prefixes} in the specified file type
+             * with an optional file name.
+             *
+             * @param {string} fileType The type of file to download based on file extension
+             * @param {string=''} fileName The optional name of the downloaded file
+             */
+            self.downloadResults = function(fileType, fileName = '') {
+                var paramsObj = {
+                    query: getPrefixString() + this.queryString,
+                    fileType
+                };
+                if (fileName) {
+                    paramsObj.fileName = fileName;
+                }
+                $window.location = prefix + '?' + $httpParamSerializer(paramsObj);
+            }
+            /**
+             * @ngdoc method
              * @name queryRdf
              * @methodOf sparqlManager.service:sparqlManagerService
              *
@@ -193,11 +218,11 @@
              */
             self.queryRdf = function() {
                 self.currentPage = 0;
-                self.data = {};
+                self.data = undefined;
                 self.errorMessage = '';
                 self.infoMessage = '';
 
-                var prefixes = self.prefixes.length ? 'PREFIX ' + _.join(self.prefixes, '\nPREFIX ') + '\n\n' : '';
+                var prefixes = getPrefixString();
                 var config = {
                     params: {
                         query: prefixes + self.queryString,
@@ -205,7 +230,7 @@
                         offset: self.currentPage * self.limit
                     }
                 }
-                $http.get(prefix, config)
+                $http.get(prefix + '/page', config)
                     .then(onSuccess, onError);
             }
             /**
@@ -241,6 +266,9 @@
             }
             function onError(response) {
                 self.errorMessage = getMessage(response, 'A server error has occurred. Please try again later.');
+            }
+            function getPrefixString() {
+                return self.prefixes.length ? 'PREFIX ' + _.join(self.prefixes, '\nPREFIX ') + '\n\n' : '';
             }
         }
 })();
