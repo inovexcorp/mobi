@@ -72,8 +72,8 @@
                                 '@id': angular.copy(prefixes.skos).slice(0, -1)
                             }];
                         }
-                        dvm.om.createOntology(dvm.ontology, dvm.title, dvm.description, dvm.keywords, dvm.type)
-                            .then(response =>
+                        dvm.om.createOntology(dvm.ontology, dvm.title, dvm.description,
+                            _.join(_.map(dvm.keywords, _.trim), ','), dvm.type).then(response =>
                                 sm.createOntologyState(response.recordId, response.branchId, response.commitId)
                                     .then(() => {
                                         dvm.os.addState(response.recordId, response.entityIRI, dvm.type);
