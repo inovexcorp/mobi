@@ -37,7 +37,6 @@ import org.matonto.rdf.orm.impl.ThingFactory
 import org.matonto.repository.api.Repository
 import org.matonto.repository.api.RepositoryConnection
 import org.matonto.repository.config.RepositoryConfig
-import org.matonto.vocabularies.xsd.XSD
 import org.openrdf.rio.RDFFormat
 import org.openrdf.rio.Rio
 import spock.lang.Specification
@@ -112,6 +111,8 @@ class SimpleMappingManagerSpec extends Specification {
 
         mapping.getModel() >> model
 
+        mappingId.getMappingIdentifier() >> mappingIRI
+
         transformer.matontoModel(_) >> { args -> Values.matontoModel(args[0])}
     }
 
@@ -141,12 +142,47 @@ class SimpleMappingManagerSpec extends Specification {
         manager.setRepository(repository)
 
         when:
-        def result = manager.storeMapping(mappingWrapper)
+        manager.storeMapping(mappingWrapper)
 
         then:
         repository.getConnection() >> connection
         repository.getConfig() >> Mock(RepositoryConfig.class)
-        result
+        1 * connection.add(model, mappingIRI)
+    }
+
+    def "updateMapping throws an exception when mapping does not exist"() {
+        setup:
+        def manager = [
+                mappingExists: { o -> return false }
+        ] as SimpleMappingManager
+        manager.setValueFactory(vf)
+        manager.setModelFactory(mf)
+        manager.setRepository(repository)
+
+        when:
+        manager.updateMapping(mappingIRI, mappingWrapper)
+
+        then:
+        thrown(MatOntoException)
+    }
+
+    def "updateMapping updates a Mapping if mapping exists"() {
+        setup:
+        def manager = [
+                mappingExists: { o -> return true }
+        ] as SimpleMappingManager
+        manager.setValueFactory(vf)
+        manager.setModelFactory(mf)
+        manager.setRepository(repository)
+
+        when:
+        manager.updateMapping(mappingIRI, mappingWrapper)
+
+        then:
+        repository.getConnection() >> connection
+        repository.getConfig() >> Mock(RepositoryConfig.class)
+        1 * connection.clear(mappingIRI)
+        1 * connection.add(model, mappingIRI)
     }
 
     def "Create a Mapping using a MappingId with an id"() {

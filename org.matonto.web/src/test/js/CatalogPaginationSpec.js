@@ -26,7 +26,6 @@ describe('Catalog Pagination directive', function() {
         catalogManagerSvc,
         catalogStateSvc,
         utilSvc,
-        $timeout,
         $q,
         controller;
 
@@ -37,13 +36,12 @@ describe('Catalog Pagination directive', function() {
         mockCatalogState();
         mockUtil();
 
-        inject(function( _$compile_, _$rootScope_, _catalogManagerService_, _catalogStateService_, _utilService_, _$timeout_, _$q_) {
+        inject(function( _$compile_, _$rootScope_, _catalogManagerService_, _catalogStateService_, _utilService_, _$q_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             catalogManagerSvc = _catalogManagerService_;
             catalogStateSvc = _catalogStateService_;
             utilSvc = _utilService_;
-            $timeout = _$timeout_;
             $q = _$q_;
         });
 
@@ -60,7 +58,7 @@ describe('Catalog Pagination directive', function() {
                 catalogManagerSvc.getResultsPage.and.returnValue($q.reject('Error message'));
                 var currentPage = catalogStateSvc.currentPage;
                 controller.getPage('next');
-                $timeout.flush();
+                scope.$apply();
                 expect(catalogManagerSvc.getResultsPage).toHaveBeenCalledWith(catalogStateSvc.links.next);
                 expect(catalogStateSvc.currentPage).toBe(currentPage);
                 expect(catalogStateSvc.setPagination).not.toHaveBeenCalled();
@@ -68,7 +66,7 @@ describe('Catalog Pagination directive', function() {
 
                 currentPage = catalogStateSvc.currentPage;
                 controller.getPage('prev');
-                $timeout.flush();
+                scope.$apply();
                 expect(catalogManagerSvc.getResultsPage).toHaveBeenCalledWith(catalogStateSvc.links.prev);
                 expect(catalogStateSvc.currentPage).toBe(currentPage);
                 expect(catalogStateSvc.setPagination).not.toHaveBeenCalled();
@@ -77,7 +75,7 @@ describe('Catalog Pagination directive', function() {
             it('successfully', function() {
                 var currentPage = catalogStateSvc.currentPage;
                 controller.getPage('next');
-                $timeout.flush();
+                scope.$apply();
                 expect(catalogManagerSvc.getResultsPage).toHaveBeenCalledWith(catalogStateSvc.links.next);
                 expect(catalogStateSvc.currentPage).toBe(currentPage + 1);
                 expect(catalogStateSvc.setPagination).toHaveBeenCalled();
@@ -85,7 +83,7 @@ describe('Catalog Pagination directive', function() {
 
                 currentPage = catalogStateSvc.currentPage;
                 controller.getPage('prev');
-                $timeout.flush();
+                scope.$apply();
                 expect(catalogManagerSvc.getResultsPage).toHaveBeenCalledWith(catalogStateSvc.links.prev);
                 expect(catalogStateSvc.currentPage).toBe(currentPage - 1);
                 expect(catalogStateSvc.setPagination).toHaveBeenCalled();

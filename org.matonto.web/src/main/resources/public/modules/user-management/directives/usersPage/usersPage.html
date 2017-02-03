@@ -91,7 +91,7 @@
                                 <span>Permissions</span>
                             </block-header>
                             <block-content class="padding">
-                                <user-permissions-input ng-if="dvm.state.selectedUser" roles="dvm.roles" is-disabled-when="!dvm.um.isAdmin(dvm.lm.currentUser) || dvm.lm.currentUser === dvm.state.selectedUser.username" on-change="dvm.changeRoles()"></user-permissions-input>
+                                <permissions-input ng-if="dvm.state.selectedUser" roles="dvm.roles" is-disabled-when="!dvm.um.isAdmin(dvm.lm.currentUser) || dvm.lm.currentUser === dvm.state.selectedUser.username" on-change="dvm.changeRoles()"></permissions-input>
                             </block-content>
                         </block>
                     </div>

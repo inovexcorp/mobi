@@ -78,7 +78,7 @@
                     dvm.addProperty = function() {
                         var value = getValue();
                         dvm.pm.add(dvm.sm.selected, dvm.ro.getItemIri(dvm.sm.ontologyProperty), value);
-                        dvm.om.addToAdditions(dvm.sm.listItem.ontologyId, createJson(value));
+                        dvm.om.addToAdditions(dvm.sm.listItem.recordId, createJson(value));
                         dvm.sm.showOntologyPropertyOverlay = false;
                     }
 
@@ -87,9 +87,9 @@
                         var value = getValue();
                         var oldValue = _.get(dvm.sm.selected, "['" + property + "']['" + dvm.sm.ontologyPropertyIndex
                             + "']['@value']");
-                        dvm.om.addToDeletions(dvm.sm.listItem.ontologyId, createJson(oldValue));
+                        dvm.om.addToDeletions(dvm.sm.listItem.recordId, createJson(oldValue));
                         dvm.pm.edit(dvm.sm.selected, property, value, dvm.sm.ontologyPropertyIndex);
-                        dvm.om.addToAdditions(dvm.sm.listItem.ontologyId, createJson(value));
+                        dvm.om.addToAdditions(dvm.sm.listItem.recordId, createJson(value));
                         dvm.sm.showOntologyPropertyOverlay = false;
                     }
                 }

@@ -95,7 +95,7 @@
              */
             self.initialize = function() {
                 $http.get(prefix)
-                    .then(response => self.mappingIds = _.get(response, 'data', []), response => console.log(_.get(response, 'statusText', 'Something went wrong. Could not load mapping ids')));
+                    .then(response => self.mappingIds = response.data, response => console.log(_.get(response, 'statusText', 'Something went wrong. Could not load mapping ids')));
             }
 
             // REST endpoint calls
@@ -127,10 +127,9 @@
                     .then(response => {
                         self.mappingIds = _.union(self.mappingIds, [response.data]);
                         deferred.resolve(response.data);
-                    }, response => deferred.reject(_.get(response, 'statusText', '')));
+                    }, error => onError(error, deferred));
                 return deferred.promise;
             }
-
             /**
              * @ngdoc method
              * @name getMapping
@@ -140,13 +139,13 @@
              * Calls the GET /matontorest/mappings/{mappingName} endpoint which returns the JSONL-LD
              * of a saved mapping. Returns a promise with "@graph" of the mapping.
              *
-             * @param {string} mappingName The IRI for the mapping with the user-defined local name
+             * @param {string} mappingId The IRI for the mapping
              * @returns {Promise} A promise with the JSON-LD of the uploaded mapping
              */
             self.getMapping = function(mappingId) {
                 var deferred = $q.defer();
                 $http.get(prefix + '/' + encodeURIComponent(mappingId))
-                    .then(response => deferred.resolve(_.get(response.data, '@graph', [])), response => deferred.reject(_.get(response, 'statusText', '')));
+                    .then(response => deferred.resolve(_.get(response.data, '@graph', [])), error => onError(error, deferred));
                 return deferred.promise;
             }
             /**
@@ -158,11 +157,30 @@
              * Calls the GET /matontorest/mappings/{mappingName} endpoint using the `window.location` function
              * which will start a download of the JSON-LD of a saved mapping.
              *
-             * @param {string} mappingName The IRI for the mapping with the user-defined local name
+             * @param {string} mappingId The IRI for the mapping
              * @param {string} format the RDF serialization to retrieve the mapping in
              */
             self.downloadMapping = function(mappingId, format) {
                 $window.location = prefix + '/' + encodeURIComponent(mappingId) + '?format=' + format;
+            }
+            /**
+             * @ngdoc method
+             * @name updateMapping
+             * @methodOf mappingManager.service:mappingManagerService
+             *
+             * @description
+             * Calls the PUT /matontorest/mappings/{mappingIRI} endpoint which replaces the saved mapping with
+             * the passed IRI with the passed JSON-LD.
+             *
+             * @param {string} mappingId The IRI of the mapping to replace
+             * @param {Object[]} newMapping The JSON-LD to replace the saved mapping with
+             * @return {Promise} A promise that resolves if the update was successful; rejects otherwise
+             */
+            self.updateMapping = function(mappingId, newMapping) {
+                var deferred = $q.defer();
+                $http.put(prefix + '/' + encodeURIComponent(mappingId), angular.toJson(newMapping))
+                    .then(response => deferred.resolve(), error => onError(error, deferred));
+                return deferred.promise;
             }
             /**
              * @ngdoc method
@@ -173,8 +191,8 @@
              * Calls the DELETE /matontorest/mappings/{mappingName} endpoint which deleted the specified
              * mapping from the MatOnto repository. Returns a promise with the success of the deletion.
              *
-             * @param {string} mappingName The IRI for the mapping with the user-defined local name
-             * @returns {Promise} A promise with a boolean indication the success of the deletion.
+             * @param {string} mappingId The IRI for the mapping
+             * @returns {Promise} A promise resolves if the deletion succeeded; rejects otherwise
              */
             self.deleteMapping = function(mappingId) {
                 var deferred = $q.defer();
@@ -182,7 +200,7 @@
                     .then(response => {
                         _.pull(self.mappingIds, mappingId);
                         deferred.resolve();
-                    }, response => deferred.reject(_.get(response, 'statusText', '')));
+                    }, error => onError(error, deferred));
                 return deferred.promise;
             }
 
@@ -977,6 +995,9 @@
             }
             function validateOntologyInfo(obj) {
                 return _.intersection(_.keys(obj), ['ontologyId', 'recordId', 'branchId', 'commitId']).length > 0;
+            }
+            function onError(error, deferred) {
+                deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.'));
             }
         }
 })();

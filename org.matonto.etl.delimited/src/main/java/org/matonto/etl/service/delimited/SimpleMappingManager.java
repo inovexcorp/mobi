@@ -196,7 +196,7 @@ public class SimpleMappingManager implements MappingManager {
     }
 
     @Override
-    public boolean storeMapping(@Nonnull MappingWrapper mappingWrapper) throws MatOntoException {
+    public void storeMapping(@Nonnull MappingWrapper mappingWrapper) throws MatOntoException {
         Resource mappingIdentifier = mappingWrapper.getId().getMappingIdentifier();
 
         if (mappingExists(mappingIdentifier)) {
@@ -210,8 +210,6 @@ public class SimpleMappingManager implements MappingManager {
         } catch (RepositoryException e) {
             throw new MatOntoException("Error in repository connection", e);
         }
-
-        return true;
     }
 
     @Override
@@ -230,23 +228,37 @@ public class SimpleMappingManager implements MappingManager {
     }
 
     @Override
-    public boolean deleteMapping(@Nonnull Resource mappingIRI) {
+    public void updateMapping(@Nonnull Resource mappingIRI, @Nonnull MappingWrapper newMapping)
+            throws MatOntoException {
+        if (!mappingExists(mappingIRI)) {
+            throw new MatOntoException("Mapping with mapping ID does not exist");
+        }
+        Resource mappingIdentifier = newMapping.getId().getMappingIdentifier();
+        if (mappingIRI.equals(mappingIdentifier)) {
+            try (RepositoryConnection conn = repository.getConnection()) {
+                conn.clear(mappingIRI);
+                conn.add(newMapping.getModel(), mappingIRI);
+                newMapping.getClassMappings().forEach(cm -> conn.add(cm.getModel(), mappingIRI));
+            } catch (RepositoryException e) {
+                throw new MatOntoException("Error in repository connection", e);
+            }
+        } else {
+            throw new MatOntoException("Mapping could not be updated");
+        }
+    }
+
+    @Override
+    public void deleteMapping(@Nonnull Resource mappingIRI) throws MatOntoException {
         if (!mappingExists(mappingIRI)) {
             throw new MatOntoException("Mapping with mapping ID does not exist");
         }
 
-        RepositoryConnection conn = null;
-        try {
-            conn = repository.getConnection();
+        try (RepositoryConnection conn = repository.getConnection()) {
             conn.clear(mappingIRI);
             conn.remove(registrySubject, registryPredicate, mappingIRI, registryContext);
         } catch (RepositoryException e) {
             throw new MatOntoException("Error in repository connection", e);
-        } finally {
-            closeConnection(conn);
         }
-
-        return true;
     }
 
     @Override
@@ -295,7 +307,6 @@ public class SimpleMappingManager implements MappingManager {
 
     private MappingWrapper getWrapperFromModel(Model model) {
         Collection<Mapping> mappings = mappingFactory.getAllExisting(model);
-
         if (mappings.size() != 1) {
             throw new MatOntoException("Input source must contain exactly one Mapping resource.");
         }
@@ -306,7 +317,6 @@ public class SimpleMappingManager implements MappingManager {
                 .mappingIRI(factory.createIRI(mapping.getResource().stringValue()));
         versionIriOpt.ifPresent(builder::versionIRI);
         Collection<ClassMapping> classMappings = classMappingFactory.getAllExisting(model);
-
         return new SimpleMappingWrapper(builder.build(), mapping, classMappings, model);
     }
 }

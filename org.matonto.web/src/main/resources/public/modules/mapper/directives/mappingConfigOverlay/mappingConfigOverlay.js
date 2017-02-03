@@ -264,6 +264,7 @@
                                 dvm.state.selectedClassMappingId = _.get(selectedBaseClassMapping, "[0]['@id']");
                             }
                             dvm.state.setAvailableProps(dvm.state.selectedClassMappingId);
+                            dvm.state.changedMapping = true;
                         }
 
                         dvm.state.displayMappingConfigOverlay = false;

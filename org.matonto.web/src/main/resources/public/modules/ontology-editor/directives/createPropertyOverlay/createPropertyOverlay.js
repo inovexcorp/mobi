@@ -107,7 +107,7 @@
                             _.get(listItem, 'dataPropertyHierarchy').push({'entityIRI': dvm.property['@id']});
                         }
                         _.set(_.get(listItem, 'index'), dvm.property['@id'], dvm.sm.listItem.ontology.length - 1);
-                        dvm.om.addToAdditions(dvm.sm.listItem.ontologyId, dvm.property);
+                        dvm.om.addToAdditions(dvm.sm.listItem.recordId, dvm.property);
                         // select the new class
                         dvm.sm.selectItem(_.get(dvm.property, '@id'));
                         // hide the overlay

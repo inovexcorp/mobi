@@ -360,6 +360,17 @@
              * {@link mappingList.directive:mappingList mapping list}.
              */
             self.mappingSearchString = '';
+            /**
+             * @ngdoc property
+             * @name changedMapping
+             * @propertyOf mapperState.service:mapperStateService
+             * @type {boolean}
+             *
+             * @description
+             * `changedMapping` holds a boolean indicating whether or not the opened mapping has been changed.
+             * If the current mapping is a new mapping, this variable should be true.
+             */
+            self.changedMapping = false;
 
             /**
              * @ngdoc method
@@ -380,6 +391,7 @@
                 self.availablePropsByClass = {};
                 self.mapping = undefined;
                 self.sourceOntologies = [];
+                self.changedMapping = false;
             }
             /**
              * @ngdoc method

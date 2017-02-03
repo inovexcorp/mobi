@@ -863,7 +863,7 @@
              * @param {number} paginatedConfig.pageIndex The index of the page of results to retrieve
              * @param {number} paginatedConfig.limit The number of results per page
              * @param {Object} paginatedConfig.sortOption A sort option object from the `sortOptions` array
-             * @param {Object} paginatedConfig.applyUserFiler Whether or not the list should be filtered based
+             * @param {Object} paginatedConfig.applyUserFilter Whether or not the list should be filtered based
              * on the currently logged in User
              * @return {Promise} A promise that resolves to the paginated response or is rejected
              * with a error message
@@ -1185,8 +1185,8 @@
                             'Accept': 'text/plain'
                         }
                     };
-                fd.append('additions', _.has(differenceObj, 'additions') ? differenceObj.additions : []);
-                fd.append('deletions', _.has(differenceObj, 'deletions') ? differenceObj.deletions : []);
+                fd.append('additions', _.has(differenceObj, 'additions') ? JSON.stringify(differenceObj.additions) : []);
+                fd.append('deletions', _.has(differenceObj, 'deletions') ? JSON.stringify(differenceObj.deletions) : []);
                 $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(sourceId) + '/conflicts/resolution', fd, config)
                     .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText));
                 return deferred.promise;
@@ -1213,6 +1213,10 @@
             self.getResource = function(commitId, branchId, recordId, catalogId, applyInProgressCommit, format = 'jsonld') {
                 var deferred = $q.defer(),
                     config = {
+                        headers: {
+                            'Content-Type': undefined,
+                            'Accept': 'text/plain'
+                        },
                         params: {
                             format,
                             applyInProgressCommit
@@ -1498,6 +1502,9 @@
                     if (_.has(paginatedConfig, 'pageIndex')) {
                         params.offset = paginatedConfig.pageIndex * paginatedConfig.limit;
                     }
+                }
+                if (_.has(paginatedConfig, 'applyUserFilter')) {
+                    params.applyUserFilter = paginatedConfig.applyUserFilter;
                 }
                 return params;
             }

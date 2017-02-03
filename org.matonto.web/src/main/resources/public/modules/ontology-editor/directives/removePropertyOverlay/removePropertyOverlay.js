@@ -57,7 +57,7 @@
                             '@id': dvm.sm.selected['@id'],
                             [dvm.key]: [angular.copy(dvm.sm.selected[dvm.key][dvm.index])]
                         }
-                        om.addToDeletions(dvm.sm.listItem.ontologyId, json);
+                        om.addToDeletions(dvm.sm.listItem.recordId, json);
                         dvm.pm.remove(dvm.sm.selected, dvm.key, dvm.index);
                         dvm.overlayFlag = false;
                     }

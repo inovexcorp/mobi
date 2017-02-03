@@ -65,17 +65,17 @@
                                 dvm.sm.selected[property] = [value];
                             }
                         }
-                        dvm.om.addToAdditions(dvm.sm.listItem.ontologyId, createJson(property, value));
+                        dvm.om.addToAdditions(dvm.sm.listItem.recordId, createJson(property, value));
                         dvm.sm.showObjectPropertyOverlay = false;
                     }
 
                     dvm.editProperty = function(select, value) {
                         var property = dvm.ro.getItemIri(select);
                         if (property) {
-                            dvm.om.addToDeletions(dvm.sm.listItem.ontologyId, createJson(property,
+                            dvm.om.addToDeletions(dvm.sm.listItem.recordId, createJson(property,
                                 dvm.sm.selected[property][dvm.sm.propertyIndex]));
                             dvm.sm.selected[property][dvm.sm.propertyIndex] = value;
-                            dvm.om.addToAdditions(dvm.sm.listItem.ontologyId, createJson(property, value));
+                            dvm.om.addToAdditions(dvm.sm.listItem.recordId, createJson(property, value));
                         }
                         dvm.sm.showObjectPropertyOverlay = false;
                     }

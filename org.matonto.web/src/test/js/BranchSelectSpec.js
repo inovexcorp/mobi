@@ -27,11 +27,9 @@ describe('Branch Select directive', function() {
     var branch = {'@id': branchId};
     var commitId = 'commitId';
     var headCommit = {
-        commit: [{
-            '@graph': [{
-                '@id': commitId
-            }]
-        }]
+        commit: {
+            '@id': commitId
+        }
     }
 
     beforeEach(function() {
@@ -150,7 +148,8 @@ describe('Branch Select directive', function() {
                 controller.delete();
                 deferred.resolve();
                 scope.$apply();
-                expect(ontologyStateSvc.listItem.branches.length).toBe(0);
+                expect(ontologyManagerSvc.removeBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
+                    controller.branch['@id']);
                 expect(controller.showDeleteConfirmation).toBe(false);
             });
             it('when rejected', function() {

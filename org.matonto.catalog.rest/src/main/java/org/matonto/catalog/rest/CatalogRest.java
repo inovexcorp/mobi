@@ -105,6 +105,23 @@ public interface CatalogRest {
                         @QueryParam("searchText") String searchText);
 
     /**
+     * Returns a Record with the provided ID.
+     *
+     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param recordId The String representing the Record ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                 with "_:".
+     * @return A Record with the provided ID.
+     */
+    @GET
+    @Path("{catalogId}/records/{recordId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Retrieves the Catalog record by its ID.")
+    Response getRecord(@PathParam("catalogId") String catalogId,
+                       @PathParam("recordId") String recordId);
+
+    /**
      * Creates a new Record in the repository using the passed form data. Determines the type of the new Record
      * based on the `type` field. Requires the `title` and `identifier` fields to be set. Returns a Response with the
      * IRI of the new Record.
@@ -132,23 +149,6 @@ public interface CatalogRest {
                           @FormDataParam("identifier") String identifier,
                           @FormDataParam("description") String description,
                           @FormDataParam("keywords") String keywords);
-
-    /**
-     * Returns a Record with the provided ID.
-     *
-     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                  with "_:".
-     * @param recordId The String representing the Record ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                 with "_:".
-     * @return A Record with the provided ID.
-     */
-    @GET
-    @Path("{catalogId}/records/{recordId}")
-    @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed("user")
-    @ApiOperation("Retrieves the Catalog record by its ID.")
-    Response getRecord(@PathParam("catalogId") String catalogId,
-                       @PathParam("recordId") String recordId);
 
     /**
      * Deletes a Record from the repository. Returns a Response which indicates whether or not the requested Record was
@@ -237,7 +237,8 @@ public interface CatalogRest {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
     @ApiOperation("Creates a new Distribution for the provided UnversionedRecord.")
-    Response createUnversionedDistribution(@PathParam("catalogId") String catalogId,
+    Response createUnversionedDistribution(@Context ContainerRequestContext context,
+                                           @PathParam("catalogId") String catalogId,
                                            @PathParam("recordId") String recordId,
                                            @FormDataParam("title") String title,
                                            @FormDataParam("description") String description,
@@ -356,7 +357,8 @@ public interface CatalogRest {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
     @ApiOperation("Creates a Version for the identified VersionedRecord.")
-    Response createVersion(@PathParam("catalogId") String catalogId,
+    Response createVersion(@Context ContainerRequestContext context,
+                           @PathParam("catalogId") String catalogId,
                            @PathParam("recordId") String recordId,
                            @FormDataParam("type") String typeIRI,
                            @FormDataParam("title") String title,
@@ -499,7 +501,8 @@ public interface CatalogRest {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
     @ApiOperation("Creates a Distribution for the identified Version.")
-    Response createVersionedDistribution(@PathParam("catalogId") String catalogId,
+    Response createVersionedDistribution(@Context ContainerRequestContext context,
+                                         @PathParam("catalogId") String catalogId,
                                          @PathParam("recordId") String recordId,
                                          @PathParam("versionId") String versionId,
                                          @FormDataParam("title") String title,
@@ -654,7 +657,8 @@ public interface CatalogRest {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
     @ApiOperation("Creates a branch for a specific VersionedRDFRecord.")
-    Response createBranch(@PathParam("catalogId") String catalogId,
+    Response createBranch(@Context ContainerRequestContext context,
+                          @PathParam("catalogId") String catalogId,
                           @PathParam("recordId") String recordId,
                           @FormDataParam("type") String typeIRI,
                           @FormDataParam("title") String title,

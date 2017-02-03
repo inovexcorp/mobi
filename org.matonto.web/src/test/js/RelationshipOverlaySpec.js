@@ -83,7 +83,7 @@ describe('Relationship Overlay directive', function() {
     describe('controller methods', function() {
         it('addRelationship should call the appropriate manager functions', function() {
             controller.addRelationship();
-            expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
+            expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                 jasmine.any(Object));
             expect(ontologyStateSvc.showRelationshipOverlay).toBe(false);
         });

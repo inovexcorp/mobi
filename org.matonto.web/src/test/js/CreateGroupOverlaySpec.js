@@ -27,7 +27,6 @@ describe('Create Group Overlay directive', function() {
         userStateSvc,
         loginManagerSvc,
         $q,
-        $timeout,
         controller;
 
     beforeEach(function() {
@@ -37,14 +36,13 @@ describe('Create Group Overlay directive', function() {
         mockLoginManager();
         mockUserState();
 
-        inject(function(_userManagerService_, _userStateService_, _loginManagerService_, _$timeout_, _$q_, _$compile_, _$rootScope_) {
+        inject(function(_$compile_, _$rootScope_, _userManagerService_, _userStateService_, _loginManagerService_, _$q_) {
+            $compile = _$compile_;
+            scope = _$rootScope_;
             userManagerSvc = _userManagerService_;
             userStateSvc = _userStateService_;
             loginManagerSvc = _loginManagerService_;
             $q = _$q_;
-            $timeout = _$timeout_;
-            $compile = _$compile_;
-            scope = _$rootScope_;
         });
     });
 
@@ -76,32 +74,28 @@ describe('Create Group Overlay directive', function() {
                 userStateSvc.displayCreateGroupOverlay = true;
             });
             it('unless an error occurs', function() {
-                userManagerSvc.addUserGroup.and.returnValue($q.reject('Error Message'));
+                userManagerSvc.addGroupUsers.and.returnValue($q.reject('Error Message'));
                 controller.add();
-                $timeout.flush();
+                scope.$apply();
                 expect(userManagerSvc.addGroup).toHaveBeenCalledWith(controller.newGroup);
-                _.forEach(controller.newGroup.members, function(member) {
-                    expect(userManagerSvc.addUserGroup).toHaveBeenCalledWith(member, controller.newGroup.title);
-                });
+                expect(userManagerSvc.addGroupUsers).toHaveBeenCalledWith(controller.newGroup.title, controller.newGroup.members);
                 expect(controller.errorMessage).toBe('Error Message');
                 expect(userStateSvc.displayCreateGroupOverlay).not.toBe(false);
 
-                userManagerSvc.addUserGroup.calls.reset();
+                userManagerSvc.addGroupUsers.calls.reset();
                 userManagerSvc.addGroup.and.returnValue($q.reject('Error Message'));
                 controller.add();
-                $timeout.flush();
+                scope.$apply();
                 expect(userManagerSvc.addGroup).toHaveBeenCalledWith(controller.newGroup);
-                expect(userManagerSvc.addUserGroup).not.toHaveBeenCalled();
+                expect(userManagerSvc.addGroupUsers).not.toHaveBeenCalled();
                 expect(controller.errorMessage).toBe('Error Message');
                 expect(userStateSvc.displayCreateGroupOverlay).not.toBe(false);
             });
             it('successfully', function() {
                 controller.add();
-                $timeout.flush();
+                scope.$apply();
                 expect(userManagerSvc.addGroup).toHaveBeenCalledWith(controller.newGroup);
-                _.forEach(controller.newGroup.members, function(member) {
-                    expect(userManagerSvc.addUserGroup).toHaveBeenCalledWith(member, controller.newGroup.title);
-                });
+                expect(userManagerSvc.addGroupUsers).toHaveBeenCalledWith(controller.newGroup.title, controller.newGroup.members);
                 expect(controller.errorMessage).toBe('');
                 expect(userStateSvc.displayCreateGroupOverlay).toBe(false);
             });

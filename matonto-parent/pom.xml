@@ -27,7 +27,7 @@
 
     <groupId>org.matonto</groupId>
     <artifactId>matonto-parent</artifactId>
-    <version>1.4.13-SNAPSHOT</version>
+    <version>1.4.18-SNAPSHOT</version>
 
     <packaging>pom</packaging>
 
@@ -418,6 +418,9 @@
                     <verbose>false</verbose>
                     <addSvnKeyWords>true</addSvnKeyWords>
                     <excludedGroups>org.matonto</excludedGroups>
+                    <excludes>
+                        <exclude>src/test/resources/**</exclude>
+                    </excludes>
                 </configuration>
                 <executions>
                     <execution>

@@ -420,6 +420,7 @@ describe('Mapping Config Overlay directive', function() {
                 expect(mapperStateSvc.selectedClassMappingId).toBe('');
                 expect(mapperStateSvc.setAvailableProps).not.toHaveBeenCalled();
                 expect(mapperStateSvc.displayMappingConfigOverlay).toBe(false);
+                expect(mapperStateSvc.changedMapping).toBe(false);
             });
             describe('if it changed', function() {
                 beforeEach(function() {
@@ -457,6 +458,7 @@ describe('Mapping Config Overlay directive', function() {
                     expect(mapperStateSvc.selectedClassMappingId).toBe(this.classMapping['@id']);
                     expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(this.classMapping['@id']);
                     expect(mapperStateSvc.displayMappingConfigOverlay).toBe(false);
+                    expect(mapperStateSvc.changedMapping).toBe(true);
                 });
                 describe('removing incompatible mappings', function() {
                     beforeEach(function() {

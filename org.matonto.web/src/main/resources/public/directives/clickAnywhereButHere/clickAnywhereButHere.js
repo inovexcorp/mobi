@@ -68,7 +68,7 @@
           var tracker = [];
 
           return function($scope, expr) {
-                var t = _.find(tracker, tr => tr.expr === expr && t.scope === $scope);
+                var t = _.find(tracker, tr => tr.expr === expr && tr.scope === $scope);
                 if (t) {
                     return t;
                 }

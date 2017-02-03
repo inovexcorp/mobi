@@ -111,6 +111,7 @@ describe('Commit Overlay directive', function() {
                             controller.comment);
                         expect(stateManagerSvc.updateOntologyState).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                             ontologyStateSvc.listItem.branchId, commitId);
+                        expect(ontologyStateSvc.listItem.commitId).toEqual(commitId);
                         expect(ontologyStateSvc.clearInProgressCommit).toHaveBeenCalled();
                         expect(ontologyStateSvc.showCommitOverlay).toBe(false);
                     });
@@ -183,6 +184,7 @@ describe('Commit Overlay directive', function() {
                                     controller.comment);
                                 expect(stateManagerSvc.updateOntologyState).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                                     ontologyStateSvc.listItem.branchId, commitId);
+                                expect(ontologyStateSvc.listItem.commitId).toEqual(commitId);
                                 expect(ontologyStateSvc.clearInProgressCommit).toHaveBeenCalled();
                                 expect(ontologyStateSvc.showCommitOverlay).toBe(false);
                             });
@@ -227,7 +229,7 @@ describe('Commit Overlay directive', function() {
                     it('when getRecordBranch is rejected', function() {
                         getDeferred.reject(error);
                         controller.commit();
-                        scope.$apply();
+                        scope.$digest();
                         expect(catalogManagerSvc.createRecordUserBranch).toHaveBeenCalledWith(ontologyStateSvc
                             .listItem.recordId, catalogId, jasmine.any(Object), ontologyStateSvc.listItem.commitId,
                             ontologyStateSvc.listItem.branchId);
@@ -239,7 +241,7 @@ describe('Commit Overlay directive', function() {
                 it('when createRecordUserBranch is rejected', function() {
                     createDeferred.reject(error);
                     controller.commit();
-                    scope.$apply();
+                    scope.$digest();
                     expect(catalogManagerSvc.createRecordUserBranch).toHaveBeenCalledWith(ontologyStateSvc
                         .listItem.recordId, catalogId, jasmine.any(Object), ontologyStateSvc.listItem.commitId,
                         ontologyStateSvc.listItem.branchId);

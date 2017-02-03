@@ -32,21 +32,18 @@
                         <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
                         <div ng-class="{'has-error': dvm.form.iri.$error.pattern}" class="form-group">
                             <custom-label>Ontology IRI</custom-label>
-                            <input class="form-control" name="iri" ng-model="dvm.ontology['@id']"
-                                   ng-pattern="dvm.iriPattern" ng-change="dvm.iriHasChanged = true" required />
+                            <input class="form-control" name="iri" ng-model="dvm.ontology['@id']" ng-pattern="dvm.iriPattern" ng-change="dvm.iriHasChanged = true" required />
                             <p ng-messages="dvm.form.iri.$error" class="error-msg">
                                 <ng-message when="pattern">The value provided is not a valid IRI.</ng-message>
                             </p>
                         </div>
                         <text-input ng-model="dvm.title" input-name="title" required="true" display-text="'Title'" ng-keyup="dvm.nameChanged()"></text-input>
                         <text-area ng-model="dvm.description" input-name="description" display-text="'Description'" muted-text="'(Optional)'"></text-area>
-                        <text-area ng-model="dvm.keywords" input-name="keywords" display-text="'Keywords'" muted-text="'(Optional)'"></text-area>
+                        <keyword-select ng-model="dvm.keywords"></keyword-select>
                         <editor-radio-buttons ng-model="dvm.type"></editor-radio-buttons>
                         <div class="btn-container clearfix">
-                            <button type="button" class="btn btn-primary pull-right" ng-click="dvm.create()"
-                                    ng-disabled="dvm.form.$invalid">Create</button>
-                            <button type="button" class="btn btn-default pull-right"
-                                    ng-click="dvm.sm.showNewTab = false">Cancel</button>
+                            <button type="button" class="btn btn-primary pull-right" ng-click="dvm.create()" ng-disabled="dvm.form.$invalid">Create</button>
+                            <button type="button" class="btn btn-default pull-right" ng-click="dvm.os.showNewTab = false">Cancel</button>
                         </div>
                     </form>
                 </block-content>

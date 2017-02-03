@@ -61,10 +61,10 @@ describe('Edit Mapping Page directive', function() {
                 });
                 it('unless an error occurs', function() {
                     var step = mapperStateSvc.step;
-                    mappingManagerSvc.deleteMapping.and.returnValue($q.reject('Error message'));
+                    mappingManagerSvc.updateMapping.and.returnValue($q.reject('Error message'));
                     controller.save();
                     scope.$apply();
-                    expect(mappingManagerSvc.deleteMapping).toHaveBeenCalledWith(mapperStateSvc.mapping.id);
+                    expect(mappingManagerSvc.updateMapping).toHaveBeenCalledWith(mapperStateSvc.mapping.id, mapperStateSvc.mapping.jsonld);
                     expect(mappingManagerSvc.upload).not.toHaveBeenCalled();
                     expect(mapperStateSvc.step).toBe(step);
                     expect(mapperStateSvc.initialize).not.toHaveBeenCalled();
@@ -75,8 +75,8 @@ describe('Edit Mapping Page directive', function() {
                 it('successfully', function() {
                     controller.save();
                     scope.$apply();
-                    expect(mappingManagerSvc.deleteMapping).toHaveBeenCalledWith(mapperStateSvc.mapping.id);
-                    expect(mappingManagerSvc.upload).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, mapperStateSvc.mapping.id);
+                    expect(mappingManagerSvc.updateMapping).toHaveBeenCalledWith(mapperStateSvc.mapping.id, mapperStateSvc.mapping.jsonld);
+                    expect(mappingManagerSvc.upload).not.toHaveBeenCalled();
                     expect(mapperStateSvc.step).toBe(mapperStateSvc.selectMappingStep);
                     expect(mapperStateSvc.initialize).toHaveBeenCalled();
                     expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
@@ -90,8 +90,8 @@ describe('Edit Mapping Page directive', function() {
                     mappingManagerSvc.upload.and.returnValue($q.reject('Error message'));
                     controller.save();
                     scope.$apply();
-                    expect(mappingManagerSvc.deleteMapping).not.toHaveBeenCalled();
-                    expect(mappingManagerSvc.upload).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, mapperStateSvc.mapping.id);
+                    expect(mappingManagerSvc.updateMapping).not.toHaveBeenCalled();
+                    expect(mappingManagerSvc.upload).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld);
                     expect(mapperStateSvc.step).toBe(step);
                     expect(mapperStateSvc.initialize).not.toHaveBeenCalled();
                     expect(mapperStateSvc.resetEdit).not.toHaveBeenCalled();
@@ -101,8 +101,8 @@ describe('Edit Mapping Page directive', function() {
                 it('successfully', function() {
                     controller.save();
                     scope.$apply();
-                    expect(mappingManagerSvc.deleteMapping).not.toHaveBeenCalled();
-                    expect(mappingManagerSvc.upload).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, mapperStateSvc.mapping.id);
+                    expect(mappingManagerSvc.updateMapping).not.toHaveBeenCalled();
+                    expect(mappingManagerSvc.upload).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld);
                     expect(mapperStateSvc.step).toBe(mapperStateSvc.selectMappingStep);
                     expect(mapperStateSvc.initialize).toHaveBeenCalled();
                     expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
@@ -196,7 +196,8 @@ describe('Edit Mapping Page directive', function() {
             expect(controller.save).toHaveBeenCalled();
         });
     });
-    it('should the the correct state when a save and run button is clicked', function() {
+    it('should set the correct state when a save and run button is clicked', function() {
+        controller = this.element.controller('editMappingPage');
         var saveRunButtons = this.element.querySelectorAll('tab block-footer button.btn-primary.save-run-btn');
         _.forEach(_.toArray(saveRunButtons), function(button) {
             mapperStateSvc.displayRunMappingOverlay = false;

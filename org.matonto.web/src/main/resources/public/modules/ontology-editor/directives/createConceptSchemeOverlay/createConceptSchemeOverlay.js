@@ -81,7 +81,7 @@
                         var listItem = dvm.om.getListItemById(dvm.sm.listItem.ontologyId);
                         _.get(listItem, 'conceptHierarchy').push({'entityIRI': dvm.scheme['@id']});
                         _.set(_.get(listItem, 'index'), dvm.scheme['@id'], dvm.sm.listItem.ontology.length - 1);
-                        dvm.om.addToAdditions(dvm.sm.listItem.ontologyId, dvm.scheme);
+                        dvm.om.addToAdditions(dvm.sm.listItem.recordId, dvm.scheme);
                         // select the new concept
                         dvm.sm.selectItem(_.get(dvm.scheme, '@id'));
                         // hide the overlay

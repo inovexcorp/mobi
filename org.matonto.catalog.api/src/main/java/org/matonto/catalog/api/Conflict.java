@@ -35,6 +35,8 @@ import org.matonto.rdf.api.Model;
  */
 public interface Conflict {
 
+    String getIRI();
+
     Model getOriginal();
 
     Difference getLeftDifference();

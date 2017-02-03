@@ -23,6 +23,7 @@
 describe('IRI Template Overlay directive', function() {
     var $compile,
         scope,
+        utilSvc,
         prefixes,
         mappingManagerSvc,
         mapperStateSvc,
@@ -33,81 +34,74 @@ describe('IRI Template Overlay directive', function() {
     beforeEach(function() {
         module('templates');
         module('iriTemplateOverlay');
+        mockUtil();
         mockPrefixes();
         mockMapperState();
         mockMappingManager();
         mockDelimitedManager();
         mockUtil();
 
-        inject(function(_$compile_, _$rootScope_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_, _prefixes_, _utilService_) {
+        inject(function(_$compile_, _$rootScope_, _utilService_, _prefixes_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            utilSvc = _utilService_;
+            prefixes = _prefixes_;
             mappingManagerSvc = _mappingManagerService_;
             mapperStateSvc = _mapperStateService_;
             delimitedManagerSvc = _delimitedManagerService_;
             prefixes = _prefixes_;
             utilSvc = _utilService_;
         });
+
+        this.begin = '/test';
+        this.then = '/';
+        this.localName = '${0}';
+        var classMapping = {
+            '@id': mapperStateSvc.selectedClassMappingId,
+            'hasPrefix': this.begin + this.then,
+            'localName': this.localName
+        };
+        utilSvc.getPropertyValue.and.callFake(function(entity, iri) {
+            if (iri === prefixes.delim + 'hasPrefix') {
+                return classMapping.hasPrefix;
+            } else if (iri === prefixes.delim + 'localName') {
+                return classMapping.localName;
+            }
+        });
+        mapperStateSvc.selectedClassMappingId = classMapping['@id'];
+        mapperStateSvc.mapping = {jsonld: [classMapping]};
+        delimitedManagerSvc.dataRows = [['a']];
+        this.element = $compile(angular.element('<iri-template-overlay></iri-template-overlay>'))(scope);
+        scope.$digest();
     });
 
     describe('should intialize with the correct values', function() {
         it('based on the selected class mapping id', function() {
-            var begin = '/test';
-            var then = '/';
-            var localName = '${0}';
-            var classMapping = {
-                '@id': mapperStateSvc.selectedClassMappingId
-            };
-            mapperStateSvc.selectedClassMappingId = classMapping['@id'];
-            mapperStateSvc.mapping = {
-                jsonld: [classMapping]
-            };
-            delimitedManagerSvc.dataRows = [['a']];
-            utilSvc.getPropertyValue.and.callFake(function(obj, propertyIRI) {
-                if (propertyIRI === prefixes.delim + 'hasPrefix') {
-                    return begin + then;
-                } else if (propertyIRI === prefixes.delim + 'localName') {
-                    return localName;
-                } else {
-                    return '';
-                }
-            })
-            var element = $compile(angular.element('<iri-template-overlay></iri-template-overlay>'))(scope);
-            scope.$digest();
-            controller = element.controller('iriTemplateOverlay');
+            controller = this.element.controller('iriTemplateOverlay');
             expect(controller.beginning).toBe('/');
             expect(controller.beginsWith).toBe('test');
-            expect(controller.then).toBe('/');
+            expect(controller.then).toBe(this.then);
             var cleanOptions = _.forEach(controller.localNameOptions, function(opt) {
                 delete opt['$$hashKey'];
             });
             expect(cleanOptions[0]).toEqual({text: 'UUID', value: '${UUID}'});
             expect(delimitedManagerSvc.getHeader.calls.count()).toBe(delimitedManagerSvc.dataRows[0].length);
-            expect(cleanOptions).toContain({text: delimitedManagerSvc.getHeader(0), value: localName});
-            expect(controller.endsWith).toEqual({text: delimitedManagerSvc.getHeader(0), value: localName});
+            expect(cleanOptions).toContain({text: delimitedManagerSvc.getHeader(0), value: this.localName});
+            expect(controller.endsWith).toEqual({text: delimitedManagerSvc.getHeader(0), value: this.localName});
         });
     });
     describe('controller methods', function() {
         beforeEach(function() {
-            mapperStateSvc.mapping = {jsonld: []};
-            delimitedManagerSvc.dataRows = [[]];
-            this.element = $compile(angular.element('<iri-template-overlay></iri-template-overlay>'))(scope);
-            scope.$digest();
             controller = this.element.controller('iriTemplateOverlay');
         });
         it('should correctly set the iri template', function() {
             controller.set();
             expect(mappingManagerSvc.editIriTemplate).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, mapperStateSvc.selectedClassMappingId,
                 controller.beginsWith + controller.then, controller.endsWith.value);
+            expect(mapperStateSvc.changedMapping).toBe(true);
         });
     });
     describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
-            mapperStateSvc.mapping = {jsonld: []};
-            delimitedManagerSvc.dataRows = [[]];
-            this.element = $compile(angular.element('<iri-template-overlay></iri-template-overlay>'))(scope);
-            scope.$digest();
-        });
         it('for wrapping containers', function() {
             expect(this.element.hasClass('iri-template-overlay')).toBe(true);
             expect(this.element.querySelectorAll('form.content').length).toBe(1);
@@ -119,6 +113,8 @@ describe('IRI Template Overlay directive', function() {
             var failTests = ['/', '#', '?', ':', 'test/', '/test', 'test#', '#test', 'test?', '?test', 'test:', ':test', 'test#test', 'test?test', 'test:test'];
             var successTests = ['test', 'test/test', 'TEST_test', 'test.test'];
             controller = this.element.controller('iriTemplateOverlay');
+            controller.beginsWith = '';
+            scope.$digest();
             var beginsWith = angular.element(this.element.querySelectorAll('.template-begins-with')[0]);
             expect(beginsWith.hasClass('has-error')).toBe(true);
 

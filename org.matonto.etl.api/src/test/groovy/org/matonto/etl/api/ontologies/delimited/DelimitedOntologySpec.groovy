@@ -78,7 +78,7 @@ class DelimitedOntologySpec extends Specification {
 
         InputStream mappingFile = new ClassPathResource("newestMapping.ttl").getInputStream()
         Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE))
-        classMapping = classFactory.getExisting(vf.createIRI("http://matonto.org/mappings/demo/Material"), mapping)
+        classMapping = classFactory.getExisting(vf.createIRI("http://matonto.org/mappings/demo/Material"), mapping, vf, vcr)
     }
 
     def "ClassMapping has the correct prefix"() {

@@ -85,6 +85,7 @@
                 objectPropertyHierarchy: [],
                 objectPropertyIndex: {},
                 classesWithIndividuals: [],
+                classesWithIndividualsIndex: {},
                 blankNodes: {},
                 index: {},
                 additions: [],
@@ -346,6 +347,20 @@
                 var branchId, commitId;
                 var state = sm.getOntologyStateByRecordId(recordId);
                 var deferred = $q.defer();
+                var getLatest = function() {
+                    cm.getRecordMasterBranch(recordId, catalogId)
+                        .then(masterBranch => {
+                            branchId = _.get(masterBranch, '@id', '');
+                            cm.getBranchHeadCommit(branchId, recordId, catalogId)
+                                .then(headCommit => {
+                                    commitId = _.get(headCommit, "commit['@id']", '');
+                                    sm.createOntologyState(recordId, branchId, commitId)
+                                        .then(() => cm.getResource(commitId, branchId, recordId, catalogId, false, rdfFormat)
+                                            .then(ontology => resolve(ontology, emptyInProgressCommit), deferred.reject),
+                                            deferred.reject);
+                                }, deferred.reject);
+                        }, deferred.reject);
+                }
                 if (!_.isEmpty(state)) {
                     branchId = _.get(state, "model[0]['" + prefixes.ontologyState + "branch'][0]['@id']");
                     commitId = _.get(state, "model[0]['" + prefixes.ontologyState + "commit'][0]['@id']");
@@ -358,20 +373,12 @@
                                 } else {
                                     deferred.reject(errorMessage);
                                 }
+                            }, () => {
+                                sm.deleteOntologyState(recordId, branchId, commitId)
+                                    .then(getLatest, deferred.reject);
                             });
                 } else {
-                    cm.getRecordMasterBranch(recordId, catalogId)
-                        .then(masterBranch => {
-                            branchId = _.get(masterBranch, '@id', '');
-                            cm.getBranchHeadCommit(branchId, recordId, catalogId)
-                                .then(headCommit => {
-                                    commitId = _.get(headCommit, "commit[0]['@graph'][0]['@id']", '');
-                                    sm.createOntologyState(recordId, branchId, commitId)
-                                        .then(() => cm.getResource(commitId, branchId, recordId, catalogId, false, rdfFormat)
-                                            .then(ontology => resolve(ontology, emptyInProgressCommit), deferred.reject),
-                                            deferred.reject);
-                                }, deferred.reject);
-                        }, deferred.reject);
+                    getLatest();
                 }
                 var resolve = function(ontology, inProgressCommit) {
                     deferred.resolve({recordId, ontologyId, ontology, branchId, commitId, inProgressCommit});
@@ -482,10 +489,10 @@
                     deferred.resolve(recordId);
                 }
                 self.getOntology(ontologyId, recordId)
-                    .then(response => {
+                    .then(response =>
                         cm.getBranchHeadCommit(response.branchId, recordId, catalogId)
                             .then(headCommit => {
-                                var commitId = _.get(headCommit, "commit[0]['@graph'][0]['@id']", '');
+                                var commitId = _.get(headCommit, "commit['@id']", '');
                                 var upToDate = commitId === response.commitId;
                                 if (type === 'ontology') {
                                     addOntologyToList(response.ontologyId, response.recordId, response.branchId,
@@ -496,8 +503,7 @@
                                         response.commitId, response.ontology, response.inProgressCommit, upToDate)
                                             .then(onAddSuccess);
                                 }
-                            }, response => deferred.reject(response.statusText));
-                    }, response => deferred.reject(response.statusText));
+                            }, deferred.reject), deferred.reject);
                 return deferred.promise;
             }
             /**
@@ -572,23 +578,23 @@
                 return deferred.promise;
             }
 
-            function addToInProgress(ontologyId, json, prop) {
-                var listItem = self.getListItemById(ontologyId);
+            function addToInProgress(recordId, json, prop) {
+                var listItem = self.getListItemByRecordId(recordId);
                 var entity = _.find(listItem[prop], {'@id': json['@id']});
                 json = $filter('removeMatonto')(json);
                 if (entity) {
                     _.mergeWith(entity, json, util.mergingArrays);
-                } else {
+                } else  {
                     listItem[prop].push(json);
                 }
             }
 
-            self.addToAdditions = function(ontologyId, json) {
-                addToInProgress(ontologyId, json, 'additions');
+            self.addToAdditions = function(recordId, json) {
+                addToInProgress(recordId, json, 'additions');
             }
 
-            self.addToDeletions = function(ontologyId, json) {
-                addToInProgress(ontologyId, json, 'deletions');
+            self.addToDeletions = function(recordId, json) {
+                addToInProgress(recordId, json, 'deletions');
             }
             /**
              * @ngdoc method
@@ -727,7 +733,7 @@
              * @returns {Promise} A promise with the entityIRI and ontologyId for the state of the newly created
              * ontology.
              */
-            self.createOntology = function(ontologyJson, title, description, keywords, type='ontology') {
+            self.createOntology = function(ontologyJson, title, description, keywords, type = 'ontology') {
                 var deferred = $q.defer();
                 var config = {
                     headers: {
@@ -759,7 +765,9 @@
                                 self.list.push(listItem);
                                 deferred.resolve({
                                     entityIRI: ontologyJson['@id'],
-                                    recordId: response.data.recordId
+                                    recordId: response.data.recordId,
+                                    branchId: response.data.branchId,
+                                    commitId: response.data.commitId
                                 });
                             }, deferred.reject);
                     }, response => deferred.reject(response.statusText));
@@ -1922,7 +1930,7 @@
                         config),
                     $http.get(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/object-property-hierarchies',
                         config),
-                    cm.getRecordBranches(recordId, catalogId)
+                    cm.getRecordBranches(recordId, catalogId, {applyUserFilter: false})
                 ]).then(response => {
                     listItem.annotations = _.unionWith(
                         _.get(response[0], 'data.annotationProperties'),

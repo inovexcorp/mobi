@@ -22,7 +22,13 @@
   -->
 <div class="project-tab row">
     <div class="col-xs-12 editor">
-        <selected-details></selected-details>
+        <!--<selected-details></selected-details>-->
+        <div class="selected-details">
+            <div ng-if="dvm.sm.selected">
+                <span class="entity-name">{{dvm.om.getEntityName(dvm.sm.selected, dvm.sm.state.type)}}</span>
+                <span class="static-iri"><strong class="text-muted">{{dvm.sm.selected['@id']}}</strong></span>
+            </div>
+        </div>
         <div class="row">
             <div class="col-xs-5">
                 <div class="row vertical-half">

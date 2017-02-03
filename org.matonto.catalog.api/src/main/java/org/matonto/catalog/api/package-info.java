@@ -1,4 +1,4 @@
-@Version("3.4.1.${build}")
+@Version("4.0.0.${build}")
 
 package org.matonto.catalog.api;
 

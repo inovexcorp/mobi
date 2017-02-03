@@ -79,6 +79,7 @@ describe('File Upload Page directive', function() {
                 expect(mapperStateSvc.setAvailableProps.calls.count()).toBe(this.classMappings.length);
                 expect(mapperStateSvc.step).toBe(mapperStateSvc.editMappingStep);
                 expect(mapperStateSvc.displayMappingConfigOverlay).toBe(true);
+                expect(mapperStateSvc.changedMapping).toBe(true);
             });
             it('if a saved mapping is being edited', function() {
                 mapperStateSvc.newMapping = false;
@@ -87,6 +88,7 @@ describe('File Upload Page directive', function() {
                 expect(mapperStateSvc.setAvailableProps.calls.count()).toBe(this.classMappings.length);
                 expect(mapperStateSvc.step).toBe(mapperStateSvc.editMappingStep);
                 expect(mapperStateSvc.displayMappingConfigOverlay).not.toBe(true);
+                expect(mapperStateSvc.changedMapping).toBe(false);
             });
         });
         it('should set the correct state for canceling', function() {

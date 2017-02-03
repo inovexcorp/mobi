@@ -102,6 +102,7 @@
                         _.forEach(classesToUpdate, obj => dvm.state.getAvailableProps(obj.classMappingId).push({'@id': obj.propId, ontologyId: obj.ontologyId}));
                         dvm.state.resetEdit();
                         dvm.state.selectedClassMappingId = _.get(dvm.mm.getBaseClass(dvm.state.mapping.jsonld), '@id', '');
+                        dvm.state.changedMapping = true;
                     }
                     dvm.deleteProp = function() {
                         var propId = dvm.mm.getPropIdByMappingId(dvm.state.mapping.jsonld, dvm.state.selectedPropMappingId);
@@ -112,6 +113,7 @@
                         _.remove(dvm.state.invalidProps, {'@id': dvm.state.selectedPropMappingId});
                         dvm.state.resetEdit();
                         dvm.state.selectedClassMappingId = classMapping['@id'];
+                        dvm.state.changedMapping = true;
                     }
                     dvm.deleteMapping = function() {
                         dvm.mm.deleteMapping(dvm.state.mapping.id).then(() => {

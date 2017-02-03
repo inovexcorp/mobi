@@ -58,7 +58,7 @@
                         var branchId = item['@id'];
                         cm.getBranchHeadCommit(branchId, dvm.os.listItem.recordId, catalogId)
                             .then(headCommit => {
-                                var commitId = _.get(headCommit, "commit[0]['@graph'][0]['@id']", '');
+                                var commitId = _.get(headCommit, "commit['@id']", '');
                                 $q.all([
                                     sm.updateOntologyState(dvm.os.listItem.recordId, branchId, commitId),
                                     om.updateOntology(dvm.os.listItem.recordId, branchId, commitId)
@@ -82,7 +82,8 @@
                     dvm.delete = function() {
                         cm.deleteRecordBranch(dvm.branch['@id'], dvm.os.listItem.recordId, catalogId)
                             .then(() => {
-                                _.remove(dvm.os.listItem.branches, branch => _.isEqual(branch, dvm.branch));
+                                om.removeBranch(dvm.os.listItem.recordId, dvm.branch['@id']);
+                                // _.remove(dvm.os.listItem.branches, branch => _.isEqual(branch, dvm.branch));
                                 dvm.showDeleteConfirmation = false;
                             }, errorMessage => dvm.deleteError = errorMessage);
                     }

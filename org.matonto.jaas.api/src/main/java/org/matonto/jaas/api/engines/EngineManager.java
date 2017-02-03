@@ -26,6 +26,7 @@ package org.matonto.jaas.api.engines;
 import org.matonto.jaas.api.ontologies.usermanagement.Group;
 import org.matonto.jaas.api.ontologies.usermanagement.Role;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
+import org.matonto.rdf.api.Resource;
 
 import java.util.Optional;
 import java.util.Set;
@@ -59,6 +60,13 @@ public interface EngineManager {
     Set<User> getUsers(String engine);
 
     /**
+     * Returns the Set of Users accessible by all Engines managed by the EngineManager.
+     *
+     * @return the Set of all Users accessible by the EngineManager
+     */
+    Set<User> getUsers();
+
+    /**
      * Creates a new User object using the Engine with the passed name.
      *
      * @param engine the name of the Engine to use when creating the User
@@ -87,6 +95,16 @@ public interface EngineManager {
      * @return an Optional that contains the User if present; empty otherwise
      */
     Optional<User> retrieveUser(String engine, String username);
+
+    /**
+     * Attempts to retrieve the User with the passed username from one of the Engines the
+     * EngineManager manages. Returns an Optional with the User if it was found or empty if
+     * it could not be found.
+     *
+     * @param username the username of the User to retrieve
+     * @return an Optional that contains the User if present; empty otherwise
+     */
+    Optional<User> retrieveUser(String username);
 
     /**
      * Removes the User with the passed username using the Engine with the passed name.
@@ -231,4 +249,13 @@ public interface EngineManager {
      * @return true if the passwords match; false otherwise
      */
     boolean checkPassword(String engine, String username, String password);
+
+    /**
+     * Attempts to find the username of a User associated with the passed IRI using all the
+     * Engines managed by the EngineManager.
+     *
+     * @param userIri the IRI to search for
+     * @return an Optional with the username of the associated User if found; empty otherwise
+     */
+    Optional<String> getUsername(Resource userIri);
 }
