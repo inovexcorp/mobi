@@ -20,58 +20,48 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('User Permissions Input directive', function() {
+describe('Permissions Input directive', function() {
     var $compile,
-        $timeout,
         scope;
 
     beforeEach(function() {
         module('templates');
-        module('userPermissionsInput');
+        module('permissionsInput');
 
-        inject(function(_$compile_, _$rootScope_, _$timeout_) {
+        inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;
-            $timeout = _$timeout_;
             scope = _$rootScope_;
         });
+
+        scope.roles = {};
+        scope.isDisabledWhen = false;
+        scope.onChange = jasmine.createSpy('onChange');
+        this.element = $compile(angular.element('<permissions-input roles="roles" is-disabled-when="isDisabledWhen" on-change="onChange()"></permissions-input>'))(scope);
+        scope.$digest();
     });
 
     describe('in isolated scope', function() {
         beforeEach(function() {
-            scope.roles = {};
-            scope.isDisabledWhen = false;
-            scope.onChange = jasmine.createSpy('onChange');
-            this.element = $compile(angular.element('<user-permissions-input roles="roles" is-disabled-when="isDisabledWhen" on-change="onChange()"></user-permissions-input>'))(scope);
-            scope.$digest();
-        });
+            this.isolatedScope = this.element.isolateScope();
+        })
         it('roles should be two way bound', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.roles = {admin: true};
+            this.isolatedScope.roles = {admin: true};
             scope.$digest();
             expect(scope.roles).toEqual({admin: true});
         });
         it('isDisabledWhen should be one way bound', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.isDisabledWhen = true;
+            this.isolatedScope.isDisabledWhen = true;
             scope.$digest();
             expect(scope.isDisabledWhen).toBe(false);
         });
         it('onChange should be called in parent scope when invoked', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.onChange();
+            this.isolatedScope.onChange();
             expect(scope.onChange).toHaveBeenCalled();
         });
     });
     describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
-            scope.roles = {};
-            scope.isDisabledWhen = false;
-            scope.onChange = jasmine.createSpy('onChange');
-            this.element = $compile(angular.element('<user-permissions-input roles="roles" is-disabled-when="isDisabledWhen" on-change="onChange()"></user-permissions-input>'))(scope);
-            scope.$digest();
-        });
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('user-permissions-input')).toBe(true);
+            expect(this.element.hasClass('permissions-input')).toBe(true);
         })
         it('with a checkbox for the admin role', function() {
             expect(this.element.querySelectorAll('checkbox[display-text="\'Admin\'"]').length).toBe(1);

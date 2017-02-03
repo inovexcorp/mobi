@@ -32,6 +32,7 @@
             'catalogTabset',
             'entityDates',
             'entityDescription',
+            'entityPublisher',
             'localTab',
             'paginationHeader',
             'recordBlock',

@@ -23,6 +23,9 @@ package org.matonto.ontology.rest.impl;
  * #L%
  */
 
+import static org.matonto.rest.util.RestUtils.getRDFFormatFileExtension;
+import static org.matonto.rest.util.RestUtils.getRDFFormatMimeType;
+
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.google.common.collect.Iterables;
@@ -56,16 +59,12 @@ import org.openrdf.rio.helpers.JSONLDSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -76,6 +75,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
 
 @Component(immediate = true)
 public class OntologyRestImpl implements OntologyRest {
@@ -114,7 +116,7 @@ public class OntologyRestImpl implements OntologyRest {
                 json.add(oid.stringValue())
         );
 
-        return Response.status(200).entity(json.toString()).build();
+        return Response.ok(json).build();
     }
 
     private Response getAllOntologies() {
@@ -123,7 +125,7 @@ public class OntologyRestImpl implements OntologyRest {
                 .map(Resource::stringValue)
                 .collect(Collectors.toList());
 
-        return Response.status(200).entity(getOntologies(ontologyIds).toString()).build();
+        return Response.ok(getOntologies(ontologyIds)).build();
     }
 
     @Override
@@ -138,7 +140,7 @@ public class OntologyRestImpl implements OntologyRest {
             throw ErrorUtils.sendError("Invalid ontology id(s) on the list", Response.Status.BAD_REQUEST);
         }
 
-        return Response.status(200).entity(getOntologies(ontologyIds).toString()).build();
+        return Response.ok(getOntologies(ontologyIds)).build();
     }
 
     private JSONArray getOntologies(List<String> ontIds) {
@@ -183,7 +185,7 @@ public class OntologyRestImpl implements OntologyRest {
 
         json.put("persisted", persisted);
 
-        return Response.status(200).entity(json.toString()).build();
+        return Response.status(201).entity(json).build();
     }
 
     @Override
@@ -224,9 +226,9 @@ public class OntologyRestImpl implements OntologyRest {
     public Response getOntology(String ontologyIdStr, String rdfFormat) {
         logger.info("Getting ontology " + ontologyIdStr);
         JSONObject result = doWithOntology(ontologyIdStr,
-                ontology -> this.getOntologyAsJsonObject(ontology, rdfFormat));
+                ontology -> this.getOntologyAsJsonObject(ontology, rdfFormat), Response.Status.NOT_FOUND);
 
-        return Response.status(200).entity(result.toString()).build();
+        return Response.ok(result).build();
     }
 
     private Optional<Ontology> getOntology(@Nonnull String ontologyIdStr) throws MatontoOntologyException {
@@ -243,7 +245,7 @@ public class OntologyRestImpl implements OntologyRest {
             JSONObject json = new JSONObject();
             json.put("ontology", content);
             return json;
-        });
+        }, Response.Status.NOT_FOUND);
         StreamingOutput stream = os -> {
             Writer writer = new BufferedWriter(new OutputStreamWriter(os));
             writer.write(result.get("ontology").toString());
@@ -276,7 +278,7 @@ public class OntologyRestImpl implements OntologyRest {
         json.put("updated", true);
         json.put("id", ontologyId);
 
-        return Response.status(200).entity(json.toString()).build();
+        return Response.ok(json).build();
     }
 
     @Override
@@ -295,7 +297,7 @@ public class OntologyRestImpl implements OntologyRest {
         JSONObject json = new JSONObject();
         json.put("deleted", deleted);
 
-        return Response.status(200).entity(json.toString()).build();
+        return Response.ok(json).build();
     }
 
     private Response deleteEntityFromOntology(String ontologyIdStr, String entityIdStr) {
@@ -335,7 +337,7 @@ public class OntologyRestImpl implements OntologyRest {
         json.put("iris", iris);
         json.put("models", models);
 
-        return Response.status(200).entity(json.toString()).build();
+        return Response.ok(json).build();
     }
 
     @Override
@@ -374,7 +376,7 @@ public class OntologyRestImpl implements OntologyRest {
         JSONObject json = new JSONObject();
         json.put("added", added);
 
-        return Response.status(200).entity(json.toString()).build();
+        return Response.status(201).entity(json).build();
     }
 
     @Override
@@ -404,51 +406,51 @@ public class OntologyRestImpl implements OntologyRest {
 
     @Override
     public Response getIRIsInOntology(String ontologyIdStr) {
-        JSONObject result = doWithOntology(ontologyIdStr, this::getAllIRIs);      
-        return Response.status(200).entity(result.toString()).build();
+        JSONObject result = doWithOntology(ontologyIdStr, this::getAllIRIs, Response.Status.BAD_REQUEST);
+        return Response.ok(result).build();
     }
 
     @Override
     public Response getAnnotationsInOntology(String ontologyIdStr) {
-        JSONObject result = doWithOntology(ontologyIdStr, this::getAnnotationArray);
-        return Response.status(200).entity(result.toString()).build();
+        JSONObject result = doWithOntology(ontologyIdStr, this::getAnnotationArray, Response.Status.BAD_REQUEST);
+        return Response.ok(result).build();
     }
 
     @Override
     public Response getClassesInOntology(String ontologyIdStr) {
-        JSONObject result = doWithOntology(ontologyIdStr, this::getClassArray);
-        return Response.status(200).entity(result.toString()).build();
+        JSONObject result = doWithOntology(ontologyIdStr, this::getClassArray, Response.Status.BAD_REQUEST);
+        return Response.ok(result).build();
     }
 
     @Override
     public Response getDatatypesInOntology(String ontologyIdStr) {
-        JSONObject result = doWithOntology(ontologyIdStr, this::getDatatypeArray);
-        return Response.status(200).entity(result.toString()).build();
+        JSONObject result = doWithOntology(ontologyIdStr, this::getDatatypeArray, Response.Status.BAD_REQUEST);
+        return Response.ok(result).build();
     }
 
     @Override
     public Response getObjectPropertiesInOntology(String ontologyIdStr) {
-        JSONObject result = doWithOntology(ontologyIdStr, this::getObjectPropertyArray);
-        return Response.status(200).entity(result.toString()).build();
+        JSONObject result = doWithOntology(ontologyIdStr, this::getObjectPropertyArray, Response.Status.BAD_REQUEST);
+        return Response.ok(result).build();
     }
 
     @Override
     public Response getDataPropertiesInOntology(String ontologyIdStr) {
-        JSONObject result = doWithOntology(ontologyIdStr, this::getDataPropertyArray);
-        return Response.status(200).entity(result.toString()).build();
+        JSONObject result = doWithOntology(ontologyIdStr, this::getDataPropertyArray, Response.Status.BAD_REQUEST);
+        return Response.ok(result).build();
     }
 
     @Override
     public Response getNamedIndividualsInOntology(String ontologyIdStr) {
-        JSONObject result = doWithOntology(ontologyIdStr, this::getNamedIndividualArray);
-        return Response.status(200).entity(result.toString()).build();
+        JSONObject result = doWithOntology(ontologyIdStr, this::getNamedIndividualArray, Response.Status.BAD_REQUEST);
+        return Response.ok(result).build();
     }
     
     @Override
     public Response getIRIsInImportedOntologies(String ontologyIdStr) {
         JSONArray result = doWithImportedOntologies(ontologyIdStr, this::getAllIRIs);
         
-        return Response.status(200).entity(result.toString()).build();
+        return Response.ok(result).build();
     }
 
     @Override
@@ -481,65 +483,65 @@ public class OntologyRestImpl implements OntologyRest {
     @Override
     public Response getAnnotationsInImportedOntologies(String ontologyIdStr) {
         JSONArray result = doWithImportedOntologies(ontologyIdStr, this::getAnnotationArray);
-        return Response.status(200).entity(result.toString()).build();
+        return Response.ok(result).build();
     }
 
     @Override
     public Response getClassesInImportedOntologies(String ontologyIdStr) {
         JSONArray result = doWithImportedOntologies(ontologyIdStr, this::getClassArray);
-        return Response.status(200).entity(result.toString()).build();
+        return Response.ok(result).build();
     }
 
     @Override
     public Response getDatatypesInImportedOntologies(String ontologyIdStr) {
         JSONArray result = doWithImportedOntologies(ontologyIdStr, this::getDatatypeArray);
-        return Response.status(200).entity(result.toString()).build();
+        return Response.ok(result).build();
     }
 
     @Override
     public Response getObjectPropertiesInImportedOntologies(String ontologyIdStr) {
         JSONArray result = doWithImportedOntologies(ontologyIdStr, this::getObjectPropertyArray);
-        return Response.status(200).entity(result.toString()).build();
+        return Response.ok(result).build();
     }
 
     @Override
     public Response getDataPropertiesInImportedOntologies(String ontologyIdStr) {
         JSONArray result = doWithImportedOntologies(ontologyIdStr, this::getDataPropertyArray);
-        return Response.status(200).entity(result.toString()).build();
+        return Response.ok(result).build();
     }
 
     @Override
     public Response getNamedIndividualsInImportedOntologies(String ontologyIdStr) {
         JSONArray result = doWithImportedOntologies(ontologyIdStr, this::getNamedIndividualArray);
-        return Response.status(200).entity(result.toString()).build();
+        return Response.ok(result).build();
     }
 
     @Override
     public Response getOntologyClassHierarchy(String ontologyIdStr) {
         TupleQueryResult queryResults = manager.getSubClassesOf(ontologyIdStr);
         JSONObject response = getHierarchy(queryResults);
-        return Response.status(200).entity(response.toString()).build();
+        return Response.ok(response).build();
     }
 
     @Override
     public Response getOntologyObjectPropertyHierarchy(String ontologyIdStr) {
         TupleQueryResult queryResults = manager.getSubObjectPropertiesOf(ontologyIdStr);
         JSONObject response = getHierarchy(queryResults);
-        return Response.status(200).entity(response.toString()).build();
+        return Response.ok(response).build();
     }
 
     @Override
     public Response getOntologyDataPropertyHierarchy(String ontologyIdStr) {
         TupleQueryResult queryResults = manager.getSubDatatypePropertiesOf(ontologyIdStr);
         JSONObject response = getHierarchy(queryResults);
-        return Response.status(200).entity(response.toString()).build();
+        return Response.ok(response).build();
     }
 
     @Override
     public Response getConceptHierarchy(String ontologyIdStr) {
         TupleQueryResult queryResults = manager.getConceptRelationships(ontologyIdStr);
         JSONObject response = getHierarchy(queryResults);
-        return Response.status(200).entity(response.toString()).build();
+        return Response.ok(response).build();
     }
 
     private JSONObject getHierarchy(TupleQueryResult queryResults) {
@@ -602,14 +604,14 @@ public class OntologyRestImpl implements OntologyRest {
     public Response getClassesWithIndividuals(String ontologyIdStr) {
         TupleQueryResult queryResults = manager.getClassesWithIndividuals(ontologyIdStr);
         JSONObject response = getHierarchy(queryResults);
-        return Response.status(200).entity(response.toString()).build();
+        return Response.ok(response).build();
     }
 
     @Override
     public Response getEntityUsages(String ontologyIdStr, String entityIRIStr) {
         TupleQueryResult queryResults = manager.getEntityUsages(ontologyIdStr, entityIRIStr);
         JSONObject response = JSONQueryResults.getResponse(queryResults);
-        return Response.status(200).entity(response.toString()).build();
+        return Response.ok(response).build();
     }
 
     @Override
@@ -631,7 +633,7 @@ public class OntologyRestImpl implements OntologyRest {
                 }
             }
         });
-        return Response.status(200).entity(JSONObject.fromObject(results).toString()).build();
+        return Response.ok(JSONObject.fromObject(results)).build();
     }
 
     /**
@@ -735,7 +737,8 @@ public class OntologyRestImpl implements OntologyRest {
      *                    an Ontology component.
      * @return The properly formatted JSON response with a List of a particular Ontology Component.
      */
-    private JSONObject doWithOntology(String ontologyIdStr, Function<Ontology, JSONObject> iriFunction) {
+    private JSONObject doWithOntology(String ontologyIdStr, Function<Ontology, JSONObject> iriFunction,
+                                      Response.Status failStatus) {
         throwErrorIfMissingParam(ontologyIdStr, "ontologyIdStr is missing");
 
         Optional<Ontology> optOntology;
@@ -750,7 +753,7 @@ public class OntologyRestImpl implements OntologyRest {
         if (optOntology.isPresent()) {
             return iriFunction.apply(optOntology.get());
         } else {
-            throw ErrorUtils.sendError("Ontology " + ontologyIdStr + " does not exist.", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError("Ontology " + ontologyIdStr + " does not exist.", failStatus);
         }
     }
     
@@ -847,34 +850,6 @@ public class OntologyRestImpl implements OntologyRest {
         return combineJsonObjects(getAnnotationArray(ontology), getClassArray(ontology), 
                 getDatatypeArray(ontology), getObjectPropertyArray(ontology), getDataPropertyArray(ontology),
                 getNamedIndividualArray(ontology));
-    }
-
-    private String getRDFFormatFileExtension(String format) {
-        switch (format.toLowerCase()) {
-            case "turtle":
-                return RDFFormat.TURTLE.getDefaultFileExtension();
-            case "rdf/xml":
-                return RDFFormat.RDFXML.getDefaultFileExtension();
-            case "owl/xml" :
-                return "owx";
-            case "jsonld":
-            default:
-                return RDFFormat.JSONLD.getDefaultFileExtension();
-        }
-    }
-
-    private String getRDFFormatMimeType(String format) {
-        switch (format.toLowerCase()) {
-            case "turtle":
-                return RDFFormat.TURTLE.getDefaultMIMEType();
-            case "rdf/xml":
-                return RDFFormat.RDFXML.getDefaultMIMEType();
-            case "owl/xml" :
-                return "application/owl+xml";
-            case "jsonld":
-            default:
-                return RDFFormat.JSONLD.getDefaultMIMEType();
-        }
     }
     
     private JSONObject combineJsonObjects(JSONObject... objects) {

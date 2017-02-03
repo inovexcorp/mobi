@@ -42,6 +42,7 @@
          * @requires userState.service:userStateService
          * @requires userManager.service:userManagerService
          * @requires loginManager.service:loginManagerService
+         * @requires util.service:utilService
          *
          * @description
          * `usersPage` is a directive that creates a Bootstrap `row` div with three columns
@@ -51,14 +52,14 @@
          * and buttons for creating, deleting, and searching for a user. The center column contains
          * a block for previewing and editing a user's profile information and a block for changing
          * a user's password. The right column contains a block for viewing and changing a user's
-         * permissions and a block for viewing the groups a user is a member of. The directive
-         * is replaced by the contents of its template.
+         * {@link permissionsInput.directive:permissionsInput permissions} and a block for viewing
+         * the groups a user is a member of. The directive is replaced by the contents of its template.
          */
         .directive('usersPage', usersPage);
 
-    usersPage.$inject = ['userStateService', 'userManagerService', 'loginManagerService'];
+    usersPage.$inject = ['userStateService', 'userManagerService', 'loginManagerService', 'utilService'];
 
-    function usersPage(userStateService, userManagerService, loginManagerService) {
+    function usersPage(userStateService, userManagerService, loginManagerService, utilService) {
         return {
             restrict: 'E',
             replace: true,
@@ -69,6 +70,7 @@
                 dvm.state = userStateService;
                 dvm.um = userManagerService;
                 dvm.lm = loginManagerService;
+                dvm.util = utilService;
                 dvm.roles = {admin: _.includes(_.get(dvm.state.selectedUser, 'roles', []), 'admin')};
 
                 $scope.$watch('dvm.state.selectedUser', function(newValue, oldValue) {
@@ -89,8 +91,8 @@
                     dvm.state.displayChangePasswordOverlay = true;
                 }
                 dvm.changeRoles = function() {
-                    var request = dvm.roles.admin ? dvm.um.addUserRole(dvm.state.selectedUser.username, 'admin') : dvm.um.deleteUserRole(dvm.state.selectedUser.username, 'admin');
-                    request.then(response => dvm.permissionErrorMessage = '', error => dvm.permissionErrorMessage = error);
+                    var request = dvm.roles.admin ? dvm.um.addUserRoles(dvm.state.selectedUser.username, ['admin']) : dvm.um.deleteUserRole(dvm.state.selectedUser.username, 'admin');
+                    request.then(angular.noop, dvm.util.createErrorToast);
                 }
                 dvm.getUserGroups = function() {
                     return _.filter(dvm.um.groups, group => _.includes(group.members, dvm.state.selectedUser.username));

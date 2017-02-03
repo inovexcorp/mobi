@@ -38,7 +38,6 @@ import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.junit.Assert;
 import org.matonto.etl.api.config.ExcelConfig;
 import org.matonto.etl.api.config.SVConfig;
 import org.matonto.etl.api.delimited.DelimitedConverter;
@@ -77,6 +76,10 @@ import java.util.UUID;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 public class DelimitedRestImplTest extends MatontoRestTestNg {
     private DelimitedRestImpl rest;
@@ -154,8 +157,8 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
                     MediaType.MULTIPART_FORM_DATA));
             String filename = response.readEntity(String.class);
 
-            Assert.assertEquals(200, response.getStatus());
-            Assert.assertTrue(Files.exists(Paths.get(DelimitedRestImpl.TEMP_DIR + "/" + filename)));
+            assertEquals(response.getStatus(), 201);
+            assertTrue(Files.exists(Paths.get(DelimitedRestImpl.TEMP_DIR + "/" + filename)));
         }
     }
 
@@ -165,8 +168,8 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
         FormDataMultiPart fd = getFileFormData("test_updated.csv");
         Response response = target().path("delimited-files/" + fileName).request().put(Entity.entity(fd,
                 MediaType.MULTIPART_FORM_DATA));
-        Assert.assertEquals(200, response.getStatus());
-        Assert.assertTrue(Files.exists(Paths.get(DelimitedRestImpl.TEMP_DIR + "/" + fileName)));
+        assertEquals(response.getStatus(), 200);
+        assertTrue(Files.exists(Paths.get(DelimitedRestImpl.TEMP_DIR + "/" + fileName)));
     }
 
     @Test
@@ -178,12 +181,12 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
         FormDataMultiPart fd = getFileFormData("test_updated.csv");
         Response response = target().path("delimited-files/" + fileName).request().put(Entity.entity(fd,
                 MediaType.MULTIPART_FORM_DATA));
-        Assert.assertEquals(200, response.getStatus());
-        Assert.assertEquals(fileName, response.readEntity(String.class));
+        assertEquals(response.getStatus(), 200);
+        assertEquals(response.readEntity(String.class), fileName);
         List<String> resultLines = Files.readAllLines(Paths.get(DelimitedRestImpl.TEMP_DIR + "/" + fileName));
-        Assert.assertEquals(expectedLines.size(), resultLines.size());
+        assertEquals(resultLines.size(), expectedLines.size());
         for (int i = 0; i < resultLines.size(); i++) {
-            Assert.assertEquals(expectedLines.get(i), resultLines.get(i));
+            assertEquals(resultLines.get(i), expectedLines.get(i));
         }
     }
 
@@ -193,7 +196,7 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
         copyResourceToTemp("test.csv", fileName);
         List<String> expectedLines = getCsvResourceLines("test.csv");
         Response response = target().path("delimited-files/" + fileName).request().get();
-        Assert.assertEquals(200, response.getStatus());
+        assertEquals(response.getStatus(), 200);
         testResultsRows(response, expectedLines, 10);
     }
 
@@ -206,14 +209,14 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
         int rowNum = 5;
         Response response = target().path("delimited-files/" + fileName).queryParam("rowCount", rowNum)
                 .queryParam("separator", "\t").request().get();
-        Assert.assertEquals(200, response.getStatus());
+        assertEquals(response.getStatus(), 200);
         testResultsRows(response, expectedLines, rowNum);
     }
 
     @Test
     public void nonExistentRowsTest() {
         Response response = target().path("delimited-files/error").request().get();
-        Assert.assertEquals(400, response.getStatus());
+        assertEquals(response.getStatus(), 404);
     }
 
     @Test
@@ -222,14 +225,14 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
         copyResourceToTemp("test.xls", fileName1);
         List<String> expectedLines = getExcelResourceLines("test.xls");
         Response response = target().path("delimited-files/" + fileName1).request().get();
-        Assert.assertEquals(200, response.getStatus());
+        assertEquals(response.getStatus(), 200);
         testResultsRows(response, expectedLines, 10);
 
         String fileName2 = UUID.randomUUID().toString() + ".xlsx";
         copyResourceToTemp("test.xlsx", fileName2);
         expectedLines = getExcelResourceLines("test.xlsx");
         response = target().path("delimited-files/" + fileName2).request().get();
-        Assert.assertEquals(200, response.getStatus());
+        assertEquals(response.getStatus(), 200);
         testResultsRows(response, expectedLines, 10);
     }
 
@@ -241,14 +244,14 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
         copyResourceToTemp("test.xls", fileName1);
         List<String> expectedLines = getExcelResourceLines("test.xls");
         Response response = target().path("delimited-files/" + fileName1).queryParam("rowCount", rowNum).request().get();
-        Assert.assertEquals(200, response.getStatus());
+        assertEquals(response.getStatus(), 200);
         testResultsRows(response, expectedLines, rowNum);
 
         String fileName2 = UUID.randomUUID().toString() + ".xlsx";
         copyResourceToTemp("test.xlsx", fileName2);
         expectedLines = getExcelResourceLines("test.xlsx");
         response = target().path("delimited-files/" + fileName2).queryParam("rowCount", rowNum).request().get();
-        Assert.assertEquals(200, response.getStatus());
+        assertEquals(response.getStatus(), 200);
         testResultsRows(response, expectedLines, rowNum);
     }
 
@@ -257,10 +260,10 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
         String mapping = "";
         Response response = target().path("delimited-files/test.csv/map").queryParam("mappingIRI", mapping)
                 .request().get();
-        Assert.assertEquals(400, response.getStatus());
+        assertEquals(response.getStatus(), 400);
 
         response = target().path("delimited-files/test.csv/map").request().get();
-        Assert.assertEquals(400, response.getStatus());
+        assertEquals(response.getStatus(), 400);
     }
 
     @Test
@@ -270,7 +273,7 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
         Response response = testMap(fileName, MAPPING_IRI, null);
         isJsonld(response.readEntity(String.class));
         String disposition = response.getStringHeaders().get("Content-Disposition").toString();
-        Assert.assertTrue(disposition.contains(fileName));
+        assertTrue(disposition.contains(fileName));
     }
 
     @Test
@@ -286,7 +289,7 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
         Response response = testMap(fileName, MAPPING_IRI, params);
         isNotJsonld(response.readEntity(String.class));
         String disposition = response.getStringHeaders().get("Content-Disposition").toString();
-        Assert.assertTrue(disposition.contains(params.get("fileName").toString()));
+        assertTrue(disposition.contains(params.get("fileName").toString()));
     }
 
     @Test
@@ -297,7 +300,7 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
         Response response = testMap(fileName, MAPPING_IRI, null);
         isJsonld(response.readEntity(String.class));
         String disposition = response.getStringHeaders().get("Content-Disposition").toString();
-        Assert.assertTrue(disposition.contains(fileName));
+        assertTrue(disposition.contains(fileName));
     }
     @Test
     public void mapExcelWithParamsTest() throws Exception {
@@ -311,14 +314,14 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
         Response response = testMap(fileName, MAPPING_IRI, params);
         isNotJsonld(response.readEntity(String.class));
         String disposition = response.getStringHeaders().get("Content-Disposition").toString();
-        Assert.assertTrue(disposition.contains(params.get("fileName").toString()));
+        assertTrue(disposition.contains(params.get("fileName").toString()));
     }
 
     @Test
     public void mapNonexistentDelimitedTest() {
         Response response = target().path("delimited-files/error/map").queryParam("mappingIRI", MAPPING_IRI)
                 .request().get();
-        Assert.assertEquals(400, response.getStatus());
+        assertEquals(response.getStatus(), 400);
     }
 
     @Test
@@ -328,10 +331,10 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
         String fileName = UUID.randomUUID().toString() + ".xls";
         copyResourceToTemp("test.xls", fileName);
 
-        Assert.assertTrue(Files.exists(Paths.get(DelimitedRestImpl.TEMP_DIR + "/" + fileName)));
+        assertTrue(Files.exists(Paths.get(DelimitedRestImpl.TEMP_DIR + "/" + fileName)));
 
         testMap(fileName, MAPPING_IRI, params);
-        Assert.assertFalse(Files.exists(Paths.get(DelimitedRestImpl.TEMP_DIR + "/" + fileName)));
+        assertFalse(Files.exists(Paths.get(DelimitedRestImpl.TEMP_DIR + "/" + fileName)));
     }
 
     @Test
@@ -341,11 +344,11 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
         fd.field("jsonld", mapping);
         Response response = target().path("delimited-files/test.csv/map-preview").request().post(Entity.entity(fd,
                 MediaType.MULTIPART_FORM_DATA));
-        Assert.assertEquals(400, response.getStatus());
+        assertEquals(response.getStatus(), 400);
 
         response = target().path("delimited-files/test.csv/map-preview").request().post(Entity.entity(null,
                 MediaType.MULTIPART_FORM_DATA));
-        Assert.assertEquals(400, response.getStatus());
+        assertEquals(response.getStatus(), 400);
     }
 
     @Test
@@ -396,21 +399,21 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
         fd.field("jsonld", "[]");
         Response response = target().path("delimited-files/error/map-preview").request().post(Entity.entity(fd,
                 MediaType.MULTIPART_FORM_DATA));
-        Assert.assertEquals(400, response.getStatus());
+        assertEquals(response.getStatus(), 400);
     }
 
     private void isJsonld(String str) {
         try {
             JSONArray result = JSONArray.fromObject(str);
         } catch (Exception e) {
-            Assert.fail("Expected no exception, but got: " + e.getMessage());
+            fail("Expected no exception, but got: " + e.getMessage());
         }
     }
 
     private void isNotJsonld(String str) {
         try {
             JSONArray result = JSONArray.fromObject(str);
-            Assert.fail();
+            fail();
         } catch (Exception e) {
             System.out.println("Format is not JSON-LD, as expected");
         }
@@ -426,7 +429,7 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
             }
         }
         Response response = wt.request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
-        Assert.assertEquals(200, response.getStatus());
+        assertEquals(response.getStatus(), 200);
         return response;
     }
 
@@ -438,19 +441,19 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
             }
         }
         Response response = wt.request().get();
-        Assert.assertEquals(response.getEntity().toString(), 200, response.getStatus());
+        assertEquals(response.getStatus(), 200);
         return response;
     }
 
     private void testResultsRows(Response response, List<String> expectedLines, int rowNum) {
         String body = response.readEntity(String.class);
         JSONArray lines = JSONArray.fromObject(body);
-        Assert.assertEquals(rowNum + 1, lines.size());
+        assertEquals(lines.size(), rowNum + 1);
         for (int i = 0; i < lines.size(); i++) {
             JSONArray line = lines.getJSONArray(i);
             String expectedLine = expectedLines.get(i);
             for (Object item : line) {
-                Assert.assertTrue(expectedLine.contains(item.toString()));
+                assertTrue(expectedLine.contains(item.toString()));
             }
         }
     }

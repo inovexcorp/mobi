@@ -131,6 +131,7 @@
                             dvm.state.resetEdit();
                             dvm.state.selectedClassMappingId = _.get(dvm.mm.getAllClassMappings(dvm.state.mapping.jsonld), "[0]['@id']");
                             dvm.state.setAvailableProps(dvm.state.selectedClassMappingId);
+                            dvm.state.changedMapping = true;
                         }
 
                         dvm.state.displayMappingConfigOverlay = false;

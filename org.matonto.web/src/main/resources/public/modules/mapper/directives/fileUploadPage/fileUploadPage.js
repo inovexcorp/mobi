@@ -89,6 +89,7 @@
                         dvm.state.step = dvm.state.editMappingStep;
                         if (dvm.state.newMapping) {
                             dvm.state.displayMappingConfigOverlay = true;
+                            dvm.state.changedMapping = true;
                         }
                     }
                 }
