@@ -26,30 +26,30 @@
     angular
         /**
          * @ngdoc overview
-         * @name userPermissionsInput
+         * @name permissionsInput
          *
          * @description
-         * The `userPermissionsInput` module only provides the `userPermissionsInput` directive
+         * The `permissionsInput` module only provides the `permissionsInput` directive
          * which creates a collections of {@link checkbox.directive:checkbox checkboxes} for
-         * changing a user's permissions and roles.
+         * changing a user or group's permissions and roles.
          */
-        .module('userPermissionsInput', [])
+        .module('permissionsInput', [])
         /**
          * @ngdoc directive
-         * @name userPermissionsInput.directive:userPermissionsInput
+         * @name permissionsInput.directive:permissionsInput
          * @scope
          * @restrict E
          *
          * @description
-         * `userPermissionsInput` is a directive that creates an collection of
-         * {@link checkbox.directive:checkbox checkboxes} for changing a user's permissions and roles.
-         * It takes the state of a user's roles from the passed roles object whose keys are the roles and
-         * whose values are booleans indicating whether the user in question has that role. The directive
+         * `permissionsInput` is a directive that creates an collection of
+         * {@link checkbox.directive:checkbox checkboxes} for changing a user or group's permissions and roles.
+         * It takes the state of a user or group's roles from the passed roles object whose keys are the roles and
+         * whose values are booleans indicating whether the user/group in question has that role. The directive
          * is replaced by the contents of its template.
          */
-        .directive('userPermissionsInput', userPermissionsInput);
+        .directive('permissionsInput', permissionsInput);
 
-        function userPermissionsInput() {
+        function permissionsInput() {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -59,10 +59,7 @@
                     isDisabledWhen: '<',
                     onChange: '&'
                 },
-                controller: function() {
-                    var dvm = this;
-                },
-                templateUrl: 'modules/user-management/directives/userPermissionsInput/userPermissionsInput.html'
+                templateUrl: 'modules/user-management/directives/permissionsInput/permissionsInput.html'
             }
         }
 })();

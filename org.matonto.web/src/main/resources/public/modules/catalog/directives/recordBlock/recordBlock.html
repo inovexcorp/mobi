@@ -29,7 +29,7 @@
         <block-content class="padding">
             <record-types record="dvm.record"></record-types>
             <entity-dates entity="dvm.record"></entity-dates>
-            <!-- <p><span class="field-name">Publisher:</span> <span></span></p> -->
+            <entity-publisher entity="dvm.record"></entity-publisher>
             <entity-description entity="dvm.record"></entity-description>
             <record-keywords record="dvm.record"></record-keywords>
 
@@ -40,7 +40,7 @@
                     <button ng-repeat="branch in dvm.state.results" class="branch list-group-item" ng-click="dvm.openBranch(branch)">
                         <h3>{{dvm.util.getDctermsValue(branch, 'title')}}</h3>
                         <entity-dates entity="branch"></entity-dates>
-                        <!-- <p><span class="field-name">Publisher:</span> <span></span></p> -->
+                        <entity-publisher entity="branch"></entity-publisher>
                         <entity-description entity="branch" limited></entity-description>
                     </button>
                 </div>

@@ -34,9 +34,9 @@
             'groupsList',
             'groupsPage',
             'memberTable',
+            'permissionsInput',
             'userManagementOverlays',
             'userManagementTabset',
-            'userPermissionsInput',
             'usersList',
             'usersPage'
         ]);

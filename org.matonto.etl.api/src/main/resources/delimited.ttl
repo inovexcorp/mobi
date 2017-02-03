@@ -6,6 +6,7 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 
 <http://matonto.org/ontologies/delimited> a owl:Ontology ;
+    owl:versionIRI <http://matonto.org/ontologies/delimited#1.1>;
     rdfs:label "Delimited" ;
     rdfs:comment "An ontology which defines MatOnto Mappings and Datasets." .
 
@@ -34,7 +35,7 @@
 
 :hasProperty a owl:ObjectProperty ;
 	rdfs:domain :DataMapping , :ObjectMapping , :PropertyMapping ;
-	rdfs:range owl:Property ;
+	rdfs:range rdf:Property ;
 	rdfs:comment "The Property defines the relationship for the PropertyMapping" .
 
 ###  http://matonto.org/ontologies/delimited#mapsTo
@@ -111,9 +112,7 @@
 :localName a owl:DatatypeProperty, owl:FunctionalProperty ;
 	rdfs:domain :ClassMapping ;
     rdfs:range xsd:string ;
-    rdfs:comment "The pattern specifying the local name of the generated instance. A value of \"${UUID}\" results
-    in the generation of random UUID. A digit value results in the value for the cell in that column being inserted
-    into the IRI (e.g. ${2} would be the value for the third column in the row)" .
+    rdfs:comment "The pattern specifying the local name of the generated instance. A value of \"${UUID}\" results in the generation of random UUID. A digit value results in the value for the cell in that column being inserted into the IRI (e.g. ${2} would be the value for the third column in the row)" .
 
 ###  http://matonto.org/ontologies/delimited#quoteCharacter
 
@@ -168,6 +167,6 @@
 
 owl:Ontology a owl:Class .
 
-###  http://www.w3.org/2002/07/owl#Property
+###  http://www.w3.org/1999/02/22-rdf-syntax-ns#Property
 
-owl:Property a owl:Class .
+rdf:Property a owl:Class .

@@ -65,19 +65,13 @@
 
                     dvm.set = function() {
                         var iri = dvm.mm.getMappingId(dvm.newName);
-                        if (dvm.state.step === dvm.state.selectMappingStep) {
-                            dvm.state.step = dvm.state.fileUploadStep;
-                            dvm.state.mapping.jsonld = dvm.mm.createNewMapping(iri);
+                        if (dvm.state.step === dvm.state.editMappingStep) {
+                            dvm.state.changedMapping = true;
                         }
                         dvm.state.mapping.id = iri;
                         dvm.state.editMappingName = false;
                     }
                     dvm.cancel = function() {
-                        if (dvm.state.step === dvm.state.selectMappingStep) {
-                            dvm.state.editMapping = false;
-                            dvm.state.newMapping = false;
-                            dvm.state.mapping = undefined;
-                        }
                         dvm.state.editMappingName = false;
                     }
                 },

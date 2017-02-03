@@ -28,7 +28,6 @@ describe('Mapping Config Overlay directive', function() {
         mappingManagerSvc,
         mapperStateSvc,
         $q,
-        $timeout,
         controller;
 
     beforeEach(function() {
@@ -42,7 +41,7 @@ describe('Mapping Config Overlay directive', function() {
         mockMapperState();
         injectSplitIRIFilter();
 
-        inject(function(_$compile_, _$rootScope_, _utilService_, _ontologyManagerService_, _mappingManagerService_, _mapperStateService_, _$q_, _$timeout_) {
+        inject(function(_$compile_, _$rootScope_, _utilService_, _ontologyManagerService_, _mappingManagerService_, _mapperStateService_, _$q_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             utilSvc = _utilService_;
@@ -50,7 +49,6 @@ describe('Mapping Config Overlay directive', function() {
             mapperStateSvc = _mapperStateService_;
             mappingManagerSvc = _mappingManagerService_;
             $q = _$q_;
-            $timeout = _$timeout_;
         });
     });
 
@@ -123,7 +121,7 @@ describe('Mapping Config Overlay directive', function() {
                 it('unless an error occurs', function() {
                     ontologyManagerSvc.getImportedOntologies.and.returnValue($q.reject('Error message'));
                     controller.selectOntology(this.id);
-                    $timeout.flush();
+                    scope.$apply();
                     expect(controller.selectedOntologyId).toBe(this.id);
                     expect(controller.ontologies[this.id]).toEqual([this.ontology]);
                     expect(ontologyManagerSvc.getImportedOntologies).toHaveBeenCalledWith(this.id);
@@ -134,7 +132,7 @@ describe('Mapping Config Overlay directive', function() {
                     ontologyManagerSvc.getImportedOntologies.calls.reset();
                     mappingManagerSvc.getOntology.and.returnValue($q.reject('Error message'));
                     controller.selectOntology(this.id);
-                    $timeout.flush();
+                    scope.$apply();
                     expect(controller.selectedOntologyId).not.toBe(this.id);
                     expect(_.has(controller.ontologies, this.id)).toBe(false);
                     expect(ontologyManagerSvc.getImportedOntologies).not.toHaveBeenCalled();
@@ -144,7 +142,7 @@ describe('Mapping Config Overlay directive', function() {
                     var importedOntology = {id: '', ontology: []};
                     ontologyManagerSvc.getImportedOntologies.and.returnValue($q.when([importedOntology]));
                     controller.selectOntology(this.id);
-                    $timeout.flush();
+                    scope.$apply();
                     expect(controller.selectedOntologyId).toBe(this.id);
                     expect(controller.ontologies[this.id]).toContain(this.ontology);
                     expect(ontologyManagerSvc.getImportedOntologies).toHaveBeenCalledWith(this.id);
@@ -206,6 +204,7 @@ describe('Mapping Config Overlay directive', function() {
                 expect(mapperStateSvc.selectedClassMappingId).not.toBe(this.classMapping['@id']);
                 expect(mapperStateSvc.setAvailableProps).not.toHaveBeenCalled();
                 expect(mapperStateSvc.displayMappingConfigOverlay).toBe(false);
+                expect(mapperStateSvc.changedMapping).toBe(false);
             });
             describe('if it changed', function() {
                 beforeEach(function() {
@@ -222,6 +221,7 @@ describe('Mapping Config Overlay directive', function() {
                     expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                     expect(mapperStateSvc.selectedClassMappingId).toBe(this.classMapping['@id']);
                     expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(this.classMapping['@id']);
+                    expect(mapperStateSvc.changedMapping).toBe(true);
                 });
                 it('and a configuration had already been set', function() {
                     mappingManagerSvc.getSourceOntologyId.and.returnValue('test');
@@ -237,6 +237,7 @@ describe('Mapping Config Overlay directive', function() {
                     expect(mapperStateSvc.selectedClassMappingId).toBe(this.classMapping['@id']);
                     expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(this.classMapping['@id']);
                     expect(mapperStateSvc.displayMappingConfigOverlay).toBe(false);
+                    expect(mapperStateSvc.changedMapping).toBe(true);
 
                     mapperStateSvc.displayMappingConfigOverlay = true;
                     mappingManagerSvc.getSourceOntologyId.and.returnValue(controller.selectedOntologyId);
@@ -250,6 +251,7 @@ describe('Mapping Config Overlay directive', function() {
                     expect(mapperStateSvc.selectedClassMappingId).toBe(this.classMapping['@id']);
                     expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(this.classMapping['@id']);
                     expect(mapperStateSvc.displayMappingConfigOverlay).toBe(false);
+                    expect(mapperStateSvc.changedMapping).toBe(true);
                 });
             });
         });

@@ -23,6 +23,8 @@ package org.matonto.ontology.rest.impl;
  * #L%
  */
 
+import static org.matonto.rest.util.RestUtils.jsonldToModel;
+
 import com.google.common.collect.Iterables;
 
 import aQute.bnd.annotation.component.Component;
@@ -65,14 +67,8 @@ import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rest.util.ErrorUtils;
 import org.matonto.web.security.util.AuthenticationProps;
 import org.openrdf.model.vocabulary.OWL;
-import org.openrdf.rio.RDFFormat;
-import org.openrdf.rio.RDFParseException;
-import org.openrdf.rio.Rio;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -141,9 +137,10 @@ public class OntologyRestImpl implements OntologyRest {
             throw ErrorUtils.sendError("The file is missing.", Response.Status.BAD_REQUEST);
         }
         User user = getUserFromContext(context);
+        String ontologyId;
         try {
             Ontology ontology = ontologyManager.createOntology(fileInputStream);
-            String ontologyId = ontology.getOntologyId().getOntologyIdentifier().stringValue();
+            ontologyId = ontology.getOntologyId().getOntologyIdentifier().stringValue();
             RecordConfig.Builder builder = new RecordConfig.Builder(title, ontologyId, Collections.singleton(user));
             if (description != null) {
                 builder.description(description);
@@ -170,7 +167,7 @@ public class OntologyRestImpl implements OntologyRest {
         } finally {
             IOUtils.closeQuietly(fileInputStream);
         }
-        return Response.ok().build();
+        return Response.status(201).entity(ontologyId).build();
     }
 
     @Override
@@ -1047,12 +1044,7 @@ public class OntologyRestImpl implements OntologyRest {
      * @return a Model created using the JSON-LD.
      */
     private Model getModelFromJson(String json) {
-        try {
-            InputStream in = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
-            return sesameTransformer.matontoModel(Rio.parse(in, "", RDFFormat.JSONLD));
-        } catch (IOException | RDFParseException e) {
-            throw new MatontoOntologyException("Error in parsing JSON", e);
-        }
+        return sesameTransformer.matontoModel(jsonldToModel(json));
     }
 
     /**
@@ -1067,7 +1059,7 @@ public class OntologyRestImpl implements OntologyRest {
                                                  Model entityModel) {
         Resource inProgressCommitIRI = getUserInProgressCommitIRI(context, ontologyIdStr);
         catalogManager.addAdditions(entityModel, inProgressCommitIRI);
-        return Response.ok().build();
+        return Response.status(201).build();
     }
 
     /**

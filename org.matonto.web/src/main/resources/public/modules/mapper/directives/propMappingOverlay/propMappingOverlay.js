@@ -55,9 +55,9 @@
          */
         .directive('propMappingOverlay', propMappingOverlay);
 
-        propMappingOverlay.$inject = ['prefixes', 'ontologyManagerService', 'mapperStateService', 'mappingManagerService'];
+        propMappingOverlay.$inject = ['prefixes', 'utilService', 'ontologyManagerService', 'mapperStateService', 'mappingManagerService'];
 
-        function propMappingOverlay(prefixes, ontologyManagerService, mapperStateService, mappingManagerService) {
+        function propMappingOverlay(prefixes, utilService, ontologyManagerService, mapperStateService, mappingManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -68,6 +68,7 @@
                     dvm.state = mapperStateService;
                     dvm.mm = mappingManagerService;
                     dvm.om = ontologyManagerService;
+                    dvm.util = utilService;
 
                     dvm.propIdObj = undefined;
                     dvm.selectedProp = undefined;
@@ -78,7 +79,7 @@
                         var ontology = dvm.mm.findSourceOntologyWithProp(propId, dvm.state.sourceOntologies);
                         dvm.propIdObj = {'@id': propId, ontologyId: _.get(ontology, 'id')};
                         dvm.selectedProp = dvm.om.getEntity(_.get(ontology, 'entities'), propId);
-                        dvm.selectedColumn = _.get(propMapping, "['" + prefixes.delim + "columnIndex'][0]['@value']");
+                        dvm.selectedColumn = dvm.util.getPropertyValue(propMapping, prefixes.delim + 'columnIndex');
                     }
 
                     dvm.getRangeClass = function(propObj) {
@@ -119,6 +120,7 @@
                             selectedClassMappingId = dvm.state.selectedClassMappingId;
                         }
 
+                        dvm.state.changedMapping = true;
                         dvm.state.resetEdit();
                         dvm.state.selectedClassMappingId = selectedClassMappingId;
                         dvm.state.displayPropMappingOverlay = false;

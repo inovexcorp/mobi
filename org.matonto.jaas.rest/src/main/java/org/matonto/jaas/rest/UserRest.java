@@ -29,11 +29,21 @@ import io.swagger.annotations.ApiOperation;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
 
 import javax.annotation.security.RolesAllowed;
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.List;
 
 @Path("/users")
 @Api( value = "/users")
@@ -148,17 +158,17 @@ public interface UserRest {
                           @DefaultValue("false") @QueryParam("includeGroups") boolean includeGroups);
 
     /**
-     * Adds a role to the specified user in MatOnto.
+     * Adds roles to the specified user in MatOnto.
      *
      * @param username the username of the user to add a role to
-     * @param role the role to add to the specified user
+     * @param roles the names of the roles to add to the specified user
      * @return a Response indicating the success or failure of the request
      */
     @PUT
     @Path("{username}/roles")
     @RolesAllowed("admin")
-    @ApiOperation("Add role to a MatOnto user")
-    Response addUserRole(@PathParam("username") String username, @QueryParam("role") String role);
+    @ApiOperation("Add roles to a MatOnto user")
+    Response addUserRoles(@PathParam("username") String username, @QueryParam("roles") List<String> roles);
 
     /**
      * Removes a role from the specified user in MatOnto.
@@ -213,4 +223,18 @@ public interface UserRest {
     @RolesAllowed("admin")
     @ApiOperation("Remove a MatOnto user from a group")
     Response removeUserGroup(@PathParam("username") String username, @QueryParam("group") String groupTitle);
+
+    /**
+     * Attempts to retrieve the username for the user associated with the passed user IRI. Returns a 404 if
+     * a user with the passed IRI cannot be found.
+     *
+     * @param userIri the IRI to search for
+     * @return a Response with the username of the user associated with the IRI
+     */
+    @GET
+    @Path("username")
+    @RolesAllowed("user")
+    @Produces(MediaType.TEXT_PLAIN)
+    @ApiOperation("Retrieve a username based on the passed User IRI")
+    Response getUsername(@QueryParam("iri") String userIri);
 }
