@@ -25,7 +25,6 @@ describe('Create User Overlays directive', function() {
         scope,
         userManagerSvc,
         userStateSvc,
-        $timeout,
         $q,
         controller;
 
@@ -36,13 +35,12 @@ describe('Create User Overlays directive', function() {
         mockUserManager();
         mockUserState();
 
-        inject(function(_userManagerService_, _userStateService_, _$timeout_, _$q_, _$compile_, _$rootScope_) {
-            userManagerSvc = _userManagerService_;
-            userStateSvc = _userStateService_;
-            $timeout = _$timeout_;
-            $q = _$q_;
+        inject(function( _$compile_, _$rootScope_, _userManagerService_, _userStateService_, _$q_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            userManagerSvc = _userManagerService_;
+            userStateSvc = _userStateService_;
+            $q = _$q_;
         });
     });
 
@@ -69,37 +67,35 @@ describe('Create User Overlays directive', function() {
             it('unless an error occurs', function() {
                 userManagerSvc.addUser.and.returnValue($q.reject('Error Message'));
                 controller.add();
-                $timeout.flush();
+                scope.$apply()
                 expect(userManagerSvc.addUser).toHaveBeenCalledWith(controller.newUser, controller.password);
                 expect(controller.errorMessage).toBe('Error Message');
                 expect(userStateSvc.displayCreateUserOverlay).not.toBe(false);
             });
             describe('and the correct roles and groups', function() {
                 it('unless an error occurs', function() {
-                    userManagerSvc.addUserRole.and.returnValue($q.reject('Error Message'));
+                    userManagerSvc.addUserRoles.and.returnValue($q.reject('Error Message'));
                     controller.add();
-                    $timeout.flush();
+                    scope.$apply()
                     expect(userManagerSvc.addUser).toHaveBeenCalledWith(controller.newUser, controller.password);
-                    expect(userManagerSvc.addUserRole).toHaveBeenCalledWith(controller.newUser.username, 'user');
+                    expect(userManagerSvc.addUserRoles).toHaveBeenCalledWith(controller.newUser.username, ['user']);
                     expect(controller.errorMessage).toBe('Error Message');
                     expect(userStateSvc.displayCreateUserOverlay).not.toBe(false);
                 });
                 it('successfully', function() {
                     controller.add();
-                    $timeout.flush();
+                    scope.$apply()
                     expect(userManagerSvc.addUser).toHaveBeenCalledWith(controller.newUser, controller.password);
-                    expect(userManagerSvc.addUserRole).toHaveBeenCalledWith(controller.newUser.username, 'user');
-                    expect(userManagerSvc.addUserRole).not.toHaveBeenCalledWith(controller.newUser.username, 'admin');
+                    expect(userManagerSvc.addUserRoles).toHaveBeenCalledWith(controller.newUser.username, ['user']);
                     expect(controller.errorMessage).toBe('');
                     expect(userStateSvc.displayCreateUserOverlay).toBe(false);
 
                     controller.roles.admin = true;
                     userStateSvc.displayCreateUserOverlay = true;
                     controller.add();
-                    $timeout.flush();
+                    scope.$apply()
                     expect(userManagerSvc.addUser).toHaveBeenCalledWith(controller.newUser, controller.password);
-                    expect(userManagerSvc.addUserRole).toHaveBeenCalledWith(controller.newUser.username, 'user');
-                    expect(userManagerSvc.addUserRole).toHaveBeenCalledWith(controller.newUser.username, 'admin');
+                    expect(userManagerSvc.addUserRoles).toHaveBeenCalledWith(controller.newUser.username, ['user', 'admin']);
                     expect(controller.errorMessage).toBe('');
                     expect(userStateSvc.displayCreateUserOverlay).toBe(false);
                 });
@@ -169,11 +165,11 @@ describe('Create User Overlays directive', function() {
         it('with an email input', function() {
             expect(this.element.find('email-input').length).toBe(1);
         });
-        it('with a user permissions input', function() {
+        it('with a permissions input', function() {
             controller = this.element.controller('createUserOverlays');
             controller.step = 1;
             scope.$digest();
-            expect(this.element.find('user-permissions-input').length).toBe(1);
+            expect(this.element.find('permissions-input').length).toBe(1);
         });
         it('depending on whether there is an error', function() {
             controller = this.element.controller('createUserOverlays');

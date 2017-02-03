@@ -1,4 +1,4 @@
-@Version("2.0.2.${build}")
+@Version("3.1.0.${build}")
 
 package org.matonto.catalog.rest;
 

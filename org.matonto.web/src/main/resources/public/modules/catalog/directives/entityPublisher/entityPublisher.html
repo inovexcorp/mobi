@@ -4,7 +4,7 @@
   $Id:$
   $HeadURL:$
   %%
-  Copyright (C) 2016 iNovex Information Systems, Inc.
+  Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
   %%
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU Affero General Public License as published by
@@ -20,17 +20,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="branch-block col-xs-12">
-    <block>
-        <block-header>
-            <catalog-breadcrumb></catalog-breadcrumb>
-            <h3 class="entity-title">{{dvm.util.getDctermsValue(dvm.branch, 'title')}}</h3>
-        </block-header>
-        <block-content class="padding">
-            <entity-publisher entity="dvm.branch"></entity-publisher>
-            <entity-dates entity="dvm.branch"></entity-dates>
-            <entity-description entity="dvm.branch"></entity-description>
-            <p><span class="field-name">Head: </span> <span>{{(dvm.branch[dvm.prefixes.catalog + 'head'][0]['@id'] | splitIRI).end}}</span></p>
-        </block-content>
-    </block>
+<div class="entity-publisher">
+    <span class="field-name">Publisher:</span> <span>{{dvm.username}}</span>
 </div>

@@ -153,12 +153,27 @@ public class SimpleEngineManagerTest {
     }
 
     @Test
-    public void testRetrieveUser() throws Exception {
+    public void testRetrieveUserFromEngine() throws Exception {
         Optional<User> result = engineManager.retrieveUser("error", "user");
         verify(engine, times(0)).retrieveUser("user");
         assertFalse(result.isPresent());
 
         result = engineManager.retrieveUser(engine.getClass().getName(), "user");
+        verify(engine).retrieveUser("user");
+        assertTrue(result.isPresent());
+        assertEquals(user, result.get());
+    }
+
+    @Test
+    public void testRetrieveUser() throws Exception {
+        // Setup:
+        when(engine.retrieveUser("error")).thenReturn(Optional.empty());
+
+        Optional<User> result = engineManager.retrieveUser("error");
+        verify(engine).retrieveUser("error");
+        assertFalse(result.isPresent());
+
+        result = engineManager.retrieveUser("user");
         verify(engine).retrieveUser("user");
         assertTrue(result.isPresent());
         assertEquals(user, result.get());

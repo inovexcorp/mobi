@@ -105,7 +105,7 @@ public class MappingRestImpl implements MappingRest {
         String mappingId = mapping.getId().getMappingIdentifier().stringValue();
 
         logger.info("Mapping Uploaded: " + mappingId);
-        return Response.status(200).entity(mappingId).build();
+        return Response.status(201).entity(mappingId).build();
     }
 
     @Override
@@ -125,7 +125,7 @@ public class MappingRestImpl implements MappingRest {
                 .forEach(mappings::add);
         }
 
-        return Response.status(200).entity(mappings.toString()).build();
+        return Response.ok(mappings).build();
     }
 
     @Override
@@ -146,9 +146,9 @@ public class MappingRestImpl implements MappingRest {
         }
 
         if (optMapping.isPresent()) {
-            return Response.status(200).entity(getJsonObject(optMapping.get()).toString()).build();
+            return Response.ok(getJsonObject(optMapping.get())).build();
         } else {
-            throw ErrorUtils.sendError("Mapping not found", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError("Mapping not found", Response.Status.NOT_FOUND);
         }
     }
 
@@ -184,8 +184,22 @@ public class MappingRestImpl implements MappingRest {
                     + rdfFormat.getDefaultFileExtension()).header("Content-Type", rdfFormat.getDefaultMIMEType())
                     .build();
         } else {
-            throw ErrorUtils.sendError("Mapping not found", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError("Mapping not found", Response.Status.NOT_FOUND);
         }
+    }
+
+    @Override
+    public Response updateMapping(String mappingIRI, String newJsonld) {
+        Resource mappingId = factory.createIRI(mappingIRI);
+        try {
+            MappingWrapper newMapping = manager.createMapping(newJsonld);
+            manager.updateMapping(mappingId, newMapping);
+        } catch (IOException e) {
+            throw ErrorUtils.sendError("Error parsing mapping", Response.Status.BAD_REQUEST);
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
+        }
+        return Response.ok().build();
     }
 
     @Override
@@ -204,7 +218,7 @@ public class MappingRestImpl implements MappingRest {
             throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
         }
 
-        return Response.status(200).entity(true).build();
+        return Response.ok().build();
     }
 
     /**

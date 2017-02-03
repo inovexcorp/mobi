@@ -23,6 +23,8 @@ package org.matonto.jaas.rest.impl;
  * #L%
  */
 
+import static org.matonto.rest.util.RestUtils.getActiveUsername;
+
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import org.matonto.jaas.api.config.MatontoConfiguration;
@@ -38,11 +40,11 @@ import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.orm.Thing;
 import org.matonto.rest.util.ErrorUtils;
-import org.matonto.web.security.util.AuthenticationProps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -99,7 +101,7 @@ public class UserRestImpl implements UserRest {
         user.setPassword(tempUser.getPassword().get());
         engineManager.storeUser(RdfEngine.COMPONENT_NAME, user);
         logger.info("Created user " + username.stringValue());
-        return Response.ok().build();
+        return Response.status(201).entity(username.stringValue()).build();
     }
 
     @Override
@@ -108,7 +110,7 @@ public class UserRestImpl implements UserRest {
             throw ErrorUtils.sendError("Username must be provided", Response.Status.BAD_REQUEST);
         }
         User user = engineManager.retrieveUser(RdfEngine.COMPONENT_NAME, username).orElseThrow(() ->
-                ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
+                ErrorUtils.sendError("User " + username + " not found", Response.Status.NOT_FOUND));
         return Response.status(200).entity(user).build();
     }
 
@@ -187,20 +189,21 @@ public class UserRestImpl implements UserRest {
     }
 
     @Override
-    public Response addUserRole(String username, String role) {
-        if (username == null || role == null) {
-            throw ErrorUtils.sendError("Both username and role must be provided", Response.Status.BAD_REQUEST);
+    public Response addUserRoles(String username, List<String> roles) {
+        if (username == null || roles.isEmpty()) {
+            throw ErrorUtils.sendError("Both username and roles must be provided", Response.Status.BAD_REQUEST);
         }
 
         User savedUser = engineManager.retrieveUser(RdfEngine.COMPONENT_NAME, username).orElseThrow(() ->
                 ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
-        Role roleObj = engineManager.getRole(RdfEngine.COMPONENT_NAME, role).orElseThrow(() ->
-                ErrorUtils.sendError("Role " + role + " not found", Response.Status.BAD_REQUEST));
+        Set<Role> roleObjs = new HashSet<>();
+        roles.forEach(s -> roleObjs.add(engineManager.getRole(RdfEngine.COMPONENT_NAME, s).orElseThrow(() ->
+                ErrorUtils.sendError("Role " + s + " not found", Response.Status.BAD_REQUEST))));
         Set<Role> allRoles = savedUser.getHasUserRole();
-        allRoles.add(roleObj);
+        allRoles.addAll(roleObjs);
         savedUser.setHasUserRole(allRoles);
         engineManager.updateUser(RdfEngine.COMPONENT_NAME, savedUser);
-        logger.info("Role " + role + " added to user " + username);
+        logger.info("Role(s) " + String.join(", ", roles) + " added to user " + username);
         return Response.ok().build();
     }
 
@@ -286,7 +289,7 @@ public class UserRestImpl implements UserRest {
      * @param username The required username if the user is not an admin
      */
     private void isAuthorizedUser(ContainerRequestContext context, String username) {
-        String activeUsername = context.getProperty(AuthenticationProps.USERNAME).toString();
+        String activeUsername = getActiveUsername(context);
         if (!engineManager.userExists(activeUsername)) {
             throw ErrorUtils.sendError("User not found", Response.Status.FORBIDDEN);
         }

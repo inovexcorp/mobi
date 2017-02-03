@@ -23,6 +23,7 @@ package org.matonto.platform.config.rest.impl;
  * #L%
  */
 
+import static org.matonto.rest.util.RestUtils.getActiveUsername;
 import static org.matonto.rest.util.RestUtils.modelToJsonld;
 
 import aQute.bnd.annotation.component.Component;
@@ -80,7 +81,7 @@ public class StateRestImpl implements StateRest {
 
     @Override
     public Response getStates(ContainerRequestContext context, String applicationId, List<String> subjectIds) {
-        String username = context.getProperty(AuthenticationProps.USERNAME).toString();
+        String username = getActiveUsername(context);
         Set<Resource> subjects = subjectIds.stream()
                 .map(factory::createIRI)
                 .collect(Collectors.toSet());
@@ -98,7 +99,7 @@ public class StateRestImpl implements StateRest {
 
     @Override
     public Response createState(ContainerRequestContext context, String applicationId, String stateJson) {
-        String username = context.getProperty(AuthenticationProps.USERNAME).toString();
+        String username = getActiveUsername(context);
         Model newState;
         try {
             newState = transformer.matontoModel(Rio.parse(IOUtils.toInputStream(stateJson), "", RDFFormat.JSONLD));
@@ -111,17 +112,21 @@ public class StateRestImpl implements StateRest {
         Resource stateId = (applicationId == null) ? stateManager.storeState(newState, username)
                 : stateManager.storeState(newState, username, applicationId);
 
-        return Response.ok(stateId.stringValue()).build();
+        return Response.status(201).entity(stateId.stringValue()).build();
     }
 
     @Override
     public Response getState(ContainerRequestContext context, String stateId) {
-        String username = context.getProperty(AuthenticationProps.USERNAME).toString();
+        String username = getActiveUsername(context);
         Model state;
         try {
             state = stateManager.getState(factory.createIRI(stateId), username);
         } catch (MatOntoException ex) {
-            throw ErrorUtils.sendError(ex.getMessage(), Response.Status.FORBIDDEN);
+            if (ex.getMessage() != null && ex.getMessage().equals("State not found")) {
+                throw ErrorUtils.sendError(ex.getMessage(), Response.Status.NOT_FOUND);
+            } else {
+                throw ErrorUtils.sendError(ex.getMessage(), Response.Status.FORBIDDEN);
+            }
         }
 
         return Response.ok(convertModel(state)).build();
@@ -129,7 +134,7 @@ public class StateRestImpl implements StateRest {
 
     @Override
     public Response updateState(ContainerRequestContext context, String stateId, String newStateJson) {
-        String username = context.getProperty(AuthenticationProps.USERNAME).toString();
+        String username = getActiveUsername(context);
         Model newState;
         try {
             newState = transformer.matontoModel(Rio.parse(IOUtils.toInputStream(newStateJson), "", RDFFormat.JSONLD));
@@ -149,7 +154,7 @@ public class StateRestImpl implements StateRest {
 
     @Override
     public Response deleteState(ContainerRequestContext context, String stateId) {
-        String username = context.getProperty(AuthenticationProps.USERNAME).toString();
+        String username = getActiveUsername(context);
         try {
             stateManager.deleteState(factory.createIRI(stateId), username);
         } catch (MatOntoException ex) {

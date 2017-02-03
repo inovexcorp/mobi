@@ -144,7 +144,7 @@ public class DelimitedRestImpl implements DelimitedRest {
         Path filePath = Paths.get(TEMP_DIR + "/" + fileName + "." + extension);
 
         saveStreamToFile(new ByteArrayInputStream(fileOutput.toByteArray()), filePath);
-        return Response.status(200).entity(filePath.getFileName().toString()).build();
+        return Response.status(201).entity(filePath.getFileName().toString()).build();
     }
 
     @Override
@@ -159,7 +159,7 @@ public class DelimitedRestImpl implements DelimitedRest {
 
         Path filePath = Paths.get(TEMP_DIR + "/" + fileName);
         saveStreamToFile(new ByteArrayInputStream(fileOutput.toByteArray()), filePath);
-        return Response.status(200).entity(fileName).build();
+        return Response.ok(fileName).build();
     }
 
     @Override
@@ -201,7 +201,7 @@ public class DelimitedRestImpl implements DelimitedRest {
 
         // Write data back to Response
         logger.info("File mapped: " + delimitedFile.getPath());
-        return Response.status(200).entity(result).build();
+        return Response.ok(result).build();
     }
 
     @Override
@@ -313,9 +313,9 @@ public class DelimitedRestImpl implements DelimitedRest {
                 throw ErrorUtils.sendError("Error loading document", Response.Status.BAD_REQUEST);
             }
 
-            return Response.status(200).entity(json).build();
+            return Response.ok(json).build();
         } else {
-            throw ErrorUtils.sendError("Document not found", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError("Document not found", Response.Status.NOT_FOUND);
         }
     }
 
