@@ -97,7 +97,7 @@ describe('Remove Property Overlay directive', function() {
             _.set(ontologyStateSvc.selected, 'key[0]', 'value');
             controller.removeProperty();
             expect(scope.onSubmit).toHaveBeenCalled();
-            expect(ontologyManagerSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
+            expect(ontologyManagerSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                 jasmine.any(Object));
             expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.selected, controller.key,
                 controller.index);

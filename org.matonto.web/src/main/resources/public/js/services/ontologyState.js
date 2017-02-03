@@ -50,8 +50,8 @@
                 self.listItem = {};
             }
             self.afterSave = function() {
-                _.mergeWith(self.listItem.inProgressCommit.additions, self.listItem.additions);
-                _.mergeWith(self.listItem.inProgressCommit.deletions, self.listItem.deletions);
+                self.listItem.inProgressCommit.additions = _.concat(self.listItem.inProgressCommit.additions, self.listItem.additions);
+                self.listItem.inProgressCommit.deletions = _.concat(self.listItem.inProgressCommit.deletions, self.listItem.deletions);
 
                 self.listItem.additions = [];
                 self.listItem.deletions = [];
@@ -148,8 +148,11 @@
 
             self.onEdit = function(iriBegin, iriThen, iriEnd) {
                 var newIRI = iriBegin + iriThen + iriEnd;
+                var oldEntity = angular.copy(self.selected);
                 updateRefsService.update(self.listItem, self.selected['@id'], newIRI);
-                self.selected['@id'] = newIRI;
+                self.getActivePage().entityIRI = newIRI;
+                om.addToAdditions(self.listItem.recordId, angular.copy(self.selected));
+                om.addToDeletions(self.listItem.recordId, oldEntity);
             }
             self.setSelected = function(entityIRI) {
                 self.selected = om.getEntityByRecordId(self.listItem.recordId, entityIRI);
@@ -382,6 +385,8 @@
                     self.setObjectPropertiesOpened(self.listItem.recordId, true);
                 } else if (om.isIndividual(entity)) {
                     commonGoTo('individuals', iri);
+                } else if (om.isOntology(entity)) {
+                    commonGoTo('project', iri);
                 }
             }
             function commonGoTo(key, iri, index) {

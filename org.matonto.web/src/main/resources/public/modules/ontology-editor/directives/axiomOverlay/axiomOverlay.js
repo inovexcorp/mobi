@@ -55,7 +55,7 @@
                         } else {
                             dvm.sm.selected[axiom] = values;
                         }
-                        dvm.om.addToAdditions(dvm.sm.listItem.ontologyId, {'@id': dvm.sm.selected['@id'],
+                        dvm.om.addToAdditions(dvm.sm.listItem.recordId, {'@id': dvm.sm.selected['@id'],
                             [axiom]: values});
                         dvm.sm.showAxiomOverlay = false;
                     }

@@ -578,23 +578,23 @@
                 return deferred.promise;
             }
 
-            function addToInProgress(ontologyId, json, prop) {
-                var listItem = self.getListItemById(ontologyId);
+            function addToInProgress(recordId, json, prop) {
+                var listItem = self.getListItemByRecordId(recordId);
                 var entity = _.find(listItem[prop], {'@id': json['@id']});
                 json = $filter('removeMatonto')(json);
                 if (entity) {
                     _.mergeWith(entity, json, util.mergingArrays);
-                } else {
+                } else  {
                     listItem[prop].push(json);
                 }
             }
 
-            self.addToAdditions = function(ontologyId, json) {
-                addToInProgress(ontologyId, json, 'additions');
+            self.addToAdditions = function(recordId, json) {
+                addToInProgress(recordId, json, 'additions');
             }
 
-            self.addToDeletions = function(ontologyId, json) {
-                addToInProgress(ontologyId, json, 'deletions');
+            self.addToDeletions = function(recordId, json) {
+                addToInProgress(recordId, json, 'deletions');
             }
             /**
              * @ngdoc method

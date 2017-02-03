@@ -56,7 +56,7 @@
                     dvm.addAnnotation = function() {
                         dvm.pm.add(dvm.sm.selected, dvm.ro.getItemIri(dvm.sm.annotationSelect), dvm.sm.annotationValue,
                             _.get(dvm.sm.annotationType, '@id'));
-                        dvm.om.addToAdditions(dvm.sm.listItem.ontologyId, createJson(dvm.sm.annotationValue));
+                        dvm.om.addToAdditions(dvm.sm.listItem.recordId, createJson(dvm.sm.annotationValue));
                         dvm.sm.showAnnotationOverlay = false;
                     }
 
@@ -64,10 +64,10 @@
                         var property = dvm.ro.getItemIri(dvm.sm.annotationSelect);
                         var oldValue = _.get(dvm.sm.selected, "['" + property + "']['" + dvm.sm.annotationIndex
                             + "']['@value']");
-                        dvm.om.addToDeletions(dvm.sm.listItem.ontologyId, createJson(oldValue));
+                        dvm.om.addToDeletions(dvm.sm.listItem.recordId, createJson(oldValue));
                         dvm.pm.edit(dvm.sm.selected, property, dvm.sm.annotationValue, dvm.sm.annotationIndex,
                             _.get(dvm.sm.annotationType, '@id'));
-                        dvm.om.addToAdditions(dvm.sm.listItem.ontologyId, createJson(dvm.sm.annotationValue));
+                        dvm.om.addToAdditions(dvm.sm.listItem.recordId, createJson(dvm.sm.annotationValue));
                         dvm.sm.showAnnotationOverlay = false;
                     }
                 }

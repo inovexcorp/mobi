@@ -26,7 +26,7 @@
             <block-content class="padding">
                 <div ng-if="dvm.list.length">
                     <error-display ng-if="!dvm.os.listItem.upToDate">There have been other commits made on this Branch.</error-display>
-                    <div class="property-values" ng-repeat="id in dvm.list">
+                    <div class="property-values" ng-repeat="id in dvm.list | orderBy:dvm.util.getBeautifulIRI">
                         <h5 ng-click="isClosed = !isClosed" class="clearfix">
                             <p class="text">{{dvm.util.getBeautifulIRI(id)}} <small><a ng-click="dvm.go($event, id)">{{id}}</a></small></p><i class="fa fa-fw" ng-class="{'fa-chevron-down': isClosed, 'fa-chevron-up': !isClosed}"></i>
                         </h5>

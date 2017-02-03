@@ -54,9 +54,7 @@
         </div>
         <!-- buttons -->
         <div class="btn-container clearfix">
-            <button type="button" class="btn btn-primary pull-right"
-                    ng-click="onEdit({iriBegin: dvm.iriBegin, iriThen: dvm.iriThen, iriEnd: dvm.iriEnd}); dvm.afterEdit()"
-                    ng-disabled="dvm.iriForm.$invalid">Edit</button>
+            <button type="button" class="btn btn-primary pull-right" ng-click="onEdit({iriBegin: dvm.iriBegin, iriThen: dvm.iriThen, iriEnd: dvm.iriEnd}); dvm.afterEdit()" ng-disabled="dvm.iriForm.$invalid">Edit</button>
             <button type="button" class="btn btn-default pull-right" ng-click="dvm.sm.showIriOverlay = false">Cancel</button>
             <button type="button" class="btn btn-primary pull-left" ng-click="dvm.resetVariables()"><i class="fa fa-refresh"></i></button>
         </div>

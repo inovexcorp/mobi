@@ -324,17 +324,17 @@ describe('Ontology Manager service', function() {
         it('when entity is in the additions list', function() {
             var statement = {'@id': 'id', 'prop': 'value'};
             var listItem = {'additions': [{'@id': 'id'}]};
-            spyOn(ontologyManagerSvc, 'getListItemById').and.returnValue(listItem);
-            ontologyManagerSvc.addToAdditions(ontologyId, statement);
-            expect(ontologyManagerSvc.getListItemById).toHaveBeenCalledWith(ontologyId);
+            spyOn(ontologyManagerSvc, 'getListItemByRecordId').and.returnValue(listItem);
+            ontologyManagerSvc.addToAdditions(recordId, statement);
+            expect(ontologyManagerSvc.getListItemByRecordId).toHaveBeenCalledWith(recordId);
             expect(listItem.additions[0]).toEqual(statement);
         });
         it('when entity is not in the additions list', function() {
             var statement = {'@id': 'id', 'prop': 'value'};
             var listItem = {'additions': []};
-            spyOn(ontologyManagerSvc, 'getListItemById').and.returnValue(listItem);
-            ontologyManagerSvc.addToAdditions(ontologyId, statement);
-            expect(ontologyManagerSvc.getListItemById).toHaveBeenCalledWith(ontologyId);
+            spyOn(ontologyManagerSvc, 'getListItemByRecordId').and.returnValue(listItem);
+            ontologyManagerSvc.addToAdditions(recordId, statement);
+            expect(ontologyManagerSvc.getListItemByRecordId).toHaveBeenCalledWith(recordId);
             expect(listItem.additions[0]).toEqual(statement);
         });
     });
@@ -343,17 +343,17 @@ describe('Ontology Manager service', function() {
         it('when entity is in the deletions list', function() {
             var statement = {'@id': 'id', 'prop': 'value'};
             var listItem = {'deletions': [{'@id': 'id'}]};
-            spyOn(ontologyManagerSvc, 'getListItemById').and.returnValue(listItem);
-            ontologyManagerSvc.addToDeletions(ontologyId, statement);
-            expect(ontologyManagerSvc.getListItemById).toHaveBeenCalledWith(ontologyId);
+            spyOn(ontologyManagerSvc, 'getListItemByRecordId').and.returnValue(listItem);
+            ontologyManagerSvc.addToDeletions(recordId, statement);
+            expect(ontologyManagerSvc.getListItemByRecordId).toHaveBeenCalledWith(recordId);
             expect(listItem.deletions[0]).toEqual(statement);
         });
         it('when entity is not in the deletions list', function() {
             var statement = {'@id': 'id', 'prop': 'value'};
             var listItem = {'deletions': []};
-            spyOn(ontologyManagerSvc, 'getListItemById').and.returnValue(listItem);
-            ontologyManagerSvc.addToDeletions(ontologyId, statement);
-            expect(ontologyManagerSvc.getListItemById).toHaveBeenCalledWith(ontologyId);
+            spyOn(ontologyManagerSvc, 'getListItemByRecordId').and.returnValue(listItem);
+            ontologyManagerSvc.addToDeletions(recordId, statement);
+            expect(ontologyManagerSvc.getListItemByRecordId).toHaveBeenCalledWith(recordId);
             expect(listItem.deletions[0]).toEqual(statement);
         });
     });

@@ -184,7 +184,7 @@ describe('Ontology Property Overlay directive', function() {
                 expect(resObj.getItemIri).toHaveBeenCalledWith(ontologyStateSvc.ontologyProperty);
                 expect(propertyManagerSvc.add).toHaveBeenCalledWith(ontologyStateSvc.selected,
                     resObj.getItemIri(ontologyStateSvc.ontologyProperty), ontologyStateSvc.ontologyPropertyIRI);
-                expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
+                expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                     jasmine.any(Object));
                 expect(ontologyStateSvc.showOntologyPropertyOverlay).toBe(false);
             });
@@ -194,7 +194,7 @@ describe('Ontology Property Overlay directive', function() {
                 expect(resObj.getItemIri).toHaveBeenCalledWith(ontologyStateSvc.ontologyProperty);
                 expect(propertyManagerSvc.add).toHaveBeenCalledWith(ontologyStateSvc.selected,
                     resObj.getItemIri(ontologyStateSvc.ontologyProperty), ontologyStateSvc.ontologyPropertyValue);
-                expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
+                expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                     jasmine.any(Object));
                 expect(ontologyStateSvc.showOntologyPropertyOverlay).toBe(false);
             });
@@ -203,7 +203,7 @@ describe('Ontology Property Overlay directive', function() {
                 expect(resObj.getItemIri).toHaveBeenCalledWith(ontologyStateSvc.ontologyProperty);
                 expect(propertyManagerSvc.add).toHaveBeenCalledWith(ontologyStateSvc.selected,
                     resObj.getItemIri(ontologyStateSvc.ontologyProperty), '');
-                expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
+                expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                     jasmine.any(Object));
                 expect(ontologyStateSvc.showOntologyPropertyOverlay).toBe(false);
             });
@@ -212,38 +212,38 @@ describe('Ontology Property Overlay directive', function() {
             it('when isOntologyProperty is true', function() {
                 spyOn(controller, 'isOntologyProperty').and.returnValue(true);
                 controller.editProperty();
-                expect(ontologyManagerSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
+                expect(ontologyManagerSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                     jasmine.any(Object));
                 expect(resObj.getItemIri).toHaveBeenCalledWith(ontologyStateSvc.ontologyProperty);
                 expect(propertyManagerSvc.edit).toHaveBeenCalledWith(ontologyStateSvc.selected,
                     resObj.getItemIri(ontologyStateSvc.ontologyProperty), ontologyStateSvc.ontologyPropertyIRI,
                     ontologyStateSvc.ontologyPropertyIndex);
-                expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
+                expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                     jasmine.any(Object));
                 expect(ontologyStateSvc.showOntologyPropertyOverlay).toBe(false);
             });
             it('when isAnnotationProperty is true', function() {
                 spyOn(controller, 'isAnnotationProperty').and.returnValue(true);
                 controller.editProperty();
-                expect(ontologyManagerSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
+                expect(ontologyManagerSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                     jasmine.any(Object));
                 expect(resObj.getItemIri).toHaveBeenCalledWith(ontologyStateSvc.ontologyProperty);
                 expect(propertyManagerSvc.edit).toHaveBeenCalledWith(ontologyStateSvc.selected,
                     resObj.getItemIri(ontologyStateSvc.ontologyProperty), ontologyStateSvc.ontologyPropertyValue,
                     ontologyStateSvc.ontologyPropertyIndex);
-                expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
+                expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                     jasmine.any(Object));
                 expect(ontologyStateSvc.showOntologyPropertyOverlay).toBe(false);
             });
             it('when neither are true', function() {
                 controller.editProperty();
-                expect(ontologyManagerSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
+                expect(ontologyManagerSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                     jasmine.any(Object));
                 expect(resObj.getItemIri).toHaveBeenCalledWith(ontologyStateSvc.ontologyProperty);
                 expect(propertyManagerSvc.edit).toHaveBeenCalledWith(ontologyStateSvc.selected,
                     resObj.getItemIri(ontologyStateSvc.ontologyProperty), '',
                     ontologyStateSvc.ontologyPropertyIndex);
-                expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
+                expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                     jasmine.any(Object));
                 expect(ontologyStateSvc.showOntologyPropertyOverlay).toBe(false);
             });

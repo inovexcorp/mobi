@@ -73,7 +73,7 @@ describe('Axiom Overlay directive', function() {
     describe('controller methods', function() {
         it('addAxiom should call the appropriate manager functions', function() {
             controller.addAxiom();
-            expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
+            expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                 jasmine.any(Object));
             expect(ontologyStateSvc.showAxiomOverlay).toBe(false);
         });

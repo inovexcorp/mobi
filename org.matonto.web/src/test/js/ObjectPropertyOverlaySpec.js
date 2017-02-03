@@ -114,7 +114,7 @@ describe('Object Property Overlay directive', function() {
             expect(ontologyStateSvc.selected.prop).toBeDefined();
             expect(ontologyStateSvc.selected.prop).toContain(value);
             expect(ontologyStateSvc.showObjectPropertyOverlay).toBe(false);
-            expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
+            expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                 jasmine.any(Object));
         });
         it('should edit an object property', function() {
@@ -123,11 +123,11 @@ describe('Object Property Overlay directive', function() {
             ontologyStateSvc.propertyIndex = 0;
             responseObj.getItemIri.and.returnValue('prop');
             controller.editProperty({}, value);
-            expect(ontologyManagerSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
+            expect(ontologyManagerSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                 jasmine.any(Object));
             expect(ontologyStateSvc.selected.prop[ontologyStateSvc.propertyIndex]).toEqual(value);
             expect(ontologyStateSvc.showObjectPropertyOverlay).toBe(false);
-            expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
+            expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                 jasmine.any(Object));
         });
     });
