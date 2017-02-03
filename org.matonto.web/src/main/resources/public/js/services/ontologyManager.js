@@ -353,7 +353,7 @@
                             branchId = _.get(masterBranch, '@id', '');
                             cm.getBranchHeadCommit(branchId, recordId, catalogId)
                                 .then(headCommit => {
-                                    commitId = _.get(headCommit, "commit[0]['@graph'][0]['@id']", '');
+                                    commitId = _.get(headCommit, "commit['@id']", '');
                                     sm.createOntologyState(recordId, branchId, commitId)
                                         .then(() => cm.getResource(commitId, branchId, recordId, catalogId, false, rdfFormat)
                                             .then(ontology => resolve(ontology, emptyInProgressCommit), deferred.reject),
@@ -492,7 +492,7 @@
                     .then(response =>
                         cm.getBranchHeadCommit(response.branchId, recordId, catalogId)
                             .then(headCommit => {
-                                var commitId = _.get(headCommit, "commit[0]['@graph'][0]['@id']", '');
+                                var commitId = _.get(headCommit, "commit['@id']", '');
                                 var upToDate = commitId === response.commitId;
                                 if (type === 'ontology') {
                                     addOntologyToList(response.ontologyId, response.recordId, response.branchId,

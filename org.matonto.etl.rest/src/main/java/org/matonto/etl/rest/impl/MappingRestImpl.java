@@ -23,6 +23,9 @@ package org.matonto.etl.rest.impl;
  * #L%
  */
 
+import static org.matonto.rest.util.RestUtils.getRDFFormat;
+import static org.matonto.rest.util.RestUtils.modelToString;
+
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import net.sf.json.JSONArray;
@@ -42,17 +45,15 @@ import org.openrdf.rio.Rio;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
 import java.io.BufferedWriter;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
 
 @Component(immediate = true)
 public class MappingRestImpl implements MappingRest {
@@ -104,7 +105,7 @@ public class MappingRestImpl implements MappingRest {
         String mappingId = mapping.getId().getMappingIdentifier().stringValue();
 
         logger.info("Mapping Uploaded: " + mappingId);
-        return Response.status(200).entity(mappingId).build();
+        return Response.status(201).entity(mappingId).build();
     }
 
     @Override
@@ -124,7 +125,7 @@ public class MappingRestImpl implements MappingRest {
                 .forEach(mappings::add);
         }
 
-        return Response.status(200).entity(mappings.toString()).build();
+        return Response.ok(mappings).build();
     }
 
     @Override
@@ -145,9 +146,9 @@ public class MappingRestImpl implements MappingRest {
         }
 
         if (optMapping.isPresent()) {
-            return Response.status(200).entity(getJsonObject(optMapping.get()).toString()).build();
+            return Response.ok(getJsonObject(optMapping.get())).build();
         } else {
-            throw ErrorUtils.sendError("Mapping not found", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError("Mapping not found", Response.Status.NOT_FOUND);
         }
     }
 
@@ -183,8 +184,22 @@ public class MappingRestImpl implements MappingRest {
                     + rdfFormat.getDefaultFileExtension()).header("Content-Type", rdfFormat.getDefaultMIMEType())
                     .build();
         } else {
-            throw ErrorUtils.sendError("Mapping not found", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError("Mapping not found", Response.Status.NOT_FOUND);
         }
+    }
+
+    @Override
+    public Response updateMapping(String mappingIRI, String newJsonld) {
+        Resource mappingId = factory.createIRI(mappingIRI);
+        try {
+            MappingWrapper newMapping = manager.createMapping(newJsonld);
+            manager.updateMapping(mappingId, newMapping);
+        } catch (IOException e) {
+            throw ErrorUtils.sendError("Error parsing mapping", Response.Status.BAD_REQUEST);
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
+        }
+        return Response.ok().build();
     }
 
     @Override
@@ -203,7 +218,7 @@ public class MappingRestImpl implements MappingRest {
             throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
         }
 
-        return Response.status(200).entity(true).build();
+        return Response.ok().build();
     }
 
     /**
@@ -219,9 +234,7 @@ public class MappingRestImpl implements MappingRest {
         String mapping;
         Optional<MappingWrapper> mappingModel = manager.retrieveMapping(mappingIRI);
         if (mappingModel.isPresent()) {
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            Rio.write(transformer.sesameModel(mappingModel.get().getModel()), out, format);
-            mapping = new String(out.toByteArray(), StandardCharsets.UTF_8);
+            mapping = modelToString(transformer.sesameModel(mappingModel.get().getModel()), format);
         } else {
             return Optional.empty();
         }
@@ -238,23 +251,5 @@ public class MappingRestImpl implements MappingRest {
     private JSONObject getJsonObject(String jsonld) {
         JSONArray arr = JSONArray.fromObject(jsonld);
         return arr.getJSONObject(0);
-    }
-
-    /**
-     * Returns the specified RDFFormat. Currently supports Turtle, RDF/XML, and JSON-LD.
-     *
-     * @param format the abbreviated name of a RDFFormat
-     * @return a RDFFormat object with the requested format
-     */
-    private RDFFormat getRDFFormat(String format) {
-        switch (format.toLowerCase()) {
-            case "turtle":
-                return RDFFormat.TURTLE;
-            case "rdf/xml":
-                return RDFFormat.RDFXML;
-            case "jsonld":
-            default:
-                return RDFFormat.JSONLD;
-        }
     }
 }

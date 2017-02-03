@@ -558,7 +558,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         Response response = target().path("ontologies").request().post(Entity.entity(fd,
                 MediaType.MULTIPART_FORM_DATA));
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(response.getStatus(), 201);
         assertGetUserFromContext();
         verify(ontologyManager).createOntology(any(FileInputStream.class));
         verify(ontology).getOntologyId();
@@ -991,7 +991,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/annotations").request()
                 .post(Entity.json(entity));
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(response.getStatus(), 201);
         assertAdditionsToInProgressCommit(true);
     }
 
@@ -1024,7 +1024,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/annotations").request()
                 .post(Entity.json(entity));
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(response.getStatus(), 201);
         assertAdditionsToInProgressCommit(false);
     }
 
@@ -1214,7 +1214,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/classes").request()
                 .post(Entity.json(entity));
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(response.getStatus(), 201);
         assertAdditionsToInProgressCommit(true);
     }
 
@@ -1247,7 +1247,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/classes").request()
                 .post(Entity.json(entity));
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(response.getStatus(), 201);
         assertAdditionsToInProgressCommit(false);
     }
 
@@ -1437,7 +1437,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/datatypes").request()
                 .post(Entity.json(entity));
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(response.getStatus(), 201);
         assertAdditionsToInProgressCommit(true);
     }
 
@@ -1470,7 +1470,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/datatypes").request()
                 .post(Entity.json(entity));
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(response.getStatus(), 201);
         assertAdditionsToInProgressCommit(false);
     }
 
@@ -1660,7 +1660,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/object-properties")
                 .request().post(Entity.json(entity));
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(response.getStatus(), 201);
         assertAdditionsToInProgressCommit(true);
     }
 
@@ -1693,7 +1693,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/object-properties")
                 .request().post(Entity.json(entity));
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(response.getStatus(), 201);
         assertAdditionsToInProgressCommit(false);
     }
 
@@ -1883,7 +1883,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/data-properties")
                 .request().post(Entity.json(entity));
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(response.getStatus(), 201);
         assertAdditionsToInProgressCommit(true);
     }
 
@@ -1916,7 +1916,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/data-properties")
                 .request().post(Entity.json(entity));
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(response.getStatus(), 201);
         assertAdditionsToInProgressCommit(false);
     }
 
@@ -2106,7 +2106,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/named-individuals")
                 .request().post(Entity.json(entity));
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(response.getStatus(), 201);
         assertAdditionsToInProgressCommit(true);
     }
 
@@ -2139,7 +2139,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         Response response = target().path("ontologies/" + encode(ontologyIRI.stringValue()) + "/named-individuals")
                 .request().post(Entity.json(entity));
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(response.getStatus(), 201);
         assertAdditionsToInProgressCommit(false);
     }
 

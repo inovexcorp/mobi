@@ -26,7 +26,6 @@ describe('Record Block directive', function() {
         catalogManagerSvc,
         catalogStateSvc,
         utilSvc,
-        $timeout,
         $q,
         controller;
 
@@ -37,13 +36,12 @@ describe('Record Block directive', function() {
         mockCatalogState();
         mockUtil();
 
-        inject(function(_$compile_, _$rootScope_, _catalogManagerService_, _catalogStateService_, _utilService_, _$timeout_, _$q_) {
+        inject(function(_$compile_, _$rootScope_, _catalogManagerService_, _catalogStateService_, _utilService_, _$q_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             catalogManagerSvc = _catalogManagerService_;
             catalogStateSvc = _catalogStateService_;
             utilSvc = _utilService_;
-            $timeout = _$timeout_;
             $q = _$q_;
         });
 
@@ -91,7 +89,7 @@ describe('Record Block directive', function() {
                 it('unless an error occurs', function() {
                     catalogManagerSvc.getRecordBranches.and.returnValue($q.reject('Error Message'));
                     controller.changeSort();
-                    $timeout.flush();
+                    scope.$apply();
                     expect(catalogManagerSvc.getRecordBranches).toHaveBeenCalledWith(controller.record['@id'], catalogStateSvc.catalogs.local['@id'], this.expectedPaginationConfig);
                     expect(catalogStateSvc.currentPage).toBe(0);
                     expect(catalogStateSvc.setPagination).not.toHaveBeenCalled();
@@ -99,7 +97,7 @@ describe('Record Block directive', function() {
                 });
                 it('succesfully', function() {
                     controller.changeSort();
-                    $timeout.flush();
+                    scope.$apply();
                     expect(catalogManagerSvc.getRecordBranches).toHaveBeenCalledWith(controller.record['@id'], catalogStateSvc.catalogs.local['@id'], this.expectedPaginationConfig);
                     expect(catalogStateSvc.currentPage).toBe(0);
                     expect(catalogStateSvc.setPagination).toHaveBeenCalled();

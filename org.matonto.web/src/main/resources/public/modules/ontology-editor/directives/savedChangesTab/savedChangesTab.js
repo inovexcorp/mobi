@@ -74,7 +74,7 @@
                     dvm.update = function() {
                         cm.getBranchHeadCommit(dvm.os.listItem.branchId, dvm.os.listItem.recordId, catalogId)
                             .then(headCommit => {
-                                var commitId = _.get(headCommit, "commit[0]['@graph'][0]['@id']", '');
+                                var commitId = _.get(headCommit, "commit", '');
                                 dvm.om.updateOntology(dvm.os.listItem.recordId, dvm.os.listItem.branchId, commitId,
                                     dvm.os.listItem.type).then(() =>
                                         dvm.util.createSuccessToast('Your ontology has been updated.'),

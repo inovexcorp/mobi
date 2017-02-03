@@ -30,11 +30,9 @@ describe('Ontology Manager service', function() {
     var format = 'jsonld';
     var ontology = [];
     var commitObj = {
-        commit: [{
-            '@graph': [{
-                '@id': commitId
-            }]
-        }]
+        commit: {
+            '@id': commitId
+        }
     }
     var file = {};
     var title = 'title';

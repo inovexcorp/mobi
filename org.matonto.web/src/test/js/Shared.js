@@ -233,6 +233,7 @@ function mockMappingManager() {
             this.upload = jasmine.createSpy('upload').and.returnValue($q.when());
             this.getMapping = jasmine.createSpy('getMapping').and.returnValue($q.when([]));
             this.downloadMapping = jasmine.createSpy('downloadMapping');
+            this.updateMapping = jasmine.createSpy('updateMapping').and.returnValue($q.when());
             this.deleteMapping = jasmine.createSpy('deleteMapping').and.returnValue($q.when());
             this.getMappingId = jasmine.createSpy('getMappingId').and.returnValue('');
             this.createNewMapping = jasmine.createSpy('createNewMapping').and.returnValue([]);
@@ -328,6 +329,7 @@ function mockMapperState() {
             this.selectedPropMappingId = '';
             this.newProp = false;
             this.highlightIndexes = [];
+            this.changedMapping = false;
 
             this.initialize = jasmine.createSpy('initialize');
             this.resetEdit = jasmine.createSpy('resetEdit');
@@ -553,6 +555,7 @@ function mockUserManager() {
             this.groups = [];
             this.reset = jasmine.createSpy('reset');
             this.initialize = jasmine.createSpy('initialize');
+            this.getUsername = jasmine.createSpy('getUsername').and.returnValue($q.when(''));
             this.setUsers = jasmine.createSpy('setUsers').and.returnValue($q.when());
             this.setGroups = jasmine.createSpy('setGroups').and.returnValue($q.when());
             this.addUser = jasmine.createSpy('addUser').and.returnValue($q.when());
@@ -560,7 +563,7 @@ function mockUserManager() {
             this.updateUser = jasmine.createSpy('updateUser').and.returnValue($q.when());
             this.updatePassword = jasmine.createSpy('updatePassword').and.returnValue($q.when());
             this.deleteUser = jasmine.createSpy('deleteUser').and.returnValue($q.when());
-            this.addUserRole = jasmine.createSpy('addUserRole').and.returnValue($q.when());
+            this.addUserRoles = jasmine.createSpy('addUserRoles').and.returnValue($q.when());
             this.deleteUserRole = jasmine.createSpy('deleteUserRole').and.returnValue($q.when());
             this.addUserGroup = jasmine.createSpy('addUserGroup').and.returnValue($q.when());
             this.deleteUserGroup = jasmine.createSpy('deleteUserGroup').and.returnValue($q.when());
@@ -568,8 +571,11 @@ function mockUserManager() {
             this.getGroup = jasmine.createSpy('getGroup').and.returnValue($q.when());
             this.updateGroup = jasmine.createSpy('updateGroup').and.returnValue($q.when());
             this.deleteGroup = jasmine.createSpy('deleteGroup').and.returnValue($q.when());
-            this.addGroupRole = jasmine.createSpy('addGroupRole').and.returnValue($q.when());
+            this.addGroupRoles = jasmine.createSpy('addGroupRoles').and.returnValue($q.when());
             this.deleteGroupRole = jasmine.createSpy('deleteGroupRole').and.returnValue($q.when());
+            this.getGroupUsers = jasmine.createSpy('getGroupUsers').and.returnValue($q.when([]));
+            this.addGroupUsers = jasmine.createSpy('addGroupUsers').and.returnValue($q.when());
+            this.deleteGroupUser = jasmine.createSpy('deleteGroupUser').and.returnValue($q.when());
             this.isAdmin = jasmine.createSpy('isAdmin');
         });
     });
@@ -717,6 +723,7 @@ function mockUtil() {
             this.setDctermsValue = jasmine.createSpy('setDctermsValue').and.returnValue({});
             this.mergingArrays = jasmine.createSpy('mergingArrays');
             this.getDctermsValue = jasmine.createSpy('getPropertyValue').and.returnValue('');
+            this.getDctermsId = jasmine.createSpy('getDctermsId').and.returnValue('');
             this.parseLinks = jasmine.createSpy('parseLinks').and.returnValue({});
             this.createErrorToast = jasmine.createSpy('createErrorToast');
         });

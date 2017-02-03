@@ -58,7 +58,7 @@
                         var branchId = item['@id'];
                         cm.getBranchHeadCommit(branchId, dvm.os.listItem.recordId, catalogId)
                             .then(headCommit => {
-                                var commitId = _.get(headCommit, "commit[0]['@graph'][0]['@id']", '');
+                                var commitId = _.get(headCommit, "commit['@id']", '');
                                 $q.all([
                                     sm.updateOntologyState(dvm.os.listItem.recordId, branchId, commitId),
                                     om.updateOntology(dvm.os.listItem.recordId, branchId, commitId)

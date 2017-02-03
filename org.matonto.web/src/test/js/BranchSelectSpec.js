@@ -27,11 +27,9 @@ describe('Branch Select directive', function() {
     var branch = {'@id': branchId};
     var commitId = 'commitId';
     var headCommit = {
-        commit: [{
-            '@graph': [{
-                '@id': commitId
-            }]
-        }]
+        commit: {
+            '@id': commitId
+        }
     }
 
     beforeEach(function() {
