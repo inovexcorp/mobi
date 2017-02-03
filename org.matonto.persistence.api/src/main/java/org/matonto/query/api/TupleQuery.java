@@ -34,5 +34,4 @@ public interface TupleQuery extends Operation {
      * @throws QueryEvaluationException if there is an error processing the query
      */
     TupleQueryResult evaluate() throws QueryEvaluationException;
-
 }
