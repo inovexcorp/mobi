@@ -27,11 +27,11 @@
         .module('ontologyButtonStack', [])
         .directive('ontologyButtonStack', ontologyButtonStack);
 
-        ontologyButtonStack.$inject = ['$filter', 'ontologyStateService', 'ontologyManagerService',
+        ontologyButtonStack.$inject = ['$q', '$filter', '$http', 'ontologyStateService', 'ontologyManagerService',
             'catalogManagerService', 'utilService', 'updateRefsService'];
 
-        function ontologyButtonStack($filter, ontologyStateService, ontologyManagerService, catalogManagerService,
-            utilService, updateRefsService) {
+        function ontologyButtonStack($q, $filter, $http, ontologyStateService, ontologyManagerService,
+            catalogManagerService, utilService, updateRefsService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -53,12 +53,26 @@
                     dvm.delete = function() {
                         cm.deleteInProgressCommit(dvm.os.listItem.recordId, catalogId)
                             .then(() => {
-                                var ontology = om.getOntologyByRecordId(dvm.os.listItem.recordId);
+                                /*var ontology = om.getOntologyByRecordId(dvm.os.listItem.recordId);
                                 _.forEach(dvm.os.listItem.inProgressCommit.additions, statements => {
                                     var entityIRI = statements['@id'];
                                     var entity = om.getEntity(ontology, entityIRI);
                                     if (_.isEqual(statements, $filter('removeMatonto')(entity))) {
-                                        om.removeEntity(ontology, entityIRI)
+                                        om.removeEntity(ontology, entityIRI);
+                                        dvm.os.unsetEntityByIRI(entityIRI);
+                                        if (dvm.os.state.type === 'vocabulary') {
+                                            dvm.os.deleteEntityFromHierarchy(dvm.os.listItem.conceptHierarchy,
+                                                entityIRI, dvm.os.listItem.conceptIndex);
+                                        } else if (om.isClass(entity)) {
+                                            dvm.os.deleteEntityFromHierarchy(dvm.os.listItem.classHierarchy,
+                                                entityIRI, dvm.os.listItem.classIndex);
+                                        } else if (om.isDataTypeProperty(entity)) {
+                                            dvm.os.deleteEntityFromHierarchy(dvm.os.listItem.dataPropertyHierarchy,
+                                                entityIRI, dvm.os.listItem.dataPropertyIndex);
+                                        } else if (om.isObjectProperty(entity)) {
+                                            dvm.os.deleteEntityFromHierarchy(dvm.os.listItem.objectPropertyHierarchy,
+                                                entityIRI, dvm.os.listItem.objectPropertyIndex);
+                                        }
                                     } else {
                                         _.unset(statements, '@id');
                                         _.forOwn(statements, (value, key) => update.remove(entity[key], value));
@@ -71,14 +85,53 @@
                                     } else {
                                         _.mergeWith(entity, statements, util.mergingArrays);
                                     }
-                                });
-                                /*om.getOntology(dvm.os.listItem.ontologyId, dvm.os.listItem.recordId)
-                                    .then(response => {
-                                        dvm.os.state.ontology = response.ontology;
-                                        dvm.showDeleteOverlay = false;
-                                    }, errorMessage => dvm.error = errorMessage);*/
-                                dvm.os.clearInProgressCommit();
-                                dvm.showDeleteOverlay = false;
+                                });*/
+                                var config = {
+                                    params: {
+                                        branchId: dvm.os.listItem.branchId,
+                                        commitId: dvm.os.listItem.commitId
+                                    }
+                                }
+                                var onSuccess = function() {
+                                    dvm.os.clearInProgressCommit();
+                                    dvm.showDeleteOverlay = false;
+                                }
+                                var listItem = om.getListItemByRecordId(dvm.os.listItem.recordId);
+                                if (dvm.os.state.type === 'ontology') {
+                                    $q.all([
+                                        om.getOntology(dvm.os.listItem.ontologyId, dvm.os.listItem.recordId)
+                                            .then(response => {
+                                                listItem.ontology = response.ontology;
+                                            }),
+                                        om.getClassHierarchies(dvm.os.listItem.ontologyId, dvm.os.listItem.branchId,
+                                            dvm.os.listItem.commitId).then(response => {
+                                                listItem.classHierarchy = response.data.hierarchy;
+                                                listItem.classIndex = response.data.index;
+                                            }),
+                                        om.getDataPropertyHierarchies(dvm.os.listItem.ontologyId,
+                                            dvm.os.listItem.branchId, dvm.os.listItem.commitId).then(response => {
+                                                listItem.dataPropertyHierarchy = response.data.hierarchy;
+                                                listItem.dataPropertyIndex = response.data.index;
+                                            }),
+                                        om.getObjectPropertyHierarchies(dvm.os.listItem.ontologyId,
+                                            dvm.os.listItem.branchId, dvm.os.listItem.commitId).then(response => {
+                                                listItem.objectPropertyHierarchy = response.data.hierarchy;
+                                                listItem.objectPropertyIndex = response.data.index;
+                                            })
+                                    ]).then(onSuccess);
+                                } else if (dvm.os.state.type === 'vocabulary') {
+                                    $q.all([
+                                        om.getOntology(dvm.os.listItem.ontologyId, dvm.os.listItem.recordId)
+                                            .then(response => {
+                                                listItem.ontology = response.ontology;
+                                            }),
+                                        om.getConceptHierarchies(dvm.os.listItem.ontologyId, dvm.os.listItem.branchId,
+                                            dvm.os.listItem.commitId).then(response => {
+                                                listItem.conceptHierarchy = response.data.hierarchy;
+                                                listItem.conceptIndex = response.data.index;
+                                            })
+                                    ]).then(onSuccess);
+                                }
                             }, errorMessage => dvm.error = errorMessage);
                     }
                 }

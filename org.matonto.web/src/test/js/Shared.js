@@ -493,6 +493,7 @@ function mockOntologyState() {
             this.unSelectItem = jasmine.createSpy('unSelectItem');
             this.clearInProgressCommit = jasmine.createSpy('clearInProgressCommit');
             this.resetStateTabs = jasmine.createSpy('resetStateTabs');
+            this.unsetEntityByIRI = jasmine.createSpy('unsetEntityByIRI');
         });
     });
 }

@@ -58,9 +58,7 @@
         function ontologyManagerService($window, $http, $q, $timeout, $filter, prefixes,
             propertyManagerService, catalogManagerService, utilService, stateManagerService) {
             var self = this;
-            var prefix = '/matontorest/';
-            var ontologyPrefix = prefix + 'ontologies';
-            var catalogPrefix = prefix + 'catalogs/';
+            var prefix = '/matontorest/ontologies';
             var defaultDatatypes = _.map(['anyURI', 'boolean', 'byte', 'dateTime', 'decimal', 'double', 'float', 'int',
                 'integer', 'language', 'long', 'string'], function(item) {
                 return {
@@ -327,7 +325,7 @@
                 if (keywords) {
                     fd.append('keywords', keywords);
                 }
-                return $http.post(ontologyPrefix, fd, config);
+                return $http.post(prefix, fd, config);
             }
             /**
              * @ngdoc method
@@ -400,7 +398,7 @@
              * @returns {Promise} A promise indicating whether the ontology was persisted.
              */
             self.downloadOntologyFile = function(ontologyId, rdfFormat = 'jsonld', fileName = 'ontology') {
-                $window.location = ontologyPrefix + '/' + encodeURIComponent(ontologyId)
+                $window.location = prefix + '/' + encodeURIComponent(ontologyId)
                     + `?rdfFormat=${rdfFormat}&fileName=${fileName}`;
             }
             /**
@@ -747,7 +745,7 @@
                 if (keywords) {
                     config.params.keywords = keywords;
                 }
-                $http.post(ontologyPrefix, ontologyJson, config)
+                $http.post(prefix, ontologyJson, config)
                     .then(response => {
                         var listItem = {};
                         if (type === 'ontology') {
@@ -846,7 +844,7 @@
              * @returns {Promise} A promise with a boolean indicating the success of the deletion.
              */
             self.deleteClass = function(ontologyId, classIRI) {
-                return $http.delete(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/classes/'
+                return $http.delete(prefix + '/' + encodeURIComponent(ontologyId) + '/classes/'
                     + encodeURIComponent(classIRI));
             }
             /**
@@ -869,7 +867,7 @@
                         resourcejson: classJSON
                     }
                 };
-                return $http.post(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/classes', null, config);
+                return $http.post(prefix + '/' + encodeURIComponent(ontologyId) + '/classes', null, config);
             }
             /**
              * @ngdoc method
@@ -886,7 +884,7 @@
              */
             self.updateClassHierarchies = function(ontologyId) {
                 var deferred = $q.defer();
-                $http.get(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/class-hierarchies')
+                $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/class-hierarchies')
                     .then(hierarchyResponse => {
                         if (_.get(hierarchyResponse, 'status') === 200) {
                             var listItem = self.getListItemById(ontologyId);
@@ -1100,7 +1098,7 @@
              * @returns {Promise} A promise with a boolean indicating the success of the deletion.
              */
             self.deleteObjectProperty = function(ontologyId, propertyIRI) {
-                return $http.delete(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/object-properties/'
+                return $http.delete(prefix + '/' + encodeURIComponent(ontologyId) + '/object-properties/'
                     + encodeURIComponent(propertyIRI));
             }
             /**
@@ -1124,7 +1122,7 @@
                         resourcejson: propertyJSON
                     }
                 };
-                return $http.post(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/object-properties', null,
+                return $http.post(prefix + '/' + encodeURIComponent(ontologyId) + '/object-properties', null,
                     config);
             }
             /**
@@ -1187,7 +1185,7 @@
              * @returns {Promise} A promise with a boolean indicating the success of the deletion.
              */
             self.deleteDataTypeProperty = function(ontologyId, propertyIRI) {
-                return $http.delete(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/data-properties/'
+                return $http.delete(prefix + '/' + encodeURIComponent(ontologyId) + '/data-properties/'
                     + encodeURIComponent(propertyIRI));
             }
             /**
@@ -1211,7 +1209,7 @@
                         resourcejson: propertyJSON
                     }
                 };
-                return $http.post(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/data-properties', null,
+                return $http.post(prefix + '/' + encodeURIComponent(ontologyId) + '/data-properties', null,
                     config);
             }
             /**
@@ -1378,7 +1376,7 @@
              * @returns {Promise} A promise with a boolean indicating the success of the deletion.
              */
             self.deleteIndividual = function(ontologyId, individualIRI) {
-                return $http.delete(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/named-individuals/'
+                return $http.delete(prefix + '/' + encodeURIComponent(ontologyId) + '/named-individuals/'
                     + encodeURIComponent(individualIRI));
             }
             /**
@@ -1402,7 +1400,7 @@
                         resourcejson: individualJSON
                     }
                 };
-                return $http.post(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/named-individuals', null,
+                return $http.post(prefix + '/' + encodeURIComponent(ontologyId) + '/named-individuals', null,
                     config);
             }
             /**
@@ -1607,7 +1605,7 @@
                         commitId
                     }
                 };
-                $http.get(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/imported-ontologies', null, config)
+                $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/imported-ontologies', null, config)
                     .then(response => {
                         if(_.get(response, 'status') === 200 && _.has(response, 'data')) {
                             deferred.resolve(response.data);
@@ -1635,7 +1633,7 @@
             self.getEntityUsages = function(recordId, entityIRI) {
                 var deferred = $q.defer();
                 var ontologyId = self.getListItemByRecordId(recordId).ontologyId;
-                $http.get(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/entity-usages/'
+                $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/entity-usages/'
                     + encodeURIComponent(entityIRI)).then(response => {
                         if(_.get(response, 'status') === 200) {
                             deferred.resolve(response.data.results.bindings);
@@ -1781,7 +1779,7 @@
                 var defaultErrorMessage = 'An error has occurred with your search.';
                 var deferred = $q.defer();
                 var config = {params: {searchText, branchId, commitId}};
-                $http.get(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/search-results', config)
+                $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/search-results', config)
                     .then(response => {
                         if(_.get(response, 'status') === 200) {
                             deferred.resolve(response.data);
@@ -1792,6 +1790,24 @@
                         }
                     }, response => deferred.reject(response.statusText));
                 return deferred.promise;
+            }
+            self.getClassHierarchies = function(ontologyId, branchId, commitId) {
+                var config = {params: branchId, commitId};
+                return $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/class-hierarchies', config);
+            }
+            self.getDataPropertyHierarchies = function(ontologyId, branchId, commitId) {
+                var config = {params: branchId, commitId};
+                return $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/data-property-hierarchies', config);
+            }
+            self.getObjectPropertyHierarchies = function(ontologyId, branchId, commitId) {
+                var config = {params: branchId, commitId};
+                return $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/object-property-hierarchies',
+                    config);
+            }
+            self.getConceptHierarchies = function(ontologyId, branchId, commitId) {
+                var config = {params: branchId, commitId};
+                return $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/concept-hierarchies',
+                    config);
             }
 
             /* Private helper functions */
@@ -1921,15 +1937,12 @@
                     ontologyListItemTemplate);
                 var config = {params: {branchId, commitId}};
                 $q.all([
-                    $http.get(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/iris', config),
-                    $http.get(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/imported-iris', config),
-                    $http.get(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/class-hierarchies', config),
-                    $http.get(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/classes-with-individuals',
-                        config),
-                    $http.get(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/data-property-hierarchies',
-                        config),
-                    $http.get(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/object-property-hierarchies',
-                        config),
+                    $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/iris', config),
+                    $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/imported-iris', config),
+                    self.getClassHierarchies(ontologyId, branchId, commitId),
+                    $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/classes-with-individuals', config),
+                    self.getDataPropertyHierarchies(ontologyId, branchId, commitId),
+                    self.getObjectPropertyHierarchies(ontologyId, branchId, commitId),
                     cm.getRecordBranches(recordId, catalogId, {applyUserFilter: false})
                 ]).then(response => {
                     listItem.annotations = _.unionWith(
@@ -2015,9 +2028,9 @@
                 var listItem = setupListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit,
                     vocabularyListItemTemplate);
                 $q.all([
-                    $http.get(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/iris'),
-                    $http.get(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/imported-iris'),
-                    $http.get(ontologyPrefix + '/' + encodeURIComponent(ontologyId) + '/concept-hierarchies'),
+                    $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/iris'),
+                    $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/imported-iris'),
+                    self.getConceptHierarchies(ontologyId, branchId, commitId),
                     cm.getRecordBranches(recordId, catalogId)
                 ]).then(response => {
                     listItem.subDataProperties = _.get(response[0], 'data.dataProperties');
