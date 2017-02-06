@@ -129,7 +129,7 @@ describe('Mapping Config Overlay directive', function() {
                 ontologyManagerSvc.getClasses.and.returnValue([this.classObj]);
                 mappingManagerSvc.getClassIdByMapping.and.returnValue(this.classObj['@id']);
                 catalogManagerSvc.getRecordMasterBranch.and.returnValue($q.when({'@id': this.expectedState.branchId}));
-                catalogManagerSvc.getBranchHeadCommit.and.returnValue($q.when({commit: [{'@graph': [{'@id': this.expectedVersion.commitId}]}]}));
+                catalogManagerSvc.getBranchHeadCommit.and.returnValue($q.when({commit: {'@id': this.expectedVersion.commitId}}));
             });
             it('and no changes have been commited to the record since it was set', function() {
                 mappingManagerSvc.getSourceOntologyInfo.and.returnValue({commitId: this.expectedVersion.commitId});
@@ -274,7 +274,7 @@ describe('Mapping Config Overlay directive', function() {
                     ontologyManagerSvc.getClasses.and.returnValue([classObj]);
                     ontologyManagerSvc.getImportedOntologies.and.returnValue($q.when([importedOntology]));
                     catalogManagerSvc.getRecordMasterBranch.and.returnValue($q.when({'@id': expectedState.branchId}));
-                    catalogManagerSvc.getBranchHeadCommit.and.returnValue($q.when({commit: [{'@graph': [{'@id': expectedState.latest.commitId}]}]}));
+                    catalogManagerSvc.getBranchHeadCommit.and.returnValue($q.when({commit: {'@id': expectedState.latest.commitId}}));
                     controller.selectOntology();
                     scope.$apply();
                     expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(controller.selectedRecord['@id'], catalogManagerSvc.localCatalog['@id']);
@@ -341,7 +341,7 @@ describe('Mapping Config Overlay directive', function() {
                                 ontologies: [this.ontology, {id: this.importedOntology.id, entities: this.importedOntology.ontology}],
                                 classes: [{ontologyId: 'original', classObj: this.classObj}, {ontologyId: 'imported', classObj: this.classObj}]
                             };
-                            catalogManagerSvc.getBranchHeadCommit.and.returnValue($q.when({commit: [{'@graph': [{'@id': expectedVersion.commitId}]}]}));
+                            catalogManagerSvc.getBranchHeadCommit.and.returnValue($q.when({commit: {'@id': expectedVersion.commitId}}));
                             controller.selectVersion();
                             scope.$apply();
                             expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(controller.selectedOntologyState.branchId, controller.selectedOntologyState.recordId, catalogManagerSvc.localCatalog['@id']);

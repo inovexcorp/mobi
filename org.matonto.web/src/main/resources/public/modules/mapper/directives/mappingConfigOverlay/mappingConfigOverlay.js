@@ -103,7 +103,7 @@
                             stateObj.branchId = branch['@id'];
                             return dvm.cm.getBranchHeadCommit(branch['@id'], dvm.selectedRecord['@id'], dvm.cm.localCatalog['@id']);
                         }, $q.reject).then(commit => {
-                            versionObj.commitId = commit.commit[0]['@graph'][0]['@id'];
+                            versionObj.commitId = commit.commit['@id'];
                             versionObj.ontologies = dvm.state.sourceOntologies;
                             versionObj.classes = getClasses(versionObj.ontologies);
                             dvm.classes = versionObj.classes;
@@ -154,7 +154,7 @@
                                 ontologyState.branchId = branch['@id'];
                                 return dvm.cm.getBranchHeadCommit(branch['@id'], dvm.selectedRecord['@id'], dvm.cm.localCatalog['@id']);
                             }, $q.reject).then(commit => {
-                                versionObj.commitId = commit.commit[0]['@graph'][0]['@id'];
+                                versionObj.commitId = commit.commit['@id'];
                                 var ontologyInfo = {
                                     recordId: dvm.selectedRecord['@id'],
                                     ontologyId: dvm.util.getDctermsValue(dvm.selectedRecord, 'identifier'),
@@ -190,7 +190,7 @@
                                 var versionObj = {};
                                 if (dvm.selectedVersion === 'latest') {
                                     dvm.cm.getBranchHeadCommit(dvm.selectedOntologyState.branchId, dvm.selectedOntologyState.recordId, dvm.cm.localCatalog['@id']).then(commit => {
-                                        versionObj.commitId = commit.commit[0]['@graph'][0]['@id'];
+                                        versionObj.commitId = commit.commit['@id'];
                                         var ontologyInfo = {
                                             recordId: dvm.selectedOntologyState.recordId,
                                             ontologyId: dvm.util.getDctermsValue(dvm.selectedRecord, 'identifier'),
