@@ -35,6 +35,7 @@ import org.matonto.rdf.orm.Thing;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Component(immediate = true)
@@ -57,24 +58,22 @@ public class OrmFactoryRegistryImpl implements OrmFactoryRegistry {
     }
 
     @Override
-    public <T extends Thing> OrmFactory getFactoryOfType(Class<T> type) {
+    public <T extends Thing> Optional<OrmFactory> getFactoryOfType(Class<T> type) {
         return factories.stream()
                 .filter(factory -> factory.getType().equals(type))
-                .findFirst()
-                .orElseThrow(() -> new MatOntoException("Factory not found"));
+                .findFirst();
     }
 
     @Override
-    public OrmFactory getFactoryOfType(String typeIRI) {
+    public Optional<OrmFactory> getFactoryOfType(String typeIRI) {
         return getFactoryOfType(valueFactory.createIRI(typeIRI));
     }
 
     @Override
-    public OrmFactory getFactoryOfType(IRI typeIRI) {
+    public Optional<OrmFactory> getFactoryOfType(IRI typeIRI) {
         return factories.stream()
                 .filter(factory -> factory.getTypeIRI().equals(typeIRI))
-                .findFirst()
-                .orElseThrow(() -> new MatOntoException("Factory not found"));
+                .findFirst();
     }
 
     @Override

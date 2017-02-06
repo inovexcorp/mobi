@@ -26,32 +26,35 @@ package org.matonto.rdf.orm;
 import org.matonto.rdf.api.IRI;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface OrmFactoryRegistry {
     /**
-     * Retrieves a registered OrmFactory of the passed type.
+     * Attempts to retrieve a registered OrmFactory of the passed type.
      *
      * @param type A Class that extends Thing
      * @param <T> A class that extends Thing
-     * @return A registered OrmFactory for the passed type
+     * @return A registered OrmFactory for the passed type if found
      */
-    <T extends Thing> OrmFactory getFactoryOfType(Class<T> type);
+    <T extends Thing> Optional<OrmFactory> getFactoryOfType(Class<T> type);
 
     /**
-     * Retrieves a registered OrmFactory of the type identified by the passed class IRI string.
+     * Attempts retrieve a registered OrmFactory of the type identified by the passed
+     * class IRI string.
      *
      * @param typeIRI An IRI string of a class
      * @return A registered OrmFactory for the type identified by the passed IRI string
+     *      if found
      */
-    OrmFactory getFactoryOfType(String typeIRI);
+    Optional<OrmFactory> getFactoryOfType(String typeIRI);
 
     /**
-     * Retrieves a registered OrmFactory of the type identified by the passed class IRI.
+     * Attempts retrieve a registered OrmFactory of the type identified by the passed class IRI.
      *
      * @param typeIRI An IRI of a class
-     * @return A registered OrmFactory for the type identified by the passed IRI
+     * @return A registered OrmFactory for the type identified by the passed IRI if found
      */
-    OrmFactory getFactoryOfType(IRI typeIRI);
+    Optional<OrmFactory> getFactoryOfType(IRI typeIRI);
 
     /**
      * A List of OrmFactories of types that extend the passed type include the OrmFactory of the

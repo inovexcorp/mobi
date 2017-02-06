@@ -36,10 +36,13 @@ import org.mockito.MockitoAnnotations;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
 public class OrmFactoryRegistryImplTest {
@@ -104,41 +107,65 @@ public class OrmFactoryRegistryImplTest {
 
     @Test
     public void getFactoryByTypeClassTest() throws Exception {
-        assertEquals(thingFactory, registry.getFactoryOfType(Thing.class));
-        assertEquals(aFactory, registry.getFactoryOfType(A.class));
-        assertEquals(bFactory, registry.getFactoryOfType(B.class));
-        assertEquals(cFactory, registry.getFactoryOfType(C.class));
+        Optional<OrmFactory> result = registry.getFactoryOfType(Thing.class);
+        assertTrue(result.isPresent());
+        assertEquals(thingFactory, result.get());
+        result = registry.getFactoryOfType(A.class);
+        assertTrue(result.isPresent());
+        assertEquals(aFactory, result.get());
+        result = registry.getFactoryOfType(B.class);
+        assertTrue(result.isPresent());
+        assertEquals(bFactory, result.get());
+        result = registry.getFactoryOfType(C.class);
+        assertTrue(result.isPresent());
+        assertEquals(cFactory, result.get());
     }
 
-    @Test(expected = MatOntoException.class)
+    @Test
     public void getFactoryByTypeClassThatDoesNotExistTest() {
-        registry.getFactoryOfType(Error.class);
+        assertFalse(registry.getFactoryOfType(Error.class).isPresent());
     }
 
     @Test
     public void getFactoryByTypeStringTest() throws Exception {
-        assertEquals(thingFactory, registry.getFactoryOfType(Thing.TYPE));
-        assertEquals(aFactory, registry.getFactoryOfType(A.TYPE));
-        assertEquals(bFactory, registry.getFactoryOfType(B.TYPE));
-        assertEquals(cFactory, registry.getFactoryOfType(C.TYPE));
+        Optional<OrmFactory> result = registry.getFactoryOfType(Thing.TYPE);
+        assertTrue(result.isPresent());
+        assertEquals(thingFactory, result.get());
+        result = registry.getFactoryOfType(A.TYPE);
+        assertTrue(result.isPresent());
+        assertEquals(aFactory, result.get());
+        result = registry.getFactoryOfType(B.TYPE);
+        assertTrue(result.isPresent());
+        assertEquals(bFactory, result.get());
+        result = registry.getFactoryOfType(C.TYPE);
+        assertTrue(result.isPresent());
+        assertEquals(cFactory, result.get());
     }
 
-    @Test(expected = MatOntoException.class)
+    @Test
     public void getFactoryByTypeStringThatDoesNotExistTest() {
-        registry.getFactoryOfType(Error.TYPE);
+        assertFalse(registry.getFactoryOfType(Error.TYPE).isPresent());
     }
 
     @Test
     public void getFactoryByTypeIriTest() throws Exception {
-        assertEquals(thingFactory, registry.getFactoryOfType(thingIRI));
-        assertEquals(aFactory, registry.getFactoryOfType(aIRI));
-        assertEquals(bFactory, registry.getFactoryOfType(bIRI));
-        assertEquals(cFactory, registry.getFactoryOfType(cIRI));
+        Optional<OrmFactory> result = registry.getFactoryOfType(thingIRI);
+        assertTrue(result.isPresent());
+        assertEquals(thingFactory, result.get());
+        result = registry.getFactoryOfType(aIRI);
+        assertTrue(result.isPresent());
+        assertEquals(aFactory, result.get());
+        result = registry.getFactoryOfType(bIRI);
+        assertTrue(result.isPresent());
+        assertEquals(bFactory, result.get());
+        result = registry.getFactoryOfType(cIRI);
+        assertTrue(result.isPresent());
+        assertEquals(cFactory, result.get());
     }
 
-    @Test(expected = MatOntoException.class)
+    @Test
     public void getFactoryByTypeIriThatDoesNotExistTest() {
-        registry.getFactoryOfType(errorIRI);
+        assertFalse(registry.getFactoryOfType(errorIRI).isPresent());
     }
 
     @Test
