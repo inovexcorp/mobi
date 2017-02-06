@@ -1520,7 +1520,7 @@ describe('Catalog Manager service', function() {
             catalogManagerSvc.downloadResource(commitId, branchId, recordId, catalogId, true, 'turtle');
             expect(windowSvc.location).toBe('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId) + '/resource?applyInProgressCommit=true&format=turtle');
         });
-        it('with a format', function() {
+        it('without a format', function() {
             catalogManagerSvc.downloadResource(commitId, branchId, recordId, catalogId, true);
             expect(windowSvc.location).toBe('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId) + '/resource?applyInProgressCommit=true&format=jsonld');
         });

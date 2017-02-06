@@ -1300,12 +1300,7 @@ public class CatalogRestImpl implements CatalogRest {
         if (!SORT_RESOURCES.contains(sortIRI)) {
             throw ErrorUtils.sendError("Invalid sort property IRI", Response.Status.BAD_REQUEST);
         }
-        if (offset < 0) {
-            throw ErrorUtils.sendError("Offset cannot be negative.", Response.Status.BAD_REQUEST);
-        }
-        if (limit <= 0) {
-            throw ErrorUtils.sendError("Limit must be positive", Response.Status.BAD_REQUEST);
-        }
+        LinksUtils.validateParams(limit, offset);
     }
 
     /**
