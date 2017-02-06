@@ -58,16 +58,16 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    dvm.sparql = sparqlManagerService;
+                    var sparql = sparqlManagerService;
                     dvm.fileName = 'results';
                     dvm.fileType = 'csv';
 
                     dvm.download = function() {
-                        dvm.sparql.downloadResults(dvm.fileType, dvm.fileName);
-                        dvm.sparql.displayDownloadOverlay = false;
+                        sparql.downloadResults(dvm.fileType, dvm.fileName);
+                        sparql.displayDownloadOverlay = false;
                     }
                     dvm.cancel = function() {
-                        dvm.sparql.displayDownloadOverlay = false;
+                        sparql.displayDownloadOverlay = false;
                     }
                 },
                 templateUrl: 'modules/sparql/directives/downloadQueryOverlay/downloadQueryOverlay.html'
