@@ -75,21 +75,33 @@ describe('Ontology Button Stack directive', function() {
                 ontologyStateSvc.listItem.inProgressCommit.additions = [{'@id': id}];
                 ontologyStateSvc.listItem.inProgressCommit.deletions = [{'@id': id}];
             });
-            /*describe('when deleteInProgressCommit resolves', function() {
+            describe('when deleteInProgressCommit resolves', function() {
+                var updateDeferred;
                 beforeEach(function() {
+                    updateDeferred = $q.defer();
+                    ontologyManagerSvc.updateOntology.and.returnValue(updateDeferred.promise);
                     deleteDeferred.resolve();
+                    controller.delete();
                 });
-                it('when all other calls resolve for an ontology type', function() {
-                    ontologyStateSvc.state.type = 'ontology';
-
+                it('and updateOntology resolves', function() {
+                    updateDeferred.resolve();
+                    scope.$digest();
+                    expect(catalogManagerSvc.deleteInProgressCommit).toHaveBeenCalledWith(
+                        ontologyStateSvc.listItem.recordId, catalogId);
+                    expect(ontologyManagerSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
+                        ontologyStateSvc.listItem.branchId, ontologyStateSvc.listItem.commitId,
+                        ontologyStateSvc.state.type);
+                    expect(ontologyStateSvc.clearInProgressCommit).toHaveBeenCalled();
+                    expect(controller.showDeleteOverlay).toBe(false);
                 });
-                controller.delete();
-                scope.$digest();
-                expect(catalogManagerSvc.deleteInProgressCommit).toHaveBeenCalledWith(
-                    ontologyStateSvc.listItem.recordId, catalogId);
-                *//*expect(ontologyStateSvc.clearInProgressCommit).toHaveBeenCalled();
-                expect(controller.showDeleteOverlay).toBe(false);*//*
-            });*/
+                it('and updateOntology rejects', function() {
+                    updateDeferred.reject(error);
+                    scope.$digest();
+                    expect(catalogManagerSvc.deleteInProgressCommit).toHaveBeenCalledWith(
+                        ontologyStateSvc.listItem.recordId, catalogId);
+                    expect(controller.error).toEqual(error);
+                });
+            });
             it('when deleteInProgressCommit rejects', function() {
                 deleteDeferred.reject(error);
                 controller.delete();

@@ -1791,24 +1791,6 @@
                     }, response => deferred.reject(response.statusText));
                 return deferred.promise;
             }
-            self.getClassHierarchies = function(ontologyId, branchId, commitId) {
-                var config = {params: branchId, commitId};
-                return $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/class-hierarchies', config);
-            }
-            self.getDataPropertyHierarchies = function(ontologyId, branchId, commitId) {
-                var config = {params: branchId, commitId};
-                return $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/data-property-hierarchies', config);
-            }
-            self.getObjectPropertyHierarchies = function(ontologyId, branchId, commitId) {
-                var config = {params: branchId, commitId};
-                return $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/object-property-hierarchies',
-                    config);
-            }
-            self.getConceptHierarchies = function(ontologyId, branchId, commitId) {
-                var config = {params: branchId, commitId};
-                return $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/concept-hierarchies',
-                    config);
-            }
 
             /* Private helper functions */
             function getIcon(property) {
@@ -1939,10 +1921,13 @@
                 $q.all([
                     $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/iris', config),
                     $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/imported-iris', config),
-                    self.getClassHierarchies(ontologyId, branchId, commitId),
-                    $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/classes-with-individuals', config),
-                    self.getDataPropertyHierarchies(ontologyId, branchId, commitId),
-                    self.getObjectPropertyHierarchies(ontologyId, branchId, commitId),
+                    $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/class-hierarchies', config),
+                    $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/classes-with-individuals',
+                        config),
+                    $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/data-property-hierarchies',
+                        config),
+                    $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/object-property-hierarchies',
+                        config),
                     cm.getRecordBranches(recordId, catalogId, {applyUserFilter: false})
                 ]).then(response => {
                     listItem.annotations = _.unionWith(
@@ -2030,7 +2015,7 @@
                 $q.all([
                     $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/iris'),
                     $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/imported-iris'),
-                    self.getConceptHierarchies(ontologyId, branchId, commitId),
+                    $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/concept-hierarchies'),
                     cm.getRecordBranches(recordId, catalogId)
                 ]).then(response => {
                     listItem.subDataProperties = _.get(response[0], 'data.dataProperties');
