@@ -47,10 +47,12 @@ describe('Project Tab directive', function() {
             expect(element.prop('tagName')).toBe('DIV');
             expect(element.hasClass('project-tab')).toBe(true);
             expect(element.hasClass('row')).toBe(true);
-            expect(element.querySelectorAll('.selected-details').length).toBe(1);
         });
         it('with a .editor', function() {
             expect(element.querySelectorAll('.editor').length).toBe(1);
+        });
+        it('with a selected-details', function() {
+            expect(element.find('selected-details').length).toBe(1);
         });
         it('with a ontology-properties-block', function() {
             expect(element.find('ontology-properties-block').length).toBe(1);
@@ -60,13 +62,6 @@ describe('Project Tab directive', function() {
         });
         it('with a preview-block', function() {
             expect(element.find('preview-block').length).toBe(1);
-        });
-        it('depending on whether something has been selected', function() {
-            expect(element.querySelectorAll('.selected-details div').length).toBe(1);
-
-            ontologyStateSvc.selected = undefined;
-            scope.$digest();
-            expect(element.querySelectorAll('.selected-details div').length).toBe(0);
         });
     });
 });

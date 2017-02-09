@@ -21,12 +21,12 @@
  * #L%
  */
 describe('Ontology State service', function() {
-    var ontologyStateSvc;
-    var ontologyManagerSvc;
-    var updateRefsSvc;
-    var hierarchy;
-    var indexObject;
-    var expectedPaths;
+    var ontologyStateSvc, ontologyManagerSvc, updateRefsSvc, hierarchy, indexObject, expectedPaths, catalogManagerSvc;
+    var error = 'error';
+    var inProgressCommit = {
+        additions: ['test'],
+        deletions: ['test']
+    }
 
     beforeEach(function() {
         module('ontologyState');
@@ -36,10 +36,11 @@ describe('Ontology State service', function() {
         mockUtil();
         mockCatalogManager();
 
-        inject(function(ontologyStateService, _updateRefsService_, _ontologyManagerService_) {
+        inject(function(ontologyStateService, _updateRefsService_, _ontologyManagerService_, _catalogManagerService_) {
             ontologyStateSvc = ontologyStateService;
             updateRefsSvc = _updateRefsService_;
             ontologyManagerSvc = _ontologyManagerService_;
+            catalogManagerSvc = _catalogManagerService_;
         });
 
         /*
@@ -107,6 +108,22 @@ describe('Ontology State service', function() {
             ['node1b','node3b','node3a']
         ];
     });
+
+    describe('afterSave calls the correct functions', function() {
+        var getDeferred;
+        beforeEach(function() {
+            getDeferred = $q.defer();
+            catalogManagerSvc.getInProgressCommit.and.returnValue(getDeferred.promise);
+        });
+        it('when getInProgressCommit resolves', function() {
+            ontologyStateSvc.
+            getDeferred.resolve(inProgressCommit);
+        });
+        it('when getInProgressCommit rejects', function() {
+            getDeferred.reject(error);
+        });
+    });
+
     it('setOpened sets the correct property on the state object', function() {
         var path = 'this.is.the.path';
         ontologyStateSvc.setOpened(path, true);
@@ -115,6 +132,7 @@ describe('Ontology State service', function() {
         ontologyStateSvc.setOpened(path, false);
         expect(_.get(ontologyStateSvc.state, encodeURIComponent(path) + '.isOpened')).toBe(false);
     });
+
     describe('getOpened gets the correct property value on the state object', function() {
         it('when path is not found, returns false', function() {
             var path = 'this.is.the.path';
@@ -128,6 +146,7 @@ describe('Ontology State service', function() {
             });
         });
     });
+
     describe('openAt', function() {
         beforeEach(function() {
             ontologyStateSvc.listItem = {recordId: 'id'};
@@ -173,6 +192,7 @@ describe('Ontology State service', function() {
                 .toBe(true);
         });
     });
+
     describe('getPathsTo', function() {
         it('should return all paths to provided node', function() {
             var result = ontologyStateSvc.getPathsTo(indexObject, 'node3a');
@@ -180,6 +200,7 @@ describe('Ontology State service', function() {
             expect(_.sortBy(result)).toEqual(_.sortBy(expectedPaths));
         });
     });
+
     describe('deleteEntityFromHierarchy', function() {
         it('should delete the entity from the hierarchy tree', function() {
             ontologyStateSvc.deleteEntityFromHierarchy(hierarchy, 'node3a', indexObject);
@@ -248,6 +269,7 @@ describe('Ontology State service', function() {
             });
         });*/
     });
+
     describe('addEntityToHierarchy', function() {
         describe('should add the entity to the single proper location in the tree', function() {
             it('where the parent entity has subEntities', function() {
@@ -573,6 +595,7 @@ describe('Ontology State service', function() {
             });
         });
     });
+
     describe('deleteEntityFromParentInHierarchy', function() {
         it('should remove the provided entityIRI from the parentIRI', function() {
             ontologyStateSvc.deleteEntityFromParentInHierarchy(hierarchy, 'node3a', 'node3b', indexObject);
@@ -662,6 +685,7 @@ describe('Ontology State service', function() {
             });
         });
     });
+
     describe('goTo calls the proper manager functions with correct parameters', function() {
         beforeEach(function() {
             spyOn(ontologyStateSvc, 'getActivePage').and.returnValue({entityIRI: ''});
@@ -732,6 +756,7 @@ describe('Ontology State service', function() {
             });
         });
     });
+
     describe('unsetEntityByIRI removes the entityIRI for the provided iri', function() {
         beforeEach(function() {
             ontologyStateSvc.state = {
