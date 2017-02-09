@@ -366,6 +366,7 @@ function mockPrefixes() {
             this.ontologyState = 'ontologyState:';
             this.catalog = 'catalog:';
             this.skos = 'skos:';
+            this.xsd = 'xsd:';
         });
     });
 }

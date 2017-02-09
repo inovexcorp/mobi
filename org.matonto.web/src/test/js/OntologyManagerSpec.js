@@ -23,7 +23,7 @@
 describe('Ontology Manager service', function() {
     var $httpBackend, ontologyManagerSvc, catalogManagerSvc, stateManagerSvc, scope, ontologyState, prefixes, $q, util,
         windowSvc, listItem, filter, ontologyObj, paramSerializer, classObj, objectPropertyObj, dataPropertyObj,
-        annotationObj, individualObj, restrictionObj, ontology, getResponse, conceptObj, schemeObj;
+        annotationObj, individualObj, restrictionObj, ontology, getResponse, conceptObj, schemeObj, defaultDatatypes;
     var recordId = 'recordId';
     var ontologyId = 'ontologyId';
     var branchId = 'branchId';
@@ -89,6 +89,51 @@ describe('Ontology Manager service', function() {
     var schemeId = 'schemeId';
     var searchResults = [];
     var searchText = 'searchText';
+    var datatypeId = 'datatypeId';
+    var annotationId2 = 'annotationId2';
+    var classId2 = 'classId2';
+    var dataPropertyId2 = 'dataPropertyId2';
+    var objectPropertyId2 = 'objectProperty2';
+    var individualId2 = 'individualId2';
+    var datatypeId2 = 'datatypeId2';
+    var irisResponse = {
+        annotationProperties: [{localName: annotationId, namespace: annotationId}],
+        classes: [{localName: classId, namespace: classId}],
+        dataProperties: [{localName: dataPropertyId, namespace: dataPropertyId}],
+        objectProperties: [{localName: objectPropertyId, namespace: objectPropertyId}],
+        namedIndividuals: [{localName: individualId, namespace: individualId}],
+        datatypes: [{localName: datatypeId, namespace: datatypeId}]
+    };
+    var importedIrisResponse = [{
+        id: ontologyId,
+        annotationProperties: [{localName: annotationId2, namespace: annotationId2}],
+        classes: [{localName: classId2, namespace: classId2}],
+        dataProperties: [{localName: dataPropertyId2, namespace: dataPropertyId2}],
+        objectProperties: [{localName: objectPropertyId2, namespace: objectPropertyId2}],
+        individuals: [{localName: individualId2, namespace: individualId2}],
+        datatypes: [{localName: datatypeId2, namespace: datatypeId2}]
+    }];
+    var classHierarchiesResponse = {
+        hierarchy: [],
+        index: {}
+    };
+    var conceptHierarchiesResponse = {
+        hierarchy: [],
+        index: {}
+    };
+    var classesWithIndividualsResponse = {
+        hierarchy: [],
+        index: {}
+    };
+    var dataPropertyHierarchiesResponse = {
+        hierarchy: [],
+        index: {}
+    };
+    var objectPropertyHierarchiesResponse = {
+        hierarchy: [],
+        index: {}
+    };
+    var branches = [branch];
 
     beforeEach(function() {
         module('ontologyManager');
@@ -213,6 +258,13 @@ describe('Ontology Manager service', function() {
                 originalIRI: schemeId
             }
         }
+        defaultDatatypes = _.map(['anyURI', 'boolean', 'byte', 'dateTime', 'decimal', 'double', 'float', 'int',
+            'integer', 'language', 'long', 'string'], function(item) {
+            return {
+                'namespace': prefixes.xsd,
+                'localName': item
+            }
+        });
     });
 
     function flushAndVerify() {
@@ -2087,6 +2139,248 @@ describe('Ontology Manager service', function() {
                     expect(response).toEqual(error);
                 });
             flushAndVerify();
+        });
+    });
+
+    describe('createOntologyListItem should call the correct functions', function() {
+        var iris, importedIris, classHierarchies, classesWithIndividuals, dataPropertyHierarchies,
+            objectPropertyHierarchies, getDeferred, params;
+        beforeEach(function() {
+            params = paramSerializer({
+                branchId: branchId,
+                commitId: commitId
+            });
+            getDeferred = $q.defer();
+            iris = $httpBackend.expectGET('/matontorest/ontologies/ontologyId/iris?' + params);
+            importedIris = $httpBackend.expectGET('/matontorest/ontologies/ontologyId/imported-iris?' + params);
+            classHierarchies = $httpBackend.expectGET('/matontorest/ontologies/ontologyId/class-hierarchies?' + params);
+            classesWithIndividuals = $httpBackend
+                .expectGET('/matontorest/ontologies/ontologyId/classes-with-individuals?' + params);
+            dataPropertyHierarchies = $httpBackend
+                .expectGET('/matontorest/ontologies/ontologyId/data-property-hierarchies?' + params);
+            objectPropertyHierarchies = $httpBackend
+                .expectGET('/matontorest/ontologies/ontologyId/object-property-hierarchies?' + params);
+            catalogManagerSvc.getRecordBranches.and.returnValue(getDeferred.promise);
+        });
+        it('when all promises resolve', function() {
+            iris.respond(200, irisResponse);
+            importedIris.respond(200, importedIrisResponse);
+            classHierarchies.respond(200, classHierarchiesResponse);
+            classesWithIndividuals.respond(200, classesWithIndividualsResponse);
+            dataPropertyHierarchies.respond(200, dataPropertyHierarchiesResponse);
+            objectPropertyHierarchies.respond(200, objectPropertyHierarchiesResponse);
+            getDeferred.resolve({data: branches});
+            ontologyManagerSvc.createOntologyListItem(ontologyId, recordId, branchId, commitId, ontology,
+                inProgressCommit, true).then(function(response) {
+                    expect(_.get(response, 'annotations')).toEqual([{
+                        localName: annotationId2, namespace: annotationId2, ontologyId: ontologyId
+                    }, {
+                        localName: annotationId, namespace: annotationId
+                    }]);
+                    expect(_.get(response, 'subClasses')).toEqual([{
+                        localName: classId2, namespace: classId2, ontologyId: ontologyId
+                    }, {
+                        localName: classId, namespace: classId
+                    }]);
+                    expect(_.get(response, 'subDataProperties')).toEqual([{
+                        localName: dataPropertyId2, namespace: dataPropertyId2, ontologyId: ontologyId
+                    }, {
+                        localName: dataPropertyId, namespace: dataPropertyId
+                    }]);
+                    expect(_.get(response, 'subObjectProperties')).toEqual([{
+                        localName: objectPropertyId2, namespace: objectPropertyId2, ontologyId: ontologyId
+                    }, {
+                        localName: objectPropertyId, namespace: objectPropertyId
+                    }]);
+                    expect(_.get(response, 'individuals')).toEqual([{
+                        localName: individualId2, namespace: individualId2, ontologyId: ontologyId
+                    }, {
+                        localName: individualId, namespace: individualId
+                    }]);
+                    expect(_.get(response, 'dataPropertyRange')).toEqual(_.concat([{
+                        localName: datatypeId2, namespace: datatypeId2, ontologyId: ontologyId
+                    }, {
+                        localName: datatypeId, namespace: datatypeId
+                    }], defaultDatatypes));
+                    expect(_.get(response, 'classHierarchy')).toEqual(classHierarchiesResponse.hierarchy);
+                    expect(_.get(response, 'classIndex')).toEqual(classHierarchiesResponse.index);
+                    expect(_.get(response, 'classesWithIndividuals')).toEqual(classesWithIndividualsResponse.hierarchy);
+                    expect(_.get(response, 'classesWithIndividualsIndex'))
+                        .toEqual(classesWithIndividualsResponse.index);
+                    expect(_.get(response, 'dataPropertyHierarchy')).toEqual(dataPropertyHierarchiesResponse.hierarchy);
+                    expect(_.get(response, 'dataPropertyIndex')).toEqual(dataPropertyHierarchiesResponse.index);
+                    expect(_.get(response, 'objectPropertyHierarchy'))
+                        .toEqual(objectPropertyHierarchiesResponse.hierarchy);
+                    expect(_.get(response, 'objectPropertyIndex')).toEqual(objectPropertyHierarchiesResponse.index);
+                    expect(_.get(response, 'branches')).toEqual(branches);
+                    expect(_.get(response, 'upToDate')).toBe(true);
+                }, function() {
+                    fail('Promise should have resolved');
+                });
+            flushAndVerify();
+        });
+        it('when one call fails', function() {
+            iris.respond(400, null, null, error);
+            importedIris.respond(200);
+            classHierarchies.respond(200);
+            classesWithIndividuals.respond(200);
+            dataPropertyHierarchies.respond(200);
+            objectPropertyHierarchies.respond(200);
+            getDeferred.resolve();
+            ontologyManagerSvc.createOntologyListItem(ontologyId, recordId, branchId, commitId, ontology,
+                inProgressCommit, true).then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toEqual(error);
+                });
+            flushAndVerify();
+        });
+        it('when more than one call fails', function() {
+            iris.respond(400, null, null, error);
+            importedIris.respond(400, null, null, error);
+            classHierarchies.respond(200);
+            classesWithIndividuals.respond(200);
+            dataPropertyHierarchies.respond(200);
+            objectPropertyHierarchies.respond(200);
+            getDeferred.resolve();
+            ontologyManagerSvc.createOntologyListItem(ontologyId, recordId, branchId, commitId, ontology,
+                inProgressCommit, true).then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toEqual(error);
+                });
+            flushAndVerify();
+        });
+    });
+
+    describe('addOntologyToList should call the correct functions', function() {
+        var createDeferred;
+        beforeEach(function() {
+            ontologyManagerSvc.list = [];
+            createDeferred = $q.defer();
+            spyOn(ontologyManagerSvc, 'createOntologyListItem').and.returnValue(createDeferred.promise);
+        });
+        it('when createOntologyListItem resolves', function() {
+            createDeferred.resolve(listItem);
+            ontologyManagerSvc.addOntologyToList(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit)
+                .then(function() {
+                    expect(ontologyManagerSvc.list.length).toBe(1);
+                    expect(ontologyManagerSvc.createOntologyListItem).toHaveBeenCalledWith(ontologyId, recordId,
+                        branchId, commitId, ontology, inProgressCommit, true);
+                }, function() {
+                    fail('Promise should have resolved');
+                });
+        });
+        it('when createOntologyListItem rejects', function() {
+            createDeferred.reject(error);
+            ontologyManagerSvc.addOntologyToList(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit)
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toEqual(error);
+                    expect(ontologyManagerSvc.createOntologyListItem).toHaveBeenCalledWith(ontologyId, recordId,
+                        branchId, commitId, ontology, inProgressCommit, true);
+                });
+        });
+    });
+
+    describe('createVocabularyListItem should call the correct functions', function() {
+        var iris, importedIris, classHierarchies, classesWithIndividuals, dataPropertyHierarchies,
+            objectPropertyHierarchies, getDeferred, params;
+        beforeEach(function() {
+            params = paramSerializer({
+                branchId: branchId,
+                commitId: commitId
+            });
+            getDeferred = $q.defer();
+            iris = $httpBackend.expectGET('/matontorest/ontologies/ontologyId/iris?' + params);
+            importedIris = $httpBackend.expectGET('/matontorest/ontologies/ontologyId/imported-iris?' + params);
+            conceptHierarchies = $httpBackend.expectGET('/matontorest/ontologies/ontologyId/concept-hierarchies?'
+                + params);
+            catalogManagerSvc.getRecordBranches.and.returnValue(getDeferred.promise);
+        });
+        it('when all promises resolve', function() {
+            iris.respond(200, irisResponse);
+            importedIris.respond(200, importedIrisResponse);
+            conceptHierarchies.respond(200, conceptHierarchiesResponse);
+            getDeferred.resolve({data: branches});
+            ontologyManagerSvc.createVocabularyListItem(ontologyId, recordId, branchId, commitId, ontology,
+                inProgressCommit, true).then(function(response) {
+                    expect(_.get(response, 'subDataProperties')).toEqual([{
+                        localName: dataPropertyId2, namespace: dataPropertyId2, ontologyId: ontologyId
+                    }, {
+                        localName: dataPropertyId, namespace: dataPropertyId
+                    }]);
+                    expect(_.get(response, 'subObjectProperties')).toEqual([{
+                        localName: objectPropertyId2, namespace: objectPropertyId2, ontologyId: ontologyId
+                    }, {
+                        localName: objectPropertyId, namespace: objectPropertyId
+                    }]);
+                    expect(_.get(response, 'conceptHierarchy')).toEqual(conceptHierarchiesResponse.hierarchy);
+                    expect(_.get(response, 'conceptIndex')).toEqual(conceptHierarchiesResponse.index);
+                    expect(_.get(response, 'branches')).toEqual(branches);
+                    expect(_.get(response, 'upToDate')).toBe(true);
+                }, function() {
+                    fail('Promise should have resolved');
+                });
+            flushAndVerify();
+        });
+        it('when one call fails', function() {
+            iris.respond(400, null, null, error);
+            importedIris.respond(200);
+            conceptHierarchies.respond(200);
+            getDeferred.resolve();
+            ontologyManagerSvc.createVocabularyListItem(ontologyId, recordId, branchId, commitId, ontology,
+                inProgressCommit, true).then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toEqual(error);
+                });
+            flushAndVerify();
+        });
+        it('when more than one call fails', function() {
+            iris.respond(400, null, null, error);
+            importedIris.respond(400, null, null, error);
+            conceptHierarchies.respond(200);
+            getDeferred.resolve();
+            ontologyManagerSvc.createVocabularyListItem(ontologyId, recordId, branchId, commitId, ontology,
+                inProgressCommit, true).then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toEqual(error);
+                });
+            flushAndVerify();
+        });
+    });
+
+    describe('addVocabularyToList should call the correct functions', function() {
+        var createDeferred;
+        beforeEach(function() {
+            ontologyManagerSvc.list = [];
+            createDeferred = $q.defer();
+            spyOn(ontologyManagerSvc, 'createVocabularyListItem').and.returnValue(createDeferred.promise);
+        });
+        it('when createVocabularyListItem resolves', function() {
+            createDeferred.resolve(listItem);
+            ontologyManagerSvc.addVocabularyToList(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit)
+                .then(function() {
+                    expect(ontologyManagerSvc.list.length).toBe(1);
+                    expect(ontologyManagerSvc.createVocabularyListItem).toHaveBeenCalledWith(ontologyId, recordId,
+                        branchId, commitId, ontology, inProgressCommit, true);
+                }, function() {
+                    fail('Promise should have resolved');
+                });
+        });
+        it('when createVocabularyListItem rejects', function() {
+            createDeferred.reject(error);
+            ontologyManagerSvc.addVocabularyToList(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit)
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toEqual(error);
+                    expect(ontologyManagerSvc.createVocabularyListItem).toHaveBeenCalledWith(ontologyId, recordId,
+                        branchId, commitId, ontology, inProgressCommit, true);
+                });
         });
     });
 });
