@@ -25,6 +25,8 @@
 
     angular
         .module('sparql', [
+            /* Custom directives */
+            'downloadQueryOverlay',
             'sparqlEditor',
             'sparqlResultTable'
         ]);

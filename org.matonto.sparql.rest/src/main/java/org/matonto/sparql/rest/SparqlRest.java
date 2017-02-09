@@ -48,12 +48,32 @@ public interface SparqlRest {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation(value = "Retrieves the results of the provided SPARQL query.")
+    @ApiOperation("Retrieves the results of the provided SPARQL query.")
     Response queryRdf(@QueryParam("query") String queryString);
 
     /**
-     * Retrieves the paged results of the provided SPARQL query. Parameters can be passed to control paging.
+     * Downloads a delimited file with the results of the provided SPARQL query. Supports CSV, TSV,
+     * Excel 97-2003, and Excel 2013 files extensions.
      *
+     * @param queryString The SPARQL query to execute.
+     * @param fileExtension The desired extension of the download file.
+     * @param fileName The optional file name for the download file.
+     * @return A download stream of a file with the results of the provided SPARQL query.
+     */
+    @GET
+    @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*", "application/*"})
+    @RolesAllowed("user")
+    @ApiOperation("Download the results of the provided SPARQL query.")
+    Response downloadQuery(@QueryParam("query") String queryString,
+                           @QueryParam("fileType") String fileExtension,
+                           @DefaultValue("results") @QueryParam("fileName") String fileName);
+
+    /**
+     * Retrieves the paged results of the provided SPARQL query. Parameters can be passed to control paging.
+     * Links to next and previous pages are within the Links header and the total size is within the
+     * X-Total-Count header.
+     *
+     * @param queryString The SPARQL query to execute.
      * @param limit The number of resources to return in one page.
      * @param offset The offset for the page.
      * @return The paginated List of JSONObjects that match the SPARQL query bindings.
@@ -62,10 +82,9 @@ public interface SparqlRest {
     @Path("/page")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation(value = "Retrieves the paged results of the provided SPARQL query.")
-    SparqlPaginatedResults<JSONObject> getPagedResults(
-            @QueryParam("query") String queryString,
-            @Context UriInfo uriInfo,
-            @DefaultValue("100") @QueryParam("limit") int limit,
-            @DefaultValue("0") @QueryParam("offset") int offset);
+    @ApiOperation("Retrieves the paged results of the provided SPARQL query.")
+    Response getPagedResults(@QueryParam("query") String queryString,
+                             @Context UriInfo uriInfo,
+                             @DefaultValue("100") @QueryParam("limit") int limit,
+                             @DefaultValue("0") @QueryParam("offset") int offset);
 }
