@@ -57,6 +57,7 @@ public interface GroupRest {
     @POST
     @RolesAllowed("admin")
     @ApiOperation("Create a new MatOnto group")
+    @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.APPLICATION_JSON)
     Response createGroup(Group group);
 
