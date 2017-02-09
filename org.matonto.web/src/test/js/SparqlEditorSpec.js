@@ -30,6 +30,7 @@ describe('SPARQL Editor directive', function() {
         injectTrustedFilter();
         injectHighlightFilter();
         mockPrefixes();
+        mockSparqlManager();
 
         module(function($provide) {
             $provide.value('escapeHTMLFilter', jasmine.createSpy('escapeHTMLFilter'));
@@ -39,28 +40,20 @@ describe('SPARQL Editor directive', function() {
             $compile = _$compile_;
             scope = _$rootScope_;
         });
+
+        this.element = $compile(angular.element('<sparql-editor></sparql-editor>'))(scope);
+        scope.$digest();
     });
 
     describe('replaces the element with the correct html', function() {
         it('for a form', function() {
-            var element = $compile(angular.element('<sparql-editor></sparql-editor>'))(scope);
-            scope.$digest();
-
-            expect(element.prop('tagName')).toBe('FORM');
+            expect(this.element.prop('tagName')).toBe('FORM');
         });
         it('based on form-group', function() {
-            var element = $compile(angular.element('<sparql-editor></sparql-editor>'))(scope);
-            scope.$digest();
-
-            var formGroups = element.querySelectorAll('.form-group');
-            expect(formGroups.length).toBe(1);
+            expect(this.element.querySelectorAll('.form-group').length).toBe(1);
         });
-        it('based on ui-codemirror', function() {
-            var element = $compile(angular.element('<sparql-editor></sparql-editor>'))(scope);
-            scope.$digest();
-
-            var codeMirrors = element.find('ui-codemirror');
-            expect(codeMirrors.length).toBe(1);
+        it('with a ui-codemirror', function() {
+            expect(this.element.find('ui-codemirror').length).toBe(1);
         });
     });
 });

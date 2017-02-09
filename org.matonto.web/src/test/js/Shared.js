@@ -378,20 +378,22 @@ function mockUpdateRefs() {
 function mockSparqlManager() {
     module(function($provide) {
         $provide.service('sparqlManagerService', function($q) {
-            this.data = {
-                head: {
-                    vars: []
-                },
-                results: {
-                    bindings: []
-                }
-            }
-            this.prefixes = [];
+            this.data = undefined;
+            this.bindings = [];
+            this.limit = 100;
+            this.links = {
+                next: '',
+                prev: ''
+            };
+            this.currentPage = 0;
+            this.totalSize = 0;
+            this.bindings = [];
             this.queryString = '';
             this.errorMessage = '';
             this.infoMessage = '';
             this.reset = jasmine.createSpy('reset');
-            this.queryRdf = jasmine.createSpy('queryRdf').and.returnValue($q.when({}));
+            this.queryRdf = jasmine.createSpy('queryRdf');
+            this.downloadResults = jasmine.createSpy('downloadResults');
         });
     });
 }

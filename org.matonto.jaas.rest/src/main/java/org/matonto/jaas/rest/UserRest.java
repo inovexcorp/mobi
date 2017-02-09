@@ -70,9 +70,9 @@ public interface UserRest {
     @POST
     @RolesAllowed("admin")
     @ApiOperation("Create a MatOnto user account")
+    @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.APPLICATION_JSON)
-    Response createUser(User user,
-                        @QueryParam("password") String password);
+    Response createUser(User user, @QueryParam("password") String password);
 
     /**
      * Retrieves the specified user in MatOnto.
