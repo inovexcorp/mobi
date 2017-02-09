@@ -27,9 +27,9 @@
         .module('uploadOntologyTab', [])
         .directive('uploadOntologyTab', uploadOntologyTab);
 
-        uploadOntologyTab.$inject = ['$filter', 'REGEX', 'ontologyManagerService', 'ontologyStateService', 'prefixes'];
+        uploadOntologyTab.$inject = ['$filter', 'REGEX', 'ontologyManagerService', 'ontologyStateService'];
 
-        function uploadOntologyTab($filter, REGEX, ontologyManagerService, ontologyStateService, prefixes) {
+        function uploadOntologyTab($filter, REGEX, ontologyManagerService, ontologyStateService) {
             return {
                 restrict: 'E',
                 replace: true,

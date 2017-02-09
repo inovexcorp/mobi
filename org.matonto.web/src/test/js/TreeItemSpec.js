@@ -26,6 +26,7 @@ describe('Tree Item directive', function() {
         scope,
         element,
         controller,
+        isolatedScope,
         ontologyStateSvc,
         ontologyManagerSvc,
         settingsManagerSvc;
@@ -47,28 +48,25 @@ describe('Tree Item directive', function() {
             settingsManagerSvc = _settingsManagerService_;
         });
 
-        scope.hasChildren = false;
+        scope.hasChildren = true;
         scope.isActive = false;
         scope.onClick = jasmine.createSpy('onClick');
         scope.currentEntity = {};
         scope.isOpened = true;
         scope.isBold = false;
         scope.path = '';
+        element = $compile(angular.element('<tree-item path="path" is-opened="isOpened" current-entity="currentEntity" is-active="isActive" on-click="onClick()" has-children="hasChildren" is-bold="isBold"></tree-item>'))(scope);
+        scope.$digest();
     });
 
     describe('in isolated scope', function() {
-        var isolatedScope;
-
         beforeEach(function() {
-            element = $compile(angular.element('<tree-item path="path" is-bold="isBold" is-opened="isOpened" current-entity="currentEntity" is-active="isActive" on-click="onClick()" has-children="hasChildren"></tree-item>'))(scope);
-            scope.$digest();
             isolatedScope = element.isolateScope();
-            controller = element.controller('treeItem');
         });
         it('hasChildren should be one way bound', function() {
-            isolatedScope.hasChildren = true;
+            isolatedScope.hasChildren = false;
             scope.$digest();
-            expect(scope.hasChildren).toBe(false);
+            expect(scope.hasChildren).toBe(true);
         });
         it('isActive should be one way bound', function() {
             isolatedScope.isActive = true;
@@ -83,6 +81,11 @@ describe('Tree Item directive', function() {
         it('onClick should be called in parent scope when invoked', function() {
             isolatedScope.onClick();
             expect(scope.onClick).toHaveBeenCalled();
+        });
+    });
+    it('controller bound variable', function() {
+        beforeEach(function() {
+            controller = element.controller('treeItem');
         });
         it('currentEntity should be two way bound', function() {
             controller.currentEntity = {id: 'new'};
@@ -101,84 +104,56 @@ describe('Tree Item directive', function() {
         });
     });
     describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
-            element = $compile(angular.element('<tree-item path="path" is-bold="isBold" is-opened="isOpened" current-entity="currentEntity" is-active="isActive" on-click="onClick()" has-children="hasChildren"></tree-item>'))(scope);
-        });
-        it('for an li', function() {
-            scope.$digest();
+        it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('LI');
+            expect(element.hasClass('tree-item')).toBe(true);
         });
-        describe('depending on if hasChildren', function() {
-            describe('is false', function() {
-                beforeEach(function() {
-                    scope.hasChildren = false;
-                    scope.$digest();
-                });
-                it('and it has an anchor', function() {
-                    var anchors = element.find('a');
-                    expect(anchors.length).toBe(1);
-                });
-                it('and it has one icons', function() {
-                    var icons = element.find('i');
-                    expect(icons.length).toBe(1);
-                });
-            });
-            describe('is true', function() {
-                beforeEach(function() {
-                    scope.hasChildren = true;
-                    scope.$digest();
-                });
-                it('and it has an anchor', function() {
-                    var anchors = element.find('a');
-                    expect(anchors.length).toBe(1);
-                });
-                it('and it has one icons', function() {
-                    var icons = element.find('i');
-                    expect(icons.length).toBe(1);
-                });
-                it('and it has an anchor with a double click attribute', function() {
-                    var anchors = element.querySelectorAll('[ng-dblclick]');
-                    expect(anchors.length).toBe(1);
-                });
-            });
+        it('depending on whether or not the currentEntity is valid', function() {
+            expect(element.hasClass('invalid')).toBe(false);
+
+            scope.currentEntity.matonto = {valid: false};
+            scope.$digest();
+            expect(element.hasClass('invalid')).toBe(true);
         });
-        describe('when isActive', function() {
-            it('is true', function() {
-                scope.isActive = true;
-                scope.$digest();
-                var anchor = element.find('a')[0];
-                expect(angular.element(anchor).hasClass('active')).toBe(true);
-            });
-            it('is false', function() {
-                scope.isActive = false;
-                scope.$digest();
-                var anchor = element.find('a')[0];
-                expect(angular.element(anchor).hasClass('active')).toBe(false);
-            });
+        it('depending on whether or not the currentEntity is unsaved', function() {
+            expect(element.find('a').hasClass('unsaved')).toBe(false);
+
+            scope.currentEntity.matonto = {unsaved: true};
+            scope.$digest();
+            expect(element.find('a').hasClass('unsaved')).toBe(true);
         });
-        describe('when isBold', function() {
-            it('is true', function() {
-                scope.isBold = true;
-                scope.$digest();
-                var strong = element.querySelectorAll('.bold');
-                expect(strong.length).toBe(1);
-            });
-            it('is false', function() {
-                scope.isBold = false;
-                scope.$digest();
-                var strong = element.querySelectorAll('.bold');
-                expect(strong.length).toBe(0);
-            });
+        it('depending on whether it has children', function() {
+            var anchor = element.find('a');
+            expect(anchor.length).toBe(1);
+            expect(anchor.attr('ng-dblclick')).toBeTruthy();
+            expect(element.find('i').length).toBe(1);
+
+            scope.hasChildren = false;
+            scope.$digest();
+            var anchor = element.find('a');
+            expect(anchor.length).toBe(1);
+            expect(anchor.attr('ng-dblclick')).toBeFalsy();
+            expect(element.find('i').length).toBe(1);
+        });
+        it('depending on whether it is active', function() {
+            var anchor = element.find('a');
+            expect(anchor.hasClass('active')).toBe(false);
+
+            scope.isActive = true;
+            scope.$digest();
+            expect(anchor.hasClass('active')).toBe(true);
+        });
+        it('depending on whether it is bold', function() {
+            var span = element.find('span');
+            expect(span.hasClass('bold')).toBe(false);
+
+            scope.isBold = true;
+            scope.$digest();
+            expect(span.hasClass('bold')).toBe(true);
         });
     });
     describe('controller methods', function() {
         beforeEach(function() {
-            scope.hasChildren = true;
-            scope.isActive = false;
-            scope.onClick = jasmine.createSpy('onClick');
-            scope.currentEntity = {};
-            element = $compile(angular.element('<tree-item path="path" is-opened="isOpened" current-entity="currentEntity" is-active="isActive" on-click="onClick()" has-children="hasChildren"></tree-item>'))(scope);
-            scope.$digest();
             controller = element.controller('treeItem');
         });
         describe('getTreeDisplay', function() {

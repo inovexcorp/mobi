@@ -21,28 +21,27 @@
  * #L%
  */
 describe('Upload Ontology Tab directive', function() {
-    var $compile;
-    var scope;
-    var element;
-    var controller;
-    var ontologyStateSvc;
-    var ontologyManagerSvc;
-    var prefixes;
+    var $compile,
+        scope,
+        $q,
+        element,
+        controller,
+        ontologyStateSvc,
+        ontologyManagerSvc;
 
     beforeEach(function() {
         module('templates');
         module('uploadOntologyTab');
         mockOntologyManager();
         mockOntologyState();
-        mockPrefixes();
         injectRegexConstant();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyManagerService_, _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _ontologyManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            $q = _$q_;
             ontologyStateSvc = _ontologyStateService_;
             ontologyManagerSvc = _ontologyManagerService_;
-            prefixes = _prefixes_;
         });
 
         element = $compile(angular.element('<upload-ontology-tab></upload-ontology-tab>'))(scope);
@@ -50,26 +49,81 @@ describe('Upload Ontology Tab directive', function() {
     });
 
     describe('replaces the element with the correct html', function() {
-        it('for a DIV', function() {
+        it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
-        });
-        it('based on upload-ontology-tab', function() {
             expect(element.hasClass('upload-ontology-tab')).toBe(true);
-        });
-        it('based on .actions div', function() {
             expect(element.querySelectorAll('.actions').length).toBe(1);
-        });
-        it('based on .form-container div', function() {
             expect(element.querySelectorAll('.form-container').length).toBe(1);
         });
-        it('based on form', function() {
-            expect(element.find('form').length).toBe(1);
-        });
-        it('based on .btn-container div', function() {
+        _.forEach(['form', 'file-input', 'custom-label', 'text-input', 'text-area', 'keyword-select', 'editor-radio-buttons'], function(tag) {
+            it('with a ' + tag, function() {
+                expect(element.find(tag).length).toBe(1);
+            });
+        })
+        it('with a .btn-container', function() {
             expect(element.querySelectorAll('.btn-container').length).toBe(1);
+        });
+        it('with custom buttons to upload and cancel', function() {
+            var buttons = element.querySelectorAll('.btn-container button');
+            expect(buttons.length).toBe(2);
+            expect(['Cancel', 'Upload']).toContain(angular.element(buttons[0]).text().trim());
+            expect(['Cancel', 'Upload']).toContain(angular.element(buttons[1]).text().trim());
+        });
+        it('depending on whether the form is invalid', function() {
+            var button = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
+            expect(button.attr('disabled')).toBeTruthy();
+
+            controller = element.controller('uploadOntologyTab');
+            controller.form.$invalid = false;
+            scope.$digest();
+            expect(button.attr('disabled')).toBeFalsy();
+        });
+        it('depending on whether there is an error', function() {
+            expect(element.find('error-display').length).toBe(0);
+
+            controller = element.controller('uploadOntologyTab');
+            controller.error = true;
+            scope.$digest();
+            expect(element.find('error-display').length).toBe(1);
         });
     });
     describe('controller methods', function() {
-
+        beforeEach(function() {
+            controller = element.controller('uploadOntologyTab');
+        });
+        describe('should upload an ontology', function() {
+            beforeEach(function() {
+                this.listItem = {ontology: []};
+                controller.file = {};
+                controller.title = '';
+                controller.description = '';
+                controller.keywords = ['one', 'two'];
+                ontologyStateSvc.showUploadTab = true;
+                ontologyManagerSvc.getListItemByRecordId.and.returnValue(this.listItem)
+            });
+            it('unless an error occurs', function() {
+                ontologyManagerSvc.uploadThenGet.and.returnValue($q.reject({statusText: 'Error message'}));
+                controller.upload();
+                scope.$apply();
+                expect(ontologyManagerSvc.uploadThenGet).toHaveBeenCalledWith(controller.file, controller.title, controller.description, 'one,two', controller.type);
+                expect(ontologyManagerSvc.getListItemByRecordId).not.toHaveBeenCalled();
+                expect(ontologyManagerSvc.getOntologyIRI).not.toHaveBeenCalled();
+                expect(ontologyStateSvc.addState).not.toHaveBeenCalled();
+                expect(ontologyStateSvc.setState).not.toHaveBeenCalled();
+                expect(ontologyStateSvc.showUploadTab).toBe(true);
+                expect(controller.error).toBe('Error message');
+            });
+            it('succesfully', function() {
+                controller.upload();
+                scope.$apply();
+                expect(ontologyManagerSvc.uploadThenGet).toHaveBeenCalledWith(controller.file, controller.title, controller.description, 'one,two', controller.type);
+                expect(ontologyManagerSvc.getListItemByRecordId).toHaveBeenCalledWith(jasmine.any(String));
+                expect(ontologyManagerSvc.getOntologyIRI).toHaveBeenCalledWith(this.listItem.ontology);
+                expect(ontologyStateSvc.addState).toHaveBeenCalledWith(jasmine.any(String), jasmine.any(String), controller.type);
+                expect(ontologyStateSvc.setState).toHaveBeenCalledWith(jasmine.any(String));
+                expect(ontologyStateSvc.showUploadTab).toBe(false);
+                expect(controller.error).toBeUndefined();
+            });
+        });
     });
 });

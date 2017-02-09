@@ -207,7 +207,7 @@ function mockOntologyManager() {
             this.getPropertyTypes = jasmine.createSpy('getPropertyTypes').and.returnValue([]);
             this.downloadOntologyFile = jasmine.createSpy('downloadOntologyFile');
             this.openOntology = jasmine.createSpy('openOntology').and.returnValue($q.resolve({}));
-            this.uploadThenGet = jasmine.createSpy('uploadThenGet').and.returnValue($q.resolve({}));
+            this.uploadThenGet = jasmine.createSpy('uploadThenGet').and.returnValue($q.resolve(''));
             this.getPreview = jasmine.createSpy('getPreview').and.returnValue($q.resolve({}));
             this.getChangedListForOntology = jasmine.createSpy('getChangedListForOntology').and.returnValue([]);
             this.editIRI = jasmine.createSpy('editIRI');
@@ -511,6 +511,7 @@ function mockOntologyState() {
             this.getObjectPropertiesOpened = jasmine.createSpy('getObjectPropertiesOpened');
             this.setObjectPropertiesOpened = jasmine.createSpy('setObjectPropertiesOpened');
             this.unsetEntityByIRI = jasmine.createSpy('unsetEntityByIRI');
+            this.getActiveKey = jasmine.createSpy('getActiveKey').and.returnValue('');
         });
     });
 }
@@ -744,6 +745,7 @@ function mockUtil() {
             this.getDctermsId = jasmine.createSpy('getDctermsId').and.returnValue('');
             this.parseLinks = jasmine.createSpy('parseLinks').and.returnValue({});
             this.createErrorToast = jasmine.createSpy('createErrorToast');
+            this.createSuccessToast = jasmine.createSpy('createSuccessToast');
         });
     });
 }

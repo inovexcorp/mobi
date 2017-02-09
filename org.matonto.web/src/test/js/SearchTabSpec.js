@@ -21,25 +21,27 @@
  * #L%
  */
 describe('Search Tab directive', function() {
-    var $compile;
-    var element;
-    var scope;
-    var ontologyStateSvc;
-    var ontologyUtilsManagerSvc;
-    var ontologyManagerSvc;
-    var deferred;
+    var $compile,
+        scope,
+        $q,
+        element,
+        controller,
+        ontologyStateSvc,
+        ontologyUtilsManagerSvc,
+        ontologyManagerSvc,
+        deferred;
 
     beforeEach(function() {
         module('templates');
         module('searchTab');
-        mockOntologyState();
-        mockOntologyManager();
-        mockOntologyUtilsManager();
         injectPrefixationFilter();
         injectTrustedFilter();
         injectHighlightFilter();
         injectBeautifyFilter();
         injectSplitIRIFilter();
+        mockOntologyState();
+        mockOntologyManager();
+        mockOntologyUtilsManager();
 
         inject(function(_$q_, _$compile_, _$rootScope_, _ontologyStateService_, _ontologyUtilsManagerService_, _ontologyManagerService_) {
             $q = _$q_;
@@ -80,59 +82,45 @@ describe('Search Tab directive', function() {
     });
 
     describe('contains the correct html', function() {
-        it('for a DIV tag', function() {
+        it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
-        });
-        it('based on .search-tab', function() {
             expect(element.hasClass('search-tab')).toBe(true);
         });
-        it('for blocks', function() {
-            var blocks = element.find('block');
-            expect(blocks.length).toBe(2);
+        it('with blocks', function() {
+            expect(element.find('block').length).toBe(2);
         });
-        it('for block-headers', function() {
-            var blockHeaders = element.find('block-header');
-            expect(blockHeaders.length).toBe(2);
+        it('with block-headers', function() {
+            expect(element.find('block-header').length).toBe(2);
         });
-        it('for block-contents', function() {
-            var blockContents = element.find('block-content');
-            expect(blockContents.length).toBe(2);
+        it('with block-contents', function() {
+            expect(element.find('block-content').length).toBe(2);
         });
-        it('for error-display', function() {
-            var errorDisplay = element.find('error-display');
-            expect(errorDisplay.length).toBe(1);
+        it('with a error-display', function() {
+            expect(element.find('error-display').length).toBe(1);
         });
-        it('for info-message', function() {
-            var infoMessage = element.find('info-message');
-            expect(infoMessage.length).toBe(1);
+        it('with a info-message', function() {
+            expect(element.find('info-message').length).toBe(1);
         });
-        it('for .result', function() {
-            var result = element.querySelectorAll('.result');
-            expect(result.length).toBe(1);
+        it('with a .result', function() {
+            expect(element.querySelectorAll('.result').length).toBe(1);
         });
-        it('for tree-item', function() {
-            var treeItem = element.find('tree-item');
-            expect(treeItem.length).toBe(1);
+        it('with a tree-item', function() {
+            expect(element.find('tree-item').length).toBe(1);
         });
-        it('for .property-values', function() {
-            var propertyValues = element.querySelectorAll('.property-values');
-            expect(propertyValues.length).toBe(1);
+        it('with a .property-values', function() {
+            expect(element.querySelectorAll('.property-values').length).toBe(1);
         });
-        it('for .value-container', function() {
-            var valueContainers = element.querySelectorAll('.value-container');
-            expect(valueContainers.length).toBe(2);
+        it('with .value-containers', function() {
+            expect(element.querySelectorAll('.value-container').length).toBe(2);
         });
-        it('for .value-display', function() {
-            var valueDisplays = element.querySelectorAll('.value-display');
-            expect(valueDisplays.length).toBe(2);
+        it('with .value-displays', function() {
+            expect(element.querySelectorAll('.value-display').length).toBe(2);
         });
-        it('for .value-display a', function() {
-            var anchor = element.querySelectorAll('.value-display a');
-            expect(anchor.length).toBe(1);
+        it('with a link in .value-display', function() {
+            expect(element.querySelectorAll('.value-display a').length).toBe(1);
         });
     });
     describe('controller methods', function() {
-        var controller;
         beforeEach(function() {
             controller = element.controller('searchTab');
         });
