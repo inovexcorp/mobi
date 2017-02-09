@@ -1618,12 +1618,9 @@
                     $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/iris', config),
                     $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/imported-iris', config),
                     $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/class-hierarchies', config),
-                    $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/classes-with-individuals',
-                        config),
-                    $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/data-property-hierarchies',
-                        config),
-                    $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/object-property-hierarchies',
-                        config),
+                    $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/classes-with-individuals', config),
+                    $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/data-property-hierarchies', config),
+                    $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/object-property-hierarchies', config),
                     cm.getRecordBranches(recordId, catalogId, {applyUserFilter: false})
                 ]).then(response => {
                     listItem.annotations = _.unionWith(
@@ -1749,7 +1746,7 @@
                     }
                     listItem.conceptHierarchy = response[2].data.hierarchy;
                     listItem.conceptIndex = response[2].data.index;
-                    listItem.branches = response[3];
+                    listItem.branches = response[3].data;
                     listItem.upToDate = upToDate;
                     _.pullAllWith(
                         listItem.annotations,
