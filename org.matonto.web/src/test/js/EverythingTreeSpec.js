@@ -24,7 +24,6 @@ describe('Everything Tree directive', function() {
     var $compile,
         scope,
         element,
-        controller,
         ontologyStateSvc,
         ontologyManagerSvc;
 
@@ -40,36 +39,32 @@ describe('Everything Tree directive', function() {
             ontologyManagerSvc = _ontologyManagerService_;
             ontologyStateSvc = _ontologyStateService_;
         });
+
         ontologyManagerSvc.getClasses.and.returnValue(['class1']);
         ontologyManagerSvc.getClassProperties.and.returnValue(['property1']);
         ontologyManagerSvc.getNoDomainProperties.and.returnValue(['property1']);
         ontologyManagerSvc.hasNoDomainProperties.and.returnValue(true);
         ontologyStateSvc.getOpened.and.returnValue(true);
         ontologyStateSvc.getNoDomainsOpened.and.returnValue(true);
+
+        element = $compile(angular.element('<everything-tree></everything-tree>'))(scope);
+        scope.$digest();
     });
 
     describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
-            element = $compile(angular.element('<everything-tree></everything-tree>'))(scope);
-            scope.$digest();
-        });
-        it('for a DIV', function() {
+        it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
-        });
-        it('based on tree class', function() {
             expect(element.hasClass('tree')).toBe(true);
+            expect(element.hasClass('everything-tree')).toBe(true);
         });
         it('based on container class', function() {
-            var container = element.querySelectorAll('.container');
-            expect(container.length).toBe(2);
+            expect(element.querySelectorAll('.container').length).toBe(2);
         });
         it('based on <ul>s', function() {
-            var uls = element.find('ul');
-            expect(uls.length).toBe(4);
+            expect(element.find('ul').length).toBe(4);
         });
         it('based on container tree-items', function() {
-            var treeItems = element.querySelectorAll('.container tree-item');
-            expect(treeItems.length).toBe(2);
+            expect(element.querySelectorAll('.container tree-item').length).toBe(2);
         });
         describe('based on tree-item length', function() {
             it('when noDomainProperties is empty', function() {
@@ -77,24 +72,21 @@ describe('Everything Tree directive', function() {
                 element = $compile(angular.element('<everything-tree></everything-tree>'))(scope);
                 scope.$digest();
 
-                var treeItems = element.querySelectorAll('.container tree-item');
-                expect(treeItems.length).toBe(1);
+                expect(element.querySelectorAll('.container tree-item').length).toBe(1);
             });
             it('when getClassProperties returns an empty array', function() {
                 ontologyManagerSvc.getClassProperties.and.returnValue([]);
                 element = $compile(angular.element('<everything-tree></everything-tree>'))(scope);
                 scope.$digest();
 
-                var treeItems = element.querySelectorAll('.container tree-item');
-                expect(treeItems.length).toBe(1);
+                expect(element.querySelectorAll('.container tree-item').length).toBe(1);
             });
             it('when getClasses is empty', function() {
                 ontologyManagerSvc.getClasses.and.returnValue([]);
                 element = $compile(angular.element('<everything-tree></everything-tree>'))(scope);
                 scope.$digest();
 
-                var treeItems = element.querySelectorAll('.container tree-item');
-                expect(treeItems.length).toBe(1);
+                expect(element.querySelectorAll('.container tree-item').length).toBe(1);
             });
         });
     });

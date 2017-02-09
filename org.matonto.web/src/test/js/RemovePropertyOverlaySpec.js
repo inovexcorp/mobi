@@ -21,7 +21,14 @@
  * #L%
  */
 describe('Remove Property Overlay directive', function() {
-    var $compile, scope, $q, ontologyStateSvc, ontologyManagerSvc, propertyManagerSvc, isolatedScope, element, controller;
+    var $compile,
+        scope,
+        $q,
+        element,
+        controller,
+        ontologyStateSvc,
+        ontologyManagerSvc,
+        propertyManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -46,12 +53,10 @@ describe('Remove Property Overlay directive', function() {
 
         element = $compile(angular.element('<remove-property-overlay index="index" key="key" on-submit="onSubmit()" overlay-flag="overlayFlag"></remove-property-overlay>'))(scope);
         scope.$digest();
-
         controller = element.controller('removePropertyOverlay');
-        isolatedScope = element.isolateScope();
     });
 
-    describe('controller bound variables', function() {
+    describe('controller bound variable', function() {
         it('index should be one way bound', function() {
             controller.index = 1;
             scope.$digest();
@@ -74,20 +79,17 @@ describe('Remove Property Overlay directive', function() {
         });
     });
     describe('replaces the element with the correct html', function() {
-        it('for a div', function() {
+        it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
-        });
-        it('based on .overlay', function() {
+            expect(element.hasClass('remove-property-overlay')).toBe(true);
             expect(element.hasClass('overlay')).toBe(true);
-        });
-        it('based on form', function() {
             expect(element.find('form').length).toBe(1);
         });
-        it('based on h6', function() {
+        it('with a h6', function() {
             expect(element.find('h6').length).toBe(1);
         });
         _.forEach(['main', 'btn-container', 'btn-primary', 'btn-default'], function(item) {
-            it('based on .' + item, function() {
+            it('with a .' + item, function() {
                 expect(element.querySelectorAll('.' + item).length).toBe(1);
             });
         });
@@ -103,5 +105,16 @@ describe('Remove Property Overlay directive', function() {
                 controller.index);
             expect(controller.overlayFlag).toBe(false);
         });
+    });
+    it('calls removeProperty when the button is clicked', function() {
+        spyOn(controller, 'removeProperty');
+        var button = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
+        button.triggerHandler('click');
+        expect(controller.removeProperty).toHaveBeenCalled();
+    });
+    it('sets the correct state when the cancel button is clicked', function() {
+        var button = angular.element(element.querySelectorAll('.btn-container button.btn-default')[0]);
+        button.triggerHandler('click');
+        expect(controller.overlayFlag).toBe(false);
     });
 });

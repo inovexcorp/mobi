@@ -21,8 +21,16 @@
  * #L%
  */
 describe('Branch Select directive', function() {
-    var $compile, scope, isolatedScope, element, controller, catalogManagerSvc, ontologyStateSvc, $q, stateManagerSvc,
-        ontologyStateSvc, catalogId;
+    var $compile,
+        scope,
+        element,
+        controller,
+        catalogManagerSvc,
+        ontologyStateSvc,
+        stateManagerSvc,
+        $q,
+        catalogId;
+
     var branchId = 'branchId';
     var branch = {'@id': branchId};
     var commitId = 'commitId';
@@ -58,13 +66,11 @@ describe('Branch Select directive', function() {
 
         element = $compile(angular.element('<branch-select ng-model="bindModel"></branch-select>'))(scope);
         scope.$digest();
-
         controller = element.controller('branchSelect');
-        isolatedScope = element.isolateScope();
         catalogId = _.get(catalogManagerSvc.localCatalog, '@id', '');
     });
 
-    describe('controller bound variables', function() {
+    describe('controller bound variable', function() {
         it('ngModel should be two way bound', function() {
             controller.bindModel = {id: 'id'};
             scope.$digest();
@@ -72,20 +78,35 @@ describe('Branch Select directive', function() {
         });
     });
     describe('replaces the element with the correct html', function() {
-        it('for a div', function() {
+        it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
-        });
-        it('based on .branch-select', function() {
             expect(element.hasClass('branch-select')).toBe(true);
         });
-        it('based on ui-select', function() {
+        it('with a ui-select', function() {
             expect(element.find('ui-select').length).toBe(1);
         });
-        it('based on confirmation-overlay', function() {
+        it('depending on whether a branch is being deleted', function() {
             expect(element.find('confirmation-overlay').length).toBe(0);
+
             controller.showDeleteConfirmation = true;
-            scope.$apply();
+            scope.$digest();
             expect(element.find('confirmation-overlay').length).toBe(1);
+        });
+        it('depending on whether an error occurred while deleting a branch', function() {
+            controller.showDeleteConfirmation = true;
+            scope.$digest();
+            expect(element.find('error-message').length).toBe(0);
+
+            controller.deleteError = 'Error';
+            scope.$digest();
+            expect(element.find('error-message').length).toBe(1);
+        });
+        it('depending on whether a branch is being editing', function() {
+            expect(element.find('edit-branch-overlay').length).toBe(0);
+
+            controller.showEditOverlay = true;
+            scope.$digest();
+            expect(element.find('edit-branch-overlay').length).toBe(1);
         });
     });
     describe('controller methods', function() {

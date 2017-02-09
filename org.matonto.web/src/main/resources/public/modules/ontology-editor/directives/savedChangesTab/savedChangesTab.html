@@ -24,7 +24,7 @@
     <div class="col-xs-8 col-xs-offset-2">
         <block>
             <block-content class="padding">
-                <div ng-if="dvm.list.length">
+                <div ng-if="dvm.list.length" class="changes">
                     <error-display ng-if="!dvm.os.listItem.upToDate">There have been other commits made on this Branch.</error-display>
                     <div class="property-values" ng-repeat="id in dvm.list | orderBy:dvm.util.getBeautifulIRI">
                         <h5 ng-click="isClosed = !isClosed" class="clearfix">

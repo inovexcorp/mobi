@@ -197,6 +197,10 @@ function mockOntologyManager() {
             this.createObjectProperty = jasmine.createSpy('createObjectProperty').and.returnValue($q.resolve({}));
             this.createDataTypeProperty = jasmine.createSpy('createDataTypeProperty').and.returnValue($q.resolve({}));
             this.createIndividual = jasmine.createSpy('createIndividual').and.returnValue($q.resolve({}));
+            this.isConcept = jasmine.createSpy('isConcept').and.returnValue(true);
+            this.isConceptScheme = jasmine.createSpy('isConceptScheme').and.returnValue(true);
+            this.hasConceptSchemes = jasmine.createSpy('hasConceptSchemes').and.returnValue(true);
+            this.hasConcepts = jasmine.createSpy('hasConcepts').and.returnValue(true);
 
             this.getImportedOntologies = jasmine.createSpy('getImportedOntologies').and.returnValue($q.when([]));
             this.getObjectCopyByIri = jasmine.createSpy('getObjectCopyByIri').and.returnValue({});
@@ -219,6 +223,7 @@ function mockOntologyManager() {
             this.updateOntology = jasmine.createSpy('updateOntology');
             this.removeBranch = jasmine.createSpy('removeBranch');
             this.getOntologyByRecordId = jasmine.createSpy('getOntologyByRecordId');
+            this.getAllOntologyRecords = jasmine.createSpy('getAllOntologyRecords').and.returnValue($q.when([]));
         });
     });
 }
@@ -356,6 +361,7 @@ function mockPrefixes() {
             this.rdf = 'rdf:';
             this.ontologyState = 'ontologyState:';
             this.catalog = 'catalog:';
+            this.skos = 'skos:';
         });
     });
 }
@@ -493,6 +499,15 @@ function mockOntologyState() {
             this.unSelectItem = jasmine.createSpy('unSelectItem');
             this.clearInProgressCommit = jasmine.createSpy('clearInProgressCommit');
             this.resetStateTabs = jasmine.createSpy('resetStateTabs');
+            this.addEntityToHierarchy = jasmine.createSpy('addEntityToHierarchy');
+            this.deleteEntityFromParentInHierarchy = jasmine.createSpy('deleteEntityFromParentInHierarchy');
+            this.addState = jasmine.createSpy('addState');
+            this.hasChanges = jasmine.createSpy('hasChanges').and.returnValue(true);
+            this.getActivePage = jasmine.createSpy('getActivePage').and.returnValue({});
+            this.getDataPropertiesOpened = jasmine.createSpy('getDataPropertiesOpened');
+            this.setDataPropertiesOpened = jasmine.createSpy('setDataPropertiesOpened');
+            this.getObjectPropertiesOpened = jasmine.createSpy('getObjectPropertiesOpened');
+            this.setObjectPropertiesOpened = jasmine.createSpy('setObjectPropertiesOpened');
         });
     });
 }

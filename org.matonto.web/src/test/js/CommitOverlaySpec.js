@@ -21,7 +21,16 @@
  * #L%
  */
 describe('Commit Overlay directive', function() {
-    var $compile, scope, $q, catalogManagerSvc, stateManagerSvc, ontologyStateSvc, element, controller, catalogId;
+    var $compile,
+        scope,
+        $q,
+        catalogManagerSvc,
+        stateManagerSvc,
+        ontologyStateSvc,
+        element,
+        controller,
+        catalogId;
+
     var commitId = 'commitId';
     var error = 'error';
     var branchId = 'branchId';
@@ -53,35 +62,44 @@ describe('Commit Overlay directive', function() {
     });
 
     describe('replaces the element with the correct html', function() {
-        it('for a div', function() {
+        it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
-        });
-        it('based on .commit-overlay', function() {
             expect(element.hasClass('commit-overlay')).toBe(true);
         });
-        it('based on form', function() {
+        it('with a form', function() {
             expect(element.find('form').length).toBe(1);
         });
-        it('based on error-message', function() {
+        it('depending on whether there is a error message', function() {
             expect(element.find('error-message').length).toBe(0);
             controller.errorMessage = 'error';
             scope.$digest();
             expect(element.find('error-message').length).toBe(1);
         });
-        it('based on info-message', function() {
+        it('depending on whether the selected item is up to date', function() {
             expect(element.find('info-message').length).toBe(0);
             ontologyStateSvc.listItem.upToDate = false;
             scope.$digest();
             expect(element.find('info-message').length).toBe(1);
         });
-        it('based on text-area', function() {
+        it('with a text-area', function() {
             expect(element.find('text-area').length).toBe(1);
         });
-        it('based on .btn-container', function() {
+        it('with a .btn-container', function() {
             expect(element.querySelectorAll('.btn-container').length).toBe(1);
         });
-        it('based on .btn', function() {
-            expect(element.querySelectorAll('.btn').length).toBe(2);
+        it('depending on the form validity', function() {
+            var button = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
+            expect(button.attr('disabled')).toBeTruthy();
+
+            controller.form.$invalid = false;
+            scope.$digest();
+            expect(button.attr('disabled')).toBeFalsy();
+        });
+        it('with buttons to submit and cancel', function() {
+            var buttons = element.querySelectorAll('.btn-container button');
+            expect(buttons.length).toBe(2);
+            expect(['Cancel', 'Submit']).toContain(angular.element(buttons[0]).text().trim());
+            expect(['Cancel', 'Submit']).toContain(angular.element(buttons[1]).text().trim());
         });
     });
     describe('controller methods', function() {
@@ -250,5 +268,16 @@ describe('Commit Overlay directive', function() {
                 });
             });
         });
+    });
+    it('should call commit when the submit button is clicked', function() {
+        spyOn(controller, 'commit');
+        var button = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
+        button.triggerHandler('click');
+        expect(controller.commit).toHaveBeenCalled();
+    });
+    it('should set the correct state when the cancel button is clicked', function() {
+        var button = angular.element(element.querySelectorAll('.btn-container button.btn-default')[0]);
+        button.triggerHandler('click');
+        expect(ontologyStateSvc.showCommitOverlay).toBe(false);
     });
 });

@@ -21,7 +21,16 @@
  * #L%
  */
 describe('Edit Branch Overlay directive', function() {
-    var $compile, scope, isolatedScope, element, controller, catalogManagerSvc, ontologyStateSvc, $q, prefixes, utilSvc;
+    var $compile,
+        scope,
+        $q,
+        element,
+        controller,
+        catalogManagerSvc,
+        ontologyStateSvc,
+        prefixes,
+        utilSvc;
+
     var branch = {'@id': 'id'};
 
     beforeEach(function() {
@@ -50,12 +59,11 @@ describe('Edit Branch Overlay directive', function() {
         scope.$digest();
 
         controller = element.controller('editBranchOverlay');
-        controller.error = 'error';
         scope.$digest();
         isolatedScope = element.isolateScope();
     });
 
-    describe('controller bound variables', function() {
+    describe('controller bound variable', function() {
         it('branch should be two way bound', function() {
             controller.branch = {'@id': 'new'};
             scope.$digest();
@@ -68,21 +76,41 @@ describe('Edit Branch Overlay directive', function() {
         });
     });
     describe('replaces the element with the correct html', function() {
-        it('for a div', function() {
+        it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
-        });
-        it('based on .edit-branch-overlay', function() {
             expect(element.hasClass('edit-branch-overlay')).toBe(true);
         });
-        _.forEach(['form', 'error-display', 'text-input', 'text-area'], function(item) {
-            it('based on ' + item, function() {
+        it('based on .edit-branch-overlay', function() {
+        });
+        _.forEach(['form', 'text-input', 'text-area'], function(item) {
+            it('with a ' + item, function() {
                 expect(element.find(item).length).toBe(1);
             });
         });
         _.forEach(['btn-container', 'btn-primary', 'btn-default'], function(item) {
-            it('based on .' + item, function() {
+            it('with a .' + item, function() {
                 expect(element.querySelectorAll('.' + item).length).toBe(1);
             });
+        });
+        it('depending on whether there is an error', function() {
+            expect(element.find('error-display').length).toBe(0);
+            controller.error = 'error';
+            scope.$digest();
+            expect(element.find('error-display').length).toBe(1);
+        });
+        it('with custom buttons to submit and cancel', function() {
+            var buttons = element.find('button');
+            expect(buttons.length).toBe(2);
+            expect(['Cancel', 'Submit'].indexOf(angular.element(buttons[0]).text()) >= 0).toBe(true);
+            expect(['Cancel', 'Submit'].indexOf(angular.element(buttons[1]).text()) >= 0).toBe(true);
+        });
+        it('depending on the form validity', function() {
+            var button = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
+            expect(button.attr('disabled')).toBeTruthy();
+
+            controller.form.$invalid = false;
+            scope.$digest();
+            expect(button.attr('disabled')).toBeFalsy();
         });
     });
     describe('controller methods', function() {
@@ -128,5 +156,17 @@ describe('Edit Branch Overlay directive', function() {
                 expect(controller.error).toBe(errorMessage);
             });
         });
+    });
+    it('should call edit when the submit button is clicked', function() {
+        spyOn(controller, 'edit');
+
+        var button = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
+        button.triggerHandler('click');
+        expect(controller.edit).toHaveBeenCalled();
+    });
+    it('should set overlayFlag when the cancel button is clicked', function() {
+        var button = angular.element(element.querySelectorAll('.btn-container button.btn-default')[0]);
+        button.triggerHandler('click');
+        expect(scope.overlayFlag).toBe(false);
     });
 });
