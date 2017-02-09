@@ -27,6 +27,7 @@ describe('Ontology State service', function() {
         additions: ['test'],
         deletions: ['test']
     }
+    var recordId = 'recordId';
 
     beforeEach(function() {
         module('ontologyState');
@@ -109,20 +110,28 @@ describe('Ontology State service', function() {
         ];
     });
 
-    describe('afterSave calls the correct functions', function() {
+    /*describe('afterSave calls the correct functions', function() {
         var getDeferred;
         beforeEach(function() {
             getDeferred = $q.defer();
             catalogManagerSvc.getInProgressCommit.and.returnValue(getDeferred.promise);
         });
         it('when getInProgressCommit resolves', function() {
-            ontologyStateSvc.
+            ontologyStateSvc.listItem = {
+                recordId: recordId
+            };
             getDeferred.resolve(inProgressCommit);
+            ontologyStateSvc.afterSave()
+                .then(function(response) {
+
+                }, function() {
+                    fail('Promise should have resolved');
+                });
         });
         it('when getInProgressCommit rejects', function() {
             getDeferred.reject(error);
         });
-    });
+    });*/
 
     it('setOpened sets the correct property on the state object', function() {
         var path = 'this.is.the.path';
