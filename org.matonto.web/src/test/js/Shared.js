@@ -224,6 +224,10 @@ function mockOntologyManager() {
             this.removeBranch = jasmine.createSpy('removeBranch');
             this.getOntologyByRecordId = jasmine.createSpy('getOntologyByRecordId');
             this.getAllOntologyRecords = jasmine.createSpy('getAllOntologyRecords').and.returnValue($q.when([]));
+            this.createOntologyListItem = jasmine.createSpy('createOntologyListItem').and.returnValue($q.when([]));
+            this.addOntologyToList = jasmine.createSpy('addOntologyToList').and.returnValue($q.when([]));
+            this.createVocabularyListItem = jasmine.createSpy('createVocabularyListItem').and.returnValue($q.when([]));
+            this.addVocabularyToList = jasmine.createSpy('addVocabularyToList').and.returnValue($q.when([]));
         });
     });
 }
@@ -546,6 +550,8 @@ function mockResponseObj() {
 function mockPropertyManager() {
     module(function($provide) {
         $provide.service('propertyManagerService', function($q) {
+            this.defaultAnnotations = [];
+            this.skosAnnotations = [];
             this.getDefaultAnnotations = jasmine.createSpy('getDefaultAnnotations').and.returnValue([]);
             this.remove = jasmine.createSpy('remove');
             this.add = jasmine.createSpy('add');
