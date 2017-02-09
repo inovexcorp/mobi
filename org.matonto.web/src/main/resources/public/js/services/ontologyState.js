@@ -28,13 +28,14 @@
         .service('ontologyStateService', ontologyStateService);
 
         ontologyStateService.$inject = ['$timeout', '$q', 'ontologyManagerService', 'updateRefsService',
-            'stateManagerService', 'utilService'];
+            'stateManagerService', 'utilService', 'catalogManagerService'];
 
         function ontologyStateService($timeout, $q, ontologyManagerService, updateRefsService,
-            stateManagerService, utilService) {
+            stateManagerService, utilService, catalogManagerService) {
             var self = this;
             var om = ontologyManagerService;
             var sm = stateManagerService;
+            var cm = catalogManagerService;
 
             self.states = [];
             self.newState = {active: true};
@@ -50,20 +51,24 @@
                 self.listItem = {};
             }
             self.afterSave = function() {
-                self.listItem.inProgressCommit.additions = _.concat(self.listItem.inProgressCommit.additions, self.listItem.additions);
-                self.listItem.inProgressCommit.deletions = _.concat(self.listItem.inProgressCommit.deletions, self.listItem.deletions);
-
-                self.listItem.additions = [];
-                self.listItem.deletions = [];
-
                 var deferred = $q.defer();
-                if (_.isEmpty(sm.getOntologyStateByRecordId(self.listItem.recordId))) {
-                    sm.createOntologyState(self.listItem.recordId, self.listItem.branchId, self.listItem.commitId)
-                        .then(deferred.resolve, response => deferred.reject(response.statusText));
-                } else {
-                    sm.updateOntologyState(self.listItem.recordId, self.listItem.branchId, self.listItem.commitId)
-                        .then(deferred.resolve, response => deferred.reject(response.statusText));
-                }
+                cm.getInProgressCommit(self.listItem.recordId, _.get(cm.localCatalog, '@id', ''))
+                    .then(inProgressCommit => {
+                        self.listItem.inProgressCommit = inProgressCommit;
+
+                        self.listItem.additions = [];
+                        self.listItem.deletions = [];
+
+                        if (_.isEmpty(sm.getOntologyStateByRecordId(self.listItem.recordId))) {
+                            sm.createOntologyState(self.listItem.recordId, self.listItem.branchId,
+                                self.listItem.commitId)
+                                    .then(deferred.resolve, response => deferred.reject(response.statusText));
+                        } else {
+                            sm.updateOntologyState(self.listItem.recordId, self.listItem.branchId,
+                                self.listItem.commitId)
+                                    .then(deferred.resolve, response => deferred.reject(response.statusText));
+                        }
+                    }, deferred.reject);
                 return deferred.promise;
             }
 
