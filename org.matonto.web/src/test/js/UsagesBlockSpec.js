@@ -106,11 +106,11 @@ describe('Usages Block directive', function() {
     });
     it('should update the results when the usages change', function() {
         ontologyStateSvc.selected = {'@id': 'test'};
-        ontologyStateSvc.deletedEntities = [{matonto: {originalIRI: 'A'}}];
-        ontologyStateSvc.state.test.usages = [{s: 'A', p: 'B'}, {s: 'B', o: 'A'}, {s: 'B', p: 'A'}, {s: 'B', p: 'B'}, {s: 'B', o: 'B'}];
+        ontologyStateSvc.state.deletedEntities = [{matonto: {originalIRI: 'A'}}];
+        ontologyStateSvc.state.test.usages = [{s: {value: 'A'}, p: {value: 'B'}}, {s: {value: 'B'}, o: {value: 'A'}}, {s: {value: 'B'}, p: {value: 'A'}}, {s: {value: 'B'}, p: {value: 'B'}}, {s: {value: 'B'}, o: {value: 'B'}}];
         scope.$digest();
         expect(_.has(controller.results, 'A')).toBe(false);
-        expect(controller.results.B).toEqual([{subject: 'B', predicate: 'B', object: 'test'}]);
-        expect(controller.results.test).toEqual([{subject: 'B', predicate: 'test', object: 'B'}]);
+        expect(controller.results.B).toContain(jasmine.objectContaining({subject: 'B', predicate: 'B', object: 'test'}));
+        expect(controller.results.test).toContain(jasmine.objectContaining({subject: 'B', predicate: 'test', object: 'B'}));
     });
 });
