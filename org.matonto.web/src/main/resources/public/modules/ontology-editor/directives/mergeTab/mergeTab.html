@@ -40,7 +40,7 @@
                         <checkbox ng-if="dvm.branchTitle !== 'MASTER' && !dvm.isUserBranch" ng-model="dvm.checkbox" display-text="'Remove Branch: ' + dvm.branchTitle + ' after merge.'"></checkbox>
                     </form>
                 </div>
-                <div ng-if="dvm.conflicts.length">
+                <div ng-if="dvm.conflicts.length" class="conflicts-container">
                     <p class="text-center">Merge <strong>Branch: {{dvm.branchTitle}}</strong> into <strong>Branch: {{dvm.getTargetTitle()}}</strong><button class="btn btn-primary btn-resolution" type="button" ng-click="dvm.mergeWithResolutions()" ng-disabled="!dvm.allResolved()">Submit with Resolutions</button></p>
                     <p class="text-center" ng-if="dvm.checkbox">Branch: {{dvm.branchTitle}} will be removed after conflicts are resolved.</p>
                     <div ng-if="dvm.index === undefined">

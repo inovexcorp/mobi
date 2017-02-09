@@ -731,4 +731,51 @@ describe('Ontology State service', function() {
             });
         });
     });
+    describe('unsetEntityByIRI removes the entityIRI for the provided iri', function() {
+        beforeEach(function() {
+            ontologyStateSvc.state = {
+                prop1: {
+                    entityIRI: 'iri1'
+                },
+                prop2: {
+                    entityIRI: 'iri2'
+                }
+            }
+            ontologyStateSvc.selected = {
+                '@id': 'iri1'
+            }
+        });
+        it('if the iri is not present', function() {
+            ontologyStateSvc.unsetEntityByIRI('notThere');
+            expect(ontologyStateSvc.state).toEqual({
+                prop1: {
+                    entityIRI: 'iri1'
+                },
+                prop2: {
+                    entityIRI: 'iri2'
+                }
+            });
+            expect(ontologyStateSvc.selected).toEqual({'@id': 'iri1'});
+        });
+        it('if the iri is present and not the selected', function() {
+            ontologyStateSvc.unsetEntityByIRI('iri2');
+            expect(ontologyStateSvc.state).toEqual({
+                prop1: {
+                    entityIRI: 'iri1'
+                },
+                prop2: {}
+            });
+            expect(ontologyStateSvc.selected).toEqual({'@id': 'iri1'});
+        });
+        it('if the iri is present and is the selected', function() {
+            ontologyStateSvc.unsetEntityByIRI('iri1');
+            expect(ontologyStateSvc.state).toEqual({
+                prop1: {},
+                prop2: {
+                    entityIRI: 'iri2'
+                }
+            });
+            expect(ontologyStateSvc.selected).toEqual(undefined);
+        });
+    });
 });

@@ -21,7 +21,13 @@
  * #L%
  */
 describe('Ontology Property Overlay directive', function() {
-    var $compile, scope, element, controller, ontologyStateSvc, propertyManagerSvc, ontologyManagerSvc;
+    var $compile,
+        scope,
+        element,
+        controller,
+        ontologyStateSvc,
+        propertyManagerSvc,
+        ontologyManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -51,27 +57,25 @@ describe('Ontology Property Overlay directive', function() {
     });
 
     describe('replaces the element with the correct html', function() {
-        it('for a div', function() {
+        it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
-        });
-        it('based on .ontology-property-overlay', function() {
             expect(element.hasClass('ontology-property-overlay')).toBe(true);
-        });
-        it('based on form', function() {
             expect(element.find('form').length).toBe(1);
         });
-        it('based on h6', function() {
+        it('with a h6', function() {
             expect(element.find('h6').length).toBe(1);
         });
-        it('has correct heading based on variable', function() {
+        it('depending on whether a property is being edited', function() {
             var tests = [
                 {
                     value: true,
-                    result: 'Edit Property'
+                    heading: 'Edit Property',
+                    button: 'Edit'
                 },
                 {
                     value: false,
-                    result: 'Add Property'
+                    heading: 'Add Property',
+                    button: 'Add'
                 }
             ];
             _.forEach(tests, function(test) {
@@ -80,50 +84,29 @@ describe('Ontology Property Overlay directive', function() {
 
                 var header = element.find('h6');
                 expect(header.length).toBe(1);
-                expect(header[0].innerHTML).toBe(test.result);
-            });
-        });
-        describe('when', function() {
-            it('isOntologyProperty is true', function() {
-                spyOn(controller, 'isOntologyProperty').and.returnValue(true);
-                spyOn(controller, 'isAnnotationProperty').and.returnValue(false);
-                scope.$digest();
-                expect(element.querySelectorAll('.form-group').length).toBe(2);
-                expect(element.find('custom-label').length).toBe(2);
-                expect(element.find('input').length).toBe(1);
-                expect(element.find('p').length).toBe(1);
-                expect(element.find('ng-message').length).toBe(2);
-            });
-            it('isAnnotationProperty is true', function() {
-                spyOn(controller, 'isOntologyProperty').and.returnValue(false);
-                spyOn(controller, 'isAnnotationProperty').and.returnValue(true);
-                scope.$digest();
-                expect(element.querySelectorAll('.form-group').length).toBe(1);
-                expect(element.find('text-area').length).toBe(1);
-            });
-        });
-        it('based on .btn-container', function() {
-            expect(element.querySelectorAll('.btn-container').length).toBe(1);
-        });
-        it('has correct button based on variable', function() {
-            var tests = [
-                {
-                    value: true,
-                    result: 'Edit'
-                },
-                {
-                    value: false,
-                    result: 'Add'
-                }
-            ];
-            _.forEach(tests, function(test) {
-                ontologyStateSvc.editingOntologyProperty = test.value;
-                scope.$digest();
-
+                expect(header[0].innerHTML).toBe(test.heading);
                 var buttons = element.querySelectorAll('button.btn-primary');
                 expect(buttons.length).toBe(1);
-                expect(buttons[0].innerHTML).toBe(test.result);
+                expect(buttons[0].innerHTML).toBe(test.button);
             });
+        });
+        it('depending on whether it is an annotation', function() {
+            spyOn(controller, 'isAnnotationProperty').and.returnValue(true);
+            scope.$digest();
+            expect(element.querySelectorAll('.form-group').length).toBe(1);
+            expect(element.find('text-area').length).toBe(1);
+        });
+        it('depending on whether it is an ontology property', function() {
+            spyOn(controller, 'isOntologyProperty').and.returnValue(true);
+            scope.$digest();
+            expect(element.querySelectorAll('.form-group').length).toBe(2);
+            expect(element.find('custom-label').length).toBe(2);
+            expect(element.find('input').length).toBe(1);
+            expect(element.find('p').length).toBe(1);
+            expect(element.find('ng-message').length).toBe(2);
+        });
+        it('with a .btn-container', function() {
+            expect(element.querySelectorAll('.btn-container').length).toBe(1);
         });
     });
     describe('controller methods', function() {
@@ -248,5 +231,24 @@ describe('Ontology Property Overlay directive', function() {
                 expect(ontologyStateSvc.showOntologyPropertyOverlay).toBe(false);
             });
         });
+    });
+    it('should call addProperty with the button is clicked', function() {
+        spyOn(controller, 'addProperty');
+        var button = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
+        button.triggerHandler('click');
+        expect(controller.addProperty).toHaveBeenCalled();
+    });
+    it('should call editProperty with the button is clicked', function() {
+        ontologyStateSvc.editingOntologyProperty = true;
+        scope.$digest();
+        spyOn(controller, 'editProperty');
+        var button = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
+        button.triggerHandler('click');
+        expect(controller.editProperty).toHaveBeenCalled();
+    });
+    it('should set the correct state when the cancel button is clicked', function() {
+        var button = angular.element(element.querySelectorAll('.btn-container button.btn-default')[0]);
+        button.triggerHandler('click');
+        expect(ontologyStateSvc.showOntologyPropertyOverlay).toBe(false);
     });
 });

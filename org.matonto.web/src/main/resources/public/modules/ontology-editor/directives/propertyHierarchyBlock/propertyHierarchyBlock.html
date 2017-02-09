@@ -26,7 +26,7 @@
             <span>Property Hierarchies</span><a ng-click="dvm.sm.showCreatePropertyOverlay = true" class="pull-right"><i class="fa fa-plus"></i><span>Create Property</span></a>
         </block-header>
         <block-content class="tree">
-            <ul ng-if="dvm.sm.listItem.dataPropertyHierarchy.length">
+            <ul ng-if="dvm.sm.listItem.dataPropertyHierarchy.length" class="data-property-hierarchy">
                 <li>
                     <a ng-click="dvm.sm.setDataPropertiesOpened(dvm.sm.listItem.recordId, !dvm.sm.getDataPropertiesOpened(dvm.sm.listItem.recordId)); $event.stopPropagation()">
                         <i class="fa fa-fw"
@@ -37,7 +37,7 @@
                     <hierarchy-tree hierarchy="dvm.sm.listItem.dataPropertyHierarchy"></hierarchy-tree>
                 </li>
             </ul>
-            <ul ng-if="dvm.sm.listItem.objectPropertyHierarchy.length">
+            <ul ng-if="dvm.sm.listItem.objectPropertyHierarchy.length" class="object-property-hierarchy">
                 <li>
                     <a ng-click="dvm.sm.setObjectPropertiesOpened(dvm.sm.listItem.recordId, !dvm.sm.getObjectPropertiesOpened(dvm.sm.listItem.recordId)); $event.stopPropagation()">
                         <i class="fa fa-fw"

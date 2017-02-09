@@ -21,7 +21,13 @@
  * #L%
  */
 describe('Annotation Overlay directive', function() {
-    var $compile, scope, element, controller, ontologyStateSvc, propertyManagerSvc, ontologyManagerSvc;
+    var $compile,
+        scope,
+        element,
+        controller,
+        ontologyStateSvc,
+        propertyManagerSvc,
+        ontologyManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -44,19 +50,18 @@ describe('Annotation Overlay directive', function() {
             resObj = _responseObj_;
             ontologyManagerSvc = _ontologyManagerService_;
         });
+
+        element = $compile(angular.element('<annotation-overlay></annotation-overlay>'))(scope);
+        scope.$digest();
     });
 
     describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
-            element = $compile(angular.element('<annotation-overlay></annotation-overlay>'))(scope);
-            scope.$digest();
-        });
-        it('for a div', function() {
+        it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
+            expect(element.hasClass('annotation-overlay')).toBe(true);
         });
         it('based on form (.content)', function() {
-            var formList = element.querySelectorAll('.content');
-            expect(formList.length).toBe(1);
+            expect(element.querySelectorAll('.content').length).toBe(1);
         });
         it('has correct heading based on variable', function() {
             var tests = [
@@ -101,8 +106,6 @@ describe('Annotation Overlay directive', function() {
     });
     describe('controller methods', function() {
         beforeEach(function() {
-            element = $compile(angular.element('<annotation-overlay></annotation-overlay>'))(scope);
-            scope.$digest();
             controller = element.controller('annotationOverlay');
         });
         it('addAnnotation should call the appropriate manager functions', function() {

@@ -27,7 +27,7 @@
         </block-header>
         <block-content>
             <p ng-if="dvm.sm.selected[dvm.prefixes.owl + 'imports'].length"
-               ng-repeat="import in dvm.sm.selected[dvm.prefixes.owl + 'imports'] track by import['@id']">
+               ng-repeat="import in dvm.sm.selected[dvm.prefixes.owl + 'imports'] track by import['@id']" class="import">
                 <a href="{{import['@id']}}" target="_blank">{{import['@id']}}</a>
             </p>
             <p ng-if="!dvm.sm.selected[dvm.prefixes.owl + 'imports'].length" class="text-info message">

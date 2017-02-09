@@ -106,29 +106,95 @@ describe('Object Property Overlay directive', function() {
             scope.$digest();
             controller = element.controller('objectPropertyOverlay');
         });
-        it('should add an object property', function() {
-            var value = {'@id': 'value'};
-            ontologyStateSvc.selected = {};
-            responseObj.getItemIri.and.returnValue('prop');
-            controller.addProperty({}, value);
-            expect(ontologyStateSvc.selected.prop).toBeDefined();
-            expect(ontologyStateSvc.selected.prop).toContain(value);
-            expect(ontologyStateSvc.showObjectPropertyOverlay).toBe(false);
-            expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
-                jasmine.any(Object));
+        describe('should add an object property', function() {
+            beforeEach(function() {
+                ontologyStateSvc.selected = {};
+                this.value = {'@id': 'value'};
+            });
+            describe('if the property is valid', function() {
+                beforeEach(function() {
+                    responseObj.getItemIri.and.returnValue('prop');
+                });
+                it('and the entity has the property', function() {
+                    ontologyStateSvc.selected.prop = [{'@id': 'original'}];
+                    controller.addProperty({}, this.value);
+                    expect(ontologyStateSvc.selected.prop.length).toBe(2);
+                    expect(ontologyStateSvc.selected.prop).toContain(this.value);
+                    expect(ontologyStateSvc.showObjectPropertyOverlay).toBe(false);
+                    expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
+                        jasmine.any(Object));
+                });
+                it('and the entity does not have the property', function() {
+                    controller.addProperty({}, this.value);
+                    expect(ontologyStateSvc.selected.prop).toEqual([this.value]);
+                    expect(ontologyStateSvc.showObjectPropertyOverlay).toBe(false);
+                    expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
+                        jasmine.any(Object));
+                });
+            });
+            it('unless the property is not valid', function() {
+                responseObj.getItemIri.and.returnValue('');
+                controller.addProperty({}, this.value);
+                expect(ontologyStateSvc.selected).toEqual({});
+                expect(ontologyStateSvc.showObjectPropertyOverlay).toBe(false);
+                expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
+                    jasmine.any(Object));
+            });
         });
-        it('should edit an object property', function() {
-            var value = {'@id': 'value'};
-            ontologyStateSvc.selected = {prop: [{}]};
-            ontologyStateSvc.propertyIndex = 0;
-            responseObj.getItemIri.and.returnValue('prop');
-            controller.editProperty({}, value);
-            expect(ontologyManagerSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
-                jasmine.any(Object));
-            expect(ontologyStateSvc.selected.prop[ontologyStateSvc.propertyIndex]).toEqual(value);
-            expect(ontologyStateSvc.showObjectPropertyOverlay).toBe(false);
-            expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
-                jasmine.any(Object));
+        describe('should edit an object property', function() {
+            beforeEach(function() {
+                this.value = {'@id': 'value'};
+                this.original = {prop: [{}]};
+                ontologyStateSvc.selected = angular.copy(this.original);
+                ontologyStateSvc.propertyIndex = 0;
+            });
+            it('if the property is valid', function() {
+                responseObj.getItemIri.and.returnValue('prop');
+                controller.editProperty({}, this.value);
+                expect(ontologyManagerSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
+                    jasmine.any(Object));
+                expect(ontologyStateSvc.selected.prop[ontologyStateSvc.propertyIndex]).toEqual(this.value);
+                expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
+                    jasmine.any(Object));
+                expect(ontologyStateSvc.showObjectPropertyOverlay).toBe(false);
+            });
+            it('unless the property is not valid', function() {
+                responseObj.getItemIri.and.returnValue('');
+                controller.editProperty({}, this.value);
+                expect(ontologyManagerSvc.addToDeletions).not.toHaveBeenCalled();
+                expect(ontologyStateSvc.selected).toEqual(this.original);
+                expect(ontologyManagerSvc.addToAdditions).not.toHaveBeenCalled();
+                expect(ontologyStateSvc.showObjectPropertyOverlay).toBe(false);
+            });
         });
+    });
+    it('should call editProperty when the button is clicked', function() {
+        element = $compile(angular.element('<object-property-overlay></object-property-overlay>'))(scope);
+        scope.$digest();
+        controller = element.controller('objectPropertyOverlay');
+        spyOn(controller, 'editProperty');
+        ontologyStateSvc.editingProperty = true;
+        scope.$digest();
+
+        var button = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
+        button.triggerHandler('click');
+        expect(controller.editProperty).toHaveBeenCalled();
+    });
+    it('should call addProperty when the button is clicked', function() {
+        element = $compile(angular.element('<object-property-overlay></object-property-overlay>'))(scope);
+        scope.$digest();
+        controller = element.controller('objectPropertyOverlay');
+        spyOn(controller, 'addProperty');
+
+        var button = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
+        button.triggerHandler('click');
+        expect(controller.addProperty).toHaveBeenCalled();
+    });
+    it('should set the correct state when the cancel button is clicked', function() {
+        element = $compile(angular.element('<object-property-overlay></object-property-overlay>'))(scope);
+        scope.$digest();
+        var button = angular.element(element.querySelectorAll('.btn-container button.btn-default')[0]);
+        button.triggerHandler('click');
+        expect(ontologyStateSvc.showObjectPropertyOverlay).toBe(false);
     });
 });

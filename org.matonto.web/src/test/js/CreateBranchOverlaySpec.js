@@ -21,8 +21,17 @@
  * #L%
  */
 describe('Create Branch Overlay directive', function() {
-    var $compile, scope, element, controller, catalogManagerSvc, ontologyStateSvc, $q, catalogId, stateManagerSvc,
+    var $compile,
+        scope,
+        element,
+        controller,
+        $q,
+        catalogManagerSvc,
+        ontologyStateSvc,
+        stateManagerSvc,
+        catalogId,
         prefixes;
+
     var commitId = 'commitId';
     var branchId = 'branchId';
     var branch = {'@id': branchId};
@@ -58,21 +67,33 @@ describe('Create Branch Overlay directive', function() {
     });
 
     describe('replaces the element with the correct html', function() {
-        it('for a div', function() {
+        it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
-        });
-        it('based on .edit-branch-overlay', function() {
             expect(element.hasClass('create-branch-overlay')).toBe(true);
         });
         _.forEach(['form', 'error-display', 'text-input', 'text-area'], function(item) {
-            it('based on ' + item, function() {
+            it('with a ' + item, function() {
                 expect(element.find(item).length).toBe(1);
             });
         });
         _.forEach(['btn-container', 'btn-primary', 'btn-default'], function(item) {
-            it('based on .' + item, function() {
+            it('with a .' + item, function() {
                 expect(element.querySelectorAll('.' + item).length).toBe(1);
             });
+        });
+        it('with buttons to submit and cancel', function() {
+            var buttons = element.querySelectorAll('.btn-container button');
+            expect(buttons.length).toBe(2);
+            expect(['Cancel', 'Submit']).toContain(angular.element(buttons[0]).text().trim());
+            expect(['Cancel', 'Submit']).toContain(angular.element(buttons[1]).text().trim());
+        });
+        it('depending on the form validity', function() {
+            var button = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
+            expect(button.attr('disabled')).toBeTruthy();
+
+            controller.form.$invalid = false;
+            scope.$digest();
+            expect(button.attr('disabled')).toBeFalsy();
         });
     });
     describe('controller methods', function() {
@@ -141,5 +162,16 @@ describe('Create Branch Overlay directive', function() {
                 expect(controller.error).toBe(error);
             });
         });
+    });
+    it('should call create when the submit button is clicked', function() {
+        spyOn(controller, 'create');
+        var button = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
+        button.triggerHandler('click');
+        expect(controller.create).toHaveBeenCalled();
+    });
+    it('should set the correct state when the cancel button is clicked', function() {
+        var button = angular.element(element.querySelectorAll('.btn-container button.btn-default')[0]);
+        button.triggerHandler('click');
+        expect(ontologyStateSvc.showCreateBranchOverlay).toBe(false);
     });
 });

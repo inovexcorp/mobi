@@ -21,8 +21,16 @@
  * #L%
  */
 describe('Merge Tab directive', function() {
-    var $compile, element, scope, ontologyStateSvc, ontologyManagerSvc, catalogManagerSvc,
-        controller, catalogId;
+    var $compile,
+        scope,
+        $q,
+        element,
+        controller,
+        ontologyStateSvc,
+        ontologyManagerSvc,
+        catalogManagerSvc,
+        catalogId;
+
     var error = 'error';
     var commitId = 'commitId';
     var branchId = 'branchId';
@@ -63,10 +71,8 @@ describe('Merge Tab directive', function() {
     });
 
     describe('contains the correct html', function() {
-        it('for a DIV tag', function() {
+        it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
-        });
-        it('based on .merge-tab', function() {
             expect(element.hasClass('merge-tab')).toBe(true);
         });
         _.forEach(['block', 'block-content', 'ui-select', 'button', 'checkbox'], function(item) {
@@ -74,14 +80,23 @@ describe('Merge Tab directive', function() {
                 expect(element.find(item).length).toBe(1);
             });
         });
-        it('for error-display', function() {
+        it('depending on whether there is an error', function() {
             expect(element.find('error-display').length).toBe(0);
             controller.error = error;
-            scope.$apply();
+            scope.$digest();
             expect(element.find('error-display').length).toBe(1);
         });
-        it('for .merge-message', function() {
+        it('with a .merge-message', function() {
             expect(element.querySelectorAll('.merge-message').length).toBe(1);
+        });
+        it('depending on whether there are conflicts', function() {
+            expect(element.querySelectorAll('.form-container').length).toBe(1);
+            expect(element.querySelectorAll('.conflicts-container').length).toBe(0);
+
+            controller.conflicts = [{}];
+            scope.$digest();
+            expect(element.querySelectorAll('.form-container').length).toBe(0);
+            expect(element.querySelectorAll('.conflicts-container').length).toBe(1);
         });
     });
     describe('controller methods', function() {

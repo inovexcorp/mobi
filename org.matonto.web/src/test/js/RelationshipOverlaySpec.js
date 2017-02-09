@@ -21,21 +21,27 @@
  * #L%
  */
 describe('Relationship Overlay directive', function() {
-    var $compile, scope, element, controller, ontologyStateSvc, propertyManagerSvc, ontologyManagerSvc;
+    var $compile,
+        scope,
+        element,
+        controller,
+        ontologyStateSvc,
+        ontologyManagerSvc,
+        resObj,
+        splitIRIFilter;
 
     beforeEach(function() {
         module('templates');
         module('relationshipOverlay');
+        injectHighlightFilter();
+        injectTrustedFilter();
+        injectSplitIRIFilter();
         mockResponseObj();
         mockOntologyManager();
         mockOntologyState();
         mockUtil();
-        injectHighlightFilter();
-        injectTrustedFilter();
-        injectSplitIRIFilter();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _responseObj_, _ontologyManagerService_,
-            _splitIRIFilter_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _responseObj_, _ontologyManagerService_, _splitIRIFilter_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
@@ -45,53 +51,102 @@ describe('Relationship Overlay directive', function() {
         });
 
         scope.relationshipList = [];
-
         element = $compile(angular.element('<relationship-overlay relationship-list="relationshipList"></relationship-overlay>'))(scope);
         scope.$digest();
         controller = element.controller('relationshipOverlay');
     });
 
+    describe('in isolated scope', function() {
+        beforeEach(function() {
+            this.isolatedScope = element.isolateScope();
+        });
+        it('relationshipList should be one way bound', function() {
+            this.isolatedScope.relationshipList = [{}];
+            scope.$digest();
+            expect(scope.relationshipList).toEqual([]);
+        });
+    });
     describe('replaces the element with the correct html', function() {
-        it('for a div', function() {
+        it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
-        });
-        it('based on relationship-overlay', function() {
             expect(element.hasClass('relationship-overlay')).toBe(true);
-        });
-        it('based on form', function() {
             expect(element.find('form').length).toBe(1);
+            expect(element.querySelectorAll('.content').length).toBe(1);
         });
-        it('based on h6', function() {
+        it('with a h6', function() {
             expect(element.find('h6').length).toBe(1);
         });
-        it('based on .form-groups', function() {
+        it('with .form-groups', function() {
             expect(element.querySelectorAll('.form-group').length).toBe(2);
         });
-        it('based on custom-label', function() {
+        it('with custom-labels', function() {
             expect(element.find('custom-label').length).toBe(2);
         });
-        it('based on ui-select', function() {
+        it('with ui-selects', function() {
             expect(element.find('ui-select').length).toBe(2);
         });
-        it('based on .btn-container', function() {
+        it('with a .btn-container', function() {
             expect(element.querySelectorAll('.btn-container').length).toBe(1);
         });
-        it('based on .btn', function() {
-            expect(element.querySelectorAll('.btn').length).toBe(2);
+        it('with buttons to add and cancel', function() {
+            var buttons = element.querySelectorAll('.btn-container button');
+            expect(buttons.length).toBe(2);
+            expect(['Cancel', 'Add']).toContain(angular.element(buttons[0]).text().trim());
+            expect(['Cancel', 'Add']).toContain(angular.element(buttons[1]).text().trim());
+        });
+        it('depending on whether a relationship is selected', function() {
+            controller.values = [{}];
+            scope.$digest();
+            var button = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
+            expect(button.attr('disabled')).toBeTruthy();
+
+            controller.relationship = {};
+            scope.$digest();
+            expect(button.attr('disabled')).toBeFalsy();
+        });
+        it('depending on whether values are selected', function() {
+            controller.relationship = {};
+            scope.$digest();
+            var button = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
+            expect(button.attr('disabled')).toBeTruthy();
+
+            controller.values = [{}];
+            scope.$digest();
+            expect(button.attr('disabled')).toBeFalsy();
         });
     });
     describe('controller methods', function() {
-        it('addRelationship should call the appropriate manager functions', function() {
+        beforeEach(function() {
+            controller = element.controller('relationshipOverlay');
+        });
+        it('should get the namespace of a IRI', function() {
+            var split = {begin: 'begin', then: 'then', end: 'end'};
+            splitIRIFilter.and.returnValue(split);
+            expect(controller.getIRINamespace('iri')).toBe(split.begin + split.then);
+            expect(splitIRIFilter).toHaveBeenCalledWith('iri');
+        });
+        it('should add a relationship', function() {
+            controller.relationship = {};
+            controller.values = [{}];
+            resObj.getItemIri.and.returnValue('axiom');
             controller.addRelationship();
-            expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
-                jasmine.any(Object));
+            expect(resObj.getItemIri).toHaveBeenCalledWith(controller.relationship);
+            expect(ontologyStateSvc.selected.axiom).toEqual(controller.values);
+            expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, jasmine.any(Object));
             expect(ontologyStateSvc.showRelationshipOverlay).toBe(false);
         });
-        it('getIRINamespace should return the proper value', function() {
-            var item = {};
-            var result = controller.getIRINamespace(item);
-            expect(splitIRIFilter).toHaveBeenCalledWith(item);
-            expect(result).toEqual(splitIRIFilter(item).begin + splitIRIFilter(item).then);
-        });
+    });
+    it('should call addRelationship when the button is clicked', function() {
+        controller = element.controller('relationshipOverlay');
+        spyOn(controller, 'addRelationship');
+
+        var button = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
+        button.triggerHandler('click');
+        expect(controller.addRelationship).toHaveBeenCalled();
+    });
+    it('should set the correct state when the Cancel button is clicked', function() {
+        var button = angular.element(element.querySelectorAll('.btn-container button.btn-default')[0]);
+        button.triggerHandler('click');
+        expect(ontologyStateSvc.showRelationshipOverlay).toBe(false);
     });
 });

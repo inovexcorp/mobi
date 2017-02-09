@@ -47,48 +47,43 @@ describe('Ontology Overlays directive', function() {
             propertyManagerSvc = _propertyManagerService_;
             deferred = _$q_.defer();
         });
+
+        ontologyStateSvc.showAnnotationOverlay = true;
+        ontologyStateSvc.showDataPropertyOverlay = true;
+        ontologyStateSvc.showObjectPropertyOverlay = true;
+        ontologyStateSvc.showDownloadOverlay = true;
+        ontologyStateSvc.showCreateAnnotationOverlay = true;
+        ontologyStateSvc.showCreateClassOverlay = true;
+        ontologyStateSvc.showCreatePropertyOverlay = true;
+        ontologyStateSvc.showCreateIndividualOverlay = true;
+        ontologyStateSvc.showCloseOverlay = true;
+        ontologyStateSvc.showRemoveOverlay = true;
+        ontologyStateSvc.showRemoveIndividualPropertyOverlay = true;
+        ontologyStateSvc.showSaveOverlay = true;
+        ontologyStateSvc.showCommitOverlay = true;
+        ontologyStateSvc.showCreateBranchOverlay = true;
+        element = $compile(angular.element('<ontology-overlays></ontology-overlays>'))(scope);
+        scope.$digest();
     });
 
-    describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
-            ontologyStateSvc.showAnnotationOverlay = true;
-            ontologyStateSvc.showDataPropertyOverlay = true;
-            ontologyStateSvc.showObjectPropertyOverlay = true;
-            ontologyStateSvc.showDownloadOverlay = true;
-            ontologyStateSvc.showCreateAnnotationOverlay = true;
-            ontologyStateSvc.showCreateClassOverlay = true;
-            ontologyStateSvc.showCreatePropertyOverlay = true;
-            ontologyStateSvc.showCreateIndividualOverlay = true;
-            ontologyStateSvc.showCloseOverlay = true;
-            ontologyStateSvc.showRemoveOverlay = true;
-            ontologyStateSvc.showRemoveIndividualPropertyOverlay = true;
-            ontologyStateSvc.showSaveOverlay = true;
-            ontologyStateSvc.showCommitOverlay = true;
-            ontologyStateSvc.showCreateBranchOverlay = true;
-            element = $compile(angular.element('<ontology-overlays></ontology-overlays>'))(scope);
-            scope.$digest();
-        });
-        it('for an ontology-overlays', function() {
+    describe('contains the correct html', function() {
+        it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('ONTOLOGY-OVERLAYS');
         });
-        it('based on confirmation-overlays', function() {
-            var confirmations = element.find('confirmation-overlay');
-            expect(confirmations.length).toBe(1);
+        it('with a confirmation-overlay', function() {
+            expect(element.find('confirmation-overlay').length).toBe(1);
         });
         _.forEach(['annotation-overlay', 'datatype-property-overlay', 'object-property-overlay',
         'ontology-download-overlay', 'create-annotation-overlay', 'create-class-overlay', 'create-property-overlay',
         'create-individual-overlay', 'ontology-close-overlay', 'commit-overlay', 'create-branch-overlay'],
         function(item) {
-            it('based on ' + item, function() {
-                var items = element.find(item);
-                expect(items.length).toBe(1);
+            it('with a ' + item, function() {
+                expect(element.find(item).length).toBe(1);
             });
         });
     });
     describe('controller methods', function() {
         beforeEach(function() {
-            element = $compile(angular.element('<ontology-overlays></ontology-overlays>'))(scope);
-            scope.$digest();
             controller = element.controller('ontologyOverlays');
         });
         describe('save', function() {
