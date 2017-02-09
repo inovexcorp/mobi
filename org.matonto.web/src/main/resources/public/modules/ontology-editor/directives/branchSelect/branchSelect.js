@@ -83,7 +83,6 @@
                         cm.deleteRecordBranch(dvm.branch['@id'], dvm.os.listItem.recordId, catalogId)
                             .then(() => {
                                 om.removeBranch(dvm.os.listItem.recordId, dvm.branch['@id']);
-                                // _.remove(dvm.os.listItem.branches, branch => _.isEqual(branch, dvm.branch));
                                 dvm.showDeleteConfirmation = false;
                             }, errorMessage => dvm.deleteError = errorMessage);
                     }

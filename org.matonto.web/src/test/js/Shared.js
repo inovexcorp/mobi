@@ -508,6 +508,7 @@ function mockOntologyState() {
             this.setDataPropertiesOpened = jasmine.createSpy('setDataPropertiesOpened');
             this.getObjectPropertiesOpened = jasmine.createSpy('getObjectPropertiesOpened');
             this.setObjectPropertiesOpened = jasmine.createSpy('setObjectPropertiesOpened');
+            this.unsetEntityByIRI = jasmine.createSpy('unsetEntityByIRI');
         });
     });
 }

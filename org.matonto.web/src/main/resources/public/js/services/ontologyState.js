@@ -230,8 +230,24 @@
                 _.remove(self.states, {recordId});
             }
             self.resetStateTabs = function() {
-                _.forOwn(self.state, prop => _.unset(prop, 'entityIRI'));
-                self.selected = undefined;
+                _.forOwn(self.state, (value, key) => {
+                    if (key !== 'project') {
+                        _.unset(value, 'entityIRI');
+                    }
+                });
+                if (self.getActiveKey() !== 'project') {
+                    self.selected = undefined;
+                }
+            }
+            self.unsetEntityByIRI = function(iri) {
+                _.forOwn(self.state, prop => {
+                    if (_.get(prop, 'entityIRI', '') === iri) {
+                        _.unset(prop, 'entityIRI');
+                    }
+                });
+                if (_.get(self.selected, '@id', '') === iri) {
+                    self.selected = undefined;
+                }
             }
             self.getActiveKey = function() {
                 return _.findKey(self.state, ['active', true], 'project');
