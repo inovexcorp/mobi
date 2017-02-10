@@ -139,6 +139,7 @@
                     }
 
                     function onSuccess() {
+                        dvm.util.createSuccessToast('Your merge was successful.');
                         dvm.targetId = undefined;
                         dvm.selected = undefined;
                         dvm.index = undefined;

@@ -45,7 +45,7 @@
          * @requires prefixes.service:prefixes
          * @requires propertyManager.service:propertyManagerService
          * @requires catalogManager.service:catalogManagerService
-         * @requires util.service:utilManagerService
+         * @requires util.service:utilService
          * @requires stateManager.service:stateManagerService
          *
          * @description
@@ -352,19 +352,23 @@
                         .then(ontology => resolve(ontology, emptyInProgressCommit), deferred.reject);
                 }
                 if (!_.isEmpty(state)) {
+                    var inProgressCommit = emptyInProgressCommit;
                     branchId = _.get(state, "model[0]['" + prefixes.ontologyState + "branch'][0]['@id']");
                     commitId = _.get(state, "model[0]['" + prefixes.ontologyState + "commit'][0]['@id']");
                     cm.getInProgressCommit(recordId, catalogId)
-                        .then(inProgressCommit => cm.getResource(commitId, branchId, recordId, catalogId, true, rdfFormat)
-                            .then(ontology => resolve(ontology, inProgressCommit), deferred.reject), errorMessage => {
-                                if (errorMessage === 'User has no InProgressCommit') {
-                                    cm.getResource(commitId, branchId, recordId, catalogId, false, rdfFormat)
-                                        .then(ontology => resolve(ontology, emptyInProgressCommit), deferred.reject);
-                                } else {
-                                    deferred.reject(errorMessage);
-                                }
-                            }, () => sm.deleteOntologyState(recordId, branchId, commitId)
-                                .then(getLatest, deferred.reject));
+                        .then(response => {
+                            inProgressCommit = response;
+                            return cm.getResource(commitId, branchId, recordId, catalogId, true, rdfFormat)
+                        }, errorMessage => {
+                            if (errorMessage === 'User has no InProgressCommit') {
+                                return cm.getResource(commitId, branchId, recordId, catalogId, false, rdfFormat);
+                            }
+                            return $q.reject();
+                        })
+                        .then(ontology => resolve(ontology, inProgressCommit), () => {
+                            return sm.deleteOntologyState(recordId, branchId, commitId)
+                        })
+                        .then(getLatest, deferred.reject);
                 } else {
                     getLatest();
                 }

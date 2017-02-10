@@ -21,7 +21,8 @@
  * #L%
  */
 describe('Merge Tab directive', function() {
-    var $compile, scope, $q, element, controller, ontologyStateSvc, ontologyManagerSvc, catalogManagerSvc, catalogId;
+    var $compile, scope, $q, element, controller, ontologyStateSvc, ontologyManagerSvc, catalogManagerSvc, catalogId,
+        util;
 
     var error = 'error';
     var commitId = 'commitId';
@@ -43,13 +44,14 @@ describe('Merge Tab directive', function() {
         injectBeautifyFilter();
 
         inject(function(_$q_, _$compile_, _$rootScope_, _ontologyStateService_, _ontologyManagerService_,
-            _catalogManagerService_) {
+            _catalogManagerService_, _utilService_) {
             $q = _$q_;
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
             ontologyManagerSvc = _ontologyManagerService_;
             catalogManagerSvc = _catalogManagerService_;
+            util = _utilService_;
         });
 
         ontologyStateSvc.listItem.branchId = branchId;
@@ -150,6 +152,7 @@ describe('Merge Tab directive', function() {
                             expect(ontologyManagerSvc.removeBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem
                                 .recordId, branchId);
                             expect(controller.targetId).toBe(undefined);
+                            expect(util.createSuccessToast).toHaveBeenCalled();
                         });
                         it('and deleteRecordBranch is rejected', function() {
                             deleteDefer.reject(error);
@@ -171,6 +174,7 @@ describe('Merge Tab directive', function() {
                             .recordId, targetId, commitId, ontologyStateSvc.state.type);
                         expect(catalogManagerSvc.deleteRecordBranch).not.toHaveBeenCalled();
                         expect(controller.targetId).toBe(undefined);
+                        expect(util.createSuccessToast).toHaveBeenCalled();
                     });
                 });
                 it('and changeBranch is rejected', function() {

@@ -457,6 +457,7 @@ describe('Ontology Manager service', function() {
                         expect(catalogManagerSvc.getInProgressCommit).toHaveBeenCalledWith(recordId, catalogId);
                         expect(catalogManagerSvc.getResource).toHaveBeenCalledWith(commitId, branchId, recordId,
                             catalogId, false, format);
+                        expect(stateManagerSvc.deleteOntologyState).toHaveBeenCalledWith(recordId, branchId, commitId);
                     });
                 });
                 it('with other message', function() {
@@ -468,7 +469,7 @@ describe('Ontology Manager service', function() {
                         expect(response).toEqual(error);
                     });
                     scope.$apply();
-                    expect(catalogManagerSvc.getResource).not.toHaveBeenCalled();
+                    expect(stateManagerSvc.deleteOntologyState).toHaveBeenCalledWith(recordId, branchId, commitId);
                 });
             });
         });

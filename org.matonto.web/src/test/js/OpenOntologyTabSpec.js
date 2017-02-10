@@ -66,7 +66,7 @@ describe('Open Ontology Tab directive', function() {
             expect(element.querySelectorAll('.list').length).toBe(1);
             expect(element.querySelectorAll('.open-ontology-content').length).toBe(1);
             expect(element.querySelectorAll('.ontologies').length).toBe(1);
-            expect(element.querySelectorAll('.paging-details').length).toBe(1);
+            expect(element.querySelectorAll('.paging-container').length).toBe(1);
         });
         _.forEach(['block', 'block-content', 'form', 'block-footer', 'pagination'], function(item) {
             it('with a ' + item, function() {

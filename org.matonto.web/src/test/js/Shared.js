@@ -100,9 +100,7 @@ function injectRemoveIriFromArrayFilter() {
 
 function injectRemoveMatontoFilter() {
     module(function($provide) {
-        $provide.value('removeMatontoFilter', jasmine.createSpy('removeMatontoFilter').and.callFake(function(word) {
-            return word;
-        }));
+        $provide.value('removeMatontoFilter', jasmine.createSpy('removeMatontoFilter').and.callFake(_.identity));
     });
 }
 
@@ -754,6 +752,7 @@ function mockUtil() {
             this.createErrorToast = jasmine.createSpy('createErrorToast');
             this.createSuccessToast = jasmine.createSpy('createSuccessToast');
             this.createJson = jasmine.createSpy('createJson').and.returnValue({});
+            this.getIRINamespace = jasmine.createSpy('getIRINamespace').and.returnValue({});
         });
     });
 }

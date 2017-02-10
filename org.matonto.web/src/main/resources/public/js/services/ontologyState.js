@@ -251,7 +251,7 @@
                 }
             }
             self.getActiveKey = function() {
-                return _.findKey(self.state, ['active', true]);
+                return _.findKey(self.state, ['active', true]) || 'project';
             }
             self.getActivePage = function() {
                 return self.state[self.getActiveKey()];
