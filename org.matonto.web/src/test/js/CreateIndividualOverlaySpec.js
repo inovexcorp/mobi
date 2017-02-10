@@ -58,7 +58,7 @@ describe('Create Individual Overlay directive', function() {
     describe('initializes with the correct values', function() {
         it('if parent ontology is opened', function() {
             var ontology = {iriBegin: 'begin', iriThen: '/'};
-            ontologyManagerSvc.getListItemById.and.returnValue(ontology);
+            ontologyStateSvc.listItem = ontology;
             element = $compile(angular.element('<create-individual-overlay></create-individual-overlay>'))(scope);
             scope.$digest();
             controller = element.controller('createIndividualOverlay');
@@ -67,8 +67,7 @@ describe('Create Individual Overlay directive', function() {
             expect(controller.individual['@type']).toEqual([]);
         });
         it('if parent ontology is not opened', function() {
-            ontologyManagerSvc.getListItemById.and.returnValue(undefined);
-            ontologyManagerSvc.getOntologyIRI.and.returnValue('iri');
+            ontologyStateSvc.listItem = {ontologyId: 'iri'};
             element = $compile(angular.element('<create-individual-overlay></create-individual-overlay>'))(scope);
             scope.$digest();
             controller = element.controller('createIndividualOverlay');
@@ -175,7 +174,7 @@ describe('Create Individual Overlay directive', function() {
         it('should create an individual', function() {
             var listItem = {ontology: [{}], individuals: [], classesWithIndividuals: [], index: {}};
             var split = {begin: 'begin', then: 'then', end: 'end'};
-            ontologyManagerSvc.getListItemById.and.returnValue(listItem)
+            ontologyStateSvc.listItem = listItem;
             splitIRIFilter.and.returnValue(split);
             controller.individual = {'@id': 'id', '@type': ['ClassA']};
             controller.create();

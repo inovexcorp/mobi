@@ -130,4 +130,9 @@ describe('Util service', function() {
         utilSvc.createErrorToast('Text');
         expect(toastr.error).toHaveBeenCalledWith('Text', 'Error', {timeOut: 0});
     });
+    it('should get the namespace of an iri', function() {
+        var result = utilSvc.getIRINamespace('iri');
+        expect(splitIRIFilter).toHaveBeenCalledWith('iri');
+        expect(_.isString(result)).toBe(true);
+    });
 });

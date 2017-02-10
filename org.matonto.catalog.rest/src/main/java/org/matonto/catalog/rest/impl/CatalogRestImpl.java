@@ -869,7 +869,6 @@ public class CatalogRestImpl implements CatalogRest {
     @Override
     public Response getConflicts(String catalogId, String recordId, String branchId, String targetBranchId,
                                  String rdfFormat) {
-
         try {
             Resource sourceHeadIRI = getHeadCommitIRI(catalogId, recordId, branchId);
             Resource targetHeadIRI = getHeadCommitIRI(catalogId, recordId, targetBranchId);
@@ -1481,7 +1480,7 @@ public class CatalogRestImpl implements CatalogRest {
      */
     private JSONObject conflictToJson(Conflict conflict, String rdfFormat) {
         JSONObject object = new JSONObject();
-        object.put("iri", conflict.getIRI());
+        object.put("iri", conflict.getIRI().stringValue());
         object.put("original", getModelInFormat(conflict.getOriginal(), rdfFormat));
         object.put("left", getDifferenceJson(conflict.getLeftDifference(), rdfFormat));
         object.put("right", getDifferenceJson(conflict.getRightDifference(), rdfFormat));

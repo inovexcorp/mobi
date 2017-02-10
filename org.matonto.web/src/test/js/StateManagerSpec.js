@@ -21,7 +21,7 @@
  * #L%
  */
 describe('State Manager service', function() {
-    var $httpBackend, stateManagerSvc, deferred, scope, uuidSvc, $httpParamSerializer, prefixes;
+    var $httpBackend, stateManagerSvc, deferred, scope, uuidSvc, $httpParamSerializer, prefixes, util;
     var state = {
         '@id': 'http://matonto.org/new-state',
         '@type': 'http://matonto.org/state'
@@ -38,13 +38,16 @@ describe('State Manager service', function() {
     beforeEach(function() {
         module('stateManager');
         mockPrefixes();
+        mockUtil();
+
         module(function($provide) {
             $provide.service('uuid', function() {
                 this.v4 = jasmine.createSpy('v4').and.returnValue('');
             });
         });
+
         inject(function(stateManagerService, _$httpBackend_, _$q_, _$rootScope_, _uuid_, _$httpParamSerializer_,
-            _prefixes_) {
+            _prefixes_, _utilService_) {
             $httpBackend = _$httpBackend_;
             stateManagerSvc = stateManagerService;
             deferred = _$q_.defer();
@@ -52,6 +55,7 @@ describe('State Manager service', function() {
             uuidSvc = _uuid_;
             $httpParamSerializer = _$httpParamSerializer_;
             prefixes = _prefixes_;
+            util = _utilService_;
         });
         ontologyState[prefixes.ontologyState + 'record'] = [{'@id': recordId}];
     });
@@ -170,10 +174,9 @@ describe('State Manager service', function() {
             expect(stateManagerSvc.states).toEqual(states);
         });
         it('when rejected', function() {
-            spyOn(console, 'log');
             deferred.reject('');
             scope.$apply();
-            expect(console.log).toHaveBeenCalledWith('Problem getting states');
+            expect(util.createErrorToast).toHaveBeenCalledWith('Problem getting states');
         });
     });
 

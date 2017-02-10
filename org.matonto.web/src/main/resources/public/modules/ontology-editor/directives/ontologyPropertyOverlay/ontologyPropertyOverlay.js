@@ -59,20 +59,18 @@
                     }
 
                     function createJson(value) {
-                        return {
-                            '@id': dvm.sm.selected['@id'],
-                            [dvm.ro.getItemIri(dvm.sm.ontologyProperty)]: [value]
-                        }
+                        return utilService.createJson(dvm.sm.selected['@id'],
+                            dvm.ro.getItemIri(dvm.sm.ontologyProperty), value);
                     }
 
                     dvm.isOntologyProperty = function() {
                         return !!dvm.sm.ontologyProperty && _.some(dvm.om.ontologyProperties, property =>
-                            _.isEqual(dvm.ro.getItemIri(dvm.sm.ontologyProperty), dvm.ro.getItemIri(property)));
+                            dvm.ro.getItemIri(dvm.sm.ontologyProperty) === dvm.ro.getItemIri(property));
                     }
 
                     dvm.isAnnotationProperty = function() {
                         return !!dvm.sm.ontologyProperty && _.some(dvm.sm.listItem.annotations, property =>
-                            _.isEqual(dvm.ro.getItemIri(dvm.sm.ontologyProperty), dvm.ro.getItemIri(property)));
+                            dvm.ro.getItemIri(dvm.sm.ontologyProperty) === dvm.ro.getItemIri(property));
                     }
 
                     dvm.addProperty = function() {

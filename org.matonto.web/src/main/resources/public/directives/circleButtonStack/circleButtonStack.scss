@@ -2,7 +2,7 @@
 @import "./src/main/resources/public/css/variables";
 
 .circle-button-stack {
-    width: 57px;
+    width: $circle-button-width;
 
     .btn-circle {
         margin-top: 15px;

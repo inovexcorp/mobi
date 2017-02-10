@@ -40,7 +40,7 @@
                 <ui-select-match placeholder="Select Value(s)">
                     <span title="{{$item}}">{{($item | splitIRI).end}}</span>
                 </ui-select-match>
-                <ui-select-choices group-by="dvm.getIRINamespace" repeat="{'@id': iri} as iri in dvm[dvm.relationship.values] | filter:$select.search track by iri">
+                <ui-select-choices group-by="dvm.util.getIRINamespace" repeat="{'@id': iri} as iri in dvm[dvm.relationship.values] | filter:$select.search track by iri">
                     <div title="{{iri}}" ng-bind-html="(iri | splitIRI).end | highlight: $select.search | trusted"></div>
                 </ui-select-choices>
             </ui-select>

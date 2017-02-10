@@ -21,13 +21,7 @@
  * #L%
  */
 describe('Ontology Property Overlay directive', function() {
-    var $compile,
-        scope,
-        element,
-        controller,
-        ontologyStateSvc,
-        propertyManagerSvc,
-        ontologyManagerSvc;
+    var $compile, scope, element, controller, ontologyStateSvc, propertyManagerSvc, ontologyManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -118,7 +112,9 @@ describe('Ontology Property Overlay directive', function() {
             describe('when ontologyStateService.ontologyProperty is truthy', function() {
                 beforeEach(function() {
                     ontologyStateSvc.ontologyProperty = {'@id': 'id'};
-                    resObj.getItemIri.and.callFake(_.identity);
+                    resObj.getItemIri.and.callFake(function(obj) {
+                        return obj['@id'];
+                    });
                 });
                 it('and ontologyManagerService.ontologyProperties is empty', function() {
                     ontologyManagerSvc.ontologyProperties = [];
@@ -143,7 +139,9 @@ describe('Ontology Property Overlay directive', function() {
             describe('when ontologyStateService.ontologyProperty is truthy', function() {
                 beforeEach(function() {
                     ontologyStateSvc.ontologyProperty = {'@id': 'id'};
-                    resObj.getItemIri.and.callFake(_.identity);
+                    resObj.getItemIri.and.callFake(function(obj) {
+                        return obj['@id'];
+                    });
                 });
                 it('and ontologyManagerService.ontologyProperties is empty', function() {
                     ontologyStateSvc.listItem.annotations = [];

@@ -21,15 +21,7 @@
  * #L%
  */
 describe('Create Concept Overlay directive', function() {
-    var $compile,
-        scope,
-        $q,
-        element,
-        controller,
-        ontologyManagerSvc,
-        ontologyStateSvc,
-        prefixes,
-        splitIRIFilter;
+    var $compile, scope, $q, element, controller,  ontologyManagerSvc, ontologyStateSvc, prefixes, splitIRIFilter;
 
     beforeEach(function() {
         module('templates');
@@ -42,6 +34,7 @@ describe('Create Concept Overlay directive', function() {
         mockOntologyManager();
         mockOntologyState();
         mockPrefixes();
+        mockUtil();
 
         inject(function(_$q_, _$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_, _prefixes_, _splitIRIFilter_) {
             $q = _$q_;
@@ -135,11 +128,6 @@ describe('Create Concept Overlay directive', function() {
             expect(controller.concept['@id']).toBe('begin' + 'then' + 'end');
             expect(controller.iriHasChanged).toBe(true);
         });
-        it('should get the namespace of an iri', function() {
-            var result = controller.getIRINamespace('iri');
-            expect(splitIRIFilter).toHaveBeenCalledWith('iri');
-            expect(_.isString(result)).toBe(true);
-        });
         it('should create a concept', function() {
             var listItem = {ontology: [{}], conceptHierarchy: [], index: {}};
             var schemes = {
@@ -151,7 +139,7 @@ describe('Create Concept Overlay directive', function() {
             ontologyManagerSvc.getEntityByRecordId.and.callFake(function(recordId, schemeId) {
                 return _.get(schemes, schemeId);
             });
-            ontologyManagerSvc.getListItemById.and.returnValue(listItem);
+            ontologyStateSvc.listItem = listItem;
             controller.concept = {'@id': 'concept'};
 
             controller.create();
@@ -161,7 +149,6 @@ describe('Create Concept Overlay directive', function() {
             expect(schemes.scheme2.matonto.unsaved).toBe(true);
             expect(controller.concept.matonto.originalIRI).toEqual(controller.concept['@id']);
             expect(ontologyManagerSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontology, controller.concept);
-            expect(ontologyManagerSvc.getListItemById).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId);
             expect(listItem.conceptHierarchy).toContain({entityIRI: controller.concept['@id']});
             expect(listItem.index[controller.concept['@id']]).toBe(0);
             expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,

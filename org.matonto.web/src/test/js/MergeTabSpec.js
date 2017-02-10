@@ -21,15 +21,7 @@
  * #L%
  */
 describe('Merge Tab directive', function() {
-    var $compile,
-        scope,
-        $q,
-        element,
-        controller,
-        ontologyStateSvc,
-        ontologyManagerSvc,
-        catalogManagerSvc,
-        catalogId;
+    var $compile, scope, $q, element, controller, ontologyStateSvc, ontologyManagerSvc, catalogManagerSvc, catalogId;
 
     var error = 'error';
     var commitId = 'commitId';
@@ -202,12 +194,12 @@ describe('Merge Tab directive', function() {
                 expect(controller.error).toEqual(error);
             });
         });
-        describe('removeCurrent returns', function() {
+        describe('matchesCurrent returns', function() {
             it('true if it does not match ontologyStateService.listItem.branchId', function() {
-                expect(controller.removeCurrent({'@id': 'differentId'})).toBe(true);
+                expect(controller.matchesCurrent({'@id': 'differentId'})).toBe(true);
             });
             it('false if it does match ontologyStateService.listItem.branchId', function() {
-                expect(controller.removeCurrent(branch)).toBe(false);
+                expect(controller.matchesCurrent(branch)).toBe(false);
             });
         });
     });

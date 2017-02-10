@@ -28,10 +28,9 @@
         .directive('mergeTab', mergeTab);
 
         mergeTab.$inject = ['utilService', 'ontologyStateService', 'catalogManagerService', 'ontologyManagerService',
-            'prefixes', 'stateManagerService'];
+            'prefixes'];
 
-        function mergeTab(utilService, ontologyStateService, catalogManagerService, ontologyManagerService, prefixes,
-            stateManagerService) {
+        function mergeTab(utilService, ontologyStateService, catalogManagerService, ontologyManagerService, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -43,7 +42,6 @@
                     var om = ontologyManagerService;
                     var cm = catalogManagerService;
                     var catalogId = _.get(cm.localCatalog, '@id', '');
-                    var sm = stateManagerService;
                     var resolutions = {
                         additions: [],
                         deletions: []
@@ -108,7 +106,7 @@
                                     }, onError), onError);
                     }
 
-                    dvm.removeCurrent = function(branch) {
+                    dvm.matchesCurrent = function(branch) {
                         return branch['@id'] !== dvm.os.listItem.branchId;
                     }
 

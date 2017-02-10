@@ -133,7 +133,7 @@ describe('Ontology Close Overlay directive', function() {
         controller = element.controller('ontologyCloseOverlay');
         spyOn(controller, 'saveThenClose');
 
-        var button = angular.element(element.querySelectorAll('.btn-container button.save-close')[0]);
+        var button = angular.element(element.querySelectorAll('.btn-container button.save-close-btn')[0]);
         button.triggerHandler('click');
         expect(controller.saveThenClose).toHaveBeenCalled();
     });
@@ -141,7 +141,7 @@ describe('Ontology Close Overlay directive', function() {
         controller = element.controller('ontologyCloseOverlay');
         spyOn(controller, 'close');
 
-        var button = angular.element(element.querySelectorAll('.btn-container button.close')[0]);
+        var button = angular.element(element.querySelectorAll('.btn-container button.close-btn')[0]);
         button.triggerHandler('click');
         expect(controller.close).toHaveBeenCalled();
     });

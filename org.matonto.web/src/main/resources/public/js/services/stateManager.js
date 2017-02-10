@@ -24,95 +24,95 @@
     'use strict';
 
     angular
-    .module('stateManager', [])
-    .service('stateManagerService', stateManagerService);
+        .module('stateManager', [])
+        .service('stateManagerService', stateManagerService);
 
-    stateManagerService.$inject = ['$http', '$q', '$httpParamSerializer', 'uuid', 'prefixes'];
+        stateManagerService.$inject = ['$http', '$q', '$httpParamSerializer', 'uuid', 'prefixes', 'utilService'];
 
-    function stateManagerService($http, $q, $httpParamSerializer, uuid, prefixes) {
-        var self = this;
-        var prefix = '/matontorest/states';
+        function stateManagerService($http, $q, $httpParamSerializer, uuid, prefixes, utilService) {
+            var self = this;
+            var prefix = '/matontorest/states';
 
-        self.states = [];
+            self.states = [];
 
-        self.getStates = function(stateConfig) {
-            var params = $httpParamSerializer(stateConfig);
-            return $http.get(prefix + '?' + params)
-                .then(response => $q.resolve(_.get(response, 'data', [])), onError);
-        }
-
-        self.createState = function(stateJson, application) {
-            var config = {
-                transformResponse: undefined,
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            };
-            if (application) {
-                config.params = {application};
+            self.getStates = function(stateConfig) {
+                var params = $httpParamSerializer(stateConfig);
+                return $http.get(prefix + '?' + params)
+                    .then(response => $q.resolve(_.get(response, 'data', [])), onError);
             }
-            return $http.post(prefix, angular.toJson(stateJson), config)
-                .then(response => self.states.push({id: response.data, model: [stateJson]}), onError);
-        }
 
-        self.getState = function(stateId) {
-            return $http.get(prefix + '/' + encodeURIComponent(stateId))
-                .then(response => $q.resolve(_.get(response, 'data', {})), onError);
-        }
-
-        self.updateState = function(stateId, stateJson) {
-            return $http.put(prefix + '/' + encodeURIComponent(stateId), angular.toJson(stateJson))
-                .then(() => _.forEach(self.states, state => {
-                    if (_.get(state, 'id', '') === stateId) {
-                        _.set(state, 'model', [stateJson]);
-                        return false;
+            self.createState = function(stateJson, application) {
+                var config = {
+                    transformResponse: undefined,
+                    headers: {
+                        'Content-Type': 'application/json'
                     }
-                }), onError);
-        }
+                };
+                if (application) {
+                    config.params = {application};
+                }
+                return $http.post(prefix, angular.toJson(stateJson), config)
+                    .then(response => self.states.push({id: response.data, model: [stateJson]}), onError);
+            }
 
-        self.deleteState = function(stateId) {
-            return $http.delete(prefix + '/' + encodeURIComponent(stateId))
-                .then(() => _.remove(self.states, state => _.get(state, 'id', '') === stateId), onError);
-        }
+            self.getState = function(stateId) {
+                return $http.get(prefix + '/' + encodeURIComponent(stateId))
+                    .then(response => $q.resolve(_.get(response, 'data', {})), onError);
+            }
 
-        self.initialize = function() {
-            self.getStates()
-                .then(states => self.states = states, () => console.log('Problem getting states'));
-        }
+            self.updateState = function(stateId, stateJson) {
+                return $http.put(prefix + '/' + encodeURIComponent(stateId), angular.toJson(stateJson))
+                    .then(() => _.forEach(self.states, state => {
+                        if (_.get(state, 'id', '') === stateId) {
+                            _.set(state, 'model', [stateJson]);
+                            return false;
+                        }
+                    }), onError);
+            }
 
-        self.createOntologyState = function(recordId, branchId, commitId) {
-            return self.createState(makeOntologyState(recordId, branchId, commitId), 'ontology-editor');
-        }
+            self.deleteState = function(stateId) {
+                return $http.delete(prefix + '/' + encodeURIComponent(stateId))
+                    .then(() => _.remove(self.states, {id: stateId}), onError);
+            }
 
-        self.getOntologyStateByRecordId = function(recordId) {
-            return _.find(self.states, {
-                model: [{
-                    [prefixes.ontologyState + 'record']: [{'@id': recordId}]
-                }]
-            });
-        }
+            self.initialize = function() {
+                self.getStates()
+                    .then(states => self.states = states, () => utilService.createErrorToast('Problem getting states'));
+            }
 
-        self.updateOntologyState = function(recordId, branchId, commitId) {
-            var stateId = _.get(self.getOntologyStateByRecordId(recordId), 'id', '');
-            return self.updateState(stateId, makeOntologyState(recordId, branchId, commitId));
-        }
+            self.createOntologyState = function(recordId, branchId, commitId) {
+                return self.createState(makeOntologyState(recordId, branchId, commitId), 'ontology-editor');
+            }
 
-        self.deleteOntologyState = function(recordId) {
-            var stateId = _.get(self.getOntologyStateByRecordId(recordId), 'id', '');
-            return self.deleteState(stateId);
-        }
+            self.getOntologyStateByRecordId = function(recordId) {
+                return _.find(self.states, {
+                    model: [{
+                        [prefixes.ontologyState + 'record']: [{'@id': recordId}]
+                    }]
+                });
+            }
 
-        function makeOntologyState(recordId, branchId, commitId) {
-            return {
-                '@id': 'http://matonto.org/states/ontology-editor/' + uuid.v4(),
-                [prefixes.ontologyState + 'record']: [{'@id': recordId}],
-                [prefixes.ontologyState + 'branch']: [{'@id': branchId}],
-                [prefixes.ontologyState + 'commit']: [{'@id': commitId}]
+            self.updateOntologyState = function(recordId, branchId, commitId) {
+                var stateId = _.get(self.getOntologyStateByRecordId(recordId), 'id', '');
+                return self.updateState(stateId, makeOntologyState(recordId, branchId, commitId));
+            }
+
+            self.deleteOntologyState = function(recordId) {
+                var stateId = _.get(self.getOntologyStateByRecordId(recordId), 'id', '');
+                return self.deleteState(stateId);
+            }
+
+            function makeOntologyState(recordId, branchId, commitId) {
+                return {
+                    '@id': 'http://matonto.org/states/ontology-editor/' + uuid.v4(),
+                    [prefixes.ontologyState + 'record']: [{'@id': recordId}],
+                    [prefixes.ontologyState + 'branch']: [{'@id': branchId}],
+                    [prefixes.ontologyState + 'commit']: [{'@id': commitId}]
+                }
+            }
+
+            function onError(response) {
+                return $q.reject(response.statusText);
             }
         }
-
-        function onError(response) {
-            return $q.reject(response.statusText);
-        }
-    }
 })();

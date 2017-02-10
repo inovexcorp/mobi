@@ -44,6 +44,9 @@
          * @requires $filter
          * @requires prefixes.service:prefixes
          * @requires propertyManager.service:propertyManagerService
+         * @requires catalogManager.service:catalogManagerService
+         * @requires util.service:utilManagerService
+         * @requires stateManager.service:stateManagerService
          *
          * @description
          * `ontologyManagerService` is a service that provides access to the MatOnto ontology REST
@@ -249,8 +252,7 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Initializes the `ontologyManagerService` by setting the list of
-             * {@link ontologyManager.service:ontologyManagerService#ontologyRecords ontology records}.
+             * Initializes the `catalogId` variable.
              */
             self.initialize = function() {
                 catalogId = _.get(cm.localCatalog, '@id', '');
@@ -268,7 +270,7 @@
              */
             self.getAllOntologyIds = function(sortingOption) {
                 var deferred = $q.defer();
-               getAllRecords(sortingOption)
+                getAllRecords(sortingOption)
                     .then(response => {
                         var recordIds = _.map(_.get(response, 'data', []), record => utilService.getDctermsValue(record,
                             'identifier'));
@@ -281,16 +283,6 @@
                 getAllRecords(sortingOption)
                     .then(response => deferred.resolve(response.data), deferred.reject);
                 return deferred.promise;
-            }
-            function getAllRecords(sortingOption = _.find(cm.sortOptions, {label: 'Title (desc)'})) {
-                var ontologyRecordType = 'http://matonto.org/ontologies/catalog#OntologyRecord';
-                var paginatedConfig = {
-                    pageIndex: 0,
-                    limit: 100,
-                    sortOption: sortingOption,
-                    recordType: ontologyRecordType
-                }
-                return cm.getRecords(catalogId, paginatedConfig);
             }
             /**
              * @ngdoc method
@@ -349,15 +341,15 @@
                     cm.getRecordMasterBranch(recordId, catalogId)
                         .then(masterBranch => {
                             branchId = _.get(masterBranch, '@id', '');
-                            cm.getBranchHeadCommit(branchId, recordId, catalogId)
-                                .then(headCommit => {
-                                    commitId = _.get(headCommit, "commit['@id']", '');
-                                    sm.createOntologyState(recordId, branchId, commitId)
-                                        .then(() => cm.getResource(commitId, branchId, recordId, catalogId, false, rdfFormat)
-                                            .then(ontology => resolve(ontology, emptyInProgressCommit), deferred.reject),
-                                            deferred.reject);
-                                }, deferred.reject);
-                        }, deferred.reject);
+                            return cm.getBranchHeadCommit(branchId, recordId, catalogId);
+                        }, $q.reject)
+                        .then(headCommit => {
+                            commitId = _.get(headCommit, "commit['@id']", '');
+                            return sm.createOntologyState(recordId, branchId, commitId);
+                        }, $q.reject)
+                        .then(() => cm.getResource(commitId, branchId, recordId, catalogId, false, rdfFormat),
+                            $q.reject)
+                        .then(ontology => resolve(ontology, emptyInProgressCommit), deferred.reject);
                 }
                 if (!_.isEmpty(state)) {
                     branchId = _.get(state, "model[0]['" + prefixes.ontologyState + "branch'][0]['@id']");
@@ -371,10 +363,8 @@
                                 } else {
                                     deferred.reject(errorMessage);
                                 }
-                            }, () => {
-                                sm.deleteOntologyState(recordId, branchId, commitId)
-                                    .then(getLatest, deferred.reject);
-                            });
+                            }, () => sm.deleteOntologyState(recordId, branchId, commitId)
+                                .then(getLatest, deferred.reject));
                 } else {
                     getLatest();
                 }
@@ -421,7 +411,7 @@
              */
             self.uploadThenGet = function(file, title, description, keywords, type = 'ontology') {
                 var deferred = $q.defer();
-                var onUploadSuccess = function(recordId, ontologyId) {
+                var onUploadSuccess = function(ontologyId, recordId) {
                     self.getOntology(ontologyId, recordId)
                         .then(response => {
                             if (type === 'ontology') {
@@ -436,7 +426,7 @@
                         }, deferred.reject);
                 };
                 self.uploadFile(file, title, description, keywords)
-                    .then(response => onUploadSuccess(response.data.recordId, response.data.ontologyId),
+                    .then(response => onUploadSuccess(response.data.ontologyId, response.data.recordId),
                         deferred.reject);
                 return deferred.promise;
             }
@@ -476,23 +466,26 @@
              * @returns {Promise} A promise with with the ontology ID or error message.
              */
             self.openOntology = function(ontologyId, recordId, type='ontology') {
+                var branchId, commitId, ontology, inProgressCommit;
                 var deferred = $q.defer();
                 self.getOntology(ontologyId, recordId)
-                    .then(response =>
-                        cm.getBranchHeadCommit(response.branchId, recordId, catalogId)
-                            .then(headCommit => {
-                                var commitId = _.get(headCommit, "commit['@id']", '');
-                                var upToDate = commitId === response.commitId;
-                                if (type === 'ontology') {
-                                    self.addOntologyToList(response.ontologyId, response.recordId, response.branchId,
-                                        response.commitId, response.ontology, response.inProgressCommit, upToDate)
-                                            .then(() => deferred.resolve(recordId), deferred.reject);
-                                } else if (type === 'vocabulary') {
-                                    self.addVocabularyToList(response.ontologyId, response.recordId, response.branchId,
-                                        response.commitId, response.ontology, response.inProgressCommit, upToDate)
-                                            .then(() => deferred.resolve(recordId), deferred.reject);
-                                }
-                            }, deferred.reject), deferred.reject);
+                    .then(response => {
+                        branchId = response.branchId;
+                        commitId = response.commitId;
+                        ontology = response.ontology;
+                        inProgressCommit = response.inProgressCommit;
+                        return cm.getBranchHeadCommit(branchId, recordId, catalogId);
+                    }, $q.reject)
+                    .then(headCommit => {
+                        var headId = _.get(headCommit, "commit['@id']", '');
+                        var upToDate = headId === commitId;
+                        if (type === 'ontology') {
+                            return self.addOntologyToList(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate);
+                        } else if (type === 'vocabulary') {
+                            return self.addVocabularyToList(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate);
+                        }
+                    }, $q.reject)
+                    .then(() => deferred.resolve(recordId), deferred.reject);
                 return deferred.promise;
             }
             /**
@@ -509,10 +502,10 @@
              * @param {string} ontologyId The ontology ID of the requested ontology.
              */
             self.closeOntology = function(recordId) {
-                _.remove(self.list, item => _.get(item, 'recordId') === recordId);
+                _.remove(self.list, {recordId});
             }
             self.removeBranch = function(recordId, branchId) {
-                _.remove(self.getListItemByRecordId(recordId).branches, branch => _.get(branch, '@id') === branchId);
+                _.remove(self.getListItemByRecordId(recordId).branches, {'@id': branchId});
             }
             /**
              * @ngdoc method
@@ -566,22 +559,9 @@
                     });
                 return deferred.promise;
             }
-
-            function addToInProgress(recordId, json, prop) {
-                var listItem = self.getListItemByRecordId(recordId);
-                var entity = _.find(listItem[prop], {'@id': json['@id']});
-                json = $filter('removeMatonto')(json);
-                if (entity) {
-                    _.mergeWith(entity, json, util.mergingArrays);
-                } else  {
-                    listItem[prop].push(json);
-                }
-            }
-
             self.addToAdditions = function(recordId, json) {
                 addToInProgress(recordId, json, 'additions');
             }
-
             self.addToDeletions = function(recordId, json) {
                 addToInProgress(recordId, json, 'deletions');
             }
@@ -601,6 +581,19 @@
             self.getListItemById = function(ontologyId) {
                 return _.find(self.list, {ontologyId: ontologyId});
             }
+            /**
+             * @ngdoc method
+             * @name getListItemByRecordId
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Gets the associated object from the {@link ontologyManager.service:ontologyManagerService#list list} that
+             * contains the requested record ID. Returns the list item.
+             *
+             * @param {string} recordId The record ID of the requested ontology.
+             * @returns {Object} The associated Object from the
+             * {@link ontologyManager.service:ontologyManagerService#list list}.
+             */
             self.getListItemByRecordId = function(recordId) {
                 return _.find(self.list, {recordId: recordId});
             }
@@ -688,10 +681,14 @@
              *
              * @description
              * Calls the POST /matontorest/ontologies endpoint which uploads an ontology to the MatOnto repository
-             * with the JSON-LD ontology string provided. Returns a promise with the entityIRI and ontologyId for the
-             * state of the newly created ontology.
+             * with the JSON-LD ontology string provided. Creates a new OntologyRecord for the associated ontology.
+             * Returns a promise with the entityIRI and ontologyId for the state of the newly created ontology.
              *
-             * @param {string} ontologyJSON The JSON-LD representing the ontology.
+             * @param {string} ontologyJson The JSON-LD representing the ontology.
+             * @param {string} title The title for the OntologyRecord.
+             * @param {string} description The description for the OntologyRecord.
+             * @param {string} keywords The keywords for the OntologyRecord.
+             * @param {string} type The type (either "ontology" or "vocabulary") for the document being created.
              * @returns {Promise} A promise with the entityIRI and ontologyId for the state of the newly created
              * ontology.
              */
@@ -1301,17 +1298,21 @@
             self.getEntityById = function(ontologyId, entityIRI) {
                 return getEntityFromListItem(self.getListItemById(ontologyId), entityIRI);
             }
+            /**
+             * @ngdoc method
+             * @name getEntityByRecordId
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Gets entity with the provided IRI from the ontology linked to the provided recordId in the MatOnto
+             * repository. Returns the entity Object.
+             *
+             * @param {string} recordId The recordId linked to the ontology you want to check.
+             * @param {string} entityIRI The IRI of the entity that you want.
+             * @returns {Object} An Object which represents the requested entity.
+             */
             self.getEntityByRecordId = function(recordId, entityIRI) {
                 return getEntityFromListItem(self.getListItemByRecordId(recordId), entityIRI);
-            }
-            function getEntityFromListItem(listItem, entityIRI) {
-                var index = _.get(listItem, 'index');
-                var ontology = _.get(listItem, 'ontology');
-                if (_.has(index, entityIRI)) {
-                    return ontology[_.get(index, entityIRI)];
-                } else {
-                    return self.getEntity(ontology, entityIRI);
-                }
             }
             /**
              * @ngdoc method
@@ -1415,13 +1416,7 @@
              */
             self.getImportedOntologies = function(ontologyId, branchId, commitId, rdfFormat = 'jsonld') {
                 var deferred = $q.defer();
-                var config = {
-                    params: {
-                        rdfFormat,
-                        branchId,
-                        commitId
-                    }
-                };
+                var config = {params: {rdfFormat, branchId, commitId}};
                 $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/imported-ontologies', null, config)
                     .then(response => {
                         if (_.get(response, 'status') === 200) {
@@ -1608,6 +1603,7 @@
                     }, response => deferred.reject(response.statusText));
                 return deferred.promise;
             }
+
             self.createOntologyListItem = function(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit,
                 upToDate = true) {
                 var deferred = $q.defer();
@@ -1892,6 +1888,35 @@
             function updateListItem(recordId, newListItem) {
                 var oldListItem = self.getListItemByRecordId(recordId);
                 _.assign(oldListItem, newListItem);
+            }
+            function getAllRecords(sortingOption = _.find(cm.sortOptions, {label: 'Title (desc)'})) {
+                var ontologyRecordType = 'http://matonto.org/ontologies/catalog#OntologyRecord';
+                var paginatedConfig = {
+                    pageIndex: 0,
+                    limit: 100,
+                    sortOption: sortingOption,
+                    recordType: ontologyRecordType
+                }
+                return cm.getRecords(catalogId, paginatedConfig);
+            }
+            function addToInProgress(recordId, json, prop) {
+                var listItem = self.getListItemByRecordId(recordId);
+                var entity = _.find(listItem[prop], {'@id': json['@id']});
+                var filteredJson = $filter('removeMatonto')(json);
+                if (entity) {
+                    _.mergeWith(entity, filteredJson, util.mergingArrays);
+                } else  {
+                    listItem[prop].push(filteredJson);
+                }
+            }
+            function getEntityFromListItem(listItem, entityIRI) {
+                var index = _.get(listItem, 'index');
+                var ontology = _.get(listItem, 'ontology');
+                if (_.has(index, entityIRI)) {
+                    return ontology[_.get(index, entityIRI)];
+                } else {
+                    return self.getEntity(ontology, entityIRI);
+                }
             }
         }
 })();

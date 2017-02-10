@@ -45,7 +45,7 @@
                     dvm.sm = ontologyStateService;
 
                     dvm.prefix = _.get(dvm.om.getListItemById(dvm.sm.listItem.ontologyId), 'iriBegin',
-                        dvm.om.getOntologyIRI(dvm.sm.listItem.ontology)) + _.get(dvm.om.getListItemById(dvm.sm.listItem.ontologyId),
+                        dvm.sm.listItem.ontologyId) + _.get(dvm.om.getListItemById(dvm.sm.listItem.ontologyId),
                         'iriThen', '#');
 
                     dvm.clazz = {

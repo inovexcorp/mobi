@@ -753,6 +753,7 @@ function mockUtil() {
             this.parseLinks = jasmine.createSpy('parseLinks').and.returnValue({});
             this.createErrorToast = jasmine.createSpy('createErrorToast');
             this.createSuccessToast = jasmine.createSpy('createSuccessToast');
+            this.createJson = jasmine.createSpy('createJson').and.returnValue({});
         });
     });
 }

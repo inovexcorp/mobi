@@ -117,12 +117,12 @@ describe('Saved Changes Tab directive', function() {
         describe('should update the selected ontology', function() {
             beforeEach(function() {
                 this.commitId = 'commit';
-                catalogManagerSvc.getBranchHeadCommit.and.returnValue($q.when({commit: this.commitId}));
+                catalogManagerSvc.getBranchHeadCommit.and.returnValue($q.when({commit: {'@id': this.commitId}}));
             });
             it('unless an error occurs', function() {
                 ontologyManagerSvc.updateOntology.and.returnValue($q.reject('Error message'));
                 controller.update();
-                scope.$apply()
+                scope.$apply();
                 expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(ontologyStateSvc.listItem.branchId, ontologyStateSvc.listItem.recordId, jasmine.any(String));
                 expect(ontologyManagerSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, ontologyStateSvc.listItem.branchId, this.commitId, ontologyStateSvc.listItem.type);
                 expect(utilSvc.createSuccessToast).not.toHaveBeenCalled();
@@ -131,7 +131,7 @@ describe('Saved Changes Tab directive', function() {
             it('successfully', function() {
                 ontologyManagerSvc.updateOntology.and.returnValue($q.when());
                 controller.update();
-                scope.$apply()
+                scope.$apply();
                 expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(ontologyStateSvc.listItem.branchId, ontologyStateSvc.listItem.recordId, jasmine.any(String));
                 expect(ontologyManagerSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, ontologyStateSvc.listItem.branchId, this.commitId, ontologyStateSvc.listItem.type);
                 expect(utilSvc.createSuccessToast).toHaveBeenCalled();

@@ -56,11 +56,6 @@
                             [axiom]: dvm.values});
                         dvm.sm.showRelationshipOverlay = false;
                     }
-
-                    dvm.getIRINamespace = function(item) {
-                        var split = $filter('splitIRI')(item);
-                        return split.begin + split.then;
-                    }
                 }
             }
         }

@@ -44,13 +44,6 @@
                     dvm.sm = ontologyStateService;
                     dvm.util = utilService;
 
-                    function createJson(property, valueObj) {
-                        return {
-                            '@id': dvm.sm.selected['@id'],
-                            [property]: [valueObj]
-                        }
-                    }
-
                     dvm.addProperty = function(select, value, type) {
                         var property = dvm.ro.getItemIri(select);
                         if (property) {
@@ -64,15 +57,16 @@
                                 dvm.sm.selected[property] = [valueObj];
                             }
                         }
-                        dvm.om.addToAdditions(dvm.sm.listItem.recordId, createJson(property, valueObj));
+                        dvm.om.addToAdditions(dvm.sm.listItem.recordId, dvm.util.createJson(dvm.sm.selected['@id'],
+                            property, valueObj));
                         dvm.sm.showDataPropertyOverlay = false;
                     }
 
                     dvm.editProperty = function(select, value, type) {
                         var property = dvm.ro.getItemIri(select);
                         if (property) {
-                            dvm.om.addToDeletions(dvm.sm.listItem.recordId, createJson(property,
-                                dvm.sm.selected[property][dvm.sm.propertyIndex]));
+                            dvm.om.addToDeletions(dvm.sm.listItem.recordId, dvm.util.createJson(dvm.sm.selected['@id'],
+                                property, dvm.sm.selected[property][dvm.sm.propertyIndex]));
                             dvm.sm.selected[property][dvm.sm.propertyIndex]['@value'] = value;
                             if (_.get(type, '@id') !== dvm.sm.selected[property][dvm.sm.propertyIndex]['@type']) {
                                 if (type) {
@@ -81,8 +75,8 @@
                                     _.unset(dvm.sm.selected[property][dvm.sm.propertyIndex], '@type');
                                 }
                             }
-                            dvm.om.addToAdditions(dvm.sm.listItem.recordId, createJson(property,
-                                dvm.sm.selected[property][dvm.sm.propertyIndex]));
+                            dvm.om.addToAdditions(dvm.sm.listItem.recordId, dvm.util.createJson(dvm.sm.selected['@id'],
+                                property, dvm.sm.selected[property][dvm.sm.propertyIndex]));
                         }
                         dvm.sm.showDataPropertyOverlay = false;
                     }

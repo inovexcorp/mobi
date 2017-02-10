@@ -28,10 +28,10 @@
         .directive('openOntologyTab', openOntologyTab);
 
         openOntologyTab.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'prefixes',
-            'catalogManagerService', 'stateManagerService'];
+            'catalogManagerService', 'stateManagerService', 'utilService'];
 
         function openOntologyTab($filter, ontologyManagerService, ontologyStateService, prefixes,
-            catalogManagerService, stateManagerService) {
+            catalogManagerService, stateManagerService, utilService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -49,6 +49,7 @@
 
                     dvm.om = ontologyManagerService;
                     dvm.os = ontologyStateService;
+                    dvm.util = utilService;
                     dvm.begin = 0;
                     dvm.limit = 10;
                     dvm.filteredList = [];
@@ -60,9 +61,7 @@
                                 var listItem = dvm.om.getListItemByRecordId(dvm.recordId);
                                 dvm.os.addState(dvm.recordId, dvm.om.getOntologyIRI(listItem.ontology), dvm.type);
                                 dvm.os.setState(dvm.recordId);
-                            }, errorMessage => {
-                                dvm.errorMessage = errorMessage;
-                            });
+                            }, errorMessage => dvm.errorMessage = errorMessage);
                     }
 
                     dvm.getPage = function(direction) {
@@ -73,13 +72,9 @@
                         }
                     }
 
-                    dvm.getRecordValue = function(record, property) {
-                        return _.get(record, "['" + prefixes.dcterms + property + "'][0]['@value']");
-                    }
-
                     dvm.showDeleteConfirmationOverlay = function(record) {
                         dvm.recordId = _.get(record, '@id', '');
-                        dvm.recordTitle = dvm.getRecordValue(record, 'title');
+                        dvm.recordTitle = dvm.util.getDctermsValue(record, 'title');
                         dvm.errorMessage = '';
                         dvm.showDeleteConfirmation = true;
                     }
@@ -115,9 +110,9 @@
                         dvm.filteredList = $filter('filter')(getFilteredRecords(ontologyRecords), dvm.filterText,
                             (actual, expected) => {
                                 expected = _.lowerCase(expected);
-                                return _.includes(_.lowerCase(dvm.getRecordValue(actual, 'title')), expected)
-                                    || _.includes(_.lowerCase(dvm.getRecordValue(actual, 'description')), expected)
-                                    || _.includes(_.lowerCase(dvm.getRecordValue(actual, 'identifier')), expected);
+                                return _.includes(_.lowerCase(dvm.util.getDctermsValue(actual, 'title')), expected)
+                                    || _.includes(_.lowerCase(dvm.util.getDctermsValue(actual, 'description')), expected)
+                                    || _.includes(_.lowerCase(dvm.util.getDctermsValue(actual, 'identifier')), expected);
                             });
                     });
 

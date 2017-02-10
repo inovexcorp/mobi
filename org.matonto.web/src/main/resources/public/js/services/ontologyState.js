@@ -220,11 +220,7 @@
                 self.state.active = true;
             }
             self.getState = function(recordId) {
-                if (!recordId) {
-                    return self.newState;
-                } else {
-                    return _.find(self.states, {recordId});
-                }
+                return recordId ? _.find(self.states, {recordId}) : self.newState;
             }
             self.deleteState = function(recordId) {
                 if (self.state.recordId === recordId) {
@@ -255,7 +251,7 @@
                 }
             }
             self.getActiveKey = function() {
-                return _.findKey(self.state, ['active', true], 'project');
+                return _.findKey(self.state, ['active', true]);
             }
             self.getActivePage = function() {
                 return self.state[self.getActiveKey()];

@@ -52,9 +52,7 @@
                                 _.set(annotationJSON, 'matonto.originalIRI', angular.copy(annotationJSON['@id']));
                                 dvm.om.addEntity(dvm.sm.listItem.ontology, annotationJSON);
                                 dvm.sm.showCreateAnnotationOverlay = false;
-                            }, errorMessage => {
-                                dvm.error = errorMessage;
-                            });
+                            }, errorMessage => dvm.error = errorMessage);
                     }
                 }
             }
