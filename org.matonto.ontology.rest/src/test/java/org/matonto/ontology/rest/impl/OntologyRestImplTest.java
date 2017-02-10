@@ -397,6 +397,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .createModel());
         when(catalogManager.getDiff(any(Model.class), any(Model.class))).thenReturn(difference);
         when(ontologyManager.createOntology(any(FileInputStream.class))).thenReturn(ontology);
+        when(ontologyManager.createOntology(anyString())).thenReturn(ontology);
         when(ontologyManager.createOntology(any(Model.class))).thenReturn(ontology);
         when(ontologyManager.retrieveOntology(eq(ontologyIRI), any(Resource.class), any(Resource.class)))
                 .thenReturn(Optional.of(ontology));
@@ -622,17 +623,16 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
 
     // Test upload ontology json
 
-    /*@Test
+    @Test
     public void testUploadOntologyJson() {
-        JSONObject json = new JSONObject().element("@id", "http://matonto.org/ontology");
         JSONObject entity = new JSONObject().element("@id", "http://matonto.org/entity");
 
         Response response = target().path("ontologies").queryParam("title", "title").queryParam("description",
                 "description").queryParam("keywords", "keyword1,keyword2").request().post(Entity.json(entity));
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(response.getStatus(), 201);
         assertGetUserFromContext();
-        verify(ontologyManager).createOntology(any(FileInputStream.class));
+        verify(ontologyManager).createOntology(entity.toString());
         verify(ontology).getOntologyId();
         verify(ontologyId).getOntologyIdentifier();
         verify(catalogManager).getLocalCatalog();
@@ -650,47 +650,29 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void testUploadOntologyJsonWithoutTitle() {
-        FormDataMultiPart fd = new FormDataMultiPart();
-        fd.field("file", getClass().getResourceAsStream("/test-ontology.ttl"), MediaType.APPLICATION_OCTET_STREAM_TYPE);
-        fd.field("description", "description");
-        fd.field("keywords", "keyword1,keyword2");
+        JSONObject entity = new JSONObject().element("@id", "http://matonto.org/entity");
 
-        Response response = target().path("ontologies").request().post(Entity.entity(fd,
-                MediaType.MULTIPART_FORM_DATA));
-
+        Response response = target().path("ontologies").queryParam("description", "description")
+                .queryParam("keywords", "keyword1,keyword2").request().post(Entity.json(entity));
         assertEquals(response.getStatus(), 400);
     }
 
     @Test
-    public void testUploadOntologyJsonWithoutFile() {
-        FormDataMultiPart fd = new FormDataMultiPart();
-        fd.field("title", "title");
-        fd.field("description", "description");
-        fd.field("keywords", "keyword1,keyword2");
-
-        Response response = target().path("ontologies").request().post(Entity.entity(fd,
-                MediaType.MULTIPART_FORM_DATA));
-
+    public void testUploadOntologyJsonWithoutJson() {
+        Response response = target().path("ontologies").queryParam("title", "title").queryParam("description",
+                "description").queryParam("keywords", "keyword1,keyword2").request().post(Entity.json(""));
         assertEquals(response.getStatus(), 400);
     }
 
     @Test
     public void testUploadInvalidOntologyJson() {
-        when(ontologyManager.createOntology(any(FileInputStream.class)))
-                .thenThrow(new MatontoOntologyException("Error"));
+        when(ontologyManager.createOntology(anyString())).thenThrow(new MatontoOntologyException("Error"));
+        JSONObject entity = new JSONObject().element("@id", "http://matonto.org/entity");
 
-        FormDataMultiPart fd = new FormDataMultiPart();
-        fd.field("file", getClass().getResourceAsStream("/search-results.json"),
-                MediaType.APPLICATION_OCTET_STREAM_TYPE);
-        fd.field("title", "title");
-        fd.field("description", "description");
-        fd.field("keywords", "keyword1,keyword2");
-
-        Response response = target().path("ontologies").request().post(Entity.entity(fd,
-                MediaType.MULTIPART_FORM_DATA));
-
+        Response response = target().path("ontologies").queryParam("title", "title").queryParam("description",
+                "description").queryParam("keywords", "keyword1,keyword2").request().post(Entity.json(entity));
         assertEquals(response.getStatus(), 400);
-    }*/
+    }
 
     // Test save changes to ontology
 
