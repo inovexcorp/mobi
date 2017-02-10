@@ -28,9 +28,10 @@
         .directive('ontologyPropertyOverlay', ontologyPropertyOverlay);
 
         ontologyPropertyOverlay.$inject = ['responseObj', 'ontologyManagerService', 'ontologyStateService', 'REGEX',
-            'propertyManagerService'];
+            'propertyManagerService', 'utilService'];
 
-        function ontologyPropertyOverlay(responseObj, ontologyManagerService, ontologyStateService, REGEX, propertyManagerService) {
+        function ontologyPropertyOverlay(responseObj, ontologyManagerService, ontologyStateService, REGEX,
+            propertyManagerService, utilService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -45,11 +46,7 @@
                     dvm.iriPattern = REGEX.IRI;
                     dvm.pm = propertyManagerService;
                     dvm.properties = _.union(dvm.om.ontologyProperties, dvm.sm.listItem.annotations);
-
-                    function markAndClose() {
-                        dvm.sm.setUnsaved(dvm.sm.listItem.ontologyId, dvm.sm.selected.matonto.originalIRI, true);
-                        dvm.sm.showOntologyPropertyOverlay = false;
-                    }
+                    dvm.util = utilService;
 
                     function getValue() {
                         var value = '';
@@ -61,12 +58,9 @@
                         return value;
                     }
 
-                    dvm.isDisabled = function() {
-                        var valid = true;
-                        if (dvm.isAnnotationProperty()) {
-                            valid = !!dvm.sm.ontologyPropertyValue;
-                        }
-                        return dvm.propertyForm.$invalid || !dvm.sm.ontologyProperty || !valid;
+                    function createJson(value) {
+                        return utilService.createJson(dvm.sm.selected['@id'],
+                            dvm.ro.getItemIri(dvm.sm.ontologyProperty), value);
                     }
 
                     dvm.isOntologyProperty = function() {
@@ -80,18 +74,21 @@
                     }
 
                     dvm.addProperty = function() {
-                        dvm.pm.add(dvm.sm.selected, dvm.ro.getItemIri(dvm.sm.ontologyProperty), getValue());
-                        markAndClose();
+                        var value = getValue();
+                        dvm.pm.add(dvm.sm.selected, dvm.ro.getItemIri(dvm.sm.ontologyProperty), value);
+                        dvm.om.addToAdditions(dvm.sm.listItem.recordId, createJson(value));
+                        dvm.sm.showOntologyPropertyOverlay = false;
                     }
 
                     dvm.editProperty = function() {
-                        dvm.pm.edit(dvm.sm.selected, dvm.ro.getItemIri(dvm.sm.ontologyProperty), getValue(),
-                            dvm.sm.ontologyPropertyIndex);
-                        markAndClose();
-                    }
-
-                    dvm.getItemNamespace = function(item) {
-                        return _.get(item, 'namespace', 'No namespace');
+                        var property = dvm.ro.getItemIri(dvm.sm.ontologyProperty);
+                        var value = getValue();
+                        var oldValue = _.get(dvm.sm.selected, "['" + property + "']['" + dvm.sm.ontologyPropertyIndex
+                            + "']['@value']");
+                        dvm.om.addToDeletions(dvm.sm.listItem.recordId, createJson(oldValue));
+                        dvm.pm.edit(dvm.sm.selected, property, value, dvm.sm.ontologyPropertyIndex);
+                        dvm.om.addToAdditions(dvm.sm.listItem.recordId, createJson(value));
+                        dvm.sm.showOntologyPropertyOverlay = false;
                     }
                 }
             }

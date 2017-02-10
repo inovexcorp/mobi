@@ -397,6 +397,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .createModel());
         when(catalogManager.getDiff(any(Model.class), any(Model.class))).thenReturn(difference);
         when(ontologyManager.createOntology(any(FileInputStream.class))).thenReturn(ontology);
+        when(ontologyManager.createOntology(anyString())).thenReturn(ontology);
         when(ontologyManager.createOntology(any(Model.class))).thenReturn(ontology);
         when(ontologyManager.retrieveOntology(eq(ontologyIRI), any(Resource.class), any(Resource.class)))
                 .thenReturn(Optional.of(ontology));
@@ -617,6 +618,59 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         Response response = target().path("ontologies").request().post(Entity.entity(fd,
                 MediaType.MULTIPART_FORM_DATA));
 
+        assertEquals(response.getStatus(), 400);
+    }
+
+    // Test upload ontology json
+
+    @Test
+    public void testUploadOntologyJson() {
+        JSONObject ontologyJson = new JSONObject().element("@id", "http://matonto.org/ontology");
+
+        Response response = target().path("ontologies").queryParam("title", "title").queryParam("description",
+                "description").queryParam("keywords", "keyword1,keyword2").request().post(Entity.json(ontologyJson));
+
+        assertEquals(response.getStatus(), 201);
+        assertGetUserFromContext();
+        verify(ontologyManager).createOntology(ontologyJson.toString());
+        verify(ontology).getOntologyId();
+        verify(ontologyId).getOntologyIdentifier();
+        verify(catalogManager).getLocalCatalog();
+        verify(catalogManager).createRecord(any(RecordConfig.class), eq(ontologyRecordFactory));
+        verify(catalogManager).addRecord(catalogId, record);
+        verify(catalogManager).addMasterBranch(recordId);
+        verify(catalogManager).getRecord(catalogId, recordId, ontologyRecordFactory);
+        verify(catalogManager).createInProgressCommit(user, recordId);
+        verify(catalogManager).addInProgressCommit(inProgressCommit);
+        verify(catalogManager).addAdditions(any(Model.class), eq(inProgressCommitId));
+        verify(catalogManager).createCommit(eq(inProgressCommit), eq(null), anyString());
+        verify(catalogManager).addCommitToBranch(commit, branchId);
+        verify(catalogManager).removeInProgressCommit(inProgressCommitId);
+    }
+
+    @Test
+    public void testUploadOntologyJsonWithoutTitle() {
+        JSONObject entity = new JSONObject().element("@id", "http://matonto.org/entity");
+
+        Response response = target().path("ontologies").queryParam("description", "description")
+                .queryParam("keywords", "keyword1,keyword2").request().post(Entity.json(entity));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void testUploadOntologyJsonWithoutJson() {
+        Response response = target().path("ontologies").queryParam("title", "title").queryParam("description",
+                "description").queryParam("keywords", "keyword1,keyword2").request().post(Entity.json(""));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void testUploadInvalidOntologyJson() {
+        when(ontologyManager.createOntology(anyString())).thenThrow(new MatontoOntologyException("Error"));
+        JSONObject entity = new JSONObject().element("@id", "http://matonto.org/entity");
+
+        Response response = target().path("ontologies").queryParam("title", "title").queryParam("description",
+                "description").queryParam("keywords", "keyword1,keyword2").request().post(Entity.json(entity));
         assertEquals(response.getStatus(), 400);
     }
 

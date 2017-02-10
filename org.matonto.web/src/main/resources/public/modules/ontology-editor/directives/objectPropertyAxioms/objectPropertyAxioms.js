@@ -40,6 +40,7 @@
                     var dvm = this;
                     dvm.sm = ontologyStateService;
                     dvm.pm = propertyManagerService;
+                    dvm.ro = responseObj;
 
                     dvm.openRemoveOverlay = function(key, index) {
                         dvm.key = key;

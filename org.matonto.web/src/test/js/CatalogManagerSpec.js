@@ -1518,11 +1518,11 @@ describe('Catalog Manager service', function() {
     describe('should download the compiled resource from a Branch Commit', function() {
         it('with a format', function() {
             catalogManagerSvc.downloadResource(commitId, branchId, recordId, catalogId, true, 'turtle');
-            expect(windowSvc.location).toBe('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId) + '/resource?applyInProgressCommit=true&format=turtle');
+            expect(windowSvc.location).toBe('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId) + '/resource?applyInProgressCommit=true&format=turtle&fileName=resource');
         });
         it('without a format', function() {
             catalogManagerSvc.downloadResource(commitId, branchId, recordId, catalogId, true);
-            expect(windowSvc.location).toBe('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId) + '/resource?applyInProgressCommit=true&format=jsonld');
+            expect(windowSvc.location).toBe('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId) + '/resource?applyInProgressCommit=true&format=jsonld&fileName=resource');
         });
     });
     describe('should create a new InProgressCommit for the logged-in User', function() {

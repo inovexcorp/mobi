@@ -100,7 +100,7 @@ function injectRemoveIriFromArrayFilter() {
 
 function injectRemoveMatontoFilter() {
     module(function($provide) {
-        $provide.value('removeMatontoFilter', jasmine.createSpy('removeMatontoFilter'));
+        $provide.value('removeMatontoFilter', jasmine.createSpy('removeMatontoFilter').and.callFake(_.identity));
     });
 }
 
@@ -116,6 +116,24 @@ function injectInArrayFilter() {
     });
 }
 
+function mockStateManager() {
+    module(function($provide) {
+        $provide.service('stateManagerService', function($q) {
+            this.states = [];
+            this.getStates = jasmine.createSpy('getStates').and.returnValue($q.when());
+            this.createState = jasmine.createSpy('createStates').and.returnValue($q.when());
+            this.getState = jasmine.createSpy('getState').and.returnValue($q.when());
+            this.updateState = jasmine.createSpy('updateState').and.returnValue($q.when());
+            this.deleteState = jasmine.createSpy('deleteState').and.returnValue($q.when());
+            this.initialize = jasmine.createSpy('initialize');
+            this.createOntologyState = jasmine.createSpy('createOntologyState').and.returnValue($q.when());
+            this.getOntologyStateByRecordId = jasmine.createSpy('getOntologyStateByRecordId').and.returnValue({});
+            this.updateOntologyState = jasmine.createSpy('updateOntologyState').and.returnValue($q.when());
+            this.deleteOntologyState = jasmine.createSpy('deleteOntologyState').and.returnValue($q.when());
+        });
+    });
+}
+
 function mockOntologyManager() {
     module(function($provide) {
         $provide.service('ontologyManagerService', function($q) {
@@ -126,6 +144,7 @@ function mockOntologyManager() {
             this.initialize = jasmine.createSpy('initialize');
             this.getOntology = jasmine.createSpy('getOntology').and.returnValue($q.when({}));
             this.getListItemById = jasmine.createSpy('getListItemById').and.returnValue({});
+            this.getListItemByRecordId = jasmine.createSpy('getListItemByRecordId');
             this.isOntology = jasmine.createSpy('isOntology');
             this.getOntologyById = jasmine.createSpy('getOntologyById').and.returnValue([]);
             this.getOntologyEntity = jasmine.createSpy('getOntologyEntity').and.returnValue({});
@@ -176,20 +195,37 @@ function mockOntologyManager() {
             this.createObjectProperty = jasmine.createSpy('createObjectProperty').and.returnValue($q.resolve({}));
             this.createDataTypeProperty = jasmine.createSpy('createDataTypeProperty').and.returnValue($q.resolve({}));
             this.createIndividual = jasmine.createSpy('createIndividual').and.returnValue($q.resolve({}));
+            this.isConcept = jasmine.createSpy('isConcept').and.returnValue(true);
+            this.isConceptScheme = jasmine.createSpy('isConceptScheme').and.returnValue(true);
+            this.hasConceptSchemes = jasmine.createSpy('hasConceptSchemes').and.returnValue(true);
+            this.hasConcepts = jasmine.createSpy('hasConcepts').and.returnValue(true);
 
             this.getImportedOntologies = jasmine.createSpy('getImportedOntologies').and.returnValue($q.when([]));
             this.getObjectCopyByIri = jasmine.createSpy('getObjectCopyByIri').and.returnValue({});
             this.getPropertyTypes = jasmine.createSpy('getPropertyTypes').and.returnValue([]);
             this.downloadOntologyFile = jasmine.createSpy('downloadOntologyFile');
             this.openOntology = jasmine.createSpy('openOntology').and.returnValue($q.resolve({}));
-            this.uploadThenGet = jasmine.createSpy('uploadThenGet').and.returnValue($q.resolve({}));
+            this.uploadThenGet = jasmine.createSpy('uploadThenGet').and.returnValue($q.resolve(''));
             this.getPreview = jasmine.createSpy('getPreview').and.returnValue($q.resolve({}));
             this.getChangedListForOntology = jasmine.createSpy('getChangedListForOntology').and.returnValue([]);
             this.editIRI = jasmine.createSpy('editIRI');
             this.saveChanges = jasmine.createSpy('saveChanges').and.returnValue($q.resolve({}));
             this.closeOntology = jasmine.createSpy('closeOntology');
             this.getEntityById = jasmine.createSpy('getEntityById');
+            this.getEntityByRecordId = jasmine.createSpy('getEntityByRecordId');
             this.getSearchResults = jasmine.createSpy('getSearchResults');
+            this.addToAdditions = jasmine.createSpy('addToAdditions');
+            this.addToDeletions = jasmine.createSpy('addToDeletions');
+            this.getConceptIRIs = jasmine.createSpy('getConceptsIRIs');
+            this.getConceptSchemeIRIs = jasmine.createSpy('getConceptSchemeIRIs');
+            this.updateOntology = jasmine.createSpy('updateOntology');
+            this.removeBranch = jasmine.createSpy('removeBranch');
+            this.getOntologyByRecordId = jasmine.createSpy('getOntologyByRecordId');
+            this.getAllOntologyRecords = jasmine.createSpy('getAllOntologyRecords').and.returnValue($q.when([]));
+            this.createOntologyListItem = jasmine.createSpy('createOntologyListItem').and.returnValue($q.when([]));
+            this.addOntologyToList = jasmine.createSpy('addOntologyToList').and.returnValue($q.when([]));
+            this.createVocabularyListItem = jasmine.createSpy('createVocabularyListItem').and.returnValue($q.when([]));
+            this.addVocabularyToList = jasmine.createSpy('addVocabularyToList').and.returnValue($q.when([]));
         });
     });
 }
@@ -320,11 +356,15 @@ function mockMapperState() {
 function mockPrefixes() {
     module(function($provide) {
         $provide.service('prefixes', function() {
-            this.owl = this.rdf = this.delim = this.data = this.mappings = this.catalog = '';
+            this.owl = this.rdf = this.delim = this.data = this.mappings = '';
             this.rdfs = 'rdfs:';
             this.dc = 'dc:';
             this.dcterms = 'dcterms:';
-            this.rdf = 'rdf';
+            this.rdf = 'rdf:';
+            this.ontologyState = 'ontologyState:';
+            this.catalog = 'catalog:';
+            this.skos = 'skos:';
+            this.xsd = 'xsd:';
         });
     });
 }
@@ -374,20 +414,14 @@ function mockSettingsManager() {
 
 function mockOntologyState() {
     module(function($provide) {
-        $provide.service('ontologyStateService', function() {
+        $provide.service('ontologyStateService', function($q) {
             this.states = {};
-            this.ontologyIdToClose = '';
+            this.recordIdToClose = 'recordIdToClose';
             this.state = {
                 ontologyId: '',
                 entityIRI: '',
-                deletedEntities: []
-            };
-            this.ontology = {
-                '@id': 'id',
-                matonto: {
-                    id: 'id',
-                    jsAnnotations: [{}]
-                }
+                deletedEntities: [],
+                type: ''
             };
             this.selected = {
                 '@id': 'id',
@@ -395,13 +429,14 @@ function mockOntologyState() {
                     originalIri: 'iri'
                 }
             };
-            this.annotationSelect = '';
-            this.annotationValue = '';
-            this.annotationType = {'@id': ''};
-            this.key = '';
+            this.annotationSelect = 'select';
+            this.annotationValue = 'value';
+            this.annotationType = {'@id': 'annotationId'};
+            this.key = 'key';
             this.index = 0;
             this.annotationIndex = 0;
             this.listItem = {
+                annotations: [],
                 dataPropertyRange: [],
                 classHierarchy: [],
                 subClasses: [],
@@ -411,7 +446,26 @@ function mockOntologyState() {
                 subDataProperties: [],
                 blankNodes: {},
                 individuals: [],
-                index: {}
+                index: {},
+                recordId: 'recordId',
+                branchId: 'branchId',
+                commitId: 'commitId',
+                ontologyId: 'ontologyId',
+                additions: [],
+                deletions: [],
+                inProgressCommit: {
+                    additions: [],
+                    deletions: []
+                },
+                branches: [],
+                ontology: [{
+                    '@id': 'id',
+                    matonto: {
+                        id: 'id',
+                        jsAnnotations: [{}]
+                    }
+                }],
+                upToDate: true
             };
             this.reset = jasmine.createSpy('reset');
             this.setTreeTab = jasmine.createSpy('setTreeTab');
@@ -436,7 +490,7 @@ function mockOntologyState() {
             this.getNoDomainsOpened = jasmine.createSpy('getNoDomainsOpened').and.returnValue(true);
             this.onEdit = jasmine.createSpy('onEdit');
             this.getUnsavedEntities = jasmine.createSpy('getUnsavedEntities');
-            this.afterSave = jasmine.createSpy('afterSave');
+            this.afterSave = jasmine.createSpy('afterSave').and.returnValue($q.when([]));
             this.setIndividualsOpened = jasmine.createSpy('setIndividualsOpened');
             this.getIndividualsOpened = jasmine.createSpy('getIndividualsOpened').and.returnValue(false);
             this.deleteState = jasmine.createSpy('deleteState');
@@ -448,6 +502,19 @@ function mockOntologyState() {
             this.openAt = jasmine.createSpy('openAt');
             this.goTo = jasmine.createSpy('goTo');
             this.unSelectItem = jasmine.createSpy('unSelectItem');
+            this.clearInProgressCommit = jasmine.createSpy('clearInProgressCommit');
+            this.resetStateTabs = jasmine.createSpy('resetStateTabs');
+            this.addEntityToHierarchy = jasmine.createSpy('addEntityToHierarchy');
+            this.deleteEntityFromParentInHierarchy = jasmine.createSpy('deleteEntityFromParentInHierarchy');
+            this.addState = jasmine.createSpy('addState');
+            this.hasChanges = jasmine.createSpy('hasChanges').and.returnValue(true);
+            this.getActivePage = jasmine.createSpy('getActivePage').and.returnValue({});
+            this.getDataPropertiesOpened = jasmine.createSpy('getDataPropertiesOpened');
+            this.setDataPropertiesOpened = jasmine.createSpy('setDataPropertiesOpened');
+            this.getObjectPropertiesOpened = jasmine.createSpy('getObjectPropertiesOpened');
+            this.setObjectPropertiesOpened = jasmine.createSpy('setObjectPropertiesOpened');
+            this.unsetEntityByIRI = jasmine.createSpy('unsetEntityByIRI');
+            this.getActiveKey = jasmine.createSpy('getActiveKey').and.returnValue('');
         });
     });
 }
@@ -482,6 +549,8 @@ function mockResponseObj() {
 function mockPropertyManager() {
     module(function($provide) {
         $provide.service('propertyManagerService', function($q) {
+            this.defaultAnnotations = [];
+            this.skosAnnotations = [];
             this.getDefaultAnnotations = jasmine.createSpy('getDefaultAnnotations').and.returnValue([]);
             this.remove = jasmine.createSpy('remove');
             this.add = jasmine.createSpy('add');
@@ -673,10 +742,17 @@ function mockUtil() {
         $provide.service('utilService', function() {
             this.getBeautifulIRI = jasmine.createSpy('getBeautifulIRI').and.callFake(_.identity);
             this.getPropertyValue = jasmine.createSpy('getPropertyValue').and.returnValue('');
+            this.setPropertyValue = jasmine.createSpy('setPropertyValue').and.returnValue({});
+            this.getDctermsValue = jasmine.createSpy('getDctermsValue').and.returnValue('');
+            this.setDctermsValue = jasmine.createSpy('setDctermsValue').and.returnValue({});
+            this.mergingArrays = jasmine.createSpy('mergingArrays');
             this.getDctermsValue = jasmine.createSpy('getPropertyValue').and.returnValue('');
             this.getDctermsId = jasmine.createSpy('getDctermsId').and.returnValue('');
             this.parseLinks = jasmine.createSpy('parseLinks').and.returnValue({});
             this.createErrorToast = jasmine.createSpy('createErrorToast');
+            this.createSuccessToast = jasmine.createSpy('createSuccessToast');
+            this.createJson = jasmine.createSpy('createJson').and.returnValue({});
+            this.getIRINamespace = jasmine.createSpy('getIRINamespace').and.returnValue({});
         });
     });
 }

@@ -23,14 +23,14 @@
 <div class="datatype-property-overlay overlay">
     <form name="dvm.propertyForm" class="content clearfix" novalidate autocomplete="off">
         <!-- section header -->
-        <h6>{{dvm.sm.editingProperty ? 'Edit Individual Data Property' : 'Add Individual Data Property'}}</h6>
+        <h6>{{dvm.sm.editingProperty ? 'Edit' : 'Add'}} Individual Data Property</h6>
 
         <!-- data property list -->
         <div class="form-group">
             <label class="control-label">Data Property</label>
             <ui-select ng-model="dvm.sm.propertySelect" ng-disabled="dvm.sm.editingProperty">
                 <ui-select-match placeholder="Select a data property">{{dvm.ro.getItemIri($select.selected)}}</ui-select-match>
-                <ui-select-choices group-by="dvm.getItemNamespace" repeat="property in dvm.sm.listItem.subDataProperties | filter: $select.search | orderBy:'localName'">
+                <ui-select-choices group-by="dvm.util.getItemNamespace" repeat="property in dvm.sm.listItem.subDataProperties | filter: $select.search | orderBy:'localName'">
                     <div ng-bind-html="property.localName | highlight: $select.search | trusted"></div>
                 </ui-select-choices>
             </ui-select>

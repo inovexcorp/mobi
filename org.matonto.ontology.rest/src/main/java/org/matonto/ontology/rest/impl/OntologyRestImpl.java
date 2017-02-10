@@ -136,38 +136,27 @@ public class OntologyRestImpl implements OntologyRest {
         if (fileInputStream == null) {
             throw ErrorUtils.sendError("The file is missing.", Response.Status.BAD_REQUEST);
         }
-        User user = getUserFromContext(context);
-        String ontologyId;
         try {
             Ontology ontology = ontologyManager.createOntology(fileInputStream);
-            ontologyId = ontology.getOntologyId().getOntologyIdentifier().stringValue();
-            RecordConfig.Builder builder = new RecordConfig.Builder(title, ontologyId, Collections.singleton(user));
-            if (description != null) {
-                builder.description(description);
-            }
-            if (keywords != null) {
-                builder.keywords(Arrays.stream(StringUtils.split(keywords, ",")).collect(Collectors.toSet()));
-            }
-            Resource catalogId = catalogManager.getLocalCatalog().getResource();
-            OntologyRecord record = catalogManager.createRecord(builder.build(), ontologyRecordFactory);
-            catalogManager.addRecord(catalogId, record);
-            catalogManager.addMasterBranch(record.getResource());
-            record = catalogManager.getRecord(catalogId, record.getResource(), ontologyRecordFactory).get();
-
-            InProgressCommit inProgressCommit = catalogManager.createInProgressCommit(user, record.getResource());
-            catalogManager.addInProgressCommit(inProgressCommit);
-            catalogManager.addAdditions(ontology.asModel(modelFactory), inProgressCommit.getResource());
-
-            Commit commit = catalogManager.createCommit(inProgressCommit, null, "The initial commit.");
-            catalogManager.addCommitToBranch(commit, record.getMasterBranch().get().getResource());
-
-            catalogManager.removeInProgressCommit(inProgressCommit.getResource());
+            return uploadOntology(context, ontology, title, description, keywords);
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         } finally {
             IOUtils.closeQuietly(fileInputStream);
         }
-        return Response.status(201).entity(ontologyId).build();
+    }
+
+    @Override
+    public Response uploadOntologyJson(ContainerRequestContext context, String title, String description,
+                                       String keywords, String ontologyJson) {
+        throwErrorIfMissingStringParam(title, "The title is missing.");
+        throwErrorIfMissingStringParam(ontologyJson, "The ontologyJson is missing.");
+        try {
+            Ontology ontology = ontologyManager.createOntology(ontologyJson);
+            return uploadOntology(context, ontology, title, description, keywords);
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+        }
     }
 
     @Override
@@ -1118,5 +1107,49 @@ public class OntologyRestImpl implements OntologyRest {
         } catch (JSONException e) {
             throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
         }
+    }
+
+    /**
+     * Uploads the provided Ontology to a data store.
+     *
+     * @param context the context of the request.
+     * @param ontology the Ontology to upload.
+     * @param title the title for the OntologyRecord.
+     * @param description the description for the OntologyRecord.
+     * @param keywords the comma separated list of keywords associated with the OntologyRecord.
+     * @return a Response indicating the success of the upload.
+     */
+    private Response uploadOntology(ContainerRequestContext context, Ontology ontology, String title,
+                                    String description, String keywords) throws MatOntoException {
+        String ontologyId = ontology.getOntologyId().getOntologyIdentifier().stringValue();
+        User user = getUserFromContext(context);
+        RecordConfig.Builder builder = new RecordConfig.Builder(title, ontologyId, Collections.singleton(user));
+        if (description != null) {
+            builder.description(description);
+        }
+        if (keywords != null) {
+            builder.keywords(Arrays.stream(StringUtils.split(keywords, ",")).collect(Collectors.toSet()));
+        }
+        Resource catalogId = catalogManager.getLocalCatalog().getResource();
+        OntologyRecord record = catalogManager.createRecord(builder.build(), ontologyRecordFactory);
+        catalogManager.addRecord(catalogId, record);
+        catalogManager.addMasterBranch(record.getResource());
+        record = catalogManager.getRecord(catalogId, record.getResource(), ontologyRecordFactory).get();
+
+        InProgressCommit inProgressCommit = catalogManager.createInProgressCommit(user, record.getResource());
+        catalogManager.addInProgressCommit(inProgressCommit);
+        catalogManager.addAdditions(ontology.asModel(modelFactory), inProgressCommit.getResource());
+
+        Commit commit = catalogManager.createCommit(inProgressCommit, null, "The initial commit.");
+        Resource masterBranchId = record.getMasterBranch().get().getResource();
+        catalogManager.addCommitToBranch(commit, masterBranchId);
+
+        catalogManager.removeInProgressCommit(inProgressCommit.getResource());
+        JSONObject response = new JSONObject()
+                .element("ontologyId", ontologyId)
+                .element("recordId", record.getResource().stringValue())
+                .element("branchId", masterBranchId.stringValue())
+                .element("commitId", commit.getResource().stringValue());
+        return Response.status(201).entity(response).build();
     }
 }

@@ -869,7 +869,6 @@ public class CatalogRestImpl implements CatalogRest {
     @Override
     public Response getConflicts(String catalogId, String recordId, String branchId, String targetBranchId,
                                  String rdfFormat) {
-
         try {
             Resource sourceHeadIRI = getHeadCommitIRI(catalogId, recordId, branchId);
             Resource targetHeadIRI = getHeadCommitIRI(catalogId, recordId, targetBranchId);
@@ -896,6 +895,8 @@ public class CatalogRestImpl implements CatalogRest {
                 throw ErrorUtils.sendError("User already has an InProgressCommit for Record " + recordId,
                         Response.Status.BAD_REQUEST);
             }
+            Branch branch = catalogManager.getBranch(factory.createIRI(branchId), branchFactories.get(Branch.TYPE))
+                    .orElseThrow(() -> ErrorUtils.sendError("Branch not found", Response.Status.BAD_REQUEST));
             InProgressCommit inProgressCommit = catalogManager.createInProgressCommit(activeUser,
                     factory.createIRI(recordId));
             catalogManager.addInProgressCommit(inProgressCommit);
@@ -909,6 +910,8 @@ public class CatalogRestImpl implements CatalogRest {
                     Stream.of(sourceHead, targetHead).collect(Collectors.toSet()),
                     getMergeMessage(branchId, targetBranchId));
             catalogManager.addCommitToBranch(newCommit, factory.createIRI(targetBranchId));
+            branch.setHead(newCommit);
+            catalogManager.updateBranch(branch);
             catalogManager.removeInProgressCommit(inProgressCommit.getResource());
             return Response.ok(newCommit.getResource().stringValue()).build();
         } catch (MatOntoException e) {
@@ -938,7 +941,8 @@ public class CatalogRestImpl implements CatalogRest {
 
     @Override
     public Response downloadCompiledResource(ContainerRequestContext context, String catalogId, String recordId, 
-                                             String branchId, String commitId, String rdfFormat, boolean apply) {
+                                             String branchId, String commitId, String rdfFormat, boolean apply,
+                                             String fileName) {
         try {
             commitInBranch(catalogId, recordId, branchId, commitId);
             Model resource;
@@ -960,7 +964,7 @@ public class CatalogRestImpl implements CatalogRest {
                 writer.close();
             };
 
-            return Response.ok(stream).header("Content-Disposition", "attachment;filename=" + recordId
+            return Response.ok(stream).header("Content-Disposition", "attachment;filename=" + fileName
                     + "." + getRDFFormatFileExtension(rdfFormat))
                     .header("Content-Type", getRDFFormatMimeType(rdfFormat)).build();
         } catch (MatOntoException e) {
@@ -1477,6 +1481,7 @@ public class CatalogRestImpl implements CatalogRest {
      */
     private JSONObject conflictToJson(Conflict conflict, String rdfFormat) {
         JSONObject object = new JSONObject();
+        object.put("iri", conflict.getIRI().stringValue());
         object.put("original", getModelInFormat(conflict.getOriginal(), rdfFormat));
         object.put("left", getDifferenceJson(conflict.getLeftDifference(), rdfFormat));
         object.put("right", getDifferenceJson(conflict.getRightDifference(), rdfFormat));

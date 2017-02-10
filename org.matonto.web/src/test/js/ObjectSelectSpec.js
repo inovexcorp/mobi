@@ -24,6 +24,8 @@ describe('Object Select directive', function() {
     var $compile,
         scope,
         element,
+        isolatedScope,
+        controller,
         prefixes,
         ontologyStateSvc,
         responseObj;
@@ -31,7 +33,6 @@ describe('Object Select directive', function() {
     beforeEach(function() {
         module('templates');
         module('objectSelect');
-        mockPrefixes();
         injectTrustedFilter();
         injectHighlightFilter();
         injectSplitIRIFilter();
@@ -39,8 +40,11 @@ describe('Object Select directive', function() {
         mockSettingsManager();
         mockOntologyState();
         mockResponseObj();
+        mockPrefixes();
 
-        inject(function(_ontologyManagerService_, _settingsManagerService_, _responseObj_, _ontologyStateService_, _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _settingsManagerService_, _responseObj_, _ontologyStateService_, _prefixes_) {
+            $compile = _$compile_;
+            scope = _$rootScope_;
             ontologyManagerService = _ontologyManagerService_;
             settingsManagerService = _settingsManagerService_;
             responseObj = _responseObj_;
@@ -48,13 +52,6 @@ describe('Object Select directive', function() {
             prefixes = _prefixes_;
         });
 
-        inject(function(_$compile_, _$rootScope_) {
-            $compile = _$compile_;
-            scope = _$rootScope_;
-        });
-    });
-
-    beforeEach(function() {
         scope.displayText = 'test';
         scope.selectList = [];
         scope.mutedText = 'test';
@@ -69,8 +66,6 @@ describe('Object Select directive', function() {
     });
 
     describe('in isolated scope', function() {
-        var isolatedScope;
-
         beforeEach(function() {
             isolatedScope = element.isolateScope();
         });
@@ -109,9 +104,7 @@ describe('Object Select directive', function() {
             expect(scope.onChange).toHaveBeenCalled();
         });
     });
-    describe('controller bound variables', function() {
-        var controller;
-
+    describe('controller bound variable', function() {
         beforeEach(function() {
             controller = element.controller('objectSelect');
         });
@@ -122,52 +115,40 @@ describe('Object Select directive', function() {
         });
     });
     describe('replaces the element with the correct html', function() {
-        it('for a DIV', function() {
+        it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
-        });
-        it('based on overlay form group', function() {
+            expect(element.hasClass('object-select')).toBe(true);
             expect(element.hasClass('form-group')).toBe(true);
         });
-        it('based on custom label tags', function() {
-            var labels = element.querySelectorAll('custom-label');
-            expect(labels.length).toBe(1);
+        it('with custom-labels', function() {
+            expect(element.querySelectorAll('custom-label').length).toBe(1);
         });
-        describe('based on ui select tags', function() {
-            it('if it is a multi select', function() {
-                scope.multiSelect = true;
-                scope.$digest();
-                var selects = element.querySelectorAll('ui-select');
-                expect(selects.length).toBe(1);
-                expect(angular.element(selects[0]).attr('multiple')).toBeDefined();
-            });
-            it('if it is not a multi select', function() {
-                scope.multiSelect = false;
-                scope.$digest();
-                var selects = element.querySelectorAll('ui-select');
-                expect(selects.length).toBe(1);
-                expect(angular.element(selects[0]).attr('multiple')).toBeUndefined();
-            });
+        it('depending on whether it is a multi select', function() {
+            var selects = element.querySelectorAll('ui-select');
+            expect(selects.length).toBe(1);
+            expect(angular.element(selects[0]).attr('multiple')).toBeUndefined();
+
+            scope.multiSelect = true;
+            scope.$digest();
+            selects = element.querySelectorAll('ui-select');
+            expect(selects.length).toBe(1);
+            expect(angular.element(selects[0]).attr('multiple')).toBeDefined();
         });
     });
     describe('controller methods', function() {
-        var controller;
-
         beforeEach(function() {
-            ontologyStateSvc.state = {ontologyId: 'ontologyId'};
+            ontologyStateSvc.listItem.ontologyId = 'ontologyId';
             controller = element.controller('objectSelect');
         });
         describe('getItemOntologyIri', function() {
             it('should return ontologyId if nothing is passed in', function() {
-                var result = controller.getItemOntologyIri();
-                expect(result).toEqual('ontologyId');
+                expect(controller.getItemOntologyIri()).toEqual('ontologyId');
             });
             it('should return item.ontologyIri if provided', function() {
-                var result = controller.getItemOntologyIri({ontologyId: 'new'});
-                expect(result).toEqual('new');
+                expect(controller.getItemOntologyIri({ontologyId: 'new'})).toEqual('new');
             });
             it('should return ontologyId if object does not have ontologyIri property.', function() {
-                var result = controller.getItemOntologyIri({prop: 'new'});
-                expect(result).toEqual('ontologyId');
+                expect(controller.getItemOntologyIri({prop: 'new'})).toEqual('ontologyId');
             });
         });
         describe('getItemIri', function() {
@@ -176,8 +157,7 @@ describe('Object Select directive', function() {
                 expect(responseObj.getItemIri).toHaveBeenCalled();
             });
             it('should return item["@id"] if it has that property', function() {
-                var result = controller.getItemIri({'@id': 'new'});
-                expect(result).toEqual('new');
+                expect(controller.getItemIri({'@id': 'new'})).toEqual('new');
             });
             it('should call responseObj.getItemIri if object does not have @id property.', function() {
                 var result = controller.getItemIri({prop: 'new'});
@@ -186,11 +166,11 @@ describe('Object Select directive', function() {
         });
         describe('getTooltipDisplay', function() {
             beforeEach(function() {
-                ontologyManagerService.getEntityById.and.returnValue({});
+                ontologyManagerService.getEntityByRecordId.and.returnValue({});
                 spyOn(controller, 'getItemIri').and.returnValue('test');
             });
             it('should return @id when tooltipDisplay is empty', function() {
-                ontologyManagerService.getEntityById.and.returnValue({'@id': 'id'});
+                ontologyManagerService.getEntityByRecordId.and.returnValue({'@id': 'id'});
                 var result = controller.getTooltipDisplay();
                 expect(result).toBe('id');
             });

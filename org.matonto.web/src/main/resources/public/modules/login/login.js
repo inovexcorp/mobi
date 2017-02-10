@@ -35,11 +35,7 @@
 
         vm.login = function() {
             loginManagerService.login(vm.form.username, vm.form.password)
-                .then(() => {
-                    vm.errorMessage = '';
-                }, errorMessage => {
-                    vm.errorMessage = errorMessage;
-                });
+                .then(() => vm.errorMessage = '', errorMessage => vm.errorMessage = errorMessage);
         }
     }
 })();

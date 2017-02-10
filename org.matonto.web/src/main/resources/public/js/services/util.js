@@ -81,6 +81,10 @@
                 return _.get(entity, "['" + propertyIRI + "'][0]['@value']", '');
             }
 
+            self.setPropertyValue = function(entity, propertyIRI, value) {
+                _.set(entity, "['" + propertyIRI + "'][0]['@value']", value);
+            }
+
             /**
              * @ngdoc method
              * @name getPropertyValue
@@ -96,6 +100,20 @@
              */
             self.getDctermsValue = function(entity, property) {
                 return self.getPropertyValue(entity, prefixes.dcterms + property);
+            }
+
+            self.setDctermsValue = function(entity, property, value) {
+                self.setPropertyValue(entity, prefixes.dcterms + property, value);
+            }
+
+            self.getItemNamespace = function(item) {
+                return _.get(item, 'namespace', 'No namespace');
+            }
+
+            self.mergingArrays = function(objValue, srcValue) {
+                if (_.isArray(objValue)) {
+                    return _.unionWith(objValue, srcValue, _.isEqual);
+                }
             }
 
             /**
@@ -127,7 +145,7 @@
              * @param {string} header A "link" header string from an HTTP response
              * @return {Object} An object with keys of the rel labels and values of URLs
              */
-            self.parseLinks = function(header){
+            self.parseLinks = function(header) {
                 // Split parts by comma
                 var parts = header.split(',');
                 var links = {};
@@ -155,6 +173,19 @@
              */
             self.createErrorToast = function(text) {
                 toastr.error(text, 'Error', {timeOut: 0});
+            }
+            self.createSuccessToast = function(text) {
+                toastr.success(text, 'Success', {timeOut: 0});
+            }
+            self.getIRINamespace = function(item) {
+                var split = $filter('splitIRI')(item);
+                return split.begin + split.then;
+            }
+            self.createJson = function(id, property, valueObj) {
+                return {
+                    '@id': id,
+                    [property]: [valueObj]
+                }
             }
         }
 })();

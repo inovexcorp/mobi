@@ -27,9 +27,9 @@
         .module('ontologyOverlays', [])
         .directive('ontologyOverlays', ontologyOverlays);
 
-        ontologyOverlays.$inject = ['ontologyStateService', 'ontologyManagerService', 'propertyManagerService'];
+        ontologyOverlays.$inject = ['ontologyStateService', 'ontologyManagerService'];
 
-        function ontologyOverlays(ontologyStateService, ontologyManagerService, propertyManagerService) {
+        function ontologyOverlays(ontologyStateService, ontologyManagerService) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/ontology-editor/directives/ontologyOverlays/ontologyOverlays.html',
@@ -40,28 +40,17 @@
 
                     dvm.sm = ontologyStateService;
                     dvm.om = ontologyManagerService;
-                    dvm.pm = propertyManagerService;
 
                     function onError(errorMessage) {
                         dvm.error = errorMessage;
                     }
 
                     dvm.save = function() {
-                        dvm.om.saveChanges(dvm.sm.state.ontologyId, dvm.sm.getUnsavedEntities(dvm.sm.ontology),
-                            dvm.sm.getCreatedEntities(dvm.sm.ontology), dvm.sm.state.deletedEntities)
-                            .then(newId => {
-                                dvm.sm.afterSave(newId);
-                                dvm.sm.showSaveOverlay = false;
-                            }, onError);
-                    }
-
-                    dvm.removeIndividualProperty = function() {
-                        _.pullAt(dvm.sm.selected[dvm.sm.key], dvm.sm.index);
-                        if (!dvm.sm.selected[dvm.sm.key].length) {
-                            _.unset(dvm.sm.selected, dvm.sm.key);
-                        }
-                        dvm.sm.setUnsaved(dvm.sm.state.ontology, dvm.sm.state.entityIRI, true);
-                        dvm.sm.showRemoveIndividualPropertyOverlay = false;
+                        dvm.om.saveChanges(dvm.sm.listItem.recordId, {additions: dvm.sm.listItem.additions,
+                            deletions: dvm.sm.listItem.deletions}).then(() => {
+                                dvm.sm.afterSave()
+                                    .then(() => dvm.sm.showSaveOverlay = false, onError);
+                            }, onError)
                     }
                 }
             }

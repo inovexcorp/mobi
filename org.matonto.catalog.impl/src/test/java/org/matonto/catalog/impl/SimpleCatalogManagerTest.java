@@ -2077,7 +2077,7 @@ public class SimpleCatalogManagerTest {
         Resource rightId = vf.createIRI("http://matonto.org/test/commits#conflict2-2");
 
         Set<Conflict> result = manager.getConflicts(leftId, rightId);
-        assertEquals(result.size(), 1);
+        assertEquals(1, result.size());
 
         String subject = "http://matonto.org/test/ontology";
         String predicate = DC_TITLE;
@@ -2142,6 +2142,15 @@ public class SimpleCatalogManagerTest {
                         assertEquals(predicate, statement.getPredicate().stringValue());
                     }));
         });
+    }
+
+    @Test
+    public void testGetConflictsWithOnlyOneCommit() throws Exception {
+        Resource leftId = vf.createIRI("http://matonto.org/test/commits#conflict1-4");
+        Resource rightId = vf.createIRI("http://matonto.org/test/commits#conflict0-4");
+
+        Set<Conflict> result = manager.getConflicts(leftId, rightId);
+        assertEquals(0, result.size());
     }
 
     @Test

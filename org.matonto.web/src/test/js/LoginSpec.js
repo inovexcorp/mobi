@@ -21,11 +21,7 @@
  * #L%
  */
 describe('Login controller', function() {
-    var $controller,
-        scope,
-        loginManagerSvc,
-        $q,
-        controller;
+    var $controller, scope, loginManagerSvc, $q, controller;
 
     beforeEach(function() {
         module('login');

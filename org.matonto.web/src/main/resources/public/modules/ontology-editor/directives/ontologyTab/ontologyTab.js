@@ -39,6 +39,7 @@
                 controller: function() {
                     var dvm = this;
                     dvm.sm = ontologyStateService;
+                    dvm.savedChanges = '<i class="fa fa-exclamation-triangle"></i>Saved Changes';
                 }
             }
         }
