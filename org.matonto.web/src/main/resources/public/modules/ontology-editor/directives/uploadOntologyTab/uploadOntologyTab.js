@@ -27,9 +27,9 @@
         .module('uploadOntologyTab', [])
         .directive('uploadOntologyTab', uploadOntologyTab);
 
-        uploadOntologyTab.$inject = ['$filter', 'REGEX', 'ontologyManagerService', 'ontologyStateService', 'prefixes'];
+        uploadOntologyTab.$inject = ['REGEX', 'ontologyManagerService', 'ontologyStateService'];
 
-        function uploadOntologyTab($filter, REGEX, ontologyManagerService, ontologyStateService, prefixes) {
+        function uploadOntologyTab(REGEX, ontologyManagerService, ontologyStateService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -49,9 +49,7 @@
                                 dvm.sm.addState(recordId, dvm.om.getOntologyIRI(listItem.ontology), dvm.type);
                                 dvm.sm.setState(recordId);
                                 dvm.sm.showUploadTab = false;
-                            }, response => {
-                                dvm.error = response.statusText;
-                            });
+                            }, response => dvm.error = response.statusText);
                     }
                 }
             }

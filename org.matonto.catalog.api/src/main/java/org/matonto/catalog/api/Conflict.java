@@ -23,6 +23,7 @@ package org.matonto.catalog.api;
  * #L%
  */
 
+import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 
 /**
@@ -35,7 +36,7 @@ import org.matonto.rdf.api.Model;
  */
 public interface Conflict {
 
-    String getIRI();
+    IRI getIRI();
 
     Model getOriginal();
 

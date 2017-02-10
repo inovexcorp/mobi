@@ -55,7 +55,7 @@
     "angular-uuid": "^0.0.2",
     "bootstrap": "^3.3.6",
     "chroma-js": "^1.2.1",
-    "codemirror": "5.14.2",
+    "codemirror": "^5.14.2",
     "font-awesome": "^4.5.0",
     "handsontable": "^0.27.0",
     "lodash": "^4.6.0",

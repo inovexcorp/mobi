@@ -27,9 +27,9 @@
         .module('treeItem', [])
         .directive('treeItem', treeItem);
 
-        treeItem.$inject = ['settingsManagerService', 'ontologyManagerService', 'ontologyStateService', 'prefixes'];
+        treeItem.$inject = ['settingsManagerService', 'ontologyManagerService', 'ontologyStateService'];
 
-        function treeItem(settingsManagerService, ontologyManagerService, ontologyStateService, prefixes) {
+        function treeItem(settingsManagerService, ontologyManagerService, ontologyStateService) {
             return {
                 restrict: 'E',
                 replace: true,

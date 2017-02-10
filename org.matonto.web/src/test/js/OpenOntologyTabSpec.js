@@ -21,16 +21,8 @@
  * #L%
  */
 describe('Open Ontology Tab directive', function() {
-    var $compile,
-        scope,
-        $q,
-        element,
-        controller,
-        ontologyStateSvc,
-        ontologyManagerSvc,
-        catalogManagerSvc,
-        stateManagerSvc,
-        prefixes;
+    var $compile, scope, $q, element, controller, ontologyStateSvc, ontologyManagerSvc, catalogManagerSvc,
+        stateManagerSvc, prefixes, util;
 
     beforeEach(function() {
         module('templates');
@@ -42,8 +34,9 @@ describe('Open Ontology Tab directive', function() {
         mockOntologyState();
         mockPrefixes();
         mockStateManager();
+        mockUtil();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _ontologyManagerService_, _catalogManagerService_, _stateManagerService_, _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _ontologyManagerService_, _catalogManagerService_, _stateManagerService_, _prefixes_, _utilService_) {
             $q = _$q_;
             $compile = _$compile_;
             scope = _$rootScope_;
@@ -52,12 +45,14 @@ describe('Open Ontology Tab directive', function() {
             catalogManagerSvc = _catalogManagerService_;
             stateManagerSvc = _stateManagerService_;
             prefixes = _prefixes_;
+            util = _utilService_;
         });
 
         this.records = [{'@id': 'recordA'}, {'@id': 'recordB'}];
         this.records[0][prefixes.dcterms + 'identifier'] = [{'@value': 'A'}];
         this.records[1][prefixes.dcterms + 'identifier'] = [{'@value': 'B'}];
         ontologyManagerSvc.getAllOntologyRecords.and.returnValue($q.when(this.records));
+        util.getDctermsValue.and.returnValue('A');
         element = $compile(angular.element('<open-ontology-tab></open-ontology-tab>'))(scope);
         scope.$digest();
         controller = element.controller('openOntologyTab');
@@ -71,7 +66,7 @@ describe('Open Ontology Tab directive', function() {
             expect(element.querySelectorAll('.list').length).toBe(1);
             expect(element.querySelectorAll('.open-ontology-content').length).toBe(1);
             expect(element.querySelectorAll('.ontologies').length).toBe(1);
-            expect(element.querySelectorAll('.paging-details').length).toBe(1);
+            expect(element.querySelectorAll('.paging-container').length).toBe(1);
         });
         _.forEach(['block', 'block-content', 'form', 'block-footer', 'pagination'], function(item) {
             it('with a ' + item, function() {
@@ -167,16 +162,8 @@ describe('Open Ontology Tab directive', function() {
             controller.getPage('prev');
             expect(controller.begin).toBe(begin - controller.limit);
         });
-        it('should get a property from a record', function() {
-            var record = {};
-            record[prefixes.dcterms + 'test1'] = [{'@value': 'A'}];
-            record[prefixes.dcterms + 'test2'] = [];
-            expect(controller.getRecordValue(record, 'test1')).toBe('A');
-            expect(controller.getRecordValue(record, 'test2')).toBeUndefined();
-            expect(controller.getRecordValue(record, 'test3')).toBeUndefined();
-        });
         it('should show the delete confirmation overlay', function() {
-            spyOn(controller, 'getRecordValue').and.returnValue('title');
+            util.getDctermsValue.and.returnValue('title');
             controller.showDeleteConfirmationOverlay({'@id': 'record'});
             expect(controller.recordId).toBe('record');
             expect(controller.recordTitle).toBe('title');
@@ -211,11 +198,6 @@ describe('Open Ontology Tab directive', function() {
                 expect(controller.errorMessage).toBeUndefined();
             });
         });
-        it('should download an ontology', function() {
-            controller.download('id');
-            expect(ontologyStateSvc.downloadId).toBe('id');
-            expect(ontologyStateSvc.showDownloadOverlay).toBe(true);
-        });
         it('should get the list of unopened ontology records', function() {
             ontologyManagerSvc.list = [{'recordId': 'recordA'}];
             controller.getAllOntologyRecords('sort');
@@ -225,7 +207,7 @@ describe('Open Ontology Tab directive', function() {
         });
     });
     it('should filter the ontology list when the filter text changes', function() {
-        spyOn(controller, 'getRecordValue').and.callFake(function(obj, filter) {
+        util.getDctermsValue.and.callFake(function(obj, filter) {
             return obj['@id'] === 'recordA' ? 'test' : '';
         });
         controller.filterText = 'test';

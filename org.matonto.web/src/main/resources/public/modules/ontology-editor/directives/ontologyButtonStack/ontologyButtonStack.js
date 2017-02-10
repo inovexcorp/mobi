@@ -27,11 +27,9 @@
         .module('ontologyButtonStack', [])
         .directive('ontologyButtonStack', ontologyButtonStack);
 
-        ontologyButtonStack.$inject = ['$q', '$filter', '$http', 'ontologyStateService', 'ontologyManagerService',
-            'catalogManagerService', 'utilService', 'updateRefsService'];
+        ontologyButtonStack.$inject = ['ontologyStateService', 'ontologyManagerService', 'catalogManagerService'];
 
-        function ontologyButtonStack($q, $filter, $http, ontologyStateService, ontologyManagerService,
-            catalogManagerService, utilService, updateRefsService) {
+        function ontologyButtonStack(ontologyStateService, ontologyManagerService, catalogManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -42,8 +40,6 @@
                     var dvm = this;
                     var om = ontologyManagerService;
                     var cm = catalogManagerService;
-                    var util = utilService;
-                    var update = updateRefsService;
                     var catalogId = _.get(cm.localCatalog, '@id', '');
 
                     dvm.os = ontologyStateService;

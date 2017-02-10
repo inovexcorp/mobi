@@ -139,6 +139,7 @@ public interface CatalogRest {
      */
     @POST
     @Path("{catalogId}/records")
+    @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
     @ApiOperation("Creates a new Record in the Catalog.")
@@ -234,6 +235,7 @@ public interface CatalogRest {
      */
     @POST
     @Path("{catalogId}/records/{recordId}/distributions")
+    @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
     @ApiOperation("Creates a new Distribution for the provided UnversionedRecord.")
@@ -354,6 +356,7 @@ public interface CatalogRest {
      */
     @POST
     @Path("{catalogId}/records/{recordId}/versions")
+    @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
     @ApiOperation("Creates a Version for the identified VersionedRecord.")
@@ -498,6 +501,7 @@ public interface CatalogRest {
      */
     @POST
     @Path("{catalogId}/records/{recordId}/versions/{versionId}/distributions")
+    @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
     @ApiOperation("Creates a Distribution for the identified Version.")
@@ -654,6 +658,7 @@ public interface CatalogRest {
      */
     @POST
     @Path("{catalogId}/records/{recordId}/branches")
+    @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
     @ApiOperation("Creates a branch for a specific VersionedRDFRecord.")
@@ -784,7 +789,7 @@ public interface CatalogRest {
      */
     @POST
     @Path("{catalogId}/records/{recordId}/branches/{branchId}/commits")
-    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.TEXT_PLAIN)
     @RolesAllowed("user")
     @ApiOperation("Creates a Commit for a specific Branch and sets it to be the new HEAD Commit.")
     Response createBranchCommit(@Context ContainerRequestContext context,
@@ -888,6 +893,7 @@ public interface CatalogRest {
      */
     @POST
     @Path("{catalogId}/records/{recordId}/branches/{branchId}/conflicts/resolution")
+    @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
     @ApiOperation("Merges the two commits identified by the provided IDs.")
@@ -946,6 +952,7 @@ public interface CatalogRest {
      * @param rdfFormat The desired RDF return format. NOTE: Optional param - defaults to "jsonld".
      * @param apply A boolean value identifying whether the InProgressCommit associated with the identified Record and
      *              User making the request should be applied to the result.
+     * @param fileName The desired name of the generated file.
      * @return A Response with the compiled Resource for the entity at the specific Commit to download.
      */
     @GET
@@ -959,7 +966,8 @@ public interface CatalogRest {
                                       @PathParam("branchId") String branchId,
                                       @PathParam("commitId") String commitId,
                                       @DefaultValue("jsonld") @QueryParam("format") String rdfFormat,
-                                      @DefaultValue("false") @QueryParam("applyInProgressCommit") boolean apply);
+                                      @DefaultValue("false") @QueryParam("applyInProgressCommit") boolean apply,
+                                      @DefaultValue("resource") @QueryParam("fileName") String fileName);
 
     /**
      * Creates a new InProgressCommit in the repository for the User making this request. Returns a Response indicating

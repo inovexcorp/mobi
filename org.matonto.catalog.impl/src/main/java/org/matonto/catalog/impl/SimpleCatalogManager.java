@@ -1145,7 +1145,7 @@ public class SimpleCatalogManager implements CatalogManager {
                 .build();
 
         return new SimpleConflict.Builder(mf.createModel(original).filter(subject, predicate, null),
-                subject.stringValue())
+                vf.createIRI(subject.stringValue()))
                 .leftDifference(leftDifference)
                 .rightDifference(rightDifference)
                 .build();

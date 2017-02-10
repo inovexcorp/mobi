@@ -77,8 +77,17 @@
             }
         }
 
-        .paging-details {
+        .paging-container {
             padding: 0 15px;
+
+            .paging-details {
+                float: left;
+
+                p {
+                    line-height: 34px;
+                    margin: 0;
+                }
+            }
 
             .page-count {
                 float: left;

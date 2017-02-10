@@ -47,10 +47,8 @@
                     dvm.util = utilService;
 
                     function createJson(value) {
-                        return {
-                            '@id': dvm.sm.selected['@id'],
-                            [dvm.ro.getItemIri(dvm.sm.annotationSelect)]: [{'@value': value}]
-                        }
+                        return dvm.util.createJson(dvm.sm.selected['@id'], dvm.ro.getItemIri(dvm.sm.annotationSelect),
+                            {'@value': value});
                     }
 
                     dvm.addAnnotation = function() {

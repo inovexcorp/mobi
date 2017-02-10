@@ -50,8 +50,7 @@
                         if (dvm.os.listItem.upToDate) {
                             createCommit(dvm.os.listItem.branchId);
                         } else {
-                            var branch = _.find(dvm.os.listItem.branches, branch =>
-                                _.get(branch, '@id') === dvm.os.listItem.branchId);
+                            var branch = _.find(dvm.os.listItem.branches, {'@id': dvm.os.listItem.branchId});
                             var branchConfig = {title: 'WIP:' +  util.getDctermsValue(branch, 'title')};
                             var description = util.getDctermsValue(branch, 'description');
                             if (description) {
@@ -74,8 +73,8 @@
                     }
 
                     function createCommit(branchId) {
-                        cm.createBranchCommit(branchId, dvm.os.listItem.recordId, catalogId,
-                            dvm.comment).then(commitId =>
+                        cm.createBranchCommit(branchId, dvm.os.listItem.recordId, catalogId, dvm.comment)
+                            .then(commitId =>
                                 sm.updateOntologyState(dvm.os.listItem.recordId, branchId, commitId)
                                     .then(() => {
                                         dvm.os.listItem.commitId = commitId;

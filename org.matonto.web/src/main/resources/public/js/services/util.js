@@ -181,5 +181,15 @@
             self.createSuccessToast = function(text) {
                 toastr.success(text, 'Success', {timeOut: 0});
             }
+            self.getIRINamespace = function(item) {
+                var split = $filter('splitIRI')(item);
+                return split.begin + split.then;
+            }
+            self.createJson = function(id, property, valueObj) {
+                return {
+                    '@id': id,
+                    [property]: [valueObj]
+                }
+            }
         }
 })();

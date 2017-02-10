@@ -119,12 +119,6 @@ describe('Relationship Overlay directive', function() {
         beforeEach(function() {
             controller = element.controller('relationshipOverlay');
         });
-        it('should get the namespace of a IRI', function() {
-            var split = {begin: 'begin', then: 'then', end: 'end'};
-            splitIRIFilter.and.returnValue(split);
-            expect(controller.getIRINamespace('iri')).toBe(split.begin + split.then);
-            expect(splitIRIFilter).toHaveBeenCalledWith('iri');
-        });
         it('should add a relationship', function() {
             controller.relationship = {};
             controller.values = [{}];

@@ -20,44 +20,41 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Serialization Select directive', function() {
+describe('Selected Details directive', function() {
     var $compile,
         scope,
-        element;
+        element,
+        ontologyStateSvc;
 
     beforeEach(function() {
         module('templates');
-        module('serializationSelect');
+        module('selectedDetails');
+        mockOntologyManager();
+        mockOntologyState();
 
-        inject(function(_$compile_, _$rootScope_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            ontologyStateSvc = _ontologyStateService_;
         });
 
-        scope.bindModel = '';
-        element = $compile(angular.element('<serialization-select ng-model="bindModel"></serialization-select>'))(scope);
+        element = $compile(angular.element('<selected-details></selected-details>'))(scope);
         scope.$digest();
     });
 
-    describe('in isolated scope', function() {
-        it('bindModel should be two way bound', function() {
-            var isolatedScope = element.isolateScope();
-            isolatedScope.bindModel = 'turtle';
-            scope.$digest();
-            expect(scope.bindModel).toEqual('turtle');
-        });
-    });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('serialization-select')).toBe(true);
-            expect(element.hasClass('form-group')).toBe(true);
+            expect(element.hasClass('selected-details')).toBe(true);
         });
-        it('with a select', function() {
-            expect(element.find('select').length).toBe(1);
-        });
-        it('with options', function() {
-            expect(element.find('option').length).toBe(4);
+        it('depending on whether something is selected', function() {
+            expect(element.find('div').length).toBe(1);
+            expect(element.find('static-iri').length).toBe(1);
+
+            ontologyStateSvc.selected = undefined;
+            scope.$digest();
+            expect(element.find('div').length).toBe(0);
+            expect(element.find('static-iri').length).toBe(0);
         });
     });
 });

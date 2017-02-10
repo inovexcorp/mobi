@@ -121,7 +121,6 @@ describe('Create Class Overlay directive', function() {
             expect(controller.clazz['@id']).toBe('begin' + 'then' + 'end');
         });
         it('create calls the correct manager functions', function() {
-            ontologyManagerSvc.getListItemById.and.returnValue({subClasses: [], classHierarchy: []});
             controller.clazz = {'@id': 'class-iri'};
             controller.clazz[prefixes.dcterms + 'title'] = [{'@value': 'label'}];
             controller.clazz[prefixes.dcterms + 'description'] = [{'@value': 'description'}];
@@ -129,7 +128,6 @@ describe('Create Class Overlay directive', function() {
             expect(_.get(controller.clazz, 'matonto.originalIRI')).toEqual(controller.clazz['@id']);
             expect(ontologyManagerSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontology,
                 controller.clazz);
-            expect(ontologyManagerSvc.getListItemById).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId);
             expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                 controller.clazz);
             expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(controller.clazz['@id']);

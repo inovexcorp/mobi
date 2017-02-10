@@ -26,7 +26,11 @@ describe('Ontology Download Overlay directive', function() {
         element,
         controller,
         ontologyManagerSvc,
-        ontologyStateSvc;
+        ontologyStateSvc,
+        $q,
+        catalogManagerSvc;
+    var catalogId = 'catalogId';
+    var error = 'error';
 
     beforeEach(function() {
         module('templates');
@@ -35,13 +39,18 @@ describe('Ontology Download Overlay directive', function() {
         injectSplitIRIFilter();
         mockOntologyState();
         mockOntologyManager();
+        mockCatalogManager();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_, _$q_, _catalogManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyManagerSvc = _ontologyManagerService_;
             ontologyStateSvc = _ontologyStateService_;
+            $q = _$q_;
+            catalogManagerSvc = _catalogManagerService_;
         });
+
+        catalogManagerSvc.localCatalog = {'@id': catalogId};
 
         element = $compile(angular.element('<ontology-download-overlay></ontology-download-overlay>'))(scope);
         scope.$digest();
@@ -85,12 +94,75 @@ describe('Ontology Download Overlay directive', function() {
         beforeEach(function() {
             controller = element.controller('ontologyDownloadOverlay');
         });
-        it('download calls the correct manager function', function() {
-            controller.serialization = 'serialization';
-            controller.fileName = 'fileName';
-            controller.download();
-            expect(ontologyManagerSvc.downloadOntologyFile).toHaveBeenCalledWith(ontologyStateSvc.downloadId, controller.serialization, controller.fileName);
-            expect(ontologyStateSvc.showDownloadOverlay).toBe(false);
+        describe('download calls the correct manager function', function() {
+            var getDeferred;
+            beforeEach(function() {
+                getDeferred = $q.defer();
+                controller.serialization = 'serialization';
+                controller.fileName = 'fileName';
+                ontologyStateSvc.showDownloadOverlay = true;
+                catalogManagerSvc.getInProgressCommit.and.returnValue(getDeferred.promise);
+            });
+            describe('when getInProgressCommit resolves', function() {
+                var downloadDeferred;
+                beforeEach(function() {
+                    getDeferred.resolve();
+                    downloadDeferred = $q.defer();
+                    catalogManagerSvc.downloadResource.and.returnValue(downloadDeferred.promise);
+                });
+                it('and downloadResource resolves', function() {
+                    downloadDeferred.resolve();
+                    controller.download();
+                    scope.$apply();
+                    expect(catalogManagerSvc.getInProgressCommit).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, catalogId);
+                    expect(catalogManagerSvc.downloadResource).toHaveBeenCalledWith(ontologyStateSvc.listItem.commitId, ontologyStateSvc.listItem.branchId, ontologyStateSvc.listItem.recordId, catalogId, true, controller.serialization, controller.fileName);
+                    expect(ontologyStateSvc.showDownloadOverlay).toBe(false);
+                });
+                it('and downloadResource rejects', function() {
+                    downloadDeferred.reject(error);
+                    controller.download();
+                    scope.$apply();
+                    expect(catalogManagerSvc.getInProgressCommit).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, catalogId);
+                    expect(catalogManagerSvc.downloadResource).toHaveBeenCalledWith(ontologyStateSvc.listItem.commitId, ontologyStateSvc.listItem.branchId, ontologyStateSvc.listItem.recordId, catalogId, true, controller.serialization, controller.fileName);
+                    expect(ontologyStateSvc.showDownloadOverlay).toBe(true);
+                    expect(controller.error).toEqual(error);
+                });
+            });
+            describe('when getInProgressCommit rejects', function() {
+                describe('with message "User has no InProgressCommit"', function() {
+                    var downloadDeferred;
+                    beforeEach(function() {
+                        getDeferred.reject('User has no InProgressCommit');
+                        downloadDeferred = $q.defer();
+                        catalogManagerSvc.downloadResource.and.returnValue(downloadDeferred.promise);
+                    });
+                    it('and downloadResource resolves', function() {
+                        downloadDeferred.resolve();
+                        controller.download();
+                        scope.$apply();
+                        expect(catalogManagerSvc.getInProgressCommit).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, catalogId);
+                        expect(catalogManagerSvc.downloadResource).toHaveBeenCalledWith(ontologyStateSvc.listItem.commitId, ontologyStateSvc.listItem.branchId, ontologyStateSvc.listItem.recordId, catalogId, false, controller.serialization, controller.fileName);
+                        expect(ontologyStateSvc.showDownloadOverlay).toBe(false);
+                    });
+                    it('and downloadResource rejects', function() {
+                        downloadDeferred.reject(error);
+                        controller.download();
+                        scope.$apply();
+                        expect(catalogManagerSvc.getInProgressCommit).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, catalogId);
+                        expect(catalogManagerSvc.downloadResource).toHaveBeenCalledWith(ontologyStateSvc.listItem.commitId, ontologyStateSvc.listItem.branchId, ontologyStateSvc.listItem.recordId, catalogId, false, controller.serialization, controller.fileName);
+                        expect(ontologyStateSvc.showDownloadOverlay).toBe(true);
+                        expect(controller.error).toEqual(error);
+                    });
+                });
+                it('with other message', function() {
+                    getDeferred.reject(error);
+                    controller.download();
+                    scope.$apply();
+                    expect(catalogManagerSvc.getInProgressCommit).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, catalogId);
+                    expect(ontologyStateSvc.showDownloadOverlay).toBe(true);
+                    expect(controller.error).toEqual(error);
+                });
+            });
         });
     });
 });

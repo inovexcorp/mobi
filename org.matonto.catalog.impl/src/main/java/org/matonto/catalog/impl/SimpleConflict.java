@@ -25,16 +25,17 @@ package org.matonto.catalog.impl;
 
 import org.matonto.catalog.api.Conflict;
 import org.matonto.catalog.api.Difference;
+import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 
 public class SimpleConflict implements Conflict {
-    private String iri;
+    private IRI iri;
     private Model original;
     private Difference left;
     private Difference right;
 
     @Override
-    public String getIRI() {
+    public IRI getIRI() {
         return iri;
     }
 
@@ -54,7 +55,7 @@ public class SimpleConflict implements Conflict {
     }
 
     public static class Builder {
-        private final String iri;
+        private final IRI iri;
         private final Model original;
         private Difference left;
         private Difference right;
@@ -65,9 +66,9 @@ public class SimpleConflict implements Conflict {
          * down into additions and deletions.
          *
          * @param original The Model identifying the original state for this conflict.
-         * @param iri The String identifying the entity for this conflict.
+         * @param iri The IRI identifying the entity for this conflict.
          */
-        public Builder(Model original, String iri) {
+        public Builder(Model original, IRI iri) {
             this.original = original;
             this.iri = iri;
         }

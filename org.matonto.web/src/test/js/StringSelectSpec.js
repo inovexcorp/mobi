@@ -23,13 +23,13 @@
 describe('String Select directive', function() {
     var $compile,
         scope,
-        element,
         $filter,
+        element,
         controller,
+        isolatedScope,
         prefixes,
-        item,
         splitIRIFilter,
-        isolatedScope;
+        item;
 
     beforeEach(function() {
         module('templates');
@@ -48,15 +48,12 @@ describe('String Select directive', function() {
             prefixes = _prefixes_;
             splitIRIFilter = _splitIRIFilter_;
         });
-    });
 
-    beforeEach(function() {
         scope.bindModel = [];
         scope.onChange = jasmine.createSpy('onChange');
         scope.displayText = '';
         scope.selectList = [];
         scope.mutedText = '';
-
         element = $compile(angular.element('<string-select ng-model="bindModel" on-change="onChange" display-text="displayText" select-list="selectList" muted-text="mutedText"></string-select>'))(scope);
         scope.$digest();
     });
@@ -81,7 +78,7 @@ describe('String Select directive', function() {
             expect(scope.selectList).toEqual([]);
         });
     });
-    describe('controller bound variables', function() {
+    describe('controller bound variable', function() {
         it('bindModel should be two way bound', function() {
             var controller = element.controller('stringSelect');
             controller.bindModel = ['new value'];
@@ -90,19 +87,16 @@ describe('String Select directive', function() {
         });
     });
     describe('replaces the element with the correct html', function() {
-        it('for a DIV', function() {
+        it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
-        });
-        it('has form-group class', function() {
+            expect(element.hasClass('string-select')).toBe(true);
             expect(element.hasClass('form-group')).toBe(true);
         });
-        it('based on custom-label', function() {
-            var items = element.find('custom-label');
-            expect(items.length).toBe(1);
+        it('with a custom-label', function() {
+            expect(element.find('custom-label').length).toBe(1);
         });
-        it('based on ui-select', function() {
-            var items = element.find('ui-select');
-            expect(items.length).toBe(1);
+        it('with a ui-select', function() {
+            expect(element.find('ui-select').length).toBe(1);
         });
     });
     describe('controller methods', function() {

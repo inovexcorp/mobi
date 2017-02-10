@@ -20,44 +20,42 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Serialization Select directive', function() {
+describe('Vocabulary Tab directive', function() {
     var $compile,
         scope,
         element;
 
     beforeEach(function() {
         module('templates');
-        module('serializationSelect');
+        module('vocabularyTab');
+        mockOntologyState();
+        mockOntologyManager();
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;
             scope = _$rootScope_;
         });
 
-        scope.bindModel = '';
-        element = $compile(angular.element('<serialization-select ng-model="bindModel"></serialization-select>'))(scope);
+        element = $compile(angular.element('<vocabulary-tab></vocabulary-tab>'))(scope);
         scope.$digest();
     });
 
-    describe('in isolated scope', function() {
-        it('bindModel should be two way bound', function() {
-            var isolatedScope = element.isolateScope();
-            isolatedScope.bindModel = 'turtle';
-            scope.$digest();
-            expect(scope.bindModel).toEqual('turtle');
-        });
-    });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('serialization-select')).toBe(true);
-            expect(element.hasClass('form-group')).toBe(true);
+            expect(element.hasClass('vocabulary-tab')).toBe(true);
+            expect(element.hasClass('ontology-tab')).toBe(true);
         });
-        it('with a select', function() {
-            expect(element.find('select').length).toBe(1);
+        it('with a tabset', function() {
+            expect(element.find('tabset').length).toBe(1);
         });
-        it('with options', function() {
-            expect(element.find('option').length).toBe(4);
+        it('with tabs', function() {
+            expect(element.find('tab').length).toBe(5);
+        });
+        _.forEach(['ontology-button-stack', 'project-tab', 'concepts-tab', 'search-tab', 'saved-changes-tab', 'merge-tab'], function(tag) {
+            it('with a ' + tag, function() {
+                expect(element.find(tag).length).toBe(1);
+            });
         });
     });
 });

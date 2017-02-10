@@ -27,9 +27,9 @@
         .module('ontologyOverlays', [])
         .directive('ontologyOverlays', ontologyOverlays);
 
-        ontologyOverlays.$inject = ['ontologyStateService', 'ontologyManagerService', 'propertyManagerService'];
+        ontologyOverlays.$inject = ['ontologyStateService', 'ontologyManagerService'];
 
-        function ontologyOverlays(ontologyStateService, ontologyManagerService, propertyManagerService) {
+        function ontologyOverlays(ontologyStateService, ontologyManagerService) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/ontology-editor/directives/ontologyOverlays/ontologyOverlays.html',
@@ -40,7 +40,6 @@
 
                     dvm.sm = ontologyStateService;
                     dvm.om = ontologyManagerService;
-                    dvm.pm = propertyManagerService;
 
                     function onError(errorMessage) {
                         dvm.error = errorMessage;

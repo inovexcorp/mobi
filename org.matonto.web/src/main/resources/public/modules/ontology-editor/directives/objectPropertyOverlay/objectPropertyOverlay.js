@@ -49,13 +49,6 @@
                     dvm.valueSelect = _.find(dvm.individuals, individual =>
                         dvm.ro.getItemIri(individual) === dvm.sm.propertyValue);
 
-                    function createJson(property, valueObj) {
-                        return {
-                            '@id': dvm.sm.selected['@id'],
-                            [property]: [valueObj]
-                        }
-                    }
-
                     dvm.addProperty = function(select, value) {
                         var property = dvm.ro.getItemIri(select);
                         if (property) {
@@ -65,17 +58,19 @@
                                 dvm.sm.selected[property] = [value];
                             }
                         }
-                        dvm.om.addToAdditions(dvm.sm.listItem.recordId, createJson(property, value));
+                        dvm.om.addToAdditions(dvm.sm.listItem.recordId, dvm.util.createJson(dvm.sm.selected['@id'],
+                            property, value));
                         dvm.sm.showObjectPropertyOverlay = false;
                     }
 
                     dvm.editProperty = function(select, value) {
                         var property = dvm.ro.getItemIri(select);
                         if (property) {
-                            dvm.om.addToDeletions(dvm.sm.listItem.recordId, createJson(property,
-                                dvm.sm.selected[property][dvm.sm.propertyIndex]));
+                            dvm.om.addToDeletions(dvm.sm.listItem.recordId, dvm.util.createJson(dvm.sm.selected['@id'],
+                                property, dvm.sm.selected[property][dvm.sm.propertyIndex]));
                             dvm.sm.selected[property][dvm.sm.propertyIndex] = value;
-                            dvm.om.addToAdditions(dvm.sm.listItem.recordId, createJson(property, value));
+                            dvm.om.addToAdditions(dvm.sm.listItem.recordId, dvm.util.createJson(dvm.sm.selected['@id'],
+                                property, value));
                         }
                         dvm.sm.showObjectPropertyOverlay = false;
                     }

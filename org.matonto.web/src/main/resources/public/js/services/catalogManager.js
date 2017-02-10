@@ -292,10 +292,9 @@
                 var deferred = $q.defer(),
                     fd = new FormData(),
                     config = {
-                        transformRequest: angular.identity,
+                        transformRequest: _.identity,
                         headers: {
-                            'Content-Type': undefined,
-                            'Accept': 'text/plain'
+                            'Content-Type': undefined
                         }
                     };
                 fd.append('type', recordConfig.recordType);
@@ -431,10 +430,9 @@
                 var deferred = $q.defer(),
                     fd = new FormData(),
                     config = {
-                        transformRequest: angular.identity,
+                        transformRequest: _.identity,
                         headers: {
-                            'Content-Type': undefined,
-                            'Accept': 'text/plain'
+                            'Content-Type': undefined
                         }
                     };
                 fd.append('title', distributionConfig.title);
@@ -774,10 +772,9 @@
                 var deferred = $q.defer(),
                     fd = new FormData(),
                     config = {
-                        transformRequest: angular.identity,
+                        transformRequest: _.identity,
                         headers: {
-                            'Content-Type': undefined,
-                            'Accept': 'text/plain'
+                            'Content-Type': undefined
                         }
                     };
                 fd.append('title', distributionConfig.title);
@@ -1061,10 +1058,6 @@
             self.createBranchCommit = function(branchId, recordId, catalogId, message) {
                 var deferred = $q.defer(),
                     config = {
-                        headers: {
-                            'Content-Type': undefined,
-                            'Accept': 'text/plain'
-                        },
                         params: {
                             message
                         }
@@ -1179,14 +1172,14 @@
                 var deferred = $q.defer(),
                     fd = new FormData(),
                     config = {
-                        params: {targetId},
+                        transformRequest: _.identity,
                         headers: {
-                            'Content-Type': undefined,
-                            'Accept': 'text/plain'
-                        }
+                            'Content-Type': undefined
+                        },
+                        params: {targetId}
                     };
-                fd.append('additions', _.has(differenceObj, 'additions') ? JSON.stringify(differenceObj.additions) : []);
-                fd.append('deletions', _.has(differenceObj, 'deletions') ? JSON.stringify(differenceObj.deletions) : []);
+                fd.append('additions', _.has(differenceObj, 'additions') ? JSON.stringify(differenceObj.additions) : '[]');
+                fd.append('deletions', _.has(differenceObj, 'deletions') ? JSON.stringify(differenceObj.deletions) : '[]');
                 $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(sourceId) + '/conflicts/resolution', fd, config)
                     .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText));
                 return deferred.promise;
@@ -1245,8 +1238,8 @@
              * should be applied to the resource
              * @param {String} format The RDF format to return the compiled resource in
              */
-            self.downloadResource = function(commitId, branchId, recordId, catalogId, applyInProgressCommit, format = 'jsonld') {
-                $window.location = prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId) + '/resource?applyInProgressCommit=' + applyInProgressCommit + '&format=' + format;
+            self.downloadResource = function(commitId, branchId, recordId, catalogId, applyInProgressCommit, format = 'jsonld', fileName = 'resource') {
+                $window.location = prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId) + '/resource?applyInProgressCommit=' + applyInProgressCommit + '&format=' + format + '&fileName=' + fileName;
             }
 
             /**
@@ -1442,8 +1435,7 @@
                     config = {
                         transformRequest: _.identity,
                         headers: {
-                            'Content-Type': undefined,
-                            'Accept': 'text/plain'
+                            'Content-Type': undefined
                         }
                     };
                 fd.append('title', versionConfig.title);
@@ -1462,8 +1454,7 @@
                     config = {
                         transformRequest: _.identity,
                         headers: {
-                            'Content-Type': undefined,
-                            'Accept': 'text/plain'
+                            'Content-Type': undefined
                         }
                     };
                 fd.append('title', branchConfig.title);

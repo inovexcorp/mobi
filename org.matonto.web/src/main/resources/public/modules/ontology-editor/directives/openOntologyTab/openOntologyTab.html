@@ -35,14 +35,13 @@
             <block>
                 <block-content class="open-ontology-content">
                     <div class="ontologies">
-                        <div class="ontology" ng-click="dvm.ontologyId = ontologyId; dvm.recordId = record['@id']; dvm.showOpenOverlay = true" ng-repeat="record in dvm.filteredList | limitTo:dvm.limit:dvm.begin" ng-init="ontologyId = dvm.getRecordValue(record, 'identifier')">
+                        <div class="ontology" ng-click="dvm.ontologyId = ontologyId; dvm.recordId = record['@id']; dvm.showOpenOverlay = true" ng-repeat="record in dvm.filteredList | limitTo:dvm.limit:dvm.begin" ng-init="ontologyId = dvm.util.getDctermsValue(record, 'identifier')">
                             <div class="details">
-                                <h2 class="header" ng-bind-html="dvm.getRecordValue(record, 'title') | highlight:dvm.filterText | trusted"></h2>
-                                <p class="description" ng-bind-html="dvm.getRecordValue(record, 'description') | highlight:dvm.filterText | trusted"></p>
+                                <h2 class="header" ng-bind-html="dvm.util.getDctermsValue(record, 'title') | highlight:dvm.filterText | trusted"></h2>
+                                <p class="description" ng-bind-html="dvm.util.getDctermsValue(record, 'description') | highlight:dvm.filterText | trusted"></p>
                                 <small class="text-muted" ng-bind-html="ontologyId | highlight:dvm.filterText | trusted"></small>
                             </div>
                             <div class="action-container">
-                                <!--<a ng-click="dvm.download(id); $event.stopPropagation()" class="action"><i class="fa fa-2x fa-fw fa-download"></i></a>-->
                                 <a ng-click="dvm.showDeleteConfirmationOverlay(record); $event.stopPropagation()" class="action"><i class="fa fa-2x fa-fw fa-trash-o"></i></a>
                             </div>
                         </div>
@@ -53,8 +52,8 @@
                     </div>
                 </block-content>
                 <block-footer>
-                    <div class="paging-details clearfix">
-                        <p class="page-count">Showing {{(dvm.filteredList.length > 0 ? (dvm.begin + 1) : 0) | number}} to {{(dvm.filteredList.length < (dvm.begin + dvm.limit) ? dvm.filteredList.length : (dvm.begin + dvm.limit)) | number}} of {{dvm.filteredList.length | number}}</p>
+                    <div class="paging-container clearfix">
+                        <paging-details page-size="dvm.limit" total-size="dvm.filteredList.length" page-index="dvm.begin / dvm.limit" limit="dvm.limit"></paging-details>
                         <pagination links="{'prev': dvm.begin !== 0, 'next': (dvm.begin + dvm.limit) < dvm.filteredList.length}" current-page="dvm.begin / dvm.limit" get-page="dvm.getPage(direction)"></pagination>
                     </div>
                 </block-footer>

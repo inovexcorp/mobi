@@ -74,8 +74,7 @@
 
                     function onCreateSuccess(response) {
                         dvm.sm.showCreatePropertyOverlay = false;
-                        dvm.sm.selectItem('property-editor', response.entityIRI,
-                            dvm.om.getListItemById(response.ontologyId));
+                        dvm.sm.selectItem('property-editor', response.entityIRI, dvm.sm.listItem);
                         // TODO: figure out how to open up where this property is listed
                         // Potentially easier with the getPath function I'm working on
                     }
@@ -98,15 +97,14 @@
                         dvm.om.addEntity(dvm.sm.listItem.ontology, dvm.property);
                         // update relevant lists
                         var split = $filter('splitIRI')(dvm.property['@id']);
-                        var listItem = dvm.om.getListItemById(dvm.sm.listItem.ontologyId);
                         if (dvm.om.isObjectProperty(dvm.property)) {
-                            _.get(listItem, 'subObjectProperties').push({namespace:split.begin + split.then, localName: split.end});
-                            _.get(listItem, 'objectPropertyHierarchy').push({'entityIRI': dvm.property['@id']});
+                            _.get(dvm.sm.listItem, 'subObjectProperties').push({namespace:split.begin + split.then, localName: split.end});
+                            _.get(dvm.sm.listItem, 'objectPropertyHierarchy').push({'entityIRI': dvm.property['@id']});
                         } else {
-                            _.get(listItem, 'subDataProperties').push({namespace:split.begin + split.then, localName: split.end});
-                            _.get(listItem, 'dataPropertyHierarchy').push({'entityIRI': dvm.property['@id']});
+                            _.get(dvm.sm.listItem, 'subDataProperties').push({namespace:split.begin + split.then, localName: split.end});
+                            _.get(dvm.sm.listItem, 'dataPropertyHierarchy').push({'entityIRI': dvm.property['@id']});
                         }
-                        _.set(_.get(listItem, 'index'), dvm.property['@id'], dvm.sm.listItem.ontology.length - 1);
+                        _.set(_.get(dvm.sm.listItem, 'index'), dvm.property['@id'], dvm.sm.listItem.ontology.length - 1);
                         dvm.om.addToAdditions(dvm.sm.listItem.recordId, dvm.property);
                         // select the new class
                         dvm.sm.selectItem(_.get(dvm.property, '@id'));
