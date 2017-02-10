@@ -952,7 +952,7 @@ public interface CatalogRest {
      * @param rdfFormat The desired RDF return format. NOTE: Optional param - defaults to "jsonld".
      * @param apply A boolean value identifying whether the InProgressCommit associated with the identified Record and
      *              User making the request should be applied to the result.
-     * @param fileName The desired name of the generated file.
+     * @param fileName The desired name of the generated file. NOTE: Optional param - defaults to "resource".
      * @return A Response with the compiled Resource for the entity at the specific Commit to download.
      */
     @GET
