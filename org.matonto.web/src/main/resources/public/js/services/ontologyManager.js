@@ -349,7 +349,7 @@
                 };
                 self.uploadFile(file)
                     .then(response => {
-                        if (_.get(response, 'status') === 200 && _.get(response, 'data.persisted')
+                        if (_.get(response, 'status') === 201 && _.get(response, 'data.persisted')
                             && _.has(response, 'data.ontologyId')) {
                             onUploadSuccess(response.data.ontologyId);
                         } else {

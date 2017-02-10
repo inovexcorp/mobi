@@ -24,7 +24,28 @@
     'use strict';
 
     angular
-        .module('sparqlEditor', ['sparqlManager', 'prefixes'])
+        /**
+         * @ngdoc overview
+         * @name sparqlEditor
+         *
+         * @description
+         * The `sparqlEditor` module only provides the `sparqlEditor` directive which creates a form
+         * to input a SPARQL query, its prefixes, and submit it.
+         */
+        .module('sparqlEditor', [])
+        /**
+         * @ngdoc directive
+         * @name sparqlEditor.directive:sparqlEditor
+         * @scope
+         * @restrict E
+         * @requires sparqlManager.service:sparqlManagerService
+         * @requires prefixes.service:prefixes
+         *
+         * @description
+         * `sparqlEditor` is a directive that creates a {@link block.directive:block block} with a form for creating
+         * a {@link sparqlManager.service:sparqlManagerService#queryString SPARQL query} and submitting it. The
+         * directive is replaced by the contents of its template.
+         */
         .directive('sparqlEditor', sparqlEditor);
 
         sparqlEditor.$inject = ['sparqlManagerService', 'prefixes'];

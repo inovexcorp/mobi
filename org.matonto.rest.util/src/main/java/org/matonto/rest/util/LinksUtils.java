@@ -33,6 +33,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 public class LinksUtils {
@@ -80,5 +81,21 @@ public class LinksUtils {
         }
 
         return links;
+    }
+
+    /**
+     * Checks whether the passed limit and offset values are valid pagination parameters. The
+     * offset must not be negative and the limits must not be zero or negative.
+     *
+     * @param limit the maximum number of results to return
+     * @param offset the offset of the results
+     */
+    public static void validateParams(int limit, int offset) {
+        if (offset < 0) {
+            throw ErrorUtils.sendError("Offset cannot be negative.", Response.Status.BAD_REQUEST);
+        }
+        if (limit <= 0) {
+            throw ErrorUtils.sendError("Limit must be positive", Response.Status.BAD_REQUEST);
+        }
     }
 }
