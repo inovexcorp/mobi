@@ -198,11 +198,6 @@ describe('Open Ontology Tab directive', function() {
                 expect(controller.errorMessage).toBeUndefined();
             });
         });
-        it('should download an ontology', function() {
-            controller.download('id');
-            expect(ontologyStateSvc.downloadId).toBe('id');
-            expect(ontologyStateSvc.showDownloadOverlay).toBe(true);
-        });
         it('should get the list of unopened ontology records', function() {
             ontologyManagerSvc.list = [{'recordId': 'recordA'}];
             controller.getAllOntologyRecords('sort');

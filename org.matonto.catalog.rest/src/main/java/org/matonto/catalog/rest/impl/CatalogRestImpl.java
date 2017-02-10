@@ -941,7 +941,8 @@ public class CatalogRestImpl implements CatalogRest {
 
     @Override
     public Response downloadCompiledResource(ContainerRequestContext context, String catalogId, String recordId, 
-                                             String branchId, String commitId, String rdfFormat, boolean apply) {
+                                             String branchId, String commitId, String rdfFormat, boolean apply,
+                                             String fileName) {
         try {
             commitInBranch(catalogId, recordId, branchId, commitId);
             Model resource;
@@ -963,7 +964,7 @@ public class CatalogRestImpl implements CatalogRest {
                 writer.close();
             };
 
-            return Response.ok(stream).header("Content-Disposition", "attachment;filename=" + recordId
+            return Response.ok(stream).header("Content-Disposition", "attachment;filename=" + fileName
                     + "." + getRDFFormatFileExtension(rdfFormat))
                     .header("Content-Type", getRDFFormatMimeType(rdfFormat)).build();
         } catch (MatOntoException e) {

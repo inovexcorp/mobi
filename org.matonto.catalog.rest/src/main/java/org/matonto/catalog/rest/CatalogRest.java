@@ -952,6 +952,7 @@ public interface CatalogRest {
      * @param rdfFormat The desired RDF return format. NOTE: Optional param - defaults to "jsonld".
      * @param apply A boolean value identifying whether the InProgressCommit associated with the identified Record and
      *              User making the request should be applied to the result.
+     * @param fileName The desired name of the generated file.
      * @return A Response with the compiled Resource for the entity at the specific Commit to download.
      */
     @GET
@@ -965,7 +966,8 @@ public interface CatalogRest {
                                       @PathParam("branchId") String branchId,
                                       @PathParam("commitId") String commitId,
                                       @DefaultValue("jsonld") @QueryParam("format") String rdfFormat,
-                                      @DefaultValue("false") @QueryParam("applyInProgressCommit") boolean apply);
+                                      @DefaultValue("false") @QueryParam("applyInProgressCommit") boolean apply,
+                                      @DefaultValue("resource") @QueryParam("fileName") String fileName);
 
     /**
      * Creates a new InProgressCommit in the repository for the User making this request. Returns a Response indicating

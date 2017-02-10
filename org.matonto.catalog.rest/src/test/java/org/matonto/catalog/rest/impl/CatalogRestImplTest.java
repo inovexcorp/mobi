@@ -3173,10 +3173,11 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     public void downloadCompiledResourceAsJsonldTest() {
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits/" + encode(COMMIT_IRIS[0]) + "/resource")
-                .queryParam("format", "jsonld").request().accept(MediaType.APPLICATION_OCTET_STREAM).get();
+                .queryParam("format", "jsonld").queryParam("fileName", "fileName").request()
+                .accept(MediaType.APPLICATION_OCTET_STREAM).get();
         assertEquals(response.getStatus(), 200);
         verify(catalogManager).getCompiledResource(vf.createIRI(COMMIT_IRIS[0]));
-        assertTrue(response.getHeaderString("Content-Disposition").contains(RECORD_IRI));
+        assertTrue(response.getHeaderString("Content-Disposition").contains("fileName"));
         isJsonld(response.readEntity(String.class));
     }
 
@@ -3184,10 +3185,11 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     public void downloadCompiledResourceAsTurtleTest() {
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits/" + encode(COMMIT_IRIS[0]) + "/resource")
-                .queryParam("format", "turtle").request().accept(MediaType.APPLICATION_OCTET_STREAM).get();
+                .queryParam("format", "turtle").queryParam("fileName", "fileName").request()
+                .accept(MediaType.APPLICATION_OCTET_STREAM).get();
         assertEquals(response.getStatus(), 200);
         verify(catalogManager).getCompiledResource(vf.createIRI(COMMIT_IRIS[0]));
-        assertTrue(response.getHeaderString("Content-Disposition").contains(RECORD_IRI));
+        assertTrue(response.getHeaderString("Content-Disposition").contains("fileName"));
         notJsonld(response.readEntity(String.class));
     }
 
@@ -3195,9 +3197,10 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     public void downloadCompiledResourceAsRdfxmlTest() {
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits/" + encode(COMMIT_IRIS[0]) + "/resource")
-                .queryParam("format", "rdf/xml").request().accept(MediaType.APPLICATION_OCTET_STREAM).get();
+                .queryParam("format", "rdf/xml").queryParam("fileName", "fileName").request()
+                .accept(MediaType.APPLICATION_OCTET_STREAM).get();
         assertEquals(response.getStatus(), 200);
-        assertTrue(response.getHeaderString("Content-Disposition").contains(RECORD_IRI));
+        assertTrue(response.getHeaderString("Content-Disposition").contains("fileName"));
         verify(catalogManager).getCompiledResource(vf.createIRI(COMMIT_IRIS[0]));
         notJsonld(response.readEntity(String.class));
     }

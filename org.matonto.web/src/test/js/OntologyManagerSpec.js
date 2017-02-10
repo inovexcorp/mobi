@@ -578,12 +578,6 @@ describe('Ontology Manager service', function() {
         });
     });
 
-    it('downloadOntologyFile should set the $window.location to the correct value', function() {
-        ontologyManagerSvc.downloadOntologyFile(ontologyId, format, fileName);
-        expect(windowSvc.location).toBe('/matontorest/ontologies/' + ontologyId + '?rdfFormat=' + format + '&fileName='
-            + fileName);
-    });
-
     describe('uploadThenGet should call the proper methods', function() {
         var uploadDeferred;
         beforeEach(function() {

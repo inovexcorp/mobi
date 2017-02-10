@@ -625,14 +625,14 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void testUploadOntologyJson() {
-        JSONObject entity = new JSONObject().element("@id", "http://matonto.org/entity");
+        JSONObject ontologyJson = new JSONObject().element("@id", "http://matonto.org/ontology");
 
         Response response = target().path("ontologies").queryParam("title", "title").queryParam("description",
-                "description").queryParam("keywords", "keyword1,keyword2").request().post(Entity.json(entity));
+                "description").queryParam("keywords", "keyword1,keyword2").request().post(Entity.json(ontologyJson));
 
         assertEquals(response.getStatus(), 201);
         assertGetUserFromContext();
-        verify(ontologyManager).createOntology(entity.toString());
+        verify(ontologyManager).createOntology(ontologyJson.toString());
         verify(ontology).getOntologyId();
         verify(ontologyId).getOntologyIdentifier();
         verify(catalogManager).getLocalCatalog();

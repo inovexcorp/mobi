@@ -379,24 +379,6 @@
             }
             /**
              * @ngdoc method
-             * @name downloadOntologyFile
-             * @methodOf ontologyManager.service:ontologyManagerService
-             *
-             * @description
-             * Calls the GET /matontorest/ontologies/{ontologyId} endpoint using the `window.location` function which
-             * will start a download of the specified ontology.
-             *
-             * @param {string} ontologyId The ontology ID of the ontology you want to download.
-             * @param {string} [rdfFormat='jsonld'] The format string to identify the serialization requested.
-             * @param {string} [fileName='ontology'] The ontology file name specified.
-             * @returns {Promise} A promise indicating whether the ontology was persisted.
-             */
-            self.downloadOntologyFile = function(ontologyId, rdfFormat = 'jsonld', fileName = 'ontology') {
-                $window.location = prefix + '/' + encodeURIComponent(ontologyId)
-                    + `?rdfFormat=${rdfFormat}&fileName=${fileName}`;
-            }
-            /**
-             * @ngdoc method
              * @name uploadThenGet
              * @methodOf ontologyManager.service:ontologyManagerService
              *

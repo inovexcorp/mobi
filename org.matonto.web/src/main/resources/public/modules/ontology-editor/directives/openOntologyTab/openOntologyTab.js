@@ -91,11 +91,6 @@
                             }, errorMessage => dvm.errorMessage = errorMessage);
                     }
 
-                    dvm.download = function(id) {
-                        dvm.os.downloadId = id;
-                        dvm.os.showDownloadOverlay = true;
-                    }
-
                     dvm.getAllOntologyRecords = function(sortingOption) {
                         dvm.om.getAllOntologyRecords(sortingOption)
                             .then(records => {
