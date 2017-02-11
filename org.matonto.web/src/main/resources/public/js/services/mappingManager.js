@@ -577,6 +577,19 @@
             self.getSourceOntologyId = function(mapping) {
                 return _.get(self.getSourceOntologyInfo(mapping), 'ontologyId', '');
             }
+            /**
+             * @ngdoc method
+             * @name getSourceOntologyInfo
+             * @methodOf mappingManager.service:mappingManagerService
+             *
+             * @description
+             * Collects all the source ontology information from the passed mapping. This includes the
+             * ontology id, the record id, the branch id, and the commit id.
+             *
+             * @param {Object[]} mapping The mapping JSON-LD array
+             * @return {Object} An object with keys for the ontology, record, branch, and commit ids of
+             * the source ontology of the passed mapping
+             */
             self.getSourceOntologyInfo = function(mapping) {
                 return _.mapValues(
                     _.mapKeys(_.pick(getMappingEntity(mapping), [prefixes.delim + 'sourceOntology', prefixes.delim + 'sourceRecord', prefixes.delim + 'sourceBranch', prefixes.delim + 'sourceCommit']),
@@ -648,14 +661,28 @@
              * property type.
              *
              * @param {Object[]} mapping The mapping JSON-LD array
-             * @param {Object[]} ontololgies The array of ontologies to test for compatibililty with
+             * @param {Object[]} ontologies The array of ontologies to test for compatibility with
              * @return {boolean} True if the passed list of ontologies have not changed in an incompatible way;
              * false otherwise
              */
             self.areCompatible = function(mapping, ontologies) {
                 return self.findIncompatibleMappings(mapping, ontologies).length === 0;
             }
-
+            /**
+             * @ngdoc method
+             * @name findIncompatibleMappings
+             * @methodOf mappingManager.service:mappingManagerService
+             *
+             * @description
+             * Finds the list of any Class, Data, or Object Mappings within the passed mapping that are no longer
+             * compatible with the passed list of source ontologies. A Class, Data, or Object is incompatible if
+             * its IRI doesn't exist in the ontologies. A ObjectMapping is also incompatible if its range has
+             * changed.
+             *
+             * @param {Object[]} mapping The mapping JSON-LD array
+             * @param {Object[]} ontologies The list of source ontologies to reference
+             * @return {Object[]} All incompatible entities within the mapping
+             */
             self.findIncompatibleMappings = function(mapping, ontologies) {
                 var incompatibleMappings = [];
                 _.forEach(self.getAllClassMappings(mapping), classMapping => {
@@ -841,6 +868,17 @@
             self.isClassMapping = function(entity) {
                 return isType(entity, 'ClassMapping');
             }
+            /**
+             * @ngdoc method
+             * @name isPropertyMapping
+             * @methodOf mappingManager.service:mappingManagerService
+             *
+             * @description
+             * Tests whether the passed mapping entity is a property mapping.
+             *
+             * @param {Object} entity A mapping entity
+             * @return {boolean} A boolean indicating whether the entity is a property mapping
+             */
             self.isPropertyMapping = function(entity) {
                 return isType(entity, 'PropertyMapping');
             }
@@ -952,9 +990,33 @@
                 var usedClasses = _.map(self.getAllObjectMappings(mapping), "['" + prefixes.delim + "classMapping'][0]['@id']");
                 return _.get(_.filter(classes, classMap => !_.includes(usedClasses, classMap['@id'])), '0');
             }
+            /**
+             * @ngdoc method
+             * @name getClassMappingsByClassId
+             * @methodOf mappingManager.service:mappingManagerService
+             *
+             * @description
+             * Collects all class mappings in the passed mapping that map to the passed class IRI.
+             *
+             * @param {Object[]} mapping The mapping JSON-LD array
+             * @param {string} classId The IRI of the class to filter by
+             * @return {Object[]} THe array of class mappings for the identified class in the mapping
+             */
             self.getClassMappingsByClassId = function(mapping, classId) {
                 return _.filter(self.getAllClassMappings(mapping), ["['" + prefixes.delim + "mapsTo'][0]['@id']", classId]);
             }
+            /**
+             * @ngdoc method
+             * @name getClassMappingsByClassId
+             * @methodOf mappingManager.service:mappingManagerService
+             *
+             * @description
+             * Collects all property mappings in the passed mapping that map to the passed property IRI.
+             *
+             * @param {Object[]} mapping The mapping JSON-LD array
+             * @param {string} propId The IRI of the property to filter by
+             * @return {Object[]} THe array of property mappings for the identified property in the mapping
+             */
             self.getPropMappingsByPropId = function(mapping, propId) {
                 var propMappings = _.concat(self.getAllDataMappings(mapping), self.getAllObjectMappings(mapping));
                 return _.filter(propMappings, [prefixes.delim + 'hasProperty', [{'@id': propId}]]);
