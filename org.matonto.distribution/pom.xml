@@ -203,19 +203,11 @@
                 <groupId>com.spotify</groupId>
                 <artifactId>docker-maven-plugin</artifactId>
                 <version>0.4.12</version>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>build</goal>
-                        </goals>
-                    </execution>
-                </executions>
                 <configuration>
                     <dockerMaintainer>MatOnto.org</dockerMaintainer>
                     <useGitCommitId>true</useGitCommitId>
                     <dockerDirectory>${project.build.directory}/assembly/docker</dockerDirectory>
-                    <imageName>bdgould/matonto</imageName>
+                    <imageName>matonto/matonto</imageName>
                     <imageTags>
                         <imageTag>${project.version}</imageTag>
                         <imageTag>latest</imageTag>
