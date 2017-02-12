@@ -519,7 +519,7 @@ describe('Mapping Manager service', function() {
             $timeout.flush();
         });
         it('unless an error occurs', function(done) {
-            catalogManagerSvc.getResource.and.returnValue($q.reject({statusText: 'Error message'}));
+            catalogManagerSvc.getResource.and.returnValue($q.reject('Error message'));
             mappingManagerSvc.getOntology(this.ontologyInfo).then(function() {
                 fail('Promise should have rejected');
                 done();

@@ -520,9 +520,8 @@
                     return $q.reject('Missing identification information');
                 }
                 var deferred = $q.defer();
-                cm.getResource(ontologyInfo.commitId, ontologyInfo.branchId, ontologyInfo.recordId, cm.localCatalog['@id'], false).then(response => {
-                    deferred.resolve({id: ontologyInfo.ontologyId, entities: response, recordId: ontologyInfo.recordId});
-                }, response => deferred.reject(_.get(response, 'statusText', '')));
+                cm.getResource(ontologyInfo.commitId, ontologyInfo.branchId, ontologyInfo.recordId, cm.localCatalog['@id'], false)
+                    .then(response => deferred.resolve({id: ontologyInfo.ontologyId, entities: response, recordId: ontologyInfo.recordId}), deferred.reject);
                 return deferred.promise;
             }
             /**
@@ -544,24 +543,20 @@
                 if (!validateOntologyInfo(ontologyInfo)) {
                     return $q.when([]);
                 }
-                var deferred1 = $q.defer();
-                var deferred2 = $q.defer();
-                var ontology = _.find(om.list, {ontologyId: ontologyInfo.ontologyId, recordId: ontologyInfo.recordId, branchId: ontologyInfo.branchId, commitId: ontologyInfo.commitId});
-                if (ontology) {
-                    deferred1.resolve({id: ontologyInfo.ontologyId, entities: ontology.ontology, recordId: ontologyInfo.recordId});
-                } else {
-                    self.getOntology(ontologyInfo).then(deferred1.resolve, deferred1.reject);
-                }
-                deferred1.promise.then(ontology => {
-                    om.getImportedOntologies(ontology.id, ontologyInfo.branchId, ontologyInfo.commitId).then(imported => {
-                        var importedOntologies = _.map(imported, obj => {
-                            return {id: obj.ontologyId, entities: obj.ontology};
-                        });
-                        deferred2.resolve(_.concat(ontology, importedOntologies));
-                    }, deferred2.reject);
-                }, deferred2.reject);
-
-                return deferred2.promise;
+                var sourceOntology,
+                    deferred = $q.defer();
+                var ontologyObj = _.find(om.list, {ontologyId: ontologyInfo.ontologyId, recordId: ontologyInfo.recordId, branchId: ontologyInfo.branchId, commitId: ontologyInfo.commitId});
+                var promise = ontologyObj ? $q.when({id: ontologyInfo.ontologyId, entities: ontologyObj.ontology, recordId: ontologyInfo.recordId}) : self.getOntology(ontologyInfo);
+                promise.then(ontology => {
+                    sourceOntology = ontology;
+                    return om.getImportedOntologies(ontology.id, ontologyInfo.branchId, ontologyInfo.commitId);
+                }, $q.reject).then(imported => {
+                    var importedOntologies = _.map(imported, obj => {
+                        return {id: obj.ontologyId, entities: obj.ontology};
+                    });
+                    deferred.resolve(_.concat(sourceOntology, importedOntologies));
+                }, deferred.reject);
+                return deferred.promise;
             }
             /**
              * @ngdoc method
@@ -1056,7 +1051,7 @@
                 return _.get(getEntitiesByType(mapping, 'Mapping'), 0);
             }
             function validateOntologyInfo(obj) {
-                return _.intersection(_.keys(obj), ['ontologyId', 'recordId', 'branchId', 'commitId']).length > 0;
+                return _.intersection(_.keys(obj), ['ontologyId', 'recordId', 'branchId', 'commitId']).length === 4;
             }
             function onError(error, deferred) {
                 deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.'));
