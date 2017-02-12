@@ -19,6 +19,8 @@ RUN set -ex \
 
 ENV NPM_CONFIG_LOGLEVEL info
 ENV NODE_VERSION 4.0.0
+# Maven filtered to produce correct versioning.
+ENV MATONTO_VERSION ${project.version}
 
 RUN curl -SLO "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-x64.tar.xz" \
   && curl -SLO "https://nodejs.org/dist/v$NODE_VERSION/SHASUMS256.txt.asc" \
@@ -29,16 +31,10 @@ RUN curl -SLO "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-
   && ln -s /usr/local/bin/node /usr/local/bin/nodejs
 
 RUN ["node"]
-
-WORKDIR /code
-ADD . /code
-
-RUN ["mvn", "clean", "install"]
-
-RUN ["tar","-xvzf","./org.matonto.distribution/target/distribution-1.3.11.tar.gz"]
+# Base MatOnto assembly in the /opt/matonto directory.
+WORKDIR /opt/matonto
+ADD ./distribution-$MATONTO_VERSION.tar.gz ./
+CMD ./distribution-$MATONTO_VERSION/bin/karaf
 
 EXPOSE 8443
 
-ADD keep_alive.py /code/keep_alive.py
-
-CMD ["python", "keep_alive.py"]

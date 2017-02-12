@@ -1,7 +1,0 @@
-version: '2'
-services:
-  matonto:
-    build: .
-    ports:
-      - "8443:8443"
-    command: bash -c '/code/distribution-1.3.11/bin/start && python keep_alive.py'
