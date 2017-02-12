@@ -69,7 +69,7 @@ describe('Mapper State service', function() {
         mapperStateSvc.createMapping();
         expect(mapperStateSvc.editMapping).toBe(true);
         expect(mapperStateSvc.newMapping).toBe(true);
-        expect(mapperStateSvc.mapping).toEqual({jsonld: [], id: ''});
+        expect(mapperStateSvc.mapping).toEqual({jsonld: [], id: '', record: undefined});
         expect(mapperStateSvc.sourceOntologies).toEqual([]);
         expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
     });

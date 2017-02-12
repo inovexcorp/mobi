@@ -28,6 +28,7 @@ describe('IRI Template Overlay directive', function() {
         mappingManagerSvc,
         mapperStateSvc,
         delimitedManagerSvc,
+        utilSvc,
         controller;
 
     beforeEach(function() {
@@ -38,6 +39,7 @@ describe('IRI Template Overlay directive', function() {
         mockMapperState();
         mockMappingManager();
         mockDelimitedManager();
+        mockUtil();
 
         inject(function(_$compile_, _$rootScope_, _utilService_, _prefixes_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_) {
             $compile = _$compile_;
@@ -47,6 +49,8 @@ describe('IRI Template Overlay directive', function() {
             mappingManagerSvc = _mappingManagerService_;
             mapperStateSvc = _mapperStateService_;
             delimitedManagerSvc = _delimitedManagerService_;
+            prefixes = _prefixes_;
+            utilSvc = _utilService_;
         });
 
         this.begin = '/test';

@@ -47,13 +47,13 @@ describe('Mapping Overlays directive', function() {
             mapperStateSvc = _mapperStateService_;
             delimitedManagerSvc = _delimitedManagerService_;
         });
+        mapperStateSvc.mapping = {id: '', jsonld: []};
+        this.element = $compile(angular.element('<mapping-overlays></mapping-overlays>'))(scope);
+        scope.$digest();
     });
 
     describe('controller methods', function() {
         beforeEach(function() {
-            mapperStateSvc.mapping = {jsonld: []};
-            this.element = $compile(angular.element('<mapping-overlays></mapping-overlays>'))(scope);
-            scope.$digest();
             controller = this.element.controller('mappingOverlays');
         });
         it('should set the correct state for reseting', function() {
@@ -134,11 +134,6 @@ describe('Mapping Overlays directive', function() {
         });
     });
     describe('contains the correct html', function() {
-        beforeEach(function() {
-            mapperStateSvc.mapping = {name: '', jsonld: []};
-            this.element = $compile(angular.element('<mapping-overlays></mapping-overlays>'))(scope);
-            scope.$digest();
-        });
         it('depending on whether a mapping is being created', function() {
             mapperStateSvc.displayCreateMappingOverlay = true;
             scope.$digest();

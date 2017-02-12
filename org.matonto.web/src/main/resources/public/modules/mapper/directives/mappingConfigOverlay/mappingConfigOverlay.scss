@@ -3,21 +3,26 @@
 
 .mapping-config-overlay {
 	.content {
-		.ontology-select-container,
-		.base-class-select-container {
-			float: left;
-			width: 50%;
-			max-height: 400px;
-			display: flex;
-			flex-direction: column;
-		}
-		.ontology-preview,
-		.class-preview {
-			overflow: auto;
-			flex: 1;
-		}
-		.btn-container {
-			clear: both;
-		}
+        .page-nav {
+            float: right;
+
+            .pagination {
+                margin: 0;
+            }
+        }
+        .paging-details {
+            float: left;
+        }
+        .ontology-records-list {
+            height: 100px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow-y: auto;
+
+            .list-group-item {
+                outline: 0;
+                border-radius: 0;
+            }
+        }
 	}
 }

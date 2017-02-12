@@ -105,6 +105,23 @@ public interface CatalogRest {
                         @QueryParam("searchText") String searchText);
 
     /**
+     * Returns a Record with the provided ID.
+     *
+     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param recordId The String representing the Record ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                 with "_:".
+     * @return A Record with the provided ID.
+     */
+    @GET
+    @Path("{catalogId}/records/{recordId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Retrieves the Catalog record by its ID.")
+    Response getRecord(@PathParam("catalogId") String catalogId,
+                       @PathParam("recordId") String recordId);
+
+    /**
      * Creates a new Record in the repository using the passed form data. Determines the type of the new Record
      * based on the `type` field. Requires the `title` and `identifier` fields to be set. Returns a Response with the
      * IRI of the new Record.
@@ -122,6 +139,7 @@ public interface CatalogRest {
      */
     @POST
     @Path("{catalogId}/records")
+    @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
     @ApiOperation("Creates a new Record in the Catalog.")
@@ -132,23 +150,6 @@ public interface CatalogRest {
                           @FormDataParam("identifier") String identifier,
                           @FormDataParam("description") String description,
                           @FormDataParam("keywords") String keywords);
-
-    /**
-     * Returns a Record with the provided ID.
-     *
-     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                  with "_:".
-     * @param recordId The String representing the Record ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                 with "_:".
-     * @return A Record with the provided ID.
-     */
-    @GET
-    @Path("{catalogId}/records/{recordId}")
-    @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed("user")
-    @ApiOperation("Retrieves the Catalog record by its ID.")
-    Response getRecord(@PathParam("catalogId") String catalogId,
-                       @PathParam("recordId") String recordId);
 
     /**
      * Deletes a Record from the repository. Returns a Response which indicates whether or not the requested Record was
@@ -234,10 +235,12 @@ public interface CatalogRest {
      */
     @POST
     @Path("{catalogId}/records/{recordId}/distributions")
+    @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
     @ApiOperation("Creates a new Distribution for the provided UnversionedRecord.")
-    Response createUnversionedDistribution(@PathParam("catalogId") String catalogId,
+    Response createUnversionedDistribution(@Context ContainerRequestContext context,
+                                           @PathParam("catalogId") String catalogId,
                                            @PathParam("recordId") String recordId,
                                            @FormDataParam("title") String title,
                                            @FormDataParam("description") String description,
@@ -353,10 +356,12 @@ public interface CatalogRest {
      */
     @POST
     @Path("{catalogId}/records/{recordId}/versions")
+    @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
     @ApiOperation("Creates a Version for the identified VersionedRecord.")
-    Response createVersion(@PathParam("catalogId") String catalogId,
+    Response createVersion(@Context ContainerRequestContext context,
+                           @PathParam("catalogId") String catalogId,
                            @PathParam("recordId") String recordId,
                            @FormDataParam("type") String typeIRI,
                            @FormDataParam("title") String title,
@@ -496,10 +501,12 @@ public interface CatalogRest {
      */
     @POST
     @Path("{catalogId}/records/{recordId}/versions/{versionId}/distributions")
+    @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
     @ApiOperation("Creates a Distribution for the identified Version.")
-    Response createVersionedDistribution(@PathParam("catalogId") String catalogId,
+    Response createVersionedDistribution(@Context ContainerRequestContext context,
+                                         @PathParam("catalogId") String catalogId,
                                          @PathParam("recordId") String recordId,
                                          @PathParam("versionId") String versionId,
                                          @FormDataParam("title") String title,
@@ -606,6 +613,7 @@ public interface CatalogRest {
     /**
      * Gets a list of Branches associated with a VersionedRDFRecord identified by the provided IDs.
      *
+     * @param context The context of the request.
      * @param uriInfo The URI information of the request to be used in creating links to other pages of branches
      * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
@@ -615,6 +623,8 @@ public interface CatalogRest {
      * @param offset The offset for the page.
      * @param limit The number of Branches to return in one page.
      * @param asc Whether or not the list should be sorted ascending or descending.
+     * @param applyUserFilter Whether or not the list should be filtered to Branches associated with the user making
+     *                        the request.
      * @return A list of Branches for the identified VersionedRDFRecord.
      */
     @GET
@@ -622,13 +632,15 @@ public interface CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @ApiOperation("Gets list of Branches associated with a specific VersionedRDFRecord.")
-    Response getBranches(@Context UriInfo uriInfo,
+    Response getBranches(@Context ContainerRequestContext context,
+                         @Context UriInfo uriInfo,
                          @PathParam("catalogId") String catalogId,
                          @PathParam("recordId") String recordId,
                          @QueryParam("sort") String sort,
                          @DefaultValue("0") @QueryParam("offset") int offset,
                          @DefaultValue("100") @QueryParam("limit") int limit,
-                         @DefaultValue("true") @QueryParam("ascending") boolean asc);
+                         @DefaultValue("true") @QueryParam("ascending") boolean asc,
+                         @DefaultValue("false") @QueryParam("applyUserFilter") boolean applyUserFilter);
 
     /**
      * Creates a Branch for a VersionedRDFRecord identified by the IDs using the passed form data. Returns a Response
@@ -646,10 +658,12 @@ public interface CatalogRest {
      */
     @POST
     @Path("{catalogId}/records/{recordId}/branches")
+    @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
     @ApiOperation("Creates a branch for a specific VersionedRDFRecord.")
-    Response createBranch(@PathParam("catalogId") String catalogId,
+    Response createBranch(@Context ContainerRequestContext context,
+                          @PathParam("catalogId") String catalogId,
                           @PathParam("recordId") String recordId,
                           @FormDataParam("type") String typeIRI,
                           @FormDataParam("title") String title,
@@ -775,7 +789,7 @@ public interface CatalogRest {
      */
     @POST
     @Path("{catalogId}/records/{recordId}/branches/{branchId}/commits")
-    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.TEXT_PLAIN)
     @RolesAllowed("user")
     @ApiOperation("Creates a Commit for a specific Branch and sets it to be the new HEAD Commit.")
     Response createBranchCommit(@Context ContainerRequestContext context,
@@ -879,7 +893,7 @@ public interface CatalogRest {
      */
     @POST
     @Path("{catalogId}/records/{recordId}/branches/{branchId}/conflicts/resolution")
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
     @ApiOperation("Merges the two commits identified by the provided IDs.")
@@ -938,6 +952,7 @@ public interface CatalogRest {
      * @param rdfFormat The desired RDF return format. NOTE: Optional param - defaults to "jsonld".
      * @param apply A boolean value identifying whether the InProgressCommit associated with the identified Record and
      *              User making the request should be applied to the result.
+     * @param fileName The desired name of the generated file. NOTE: Optional param - defaults to "resource".
      * @return A Response with the compiled Resource for the entity at the specific Commit to download.
      */
     @GET
@@ -951,7 +966,8 @@ public interface CatalogRest {
                                       @PathParam("branchId") String branchId,
                                       @PathParam("commitId") String commitId,
                                       @DefaultValue("jsonld") @QueryParam("format") String rdfFormat,
-                                      @DefaultValue("false") @QueryParam("applyInProgressCommit") boolean apply);
+                                      @DefaultValue("false") @QueryParam("applyInProgressCommit") boolean apply,
+                                      @DefaultValue("resource") @QueryParam("fileName") String fileName);
 
     /**
      * Creates a new InProgressCommit in the repository for the User making this request. Returns a Response indicating

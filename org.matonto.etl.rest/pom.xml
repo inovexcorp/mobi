@@ -52,7 +52,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>etl.api</artifactId>
-            <version>1.4.17</version>
+            <version>1.4.20-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
@@ -131,7 +131,7 @@
                         <Bundle-Name>MatOnto ETL REST Services</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
-                            org.matonto.etl.rest; provide:=true
+                            org.matonto.etl.rest
                         </Export-Package>
                         <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>

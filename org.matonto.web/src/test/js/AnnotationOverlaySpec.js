@@ -26,7 +26,8 @@ describe('Annotation Overlay directive', function() {
         element,
         controller,
         ontologyStateSvc,
-        propertyManagerSvc;
+        propertyManagerSvc,
+        ontologyManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -38,27 +39,29 @@ describe('Annotation Overlay directive', function() {
         mockOntologyState();
         mockResponseObj();
         mockPropertyManager();
+        mockUtil();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _propertyManagerService_, _responseObj_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _propertyManagerService_, _responseObj_,
+            _ontologyManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
             propertyManagerSvc = _propertyManagerService_;
             resObj = _responseObj_;
+            ontologyManagerSvc = _ontologyManagerService_;
         });
+
+        element = $compile(angular.element('<annotation-overlay></annotation-overlay>'))(scope);
+        scope.$digest();
     });
 
     describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
-            element = $compile(angular.element('<annotation-overlay></annotation-overlay>'))(scope);
-            scope.$digest();
-        });
-        it('for a div', function() {
+        it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
+            expect(element.hasClass('annotation-overlay')).toBe(true);
         });
         it('based on form (.content)', function() {
-            var formList = element.querySelectorAll('.content');
-            expect(formList.length).toBe(1);
+            expect(element.querySelectorAll('.content').length).toBe(1);
         });
         it('has correct heading based on variable', function() {
             var tests = [
@@ -103,8 +106,6 @@ describe('Annotation Overlay directive', function() {
     });
     describe('controller methods', function() {
         beforeEach(function() {
-            element = $compile(angular.element('<annotation-overlay></annotation-overlay>'))(scope);
-            scope.$digest();
             controller = element.controller('annotationOverlay');
         });
         it('addAnnotation should call the appropriate manager functions', function() {
@@ -113,29 +114,21 @@ describe('Annotation Overlay directive', function() {
             expect(propertyManagerSvc.add).toHaveBeenCalledWith(ontologyStateSvc.selected,
                 resObj.getItemIri(ontologyStateSvc.annotationSelect), ontologyStateSvc.annotationValue,
                 ontologyStateSvc.annotationType['@id']);
+            expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
+                jasmine.any(Object));
             expect(ontologyStateSvc.showAnnotationOverlay).toBe(false);
-            expect(ontologyStateSvc.setUnsaved).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
-                ontologyStateSvc.selected.matonto.originalIRI, true);
         });
         it('editAnnotation should call the appropriate manager functions', function() {
             controller.editAnnotation();
             expect(resObj.getItemIri).toHaveBeenCalledWith(ontologyStateSvc.annotationSelect);
+            expect(ontologyManagerSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
+                jasmine.any(Object));
             expect(propertyManagerSvc.edit).toHaveBeenCalledWith(ontologyStateSvc.selected,
                 resObj.getItemIri(ontologyStateSvc.annotationSelect), ontologyStateSvc.annotationValue,
                 ontologyStateSvc.annotationIndex, ontologyStateSvc.annotationType['@id']);
+            expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
+                jasmine.any(Object));
             expect(ontologyStateSvc.showAnnotationOverlay).toBe(false);
-            expect(ontologyStateSvc.setUnsaved).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
-                ontologyStateSvc.selected.matonto.originalIRI, true);
-        });
-        describe('getItemNamespace returns', function() {
-            it('item.namespace value when present', function() {
-                var result = controller.getItemNamespace({namespace: 'namespace'});
-                expect(result).toEqual('namespace');
-            });
-            it("'No namespace' when item.namespace is not present", function() {
-                var result = controller.getItemNamespace({});
-                expect(result).toEqual('No namespace');
-            });
         });
     });
 });

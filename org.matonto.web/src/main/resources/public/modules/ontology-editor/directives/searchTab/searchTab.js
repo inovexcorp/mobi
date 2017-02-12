@@ -45,11 +45,12 @@
                     dvm.onKeyup = function($event) {
                         if ($event.keyCode === 13) {
                             dvm.sm.unSelectItem();
-                            dvm.om.getSearchResults(dvm.sm.listItem.ontologyId, dvm.sm.state.searchText)
-                                .then(results => {
+                            dvm.om.getSearchResults(dvm.sm.listItem.ontologyId, dvm.sm.listItem.branchId,
+                                dvm.sm.listItem.commitId, dvm.sm.state.searchText).then(results => {
                                     dvm.sm.state.errorMessage = '';
                                     dvm.sm.state.results = results;
-                                    dvm.sm.state.infoMessage = !_.isEmpty(results) ? '' : 'There were no results for your search text.';
+                                    dvm.sm.state.infoMessage = !_.isEmpty(results) ? ''
+                                        : 'There were no results for your search text.';
                                     dvm.sm.state.highlightText = dvm.sm.state.searchText;
                                 }, errorMessage => {
                                     dvm.sm.state.errorMessage = errorMessage;

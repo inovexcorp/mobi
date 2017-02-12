@@ -58,7 +58,7 @@
                     dvm.tooltipDisplay = settingsManagerService.getTooltipDisplay();
 
                     dvm.getItemOntologyIri = function(item) {
-                        return _.get(item, 'ontologyId', dvm.sm.state.ontologyId);
+                        return _.get(item, 'ontologyId', dvm.sm.listItem.ontologyId);
                     }
 
                     dvm.getItemIri = function(item) {
@@ -69,7 +69,7 @@
                         var itemIri = dvm.getItemIri(item);
                         var result = itemIri;
                         if (!_.has(item, 'ontologyId')) {
-                            var selectedObject = dvm.om.getEntityById(dvm.sm.listItem.ontologyId, itemIri);
+                            var selectedObject = dvm.om.getEntityByRecordId(dvm.sm.listItem.recordId, itemIri);
                             if (dvm.tooltipDisplay === 'comment') {
                                 result = dvm.om.getEntityDescription(selectedObject) || itemIri;
                             } else if (dvm.tooltipDisplay === 'label') {

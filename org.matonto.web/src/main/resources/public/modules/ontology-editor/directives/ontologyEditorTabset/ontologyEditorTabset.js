@@ -39,16 +39,16 @@
                 controller: function() {
                     var dvm = this;
                     dvm.om = ontologyManagerService;
-                    dvm.sm = ontologyStateService;
+                    dvm.os = ontologyStateService;
 
-                    dvm.onClose = function(ontologyId) {
-                        var ontology = dvm.om.getOntologyById(ontologyId);
-                        if (dvm.sm.hasChanges(ontology, ontologyId)) {
-                            dvm.sm.ontologyIdToClose = ontologyId;
-                            dvm.sm.showCloseOverlay = true;
+                    dvm.onClose = function(recordId) {
+                        var ontology = dvm.om.getOntologyByRecordId(recordId);
+                        if (dvm.os.hasChanges(recordId)) {
+                            dvm.os.recordIdToClose = recordId;
+                            dvm.os.showCloseOverlay = true;
                         } else {
-                            dvm.sm.deleteState(ontologyId);
-                            dvm.om.closeOntology(ontologyId);
+                            dvm.os.deleteState(recordId);
+                            dvm.om.closeOntology(recordId);
                         }
                     }
                 }

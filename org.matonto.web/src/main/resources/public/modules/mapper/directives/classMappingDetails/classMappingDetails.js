@@ -43,6 +43,7 @@
          * @requires delimitedManager.service:delimitedManagerService
          * @requires ontologyManager.service:ontologyManagerService
          * @requires prefixes.service:prefixes
+         * @requires util.service:utilService
          *
          * @description
          * `classMappingDetails` is a directive that creates a div with sections to view and edit information
@@ -53,9 +54,9 @@
          */
         .directive('classMappingDetails', classMappingDetails);
 
-        classMappingDetails.$inject = ['prefixes', 'mappingManagerService', 'mapperStateService', 'ontologyManagerService', 'delimitedManagerService'];
+        classMappingDetails.$inject = ['utilService', 'prefixes', 'mappingManagerService', 'mapperStateService', 'ontologyManagerService', 'delimitedManagerService'];
 
-        function classMappingDetails(prefixes, mappingManagerService, mapperStateService, ontologyManagerService, delimitedManagerService) {
+        function classMappingDetails(utilService, prefixes, mappingManagerService, mapperStateService, ontologyManagerService, delimitedManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -67,14 +68,15 @@
                     dvm.mm = mappingManagerService;
                     dvm.om = ontologyManagerService;
                     dvm.dm = delimitedManagerService;
+                    dvm.util = utilService;
 
                     dvm.isInvalid = function(propMapping) {
                         return !!_.find(dvm.state.invalidProps, {'@id': propMapping['@id']});
                     }
                     dvm.getIriTemplate = function() {
                         var classMapping = _.find(dvm.state.mapping.jsonld, {'@id': dvm.state.selectedClassMappingId});
-                        var prefix = _.get(classMapping, "['" + prefixes.delim + "hasPrefix'][0]['@value']", '');
-                        var localName = _.get(classMapping, "['" + prefixes.delim + "localName'][0]['@value']", '');
+                        var prefix = dvm.util.getPropertyValue(classMapping, prefixes.delim + 'hasPrefix');
+                        var localName = dvm.util.getPropertyValue(classMapping, prefixes.delim + 'localName');
                         return prefix + localName;
                     }
                     dvm.getPropName = function(propMapping) {
@@ -93,10 +95,10 @@
                         }
                     }
                     dvm.getLinkedClassId = function(propMapping) {
-                        return dvm.mm.isObjectMapping(propMapping) ? propMapping[prefixes.delim + 'classMapping'][0]['@id'] : '';
+                        return dvm.util.getPropertyId(propMapping, prefixes.delim + 'classMapping');
                     }
                     dvm.getLinkedColumnIndex = function(propMapping) {
-                        return dvm.mm.isDataMapping(propMapping) ? propMapping[prefixes.delim + 'columnIndex'][0]['@value'] : '';
+                        return dvm.util.getPropertyValue(propMapping, prefixes.delim + 'columnIndex');
                     }
                     dvm.switchClass = function(propMapping) {
                         if (dvm.mm.isObjectMapping(propMapping)) {

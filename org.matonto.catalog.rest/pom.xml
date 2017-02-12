@@ -51,7 +51,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>catalog.api</artifactId>
-            <version>1.4.17</version>
+            <version>1.4.20-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
@@ -133,7 +133,7 @@
                         <Bundle-Name>MatOnto Catalog REST Services</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
-                            org.matonto.catalog.rest; provide:=true
+                            org.matonto.catalog.rest
                         </Export-Package>
                         <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>

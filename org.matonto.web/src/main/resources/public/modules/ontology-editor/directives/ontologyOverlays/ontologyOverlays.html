@@ -29,14 +29,10 @@
 <create-property-overlay ng-if="dvm.sm.showCreatePropertyOverlay"></create-property-overlay>
 <create-individual-overlay ng-if="dvm.sm.showCreateIndividualOverlay"></create-individual-overlay>
 <ontology-close-overlay ng-if="dvm.sm.showCloseOverlay"></ontology-close-overlay>
-<confirmation-overlay ng-if="dvm.sm.showRemoveIndividualPropertyOverlay" header-text="'Remove Individual Property'"
-                      confirm-click="dvm.removeIndividualProperty()" cancel-click="dvm.sm.showRemoveIndividualPropertyOverlay = false"
-                      confirm-text="'Yes'" cancel-text="'No'">
-    <p>Are you sure you want to remove property:<br><strong>{{dvm.sm.key}}</strong></p>
-    <p>with value:<br><strong>{{dvm.sm.selected[dvm.sm.key][dvm.sm.index]['@value'] || dvm.sm.selected[dvm.sm.key][dvm.sm.index]['@id']}}</strong></p>
-    <p>from:<br><strong>{{dvm.sm.selected['@id']}}</strong>?</p>
-</confirmation-overlay>
 <confirmation-overlay ng-if="dvm.sm.showSaveOverlay" header-text="'Save Ontology Changes'" confirm-click="dvm.save()"
                       cancel-click="dvm.sm.showSaveOverlay = false" confirm-text="'Yes'" cancel-text="'No'">
-    <p>Are you sure that you want to save changes to <strong>{{dvm.om.getOntologyIRI(dvm.sm.ontology) || dvm.sm.state.ontologyId}}</strong>?</p>
+    <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
+    <p>Are you sure that you want to save changes to <strong>{{dvm.om.getOntologyIRI(dvm.sm.listItem.ontology) || dvm.sm.listItem.ontologyId}}</strong>?</p>
 </confirmation-overlay>
+<commit-overlay ng-if="dvm.sm.showCommitOverlay"></commit-overlay>
+<create-branch-overlay ng-if="dvm.sm.showCreateBranchOverlay"></create-branch-overlay>

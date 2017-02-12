@@ -39,7 +39,6 @@
          * @scope
          * @restrict E
          * @requires $q
-         * @requires prefixes.service:prefixes
          * @requires delimitedManager.service:delimitedManagerService
          * @requires mapperState.service:mapperStateService
          *
@@ -54,9 +53,9 @@
          */
         .directive('fileUploadForm', fileUploadForm);
 
-        fileUploadForm.$inject = ['$q', 'prefixes', 'delimitedManagerService', 'mapperStateService'];
+        fileUploadForm.$inject = ['$q', 'delimitedManagerService', 'mapperStateService'];
 
-        function fileUploadForm($q, prefixes, delimitedManagerService, mapperStateService) {
+        function fileUploadForm($q, delimitedManagerService, mapperStateService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -79,16 +78,12 @@
                                 dvm.dm.fileName = data;
                                 dvm.errorMessage = '';
                                 return dvm.dm.previewFile(50);
-                            }, errorMessage => $q.reject(errorMessage)).then(() => {
-                                dvm.state.setInvalidProps();
-                            }, onError);
+                            }, $q.reject).then(() => dvm.state.setInvalidProps(), onError);
                         }
                     }
                     $scope.$watch('dvm.dm.separator', (newValue, oldValue) => {
                         if (newValue !== oldValue && !dvm.isExcel()) {
-                            dvm.dm.previewFile(50).then(() => {
-                                dvm.state.setInvalidProps();
-                            }, onError);
+                            dvm.dm.previewFile(50).then(() => dvm.state.setInvalidProps(), onError);
                         }
                     });
                     function onError(errorMessage) {

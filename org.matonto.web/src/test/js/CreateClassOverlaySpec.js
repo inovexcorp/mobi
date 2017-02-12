@@ -24,16 +24,15 @@ describe('Create Class Overlay directive', function() {
     var $compile,
         scope,
         element,
+        controller,
         ontologyManagerSvc,
         deferred,
         ontologyStateSvc,
         prefixes;
 
-
     beforeEach(function() {
         module('templates');
         module('createClassOverlay');
-        mockPrefixes();
         injectRegexConstant();
         injectCamelCaseFilter();
         injectSplitIRIFilter();
@@ -50,35 +49,51 @@ describe('Create Class Overlay directive', function() {
             deferred = _$q_.defer();
             prefixes = _prefixes_;
         });
-    });
 
-    beforeEach(function() {
         element = $compile(angular.element('<create-class-overlay></create-class-overlay>'))(scope);
         scope.$digest();
     });
+
     describe('replaces the element with the correct html', function() {
-        it('for a DIV', function() {
+        it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
-        });
-        it('based on overlay class', function() {
+            expect(element.hasClass('create-class-overlay')).toBe(true);
             expect(element.hasClass('overlay')).toBe(true);
         });
-        it('based on content class', function() {
-            var contents = element.querySelectorAll('.content');
-            expect(contents.length).toBe(1);
+        it('with a .content', function() {
+            expect(element.querySelectorAll('.content').length).toBe(1);
         });
-        it('based on form', function() {
-            var forms = element.find('form');
-            expect(forms.length).toBe(1);
+        it('with a form', function() {
+            expect(element.find('form').length).toBe(1);
         });
-        it('based on btn-container class', function() {
-            var containers = element.querySelectorAll('.btn-container');
-            expect(containers.length).toBe(1);
+        it('with a static-iri', function() {
+            expect(element.find('static-iri').length).toBe(1);
+        });
+        it('with a custom-label', function() {
+            expect(element.find('custom-label').length).toBe(1);
+        });
+        it('with a text-area', function() {
+            expect(element.find('text-area').length).toBe(1);
+        });
+        it('with a .btn-container', function() {
+            expect(element.querySelectorAll('.btn-container').length).toBe(1);
+        });
+        it('depending on whether there is an error', function() {
+            expect(element.find('error-display').length).toBe(0);
+
+            controller = element.controller('createClassOverlay');
+            controller.error = 'Error';
+            scope.$digest();
+            expect(element.find('error-display').length).toBe(1);
+        });
+        it('with buttons to create and cancel', function() {
+            var buttons = element.querySelectorAll('.btn-container button');
+            expect(buttons.length).toBe(2);
+            expect(['Cancel', 'Create']).toContain(angular.element(buttons[0]).text().trim());
+            expect(['Cancel', 'Create']).toContain(angular.element(buttons[1]).text().trim());
         });
     });
     describe('controller methods', function() {
-        var controller;
-
         beforeEach(function() {
             controller = element.controller('createClassOverlay');
         });
@@ -106,16 +121,30 @@ describe('Create Class Overlay directive', function() {
             expect(controller.clazz['@id']).toBe('begin' + 'then' + 'end');
         });
         it('create calls the correct manager functions', function() {
-            ontologyManagerSvc.getListItemById.and.returnValue({subClasses: [], classHierarchy: []});
             controller.clazz = {'@id': 'class-iri'};
             controller.clazz[prefixes.dcterms + 'title'] = [{'@value': 'label'}];
             controller.clazz[prefixes.dcterms + 'description'] = [{'@value': 'description'}];
             controller.create();
             expect(_.get(controller.clazz, 'matonto.originalIRI')).toEqual(controller.clazz['@id']);
-            expect(ontologyManagerSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.ontology, controller.clazz);
-            expect(ontologyManagerSvc.getListItemById).toHaveBeenCalledWith(ontologyStateSvc.state.ontologyId);
+            expect(ontologyManagerSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontology,
+                controller.clazz);
+            expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
+                controller.clazz);
             expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(controller.clazz['@id']);
             expect(ontologyStateSvc.showCreateClassOverlay).toBe(false);
         });
+    });
+    it('should call create when the button is clicked', function() {
+        controller = element.controller('createClassOverlay');
+        spyOn(controller, 'create');
+
+        var button = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
+        button.triggerHandler('click');
+        expect(controller.create).toHaveBeenCalled();
+    });
+    it('should set the correct state when the cancel button is clicked', function() {
+        var button = angular.element(element.querySelectorAll('.btn-container button.btn-default')[0]);
+        button.triggerHandler('click');
+        expect(ontologyStateSvc.showCreateClassOverlay).toBe(false);
     });
 });

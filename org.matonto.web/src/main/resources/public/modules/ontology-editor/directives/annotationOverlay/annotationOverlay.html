@@ -20,14 +20,14 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="overlay">
+<div class="annotation-overlay overlay">
     <form name="dvm.annotationForm" class="content clearfix" novalidate autocomplete="off">
         <h6>{{dvm.sm.editingAnnotation ? 'Edit Annotation' : 'Add Annotation'}}</h6>
         <div class="form-group">
             <label class="control-label">Annotation</label>
             <ui-select ng-model="dvm.sm.annotationSelect" ng-disabled="dvm.sm.editingAnnotation">
                 <ui-select-match placeholder="Select an annotation">{{dvm.ro.getItemIri($select.selected)}}</ui-select-match>
-                <ui-select-choices group-by="dvm.getItemNamespace" repeat="annotation in dvm.sm.listItem.annotations | filter: $select.search | orderBy:'localName'">
+                <ui-select-choices group-by="dvm.util.getItemNamespace" repeat="annotation in dvm.sm.listItem.annotations | filter: $select.search | orderBy:'localName'">
                     <div ng-bind-html="annotation.localName | highlight: $select.search | trusted"></div>
                 </ui-select-choices>
             </ui-select>
