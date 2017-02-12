@@ -30,46 +30,37 @@ describe('Prop Select directive', function() {
         module('templates');
         module('propSelect');
         mockUtil();
-
-        module(function($provide) {
-            $provide.value('highlightFilter', jasmine.createSpy('highlightFilter'));
-            $provide.value('trustedFilter', jasmine.createSpy('trustedFilter'));
-        });
+        injectHighlightFilter();
+        injectTrustedFilter();
 
         inject(function(_$compile_, _$rootScope_, _utilService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             utilSvc = _utilService_;
         });
-    });
 
+        scope.props = [];
+        scope.selectedProp = '';
+        scope.onChange = jasmine.createSpy('onChange');
+        this.element = $compile(angular.element('<prop-select props="props" selected-prop="selectedProp" on-change="onChange()"></prop-select>'))(scope);
+        scope.$digest();
+    });
     describe('in isolated scope', function() {
         beforeEach(function() {
-            scope.props = [];
-            scope.selectedProp = '';
-            scope.onChange = jasmine.createSpy('onChange');
-            this.element = $compile(angular.element('<prop-select props="props" selected-prop="selectedProp" on-change="onChange()"></prop-select>'))(scope);
-            scope.$digest();
+            this.isolatedScope = this.element.isolateScope();
         });
         it('props should be one way bound', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.props = [{}];
+            this.isolatedScope.props = [{}];
             scope.$digest();
             expect(scope.props).not.toEqual([{}]);
         });
         it('onChange should be called in the parent scope', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.onChange();
+            this.isolatedScope.onChange();
             expect(scope.onChange).toHaveBeenCalled();
         });
     });
     describe('controller bound variable', function() {
         beforeEach(function() {
-            scope.props = [];
-            scope.selectedProp = '';
-            scope.onChange = jasmine.createSpy('onChange');
-            this.element = $compile(angular.element('<prop-select props="props" selected-prop="selectedProp" on-change="onChange()"></prop-select>'))(scope);
-            scope.$digest();
             controller = this.element.controller('propSelect');
         });
         it('selectedProp should be two way bound', function() {
@@ -79,10 +70,6 @@ describe('Prop Select directive', function() {
         });
     });
     describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
-            this.element = $compile(angular.element('<prop-select props="props" selected-prop="selectedProp" on-change="onChange()"></prop-select>'))(scope);
-            scope.$digest();
-        });
         it('for wrapping containers', function() {
             expect(this.element.hasClass('prop-select')).toBe(true);
         });

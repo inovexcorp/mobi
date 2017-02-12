@@ -244,7 +244,7 @@ function mockMappingManager() {
             this.deleteMapping = jasmine.createSpy('deleteMapping').and.returnValue($q.when());
             this.getMappingId = jasmine.createSpy('getMappingId').and.returnValue('');
             this.createNewMapping = jasmine.createSpy('createNewMapping').and.returnValue([]);
-            this.setSourceOntology = jasmine.createSpy('setSourceOntology').and.returnValue([]);
+            this.setSourceOntologyInfo = jasmine.createSpy('setSourceOntologyInfo').and.returnValue([]);
             this.copyMapping = jasmine.createSpy('copyMapping').and.returnValue([]);
             this.addClass = jasmine.createSpy('addClass').and.returnValue([]);
             this.editIriTemplate = jasmine.createSpy('editIriTemplate').and.returnValue([]);
@@ -252,6 +252,7 @@ function mockMappingManager() {
             this.addObjectProp = jasmine.createSpy('addObjectProp').and.returnValue([]);
             this.removeProp = jasmine.createSpy('removeProp').and.returnValue([]);
             this.removeClass = jasmine.createSpy('removeClass').and.returnValue([]);
+            this.isPropertyMapping = jasmine.createSpy('isPropertyMapping').and.returnValue(true);
             this.isObjectMapping = jasmine.createSpy('isObjectMapping').and.returnValue(true);
             this.isDataMapping = jasmine.createSpy('isDataMapping').and.returnValue(true);
             this.isClassMapping = jasmine.createSpy('isClassMapping').and.returnValue(true);
@@ -261,8 +262,10 @@ function mockMappingManager() {
             this.findSourceOntologyWithClass = jasmine.createSpy('findSourceOntologyWithClass').and.returnValue({});
             this.findSourceOntologyWithProp = jasmine.createSpy('findSourceOntologyWithProp').and.returnValue({});
             this.getSourceOntologyId = jasmine.createSpy('getSourceOntologyId').and.returnValue('');
+            this.getSourceOntologyInfo = jasmine.createSpy('getSourceOntologyInfo').and.returnValue({});
             this.getSourceOntology = jasmine.createSpy('getSourceOntologyId').and.returnValue({});
             this.areCompatible = jasmine.createSpy('areCompatible').and.returnValue(true);
+            this.findIncompatibleMappings = jasmine.createSpy('findIncompatibleMappings').and.returnValue([]);
             this.findClassWithObjectMapping = jasmine.createSpy('findClassWithObjectMapping').and.returnValue({});
             this.findClassWithDataMapping = jasmine.createSpy('findClassWithDataMapping').and.returnValue({});
             this.getClassIdByMapping = jasmine.createSpy('getClassIdByMapping').and.returnValue('');
@@ -275,6 +278,7 @@ function mockMappingManager() {
             this.getPropsLinkingToClass = jasmine.createSpy('getPropsLinkingToClass').and.returnValue([]);
             this.getPropMappingTitle = jasmine.createSpy('getPropMappingTitle').and.returnValue('');
             this.getBaseClass = jasmine.createSpy('getBaseClass').and.returnValue({});
+            this.getClassMappingsByClassId = jasmine.createSpy('getClassMappingsByClassId').and.returnValue([]);
         });
     });
 }
@@ -743,6 +747,7 @@ function mockUtil() {
             this.getBeautifulIRI = jasmine.createSpy('getBeautifulIRI').and.callFake(_.identity);
             this.getPropertyValue = jasmine.createSpy('getPropertyValue').and.returnValue('');
             this.setPropertyValue = jasmine.createSpy('setPropertyValue').and.returnValue({});
+            this.getPropertyId = jasmine.createSpy('getPropertyId').and.returnValue('');
             this.getDctermsValue = jasmine.createSpy('getDctermsValue').and.returnValue('');
             this.setDctermsValue = jasmine.createSpy('setDctermsValue').and.returnValue({});
             this.mergingArrays = jasmine.createSpy('mergingArrays');

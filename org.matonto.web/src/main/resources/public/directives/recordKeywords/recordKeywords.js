@@ -26,50 +26,47 @@
     angular
         /**
          * @ngdoc overview
-         * @name entityDates
+         * @name recordKeywords
+         * @requires catalogManager
          *
          * @description
-         * The `entityDates` module only provides the `entityDates` directive which creates a div
-         * with displays for an entity's dcterms:issued and dcterms:modified date property values.
+         * The `recordKeywords` module only provides the `recordKeywords` directive which creates a div with
+         * a display of all the keywords in the passed record JSON-LD object.
          */
-        .module('entityDates', [])
+        .module('recordKeywords', [])
         /**
          * @ngdoc directive
-         * @name entityDates.directive:entityDates
+         * @name recordKeywords.directive:recordKeywords
          * @scope
          * @restrict E
-         * @requires $filter
-         * @requires util.service:utilService
+         * @requires prefixes.service:prefixes
          *
          * @description
-         * `entityDates` is a directive which creates a div with displays for a JSON-LD object's
-         * dcterms:issued and dcterms:modified property values. Displays the dates in "short" form.
-         * If it can't find one of the dates, displays "(No Date Specified)". The directive is
-         * replaced by the contents of its template.
+         * `recordKeywords` is a directive that creates a div containing a display of all the keyword property
+         * values of the pased JSON-LD record object. The directive is replaced with the content of the template.
          *
-         * @param {Object} entity A JSON-LD object
+         * @param {Object} record The JSON-LD object for a record
          */
-        .directive('entityDates', entityDates);
+        .directive('recordKeywords', recordKeywords);
 
-    entityDates.$inject = ['$filter', 'utilService'];
+    recordKeywords.$inject = ['prefixes'];
 
-    function entityDates($filter, utilService) {
+    function recordKeywords(prefixes) {
         return {
             restrict: 'E',
             replace: true,
             controllerAs: 'dvm',
             scope: {
-                entity: '<'
+                record: '<'
             },
             controller: function() {
                 var dvm = this;
 
-                dvm.getDate = function(entity, key) {
-                    var dateStr = utilService.getDctermsValue(entity, key);
-                    return dateStr ? $filter('date')(new Date(dateStr), 'short') : '(No Date Specified)';
+                dvm.getKeywords = function(record) {
+                    return _.map(_.get(record, prefixes.catalog + 'keyword', []), '@value');
                 }
             },
-            templateUrl: 'modules/catalog/directives/entityDates/entityDates.html'
+            templateUrl: 'directives/recordKeywords/recordKeywords.html'
         };
     }
 })();

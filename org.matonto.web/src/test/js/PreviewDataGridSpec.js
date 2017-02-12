@@ -52,12 +52,12 @@ describe('Preview Data Grid directive', function() {
             render: jasmine.createSpy('render'),
             deselectCell: jasmine.createSpy('deselectCell')
         };
+        this.element = $compile(angular.element('<preview-data-grid></preview-data-grid>'))(scope);
+        scope.$digest();
     });
 
     describe('should update when', function() {
         beforeEach(function() {
-            this.element = $compile(angular.element('<preview-data-grid></preview-data-grid>'))(scope);
-            scope.$digest();
             controller = this.element.controller('previewDataGrid');
             controller.hotTable = hotTable;
         });
@@ -74,10 +74,6 @@ describe('Preview Data Grid directive', function() {
         });
     });
     describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
-            this.element = $compile(angular.element('<preview-data-grid></preview-data-grid>'))(scope);
-            scope.$digest();
-        });
         it('for wrapping containers', function() {
             expect(this.element.hasClass('preview-data-grid')).toBe(true);
         });

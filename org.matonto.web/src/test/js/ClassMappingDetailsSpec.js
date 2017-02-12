@@ -24,6 +24,7 @@ describe('Class Mapping Details directive', function() {
     var $compile,
         scope,
         prefixes,
+        utilSvc,
         ontologyManagerSvc,
         mappingManagerSvc,
         mapperStateSvc,
@@ -38,79 +39,57 @@ describe('Class Mapping Details directive', function() {
         mockMappingManager();
         mockMapperState();
         mockDelimitedManager();
+        mockUtil();
 
-        inject(function(_$compile_, _$rootScope_, _prefixes_, _ontologyManagerService_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _prefixes_, _utilService_, _ontologyManagerService_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             prefixes = _prefixes_;
+            utilSvc = _utilService_;
             ontologyManagerSvc = _ontologyManagerService_;
             mappingManagerSvc = _mappingManagerService_;
             mapperStateSvc = _mapperStateService_;
             delimitedManagerSvc = _delimitedManagerService_;
         });
+
+        mapperStateSvc.mapping = {jsonld: []};
+        delimitedManagerSvc.dataRows = [['']];
+        this.element = $compile(angular.element('<class-mapping-details></class-mapping-details>'))(scope);
+        scope.$digest();
     });
 
     describe('controller methods', function() {
         beforeEach(function() {
-            mapperStateSvc.mapping = {jsonld: []};
-            delimitedManagerSvc.dataRows = [['']];
-            this.element = $compile(angular.element('<class-mapping-details></class-mapping-details>'))(scope);
-            scope.$digest();
             controller = this.element.controller('classMappingDetails');
         });
         it('should create the IRI template for the class mapping', function() {
-            var result = controller.getIriTemplate();
-            expect(typeof result).toBe('string');
+            expect(_.isString(controller.getIriTemplate())).toBe(true);
         });
-        describe('should get the id of the linked class mapping of a property mapping', function() {
-            beforeEach(function() {
-                this.classId = 'class';
-                this.propMapping = {};
-                this.propMapping[prefixes.delim + 'classMapping'] = [{'@id': this.classId}];
-            })
-            it('unless it is not an object property mapping', function() {
-                mappingManagerSvc.isObjectMapping.and.returnValue(false);
-                var result = controller.getLinkedClassId(this.propMapping);
-                expect(result).toBe('');
-            });
-            it('if it is an object property mapping', function() {
-                mappingManagerSvc.isObjectMapping.and.returnValue(true);
-                var result = controller.getLinkedClassId(this.propMapping);
-                expect(result).toBe(this.classId);
-            });
+        it('should get the id of the linked class mapping of a property mapping', function() {
+            var propMapping = {};
+            var result = controller.getLinkedClassId(propMapping);
+            expect(utilSvc.getPropertyId).toHaveBeenCalledWith(propMapping, prefixes.delim + 'classMapping');
+            expect(_.isString(result)).toBe(true);
         });
-        describe('should get the linked column index of a property mapping', function() {
-            beforeEach(function() {
-                this.columnIndex = '0';
-                this.propMapping = {};
-                this.propMapping[prefixes.delim + 'columnIndex'] = [{'@value': '' + this.columnIndex}];
-            });
-            it('unless it is for an object property', function() {
-                mappingManagerSvc.isDataMapping.and.returnValue(false);
-                var result = controller.getLinkedColumnIndex(this.propMapping);
-                expect(result).toBe('');
-            });
-            it('if it is for an object property', function() {
-                mappingManagerSvc.isDataMapping.and.returnValue(true);
-                var result = controller.getLinkedColumnIndex(this.propMapping);
-                expect(result).toBe(this.columnIndex);
-            });
-        })
+        it('should get the linked column index of a property mapping', function() {
+            var propMapping = {};
+            var result = controller.getLinkedColumnIndex(propMapping);
+            expect(utilSvc.getPropertyValue).toHaveBeenCalledWith(propMapping, prefixes.delim + 'columnIndex');
+            expect(_.isString(result)).toBe(true);
+        });
         it('should get a class name', function() {
-            var result = controller.getClassName({'@id': ''});
+            expect(_.isString(controller.getClassName({'@id': ''}))).toBe(true);
             expect(mappingManagerSvc.getClassIdByMapping).toHaveBeenCalledWith({'@id': ''});
             expect(mappingManagerSvc.findSourceOntologyWithClass).toHaveBeenCalled();
             expect(ontologyManagerSvc.getEntity).toHaveBeenCalled();
             expect(ontologyManagerSvc.getEntityName).toHaveBeenCalled();
-            expect(typeof result).toBe('string');
         });
         it('should get a property name', function() {
-            var result = controller.getPropName({'@id': ''});
+            expect(_.isString(controller.getPropName({'@id': ''}))).toBe(true);
             expect(mappingManagerSvc.getPropIdByMapping).toHaveBeenCalledWith({'@id': ''});
             expect(mappingManagerSvc.findSourceOntologyWithProp).toHaveBeenCalled();
             expect(ontologyManagerSvc.getEntity).toHaveBeenCalled();
             expect(ontologyManagerSvc.getEntityName).toHaveBeenCalled();
-            expect(typeof result).toBe('string');
         });
         describe('should get the value of a property', function() {
             it('if it is a data property mapping', function() {
@@ -176,9 +155,6 @@ describe('Class Mapping Details directive', function() {
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            mapperStateSvc.mapping = {jsonld: []};
-            this.element = $compile(angular.element('<class-mapping-details></class-mapping-details>'))(scope);
-            scope.$digest();
             controller = this.element.controller('classMappingDetails');
             spyOn(controller, 'getPropName').and.returnValue('');
             spyOn(controller, 'getPropValue').and.returnValue('');
@@ -217,87 +193,68 @@ describe('Class Mapping Details directive', function() {
         });
     });
     it('should set the right state for editing the IRI template when the link is clicked', function() {
-        mapperStateSvc.mapping = {jsonld: []};
-        var element = $compile(angular.element('<class-mapping-details></class-mapping-details>'))(scope);
-        scope.$digest();
-
-        var iriTemplateLink = angular.element(element.querySelectorAll('.iri-template custom-label a')[0]);
+        var iriTemplateLink = angular.element(this.element.querySelectorAll('.iri-template custom-label a')[0]);
         iriTemplateLink.triggerHandler('click');
         expect(mapperStateSvc.editIriTemplate).toBe(true);
     });
     it('should call addProp when the Add Property link is clicked', function() {
-        mapperStateSvc.mapping = {jsonld: []};
-        var element = $compile(angular.element('<class-mapping-details></class-mapping-details>'))(scope);
-        scope.$digest();
-        controller = element.controller('classMappingDetails');
+        controller = this.element.controller('classMappingDetails');
         spyOn(controller, 'addProp');
 
-        var addPropButton = angular.element(element.querySelectorAll('.class-mapping-props custom-label button')[0]);
+        var addPropButton = angular.element(this.element.querySelectorAll('.class-mapping-props custom-label button')[0]);
         addPropButton.triggerHandler('click');
         expect(controller.addProp).toHaveBeenCalled();
     });
     it('should select a property when clicked', function() {
-        mapperStateSvc.mapping = {jsonld: []};
-        var element = $compile(angular.element('<class-mapping-details></class-mapping-details>'))(scope);
-        scope.$digest();
         var property = {'@id': 'prop'};
         mappingManagerSvc.getPropMappingsByClass.and.returnValue([property]);
-        controller = element.controller('classMappingDetails');
+        controller = this.element.controller('classMappingDetails');
         spyOn(controller, 'getPropName').and.returnValue('');
         spyOn(controller, 'getPropValue').and.returnValue('');
         scope.$digest();
         spyOn(controller, 'getLinkedColumnIndex').and.returnValue('0');
 
-        var propertyButton = angular.element(element.querySelectorAll('.prop-list button')[0]);
+        var propertyButton = angular.element(this.element.querySelectorAll('.prop-list button')[0]);
         propertyButton.triggerHandler('click');
         expect(mapperStateSvc.selectedPropMappingId).toBe(property['@id']);
         expect(mapperStateSvc.highlightIndexes).toEqual(['0']);
     });
     it('should call switchClass when a property is double clicked', function() {
-        mapperStateSvc.mapping = {jsonld: []};
-        var element = $compile(angular.element('<class-mapping-details></class-mapping-details>'))(scope);
-        scope.$digest();
         var property = {};
         mappingManagerSvc.getPropMappingsByClass.and.returnValue([property]);
-        controller = element.controller('classMappingDetails');
+        controller = this.element.controller('classMappingDetails');
         spyOn(controller, 'getPropName').and.returnValue('');
         spyOn(controller, 'getPropValue').and.returnValue('');
         spyOn(controller, 'switchClass');
         scope.$digest();
 
-        var propertyButton = angular.element(element.querySelectorAll('.prop-list button')[0]);
+        var propertyButton = angular.element(this.element.querySelectorAll('.prop-list button')[0]);
         propertyButton.triggerHandler('dblclick');
         expect(controller.switchClass).toHaveBeenCalled();
     });
     it('should call editProp when an edit property link is clicked', function() {
-        mapperStateSvc.mapping = {jsonld: []};
-        var element = $compile(angular.element('<class-mapping-details></class-mapping-details>'))(scope);
-        scope.$digest();
         var property = {};
         mappingManagerSvc.getPropMappingsByClass.and.returnValue([property]);
-        controller = element.controller('classMappingDetails');
+        controller = this.element.controller('classMappingDetails');
         spyOn(controller, 'getPropName').and.returnValue('');
         spyOn(controller, 'getPropValue').and.returnValue('');
         spyOn(controller, 'editProp');
         scope.$digest();
 
-        var editPropLink = angular.element(element.querySelectorAll('.prop-list button .edit-prop')[0]);
+        var editPropLink = angular.element(this.element.querySelectorAll('.prop-list button .edit-prop')[0]);
         editPropLink.triggerHandler('click');
         expect(controller.editProp).toHaveBeenCalledWith(property);
     });
     it('should call deleteProp when a delete property link is clicked', function() {
-        mapperStateSvc.mapping = {jsonld: []};
-        var element = $compile(angular.element('<class-mapping-details></class-mapping-details>'))(scope);
-        scope.$digest();
         var property = {};
         mappingManagerSvc.getPropMappingsByClass.and.returnValue([property]);
-        controller = element.controller('classMappingDetails');
+        controller = this.element.controller('classMappingDetails');
         spyOn(controller, 'getPropName').and.returnValue('');
         spyOn(controller, 'getPropValue').and.returnValue('');
         spyOn(controller, 'deleteProp');
         scope.$digest();
 
-        var deletePropLink = angular.element(element.querySelectorAll('.prop-list button .delete-prop')[0]);
+        var deletePropLink = angular.element(this.element.querySelectorAll('.prop-list button .delete-prop')[0]);
         deletePropLink.triggerHandler('click');
         expect(controller.deleteProp).toHaveBeenCalledWith(property);
     });

@@ -38,10 +38,12 @@
          * @name createMappingOverlay.directive:createMappingOverlay
          * @scope
          * @restrict E
-         * @requires  $q
-         * @requires  $filter
-         * @requires  mappingManager.service:mappingManagerService
-         * @requires  mapperState.service:mapperStateService
+         * @requires $q
+         * @requires $filter
+         * @requires mappingManager.service:mappingManagerService
+         * @requires mapperState.service:mapperStateService
+         * @requires catalogManager.service:catalogManagerService
+         * @requires prefixes.service:prefixes
          *
          * @description
          * `createMappingOverlay` is a directive that creates an overlay with functionality to create a
@@ -51,9 +53,9 @@
          */
         .directive('createMappingOverlay', createMappingOverlay);
 
-        createMappingOverlay.$inject = ['$q', '$filter', 'mappingManagerService', 'mapperStateService']
+        createMappingOverlay.$inject = ['$q', '$filter', 'mappingManagerService', 'mapperStateService', 'catalogManagerService', 'prefixes']
 
-        function createMappingOverlay($q, $filter, mappingManagerService, mapperStateService) {
+        function createMappingOverlay($q, $filter, mappingManagerService, mapperStateService, catalogManagerService, prefixes) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -63,6 +65,7 @@
                     var dvm = this;
                     dvm.state = mapperStateService;
                     dvm.mm = mappingManagerService;
+                    dvm.cm = catalogManagerService;
                     dvm.mappingType = 'new';
                     dvm.errorMessage = '';
                     dvm.newName = $filter('splitIRI')(_.get(dvm.state.mapping, 'id', '')).end;
@@ -83,15 +86,19 @@
                         } else {
                             dvm.mm.getMapping(dvm.savedMappingId).then(mapping => {
                                 deferred.resolve(dvm.mm.copyMapping(mapping, dvm.state.mapping.id));
-                            }, error => {
-                                deferred.reject(error);
-                            });
+                            }, deferred.reject);
                         }
 
                         deferred.promise.then(mapping => {
                             dvm.state.mapping.jsonld = mapping;
-                            return dvm.mm.getSourceOntologies(dvm.mm.getSourceOntologyId(dvm.state.mapping.jsonld));
-                        }, error => $q.reject(error)).then(ontologies => {
+                            var sourceOntologyInfo = dvm.mm.getSourceOntologyInfo(mapping);
+                            if (_.get(sourceOntologyInfo, 'recordId')) {
+                                dvm.cm.getRecord(sourceOntologyInfo.recordId, dvm.cm.localCatalog['@id']).then(record => {
+                                    dvm.state.mapping.record = _.pick(record, ['@id', '@type', prefixes.dcterms + 'title', prefixes.dcterms + 'description', prefixes.dcterms + 'identifier', prefixes.dcterms + 'issued', prefixes.dcterms + 'modified', prefixes.catalog + 'keyword'])
+                                });
+                            }
+                            return dvm.mm.getSourceOntologies();
+                        }, $q.reject).then(ontologies => {
                             if (dvm.mm.areCompatible(dvm.state.mapping.jsonld, ontologies)) {
                                 dvm.state.sourceOntologies = ontologies;
                                 dvm.state.mappingSearchString = '';
@@ -106,6 +113,7 @@
                     function onError(message) {
                         dvm.errorMessage = message;
                         dvm.state.mapping.jsonld = [];
+                        dvm.state.mapping.record = undefined;
                     }
                 },
                 templateUrl: 'modules/mapper/directives/createMappingOverlay/createMappingOverlay.html'

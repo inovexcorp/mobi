@@ -36,13 +36,14 @@ describe('Invalid Ontology Overlay directive', function() {
             scope = _$rootScope_;
             mapperStateSvc = _mapperStateService_;
         });
+
+        mapperStateSvc.mapping = {id: ''};
+        this.element = $compile(angular.element('<invalid-ontology-overlay></invalid-ontology-overlay>'))(scope);
+        scope.$digest();
     });
 
     describe('controller methods', function() {
         beforeEach(function() {
-            mapperStateSvc.mapping = {id: ''};
-            this.element = $compile(angular.element('<invalid-ontology-overlay></invalid-ontology-overlay>'))(scope);
-            scope.$digest();
             controller = this.element.controller('invalidOntologyOverlay');
         });
         it('should set the correct state for closing the overlay', function() {
@@ -52,10 +53,6 @@ describe('Invalid Ontology Overlay directive', function() {
         });
     });
     describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
-            this.element = $compile(angular.element('<invalid-ontology-overlay></invalid-ontology-overlay>'))(scope);
-            scope.$digest();
-        });
         it('for wrapping containers', function() {
             expect(this.element.hasClass('invalid-ontology-overlay')).toBe(true);
             expect(this.element.querySelectorAll('form.content').length).toBe(1);

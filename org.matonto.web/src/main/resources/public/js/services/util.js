@@ -85,6 +85,10 @@
                 _.set(entity, "['" + propertyIRI + "'][0]['@value']", value);
             }
 
+            self.getPropertyId = function(entity, propertyIRI) {
+                return _.get(entity, "['" + propertyIRI + "'][0]['@id']", '');
+            }
+
             /**
              * @ngdoc method
              * @name getPropertyValue

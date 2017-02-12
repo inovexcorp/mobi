@@ -188,6 +188,7 @@ describe('Edit Mapping Page directive', function() {
     it('should call save when a save button is clicked', function() {
         controller = this.element.controller('editMappingPage');
         spyOn(controller, 'save');
+
         var saveButtons = this.element.querySelectorAll('tab block-footer button.btn-primary.save-btn');
         _.forEach(_.toArray(saveButtons), function(button) {
             controller.save.calls.reset();
