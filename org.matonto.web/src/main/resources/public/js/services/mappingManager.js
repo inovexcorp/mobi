@@ -52,10 +52,13 @@
          */
         .service('mappingManagerService', mappingManagerService);
 
-        mappingManagerService.$inject = ['$window', '$filter', '$http', '$q', 'utilService', 'ontologyManagerService', 'prefixes', 'uuid'];
+        mappingManagerService.$inject = ['$window', '$filter', '$http', '$q', 'utilService', 'ontologyManagerService', 'catalogManagerService', 'prefixes', 'uuid'];
 
-        function mappingManagerService($window, $filter, $http, $q, utilService, ontologyManagerService, prefixes, uuid) {
+        function mappingManagerService($window, $filter, $http, $q, utilService, ontologyManagerService, catalogManagerService, prefixes, uuid) {
             var self = this,
+                om = ontologyManagerService,
+                cm = catalogManagerService,
+                util = utilService,
                 prefix = '/matontorest/mappings';
 
             /**
@@ -248,10 +251,14 @@
              * @param {Object[]} mapping The mapping JSON-LD array
              * @param {string} ontologyId The id of the ontology to set as the source ontology
              */
-            self.setSourceOntology = function(mapping, ontologyId) {
+            self.setSourceOntologyInfo = function(mapping, ontologyId, recordId, branchId, commitId) {
                 var mappingEntity = getMappingEntity(mapping);
                 mappingEntity[prefixes.delim + 'sourceOntology'] = [{'@id': ontologyId}];
+                mappingEntity[prefixes.delim + 'sourceRecord'] = [{'@id': recordId}];
+                mappingEntity[prefixes.delim + 'sourceBranch'] = [{'@id': branchId}];
+                mappingEntity[prefixes.delim + 'sourceCommit'] = [{'@id': commitId}];
             }
+
             /**
              * @ngdoc method
              * @name copyMapping
@@ -302,10 +309,10 @@
             self.addClass = function(mapping, ontology, classId) {
                 var classEntity = undefined;
                 // Check if class exists in ontology
-                if (ontologyManagerService.getEntity(ontology, classId)) {
+                if (om.getEntity(ontology, classId)) {
                     // Collect IRI sections for prefix and create class mapping
                     var splitIri = $filter('splitIRI')(classId);
-                    var ontologyDataName = utilService.getBeautifulIRI(self.getSourceOntologyId(mapping)).toLowerCase();
+                    var ontologyDataName = util.getBeautifulIRI(self.getSourceOntologyId(mapping)).toLowerCase();
                     classEntity = {
                         '@id': getMappingEntity(mapping)['@id'] + '/' + uuid.v4(),
                         '@type': [prefixes.delim + 'ClassMapping']
@@ -337,7 +344,7 @@
                 // Check if class mapping exists in mapping
                 if (entityExists(mapping, classMappingId)) {
                     var classMapping = getEntityById(mapping, classMappingId);
-                    var ontologyDataName = utilService.getBeautifulIRI(self.getSourceOntologyId(mapping)).toLowerCase();
+                    var ontologyDataName = util.getBeautifulIRI(self.getSourceOntologyId(mapping)).toLowerCase();
                     classMapping[prefixes.delim + 'hasPrefix'] = [{'@value': prefixes.data + ontologyDataName + '/' + prefixEnd}];
                     classMapping[prefixes.delim + 'localName'] = [{'@value': localNamePattern}];
                 }
@@ -363,8 +370,8 @@
             self.addDataProp = function(mapping, ontology, classMappingId, propId, columnIndex) {
                 var dataEntity;
                 // Check if class mapping exists and the property exists in the ontology
-                var propObj = ontologyManagerService.getEntity(ontology, propId);
-                if (entityExists(mapping, classMappingId) && propObj && ontologyManagerService.isDataTypeProperty(propObj)) {
+                var propObj = om.getEntity(ontology, propId);
+                if (entityExists(mapping, classMappingId) && propObj && om.isDataTypeProperty(propObj)) {
                     // Add new data mapping id to data properties of class mapping
                     dataEntity = {
                         '@id': getMappingEntity(mapping)['@id'] + '/' + uuid.v4()
@@ -374,7 +381,7 @@
                     classMapping[prefixes.delim + 'dataProperty'] = getDataProperties(classMapping);
                     classMapping[prefixes.delim + 'dataProperty'].push(angular.copy(dataEntity));
                     // Create data mapping
-                    dataEntity['@type'] = [prefixes.delim + 'DataMapping'];
+                    dataEntity['@type'] = [prefixes.delim + 'DataMapping', prefixes.delim + 'PropertyMapping'];
                     dataEntity[prefixes.delim + 'columnIndex'] = [{'@value': `${columnIndex}`}];
                     dataEntity[prefixes.delim + 'hasProperty'] = [{'@id': propId}];
                     mapping.push(dataEntity);
@@ -404,9 +411,9 @@
                 var objectEntity;
                 // Check if class mapping exists, range class mapping exists, object property exists in ontology,
                 // and object property range matches the range class mapping
-                var propObj = ontologyManagerService.getEntity(ontology, propId);
-                if (entityExists(mapping, classMappingId) && entityExists(mapping, rangeClassMappingId) && propObj && ontologyManagerService.isObjectProperty(propObj)
-                        && _.get(propObj, "['" + prefixes.rdfs + "range'][0]['@id']") === getEntityById(mapping, rangeClassMappingId)[prefixes.delim + 'mapsTo'][0]['@id']) {
+                var propObj = om.getEntity(ontology, propId);
+                if (entityExists(mapping, classMappingId) && entityExists(mapping, rangeClassMappingId) && propObj && om.isObjectProperty(propObj)
+                        && util.getPropertyId(propObj, prefixes.rdfs + 'range') === getEntityById(mapping, rangeClassMappingId)[prefixes.delim + 'mapsTo'][0]['@id']) {
                     // Add new object mapping id to object properties of class mapping
                     objectEntity = {
                         '@id': getMappingEntity(mapping)['@id'] + '/' + uuid.v4()
@@ -415,7 +422,7 @@
                     classMapping[prefixes.delim + 'objectProperty'] = getObjectProperties(classMapping);
                     classMapping[prefixes.delim + 'objectProperty'].push(angular.copy(objectEntity));
                     // Create object mapping
-                    objectEntity['@type'] = [prefixes.delim + 'ObjectMapping'];
+                    objectEntity['@type'] = [prefixes.delim + 'ObjectMapping', prefixes.delim + 'PropertyMapping'];
                     objectEntity[prefixes.delim + 'classMapping'] = [{'@id': rangeClassMappingId}];
                     objectEntity[prefixes.delim + 'hasProperty'] = [{'@id': propId}];
                     mapping.push(objectEntity);
@@ -508,22 +515,15 @@
              * @return {Promise} A Promise that resolves with a structured ontology if the call was successful;
              * rejects otherwise
              */
-            self.getOntology = function(ontologyId) {
+            self.getOntology = function(ontologyInfo) {
+                if (!validateOntologyInfo(ontologyInfo)) {
+                    return $q.reject('Missing identification information');
+                }
                 var deferred = $q.defer();
-                var onError = function(response) {
-                    deferred.reject(_.get(response, 'statusText', ''));
-                };
-                ontologyManagerService.getOntology(ontologyId)
-                    .then(response => {
-                        if (_.get(response, 'status') === 200) {
-                            var obj = _.pick(response.data, ['ontology', 'id']);
-                            deferred.resolve({id: obj.id, entities: obj.ontology});
-                        } else {
-                            onError(response);
-                        }
-                    }, onError);
+                cm.getResource(ontologyInfo.commitId, ontologyInfo.branchId, ontologyInfo.recordId, cm.localCatalog['@id'], false)
+                    .then(response => deferred.resolve({id: ontologyInfo.ontologyId, entities: response, recordId: ontologyInfo.recordId}), deferred.reject);
                 return deferred.promise;
-            };
+            }
             /**
              * @ngdoc method
              * @name getSourceOntologies
@@ -539,37 +539,24 @@
              * @returns {Promise} A promise that resolves to an array of objects if no id is passed or the
              * source ontologies are found; rejects otherwise
              */
-            self.getSourceOntologies = function(ontologyId) {
-                if (!ontologyId) {
+            self.getSourceOntologies = function(ontologyInfo) {
+                if (!validateOntologyInfo(ontologyInfo)) {
                     return $q.when([]);
                 }
-                var deferred1 = $q.defer();
-                var deferred2 = $q.defer();
-                var ontology = _.find(ontologyManagerService.list, {ontologyId: ontologyId});
-                if (ontology) {
-                    var obj = _.pick(ontology, ['ontologyId', 'ontology']);
-                    deferred1.resolve({id: obj.ontologyId, entities: obj.ontology});
-                } else {
-                    self.getOntology(ontologyId).then(ontology => {
-                        deferred1.resolve(ontology);
-                    }, error => {
-                        deferred1.reject(error);
+                var sourceOntology,
+                    deferred = $q.defer();
+                var ontologyObj = _.find(om.list, {ontologyId: ontologyInfo.ontologyId, recordId: ontologyInfo.recordId, branchId: ontologyInfo.branchId, commitId: ontologyInfo.commitId});
+                var promise = ontologyObj ? $q.when({id: ontologyInfo.ontologyId, entities: ontologyObj.ontology, recordId: ontologyInfo.recordId}) : self.getOntology(ontologyInfo);
+                promise.then(ontology => {
+                    sourceOntology = ontology;
+                    return om.getImportedOntologies(ontology.id, ontologyInfo.branchId, ontologyInfo.commitId);
+                }, $q.reject).then(imported => {
+                    var importedOntologies = _.map(imported, obj => {
+                        return {id: obj.ontologyId, entities: obj.ontology};
                     });
-                }
-                deferred1.promise.then(ontology => {
-                    ontologyManagerService.getImportedOntologies(ontology.id).then(imported => {
-                        var importedOntologies = _.map(imported, obj => {
-                            return {id: obj.ontologyId, entities: obj.ontology};
-                        });
-                        deferred2.resolve(_.concat(ontology, importedOntologies));
-                    }, error => {
-                        deferred2.reject(error);
-                    });
-                }, error => {
-                    deferred2.reject(error);
-                });
-
-                return deferred2.promise;
+                    deferred.resolve(_.concat(sourceOntology, importedOntologies));
+                }, deferred.reject);
+                return deferred.promise;
             }
             /**
              * @ngdoc method
@@ -583,10 +570,27 @@
              * @returns {string} The id of the source ontology of a mapping
              */
             self.getSourceOntologyId = function(mapping) {
-                return _.get(
-                    getMappingEntity(mapping),
-                    "['" + prefixes.delim + "sourceOntology'][0]['@id']",
-                    ''
+                return _.get(self.getSourceOntologyInfo(mapping), 'ontologyId', '');
+            }
+            /**
+             * @ngdoc method
+             * @name getSourceOntologyInfo
+             * @methodOf mappingManager.service:mappingManagerService
+             *
+             * @description
+             * Collects all the source ontology information from the passed mapping. This includes the
+             * ontology id, the record id, the branch id, and the commit id.
+             *
+             * @param {Object[]} mapping The mapping JSON-LD array
+             * @return {Object} An object with keys for the ontology, record, branch, and commit ids of
+             * the source ontology of the passed mapping
+             */
+            self.getSourceOntologyInfo = function(mapping) {
+                return _.mapValues(
+                    _.mapKeys(_.pick(getMappingEntity(mapping), [prefixes.delim + 'sourceOntology', prefixes.delim + 'sourceRecord', prefixes.delim + 'sourceBranch', prefixes.delim + 'sourceCommit']),
+                        (val, key) => _.lowerFirst(_.replace(key, prefixes.delim + 'source', '')) + 'Id'
+                    ),
+                    (val, key) => _.get(val, "[0]['@id']")
                 );
             }
             /**
@@ -620,7 +624,7 @@
              * @return {Object} The ontology with the class with the passed IRI
              */
             self.findSourceOntologyWithClass = function(classIRI, ontologies) {
-                return _.find(ontologies, ontology => _.findIndex(ontologyManagerService.getClasses(ontology.entities), {'@id': classIRI}) !== -1);
+                return _.find(ontologies, ontology => _.findIndex(om.getClasses(ontology.entities), {'@id': classIRI}) !== -1);
             }
             /**
              * @ngdoc method
@@ -637,7 +641,7 @@
              */
             self.findSourceOntologyWithProp = function(propertyIRI, ontologies) {
                 return _.find(ontologies, ontology => {
-                    var properties = _.concat(ontologyManagerService.getDataTypeProperties(ontology.entities), ontologyManagerService.getObjectProperties(ontology.entities));
+                    var properties = _.concat(om.getDataTypeProperties(ontology.entities), om.getObjectProperties(ontology.entities));
                     return _.findIndex(properties, {'@id': propertyIRI}) !== -1;
                 });
             }
@@ -652,31 +656,54 @@
              * property type.
              *
              * @param {Object[]} mapping The mapping JSON-LD array
-             * @param {Object[]} ontololgies The array of ontologies to test for compatibililty with
+             * @param {Object[]} ontologies The array of ontologies to test for compatibility with
              * @return {boolean} True if the passed list of ontologies have not changed in an incompatible way;
              * false otherwise
              */
             self.areCompatible = function(mapping, ontologies) {
-                return !_.some(self.getAllClassMappings(mapping), classMapping => {
+                return self.findIncompatibleMappings(mapping, ontologies).length === 0;
+            }
+            /**
+             * @ngdoc method
+             * @name findIncompatibleMappings
+             * @methodOf mappingManager.service:mappingManagerService
+             *
+             * @description
+             * Finds the list of any Class, Data, or Object Mappings within the passed mapping that are no longer
+             * compatible with the passed list of source ontologies. A Class, Data, or Object is incompatible if
+             * its IRI doesn't exist in the ontologies. A ObjectMapping is also incompatible if its range has
+             * changed.
+             *
+             * @param {Object[]} mapping The mapping JSON-LD array
+             * @param {Object[]} ontologies The list of source ontologies to reference
+             * @return {Object[]} All incompatible entities within the mapping
+             */
+            self.findIncompatibleMappings = function(mapping, ontologies) {
+                var incompatibleMappings = [];
+                _.forEach(self.getAllClassMappings(mapping), classMapping => {
                     if (!self.findSourceOntologyWithClass(self.getClassIdByMapping(classMapping), ontologies)) {
-                        return true;
+                        incompatibleMappings.push(classMapping);
                     }
-                    return _.some(self.getPropMappingsByClass(mapping, classMapping['@id']), propMapping => {
+                    _.forEach(self.getPropMappingsByClass(mapping, classMapping['@id']), propMapping => {
                         var propId = self.getPropIdByMapping(propMapping);
                         var ontology = self.findSourceOntologyWithProp(propId, ontologies);
                         if (!ontology) {
-                            return true;
+                            incompatibleMappings.push(propMapping);
                         } else {
-                            var propObj = ontologyManagerService.getEntity(ontology.entities, propId);
-                            if (ontologyManagerService.isObjectProperty(propObj) && self.isDataMapping(propMapping)) {
-                                return true;
+                            var propObj = om.getEntity(ontology.entities, propId);
+                            if (om.isObjectProperty(propObj)) {
+                                var rangeClassId = self.getClassIdByMappingId(mapping, util.getPropertyId(propMapping, prefixes.delim + 'classMapping'));
+                                if (self.isDataMapping(propMapping) || util.getPropertyId(propObj, prefixes.rdfs + 'range') !== rangeClassId) {
+                                    incompatibleMappings.push(propMapping);
+                                }
                             }
-                            if (ontologyManagerService.isDataTypeProperty(propObj) && self.isObjectMapping(propMapping)) {
-                                return true;
+                            if (om.isDataTypeProperty(propObj) && self.isObjectMapping(propMapping)) {
+                                incompatibleMappings.push(propMapping);
                             }
                         }
                     });
                 });
+                return incompatibleMappings;
             }
 
             // Public helper methods
@@ -707,7 +734,7 @@
              * @returns {string} The id of the class mapped by the class mapping
              */
             self.getClassIdByMapping = function(classMapping) {
-                return _.get(classMapping, "['" + prefixes.delim + "mapsTo'][0]['@id']", '');
+                return util.getPropertyId(classMapping, prefixes.delim + 'mapsTo', '');
             }
             /**
              * @ngdoc method
@@ -737,7 +764,7 @@
              * @returns {string} The id of the property mapped by the property mapping
              */
             self.getPropIdByMapping = function(propMapping) {
-                return _.get(propMapping, "['" + prefixes.delim + "hasProperty'][0]['@id']", '');
+                return util.getPropertyId(propMapping, prefixes.delim + 'hasProperty', '');
             }
             /**
              * @ngdoc method
@@ -745,8 +772,8 @@
              * @methodOf mappingManager.service:mappingManagerService
              *
              * @description
-             * Retrieves the data mapping mapping the specified property from the specified class
-             * mapping in a mapping.
+             * Retrieves the data mapping which maps the specified property from the specified class
+             * mapping in the passed mapping.
              *
              * @param {Object[]} mapping The mapping JSON-LD array
              * @param {string} classMappingId The id of the class mapping with the requested data property
@@ -755,7 +782,7 @@
              */
             self.getDataMappingFromClass = function(mapping, classMappingId, propId) {
                 var dataProperties = _.map(getDataProperties(getEntityById(mapping, classMappingId)), '@id');
-                var dataMappings = getMappingsForProp(mapping, propId);
+                var dataMappings = self.getPropMappingsByPropId(mapping, propId);
                 if (dataProperties.length && dataMappings.length) {
                     return _.find(dataMappings, mapping => dataProperties.indexOf(mapping['@id']) >= 0);
                 }
@@ -835,6 +862,20 @@
              */
             self.isClassMapping = function(entity) {
                 return isType(entity, 'ClassMapping');
+            }
+            /**
+             * @ngdoc method
+             * @name isPropertyMapping
+             * @methodOf mappingManager.service:mappingManagerService
+             *
+             * @description
+             * Tests whether the passed mapping entity is a property mapping.
+             *
+             * @param {Object} entity A mapping entity
+             * @return {boolean} A boolean indicating whether the entity is a property mapping
+             */
+            self.isPropertyMapping = function(entity) {
+                return isType(entity, 'PropertyMapping');
             }
             /**
              * @ngdoc method
@@ -944,6 +985,37 @@
                 var usedClasses = _.map(self.getAllObjectMappings(mapping), "['" + prefixes.delim + "classMapping'][0]['@id']");
                 return _.get(_.filter(classes, classMap => !_.includes(usedClasses, classMap['@id'])), '0');
             }
+            /**
+             * @ngdoc method
+             * @name getClassMappingsByClassId
+             * @methodOf mappingManager.service:mappingManagerService
+             *
+             * @description
+             * Collects all class mappings in the passed mapping that map to the passed class IRI.
+             *
+             * @param {Object[]} mapping The mapping JSON-LD array
+             * @param {string} classId The IRI of the class to filter by
+             * @return {Object[]} THe array of class mappings for the identified class in the mapping
+             */
+            self.getClassMappingsByClassId = function(mapping, classId) {
+                return _.filter(self.getAllClassMappings(mapping), ["['" + prefixes.delim + "mapsTo'][0]['@id']", classId]);
+            }
+            /**
+             * @ngdoc method
+             * @name getClassMappingsByClassId
+             * @methodOf mappingManager.service:mappingManagerService
+             *
+             * @description
+             * Collects all property mappings in the passed mapping that map to the passed property IRI.
+             *
+             * @param {Object[]} mapping The mapping JSON-LD array
+             * @param {string} propId The IRI of the property to filter by
+             * @return {Object[]} THe array of property mappings for the identified property in the mapping
+             */
+            self.getPropMappingsByPropId = function(mapping, propId) {
+                var propMappings = _.concat(self.getAllDataMappings(mapping), self.getAllObjectMappings(mapping));
+                return _.filter(propMappings, [prefixes.delim + 'hasProperty', [{'@id': propId}]]);
+            }
 
             // Private helper methods
             function cleanPropertyArray(classMapping, propType) {
@@ -960,14 +1032,6 @@
             function entityExists(mapping, id) {
                 return !!getEntityById(mapping, id);
             }
-            function getClassMappingsByClass(mapping, classId) {
-                return _.filter(self.getAllClassMappings(mapping), ["['" + prefixes.delim + "mapsTo'][0]['@id']", classId]);
-            }
-
-            function getMappingsForProp(mapping, propId) {
-                var propMappings = _.concat(self.getAllDataMappings(mapping), self.getAllObjectMappings(mapping));
-                return _.filter(propMappings, [prefixes.delim + 'hasProperty', [{'@id': propId}]]);
-            }
             function findClassWithPropMapping(mapping, propMappingId, type) {
                 return _.find(self.getAllClassMappings(mapping), classMapping => _.map(getProperties(classMapping, type), '@id').indexOf(propMappingId) >= 0);
             }
@@ -981,10 +1045,13 @@
                 return _.get(classMapping, "['" + prefixes.delim + type + "']", []);
             }
             function isType(entity, type) {
-                return _.get(entity, "['@type'][0]") === prefixes.delim + type;
+                return _.includes(_.get(entity, "['@type']"), prefixes.delim + type);
             }
             function getMappingEntity(mapping) {
                 return _.get(getEntitiesByType(mapping, 'Mapping'), 0);
+            }
+            function validateOntologyInfo(obj) {
+                return _.intersection(_.keys(obj), ['ontologyId', 'recordId', 'branchId', 'commitId']).length === 4;
             }
             function onError(error, deferred) {
                 deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.'));

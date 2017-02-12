@@ -55,6 +55,7 @@ import org.matonto.catalog.api.ontologies.mcat.OntologyRecord;
 import org.matonto.catalog.api.ontologies.mcat.Record;
 import org.matonto.catalog.api.ontologies.mcat.Tag;
 import org.matonto.catalog.api.ontologies.mcat.UnversionedRecord;
+import org.matonto.catalog.api.ontologies.mcat.UserBranch;
 import org.matonto.catalog.api.ontologies.mcat.Version;
 import org.matonto.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import org.matonto.catalog.api.ontologies.mcat.VersionedRecord;
@@ -66,6 +67,7 @@ import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.orm.OrmFactory;
 import org.matonto.rdf.orm.Thing;
@@ -73,6 +75,7 @@ import org.matonto.rest.util.ErrorUtils;
 import org.matonto.rest.util.LinksUtils;
 import org.matonto.rest.util.jaxb.Links;
 import org.openrdf.model.vocabulary.DCTERMS;
+import org.openrdf.model.vocabulary.RDF;
 
 import java.io.BufferedWriter;
 import java.io.OutputStreamWriter;
@@ -367,20 +370,21 @@ public class CatalogRestImpl implements CatalogRest {
             Set<Resource> distributionIRIs = record.getUnversionedDistribution().stream()
                     .map(Thing::getResource)
                     .collect(Collectors.toSet());
-            List<Distribution> distributions = getSortedThingPage(distributionIRIs, this::getDistribution, sort,
-                    offset, limit, asc);
-            return createPaginatedResponse(uriInfo, distributions, distributionIRIs.size(), limit, offset);
+            return createPaginatedThingResponse(uriInfo, distributionIRIs, this::getDistribution, sort, offset, limit,
+                    asc, null);
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
         }
     }
 
     @Override
-    public Response createUnversionedDistribution(String catalogId, String recordId, String title, String description,
-                                                  String format, String accessURL, String downloadURL) {
+    public Response createUnversionedDistribution(ContainerRequestContext context, String catalogId, String recordId,
+                                                  String title, String description, String format, String accessURL,
+                                                  String downloadURL) {
         try {
             recordInCatalog(catalogId, recordId);
-            Distribution newDistribution = createDistribution(title, description, format, accessURL, downloadURL);
+            Distribution newDistribution = createDistribution(title, description, format, accessURL, downloadURL,
+                    context);
             catalogManager.addDistributionToUnversionedRecord(newDistribution, factory.createIRI(recordId));
             return Response.status(201).entity(newDistribution.getResource().stringValue()).build();
         } catch (MatOntoException e) {
@@ -433,15 +437,15 @@ public class CatalogRestImpl implements CatalogRest {
             Set<Resource> versionIRIs = record.getVersion().stream()
                     .map(Thing::getResource)
                     .collect(Collectors.toSet());
-            List<Version> versions = getSortedThingPage(versionIRIs, this::getVersion, sort, offset, limit, asc);
-            return createPaginatedResponse(uriInfo, versions, versionIRIs.size(), limit, offset);
+            return createPaginatedThingResponse(uriInfo, versionIRIs, this::getVersion, sort, offset, limit, asc, null);
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
         }
     }
 
     @Override
-    public Response createVersion(String catalogId, String recordId, String typeIRI, String title, String description) {
+    public Response createVersion(ContainerRequestContext context, String catalogId, String recordId, String typeIRI,
+                                  String title, String description) {
         try {
             recordInCatalog(catalogId, recordId);
             if (typeIRI == null || !versionFactories.keySet().contains(typeIRI)) {
@@ -452,6 +456,8 @@ public class CatalogRestImpl implements CatalogRest {
             }
 
             Version newVersion = catalogManager.createVersion(title, description, versionFactories.get(typeIRI));
+            newVersion.setProperty(getActiveUser(context, engineManager).getResource(),
+                    factory.createIRI(DCTERMS.PUBLISHER.stringValue()));
             catalogManager.addVersion(newVersion, factory.createIRI(recordId));
             return Response.status(201).entity(newVersion.getResource().stringValue()).build();
         } catch (MatOntoException e) {
@@ -570,21 +576,21 @@ public class CatalogRestImpl implements CatalogRest {
             Set<Resource> distributionIRIs = version.getVersionedDistribution().stream()
                     .map(Thing::getResource)
                     .collect(Collectors.toSet());
-            List<Distribution> distributions = getSortedThingPage(distributionIRIs, this::getDistribution, sort,
-                    offset, limit, asc);
-            return createPaginatedResponse(uriInfo, distributions, distributionIRIs.size(), limit, offset);
+            return createPaginatedThingResponse(uriInfo, distributionIRIs, this::getDistribution, sort, offset, limit,
+                    asc, null);
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
         }
     }
 
     @Override
-    public Response createVersionedDistribution(String catalogId, String recordId, String versionId, String title,
-                                                String description, String format, String accessURL,
-                                                String downloadURL) {
+    public Response createVersionedDistribution(ContainerRequestContext context, String catalogId, String recordId,
+                                                String versionId, String title, String description, String format,
+                                                String accessURL, String downloadURL) {
         try {
             testVersionPath(catalogId, recordId, versionId);
-            Distribution newDistribution = createDistribution(title, description, format, accessURL, downloadURL);
+            Distribution newDistribution = createDistribution(title, description, format, accessURL, downloadURL,
+                    context);
             catalogManager.addDistributionToVersion(newDistribution, factory.createIRI(versionId));
             return Response.status(201).entity(newDistribution.getResource().stringValue()).build();
         } catch (MatOntoException e) {
@@ -646,23 +652,36 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
-    public Response getBranches(UriInfo uriInfo, String catalogId, String recordId, String sort, int offset, int limit,
-                                boolean asc) {
+    public Response getBranches(ContainerRequestContext context, UriInfo uriInfo, String catalogId, String recordId,
+                                String sort, int offset, int limit, boolean asc, boolean applyUserFilter) {
         try {
             validatePaginationParams(sort, offset, limit);
             VersionedRDFRecord record = getRecord(catalogId, recordId, VersionedRDFRecord.TYPE);
             Set<Resource> branchIRIs = record.getBranch().stream()
                     .map(Thing::getResource)
                     .collect(Collectors.toSet());
-            List<Branch> branches = getSortedThingPage(branchIRIs, this::getBranch, sort, offset, limit, asc);
-            return createPaginatedResponse(uriInfo, branches, branchIRIs.size(), limit, offset);
+            Function<Branch, Boolean> filterFunction = null;
+            if (applyUserFilter) {
+                User activeUser = getActiveUser(context, engineManager);
+                filterFunction = branch -> {
+                    Set<String> types = branch.getProperties(factory.createIRI(RDF.TYPE.stringValue())).stream()
+                            .map(Value::stringValue)
+                            .collect(Collectors.toSet());
+                    return !types.contains(UserBranch.TYPE)
+                            || branch.getProperty(factory.createIRI(DCTERMS.PUBLISHER.stringValue())).get()
+                            .stringValue().equals(activeUser.getResource().stringValue());
+                };
+            }
+            return createPaginatedThingResponse(uriInfo, branchIRIs, this::getBranch, sort, offset, limit, asc,
+                    filterFunction);
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
         }
     }
 
     @Override
-    public Response createBranch(String catalogId, String recordId, String typeIRI, String title, String description) {
+    public Response createBranch(ContainerRequestContext context, String catalogId, String recordId, String typeIRI,
+                                 String title, String description) {
         try {
             recordInCatalog(catalogId, recordId);
             if (typeIRI == null || !branchFactories.keySet().contains(typeIRI)) {
@@ -673,6 +692,8 @@ public class CatalogRestImpl implements CatalogRest {
             }
 
             Branch newBranch = catalogManager.createBranch(title, description, branchFactories.get(typeIRI));
+            newBranch.setProperty(getActiveUser(context, engineManager).getResource(),
+                    factory.createIRI(DCTERMS.PUBLISHER.stringValue()));
             catalogManager.addBranch(newBranch, factory.createIRI(recordId));
             return Response.status(201).entity(newBranch.getResource().stringValue()).build();
         } catch (MatOntoException e) {
@@ -848,7 +869,6 @@ public class CatalogRestImpl implements CatalogRest {
     @Override
     public Response getConflicts(String catalogId, String recordId, String branchId, String targetBranchId,
                                  String rdfFormat) {
-
         try {
             Resource sourceHeadIRI = getHeadCommitIRI(catalogId, recordId, branchId);
             Resource targetHeadIRI = getHeadCommitIRI(catalogId, recordId, targetBranchId);
@@ -875,6 +895,8 @@ public class CatalogRestImpl implements CatalogRest {
                 throw ErrorUtils.sendError("User already has an InProgressCommit for Record " + recordId,
                         Response.Status.BAD_REQUEST);
             }
+            Branch branch = catalogManager.getBranch(factory.createIRI(branchId), branchFactories.get(Branch.TYPE))
+                    .orElseThrow(() -> ErrorUtils.sendError("Branch not found", Response.Status.BAD_REQUEST));
             InProgressCommit inProgressCommit = catalogManager.createInProgressCommit(activeUser,
                     factory.createIRI(recordId));
             catalogManager.addInProgressCommit(inProgressCommit);
@@ -888,6 +910,8 @@ public class CatalogRestImpl implements CatalogRest {
                     Stream.of(sourceHead, targetHead).collect(Collectors.toSet()),
                     getMergeMessage(branchId, targetBranchId));
             catalogManager.addCommitToBranch(newCommit, factory.createIRI(targetBranchId));
+            branch.setHead(newCommit);
+            catalogManager.updateBranch(branch);
             catalogManager.removeInProgressCommit(inProgressCommit.getResource());
             return Response.ok(newCommit.getResource().stringValue()).build();
         } catch (MatOntoException e) {
@@ -917,7 +941,8 @@ public class CatalogRestImpl implements CatalogRest {
 
     @Override
     public Response downloadCompiledResource(ContainerRequestContext context, String catalogId, String recordId, 
-                                             String branchId, String commitId, String rdfFormat, boolean apply) {
+                                             String branchId, String commitId, String rdfFormat, boolean apply,
+                                             String fileName) {
         try {
             commitInBranch(catalogId, recordId, branchId, commitId);
             Model resource;
@@ -939,7 +964,7 @@ public class CatalogRestImpl implements CatalogRest {
                 writer.close();
             };
 
-            return Response.ok(stream).header("Content-Disposition", "attachment;filename=" + recordId
+            return Response.ok(stream).header("Content-Disposition", "attachment;filename=" + fileName
                     + "." + getRDFFormatFileExtension(rdfFormat))
                     .header("Content-Type", getRDFFormatMimeType(rdfFormat)).build();
         } catch (MatOntoException e) {
@@ -1063,6 +1088,48 @@ public class CatalogRestImpl implements CatalogRest {
             response = response.link(links.getBase() + links.getPrev(), "prev");
         }
         return response.build();
+    }
+
+    /**
+     * Creates a Response for a page of a sorted limited offset Set of Things based on the return type of the passed
+     * function using the passed full Set of Resources.
+     *
+     * @param uriInfo The URI information of the request.
+     * @param iris The Set of Resource for all of the Things.
+     * @param thingFunction A Function to retrieve Things based on their Resource IDs.
+     * @param sortBy The property IRI string to sort the Set of Things by.
+     * @param offset The number of Things to skip.
+     * @param limit The size of the page of Things to the return.
+     * @param asc Whether the sorting should be ascending or descending.
+     * @param filterFunction A Function to filter the set of Things.
+     * @param <T> A class that extends Things.
+     * @return A Response with a page of Things that has been filtered, sorted, and limited and headers for the total
+     *      size and links to the next and prev pages if present.
+     */
+    private <T extends Thing> Response createPaginatedThingResponse(UriInfo uriInfo, Set<Resource> iris,
+                                                                    Function<Resource, T> thingFunction, String sortBy,
+                                                                    int offset, int limit, boolean asc,
+                                                                    Function<T, Boolean> filterFunction) {
+        if (offset > iris.size()) {
+            throw ErrorUtils.sendError("Offset exceeds total size", Response.Status.BAD_REQUEST);
+        }
+        IRI sortIRI = factory.createIRI(sortBy);
+        Comparator<T> comparator = Comparator.comparing(dist -> dist.getProperty(sortIRI).get().stringValue());
+        Stream<T> stream = iris.stream()
+                .map(thingFunction);
+        if (!asc) {
+            comparator = comparator.reversed();
+        }
+        if (filterFunction != null) {
+            stream = stream.filter(filterFunction::apply);
+        }
+        List<T> filteredThings = stream.collect(Collectors.toList());
+        List<T> things = filteredThings.stream()
+                .sorted(comparator)
+                .skip(offset)
+                .limit(limit)
+                .collect(Collectors.toList());
+        return createPaginatedResponse(uriInfo, things, filteredThings.size(), limit, offset);
     }
 
     /**
@@ -1314,7 +1381,7 @@ public class CatalogRestImpl implements CatalogRest {
      * @return The new Distribution if passed a title.
      */
     private Distribution createDistribution(String title, String description, String format, String accessURL,
-                                            String downloadURL) {
+                                            String downloadURL, ContainerRequestContext context) {
         if (title == null) {
             throw ErrorUtils.sendError("Distribution title is required", Response.Status.BAD_REQUEST);
         }
@@ -1331,7 +1398,10 @@ public class CatalogRestImpl implements CatalogRest {
         if (downloadURL != null) {
             builder.downloadURL(factory.createIRI(downloadURL));
         }
-        return catalogManager.createDistribution(builder.build());
+        Distribution distribution = catalogManager.createDistribution(builder.build());
+        distribution.setProperty(getActiveUser(context, engineManager).getResource(),
+                factory.createIRI(DCTERMS.PUBLISHER.stringValue()));
+        return distribution;
     }
 
     /**
@@ -1389,37 +1459,6 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     /**
-     * Creates a sorted limited offset Set of Things based on the return type of the passed function representing a
-     * page in a paginated Response using the passed full Set of Resources.
-     *
-     * @param iris The Set of Resource for all of the Things.
-     * @param thingFunction A Function to retrieve Things based on their Resource IDs.
-     * @param sortBy The property IRI string to sort the Set of Things by.
-     * @param offset The number of Things to skip.
-     * @param limit The size of the page of Things to the return.
-     * @param asc Whether the sorting should be ascending or descending.
-     * @param <T> A class that extends Things.
-     * @return A Set of Things that has been sorted and limited to create a page in a paginated Response.
-     */
-    private <T extends Thing> List<T> getSortedThingPage(Set<Resource> iris, Function<Resource, T> thingFunction,
-                                                         String sortBy, int offset, int limit, boolean asc) {
-        if (offset > iris.size()) {
-            throw ErrorUtils.sendError("Offset exceeds total size", Response.Status.BAD_REQUEST);
-        }
-        IRI sortIRI = factory.createIRI(sortBy);
-        Comparator<T> comparator = Comparator.comparing(dist -> dist.getProperty(sortIRI).get().stringValue());
-        Stream<T> stream = iris.stream()
-                .map(thingFunction);
-        if (!asc) {
-            comparator = comparator.reversed();
-        }
-        return stream.sorted(comparator)
-                .skip(offset)
-                .limit(limit)
-                .collect(Collectors.toList());
-    }
-
-    /**
      * Creates a message for the Commit that occurs as a result of a merge between the Branches identified by the
      * provided ID strings.
      *
@@ -1442,6 +1481,7 @@ public class CatalogRestImpl implements CatalogRest {
      */
     private JSONObject conflictToJson(Conflict conflict, String rdfFormat) {
         JSONObject object = new JSONObject();
+        object.put("iri", conflict.getIRI().stringValue());
         object.put("original", getModelInFormat(conflict.getOriginal(), rdfFormat));
         object.put("left", getDifferenceJson(conflict.getLeftDifference(), rdfFormat));
         object.put("right", getDifferenceJson(conflict.getRightDifference(), rdfFormat));

@@ -38,10 +38,11 @@
          * @name iriTemplateOverlay.directive:iriTemplateOverlay
          * @scope
          * @restrict E
-         * @requires  prefixes.service:prefixes
-         * @requires  mappingManager.service:mappingManagerService
-         * @requires  mapperState.service:mapperStateService
-         * @requires  delimitedManager.service:delimitedManagerService
+         * @requires prefixes.service:prefixes
+         * @requires mappingManager.service:mappingManagerService
+         * @requires mapperState.service:mapperStateService
+         * @requires delimitedManager.service:delimitedManagerService
+         * @requires util.service:utilService
          *
          * @description
          * `iriTemplateOverlay` is a directive that creates an overlay with functionality to change the

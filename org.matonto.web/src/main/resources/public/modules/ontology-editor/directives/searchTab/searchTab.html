@@ -32,7 +32,7 @@
                     <span class="result-header text-muted" ng-click="isClosed = !isClosed"><strong>{{key | prefixation}}</strong><i class="fa fa-fw pull-right" ng-class="{'fa-chevron-down': isClosed, 'fa-chevron-up': !isClosed}"></i></span>
                     <ul class="tree" ng-if="!isClosed">
                         <tree-item ng-repeat="item in value track by item"
-                                   current-entity="dvm.om.getEntityById(dvm.sm.listItem.ontologyId, item)"
+                                   current-entity="dvm.om.getEntityByRecordId(dvm.sm.listItem.recordId, item)"
                                    is-active="dvm.sm.getActiveEntityIRI() === item"
                                    on-click="dvm.sm.selectItem(item, false)"
                                    ng-dblclick="dvm.sm.goTo(item)"></tree-item>

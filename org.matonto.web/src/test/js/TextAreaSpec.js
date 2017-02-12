@@ -41,8 +41,10 @@ describe('Text Area directive', function() {
             scope.changeEvent = jasmine.createSpy('changeEvent');
             scope.displayText = '';
             scope.mutedText = '';
+            scope.required = true;
+            scope.textAreaName = '';
 
-            this.element = $compile(angular.element('<text-area ng-model="bindModel" change-event="changeEvent()" display-text="displayText" muted-text="mutedText"></text-area>'))(scope);
+            this.element = $compile(angular.element('<text-area ng-model="bindModel" change-event="changeEvent()" display-text="displayText" muted-text="mutedText" required="required" text-area-name="textAreaName"></text-area>'))(scope);
             scope.$digest();
         });
         it('bindModel should be two way bound', function() {
@@ -57,17 +59,29 @@ describe('Text Area directive', function() {
 
             expect(scope.changeEvent).toHaveBeenCalled();
         });
-        it('displayText should be two way bound', function() {
+        it('displayText should be one way bound', function() {
             var isolatedScope = this.element.isolateScope();
             isolatedScope.displayText = 'Test';
             scope.$digest();
-            expect(scope.displayText).toEqual('Test');
+            expect(scope.displayText).toEqual('');
         });
-        it('mutedText should be two way bound', function() {
+        it('mutedText should be one way bound', function() {
             var isolatedScope = this.element.isolateScope();
             isolatedScope.mutedText = 'Test';
             scope.$digest();
-            expect(scope.mutedText).toEqual('Test');
+            expect(scope.mutedText).toEqual('');
+        });
+        it('required should be one way bound', function() {
+            var isolatedScope = this.element.isolateScope();
+            isolatedScope.required = false;
+            scope.$digest();
+            expect(scope.required).toBe(true);
+        });
+        it('textAreaName should be one way bound', function() {
+            var isolatedScope = this.element.isolateScope();
+            isolatedScope.textAreaName = 'Test';
+            scope.$digest();
+            expect(scope.textAreaName).toBe('');
         });
     });
     describe('contains the correct html', function() {
@@ -77,7 +91,7 @@ describe('Text Area directive', function() {
             scope.displayText = '';
             scope.mutedText = '';
 
-            this.element = $compile(angular.element('<text-area ng-model="bindModel" change-event="changeEvent()" display-text="displayText" muted-text="mutedText"></text-area>'))(scope);
+            this.element = $compile(angular.element('<text-area ng-model="bindModel" change-event="changeEvent()" display-text="displayText" muted-text="mutedText" required="required" text-area-name="textAreaName"></text-area>'))(scope);
             scope.$digest();
             this.firstChild = angular.element(this.element.children()[0]);
         });
@@ -90,11 +104,19 @@ describe('Text Area directive', function() {
         it('with a textarea element', function() {
             expect(this.firstChild.find('textarea').length).toBe(1);
         });
+        it('depending on whether it is required or not', function() {
+            var textArea = angular.element(this.firstChild.find('textarea')[0]);
+            expect(textArea.attr('required')).toBeFalsy();
+
+            scope.required = true;
+            scope.$digest();
+            expect(textArea.attr('required')).toBeTruthy();
+        });
     });
     it('should call changeEvent when the text in the textarea changes', function() {
         scope.bindModel = '';
         scope.changeEvent = jasmine.createSpy('changeEvent');
-        var element = $compile(angular.element('<text-area ng-model="bindModel" change-event="changeEvent()" display-text="displayText" muted-text="mutedText"></text-area>'))(scope);
+        var element = $compile(angular.element('<text-area ng-model="bindModel" change-event="changeEvent()" display-text="displayText" muted-text="mutedText" required="required" text-area-name="textAreaName"></text-area>'))(scope);
         scope.$digest();
 
         var input = angular.element(element.find('textarea')[0]);

@@ -28,7 +28,7 @@
          * @ngdoc overview
          * @name columnSelect
          *
-         * @description 
+         * @description
          * The `columnSelect` module only provides the `columnSelect` directive which creates
          * a `ui-select` with the passed column list and selected column.
          */
@@ -40,7 +40,7 @@
          * @restrict E
          * @requires delimitedManager.service:delimitedManagerService
          *
-         * @description 
+         * @description
          * `columnSelect` is a directive which creates a `ui-select` with the passed column list and
          * selected column. The directive is replaced by the contents of its template.
          *

@@ -36,7 +36,6 @@
             'localTab',
             'paginationHeader',
             'recordBlock',
-            'recordKeywords',
             'recordType',
             'recordTypes',
             'resultsBlock',

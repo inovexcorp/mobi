@@ -27,9 +27,10 @@
         .module('createConceptOverlay', [])
         .directive('createConceptOverlay', createConceptOverlay);
 
-        createConceptOverlay.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'prefixes'];
+        createConceptOverlay.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'prefixes',
+            'utilService'];
 
-        function createConceptOverlay($filter, ontologyManagerService, ontologyStateService, prefixes) {
+        function createConceptOverlay($filter, ontologyManagerService, ontologyStateService, prefixes, utilService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -42,18 +43,14 @@
                     dvm.om = ontologyManagerService;
                     dvm.sm = ontologyStateService;
                     dvm.schemes = [];
-                    dvm.prefix = _.get(dvm.om.getListItemById(dvm.sm.state.ontologyId), 'iriBegin',
-                        dvm.om.getOntologyIRI(dvm.sm.ontology)) + _.get(dvm.om.getListItemById(dvm.sm.state.ontologyId),
-                        'iriThen', '#');
+                    dvm.prefix = _.get(dvm.sm.listItem, 'iriBegin', dvm.sm.listItem.ontologyId)
+                        + _.get(dvm.sm.listItem, 'iriThen', '#');
                     dvm.concept = {
                         '@id': dvm.prefix,
                         '@type': [prefixes.owl + 'NamedIndividual', prefixes.skos + 'Concept'],
                         [prefixes.skos + 'prefLabel']: [{
                             '@value': ''
-                        }],
-                        matonto: {
-                            created: true
-                        }
+                        }]
                     }
 
                     dvm.nameChanged = function() {
@@ -68,14 +65,9 @@
                         dvm.concept['@id'] = iriBegin + iriThen + iriEnd;
                     }
 
-                    dvm.getIRINamespace = function(iri) {
-                        var split = $filter('splitIRI')(iri);
-                        return split.begin + split.then;
-                    }
-
                     dvm.create = function() {
                         _.forEach(dvm.schemes, scheme => {
-                            var entity = dvm.om.getEntityById(dvm.sm.listItem.ontologyId, scheme['@id']);
+                            var entity = dvm.om.getEntityByRecordId(dvm.sm.listItem.recordId, scheme['@id']);
                             if (_.has(entity, prefixes.skos + 'hasTopConcept')) {
                                 entity[prefixes.skos + 'hasTopConcept'].push({'@id': dvm.concept['@id']});
                             } else {
@@ -85,11 +77,11 @@
                         });
                         _.set(dvm.concept, 'matonto.originalIRI', dvm.concept['@id']);
                         // add the entity to the ontology
-                        dvm.om.addEntity(dvm.sm.ontology, dvm.concept);
+                        dvm.om.addEntity(dvm.sm.listItem.ontology, dvm.concept);
                         // update relevant lists
-                        var listItem = dvm.om.getListItemById(dvm.sm.state.ontologyId);
-                        _.get(listItem, 'conceptHierarchy').push({'entityIRI': dvm.concept['@id']});
-                        _.set(_.get(listItem, 'index'), dvm.concept['@id'], dvm.sm.ontology.length - 1);
+                        _.get(dvm.sm.listItem, 'conceptHierarchy').push({'entityIRI': dvm.concept['@id']});
+                        _.set(_.get(dvm.sm.listItem, 'index'), dvm.concept['@id'], dvm.sm.listItem.ontology.length - 1);
+                        dvm.om.addToAdditions(dvm.sm.listItem.recordId, dvm.concept);
                         // select the new class
                         dvm.sm.selectItem(_.get(dvm.concept, '@id'));
                         // hide the overlay

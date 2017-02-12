@@ -2,5 +2,16 @@
 @import "./src/main/resources/public/css/variables";
 
 .class-preview {
-    overflow-y: auto;
+    .props {
+        li {
+            display: inline;
+
+            &:after {
+                content: ', ';
+            }
+            &.last:after {
+                content: '';
+            }
+        }
+    }
 }

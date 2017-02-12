@@ -27,9 +27,9 @@
         .module('uploadOntologyTab', [])
         .directive('uploadOntologyTab', uploadOntologyTab);
 
-        uploadOntologyTab.$inject = ['$filter', 'REGEX', 'ontologyManagerService', 'ontologyStateService', 'prefixes'];
+        uploadOntologyTab.$inject = ['REGEX', 'ontologyManagerService', 'ontologyStateService'];
 
-        function uploadOntologyTab($filter, REGEX, ontologyManagerService, ontologyStateService, prefixes) {
+        function uploadOntologyTab(REGEX, ontologyManagerService, ontologyStateService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -43,15 +43,13 @@
                     dvm.type = 'ontology';
 
                     dvm.upload = function() {
-                        dvm.om.uploadThenGet(dvm.file, dvm.type)
-                            .then(ontologyId => {
-                                var listItem = dvm.om.getListItemById(ontologyId);
-                                dvm.sm.addState(ontologyId, dvm.om.getOntologyIRI(listItem.ontology), dvm.type);
-                                dvm.sm.setState(ontologyId);
+                        dvm.om.uploadThenGet(dvm.file, dvm.title, dvm.description,
+                            _.join(_.map(dvm.keywords, _.trim), ','), dvm.type).then(recordId => {
+                                var listItem = dvm.om.getListItemByRecordId(recordId);
+                                dvm.sm.addState(recordId, dvm.om.getOntologyIRI(listItem.ontology), dvm.type);
+                                dvm.sm.setState(recordId);
                                 dvm.sm.showUploadTab = false;
-                            }, response => {
-                                dvm.error = response.statusText;
-                            });
+                            }, response => dvm.error = response.statusText);
                     }
                 }
             }

@@ -88,10 +88,9 @@ describe('Prop Mapping Overlay directive', function() {
             var prop = {};
             prop[prefixes.rdfs + 'range'] = [{'@id': classObj['@id']}];
             ontologyManagerSvc.getEntity.and.returnValue(classObj);
-            var result = controller.getRangeClass(prop);
+            expect(controller.getRangeClass(prop)).toEqual(classObj);
             expect(mappingManagerSvc.findSourceOntologyWithClass).toHaveBeenCalledWith(classObj['@id'], mapperStateSvc.sourceOntologies)
             expect(ontologyManagerSvc.getEntity).toHaveBeenCalled();
-            expect(result).toEqual(classObj);
         });
         describe('should set the correct state for setting the property mapping', function() {
             beforeEach(function() {

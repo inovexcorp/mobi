@@ -65,8 +65,10 @@
                 scope: {
                     bindModel: '=ngModel',
                     changeEvent: '&',
-                    displayText: '=',
-                    mutedText: '='
+                    displayText: '<',
+                    mutedText: '<',
+                    required: '<',
+                    textAreaName: '<'
                 },
                 templateUrl: 'directives/textArea/textArea.html'
             }

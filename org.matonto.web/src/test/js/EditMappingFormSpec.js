@@ -42,13 +42,14 @@ describe('Edit Mapping Form directive', function() {
             mappingManagerSvc = _mappingManagerService_;
             ontologyManagerSvc = _ontologyManagerService_;
         });
+
+        mapperStateSvc.mapping = {name: '', jsonld: []};
+        this.element = $compile(angular.element('<edit-mapping-form></edit-mapping-form>'))(scope);
+        scope.$digest();
     });
 
     describe('controller methods', function() {
         beforeEach(function() {
-            mapperStateSvc.mapping = {name: '', jsonld: []};
-            this.element = $compile(angular.element('<edit-mapping-form></edit-mapping-form>'))(scope);
-            scope.$digest();
             controller = this.element.controller('editMappingForm');
         });
         describe('should get the name of the mapping\'s source ontology', function() {
@@ -97,11 +98,6 @@ describe('Edit Mapping Form directive', function() {
         });
     });
     describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
-            mapperStateSvc.mapping = {name: '', jsonld: []};
-            this.element = $compile(angular.element('<edit-mapping-form></edit-mapping-form>'))(scope);
-            scope.$digest();
-        });
         it('for wrapping containers', function() {
             expect(this.element.hasClass('edit-mapping-form')).toBe(true);
             expect(this.element.querySelectorAll('.mapping-config').length).toBe(1);
@@ -130,21 +126,15 @@ describe('Edit Mapping Form directive', function() {
         });
     });
     it('should set the correct state when the edit config link is clicked', function() {
-        mapperStateSvc.mapping = {name: '', jsonld: []};
-        var element = $compile(angular.element('<edit-mapping-form></edit-mapping-form>'))(scope);
-        scope.$digest();
-
-        var editConfigLink = angular.element(element.querySelectorAll('.mapping-config custom-label a')[0]);
+        var editConfigLink = angular.element(this.element.querySelectorAll('.mapping-config custom-label a')[0]);
         editConfigLink.triggerHandler('click');
         expect(mapperStateSvc.displayMappingConfigOverlay).toBe(true);
     });
     it('should set the correct state when delete class button is clicked', function() {
-        mapperStateSvc.mapping = {name: '', jsonld: []};
         mapperStateSvc.selectedClassMappingId = 'class';
-        var element = $compile(angular.element('<edit-mapping-form></edit-mapping-form>'))(scope);
         scope.$digest();
 
-        var deleteClassButton = angular.element(element.querySelectorAll('.class-mapping-select-container button')[0]);
+        var deleteClassButton = angular.element(this.element.querySelectorAll('.class-mapping-select-container button')[0]);
         deleteClassButton.triggerHandler('click');
         expect(mapperStateSvc.displayDeleteClassConfirm).toBe(true);
     });

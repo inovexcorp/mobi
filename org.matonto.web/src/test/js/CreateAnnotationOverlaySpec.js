@@ -48,73 +48,62 @@ describe('Create Annotation Overlay directive', function() {
             deferred = _$q_.defer();
             ontologyManagerSvc = _ontologyManagerService_;
         });
-    });
 
-    beforeEach(function() {
         element = $compile(angular.element('<create-annotation-overlay></create-annotation-overlay>'))(scope);
         scope.$digest();
     });
 
     describe('replaces the element with the correct html', function() {
-        it('for a div', function() {
+        it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
+            expect(element.hasClass('create-annotation-overlay')).toBe(true);
         });
-        it('based on .content', function() {
-            var items = element.querySelectorAll('.content');
-            expect(items.length).toBe(1);
+        it('with a .content', function() {
+            expect(element.querySelectorAll('.content').length).toBe(1);
         });
-        it('based on h6', function() {
-            var items = element.find('h6');
-            expect(items.length).toBe(1);
+        it('with a h6', function() {
+            expect(element.find('h6').length).toBe(1);
         });
-        it('based on .form-group', function() {
-            var items = element.querySelectorAll('.form-group');
-            expect(items.length).toBe(1);
+        it('with a .form-group', function() {
+            expect(element.querySelectorAll('.form-group').length).toBe(1);
         });
-        it('based on .btn-container', function() {
-            var items = element.querySelectorAll('.btn-container');
-            expect(items.length).toBe(1);
+        it('with a custom-label', function() {
+            expect(element.find('custom-label').length).toBe(1);
         });
-        it('based on .error-msg', function() {
-            var items = element.querySelectorAll('.error-msg');
-            expect(items.length).toBe(1);
+        it('with a .btn-container', function() {
+            expect(element.querySelectorAll('.btn-container').length).toBe(1);
         });
-        describe('and has-error class', function() {
-            it('is not there when form.iri is valid', function() {
-                var formGroup = element.querySelectorAll('.form-group');
-                expect(angular.element(formGroup[0]).hasClass('has-error')).toBe(false);
-            });
-            it('is there when form.iri is invalid', function() {
-                controller = element.controller('createAnnotationOverlay');
-                controller.form = {
-                    iri: {
-                        '$error': {
-                            pattern: true
-                        }
+        it('with a .error-msg', function() {
+            expect(element.querySelectorAll('.error-msg').length).toBe(1);
+        });
+        it('with buttons to create and cancel', function() {
+            var buttons = element.querySelectorAll('.btn-container button');
+            expect(buttons.length).toBe(2);
+            expect(['Cancel', 'Create']).toContain(angular.element(buttons[0]).text().trim());
+            expect(['Cancel', 'Create']).toContain(angular.element(buttons[1]).text().trim());
+        });
+        it('depending on whether the iri pattern is incorrect', function() {
+            var formGroup = angular.element(element.querySelectorAll('.form-group')[0]);
+            expect(formGroup.hasClass('has-error')).toBe(false);
+
+            controller = element.controller('createAnnotationOverlay');
+            controller.form = {
+                iri: {
+                    '$error': {
+                        pattern: true
                     }
                 }
-                scope.$digest();
-
-                var formGroup = element.querySelectorAll('.form-group');
-                expect(angular.element(formGroup[0]).hasClass('has-error')).toBe(true);
-            });
+            }
+            scope.$digest();
+            expect(formGroup.hasClass('has-error')).toBe(true);
         });
-        describe('and error-display', function() {
-            beforeEach(function() {
-                controller = element.controller('createAnnotationOverlay');
-            });
-            it('is visible when error is true', function() {
-                controller.error = true;
-                scope.$digest();
-                var errors = element.querySelectorAll('error-display');
-                expect(errors.length).toBe(1);
-            });
-            it('is not visible when error is false', function() {
-                controller.error = false;
-                scope.$digest();
-                var errors = element.querySelectorAll('error-display');
-                expect(errors.length).toBe(0);
-            });
+        it('depending on whether there is an error', function() {
+            expect(element.find('error-display').length).toBe(0);
+
+            controller = element.controller('createAnnotationOverlay');
+            controller.error = true;
+            scope.$digest();
+            expect(element.find('error-display').length).toBe(1);
         });
     });
     describe('controller methods', function() {
@@ -128,14 +117,14 @@ describe('Create Annotation Overlay directive', function() {
                 controller.create();
             });
             it('calls the correct manager function', function() {
-                expect(ontologyManagerSvc.getAnnotationIRIs).toHaveBeenCalledWith(ontologyStateSvc.ontology);
-                expect(propertyManagerSvc.create).toHaveBeenCalledWith(ontologyStateSvc.state.ontologyId,
-                    ontologyManagerSvc.getAnnotationIRIs(ontologyStateSvc.ontology), controller.iri);
+                expect(ontologyManagerSvc.getAnnotationIRIs).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontology);
+                expect(propertyManagerSvc.create).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
+                    ontologyManagerSvc.getAnnotationIRIs(ontologyStateSvc.listItem.ontology), controller.iri);
             });
             it('when resolved, sets the correct variables', function() {
                 deferred.resolve({'@id': 'id'});
                 scope.$apply();
-                expect(ontologyManagerSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.ontology,
+                expect(ontologyManagerSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontology,
                     {'@id': 'id', matonto: {originalIRI: 'id'}});
                 expect(ontologyStateSvc.showCreateAnnotationOverlay).toBe(false);
             });
@@ -145,6 +134,18 @@ describe('Create Annotation Overlay directive', function() {
                 expect(controller.error).toBe('error');
             });
         });
+    });
+    it('should call create when the button is clicked', function() {
+        controller = element.controller('createAnnotationOverlay');
+        spyOn(controller, 'create');
 
+        var button = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
+        button.triggerHandler('click');
+        expect(controller.create).toHaveBeenCalled();
+    });
+    it('should set the correct state when the cancel button is clicked', function() {
+        var button = angular.element(element.querySelectorAll('.btn-container button.btn-default')[0]);
+        button.triggerHandler('click');
+        expect(ontologyStateSvc.showCreateAnnotationOverlay).toBe(false);
     });
 });

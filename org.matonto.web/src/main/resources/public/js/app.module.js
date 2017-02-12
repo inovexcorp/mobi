@@ -57,11 +57,14 @@
             'blockSearch',
             'checkbox',
             'circleButton',
+            'circleButtonStack',
             'clickAnywhereButHere',
             'confirmationOverlay',
             'customHeader',
             'customLabel',
             'emailInput',
+            'entityDates',
+            'entityDescription',
             'errorDisplay',
             'fileInput',
             'infoMessage',
@@ -69,6 +72,7 @@
             'pagingDetails',
             'passwordConfirmInput',
             'radioButton',
+            'recordKeywords',
             'stepProgressBar',
             'tab',
             'tabset',
@@ -102,6 +106,7 @@
             'responseObj',
             'settingsManager',
             'sparqlManager',
+            'stateManager',
             'updateRefs',
             'userManager',
             'userState',
@@ -125,7 +130,7 @@
         function beforeUnload($window, ontologyManagerService, ontologyStateService, mapperStateService) {
             $window.onbeforeunload = function(e) {
                 var ontologyHasChanges = _.some(ontologyManagerService.list, listItem => {
-                    return ontologyStateService.hasChanges(_.get(listItem, 'ontology'), _.get(listItem, 'ontologyId'));
+                    return ontologyStateService.hasChanges(_.get(listItem, 'recordId'));
                 });
                 var mappingHasChanges = mapperStateService.changedMapping;
                 if (ontologyHasChanges || mappingHasChanges) {
@@ -145,7 +150,7 @@
         function requestInterceptor($q, $rootScope) {
             $rootScope.pendingRequests = 0;
             return {
-               'request': function (config) {
+                'request': function (config) {
                     $rootScope.pendingRequests++;
                     return config || $q.when(config);
                 },

@@ -20,9 +20,10 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="overlay sm">
+<div class="ontology-download-overlay overlay sm">
     <form name="dvm.form" class="content clearfix" novalidate autocomplete="off">
         <h6>Download Ontology</h6>
+        <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
         <custom-label>Serialization</custom-label>
         <serialization-select ng-model="dvm.serialization"></serialization-select>
         <div ng-class="{'has-error': dvm.form.fileName.$error.pattern}" class="form-group">

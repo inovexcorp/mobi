@@ -4,10 +4,8 @@ prefix owl: <http://www.w3.org/2002/07/owl#>
 
 select ?parent ?child
 where {
-    graph ?graph {
-        ?parent rdf:type owl:DatatypeProperty .
-        optional {
-            ?child rdfs:subPropertyOf ?parent .
-        }
+    ?parent rdf:type owl:DatatypeProperty .
+    optional {
+        ?child rdfs:subPropertyOf ?parent .
     }
 }

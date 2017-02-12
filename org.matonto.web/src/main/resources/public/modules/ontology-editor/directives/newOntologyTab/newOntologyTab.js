@@ -27,9 +27,11 @@
         .module('newOntologyTab', [])
         .directive('newOntologyTab', newOntologyTab);
 
-        newOntologyTab.$inject = ['$filter', 'REGEX', 'ontologyManagerService', 'ontologyStateService', 'prefixes'];
+        newOntologyTab.$inject = ['$filter', 'REGEX', 'ontologyManagerService', 'ontologyStateService', 'prefixes',
+            'stateManagerService', 'utilService'];
 
-        function newOntologyTab($filter, REGEX, ontologyManagerService, ontologyStateService, prefixes) {
+        function newOntologyTab($filter, REGEX, ontologyManagerService, ontologyStateService, prefixes,
+            stateManagerService, utilService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -41,46 +43,47 @@
                     var date = new Date();
                     var prefix = 'https://matonto.org/ontologies/' + (date.getMonth() + 1) + '/' + date.getFullYear()
                         + '/';
+                    var sm = stateManagerService;
+                    var util = utilService;
+
                     dvm.prefixes = prefixes;
                     dvm.iriPattern = REGEX.IRI;
-                    dvm.sm = ontologyStateService;
+                    dvm.os = ontologyStateService;
                     dvm.om = ontologyManagerService;
                     dvm.type = 'ontology';
                     dvm.ontology = {
                         '@id': prefix,
-                        '@type': [prefixes.owl + 'Ontology'],
-                        [prefixes.dcterms + 'title']: [{
-                            '@value': ''
-                        }],
-                        [prefixes.dcterms + 'description']: [{
-                            '@value': ''
-                        }]
+                        '@type': [prefixes.owl + 'Ontology']
                     };
 
                     dvm.nameChanged = function() {
                         if (!dvm.iriHasChanged) {
-                            dvm.ontology['@id'] = prefix + $filter('camelCase')(
-                                dvm.ontology[prefixes.dcterms + 'title'][0]['@value'], 'class');
+                            dvm.ontology['@id'] = prefix + $filter('camelCase')(dvm.title, 'class');
                         }
                     }
 
                     dvm.create = function() {
-                        if (_.get(dvm.ontology, "['" + prefixes.dcterms + "description'][0]['@value']") === '') {
-                            _.unset(dvm.ontology, prefixes.dcterms + 'description');
+                        util.setDctermsValue(dvm.ontology, 'title', dvm.title);
+                        if (dvm.description) {
+                            util.setDctermsValue(dvm.ontology, 'description', dvm.description);
                         }
                         if (dvm.type === 'vocabulary') {
                             dvm.ontology[prefixes.owl + 'imports'] = [{
-                                '@id': prefixes.skos
+                                '@id': angular.copy(prefixes.skos).slice(0, -1)
                             }];
                         }
-                        dvm.om.createOntology(dvm.ontology, dvm.type)
-                            .then(response => {
-                                dvm.sm.addState(response.ontologyId, response.entityIRI, dvm.type);
-                                dvm.sm.setState(response.ontologyId);
-                                dvm.sm.showNewTab = false;
-                            }, errorMessage => {
-                                dvm.error = errorMessage;
-                            });
+                        dvm.om.createOntology(dvm.ontology, dvm.title, dvm.description,
+                            _.join(_.map(dvm.keywords, _.trim), ','), dvm.type).then(response =>
+                                sm.createOntologyState(response.recordId, response.branchId, response.commitId)
+                                    .then(() => {
+                                        dvm.os.addState(response.recordId, response.entityIRI, dvm.type);
+                                        dvm.os.setState(response.recordId);
+                                        dvm.os.showNewTab = false;
+                                    }, onError), onError);
+                    }
+
+                    function onError(errorMessage) {
+                        dvm.error = errorMessage;
                     }
                 }
             }

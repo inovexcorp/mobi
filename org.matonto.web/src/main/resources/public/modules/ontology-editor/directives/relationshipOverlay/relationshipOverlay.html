@@ -20,7 +20,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="overlay">
+<div class="relationship-overlay overlay">
     <form name="dvm.form" class="content clearfix" novalidate autocomplete="off">
         <h6>Add Relationship</h6>
         <div class="form-group">
@@ -29,7 +29,7 @@
                 <ui-select-match placeholder="Select Relationship">
                     <span>{{$select.selected.namespace + $select.selected.localName}}</span>
                 </ui-select-match>
-                <ui-select-choices group-by="dvm.getItemNamespace" repeat="relationship in relationshipList | filter:$select.search | orderBy:'localName' track by relationship.localName">
+                <ui-select-choices group-by="dvm.util.getItemNamespace" repeat="relationship in relationshipList | filter:$select.search | orderBy:'localName' track by relationship.localName">
                     <div title="{{relationship.namespace + relationship.localName}}" ng-bind-html="relationship.localName | highlight: $select.search | trusted"></div>
                 </ui-select-choices>
             </ui-select>
@@ -40,7 +40,7 @@
                 <ui-select-match placeholder="Select Value(s)">
                     <span title="{{$item}}">{{($item | splitIRI).end}}</span>
                 </ui-select-match>
-                <ui-select-choices group-by="dvm.getIRINamespace" repeat="{'@id': iri} as iri in dvm[dvm.relationship.values] | filter:$select.search track by iri">
+                <ui-select-choices group-by="dvm.util.getIRINamespace" repeat="{'@id': iri} as iri in dvm[dvm.relationship.values] | filter:$select.search track by iri">
                     <div title="{{iri}}" ng-bind-html="(iri | splitIRI).end | highlight: $select.search | trusted"></div>
                 </ui-select-choices>
             </ui-select>
