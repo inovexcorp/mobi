@@ -20,42 +20,46 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Vocabulary Tab directive', function() {
-    var $compile,
-        scope,
-        element;
+describe('Commit History Table directive', function() {
+    var $compile, scope, $q, element;
+    var error = 'error';
 
     beforeEach(function() {
         module('templates');
-        module('vocabularyTab');
+        module('commitHistoryTable');
         mockOntologyState();
-        mockOntologyManager();
+        mockCatalogManager();
+        mockUtil();
+        injectSplitIRIFilter();
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;
             scope = _$rootScope_;
         });
 
-        element = $compile(angular.element('<vocabulary-tab></vocabulary-tab>'))(scope);
+        element = $compile(angular.element('<commit-history-table></commit-history-table>'))(scope);
         scope.$digest();
+        controller = element.controller('commitHistoryTable');
     });
 
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('vocabulary-tab')).toBe(true);
-            expect(element.hasClass('ontology-tab')).toBe(true);
+            expect(element.hasClass('commit-history-table')).toBe(true);
         });
-        it('with a tabset', function() {
-            expect(element.find('tabset').length).toBe(1);
-        });
-        it('with tabs', function() {
-            expect(element.find('tab').length).toBe(6);
-        });
-        _.forEach(['ontology-button-stack', 'project-tab', 'concepts-tab', 'search-tab', 'saved-changes-tab', 'merge-tab', 'commits-tab'], function(tag) {
-            it('with a ' + tag, function() {
-                expect(element.find(tag).length).toBe(1);
+        _.forEach(['table', 'thead', 'tbody'], function(item) {
+            it('for ' + item, function() {
+                expect(element.find(item).length).toBe(1);
             });
+        });
+        it('for error-display', function() {
+            expect(element.find('error-display').length).toBe(0);
+            controller.error = error;
+            scope.$apply();
+            expect(element.find('error-display').length).toBe(1);
+        });
+        it('for th', function() {
+            expect(element.find('th').length).toBe(4);
         });
     });
 });

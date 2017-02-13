@@ -459,6 +459,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         when(difference.getDeletions()).thenReturn(mf.createModel());
 
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
+        when(engineManager.getUsername(any(Resource.class))).thenReturn(Optional.of(user.getResource().stringValue()));
     }
 
     // GET catalogs
@@ -2400,7 +2401,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
                         boolean matchingCommit = false;
                         for (Object object : JSONArray.fromObject(aResult)) {
                             JSONObject commitObj = JSONObject.fromObject(object);
-                            if (commitObj.containsKey("@id") && Arrays.asList(COMMIT_IRIS).contains(commitObj.getString("@id"))) {
+                            if (commitObj.containsKey("id") && Arrays.asList(COMMIT_IRIS).contains(commitObj.getString("id"))) {
                                 matchingCommit = true;
                             }
                         }

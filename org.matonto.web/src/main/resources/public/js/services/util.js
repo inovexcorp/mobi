@@ -191,5 +191,8 @@
                     [property]: [valueObj]
                 }
             }
+            self.getDate = function(dateStr, format) {
+                 return dateStr ? $filter('date')(new Date(dateStr), format) : '(No Date Specified)';
+            }
         }
 })();

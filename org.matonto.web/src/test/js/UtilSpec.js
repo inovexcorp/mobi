@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Util service', function() {
-    var utilSvc, prefixes, toastr, splitIRIFilter, beautifyFilter;
+    var utilSvc, prefixes, toastr, splitIRIFilter, beautifyFilter, $filter;
 
     beforeEach(function() {
         module('util');
@@ -30,12 +30,13 @@ describe('Util service', function() {
         injectBeautifyFilter();
         mockToastr();
 
-        inject(function(utilService, _prefixes_, _toastr_, _splitIRIFilter_, _beautifyFilter_) {
+        inject(function(utilService, _prefixes_, _toastr_, _splitIRIFilter_, _beautifyFilter_, _$filter_) {
             utilSvc = utilService;
             prefixes = _prefixes_;
             toastr = _toastr_;
             splitIRIFilter = _splitIRIFilter_;
             beautifyFilter = _beautifyFilter_;
+            $filter = _$filter_;
         });
     });
 
@@ -134,5 +135,14 @@ describe('Util service', function() {
         var result = utilSvc.getIRINamespace('iri');
         expect(splitIRIFilter).toHaveBeenCalledWith('iri');
         expect(_.isString(result)).toBe(true);
+    });
+    describe('getDate should get the specified date entity', function() {
+        it('when provided', function() {
+            var date = '1/1/2000';
+            expect(utilSvc.getDate(date, 'short')).toBe($filter('date')(new Date(date), 'short'));
+        });
+        it('unless it is not provided', function() {
+            expect(utilSvc.getDate('')).toBe('(No Date Specified)');
+        });
     });
 });
