@@ -73,10 +73,9 @@
                     dvm.run = function() {
                         if (dvm.state.editMapping) {
                             if (_.includes(dvm.mm.mappingIds, dvm.state.mapping.id)) {
-                                dvm.mm.deleteMapping(dvm.state.mapping.id)
-                                    .then(() => saveMapping(), errorMessage => dvm.errorMessage = errorMessage);
+                                dvm.mm.updateMapping(dvm.state.mapping.id, dvm.state.mapping.jsonld).then(runMapping, onError);
                             } else {
-                                saveMapping();
+                                dvm.mm.upload(dvm.state.mapping.jsonld, dvm.state.mapping.id).then(runMapping, onError);
                             }
                         } else {
                             runMapping();
@@ -85,11 +84,12 @@
                     dvm.cancel = function() {
                         dvm.state.displayRunMappingOverlay = false;
                     }
-                    function saveMapping() {
-                        dvm.mm.upload(dvm.state.mapping.jsonld, dvm.state.mapping.id)
-                            .then(() => runMapping(), errorMessage => dvm.errorMessage = errorMessage);
+
+                    function onError(errorMessage) {
+                        dvm.errorMessage = errorMessage;
                     }
                     function runMapping() {
+                        dvm.state.changedMapping = false;
                         dvm.dm.map(dvm.state.mapping.id, dvm.format, dvm.fileName);
                         dvm.state.step = dvm.state.selectMappingStep;
                         dvm.state.initialize();
