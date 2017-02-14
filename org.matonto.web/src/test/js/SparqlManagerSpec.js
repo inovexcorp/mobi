@@ -83,12 +83,12 @@ describe('SPARQL Manager service', function() {
                 'X-Total-Count': '10'
             };
             utilSvc.parseLinks.and.returnValue({next: nextLink, prev: prevLink});
-            $httpBackend.expectGET(this.url).respond(200, {bindings: [{}], data: []}, headers);
+            $httpBackend.expectGET(this.url).respond(200, {bindings: [''], data: []}, headers);
             sparqlManagerSvc.queryRdf();
             $httpBackend.flush();
 
             expect(sparqlManagerSvc.data).toEqual([]);
-            expect(sparqlManagerSvc.bindings).toEqual([{}]);
+            expect(sparqlManagerSvc.bindings).toEqual(['']);
             expect(sparqlManagerSvc.totalSize).toEqual(headers['X-Total-Count']);
             expect(sparqlManagerSvc.links.next).toEqual(nextLink);
             expect(sparqlManagerSvc.links.prev).toEqual(prevLink);
