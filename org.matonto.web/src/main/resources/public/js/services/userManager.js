@@ -709,6 +709,7 @@
              * "[Not Available]".
              *
              * @param {object} userObject the object which represents a user.
+             * @return {string} a string to identify for the provided user.
              */
             self.getUserDisplay = function(userObject) {
                 return (_.get(userObject, 'firstName') && _.get(userObject, 'lastName')) ? userObject.firstName + ' ' + userObject.lastName : _.get(userObject, 'username', '[Not Available]');
