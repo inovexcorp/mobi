@@ -27,10 +27,10 @@
         .module('mergeTab', [])
         .directive('mergeTab', mergeTab);
 
-        mergeTab.$inject = ['utilService', 'ontologyStateService', 'catalogManagerService', 'ontologyManagerService',
+        mergeTab.$inject = ['$q', 'utilService', 'ontologyStateService', 'catalogManagerService', 'ontologyManagerService',
             'prefixes'];
 
-        function mergeTab(utilService, ontologyStateService, catalogManagerService, ontologyManagerService, prefixes) {
+        function mergeTab($q, utilService, ontologyStateService, catalogManagerService, ontologyManagerService, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -90,20 +90,20 @@
                     }
 
                     dvm.merge = function() {
-                        cm.mergeBranches(dvm.branch['@id'], dvm.targetId, dvm.os.listItem.recordId, catalogId,
-                            resolutions).then(commitId =>
-                                om.updateOntology(dvm.os.listItem.recordId, dvm.targetId, commitId, dvm.os.state.type)
-                                    .then(() => {
-                                        if (dvm.checkbox) {
-                                            cm.deleteRecordBranch(dvm.branch['@id'], dvm.os.listItem.recordId,
-                                                catalogId).then(() => {
-                                                    om.removeBranch(dvm.os.listItem.recordId, dvm.branch['@id']);
-                                                    onSuccess();
-                                                }, onError);
-                                        } else {
-                                            onSuccess();
-                                        }
-                                    }, onError), onError);
+                        var sourceId = angular.copy(dvm.branch['@id']);
+                        cm.mergeBranches(sourceId, dvm.targetId, dvm.os.listItem.recordId, catalogId, resolutions)
+                            .then(commitId => om.updateOntology(dvm.os.listItem.recordId, dvm.targetId, commitId, dvm.os.state.type), $q.reject)
+                            .then(() => {
+                                if (dvm.checkbox) {
+                                    return cm.deleteRecordBranch(sourceId, dvm.os.listItem.recordId, catalogId)
+                                } else {
+                                    onSuccess();
+                                }
+                            }, $q.reject)
+                            .then(() => {
+                                om.removeBranch(dvm.os.listItem.recordId, sourceId);
+                                onSuccess();
+                            }, onError);
                     }
 
                     dvm.matchesCurrent = function(branch) {
