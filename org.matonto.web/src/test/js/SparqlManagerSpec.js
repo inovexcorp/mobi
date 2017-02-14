@@ -66,30 +66,29 @@ describe('SPARQL Manager service', function() {
             expect(sparqlManagerSvc.data).toBeUndefined();
             done();
         });
-        it('unless something goes wrong', function(done) {
-            var statusMessage = 'Status Message';
-            $httpBackend.expectGET(this.url).respond(204, undefined, undefined, statusMessage);
+        it('when returning no bindings', function(done) {
+            $httpBackend.expectGET(this.url).respond(200, {bindings: [], data: []});
             sparqlManagerSvc.queryRdf();
             $httpBackend.flush();
 
-            expect(sparqlManagerSvc.infoMessage).toEqual(statusMessage);
+            expect(sparqlManagerSvc.infoMessage).toEqual('There were no results for the submitted query.');
             expect(sparqlManagerSvc.currentPage).toBe(0);
             expect(sparqlManagerSvc.data).toBeUndefined();
             done();
         });
-        it('successfully', function(done) {
+        it('when returning bindings', function(done) {
             var nextLink = 'http://example.com/next';
             var prevLink = 'http://example.com/prev';
             var headers = {
                 'X-Total-Count': '10'
             };
             utilSvc.parseLinks.and.returnValue({next: nextLink, prev: prevLink});
-            $httpBackend.expectGET(this.url).respond(200, {bindings: [], data: []}, headers);
+            $httpBackend.expectGET(this.url).respond(200, {bindings: [{}], data: []}, headers);
             sparqlManagerSvc.queryRdf();
             $httpBackend.flush();
 
             expect(sparqlManagerSvc.data).toEqual([]);
-            expect(sparqlManagerSvc.bindings).toEqual([]);
+            expect(sparqlManagerSvc.bindings).toEqual([{}]);
             expect(sparqlManagerSvc.totalSize).toEqual(headers['X-Total-Count']);
             expect(sparqlManagerSvc.links.next).toEqual(nextLink);
             expect(sparqlManagerSvc.links.prev).toEqual(prevLink);

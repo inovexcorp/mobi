@@ -252,7 +252,7 @@
                 return _.get(response, 'statusText') || defaultMessage;
             }
             function onSuccess(response) {
-                if (_.get(response, 'status') === 200) {
+                if (_.get(response, 'data.bindings', []).length) {
                     self.bindings = response.data.bindings;
                     self.data = response.data.data;
                     var headers = response.headers();
@@ -261,7 +261,7 @@
                     self.links.prev = _.get(links, 'prev', '');
                     self.links.next = _.get(links, 'next', '');
                 } else {
-                    self.infoMessage = getMessage(response, 'There was a problem getting the results.');
+                    self.infoMessage = 'There were no results for the submitted query.';
                 }
             }
             function onError(response) {
