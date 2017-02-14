@@ -59,6 +59,7 @@
             'circleButton',
             'circleButtonStack',
             'clickAnywhereButHere',
+            'commitHistoryTable',
             'confirmationOverlay',
             'customHeader',
             'customLabel',

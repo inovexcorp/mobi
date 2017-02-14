@@ -66,7 +66,7 @@
 
                 dvm.getDate = function(entity, key) {
                     var dateStr = utilService.getDctermsValue(entity, key);
-                    return dateStr ? $filter('date')(new Date(dateStr), 'short') : '(No Date Specified)';
+                    return utilService.getDate(dateStr, 'short');
                 }
             },
             templateUrl: 'directives/entityDates/entityDates.html'

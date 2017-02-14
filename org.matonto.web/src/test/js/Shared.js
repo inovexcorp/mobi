@@ -758,6 +758,7 @@ function mockUtil() {
             this.createSuccessToast = jasmine.createSpy('createSuccessToast');
             this.createJson = jasmine.createSpy('createJson').and.returnValue({});
             this.getIRINamespace = jasmine.createSpy('getIRINamespace').and.returnValue({});
+            this.getDate = jasmine.createSpy('getDate').and.returnValue(new Date());
         });
     });
 }

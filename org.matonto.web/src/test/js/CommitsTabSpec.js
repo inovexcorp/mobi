@@ -20,42 +20,35 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Vocabulary Tab directive', function() {
-    var $compile,
-        scope,
-        element;
+describe('Commits Tab directive', function() {
+    var $compile, scope, $q, element;
 
     beforeEach(function() {
         module('templates');
-        module('vocabularyTab');
+        module('commitsTab');
         mockOntologyState();
-        mockOntologyManager();
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;
             scope = _$rootScope_;
         });
 
-        element = $compile(angular.element('<vocabulary-tab></vocabulary-tab>'))(scope);
+        element = $compile(angular.element('<commits-tab></commits-tab>'))(scope);
         scope.$digest();
     });
 
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('vocabulary-tab')).toBe(true);
-            expect(element.hasClass('ontology-tab')).toBe(true);
+            expect(element.hasClass('commits-tab')).toBe(true);
         });
-        it('with a tabset', function() {
-            expect(element.find('tabset').length).toBe(1);
-        });
-        it('with tabs', function() {
-            expect(element.find('tab').length).toBe(6);
-        });
-        _.forEach(['ontology-button-stack', 'project-tab', 'concepts-tab', 'search-tab', 'saved-changes-tab', 'merge-tab', 'commits-tab'], function(tag) {
-            it('with a ' + tag, function() {
-                expect(element.find(tag).length).toBe(1);
+        _.forEach(['block', 'block-content', 'block-header', 'commit-history-table'], function(item) {
+            it('for ' + item, function() {
+                expect(element.find(item).length).toBe(1);
             });
+        });
+        it('for .col-xs-8', function() {
+            expect(element.querySelectorAll('.col-xs-8').length).toBe(1);
         });
     });
 });
