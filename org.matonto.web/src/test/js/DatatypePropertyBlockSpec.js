@@ -46,7 +46,6 @@ describe('Datatype Property Block directive', function() {
             'prop1': [{'@id': 'value1'}],
             'prop2': [{'@value': 'value2'}]
         };
-        ontologyManagerSvc.getAnnotationIRIs.and.returnValue(['prop1', 'prop2']);
         element = $compile(angular.element('<datatype-property-block></datatype-property-block>'))(scope);
         scope.$digest();
     });

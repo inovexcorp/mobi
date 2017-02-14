@@ -86,6 +86,17 @@ var jsFiles = function(prefix) {
         ]
     };
 
+// Method to chunk array
+var createGroupedArray = function(arr, chunkSize) {
+    var groups = [], i;
+    for (i = 0; i < arr.length; i += chunkSize) {
+        groups.push(arr.slice(i, i + chunkSize));
+    }
+    return groups;
+}
+
+var tests = createGroupedArray(glob.sync('./src/test/js/*Spec.js'), 50);
+
 //Method to create frontend documentation
 var createDocs = function(scripts) {
     var options = {
@@ -102,12 +113,33 @@ var createDocs = function(scripts) {
 }
 
 //Method to run jasmine tests
-var runKarma = function(vendorFiles, isBuild, done) {
-    var configFile = isBuild ? __dirname + '/karma.conf.build.js' : __dirname + '/karma.conf.tdd.js';
+var runKarma = function(vendorFiles, testFiles, isBuild, done) {
+    var files = vendorFiles.concat(['./target/templates.js', './src/test/js/Shared.js']).concat(testFiles);
+    var configFile = __dirname;
+    if (isBuild) {
+        configFile += '/karma.conf.build.js';
+        new Karma({
+            configFile: configFile,
+            files: files
+        }, done).start();
+        /*createGroupedArray(glob.sync('./src/test/js/*Spec.js'), 50).forEach(function(chunk) {
+            new Karma({
+                configFile: configFile,
+                files: files.concat(chunk)
+            }, done()).start();
+        });*/
+    } else {
+        configFile += '/karma.conf.tdd.js';
+        new Karma({
+            configFile: configFile,
+            files: files
+        }, done).start();
+    }
+    /*var configFile = isBuild ? __dirname + '/karma.conf.build.js' : __dirname + '/karma.conf.tdd.js';
     new Karma({
         configFile: configFile,
         files: vendorFiles.concat(['./target/templates.js', './src/test/js/Shared.js', './src/test/js/*Spec.js'])
-    }, done()).start();
+    }, done()).start();*/
 }
 
 // Inject method for minified and unminified
@@ -130,17 +162,33 @@ gulp.task('cacheTemplates', function() {
 
 // Run jasmine tests in PhantomJS with minified source files
 gulp.task('test-minified', ['cacheTemplates', 'minify-scripts'], function(done) {
-    return runKarma([dest + '**/*.js'], true, done);
+    return runKarma([dest + '**/*.js'], glob.sync('./src/test/js/*Spec.js'), true, done);
 });
 
 // Run jasmine tests in PhantomJS with unminified source files
 gulp.task('test-unminified', ['cacheTemplates', 'move-custom-js'], function(done) {
-    return runKarma(nodeJsFiles(nodeDir).concat(jsFiles(dest)), true, done);
+    return runKarma(nodeJsFiles(nodeDir).concat(jsFiles(dest)), glob.sync('./src/test/js/*Spec.js'), true, done);
+});
+
+gulp.task('test-unminified-1', ['cacheTemplates', 'move-custom-js'], function(done) {
+    return runKarma(nodeJsFiles(nodeDir).concat(jsFiles(dest)), tests[0], true, done);
+});
+
+gulp.task('test-unminified-2', ['cacheTemplates', 'move-custom-js', 'test-unminified-1'], function(done) {
+    return runKarma(nodeJsFiles(nodeDir).concat(jsFiles(dest)), tests[1], true, done);
+});
+
+gulp.task('test-unminified-3', ['cacheTemplates', 'move-custom-js', 'test-unminified-2'], function(done) {
+    return runKarma(nodeJsFiles(nodeDir).concat(jsFiles(dest)), tests[2], true, done);
+});
+
+gulp.task('test-unminified-4', ['cacheTemplates', 'move-custom-js', 'test-unminified-3'], function(done) {
+    return runKarma(nodeJsFiles(nodeDir).concat(jsFiles(dest)), tests[3], true, done);
 });
 
 // Launch TDD environment for jasmine tests in Chrome
 gulp.task('tdd', ['cacheTemplates'], function(done) {
-    return runKarma(nodeJsFiles(nodeDir).concat(jsFiles(src)), false, done);
+    return runKarma(nodeJsFiles(nodeDir).concat(jsFiles(src)), glob.sync('./src/test/js/*Spec.js'), false, done);
 });
 
 // Create ngDocs files for minified build
@@ -263,4 +311,5 @@ gulp.task('icons-unminified', function() {
 gulp.task('prod', ['test-minified', 'minify-scripts', 'minify-css', 'html', 'images', 'inject-minified', 'icons-minified', 'ngdocs-minified']);
 
 // Default Task (un-minified)
-gulp.task('default', ['test-unminified', 'move-custom-js', 'move-node-js', 'move-node-css', 'images', 'html', 'change-to-css', 'inject-unminified', 'icons-unminified', 'ngdocs-unminified']);
+gulp.task('default', ['test-unminified-1', 'test-unminified-2', 'test-unminified-3', 'test-unminified-4', 'move-custom-js', 'move-node-js', 'move-node-css', 'images', 'html', 'change-to-css', 'inject-unminified', 'icons-unminified', 'ngdocs-unminified']);
+// gulp.task('default', ['test-unminified', 'move-custom-js', 'move-node-js', 'move-node-css', 'images', 'html', 'change-to-css', 'inject-unminified', 'icons-unminified', 'ngdocs-unminified']);
