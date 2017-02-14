@@ -64,7 +64,6 @@
                                     om.updateOntology(dvm.os.listItem.recordId, branchId, commitId)
                                 ]).then(dvm.os.resetStateTabs());
                             });
-
                     }
 
                     dvm.openDeleteConfirmation = function($event, branch) {

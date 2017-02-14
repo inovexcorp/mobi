@@ -167,12 +167,14 @@ describe('Merge Tab directive', function() {
                         });
                     });
                     it('and controller.checkbox if falsy', function() {
+                        controller.checkbox = false;
                         scope.$apply();
                         expect(catalogManagerSvc.mergeBranches).toHaveBeenCalledWith(branchId, targetId,
                             ontologyStateSvc.listItem.recordId, catalogId, jasmine.any(Object));
                         expect(ontologyManagerSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem
                             .recordId, targetId, commitId, ontologyStateSvc.state.type);
                         expect(catalogManagerSvc.deleteRecordBranch).not.toHaveBeenCalled();
+                        expect(ontologyManagerSvc.removeBranch).not.toHaveBeenCalled();
                         expect(controller.targetId).toBe(undefined);
                         expect(util.createSuccessToast).toHaveBeenCalled();
                     });
