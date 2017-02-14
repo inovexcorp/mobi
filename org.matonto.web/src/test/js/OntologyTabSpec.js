@@ -48,9 +48,9 @@ describe('Ontology Tab directive', function() {
             expect(element.find('tabset').length).toBe(1);
         });
         it('with tabs', function() {
-            expect(element.find('tab').length).toBe(8);
+            expect(element.find('tab').length).toBe(9);
         });
-        _.forEach(['branch-select', 'ontology-button-stack', 'project-tab', 'overview-tab', 'classes-tab', 'properties-tab', 'individuals-tab', 'search-tab', 'saved-changes-tab', 'merge-tab'], function(tag) {
+        _.forEach(['branch-select', 'ontology-button-stack', 'project-tab', 'overview-tab', 'classes-tab', 'properties-tab', 'individuals-tab', 'search-tab', 'saved-changes-tab', 'merge-tab', 'commits-tab'], function(tag) {
             it('with a ' + tag, function() {
                 expect(element.find(tag).length).toBe(1);
             });
