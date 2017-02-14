@@ -673,4 +673,22 @@ describe('User Manager service', function() {
             expect(result).toBe(false);
         });
     });
+    describe('getUserDisplay should return the correct value', function() {
+        it('when there is a first and last', function() {
+            var userObject = {
+                firstName: 'first',
+                lastName: 'last'
+            }
+            expect(userManagerSvc.getUserDisplay(userObject)).toEqual('first last');
+        });
+        it('when there is not a first or last but there is a username', function() {
+            var userObject = {
+                username: 'username'
+            }
+            expect(userManagerSvc.getUserDisplay(userObject)).toEqual('username');
+        });
+        it('when there is not a first, last, or username', function() {
+            expect(userManagerSvc.getUserDisplay({})).toEqual('[Not Available]');
+        });
+    });
 });
