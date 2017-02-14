@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Commit History Table directive', function() {
-    var $compile, scope, $q, element, controller, $filter, catalogManagerSvc, getDeferred, catalogId;
+    var $compile, scope, $q, element, controller, catalogManagerSvc, getDeferred, catalogId, isolatedScope;
     var error = 'error';
     var id = 'id';
     var commitId = 'commitId';
@@ -34,13 +34,12 @@ describe('Commit History Table directive', function() {
         module('commitHistoryTable');
         mockOntologyState();
         mockCatalogManager();
+        mockUserManager();
         mockUtil();
-        injectSplitIRIFilter();
 
-        inject(function(_$compile_, _$rootScope_, _$filter_, _$q_, _catalogManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _catalogManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            $filter = _$filter_;
             $q = _$q_;
             catalogManagerSvc = _catalogManagerService_;
         });
@@ -55,6 +54,7 @@ describe('Commit History Table directive', function() {
         scope.$digest();
         controller = element.controller('commitHistoryTable');
         scope.dvm = controller;
+        isolatedScope = element.isolateScope();
     });
 
     describe('contains the correct html', function() {
@@ -77,6 +77,25 @@ describe('Commit History Table directive', function() {
             expect(element.find('th').length).toBe(4);
         });
     });
+
+    describe('in isolated scope', function() {
+        it('recordId should be one way bound', function() {
+            isolatedScope.recordId = 'new';
+            scope.$digest();
+            expect(scope.recordId).toEqual(recordId);
+        });
+        it('branchId should be one way bound', function() {
+            isolatedScope.branchId = 'new';
+            scope.$digest();
+            expect(scope.branchId).toEqual(branchId);
+        });
+        it('commitId should be one way bound', function() {
+            isolatedScope.commitId = 'new';
+            scope.$digest();
+            expect(scope.commitId).toEqual(commitId);
+        });
+    });
+
     describe('controller methods', function() {
         describe('getBranchCommits should be called initially', function() {
             it('and if it succeeds', function() {
@@ -92,27 +111,6 @@ describe('Commit History Table directive', function() {
                 expect(catalogManagerSvc.getBranchCommits).toHaveBeenCalledWith(scope.branchId, scope.recordId, catalogId);
                 expect(controller.error).toEqual(error);
                 expect(controller.commits).toEqual([]);
-            });
-        });
-        it('condenseId returns the proper string', function() {
-            expect(controller.condenseId(id)).toEqual($filter('splitIRI')(id).end.substr(0,10));
-        });
-        describe('getCreatorDisplay should return the correct value', function() {
-            it('when there is a first and last', function() {
-                var creatorObject = {
-                    first: 'first',
-                    last: 'last'
-                }
-                expect(controller.getCreatorDisplay(creatorObject)).toEqual('first last');
-            });
-            it('when there is not a first or last but there is a username', function() {
-                var creatorObject = {
-                    username: 'username'
-                }
-                expect(controller.getCreatorDisplay(creatorObject)).toEqual('username');
-            });
-            it('when there is not a first, last, or username', function() {
-                expect(controller.getCreatorDisplay({})).toEqual('[Not Available]');
             });
         });
         describe('$scope.$watch triggers when changing the', function() {

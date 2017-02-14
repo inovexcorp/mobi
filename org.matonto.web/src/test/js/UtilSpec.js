@@ -145,4 +145,8 @@ describe('Util service', function() {
             expect(utilSvc.getDate('')).toBe('(No Date Specified)');
         });
     });
+    it('condenseCommitId returns the proper string', function() {
+        var id = 'testId';
+        expect(utilSvc.condenseCommitId(id)).toEqual($filter('splitIRI')(id).end.substr(0,10));
+    });
 });

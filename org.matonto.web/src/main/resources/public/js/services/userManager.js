@@ -698,6 +698,22 @@
                     return _.includes(_.flatten(_.map(userGroups, 'roles')), 'admin');
                 }
             }
+            /**
+             * @ngdoc method
+             * @name getUserDisplay
+             * @methodOf userManager.service:userManagerService
+             *
+             * @description
+             * Returns a human readable form of a user. It will default to the "firstName lastName". If both of those
+             * properties are not present, it will return the "username". If the username is not present, it will return
+             * "[Not Available]".
+             *
+             * @param {string} username the username of the user to test whether they are an admin
+             * @return {boolean} true if the user is an admin; false otherwise
+             */
+            self.getUserDisplay = function(userObject) {
+                return (_.get(userObject, 'firstName') && _.get(userObject, 'lastName')) ? userObject.firstName + ' ' + userObject.lastName : _.get(userObject, 'username', '[Not Available]');
+            }
 
             function listUserRoles(username) {
                 var deferred = $q.defer();

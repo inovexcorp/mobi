@@ -35,22 +35,25 @@
          * @name commitHistoryTable.directive:commitHistoryTable
          * @scope
          * @restrict E
+         * @requires catalogManager.service:catalogManagerService
+         * @requires util.service:utilService
+         * @requires userManager.service:userManagerService
          *
          */
         .directive('commitHistoryTable', commitHistoryTable);
 
-        commitHistoryTable.$inject = ['$filter', 'catalogManagerService', 'utilService'];
+        commitHistoryTable.$inject = ['catalogManagerService', 'utilService', 'userManagerService'];
 
-        function commitHistoryTable($filter, catalogManagerService, utilService) {
+        function commitHistoryTable(catalogManagerService, utilService, userManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
                 transclude: true,
                 scope: {},
                 bindToController: {
-                    recordId: '=',
-                    branchId: '=',
-                    commitId: '=?'
+                    recordId: '<',
+                    branchId: '<',
+                    commitId: '<?'
                 },
                 templateUrl: 'directives/commitHistoryTable/commitHistoryTable.html',
                 controllerAs: 'dvm',
@@ -60,17 +63,9 @@
                     var catalogId = _.get(cm.localCatalog, '@id', '');
 
                     dvm.util = utilService;
+                    dvm.um = userManagerService;
                     dvm.error = '';
                     dvm.commits = [];
-
-                    dvm.condenseId = function(id) {
-                        return $filter('splitIRI')(id).end.substr(0, 10);
-                    }
-
-                    dvm.getCreatorDisplay = function(creatorObject) {
-                        return (_.get(creatorObject, 'first') && _.get(creatorObject, 'last')) ? creatorObject.first
-                            + ' ' + creatorObject.last : _.get(creatorObject, 'username', '[Not Available]');
-                    }
 
                     $scope.$watchGroup(['dvm.branchId', 'dvm.recordId', 'dvm.commitId'], newValues => {
                         getCommits();

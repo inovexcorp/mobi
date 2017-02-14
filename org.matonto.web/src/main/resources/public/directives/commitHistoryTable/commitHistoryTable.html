@@ -33,8 +33,8 @@
         </thead>
         <tbody>
             <tr ng-repeat="commit in dvm.commits | orderBy:'-' track by commit.id">
-                <td class="text-nowrap" title="Username: {{commit.creator.username}}">{{dvm.getCreatorDisplay(commit.creator)}}</td>
-                <td class="text-nowrap commit-id" title="{{commit.id}}">{{dvm.condenseId(commit.id)}}</td>
+                <td class="text-nowrap" title="Username: {{commit.creator.username}}">{{dvm.um.getUserDisplay(commit.creator)}}</td>
+                <td class="text-nowrap commit-id" title="{{commit.id}}">{{dvm.util.condenseCommitId(commit.id)}}</td>
                 <td title="{{commit.message}}" class="commit-message">{{commit.message}}</td>
                 <td class="text-nowrap" title="{{dvm.util.getDate(commit.date, 'medium')}}">{{dvm.util.getDate(commit.date, 'd MMM yyyy')}}</td>
             </tr>
