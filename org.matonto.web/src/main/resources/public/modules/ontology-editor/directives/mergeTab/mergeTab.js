@@ -95,14 +95,14 @@
                             .then(commitId => om.updateOntology(dvm.os.listItem.recordId, dvm.targetId, commitId, dvm.os.state.type), $q.reject)
                             .then(() => {
                                 if (dvm.checkbox) {
-                                    return cm.deleteRecordBranch(sourceId, dvm.os.listItem.recordId, catalogId)
+                                    cm.deleteRecordBranch(sourceId, dvm.os.listItem.recordId, catalogId)
+                                        .then(() => {
+                                            om.removeBranch(dvm.os.listItem.recordId, sourceId);
+                                            onSuccess();
+                                        }, onError);
                                 } else {
                                     onSuccess();
                                 }
-                            }, $q.reject)
-                            .then(() => {
-                                om.removeBranch(dvm.os.listItem.recordId, sourceId);
-                                onSuccess();
                             }, onError);
                     }
 
