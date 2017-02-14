@@ -78,19 +78,19 @@ describe('Commit History Table directive', function() {
         });
     });
 
-    describe('in isolated scope', function() {
+    describe('controller bound variables', function() {
         it('recordId should be one way bound', function() {
-            isolatedScope.recordId = 'new';
+            controller.recordId = 'new';
             scope.$digest();
             expect(scope.recordId).toEqual(recordId);
         });
         it('branchId should be one way bound', function() {
-            isolatedScope.branchId = 'new';
+            controller.branchId = 'new';
             scope.$digest();
             expect(scope.branchId).toEqual(branchId);
         });
         it('commitId should be one way bound', function() {
-            isolatedScope.commitId = 'new';
+            controller.commitId = 'new';
             scope.$digest();
             expect(scope.commitId).toEqual(commitId);
         });

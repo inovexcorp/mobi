@@ -42,7 +42,7 @@ describe('Commits Tab directive', function() {
             expect(element.prop('tagName')).toBe('DIV');
             expect(element.hasClass('commits-tab')).toBe(true);
         });
-        _.forEach(['block', 'commit-history-table', 'h4'], function(item) {
+        _.forEach(['block', 'block-content', 'block-header', 'commit-history-table'], function(item) {
             it('for ' + item, function() {
                 expect(element.find(item).length).toBe(1);
             });

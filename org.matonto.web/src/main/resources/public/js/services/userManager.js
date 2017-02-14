@@ -708,8 +708,7 @@
              * properties are not present, it will return the "username". If the username is not present, it will return
              * "[Not Available]".
              *
-             * @param {string} username the username of the user to test whether they are an admin
-             * @return {boolean} true if the user is an admin; false otherwise
+             * @param {object} userObject the object which represents a user.
              */
             self.getUserDisplay = function(userObject) {
                 return (_.get(userObject, 'firstName') && _.get(userObject, 'lastName')) ? userObject.firstName + ' ' + userObject.lastName : _.get(userObject, 'username', '[Not Available]');
