@@ -49,7 +49,8 @@
                 scope: {},
                 bindToController: {
                     recordId: '=',
-                    branchId: '='
+                    branchId: '=',
+                    commitId: '=?'
                 },
                 templateUrl: 'directives/commitHistoryTable/commitHistoryTable.html',
                 controllerAs: 'dvm',
@@ -63,7 +64,7 @@
                     dvm.commits = [];
 
                     dvm.condenseId = function(id) {
-                        return ($filter('splitIRI')(id).end).substr(0, 10);
+                        return $filter('splitIRI')(id).end.substr(0, 10);
                     }
 
                     dvm.getCreatorDisplay = function(creatorObject) {
@@ -71,7 +72,7 @@
                             + ' ' + creatorObject.last : _.get(creatorObject, 'username', '[Not Available]');
                     }
 
-                    $scope.$watchGroup(['dvm.branchId', 'dvm.recordId'], newValues => {
+                    $scope.$watchGroup(['dvm.branchId', 'dvm.recordId', 'dvm.commitId'], newValues => {
                         getCommits();
                     });
 

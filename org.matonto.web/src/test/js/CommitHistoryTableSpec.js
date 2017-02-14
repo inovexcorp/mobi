@@ -21,8 +21,13 @@
  * #L%
  */
 describe('Commit History Table directive', function() {
-    var $compile, scope, $q, element;
+    var $compile, scope, $q, element, controller, $filter, catalogManagerSvc, getDeferred, catalogId;
     var error = 'error';
+    var id = 'id';
+    var commitId = 'commitId';
+    var branchId = 'branchId';
+    var recordId = 'recordId';
+    var commits = [{'@id': commitId}];
 
     beforeEach(function() {
         module('templates');
@@ -32,14 +37,24 @@ describe('Commit History Table directive', function() {
         mockUtil();
         injectSplitIRIFilter();
 
-        inject(function(_$compile_, _$rootScope_) {
+        inject(function(_$compile_, _$rootScope_, _$filter_, _$q_, _catalogManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            $filter = _$filter_;
+            $q = _$q_;
+            catalogManagerSvc = _catalogManagerService_;
         });
+        catalogId = _.get(catalogManagerSvc.localCatalog, '@id', '');
+        getDeferred = $q.defer();
+        catalogManagerSvc.getBranchCommits.and.returnValue(getDeferred.promise);
 
-        element = $compile(angular.element('<commit-history-table></commit-history-table>'))(scope);
+        scope.recordId = recordId;
+        scope.branchId = branchId;
+        scope.commitId = commitId;
+        element = $compile(angular.element('<commit-history-table commit-id="commitId" branch-id="branchId" record-id="recordId"></commit-history-table>'))(scope);
         scope.$digest();
         controller = element.controller('commitHistoryTable');
+        scope.dvm = controller;
     });
 
     describe('contains the correct html', function() {
@@ -60,6 +75,59 @@ describe('Commit History Table directive', function() {
         });
         it('for th', function() {
             expect(element.find('th').length).toBe(4);
+        });
+    });
+    describe('controller methods', function() {
+        describe('getBranchCommits should be called initially', function() {
+            it('and if it succeeds', function() {
+                getDeferred.resolve(commits);
+                scope.$apply();
+                expect(catalogManagerSvc.getBranchCommits).toHaveBeenCalledWith(scope.branchId, scope.recordId, catalogId);
+                expect(controller.error).toEqual('');
+                expect(controller.commits).toEqual(commits);
+            });
+            it('and if it fails', function() {
+                getDeferred.reject(error);
+                scope.$apply();
+                expect(catalogManagerSvc.getBranchCommits).toHaveBeenCalledWith(scope.branchId, scope.recordId, catalogId);
+                expect(controller.error).toEqual(error);
+                expect(controller.commits).toEqual([]);
+            });
+        });
+        it('condenseId returns the proper string', function() {
+            expect(controller.condenseId(id)).toEqual($filter('splitIRI')(id).end.substr(0,10));
+        });
+        describe('getCreatorDisplay should return the correct value', function() {
+            it('when there is a first and last', function() {
+                var creatorObject = {
+                    first: 'first',
+                    last: 'last'
+                }
+                expect(controller.getCreatorDisplay(creatorObject)).toEqual('first last');
+            });
+            it('when there is not a first or last but there is a username', function() {
+                var creatorObject = {
+                    username: 'username'
+                }
+                expect(controller.getCreatorDisplay(creatorObject)).toEqual('username');
+            });
+            it('when there is not a first, last, or username', function() {
+                expect(controller.getCreatorDisplay({})).toEqual('[Not Available]');
+            });
+        });
+        describe('$scope.$watch triggers when changing the', function() {
+            it('commitId', function() {
+                scope.$apply('commitId = "new"');
+                expect(catalogManagerSvc.getBranchCommits).toHaveBeenCalledWith(scope.branchId, scope.recordId, catalogId);
+            });
+            it('branchId', function() {
+                scope.$apply('branchId = "new"');
+                expect(catalogManagerSvc.getBranchCommits).toHaveBeenCalledWith('new', scope.recordId, catalogId);
+            });
+            it('recordId', function() {
+                scope.$apply('recordId = "new"');
+                expect(catalogManagerSvc.getBranchCommits).toHaveBeenCalledWith(scope.branchId, 'new', catalogId);
+            });
         });
     });
 });

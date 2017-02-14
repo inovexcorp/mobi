@@ -84,5 +84,8 @@ describe('Branch Block directive', function() {
         it('with a entity-description', function() {
             expect(this.element.find('entity-description').length).toBe(1);
         });
+        it('with a commit-history-table', function() {
+            expect(this.element.find('commit-history-table').length).toBe(1);
+        });
     });
 });
