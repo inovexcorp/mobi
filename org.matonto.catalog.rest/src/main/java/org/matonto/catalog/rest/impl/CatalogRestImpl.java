@@ -23,12 +23,6 @@ package org.matonto.catalog.rest.impl;
  * #L%
  */
 
-import static org.matonto.rest.util.RestUtils.getActiveUser;
-import static org.matonto.rest.util.RestUtils.getRDFFormatFileExtension;
-import static org.matonto.rest.util.RestUtils.getRDFFormatMimeType;
-import static org.matonto.rest.util.RestUtils.jsonldToModel;
-import static org.matonto.rest.util.RestUtils.modelToString;
-
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import net.sf.json.JSONArray;
@@ -80,6 +74,10 @@ import org.matonto.rest.util.jaxb.Links;
 import org.openrdf.model.vocabulary.DCTERMS;
 import org.openrdf.model.vocabulary.RDF;
 
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
+import javax.ws.rs.core.UriInfo;
 import java.io.BufferedWriter;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
@@ -96,10 +94,12 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
-import javax.ws.rs.core.UriInfo;
+
+import static org.matonto.rest.util.RestUtils.getActiveUser;
+import static org.matonto.rest.util.RestUtils.getRDFFormatFileExtension;
+import static org.matonto.rest.util.RestUtils.getRDFFormatMimeType;
+import static org.matonto.rest.util.RestUtils.jsonldToModel;
+import static org.matonto.rest.util.RestUtils.modelToString;
 
 @Component(immediate = true)
 public class CatalogRestImpl implements CatalogRest {
@@ -887,10 +887,10 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
-    public Response merge(ContainerRequestContext context, String catalogId, String recordId, String branchId,
+    public Response merge(ContainerRequestContext context, String catalogId, String recordId, String sourceBranchId,
                           String targetBranchId, String additionsJson, String deletionsJson) {
         try {
-            final Commit sourceHead = getHeadCommit(catalogId, recordId, branchId);
+            final Commit sourceHead = getHeadCommit(catalogId, recordId, sourceBranchId);
             final Commit targetHead = getHeadCommit(catalogId, recordId, targetBranchId);
             User activeUser = getActiveUser(context, engineManager);
             if (catalogManager.getInProgressCommitIRI(activeUser.getResource(), factory.createIRI(recordId))
@@ -898,7 +898,7 @@ public class CatalogRestImpl implements CatalogRest {
                 throw ErrorUtils.sendError("User already has an InProgressCommit for Record " + recordId,
                         Response.Status.BAD_REQUEST);
             }
-            Branch branch = catalogManager.getBranch(factory.createIRI(branchId), branchFactories.get(Branch.TYPE))
+            Branch sourceBranch = catalogManager.getBranch(factory.createIRI(sourceBranchId), branchFactories.get(Branch.TYPE))
                     .orElseThrow(() -> ErrorUtils.sendError("Branch not found", Response.Status.BAD_REQUEST));
             InProgressCommit inProgressCommit = catalogManager.createInProgressCommit(activeUser,
                     factory.createIRI(recordId));
@@ -911,10 +911,9 @@ public class CatalogRestImpl implements CatalogRest {
             }
             Commit newCommit = catalogManager.createCommit(inProgressCommit,
                     Stream.of(sourceHead, targetHead).collect(Collectors.toSet()),
-                    getMergeMessage(branchId, targetBranchId));
+                    getMergeMessage(sourceBranchId, targetBranchId));
             catalogManager.addCommitToBranch(newCommit, factory.createIRI(targetBranchId));
-            branch.setHead(newCommit);
-            catalogManager.updateBranch(branch);
+            catalogManager.updateHead(sourceBranch.getResource(), newCommit.getResource());
             catalogManager.removeInProgressCommit(inProgressCommit.getResource());
             return Response.ok(newCommit.getResource().stringValue()).build();
         } catch (MatOntoException e) {

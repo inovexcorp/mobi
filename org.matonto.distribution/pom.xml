@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.4.21-SNAPSHOT</version>
+        <version>1.4.24-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -225,6 +225,28 @@
                         <feature>matonto-cli</feature>
                         <feature>matonto-web</feature>
                     </bootFeatures>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>com.spotify</groupId>
+                <artifactId>docker-maven-plugin</artifactId>
+                <version>0.4.12</version>
+                <configuration>
+                    <dockerMaintainer>MatOnto.org</dockerMaintainer>
+                    <useGitCommitId>true</useGitCommitId>
+                    <dockerDirectory>${project.build.directory}/assembly/docker</dockerDirectory>
+                    <imageName>matonto/matonto</imageName>
+                    <imageTags>
+                        <imageTag>${project.version}</imageTag>
+                        <imageTag>latest</imageTag>
+                    </imageTags>
+                    <resources>
+                        <resource>
+                            <targetPath>/</targetPath>
+                            <directory>${project.build.directory}</directory>
+                            <include>distribution-${project.version}.tar.gz</include>
+                        </resource>
+                    </resources>
                 </configuration>
             </plugin>
         </plugins>
