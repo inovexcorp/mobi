@@ -46,7 +46,6 @@ describe('Object Property Block directive', function() {
             'prop1': [{'@id': 'value1'}],
             'prop2': [{'@value': 'value2'}]
         };
-        ontologyManagerSvc.getAnnotationIRIs.and.returnValue(['prop1', 'prop2']);
         element = $compile(angular.element('<object-property-block></object-property-block>'))(scope);
         scope.$digest();
     });
