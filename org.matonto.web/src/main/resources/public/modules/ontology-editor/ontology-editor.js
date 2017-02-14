@@ -36,6 +36,7 @@
             'classesTab',
             'classHierarchyBlock',
             'commitOverlay',
+            'commitsTab',
             'conceptHierarchyBlock',
             'conceptsTab',
             'createAnnotationOverlay',

@@ -57,8 +57,11 @@ import org.matonto.catalog.rest.CatalogRest;
 import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
+import org.matonto.ontologies.provo.Activity;
+import org.matonto.ontologies.provo.InstantaneousEvent;
 import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.rdf.api.IRI;
+import org.matonto.rdf.api.Literal;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.Value;
@@ -810,7 +813,7 @@ public class CatalogRestImpl implements CatalogRest {
                     .map(resource -> catalogManager.getCommit(resource, commitFactory))
                     .filter(Optional::isPresent)
                     .map(Optional::get)
-                    .map(this::thingToJsonld)
+                    .map(this::createCommitJson)
                     .forEach(commitChain::add);
             return Response.ok(commitChain).build();
         } catch (MatOntoException e) {
@@ -1056,6 +1059,44 @@ public class CatalogRestImpl implements CatalogRest {
         } catch (MatOntoException ex) {
             throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
         }
+    }
+
+    /**
+     * Creates the JSONObject to be returned in the commit chain to more easily work with the data associated with the
+     * Commit.
+     *
+     * @param commit The Commit object to parse data from.
+     * @return JSONObject with the necessary information set.
+     */
+    private JSONObject createCommitJson(Commit commit) {
+        Literal emptyLiteral = factory.createLiteral("");
+        Value creatorIRI = commit.getProperty(factory.createIRI(Activity.wasAssociatedWith_IRI))
+                .orElse(null);
+        Value date = commit.getProperty(factory.createIRI(InstantaneousEvent.atTime_IRI))
+                .orElse(emptyLiteral);
+        String message = commit.getProperty(factory.createIRI(DCTERMS.TITLE.stringValue()))
+                .orElse(emptyLiteral).stringValue();
+        Set<String> parents = commit.getProperties(factory.createIRI(Activity.wasInformedBy_IRI))
+                .stream()
+                .map(Value::stringValue)
+                .collect(Collectors.toSet());
+        User creator = engineManager.retrieveUser(engineManager.getUsername((Resource) creatorIRI)
+                .orElse("")).orElse(null);
+        JSONObject creatorObject = new JSONObject();
+        if (creator != null) {
+            creatorObject.element("firstName", creator.getFirstName().stream().findFirst()
+                    .orElse(emptyLiteral).stringValue())
+                    .element("lastName", creator.getLastName().stream().findFirst().orElse(emptyLiteral)
+                            .stringValue())
+                    .element("username", creator.getUsername().orElse(emptyLiteral).stringValue());
+        }
+
+        return new JSONObject()
+                .element("id", commit.getResource().stringValue())
+                .element("creator", creatorObject)
+                .element("date", date.stringValue())
+                .element("message", message)
+                .element("parents", parents);
     }
 
     /**
