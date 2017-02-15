@@ -531,9 +531,9 @@ describe('Mapping Config Overlay directive', function() {
         it('for wrapping containers', function() {
             expect(element.hasClass('mapping-config-overlay')).toBe(true);
             expect(element.querySelectorAll('form.content').length).toBe(1);
-            expect(element.querySelectorAll('.row').length).toBe(2);
+            expect(element.querySelectorAll('.row').length).toBe(1);
             expect(element.querySelectorAll('.ontology-select-container').length).toBe(1);
-            expect(element.querySelectorAll('.version-class-select-container').length).toBe(1);
+            expect(element.querySelectorAll('.preview-display').length).toBe(1);
             expect(element.querySelectorAll('.ontology-records-list').length).toBe(1);
         });
         it('with a paging-details', function() {

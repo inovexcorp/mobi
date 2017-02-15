@@ -23,9 +23,11 @@
 describe('Entity Description directive', function() {
     var $compile,
         scope,
+        element,
+        isolatedScope,
+        controller,
         utilSvc,
-        $filter,
-        controller;
+        $filter;
 
     beforeEach(function() {
         module('templates');
@@ -41,23 +43,23 @@ describe('Entity Description directive', function() {
 
         scope.entity = {};
         scope.limited = true;
-        this.element = $compile(angular.element('<entity-description entity="entity" limited="limited"></entity-description>'))(scope);
+        element = $compile(angular.element('<entity-description entity="entity" limited="limited"></entity-description>'))(scope);
         scope.$digest();
     });
 
     describe('in isolated scope', function() {
         beforeEach(function() {
-            this.isolatedScope = this.element.isolateScope();
+            isolatedScope = element.isolateScope();
         });
         it('entity should be one way bound', function() {
-            this.isolatedScope.entity = {a: 'b'};
+            isolatedScope.entity = {a: 'b'};
             scope.$digest();
             expect(scope.entity).toEqual({});
         });
     });
     describe('controller bound variable', function() {
         beforeEach(function() {
-            controller = this.element.controller('entityDescription');
+            controller = element.controller('entityDescription');
         });
         it('limited should be one way bound', function() {
             controller.limited = false;
@@ -67,7 +69,7 @@ describe('Entity Description directive', function() {
     });
     describe('controller methods', function() {
         beforeEach(function() {
-            controller = this.element.controller('entityDescription');
+            controller = element.controller('entityDescription');
         });
         describe('should get the limited description of the entity', function() {
             beforeEach(function() {
@@ -109,17 +111,26 @@ describe('Entity Description directive', function() {
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            controller = this.element.controller('entityDescription');
+            controller = element.controller('entityDescription');
         });
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('entity-description')).toBe(true);
+            expect(element.hasClass('entity-description')).toBe(true);
+        });
+        it('depending on whether there is a description', function() {
+            var p = element.find('p');
+            expect(p.text()).toContain('(None Specified)');
+
+            spyOn(controller, 'getDescription').and.returnValue('test');
+            scope.$digest();
+            var p = element.find('p');
+            expect(p.text()).not.toContain('(None Specified)');
         });
         it('depending on whether the description should be limited', function() {
             controller.descriptionLimit = 1;
             spyOn(controller, 'getDescription').and.returnValue('full');
             spyOn(controller, 'getLimitedDescription').and.returnValue('limited');
             scope.$digest();
-            var p = this.element.find('p');
+            var p = element.find('p');
             expect(p.text()).toContain('limited');
             expect(p.find('a').length).toBe(1);
 
@@ -132,18 +143,18 @@ describe('Entity Description directive', function() {
             controller.descriptionLimit = 10;
             spyOn(controller, 'getDescription').and.returnValue('AAAAA');
             scope.$digest();
-            expect(this.element.find('a').length).toBe(0);
+            expect(element.find('a').length).toBe(0);
 
             controller.getDescription.and.returnValue('AAAAAAAAAAAAAAA');
             scope.$digest();
-            expect(this.element.find('a').length).toBe(1);
+            expect(element.find('a').length).toBe(1);
         });
         it('depending on whether the full description should be shown', function() {
             controller.descriptionLimit = 10;
             spyOn(controller, 'getDescription').and.returnValue('AAAAAAAAAAAAAAA');
             controller.full = false;
             scope.$digest();
-            var a = this.element.find('a');
+            var a = element.find('a');
             expect(a.text()).toBe('Show more');
 
             controller.full = true;
@@ -152,12 +163,12 @@ describe('Entity Description directive', function() {
         });
     });
     it('should toggle full when the Show link is clicked', function() {
-        controller = this.element.controller('entityDescription');
+        controller = element.controller('entityDescription');
         controller.descriptionLimit = 10;
         spyOn(controller, 'getDescription').and.returnValue('AAAAAAAAAAAAAAA');
         scope.$digest();
 
-        var link = this.element.find('a');
+        var link = element.find('a');
         link.triggerHandler('click');
         expect(controller.full).toBe(true);
     });

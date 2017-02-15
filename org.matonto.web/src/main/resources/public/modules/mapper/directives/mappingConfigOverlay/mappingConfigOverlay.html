@@ -24,25 +24,24 @@
     <form class="content" name="dvm.configForm">
         <h6>{{(dvm.state.mapping.id | splitIRI).end}} Configuration</h6>
         <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
-
         <div class="row">
             <div class="col-xs-6 ontology-select-container">
-                <custom-label>Ontology</custom-label>
-                <div class="input-group record-search-bar">
-                    <input type="text" class="form-control" name="record-search" ng-model="dvm.recordsConfig.searchText" placeholder="Search for...">
-                    <span class="input-group-btn">
-                        <button class="btn btn-primary" type="submit" ng-click="dvm.getRecords()">Search</button>
-                    </span>
+                <div class="form-group">
+                    <custom-label>Ontology</custom-label>
+                    <div class="input-group record-search-bar">
+                        <input type="text" class="form-control" name="record-search" ng-model="dvm.recordsConfig.searchText" placeholder="Search for...">
+                        <span class="input-group-btn">
+                            <button class="btn btn-primary" type="submit" ng-click="dvm.getRecords()">Search</button>
+                        </span>
+                    </div>
+                    <div class="ontology-records-list list-group">
+                        <button class="list-group-item" ng-repeat="record in dvm.records track by record['@id']" ng-class="{'active': dvm.selectedRecord['@id'] === record['@id']}" ng-click="dvm.selectedRecord = record; dvm.selectOntology()">
+                            <span>{{dvm.util.getDctermsValue(record, 'title')}}</span>
+                        </button>
+                    </div>
+                    <paging-details page-size="dvm.records.length" total-size="dvm.totalSize" page-index="dvm.recordsConfig.pageIndex" limit="dvm.recordsConfig.limit"></paging-details>
+                    <pagination links="dvm.links" current-page="dvm.recordsConfig.pageIndex" get-page="dvm.getRecordPage(direction)"></pagination>
                 </div>
-                <div class="ontology-records-list list-group">
-                    <button class="list-group-item" ng-repeat="record in dvm.records track by record['@id']" ng-class="{'active': dvm.selectedRecord['@id'] === record['@id']}" ng-click="dvm.selectedRecord = record; dvm.selectOntology()">
-                        <span>{{dvm.util.getDctermsValue(record, 'title')}}</span>
-                    </button>
-                </div>
-                <paging-details page-size="dvm.records.length" total-size="dvm.totalSize" page-index="dvm.recordsConfig.pageIndex" limit="dvm.recordsConfig.limit"></paging-details>
-                <pagination links="dvm.links" current-page="dvm.recordsConfig.pageIndex" get-page="dvm.getRecordPage(direction)"></pagination>
-            </div>
-            <div class="col-xs-6 version-class-select-container">
                 <div class="form-group">
                     <custom-label>Version</custom-label>
                     <select class="version-select form-control" placeholder="Select a version" ng-model="dvm.selectedVersion" ng-change="dvm.selectVersion()" ng-disabled="!dvm.selectedOntologyState">
@@ -51,22 +50,20 @@
                     </select>
                 </div>
             </div>
-        </div>
-        <div class="row">
-            <div class="col-xs-6">
+            <div class="col-xs-6 preview-display">
                 <div class="ontology-record-info" ng-if="dvm.selectedRecord">
                     <h3>{{dvm.util.getDctermsValue(dvm.selectedRecord, 'title')}}</h3>
                     <p><small>{{dvm.util.getDctermsValue(dvm.selectedRecord, 'identifier')}}</small></p>
                     <entity-dates entity="dvm.selectedRecord"></entity-dates>
                     <entity-description entity="dvm.selectedRecord"></entity-description>
                     <record-keywords record="dvm.selectedRecord"></record-keywords>
+                    <div class="classes-list">
+                        <span class="field-name">Classes:</span>
+                        <ul>
+                            <li ng-repeat="class in dvm.classes track by class.classObj['@id']" title="{{class.classObj['@id']}}">{{dvm.om.getEntityName(class.classObj)}}</li>
+                        </ul>
+                    </div>
                 </div>
-            </div>
-            <div class="col-xs-6">
-                <span class="field-name">Classes:</span>
-                <ul>
-                    <li ng-repeat="class in dvm.classes track by class.classObj['@id']" title="{{class.classObj['@id']}}">{{dvm.om.getEntityName(class.classObj)}}</li>
-                </ul>
             </div>
         </div>
         <div class="btn-container clearfix">

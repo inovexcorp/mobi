@@ -3,6 +3,20 @@
 
 .mapping-config-overlay {
 	.content {
+        .row {
+            max-height: 300px;
+            position: relative;
+        }
+        .form-group {
+            clear: both;
+        }
+        .preview-display {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            overflow-y: auto;
+        }
         .page-nav {
             float: right;
 
