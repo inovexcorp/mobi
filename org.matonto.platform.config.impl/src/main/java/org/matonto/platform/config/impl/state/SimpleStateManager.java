@@ -263,9 +263,9 @@ public class SimpleStateManager implements StateManager {
     private void removeState(State state, RepositoryConnection conn) {
         conn.remove(state.getResource(), null, null);
         state.getStateResource().stream()
-                .filter(thing ->
-                        !conn.getStatements(null, factory.createIRI(State.stateResource_IRI), thing).hasNext())
-                .forEach(thing -> conn.remove(thing, null, null));
+                .filter(resource ->
+                        !conn.getStatements(null, factory.createIRI(State.stateResource_IRI), resource).hasNext())
+                .forEach(resource -> conn.remove(resource, null, null));
     }
 
     private <T extends State> T createState(Model newState, String username, OrmFactory<T> ormFactory) {
