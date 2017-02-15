@@ -18,7 +18,6 @@ matonto-deploy-bundles = {
         org.matonto.etl.rdf${deploy.bundles.version} \
         org.matonto.etl.rest${deploy.bundles.version} \
         org.matonto.ontology.api${deploy.bundles.version} \
-        org.matonto.ontology.cli${deploy.bundles.version} \
         org.matonto.ontology.core.impl.owlapi${deploy.bundles.version} \
         org.matonto.ontology.rest${deploy.bundles.version} \
         org.matonto.catalog.api${deploy.bundles.version} \

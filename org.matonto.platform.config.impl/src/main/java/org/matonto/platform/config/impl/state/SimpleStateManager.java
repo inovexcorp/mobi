@@ -49,7 +49,6 @@ import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.orm.OrmFactory;
-import org.matonto.rdf.orm.impl.ThingFactory;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.config.RepositoryConsumerConfig;
@@ -77,7 +76,6 @@ public class SimpleStateManager implements StateManager {
     private ModelFactory modelFactory;
     private StateFactory stateFactory;
     private ApplicationStateFactory applicationStateFactory;
-    private ThingFactory thingFactory;
     private EngineManager engineManager;
     private ApplicationManager applicationManager;
 
@@ -124,11 +122,6 @@ public class SimpleStateManager implements StateManager {
     @Reference
     protected void setApplicationStateFactory(ApplicationStateFactory applicationStateFactory) {
         this.applicationStateFactory = applicationStateFactory;
-    }
-
-    @Reference
-    protected void setThingFactory(ThingFactory thingFactory) {
-        this.thingFactory = thingFactory;
     }
 
     @Reference
@@ -227,9 +220,8 @@ public class SimpleStateManager implements StateManager {
         try (RepositoryConnection conn = repository.getConnection()) {
             Model stateModel = modelFactory.createModel();
             conn.getStatements(stateId, null, null).forEach(stateModel::add);
-            stateModel.filter(stateId, factory.createIRI(State.stateResource_IRI), null).objects().forEach(value -> {
-                conn.getStatements((Resource) value, null, null).forEach(result::add);
-            });
+            stateModel.filter(stateId, factory.createIRI(State.stateResource_IRI), null).objects().forEach(value ->
+                    conn.getStatements((Resource) value, null, null).forEach(result::add));
         } catch (RepositoryException e) {
             throw new MatOntoException("Error in repository connection", e);
         }
@@ -246,8 +238,7 @@ public class SimpleStateManager implements StateManager {
             conn.getStatements(stateId, null, null).forEach(stateModel::add);
             State state = stateFactory.getExisting(stateId, stateModel);
             removeState(state, conn);
-            state.setStateResource(newState.subjects().stream().map(thingFactory::createNew)
-                    .collect(Collectors.toSet()));
+            state.setStateResource(newState.subjects());
             conn.add(state.getModel());
         } catch (RepositoryException e) {
             throw new MatOntoException("Error in repository connection", e);
@@ -272,17 +263,16 @@ public class SimpleStateManager implements StateManager {
     private void removeState(State state, RepositoryConnection conn) {
         conn.remove(state.getResource(), null, null);
         state.getStateResource().stream()
-                .filter(thing -> !conn.getStatements(null, factory.createIRI(State.stateResource_IRI),
-                        thing.getResource()).hasNext())
-                .forEach(thing -> conn.remove(thing.getResource(), null, null));
+                .filter(resource ->
+                        !conn.getStatements(null, factory.createIRI(State.stateResource_IRI), resource).hasNext())
+                .forEach(resource -> conn.remove(resource, null, null));
     }
 
     private <T extends State> T createState(Model newState, String username, OrmFactory<T> ormFactory) {
         User user = engineManager.retrieveUser(RdfEngine.COMPONENT_NAME, username).orElseThrow(() ->
                 new MatOntoException("User not found"));
         T stateObj = ormFactory.createNew(factory.createIRI(NAMESPACE + UUID.randomUUID()));
-        stateObj.setStateResource(newState.subjects().stream().map(thingFactory::createNew)
-                .collect(Collectors.toSet()));
+        stateObj.setStateResource(newState.subjects());
         stateObj.setForUser(user);
         stateObj.getModel().addAll(newState);
         return stateObj;
