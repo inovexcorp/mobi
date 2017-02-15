@@ -23,14 +23,14 @@ package org.matonto.catalog.api.builder;
  * #L%
  */
 
-import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.IRI;
 
 public class DistributionConfig {
     private String title;
     private String description;
     private String format;
-    private Resource accessURL;
-    private Resource downloadURL;
+    private IRI accessURL;
+    private IRI downloadURL;
 
     private DistributionConfig(DistributionConfig.Builder builder) {
         title = builder.title;
@@ -52,11 +52,11 @@ public class DistributionConfig {
         return format;
     }
 
-    public Resource getAccessURL() {
+    public IRI getAccessURL() {
         return accessURL;
     }
 
-    public Resource getDownloadURL() {
+    public IRI getDownloadURL() {
         return downloadURL;
     }
 
@@ -64,8 +64,8 @@ public class DistributionConfig {
         private String title;
         private String description;
         private String format;
-        private Resource accessURL;
-        private Resource downloadURL;
+        private IRI accessURL;
+        private IRI downloadURL;
 
         /**
          * The constructor for the builder.
@@ -86,12 +86,12 @@ public class DistributionConfig {
             return this;
         }
 
-        public Builder accessURL(Resource accessURL) {
+        public Builder accessURL(IRI accessURL) {
             this.accessURL = accessURL;
             return this;
         }
 
-        public Builder downloadURL(Resource downloadURL) {
+        public Builder downloadURL(IRI downloadURL) {
             this.downloadURL = downloadURL;
             return this;
         }
