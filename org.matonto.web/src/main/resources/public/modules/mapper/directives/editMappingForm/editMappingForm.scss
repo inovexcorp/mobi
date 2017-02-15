@@ -4,18 +4,26 @@
 .edit-mapping-form {
 	display: flex;
 	flex-direction: column;
-	
-	.class-mapping-select-container {
-		display: flex;
 
-		.class-mapping-select {
-			flex: 1;
-		}
-	}
-	.class-mapping-details {
-		flex: 1;
-	}
-	ul.dl-horizontal {
-		margin-bottom: 0;
-	}
+    .mapping-config {
+        margin-bottom: 0;
+    }
+    .class-mappings {
+        .control-label {
+            width: 100%;
+        }
+        .class-mapping-select-container {
+            display: flex;
+
+            .class-mapping-select {
+                flex: 1;
+            }
+        }
+    }
+    .class-mapping-details {
+        flex: 1;
+    }
+    ul.dl-horizontal {
+        margin-bottom: 0;
+    }
 }

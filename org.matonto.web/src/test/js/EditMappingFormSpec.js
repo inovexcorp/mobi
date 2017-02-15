@@ -23,10 +23,11 @@
 describe('Edit Mapping Form directive', function() {
     var $compile,
         scope,
+        element,
+        controller,
         mappingManagerSvc,
         mapperStateSvc,
-        ontologyManagerSvc,
-        controller;
+        ontologyManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -44,13 +45,13 @@ describe('Edit Mapping Form directive', function() {
         });
 
         mapperStateSvc.mapping = {name: '', jsonld: []};
-        this.element = $compile(angular.element('<edit-mapping-form></edit-mapping-form>'))(scope);
+        element = $compile(angular.element('<edit-mapping-form></edit-mapping-form>'))(scope);
         scope.$digest();
     });
 
     describe('controller methods', function() {
         beforeEach(function() {
-            controller = this.element.controller('editMappingForm');
+            controller = element.controller('editMappingForm');
         });
         describe('should get the name of the mapping\'s source ontology', function() {
             beforeEach(function() {
@@ -99,43 +100,43 @@ describe('Edit Mapping Form directive', function() {
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('edit-mapping-form')).toBe(true);
-            expect(this.element.querySelectorAll('.mapping-config').length).toBe(1);
-            expect(this.element.querySelectorAll('.class-mapping-select-container').length).toBe(1);
+            expect(element.hasClass('edit-mapping-form')).toBe(true);
+            expect(element.querySelectorAll('.mapping-config').length).toBe(1);
+            expect(element.querySelectorAll('.class-mapping-select-container').length).toBe(1);
         });
         it('with a class mapping select', function() {
-            expect(this.element.find('class-mapping-select').length).toBe(1);
+            expect(element.find('class-mapping-select').length).toBe(1);
         });
-        it('depending on whether a class has been selected and if it is the base class', function() {
-            mapperStateSvc.selectedClassMappingId = '';
-            scope.$digest();
-            var deleteClassButton = angular.element(this.element.querySelectorAll('.class-mapping-select-container button')[0]);
-            expect(this.element.find('class-mapping-details').length).toBe(0);
+        it('with custom-labels', function() {
+            expect(element.find('custom-label').length).toBe(2);
+        });
+        it('with a class-mapping-details', function() {
+            expect(element.find('class-mapping-details').length).toBe(1);
+        });
+        it('depending on whether a class has been selected', function() {
+            var deleteClassButton = angular.element(element.querySelectorAll('.class-mapping-select-container button')[0]);
             expect(deleteClassButton.attr('disabled')).toBeTruthy();
 
-            mappingManagerSvc.getBaseClass.and.returnValue({'@id': 'base'});
             mapperStateSvc.selectedClassMappingId = 'class';
             scope.$digest();
-            expect(this.element.find('class-mapping-details').length).toBe(1);
             expect(deleteClassButton.attr('disabled')).toBeFalsy();
-
-            mapperStateSvc.selectedClassMappingId = 'base';
-            scope.$digest();
-            expect(this.element.find('class-mapping-details').length).toBe(1);
-            expect(deleteClassButton.attr('disabled')).toBeTruthy();
         });
     });
+    it('should set the correct state when the add class button is linked', function() {
+        var button = angular.element(element.querySelectorAll('.class-mappings custom-label button')[0]);
+        button.triggerHandler('click');
+        expect(mapperStateSvc.displayClassMappingOverlay).toBe(true);
+    });
     it('should set the correct state when the edit config link is clicked', function() {
-        var editConfigLink = angular.element(this.element.querySelectorAll('.mapping-config custom-label a')[0]);
-        editConfigLink.triggerHandler('click');
+        var button = angular.element(element.querySelectorAll('.mapping-config custom-label button')[0]);
+        button.triggerHandler('click');
         expect(mapperStateSvc.displayMappingConfigOverlay).toBe(true);
     });
     it('should set the correct state when delete class button is clicked', function() {
         mapperStateSvc.selectedClassMappingId = 'class';
         scope.$digest();
-
-        var deleteClassButton = angular.element(this.element.querySelectorAll('.class-mapping-select-container button')[0]);
-        deleteClassButton.triggerHandler('click');
+        var button = angular.element(element.querySelectorAll('.class-mapping-select-container button')[0]);
+        button.triggerHandler('click');
         expect(mapperStateSvc.displayDeleteClassConfirm).toBe(true);
     });
 });

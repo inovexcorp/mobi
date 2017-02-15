@@ -22,20 +22,18 @@
   -->
 <form class="edit-mapping-form full-height">
     <div class="mapping-config form-group">
-        <custom-label>Configuration <a ng-click="dvm.state.displayMappingConfigOverlay = true"><i class="fa fa-pencil"></i></a></custom-label>
+        <custom-label>Configuration <button class="btn btn-link no-padding" ng-click="dvm.state.displayMappingConfigOverlay = true"><i class="fa fa-pencil"></i></button></custom-label>
         <dl class="dl-horizontal">
             <dt>Ontology:</dt>
             <dd>{{dvm.getSourceOntologyName()}}</dd>
-            <dt>Base Type:</dt>
-            <dd>{{dvm.getBaseClassName()}}</dd>
         </dl>
     </div>
-        <div class="form-group">
-            <custom-label>Class</custom-label>
-            <div class="class-mapping-select-container">
-                <class-mapping-select ng-model="dvm.state.selectedClassMappingId"></class-mapping-select>
-                <button class="btn btn-link" ng-click="dvm.state.displayDeleteClassConfirm = true" ng-disabled="!dvm.state.selectedClassMappingId || (dvm.state.selectedClassMappingId === dvm.mm.getBaseClass(dvm.state.mapping.jsonld)['@id'])"><i class="fa fa-trash"></i></button>
-            </div>
+    <div class="class-mappings form-group">
+        <custom-label>Class <button class="btn btn-link no-padding pull-right" ng-click="dvm.state.displayClassMappingOverlay = true"><i class="fa fa-plus"></i> Add Class</button></custom-label>
+        <div class="class-mapping-select-container">
+            <class-mapping-select ng-model="dvm.state.selectedClassMappingId"></class-mapping-select>
+            <button class="btn btn-link" ng-click="dvm.state.displayDeleteClassConfirm = true" ng-disabled="!dvm.state.selectedClassMappingId"><i class="fa fa-trash"></i></button>
         </div>
-        <class-mapping-details ng-if="dvm.state.selectedClassMappingId"></class-mapping-details>
+    </div>
+    <class-mapping-details></class-mapping-details>
 </form>

@@ -26,21 +26,22 @@
         <div class="form-group">
             <custom-label>Property</custom-label>
             <prop-select props="dvm.state.getAvailableProps(dvm.state.selectedClassMappingId)"
-                         selected-prop="dvm.propIdObj"
+                         selected-prop="dvm.selectedProp"
                          is-disabled-when="!dvm.state.newProp"
-                         on-change="dvm.setSelectedProp(dvm.propIdObj)"></prop-select>
-            <p>{{dvm.om.getEntityDescription(dvm.selectedProp)}}</p>
+                         on-change="dvm.updateRange()"></prop-select>
+            <p>{{dvm.om.getEntityDescription(dvm.selectedProp.propObj)}}</p>
         </div>
-        <div class="class-description form-group" ng-if="dvm.selectedProp && dvm.om.isObjectProperty(dvm.selectedProp)">
+        <div class="class-description form-group" ng-if="dvm.selectedProp && dvm.om.isObjectProperty(dvm.selectedProp.propObj)">
             <custom-label>Links To</custom-label>
-            <p>{{dvm.om.getEntityName(dvm.getRangeClass(dvm.selectedProp))}}<span ng-if="dvm.om.getEntityDescription(dvm.getRangeClass(dvm.selectedProp))"> - {{dvm.om.getEntityDescription(dvm.getRangeClass(dvm.selectedProp))}}</span></p>
+            <p title="dvm.rangeClass.classObj['@id']">{{dvm.om.getEntityName(dvm.rangeClass.classObj)}}<span ng-if="dvm.om.getEntityDescription(dvm.rangeClass.classObj)"> - {{dvm.om.getEntityDescription(dvm.rangeClass.classObj)}}</span></p>
+            <small ng-if="dvm.state.newProp" class="text-muted">A new class will be created if one does not already exist</small>
         </div>
-        <div class="column-select-container form-group" ng-if="dvm.selectedProp && dvm.om.isDataTypeProperty(dvm.selectedProp)">
+        <div class="column-select-container form-group" ng-if="dvm.selectedProp && dvm.om.isDataTypeProperty(dvm.selectedProp.propObj)">
             <custom-label>Column</custom-label>
             <column-select columns="dvm.state.availableColumns" selected-column="dvm.selectedColumn"></column-select>
         </div>
         <div class="btn-container clearfix">
-            <button class="btn btn-primary pull-right" ng-click="dvm.set()" ng-disabled="(dvm.state.newProp && !dvm.selectedProp) || (dvm.om.isDataTypeProperty(dvm.selectedProp) && !dvm.selectedColumn) || (!dvm.state.newProp && dvm.om.isObjectProperty(dvm.selectedProp))">Set</button>
+            <button class="btn btn-primary pull-right" ng-click="dvm.set()" ng-disabled="(dvm.state.newProp && !dvm.selectedProp) || (dvm.om.isDataTypeProperty(dvm.selectedProp.propObj) && !dvm.selectedColumn) || (!dvm.state.newProp && dvm.om.isObjectProperty(dvm.selectedProp.propObj))">Set</button>
             <button class="btn btn-default pull-right" ng-click="dvm.cancel()">Cancel</button>
         </div>
     </form>

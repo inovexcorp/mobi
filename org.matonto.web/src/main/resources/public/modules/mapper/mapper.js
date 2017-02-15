@@ -27,8 +27,10 @@
         .module('mapper', [
             /* Custom Directives */
             'classMappingDetails',
+            'classMappingOverlay',
             'classMappingSelect',
             'classPreview',
+            'classSelect',
             'columnSelect',
             'createMappingOverlay',
             'downloadMappingOverlay',

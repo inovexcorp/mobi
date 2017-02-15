@@ -16,6 +16,10 @@ body {
         cursor: pointer;
     }
 
+    button.no-padding {
+        padding: 0;
+    }
+
     textarea {
         resize: vertical;
     }
