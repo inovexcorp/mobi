@@ -310,6 +310,11 @@
         <pluginManagement>
             <plugins>
                 <plugin>
+                    <groupId>org.matonto.orm</groupId>
+                    <artifactId>rdf-orm-maven-plugin</artifactId>
+                    <version>1.4.24</version>
+                </plugin>
+                <plugin>
                     <groupId>org.apache.felix</groupId>
                     <artifactId>maven-bundle-plugin</artifactId>
                     <version>${maven-bundle-plugin.version}</version>
