@@ -295,6 +295,16 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
+    public IRI getDistributedCatalogIRI() {
+        return (IRI) distributedCatalogIRI;
+    }
+
+    @Override
+    public IRI getLocalCatalogIRI() {
+        return (IRI) localCatalogIRI;
+    }
+
+    @Override
     public Catalog getDistributedCatalog() throws MatOntoException {
         return getCatalog(distributedCatalogIRI);
     }

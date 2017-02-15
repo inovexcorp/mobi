@@ -137,6 +137,7 @@ public class SimpleCatalogManagerTest {
     private UserBranchFactory userBranchFactory = new UserBranchFactory();
     private UserFactory userFactory = new UserFactory();
     private IRI distributedCatalogId;
+    private IRI localCatalogId;
     private Resource notPresentId;
     private Resource differentId;
     private IRI dcIdentifier;
@@ -308,6 +309,7 @@ public class SimpleCatalogManagerTest {
         manager.start(props);
 
         distributedCatalogId = vf.createIRI("http://matonto.org/test/catalog-distributed");
+        localCatalogId = vf.createIRI("http://matonto.org/test/catalog-local");
         notPresentId = vf.createIRI("http://matonto.org/test/records#not-present");
         differentId = vf.createIRI("http://matonto.org/test/different");
         dcIdentifier = vf.createIRI(DC_IDENTIFIER);
@@ -319,7 +321,19 @@ public class SimpleCatalogManagerTest {
     }
 
     @Test
-    public void testGetPublishedCatalog() throws Exception {
+    public void testGetDistributedCatalogIRI() throws Exception {
+        IRI iri = manager.getDistributedCatalogIRI();
+        assertEquals(distributedCatalogId, iri);
+    }
+
+    @Test
+    public void testGetLocalCatalogIRI() throws Exception {
+        IRI iri = manager.getLocalCatalogIRI();
+        assertEquals(localCatalogId, iri);
+    }
+
+    @Test
+    public void testGetDistributedCatalog() throws Exception {
         Catalog catalog = manager.getDistributedCatalog();
         Optional<Value> title = catalog.getProperty(vf.createIRI(DC_TITLE));
         Optional<Value> description = catalog.getProperty(vf.createIRI(DC_DESCRIPTION));

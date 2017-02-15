@@ -23,6 +23,7 @@ package org.matonto.ontology.core.impl.owlapi;
  * #L%
  */
 
+import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import org.apache.commons.io.IOUtils;
@@ -233,9 +234,10 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Override
-    public Optional<Ontology> retrieveOntology(@Nonnull Resource ontologyId) throws MatontoOntologyException {
+    public Optional<Ontology> retrieveOntology(@Nonnull Resource recordId) throws MatontoOntologyException {
         Optional<Ontology> result = Optional.empty();
-        Optional<OntologyRecord> record = catalogManager.getRecord(ontologyId.stringValue(), ontologyRecordFactory);
+        Optional<OntologyRecord> record = catalogManager.getRecord(catalogManager.getLocalCatalogIRI(), recordId,
+                ontologyRecordFactory);
         if (record.isPresent()) {
             Branch masterBranch = record.get().getMasterBranch().orElseThrow(() ->
                     new MatontoOntologyException("The master Branch was not set on the OntologyRecord."));
@@ -253,10 +255,11 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Override
-    public Optional<Ontology> retrieveOntology(@Nonnull Resource ontologyId, @Nonnull Resource branchId) throws
+    public Optional<Ontology> retrieveOntology(@Nonnull Resource recordId, @Nonnull Resource branchId) throws
             MatontoOntologyException {
         Optional<Ontology> result = Optional.empty();
-        Optional<OntologyRecord> record = catalogManager.getRecord(ontologyId.stringValue(), ontologyRecordFactory);
+        Optional<OntologyRecord> record = catalogManager.getRecord(catalogManager.getLocalCatalogIRI(), recordId,
+                ontologyRecordFactory);
         if (record.isPresent()) {
             for (Branch branch : record.get().getBranch()) {
                 if (branch.getResource().equals(branchId)) {
@@ -277,10 +280,11 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Override
-    public Optional<Ontology> retrieveOntology(@Nonnull Resource ontologyId, @Nonnull Resource branchId,
+    public Optional<Ontology> retrieveOntology(@Nonnull Resource recordId, @Nonnull Resource branchId,
                                                @Nonnull Resource commitId) throws MatontoOntologyException {
         Optional<Ontology> result = Optional.empty();
-        Optional<OntologyRecord> record = catalogManager.getRecord(ontologyId.stringValue(), ontologyRecordFactory);
+        Optional<OntologyRecord> record = catalogManager.getRecord(catalogManager.getLocalCatalogIRI(), recordId,
+                ontologyRecordFactory);
         if (record.isPresent()) {
             for (Branch branch : record.get().getBranch()) {
                 if (branch.getResource().equals(branchId)) {
@@ -306,9 +310,10 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Override
-    public void deleteOntology(@Nonnull Resource ontologyId) throws MatontoOntologyException {
-        OntologyRecord record = catalogManager.getRecord(ontologyId.stringValue(), ontologyRecordFactory)
-                .orElseThrow(() -> new MatontoOntologyException("The OntologyRecord could not be retrieved."));
+    public void deleteOntology(@Nonnull Resource recordId) throws MatontoOntologyException {
+        OntologyRecord record = catalogManager.getRecord(catalogManager.getLocalCatalogIRI(), recordId,
+                ontologyRecordFactory).orElseThrow(() ->
+                new MatontoOntologyException("The OntologyRecord could not be retrieved."));
         try {
             catalogManager.removeRecord(catalogManager.getLocalCatalog().getResource(), record.getResource());
         } catch (MatOntoException e) {

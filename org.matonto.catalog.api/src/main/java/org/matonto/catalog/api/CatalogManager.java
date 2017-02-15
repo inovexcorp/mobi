@@ -28,6 +28,7 @@ import org.matonto.catalog.api.builder.RecordConfig;
 import org.matonto.catalog.api.ontologies.mcat.*;
 import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
+import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.orm.OrmFactory;
@@ -37,6 +38,20 @@ import java.security.InvalidParameterException;
 import java.util.*;
 
 public interface CatalogManager {
+
+    /**
+     * Returns the IRI for the distributed Catalog.
+     *
+     * @return The IRI which identifies the distributed Catalog.
+     */
+    IRI getDistributedCatalogIRI();
+
+    /**
+     * Returns the IRI for the local Catalog.
+     *
+     * @return The IRI which identifies the local Catalog.
+     */
+    IRI getLocalCatalogIRI();
 
     /**
      * Retrieves the distributed Catalog containing the published Records.
