@@ -28,13 +28,17 @@ import org.matonto.jaas.api.config.LoginModuleConfig;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.principals.UserPrincipal;
 
-import java.io.IOException;
-import java.util.Map;
 import javax.security.auth.Subject;
-import javax.security.auth.callback.*;
+import javax.security.auth.callback.Callback;
+import javax.security.auth.callback.CallbackHandler;
+import javax.security.auth.callback.NameCallback;
+import javax.security.auth.callback.PasswordCallback;
+import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.auth.login.FailedLoginException;
 import javax.security.auth.login.LoginException;
 import javax.security.auth.spi.LoginModule;
+import java.io.IOException;
+import java.util.Map;
 
 public class PasswordLoginModule implements LoginModule {
     private static final Logger LOG = Logger.getLogger(PasswordLoginModule.class.getName());
@@ -51,7 +55,7 @@ public class PasswordLoginModule implements LoginModule {
         this.callbackHandler = callbackHandler;
         engineManager = (EngineManager) options.get(LoginModuleConfig.ENGINE_MANAGER);
         engineName = options.get(LoginModuleConfig.ENGINE) + "";
-        LOG.info("Initialized PasswordLoginModule engineName=" + engineName);
+        LOG.debug("Initialized PasswordLoginModule engineName=" + engineName);
     }
 
     @Override
