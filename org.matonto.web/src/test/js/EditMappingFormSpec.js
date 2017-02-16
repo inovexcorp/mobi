@@ -69,6 +69,14 @@ describe('Edit Mapping Form directive', function() {
             scope.$digest();
             expect(deleteClassButton.attr('disabled')).toBeFalsy();
         });
+        it('depending on whether there are available classes', function() {
+            var button = angular.element(element.querySelectorAll('.class-mappings custom-label button')[0]);
+            expect(button.attr('disabled')).toBeTruthy();
+
+            mapperStateSvc.availableClasses = [{}];
+            scope.$digest();
+            expect(button.attr('disabled')).toBeFalsy();
+        });
     });
     it('should set the correct state when the add class button is linked', function() {
         var button = angular.element(element.querySelectorAll('.class-mappings custom-label button')[0]);

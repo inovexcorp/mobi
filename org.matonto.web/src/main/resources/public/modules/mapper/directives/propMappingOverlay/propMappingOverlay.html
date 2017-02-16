@@ -33,7 +33,7 @@
         <prop-preview ng-if="dvm.selectedProp" prop-obj="dvm.selectedProp.propObj" ontologies="dvm.state.sourceOntologies"></prop-preview>
         <div class="range-class-select-container form-group" ng-if="dvm.selectedProp && dvm.om.isObjectProperty(dvm.selectedProp.propObj)">
             <custom-label>Link To</custom-label>
-            {{dvm.util.getBeautifulIRI(dvm.util.getPropertyId(dvm.rangeClassMapping, dvm.prefixes.rdfs + 'range'))}}
+            <p>{{dvm.util.getBeautifulIRI(dvm.util.getPropertyId(dvm.rangeClassMapping, dvm.prefixes.rdfs + 'range')) || "[New]"}}</p>
         </div>
         <div class="column-select-container form-group" ng-if="dvm.selectedProp && dvm.om.isDataTypeProperty(dvm.selectedProp.propObj)">
             <custom-label>Column</custom-label>
