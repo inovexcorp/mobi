@@ -67,7 +67,7 @@
                 scope: {
                     classes: '<',
                     isDisabledWhen: '<',
-                    onChange: '&'
+                    onChange: '&?'
                 },
                 bindToController: {
                     selectedClass: '='

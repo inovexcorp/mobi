@@ -27,7 +27,6 @@ describe('Class Mapping Details directive', function() {
         controller,
         prefixes,
         utilSvc,
-        ontologyManagerSvc,
         mappingManagerSvc,
         mapperStateSvc,
         delimitedManagerSvc;
@@ -36,18 +35,16 @@ describe('Class Mapping Details directive', function() {
         module('templates');
         module('classMappingDetails');
         mockPrefixes();
-        mockOntologyManager();
         mockMappingManager();
         mockMapperState();
         mockDelimitedManager();
         mockUtil();
 
-        inject(function(_$compile_, _$rootScope_, _prefixes_, _utilService_, _ontologyManagerService_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _prefixes_, _utilService_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             prefixes = _prefixes_;
             utilSvc = _utilService_;
-            ontologyManagerSvc = _ontologyManagerService_;
             mappingManagerSvc = _mappingManagerService_;
             mapperStateSvc = _mapperStateService_;
             delimitedManagerSvc = _delimitedManagerService_;
@@ -79,18 +76,14 @@ describe('Class Mapping Details directive', function() {
             expect(_.isString(result)).toBe(true);
         });
         it('should get a class name', function() {
-            expect(_.isString(controller.getClassName({'@id': ''}))).toBe(true);
-            expect(mappingManagerSvc.getClassIdByMapping).toHaveBeenCalledWith({'@id': ''});
-            expect(mappingManagerSvc.findSourceOntologyWithClass).toHaveBeenCalled();
-            expect(ontologyManagerSvc.getEntity).toHaveBeenCalled();
-            expect(ontologyManagerSvc.getEntityName).toHaveBeenCalled();
+            expect(_.isString(controller.getClassName({}))).toBe(true);
+            expect(mappingManagerSvc.getClassIdByMapping).toHaveBeenCalledWith({});
+            expect(utilSvc.getBeautifulIRI).toHaveBeenCalledWith(jasmine.any(String));
         });
         it('should get a property name', function() {
-            expect(_.isString(controller.getPropName({'@id': ''}))).toBe(true);
-            expect(mappingManagerSvc.getPropIdByMapping).toHaveBeenCalledWith({'@id': ''});
-            expect(mappingManagerSvc.findSourceOntologyWithProp).toHaveBeenCalled();
-            expect(ontologyManagerSvc.getEntity).toHaveBeenCalled();
-            expect(ontologyManagerSvc.getEntityName).toHaveBeenCalled();
+            expect(_.isString(controller.getPropName({}))).toBe(true);
+            expect(mappingManagerSvc.getPropIdByMapping).toHaveBeenCalledWith({});
+            expect(utilSvc.getBeautifulIRI).toHaveBeenCalledWith(jasmine.any(String));
         });
         describe('should get the value of a property', function() {
             it('if it is a data property mapping', function() {

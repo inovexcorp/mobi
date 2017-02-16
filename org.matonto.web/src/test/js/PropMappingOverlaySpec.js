@@ -61,7 +61,7 @@ describe('Prop Mapping Overlay directive', function() {
             controller = element.controller('propMappingOverlay');
             expect(controller.selectedProp).toBeUndefined();
             expect(controller.selectedColumn).toBe('');
-            expect(controller.rangeClass).toBeUndefined();
+            expect(controller.rangeClassMapping).toBeUndefined();
         });
         it('if a property mapping is being edited', function() {
             mapperStateSvc.newProp = false;
@@ -74,55 +74,40 @@ describe('Prop Mapping Overlay directive', function() {
             mappingManagerSvc.getPropIdByMapping.and.returnValue('prop');
             ontologyManagerSvc.getEntity.and.returnValue(prop);
             mappingManagerSvc.findSourceOntologyWithProp.and.returnValue({id: 'propOntology', entities: []})
+            mappingManagerSvc.getClassMappingsByClassId.and.returnValue([{}]);
             element = $compile(angular.element('<prop-mapping-overlay></prop-mapping-overlay>'))(scope);
             scope.$digest();
             controller = element.controller('propMappingOverlay');
             expect(controller.selectedProp).toEqual({ontologyId: 'propOntology', propObj: prop});
             expect(controller.selectedColumn).toBe(columnIndex);
-            expect(controller.rangeClass).not.toBeUndefined();
+            expect(controller.rangeClassMapping).not.toBeUndefined();
+            expect(controller.rangeClassMapping).not.toBeUndefined();
         });
     });
     describe('controller methods', function() {
         beforeEach(function() {
             controller = element.controller('propMappingOverlay');
         });
-        describe('should find the range class of an object property mapping', function() {
-            beforeEach(function() {
-                this.classObj = {'@id': 'class'};
-                this.availableClass = {classObj: this.classObj};
-                utilSvc.getPropertyId.and.returnValue(this.classObj['@id']);
-                mappingManagerSvc.findSourceOntologyWithClass.and.returnValue({id: 'source', entities: []});
-                ontologyManagerSvc.getEntity.and.returnValue(this.classObj);
-            });
-            it('if it is an available class', function() {
-                this.availableClass.id = 'available';
-                mapperStateSvc.availableClasses = [this.availableClass];
-                expect(controller.getRangeClass({propObj: {}})).toEqual(this.availableClass);
-                expect(utilSvc.getPropertyId).toHaveBeenCalledWith({}, prefixes.rdfs + 'range');
-                expect(mappingManagerSvc.findSourceOntologyWithClass).not.toHaveBeenCalledWith(this.classObj['@id'], mapperStateSvc.sourceOntologies);
-                expect(ontologyManagerSvc.getEntity).not.toHaveBeenCalledWith(jasmine.any(Array), this.classObj['@id']);
-            });
-            it('if it is not an available class', function() {
-                this.availableClass.ontologyId = 'source';
-                expect(controller.getRangeClass({propObj: {}})).toEqual(this.availableClass);
-                expect(utilSvc.getPropertyId).toHaveBeenCalledWith({}, prefixes.rdfs + 'range');
-                expect(mappingManagerSvc.findSourceOntologyWithClass).toHaveBeenCalledWith(this.classObj['@id'], mapperStateSvc.sourceOntologies);
-                expect(ontologyManagerSvc.getEntity).toHaveBeenCalledWith(jasmine.any(Array), this.classObj['@id']);
-            });
+        it('should find the range class mapping of an object property mapping', function() {
+            this.classMapping = {'@id': 'class'};
+            mappingManagerSvc.getClassMappingsByClassId.and.returnValue([this.classMapping]);
+            expect(controller.getRangeClassMapping({propObj: {}})).toEqual(this.classMapping);
+            expect(utilSvc.getPropertyId).toHaveBeenCalledWith({}, prefixes.rdfs + 'range');
+            expect(mappingManagerSvc.getClassMappingsByClassId).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, jasmine.any(String));
         });
         describe('should update the range of the selected property', function() {
             it('if it is a object property', function() {
                 ontologyManagerSvc.isObjectProperty.and.returnValue(true);
-                spyOn(controller, 'getRangeClass').and.returnValue({});
+                spyOn(controller, 'getRangeClassMapping').and.returnValue({});
                 controller.updateRange();
                 expect(controller.selectedColumn).toBe('');
-                expect(controller.rangeClass).toEqual({});
+                expect(controller.rangeClassMapping).toEqual({});
             });
             it('if it is a data property', function() {
                 ontologyManagerSvc.isObjectProperty.and.returnValue(false);
                 controller.updateRange();
                 expect(controller.selectedColumn).toBe('');
-                expect(controller.rangeClass).toBeUndefined();
+                expect(controller.rangeClassMapping).toBeUndefined();
             });
         });
         describe('should set the value of the property mapping', function() {
@@ -138,16 +123,13 @@ describe('Prop Mapping Overlay directive', function() {
                 });
                 describe('for an object property', function() {
                     beforeEach(function() {
-                        controller.rangeClass = {ontologyId: 'ontology', classObj: {'@id': 'range'}}
-                        mapperStateSvc.sourceOntologies.push({id: controller.rangeClass.ontologyId, entities: []});
                         this.classMapping = {'@id': 'class'};
                         ontologyManagerSvc.isObjectProperty.and.returnValue(true);
                         mappingManagerSvc.addClass.and.returnValue(this.classMapping);
                     });
                     it('and there is already a class mapping for the range', function() {
-                        mappingManagerSvc.getClassMappingsByClassId.and.returnValue([this.classMapping]);
+                        controller.rangeClassMapping = this.classMapping;
                         controller.set();
-                        expect(mappingManagerSvc.getClassMappingsByClassId).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, controller.rangeClass.classObj['@id']);
                         expect(mappingManagerSvc.addClass).not.toHaveBeenCalled();
                         expect(mappingManagerSvc.addObjectProp).toHaveBeenCalled();
                         expect(mappingManagerSvc.addDataProp).not.toHaveBeenCalled();
@@ -156,14 +138,15 @@ describe('Prop Mapping Overlay directive', function() {
                         expect(mapperStateSvc.newProp).toBe(false);
                         expect(mapperStateSvc.changedMapping).toBe(true);
                         expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
-                        expect(mapperStateSvc.selectedClassMappingId).toBe(this.classMapping['@id']);
                         expect(mapperStateSvc.displayPropMappingOverlay).toBe(false);
                     });
                     it('and there is no class mapping for the range', function() {
-                        mapperStateSvc.availableClasses = [controller.rangeClass];
+                        var rangeClassId = 'range';
+                        utilSvc.getPropertyId.and.returnValue(rangeClassId);
+                        mapperStateSvc.availableClasses = [{ontologyId: 'classOntology', classObj: {'@id': rangeClassId}}];
+                        mapperStateSvc.sourceOntologies.push({id: 'classOntology', entities: []});
                         controller.set();
-                        expect(mappingManagerSvc.getClassMappingsByClassId).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, controller.rangeClass.classObj['@id']);
-                        expect(mappingManagerSvc.addClass).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, jasmine.any(Array), controller.rangeClass.classObj['@id']);
+                        expect(mappingManagerSvc.addClass).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, jasmine.any(Array), rangeClassId);
                         expect(mapperStateSvc.availableClasses.length).toBe(0);
                         expect(mappingManagerSvc.addObjectProp).toHaveBeenCalled();
                         expect(mappingManagerSvc.addDataProp).not.toHaveBeenCalled();
@@ -172,7 +155,6 @@ describe('Prop Mapping Overlay directive', function() {
                         expect(mapperStateSvc.newProp).toBe(false);
                         expect(mapperStateSvc.changedMapping).toBe(true);
                         expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
-                        expect(mapperStateSvc.selectedClassMappingId).toBe(this.classMapping['@id']);
                         expect(mapperStateSvc.displayPropMappingOverlay).toBe(false);
                     });
                 });
@@ -187,7 +169,6 @@ describe('Prop Mapping Overlay directive', function() {
                     expect(mapperStateSvc.newProp).toBe(false);
                     expect(mapperStateSvc.changedMapping).toBe(true);
                     expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
-                    expect(mapperStateSvc.selectedClassMappingId).toBe(this.classMappingId);
                     expect(mapperStateSvc.displayPropMappingOverlay).toBe(false);
                 });
             });
@@ -259,7 +240,7 @@ describe('Prop Mapping Overlay directive', function() {
             it('an object property', function() {
                 ontologyManagerSvc.isObjectProperty.and.returnValue(true);
                 scope.$digest();
-                expect(element.querySelectorAll('.class-description').length).toBe(1);
+                expect(element.querySelectorAll('.range-class-select-container').length).toBe(1);
             });
         });
         it('depending on the validity of the form', function() {

@@ -52,6 +52,7 @@
             'mappingTitle',
             'previewDataGrid',
             'propMappingOverlay',
+            'propPreview',
             'propSelect',
             'rdfPreviewForm',
             'runMappingOverlay'

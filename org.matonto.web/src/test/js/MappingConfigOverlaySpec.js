@@ -238,17 +238,18 @@ describe('Mapping Config Overlay directive', function() {
         });
         describe('should select an ontology', function() {
             beforeEach(function() {
-                controller.selectedRecord = {'@id': ''};
+                this.record = {'@id': ''};
              });
             it('if it had been opened', function() {
                 var openedState = {
-                    recordId: controller.selectedRecord['@id'],
+                    recordId: this.record['@id'],
                     latest: {
                         classes: []
                     }
                 };
                 controller.ontologyStates.push(openedState);
-                controller.selectOntology();
+                controller.selectOntology(this.record);
+                expect(controller.selectedRecord).toBe(this.record);
                 expect(controller.selectedOntologyState).toBe(openedState);
                 expect(controller.selectedVersion).toBe('latest');
                 expect(controller.classes).toBe(openedState.latest.classes);
@@ -257,14 +258,15 @@ describe('Mapping Config Overlay directive', function() {
             describe('if it had not been opened', function() {
                 it('unless an error occurs', function() {
                     catalogManagerSvc.getRecordMasterBranch.and.returnValue($q.reject('Error message'));
-                    controller.selectOntology();
+                    controller.selectOntology(this.record);
                     scope.$apply();
-                    expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(controller.selectedRecord['@id'], catalogManagerSvc.localCatalog['@id']);
+                    expect(controller.selectedRecord).toBe(this.record);
+                    expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(this.record['@id'], catalogManagerSvc.localCatalog['@id']);
                     expect(controller.errorMessage).toBe('Error message');
                 });
                 it('successfully', function() {
                     var expectedState = {
-                        recordId: controller.selectedRecord['@id'],
+                        recordId: this.record['@id'],
                         branchId: '',
                         latest: {
                             commitId: '',
@@ -277,10 +279,11 @@ describe('Mapping Config Overlay directive', function() {
                     ontologyManagerSvc.getImportedOntologies.and.returnValue($q.when([importedOntology]));
                     catalogManagerSvc.getRecordMasterBranch.and.returnValue($q.when({'@id': expectedState.branchId}));
                     catalogManagerSvc.getBranchHeadCommit.and.returnValue($q.when({commit: {'@id': expectedState.latest.commitId}}));
-                    controller.selectOntology();
+                    controller.selectOntology(this.record);
                     scope.$apply();
-                    expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(controller.selectedRecord['@id'], catalogManagerSvc.localCatalog['@id']);
-                    expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(expectedState.branchId, controller.selectedRecord['@id'], catalogManagerSvc.localCatalog['@id']);
+                    expect(controller.selectedRecord).toBe(this.record);
+                    expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(this.record['@id'], catalogManagerSvc.localCatalog['@id']);
+                    expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(expectedState.branchId, this.record['@id'], catalogManagerSvc.localCatalog['@id']);
                     expect(mappingManagerSvc.getOntology).toHaveBeenCalled();
                     expect(ontologyManagerSvc.getImportedOntologies).toHaveBeenCalledWith('', expectedState.branchId, expectedState.latest.commitId);
                     expect(controller.ontologyStates).toContain(expectedState);
@@ -621,14 +624,12 @@ describe('Mapping Config Overlay directive', function() {
         element = $compile(angular.element('<mapping-config-overlay></mapping-config-overlay>'))(scope);
         scope.$digest();
         controller = element.controller('mappingConfigOverlay');
-        var record = {'@id': 'record'}
-        controller.records = [record];
+        controller.records = [{}];
         spyOn(controller, 'selectOntology');
         scope.$digest();
 
         var recordButton = angular.element(element.querySelectorAll('.ontology-records-list button')[0]);
         recordButton.triggerHandler('click');
-        expect(controller.selectedRecord).toEqual(record);
         expect(controller.selectOntology).toHaveBeenCalled();
     });
     it('should call set when the button is clicked', function() {

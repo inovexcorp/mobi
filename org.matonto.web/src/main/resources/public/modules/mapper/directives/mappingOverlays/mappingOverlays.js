@@ -78,12 +78,10 @@
                         dvm.dm.reset();
                     }
                     dvm.getClassName = function(classMappingId) {
-                        var classId = dvm.mm.getClassIdByMappingId(dvm.state.mapping.jsonld, classMappingId);
-                        return dvm.om.getEntityName(dvm.om.getEntity(_.get(dvm.mm.findSourceOntologyWithClass(classId, dvm.state.sourceOntologies), 'entities'), classId));
+                        return dvm.util.getBeautifulIRI(dvm.mm.getClassIdByMappingId(dvm.state.mapping.jsonld, classMappingId));
                     }
                     dvm.getPropName = function(propMappingId) {
-                        var propId = dvm.mm.getPropIdByMappingId(dvm.state.mapping.jsonld, propMappingId);
-                        return dvm.om.getEntityName(dvm.om.getEntity(_.get(dvm.mm.findSourceOntologyWithProp(propId, dvm.state.sourceOntologies), 'entities'), propId));
+                        return dvm.util.getBeautifulIRI(dvm.mm.getPropIdByMappingId(dvm.state.mapping.jsonld, propMappingId));
                     }
                     dvm.deleteClass = function() {
                         var propsToAdd = _.map(dvm.mm.getPropsLinkingToClass(dvm.state.mapping.jsonld, dvm.state.selectedClassMappingId), prop => {

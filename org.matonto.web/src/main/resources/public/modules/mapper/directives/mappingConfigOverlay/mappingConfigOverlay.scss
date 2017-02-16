@@ -4,18 +4,14 @@
 .mapping-config-overlay {
 	.content {
         .row {
-            max-height: 300px;
-            position: relative;
+            margin: 0 -10px;
         }
         .form-group {
             clear: both;
         }
-        .preview-display {
-            position: absolute;
-            right: 0;
-            top: 0;
-            bottom: 0;
+        .ontology-record-info {
             overflow-y: auto;
+            max-height: 300px;
         }
         .page-nav {
             float: right;

@@ -42,9 +42,10 @@ describe('Prop Select directive', function() {
         });
 
         scope.props = [];
+        scope.isDisabledWhen = false;
         scope.selectedProp = undefined;
         scope.onChange = jasmine.createSpy('onChange');
-        element = $compile(angular.element('<prop-select props="props" selected-prop="selectedProp" on-change="onChange()"></prop-select>'))(scope);
+        element = $compile(angular.element('<prop-select props="props" selected-prop="selectedProp" is-disabled-when="isDisabledWhen" on-change="onChange()"></prop-select>'))(scope);
         scope.$digest();
     });
     describe('in isolated scope', function() {
@@ -54,7 +55,12 @@ describe('Prop Select directive', function() {
         it('props should be one way bound', function() {
             isolatedScope.props = [{}];
             scope.$digest();
-            expect(scope.props).not.toEqual([{}]);
+            expect(scope.props).toEqual([]);
+        });
+        it('isDisabledWhen should be one way bound', function() {
+            isolatedScope.isDisabledWhen = true;
+            scope.$digest();
+            expect(scope.isDisabledWhen).toEqual(false);
         });
         it('onChange should be called in the parent scope', function() {
             isolatedScope.onChange();

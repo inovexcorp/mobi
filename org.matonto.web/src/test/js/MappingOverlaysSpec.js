@@ -69,21 +69,15 @@ describe('Mapping Overlays directive', function() {
         });
         it('should get the name of a class mapping', function() {
             var classMappingId = 'class';
-            var result = controller.getClassName(classMappingId);
+            expect(_.isString(controller.getClassName(classMappingId))).toBe(true);
             expect(mappingManagerSvc.getClassIdByMappingId).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, classMappingId);
-            expect(mappingManagerSvc.findSourceOntologyWithClass).toHaveBeenCalled();
-            expect(ontologyManagerSvc.getEntity).toHaveBeenCalled();
-            expect(ontologyManagerSvc.getEntityName).toHaveBeenCalled();
-            expect(typeof result).toBe('string');
+            expect(utilSvc.getBeautifulIRI).toHaveBeenCalledWith(jasmine.any(String));
         });
         it('if it is a property mapping', function() {
-            var propMappingId = 'class';
-            var result = controller.getPropName(propMappingId);
+            var propMappingId = 'prop';
+            expect(_.isString(controller.getPropName(propMappingId))).toBe(true);
             expect(mappingManagerSvc.getPropIdByMappingId).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, propMappingId);
-            expect(mappingManagerSvc.findSourceOntologyWithProp).toHaveBeenCalled();
-            expect(ontologyManagerSvc.getEntity).toHaveBeenCalled();
-            expect(ontologyManagerSvc.getEntityName).toHaveBeenCalled();
-            expect(typeof result).toBe('string');
+            expect(utilSvc.getBeautifulIRI).toHaveBeenCalledWith(jasmine.any(String));
         });
         it('should delete a class mapping from the mapping', function() {
             var classMappingId = mapperStateSvc.selectedClassMappingId;

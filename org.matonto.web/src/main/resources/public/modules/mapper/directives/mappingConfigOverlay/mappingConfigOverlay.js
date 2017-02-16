@@ -134,7 +134,8 @@
                             }, onError);
                         }
                     }
-                    dvm.selectOntology = function() {
+                    dvm.selectOntology = function(record) {
+                        dvm.selectedRecord = record;
                         var ontologyState = _.find(dvm.ontologyStates, {recordId: dvm.selectedRecord['@id']});
                         if (ontologyState) {
                             dvm.selectedOntologyState = ontologyState;

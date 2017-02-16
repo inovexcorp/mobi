@@ -6,7 +6,20 @@
 	flex-direction: column;
 
     .mapping-config {
-        margin-bottom: 0;
+        p {
+            margin-bottom: 0;
+            display: inline-block;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+            position: relative;
+            padding-right: 20px;
+            max-width: 100%;
+        }
+        button {
+            position: absolute;
+            right: 0;
+        }
     }
     .class-mappings {
         .control-label {

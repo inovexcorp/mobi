@@ -20,13 +20,12 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="class-mapping-select">
-    <ui-select ng-model="dvm.bindModel" on-select="onSelect()">
-        <ui-select-match placeholder="{{dvm.mm.getAllClassMappings(dvm.state.mapping.jsonld).length ? 'Select a class' : 'No classes to show'}}">
-            <span>{{dvm.util.getBeautifulIRI(dvm.mm.getClassIdByMapping($select.selected))}}</span>
-        </ui-select-match>
-        <ui-select-choices repeat="classMapping['@id'] as classMapping in dvm.mm.getAllClassMappings(dvm.state.mapping.jsonld) | filter:$select.search">
-            <span ng-bind-html="dvm.util.getBeautifulIRI(dvm.mm.getClassIdByMapping(classMapping)) | highlight:$select.search | trusted"></span>
-        </ui-select-choices>
-    </ui-select>
+<div class="prop-preview">
+    <h3>{{dvm.om.getEntityName(dvm.propObj)}}</h3>
+    <p class="text-muted"><small>{{dvm.propObj['@id']}}</small></p>
+    <div class="description">
+        <span class="field-name">Description:</span>
+        <p>{{dvm.om.getEntityDescription(dvm.propObj) || "(None Specified)"}}</p>
+    </div>
+    <p><span class="field-name">Range:</span> {{dvm.getPropRangeName()}}</p>
 </div>

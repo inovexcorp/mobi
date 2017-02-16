@@ -25,23 +25,20 @@ describe('Edit Mapping Form directive', function() {
         scope,
         element,
         controller,
-        mappingManagerSvc,
         mapperStateSvc,
-        ontologyManagerSvc;
+        utilSvc;
 
     beforeEach(function() {
         module('templates');
         module('editMappingForm');
-        mockMappingManager();
         mockMapperState();
-        mockOntologyManager();
+        mockUtil();
 
-        inject(function(_$compile_, _$rootScope_, _mappingManagerService_, _mapperStateService_, _ontologyManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _mapperStateService_, _utilService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             mapperStateSvc = _mapperStateService_;
-            mappingManagerSvc = _mappingManagerService_;
-            ontologyManagerSvc = _ontologyManagerService_;
+            utilSvc = _utilService_;
         });
 
         mapperStateSvc.mapping = {name: '', jsonld: []};
@@ -49,55 +46,6 @@ describe('Edit Mapping Form directive', function() {
         scope.$digest();
     });
 
-    describe('controller methods', function() {
-        beforeEach(function() {
-            controller = element.controller('editMappingForm');
-        });
-        describe('should get the name of the mapping\'s source ontology', function() {
-            beforeEach(function() {
-                ontologyManagerSvc.getEntityName.calls.reset();
-            });
-            it('if it exists', function() {
-                var result = controller.getSourceOntologyName();
-                expect(mappingManagerSvc.getSourceOntology).toHaveBeenCalled();
-                expect(ontologyManagerSvc.getEntityName).toHaveBeenCalled();
-                expect(typeof result).toBe('string');
-            });
-            it('unless it does not exist', function() {
-                mappingManagerSvc.getSourceOntology.and.returnValue(undefined);
-                var result = controller.getSourceOntologyName();
-                expect(mappingManagerSvc.getSourceOntology).toHaveBeenCalled();
-                expect(ontologyManagerSvc.getEntityName).not.toHaveBeenCalled();
-                expect(result).toBe('');
-            });
-        });
-        it('should get a class mapping name', function() {
-            var result = controller.getClassName({});
-            expect(mappingManagerSvc.getClassIdByMapping).toHaveBeenCalledWith({});
-            expect(mappingManagerSvc.findSourceOntologyWithClass).toHaveBeenCalled();
-            expect(ontologyManagerSvc.getEntity).toHaveBeenCalled();
-            expect(ontologyManagerSvc.getEntityName).toHaveBeenCalled();
-            expect(typeof result).toBe('string');
-        });
-        describe('should get the name of the base class', function() {
-            beforeEach(function() {
-                spyOn(controller, 'getClassName').and.returnValue('');
-            });
-            it('if it exists', function() {
-                var result = controller.getBaseClassName();
-                expect(mappingManagerSvc.getBaseClass).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld);
-                expect(controller.getClassName).toHaveBeenCalled();
-                expect(typeof result).toBe('string');
-            });
-            it('unless it does not exist', function() {
-                mappingManagerSvc.getBaseClass.and.returnValue(undefined);
-                var result = controller.getBaseClassName();
-                expect(mappingManagerSvc.getBaseClass).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld);
-                expect(controller.getClassName).not.toHaveBeenCalled();
-                expect(result).toBe('');
-            });
-        });
-    });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(element.hasClass('edit-mapping-form')).toBe(true);
@@ -107,8 +55,8 @@ describe('Edit Mapping Form directive', function() {
         it('with a class mapping select', function() {
             expect(element.find('class-mapping-select').length).toBe(1);
         });
-        it('with custom-labels', function() {
-            expect(element.find('custom-label').length).toBe(2);
+        it('with a custom-label', function() {
+            expect(element.find('custom-label').length).toBe(1);
         });
         it('with a class-mapping-details', function() {
             expect(element.find('class-mapping-details').length).toBe(1);
@@ -128,7 +76,7 @@ describe('Edit Mapping Form directive', function() {
         expect(mapperStateSvc.displayClassMappingOverlay).toBe(true);
     });
     it('should set the correct state when the edit config link is clicked', function() {
-        var button = angular.element(element.querySelectorAll('.mapping-config custom-label button')[0]);
+        var button = angular.element(element.querySelectorAll('.mapping-config button')[0]);
         button.triggerHandler('click');
         expect(mapperStateSvc.displayMappingConfigOverlay).toBe(true);
     });

@@ -65,8 +65,8 @@
                 replace: true,
                 scope: {
                     props: '<',
-                    isDisabledWhen: '=',
-                    onChange: '&'
+                    isDisabledWhen: '<',
+                    onChange: '&?'
                 },
                 bindToController: {
                     selectedProp: '='

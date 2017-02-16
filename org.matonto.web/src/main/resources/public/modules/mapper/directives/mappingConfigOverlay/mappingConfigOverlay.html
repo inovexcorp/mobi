@@ -35,7 +35,7 @@
                         </span>
                     </div>
                     <div class="ontology-records-list list-group">
-                        <button class="list-group-item" ng-repeat="record in dvm.records track by record['@id']" ng-class="{'active': dvm.selectedRecord['@id'] === record['@id']}" ng-click="dvm.selectedRecord = record; dvm.selectOntology()">
+                        <button class="list-group-item" ng-repeat="record in dvm.records track by record['@id']" ng-class="{'active': dvm.selectedRecord['@id'] === record['@id']}" ng-click="dvm.selectOntology(record)">
                             <span>{{dvm.util.getDctermsValue(record, 'title')}}</span>
                         </button>
                     </div>

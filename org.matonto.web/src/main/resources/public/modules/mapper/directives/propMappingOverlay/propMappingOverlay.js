@@ -40,6 +40,7 @@
          * @scope
          * @restrict E
          * @requires  prefixes.service:prefixes
+         * @requires  util.service:utilService
          * @requires  ontologyManager.service:ontologyManagerService
          * @requires  mappingManager.service:mappingManagerService
          * @requires  mapperState.service:mapperStateService
@@ -65,6 +66,7 @@
                 scope: {},
                 controller: function() {
                     var dvm = this;
+                    dvm.prefixes = prefixes;
                     dvm.state = mapperStateService;
                     dvm.mm = mappingManagerService;
                     dvm.om = ontologyManagerService;
@@ -72,49 +74,37 @@
 
                     dvm.selectedProp = undefined;
                     dvm.selectedColumn = '';
-                    dvm.rangeClass = undefined;
+                    dvm.rangeClassMapping = undefined;
 
-                    dvm.getRangeClass = function(prop) {
-                        var rangeClassId = dvm.util.getPropertyId(prop.propObj, prefixes.rdfs + 'range');
-                        var availableClass = _.find(dvm.state.availableClasses, {classObj: {'@id': rangeClassId}});
-                        if (availableClass) {
-                            return availableClass;
-                        } else {
-                            var rangeOntology = dvm.mm.findSourceOntologyWithClass(rangeClassId, dvm.state.sourceOntologies);
-                            return {
-                                ontologyId: rangeOntology.id,
-                                classObj: dvm.om.getEntity(rangeOntology.entities, rangeClassId)
-                            };
-                        }
+                    dvm.getRangeClassMapping = function(prop) {
+                        return _.get(dvm.mm.getClassMappingsByClassId(dvm.state.mapping.jsonld, dvm.util.getPropertyId(prop.propObj, prefixes.rdfs + 'range')), '0');
                     }
                     dvm.updateRange = function() {
                         dvm.selectedColumn = '';
-                        dvm.rangeClass = dvm.om.isObjectProperty(_.get(dvm.selectedProp, 'propObj')) ? dvm.getRangeClass(dvm.selectedProp) : undefined;
+                        dvm.rangeClassMapping = dvm.om.isObjectProperty(_.get(dvm.selectedProp, 'propObj')) ? dvm.getRangeClassMapping(dvm.selectedProp) : undefined;
                     }
                     dvm.set = function() {
-                        var selectedClassMappingId = '';
                         if (dvm.state.newProp) {
                             var propId = dvm.selectedProp.propObj['@id'];
                             var ontology = _.find(dvm.state.sourceOntologies, {id: dvm.selectedProp.ontologyId});
                             if (dvm.om.isObjectProperty(dvm.selectedProp.propObj)) {
                                 // Add range class mapping first
-                                var classMappings = dvm.mm.getClassMappingsByClassId(dvm.state.mapping.jsonld, dvm.rangeClass.classObj['@id']);
                                 var classMapping;
-                                if (classMappings.length > 0) {
-                                    classMapping = classMappings[0];
+                                if (dvm.rangeClassMapping) {
+                                    classMapping = dvm.rangeClassMapping;
                                 } else {
-                                    var rangeOntology = _.find(dvm.state.sourceOntologies, {id: dvm.rangeClass.ontologyId});
-                                    classMapping = dvm.mm.addClass(dvm.state.mapping.jsonld, rangeOntology.entities, dvm.rangeClass.classObj['@id']);
-                                    _.remove(dvm.state.availableClasses, {classObj: {'@id': dvm.rangeClass.classObj['@id']}});
+                                    var rangeClassId = dvm.util.getPropertyId(dvm.selectedProp.propObj, prefixes.rdfs + 'range');
+                                    var availableClass = _.find(dvm.state.availableClasses, {classObj: {'@id': rangeClassId}});
+                                    var rangeOntology = _.find(dvm.state.sourceOntologies, {id: availableClass.ontologyId});
+                                    classMapping = dvm.mm.addClass(dvm.state.mapping.jsonld, rangeOntology.entities, rangeClassId);
+                                    _.remove(dvm.state.availableClasses, availableClass);
                                 }
 
                                 // Add object property mapping pointing to new range class mapping
                                 dvm.mm.addObjectProp(dvm.state.mapping.jsonld, ontology.entities, dvm.state.selectedClassMappingId, propId, classMapping['@id']);
                                 dvm.state.setAvailableProps(classMapping['@id']);
-                                selectedClassMappingId = classMapping['@id'];
                             } else {
                                 dvm.mm.addDataProp(dvm.state.mapping.jsonld, ontology.entities, dvm.state.selectedClassMappingId, propId, dvm.selectedColumn);
-                                selectedClassMappingId = dvm.state.selectedClassMappingId;
                             }
 
                             dvm.state.setAvailableProps(dvm.state.selectedClassMappingId);
@@ -125,10 +115,10 @@
                                 propMapping[prefixes.delim + 'columnIndex'][0]['@value'] = dvm.selectedColumn;
                                 _.remove(dvm.state.invalidProps, {'@id': dvm.state.selectedPropMappingId})
                             }
-                            selectedClassMappingId = dvm.state.selectedClassMappingId;
                         }
 
                         dvm.state.changedMapping = true;
+                        var selectedClassMappingId = dvm.state.selectedClassMappingId;
                         dvm.state.resetEdit();
                         dvm.state.selectedClassMappingId = selectedClassMappingId;
                         dvm.state.displayPropMappingOverlay = false;
@@ -144,7 +134,7 @@
                         var ontology = dvm.mm.findSourceOntologyWithProp(propId, dvm.state.sourceOntologies);
                         dvm.selectedProp = {propObj: dvm.om.getEntity(ontology.entities, propId), ontologyId: ontology.id};
                         dvm.selectedColumn = dvm.util.getPropertyValue(propMapping, prefixes.delim + 'columnIndex');
-                        dvm.rangeClass = dvm.getRangeClass(dvm.selectedProp);
+                        dvm.rangeClassMapping = dvm.getRangeClassMapping(dvm.selectedProp);
                     }
                 },
                 templateUrl: 'modules/mapper/directives/propMappingOverlay/propMappingOverlay.html'
