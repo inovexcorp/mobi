@@ -23,13 +23,17 @@ package org.matonto.ontology.core.impl.owlapi;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.matonto.catalog.api.CatalogManager;
-import org.matonto.catalog.api.ontologies.mcat.*;
+import org.matonto.catalog.api.ontologies.mcat.Branch;
+import org.matonto.catalog.api.ontologies.mcat.BranchFactory;
+import org.matonto.catalog.api.ontologies.mcat.Commit;
+import org.matonto.catalog.api.ontologies.mcat.CommitFactory;
+import org.matonto.catalog.api.ontologies.mcat.OntologyRecord;
+import org.matonto.catalog.api.ontologies.mcat.OntologyRecordFactory;
 import org.matonto.exception.MatOntoException;
 import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyId;
@@ -38,8 +42,11 @@ import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.query.api.TupleQuery;
-import org.matonto.rdf.api.*;
 import org.matonto.rdf.api.IRI;
+import org.matonto.rdf.api.Model;
+import org.matonto.rdf.api.ModelFactory;
+import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.ValueFactory;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.exception.RepositoryException;

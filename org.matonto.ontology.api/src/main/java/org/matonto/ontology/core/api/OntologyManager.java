@@ -51,7 +51,7 @@ public interface OntologyManager {
     /**
      * Creates a new Ontology Object using the provided OntologyId.
      *
-     * @param ontologyId the record id for the Ontology you want to create.
+     * @param ontologyId the ontology id for the Ontology you want to create.
      * @return an Ontology with the desired recordId.
      * @throws MatontoOntologyException - if the ontology can't be created.
      */
@@ -150,34 +150,34 @@ public interface OntologyManager {
     void deleteOntology(@Nonnull Resource recordId) throws MatontoOntologyException;
 
     /**
-     * Creates a new recordId with a generated identifier.
+     * Creates a new OntologyId with a generated identifier.
      *
-     * @return an recordId with a generated identifier.
+     * @return an OntologyId with a generated identifier.
      */
     OntologyId createOntologyId();
 
     /**
-     * Creates a new recordId using the provided Resource as the identifier.
+     * Creates a new OntologyId using the provided Resource as the identifier.
      *
      * @param resource the Resource that you want to be your identifier.
-     * @return an recordId with the provided Resource as the identifier.
+     * @return an OntologyId with the provided Resource as the identifier.
      */
     OntologyId createOntologyId(Resource resource);
 
     /**
-     * Creates a new recordId using the provided IRI as the identifier.
+     * Creates a new OntologyId using the provided IRI as the identifier.
      *
      * @param ontologyIRI the IRI that you want to be your identifier.
-     * @return an recordId with the provided IRI as the identifier.
+     * @return an OntologyId with the provided IRI as the identifier.
      */
     OntologyId createOntologyId(IRI ontologyIRI);
 
     /**
-     * Creates a new recordId using the provided version IRI as the identifier.
+     * Creates a new OntologyId using the provided version IRI as the identifier.
      *
      * @param ontologyIRI the IRI for the ontology you want to create the recordId for.
      * @param versionIRI the version IRI for the ontology you want to create the recordId for.
-     * @return an recordId using the ontologyIRI and versionIRI to determine the proper identifier.
+     * @return an OntologyId using the ontologyIRI and versionIRI to determine the proper identifier.
      */
     OntologyId createOntologyId(IRI ontologyIRI, IRI versionIRI);
 

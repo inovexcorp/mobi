@@ -146,18 +146,6 @@ public interface CatalogManager {
             MatOntoException;
 
     /**
-     * Gets the Record based on the provided identifier. The Record will be of type T which is determined by the
-     * provided OrmFactory.
-     *
-     * @param identifier The String identifying the Record you want to get.
-     * @param factory The OrmFactory of the Type of Record you want to get back.
-     * @param <T> An Object which extends Record.
-     * @return An Optional with a Record with the identifier if it was found.
-     * @throws MatOntoException Thrown if a connection to the repository could not be made.
-     */
-    <T extends Record> Optional<T> getRecord(String identifier, OrmFactory<T> factory) throws MatOntoException;
-
-    /**
      * Creates a Distribution with the metadata from the provided DistributionConfig.
      *
      * @param config The DistributionConfig which contains the needed metadata to create the Distribution.

@@ -220,7 +220,7 @@ public class OntologyRestImpl implements OntologyRest {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
-            return deletionsToInProgressCommit(context, ontology, annotationIdStr);
+            return deletionsToInProgressCommit(context, ontology, annotationIdStr, recordIdStr);
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         }
@@ -253,7 +253,7 @@ public class OntologyRestImpl implements OntologyRest {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
-            return deletionsToInProgressCommit(context, ontology, classIdStr);
+            return deletionsToInProgressCommit(context, ontology, classIdStr, recordIdStr);
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         }
@@ -287,7 +287,7 @@ public class OntologyRestImpl implements OntologyRest {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
-            return deletionsToInProgressCommit(context, ontology, datatypeIdStr);
+            return deletionsToInProgressCommit(context, ontology, datatypeIdStr, recordIdStr);
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         }
@@ -323,7 +323,7 @@ public class OntologyRestImpl implements OntologyRest {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
-            return deletionsToInProgressCommit(context, ontology, objectPropertyIdStr);
+            return deletionsToInProgressCommit(context, ontology, objectPropertyIdStr, recordIdStr);
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         }
@@ -358,7 +358,7 @@ public class OntologyRestImpl implements OntologyRest {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
-            return deletionsToInProgressCommit(context, ontology, dataPropertyIdStr);
+            return deletionsToInProgressCommit(context, ontology, dataPropertyIdStr, recordIdStr);
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         }
@@ -393,7 +393,7 @@ public class OntologyRestImpl implements OntologyRest {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
-            return deletionsToInProgressCommit(context, ontology, individualIdStr);
+            return deletionsToInProgressCommit(context, ontology, individualIdStr, recordIdStr);
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         }
@@ -723,7 +723,8 @@ public class OntologyRestImpl implements OntologyRest {
      */
     private Resource getUserInProgressCommitIRI(ContainerRequestContext context, String recordIdStr) {
         User user = getUserFromContext(context);
-        Resource recordId = catalogManager.getRecord(recordIdStr, ontologyRecordFactory).orElseThrow(() ->
+        Resource recordId = catalogManager.getRecord(catalogManager.getLocalCatalogIRI(),
+                valueFactory.createIRI(recordIdStr), ontologyRecordFactory).orElseThrow(() ->
                 ErrorUtils.sendError("OntologyRecord could not be found.", Response.Status.BAD_REQUEST)).getResource();
         Optional<Resource> optionalResource = catalogManager.getInProgressCommitIRI(user.getResource(), recordId);
         if (!optionalResource.isPresent()) {
@@ -761,7 +762,8 @@ public class OntologyRestImpl implements OntologyRest {
 
         if (optionalOntology.isPresent()) {
             User user = getUserFromContext(context);
-            OntologyRecord record = catalogManager.getRecord(recordIdStr, ontologyRecordFactory).orElseThrow(() ->
+            OntologyRecord record = catalogManager.getRecord(catalogManager.getLocalCatalogIRI(),
+                    valueFactory.createIRI(recordIdStr), ontologyRecordFactory).orElseThrow(() ->
                     ErrorUtils.sendError("OntologyRecord could not be found.", Response.Status.BAD_REQUEST));
             Optional<Resource> optionalInProgressCommitIRI = catalogManager.getInProgressCommitIRI(user
                     .getResource(), record.getResource());
@@ -841,9 +843,9 @@ public class OntologyRestImpl implements OntologyRest {
                                                 String branchIdStr, String commitIdStr) {
         Optional<Ontology> optionalOntology = getOntology(context, recordIdStr, branchIdStr, commitIdStr);
         if (optionalOntology.isPresent()) {
-            return optionalOntology.get().getImportsClosure().stream()
-                    .filter(ontology -> !ontology.getOntologyId().getOntologyIdentifier().stringValue()
-                            .equals(recordIdStr))
+            Ontology baseOntology = optionalOntology.get();
+            return baseOntology.getImportsClosure().stream()
+                    .filter(ontology -> !ontology.getOntologyId().equals(baseOntology.getOntologyId()))
                     .collect(Collectors.toSet());
         } else {
             throw ErrorUtils.sendError("Ontology " + recordIdStr + " does not exist.", Response.Status.BAD_REQUEST);
@@ -1058,12 +1060,12 @@ public class OntologyRestImpl implements OntologyRest {
      * @param context the context of the request.
      * @param ontology the ontology to process.
      * @param entityIdStr the ID of the entity to be deleted.
+     * @param recordIdStr the ID of the record which contains the entity to be deleted.
      * @return a Response indicating the success or failure of the deletion.
      */
     private Response deletionsToInProgressCommit(ContainerRequestContext context, Ontology ontology,
-                                                 String entityIdStr) {
-        Resource inProgressCommitIRI = getUserInProgressCommitIRI(context, ontology.getOntologyId()
-                .getOntologyIdentifier().stringValue());
+                                                 String entityIdStr, String recordIdStr) {
+        Resource inProgressCommitIRI = getUserInProgressCommitIRI(context, recordIdStr);
         Model ontologyModel = ontology.asModel(modelFactory);
         Resource entityId = valueFactory.createIRI(entityIdStr);
         Model model = modelFactory.createModel(ontologyModel.stream()
@@ -1121,9 +1123,8 @@ public class OntologyRestImpl implements OntologyRest {
      */
     private Response uploadOntology(ContainerRequestContext context, Ontology ontology, String title,
                                     String description, String keywords) throws MatOntoException {
-        String ontologyId = ontology.getOntologyId().getOntologyIdentifier().stringValue();
         User user = getUserFromContext(context);
-        RecordConfig.Builder builder = new RecordConfig.Builder(title, ontologyId, Collections.singleton(user));
+        RecordConfig.Builder builder = new RecordConfig.Builder(title, Collections.singleton(user));
         if (description != null) {
             builder.description(description);
         }
@@ -1146,7 +1147,7 @@ public class OntologyRestImpl implements OntologyRest {
 
         catalogManager.removeInProgressCommit(inProgressCommit.getResource());
         JSONObject response = new JSONObject()
-                .element("ontologyId", ontologyId)
+                .element("ontologyId", ontology.getOntologyId().getOntologyIdentifier().stringValue())
                 .element("recordId", record.getResource().stringValue())
                 .element("branchId", masterBranchId.stringValue())
                 .element("commitId", commit.getResource().stringValue());
