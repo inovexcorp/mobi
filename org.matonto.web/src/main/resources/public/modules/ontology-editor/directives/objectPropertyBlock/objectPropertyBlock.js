@@ -44,7 +44,7 @@
                     dvm.openAddObjectPropOverlay = function() {
                         dvm.sm.editingProperty = false;
                         dvm.sm.propertySelect = undefined;
-                        dvm.sm.propertyValue = undefined;
+                        dvm.sm.propertyValue = '';
                         dvm.sm.propertyIndex = 0;
                         dvm.sm.showObjectPropertyOverlay = true;
                     }

@@ -73,25 +73,20 @@ describe('Hierarchy Tree directive', function() {
             }]);
         });
     });
-
     describe('replaces the element with the correct html', function() {
-        it('for a DIV', function() {
+        it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
-        });
-        it('based on tree class', function() {
+            expect(element.hasClass('hierarchy-tree')).toBe(true);
             expect(element.hasClass('tree')).toBe(true);
         });
         it('based on container class', function() {
-            var container = element.querySelectorAll('.container');
-            expect(container.length).toBe(1);
+            expect(element.querySelectorAll('.container').length).toBe(1);
         });
         it('based on ul', function() {
-            var uls = element.find('ul');
-            expect(uls.length).toBe(3);
+            expect(element.find('ul').length).toBe(3);
         });
         it('based on container tree-items', function() {
-            var lis = element.querySelectorAll('.container tree-item');
-            expect(lis.length).toBe(1);
+            expect(element.querySelectorAll('.container tree-item').length).toBe(1);
         });
     });
 });

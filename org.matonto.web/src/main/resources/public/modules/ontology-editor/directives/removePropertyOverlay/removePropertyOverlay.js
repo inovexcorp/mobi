@@ -27,9 +27,9 @@
         .module('removePropertyOverlay', [])
         .directive('removePropertyOverlay', removePropertyOverlay);
 
-        removePropertyOverlay.$inject = ['ontologyStateService', 'propertyManagerService'];
+        removePropertyOverlay.$inject = ['ontologyStateService', 'propertyManagerService', 'ontologyManagerService'];
 
-        function removePropertyOverlay(ontologyStateService, propertyManagerService) {
+        function removePropertyOverlay(ontologyStateService, propertyManagerService, ontologyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -44,6 +44,8 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
+                    var om = ontologyManagerService;
+
                     dvm.sm = ontologyStateService;
                     dvm.pm = propertyManagerService;
 
@@ -51,8 +53,12 @@
                         if (dvm.onSubmit) {
                             dvm.onSubmit({axiomObject: dvm.sm.selected[dvm.key][dvm.index]});
                         }
+                        var json = {
+                            '@id': dvm.sm.selected['@id'],
+                            [dvm.key]: [angular.copy(dvm.sm.selected[dvm.key][dvm.index])]
+                        }
+                        om.addToDeletions(dvm.sm.listItem.recordId, json);
                         dvm.pm.remove(dvm.sm.selected, dvm.key, dvm.index);
-                        dvm.sm.setUnsaved(dvm.sm.listItem.ontologyId, dvm.sm.selected.matonto.originalIRI, true);
                         dvm.overlayFlag = false;
                     }
                 }

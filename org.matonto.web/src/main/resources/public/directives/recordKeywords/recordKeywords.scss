@@ -1,0 +1,17 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.record-keywords {
+    .keywords {
+        li {
+            display: inline;
+
+            &:after {
+                content: ', ';
+            }
+            &.last:after {
+                content: '';
+            }
+        }
+    }
+}

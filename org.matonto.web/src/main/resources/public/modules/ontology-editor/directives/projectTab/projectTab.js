@@ -27,12 +27,20 @@
         .module('projectTab', [])
         .directive('projectTab', projectTab);
 
-        function projectTab() {
+        projectTab.$inject = ['ontologyStateService', 'ontologyManagerService'];
+
+        function projectTab(ontologyStateService, ontologyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
                 templateUrl: 'modules/ontology-editor/directives/projectTab/projectTab.html',
-                scope: {}
+                scope: {},
+                controllerAs: 'dvm',
+                controller: function() {
+                    var dvm = this;
+                    dvm.sm = ontologyStateService;
+                    dvm.om = ontologyManagerService;
+                }
             }
         }
 })();

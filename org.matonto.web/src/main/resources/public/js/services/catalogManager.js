@@ -292,10 +292,9 @@
                 var deferred = $q.defer(),
                     fd = new FormData(),
                     config = {
-                        transformRequest: angular.identity,
+                        transformRequest: _.identity,
                         headers: {
-                            'Content-Type': undefined,
-                            'Accept': 'text/plain'
+                            'Content-Type': undefined
                         }
                     };
                 fd.append('type', recordConfig.recordType);
@@ -431,10 +430,9 @@
                 var deferred = $q.defer(),
                     fd = new FormData(),
                     config = {
-                        transformRequest: angular.identity,
+                        transformRequest: _.identity,
                         headers: {
-                            'Content-Type': undefined,
-                            'Accept': 'text/plain'
+                            'Content-Type': undefined
                         }
                     };
                 fd.append('title', distributionConfig.title);
@@ -774,10 +772,9 @@
                 var deferred = $q.defer(),
                     fd = new FormData(),
                     config = {
-                        transformRequest: angular.identity,
+                        transformRequest: _.identity,
                         headers: {
-                            'Content-Type': undefined,
-                            'Accept': 'text/plain'
+                            'Content-Type': undefined
                         }
                     };
                 fd.append('title', distributionConfig.title);
@@ -863,6 +860,8 @@
              * @param {number} paginatedConfig.pageIndex The index of the page of results to retrieve
              * @param {number} paginatedConfig.limit The number of results per page
              * @param {Object} paginatedConfig.sortOption A sort option object from the `sortOptions` array
+             * @param {Object} paginatedConfig.applyUserFilter Whether or not the list should be filtered based
+             * on the currently logged in User
              * @return {Promise} A promise that resolves to the paginated response or is rejected
              * with a error message
              */
@@ -1173,19 +1172,14 @@
                 var deferred = $q.defer(),
                     fd = new FormData(),
                     config = {
-                        params: {targetId},
                         transformRequest: _.identity,
                         headers: {
-                            'Content-Type': undefined,
-                            'Accept': 'text/plain'
-                        }
+                            'Content-Type': undefined
+                        },
+                        params: {targetId}
                     };
-                if (_.has(differenceObj, 'additions')) {
-                    fd.append('additions', differenceObj.additions);
-                }
-                if (_.has(differenceObj, 'deletions')) {
-                    fd.append('deletions', differenceObj.deletions);
-                }
+                fd.append('additions', _.has(differenceObj, 'additions') ? JSON.stringify(differenceObj.additions) : '[]');
+                fd.append('deletions', _.has(differenceObj, 'deletions') ? JSON.stringify(differenceObj.deletions) : '[]');
                 $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(sourceId) + '/conflicts/resolution', fd, config)
                     .then(response => deferred.resolve(response.data), error => deferred.reject(error.statusText));
                 return deferred.promise;
@@ -1212,6 +1206,10 @@
             self.getResource = function(commitId, branchId, recordId, catalogId, applyInProgressCommit, format = 'jsonld') {
                 var deferred = $q.defer(),
                     config = {
+                        headers: {
+                            'Content-Type': undefined,
+                            'Accept': 'text/plain'
+                        },
                         params: {
                             format,
                             applyInProgressCommit
@@ -1240,8 +1238,8 @@
              * should be applied to the resource
              * @param {String} format The RDF format to return the compiled resource in
              */
-            self.downloadResource = function(commitId, branchId, recordId, catalogId, applyInProgressCommit, format = 'jsonld') {
-                $window.location = prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId) + '/resource?applyInProgressCommit=' + applyInProgressCommit + '&format=' + format;
+            self.downloadResource = function(commitId, branchId, recordId, catalogId, applyInProgressCommit, format = 'jsonld', fileName = 'resource') {
+                $window.location = prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId) + '/resource?applyInProgressCommit=' + applyInProgressCommit + '&format=' + format + '&fileName=' + fileName;
             }
 
             /**
@@ -1307,15 +1305,14 @@
                     config = {
                         transformRequest: _.identity,
                         headers: {
-                            'Content-Type': undefined,
-                            'Accept': 'text/plain'
+                            'Content-Type': undefined
                         }
                     };
                 if (_.has(differenceObj, 'additions')) {
-                    fd.append('additions', differenceObj.additions);
+                    fd.append('additions', JSON.stringify(differenceObj.additions));
                 }
                 if (_.has(differenceObj, 'deletions')) {
-                    fd.append('deletions', differenceObj.deletions);
+                    fd.append('deletions', JSON.stringify(differenceObj.deletions));
                 }
                 $http.put(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit', fd, config)
                     .then(response => deferred.resolve(), error => deferred.reject(error.statusText));
@@ -1438,8 +1435,7 @@
                     config = {
                         transformRequest: _.identity,
                         headers: {
-                            'Content-Type': undefined,
-                            'Accept': 'text/plain'
+                            'Content-Type': undefined
                         }
                     };
                 fd.append('title', versionConfig.title);
@@ -1458,12 +1454,11 @@
                     config = {
                         transformRequest: _.identity,
                         headers: {
-                            'Content-Type': undefined,
-                            'Accept': 'text/plain'
+                            'Content-Type': undefined
                         }
                     };
                 fd.append('title', branchConfig.title);
-                fd.append('type', branchConfig.branchType);
+                fd.append('type', branchConfig.type);
                 if (_.has(branchConfig, 'description')) {
                     fd.append('description', branchConfig.description);
                 }
@@ -1498,6 +1493,9 @@
                     if (_.has(paginatedConfig, 'pageIndex')) {
                         params.offset = paginatedConfig.pageIndex * paginatedConfig.limit;
                     }
+                }
+                if (_.has(paginatedConfig, 'applyUserFilter')) {
+                    params.applyUserFilter = paginatedConfig.applyUserFilter;
                 }
                 return params;
             }

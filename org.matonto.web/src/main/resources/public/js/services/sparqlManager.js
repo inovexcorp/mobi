@@ -47,11 +47,12 @@
          */
         .service('sparqlManagerService', sparqlManagerService);
 
-        sparqlManagerService.$inject = ['$http'];
+        sparqlManagerService.$inject = ['$http', '$window', '$httpParamSerializer', 'utilService'];
 
-        function sparqlManagerService($http) {
-            var prefix = '/matontorest/sparql/page';
+        function sparqlManagerService($http, $window, $httpParamSerializer, utilService) {
+            var prefix = '/matontorest/sparql';
             var self = this;
+            var util = utilService;
 
             /**
              * @ngdoc property
@@ -79,12 +80,12 @@
              * @ngdoc property
              * @name data
              * @propertyOf sparqlManager.service:sparqlManagerService
-             * @type {Object}
+             * @type {Object[]}
              *
              * @description
              * The results from the running the {@link sparqlManager.service:sparqlManagerService#queryString}.
              */
-            self.data = {};
+            self.data = undefined;
             /**
              * @ngdoc property
              * @name errorMessage
@@ -116,6 +117,52 @@
              * displayed in the {@link sparqlResultTable.directive:sparqlResultTable SPARQL result table}.
              */
             self.currentPage = 0;
+            /**
+             * @ngdoc property
+             * @name links
+             * @propertyOf sparqlManager.service:sparqlManagerService
+             * @type {Object}
+             *
+             * @description
+             * The URLs for the next and previous page of results from running the
+             * {@link sparqlManager.service:sparqlManagerService#queryString query}.
+             */
+            self.links = {
+                next: '',
+                prev: ''
+            };
+            /**
+             * @ngdoc property
+             * @name limit
+             * @propertyOf sparqlManager.service:sparqlManagerService
+             * @type {number}
+             *
+             * @description
+             * The number of results to return at one time from {@link sparqlManager.service:sparqlManager#queryRdf querying}
+             * the repository.
+             */
+            self.limit = 100;
+            /**
+             * @ngdoc property
+             * @name totalSize
+             * @propertyOf sparqlManager.service:sparqlManagerService
+             * @type {number}
+             *
+             * @description
+             * The total number of results from running the {@link sparqlManager.service:sparqlManagerService#queryString query}
+             * with {@link sparqlManager.service:sparqlManager#queryRdf queryRdf}.
+             */
+            self.totalSize = 0;
+            /**
+             * @ngdoc property
+             * @name bindings
+             * @propertyOf sparqlManager.service:sparqlManagerService
+             * @type {string[]}
+             *
+             * @description
+             * The binding names in the result of running the {@link sparqlManager.service:sparqlManagerService#queryString query}.
+             */
+            self.bindings = [];
 
             /**
              * @ngdoc method
@@ -135,6 +182,31 @@
             }
             /**
              * @ngdoc method
+             * @name downloadResults
+             * @methodOf sparqlManager.service:sparqlManagerService
+             *
+             * @description
+             * Calls the GET /matontorest/sparql endpoint using the `window.location` variable which will start
+             * a download of the results of running the current
+             * {@link sparqlManager.service:sparqlManagerService#queryString query} and
+             * {@link sparqlManager.service:sparqlManagerService#prefixes prefixes} in the specified file type
+             * with an optional file name.
+             *
+             * @param {string} fileType The type of file to download based on file extension
+             * @param {string=''} fileName The optional name of the downloaded file
+             */
+            self.downloadResults = function(fileType, fileName = '') {
+                var paramsObj = {
+                    query: getPrefixString() + this.queryString,
+                    fileType
+                };
+                if (fileName) {
+                    paramsObj.fileName = fileName;
+                }
+                $window.location = prefix + '?' + $httpParamSerializer(paramsObj);
+            }
+            /**
+             * @ngdoc method
              * @name queryRdf
              * @methodOf sparqlManager.service:sparqlManagerService
              *
@@ -146,19 +218,19 @@
              */
             self.queryRdf = function() {
                 self.currentPage = 0;
-                self.data = {};
+                self.data = undefined;
                 self.errorMessage = '';
                 self.infoMessage = '';
 
-                var prefixes = self.prefixes.length ? 'PREFIX ' + _.join(self.prefixes, '\nPREFIX ') + '\n\n' : '';
+                var prefixes = getPrefixString();
                 var config = {
                     params: {
                         query: prefixes + self.queryString,
-                        limit: 100,
-                        start: 0
+                        limit: self.limit,
+                        offset: self.currentPage * self.limit
                     }
                 }
-                $http.get(prefix, config)
+                $http.get(prefix + '/page', config)
                     .then(onSuccess, onError);
             }
             /**
@@ -180,14 +252,23 @@
                 return _.get(response, 'statusText') || defaultMessage;
             }
             function onSuccess(response) {
-                if (_.get(response, 'status') === 200) {
-                    self.data = response.data;
+                if (_.get(response, 'data.bindings', []).length) {
+                    self.bindings = response.data.bindings;
+                    self.data = response.data.data;
+                    var headers = response.headers();
+                    self.totalSize = _.get(headers, 'x-total-count', 0);
+                    var links = util.parseLinks(_.get(headers, 'link', ''));
+                    self.links.prev = _.get(links, 'prev', '');
+                    self.links.next = _.get(links, 'next', '');
                 } else {
-                    self.infoMessage = getMessage(response, 'There was a problem getting the results.');
+                    self.infoMessage = 'There were no results for the submitted query.';
                 }
             }
             function onError(response) {
                 self.errorMessage = getMessage(response, 'A server error has occurred. Please try again later.');
+            }
+            function getPrefixString() {
+                return self.prefixes.length ? 'PREFIX ' + _.join(self.prefixes, '\nPREFIX ') + '\n\n' : '';
             }
         }
 })();

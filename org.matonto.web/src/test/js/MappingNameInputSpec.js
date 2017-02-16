@@ -36,67 +36,53 @@ describe('Mapping Name Input directive', function() {
             scope = _$rootScope_;
             mappingManagerSvc = _mappingManagerService_;
         });
+
+        mappingManagerSvc.mappingIds = ['test'];
+        scope.name = '';
+        scope.required = true;
+        scope.isActive = true;
+        scope.focusEvent = jasmine.createSpy('focusEvent');
+        var form = $compile('<form></form>')(scope);
+        this.element = angular.element('<mapping-name-input name="name" required="required" is-active="isActive" focus-event="focusEvent()"></mapping-name-input>');
+        form.append(this.element);
+        this.element = $compile(this.element)(scope);
+        scope.$digest();
     });
 
     describe('in isolated scope', function() {
         beforeEach(function() {
-            scope.name = '';
-            scope.required = true;
-            scope.isActive = true;
-            scope.focusEvent = jasmine.createSpy('focusEvent');
-
-            var form = $compile('<form></form>')(scope);
-            this.element = angular.element('<mapping-name-input name="name" required="required" is-active="isActive" focus-event="focusEvent()"></mapping-name-input>');
-            form.append(this.element);
-            this.element = $compile(this.element)(scope);
-            scope.$digest();
+            this.isolatedScope = this.element.isolateScope();
         });
-
         it('name should be two way bound', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.name = 'test';
+            this.isolatedScope.name = 'test1';
             scope.$digest();
-            expect(scope.name).toBe('test');
+            expect(scope.name).toBe('test1');
         });
-        it('required should be called in the parent scope', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.required = false;
+        it('required should be one way bound', function() {
+            this.isolatedScope.required = false;
             scope.$digest();
-            expect(scope.required).toBe(false);
+            expect(scope.required).toBe(true);
         });
-        it('isActive should be called in the parent scope', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.isActive = false;
+        it('isActive should be one way bound', function() {
+            this.isolatedScope.isActive = false;
             scope.$digest();
-            expect(scope.isActive).toBe(false);
+            expect(scope.isActive).toBe(true);
         });
         it('focusEvent should be called in the parent scope', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.focusEvent();
+            this.isolatedScope.focusEvent();
             expect(scope.focusEvent).toHaveBeenCalled();
         });
     });
     describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
-            mappingManagerSvc.mappingIds = ['test'];
-            scope.name = '';
-            scope.required = true;
-            scope.isActive = true;
-            scope.focusEvent = jasmine.createSpy('focusEvent');
-
-            var form = $compile('<form></form>')(scope);
-            this.element = angular.element('<mapping-name-input name="name" required="required" is-active="isActive" focus-event="focusEvent()"></mapping-name-input>');
-            form.append(this.element);
-            this.element = $compile(this.element)(scope);
-            scope.$digest();
-        });
         it('for wrapping containers', function() {
             expect(this.element.hasClass('mapping-name-input')).toBe(true);
             expect(this.element.hasClass('form-group')).toBe(true);
         });
         it('with the correct classes based on the input field validity and active state', function() {
-            expect(this.element.hasClass('has-error')).toBe(true);
             var isolatedScope = this.element.isolateScope();
+            isolatedScope.form.name.$touched = true;
+            scope.$digest();
+            expect(this.element.hasClass('has-error')).toBe(true);
 
             isolatedScope.name = 'a';
             scope.$digest();
@@ -128,25 +114,18 @@ describe('Mapping Name Input directive', function() {
         });
     });
     it('should not show an error if first name passed is a previous mapping id', function() {
-        mappingManagerSvc.mappingIds = ['test'];
         scope.name = 'test';
         var form = $compile('<form></form>')(scope);
-        var element = angular.element('<mapping-name-input name="name" required="required" is-active="isActive" focus-event="focusEvent()"></mapping-name-input>');
-        form.append(element);
-        element = $compile(element)(scope);
+        this.element = angular.element('<mapping-name-input name="name" required="required" is-active="isActive" focus-event="focusEvent()"></mapping-name-input>');
+        form.append(this.element);
+        this.element = $compile(this.element)(scope);
         scope.$digest();
 
-        var isolatedScope = element.isolateScope();
+        var isolatedScope = this.element.isolateScope();
         expect(isolatedScope.form.$valid).toBe(true);
     });
     it('should have the correct default values for isActive and required', function() {
-        var form = $compile('<form></form>')(scope);
-        var element = angular.element('<mapping-name-input name="name" required="required" is-active="isActive" focus-event="focusEvent()"></mapping-name-input>');
-        form.append(element);
-        element = $compile(element)(scope);
-        scope.$digest();
-
-        var isolatedScope = element.isolateScope();
+        var isolatedScope = this.element.isolateScope();
         expect(isolatedScope.isActive).toBe(true);
         expect(isolatedScope.required).toBe(true);
     });

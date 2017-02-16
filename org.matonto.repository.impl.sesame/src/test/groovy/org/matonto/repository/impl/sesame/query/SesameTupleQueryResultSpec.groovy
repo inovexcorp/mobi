@@ -75,7 +75,7 @@ class SesameTupleQueryResultSpec extends Specification{
         noExceptionThrown()
     }
 
-    def "remove() does not cause exception when tupleQueryResult has another value"() {
+    def "remove() throws an UnsupportedOperationException"() {
         setup:
         def sesameTQR = Mock(TupleQueryResult)
         def tupleQueryResult = new SesameTupleQueryResult(sesameTQR)
@@ -84,6 +84,6 @@ class SesameTupleQueryResultSpec extends Specification{
         tupleQueryResult.remove()
 
         then:
-        noExceptionThrown()
+        thrown(UnsupportedOperationException.class)
     }
 }

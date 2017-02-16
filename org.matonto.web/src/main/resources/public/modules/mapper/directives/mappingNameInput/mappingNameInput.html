@@ -20,7 +20,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="mapping-name-input form-group" ng-class="{'has-error': isActive && form.name.$invalid, 'has-success': isActive && form.name.$valid}">
+<div class="mapping-name-input form-group" ng-class="{'has-error': isActive && form.name.$touched && form.name.$invalid, 'has-success': isActive && form.name.$touched && form.name.$valid}">
     <label class="control-label">
         Name
         <input type="text" class="form-control" name="name" ng-model="name" ng-pattern="dvm.localNamePattern" ng-required="required" ng-maxlength="50" ng-focus="focusEvent()" unique-name>

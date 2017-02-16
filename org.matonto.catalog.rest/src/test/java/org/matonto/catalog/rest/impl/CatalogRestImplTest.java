@@ -112,6 +112,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static org.matonto.rest.util.RestUtils.encode;
 import static org.mockito.Matchers.any;
@@ -179,6 +180,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     };
     private static final String BRANCH_IRI = "http://matonto.org/branches/test";
     private static final String USER_IRI = "http://matonto.org/users/tester";
+    private static final String CONFLICT_IRI = "http://matonto.org/conflicts/test";
 
     @Mock
     CatalogManager catalogManager;
@@ -302,8 +304,11 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         testInProgressCommit = inProgressCommitFactory.createNew(vf.createIRI(COMMIT_IRIS[0]));
         testBranch = branchFactory.createNew(vf.createIRI(BRANCH_IRI));
         testBranch.setProperty(vf.createLiteral("Title"), vf.createIRI(DCTERMS.TITLE.stringValue()));
+        testBranch.setProperty(vf.createLiteral(USER_IRI), vf.createIRI(DCTERMS.PUBLISHER.stringValue()));
         testBranch.setHead(testCommits.get(0));
-        testUserBranch = userBranchFactory.createNew(vf.createIRI(BRANCH_IRI));
+        testUserBranch = userBranchFactory.createNew(vf.createIRI(BRANCH_IRI + "/user"));
+        testUserBranch.setProperty(vf.createLiteral("Title"), vf.createIRI(DCTERMS.TITLE.stringValue()));
+        testUserBranch.setProperty(vf.createLiteral(USER_IRI), vf.createIRI(DCTERMS.PUBLISHER.stringValue()));
         testDistribution = distributionFactory.createNew(vf.createIRI(DISTRIBUTION_IRI));
         testDistribution.setProperty(vf.createLiteral("Title"), vf.createIRI(DCTERMS.TITLE.stringValue()));
         testVersion = versionFactory.createNew(vf.createIRI(VERSION_IRI));
@@ -321,7 +326,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         testVersionedRecord.setVersion(Collections.singleton(testVersion));
         testVersionedRDFRecord = versionedRDFRecordFactory.createNew(vf.createIRI(RECORD_IRI));
         testVersionedRDFRecord.setMasterBranch(testBranch);
-        testVersionedRDFRecord.setBranch(Collections.singleton(testBranch));
+        testVersionedRDFRecord.setBranch(Stream.of(testBranch, testUserBranch).collect(Collectors.toSet()));
         testOntologyRecord = ontologyRecordFactory.createNew(vf.createIRI(RECORD_IRI));
         testMappingRecord = mappingRecordFactory.createNew(vf.createIRI(RECORD_IRI));
         testDatasetRecord = datasetRecordFactory.createNew(vf.createIRI(RECORD_IRI));
@@ -416,6 +421,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         when(catalogManager.createVersion(anyString(), anyString(), eq(versionFactory))).thenReturn(testVersion);
         when(catalogManager.createVersion(anyString(), anyString(), eq(tagFactory))).thenReturn(testTag);
         when(catalogManager.getBranch(any(Resource.class), eq(branchFactory))).thenReturn(Optional.of(testBranch));
+        when(catalogManager.getBranch(testUserBranch.getResource(), branchFactory)).thenReturn(Optional.of(testUserBranch));
         when(catalogManager.getBranch(any(Resource.class), eq(userBranchFactory))).thenReturn(Optional.of(testUserBranch));
         when(catalogManager.createBranch(anyString(), anyString(), eq(branchFactory))).thenReturn(testBranch);
         when(catalogManager.createBranch(anyString(), anyString(), eq(userBranchFactory))).thenReturn(testUserBranch);
@@ -444,6 +450,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         when(catalogManager.createInProgressCommit(any(User.class), any(Resource.class))).thenReturn(testInProgressCommit);
         when(catalogManager.getCommitDifference(any(Resource.class))).thenReturn(difference);
 
+        when(conflict.getIRI()).thenReturn(vf.createIRI(CONFLICT_IRI));
         when(conflict.getOriginal()).thenReturn(mf.createModel());
         when(conflict.getLeftDifference()).thenReturn(difference);
         when(conflict.getRightDifference()).thenReturn(difference);
@@ -452,6 +459,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         when(difference.getDeletions()).thenReturn(mf.createModel());
 
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
+        when(engineManager.getUsername(any(Resource.class))).thenReturn(Optional.of(user.getResource().stringValue()));
     }
 
     // GET catalogs
@@ -2013,6 +2021,32 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
                 .queryParam("offset", 0)
                 .queryParam("limit", 10)
                 .request().get();
+        assertEquals(response.getStatus(), 200);
+        verify(catalogManager).getRecord(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), versionedRDFRecordFactory);
+        verify(catalogManager, atLeastOnce()).getBranch(vf.createIRI(BRANCH_IRI), branchFactory);
+        MultivaluedMap<String, Object> headers = response.getHeaders();
+        assertEquals(headers.get("X-Total-Count").get(0), "2");
+        assertEquals(response.getLinks().size(), 0);
+        try {
+            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            assertEquals(result.size(), 2);
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void getBranchesWithUserFilterTest() {
+        // Setup:
+        testUserBranch.setProperty(vf.createLiteral(USER_IRI + "/0"), vf.createIRI(DCTERMS.PUBLISHER.stringValue()));
+
+        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/branches")
+                .queryParam("sort", DCTERMS.TITLE.stringValue())
+                .queryParam("offset", 0)
+                .queryParam("limit", 10)
+                .queryParam("applyUserFilter", true)
+                .request().get();
+        assertEquals(response.getStatus(), 200);
         verify(catalogManager).getRecord(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), versionedRDFRecordFactory);
         verify(catalogManager, atLeastOnce()).getBranch(vf.createIRI(BRANCH_IRI), branchFactory);
         MultivaluedMap<String, Object> headers = response.getHeaders();
@@ -2363,16 +2397,9 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
             JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
             assertEquals(result.size(), COMMIT_IRIS.length);
             for (Object aResult : result) {
-                JSONArray.fromObject(aResult).forEach(o -> {
-                        boolean matchingCommit = false;
-                        for (Object object : JSONArray.fromObject(aResult)) {
-                            JSONObject commitObj = JSONObject.fromObject(object);
-                            if (commitObj.containsKey("@id") && Arrays.asList(COMMIT_IRIS).contains(commitObj.getString("@id"))) {
-                                matchingCommit = true;
-                            }
-                        }
-                        assertTrue(matchingCommit);
-                    });
+                JSONObject commitObj = JSONObject.fromObject(aResult);
+                assertTrue(commitObj.containsKey("id"));
+                assertTrue(Arrays.asList(COMMIT_IRIS).contains(commitObj.getString("id")));
             }
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
@@ -2444,7 +2471,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     public void createBranchCommitTest() {
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits")
-                .queryParam("message", "Message").request().post(Entity.json(""));
+                .queryParam("message", "Message").request().post(Entity.entity("", MediaType.TEXT_PLAIN));
         assertEquals(response.getStatus(), 201);
         assertEquals(response.readEntity(String.class), COMMIT_IRIS[0]);
         verify(catalogManager).getInProgressCommitIRI(vf.createIRI(USER_IRI), vf.createIRI(RECORD_IRI));
@@ -2462,7 +2489,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(ERROR_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits")
-                .queryParam("message", "Message").request().post(Entity.json(""));
+                .queryParam("message", "Message").request().post(Entity.entity("", MediaType.TEXT_PLAIN));
         assertEquals(response.getStatus(), 400);
     }
 
@@ -2475,7 +2502,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits")
-                .queryParam("message", "Message").request().post(Entity.json(""));
+                .queryParam("message", "Message").request().post(Entity.entity("", MediaType.TEXT_PLAIN));
         assertEquals(response.getStatus(), 400);
     }
 
@@ -2486,7 +2513,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(ERROR_IRI) + "/commits")
-                .queryParam("message", "Message").request().post(Entity.json(""));
+                .queryParam("message", "Message").request().post(Entity.entity("", MediaType.TEXT_PLAIN));
         assertEquals(response.getStatus(), 400);
     }
 
@@ -2497,7 +2524,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits")
-                .queryParam("message", "Message").request().post(Entity.json(""));
+                .queryParam("message", "Message").request().post(Entity.entity("", MediaType.TEXT_PLAIN));
         assertEquals(response.getStatus(), 401);
     }
 
@@ -2509,7 +2536,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits")
-                .queryParam("message", "Message").request().post(Entity.json(""));
+                .queryParam("message", "Message").request().post(Entity.entity("", MediaType.TEXT_PLAIN));
         assertEquals(response.getStatus(), 400);
     }
 
@@ -2521,7 +2548,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits")
-                .queryParam("message", "Message").request().post(Entity.json(""));
+                .queryParam("message", "Message").request().post(Entity.entity("", MediaType.TEXT_PLAIN));
         assertEquals(response.getStatus(), 400);
     }
 
@@ -2532,7 +2559,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits")
-                .queryParam("message", "Message").request().post(Entity.json(""));
+                .queryParam("message", "Message").request().post(Entity.entity("", MediaType.TEXT_PLAIN));
         assertEquals(response.getStatus(), 400);
     }
 
@@ -2849,6 +2876,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     public void mergeTest() {
         // Setup:
         when((catalogManager.getInProgressCommitIRI(any(Resource.class), any(Resource.class)))).thenReturn(Optional.empty());
+        when((catalogManager.getBranch(any(Resource.class), eq(branchFactory)))).thenReturn(Optional.of(testBranch));
         JSONArray adds = new JSONArray();
         adds.add(new JSONObject().element("@id", "http://example.com/add").element("@type", new JSONArray().element("http://example.com/Add")));
         JSONArray deletes = new JSONArray();
@@ -2870,6 +2898,8 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         verify(catalogManager).removeInProgressCommit(any(Resource.class));
         verify(catalogManager).createCommit(eq(testInProgressCommit), anySetOf(Commit.class), anyString());
         verify(catalogManager).addCommitToBranch(any(Commit.class), eq(vf.createIRI(BRANCH_IRI)));
+        verify(catalogManager, atLeastOnce()).getBranch(eq(vf.createIRI(BRANCH_IRI)), eq(branchFactory));
+        verify(catalogManager).updateHead(any(Resource.class), any(Resource.class));
     }
 
     @Test
@@ -3137,10 +3167,11 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     public void downloadCompiledResourceAsJsonldTest() {
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits/" + encode(COMMIT_IRIS[0]) + "/resource")
-                .queryParam("format", "jsonld").request().accept(MediaType.APPLICATION_OCTET_STREAM).get();
+                .queryParam("format", "jsonld").queryParam("fileName", "fileName").request()
+                .accept(MediaType.APPLICATION_OCTET_STREAM).get();
         assertEquals(response.getStatus(), 200);
         verify(catalogManager).getCompiledResource(vf.createIRI(COMMIT_IRIS[0]));
-        assertTrue(response.getHeaderString("Content-Disposition").contains(RECORD_IRI));
+        assertTrue(response.getHeaderString("Content-Disposition").contains("fileName"));
         isJsonld(response.readEntity(String.class));
     }
 
@@ -3148,10 +3179,11 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     public void downloadCompiledResourceAsTurtleTest() {
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits/" + encode(COMMIT_IRIS[0]) + "/resource")
-                .queryParam("format", "turtle").request().accept(MediaType.APPLICATION_OCTET_STREAM).get();
+                .queryParam("format", "turtle").queryParam("fileName", "fileName").request()
+                .accept(MediaType.APPLICATION_OCTET_STREAM).get();
         assertEquals(response.getStatus(), 200);
         verify(catalogManager).getCompiledResource(vf.createIRI(COMMIT_IRIS[0]));
-        assertTrue(response.getHeaderString("Content-Disposition").contains(RECORD_IRI));
+        assertTrue(response.getHeaderString("Content-Disposition").contains("fileName"));
         notJsonld(response.readEntity(String.class));
     }
 
@@ -3159,9 +3191,10 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     public void downloadCompiledResourceAsRdfxmlTest() {
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits/" + encode(COMMIT_IRIS[0]) + "/resource")
-                .queryParam("format", "rdf/xml").request().accept(MediaType.APPLICATION_OCTET_STREAM).get();
+                .queryParam("format", "rdf/xml").queryParam("fileName", "fileName").request()
+                .accept(MediaType.APPLICATION_OCTET_STREAM).get();
         assertEquals(response.getStatus(), 200);
-        assertTrue(response.getHeaderString("Content-Disposition").contains(RECORD_IRI));
+        assertTrue(response.getHeaderString("Content-Disposition").contains("fileName"));
         verify(catalogManager).getCompiledResource(vf.createIRI(COMMIT_IRIS[0]));
         notJsonld(response.readEntity(String.class));
     }
@@ -3600,7 +3633,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/branches")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 201);
-        assertEquals(response.readEntity(String.class), BRANCH_IRI);
+        assertTrue(response.readEntity(String.class).contains(BRANCH_IRI));
         verify(catalogManager).createBranch(anyString(), anyString(), eq(ormFactory));
         verify(catalogManager).addBranch(any(Branch.class), eq(vf.createIRI(RECORD_IRI)));
     }

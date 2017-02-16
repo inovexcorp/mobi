@@ -1,0 +1,37 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.branch-select {
+    left: 10px;
+    position: absolute;
+    top: 10px;
+    width: 18%;
+
+    .ui-select-bootstrap .ui-select-choices-row > span {
+        padding: 3px 8px;
+    }
+
+    .branch-display {
+        .pull-right {
+            color: $gray-light;
+            line-height: 20px;
+            text-decoration: none;
+
+            &:hover {
+                color: $gray-dark;
+            }
+        }
+
+        &.master .pull-right {
+            display: none;
+        }
+    }
+
+    .active .branch-display .pull-right {
+        color: #fff;
+
+        &:hover {
+            color: $gray-light;
+        }
+    }
+}

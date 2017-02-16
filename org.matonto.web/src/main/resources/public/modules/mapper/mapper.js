@@ -48,7 +48,6 @@
             'mappingPreview',
             'mappingSelectPage',
             'mappingTitle',
-            'ontologyPreview',
             'previewDataGrid',
             'propMappingOverlay',
             'propSelect',

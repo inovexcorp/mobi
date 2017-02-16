@@ -38,38 +38,48 @@ describe('Record Keywords directive', function() {
         });
 
         scope.record = {};
+        scope.record[prefixes.catalog + 'keyword'] = [{'@value': '0'}, {'@value': '1'}];
         this.element = $compile(angular.element('<record-keywords record="record"></record-keywords>'))(scope);
         scope.$digest();
     });
 
     describe('in isolated scope', function() {
+        beforeEach(function() {
+            this.isolatedScope = this.element.isolateScope();
+        })
         it('record should be one way bound', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.record = {'@id': ''};
+            var previousRecord = angular.copy(scope.record);
+            this.isolatedScope.record = {'@id': ''};
             scope.$digest();
-            expect(scope.record).toEqual({});
+            expect(scope.record).toEqual(previousRecord);
         });
     });
     describe('controller methods', function() {
         beforeEach(function() {
-            scope.record[prefixes.catalog + 'keyword'] = [{'@value': '0'}, {'@value': '1'}];
-            scope.$digest();
             controller = this.element.controller('recordKeywords');
         });
-        it('should collect the keywords in a single string', function() {
-            expect(controller.getKeywords(scope.record)).toBe('0, 1');
+        it('should return all the record keywords', function() {
+            expect(controller.getKeywords(scope.record)).toEqual(['0', '1']);
         });
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            scope.record[prefixes.catalog + 'keyword'] = [{'@value': '0'}, {'@value': '1'}];
-            scope.$digest();
+            controller = this.element.controller('recordKeywords');
+            spyOn(controller, 'getKeywords').and.returnValue(['0', '1']);
         });
         it('for wrapping containers', function() {
             expect(this.element.hasClass('record-keywords')).toBe(true);
         });
         it('with a field-name span', function() {
             expect(this.element.querySelectorAll('span.field-name').length).toBe(1);
+        });
+        it('depending on how many keywords there are', function() {
+            expect(this.element.querySelectorAll('.keywords li').length).toBe(2);
+        });
+        it('depending on whether a list item is last', function() {
+            var listItems = this.element.querySelectorAll('.keywords li');
+            expect(angular.element(listItems[0]).hasClass('last')).toBe(false);
+            expect(angular.element(listItems[1]).hasClass('last')).toBe(true);
         });
     });
 });

@@ -39,7 +39,6 @@
          * @name mappingSelectPage.directive:mappingSelectPage
          * @scope
          * @restrict E
-         * @requires $q
          * @requires ontologyManager.service:ontologyManagerService
          * @requires mapperState.service:mapperStateService
          * @requires mappingManager.service:mappingManagerService
@@ -55,9 +54,9 @@
          */
         .directive('mappingSelectPage', mappingSelectPage);
 
-        mappingSelectPage.$inject = ['$q', 'mapperStateService', 'mappingManagerService', 'ontologyManagerService'];
+        mappingSelectPage.$inject = ['mapperStateService', 'mappingManagerService', 'ontologyManagerService', 'utilService'];
 
-        function mappingSelectPage($q, mapperStateService, mappingManagerService, ontologyManagerService) {
+        function mappingSelectPage(mapperStateService, mappingManagerService, ontologyManagerService, utilService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -69,11 +68,8 @@
                     dvm.state = mapperStateService;
                     dvm.mm = mappingManagerService;
                     dvm.om = ontologyManagerService;
+                    dvm.util = utilService;
 
-                    dvm.ontologyExists = function() {
-                        var ids = _.union(dvm.om.ontologyIds, _.map(dvm.om.list, 'ontologyId'));
-                        return _.includes(ids, dvm.mm.getSourceOntologyId(_.get(dvm.state.mapping, 'jsonld')));
-                    }
                     dvm.run = function() {
                         dvm.state.mappingSearchString = '';
                         dvm.state.highlightIndexes = dvm.state.getMappedColumns();
@@ -95,9 +91,9 @@
                         dvm.state.displayDownloadMappingOverlay = true;
                     }
                     dvm.loadOntologyAndContinue = function() {
-                        dvm.mm.getSourceOntologies(dvm.mm.getSourceOntologyId(dvm.state.mapping.jsonld)).then(ontologies => {
-                            if (dvm.mm.areCompatible(dvm.state.mapping, ontologies)) {
-                                dvm.state.sourceOntologies = ontologies;
+                        dvm.mm.getSourceOntologies(dvm.mm.getSourceOntologyInfo(dvm.state.mapping.jsonld)).then(recordIds => {
+                            if (dvm.mm.areCompatible(dvm.state.mapping, recordIds)) {
+                                dvm.state.sourceOntologies = recordIds;
                                 dvm.state.step = dvm.state.fileUploadStep;
                             } else {
                                 dvm.state.invalidOntology = true;

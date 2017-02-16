@@ -71,6 +71,7 @@
                 dvm.prefixes = prefixes;
                 dvm.util = utilService;
                 dvm.branch = dvm.state.getCurrentCatalog().openedPath[dvm.state.getCurrentCatalog().openedPath.length - 1];
+                dvm.recordId = _.get(dvm.state.getCurrentCatalog().openedPath[dvm.state.getCurrentCatalog().openedPath.length - 2], '@id', '');
             },
             templateUrl: 'modules/catalog/directives/branchBlock/branchBlock.html'
         };

@@ -37,16 +37,10 @@
             var ur = updateRefsService;
 
             function commonDelete(entityIRI) {
-                sm.addDeletedEntity();
-                om.removeEntity(sm.ontology, entityIRI);
-                ur.remove(sm.ontology, sm.selected['@id']);
-                var entityIndex = _.get(sm.listItem.index, entityIRI);
-                _.unset(sm.listItem.index, entityIRI);
-                _.forOwn(sm.listItem.index, (value, key) => {
-                    if (value > entityIndex) {
-                        sm.listItem.index[key] = value - 1;
-                    }
-                });
+                om.addToDeletions(sm.listItem.recordId, sm.selected);
+                om.removeEntity(sm.listItem.ontology, entityIRI);
+                // TODO: determine if we should remove references to this entity
+                // ur.remove(sm.listItem.ontology, sm.selected['@id']);
                 sm.unSelectItem();
             }
 

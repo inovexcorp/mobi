@@ -29,9 +29,18 @@ import org.matonto.query.exception.QueryEvaluationException;
 public interface TupleQuery extends Operation {
 
     /**
-     * Evaluates the SPARQL tuple query and returns the result.
+     * Evaluates the SPARQL tuple query and returns the result. This TupleQueryResult is backed by
+     * the RepositoryConnection and must be closed before the RepositoryConnection is closed.
      * @return a TupleQueryResult with the results of the query
      * @throws QueryEvaluationException if there is an error processing the query
      */
     TupleQueryResult evaluate() throws QueryEvaluationException;
+
+    /**
+     * Evaluates the SPARQL tuple query and returns the result. This TupleQueryResult stores and returns
+     * the complete query result in memory, and is safe to use outside of the scope of the RepositoryConnection.
+     * @return a TupleQueryResult with the results of the query
+     * @throws QueryEvaluationException if there is an error processing the query
+     */
+    TupleQueryResult evaluateAndReturn() throws QueryEvaluationException;
 }

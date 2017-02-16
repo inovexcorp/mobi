@@ -23,6 +23,7 @@ package org.matonto.catalog.api;
  * #L%
  */
 
+import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 
 /**
@@ -34,6 +35,8 @@ import org.matonto.rdf.api.Model;
  * statements that were added or deleted for the right Commit.
  */
 public interface Conflict {
+
+    IRI getIRI();
 
     Model getOriginal();
 

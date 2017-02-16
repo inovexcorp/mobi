@@ -25,11 +25,9 @@ describe('Mapping Preview directive', function() {
         scope,
         utilSvc,
         ontologyManagerSvc,
-        mappingManagerSvc,
         mapperStateSvc,
         delimitedManagerSvc,
         prefixes,
-        $timeout,
         controller;
 
     beforeEach(function() {
@@ -37,45 +35,28 @@ describe('Mapping Preview directive', function() {
         module('mappingPreview');
         mockPrefixes();
         mockUtil();
-        mockOntologyManager();
         mockMappingManager();
         mockMapperState();
         mockDelimitedManager();
 
-        inject(function(_$compile_, _$rootScope_, _utilService_, _ontologyManagerService_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_, _prefixes_, _$timeout_) {
+        inject(function(_$compile_, _$rootScope_, _utilService_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_, _prefixes_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             utilSvc = _utilService_;
-            ontologyManagerSvc = _ontologyManagerService_;
             mappingManagerSvc = _mappingManagerService_;
             mapperStateSvc = _mapperStateService_;
             delimitedManagerSvc = _delimitedManagerService_;
             prefixes = _prefixes_;
-            $timeout = _$timeout_;
         });
+
+        mapperStateSvc.mapping = {jsonld: []};
+        this.element = $compile(angular.element('<mapping-preview></mapping-preview>'))(scope);
+        scope.$digest();
     });
 
     describe('controller methods', function() {
         beforeEach(function() {
-            mapperStateSvc.mapping = {jsonld: []};
-            this.element = $compile(angular.element('<mapping-preview></mapping-preview>'))(scope);
-            scope.$digest();
             controller = this.element.controller('mappingPreview');
-        });
-        it('should test whether an ontology exists', function() {
-            var result = controller.ontologyExists();
-            expect(result).toBe(false);
-
-            ontologyManagerSvc.ontologyIds = [''];
-            mappingManagerSvc.getSourceOntologyId.and.returnValue('');
-            result = controller.ontologyExists();
-            expect(result).toBe(true);
-
-            ontologyManagerSvc.ontologyIds = [];
-            ontologyManagerSvc.list = [{ontologyId: ''}];
-            mappingManagerSvc.getSourceOntologyId.and.returnValue('');
-            result = controller.ontologyExists();
-            expect(result).toBe(true);
         });
         it('should get a class name', function() {
             var classMapping = {};
@@ -86,45 +67,34 @@ describe('Mapping Preview directive', function() {
         });
         it('should get a prop name', function() {
             var propMapping = {};
-            var result = controller.getPropName(propMapping);
+            expect(typeof controller.getPropName(propMapping)).toBe('string');
             expect(mappingManagerSvc.getPropIdByMapping).toHaveBeenCalledWith(propMapping);
             expect(utilSvc.getBeautifulIRI).toHaveBeenCalled();
-            expect(typeof result).toBe('string');
         });
         it('should get the column index of a data mapping', function() {
-            var propMapping = {'columnIndex': [{'@value': '0'}]};
-            var result = controller.getColumnIndex(propMapping);
-            expect(result).toBe('0');
+            utilSvc.getPropertyValue.and.returnValue('0');
+            expect(controller.getColumnIndex({})).toBe('0');
+            expect(utilSvc.getPropertyValue).toHaveBeenCalledWith({}, prefixes.delim + 'columnIndex');
         });
         it('should test whether a property mapping is invalid', function() {
-            var result = controller.isInvalid('');
-            expect(result).toBe(false);
+            expect(controller.isInvalid('')).toBe(false);
             mapperStateSvc.invalidProps = [{'@id': ''}];
-            result = controller.isInvalid('');
-            expect(result).toBe(true);
+            expect(controller.isInvalid('')).toBe(true);
         });
     });
     describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
-            mapperStateSvc.mapping = {jsonld: []};
-            this.element = $compile(angular.element('<mapping-preview></mapping-preview>'))(scope);
-            scope.$digest();
-        });
         it('for wrapping containers', function() {
             expect(this.element.hasClass('mapping-preview')).toBe(true);
         });
-        it('with the correct classes based on whether the source ontology exists', function() {
-            controller = this.element.controller('mappingPreview');
-            spyOn(controller, 'ontologyExists').and.returnValue(true);
-            scope.$digest();
+        it('with the correct classes based on whether the source ontology record was set', function() {
             var sourceOntologyName = angular.element(this.element.querySelectorAll('.source-ontology')[0]);
-            expect(sourceOntologyName.hasClass('text-danger')).toBe(false);
-            expect(sourceOntologyName.find('span').length).toBe(0);
-
-            controller.ontologyExists.and.returnValue(false);
-            scope.$digest();
             expect(sourceOntologyName.hasClass('text-danger')).toBe(true);
             expect(sourceOntologyName.find('span').length).toBe(1);
+
+            mapperStateSvc.mapping.record = {};
+            scope.$digest();
+            expect(sourceOntologyName.hasClass('text-danger')).toBe(false);
+            expect(sourceOntologyName.find('span').length).toBe(0);
         });
         it('with all class and property mappings displayed', function() {
             mappingManagerSvc.isDataMapping.and.returnValue(false);

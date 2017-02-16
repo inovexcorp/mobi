@@ -41,7 +41,7 @@ describe('Mapping Name Overlay directive', function() {
             mapperStateSvc = _mapperStateService_;
         });
 
-        mapperStateSvc.mapping = {id: ''};
+        mapperStateSvc.mapping = {id: '', jsonld: []};
         this.element = $compile(angular.element('<mapping-name-overlay></mapping-name-overlay>'))(scope);
         scope.$digest();
     });

@@ -62,7 +62,6 @@
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/mapper/directives/editMappingPage/editMappingPage.html',
                 scope: {},
                 controllerAs: 'dvm',
                 controller: function() {
@@ -74,13 +73,17 @@
 
                     dvm.save = function() {
                         if (_.includes(dvm.mm.mappingIds, dvm.state.mapping.id)) {
-                            dvm.mm.updateMapping(dvm.state.mapping.id, dvm.state.mapping.jsonld).then(success, error => dvm.errorMessage = error);
+                            dvm.mm.updateMapping(dvm.state.mapping.id, dvm.state.mapping.jsonld).then(success, onError);
                         } else {
-                            dvm.mm.upload(dvm.state.mapping.jsonld).then(success, error => dvm.errorMessage = error);
+                            dvm.mm.upload(dvm.state.mapping.jsonld).then(success, onError);
                         }
                     }
                     dvm.cancel = function() {
                         dvm.state.displayCancelConfirm = true;
+                    }
+
+                    function onError(errorMessage) {
+                        dvm.errorMessage = errorMessage
                     }
                     function success() {
                         dvm.errorMessage = '';
@@ -89,7 +92,8 @@
                         dvm.state.resetEdit();
                         dvm.dm.reset();
                     }
-                }
+                },
+                templateUrl: 'modules/mapper/directives/editMappingPage/editMappingPage.html'
             }
         }
 })();
