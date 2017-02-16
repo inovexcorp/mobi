@@ -167,7 +167,7 @@ describe('Class Mapping Details directive', function() {
             expect(button.attr('disabled')).toBeFalsy();
         });
         it('depending on whether the selected class mapping has available properties to map', function() {
-            var button = angular.element(element.querySelectorAll('.class-mapping-props custom-label button')[0]);
+            var button = angular.element(element.querySelectorAll('.class-mapping-props button.add-prop-mapping-button')[0]);
             mapperStateSvc.hasAvailableProps.and.returnValue(true);
             scope.$digest();
             expect(button.attr('disabled')).toBeFalsy();
@@ -202,7 +202,7 @@ describe('Class Mapping Details directive', function() {
     it('should call addProp when the Add Property link is clicked', function() {
         controller = element.controller('classMappingDetails');
         spyOn(controller, 'addProp');
-        var button = angular.element(element.querySelectorAll('.class-mapping-props custom-label button')[0]);
+        var button = angular.element(element.querySelectorAll('.class-mapping-props button.add-prop-mapping-button')[0]);
         button.triggerHandler('click');
         expect(controller.addProp).toHaveBeenCalled();
     });

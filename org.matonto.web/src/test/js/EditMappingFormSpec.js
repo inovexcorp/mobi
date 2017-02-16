@@ -55,9 +55,6 @@ describe('Edit Mapping Form directive', function() {
         it('with a class mapping select', function() {
             expect(element.find('class-mapping-select').length).toBe(1);
         });
-        it('with a custom-label', function() {
-            expect(element.find('custom-label').length).toBe(1);
-        });
         it('with a class-mapping-details', function() {
             expect(element.find('class-mapping-details').length).toBe(1);
         });
@@ -70,7 +67,7 @@ describe('Edit Mapping Form directive', function() {
             expect(deleteClassButton.attr('disabled')).toBeFalsy();
         });
         it('depending on whether there are available classes', function() {
-            var button = angular.element(element.querySelectorAll('.class-mappings custom-label button')[0]);
+            var button = angular.element(element.querySelectorAll('.class-mappings button.add-class-mapping-button')[0]);
             expect(button.attr('disabled')).toBeTruthy();
 
             mapperStateSvc.availableClasses = [{}];
@@ -79,7 +76,7 @@ describe('Edit Mapping Form directive', function() {
         });
     });
     it('should set the correct state when the add class button is linked', function() {
-        var button = angular.element(element.querySelectorAll('.class-mappings custom-label button')[0]);
+        var button = angular.element(element.querySelectorAll('.class-mappings button.add-class-mapping-button')[0]);
         button.triggerHandler('click');
         expect(mapperStateSvc.displayClassMappingOverlay).toBe(true);
     });

@@ -28,7 +28,10 @@
         </p>
     </div>
     <div class="class-mappings form-group">
-        <custom-label>Class <button class="btn btn-link no-padding pull-right" ng-click="dvm.state.displayClassMappingOverlay = true" ng-disabled="dvm.state.availableClasses.length === 0"><i class="fa fa-plus"></i> Add Class</button></custom-label>
+        <div class="classes-field-name">
+            <span class="field-name">Class</span>
+            <button class="btn btn-link no-padding pull-right add-class-mapping-button" ng-click="dvm.state.displayClassMappingOverlay = true" ng-disabled="dvm.state.availableClasses.length === 0"><i class="fa fa-plus"></i> Add Class</button>
+        </div>
         <div class="class-mapping-select-container">
             <class-mapping-select ng-model="dvm.state.selectedClassMappingId"></class-mapping-select>
             <button class="btn btn-link" ng-click="dvm.state.displayDeleteClassConfirm = true" ng-disabled="!dvm.state.selectedClassMappingId"><i class="fa fa-trash"></i></button>

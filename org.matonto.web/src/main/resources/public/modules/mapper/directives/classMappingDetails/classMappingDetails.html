@@ -27,7 +27,10 @@
     </div>
 
     <div class="class-mapping-props">
-        <custom-label>Properties <button class="btn btn-link no-padding pull-right" ng-disabled="!dvm.state.hasAvailableProps(dvm.state.selectedClassMappingId)" ng-click="dvm.addProp()"><i class="fa fa-plus"></i> Add Property</button></custom-label>
+        <div class="properties-field-name">
+            <span class="field-name">Properties</span>
+            <button class="btn btn-link no-padding pull-right add-prop-mapping-button" ng-disabled="!dvm.state.hasAvailableProps(dvm.state.selectedClassMappingId)" ng-click="dvm.addProp()"><i class="fa fa-plus"></i> Add Property</button>
+        </div>
         <div class="prop-list list-group">
             <button ng-repeat="propMapping in dvm.mm.getPropMappingsByClass(dvm.state.mapping.jsonld, dvm.state.selectedClassMappingId)" class="list-group-item" ng-class="{'active': dvm.state.selectedPropMappingId === propMapping['@id'], 'invalid': dvm.isInvalid(propMapping)}" ng-click="dvm.state.selectedPropMappingId = propMapping['@id']; dvm.state.highlightIndexes = [dvm.getLinkedColumnIndex(propMapping)]" ng-dblclick="dvm.switchClass(propMapping)">
                 <div class="prop-actions pull-right">
