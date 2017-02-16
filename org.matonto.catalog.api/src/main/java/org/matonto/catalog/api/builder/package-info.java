@@ -1,10 +1,10 @@
-@Version("1.0.1.${build}")
+@Version("1.5.0.${build}")
 
-package org.matonto.jaas.api.modules.password;
+package org.matonto.catalog.api.builder;
 
 /*-
  * #%L
- * org.matonto.jaas
+ * org.matonto.catalog.api
  * $Id:$
  * $HeadURL:$
  * %%
