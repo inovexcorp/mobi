@@ -226,7 +226,7 @@ class SimpleCatalogManagerSpec extends Specification {
 
     def "createRecord creates a Record with no identifier, description or keywords when provided a RecordFactory"() {
         setup:
-        def recordConfig = new RecordConfig.Builder(title, publishers).identifier(identifier).build()
+        def recordConfig = new RecordConfig.Builder(title, publishers).build()
         def record = service.createRecord(recordConfig, recordFactory)
         def publishers = record.getProperties(vf.createIRI(dcPublisher))
 
@@ -234,7 +234,6 @@ class SimpleCatalogManagerSpec extends Specification {
         record instanceof Record
         record.getProperty(vf.createIRI(dcTitle)).get().stringValue() == title
         !record.getProperty(vf.createIRI(dcDescription)).isPresent()
-        record.getProperty(vf.createIRI(dcIdentifier)).get().stringValue() == identifier
         record.getProperty(vf.createIRI(dcIssued)).isPresent()
         record.getProperty(vf.createIRI(dcModified)).isPresent()
         record.getKeyword().size() == 0
@@ -244,6 +243,7 @@ class SimpleCatalogManagerSpec extends Specification {
     def "createRecord creates an UnversionedRecord when provided an UnversionedRecordFactory"() {
         setup:
         def recordConfig = new RecordConfig.Builder(title, publishers)
+                .identifier(identifier)
                 .description(description)
                 .keywords(keywords)
                 .build()
@@ -255,6 +255,7 @@ class SimpleCatalogManagerSpec extends Specification {
         def keywords = record.getKeyword()
         record.getProperty(vf.createIRI(dcTitle)).get().stringValue() == title
         record.getProperty(vf.createIRI(dcDescription)).get().stringValue() == description
+        record.getProperty(vf.createIRI(dcIdentifier)).get().stringValue() == identifier
         record.getProperty(vf.createIRI(dcIssued)).isPresent()
         record.getProperty(vf.createIRI(dcModified)).isPresent()
         keywords.contains(vf.createLiteral("keyword1"))
