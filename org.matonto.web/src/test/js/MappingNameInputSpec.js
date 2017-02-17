@@ -24,6 +24,7 @@ describe('Mapping Name Input directive', function() {
     var $compile,
         scope,
         element,
+        isolatedScope,
         mappingManagerSvc;
 
     beforeEach(function() {
@@ -52,25 +53,25 @@ describe('Mapping Name Input directive', function() {
 
     describe('in isolated scope', function() {
         beforeEach(function() {
-            this.isolatedScope = element.isolateScope();
+            isolatedScope = element.isolateScope();
         });
         it('name should be two way bound', function() {
-            this.isolatedScope.name = 'test1';
+            isolatedScope.name = 'test1';
             scope.$digest();
             expect(scope.name).toBe('test1');
         });
         it('required should be one way bound', function() {
-            this.isolatedScope.required = false;
+            isolatedScope.required = false;
             scope.$digest();
             expect(scope.required).toBe(true);
         });
         it('isActive should be one way bound', function() {
-            this.isolatedScope.isActive = false;
+            isolatedScope.isActive = false;
             scope.$digest();
             expect(scope.isActive).toBe(true);
         });
         it('focusEvent should be called in the parent scope', function() {
-            this.isolatedScope.focusEvent();
+            isolatedScope.focusEvent();
             expect(scope.focusEvent).toHaveBeenCalled();
         });
     });
