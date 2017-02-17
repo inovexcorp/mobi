@@ -41,7 +41,6 @@
          * @requires mappingManager.service:mappingManagerService
          * @requires mapperState.service:mapperStateService
          * @requires delimitedManager.service:delimitedManagerService
-         * @requires ontologyManager.service:ontologyManagerService
          * @requires prefixes.service:prefixes
          * @requires util.service:utilService
          *
@@ -54,9 +53,9 @@
          */
         .directive('classMappingDetails', classMappingDetails);
 
-        classMappingDetails.$inject = ['utilService', 'prefixes', 'mappingManagerService', 'mapperStateService', 'ontologyManagerService', 'delimitedManagerService'];
+        classMappingDetails.$inject = ['utilService', 'prefixes', 'mappingManagerService', 'mapperStateService', 'delimitedManagerService'];
 
-        function classMappingDetails(utilService, prefixes, mappingManagerService, mapperStateService, ontologyManagerService, delimitedManagerService) {
+        function classMappingDetails(utilService, prefixes, mappingManagerService, mapperStateService, delimitedManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -66,7 +65,6 @@
                     var dvm = this;
                     dvm.state = mapperStateService;
                     dvm.mm = mappingManagerService;
-                    dvm.om = ontologyManagerService;
                     dvm.dm = delimitedManagerService;
                     dvm.util = utilService;
 
@@ -80,12 +78,10 @@
                         return prefix + localName;
                     }
                     dvm.getPropName = function(propMapping) {
-                        var propId = dvm.mm.getPropIdByMapping(propMapping);
-                        return dvm.om.getEntityName(dvm.om.getEntity(_.get(dvm.mm.findSourceOntologyWithProp(propId, dvm.state.sourceOntologies), 'entities'), propId));
+                        return dvm.util.getBeautifulIRI(dvm.mm.getPropIdByMapping(propMapping));
                     }
                     dvm.getClassName = function(classMapping) {
-                        var classId = dvm.mm.getClassIdByMapping(classMapping);
-                        return dvm.om.getEntityName(dvm.om.getEntity(_.get(dvm.mm.findSourceOntologyWithClass(classId, dvm.state.sourceOntologies), 'entities'), classId));
+                        return dvm.util.getBeautifulIRI(dvm.mm.getClassIdByMapping(classMapping));
                     }
                     dvm.getPropValue = function(propMapping) {
                         if (dvm.mm.isDataMapping(propMapping)) {

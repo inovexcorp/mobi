@@ -56,19 +56,12 @@ describe('Entity Dates directive', function() {
         beforeEach(function() {
             controller = this.element.controller('entityDates');
         });
-        describe('should get the specified date of an entity', function() {
-            it('if found', function() {
-                var date = '1/1/2000';
-                utilSvc.getDctermsValue.and.returnValue(date);
-                var result = controller.getDate({}, 'test');
-                expect(utilSvc.getDctermsValue).toHaveBeenCalledWith({}, 'test');
-                expect(result).toBe($filter('date')(new Date(date), 'short'));
-            });
-            it('unless it is not found', function() {
-                var result = controller.getDate({}, 'test');
-                expect(utilSvc.getDctermsValue).toHaveBeenCalledWith({}, 'test');
-                expect(result).toBe('(No Date Specified)');
-            });
+        it('should get the specified date of an entity by calling the proper functions', function() {
+            var date = '1/1/2000';
+            utilSvc.getDctermsValue.and.returnValue(date);
+            var result = controller.getDate({}, 'test');
+            expect(utilSvc.getDctermsValue).toHaveBeenCalledWith({}, 'test');
+            expect(utilSvc.getDate).toHaveBeenCalledWith(date, 'short');
         });
     });
     describe('replaces the element with the correct html', function() {

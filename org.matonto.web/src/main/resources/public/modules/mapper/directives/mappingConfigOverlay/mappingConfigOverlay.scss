@@ -3,6 +3,16 @@
 
 .mapping-config-overlay {
 	.content {
+        .row {
+            margin: 0 -10px 10px;
+        }
+        .form-group {
+            clear: both;
+        }
+        .ontology-record-info {
+            overflow-y: auto;
+            max-height: 300px;
+        }
         .page-nav {
             float: right;
 

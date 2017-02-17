@@ -29,7 +29,7 @@
 
     <groupId>org.matonto</groupId>
     <artifactId>root</artifactId>
-    <version>1.4.21-SNAPSHOT</version>
+    <version>1.5.2-SNAPSHOT</version>
 
     <packaging>pom</packaging>
 
@@ -54,7 +54,6 @@
         <module>org.matonto.etl.rdf</module>
         <module>org.matonto.etl.rest</module>
         <module>org.matonto.ontology.api</module>
-        <module>org.matonto.ontology.cli</module>
         <module>org.matonto.ontology.core.impl.owlapi</module>
         <module>org.matonto.ontology.rest</module>
         <module>org.matonto.web</module>

@@ -24,7 +24,9 @@ package org.matonto.catalog.impl;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.matonto.catalog.api.Conflict;
 import org.matonto.catalog.api.Difference;
 import org.matonto.catalog.api.PaginatedSearchParams;
@@ -97,7 +99,11 @@ import org.openrdf.sail.memory.MemoryStore;
 
 import java.io.InputStream;
 import java.security.InvalidParameterException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -154,6 +160,9 @@ public class SimpleCatalogManagerTest {
     private IRI ONT_TYPE;
     private IRI MAPPING_TYPE;
     private static final int TOTAL_SIZE = 7;
+
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
 
     @Before
     public void setUp() throws Exception {
@@ -1527,6 +1536,52 @@ public class SimpleCatalogManagerTest {
         assertTrue(conn.getStatements(branchId, vf.createIRI(DC_TITLE), vf.createLiteral("New Title"), branchId)
                 .hasNext());
         conn.close();
+    }
+
+    @Test
+    public void testUpdateHead() throws Exception {
+        IRI headIRI = vf.createIRI(Branch.head_IRI);
+        Resource commitId = vf.createIRI("https://matonto.org/commits#test");
+        Resource branchId = vf.createIRI("http://matonto.org/test/branches#test");
+
+        Commit commit = commitFactory.createNew(commitId);
+        RepositoryConnection conn = repo.getConnection();
+        conn.add(commit.getModel(), commitId);
+
+        assertFalse(conn.getStatements(branchId, headIRI, commitId, branchId).hasNext());
+
+        manager.updateHead(branchId, commitId);
+
+        assertTrue(conn.getStatements(branchId, headIRI, commitId, branchId).hasNext());
+        conn.close();
+    }
+
+    @Test
+    public void testUpdateHeadThrowsExceptionWhenMissingCommit() throws Exception {
+        Resource commitId = vf.createIRI("https://matonto.org/commits#test");
+        Resource branchId = vf.createIRI("http://matonto.org/test/branches#test");
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertFalse(conn.getStatements(commitId, null, null, commitId).hasNext());
+
+            thrown.expect(MatOntoException.class);
+            thrown.expectMessage("The Commit could not be added. The commit does not exist");
+            manager.updateHead(branchId, commitId);
+        }
+    }
+
+    @Test
+    public void testUpdateHeadThrowsExceptionWhenMissingBranch() throws Exception {
+        Resource commitId = vf.createIRI("https://matonto.org/commits#test");
+        Resource branchId = vf.createIRI("http://matonto.org/test/branches#missingBranch");
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertFalse(conn.getStatements(branchId, null, null, branchId).hasNext());
+
+            thrown.expect(MatOntoException.class);
+            thrown.expectMessage("The Commit could not be added. The branch does not exist");
+            manager.updateHead(branchId, commitId);
+        }
     }
 
     @Test

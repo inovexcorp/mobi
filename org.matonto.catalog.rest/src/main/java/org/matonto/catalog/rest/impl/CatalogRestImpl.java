@@ -23,12 +23,6 @@ package org.matonto.catalog.rest.impl;
  * #L%
  */
 
-import static org.matonto.rest.util.RestUtils.getActiveUser;
-import static org.matonto.rest.util.RestUtils.getRDFFormatFileExtension;
-import static org.matonto.rest.util.RestUtils.getRDFFormatMimeType;
-import static org.matonto.rest.util.RestUtils.jsonldToModel;
-import static org.matonto.rest.util.RestUtils.modelToString;
-
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import net.sf.json.JSONArray;
@@ -63,8 +57,11 @@ import org.matonto.catalog.rest.CatalogRest;
 import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
+import org.matonto.ontologies.provo.Activity;
+import org.matonto.ontologies.provo.InstantaneousEvent;
 import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.rdf.api.IRI;
+import org.matonto.rdf.api.Literal;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.Value;
@@ -77,6 +74,10 @@ import org.matonto.rest.util.jaxb.Links;
 import org.openrdf.model.vocabulary.DCTERMS;
 import org.openrdf.model.vocabulary.RDF;
 
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
+import javax.ws.rs.core.UriInfo;
 import java.io.BufferedWriter;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
@@ -93,10 +94,12 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
-import javax.ws.rs.core.UriInfo;
+
+import static org.matonto.rest.util.RestUtils.getActiveUser;
+import static org.matonto.rest.util.RestUtils.getRDFFormatFileExtension;
+import static org.matonto.rest.util.RestUtils.getRDFFormatMimeType;
+import static org.matonto.rest.util.RestUtils.jsonldToModel;
+import static org.matonto.rest.util.RestUtils.modelToString;
 
 @Component(immediate = true)
 public class CatalogRestImpl implements CatalogRest {
@@ -810,7 +813,7 @@ public class CatalogRestImpl implements CatalogRest {
                     .map(resource -> catalogManager.getCommit(resource, commitFactory))
                     .filter(Optional::isPresent)
                     .map(Optional::get)
-                    .map(this::thingToJsonld)
+                    .map(this::createCommitJson)
                     .forEach(commitChain::add);
             return Response.ok(commitChain).build();
         } catch (MatOntoException e) {
@@ -884,10 +887,10 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
-    public Response merge(ContainerRequestContext context, String catalogId, String recordId, String branchId,
+    public Response merge(ContainerRequestContext context, String catalogId, String recordId, String sourceBranchId,
                           String targetBranchId, String additionsJson, String deletionsJson) {
         try {
-            final Commit sourceHead = getHeadCommit(catalogId, recordId, branchId);
+            final Commit sourceHead = getHeadCommit(catalogId, recordId, sourceBranchId);
             final Commit targetHead = getHeadCommit(catalogId, recordId, targetBranchId);
             User activeUser = getActiveUser(context, engineManager);
             if (catalogManager.getInProgressCommitIRI(activeUser.getResource(), factory.createIRI(recordId))
@@ -895,7 +898,7 @@ public class CatalogRestImpl implements CatalogRest {
                 throw ErrorUtils.sendError("User already has an InProgressCommit for Record " + recordId,
                         Response.Status.BAD_REQUEST);
             }
-            Branch branch = catalogManager.getBranch(factory.createIRI(branchId), branchFactories.get(Branch.TYPE))
+            Branch sourceBranch = catalogManager.getBranch(factory.createIRI(sourceBranchId), branchFactories.get(Branch.TYPE))
                     .orElseThrow(() -> ErrorUtils.sendError("Branch not found", Response.Status.BAD_REQUEST));
             InProgressCommit inProgressCommit = catalogManager.createInProgressCommit(activeUser,
                     factory.createIRI(recordId));
@@ -908,10 +911,9 @@ public class CatalogRestImpl implements CatalogRest {
             }
             Commit newCommit = catalogManager.createCommit(inProgressCommit,
                     Stream.of(sourceHead, targetHead).collect(Collectors.toSet()),
-                    getMergeMessage(branchId, targetBranchId));
+                    getMergeMessage(sourceBranchId, targetBranchId));
             catalogManager.addCommitToBranch(newCommit, factory.createIRI(targetBranchId));
-            branch.setHead(newCommit);
-            catalogManager.updateBranch(branch);
+            catalogManager.updateHead(sourceBranch.getResource(), newCommit.getResource());
             catalogManager.removeInProgressCommit(inProgressCommit.getResource());
             return Response.ok(newCommit.getResource().stringValue()).build();
         } catch (MatOntoException e) {
@@ -1057,6 +1059,44 @@ public class CatalogRestImpl implements CatalogRest {
         } catch (MatOntoException ex) {
             throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
         }
+    }
+
+    /**
+     * Creates the JSONObject to be returned in the commit chain to more easily work with the data associated with the
+     * Commit.
+     *
+     * @param commit The Commit object to parse data from.
+     * @return JSONObject with the necessary information set.
+     */
+    private JSONObject createCommitJson(Commit commit) {
+        Literal emptyLiteral = factory.createLiteral("");
+        Value creatorIRI = commit.getProperty(factory.createIRI(Activity.wasAssociatedWith_IRI))
+                .orElse(null);
+        Value date = commit.getProperty(factory.createIRI(InstantaneousEvent.atTime_IRI))
+                .orElse(emptyLiteral);
+        String message = commit.getProperty(factory.createIRI(DCTERMS.TITLE.stringValue()))
+                .orElse(emptyLiteral).stringValue();
+        Set<String> parents = commit.getProperties(factory.createIRI(Activity.wasInformedBy_IRI))
+                .stream()
+                .map(Value::stringValue)
+                .collect(Collectors.toSet());
+        User creator = engineManager.retrieveUser(engineManager.getUsername((Resource) creatorIRI)
+                .orElse("")).orElse(null);
+        JSONObject creatorObject = new JSONObject();
+        if (creator != null) {
+            creatorObject.element("firstName", creator.getFirstName().stream().findFirst()
+                    .orElse(emptyLiteral).stringValue())
+                    .element("lastName", creator.getLastName().stream().findFirst().orElse(emptyLiteral)
+                            .stringValue())
+                    .element("username", creator.getUsername().orElse(emptyLiteral).stringValue());
+        }
+
+        return new JSONObject()
+                .element("id", commit.getResource().stringValue())
+                .element("creator", creatorObject)
+                .element("date", date.stringValue())
+                .element("message", message)
+                .element("parents", parents);
     }
 
     /**

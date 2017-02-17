@@ -23,6 +23,7 @@
 <div class="record-keywords">
     <span class="field-name">Keywords: </span>
     <ul class="keywords">
+        <li ng-if="dvm.getKeywords(record).length === 0" class="last">(None specified)</li>
         <li ng-repeat="keyword in dvm.getKeywords(record)" ng-class="{'last': $last}">{{keyword}}</li>
     </ul>
 </div>

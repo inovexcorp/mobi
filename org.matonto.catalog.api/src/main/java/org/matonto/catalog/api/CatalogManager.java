@@ -305,6 +305,16 @@ public interface CatalogManager {
     <T extends Branch> void updateBranch(T newBranch) throws MatOntoException;
 
     /**
+     * Updates the head of a branch to point to the specified commit.
+     *
+     * @param branch The branch whose head to update.
+     * @param commit The new head commit of the specified branch.
+     * @throws MatOntoException If there is a problem communicating with the Repository, or if the Branch or Commit do
+     * not exist.
+     */
+    void updateHead(Resource branch, Resource commit) throws MatOntoException;
+
+    /**
      * Removes the non-master Branch identified by the provided Resource from the repository if it was a Branch of the
      * VersionedRDFRecord identified by the provided Resource. If the provided Branch is the master Branch, it will not
      * be removed.

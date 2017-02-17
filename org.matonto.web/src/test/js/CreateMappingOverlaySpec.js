@@ -23,21 +23,22 @@
 describe('Create Mapping Overlay directive', function() {
     var $compile,
         scope,
+        element,
+        controller,
+        $q,
         mappingManagerSvc,
         mapperStateSvc,
         catalogManagerSvc,
-        prefixes,
-        $q,
-        controller;
+        prefixes;
 
     beforeEach(function() {
         module('templates');
         module('createMappingOverlay');
+        injectSplitIRIFilter();
         mockMappingManager();
         mockMapperState();
         mockPrefixes();
         mockCatalogManager();
-        injectSplitIRIFilter();
 
         inject(function(_$compile_, _$rootScope_, _mappingManagerService_, _mapperStateService_, _catalogManagerService_, _prefixes_, _$q_) {
             $compile = _$compile_;
@@ -50,19 +51,19 @@ describe('Create Mapping Overlay directive', function() {
         });
 
         mappingManagerSvc.mappingIds = [''];
-        this.element = $compile(angular.element('<create-mapping-overlay></create-mapping-overlay>'))(scope);
+        element = $compile(angular.element('<create-mapping-overlay></create-mapping-overlay>'))(scope);
         scope.$digest();
     });
 
     describe('should initialize with the correct values', function() {
         it('for the selected saved mapping id', function() {
-            controller = this.element.controller('createMappingOverlay');
+            controller = element.controller('createMappingOverlay');
             expect(controller.savedMappingId).toBe(mappingManagerSvc.mappingIds[0]);
         });
     });
     describe('controller methods', function() {
         beforeEach(function() {
-            controller = this.element.controller('createMappingOverlay');
+            controller = element.controller('createMappingOverlay');
         });
         describe('should set the correct state for continuing', function() {
             beforeEach(function() {
@@ -70,6 +71,7 @@ describe('Create Mapping Overlay directive', function() {
                 controller.savedMappingId = '';
                 this.ontologies = [{}];
                 mappingManagerSvc.getSourceOntologies.and.returnValue(this.ontologies);
+                mapperStateSvc.displayCreateMappingOverlay = true;
             });
             it('if a brand new mapping is being created', function() {
                 var ontologies = [];
@@ -83,7 +85,7 @@ describe('Create Mapping Overlay directive', function() {
                 expect(catalogManagerSvc.getRecord).not.toHaveBeenCalled();
                 expect(mapperStateSvc.mappingSearchString).toBe('');
                 expect(mapperStateSvc.mapping.jsonld).toBeDefined();
-                expect(mappingManagerSvc.getSourceOntologies).toHaveBeenCalled();
+                expect(mappingManagerSvc.getSourceOntologies).toHaveBeenCalledWith(jasmine.any(Object));
                 expect(mapperStateSvc.sourceOntologies).toEqual(this.ontologies);
                 expect(mapperStateSvc.step).toBe(mapperStateSvc.fileUploadStep);
                 expect(mapperStateSvc.displayCreateMappingOverlay).toBe(false);
@@ -105,6 +107,7 @@ describe('Create Mapping Overlay directive', function() {
                     mappingManagerSvc.getSourceOntologyInfo.and.returnValue({recordId: this.record['@id']});
                     catalogManagerSvc.getRecord.and.returnValue($q.when(this.record));
                     catalogManagerSvc.localCatalog = {'@id': ''};
+                    mapperStateSvc.mappingSearchString = 'test';
                 });
                 it('unless an error occurs', function() {
                     mappingManagerSvc.getMapping.and.returnValue($q.reject('Error message'));
@@ -117,9 +120,14 @@ describe('Create Mapping Overlay directive', function() {
                     expect(catalogManagerSvc.getRecord).not.toHaveBeenCalled();
                     expect(mapperStateSvc.step).not.toBe(mapperStateSvc.fileUploadStep);
                     expect(mappingManagerSvc.getSourceOntologies).not.toHaveBeenCalled();
+                    expect(mapperStateSvc.sourceOntologies).not.toEqual(this.ontologies);
+                    expect(mapperStateSvc.availableClasses).toEqual([]);
+                    expect(mapperStateSvc.mappingSearchString).not.toBe('');
+                    expect(mapperStateSvc.step).not.toBe(mapperStateSvc.fileUploadStep);
                     expect(controller.errorMessage).toBe('Error message');
                     expect(mapperStateSvc.mapping.jsonld).toEqual([]);
                     expect(mapperStateSvc.mapping.record).toBeUndefined();
+                    expect(mapperStateSvc.displayCreateMappingOverlay).toBe(true);
                 });
                 it('unless the source ontologies of the original mapping are not compatible', function() {
                     mappingManagerSvc.areCompatible.and.returnValue(false);
@@ -130,16 +138,22 @@ describe('Create Mapping Overlay directive', function() {
                     expect(mappingManagerSvc.getMapping).toHaveBeenCalledWith(this.savedMappingId);
                     expect(mappingManagerSvc.copyMapping).toHaveBeenCalled();
                     expect(catalogManagerSvc.getRecord).toHaveBeenCalledWith(this.record['@id'], catalogManagerSvc.localCatalog['@id']);
-                    expect(mappingManagerSvc.getSourceOntologies).toHaveBeenCalled();
+                    expect(mappingManagerSvc.getSourceOntologies).toHaveBeenCalledWith(jasmine.any(Object));
                     expect(mapperStateSvc.sourceOntologies).not.toEqual(this.ontologies);
+                    expect(mapperStateSvc.availableClasses).toEqual([]);
+                    expect(mapperStateSvc.mappingSearchString).not.toBe('');
                     expect(mapperStateSvc.step).not.toBe(mapperStateSvc.fileUploadStep);
                     expect(controller.errorMessage).toBeTruthy();
                     expect(mapperStateSvc.mapping.jsonld).toEqual([]);
                     expect(mapperStateSvc.mapping.record).toBeUndefined();
+                    expect(mapperStateSvc.displayCreateMappingOverlay).toBe(true);
                 });
                 it('successfully', function() {
                     var mapping = {};
                     mappingManagerSvc.getMapping.and.returnValue($q.when(mapping));
+                    mappingManagerSvc.getAllClassMappings.and.returnValue([{}]);
+                    mappingManagerSvc.getClassIdByMapping.and.returnValue('test');
+                    mapperStateSvc.getClasses.and.returnValue([{classObj: {'@id': 'test'}}, {classObj: {'@id': ''}}]);
                     controller.continue();
                     scope.$apply();
                     expect(mappingManagerSvc.getMappingId).toHaveBeenCalledWith(controller.newName);
@@ -149,8 +163,9 @@ describe('Create Mapping Overlay directive', function() {
                     expect(catalogManagerSvc.getRecord).toHaveBeenCalledWith(this.record['@id'], catalogManagerSvc.localCatalog['@id']);
                     expect(mapperStateSvc.mapping.jsonld).toBeDefined();
                     expect(mapperStateSvc.mapping.record).toEqual(this.record);
-                    expect(mappingManagerSvc.getSourceOntologies).toHaveBeenCalled();
+                    expect(mappingManagerSvc.getSourceOntologies).toHaveBeenCalledWith(jasmine.any(Object));
                     expect(mapperStateSvc.sourceOntologies).toEqual(this.ontologies);
+                    expect(mapperStateSvc.availableClasses).toEqual([{classObj: {'@id': ''}}]);
                     expect(mapperStateSvc.mappingSearchString).toBe('');
                     expect(mapperStateSvc.step).toBe(mapperStateSvc.fileUploadStep);
                     expect(mapperStateSvc.displayCreateMappingOverlay).toBe(false);
@@ -167,27 +182,27 @@ describe('Create Mapping Overlay directive', function() {
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('create-mapping-overlay')).toBe(true);
-            expect(this.element.querySelectorAll('form.content').length).toBe(1);
+            expect(element.hasClass('create-mapping-overlay')).toBe(true);
+            expect(element.querySelectorAll('form.content').length).toBe(1);
         });
         it('with a mapping name input', function() {
-            expect(this.element.find('mapping-name-input').length).toBe(1);
+            expect(element.find('mapping-name-input').length).toBe(1);
         });
         it('with two radio buttons', function() {
-            expect(this.element.find('radio-button').length).toBe(2);
+            expect(element.find('radio-button').length).toBe(2);
         });
         it('depending on whether an error has occured', function() {
-            controller = this.element.controller('createMappingOverlay');
-            expect(this.element.find('error-display').length).toBe(0);
+            controller = element.controller('createMappingOverlay');
+            expect(element.find('error-display').length).toBe(0);
 
             controller.errorMessage = 'test';
             scope.$digest();
-            expect(this.element.find('error-display').length).toBe(1);
+            expect(element.find('error-display').length).toBe(1);
         });
         it('depending on how many saved mappings there are', function() {
             mappingManagerSvc.mappingIds = [];
             scope.$digest();
-            var select = this.element.find('select');
+            var select = element.find('select');
             var options = select.querySelectorAll('option');
             expect(select.attr('disabled')).toBeTruthy();
             expect(options.length).toBe(1);
@@ -200,10 +215,10 @@ describe('Create Mapping Overlay directive', function() {
             expect(options.length).toBe(mappingManagerSvc.mappingIds.length);
         });
         it('depending on the mapping type being created', function() {
-            controller = this.element.controller('createMappingOverlay');
+            controller = element.controller('createMappingOverlay');
             controller.mappingType = 'new';
             scope.$digest();
-            var select = this.element.find('select');
+            var select = element.find('select');
             expect(select.attr('required')).toBeFalsy();
 
             controller.mappingType = 'saved';
@@ -211,8 +226,8 @@ describe('Create Mapping Overlay directive', function() {
             expect(select.attr('required')).toBeTruthy();
         });
         it('depending on the validity of the form', function() {
-            controller = this.element.controller('createMappingOverlay');
-            var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
+            controller = element.controller('createMappingOverlay');
+            var button = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
             expect(button.attr('disabled')).toBeFalsy();
 
             controller.createMappingForm.$setValidity('test', false);
@@ -220,31 +235,31 @@ describe('Create Mapping Overlay directive', function() {
             expect(button.attr('disabled')).toBeTruthy();
         });
         it('with buttons to cancel and continue', function() {
-            var buttons = this.element.querySelectorAll('.btn-container button');
+            var buttons = element.querySelectorAll('.btn-container button');
             expect(buttons.length).toBe(2);
             expect(['Cancel', 'Continue']).toContain(angular.element(buttons[0]).text().trim());
             expect(['Cancel', 'Continue']).toContain(angular.element(buttons[1]).text().trim());
         });
     });
     it('should change the mapping type being created if the saved mapping list is focused on', function() {
-        controller = this.element.controller('createMappingOverlay');
+        controller = element.controller('createMappingOverlay');
 
-        this.element.find('select').triggerHandler('focus');
+        element.find('select').triggerHandler('focus');
         expect(controller.mappingType).toBe('saved');
     });
     it('should call continue when the button is clicked', function() {
-        controller = this.element.controller('createMappingOverlay');
+        controller = element.controller('createMappingOverlay');
         spyOn(controller, 'continue');
 
-        var continueButton = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
+        var continueButton = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
         continueButton.triggerHandler('click');
         expect(controller.continue).toHaveBeenCalled();
     });
     it('should call cancel when the button is clicked', function() {
-        controller = this.element.controller('createMappingOverlay');
+        controller = element.controller('createMappingOverlay');
         spyOn(controller, 'cancel');
 
-        var continueButton = angular.element(this.element.querySelectorAll('.btn-container button.btn-default')[0]);
+        var continueButton = angular.element(element.querySelectorAll('.btn-container button.btn-default')[0]);
         continueButton.triggerHandler('click');
         expect(controller.cancel).toHaveBeenCalled();
     });

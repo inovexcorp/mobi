@@ -459,6 +459,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         when(difference.getDeletions()).thenReturn(mf.createModel());
 
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
+        when(engineManager.getUsername(any(Resource.class))).thenReturn(Optional.of(user.getResource().stringValue()));
     }
 
     // GET catalogs
@@ -2396,16 +2397,9 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
             JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
             assertEquals(result.size(), COMMIT_IRIS.length);
             for (Object aResult : result) {
-                JSONArray.fromObject(aResult).forEach(o -> {
-                        boolean matchingCommit = false;
-                        for (Object object : JSONArray.fromObject(aResult)) {
-                            JSONObject commitObj = JSONObject.fromObject(object);
-                            if (commitObj.containsKey("@id") && Arrays.asList(COMMIT_IRIS).contains(commitObj.getString("@id"))) {
-                                matchingCommit = true;
-                            }
-                        }
-                        assertTrue(matchingCommit);
-                    });
+                JSONObject commitObj = JSONObject.fromObject(aResult);
+                assertTrue(commitObj.containsKey("id"));
+                assertTrue(Arrays.asList(COMMIT_IRIS).contains(commitObj.getString("id")));
             }
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
@@ -2905,7 +2899,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         verify(catalogManager).createCommit(eq(testInProgressCommit), anySetOf(Commit.class), anyString());
         verify(catalogManager).addCommitToBranch(any(Commit.class), eq(vf.createIRI(BRANCH_IRI)));
         verify(catalogManager, atLeastOnce()).getBranch(eq(vf.createIRI(BRANCH_IRI)), eq(branchFactory));
-        verify(catalogManager).updateBranch(any(Branch.class));
+        verify(catalogManager).updateHead(any(Resource.class), any(Resource.class));
     }
 
     @Test
