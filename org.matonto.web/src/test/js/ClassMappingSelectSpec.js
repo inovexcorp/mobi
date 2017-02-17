@@ -23,9 +23,7 @@
 describe('Class Mapping Select directive', function() {
     var $compile,
         scope,
-        ontologyManagerSvc,
-        mappingManagerSvc,
-        mapperStateSvc,
+        element,
         controller;
 
     beforeEach(function() {
@@ -33,34 +31,31 @@ describe('Class Mapping Select directive', function() {
         module('classMappingSelect');
         injectTrustedFilter();
         injectHighlightFilter();
-        mockOntologyManager();
         mockMappingManager();
         mockMapperState();
+        mockUtil();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _mappingManagerService_, _mapperStateService_) {
+        inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            ontologyManagerSvc = _ontologyManagerService_;
-            mappingManagerSvc = _mappingManagerService_;
-            mapperStateSvc = _mapperStateService_;
         });
 
         scope.bindModel = '';
         scope.onChange = jasmine.createSpy('onChange');
-        this.element = $compile(angular.element('<class-mapping-select ng-model="bindModel" on-change="onChange()"></class-mapping-select>'))(scope);
+        element = $compile(angular.element('<class-mapping-select ng-model="bindModel" on-change="onChange()"></class-mapping-select>'))(scope);
         scope.$digest();
     });
 
     describe('in isolated scope', function() {
         it('onChange should be called in the parent scope', function() {
-            var isolatedScope = this.element.isolateScope();
+            var isolatedScope = element.isolateScope();
             isolatedScope.onChange();
             expect(scope.onChange).toHaveBeenCalled();
         });
     });
     describe('controller bound variable', function() {
         beforeEach(function() {
-            controller = this.element.controller('classMappingSelect');
+            controller = element.controller('classMappingSelect');
         });
         it('selectedProp should be two way bound', function() {
             controller.bindModel = 'test';
@@ -70,10 +65,10 @@ describe('Class Mapping Select directive', function() {
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('class-mapping-select')).toBe(true);
+            expect(element.hasClass('class-mapping-select')).toBe(true);
         });
         it('with a ui-select', function() {
-            expect(this.element.find('ui-select').length).toBe(1);
+            expect(element.find('ui-select').length).toBe(1);
         });
     });
 });

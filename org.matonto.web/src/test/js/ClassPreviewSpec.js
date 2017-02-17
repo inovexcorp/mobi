@@ -23,9 +23,10 @@
 describe('Class Preview directive', function() {
     var $compile,
         scope,
+        element,
+        controller,
         ontologyManagerSvc,
-        mapperStateSvc,
-        controller;
+        mapperStateSvc;
 
     beforeEach(function() {
         module('templates');
@@ -42,13 +43,13 @@ describe('Class Preview directive', function() {
 
         scope.classObj = {};
         scope.ontologies = [];
-        this.element = $compile(angular.element('<class-preview class-obj="classObj" ontologies="ontologies"></class-preview>'))(scope);
+        element = $compile(angular.element('<class-preview class-obj="classObj" ontologies="ontologies"></class-preview>'))(scope);
         scope.$digest();
     });
 
     describe('controller bound variable', function() {
         beforeEach(function() {
-            controller = this.element.controller('classPreview');
+            controller = element.controller('classPreview');
         });
         it('classObj should be one way bound', function() {
             controller.classObj = {'@id': ''};
@@ -62,7 +63,7 @@ describe('Class Preview directive', function() {
         });
     });
     it('should set the property list when the classObj changes', function() {
-        controller = this.element.controller('classPreview');
+        controller = element.controller('classPreview');
         var props = [{}];
         mapperStateSvc.getClassProps.and.returnValue(props);
         scope.classObj = {'@id': ''};
@@ -72,12 +73,12 @@ describe('Class Preview directive', function() {
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('class-preview')).toBe(true);
+            expect(element.hasClass('class-preview')).toBe(true);
         });
         it('depending on whether classObj has any properties', function() {
-            controller = this.element.controller('classPreview');
+            controller = element.controller('classPreview');
             scope.$digest();
-            var propList = angular.element(this.element.querySelectorAll('ul')[0]);
+            var propList = angular.element(element.querySelectorAll('ul')[0]);
             expect(propList.html()).toContain('None');
 
             controller.props = [{}];
