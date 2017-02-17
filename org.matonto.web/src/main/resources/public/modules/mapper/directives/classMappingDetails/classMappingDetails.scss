@@ -10,6 +10,10 @@
 		display: flex;
 		flex-direction: column;
 
+        .properties-field-name {
+            overflow: hidden;
+            margin-bottom: 5px;
+        }
 		.prop-list {
 			flex: 1;
 			overflow-y: auto;

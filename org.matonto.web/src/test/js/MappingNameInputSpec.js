@@ -23,6 +23,8 @@
 describe('Mapping Name Input directive', function() {
     var $compile,
         scope,
+        element,
+        isolatedScope,
         mappingManagerSvc;
 
     beforeEach(function() {
@@ -43,71 +45,78 @@ describe('Mapping Name Input directive', function() {
         scope.isActive = true;
         scope.focusEvent = jasmine.createSpy('focusEvent');
         var form = $compile('<form></form>')(scope);
-        this.element = angular.element('<mapping-name-input name="name" required="required" is-active="isActive" focus-event="focusEvent()"></mapping-name-input>');
-        form.append(this.element);
-        this.element = $compile(this.element)(scope);
+        element = angular.element('<mapping-name-input name="name" required="required" is-active="isActive" focus-event="focusEvent()"></mapping-name-input>');
+        form.append(element);
+        element = $compile(element)(scope);
         scope.$digest();
     });
 
     describe('in isolated scope', function() {
         beforeEach(function() {
-            this.isolatedScope = this.element.isolateScope();
+            isolatedScope = element.isolateScope();
         });
         it('name should be two way bound', function() {
-            this.isolatedScope.name = 'test1';
+            isolatedScope.name = 'test1';
             scope.$digest();
             expect(scope.name).toBe('test1');
         });
         it('required should be one way bound', function() {
-            this.isolatedScope.required = false;
+            isolatedScope.required = false;
             scope.$digest();
             expect(scope.required).toBe(true);
         });
         it('isActive should be one way bound', function() {
-            this.isolatedScope.isActive = false;
+            isolatedScope.isActive = false;
             scope.$digest();
             expect(scope.isActive).toBe(true);
         });
         it('focusEvent should be called in the parent scope', function() {
-            this.isolatedScope.focusEvent();
+            isolatedScope.focusEvent();
             expect(scope.focusEvent).toHaveBeenCalled();
         });
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('mapping-name-input')).toBe(true);
-            expect(this.element.hasClass('form-group')).toBe(true);
+            expect(element.hasClass('mapping-name-input')).toBe(true);
+            expect(element.hasClass('form-group')).toBe(true);
         });
         it('with the correct classes based on the input field validity and active state', function() {
-            var isolatedScope = this.element.isolateScope();
+            var isolatedScope = element.isolateScope();
             isolatedScope.form.name.$touched = true;
             scope.$digest();
-            expect(this.element.hasClass('has-error')).toBe(true);
+            expect(element.hasClass('has-error')).toBe(true);
 
             isolatedScope.name = 'a';
             scope.$digest();
-            expect(this.element.hasClass('has-success')).toBe(true);
+            expect(element.hasClass('has-success')).toBe(true);
 
             isolatedScope.isActive = false;
             scope.$digest();
-            expect(this.element.hasClass('has-success')).toBe(false);
-            expect(this.element.hasClass('has-error')).toBe(false);
+            expect(element.hasClass('has-success')).toBe(false);
+            expect(element.hasClass('has-error')).toBe(false);
+        });
+        it('depending on whether it is required', function() {
+            expect(element.querySelectorAll('.help-block').length).toBe(1);
+
+            scope.required = false;
+            scope.$digest();
+            expect(element.querySelectorAll('.help-block').length).toBe(0);
         });
         it('with an error for invalid characters', function() {
-            var isolatedScope = this.element.isolateScope();
+            var isolatedScope = element.isolateScope();
             isolatedScope.name = '$';
             scope.$digest();
             expect(isolatedScope.form.name.$error.pattern).toBe(true);
         });
         it('with an error if the input is a previous mapping id', function() {
-            var isolatedScope = this.element.isolateScope();
+            var isolatedScope = element.isolateScope();
             mappingManagerSvc.getMappingId.and.returnValue(mappingManagerSvc.mappingIds[0]);
             isolatedScope.name = mappingManagerSvc.mappingIds[0];
             scope.$digest();
             expect(isolatedScope.form.name.$error.uniqueName).toBe(true);
         });
         it('with an error if the input is longer than 50 characters', function() {
-            var isolatedScope = this.element.isolateScope();
+            var isolatedScope = element.isolateScope();
             isolatedScope.name = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
             scope.$digest();
             expect(isolatedScope.form.name.$error.maxlength).toBe(true);
@@ -116,16 +125,16 @@ describe('Mapping Name Input directive', function() {
     it('should not show an error if first name passed is a previous mapping id', function() {
         scope.name = 'test';
         var form = $compile('<form></form>')(scope);
-        this.element = angular.element('<mapping-name-input name="name" required="required" is-active="isActive" focus-event="focusEvent()"></mapping-name-input>');
-        form.append(this.element);
-        this.element = $compile(this.element)(scope);
+        element = angular.element('<mapping-name-input name="name" required="required" is-active="isActive" focus-event="focusEvent()"></mapping-name-input>');
+        form.append(element);
+        element = $compile(element)(scope);
         scope.$digest();
 
-        var isolatedScope = this.element.isolateScope();
+        var isolatedScope = element.isolateScope();
         expect(isolatedScope.form.$valid).toBe(true);
     });
     it('should have the correct default values for isActive and required', function() {
-        var isolatedScope = this.element.isolateScope();
+        var isolatedScope = element.isolateScope();
         expect(isolatedScope.isActive).toBe(true);
         expect(isolatedScope.required).toBe(true);
     });

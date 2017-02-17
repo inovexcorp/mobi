@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Prop Select directive', function() {
+describe('Class Select directive', function() {
     var $compile,
         scope,
         element,
@@ -30,10 +30,10 @@ describe('Prop Select directive', function() {
 
     beforeEach(function() {
         module('templates');
-        module('propSelect');
+        module('classSelect');
+        mockOntologyManager();
         injectHighlightFilter();
         injectTrustedFilter();
-        mockOntologyManager();
 
         inject(function(_$compile_, _$rootScope_, _ontologyManagerService_) {
             $compile = _$compile_;
@@ -41,26 +41,26 @@ describe('Prop Select directive', function() {
             ontologyManagerSvc = _ontologyManagerService_;
         });
 
-        scope.props = [];
+        scope.classes = [];
+        scope.selectedClass = undefined;
         scope.isDisabledWhen = false;
-        scope.selectedProp = undefined;
         scope.onChange = jasmine.createSpy('onChange');
-        element = $compile(angular.element('<prop-select props="props" selected-prop="selectedProp" is-disabled-when="isDisabledWhen" on-change="onChange()"></prop-select>'))(scope);
+        element = $compile(angular.element('<class-select classes="classes" selected-class="selectedClass" on-change="onChange()" is-disabled-when="isDisabledWhen"></class-select>'))(scope);
         scope.$digest();
     });
     describe('in isolated scope', function() {
         beforeEach(function() {
             isolatedScope = element.isolateScope();
         });
-        it('props should be one way bound', function() {
-            isolatedScope.props = [{}];
+        it('classes should be one way bound', function() {
+            isolatedScope.classes = [{}];
             scope.$digest();
-            expect(scope.props).toEqual([]);
+            expect(scope.classes).not.toEqual([{}]);
         });
         it('isDisabledWhen should be one way bound', function() {
             isolatedScope.isDisabledWhen = true;
             scope.$digest();
-            expect(scope.isDisabledWhen).toEqual(false);
+            expect(scope.isDisabledWhen).toBe(false);
         });
         it('onChange should be called in the parent scope', function() {
             isolatedScope.onChange();
@@ -69,17 +69,17 @@ describe('Prop Select directive', function() {
     });
     describe('controller bound variable', function() {
         beforeEach(function() {
-            controller = element.controller('propSelect');
+            controller = element.controller('classSelect');
         });
-        it('selectedProp should be two way bound', function() {
-            controller.selectedProp = {};
+        it('selectedClass should be two way bound', function() {
+            controller.selectedClass = {};
             scope.$digest();
-            expect(scope.selectedProp).toEqual({});
+            expect(scope.selectedClass).toEqual({});
         });
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.hasClass('prop-select')).toBe(true);
+            expect(element.hasClass('class-select')).toBe(true);
         });
         it('with a ui-select', function() {
             expect(element.find('ui-select').length).toBe(1);

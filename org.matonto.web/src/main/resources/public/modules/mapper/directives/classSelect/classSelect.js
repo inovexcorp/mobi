@@ -26,56 +26,57 @@
     angular
         /**
          * @ngdoc overview
-         * @name propSelect
+         * @name classSelect
          *
          * @description
-         * The `propSelect` module only provides the `propSelect` directive which creates
-         * a ui-select with the passed property list, a selected property, and an optional
-         * function to be called when the selected property changes.
+         * The `classSelect` module only provides the `classSelect` directive which creates
+         * a ui-select with the passed class list, a selected class, and an optional
+         * function to be called when the selected class changes.
          */
-        .module('propSelect', [])
+        .module('classSelect', [])
         /**
          * @ngdoc directive
-         * @name propSelect.directive:propSelect
+         * @name classSelect.directive:classSelect
          * @scope
          * @restrict E
          * @requires ontologyManager.service:ontologyManagerService
          *
          * @description
-         * `propSelect` is a directive which creates a ui-select with the passed property
-         * list, a selected property object, and an optional function to be called when
-         * the selected property is changed. The directive is replaced by the contents of
+         * `classSelect` is a directive which creates a ui-select with the passed class
+         * list, a selected class object, and an optional function to be called when
+         * the selected class is changed. The directive is replaced by the contents of
          * its template.
          *
-         * @param {object[]} props an array of property objects from the
-         * {@link ontologyManager.service:ontologyManagerService ontologyManagerService}
-         * @param {boolean} isDisabledWhen whether or not the select should be disabled
-         * @param {function} [onChange=undefined] an optional function to be called on change
-         * of the selected property
-         * @param {object} selectedProp the currently selected property object
+         * @param {Object[]} classes an array of class objects from the
+         * {@link mapperState.service:mapperStateService mapperStateService}
+         * @param {Function} [onChange=undefined] an optional function to be called on change
+         * of the selected class
+         * @param {Object} selectedClass the currently selected class object
+         * @param {string} selectedClass.ontologyid the id of the ontology that contains the class
+         * @param {Object} selectedClass.classObj the JSON-LD class object
          */
-        .directive('propSelect', propSelect);
+        .directive('classSelect', classSelect);
 
-        propSelect.$inject = ['ontologyManagerService'];
+        classSelect.$inject = ['ontologyManagerService'];
 
-        function propSelect(ontologyManagerService) {
+        function classSelect(ontologyManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
                 replace: true,
                 scope: {
-                    props: '<',
+                    classes: '<',
                     isDisabledWhen: '<',
                     onChange: '&?'
                 },
                 bindToController: {
-                    selectedProp: '='
+                    selectedClass: '='
                 },
                 controller: function() {
                     var dvm = this;
                     dvm.om = ontologyManagerService;
                 },
-                templateUrl: 'modules/mapper/directives/propSelect/propSelect.html'
+                templateUrl: 'modules/mapper/directives/classSelect/classSelect.html'
             }
         }
 })();

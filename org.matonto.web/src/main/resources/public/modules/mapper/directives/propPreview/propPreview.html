@@ -20,11 +20,12 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="entity-description">
-    <span class="field-name">Description:</span>
-    <p ng-if="dvm.getDescription().length === 0">(None Specified)</p>
-    <p class="description" ng-if="dvm.getDescription().length > 0">
-        {{limited ? dvm.getLimitedDescription() : dvm.getDescription()}} 
-        <a ng-if="limited && dvm.getDescription().length > dvm.descriptionLimit" ng-click="dvm.full = !dvm.full; $event.stopPropagation()">Show {{dvm.full ? 'less' : 'more'}}</a>
-    </p>
+<div class="prop-preview">
+    <h3>{{dvm.om.getEntityName(dvm.propObj)}}</h3>
+    <p class="text-muted"><small>{{dvm.propObj['@id']}}</small></p>
+    <div class="description">
+        <span class="field-name">Description:</span>
+        <p>{{dvm.om.getEntityDescription(dvm.propObj) || "(None Specified)"}}</p>
+    </div>
+    <p><span class="field-name">Range:</span> {{dvm.getPropRangeName()}}</p>
 </div>

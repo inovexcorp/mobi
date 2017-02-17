@@ -97,10 +97,12 @@
                                     dvm.state.mapping.record = _.pick(record, ['@id', '@type', prefixes.dcterms + 'title', prefixes.dcterms + 'description', prefixes.dcterms + 'identifier', prefixes.dcterms + 'issued', prefixes.dcterms + 'modified', prefixes.catalog + 'keyword'])
                                 });
                             }
-                            return dvm.mm.getSourceOntologies();
+                            return dvm.mm.getSourceOntologies(sourceOntologyInfo);
                         }, $q.reject).then(ontologies => {
                             if (dvm.mm.areCompatible(dvm.state.mapping.jsonld, ontologies)) {
                                 dvm.state.sourceOntologies = ontologies;
+                                var usedClassIds = _.map(dvm.mm.getAllClassMappings(dvm.state.mapping.jsonld), dvm.mm.getClassIdByMapping);
+                                dvm.state.availableClasses = _.filter(dvm.state.getClasses(ontologies), clazz => !_.includes(usedClassIds, clazz.classObj['@id']));
                                 dvm.state.mappingSearchString = '';
                                 dvm.state.step = dvm.state.fileUploadStep;
                                 dvm.state.displayCreateMappingOverlay = false;
