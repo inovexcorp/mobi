@@ -272,9 +272,9 @@
                 var deferred = $q.defer();
                 getAllRecords(sortingOption)
                     .then(response => {
-                        var recordIds = _.map(_.get(response, 'data', []), record => utilService.getDctermsValue(record,
-                            'identifier'));
-                        deferred.resolve(recordIds);
+                        var ontologyIds = _.map(_.get(response, 'data', []), record =>
+                            utilService.getDctermsValue(record, 'identifier'));
+                        deferred.resolve(ontologyIds);
                     }, deferred.reject);
                 return deferred.promise;
             }
@@ -324,16 +324,16 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Calls the GET /matontorest/ontologies/{ontologyId} endpoint which gets an ontology from the MatOnto
+             * Calls the GET /matontorest/ontologies/{recordId} endpoint which gets an ontology from the MatOnto
              * repository with the JSON-LD ontology string provided. Returns a promise which includes the serialized
              * ontology.
              *
-             * @param {string} ontologyId The ontology ID of the ontology you want to get from the repository.
+             * @param {string} recordId The record ID of the ontology you want to get from the repository.
              * @param {string} [rdfFormat='jsonld'] The format string to identify the serialization requested.
              * @returns {Promise} A promise containing the ontology id, record id, branch id, commit id,
              *                    inProgressCommit, and JSON-LD serialization of the ontology.
              */
-            self.getOntology = function(ontologyId, recordId, rdfFormat = 'jsonld') {
+            self.getOntology = function(recordId, rdfFormat = 'jsonld') {
                 var branchId, commitId;
                 var state = sm.getOntologyStateByRecordId(recordId);
                 var deferred = $q.defer();
@@ -347,8 +347,7 @@
                             commitId = _.get(headCommit, "commit['@id']", '');
                             return sm.createOntologyState(recordId, branchId, commitId);
                         }, $q.reject)
-                        .then(() => cm.getResource(commitId, branchId, recordId, catalogId, false, rdfFormat),
-                            $q.reject)
+                        .then(() => cm.getResource(commitId, branchId, recordId, catalogId, false, rdfFormat), $q.reject)
                         .then(ontology => resolve(ontology, emptyInProgressCommit), deferred.reject);
                 }
                 if (!_.isEmpty(state)) {
@@ -365,15 +364,13 @@
                             }
                             return $q.reject();
                         })
-                        .then(ontology => resolve(ontology, inProgressCommit), () => {
-                            return sm.deleteOntologyState(recordId, branchId, commitId)
-                        })
+                        .then(ontology => resolve(ontology, inProgressCommit), () => sm.deleteOntologyState(recordId, branchId, commitId))
                         .then(getLatest, deferred.reject);
                 } else {
                     getLatest();
                 }
                 var resolve = function(ontology, inProgressCommit) {
-                    deferred.resolve({recordId, ontologyId, ontology, branchId, commitId, inProgressCommit});
+                    deferred.resolve({ontology, recordId, branchId, commitId, inProgressCommit});
                 }
                 return deferred.promise;
             }
@@ -398,7 +395,7 @@
             self.uploadThenGet = function(file, title, description, keywords, type = 'ontology') {
                 var deferred = $q.defer();
                 var onUploadSuccess = function(ontologyId, recordId) {
-                    self.getOntology(ontologyId, recordId)
+                    self.getOntology(recordId)
                         .then(response => {
                             if (type === 'ontology') {
                                 self.addOntologyToList(ontologyId, recordId, response.branchId, response.commitId,
@@ -416,6 +413,21 @@
                         deferred.reject);
                 return deferred.promise;
             }
+            /**
+             * @ngdoc method
+             * @name updateOntology
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Used to update an ontology that is already open within the Ontology Editor. It will replace the existing
+             * listItem with a new listItem consisting of the data associated with the record ID, branch ID, and commit
+             * ID provided. Returns a promise.
+             *
+             * @param {string} recordId The record ID associated with the requested ontology.
+             * @param {string} branchId The branch ID associated with the requested ontology.
+             * @param {string} commitId The commit ID associated with the requested ontology.
+             * @returns {Promise} A promise indicating the success or failure of the update.
+             */
             self.updateOntology = function(recordId, branchId, commitId, type = 'ontology') {
                 var deferred = $q.defer();
                 var onSuccess = function(listItem) {
@@ -448,13 +460,13 @@
              * {@link ontologyManager.service:ontologyManagerService#getOntology getOntology} to get the specified
              * ontology from the MatOnto repository. Returns a promise.
              *
-             * @param {string} ontologyId The ontology ID of the requested ontology.
-             * @returns {Promise} A promise with with the ontology ID or error message.
+             * @param {string} recordId The record ID of the requested ontology.
+             * @returns {Promise} A promise with with the record ID or error message.
              */
-            self.openOntology = function(ontologyId, recordId, type='ontology') {
+            self.openOntology = function(recordId, type = 'ontology') {
                 var branchId, commitId, ontology, inProgressCommit;
                 var deferred = $q.defer();
-                self.getOntology(ontologyId, recordId)
+                self.getOntology(recordId)
                     .then(response => {
                         branchId = response.branchId;
                         commitId = response.commitId;
@@ -465,6 +477,7 @@
                     .then(headCommit => {
                         var headId = _.get(headCommit, "commit['@id']", '');
                         var upToDate = headId === commitId;
+                        var ontologyId = self.getOntologyIRI(ontology);
                         if (type === 'ontology') {
                             return self.addOntologyToList(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate);
                         } else if (type === 'vocabulary') {
@@ -481,11 +494,9 @@
              *
              * @description
              * Used to close an ontology from the MatOnto application. It removes the ontology list item from the
-             * {@link ontologyManager.service:ontologyManagerService#list list} and adds the ontology ID to the
-             * {@link ontologyManager.service:ontologyManagerService#ontologyIds ontologyIds array} so that it
-             * can be opened later if necessary.
+             * {@link ontologyManager.service:ontologyManagerService#list list}.
              *
-             * @param {string} ontologyId The ontology ID of the requested ontology.
+             * @param {string} recordId The record ID of the requested ontology.
              */
             self.closeOntology = function(recordId) {
                 _.remove(self.list, {recordId});
@@ -503,13 +514,13 @@
              * {@link ontologyManager.service:ontologyManagerService#getOntology getOntology} to get the specified
              * ontology from the MatOnto repository. Returns a promise with the string representation of the ontology.
              *
-             * @param {string} ontologyId The ontology ID of the requested ontology.
+             * @param {string} recordId The record ID of the requested ontology.
              * @param {string} [rdfFormat='jsonld'] The format string to identify the serialization requested.
              * @returns {Promise} A promise with the string representation of the ontology.
              */
-            self.getPreview = function(ontologyId, recordId, rdfFormat = 'jsonld') {
+            self.getPreview = function(recordId, rdfFormat = 'jsonld') {
                 var deferred = $q.defer();
-                self.getOntology(ontologyId, recordId, rdfFormat)
+                self.getOntology(recordId, rdfFormat)
                     .then(response => deferred.resolve((rdfFormat === 'jsonld') ? $filter('json')(response.ontology)
                             : response.ontology), deferred.reject);
                 return deferred.promise;
@@ -521,10 +532,10 @@
              *
              * @description
              * Saves all changes to the ontology with the specified ontology ID. It calls the POST
-             * /matontorest/ontology/{ontologyId} for each of the unsaved entities. Returns a promise with the new
+             * /matontorest/ontology/{recordId} for each of the unsaved entities. Returns a promise with the new
              * ontology ID.
              *
-             * @param {string} ontologyId The ontology ID of the requested ontology.
+             * @param {string} recordId The record ID of the requested ontology.
              * @param {Object[]} unsavedEntities The array of ontology entities with unsaved changes.
              * @returns {Promise} A promise with the ontology ID.
              */
@@ -553,22 +564,6 @@
             }
             /**
              * @ngdoc method
-             * @name getListItemById
-             * @methodOf ontologyManager.service:ontologyManagerService
-             *
-             * @description
-             * Gets the associated object from the {@link ontologyManager.service:ontologyManagerService#list list} that
-             * contains the requested ontology ID. Returns the list item.
-             *
-             * @param {string} ontologyId The ontology ID of the requested ontology.
-             * @returns {Object} The associated Object from the
-             * {@link ontologyManager.service:ontologyManagerService#list list}.
-             */
-            self.getListItemById = function(ontologyId) {
-                return _.find(self.list, {ontologyId: ontologyId});
-            }
-            /**
-             * @ngdoc method
              * @name getListItemByRecordId
              * @methodOf ontologyManager.service:ontologyManagerService
              *
@@ -581,23 +576,20 @@
              * {@link ontologyManager.service:ontologyManagerService#list list}.
              */
             self.getListItemByRecordId = function(recordId) {
-                return _.find(self.list, {recordId: recordId});
+                return _.find(self.list, {recordId});
             }
             /**
              * @ngdoc method
-             * @name getOntologyById
+             * @name getOntologyByRecordId
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
              * Gets the ontology from the {@link ontologyManager.service:ontologyManagerService#list list} using the
-             * requested ontology ID. Returns the JSON-LD of the ontology.
+             * requested recordId ID. Returns the JSON-LD of the ontology.
              *
-             * @param {string} ontologyId The ontology ID of the requested ontology.
+             * @param {string} recordId The record ID of the requested ontology.
              * @returns {Object[]} The JSON-LD of the requested ontology.
              */
-            self.getOntologyById = function(ontologyId) {
-                return _.get(self.getListItemById(ontologyId), 'ontology', []);
-            }
             self.getOntologyByRecordId = function(recordId) {
                 return _.get(self.getListItemByRecordId(recordId), 'ontology', []);
             }
@@ -657,8 +649,7 @@
              */
             self.getOntologyIRI = function(ontology) {
                 var entity = self.getOntologyEntity(ontology);
-                return _.get(entity, '@id', _.get(entity, 'matonto.originalIRI', _.get(entity, 'matonto.anonymous',
-                    '')));
+                return _.get(entity, '@id', _.get(entity, 'matonto.originalIRI', _.get(entity, 'matonto.anonymous', '')));
             }
             /**
              * @ngdoc method
@@ -776,33 +767,6 @@
              */
             self.getClassIRIs = function(ontology) {
                 return _.map(self.getClasses(ontology), 'matonto.originalIRI');
-            }
-            /**
-             * @ngdoc method
-             * @name updateClassHierarchies
-             * @methodOf ontologyManager.service:ontologyManagerService
-             *
-             * @description
-             * Calls the GET /matontorest/ontologies/{ontologyId}/class-hierarchies endpoint which gets the class
-             * hierarchy of the ontology for the provided ontology ID and uses the response data to update the list
-             * item's class hierarchy associated with the provided ontology ID.
-             *
-             * @param {string} ontologyId The ontology ID of the requested ontology.
-             * @returns {Promise} An empty promise
-             */
-            self.updateClassHierarchies = function(ontologyId) {
-                var deferred = $q.defer();
-                $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/class-hierarchies')
-                    .then(hierarchyResponse => {
-                        var listItem = self.getListItemById(ontologyId);
-                        listItem.classHierarchy = hierarchyResponse.data.hierarchy;
-                        listItem.classIndex = hierarchyResponse.data.index;
-                        deferred.resolve();
-                    }, response => {
-                        utilService.createErrorToast(response.statusText);
-                        deferred.resolve();
-                    });
-                return deferred.promise;
             }
             /**
              * @ngdoc method
@@ -1270,22 +1234,6 @@
             }
             /**
              * @ngdoc method
-             * @name getEntityById
-             * @methodOf ontologyManager.service:ontologyManagerService
-             *
-             * @description
-             * Gets entity with the provided IRI from the ontology linked to the provided ontologyId in the MatOnto
-             * repository. Returns the entity Object.
-             *
-             * @param {string} ontologyId The ontologyId linked to the ontology you want to check.
-             * @param {string} entityIRI The IRI of the entity that you want.
-             * @returns {Object} An Object which represents the requested entity.
-             */
-            self.getEntityById = function(ontologyId, entityIRI) {
-                return getEntityFromListItem(self.getListItemById(ontologyId), entityIRI);
-            }
-            /**
-             * @ngdoc method
              * @name getEntityByRecordId
              * @methodOf ontologyManager.service:ontologyManagerService
              *
@@ -1309,11 +1257,10 @@
              * Removes the entity with the provided IRI from the ontology with the provided ontology ID in the MatOnto
              * repository. Removes the entityIRI from the index. Returns the entity Object.
              *
-             * @param {Object[]} ontology The ontology you want to check.
+             * @param {Object[]} listItem The listItem linked to the ontology you want to remove the entity from.
              * @returns {Object} An Object which represents the requested entity.
              */
-            self.removeEntity = function(ontology, entityIRI) {
-                var listItem = self.getListItemById(self.getOntologyIRI(ontology));
+            self.removeEntity = function(listItem, entityIRI) {
                 var entityIndex = _.get(listItem.index, entityIRI);
                 _.unset(listItem.index, entityIRI);
                 _.forOwn(listItem.index, (value, key) => {
@@ -1321,7 +1268,7 @@
                         listItem.index[key] = value - 1;
                     }
                 });
-                return _.remove(ontology, {matonto:{originalIRI: entityIRI}})[0];
+                return _.remove(listItem.ontology, {matonto:{originalIRI: entityIRI}})[0];
             }
             /**
              * @ngdoc method
@@ -1332,12 +1279,12 @@
              * Adds the entity represented by the entityJSON to the ontology with the provided ontology ID in the
              * MatOnto repository. Adds the new entity to the index.
              *
-             * @param {Object[]} ontology The ontology you want to check.
+             * @param {Object[]} listItem The listItem linked to the ontology you want to add the entity to.
+             * @param {string} entityJSON The JSON-LD representation for the entity you want to add to the ontology.
              */
-            self.addEntity = function(ontology, entityJSON) {
-                ontology.push(entityJSON);
-                var listItem = self.getListItemById(self.getOntologyIRI(ontology));
-                _.set(_.get(listItem, 'index', {}), entityJSON['@id'], ontology.length - 1);
+            self.addEntity = function(listItem, entityJSON) {
+                listItem.ontology.push(entityJSON);
+                _.set(_.get(listItem, 'index', {}), entityJSON['@id'], listItem.ontology.length - 1);
             }
             /**
              * @ngdoc method
@@ -1392,18 +1339,18 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Calls the GET /matontorest/ontologies/{ontologyId}/imported-ontologies endpoint which gets the list of
+             * Calls the GET /matontorest/ontologies/{recordId}/imported-ontologies endpoint which gets the list of
              * all ontologies imported by the ontology with the requested ontology ID.
              *
-             * @param {string} ontologyId The ontology ID of the ontology you want to get from the repository.
+             * @param {string} recordId The record ID of the ontology you want to get from the repository.
              * @param {string} [rdfFormat='jsonld'] The format string to identify the serialization requested.
              * @returns {Promise} A promise containing the list of ontologies that are imported by the requested
              * ontology.
              */
-            self.getImportedOntologies = function(ontologyId, branchId, commitId, rdfFormat = 'jsonld') {
+            self.getImportedOntologies = function(recordId, branchId, commitId, rdfFormat = 'jsonld') {
                 var deferred = $q.defer();
                 var config = {params: {rdfFormat, branchId, commitId}};
-                $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/imported-ontologies', null, config)
+                $http.get(prefix + '/' + encodeURIComponent(recordId) + '/imported-ontologies', null, config)
                     .then(response => {
                         if (_.get(response, 'status') === 200) {
                             deferred.resolve(response.data);
@@ -1421,17 +1368,16 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Calls the GET /matontorest/ontologies/{ontologyId}/entity-usages/{entityIRI} endpoint which gets the
+             * Calls the GET /matontorest/ontologies/{recordId}/entity-usages/{entityIRI} endpoint which gets the
              * JSON SPARQL query results for all statements which have the provided entityIRI as an object.
              *
-             * @param {string} ontologyId The ontology ID of the ontology you want to get from the repository.
+             * @param {string} recordId The record ID of the ontology you want to get from the repository.
              * @param {string} entityIRI The entity IRI of the entity you want the usages for from the repository.
              * @returns {Promise} A promise containing the JSON SPARQL query results bindings.
              */
             self.getEntityUsages = function(recordId, entityIRI) {
                 var deferred = $q.defer();
-                var ontologyId = self.getListItemByRecordId(recordId).ontologyId;
-                $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/entity-usages/'
+                $http.get(prefix + '/' + encodeURIComponent(recordId) + '/entity-usages/'
                     + encodeURIComponent(entityIRI)).then(response => {
                         if(_.get(response, 'status') === 200) {
                             deferred.resolve(response.data.results.bindings);
@@ -1569,15 +1515,15 @@
              * @description
              * Gets the search results for literals that contain the requested search text.
              *
-             * @param {string} ontologyId The ontology ID of the ontology you want to get from the repository.
+             * @param {string} recordId The record ID of the ontology you want to get from the repository.
              * @param {string} searchText The text that you are searching for in the ontology entity literal values.
              * @returns {Promise} A promise containing the SPARQL query results.
              */
-            self.getSearchResults = function(ontologyId, branchId, commitId, searchText) {
+            self.getSearchResults = function(recordId, branchId, commitId, searchText) {
                 var defaultErrorMessage = 'An error has occurred with your search.';
                 var deferred = $q.defer();
                 var config = {params: {searchText, branchId, commitId}};
-                $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/search-results', config)
+                $http.get(prefix + '/' + encodeURIComponent(recordId) + '/search-results', config)
                     .then(response => {
                         if(_.get(response, 'status') === 200) {
                             deferred.resolve(response.data);
@@ -1597,12 +1543,12 @@
                     ontologyListItemTemplate);
                 var config = {params: {branchId, commitId}};
                 $q.all([
-                    $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/iris', config),
-                    $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/imported-iris', config),
-                    $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/class-hierarchies', config),
-                    $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/classes-with-individuals', config),
-                    $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/data-property-hierarchies', config),
-                    $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/object-property-hierarchies', config),
+                    $http.get(prefix + '/' + encodeURIComponent(recordId) + '/iris', config),
+                    $http.get(prefix + '/' + encodeURIComponent(recordId) + '/imported-iris', config),
+                    $http.get(prefix + '/' + encodeURIComponent(recordId) + '/class-hierarchies', config),
+                    $http.get(prefix + '/' + encodeURIComponent(recordId) + '/classes-with-individuals', config),
+                    $http.get(prefix + '/' + encodeURIComponent(recordId) + '/data-property-hierarchies', config),
+                    $http.get(prefix + '/' + encodeURIComponent(recordId) + '/object-property-hierarchies', config),
                     cm.getRecordBranches(recordId, catalogId, {applyUserFilter: false})
                 ]).then(response => {
                     listItem.annotations = _.unionWith(
@@ -1689,9 +1635,9 @@
                     vocabularyListItemTemplate);
                 var config = {params: {branchId, commitId}};
                 $q.all([
-                    $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/iris', config),
-                    $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/imported-iris', config),
-                    $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/concept-hierarchies', config),
+                    $http.get(prefix + '/' + encodeURIComponent(recordId) + '/iris', config),
+                    $http.get(prefix + '/' + encodeURIComponent(recordId) + '/imported-iris', config),
+                    $http.get(prefix + '/' + encodeURIComponent(recordId) + '/concept-hierarchies', config),
                     cm.getRecordBranches(recordId, catalogId)
                 ]).then(response => {
                     listItem.subDataProperties = _.get(response[0], 'data.dataProperties');
@@ -1876,7 +1822,7 @@
                 _.assign(oldListItem, newListItem);
             }
             function getAllRecords(sortingOption = _.find(cm.sortOptions, {label: 'Title (desc)'})) {
-                var ontologyRecordType = 'http://matonto.org/ontologies/catalog#OntologyRecord';
+                var ontologyRecordType = prefixes.catalog + 'OntologyRecord';
                 var paginatedConfig = {
                     pageIndex: 0,
                     limit: 100,

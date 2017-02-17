@@ -73,7 +73,7 @@
                             dvm.scheme[prefixes.skos + 'hasTopConcept'] = dvm.concepts;
                         }
                         // add the entity to the ontology
-                        dvm.om.addEntity(dvm.sm.listItem.ontology, dvm.scheme);
+                        dvm.om.addEntity(dvm.sm.listItem, dvm.scheme);
                         // update relevant lists
                         _.get(dvm.sm.listItem, 'conceptHierarchy').push({'entityIRI': dvm.scheme['@id']});
                         _.set(_.get(dvm.sm.listItem, 'index'), dvm.scheme['@id'], dvm.sm.listItem.ontology.length - 1);

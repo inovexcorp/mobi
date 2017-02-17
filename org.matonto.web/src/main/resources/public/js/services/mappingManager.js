@@ -549,7 +549,7 @@
                 var promise = ontologyObj ? $q.when({id: ontologyInfo.ontologyId, entities: ontologyObj.ontology, recordId: ontologyInfo.recordId}) : self.getOntology(ontologyInfo);
                 promise.then(ontology => {
                     sourceOntology = ontology;
-                    return om.getImportedOntologies(ontology.id, ontologyInfo.branchId, ontologyInfo.commitId);
+                    return om.getImportedOntologies(ontologyInfo.recordId, ontologyInfo.branchId, ontologyInfo.commitId);
                 }, $q.reject).then(imported => {
                     var importedOntologies = _.map(imported, obj => {
                         return {id: obj.ontologyId, entities: obj.ontology};

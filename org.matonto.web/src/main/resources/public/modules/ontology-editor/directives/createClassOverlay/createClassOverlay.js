@@ -76,7 +76,7 @@
                         }
                         _.set(dvm.clazz, 'matonto.originalIRI', dvm.clazz['@id']);
                         // add the entity to the ontology
-                        dvm.om.addEntity(dvm.sm.listItem.ontology, dvm.clazz);
+                        dvm.om.addEntity(dvm.sm.listItem, dvm.clazz);
                         // update relevant lists
                         var split = $filter('splitIRI')(dvm.clazz['@id']);
                         _.get(dvm.sm.listItem, 'subClasses').push({namespace:split.begin + split.then,

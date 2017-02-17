@@ -180,7 +180,7 @@ describe('Create Property Overlay directive', function() {
                 expect(_.has(controller.property, prefixes.rdfs + 'range')).toBe(false);
                 expect(_.has(controller.property, prefixes.rdfs + 'domain')).toBe(false);
                 expect(controller.property.matonto.originalIRI).toEqual(controller.property['@id']);
-                expect(ontologyManagerSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontology,
+                expect(ontologyManagerSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem,
                     controller.property);
                 expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(controller.property);
                 expect(this.listItem.index[controller.property['@id']]).toBe(0);
@@ -194,7 +194,7 @@ describe('Create Property Overlay directive', function() {
                 ontologyManagerSvc.isObjectProperty.and.returnValue(true);
                 controller.create();
                 expect(controller.property.matonto.originalIRI).toEqual(controller.property['@id']);
-                expect(ontologyManagerSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontology,
+                expect(ontologyManagerSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem,
                     controller.property);
                 expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(controller.property);
                 expect(this.listItem.subObjectProperties).toContain({namespace: this.split.begin + this.split.then, localName: this.split.end});
@@ -211,7 +211,7 @@ describe('Create Property Overlay directive', function() {
                 controller.property[prefixes.dcterms + 'description'] = [{'@value': 'description'}];
                 controller.create();
                 expect(controller.property.matonto.originalIRI).toEqual(controller.property['@id']);
-                expect(ontologyManagerSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontology,
+                expect(ontologyManagerSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem,
                     controller.property);
                 expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(controller.property);
                 expect(this.listItem.subObjectProperties).toEqual([]);

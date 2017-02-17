@@ -148,7 +148,7 @@ describe('Create Concept Overlay directive', function() {
             expect(schemes.scheme2[prefixes.skos + 'hasTopConcept'].length).toBe(1);
             expect(schemes.scheme2.matonto.unsaved).toBe(true);
             expect(controller.concept.matonto.originalIRI).toEqual(controller.concept['@id']);
-            expect(ontologyManagerSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontology, controller.concept);
+            expect(ontologyManagerSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, controller.concept);
             expect(listItem.conceptHierarchy).toContain({entityIRI: controller.concept['@id']});
             expect(listItem.index[controller.concept['@id']]).toBe(0);
             expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
