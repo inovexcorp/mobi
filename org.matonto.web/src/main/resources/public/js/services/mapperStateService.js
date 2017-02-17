@@ -146,6 +146,23 @@
             self.invalidProps = [];
             /**
              * @ngdoc property
+             * @name availableClasses
+             * @propertyOf mapperState.service:mapperStateService
+             * @type {Object[]}
+             *
+             * @description
+             * `availableClasses` holds an array of objects representing the classes from all source ontologies
+             * that have not been used for a class mapping yet. Each object has the following structure:
+             * ```
+             * {
+             *     ontologyId: '',
+             *     classObj: {}
+             * }
+             * ```
+             */
+            self.availableClasses = [];
+            /**
+             * @ngdoc property
              * @name availableColumns
              * @propertyOf mapperState.service:mapperStateService
              * @type {string[]}
@@ -250,6 +267,7 @@
              * should be shown.
              */
             self.displayPropMappingOverlay = false;
+            self.displayClassMappingOverlay = false;
             /**
              * @ngdoc property
              * @name displayDeletePropConfirm
@@ -389,6 +407,7 @@
                 self.invalidProps = [];
                 self.availableColumns = [];
                 self.availablePropsByClass = {};
+                self.availableClasses = [];
                 self.mapping = undefined;
                 self.sourceOntologies = [];
                 self.changedMapping = false;
@@ -528,7 +547,7 @@
                 var mappedProps = _.map(mm.getPropMappingsByClass(self.mapping.jsonld, classMappingId), "['" + prefixes.delim + "hasProperty'][0]['@id']");
                 var classId = mm.getClassIdByMappingId(self.mapping.jsonld, classMappingId);
                 var props = self.getClassProps(self.sourceOntologies, classId);
-                _.set(self.availablePropsByClass, encodeURIComponent(classMappingId), _.filter(props, prop => mappedProps.indexOf(prop['@id']) < 0));
+                _.set(self.availablePropsByClass, encodeURIComponent(classMappingId), _.filter(props, prop => mappedProps.indexOf(prop.propObj['@id']) < 0));
             }
             /**
              * @ngdoc method
@@ -557,7 +576,7 @@
              *
              * @param {Object[]} ontologies A list of ontology objects to collect properties from
              * @param {string} classId The id of the class to collect properties for
-             * @return {Object[]} An array of objects with the id and parent ontology id of properties
+             * @return {Object[]} An array of objects with a property object and parent ontology id of properties
              * that can be mapped for the specified class.
              */
             self.getClassProps = function(ontologies, classId) {
@@ -565,10 +584,31 @@
                 _.forEach(ontologies, ontology => {
                     var classProps = _.filter(_.union(om.getClassProperties(ontology.entities, classId), om.getNoDomainProperties(ontology.entities)), prop => !(om.isObjectProperty(prop) && om.isDataTypeProperty(prop)));
                     props = _.union(props, _.map(classProps, prop => {
-                        return {ontologyId: ontology.id, '@id': prop['@id']};
+                        return {ontologyId: ontology.id, propObj: prop};
                     }));
                 });
                 return props;
+            }
+            /**
+             * @ngdoc method
+             * @name getClasses
+             * @methodOf mapperState.service:mapperStateService
+             *
+             * @description
+             * Collects a list of objects representing all the classes from a list of ontologies created by the
+             * {@link mappingManager.service:mappingManagerService mappingManagerService}
+             *
+             * @param {Object[]} ontologies A list of ontology objects to collect properties from
+             * @return {Object[]} An array of objects with the class object and parent ontology id of classes
+             */
+            self.getClasses = function(ontologies) {
+                var classes = [];
+                _.forEach(ontologies, ontology => {
+                    classes = _.concat(classes, _.map(om.getClasses(ontology.entities), classObj => {
+                        return {ontologyId: ontology.id, classObj};
+                    }));
+                });
+                return classes;
             }
         }
 })();
