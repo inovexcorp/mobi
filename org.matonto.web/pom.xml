@@ -94,12 +94,12 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.rest</artifactId>
-            <version>1.5.1-SNAPSHOT</version>
+            <version>1.5.2-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>etl.rest</artifactId>
-            <version>1.5.1-SNAPSHOT</version>
+            <version>1.5.2-SNAPSHOT</version>
         </dependency>
     </dependencies>
 

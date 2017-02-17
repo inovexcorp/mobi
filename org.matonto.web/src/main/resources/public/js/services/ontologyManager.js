@@ -259,25 +259,16 @@
             }
             /**
              * @ngdoc method
-             * @name getAllOntologyIds
+             * @name getAllOntologyRecords
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Calls the GET /matontorest/ontologies/ontologyids endpoint which gets the list of ontology ids in the
-             * MatOnto repository. Returns a promise with an array of the ontology ids.
+             * Gets a list of all the OntologyRecords in the catalog by utilizing the `catalogManager`. Returns a
+             * promise with an array of the OntologyRecords.
              *
-             * @returns {Promise} A promise with an array of the ontology ids.
+             * @param {Object} sortingOption An object describing the order for the OntologyRecords.
+             * @returns {Promise} A promise with an array of the OntologyRecords.
              */
-            self.getAllOntologyIds = function(sortingOption) {
-                var deferred = $q.defer();
-                getAllRecords(sortingOption)
-                    .then(response => {
-                        var ontologyIds = _.map(_.get(response, 'data', []), record =>
-                            utilService.getDctermsValue(record, 'identifier'));
-                        deferred.resolve(ontologyIds);
-                    }, deferred.reject);
-                return deferred.promise;
-            }
             self.getAllOntologyRecords = function(sortingOption) {
                 var deferred = $q.defer();
                 getAllRecords(sortingOption)
@@ -461,10 +452,10 @@
              * ontology from the MatOnto repository. Returns a promise.
              *
              * @param {string} recordId The record ID of the requested ontology.
-             * @returns {Promise} A promise with with the record ID or error message.
+             * @returns {Promise} A promise with the ontology ID or error message.
              */
             self.openOntology = function(recordId, type = 'ontology') {
-                var branchId, commitId, ontology, inProgressCommit;
+                var branchId, commitId, ontology, inProgressCommit, ontologyId;
                 var deferred = $q.defer();
                 self.getOntology(recordId)
                     .then(response => {
@@ -477,14 +468,14 @@
                     .then(headCommit => {
                         var headId = _.get(headCommit, "commit['@id']", '');
                         var upToDate = headId === commitId;
-                        var ontologyId = self.getOntologyIRI(ontology);
+                        ontologyId = self.getOntologyIRI(ontology);
                         if (type === 'ontology') {
                             return self.addOntologyToList(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate);
                         } else if (type === 'vocabulary') {
                             return self.addVocabularyToList(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate);
                         }
                     }, $q.reject)
-                    .then(() => deferred.resolve(recordId), deferred.reject);
+                    .then(() => deferred.resolve(ontologyId), deferred.reject);
                 return deferred.promise;
             }
             /**

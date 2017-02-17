@@ -52,7 +52,7 @@
                 </block-content>
                 <block-footer>
                     <div class="paging-container clearfix">
-                        <paging-details page-size="(dvm.filteredList.length > 0) ? dvm.limit : 0" total-size="dvm.filteredList.length" page-index="dvm.begin / dvm.limit" limit="dvm.limit"></paging-details>
+                        <paging-details page-size="dvm.filteredList.length" total-size="dvm.filteredList.length" page-index="dvm.begin / dvm.limit" limit="dvm.limit"></paging-details>
                         <pagination links="{'prev': dvm.begin !== 0, 'next': (dvm.begin + dvm.limit) < dvm.filteredList.length}" current-page="dvm.begin / dvm.limit" get-page="dvm.getPage(direction)"></pagination>
                     </div>
                 </block-footer>

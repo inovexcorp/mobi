@@ -280,37 +280,6 @@ describe('Ontology Manager service', function() {
         expect(ontologyManagerSvc.list).toEqual([]);
     });
 
-    describe('getAllOntologyIds gets a list of all ontology ids', function() {
-        var getDeferred;
-        beforeEach(function() {
-            getDeferred = $q.defer();
-            catalogManagerSvc.getRecords.and.returnValue(getDeferred.promise);
-        });
-        it('when getRecords resolves', function() {
-            util.getDctermsValue.and.callFake(_.identity);
-            getDeferred.resolve(records);
-            ontologyManagerSvc.getAllOntologyIds({})
-                .then(function(response) {
-                    expect(catalogManagerSvc.getRecords).toHaveBeenCalled();
-                    expect(response).toEqual(records.data);
-                }, function() {
-                    fail('Promise should have resolved');
-                });
-            scope.$apply();
-        });
-        it('when getRecords rejects', function() {
-            getDeferred.reject(error);
-            ontologyManagerSvc.getAllOntologyIds({})
-                .then(function() {
-                    fail('Promise should have rejected');
-                }, function(response) {
-                    expect(catalogManagerSvc.getRecords).toHaveBeenCalled();
-                    expect(response).toEqual(error);
-                });
-            scope.$apply();
-        });
-    });
-
     describe('getAllOntologyRecords gets a list of all ontology records', function() {
         var getDeferred;
         beforeEach(function() {
@@ -852,7 +821,7 @@ describe('Ontology Manager service', function() {
                                 expect(ontologyManagerSvc.getOntologyIRI).toHaveBeenCalledWith(ontology);
                                 expect(ontologyManagerSvc.addOntologyToList).toHaveBeenCalledWith(ontologyId, recordId,
                                     branchId, commitId, ontology, inProgressCommit, true);
-                                expect(response).toEqual(recordId);
+                                expect(response).toEqual(ontologyId);
                             }, function() {
                                 fail('Promise should have resolved');
                             });
@@ -888,7 +857,7 @@ describe('Ontology Manager service', function() {
                                     catalogId);
                                 expect(ontologyManagerSvc.addVocabularyToList).toHaveBeenCalledWith(ontologyId,
                                     recordId, branchId, commitId, ontology, inProgressCommit, true);
-                                expect(response).toEqual(recordId);
+                                expect(response).toEqual(ontologyId);
                             }, function() {
                                 fail('Promise should have resolved');
                             });
