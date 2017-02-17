@@ -312,7 +312,7 @@
                 if (om.getEntity(ontology, classId)) {
                     // Collect IRI sections for prefix and create class mapping
                     var splitIri = $filter('splitIRI')(classId);
-                    var ontologyDataName = util.getBeautifulIRI(self.getSourceOntologyId(mapping)).toLowerCase();
+                    var ontologyDataName = $filter('splitIRI')(self.getSourceOntologyId(mapping)).end.toLowerCase();
                     classEntity = {
                         '@id': getMappingEntity(mapping)['@id'] + '/' + uuid.v4(),
                         '@type': [prefixes.delim + 'ClassMapping']

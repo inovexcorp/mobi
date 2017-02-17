@@ -22,5 +22,9 @@
   -->
 <div class="entity-description">
     <span class="field-name">Description:</span>
-    <p class="description">{{limited ? dvm.getLimitedDescription() : dvm.getDescription()}} <a ng-if="limited && dvm.getDescription().length > dvm.descriptionLimit" ng-click="dvm.full = !dvm.full; $event.stopPropagation()">Show {{dvm.full ? 'less' : 'more'}}</a></p>
+    <p ng-if="dvm.getDescription().length === 0">(None Specified)</p>
+    <p class="description" ng-if="dvm.getDescription().length > 0">
+        {{limited ? dvm.getLimitedDescription() : dvm.getDescription()}} 
+        <a ng-if="limited && dvm.getDescription().length > dvm.descriptionLimit" ng-click="dvm.full = !dvm.full; $event.stopPropagation()">Show {{dvm.full ? 'less' : 'more'}}</a>
+    </p>
 </div>
