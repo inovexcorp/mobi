@@ -23,12 +23,13 @@
 describe('Prop Mapping Overlay directive', function() {
     var $compile,
         scope,
+        element,
+        controller,
         prefixes,
         utilSvc,
         mappingManagerSvc,
         mapperStateSvc,
-        ontologyManagerSvc,
-        controller;
+        ontologyManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -38,7 +39,6 @@ describe('Prop Mapping Overlay directive', function() {
         mockMappingManager();
         mockMapperState();
         mockOntologyManager();
-        mockDelimitedManager();
 
         inject(function(_$compile_, _$rootScope_, _prefixes_, _utilService_, _mappingManagerService_, _mapperStateService_, _ontologyManagerService_) {
             $compile = _$compile_;
@@ -52,15 +52,16 @@ describe('Prop Mapping Overlay directive', function() {
 
         mapperStateSvc.mapping = {jsonld: []};
         mapperStateSvc.newProp = true;
-        this.element = $compile(angular.element('<prop-mapping-overlay></prop-mapping-overlay>'))(scope);
+        element = $compile(angular.element('<prop-mapping-overlay></prop-mapping-overlay>'))(scope);
         scope.$digest();
     });
 
     describe('should initialize with the correct values', function() {
         it('if a new property mapping is being created', function() {
-            controller = this.element.controller('propMappingOverlay');
+            controller = element.controller('propMappingOverlay');
             expect(controller.selectedProp).toBeUndefined();
             expect(controller.selectedColumn).toBe('');
+            expect(controller.rangeClassMapping).toBeUndefined();
         });
         it('if a property mapping is being edited', function() {
             mapperStateSvc.newProp = false;
@@ -72,60 +73,94 @@ describe('Prop Mapping Overlay directive', function() {
             mapperStateSvc.selectedPropMappingId = propMapping['@id'];
             mappingManagerSvc.getPropIdByMapping.and.returnValue('prop');
             ontologyManagerSvc.getEntity.and.returnValue(prop);
-            this.element = $compile(angular.element('<prop-mapping-overlay></prop-mapping-overlay>'))(scope);
+            mappingManagerSvc.findSourceOntologyWithProp.and.returnValue({id: 'propOntology', entities: []})
+            mappingManagerSvc.getClassMappingsByClassId.and.returnValue([{}]);
+            element = $compile(angular.element('<prop-mapping-overlay></prop-mapping-overlay>'))(scope);
             scope.$digest();
-            controller = this.element.controller('propMappingOverlay');
-            expect(controller.selectedProp).toEqual(prop);
+            controller = element.controller('propMappingOverlay');
+            expect(controller.selectedProp).toEqual({ontologyId: 'propOntology', propObj: prop});
             expect(controller.selectedColumn).toBe(columnIndex);
+            expect(controller.rangeClassMapping).not.toBeUndefined();
+            expect(controller.rangeClassMapping).not.toBeUndefined();
         });
     });
     describe('controller methods', function() {
         beforeEach(function() {
-            controller = this.element.controller('propMappingOverlay');
+            controller = element.controller('propMappingOverlay');
         });
-        it('should find the range class of an object property mapping', function() {
-            var classObj = {'@id': 'class'};
-            var prop = {};
-            prop[prefixes.rdfs + 'range'] = [{'@id': classObj['@id']}];
-            ontologyManagerSvc.getEntity.and.returnValue(classObj);
-            expect(controller.getRangeClass(prop)).toEqual(classObj);
-            expect(mappingManagerSvc.findSourceOntologyWithClass).toHaveBeenCalledWith(classObj['@id'], mapperStateSvc.sourceOntologies)
-            expect(ontologyManagerSvc.getEntity).toHaveBeenCalled();
+        it('should find the range class mapping of an object property mapping', function() {
+            this.classMapping = {'@id': 'class'};
+            mappingManagerSvc.getClassMappingsByClassId.and.returnValue([this.classMapping]);
+            expect(controller.getRangeClassMapping({propObj: {}})).toEqual(this.classMapping);
+            expect(utilSvc.getPropertyId).toHaveBeenCalledWith({}, prefixes.rdfs + 'range');
+            expect(mappingManagerSvc.getClassMappingsByClassId).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, jasmine.any(String));
         });
-        describe('should set the correct state for setting the property mapping', function() {
+        describe('should update the range of the selected property', function() {
+            it('if it is a object property', function() {
+                ontologyManagerSvc.isObjectProperty.and.returnValue(true);
+                spyOn(controller, 'getRangeClassMapping').and.returnValue({});
+                controller.updateRange();
+                expect(controller.selectedColumn).toBe('');
+                expect(controller.rangeClassMapping).toEqual({});
+            });
+            it('if it is a data property', function() {
+                ontologyManagerSvc.isObjectProperty.and.returnValue(false);
+                controller.updateRange();
+                expect(controller.selectedColumn).toBe('');
+                expect(controller.rangeClassMapping).toBeUndefined();
+            });
+        });
+        describe('should set the value of the property mapping', function() {
             beforeEach(function() {
-                controller.selectedProp = {'@id': 'prop'};
+                controller.selectedProp = {ontologyId: 'propOntology', propObj: {'@id': 'prop'}};
                 controller.selectedColumn = '0';
+                mapperStateSvc.sourceOntologies = [{id: controller.selectedProp.ontologyId, entities: []}]
             });
             describe('if a new property mapping is being created', function() {
                 beforeEach(function() {
                     mapperStateSvc.newProp = true;
                     this.classMappingId = mapperStateSvc.selectedClassMappingId;
                 });
-                it('for an object property', function() {
-                    var newClass = {'@id': 'class'};
-                    var newMapping = [newClass];
-                    ontologyManagerSvc.isObjectProperty.and.returnValue(true);
-                    mappingManagerSvc.addClass.and.returnValue(newClass);
-                    mappingManagerSvc.addObjectProp.and.returnValue(newMapping);
-                    controller.set();
-                    expect(mappingManagerSvc.findSourceOntologyWithProp).toHaveBeenCalledWith(controller.selectedProp['@id'], mapperStateSvc.sourceOntologies);
-                    expect(mappingManagerSvc.findSourceOntologyWithClass).toHaveBeenCalled();
-                    expect(mappingManagerSvc.addClass).toHaveBeenCalled();
-                    expect(mappingManagerSvc.addObjectProp).toHaveBeenCalled();
-                    expect(mappingManagerSvc.addDataProp).not.toHaveBeenCalled();
-                    expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(newClass['@id']);
-                    expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(this.classMappingId);
-                    expect(mapperStateSvc.newProp).toBe(false);
-                    expect(mapperStateSvc.changedMapping).toBe(true);
-                    expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
-                    expect(mapperStateSvc.selectedClassMappingId).toBe(newClass['@id']);
-                    expect(mapperStateSvc.displayPropMappingOverlay).toBe(false);
+                describe('for an object property', function() {
+                    beforeEach(function() {
+                        this.classMapping = {'@id': 'class'};
+                        ontologyManagerSvc.isObjectProperty.and.returnValue(true);
+                        mappingManagerSvc.addClass.and.returnValue(this.classMapping);
+                    });
+                    it('and there is already a class mapping for the range', function() {
+                        controller.rangeClassMapping = this.classMapping;
+                        controller.set();
+                        expect(mappingManagerSvc.addClass).not.toHaveBeenCalled();
+                        expect(mappingManagerSvc.addObjectProp).toHaveBeenCalled();
+                        expect(mappingManagerSvc.addDataProp).not.toHaveBeenCalled();
+                        expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(this.classMapping['@id']);
+                        expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(this.classMappingId);
+                        expect(mapperStateSvc.newProp).toBe(false);
+                        expect(mapperStateSvc.changedMapping).toBe(true);
+                        expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
+                        expect(mapperStateSvc.displayPropMappingOverlay).toBe(false);
+                    });
+                    it('and there is no class mapping for the range', function() {
+                        var rangeClassId = 'range';
+                        utilSvc.getPropertyId.and.returnValue(rangeClassId);
+                        mapperStateSvc.availableClasses = [{ontologyId: 'classOntology', classObj: {'@id': rangeClassId}}];
+                        mapperStateSvc.sourceOntologies.push({id: 'classOntology', entities: []});
+                        controller.set();
+                        expect(mappingManagerSvc.addClass).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, jasmine.any(Array), rangeClassId);
+                        expect(mapperStateSvc.availableClasses.length).toBe(0);
+                        expect(mappingManagerSvc.addObjectProp).toHaveBeenCalled();
+                        expect(mappingManagerSvc.addDataProp).not.toHaveBeenCalled();
+                        expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(this.classMapping['@id']);
+                        expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(this.classMappingId);
+                        expect(mapperStateSvc.newProp).toBe(false);
+                        expect(mapperStateSvc.changedMapping).toBe(true);
+                        expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
+                        expect(mapperStateSvc.displayPropMappingOverlay).toBe(false);
+                    });
                 });
                 it('for a data property', function() {
                     ontologyManagerSvc.isObjectProperty.and.returnValue(false);
                     controller.set();
-                    expect(mappingManagerSvc.findSourceOntologyWithProp).toHaveBeenCalledWith(controller.selectedProp['@id'], mapperStateSvc.sourceOntologies);
                     expect(mappingManagerSvc.findSourceOntologyWithClass).not.toHaveBeenCalled();
                     expect(mappingManagerSvc.addClass).not.toHaveBeenCalled();
                     expect(mappingManagerSvc.addObjectProp).not.toHaveBeenCalled();
@@ -134,7 +169,6 @@ describe('Prop Mapping Overlay directive', function() {
                     expect(mapperStateSvc.newProp).toBe(false);
                     expect(mapperStateSvc.changedMapping).toBe(true);
                     expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
-                    expect(mapperStateSvc.selectedClassMappingId).toBe(this.classMappingId);
                     expect(mapperStateSvc.displayPropMappingOverlay).toBe(false);
                 });
             });
@@ -158,11 +192,11 @@ describe('Prop Mapping Overlay directive', function() {
                     expect(mapperStateSvc.displayPropMappingOverlay).toBe(false);
                 });
                 it('and it is for a data property', function() {
-                    mapperStateSvc.invalidProps = [{'@id': controller.selectedProp['@id']}];
+                    mapperStateSvc.invalidProps = [{'@id': controller.selectedProp.propObj['@id']}];
                     mappingManagerSvc.isDataMapping.and.returnValue(true);
                     controller.set();
                     expect(this.propMapping[prefixes.delim + 'columnIndex'][0]['@value']).not.toBe(this.originalIndex);
-                    expect(mapperStateSvc.invalidProps).not.toContain({'@id': controller.selectedProp['@id']});
+                    expect(mapperStateSvc.invalidProps).not.toContain({'@id': controller.selectedProp.propObj['@id']});
                     expect(mapperStateSvc.changedMapping).toBe(true);
                     expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                     expect(mapperStateSvc.selectedClassMappingId).toBe(this.classMappingId);
@@ -178,14 +212,14 @@ describe('Prop Mapping Overlay directive', function() {
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('prop-mapping-overlay')).toBe(true);
-            expect(this.element.querySelectorAll('form.content').length).toBe(1);
+            expect(element.hasClass('prop-mapping-overlay')).toBe(true);
+            expect(element.querySelectorAll('form.content').length).toBe(1);
         });
         it('with a prop select', function() {
-            expect(this.element.find('prop-select').length).toBe(1);
+            expect(element.find('prop-select').length).toBe(1);
         });
         it('depending on whether a new property mapping is being created', function() {
-            var title = this.element.find('h6');
+            var title = element.find('h6');
             expect(title.text()).toContain('Add');
 
             mapperStateSvc.newProp = false;
@@ -194,25 +228,25 @@ describe('Prop Mapping Overlay directive', function() {
         });
         describe('depending on whether the selected property is', function() {
             beforeEach(function() {
-                controller = this.element.controller('propMappingOverlay');
-                controller.selectedProp = {};
+                controller = element.controller('propMappingOverlay');
+                controller.selectedProp = {propObj: {}};
             });
             it('a data property', function() {
                 ontologyManagerSvc.isDataTypeProperty.and.returnValue(true);
                 scope.$digest();
-                expect(this.element.querySelectorAll('.column-select-container').length).toBe(1);
-                expect(this.element.find('column-select').length).toBe(1);
+                expect(element.querySelectorAll('.column-select-container').length).toBe(1);
+                expect(element.find('column-select').length).toBe(1);
             });
             it('an object property', function() {
                 ontologyManagerSvc.isObjectProperty.and.returnValue(true);
                 scope.$digest();
-                expect(this.element.querySelectorAll('.class-description').length).toBe(1);
+                expect(element.querySelectorAll('.range-class-select-container').length).toBe(1);
             });
         });
         it('depending on the validity of the form', function() {
             ontologyManagerSvc.isDataTypeProperty.and.returnValue(true);
             scope.$digest();
-            var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
+            var button = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
             expect(button.attr('disabled')).toBeTruthy();
 
             ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
@@ -225,31 +259,31 @@ describe('Prop Mapping Overlay directive', function() {
             scope.$digest();
             expect(button.attr('disabled')).toBeTruthy();
 
-            controller = this.element.controller('propMappingOverlay');
+            controller = element.controller('propMappingOverlay');
             controller.selectedProp = {};
             scope.$digest();
             expect(button.attr('disabled')).toBeFalsy();
         });
         it('with buttons to cancel and set the property mapping value', function() {
-            var buttons = this.element.querySelectorAll('.btn-container button');
+            var buttons = element.querySelectorAll('.btn-container button');
             expect(buttons.length).toBe(2);
             expect(['Cancel', 'Set']).toContain(angular.element(buttons[0]).text().trim());
             expect(['Cancel', 'Set']).toContain(angular.element(buttons[1]).text().trim());
         });
     });
     it('should call set when the button is clicked', function() {
-        controller = this.element.controller('propMappingOverlay');
+        controller = element.controller('propMappingOverlay');
         spyOn(controller, 'set');
 
-        var continueButton = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
+        var continueButton = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
         continueButton.triggerHandler('click');
         expect(controller.set).toHaveBeenCalled();
     });
     it('should call cancel when the button is clicked', function() {
-        controller = this.element.controller('propMappingOverlay');
+        controller = element.controller('propMappingOverlay');
         spyOn(controller, 'cancel');
 
-        var continueButton = angular.element(this.element.querySelectorAll('.btn-container button.btn-default')[0]);
+        var continueButton = angular.element(element.querySelectorAll('.btn-container button.btn-default')[0]);
         continueButton.triggerHandler('click');
         expect(controller.cancel).toHaveBeenCalled();
     });

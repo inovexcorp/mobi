@@ -25,13 +25,13 @@
     <p class="text-muted"><small>{{dvm.classObj['@id']}}</small></p>
     <div>
         <span class="field-name">Description:</span>
-        <p>{{dvm.om.getEntityDescription(dvm.classObj)}}</p>
+        <p>{{dvm.om.getEntityDescription(dvm.classObj) || "(None Specified)"}}</p>
     </div>
     <div>
         <span class="field-name">Properties:</span>
         <ul class="props">
             <li ng-if="dvm.props.length === 0" class="last">None</li>
-            <li ng-repeat="prop in dvm.props track by prop['@id']" ng-class="{'last': $last}" title="{{prop['@id']}}">{{dvm.om.getEntityName(prop)}}</li>
+            <li ng-repeat="prop in dvm.props track by prop.propObj['@id']" ng-class="{'last': $last}" title="{{prop.propObj['@id']}}">{{dvm.om.getEntityName(prop.propObj)}}</li>
         </ul>
     </div>
 </div>

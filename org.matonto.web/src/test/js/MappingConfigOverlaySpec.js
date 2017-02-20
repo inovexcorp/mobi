@@ -23,14 +23,19 @@
 describe('Mapping Config Overlay directive', function() {
     var $compile,
         scope,
+        $q,
+        element,
+        controller,
         utilSvc,
         ontologyManagerSvc,
         mappingManagerSvc,
         mapperStateSvc,
         catalogManagerSvc,
         prefixes,
-        $q,
-        controller;
+        originalOntology,
+        importedOntology,
+        originalClassObj,
+        importedClassObj;
 
     beforeEach(function() {
         module('templates');
@@ -57,6 +62,10 @@ describe('Mapping Config Overlay directive', function() {
             $q = _$q_;
         });
 
+        originalOntology = {id: 'original', entities: [{}]};
+        importedOntology = {id: 'imported', ontology: []};
+        originalClassObj = {'@id': 'original'};
+        importedClassObj = {'@id': 'imported'};
         this.response = {
             data: [],
             headers: jasmine.createSpy('headers')
@@ -70,7 +79,7 @@ describe('Mapping Config Overlay directive', function() {
         it('for the configuration for getting ontology records', function() {
             var sortOption = {field: prefixes.dcterms + 'title', ascending: true};
             catalogManagerSvc.sortOptions = [sortOption];
-            var element = $compile(angular.element('<mapping-config-overlay></mapping-config-overlay>'))(scope);
+            element = $compile(angular.element('<mapping-config-overlay></mapping-config-overlay>'))(scope);
             scope.$digest();
             controller = element.controller('mappingConfigOverlay');
             expect(controller.recordsConfig.pageIndex).toBe(0);
@@ -89,7 +98,7 @@ describe('Mapping Config Overlay directive', function() {
             };
             this.response.headers.and.returnValue(headers);
             utilSvc.parseLinks.and.returnValue(headers.links);
-            var element = $compile(angular.element('<mapping-config-overlay></mapping-config-overlay>'))(scope);
+            element = $compile(angular.element('<mapping-config-overlay></mapping-config-overlay>'))(scope);
             scope.$digest();
             controller = element.controller('mappingConfigOverlay');
             expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith(catalogManagerSvc.localCatalog['@id'], controller.recordsConfig);
@@ -98,7 +107,7 @@ describe('Mapping Config Overlay directive', function() {
             expect(controller.links).toEqual(headers.links);
         });
         it('if the mapping does not have a record set', function() {
-            var element = $compile(angular.element('<mapping-config-overlay></mapping-config-overlay>'))(scope);
+            element = $compile(angular.element('<mapping-config-overlay></mapping-config-overlay>'))(scope);
             scope.$digest();
             controller = element.controller('mappingConfigOverlay');
             expect(controller.selectedRecord).toBeUndefined();
@@ -106,7 +115,6 @@ describe('Mapping Config Overlay directive', function() {
             expect(controller.selectedVersion).toBe('latest');
             expect(controller.selectedOntologyState).toBeUndefined();
             expect(controller.classes).toEqual([]);
-            expect(controller.selectedBaseClass).toBeUndefined();
             expect(catalogManagerSvc.getRecordMasterBranch).not.toHaveBeenCalled();
             expect(catalogManagerSvc.getBranchHeadCommit).not.toHaveBeenCalled();
         });
@@ -126,7 +134,7 @@ describe('Mapping Config Overlay directive', function() {
                     classes: [{ontologyId: '', classObj: this.classObj}]
                 };
                 utilSvc.getDctermsValue.and.returnValue('');
-                ontologyManagerSvc.getClasses.and.returnValue([this.classObj]);
+                mapperStateSvc.getClasses.and.returnValue(this.expectedVersion.classes);
                 mappingManagerSvc.getClassIdByMapping.and.returnValue(this.classObj['@id']);
                 catalogManagerSvc.getRecordMasterBranch.and.returnValue($q.when({'@id': this.expectedState.branchId}));
                 catalogManagerSvc.getBranchHeadCommit.and.returnValue($q.when({commit: {'@id': this.expectedVersion.commitId}}));
@@ -134,36 +142,34 @@ describe('Mapping Config Overlay directive', function() {
             it('and no changes have been commited to the record since it was set', function() {
                 mappingManagerSvc.getSourceOntologyInfo.and.returnValue({commitId: this.expectedVersion.commitId});
                 this.expectedState.latest = this.expectedVersion;
-                var element = $compile(angular.element('<mapping-config-overlay></mapping-config-overlay>'))(scope);
+                element = $compile(angular.element('<mapping-config-overlay></mapping-config-overlay>'))(scope);
                 scope.$digest();
                 controller = element.controller('mappingConfigOverlay');
                 expect(controller.selectedRecord).toEqual(this.record);
                 expect(controller.ontologyStates).toContain(this.expectedState);
                 expect(controller.selectedOntologyState).toEqual(this.expectedState);
                 expect(controller.selectedVersion).toBe('latest');
-                expect(controller.selectedBaseClass).toEqual(this.classObj);
                 expect(controller.classes).toEqual(this.expectedVersion.classes);
             });
             it('and changes have been commited to the record since it was set', function() {
                 mappingManagerSvc.getSourceOntologyInfo.and.returnValue({commitId: 'different'});
                 this.expectedState.saved = this.expectedVersion;
-                var element = $compile(angular.element('<mapping-config-overlay></mapping-config-overlay>'))(scope);
+                element = $compile(angular.element('<mapping-config-overlay></mapping-config-overlay>'))(scope);
                 scope.$digest();
                 controller = element.controller('mappingConfigOverlay');
                 expect(controller.selectedRecord).toEqual(this.record);
                 expect(controller.ontologyStates).toContain(this.expectedState);
                 expect(controller.selectedOntologyState).toEqual(this.expectedState);
                 expect(controller.selectedVersion).toBe('saved');
-                expect(controller.selectedBaseClass).toEqual(this.classObj);
                 expect(controller.classes).toEqual(this.expectedVersion.classes);
             });
         });
     });
     describe('controller methods', function() {
         beforeEach(function() {
-            this.element = $compile(angular.element('<mapping-config-overlay></mapping-config-overlay>'))(scope);
+            element = $compile(angular.element('<mapping-config-overlay></mapping-config-overlay>'))(scope);
             scope.$digest();
-            controller = this.element.controller('mappingConfigOverlay');
+            controller = element.controller('mappingConfigOverlay');
         });
         describe('should get the list of ontology records', function() {
             it('unless an error occurs', function() {
@@ -232,19 +238,19 @@ describe('Mapping Config Overlay directive', function() {
         });
         describe('should select an ontology', function() {
             beforeEach(function() {
-                controller.selectedRecord = {'@id': ''};
+                this.record = {'@id': ''};
              });
             it('if it had been opened', function() {
                 var openedState = {
-                    recordId: controller.selectedRecord['@id'],
+                    recordId: this.record['@id'],
                     latest: {
                         classes: []
                     }
                 };
                 controller.ontologyStates.push(openedState);
-                controller.selectOntology();
+                controller.selectOntology(this.record);
+                expect(controller.selectedRecord).toBe(this.record);
                 expect(controller.selectedOntologyState).toBe(openedState);
-                expect(controller.selectedBaseClass).toBeUndefined();
                 expect(controller.selectedVersion).toBe('latest');
                 expect(controller.classes).toBe(openedState.latest.classes);
                 expect(controller.errorMessage).toBe('');
@@ -252,39 +258,37 @@ describe('Mapping Config Overlay directive', function() {
             describe('if it had not been opened', function() {
                 it('unless an error occurs', function() {
                     catalogManagerSvc.getRecordMasterBranch.and.returnValue($q.reject('Error message'));
-                    controller.selectOntology();
+                    controller.selectOntology(this.record);
                     scope.$apply();
-                    expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(controller.selectedRecord['@id'], catalogManagerSvc.localCatalog['@id']);
+                    expect(controller.selectedRecord).toBe(this.record);
+                    expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(this.record['@id'], catalogManagerSvc.localCatalog['@id']);
                     expect(controller.errorMessage).toBe('Error message');
                 });
                 it('successfully', function() {
-                    var ontology = {id: 'original', entities: []};
-                    var classObj = {'@id': 'class'};
-                    var importedOntology = {id: 'imported', ontology: []};
                     var expectedState = {
-                        recordId: controller.selectedRecord['@id'],
+                        recordId: this.record['@id'],
                         branchId: '',
                         latest: {
                             commitId: '',
-                            ontologies: [ontology, {id: importedOntology.id, entities: importedOntology.ontology}],
-                            classes: [{ontologyId: 'original', classObj: classObj}, {ontologyId: 'imported', classObj: classObj}]
+                            ontologies: [originalOntology, {id: importedOntology.id, entities: importedOntology.ontology}],
+                            classes: [{ontologyId: 'original', classObj: originalClassObj}, {ontologyId: 'imported', classObj: importedClassObj}]
                         }
                     };
-                    mappingManagerSvc.getOntology.and.returnValue($q.when(ontology));
-                    ontologyManagerSvc.getClasses.and.returnValue([classObj]);
+                    mappingManagerSvc.getOntology.and.returnValue($q.when(originalOntology));
+                    mapperStateSvc.getClasses.and.returnValue(expectedState.latest.classes);
                     ontologyManagerSvc.getImportedOntologies.and.returnValue($q.when([importedOntology]));
                     catalogManagerSvc.getRecordMasterBranch.and.returnValue($q.when({'@id': expectedState.branchId}));
                     catalogManagerSvc.getBranchHeadCommit.and.returnValue($q.when({commit: {'@id': expectedState.latest.commitId}}));
-                    controller.selectOntology();
+                    controller.selectOntology(this.record);
                     scope.$apply();
-                    expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(controller.selectedRecord['@id'], catalogManagerSvc.localCatalog['@id']);
-                    expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(expectedState.branchId, controller.selectedRecord['@id'], catalogManagerSvc.localCatalog['@id']);
+                    expect(controller.selectedRecord).toBe(this.record);
+                    expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(this.record['@id'], catalogManagerSvc.localCatalog['@id']);
+                    expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(expectedState.branchId, this.record['@id'], catalogManagerSvc.localCatalog['@id']);
                     expect(mappingManagerSvc.getOntology).toHaveBeenCalled();
                     expect(ontologyManagerSvc.getImportedOntologies).toHaveBeenCalledWith('', expectedState.branchId, expectedState.latest.commitId);
                     expect(controller.ontologyStates).toContain(expectedState);
                     expect(controller.selectedOntologyState).toEqual(expectedState);
                     expect(controller.selectedVersion).toBe('latest');
-                    expect(controller.selectedBaseClass).toBeUndefined();
                     expect(controller.classes).toEqual(expectedState.latest.classes);
                     expect(controller.errorMessage).toBe('');
                 });
@@ -293,11 +297,9 @@ describe('Mapping Config Overlay directive', function() {
         describe('should select a version', function() {
             it('unless an ontology has not been selected', function() {
                 var selectedOntologyState = controller.selectedOntologyState;
-                var selectedBaseClass = controller.selectedBaseClass;
                 var classes = controller.classes;
                 controller.selectVersion();
                 expect(controller.selectedOntologyState).toBe(selectedOntologyState);
-                expect(controller.selectedBaseClass).toBe(selectedBaseClass);
                 expect(controller.classes).toBe(classes);
             });
             describe('of the selected ontology', function() {
@@ -311,18 +313,14 @@ describe('Mapping Config Overlay directive', function() {
                     controller.selectedOntologyState.latest = {classes: []};
                     controller.selectedVersion = 'latest';
                     controller.selectVersion();
-                    expect(controller.selectedBaseClass).toBeUndefined();
                     expect(controller.errorMessage).toBe('');
                     expect(controller.classes).toBe(controller.selectedOntologyState.latest.classes);
                 });
                 describe('if the', function() {
                     beforeEach(function() {
-                        this.ontology = {id: 'original', entities: []};
-                        this.classObj = {'@id': 'class'};
-                        this.importedOntology = {id: 'imported', ontology: []};
-                        mappingManagerSvc.getOntology.and.returnValue($q.when(this.ontology));
-                        ontologyManagerSvc.getClasses.and.returnValue([this.classObj]);
-                        ontologyManagerSvc.getImportedOntologies.and.returnValue($q.when([this.importedOntology]));
+                        mappingManagerSvc.getOntology.and.returnValue($q.when(originalOntology));
+                        mapperStateSvc.getClasses.and.returnValue([{ontologyId: 'original', classObj: originalClassObj}, {ontologyId: 'imported', classObj: importedClassObj}]);
+                        ontologyManagerSvc.getImportedOntologies.and.returnValue($q.when([importedOntology]));
                     });
                     describe('latest version has not been opened yet', function() {
                         beforeEach(function() {
@@ -338,8 +336,8 @@ describe('Mapping Config Overlay directive', function() {
                         it('successfully', function() {
                             var expectedVersion = {
                                 commitId: '',
-                                ontologies: [this.ontology, {id: this.importedOntology.id, entities: this.importedOntology.ontology}],
-                                classes: [{ontologyId: 'original', classObj: this.classObj}, {ontologyId: 'imported', classObj: this.classObj}]
+                                ontologies: [originalOntology, {id: importedOntology.id, entities: importedOntology.ontology}],
+                                classes: [{ontologyId: 'original', classObj: originalClassObj}, {ontologyId: 'imported', classObj: importedClassObj}]
                             };
                             catalogManagerSvc.getBranchHeadCommit.and.returnValue($q.when({commit: {'@id': expectedVersion.commitId}}));
                             controller.selectVersion();
@@ -348,7 +346,6 @@ describe('Mapping Config Overlay directive', function() {
                             expect(mappingManagerSvc.getOntology).toHaveBeenCalled();
                             expect(ontologyManagerSvc.getImportedOntologies).toHaveBeenCalledWith('', controller.selectedOntologyState.branchId, expectedVersion.commitId);
                             expect(controller.classes).toEqual(expectedVersion.classes);
-                            expect(controller.selectedBaseClass).toBeUndefined();
                             expect(controller.selectedOntologyState.latest).toEqual(expectedVersion);
                             expect(controller.errorMessage).toBe('');
                         });
@@ -374,8 +371,8 @@ describe('Mapping Config Overlay directive', function() {
                         it('successfully', function() {
                             var expectedVersion = {
                                 commitId: this.ontologyInfo.commitId,
-                                ontologies: [this.ontology, {id: this.importedOntology.id, entities: this.importedOntology.ontology}],
-                                classes: [{ontologyId: 'original', classObj: this.classObj}, {ontologyId: 'imported', classObj: this.classObj}]
+                                ontologies: [originalOntology, {id: importedOntology.id, entities: importedOntology.ontology}],
+                                classes: [{ontologyId: 'original', classObj: originalClassObj}, {ontologyId: 'imported', classObj: importedClassObj}]
                             };
                             controller.selectVersion();
                             scope.$apply();
@@ -383,7 +380,6 @@ describe('Mapping Config Overlay directive', function() {
                             expect(mappingManagerSvc.getOntology).toHaveBeenCalledWith(this.ontologyInfo);
                             expect(ontologyManagerSvc.getImportedOntologies).toHaveBeenCalledWith(this.ontologyInfo.ontologyId, this.ontologyInfo.branchId, this.ontologyInfo.commitId);
                             expect(controller.classes).toEqual(expectedVersion.classes);
-                            expect(controller.selectedBaseClass).toBeUndefined();
                             expect(controller.selectedOntologyState.saved).toEqual(expectedVersion);
                             expect(controller.errorMessage).toBe('');
                         });
@@ -417,49 +413,39 @@ describe('Mapping Config Overlay directive', function() {
                 expect(mappingManagerSvc.findIncompatibleMappings).not.toHaveBeenCalled();
                 expect(mappingManagerSvc.setSourceOntologyInfo).not.toHaveBeenCalled();
                 expect(mapperStateSvc.resetEdit).not.toHaveBeenCalled();
-                expect(mapperStateSvc.selectedClassMappingId).toBe('');
                 expect(mapperStateSvc.setAvailableProps).not.toHaveBeenCalled();
                 expect(mapperStateSvc.displayMappingConfigOverlay).toBe(false);
                 expect(mapperStateSvc.changedMapping).toBe(false);
             });
             describe('if it changed', function() {
                 beforeEach(function() {
-                    controller.selectedBaseClass = {'@id': 'base'};
-                    this.classMapping = {'@id': 'classMapping'};
                     mapperStateSvc.invalidProps = [''];
+                    /*this.classMapping = {'@id': 'classMapping'};
+                    mappingManagerSvc.getAllClassMappings.and.returnValue([this.classMapping]);*/
                 });
                 it('for the first time', function() {
-                    mappingManagerSvc.getClassMappingsByClassId.and.returnValue([this.classMapping]);
                     controller.set();
                     expect(mappingManagerSvc.createNewMapping).not.toHaveBeenCalled();
                     expect(mapperStateSvc.invalidProps).toEqual(['']);
                     expect(mappingManagerSvc.setSourceOntologyInfo).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, this.ontologyInfo.ontologyId, this.ontologyInfo.recordId, this.ontologyInfo.branchId, this.ontologyInfo.commitId);
                     expect(mapperStateSvc.mapping.record).toBe(controller.selectedRecord);
                     expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
-                    expect(mappingManagerSvc.getClassMappingsByClassId).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, controller.selectedBaseClass['@id']);
-                    expect(mappingManagerSvc.findSourceOntologyWithClass).not.toHaveBeenCalled();
-                    expect(mappingManagerSvc.addClass).not.toHaveBeenCalled();
-                    expect(mapperStateSvc.selectedClassMappingId).toBe(this.classMapping['@id']);
-                    expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(this.classMapping['@id']);
+                    expect(mapperStateSvc.availableClasses).toEqual(controller.classes);
+                    // expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(this.classMapping['@id']);
                     expect(mapperStateSvc.displayMappingConfigOverlay).toBe(false);
                     expect(mapperStateSvc.changedMapping).toBe(true);
                 });
                 it('from a previous setting', function() {
                     mappingManagerSvc.getSourceOntologyInfo.and.returnValue({test: true});
                     var ontology = {entities: []};
-                    mappingManagerSvc.addClass.and.returnValue(this.classMapping);
-                    mappingManagerSvc.findSourceOntologyWithClass.and.returnValue(ontology);
                     controller.set();
                     expect(mappingManagerSvc.createNewMapping).toHaveBeenCalledWith(mapperStateSvc.mapping.id);
                     expect(mapperStateSvc.invalidProps).toEqual([]);
                     expect(mappingManagerSvc.setSourceOntologyInfo).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, this.ontologyInfo.ontologyId, this.ontologyInfo.recordId, this.ontologyInfo.branchId, this.ontologyInfo.commitId);
                     expect(mapperStateSvc.mapping.record).toBe(controller.selectedRecord);
                     expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
-                    expect(mappingManagerSvc.getClassMappingsByClassId).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, controller.selectedBaseClass['@id']);
-                    expect(mappingManagerSvc.findSourceOntologyWithClass).toHaveBeenCalledWith(controller.selectedBaseClass['@id'], controller.selectedOntologyState.latest.ontologies);
-                    expect(mappingManagerSvc.addClass).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, ontology.entities, controller.selectedBaseClass['@id']);
-                    expect(mapperStateSvc.selectedClassMappingId).toBe(this.classMapping['@id']);
-                    expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(this.classMapping['@id']);
+                    expect(mapperStateSvc.availableClasses).toEqual(controller.classes);
+                    // expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(this.classMapping['@id']);
                     expect(mapperStateSvc.displayMappingConfigOverlay).toBe(false);
                     expect(mapperStateSvc.changedMapping).toBe(true);
                 });
@@ -542,56 +528,53 @@ describe('Mapping Config Overlay directive', function() {
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
             mapperStateSvc.mapping = {id: '', jsonld: []};
-            this.element = $compile(angular.element('<mapping-config-overlay></mapping-config-overlay>'))(scope);
+            element = $compile(angular.element('<mapping-config-overlay></mapping-config-overlay>'))(scope);
             scope.$digest();
         });
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('mapping-config-overlay')).toBe(true);
-            expect(this.element.querySelectorAll('form.content').length).toBe(1);
-            expect(this.element.querySelectorAll('.row').length).toBe(2);
-            expect(this.element.querySelectorAll('.ontology-select-container').length).toBe(1);
-            expect(this.element.querySelectorAll('.version-class-select-container').length).toBe(1);
-            expect(this.element.querySelectorAll('.ontology-records-list').length).toBe(1);
-        });
-        it('with a ui select', function() {
-            expect(this.element.find('ui-select').length).toBe(1);
+            expect(element.hasClass('mapping-config-overlay')).toBe(true);
+            expect(element.querySelectorAll('form.content').length).toBe(1);
+            expect(element.querySelectorAll('.row').length).toBe(1);
+            expect(element.querySelectorAll('.ontology-select-container').length).toBe(1);
+            expect(element.querySelectorAll('.preview-display').length).toBe(1);
+            expect(element.querySelectorAll('.ontology-records-list').length).toBe(1);
         });
         it('with a paging-details', function() {
-            expect(this.element.find('paging-details').length).toBe(1);
+            expect(element.find('paging-details').length).toBe(1);
         });
         it('with a pagination', function() {
-            expect(this.element.find('pagination').length).toBe(1);
+            expect(element.find('pagination').length).toBe(1);
         });
         it('depending on whether an error has occured', function() {
-            controller = this.element.controller('mappingConfigOverlay');
-            expect(this.element.find('error-display').length).toBe(0);
+            controller = element.controller('mappingConfigOverlay');
+            expect(element.find('error-display').length).toBe(0);
 
             controller.errorMessage = 'test';
             scope.$digest();
-            expect(this.element.find('error-display').length).toBe(1);
+            expect(element.find('error-display').length).toBe(1);
         });
         it('depending on how many ontology records there are', function() {
-            controller = this.element.controller('mappingConfigOverlay');
+            controller = element.controller('mappingConfigOverlay');
             controller.records = [{}];
             scope.$digest();
-            expect(this.element.querySelectorAll('.ontology-records-list button').length).toBe(controller.records.length);
+            expect(element.querySelectorAll('.ontology-records-list button').length).toBe(controller.records.length);
         });
         it('depending on whether an ontology record has been selected', function() {
-            var ontologyInfo = this.element.querySelectorAll('.ontology-record-info');
+            var ontologyInfo = element.querySelectorAll('.ontology-record-info');
             expect(ontologyInfo.length).toBe(0);
 
-            controller = this.element.controller('mappingConfigOverlay');
+            controller = element.controller('mappingConfigOverlay');
             controller.selectedRecord = {'@id': ''};
             scope.$digest();
-            ontologyInfo = this.element.querySelectorAll('.ontology-record-info');
+            ontologyInfo = element.querySelectorAll('.ontology-record-info');
             expect(ontologyInfo.length).toBe(1);
         });
         it('depending on which ontology record is selected', function() {
             var record = {'@id': ''};
-            controller = this.element.controller('mappingConfigOverlay');
+            controller = element.controller('mappingConfigOverlay');
             controller.records = [record];
             scope.$digest();
-            var recordItem = angular.element(this.element.querySelectorAll('.ontology-records-list button')[0]);
+            var recordItem = angular.element(element.querySelectorAll('.ontology-records-list button')[0]);
             expect(recordItem.hasClass('active')).toBe(false);
 
             controller.selectedRecord = record;
@@ -599,54 +582,36 @@ describe('Mapping Config Overlay directive', function() {
             expect(recordItem.hasClass('active')).toBe(true);
         });
         it('depending on whether the selected ontology record has a saved version', function() {
-            var options = this.element.querySelectorAll('.version-select option');
+            var options = element.querySelectorAll('.version-select option');
             expect(options.length).toBe(1);
 
-            controller = this.element.controller('mappingConfigOverlay');
+            controller = element.controller('mappingConfigOverlay');
             controller.selectedOntologyState = {saved: {}};
             scope.$digest();
-            options = this.element.querySelectorAll('.version-select option');
+            options = element.querySelectorAll('.version-select option');
             expect(options.length).toBe(2);
         });
         it('depending on whether an ontology record state has been selected', function() {
-            controller = this.element.controller('mappingConfigOverlay');
-            controller.selectedBaseClass = {};
-            scope.$digest();
-            var versionSelect = angular.element(this.element.querySelectorAll('.version-select')[0]);
-            var baseTypeSelect = this.element.find('ui-select');
-            var setButton = angular.element(this.element.querySelectorAll('.btn-container button')[0]);
+            controller = element.controller('mappingConfigOverlay');
+            var versionSelect = angular.element(element.querySelectorAll('.version-select')[0]);
+            var setButton = angular.element(element.querySelectorAll('.btn-container button')[0]);
             expect(versionSelect.attr('disabled')).toBeTruthy();
-            expect(baseTypeSelect.attr('disabled')).toBeTruthy();
             expect(setButton.attr('disabled')).toBeTruthy();
 
             controller.selectedOntologyState = {};
             scope.$digest();
             expect(versionSelect.attr('disabled')).toBeFalsy();
-            expect(baseTypeSelect.attr('disabled')).toBeFalsy();
-            expect(setButton.attr('disabled')).toBeFalsy();
-        });
-        it('depending on whether a base class has been selected', function() {
-            controller = this.element.controller('mappingConfigOverlay');
-            controller.selectedOntologyState = {};
-            scope.$digest();
-            var setButton = angular.element(this.element.querySelectorAll('.btn-container button')[0]);
-            expect(this.element.find('class-preview').length).toBe(0);
-            expect(setButton.attr('disabled')).toBeTruthy();
-
-            controller.selectedBaseClass = {};
-            scope.$digest();
-            expect(this.element.find('class-preview').length).toBe(1);
             expect(setButton.attr('disabled')).toBeFalsy();
         });
         it('with buttons to cancel and set', function() {
-            var buttons = this.element.querySelectorAll('.btn-container button');
+            var buttons = element.querySelectorAll('.btn-container button');
             expect(buttons.length).toBe(2);
             expect(['Cancel', 'Set']).toContain(angular.element(buttons[0]).text().trim());
             expect(['Cancel', 'Set']).toContain(angular.element(buttons[1]).text().trim());
         });
     });
     it('should class getRecords when the search button is clicked', function() {
-        var element = $compile(angular.element('<mapping-config-overlay></mapping-config-overlay>'))(scope);
+        element = $compile(angular.element('<mapping-config-overlay></mapping-config-overlay>'))(scope);
         scope.$digest();
         controller = element.controller('mappingConfigOverlay');
         spyOn(controller, 'getRecords');
@@ -656,21 +621,19 @@ describe('Mapping Config Overlay directive', function() {
         expect(controller.getRecords).toHaveBeenCalled();
     });
     it('should select an ontology record when clicked', function() {
-        var element = $compile(angular.element('<mapping-config-overlay></mapping-config-overlay>'))(scope);
+        element = $compile(angular.element('<mapping-config-overlay></mapping-config-overlay>'))(scope);
         scope.$digest();
         controller = element.controller('mappingConfigOverlay');
-        var record = {'@id': 'record'}
-        controller.records = [record];
+        controller.records = [{}];
         spyOn(controller, 'selectOntology');
         scope.$digest();
 
         var recordButton = angular.element(element.querySelectorAll('.ontology-records-list button')[0]);
         recordButton.triggerHandler('click');
-        expect(controller.selectedRecord).toEqual(record);
         expect(controller.selectOntology).toHaveBeenCalled();
     });
     it('should call set when the button is clicked', function() {
-        var element = $compile(angular.element('<mapping-config-overlay></mapping-config-overlay>'))(scope);
+        element = $compile(angular.element('<mapping-config-overlay></mapping-config-overlay>'))(scope);
         scope.$digest();
         controller = element.controller('mappingConfigOverlay');
         spyOn(controller, 'set');
@@ -680,7 +643,7 @@ describe('Mapping Config Overlay directive', function() {
         expect(controller.set).toHaveBeenCalled();
     });
     it('should call cancel when the button is clicked', function() {
-        var element = $compile(angular.element('<mapping-config-overlay></mapping-config-overlay>'))(scope);
+        element = $compile(angular.element('<mapping-config-overlay></mapping-config-overlay>'))(scope);
         scope.$digest();
         controller = element.controller('mappingConfigOverlay');
         spyOn(controller, 'cancel');

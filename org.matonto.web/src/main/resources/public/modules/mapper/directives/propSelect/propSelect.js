@@ -48,32 +48,32 @@
          * its template.
          *
          * @param {object[]} props an array of property objects from the
-         * {@link ontologyManager.service:ontologyMangerService ontologyMangerService}
+         * {@link ontologyManager.service:ontologyManagerService ontologyManagerService}
+         * @param {boolean} isDisabledWhen whether or not the select should be disabled
          * @param {function} [onChange=undefined] an optional function to be called on change
          * of the selected property
          * @param {object} selectedProp the currently selected property object
-         * @param {string} selectedProp['@id'] the IRI of the property
          */
         .directive('propSelect', propSelect);
 
-        propSelect.$inject = ['utilService'];
+        propSelect.$inject = ['ontologyManagerService'];
 
-        function propSelect(utilService) {
+        function propSelect(ontologyManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
                 replace: true,
                 scope: {
                     props: '<',
-                    isDisabledWhen: '=',
-                    onChange: '&'
+                    isDisabledWhen: '<',
+                    onChange: '&?'
                 },
                 bindToController: {
                     selectedProp: '='
                 },
                 controller: function() {
                     var dvm = this;
-                    dvm.util = utilService;
+                    dvm.om = ontologyManagerService;
                 },
                 templateUrl: 'modules/mapper/directives/propSelect/propSelect.html'
             }

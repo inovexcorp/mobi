@@ -39,9 +39,8 @@
          * @name editMappingForm.directive:editMappingForm
          * @scope
          * @restrict E
-         * @requires ontologyManager.service:ontologyManagerService
          * @requires mapperState.service:mapperStateService
-         * @requires mappingManager.service:mappingManagerService
+         * @requires util.service:utilService
          *
          * @description
          * `editMappingForm` is a directive that creates a div with a section to view and edit the
@@ -53,9 +52,9 @@
          */
         .directive('editMappingForm', editMappingForm);
 
-        editMappingForm.$inject = ['mappingManagerService', 'mapperStateService', 'ontologyManagerService'];
+        editMappingForm.$inject = ['mapperStateService', 'utilService'];
 
-        function editMappingForm(mappingManagerService, mapperStateService, ontologyManagerService) {
+        function editMappingForm(mapperStateService, utilService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -64,21 +63,7 @@
                 controller: function() {
                     var dvm = this;
                     dvm.state = mapperStateService;
-                    dvm.mm = mappingManagerService;
-                    dvm.om = ontologyManagerService;
-
-                    dvm.getSourceOntologyName = function() {
-                        var sourceOntology = dvm.mm.getSourceOntology(dvm.state.mapping.jsonld, dvm.state.sourceOntologies);
-                        return sourceOntology ? dvm.om.getEntityName(dvm.om.getOntologyEntity(sourceOntology.entities)) : '';
-                    }
-                    dvm.getBaseClassName = function() {
-                        var baseClass = dvm.mm.getBaseClass(dvm.state.mapping.jsonld);
-                        return baseClass ? dvm.getClassName(baseClass) : '';
-                    }
-                    dvm.getClassName = function(classMapping) {
-                        var classId = dvm.mm.getClassIdByMapping(classMapping);
-                        return dvm.om.getEntityName(dvm.om.getEntity(_.get(dvm.mm.findSourceOntologyWithClass(classId, dvm.state.sourceOntologies), 'entities'), classId));
-                    }
+                    dvm.util = utilService;
                 },
                 templateUrl: 'modules/mapper/directives/editMappingForm/editMappingForm.html'
             }
