@@ -130,25 +130,22 @@ describe('Open Ontology Tab directive', function() {
     });
     describe('controller methods', function() {
         describe('should open an ontology', function() {
-            beforeEach(function() {
-                ontologyManagerSvc.getListItemByRecordId.and.returnValue({ontology: ''});
-            });
             it('unless an error occurs', function() {
                 ontologyManagerSvc.openOntology.and.returnValue($q.reject('Error message'));
                 controller.open();
                 scope.$apply();
-                expect(ontologyManagerSvc.openOntology).toHaveBeenCalledWith(controller.ontologyId, controller.recordId, controller.type);
-                expect(ontologyManagerSvc.getListItemByRecordId).not.toHaveBeenCalled();
+                expect(ontologyManagerSvc.openOntology).toHaveBeenCalledWith(controller.recordId, controller.type);
                 expect(ontologyStateSvc.addState).not.toHaveBeenCalled();
                 expect(ontologyStateSvc.setState).not.toHaveBeenCalled();
                 expect(controller.errorMessage).toBe('Error message');
             });
             it('successfully', function() {
+                var ontologyId = 'ontologyId';
+                ontologyManagerSvc.openOntology.and.returnValue($q.resolve(ontologyId));
                 controller.open();
                 scope.$apply();
-                expect(ontologyManagerSvc.openOntology).toHaveBeenCalledWith(controller.ontologyId, controller.recordId, controller.type);
-                expect(ontologyManagerSvc.getListItemByRecordId).toHaveBeenCalledWith(controller.recordId);
-                expect(ontologyStateSvc.addState).toHaveBeenCalledWith(controller.recordId, jasmine.any(String), controller.type);
+                expect(ontologyManagerSvc.openOntology).toHaveBeenCalledWith(controller.recordId, controller.type);
+                expect(ontologyStateSvc.addState).toHaveBeenCalledWith(controller.recordId, ontologyId, controller.type);
                 expect(ontologyStateSvc.setState).toHaveBeenCalledWith(controller.recordId);
                 expect(controller.errorMessage).toBeUndefined();
             });
@@ -227,7 +224,6 @@ describe('Open Ontology Tab directive', function() {
     it('should set the correct state when an ontology is clicked', function() {
         var ontology = angular.element(element.querySelectorAll('.ontologies .ontology')[0]);
         ontology.triggerHandler('click');
-        expect(controller.ontologyId).toBe('A');
         expect(controller.recordId).toBe('recordA');
         expect(controller.showOpenOverlay).toBe(true);
     });
