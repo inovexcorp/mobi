@@ -73,13 +73,16 @@ public class RecordConfig {
          * The constructor for the builder.
          *
          * @param title The title String.
-         * @param identifier The identifier String.
          * @param publishers The Set of publisher Users.
          */
-        public Builder(String title, String identifier, Set<User> publishers) {
+        public Builder(String title, Set<User> publishers) {
             this.title = title;
-            this.identifier = identifier;
             this.publishers = publishers;
+        }
+
+        public Builder identifier(String identifier) {
+            this.identifier = identifier;
+            return this;
         }
 
         public Builder description(String description) {

@@ -318,7 +318,6 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         testTag.setCommit(testCommits.get(0));
         testRecord = recordFactory.createNew(vf.createIRI(RECORD_IRI));
         testRecord.setProperty(vf.createLiteral("Title"), vf.createIRI(DCTERMS.TITLE.stringValue()));
-        testRecord.setProperty(vf.createLiteral("ID"), vf.createIRI(DCTERMS.IDENTIFIER.stringValue()));
         testUnversionedRecord = unversionedRecordFactory.createNew(vf.createIRI(RECORD_IRI));
         testUnversionedRecord.setUnversionedDistribution(Collections.singleton(testDistribution));
         testVersionedRecord = versionedRecordFactory.createNew(vf.createIRI(RECORD_IRI));
@@ -680,7 +679,6 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         //Setup:
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("title", "Title");
-        fd.field("identifier", "Id");
 
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
@@ -692,19 +690,6 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         //Setup:
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("type", Record.TYPE);
-        fd.field("identifier", "Id");
-
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records")
-                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 400);
-    }
-
-    @Test
-    public void createRecordWithoutIdentifierTest() {
-        //Setup:
-        FormDataMultiPart fd = new FormDataMultiPart();
-        fd.field("type", Record.TYPE);
-        fd.field("title", "Title");
 
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
@@ -717,7 +702,6 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("type", Thing.TYPE);
         fd.field("title", "Title");
-        fd.field("identifier", "Id");
 
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
@@ -730,7 +714,6 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("type", Record.TYPE);
         fd.field("title", "Title");
-        fd.field("identifier", "Id");
         doThrow(new MatOntoException()).when(catalogManager).addRecord(eq(vf.createIRI(LOCAL_IRI)), any(Record.class));
 
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records")
@@ -3653,7 +3636,6 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("type", ormFactory.getTypeIRI().stringValue());
         fd.field("title", "Title");
-        fd.field("identifier", "Id");
         fd.field("description", "Description");
         fd.field("keywords", "keyword");
 

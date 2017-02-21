@@ -52,7 +52,7 @@ public interface OntologyManager {
      * Creates a new Ontology Object using the provided OntologyId.
      *
      * @param ontologyId the ontology id for the Ontology you want to create.
-     * @return an Ontology with the desired OntologyId.
+     * @return an Ontology with the desired recordId.
      * @throws MatontoOntologyException - if the ontology can't be created.
      */
     Ontology createOntology(OntologyId ontologyId) throws MatontoOntologyException;
@@ -103,57 +103,51 @@ public interface OntologyManager {
     Ontology createOntology(Model model) throws MatontoOntologyException;
 
     /**
-     * Retrieves an Ontology using an ontology id and the head commit of its MASTER branch. Returns an Optional with
-     * Ontology object or an empty Optional instance if the ontology id is not found or any owlapi exception or sesame
+     * Retrieves an Ontology using a record id and the head commit of its MASTER branch. Returns an Optional with
+     * Ontology object or an empty Optional instance if the record id is not found or any owlapi exception or sesame
      * exception is caught.
      *
-     * @param ontologyId the ontology id for the Ontology you want to retrieve.
-     * @return an Optional with Ontology if ontology id is found, or an empty Optional instance if not found.
+     * @param recordId the record id for the OntologyRecord you want to retrieve.
+     * @return an Optional with Ontology if record id is found, or an empty Optional instance if not found.
      * @throws MatontoOntologyException - if the repository connection fails or the ontology can't be created.
      */
-    Optional<Ontology> retrieveOntology(@Nonnull Resource ontologyId) throws MatontoOntologyException;
+    Optional<Ontology> retrieveOntology(@Nonnull Resource recordId) throws MatontoOntologyException;
 
     /**
-     * Retrieves an Ontology using an ontology id and the head commit of a Branch identified by the provided branch id.
-     * Returns an Optional with Ontology object or an empty Optional instance if the ontology id is not found or any
+     * Retrieves an Ontology using a record id and the head commit of a Branch identified by the provided branch id.
+     * Returns an Optional with Ontology object or an empty Optional instance if the record id is not found or any
      * owlapi exception or sesame exception is caught.
      *
-     * @param ontologyId the ontology id for the Ontology you want to retrieve.
+     * @param recordId the record id for the OntologyRecord you want to retrieve.
      * @param branchId the branch id for the Branch you want to retrieve.
-     * @return an Optional with Ontology if ontology id is found, or an empty Optional instance if not found.
+     * @return an Optional with Ontology if record id is found, or an empty Optional instance if not found.
      * @throws MatontoOntologyException - if the repository connection fails or the ontology can't be created.
      */
-    Optional<Ontology> retrieveOntology(@Nonnull Resource ontologyId, @Nonnull Resource branchId) throws
+    Optional<Ontology> retrieveOntology(@Nonnull Resource recordId, @Nonnull Resource branchId) throws
             MatontoOntologyException;
 
     /**
-     * Retrieves an Ontology using an ontology id, a branch id, and the id of a commit on that branch from the
-     * repository. Returns an Optional with Ontology object or an empty Optional instance if the ontology id is not
+     * Retrieves an Ontology using an record id, a branch id, and the id of a commit on that branch from the
+     * repository. Returns an Optional with Ontology object or an empty Optional instance if the record id is not
      * found or any owlapi exception or sesame exception is caught.
      *
-     * @param ontologyId the ontology id for the Ontology you want to retrieve.
+     * @param recordId the record id for the OntologyRecord you want to retrieve.
      * @param branchId the branch id for the Branch you want to retrieve.
      * @param commitId the commit id for the Commit you want to retrieve.
-     * @return an Optional with Ontology if ontology id is found, or an empty Optional instance if not found.
+     * @return an Optional with Ontology if record id is found, or an empty Optional instance if not found.
      * @throws MatontoOntologyException - if the repository connection fails or the ontology can't be created.
      */
-    Optional<Ontology> retrieveOntology(@Nonnull Resource ontologyId, @Nonnull Resource branchId,
+    Optional<Ontology> retrieveOntology(@Nonnull Resource recordId, @Nonnull Resource branchId,
                                         @Nonnull Resource commitId) throws MatontoOntologyException;
 
     /**
-     * Deletes the ontology and all associated Catalog elements with the given OntologyId, and returns true if
-     * successfully removed. The identifier used matches the rules for OntologyId.getOntologyIdentifier():
+     * Deletes the OntologyRecord and all associated Catalog elements with the given recordId, and returns true if
+     * successfully removed.
      *
-     * <ol>
-     *     <li>If a Version IRI is present, the ontology identifier will match the Version IRI</li>
-     *     <li>Else if an Ontology IRI is present, the ontology identifier will match the Ontology IRI</li>
-     *     <li>Else if neither are present, the ontology identifier will be a system generated blank node</li>
-     * </ol>
-     *
-     * @param ontologyId the ontology id for the Ontology you want to delete.
+     * @param recordId the record id for the OntologyRecord you want to delete.
      * @throws MatontoOntologyException - if the repository is null
      */
-    void deleteOntology(@Nonnull Resource ontologyId) throws MatontoOntologyException;
+    void deleteOntology(@Nonnull Resource recordId) throws MatontoOntologyException;
 
     /**
      * Creates a new OntologyId with a generated identifier.
@@ -181,8 +175,8 @@ public interface OntologyManager {
     /**
      * Creates a new OntologyId using the provided version IRI as the identifier.
      *
-     * @param ontologyIRI the IRI for the ontology you want to create the OntologyId for.
-     * @param versionIRI the version IRI for the ontology you want to create the OntologyId for.
+     * @param ontologyIRI the IRI for the ontology you want to create the recordId for.
+     * @param versionIRI the version IRI for the ontology you want to create the recordId for.
      * @return an OntologyId using the ontologyIRI and versionIRI to determine the proper identifier.
      */
     OntologyId createOntologyId(IRI ontologyIRI, IRI versionIRI);

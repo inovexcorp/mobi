@@ -285,7 +285,7 @@ describe('Mapping Config Overlay directive', function() {
                     expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(this.record['@id'], catalogManagerSvc.localCatalog['@id']);
                     expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(expectedState.branchId, this.record['@id'], catalogManagerSvc.localCatalog['@id']);
                     expect(mappingManagerSvc.getOntology).toHaveBeenCalled();
-                    expect(ontologyManagerSvc.getImportedOntologies).toHaveBeenCalledWith('', expectedState.branchId, expectedState.latest.commitId);
+                    expect(ontologyManagerSvc.getImportedOntologies).toHaveBeenCalledWith(expectedState.recordId, expectedState.branchId, expectedState.latest.commitId);
                     expect(controller.ontologyStates).toContain(expectedState);
                     expect(controller.selectedOntologyState).toEqual(expectedState);
                     expect(controller.selectedVersion).toBe('latest');
@@ -344,7 +344,7 @@ describe('Mapping Config Overlay directive', function() {
                             scope.$apply();
                             expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(controller.selectedOntologyState.branchId, controller.selectedOntologyState.recordId, catalogManagerSvc.localCatalog['@id']);
                             expect(mappingManagerSvc.getOntology).toHaveBeenCalled();
-                            expect(ontologyManagerSvc.getImportedOntologies).toHaveBeenCalledWith('', controller.selectedOntologyState.branchId, expectedVersion.commitId);
+                            expect(ontologyManagerSvc.getImportedOntologies).toHaveBeenCalledWith(controller.selectedOntologyState.recordId, controller.selectedOntologyState.branchId, expectedVersion.commitId);
                             expect(controller.classes).toEqual(expectedVersion.classes);
                             expect(controller.selectedOntologyState.latest).toEqual(expectedVersion);
                             expect(controller.errorMessage).toBe('');
@@ -356,7 +356,8 @@ describe('Mapping Config Overlay directive', function() {
                             this.ontologyInfo = {
                                 branchId: '',
                                 commitId: '',
-                                ontologyId: ''
+                                ontologyId: '',
+                                recordId: ''
                             };
                             mappingManagerSvc.getSourceOntologyInfo.and.returnValue(this.ontologyInfo);
                         });
@@ -378,7 +379,7 @@ describe('Mapping Config Overlay directive', function() {
                             scope.$apply();
                             expect(mappingManagerSvc.getSourceOntologyInfo).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld);
                             expect(mappingManagerSvc.getOntology).toHaveBeenCalledWith(this.ontologyInfo);
-                            expect(ontologyManagerSvc.getImportedOntologies).toHaveBeenCalledWith(this.ontologyInfo.ontologyId, this.ontologyInfo.branchId, this.ontologyInfo.commitId);
+                            expect(ontologyManagerSvc.getImportedOntologies).toHaveBeenCalledWith(this.ontologyInfo.recordId, this.ontologyInfo.branchId, this.ontologyInfo.commitId);
                             expect(controller.classes).toEqual(expectedVersion.classes);
                             expect(controller.selectedOntologyState.saved).toEqual(expectedVersion);
                             expect(controller.errorMessage).toBe('');

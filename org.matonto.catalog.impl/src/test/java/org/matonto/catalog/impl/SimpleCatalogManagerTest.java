@@ -137,6 +137,7 @@ public class SimpleCatalogManagerTest {
     private UserBranchFactory userBranchFactory = new UserBranchFactory();
     private UserFactory userFactory = new UserFactory();
     private IRI distributedCatalogId;
+    private IRI localCatalogId;
     private Resource notPresentId;
     private Resource differentId;
     private IRI dcIdentifier;
@@ -308,6 +309,7 @@ public class SimpleCatalogManagerTest {
         manager.start(props);
 
         distributedCatalogId = vf.createIRI("http://matonto.org/test/catalog-distributed");
+        localCatalogId = vf.createIRI("http://matonto.org/test/catalog-local");
         notPresentId = vf.createIRI("http://matonto.org/test/records#not-present");
         differentId = vf.createIRI("http://matonto.org/test/different");
         dcIdentifier = vf.createIRI(DC_IDENTIFIER);
@@ -319,7 +321,19 @@ public class SimpleCatalogManagerTest {
     }
 
     @Test
-    public void testGetPublishedCatalog() throws Exception {
+    public void testGetDistributedCatalogIRI() throws Exception {
+        IRI iri = manager.getDistributedCatalogIRI();
+        assertEquals(distributedCatalogId, iri);
+    }
+
+    @Test
+    public void testGetLocalCatalogIRI() throws Exception {
+        IRI iri = manager.getLocalCatalogIRI();
+        assertEquals(localCatalogId, iri);
+    }
+
+    @Test
+    public void testGetDistributedCatalog() throws Exception {
         Catalog catalog = manager.getDistributedCatalog();
         Optional<Value> title = catalog.getProperty(vf.createIRI(DC_TITLE));
         Optional<Value> description = catalog.getProperty(vf.createIRI(DC_DESCRIPTION));
@@ -395,14 +409,6 @@ public class SimpleCatalogManagerTest {
         Resource existingId = vf.createIRI("http://matonto.org/test/records#update");
         Record record = recordFactory.createNew(existingId);
         record.addProperty(vf.createLiteral("record"), dcIdentifier);
-        manager.addRecord(distributedCatalogId, record);
-    }
-
-    @Test(expected = MatOntoException.class)
-    public void testAddRecordWithExistingIdentifier() {
-        Resource newId = vf.createIRI("http://matonto.org/test/records#brand-new");
-        Record record = recordFactory.createNew(newId);
-        record.addProperty(vf.createLiteral("Unique"), dcIdentifier);
         manager.addRecord(distributedCatalogId, record);
     }
 
@@ -784,25 +790,6 @@ public class SimpleCatalogManagerTest {
         Resource distributedCatalogId = vf.createIRI("http://matonto.org/test/catalog-local");
         Optional<Record> optionalRecord = manager.getRecord(distributedCatalogId, recordId, recordFactory);
         assertFalse(optionalRecord.isPresent());
-    }
-
-    @Test
-    public void testGetRecordByIdentifier() throws Exception {
-        Optional<Record> result = manager.getRecord("Unique", recordFactory);
-        assertTrue(result.isPresent());
-        Record record = result.get();
-        assertTrue(record.getProperty(vf.createIRI(DC_TITLE)).isPresent());
-        assertEquals("Unique", record.getProperty(vf.createIRI(DC_TITLE)).get().stringValue());
-        assertTrue(record.getProperty(vf.createIRI(DC_IDENTIFIER)).isPresent());
-        assertEquals("Unique", record.getProperty(vf.createIRI(DC_IDENTIFIER)).get().stringValue());
-        assertTrue(record.getProperty(vf.createIRI(DC_MODIFIED)).isPresent());
-        assertTrue(record.getProperty(vf.createIRI(DC_ISSUED)).isPresent());
-    }
-
-    @Test
-    public void testGetRecordByMissingIdentifier() throws Exception {
-        Optional<Record> result = manager.getRecord("Missing", recordFactory);
-        assertFalse(result.isPresent());
     }
 
     @Test

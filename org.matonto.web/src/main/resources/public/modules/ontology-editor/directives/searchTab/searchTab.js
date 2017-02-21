@@ -45,7 +45,7 @@
                     dvm.onKeyup = function($event) {
                         if ($event.keyCode === 13) {
                             dvm.sm.unSelectItem();
-                            dvm.om.getSearchResults(dvm.sm.listItem.ontologyId, dvm.sm.listItem.branchId,
+                            dvm.om.getSearchResults(dvm.sm.listItem.recordId, dvm.sm.listItem.branchId,
                                 dvm.sm.listItem.commitId, dvm.sm.state.searchText).then(results => {
                                     dvm.sm.state.errorMessage = '';
                                     dvm.sm.state.results = results;

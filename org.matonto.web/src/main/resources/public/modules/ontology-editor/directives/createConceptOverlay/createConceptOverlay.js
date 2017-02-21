@@ -77,7 +77,7 @@
                         });
                         _.set(dvm.concept, 'matonto.originalIRI', dvm.concept['@id']);
                         // add the entity to the ontology
-                        dvm.om.addEntity(dvm.sm.listItem.ontology, dvm.concept);
+                        dvm.om.addEntity(dvm.sm.listItem, dvm.concept);
                         // update relevant lists
                         _.get(dvm.sm.listItem, 'conceptHierarchy').push({'entityIRI': dvm.concept['@id']});
                         _.set(_.get(dvm.sm.listItem, 'index'), dvm.concept['@id'], dvm.sm.listItem.ontology.length - 1);

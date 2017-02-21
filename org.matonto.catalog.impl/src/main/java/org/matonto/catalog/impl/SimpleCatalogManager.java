@@ -295,6 +295,16 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
+    public IRI getDistributedCatalogIRI() {
+        return (IRI) distributedCatalogIRI;
+    }
+
+    @Override
+    public IRI getLocalCatalogIRI() {
+        return (IRI) localCatalogIRI;
+    }
+
+    @Override
     public Catalog getDistributedCatalog() throws MatOntoException {
         return getCatalog(distributedCatalogIRI);
     }
@@ -422,11 +432,7 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public <T extends Record> void addRecord(Resource catalogId, T record) throws MatOntoException {
         try (RepositoryConnection conn = repository.getConnection()) {
-            IRI identifierIRI = vf.createIRI(DCTERMS.IDENTIFIER.stringValue());
-            Value identifier = record.getProperty(identifierIRI).orElseThrow(() ->
-                    new MatOntoException("The Record must have an identifier."));
-            if (resourceExists(catalogId, Catalog.TYPE) && !resourceExists(record.getResource())
-                    && !conn.getStatements(null, identifierIRI, identifier).hasNext()) {
+            if (resourceExists(catalogId, Catalog.TYPE) && !resourceExists(record.getResource())) {
                 record.setCatalog(getCatalog(catalogId));
                 conn.add(record.getModel(), record.getResource());
             } else {
@@ -482,20 +488,6 @@ public class SimpleCatalogManager implements CatalogManager {
         } catch (RepositoryException e) {
             throw new MatOntoException("Error in repository connection.", e);
         }
-    }
-
-    @Override
-    public <T extends Record> Optional<T> getRecord(String identifier, OrmFactory<T> factory) throws MatOntoException {
-        try (RepositoryConnection conn = repository.getConnection()) {
-            RepositoryResult<Statement> statements = conn.getStatements(null,
-                    vf.createIRI(DCTERMS.IDENTIFIER.stringValue()), vf.createLiteral(identifier));
-            if (statements.hasNext()) {
-                return getObject(true, statements.next().getSubject(), factory);
-            }
-        } catch (RepositoryException e) {
-            throw new MatOntoException("Error in repository connection.", e);
-        }
-        return Optional.empty();
     }
 
     @Override
@@ -1347,7 +1339,10 @@ public class SimpleCatalogManager implements CatalogManager {
         record.setProperty(vf.createLiteral(modified), vf.createIRI(DCTERMS.MODIFIED.stringValue()));
         record.setProperties(config.getPublishers().stream().map(User::getResource).collect(Collectors.toSet()),
                 vf.createIRI(DCTERMS.PUBLISHER.stringValue()));
-        record.setProperty(vf.createLiteral(config.getIdentifier()), vf.createIRI(DCTERMS.IDENTIFIER.stringValue()));
+        if (config.getIdentifier() != null) {
+            record.setProperty(vf.createLiteral(config.getIdentifier()),
+                    vf.createIRI(DCTERMS.IDENTIFIER.stringValue()));
+        }
         if (config.getDescription() != null) {
             record.setProperty(vf.createLiteral(config.getDescription()),
                     vf.createIRI(DCTERMS.DESCRIPTION.stringValue()));
@@ -1368,7 +1363,6 @@ public class SimpleCatalogManager implements CatalogManager {
      */
     private Record processRecordBindingSet(BindingSet bindingSet, Resource resource) {
         String title = Bindings.requiredLiteral(bindingSet, "title").stringValue();
-        String identifier = Bindings.requiredLiteral(bindingSet, "identifier").stringValue();
 
         Set<User> publishers = new HashSet<>();
         bindingSet.getBinding("publisher").ifPresent(binding -> {
@@ -1379,7 +1373,10 @@ public class SimpleCatalogManager implements CatalogManager {
             }
         });
 
-        RecordConfig.Builder builder = new RecordConfig.Builder(title, identifier, publishers);
+        RecordConfig.Builder builder = new RecordConfig.Builder(title, publishers);
+
+        bindingSet.getBinding("identifier").ifPresent(binding ->
+                builder.identifier(binding.getValue().stringValue()));
 
         bindingSet.getBinding("description").ifPresent(binding ->
                 builder.description(binding.getValue().stringValue()));

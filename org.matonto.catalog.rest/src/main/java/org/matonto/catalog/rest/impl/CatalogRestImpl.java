@@ -264,13 +264,12 @@ public class CatalogRestImpl implements CatalogRest {
             if (title == null) {
                 throw ErrorUtils.sendError("Record title is required", Response.Status.BAD_REQUEST);
             }
-            if (identifierIRI == null) {
-                throw ErrorUtils.sendError("Record identifier is required", Response.Status.BAD_REQUEST);
-            }
 
             User activeUser = getActiveUser(context, engineManager);
-            RecordConfig.Builder builder = new RecordConfig.Builder(title, identifierIRI,
-                    Collections.singleton(activeUser));
+            RecordConfig.Builder builder = new RecordConfig.Builder(title, Collections.singleton(activeUser));
+            if (identifierIRI != null) {
+                builder.identifier(identifierIRI);
+            }
             if (description != null) {
                 builder.description(description);
             }

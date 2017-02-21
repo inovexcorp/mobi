@@ -15,7 +15,6 @@ WHERE {
 	?record a ?type ;
 	    mcat:catalog ?catalog ;
 		dc:title ?title ;
-		dc:identifier ?identifier ;
 		dc:issued ?issued ;
 		dc:modified ?modified ;
 		dc:publisher ?publisher ;
@@ -29,4 +28,5 @@ WHERE {
 
 	OPTIONAL { ?record dc:description ?description } .
     OPTIONAL { ?record mcat:keyword ?keyword } .
+    OPTIONAL { ?record dc:identifier ?identifier } .
 } GROUP BY ?record ?title ?issued ?modified ?description ?identifier ?publisher
