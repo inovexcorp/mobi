@@ -828,15 +828,14 @@ public class CatalogRestImpl implements CatalogRest {
             if (message == null) {
                 throw ErrorUtils.sendError("Commit message is required", Response.Status.BAD_REQUEST);
             }
-            Optional<Commit> headCommit = optHeadCommit(catalogId, recordId, branchId);
-            Set<Commit> parents = headCommit.isPresent() ? Collections.singleton(headCommit.get()) : null;
+            Commit baseCommit = optHeadCommit(catalogId, recordId, branchId).orElse(null);
             User activeUser = getActiveUser(context, engineManager);
             Resource inProgressCommitIRI = catalogManager.getInProgressCommitIRI(activeUser.getResource(),
                     factory.createIRI(recordId)).orElseThrow(() ->
                     ErrorUtils.sendError("User has no InProgressCommit", Response.Status.BAD_REQUEST));
             InProgressCommit inProgressCommit = catalogManager.getCommit(inProgressCommitIRI, inProgressCommitFactory)
                     .orElseThrow(() -> ErrorUtils.sendError("InProgressCommit not found", Response.Status.BAD_REQUEST));
-            Commit newCommit = catalogManager.createCommit(inProgressCommit, parents, message);
+            Commit newCommit = catalogManager.createCommit(inProgressCommit, message, baseCommit, null);
             catalogManager.addCommitToBranch(newCommit, factory.createIRI(branchId));
             catalogManager.removeInProgressCommit(inProgressCommitIRI);
             return Response.status(201).entity(newCommit.getResource().stringValue()).build();
@@ -910,8 +909,8 @@ public class CatalogRestImpl implements CatalogRest {
                 catalogManager.addDeletions(convertJsonld(deletionsJson), inProgressCommit.getResource());
             }
             Commit newCommit = catalogManager.createCommit(inProgressCommit,
-                    Stream.of(sourceHead, targetHead).collect(Collectors.toSet()),
-                    getMergeMessage(sourceBranchId, targetBranchId));
+                    getMergeMessage(sourceBranchId, targetBranchId),
+                    targetHead, sourceHead);
             catalogManager.addCommitToBranch(newCommit, factory.createIRI(targetBranchId));
             catalogManager.updateHead(sourceBranch.getResource(), newCommit.getResource());
             catalogManager.removeInProgressCommit(inProgressCommit.getResource());
@@ -1076,8 +1075,8 @@ public class CatalogRestImpl implements CatalogRest {
                 .orElse(emptyLiteral);
         String message = commit.getProperty(factory.createIRI(DCTERMS.TITLE.stringValue()))
                 .orElse(emptyLiteral).stringValue();
-        Set<String> parents = commit.getProperties(factory.createIRI(Activity.wasInformedBy_IRI))
-                .stream()
+        Set<String> parents = commit.getProperties(factory.createIRI(Commit.baseCommit_IRI),
+                factory.createIRI(Commit.auxiliaryCommit_IRI)).stream()
                 .map(Value::stringValue)
                 .collect(Collectors.toSet());
         User creator = engineManager.retrieveUser(engineManager.getUsername((Resource) creatorIRI)

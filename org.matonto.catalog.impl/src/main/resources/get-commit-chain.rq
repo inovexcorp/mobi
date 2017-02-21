@@ -4,5 +4,8 @@ PREFIX prov: <http://www.w3.org/ns/prov#>
 SELECT ?parent
 WHERE {
     ?commit a mcat:Commit ;
-        prov:wasInformedBy+ ?parent .
+        (mcat:baseCommit| mcat:auxiliaryCommit)+ ?parent .
+
+    ?parent prov:atTime ?time .
 }
+ORDER BY DESC(?time)

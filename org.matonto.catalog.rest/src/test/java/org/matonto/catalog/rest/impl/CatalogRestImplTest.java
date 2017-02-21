@@ -444,7 +444,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
                 .thenReturn(Arrays.stream(COMMIT_IRIS).map(vf::createIRI).collect(Collectors.toList()));
         when(catalogManager.getInProgressCommitIRI(any(Resource.class), any(Resource.class)))
                 .thenReturn(Optional.of(testInProgressCommit.getResource()));
-        when(catalogManager.createCommit(any(InProgressCommit.class), anySetOf(Commit.class), anyString())).thenReturn(testCommits.get(0));
+        when(catalogManager.createCommit(any(InProgressCommit.class), anyString(), any(Commit.class), any(Commit.class))).thenReturn(testCommits.get(0));
         when(catalogManager.getCompiledResource(any(Resource.class))).thenReturn(Optional.of(compiledResource));
         when(catalogManager.applyInProgressCommit(any(Resource.class), any(Model.class))).thenReturn(compiledResourceWithChanges);
         when(catalogManager.createInProgressCommit(any(User.class), any(Resource.class))).thenReturn(testInProgressCommit);
@@ -2477,7 +2477,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         verify(catalogManager).getInProgressCommitIRI(vf.createIRI(USER_IRI), vf.createIRI(RECORD_IRI));
         verify(catalogManager).getCommit(testInProgressCommit.getResource(), inProgressCommitFactory);
         verify(catalogManager).removeInProgressCommit(testInProgressCommit.getResource());
-        verify(catalogManager).createCommit(eq(testInProgressCommit), anySetOf(Commit.class), eq("Message"));
+        verify(catalogManager).createCommit(eq(testInProgressCommit), eq("Message"), any(Commit.class), any(Commit.class));
         verify(catalogManager).addCommitToBranch(any(Commit.class), eq(vf.createIRI(BRANCH_IRI)));
     }
 
@@ -2896,7 +2896,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         verify(catalogManager).addAdditions(any(Model.class), any(Resource.class));
         verify(catalogManager).addDeletions(any(Model.class), any(Resource.class));
         verify(catalogManager).removeInProgressCommit(any(Resource.class));
-        verify(catalogManager).createCommit(eq(testInProgressCommit), anySetOf(Commit.class), anyString());
+        verify(catalogManager).createCommit(eq(testInProgressCommit), anyString(), any(Commit.class), any(Commit.class));
         verify(catalogManager).addCommitToBranch(any(Commit.class), eq(vf.createIRI(BRANCH_IRI)));
         verify(catalogManager, atLeastOnce()).getBranch(eq(vf.createIRI(BRANCH_IRI)), eq(branchFactory));
         verify(catalogManager).updateHead(any(Resource.class), any(Resource.class));

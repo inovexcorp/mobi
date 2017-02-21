@@ -771,13 +771,16 @@ public class SimpleCatalogManager implements CatalogManager {
                 if (headCommit.isPresent()) {
                     List<Resource> chain = getCommitChain(headCommit.get().getResource());
                     IRI headCommitIRI = vf.createIRI(Branch.head_IRI);
-                    IRI wasInformedByIRI = vf.createIRI(Activity.wasInformedBy_IRI);
+//                    IRI wasInformedByIRI = vf.createIRI(Activity.wasInformedBy_IRI);
+                    IRI baseCommitIRI = vf.createIRI(Commit.baseCommit_IRI);
+                    IRI auxiliaryCommitIRI = vf.createIRI(Commit.auxiliaryCommit_IRI);
                     IRI commitIRI = vf.createIRI(Tag.commit_IRI);
                     conn.begin();
-                    for (int i = chain.size() - 1; i >= 0; i--) {
-                        Resource commitId = chain.get(i);
+                    for (Resource commitId : chain) {
                         if (!conn.getStatements(null, headCommitIRI, commitId).hasNext()
-                                && !conn.getStatements(null, wasInformedByIRI, commitId).hasNext()) {
+                                && !conn.getStatements(null, baseCommitIRI, commitId).hasNext()
+                                && !conn.getStatements(null, auxiliaryCommitIRI, commitId).hasNext()) {
+//                                && !conn.getStatements(null, wasInformedByIRI, commitId).hasNext()) {
                             conn.remove((Resource) null, null, null, commitId);
                             conn.remove((Resource) null, commitIRI, commitId);
                         } else {
@@ -802,39 +805,43 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public Commit createCommit(@Nonnull InProgressCommit inProgressCommit, Set<Commit> parents,
-                               @Nonnull String message) {
+    public Commit createCommit(@Nonnull InProgressCommit inProgressCommit, @Nonnull String message, Commit baseCommit,
+                               Commit auxCommit) {
         IRI associatedWith = vf.createIRI(Activity.wasAssociatedWith_IRI);
-        IRI informedBy = vf.createIRI(Activity.wasInformedBy_IRI);
-        OffsetDateTime now = OffsetDateTime.now();
-        Value user = inProgressCommit.getProperty(associatedWith).get();
-        String metadata = now.toString() + user.stringValue();
         IRI generatedIRI = vf.createIRI(Activity.generated_IRI);
+        OffsetDateTime now = OffsetDateTime.now();
+        Resource revisionIRI = (Resource) inProgressCommit.getProperty(generatedIRI).get();
+        Value user = inProgressCommit.getProperty(associatedWith).get();
+        StringBuilder metadata = new StringBuilder(now.toString() + user.stringValue());
 
-        if (parents != null) {
-            metadata += parents.stream()
-                    .sorted(Comparator.comparing(commit2 -> commit2.getResource().stringValue()))
-                    .map(commit -> commit.getResource().stringValue()).collect(Collectors.joining(""));
+        Set<Value> generatedParents = new HashSet<>();
+        if (baseCommit != null) {
+            metadata.append(baseCommit.getResource().stringValue());
+            generatedParents.add(baseCommit.getProperty(generatedIRI).get());
         }
-
-        Commit commit = commitFactory.createNew(vf.createIRI(COMMIT_NAMESPACE + DigestUtils.shaHex(metadata)));
-        commit.setProperty(inProgressCommit.getProperty(generatedIRI).get(), generatedIRI);
+        if (auxCommit != null) {
+            metadata.append(auxCommit.getResource().stringValue());
+            generatedParents.add(auxCommit.getProperty(generatedIRI).get());
+        }
+        Commit commit = commitFactory.createNew(vf.createIRI(COMMIT_NAMESPACE
+                + DigestUtils.sha1Hex(metadata.toString())));
+        commit.setProperty(revisionIRI, generatedIRI);
         commit.setProperty(vf.createLiteral(now), vf.createIRI(PROV_AT_TIME));
         commit.setProperty(vf.createLiteral(message), vf.createIRI(DCTERMS.TITLE.stringValue()));
         commit.setProperty(user, associatedWith);
 
         Model revisionModel = mf.createModel(inProgressCommit.getModel());
         revisionModel.remove(inProgressCommit.getResource(), null, null);
-        Revision revision = revisionFactory.getExisting((Resource)inProgressCommit.getProperty(generatedIRI).get(),
-                revisionModel);
+        Revision revision = revisionFactory.getExisting(revisionIRI, revisionModel);
 
-        if (parents != null) {
-            revision.setProperties(parents.stream()
-                    .map(parent -> parent.getProperty(generatedIRI).get())
-                    .collect(Collectors.toSet()), vf.createIRI(Entity.wasDerivedFrom_IRI));
-            commit.setProperties(parents.stream()
-                    .map(Commit::getResource)
-                    .collect(Collectors.toSet()), informedBy);
+        if (baseCommit != null) {
+            commit.setBaseCommit(baseCommit);
+        }
+        if (auxCommit != null) {
+            commit.setAuxiliaryCommit(auxCommit);
+        }
+        if (generatedParents.size() != 0) {
+            revision.setProperties(generatedParents, vf.createIRI(Entity.wasDerivedFrom_IRI));
         }
 
         commit.getModel().addAll(revisionModel);
@@ -1022,7 +1029,7 @@ public class SimpleCatalogManager implements CatalogManager {
         List<Resource> results = new ArrayList<>();
         if (resourceExists(commitId, Commit.TYPE)) {
             try (RepositoryConnection conn = repository.getConnection()) {
-                Iterator<Value> commits = getCommitChainIterator(commitId, conn);
+                Iterator<Value> commits = getCommitChainIterator(commitId, conn, false);
                 commits.forEachRemaining(commit -> results.add((Resource) commit));
                 return results;
             } catch (RepositoryException e) {
@@ -1036,7 +1043,7 @@ public class SimpleCatalogManager implements CatalogManager {
     public Optional<Model> getCompiledResource(Resource commitId) throws MatOntoException {
         if (resourceExists(commitId, Commit.TYPE)) {
             try (RepositoryConnection conn = repository.getConnection()) {
-                Iterator<Value> iterator = getCommitChainIterator(commitId, conn);
+                Iterator<Value> iterator = getCommitChainIterator(commitId, conn, true);
                 Model model = createModelFromIterator(iterator, conn);
                 model.remove(null, null, null, vf.createIRI(DELETION_CONTEXT));
                 return Optional.of(model);
@@ -1054,8 +1061,8 @@ public class SimpleCatalogManager implements CatalogManager {
                 LinkedList<Value> leftList = new LinkedList<>();
                 LinkedList<Value> rightList = new LinkedList<>();
 
-                getCommitChainIterator(leftId, conn).forEachRemaining(leftList::add);
-                getCommitChainIterator(rightId, conn).forEachRemaining(rightList::add);
+                getCommitChainIterator(leftId, conn, true).forEachRemaining(leftList::add);
+                getCommitChainIterator(rightId, conn, true).forEachRemaining(rightList::add);
 
                 ListIterator<Value> leftIterator = leftList.listIterator();
                 ListIterator<Value> rightIterator = rightList.listIterator();
@@ -1590,14 +1597,15 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     /**
-     * Gets an iterator which contains all of the Resources (commits) leading up to the provided Resource identifying a
-     * commit.
+     * Gets an iterator which contains all of the Resources (commits) is the specified direction, either ascending or
+     * descending by date. If descending, the provided Resource identifying a commit will be first.
      *
      * @param commitId The Resource identifying the commit that you want to get the chain for.
      * @param conn The RepositoryConnection which will be queried for the Commits.
+     * @param asc Whether or not the iterator should be ascending by date
      * @return Iterator of Values containing the requested commits.
      */
-    private Iterator<Value> getCommitChainIterator(Resource commitId, RepositoryConnection conn) {
+    private Iterator<Value> getCommitChainIterator(Resource commitId, RepositoryConnection conn, boolean asc) {
         TupleQuery query = conn.prepareTupleQuery(GET_COMMIT_CHAIN);
         query.setBinding(COMMIT_BINDING, commitId);
         TupleQueryResult result = query.evaluate();
@@ -1605,13 +1613,13 @@ public class SimpleCatalogManager implements CatalogManager {
         result.forEach(bindingSet -> bindingSet.getBinding(PARENT_BINDING).ifPresent(binding ->
                 commits.add(binding.getValue())));
         commits.addFirst(commitId);
-        return commits.descendingIterator();
+        return asc ? commits.descendingIterator() : commits.iterator();
     }
 
     /**
      * Builds the Model based on the provided Iterator and Resource.
      *
-     * @param iterator The Iterator of commits which are supposed to be contained in the Model.
+     * @param iterator The Iterator of commits which are supposed to be contained in the Model in ascending order.
      * @param conn The RepositoryConnection which contains the requested Commits.
      * @return The Model containing the summation of all the Commits statements.
      */
