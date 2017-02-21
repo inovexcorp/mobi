@@ -28,6 +28,7 @@ import org.matonto.catalog.api.builder.RecordConfig;
 import org.matonto.catalog.api.ontologies.mcat.*;
 import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
+import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.orm.OrmFactory;
@@ -37,6 +38,20 @@ import java.security.InvalidParameterException;
 import java.util.*;
 
 public interface CatalogManager {
+
+    /**
+     * Returns the IRI for the distributed Catalog.
+     *
+     * @return The IRI which identifies the distributed Catalog.
+     */
+    IRI getDistributedCatalogIRI();
+
+    /**
+     * Returns the IRI for the local Catalog.
+     *
+     * @return The IRI which identifies the local Catalog.
+     */
+    IRI getLocalCatalogIRI();
 
     /**
      * Retrieves the distributed Catalog containing the published Records.
@@ -129,18 +144,6 @@ public interface CatalogManager {
      */
     <T extends Record> Optional<T> getRecord(Resource catalogId, Resource recordId, OrmFactory<T> factory) throws
             MatOntoException;
-
-    /**
-     * Gets the Record based on the provided identifier. The Record will be of type T which is determined by the
-     * provided OrmFactory.
-     *
-     * @param identifier The String identifying the Record you want to get.
-     * @param factory The OrmFactory of the Type of Record you want to get back.
-     * @param <T> An Object which extends Record.
-     * @return An Optional with a Record with the identifier if it was found.
-     * @throws MatOntoException Thrown if a connection to the repository could not be made.
-     */
-    <T extends Record> Optional<T> getRecord(String identifier, OrmFactory<T> factory) throws MatOntoException;
 
     /**
      * Creates a Distribution with the metadata from the provided DistributionConfig.

@@ -62,7 +62,7 @@
                     }
 
                     dvm.afterEdit = function() {
-                        var listItem = dvm.om.getListItemById(dvm.sm.listItem.ontologyId);
+                        var listItem = dvm.om.getListItemByRecordId(dvm.sm.listItem.recordId);
                         _.set(listItem, 'iriBegin', angular.copy(dvm.iriBegin));
                         _.set(listItem, 'iriThen', angular.copy(dvm.iriThen));
                         dvm.sm.showIriOverlay = false;

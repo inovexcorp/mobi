@@ -80,7 +80,7 @@
                             _.map(dvm.individual['@type'], type => {return {entityIRI: type}}), _.isEqual));
                         // add the entity to the ontology
                         dvm.individual['@type'].push(prefixes.owl + 'NamedIndividual');
-                        dvm.om.addEntity(dvm.sm.listItem.ontology, dvm.individual);
+                        dvm.om.addEntity(dvm.sm.listItem, dvm.individual);
                         _.set(_.get(dvm.sm.listItem, 'index'), dvm.individual['@id'], dvm.sm.listItem.ontology.length - 1);
                         dvm.om.addToAdditions(dvm.sm.listItem.recordId, dvm.individual);
                         // select the new individual

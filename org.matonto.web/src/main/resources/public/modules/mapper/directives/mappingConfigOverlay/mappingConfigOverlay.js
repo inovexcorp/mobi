@@ -161,7 +161,7 @@
                                 return dvm.mm.getOntology(ontologyInfo);
                             }, $q.reject).then(ontology => {
                                 versionObj.ontologies = [ontology];
-                                return dvm.om.getImportedOntologies(dvm.util.getDctermsValue(dvm.selectedRecord, 'identifier'), ontologyState.branchId, versionObj.commitId);
+                                return dvm.om.getImportedOntologies(ontologyState.recordId, ontologyState.branchId, versionObj.commitId);
                             }, $q.reject).then(imported => {
                                 _.forEach(imported, obj => {
                                     var ontology = {id: obj.id, entities: obj.ontology};
@@ -195,7 +195,7 @@
                                         return dvm.mm.getOntology(ontologyInfo);
                                     }, $q.reject).then(ontology => {
                                         versionObj.ontologies = [ontology];
-                                        return dvm.om.getImportedOntologies(dvm.util.getDctermsValue(dvm.selectedRecord, 'identifier'), dvm.selectedOntologyState.branchId, versionObj.commitId);
+                                        return dvm.om.getImportedOntologies(dvm.selectedOntologyState.recordId, dvm.selectedOntologyState.branchId, versionObj.commitId);
                                     }, $q.reject).then(imported => {
                                         _.forEach(imported, obj => {
                                             var ontology = {id: obj.id, entities: obj.ontology};
@@ -211,7 +211,7 @@
                                     versionObj.commitId = ontologyInfo.commitId;
                                     dvm.mm.getOntology(ontologyInfo).then(ontology => {
                                         versionObj.ontologies = [ontology];
-                                        return dvm.om.getImportedOntologies(ontologyInfo.ontologyId, ontologyInfo.branchId, versionObj.commitId);
+                                        return dvm.om.getImportedOntologies(ontologyInfo.recordId, ontologyInfo.branchId, versionObj.commitId);
                                     }, $q.reject).then(imported => {
                                         _.forEach(imported, obj => {
                                             var ontology = {id: obj.id, entities: obj.ontology};
