@@ -56,10 +56,9 @@
                     dvm.type = 'ontology';
 
                     dvm.open = function() {
-                        dvm.om.openOntology(dvm.ontologyId, dvm.recordId, dvm.type)
+                        dvm.om.openOntology(dvm.recordId, dvm.type)
                             .then(ontologyId => {
-                                var listItem = dvm.om.getListItemByRecordId(dvm.recordId);
-                                dvm.os.addState(dvm.recordId, dvm.om.getOntologyIRI(listItem.ontology), dvm.type);
+                                dvm.os.addState(dvm.recordId, ontologyId, dvm.type);
                                 dvm.os.setState(dvm.recordId);
                             }, errorMessage => dvm.errorMessage = errorMessage);
                     }

@@ -167,7 +167,7 @@
                 }
             }
 
-            self.create = function(ontologyId, annotationIRIs, iri) {
+            self.create = function(recordId, annotationIRIs, iri) {
                 var deferred = $q.defer();
                 var annotationJSON = {'@id': iri, '@type': [prefixes.owl + 'AnnotationProperty']};
                 if (_.indexOf(annotationIRIs, iri) === -1) {
@@ -176,7 +176,7 @@
                             annotationjson: annotationJSON
                         }
                     }
-                    $http.post(prefix + encodeURIComponent(ontologyId) + '/annotations', null, config)
+                    $http.post(prefix + encodeURIComponent(recordId) + '/annotations', null, config)
                         .then(response => {
                             if (_.get(response, 'status') === 200) {
                                 deferred.resolve(annotationJSON);

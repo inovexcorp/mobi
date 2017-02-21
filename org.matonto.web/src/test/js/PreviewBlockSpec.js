@@ -110,7 +110,7 @@ describe('Preview Block directive', function() {
                 controller.getPreview();
                 scope.$apply();
                 expect(controller.activePage.mode).toBe(test.mode);
-                expect(ontologyManagerSvc.getPreview).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId, ontologyStateSvc.listItem.recordId, test.serialization);
+                expect(ontologyManagerSvc.getPreview).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, test.serialization);
                 expect(controller.activePage.preview).toEqual({});
             });
         });
