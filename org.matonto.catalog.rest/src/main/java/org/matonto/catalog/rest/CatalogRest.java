@@ -768,9 +768,12 @@ public interface CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @ApiOperation("Gets the Commit chain for a specific Branch.")
-    Response getCommitChain(@PathParam("catalogId") String catalogId,
+    Response getCommitChain(@Context UriInfo uriInfo,
+                            @PathParam("catalogId") String catalogId,
                             @PathParam("recordId") String recordId,
-                            @PathParam("branchId") String branchId);
+                            @PathParam("branchId") String branchId,
+                            @QueryParam("offset") int offset,
+                            @QueryParam("limit") int limit);
 
     /**
      * Creates a new Commit in the repository for a specific Branch using the InProgressCommit associated with the user

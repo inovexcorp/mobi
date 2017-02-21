@@ -116,7 +116,6 @@ import java.util.stream.Stream;
 
 import static org.matonto.rest.util.RestUtils.encode;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anySetOf;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
@@ -176,29 +175,30 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     private static final String VERSION_IRI = "http://matonto.org/versions/test";
     private static final String[] COMMIT_IRIS = new String[] {
             "http://matonto.org/commits/0",
-            "http://matonto.org/commits/1"
+            "http://matonto.org/commits/1",
+            "http://matonto.org/commits/2"
     };
     private static final String BRANCH_IRI = "http://matonto.org/branches/test";
     private static final String USER_IRI = "http://matonto.org/users/tester";
     private static final String CONFLICT_IRI = "http://matonto.org/conflicts/test";
 
     @Mock
-    CatalogManager catalogManager;
+    private CatalogManager catalogManager;
 
     @Mock
-    EngineManager engineManager;
+    private EngineManager engineManager;
 
     @Mock
-    SesameTransformer transformer;
+    private SesameTransformer transformer;
 
     @Mock
-    PaginatedSearchResults<Record> results;
+    private PaginatedSearchResults<Record> results;
 
     @Mock
-    Conflict conflict;
+    private Conflict conflict;
 
     @Mock
-    Difference difference;
+    private Difference difference;
 
     @Override
     protected Application configureApp() throws Exception {
@@ -2393,6 +2393,9 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         verify(catalogManager).getBranch(vf.createIRI(BRANCH_IRI), branchFactory);
         verify(catalogManager).getCommitChain(any(Resource.class));
         Arrays.stream(COMMIT_IRIS).forEach(commitIRI -> verify(catalogManager).getCommit(vf.createIRI(commitIRI), commitFactory));
+        MultivaluedMap<String, Object> headers = response.getHeaders();
+        assertEquals(headers.get("X-Total-Count").get(0), "" + COMMIT_IRIS.length);
+        assertEquals(response.getLinks().size(), 0);
         try {
             JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
             assertEquals(result.size(), COMMIT_IRIS.length);
@@ -2401,6 +2404,60 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
                 assertTrue(commitObj.containsKey("id"));
                 assertTrue(Arrays.asList(COMMIT_IRIS).contains(commitObj.getString("id")));
             }
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void getCommitChainWithPaginationTest() {
+        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+                + "/branches/" + encode(BRANCH_IRI) + "/commits").queryParam("offset", 0).queryParam("limit", 10)
+                .request().get();
+        assertEquals(response.getStatus(), 200);
+        verify(catalogManager).getBranch(vf.createIRI(BRANCH_IRI), branchFactory);
+        verify(catalogManager).getCommitChain(any(Resource.class));
+        Arrays.stream(COMMIT_IRIS).forEach(commitIRI -> verify(catalogManager).getCommit(vf.createIRI(commitIRI), commitFactory));
+        MultivaluedMap<String, Object> headers = response.getHeaders();
+        assertEquals(headers.get("X-Total-Count").get(0), "" + COMMIT_IRIS.length);
+        assertEquals(response.getLinks().size(), 0);
+        try {
+            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            assertEquals(result.size(), COMMIT_IRIS.length);
+            for (Object aResult : result) {
+                JSONObject commitObj = JSONObject.fromObject(aResult);
+                assertTrue(commitObj.containsKey("id"));
+                assertTrue(Arrays.asList(COMMIT_IRIS).contains(commitObj.getString("id")));
+            }
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void getCommitChainWithPaginationAndLinksTest() {
+        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+                + "/branches/" + encode(BRANCH_IRI) + "/commits").queryParam("offset", 1).queryParam("limit", 1)
+                .request().get();
+        assertEquals(response.getStatus(), 200);
+        verify(catalogManager).getBranch(vf.createIRI(BRANCH_IRI), branchFactory);
+        verify(catalogManager).getCommitChain(any(Resource.class));
+        verify(catalogManager).getCommit(vf.createIRI(COMMIT_IRIS[1]), commitFactory);
+        MultivaluedMap<String, Object> headers = response.getHeaders();
+        assertEquals(headers.get("X-Total-Count").get(0), "" + COMMIT_IRIS.length);
+        Set<Link> links = response.getLinks();
+        assertEquals(links.size(), 2);
+        links.forEach(link -> {
+            assertTrue(link.getUri().getRawPath().contains("catalogs/" + encode(LOCAL_IRI) + "/records/"
+                    + encode(RECORD_IRI) + "/branches/" + encode(BRANCH_IRI) + "/commits"));
+            assertTrue(link.getRel().equals("prev") || link.getRel().equals("next"));
+        });
+        try {
+            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            assertEquals(result.size(), 1);
+            JSONObject commitObj = result.getJSONObject(0);
+            assertTrue(commitObj.containsKey("id"));
+            assertEquals(commitObj.getString("id"), COMMIT_IRIS[1]);
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }

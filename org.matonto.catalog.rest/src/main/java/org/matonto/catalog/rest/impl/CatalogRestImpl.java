@@ -805,17 +805,29 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
-    public Response getCommitChain(String catalogId, String recordId, String branchId) {
+    public Response getCommitChain(UriInfo uriInfo, String catalogId, String recordId, String branchId, int offset,
+                                   int limit) {
+        if (offset < 0) {
+            throw ErrorUtils.sendError("Offset cannot be negative.", Response.Status.BAD_REQUEST);
+        }
+        if (limit < 0 || (offset > 0 && limit == 0)) {
+            throw ErrorUtils.sendError("Limit must be positive.", Response.Status.BAD_REQUEST);
+        }
         try {
             Resource headIRI = getHeadCommitIRI(catalogId, recordId, branchId);
             JSONArray commitChain = new JSONArray();
-            catalogManager.getCommitChain(headIRI).stream()
-                    .map(resource -> catalogManager.getCommit(resource, commitFactory))
+            List<Resource> commitIRIs = catalogManager.getCommitChain(headIRI);
+            Stream<Resource> result = commitIRIs.stream();
+            if (limit > 0) {
+                result = result.skip(offset)
+                        .limit(limit);
+            }
+            result.map(resource -> catalogManager.getCommit(resource, commitFactory))
                     .filter(Optional::isPresent)
                     .map(Optional::get)
                     .map(this::createCommitJson)
                     .forEach(commitChain::add);
-            return Response.ok(commitChain).build();
+            return createPaginatedResponseWithJson(uriInfo, commitChain, commitIRIs.size(), limit, offset);
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
         }
@@ -1075,10 +1087,10 @@ public class CatalogRestImpl implements CatalogRest {
                 .orElse(emptyLiteral);
         String message = commit.getProperty(factory.createIRI(DCTERMS.TITLE.stringValue()))
                 .orElse(emptyLiteral).stringValue();
-        Set<String> parents = commit.getProperties(factory.createIRI(Commit.baseCommit_IRI),
-                factory.createIRI(Commit.auxiliaryCommit_IRI)).stream()
-                .map(Value::stringValue)
-                .collect(Collectors.toSet());
+        String baseCommit = commit.getProperty(factory.createIRI(Commit.baseCommit_IRI))
+                .orElse(emptyLiteral).stringValue();
+        String auxCommit = commit.getProperty(factory.createIRI(Commit.auxiliaryCommit_IRI))
+                .orElse(emptyLiteral).stringValue();
         User creator = engineManager.retrieveUser(engineManager.getUsername((Resource) creatorIRI)
                 .orElse("")).orElse(null);
         JSONObject creatorObject = new JSONObject();
@@ -1095,7 +1107,8 @@ public class CatalogRestImpl implements CatalogRest {
                 .element("creator", creatorObject)
                 .element("date", date.stringValue())
                 .element("message", message)
-                .element("parents", parents);
+                .element("base", baseCommit)
+                .element("auxiliary", auxCommit);
     }
 
     /**
@@ -1114,12 +1127,15 @@ public class CatalogRestImpl implements CatalogRest {
      */
     private <T extends Thing> Response createPaginatedResponse(UriInfo uriInfo, Collection<T> items, int totalSize,
                                                                int limit, int offset) {
-        Links links = LinksUtils.buildLinks(uriInfo, items.size(), totalSize, limit, offset);
-
         JSONArray results = JSONArray.fromObject(items.stream()
                 .map(this::thingToJsonObject)
                 .collect(Collectors.toList()));
-        Response.ResponseBuilder response = Response.ok(results).header("X-Total-Count", totalSize);
+        return createPaginatedResponseWithJson(uriInfo, results, totalSize, limit, offset);
+    }
+
+    private Response createPaginatedResponseWithJson(UriInfo uriInfo, JSONArray items, int totalSize, int limit, int offset) {
+        Links links = LinksUtils.buildLinks(uriInfo, items.size(), totalSize, limit, offset);
+        Response.ResponseBuilder response = Response.ok(items).header("X-Total-Count", totalSize);
         if (links.getNext() != null) {
             response = response.link(links.getBase() + links.getNext(), "next");
         }
