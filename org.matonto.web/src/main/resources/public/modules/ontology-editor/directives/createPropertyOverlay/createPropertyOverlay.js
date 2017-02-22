@@ -41,6 +41,7 @@
                     var setAsObject = false;
                     var setAsDatatype = false;
 
+                    dvm.checkbox = false;
                     dvm.prefixes = prefixes;
                     dvm.iriPattern = REGEX.IRI;
                     dvm.om = ontologyManagerService;
@@ -72,20 +73,12 @@
                         dvm.property['@id'] = iriBegin + iriThen + iriEnd;
                     }
 
-                    function onCreateSuccess(response) {
-                        dvm.sm.showCreatePropertyOverlay = false;
-                        dvm.sm.selectItem('property-editor', response.entityIRI, dvm.sm.listItem);
-                        // TODO: figure out how to open up where this property is listed
-                        // Potentially easier with the getPath function I'm working on
-                    }
-
-                    function onCreateError(errorMessage) {
-                        dvm.error = errorMessage;
-                    }
-
                     dvm.create = function() {
                         if (dvm.property[prefixes.dcterms + 'description'][0]['@value'] === '') {
                             _.unset(dvm.property, prefixes.dcterms + 'description');
+                        }
+                        if (dvm.checkbox) {
+                            dvm.property['@type'].push(prefixes.owl + 'FunctionalProperty');
                         }
                         _.forEach(['domain', 'range'], function(axiom) {
                             if (_.isEqual(dvm.property[prefixes.rdfs + axiom], [])) {
@@ -106,7 +99,7 @@
                         }
                         _.set(_.get(dvm.sm.listItem, 'index'), dvm.property['@id'], dvm.sm.listItem.ontology.length - 1);
                         dvm.om.addToAdditions(dvm.sm.listItem.recordId, dvm.property);
-                        // select the new class
+                        // select the new property
                         dvm.sm.selectItem(_.get(dvm.property, '@id'));
                         // hide the overlay
                         dvm.sm.showCreatePropertyOverlay = false;

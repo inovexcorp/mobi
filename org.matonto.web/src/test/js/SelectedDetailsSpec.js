@@ -21,25 +21,25 @@
  * #L%
  */
 describe('Selected Details directive', function() {
-    var $compile,
-        scope,
-        element,
-        ontologyStateSvc;
+    var $compile, scope, element, ontologyStateSvc, $filter, controller;
 
     beforeEach(function() {
         module('templates');
         module('selectedDetails');
         mockOntologyManager();
         mockOntologyState();
+        injectPrefixationFilter();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _$filter_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
+            $filter = _$filter_;
         });
 
         element = $compile(angular.element('<selected-details></selected-details>'))(scope);
         scope.$digest();
+        controller = element.controller('selectedDetails');
     });
 
     describe('replaces the element with the correct html', function() {
@@ -55,6 +55,20 @@ describe('Selected Details directive', function() {
             scope.$digest();
             expect(element.find('div').length).toBe(0);
             expect(element.find('static-iri').length).toBe(0);
+        });
+    });
+
+    describe('controller methods', function() {
+        describe('getTypes functions properly', function() {
+            it('when @type is empty', function() {
+                ontologyStateSvc.selected = {};
+                expect(controller.getTypes()).toEqual('');
+            });
+            it('when @type has items', function() {
+                var expected = 'test, test2';
+                ontologyStateSvc.selected = {'@type': ['test', 'test2']};
+                expect(controller.getTypes()).toEqual(expected);
+            });
         });
     });
 });

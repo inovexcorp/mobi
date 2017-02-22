@@ -89,7 +89,8 @@
                     value: '=',
                     changeEvent: '&',
                     displayText: '=',
-                    isDisabledWhen: '='
+                    isDisabledWhen: '=',
+                    inline: '<?'
                 },
                 controllerAs: 'dvm',
                 controller: ['$scope', function($scope) {
