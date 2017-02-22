@@ -21,13 +21,16 @@
  * #L%
  */
 describe('Commit History Table directive', function() {
-    var $compile, scope, $q, element, controller, catalogManagerSvc, getDeferred, catalogId, isolatedScope;
+    var $compile, scope, $q, element, controller, isolatedScope, catalogManagerSvc, getDeferred, catalogId;
     var error = 'error';
     var id = 'id';
     var commitId = 'commitId';
-    var branchId = 'branchId';
+    var branch = {'@id': 'branchId'};
     var recordId = 'recordId';
     var commits = [{'@id': commitId}];
+    var paperMock = {
+        clear: jasmine.createSpy('clear')
+    };
 
     beforeEach(function() {
         module('templates');
@@ -37,23 +40,27 @@ describe('Commit History Table directive', function() {
         mockUserManager();
         mockUtil();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _catalogManagerService_) {
+        module(function($provide) {
+            $provide.constant('Snap', jasmine.createSpy('Snap').and.returnValue(paperMock));
+        });
+
+        inject(function(_$compile_, _$rootScope_, _$q_, _catalogManagerService_, _Snap_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
             catalogManagerSvc = _catalogManagerService_;
+            Snap = _Snap_;
         });
         catalogId = _.get(catalogManagerSvc.localCatalog, '@id', '');
         getDeferred = $q.defer();
-        catalogManagerSvc.getBranchCommits.and.returnValue(getDeferred.promise);
 
         scope.recordId = recordId;
-        scope.branchId = branchId;
+        scope.branch = branch;
         scope.commitId = commitId;
-        element = $compile(angular.element('<commit-history-table commit-id="commitId" branch-id="branchId" record-id="recordId"></commit-history-table>'))(scope);
+        element = $compile(angular.element('<commit-history-table commit-id="commitId" branch="branch" record-id="recordId"></commit-history-table>'))(scope);
         scope.$digest();
         controller = element.controller('commitHistoryTable');
-        scope.dvm = controller;
+        // scope.dvm = controller;
         isolatedScope = element.isolateScope();
     });
 
@@ -61,33 +68,34 @@ describe('Commit History Table directive', function() {
         it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
             expect(element.hasClass('commit-history-table')).toBe(true);
+            expect(element.querySelectorAll('.wrapper').length).toBe(1);
+            expect(element.querySelectorAll('.table-wrapper').length).toBe(1);
         });
-        _.forEach(['table', 'thead', 'tbody'], function(item) {
-            it('for ' + item, function() {
+        _.forEach(['table', 'thead', 'tbody', 'svg'], function(item) {
+            it('with a ' + item, function() {
                 expect(element.find(item).length).toBe(1);
             });
         });
-        it('for error-display', function() {
+        it('with ths', function() {
+            expect(element.find('th').length).toBe(4);
+        });
+        it('depending on whether there is a error', function() {
             expect(element.find('error-display').length).toBe(0);
             controller.error = error;
             scope.$apply();
             expect(element.find('error-display').length).toBe(1);
         });
-        it('for th', function() {
-            expect(element.find('th').length).toBe(4);
-        });
     });
-
-    describe('controller bound variables', function() {
+    describe('controller bound variable', function() {
         it('recordId should be one way bound', function() {
             controller.recordId = 'new';
             scope.$digest();
             expect(scope.recordId).toEqual(recordId);
         });
-        it('branchId should be one way bound', function() {
-            controller.branchId = 'new';
+        it('branch should be one way bound', function() {
+            controller.branch = {};
             scope.$digest();
-            expect(scope.branchId).toEqual(branchId);
+            expect(scope.branch).toEqual(branch);
         });
         it('commitId should be one way bound', function() {
             controller.commitId = 'new';
@@ -95,37 +103,81 @@ describe('Commit History Table directive', function() {
             expect(scope.commitId).toEqual(commitId);
         });
     });
-
     describe('controller methods', function() {
-        describe('getBranchCommits should be called initially', function() {
-            it('and if it succeeds', function() {
-                getDeferred.resolve(commits);
-                scope.$apply();
-                expect(catalogManagerSvc.getBranchCommits).toHaveBeenCalledWith(scope.branchId, scope.recordId, catalogId);
-                expect(controller.error).toEqual('');
-                expect(controller.commits).toEqual(commits);
+        describe('should get the list of commits for a branch', function() {
+            beforeEach(function() {
+                catalogManagerSvc.getBranchCommits.and.returnValue(getDeferred.promise);
+                spyOn(controller, 'drawGraph');
+                spyOn(controller, 'reset');
             });
-            it('and if it fails', function() {
-                getDeferred.reject(error);
-                scope.$apply();
-                expect(catalogManagerSvc.getBranchCommits).toHaveBeenCalledWith(scope.branchId, scope.recordId, catalogId);
-                expect(controller.error).toEqual(error);
-                expect(controller.commits).toEqual([]);
+            describe('successfully', function() {
+                beforeEach(function() {
+                    getDeferred.resolve(commits);
+                });
+                it('drawing the graph', function() {
+                    isolatedScope.graph = true;
+                    controller.getCommits();
+                    scope.$apply();
+                    expect(catalogManagerSvc.getBranchCommits).toHaveBeenCalledWith(scope.branch['@id'], scope.recordId, catalogId);
+                    expect(controller.error).toEqual('');
+                    expect(controller.commits).toEqual(commits);
+                    expect(controller.drawGraph).toHaveBeenCalled();
+                });
+                it('without drawing a graph', function() {
+                    isolatedScope.graph = false;
+                    controller.getCommits();
+                    scope.$apply();
+                    expect(catalogManagerSvc.getBranchCommits).toHaveBeenCalledWith(scope.branch['@id'], scope.recordId, catalogId);
+                    expect(controller.error).toEqual('');
+                    expect(controller.commits).toEqual(commits);
+                    expect(controller.drawGraph).not.toHaveBeenCalled();
+                });
+            });
+            describe('unless an error occurs', function() {
+                beforeEach(function() {
+                    getDeferred.reject(error);
+                });
+                it('with a graph', function() {
+                    isolatedScope.graph = true;
+                    controller.getCommits();
+                    scope.$apply();
+                    expect(catalogManagerSvc.getBranchCommits).toHaveBeenCalledWith(scope.branch['@id'], scope.recordId, catalogId);
+                    expect(controller.error).toEqual(error);
+                    expect(controller.commits).toEqual([]);
+                    expect(controller.reset).toHaveBeenCalled();
+                });
+                it('with no graph', function() {
+                    isolatedScope.graph = false;
+                    controller.getCommits();
+                    scope.$apply();
+                    expect(catalogManagerSvc.getBranchCommits).toHaveBeenCalledWith(scope.branch['@id'], scope.recordId, catalogId);
+                    expect(controller.error).toEqual(error);
+                    expect(controller.commits).toEqual([]);
+                    expect(controller.reset).not.toHaveBeenCalled();
+                });
             });
         });
-        describe('$scope.$watch triggers when changing the', function() {
-            it('commitId', function() {
-                scope.$apply('commitId = "new"');
-                expect(catalogManagerSvc.getBranchCommits).toHaveBeenCalledWith(scope.branchId, scope.recordId, catalogId);
-            });
-            it('branchId', function() {
-                scope.$apply('branchId = "new"');
-                expect(catalogManagerSvc.getBranchCommits).toHaveBeenCalledWith('new', scope.recordId, catalogId);
-            });
-            it('recordId', function() {
-                scope.$apply('recordId = "new"');
-                expect(catalogManagerSvc.getBranchCommits).toHaveBeenCalledWith(scope.branchId, 'new', catalogId);
-            });
+        it('should reset graph variables', function() {
+            controller.reset();
+            expect(paperMock.clear).toHaveBeenCalled();
+            expect(controller.deltaX).toBe(85);
+        });
+    });
+    describe('$scope.$watch triggers when changing the', function() {
+        beforeEach(function() {
+            spyOn(controller, 'getCommits');
+        });
+        it('commitId', function() {
+            scope.$apply('commitId = "new"');
+            expect(controller.getCommits).toHaveBeenCalled();
+        });
+        it('branch', function() {
+            scope.$apply('branch = {"@id": "new"}');
+            expect(controller.getCommits).toHaveBeenCalled();
+        });
+        it('recordId', function() {
+            scope.$apply('recordId = "new"');
+            expect(controller.getCommits).toHaveBeenCalled();
         });
     });
 });

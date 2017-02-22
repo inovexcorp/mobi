@@ -22,22 +22,27 @@
   -->
 <div class="commit-history-table">
     <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
-    <table class="table table-hover">
-        <thead class="thead-default">
-            <tr>
-                <th>Creator</th>
-                <th>Commit</th>
-                <th>Message</th>
-                <th>Date</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr ng-repeat="commit in dvm.commits track by commit.id">
-                <td class="text-nowrap" title="Username: {{commit.creator.username}}">{{dvm.um.getUserDisplay(commit.creator)}}</td>
-                <td class="text-nowrap commit-id" title="{{commit.id}}">{{dvm.util.condenseCommitId(commit.id)}}</td>
-                <td title="{{commit.message}}" class="commit-message">{{commit.message}}</td>
-                <td class="text-nowrap" title="{{dvm.util.getDate(commit.date, 'medium')}}">{{dvm.util.getDate(commit.date, 'd MMM yyyy')}}</td>
-            </tr>
-        </tbody>
-    </table>
+    <div class="wrapper">
+        <svg class="commit-graph" ng-style="{'height': graph ? dvm.commits.length * dvm.circleSpacing + dvm.deltaY : 0, 'width': graph ? dvm.deltaX + 10 : 0}"></svg>
+        <div class="table-wrapper">
+            <table class="table table-hover">
+                <thead class="thead-default">
+                    <tr>
+                        <th class="fit">Creator</th>
+                        <th class="fit">Commit</th>
+                        <th>Message</th>
+                        <th class="fit">Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="commit in dvm.commits track by commit.id">
+                        <td class="fit" title="Username: {{commit.creator.username}}">{{dvm.um.getUserDisplay(commit.creator)}}</td>
+                        <td class="fit commit-id" title="{{commit.id}}">{{dvm.util.condenseCommitId(commit.id)}}</td>
+                        <td title="{{commit.message}}" class="commit-message"><div><span>{{commit.message}}</span></div></td>
+                        <td class="fit" title="{{dvm.util.getDate(commit.date, 'medium')}}">{{dvm.util.getDate(commit.date, 'short')}}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
