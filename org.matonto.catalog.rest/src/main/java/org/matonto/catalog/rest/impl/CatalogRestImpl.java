@@ -264,13 +264,12 @@ public class CatalogRestImpl implements CatalogRest {
             if (title == null) {
                 throw ErrorUtils.sendError("Record title is required", Response.Status.BAD_REQUEST);
             }
-            if (identifierIRI == null) {
-                throw ErrorUtils.sendError("Record identifier is required", Response.Status.BAD_REQUEST);
-            }
 
             User activeUser = getActiveUser(context, engineManager);
-            RecordConfig.Builder builder = new RecordConfig.Builder(title, identifierIRI,
-                    Collections.singleton(activeUser));
+            RecordConfig.Builder builder = new RecordConfig.Builder(title, Collections.singleton(activeUser));
+            if (identifierIRI != null) {
+                builder.identifier(identifierIRI);
+            }
             if (description != null) {
                 builder.description(description);
             }
@@ -805,17 +804,29 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
-    public Response getCommitChain(String catalogId, String recordId, String branchId) {
+    public Response getCommitChain(UriInfo uriInfo, String catalogId, String recordId, String branchId, int offset,
+                                   int limit) {
+        if (offset < 0) {
+            throw ErrorUtils.sendError("Offset cannot be negative.", Response.Status.BAD_REQUEST);
+        }
+        if (limit < 0 || (offset > 0 && limit == 0)) {
+            throw ErrorUtils.sendError("Limit must be positive.", Response.Status.BAD_REQUEST);
+        }
         try {
             Resource headIRI = getHeadCommitIRI(catalogId, recordId, branchId);
             JSONArray commitChain = new JSONArray();
-            catalogManager.getCommitChain(headIRI).stream()
-                    .map(resource -> catalogManager.getCommit(resource, commitFactory))
+            List<Resource> commitIRIs = catalogManager.getCommitChain(headIRI);
+            Stream<Resource> result = commitIRIs.stream();
+            if (limit > 0) {
+                result = result.skip(offset)
+                        .limit(limit);
+            }
+            result.map(resource -> catalogManager.getCommit(resource, commitFactory))
                     .filter(Optional::isPresent)
                     .map(Optional::get)
                     .map(this::createCommitJson)
                     .forEach(commitChain::add);
-            return Response.ok(commitChain).build();
+            return createPaginatedResponseWithJson(uriInfo, commitChain, commitIRIs.size(), limit, offset);
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
         }
@@ -828,15 +839,14 @@ public class CatalogRestImpl implements CatalogRest {
             if (message == null) {
                 throw ErrorUtils.sendError("Commit message is required", Response.Status.BAD_REQUEST);
             }
-            Optional<Commit> headCommit = optHeadCommit(catalogId, recordId, branchId);
-            Set<Commit> parents = headCommit.isPresent() ? Collections.singleton(headCommit.get()) : null;
+            Commit baseCommit = optHeadCommit(catalogId, recordId, branchId).orElse(null);
             User activeUser = getActiveUser(context, engineManager);
             Resource inProgressCommitIRI = catalogManager.getInProgressCommitIRI(activeUser.getResource(),
                     factory.createIRI(recordId)).orElseThrow(() ->
                     ErrorUtils.sendError("User has no InProgressCommit", Response.Status.BAD_REQUEST));
             InProgressCommit inProgressCommit = catalogManager.getCommit(inProgressCommitIRI, inProgressCommitFactory)
                     .orElseThrow(() -> ErrorUtils.sendError("InProgressCommit not found", Response.Status.BAD_REQUEST));
-            Commit newCommit = catalogManager.createCommit(inProgressCommit, parents, message);
+            Commit newCommit = catalogManager.createCommit(inProgressCommit, message, baseCommit, null);
             catalogManager.addCommitToBranch(newCommit, factory.createIRI(branchId));
             catalogManager.removeInProgressCommit(inProgressCommitIRI);
             return Response.status(201).entity(newCommit.getResource().stringValue()).build();
@@ -898,8 +908,6 @@ public class CatalogRestImpl implements CatalogRest {
                 throw ErrorUtils.sendError("User already has an InProgressCommit for Record " + recordId,
                         Response.Status.BAD_REQUEST);
             }
-            Branch sourceBranch = catalogManager.getBranch(factory.createIRI(sourceBranchId), branchFactories.get(Branch.TYPE))
-                    .orElseThrow(() -> ErrorUtils.sendError("Branch not found", Response.Status.BAD_REQUEST));
             InProgressCommit inProgressCommit = catalogManager.createInProgressCommit(activeUser,
                     factory.createIRI(recordId));
             catalogManager.addInProgressCommit(inProgressCommit);
@@ -909,9 +917,15 @@ public class CatalogRestImpl implements CatalogRest {
             if (deletionsJson != null && !deletionsJson.isEmpty()) {
                 catalogManager.addDeletions(convertJsonld(deletionsJson), inProgressCommit.getResource());
             }
+            Branch sourceBranch = catalogManager.getBranch(factory.createIRI(sourceBranchId),
+                    branchFactories.get(Branch.TYPE)).orElseThrow(() ->
+                    ErrorUtils.sendError("Source branch not found", Response.Status.BAD_REQUEST));
+            Branch targetBranch = catalogManager.getBranch(factory.createIRI(targetBranchId),
+                    branchFactories.get(Branch.TYPE)).orElseThrow(() ->
+                    ErrorUtils.sendError("Target branch not found", Response.Status.BAD_REQUEST));
             Commit newCommit = catalogManager.createCommit(inProgressCommit,
-                    Stream.of(sourceHead, targetHead).collect(Collectors.toSet()),
-                    getMergeMessage(sourceBranchId, targetBranchId));
+                    getMergeMessage(sourceBranch, targetBranch),
+                    targetHead, sourceHead);
             catalogManager.addCommitToBranch(newCommit, factory.createIRI(targetBranchId));
             catalogManager.updateHead(sourceBranch.getResource(), newCommit.getResource());
             catalogManager.removeInProgressCommit(inProgressCommit.getResource());
@@ -1076,10 +1090,10 @@ public class CatalogRestImpl implements CatalogRest {
                 .orElse(emptyLiteral);
         String message = commit.getProperty(factory.createIRI(DCTERMS.TITLE.stringValue()))
                 .orElse(emptyLiteral).stringValue();
-        Set<String> parents = commit.getProperties(factory.createIRI(Activity.wasInformedBy_IRI))
-                .stream()
-                .map(Value::stringValue)
-                .collect(Collectors.toSet());
+        String baseCommit = commit.getProperty(factory.createIRI(Commit.baseCommit_IRI))
+                .orElse(emptyLiteral).stringValue();
+        String auxCommit = commit.getProperty(factory.createIRI(Commit.auxiliaryCommit_IRI))
+                .orElse(emptyLiteral).stringValue();
         User creator = engineManager.retrieveUser(engineManager.getUsername((Resource) creatorIRI)
                 .orElse("")).orElse(null);
         JSONObject creatorObject = new JSONObject();
@@ -1096,7 +1110,8 @@ public class CatalogRestImpl implements CatalogRest {
                 .element("creator", creatorObject)
                 .element("date", date.stringValue())
                 .element("message", message)
-                .element("parents", parents);
+                .element("base", baseCommit)
+                .element("auxiliary", auxCommit);
     }
 
     /**
@@ -1115,12 +1130,15 @@ public class CatalogRestImpl implements CatalogRest {
      */
     private <T extends Thing> Response createPaginatedResponse(UriInfo uriInfo, Collection<T> items, int totalSize,
                                                                int limit, int offset) {
-        Links links = LinksUtils.buildLinks(uriInfo, items.size(), totalSize, limit, offset);
-
         JSONArray results = JSONArray.fromObject(items.stream()
                 .map(this::thingToJsonObject)
                 .collect(Collectors.toList()));
-        Response.ResponseBuilder response = Response.ok(results).header("X-Total-Count", totalSize);
+        return createPaginatedResponseWithJson(uriInfo, results, totalSize, limit, offset);
+    }
+
+    private Response createPaginatedResponseWithJson(UriInfo uriInfo, JSONArray items, int totalSize, int limit, int offset) {
+        Links links = LinksUtils.buildLinks(uriInfo, items.size(), totalSize, limit, offset);
+        Response.ResponseBuilder response = Response.ok(items).header("X-Total-Count", totalSize);
         if (links.getNext() != null) {
             response = response.link(links.getBase() + links.getNext(), "next");
         }
@@ -1499,15 +1517,17 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     /**
-     * Creates a message for the Commit that occurs as a result of a merge between the Branches identified by the
-     * provided ID strings.
+     * Creates a message for the Commit that occurs as a result of a merge between the provided Branches.
      *
-     * @param sourceId The ID string of the source Branch of the merge.
-     * @param targetId The ID string of the target Branch of the merge.
+     * @param sourceBranch The source Branch of the merge.
+     * @param targetBranch The target Branch of the merge.
      * @return A string message to use for the merge Commit.
      */
-    private String getMergeMessage(String sourceId, String targetId) {
-        return "Merge of " + sourceId + " into " + targetId;
+    private String getMergeMessage(Branch sourceBranch, Branch targetBranch) {
+        IRI titleIRI = factory.createIRI(DCTERMS.TITLE.stringValue());
+        String sourceName = sourceBranch.getProperty(titleIRI).orElse(sourceBranch.getResource()).stringValue();
+        String targetName = targetBranch.getProperty(titleIRI).orElse(targetBranch.getResource()).stringValue();
+        return "Merge of " + sourceName + " into " + targetName;
     }
 
     /**

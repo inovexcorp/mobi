@@ -38,7 +38,7 @@
 
             function commonDelete(entityIRI) {
                 om.addToDeletions(sm.listItem.recordId, sm.selected);
-                om.removeEntity(sm.listItem.ontology, entityIRI);
+                om.removeEntity(sm.listItem, entityIRI);
                 // TODO: determine if we should remove references to this entity
                 // ur.remove(sm.listItem.ontology, sm.selected['@id']);
                 sm.unSelectItem();

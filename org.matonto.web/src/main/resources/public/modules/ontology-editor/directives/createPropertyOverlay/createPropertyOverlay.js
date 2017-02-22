@@ -47,8 +47,8 @@
                     dvm.om = ontologyManagerService;
                     dvm.sm = ontologyStateService;
 
-                    dvm.prefix = _.get(dvm.om.getListItemById(dvm.sm.listItem.ontologyId), 'iriBegin',
-                        dvm.om.getOntologyIRI(dvm.sm.listItem.ontology)) + _.get(dvm.om.getListItemById(dvm.sm.listItem.ontologyId),
+                    dvm.prefix = _.get(dvm.om.getListItemByRecordId(dvm.sm.listItem.recordId), 'iriBegin',
+                        dvm.sm.listItem.ontologyId) + _.get(dvm.om.getListItemByRecordId(dvm.sm.listItem.recordId),
                         'iriThen', '#');
 
                     dvm.property = {
@@ -87,7 +87,7 @@
                         });
                         _.set(dvm.property, 'matonto.originalIRI', dvm.property['@id']);
                         // add the entity to the ontology
-                        dvm.om.addEntity(dvm.sm.listItem.ontology, dvm.property);
+                        dvm.om.addEntity(dvm.sm.listItem, dvm.property);
                         // update relevant lists
                         var split = $filter('splitIRI')(dvm.property['@id']);
                         if (dvm.om.isObjectProperty(dvm.property)) {
