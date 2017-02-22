@@ -349,6 +349,7 @@ public interface CatalogManager {
      * @param baseCommit The base Commit for the created Commit. Used for associating the Revisions as well.
      * @param auxCommit The auxiliary Commit for the created Commit. Used for associating the Revisions as well.
      * @return Commit created based on the provided InProgressCommit with the message metadata.
+     * @throws IllegalArgumentException If a auxiliary commit is passed, but not a base commit
      */
     Commit createCommit(@Nonnull InProgressCommit inProgressCommit, @Nonnull String message, Commit baseCommit,
                         Commit auxCommit);

@@ -1730,6 +1730,15 @@ public class SimpleCatalogManagerTest {
         assertTrue(result.getModel().contains(revisionId, null, null));
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testCreateCommitWithOnlyAuxiliary() {
+        //Setup:
+        InProgressCommit inProgressCommit = inProgressCommitFactory.createNew(vf.createIRI("http://matonto.org/dummy"));
+        Commit auxiliary = commitFactory.createNew(vf.createIRI("http://matonto.org/test/auxiliary"));
+
+        manager.createCommit(inProgressCommit, "message", null, auxiliary);
+    }
+
     @Test
     public void testCreateInProgressCommit() throws Exception {
         User user = userFactory.createNew(vf.createIRI("http://matonto.org/test/user"));

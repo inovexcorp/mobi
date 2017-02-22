@@ -763,7 +763,6 @@ public class SimpleCatalogManager implements CatalogManager {
                 if (headCommit.isPresent()) {
                     List<Resource> chain = getCommitChain(headCommit.get().getResource());
                     IRI headCommitIRI = vf.createIRI(Branch.head_IRI);
-//                    IRI wasInformedByIRI = vf.createIRI(Activity.wasInformedBy_IRI);
                     IRI baseCommitIRI = vf.createIRI(Commit.baseCommit_IRI);
                     IRI auxiliaryCommitIRI = vf.createIRI(Commit.auxiliaryCommit_IRI);
                     IRI commitIRI = vf.createIRI(Tag.commit_IRI);
@@ -772,7 +771,6 @@ public class SimpleCatalogManager implements CatalogManager {
                         if (!conn.getStatements(null, headCommitIRI, commitId).hasNext()
                                 && !conn.getStatements(null, baseCommitIRI, commitId).hasNext()
                                 && !conn.getStatements(null, auxiliaryCommitIRI, commitId).hasNext()) {
-//                                && !conn.getStatements(null, wasInformedByIRI, commitId).hasNext()) {
                             conn.remove((Resource) null, null, null, commitId);
                             conn.remove((Resource) null, commitIRI, commitId);
                         } else {
@@ -799,6 +797,9 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public Commit createCommit(@Nonnull InProgressCommit inProgressCommit, @Nonnull String message, Commit baseCommit,
                                Commit auxCommit) {
+        if (auxCommit != null && baseCommit == null) {
+            throw new IllegalArgumentException("Commit must have a base commit in order to have an auxiliary commit");
+        }
         IRI associatedWith = vf.createIRI(Activity.wasAssociatedWith_IRI);
         IRI generatedIRI = vf.createIRI(Activity.generated_IRI);
         OffsetDateTime now = OffsetDateTime.now();

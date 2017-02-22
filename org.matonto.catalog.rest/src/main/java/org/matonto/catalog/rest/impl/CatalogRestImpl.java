@@ -908,8 +908,6 @@ public class CatalogRestImpl implements CatalogRest {
                 throw ErrorUtils.sendError("User already has an InProgressCommit for Record " + recordId,
                         Response.Status.BAD_REQUEST);
             }
-            Branch sourceBranch = catalogManager.getBranch(factory.createIRI(sourceBranchId), branchFactories.get(Branch.TYPE))
-                    .orElseThrow(() -> ErrorUtils.sendError("Branch not found", Response.Status.BAD_REQUEST));
             InProgressCommit inProgressCommit = catalogManager.createInProgressCommit(activeUser,
                     factory.createIRI(recordId));
             catalogManager.addInProgressCommit(inProgressCommit);
@@ -919,8 +917,14 @@ public class CatalogRestImpl implements CatalogRest {
             if (deletionsJson != null && !deletionsJson.isEmpty()) {
                 catalogManager.addDeletions(convertJsonld(deletionsJson), inProgressCommit.getResource());
             }
+            Branch sourceBranch = catalogManager.getBranch(factory.createIRI(sourceBranchId),
+                    branchFactories.get(Branch.TYPE)).orElseThrow(() ->
+                    ErrorUtils.sendError("Source branch not found", Response.Status.BAD_REQUEST));
+            Branch targetBranch = catalogManager.getBranch(factory.createIRI(targetBranchId),
+                    branchFactories.get(Branch.TYPE)).orElseThrow(() ->
+                    ErrorUtils.sendError("Target branch not found", Response.Status.BAD_REQUEST));
             Commit newCommit = catalogManager.createCommit(inProgressCommit,
-                    getMergeMessage(sourceBranchId, targetBranchId),
+                    getMergeMessage(sourceBranch, targetBranch),
                     targetHead, sourceHead);
             catalogManager.addCommitToBranch(newCommit, factory.createIRI(targetBranchId));
             catalogManager.updateHead(sourceBranch.getResource(), newCommit.getResource());
@@ -1513,15 +1517,17 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     /**
-     * Creates a message for the Commit that occurs as a result of a merge between the Branches identified by the
-     * provided ID strings.
+     * Creates a message for the Commit that occurs as a result of a merge between the provided Branches.
      *
-     * @param sourceId The ID string of the source Branch of the merge.
-     * @param targetId The ID string of the target Branch of the merge.
+     * @param sourceBranch The source Branch of the merge.
+     * @param targetBranch The target Branch of the merge.
      * @return A string message to use for the merge Commit.
      */
-    private String getMergeMessage(String sourceId, String targetId) {
-        return "Merge of " + sourceId + " into " + targetId;
+    private String getMergeMessage(Branch sourceBranch, Branch targetBranch) {
+        IRI titleIRI = factory.createIRI(DCTERMS.TITLE.stringValue());
+        String sourceName = sourceBranch.getProperty(titleIRI).orElse(sourceBranch.getResource()).stringValue();
+        String targetName = targetBranch.getProperty(titleIRI).orElse(targetBranch.getResource()).stringValue();
+        return "Merge of " + sourceName + " into " + targetName;
     }
 
     /**
