@@ -25,13 +25,13 @@ package org.matonto.dataset.api.builder;
 
 import org.matonto.catalog.api.builder.RecordConfig;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
-import org.matonto.rdf.api.Resource;
 
 import java.util.Set;
+import java.util.UUID;
 
 public class DatasetRecordConfig extends RecordConfig {
 
-    private Resource dataset;
+    private String dataset;
     private String repositoryId;
 
     private DatasetRecordConfig(DatasetRecordBuilder builder) {
@@ -40,7 +40,7 @@ public class DatasetRecordConfig extends RecordConfig {
         this.repositoryId = builder.repositoryId;
     }
 
-    public Resource getDataset() {
+    public String getDataset() {
         return dataset;
     }
 
@@ -49,8 +49,10 @@ public class DatasetRecordConfig extends RecordConfig {
     }
 
     public static class DatasetRecordBuilder extends Builder {
-        private Resource dataset;
+        private String dataset;
         private String repositoryId;
+
+        private static final String DEFAULT_DS_NAMESPACE = "http://matonto.org/dataset/";
 
         /**
          * The constructor for the DatasetRecordBuilder.
@@ -58,13 +60,21 @@ public class DatasetRecordConfig extends RecordConfig {
          * @param title The title of the dataset record.
          * @param publishers The Set users publishing this dataset record.
          */
-        public DatasetRecordBuilder(String title, Set<User> publishers, Resource dataset, String repositoryId) {
+        public DatasetRecordBuilder(String title, Set<User> publishers, String repositoryId) {
             super(title, publishers);
-            this.dataset = dataset;
             this.repositoryId = repositoryId;
         }
 
+        public DatasetRecordBuilder dataset(String dataset) {
+            this.dataset = dataset;
+            return this;
+        }
+
         public DatasetRecordConfig build() {
+            if (this.dataset == null) {
+                this.dataset = DEFAULT_DS_NAMESPACE + UUID.randomUUID();
+            }
+
             return new DatasetRecordConfig(this);
         }
     }

@@ -35,9 +35,10 @@ import java.util.Set;
 public interface DatasetManager {
 
     /**
-     * Retrieve the record IDs for available dataset records in the local catalog.
+     * Retrieve the Resource for every Dataset in the local catalog. Note: This does not return the DatasetRecord
+     * Resource.
      *
-     * @return The Set of Resources for all the dataset records in the local catalog.
+     * @return The Set of Resources for all the Dataset in the local catalog.
      */
     Set<Resource> listDatasets();
 
