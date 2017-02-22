@@ -389,7 +389,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         when(catalogManager.createInProgressCommit(any(User.class), eq(recordId))).thenReturn(inProgressCommit);
         when(catalogManager.getCommit(inProgressCommitId, inProgressCommitFactory)).thenReturn(Optional
                 .of(inProgressCommit));
-        when(catalogManager.createCommit(eq(inProgressCommit), anySetOf(Commit.class), anyString())).thenReturn(commit);
+        when(catalogManager.createCommit(eq(inProgressCommit), anyString(), any(Commit.class), any(Commit.class))).thenReturn(commit);
         when(catalogManager.getInProgressCommitIRI(any(Resource.class), eq(recordId))).thenReturn(Optional
                 .of(inProgressCommitId));
         when(catalogManager.applyInProgressCommit(eq(inProgressCommitId), any(Model.class))).thenReturn(modelFactory
@@ -571,7 +571,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         verify(catalogManager).createInProgressCommit(user, recordId);
         verify(catalogManager).addInProgressCommit(inProgressCommit);
         verify(catalogManager).addAdditions(any(Model.class), eq(inProgressCommitId));
-        verify(catalogManager).createCommit(eq(inProgressCommit), eq(null), anyString());
+        verify(catalogManager).createCommit(eq(inProgressCommit), anyString(), eq(null), eq(null));
         verify(catalogManager).addCommitToBranch(commit, branchId);
         verify(catalogManager).removeInProgressCommit(inProgressCommitId);
     }
@@ -642,7 +642,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         verify(catalogManager).createInProgressCommit(user, recordId);
         verify(catalogManager).addInProgressCommit(inProgressCommit);
         verify(catalogManager).addAdditions(any(Model.class), eq(inProgressCommitId));
-        verify(catalogManager).createCommit(eq(inProgressCommit), eq(null), anyString());
+        verify(catalogManager).createCommit(eq(inProgressCommit), anyString(), eq(null), eq(null));
         verify(catalogManager).addCommitToBranch(commit, branchId);
         verify(catalogManager).removeInProgressCommit(inProgressCommitId);
     }
