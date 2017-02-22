@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Characteristics Block directive', function() {
-    var $compile, scope, element, ontologyStateSvc, $filter, controller, prefixes, ontologyManagerSvc, utilSvc, functionalProperty;
+    var $compile, scope, element, ontologyStateSvc, $filter, controller, prefixes, ontologyManagerSvc, functionalProperty;
 
     beforeEach(function() {
         module('templates');

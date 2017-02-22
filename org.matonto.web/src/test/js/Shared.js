@@ -760,7 +760,6 @@ function mockUtil() {
             this.getIRINamespace = jasmine.createSpy('getIRINamespace').and.returnValue({});
             this.getDate = jasmine.createSpy('getDate').and.returnValue(new Date());
             this.condenseCommitId = jasmine.createSpy('condenseCommitId');
-            this.removeTypeFrom = jasmine.createSpy('removeTypeFrom').and.callFake(_.identity);
         });
     });
 }
