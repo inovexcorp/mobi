@@ -313,7 +313,7 @@ public interface CatalogManager {
      * @param branch The branch whose head to update.
      * @param commit The new head commit of the specified branch.
      * @throws MatOntoException If there is a problem communicating with the Repository, or if the Branch or Commit do
-     * not exist.
+     *      not exist.
      */
     void updateHead(Resource branch, Resource commit) throws MatOntoException;
 
@@ -345,11 +345,14 @@ public interface CatalogManager {
      * Set of Commits.
      *
      * @param inProgressCommit The InProgressCommit which is the basis for the created Commit.
-     * @param parents The parent Commits for the created Commit. Used for associating the Revisions as well.
      * @param message The String with the message text associated with the Commit.
+     * @param baseCommit The base Commit for the created Commit. Used for associating the Revisions as well.
+     * @param auxCommit The auxiliary Commit for the created Commit. Used for associating the Revisions as well.
      * @return Commit created based on the provided InProgressCommit with the message metadata.
+     * @throws IllegalArgumentException If a auxiliary commit is passed, but not a base commit
      */
-    Commit createCommit(@Nonnull InProgressCommit inProgressCommit, Set<Commit> parents, @Nonnull String message);
+    Commit createCommit(@Nonnull InProgressCommit inProgressCommit, @Nonnull String message, Commit baseCommit,
+                        Commit auxCommit);
 
     /**
      * Creates an InProgressCommit which is a Commit that a User is actively working on. Once it is completed, the
@@ -456,10 +459,11 @@ public interface CatalogManager {
     Model applyInProgressCommit(Resource inProgressCommitId, Model entity) throws MatOntoException;
 
     /**
-     * Gets a List of Resources which all identify different Commits within the repository. The Commit identified by the
-     * provided Resource is the last item in the List and it was informed by the previous Commit in the List. This
-     * association is repeated until you get to the beginning of the List. The resulting List can then be thought about
-     * the chain of Commits on a Branch terminating at the Commit identified by the provided Resource.
+     * Gets a List of Resources which all identify different Commits ordered by date descending within the repository.
+     * The Commit identified by the provided Resource is the first item in the List and it was informed by the previous
+     * Commit in the List. This association is repeated until you get to the beginning of the List. The resulting List
+     * can then be thought about the chain of Commits on a Branch starting with the Commit identified by the provided
+     * Resource.
      *
      * @param commitId The Resource identifying the Commit for the desired chain.
      * @return List of Resources identifying the Commits which make up the commit chain for the provided Commit.
