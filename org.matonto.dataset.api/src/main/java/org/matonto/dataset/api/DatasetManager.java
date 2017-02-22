@@ -23,43 +23,78 @@ package org.matonto.dataset.api;
  * #L%
  */
 
+import org.matonto.dataset.api.builder.DatasetRecordConfig;
 import org.matonto.dataset.ontology.dataset.DatasetRecord;
-import org.matonto.rdf.api.IRI;
+import org.matonto.rdf.api.Resource;
 
-import java.util.List;
+import java.util.Set;
 
 /**
  * As service for managing local datasets within the MatOnto platform.
  */
 public interface DatasetManager {
 
-    // TODO: Do all of these methods require a repository to operate against?
-    // It would make sense for datasets exist in any number of Repositories
-    // Without a record of where the dataset is stored, it will be inefficient, if not impossible to retrieve the data
-    // The repository ID of the dataset should probably be part of its identifying information (along with IRI). In the DatasetRecord?
-    // Probably best not to put it in the catalog because this will never be shared with other catalogs.
+    /**
+     * Retrieve the record IDs for available dataset records in the local catalog.
+     *
+     * @return The Set of Resources for all the dataset records in the local catalog.
+     */
+    Set<Resource> listDatasets();
 
-    // TODO: Do all of these methods require the user making the request?
-    // This would probably require changes to the underlying repository API
-    // Can we even do anything with user information yet?
-    // We are not implementing security with this development effort (yet)
+    /**
+     * Retrieves the DatasetRecord for a dataset in the local catalog.
+     *
+     * @param datasetRecord The Resource representing the DatasetRecord in the local catalog.
+     * @return The DatasetRecord that has been created in the local catalog. DatasetRecord includes empty Dataset
+     * object.
+     */
+    // TODO: Do we need to support lookup by dataset IRI?
+    DatasetRecord getDataset(Resource datasetRecord);
 
-    // TODO: Should we operate with IRIs or DatasetRecords?
-    // If you have a DatasetRecord, it is trivial to retrieve the record and dataset IRIs
-    // If you have a record or dataset IRI, it is not necessarily trivial or efficient to create a DatasetRecord
+    /**
+     * Creates a dataset according to the specified configuration. Initial dataset structure is created in the specified
+     * repository and the DatasetRecord is added to the local catalog.
+     *
+     * @param config The DatasetRecordConfig describing the details of the dataset to create.
+     * @return The DatasetRecord that has been created in the local catalog. DatasetRecord includes empty Dataset
+     * object.
+     */
+    DatasetRecord createDataset(DatasetRecordConfig config);
 
-    // TODO: return DatasetRecords?
-    List<DatasetRecord> listDatasets();
+    /**
+     * Deletes the DatasetRecord, Dataset, and data graphs associated with the DatasetRecord Resource. Note: This method
+     * removes all graphs from the specified dataset even if they are associated with other datasets.
+     *
+     * @param datasetRecord The DatasetRecord Resource to be removed along with associated Dataset and data.
+     */
+    // TODO: Do we need to support delete by dataset IRI?
+    void deleteDataset(Resource datasetRecord);
 
-    // TODO: return DatasetRecord?
-    DatasetRecord getDataset(IRI datasetIRI);
+    /**
+     * Deletes the DatasetRecord, Dataset, and data graphs associated with the DatasetRecord Resource. Note: This method
+     * removes all graphs from the specified dataset if and only if they are not associated with other datasets.
+     *
+     * @param datasetRecord The DatasetRecord Resource to be removed along with associated Dataset and data.
+     */
+    // TODO: Do we need to support delete by dataset IRI?
+    void safeDeleteDataset(Resource datasetRecord);
 
-    // TODO: return DatasetRecord?
-    DatasetRecord createDataset(IRI datasetIRI);
+    /**
+     * Removes all data associated with the DatasetRecord Resource. DatasetRecord and Dataset are not removed. Note:
+     * This method removes all graphs from the specified dataset even if they are associated with other datasets.
+     *
+     * @param datasetRecord The DatasetRecord Resource to be cleared.
+     */
+    // TODO: Do we need to support clear by dataset IRI?
+    void clearDataset(Resource datasetRecord);
 
-    // TODO: take recordIRI or datasetIRI?
-    void deleteDataset(IRI recordIRI);
-
-    // TODO: take recordIRI or datasetIRI?
-    void clearDataset(IRI datasetIRI);
+    /**
+     * Removes all data associated with the DatasetRecord Resource. DatasetRecord and Dataset are not removed. Note:
+     * This method removes all graphs from the specified dataset if and only if they are not associated with other
+     * datasets.
+     *
+     * @param datasetRecord The DatasetRecord Resource to be cleared.
+     */
+    // TODO: Do we need to support clear by dataset IRI?
+    void safeClearDataset(Resource datasetRecord);
 }
