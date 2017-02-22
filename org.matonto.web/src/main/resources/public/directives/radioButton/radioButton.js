@@ -86,10 +86,11 @@
                 replace: true,
                 scope: {
                     bindModel: '=ngModel',
-                    value: '=',
+                    value: '<',
                     changeEvent: '&',
-                    displayText: '=',
-                    isDisabledWhen: '='
+                    displayText: '<',
+                    isDisabledWhen: '<',
+                    inline: '<?'
                 },
                 controllerAs: 'dvm',
                 controller: ['$scope', function($scope) {
