@@ -107,13 +107,6 @@
     rdfs:label "Mapping"@en;
     rdfs:comment "A collection of RDF data that defines a mapping resource."@en.
 
-# DatasetRecord
-
-:DatasetRecord a owl:Class;
-    rdfs:subClassOf :VersionedRDFRecord;
-    rdfs:label "Dataset"@en;
-    rdfs:comment "A collection of RDF data that defines a dataset resource."@en.
-
 # Branch
 
 :Branch a owl:Class;
