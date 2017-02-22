@@ -163,8 +163,9 @@ public class SimpleOntologyManagerTest {
         MockitoAnnotations.initMocks(this);
 
         Catalog catalog = catalogFactory.createNew(catalogIRI);
+        when(catalogManager.getLocalCatalogIRI()).thenReturn(catalogIRI);
         when(catalogManager.getLocalCatalog()).thenReturn(catalog);
-        when(catalogManager.getRecord(missingIRI.stringValue(), ontologyRecordFactory)).thenReturn(Optional.empty());
+        when(catalogManager.getRecord(catalogIRI, missingIRI, ontologyRecordFactory)).thenReturn(Optional.empty());
 
         when(sesameTransformer.sesameModel(any(Model.class))).thenReturn(new org.openrdf.model.impl.LinkedHashModel());
 
@@ -205,7 +206,7 @@ public class SimpleOntologyManagerTest {
         assertEquals(ontology, result);
     }
 
-    // Testing retrieveOntology(Resource ontologyId)
+    // Testing retrieveOntology(Resource recordId)
 
     @Test
     public void testRetrieveOntologyWithMissingIdentifier() {
@@ -217,7 +218,7 @@ public class SimpleOntologyManagerTest {
     public void testRetrieveOntologyWithMasterBranchNotSet() {
         OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
 
-        when(catalogManager.getRecord(recordIRI.stringValue(), ontologyRecordFactory)).thenReturn(Optional.of(record));
+        when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
 
         try {
             manager.retrieveOntology(recordIRI);
@@ -233,7 +234,7 @@ public class SimpleOntologyManagerTest {
         OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
         record.setMasterBranch(branchFactory.createNew(branchIRI));
 
-        when(catalogManager.getRecord(recordIRI.stringValue(), ontologyRecordFactory)).thenReturn(Optional.of(record));
+        when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
         when(catalogManager.getBranch(branchIRI, branchFactory)).thenReturn(Optional.empty());
 
         try {
@@ -252,7 +253,7 @@ public class SimpleOntologyManagerTest {
 
         Branch branch = branchFactory.createNew(branchIRI);
 
-        when(catalogManager.getRecord(recordIRI.stringValue(), ontologyRecordFactory)).thenReturn(Optional.of(record));
+        when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
         when(catalogManager.getBranch(branchIRI, branchFactory)).thenReturn(Optional.of(branch));
 
         try {
@@ -272,7 +273,7 @@ public class SimpleOntologyManagerTest {
         Branch branch = branchFactory.createNew(branchIRI);
         branch.setHead(commitFactory.createNew(commitIRI));
 
-        when(catalogManager.getRecord(recordIRI.stringValue(), ontologyRecordFactory)).thenReturn(Optional.of(record));
+        when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
         when(catalogManager.getBranch(branchIRI, branchFactory)).thenReturn(Optional.of(branch));
         when(catalogManager.getCompiledResource(commitIRI)).thenReturn(Optional.empty());
 
@@ -295,7 +296,7 @@ public class SimpleOntologyManagerTest {
 
         Model model = modelFactory.createModel();
 
-        when(catalogManager.getRecord(recordIRI.stringValue(), ontologyRecordFactory)).thenReturn(Optional.of(record));
+        when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
         when(catalogManager.getBranch(branchIRI, branchFactory)).thenReturn(Optional.of(branch));
         when(catalogManager.getCompiledResource(commitIRI)).thenReturn(Optional.of(model));
 
@@ -304,7 +305,7 @@ public class SimpleOntologyManagerTest {
         assertEquals(ontology, optionalOntology.get());
     }
 
-    // Testing retrieveOntology(Resource ontologyId, Resource branchId)
+    // Testing retrieveOntology(Resource recordId, Resource branchId)
 
     @Test
     public void testRetrieveOntologyUsingABranchWithMissingIdentifier() throws Exception {
@@ -316,7 +317,7 @@ public class SimpleOntologyManagerTest {
     public void testRetrieveOntologyUsingABranchWithNoBranches() throws Exception {
         OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
 
-        when(catalogManager.getRecord(recordIRI.stringValue(), ontologyRecordFactory)).thenReturn(Optional.of(record));
+        when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
 
         Optional<Ontology> optionalOntology = manager.retrieveOntology(recordIRI, missingIRI);
         assertFalse(optionalOntology.isPresent());
@@ -327,7 +328,7 @@ public class SimpleOntologyManagerTest {
         OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
         record.setBranch(Stream.of(branchFactory.createNew(branchIRI)).collect(Collectors.toSet()));
 
-        when(catalogManager.getRecord(recordIRI.stringValue(), ontologyRecordFactory)).thenReturn(Optional.of(record));
+        when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
 
         Optional<Ontology> optionalOntology = manager.retrieveOntology(recordIRI, missingIRI);
         assertFalse(optionalOntology.isPresent());
@@ -338,7 +339,7 @@ public class SimpleOntologyManagerTest {
         OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
         record.setBranch(Stream.of(branchFactory.createNew(branchIRI)).collect(Collectors.toSet()));
 
-        when(catalogManager.getRecord(recordIRI.stringValue(), ontologyRecordFactory)).thenReturn(Optional.of(record));
+        when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
         when(catalogManager.getBranch(branchIRI, branchFactory)).thenReturn(Optional.empty());
 
         try {
@@ -357,7 +358,7 @@ public class SimpleOntologyManagerTest {
 
         Branch branch = branchFactory.createNew(branchIRI);
 
-        when(catalogManager.getRecord(recordIRI.stringValue(), ontologyRecordFactory)).thenReturn(Optional.of(record));
+        when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
         when(catalogManager.getBranch(branchIRI, branchFactory)).thenReturn(Optional.of(branch));
 
         try {
@@ -377,7 +378,7 @@ public class SimpleOntologyManagerTest {
         Branch branch = branchFactory.createNew(branchIRI);
         branch.setHead(commitFactory.createNew(commitIRI));
 
-        when(catalogManager.getRecord(recordIRI.stringValue(), ontologyRecordFactory)).thenReturn(Optional.of(record));
+        when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
         when(catalogManager.getBranch(branchIRI, branchFactory)).thenReturn(Optional.of(branch));
         when(catalogManager.getCompiledResource(commitIRI)).thenReturn(Optional.empty());
 
@@ -400,7 +401,7 @@ public class SimpleOntologyManagerTest {
 
         Model model = modelFactory.createModel();
 
-        when(catalogManager.getRecord(recordIRI.stringValue(), ontologyRecordFactory)).thenReturn(Optional.of(record));
+        when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
         when(catalogManager.getBranch(branchIRI, branchFactory)).thenReturn(Optional.of(branch));
         when(catalogManager.getCompiledResource(commitIRI)).thenReturn(Optional.of(model));
 
@@ -409,7 +410,7 @@ public class SimpleOntologyManagerTest {
         assertEquals(ontology, optionalOntology.get());
     }
 
-    // Testing retrieveOntology(Resource ontologyId, Resource branchId, Resource commitId)
+    // Testing retrieveOntology(Resource recordId, Resource branchId, Resource commitId)
 
     @Test
     public void testRetrieveOntologyUsingACommitWithMissingIdentifier() throws Exception {
@@ -421,7 +422,7 @@ public class SimpleOntologyManagerTest {
     public void testRetrieveOntologyUsingACommitWithNoBranches() throws Exception {
         OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
 
-        when(catalogManager.getRecord(recordIRI.stringValue(), ontologyRecordFactory)).thenReturn(Optional.of(record));
+        when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
 
         Optional<Ontology> optionalOntology = manager.retrieveOntology(recordIRI, branchIRI, commitIRI);
         assertFalse(optionalOntology.isPresent());
@@ -432,7 +433,7 @@ public class SimpleOntologyManagerTest {
         OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
         record.setBranch(Stream.of(branchFactory.createNew(branchIRI)).collect(Collectors.toSet()));
 
-        when(catalogManager.getRecord(recordIRI.stringValue(), ontologyRecordFactory)).thenReturn(Optional.of(record));
+        when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
 
         Optional<Ontology> optionalOntology = manager.retrieveOntology(recordIRI, missingIRI, commitIRI);
         assertFalse(optionalOntology.isPresent());
@@ -443,7 +444,7 @@ public class SimpleOntologyManagerTest {
         OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
         record.setBranch(Stream.of(branchFactory.createNew(branchIRI)).collect(Collectors.toSet()));
 
-        when(catalogManager.getRecord(recordIRI.stringValue(), ontologyRecordFactory)).thenReturn(Optional.of(record));
+        when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
         when(catalogManager.getBranch(branchIRI, branchFactory)).thenReturn(Optional.empty());
 
         try {
@@ -462,7 +463,7 @@ public class SimpleOntologyManagerTest {
 
         Branch branch = branchFactory.createNew(branchIRI);
 
-        when(catalogManager.getRecord(recordIRI.stringValue(), ontologyRecordFactory)).thenReturn(Optional.of(record));
+        when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
         when(catalogManager.getBranch(branchIRI, branchFactory)).thenReturn(Optional.of(branch));
 
         try {
@@ -482,7 +483,7 @@ public class SimpleOntologyManagerTest {
         Branch branch = branchFactory.createNew(branchIRI);
         branch.setHead(commitFactory.createNew(commitIRI));
 
-        when(catalogManager.getRecord(recordIRI.stringValue(), ontologyRecordFactory)).thenReturn(Optional.of(record));
+        when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
         when(catalogManager.getBranch(branchIRI, branchFactory)).thenReturn(Optional.of(branch));
         when(catalogManager.getCommitChain(commitIRI)).thenReturn(Stream.of(commitIRI).collect(Collectors.toList()));
 
@@ -498,7 +499,7 @@ public class SimpleOntologyManagerTest {
         Branch branch = branchFactory.createNew(branchIRI);
         branch.setHead(commitFactory.createNew(commitIRI));
 
-        when(catalogManager.getRecord(recordIRI.stringValue(), ontologyRecordFactory)).thenReturn(Optional.of(record));
+        when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
         when(catalogManager.getBranch(branchIRI, branchFactory)).thenReturn(Optional.of(branch));
         when(catalogManager.getCommitChain(commitIRI)).thenReturn(Stream.of(commitIRI).collect(Collectors.toList()));
         when(catalogManager.getCommit(commitIRI, commitFactory)).thenReturn(Optional.empty());
@@ -522,7 +523,7 @@ public class SimpleOntologyManagerTest {
         Branch branch = branchFactory.createNew(branchIRI);
         branch.setHead(commit);
 
-        when(catalogManager.getRecord(recordIRI.stringValue(), ontologyRecordFactory)).thenReturn(Optional.of(record));
+        when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
         when(catalogManager.getBranch(branchIRI, branchFactory)).thenReturn(Optional.of(branch));
         when(catalogManager.getCommitChain(commitIRI)).thenReturn(Stream.of(commitIRI).collect(Collectors.toList()));
         when(catalogManager.getCommit(commitIRI, commitFactory)).thenReturn(Optional.of(commit));
@@ -549,7 +550,7 @@ public class SimpleOntologyManagerTest {
 
         Model model = modelFactory.createModel();
 
-        when(catalogManager.getRecord(recordIRI.stringValue(), ontologyRecordFactory)).thenReturn(Optional.of(record));
+        when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
         when(catalogManager.getBranch(branchIRI, branchFactory)).thenReturn(Optional.of(branch));
         when(catalogManager.getCommitChain(commitIRI)).thenReturn(Stream.of(commitIRI).collect(Collectors.toList()));
         when(catalogManager.getCommit(commitIRI, commitFactory)).thenReturn(Optional.of(commit));
@@ -560,11 +561,11 @@ public class SimpleOntologyManagerTest {
         assertEquals(ontology, optionalOntology.get());
     }
 
-    // Testing deleteOntology(Resource ontologyId)
+    // Testing deleteOntology(Resource recordId)
 
     @Test(expected = MatontoOntologyException.class)
     public void testDeleteMissingOntologyRecord() {
-        when(catalogManager.getRecord(recordIRI.stringValue(), ontologyRecordFactory)).thenReturn(Optional.empty());
+        when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.empty());
 
         try {
             manager.deleteOntology(recordIRI);
@@ -579,7 +580,7 @@ public class SimpleOntologyManagerTest {
     public void testDeleteOntology() throws Exception {
         OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
 
-        when(catalogManager.getRecord(recordIRI.stringValue(), ontologyRecordFactory)).thenReturn(Optional.of(record));
+        when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
 
         manager.deleteOntology(recordIRI);
         verify(catalogManager, atLeastOnce()).removeRecord(catalogIRI, recordIRI);

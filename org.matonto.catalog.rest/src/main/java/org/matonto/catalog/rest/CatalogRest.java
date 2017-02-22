@@ -752,8 +752,8 @@ public interface CatalogRest {
                           String newBranchJson);
 
     /**
-     * Gets a Set of Commits associated with the Branch identified by the provided IDs which represents the Commit
-     * chain for that Branch.
+     * Gets a list of Commits associated with the Branch identified by the provided IDs which represents the Commit
+     * chain for that Branch. If a limit is passed which is greater than zero, will paginated the results.
      *
      * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
@@ -761,6 +761,8 @@ public interface CatalogRest {
      *                 String begins with "_:".
      * @param branchId The String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
      *                 with "_:".
+     * @param offset An optional offset for the results.
+     * @param limit An optional limit for the results.
      * @return A list of Commits for the identified Branch which represents the Commit chain.
      */
     @GET
@@ -768,9 +770,12 @@ public interface CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @ApiOperation("Gets the Commit chain for a specific Branch.")
-    Response getCommitChain(@PathParam("catalogId") String catalogId,
+    Response getCommitChain(@Context UriInfo uriInfo,
+                            @PathParam("catalogId") String catalogId,
                             @PathParam("recordId") String recordId,
-                            @PathParam("branchId") String branchId);
+                            @PathParam("branchId") String branchId,
+                            @QueryParam("offset") int offset,
+                            @QueryParam("limit") int limit);
 
     /**
      * Creates a new Commit in the repository for a specific Branch using the InProgressCommit associated with the user

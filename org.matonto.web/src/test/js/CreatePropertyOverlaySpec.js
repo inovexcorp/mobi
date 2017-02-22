@@ -28,7 +28,8 @@ describe('Create Property Overlay directive', function() {
         ontologyManagerSvc,
         ontologyStateSvc,
         prefixes,
-        splitIRIFilter;
+        splitIRIFilter,
+        functionalProperty;
 
     beforeEach(function() {
         module('templates');
@@ -53,6 +54,7 @@ describe('Create Property Overlay directive', function() {
 
         element = $compile(angular.element('<create-property-overlay></create-property-overlay>'))(scope);
         scope.$digest();
+        functionalProperty = prefixes.owl + 'FunctionalProperty';
     });
 
     describe('replaces the element with the correct html', function() {
@@ -68,8 +70,11 @@ describe('Create Property Overlay directive', function() {
         it('with a static-iri', function() {
             expect(element.find('static-iri').length).toBe(1);
         });
-        it('with a string-select', function() {
-            expect(element.find('string-select').length).toBe(1);
+        it('with radio-buttons', function() {
+            expect(element.find('radio-button').length).toBe(2);
+        });
+        it('with a checkbox', function() {
+            expect(element.find('checkbox').length).toBe(1);
         });
         it('with a text-area', function() {
             expect(element.find('text-area').length).toBe(1);
@@ -170,6 +175,7 @@ describe('Create Property Overlay directive', function() {
                 ontologyStateSvc.listItem = this.listItem;
                 splitIRIFilter.and.returnValue(this.split);
                 controller.property['@id'] = 'property-iri';
+                controller.property['@type'] = [];
                 controller.property[prefixes.dcterms + 'title'] = [{'@value': 'label'}];
                 controller.property[prefixes.rdfs + 'range'] = [];
                 controller.property[prefixes.rdfs + 'domain'] = [];
@@ -180,7 +186,7 @@ describe('Create Property Overlay directive', function() {
                 expect(_.has(controller.property, prefixes.rdfs + 'range')).toBe(false);
                 expect(_.has(controller.property, prefixes.rdfs + 'domain')).toBe(false);
                 expect(controller.property.matonto.originalIRI).toEqual(controller.property['@id']);
-                expect(ontologyManagerSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontology,
+                expect(ontologyManagerSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem,
                     controller.property);
                 expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(controller.property);
                 expect(this.listItem.index[controller.property['@id']]).toBe(0);
@@ -194,7 +200,7 @@ describe('Create Property Overlay directive', function() {
                 ontologyManagerSvc.isObjectProperty.and.returnValue(true);
                 controller.create();
                 expect(controller.property.matonto.originalIRI).toEqual(controller.property['@id']);
-                expect(ontologyManagerSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontology,
+                expect(ontologyManagerSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem,
                     controller.property);
                 expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(controller.property);
                 expect(this.listItem.subObjectProperties).toContain({namespace: this.split.begin + this.split.then, localName: this.split.end});
@@ -211,7 +217,7 @@ describe('Create Property Overlay directive', function() {
                 controller.property[prefixes.dcterms + 'description'] = [{'@value': 'description'}];
                 controller.create();
                 expect(controller.property.matonto.originalIRI).toEqual(controller.property['@id']);
-                expect(ontologyManagerSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontology,
+                expect(ontologyManagerSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem,
                     controller.property);
                 expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(controller.property);
                 expect(this.listItem.subObjectProperties).toEqual([]);
@@ -223,6 +229,16 @@ describe('Create Property Overlay directive', function() {
                     controller.property);
                 expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(controller.property['@id']);
                 expect(ontologyStateSvc.showCreatePropertyOverlay).toBe(false);
+            });
+            it('if controller.checkbox is true', function() {
+                controller.checkbox = true;
+                controller.create();
+                expect(_.includes(controller.property['@type'], functionalProperty)).toBe(true);
+            });
+            it('if controller.checkbox is false', function() {
+                controller.checkbox = false;
+                controller.create();
+                expect(_.includes(controller.property['@type'], functionalProperty)).toBe(false);
             });
         });
     });

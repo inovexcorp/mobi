@@ -118,13 +118,13 @@ describe('Create Annotation Overlay directive', function() {
             });
             it('calls the correct manager function', function() {
                 expect(ontologyManagerSvc.getAnnotationIRIs).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontology);
-                expect(propertyManagerSvc.create).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
+                expect(propertyManagerSvc.create).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                     ontologyManagerSvc.getAnnotationIRIs(ontologyStateSvc.listItem.ontology), controller.iri);
             });
             it('when resolved, sets the correct variables', function() {
                 deferred.resolve({'@id': 'id'});
                 scope.$apply();
-                expect(ontologyManagerSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontology,
+                expect(ontologyManagerSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem,
                     {'@id': 'id', matonto: {originalIRI: 'id'}});
                 expect(ontologyStateSvc.showCreateAnnotationOverlay).toBe(false);
             });

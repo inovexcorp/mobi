@@ -137,6 +137,7 @@ public class SimpleCatalogManagerTest {
     private UserBranchFactory userBranchFactory = new UserBranchFactory();
     private UserFactory userFactory = new UserFactory();
     private IRI distributedCatalogId;
+    private IRI localCatalogId;
     private Resource notPresentId;
     private Resource differentId;
     private IRI dcIdentifier;
@@ -308,6 +309,7 @@ public class SimpleCatalogManagerTest {
         manager.start(props);
 
         distributedCatalogId = vf.createIRI("http://matonto.org/test/catalog-distributed");
+        localCatalogId = vf.createIRI("http://matonto.org/test/catalog-local");
         notPresentId = vf.createIRI("http://matonto.org/test/records#not-present");
         differentId = vf.createIRI("http://matonto.org/test/different");
         dcIdentifier = vf.createIRI(DC_IDENTIFIER);
@@ -319,7 +321,19 @@ public class SimpleCatalogManagerTest {
     }
 
     @Test
-    public void testGetPublishedCatalog() throws Exception {
+    public void testGetDistributedCatalogIRI() throws Exception {
+        IRI iri = manager.getDistributedCatalogIRI();
+        assertEquals(distributedCatalogId, iri);
+    }
+
+    @Test
+    public void testGetLocalCatalogIRI() throws Exception {
+        IRI iri = manager.getLocalCatalogIRI();
+        assertEquals(localCatalogId, iri);
+    }
+
+    @Test
+    public void testGetDistributedCatalog() throws Exception {
         Catalog catalog = manager.getDistributedCatalog();
         Optional<Value> title = catalog.getProperty(vf.createIRI(DC_TITLE));
         Optional<Value> description = catalog.getProperty(vf.createIRI(DC_DESCRIPTION));
@@ -395,14 +409,6 @@ public class SimpleCatalogManagerTest {
         Resource existingId = vf.createIRI("http://matonto.org/test/records#update");
         Record record = recordFactory.createNew(existingId);
         record.addProperty(vf.createLiteral("record"), dcIdentifier);
-        manager.addRecord(distributedCatalogId, record);
-    }
-
-    @Test(expected = MatOntoException.class)
-    public void testAddRecordWithExistingIdentifier() {
-        Resource newId = vf.createIRI("http://matonto.org/test/records#brand-new");
-        Record record = recordFactory.createNew(newId);
-        record.addProperty(vf.createLiteral("Unique"), dcIdentifier);
         manager.addRecord(distributedCatalogId, record);
     }
 
@@ -784,25 +790,6 @@ public class SimpleCatalogManagerTest {
         Resource distributedCatalogId = vf.createIRI("http://matonto.org/test/catalog-local");
         Optional<Record> optionalRecord = manager.getRecord(distributedCatalogId, recordId, recordFactory);
         assertFalse(optionalRecord.isPresent());
-    }
-
-    @Test
-    public void testGetRecordByIdentifier() throws Exception {
-        Optional<Record> result = manager.getRecord("Unique", recordFactory);
-        assertTrue(result.isPresent());
-        Record record = result.get();
-        assertTrue(record.getProperty(vf.createIRI(DC_TITLE)).isPresent());
-        assertEquals("Unique", record.getProperty(vf.createIRI(DC_TITLE)).get().stringValue());
-        assertTrue(record.getProperty(vf.createIRI(DC_IDENTIFIER)).isPresent());
-        assertEquals("Unique", record.getProperty(vf.createIRI(DC_IDENTIFIER)).get().stringValue());
-        assertTrue(record.getProperty(vf.createIRI(DC_MODIFIED)).isPresent());
-        assertTrue(record.getProperty(vf.createIRI(DC_ISSUED)).isPresent());
-    }
-
-    @Test
-    public void testGetRecordByMissingIdentifier() throws Exception {
-        Optional<Record> result = manager.getRecord("Missing", recordFactory);
-        assertFalse(result.isPresent());
     }
 
     @Test
@@ -1710,39 +1697,46 @@ public class SimpleCatalogManagerTest {
 
     @Test
     public void testCreateCommit() throws Exception {
+        // Setup:
         IRI dummyId = vf.createIRI("https://matonto.org/dummy");
         IRI generated = vf.createIRI("https://matonto.org/generated");
         IRI revisionId = vf.createIRI("http://matonto.org/revisions#test");
-
         Resource generation = vf.createIRI("http://matonto.org/test");
         Resource generation2 = vf.createIRI("http://matonto.org/test2");
-        Commit parent = commitFactory.createNew(vf.createIRI("http://matonto.org/test/parent"));
-        parent.setProperty(generation, vf.createIRI(PROV_GENERATED));
-        Commit parent2 = commitFactory.createNew(vf.createIRI("http://matonto.org/test/parent2"));
-        parent2.setProperty(generation2, vf.createIRI(PROV_GENERATED));
-        Set<Commit> parents = Stream.of(parent, parent2).collect(Collectors.toSet());
-
+        Commit base = commitFactory.createNew(vf.createIRI("http://matonto.org/test/base"));
+        base.setProperty(generation, vf.createIRI(PROV_GENERATED));
+        Commit auxiliary = commitFactory.createNew(vf.createIRI("http://matonto.org/test/auxiliary"));
+        auxiliary.setProperty(generation2, vf.createIRI(PROV_GENERATED));
         InProgressCommit inProgressCommit = inProgressCommitFactory.createNew(dummyId);
         inProgressCommit.setProperty(vf.createIRI("http://matonto.org/user"), vf.createIRI(PROV_WAS_ASSOCIATED_WITH));
         inProgressCommit.setProperty(generated, vf.createIRI(PROV_GENERATED));
         Revision revision = revisionFactory.createNew(revisionId);
         inProgressCommit.getModel().addAll(revision.getModel());
 
-        Commit result = manager.createCommit(inProgressCommit, null, "message");
+        Commit result = manager.createCommit(inProgressCommit, "message", null, null);
         assertTrue(result.getProperty(vf.createIRI(PROV_AT_TIME)).isPresent());
         assertEquals("message", result.getProperty(vf.createIRI(DC_TITLE)).get().stringValue());
-        assertEquals(0, result.getProperties(vf.createIRI(PROV_WAS_INFORMED_BY)).size());
+        assertFalse(result.getBaseCommit().isPresent());
+        assertFalse(result.getAuxiliaryCommit().isPresent());
         assertFalse(result.getModel().contains(dummyId, null, null));
         assertTrue(result.getModel().contains(revisionId, null, null));
 
-        result = manager.createCommit(inProgressCommit, parents, "message");
+        result = manager.createCommit(inProgressCommit, "message", base, auxiliary);
         assertTrue(result.getProperty(vf.createIRI(PROV_AT_TIME)).isPresent());
         assertEquals("message", result.getProperty(vf.createIRI(DC_TITLE)).get().stringValue());
-        assertEquals(2, result.getProperties(vf.createIRI(PROV_WAS_INFORMED_BY)).size());
-        result.getProperties(vf.createIRI(PROV_WAS_INFORMED_BY)).forEach(value ->
-                assertTrue(parents.stream().anyMatch(commit -> commit.getResource().equals(value))));
+        assertTrue(result.getBaseCommit().isPresent() && result.getBaseCommit().get().getResource().equals(base.getResource()));
+        assertTrue(result.getAuxiliaryCommit().isPresent() && result.getAuxiliaryCommit().get().getResource().equals(auxiliary.getResource()));
         assertFalse(result.getModel().contains(dummyId, null, null));
         assertTrue(result.getModel().contains(revisionId, null, null));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testCreateCommitWithOnlyAuxiliary() {
+        //Setup:
+        InProgressCommit inProgressCommit = inProgressCommitFactory.createNew(vf.createIRI("http://matonto.org/dummy"));
+        Commit auxiliary = commitFactory.createNew(vf.createIRI("http://matonto.org/test/auxiliary"));
+
+        manager.createCommit(inProgressCommit, "message", null, auxiliary);
     }
 
     @Test
@@ -2054,14 +2048,16 @@ public class SimpleCatalogManagerTest {
         result = manager.getCommitChain(notThere);
         assertEquals(0, result.size());
 
-        Set<Resource> expect = Stream.of(vf.createIRI("http://matonto.org/test/commits#test0"),
-                vf.createIRI("http://matonto.org/test/commits#test1"),
+        List<Resource> expect = Stream.of(vf.createIRI("http://matonto.org/test/commits#test3"),
+                vf.createIRI("http://matonto.org/test/commits#test4b"),
+                vf.createIRI("http://matonto.org/test/commits#test4a"),
                 vf.createIRI("http://matonto.org/test/commits#test2"),
-                vf.createIRI("http://matonto.org/test/commits#test4a")).collect(Collectors.toSet());
-        Resource commitId = vf.createIRI("http://matonto.org/test/commits#test4a");
+                vf.createIRI("http://matonto.org/test/commits#test1"),
+                vf.createIRI("http://matonto.org/test/commits#test0")).collect(Collectors.toList());
+        Resource commitId = vf.createIRI("http://matonto.org/test/commits#test3");
         result = manager.getCommitChain(commitId);
         assertEquals(expect.size(), result.size());
-        result.forEach(item -> assertTrue(expect.contains(item)));
+        assertEquals(expect, result);
     }
 
     @Test
@@ -2135,7 +2131,6 @@ public class SimpleCatalogManagerTest {
         assertEquals(1, result.size());
 
         String subject = "http://matonto.org/test/ontology";
-        String predicate = DC_TITLE;
         result.forEach(conflict -> {
             assertEquals(1, conflict.getOriginal().size());
             Difference left = conflict.getLeftDifference();
@@ -2147,7 +2142,7 @@ public class SimpleCatalogManagerTest {
             Stream.of(conflict.getOriginal(), left.getAdditions(), right.getAdditions())
                     .forEach(model -> model.forEach(statement -> {
                 assertEquals(subject, statement.getSubject().stringValue());
-                assertEquals(predicate, statement.getPredicate().stringValue());
+                assertEquals(DC_TITLE, statement.getPredicate().stringValue());
             }));
         });
     }
@@ -2182,7 +2177,6 @@ public class SimpleCatalogManagerTest {
         assertEquals(1, result.size());
 
         String subject = "http://matonto.org/test/ontology";
-        String predicate = DC_TITLE;
         result.forEach(conflict -> {
             assertEquals(1, conflict.getOriginal().size());
             Difference left = conflict.getLeftDifference();
@@ -2194,7 +2188,7 @@ public class SimpleCatalogManagerTest {
             Stream.of(conflict.getOriginal(), left.getAdditions(), right.getDeletions())
                     .forEach(model -> model.forEach(statement -> {
                         assertEquals(subject, statement.getSubject().stringValue());
-                        assertEquals(predicate, statement.getPredicate().stringValue());
+                        assertEquals(DC_TITLE, statement.getPredicate().stringValue());
                     }));
         });
     }

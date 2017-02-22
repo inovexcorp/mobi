@@ -106,7 +106,7 @@ function injectRemoveMatontoFilter() {
 
 function injectPrefixationFilter() {
     module(function($provide) {
-        $provide.value('prefixationFilter', jasmine.createSpy('prefixationFilter'));
+        $provide.value('prefixationFilter', jasmine.createSpy('prefixationFilter').and.callFake(_.identity));
     });
 }
 
@@ -143,8 +143,7 @@ function mockOntologyManager() {
             this.reset = jasmine.createSpy('reset');
             this.initialize = jasmine.createSpy('initialize');
             this.getOntology = jasmine.createSpy('getOntology').and.returnValue($q.when({}));
-            this.getListItemById = jasmine.createSpy('getListItemById').and.returnValue({});
-            this.getListItemByRecordId = jasmine.createSpy('getListItemByRecordId');
+            this.getListItemByRecordId = jasmine.createSpy('getListItemByRecordId').and.returnValue({});
             this.isOntology = jasmine.createSpy('isOntology');
             this.getOntologyById = jasmine.createSpy('getOntologyById').and.returnValue([]);
             this.getOntologyEntity = jasmine.createSpy('getOntologyEntity').and.returnValue({});
@@ -211,7 +210,6 @@ function mockOntologyManager() {
             this.editIRI = jasmine.createSpy('editIRI');
             this.saveChanges = jasmine.createSpy('saveChanges').and.returnValue($q.resolve({}));
             this.closeOntology = jasmine.createSpy('closeOntology');
-            this.getEntityById = jasmine.createSpy('getEntityById');
             this.getEntityByRecordId = jasmine.createSpy('getEntityByRecordId');
             this.getSearchResults = jasmine.createSpy('getSearchResults');
             this.addToAdditions = jasmine.createSpy('addToAdditions');
@@ -761,6 +759,7 @@ function mockUtil() {
             this.createJson = jasmine.createSpy('createJson').and.returnValue({});
             this.getIRINamespace = jasmine.createSpy('getIRINamespace').and.returnValue({});
             this.getDate = jasmine.createSpy('getDate').and.returnValue(new Date());
+            this.condenseCommitId = jasmine.createSpy('condenseCommitId');
         });
     });
 }
