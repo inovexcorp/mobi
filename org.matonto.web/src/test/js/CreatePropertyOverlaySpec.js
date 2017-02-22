@@ -70,7 +70,7 @@ describe('Create Property Overlay directive', function() {
         it('with a static-iri', function() {
             expect(element.find('static-iri').length).toBe(1);
         });
-        it('with a radio-button', function() {
+        it('with radio-buttons', function() {
             expect(element.find('radio-button').length).toBe(2);
         });
         it('with a checkbox', function() {

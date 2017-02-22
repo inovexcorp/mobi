@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Characteristics Block directive', function() {
-    var $compile, scope, element, ontologyStateSvc, $filter, controller, prefixes, ontologyManagerSvc;
+    var $compile, scope, element, ontologyStateSvc, $filter, controller, prefixes, ontologyManagerSvc, utilSvc, functionalProperty;
 
     beforeEach(function() {
         module('templates');
@@ -30,15 +30,15 @@ describe('Characteristics Block directive', function() {
         mockOntologyManager();
         mockOntologyState();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _$filter_, _prefixes_, _ontologyManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _prefixes_, _ontologyManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
-            $filter = _$filter_;
             prefixes = _prefixes_;
             ontologyManagerSvc = _ontologyManagerService_;
         });
 
+        functionalProperty = prefixes.owl + 'FunctionalProperty';
         ontologyStateSvc.selected = undefined;
         element = $compile(angular.element('<characteristics-block></characteristics-block>'))(scope);
         scope.$digest();
@@ -64,10 +64,9 @@ describe('Characteristics Block directive', function() {
     });
 
     describe('controller methods', function() {
-        var statement, functionalProperty;
+        var statement;
         var id = 'id';
         beforeEach(function() {
-            functionalProperty = prefixes.owl + 'FunctionalProperty';
             statement = {
                 '@id': id,
                 '@type': [functionalProperty]
@@ -126,6 +125,14 @@ describe('Characteristics Block directive', function() {
                 expect(ontologyManagerSvc.addToDeletions).not.toHaveBeenCalled();
                 expect(_.some(ontologyStateSvc.listItem.additions, {'@id': id, other: 'value'})).toBe(true);
             });
+        });
+        it('check to make sure scope.$watch works correctly', function() {
+            controller.functional = false;
+            spyOn(controller, 'onChange');
+            ontologyStateSvc.selected = {'@type': [functionalProperty]};
+            scope.$digest();
+            expect(controller.onChange).not.toHaveBeenCalled();
+            expect(controller.functional).toBe(true);
         });
     });
 });

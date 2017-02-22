@@ -46,7 +46,7 @@
 
                     dvm.onChange = function() {
                         if (dvm.functional) {
-                            _.set(dvm.os.selected, '@type', _.concat(_.get(dvm.os.selected, '@type', []), [functionalPropertyIRI]));
+                            _.set(dvm.os.selected, '@type', _.concat(_.get(dvm.os.selected, '@type', []), functionalPropertyIRI));
                             handleCase(dvm.os.listItem.deletions, om.addToAdditions);
                         } else {
                             removeTypeFrom(dvm.os.selected, functionalPropertyIRI);
@@ -55,21 +55,20 @@
                     }
 
                     function handleCase(array, method) {
-                        var statement = {
-                            '@id': angular.copy(dvm.os.selected['@id']),
-                            '@type': [functionalPropertyIRI]
-                        }
                         var match = _.find(array, item => _.includes(_.get(item, '@type', []), functionalPropertyIRI));
                         if (match) {
                             removeTypeFrom(match, functionalPropertyIRI);
                             if (!_.get(match, '@type', []).length) {
                                 _.unset(match, '@type');
                             }
-                            if (_.keys(match).length === 1 && _.has(match, '@id')) {
-                                _.remove(array, item => _.get(item, '@id', '') === match['@id']);
+                            if (_.isEqual(_.keys(match), ['@id'])) {
+                                _.remove(array, match);
                             }
                         } else {
-                            method(dvm.os.listItem.recordId, statement);
+                            method(dvm.os.listItem.recordId, {
+                                '@id': dvm.os.selected['@id'],
+                                '@type': [functionalPropertyIRI]
+                            });
                         }
                     }
 

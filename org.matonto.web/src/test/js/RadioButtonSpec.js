@@ -27,9 +27,6 @@ describe('Radio Button directive', function() {
         module('templates');
         module('radioButton');
 
-        // To test out a directive, you need to inject $compile and $rootScope
-        // and save them to use. We save $timeout because one of the methods
-        // we are testing uses it
         inject(function(_$compile_, _$rootScope_, _$timeout_) {
             $compile = _$compile_;
             $timeout = _$timeout_;
@@ -48,13 +45,9 @@ describe('Radio Button directive', function() {
         isolatedScope = element.isolateScope();
     });
 
-    // To access the functions in a directive's controller to test them directly,
-    // use element.controller('controllerName')
     it('calls changeEvent if value of radio button is changed', function() {
-        // This is the way I found to trigger a radio button ng-change function
         element.find('input')[0].click();
         scope.$digest();
-        // If your method uses $timeout, you need to run this method to update everything
         $timeout.flush();
         expect(scope.changeEvent).toHaveBeenCalled();
     });
@@ -64,20 +57,20 @@ describe('Radio Button directive', function() {
             scope.$digest();
             expect(scope.ngModel).toEqual(true);
         });
-        it('value should be two way bound', function() {
+        it('value should be one way bound', function() {
             isolatedScope.value = 1;
             scope.$digest();
-            expect(scope.value).toEqual(1);
+            expect(scope.value).toEqual(0);
         });
-        it('displayText should be two way bound', function() {
+        it('displayText should be one way bound', function() {
             isolatedScope.displayText = 'abc';
             scope.$digest();
-            expect(scope.displayText).toEqual('abc');
+            expect(scope.displayText).toEqual('');
         });
-        it('isDisabledWhen should be two way bound', function() {
+        it('isDisabledWhen should be one way bound', function() {
             isolatedScope.isDisabledWhen = true;
             scope.$digest();
-            expect(scope.isDisabledWhen).toBe(true);
+            expect(scope.isDisabledWhen).toBe(false);
         });
         it('inline should be one way bound', function() {
             isolatedScope.inline = true;
