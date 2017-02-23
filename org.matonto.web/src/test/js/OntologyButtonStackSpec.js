@@ -113,7 +113,7 @@ describe('Ontology Button Stack directive', function() {
                         ontologyStateSvc.listItem.recordId, catalogId);
                     expect(ontologyManagerSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                         ontologyStateSvc.listItem.branchId, ontologyStateSvc.listItem.commitId,
-                        ontologyStateSvc.state.type);
+                        ontologyStateSvc.state.type, ontologyStateSvc.listItem.upToDate);
                     expect(ontologyStateSvc.clearInProgressCommit).toHaveBeenCalled();
                     expect(controller.showDeleteOverlay).toBe(false);
                 });
