@@ -39,9 +39,9 @@
          * @name mappingSelectPage.directive:mappingSelectPage
          * @scope
          * @restrict E
-         * @requires ontologyManager.service:ontologyManagerService
          * @requires mapperState.service:mapperStateService
          * @requires mappingManager.service:mappingManagerService
+         * @requires util.service:utilService
          *
          * @description
          * `mappingSelectPage` is a directive that creates a Bootstrap `row` div with two columns containing
@@ -54,9 +54,9 @@
          */
         .directive('mappingSelectPage', mappingSelectPage);
 
-        mappingSelectPage.$inject = ['mapperStateService', 'mappingManagerService', 'ontologyManagerService', 'utilService'];
+        mappingSelectPage.$inject = ['mapperStateService', 'mappingManagerService', 'utilService'];
 
-        function mappingSelectPage(mapperStateService, mappingManagerService, ontologyManagerService, utilService) {
+        function mappingSelectPage(mapperStateService, mappingManagerService, utilService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -67,7 +67,6 @@
                     var dvm = this;
                     dvm.state = mapperStateService;
                     dvm.mm = mappingManagerService;
-                    dvm.om = ontologyManagerService;
                     dvm.util = utilService;
 
                     dvm.run = function() {

@@ -77,11 +77,10 @@ public class SparqlRestImpl implements SparqlRest {
     private TupleQueryResult getQueryResults(String queryString) {
         Repository repository = repositoryManager.getRepository("system")
                 .orElseThrow(() -> ErrorUtils.sendError("Repository is not available.", Response.Status.BAD_REQUEST));
-        RepositoryConnection conn = repository.getConnection();
 
-        try {
+        try (RepositoryConnection conn = repository.getConnection()) {
             TupleQuery query = conn.prepareTupleQuery(queryString);
-            return query.evaluate();
+            return query.evaluateAndReturn();
         } catch (MalformedQueryException ex) {
             throw ErrorUtils.sendError("Query is invalid. Please change the query and re-execute.",
                     Response.Status.BAD_REQUEST);
