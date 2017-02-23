@@ -56,9 +56,9 @@
          */
         .directive('commitHistoryTable', commitHistoryTable);
 
-        commitHistoryTable.$inject = ['catalogManagerService', 'utilService', 'userManagerService', 'Snap'];
+        commitHistoryTable.$inject = ['catalogManagerService', 'utilService', 'userManagerService', 'Snap', 'chroma'];
 
-        function commitHistoryTable(catalogManagerService, utilService, userManagerService, Snap) {
+        function commitHistoryTable(catalogManagerService, utilService, userManagerService, Snap, chroma) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -245,7 +245,7 @@
                         path.attr({
                             fill: 'none',
                             'stroke-width': 2,
-                            'stroke': color
+                            stroke: color
                         });
                         wrapper.add(path);
                     }
@@ -267,7 +267,7 @@
                         text.attr({
                             'text-anchor': 'middle',
                             'alignment-baseline': 'central',
-                            'fill': '#fff'
+                            fill: '#fff'
                         });
                         while (text.getBBox().width > rect.asPX('width') - 5) {
                             displayText = displayText.slice(0, -1);
@@ -280,7 +280,7 @@
                         var lineY = circle.asPX('cy') - dvm.circleSpacing/2;
                         var line = snap.line(0, lineY, dvm.deltaX + 10, lineY);
                         line.attr({
-                            'stroke': '#ddd',
+                            stroke: '#ddd',
                             'stroke-width': strokeWidth
                         });
                         wrapper.insertBefore(line);

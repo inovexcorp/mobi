@@ -31,6 +31,7 @@ describe('Record Type directive', function() {
         module('recordType');
         mockCatalogManager();
         injectSplitIRIFilter();
+        injectChromaConstant();
 
         inject(function(_$compile_, _$rootScope_, _catalogManagerService_) {
             $compile = _$compile_;

@@ -35,6 +35,7 @@ describe('Commit History Table directive', function() {
     beforeEach(function() {
         module('templates');
         module('commitHistoryTable');
+        injectChromaConstant();
         mockOntologyState();
         mockCatalogManager();
         mockUserManager();
