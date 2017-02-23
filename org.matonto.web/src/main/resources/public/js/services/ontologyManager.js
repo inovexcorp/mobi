@@ -425,11 +425,11 @@
                 var deferred = $q.defer();
                 cm.getResource(commitId, branchId, recordId, catalogId, false)
                     .then(ontology => {
-                        var listItem = self.getListItemByRecordId(recordId);
+                        var ontologyId = self.getListItemByRecordId(recordId).ontologyId;
                         if (type === 'ontology') {
-                            return self.createOntologyListItem(listItem.ontologyId, recordId, branchId, commitId, ontology, emptyInProgressCommit, upToDate);
+                            return self.createOntologyListItem(ontologyId, recordId, branchId, commitId, ontology, emptyInProgressCommit, upToDate);
                         } else if (type === 'vocabulary') {
-                            return self.createVocabularyListItem(listItem.ontologyId, recordId, branchId, commitId, ontology, emptyInProgressCommit, upToDate);
+                            return self.createVocabularyListItem(ontologyId, recordId, branchId, commitId, ontology, emptyInProgressCommit, upToDate);
                         }
                     }, $q.reject)
                     .then(response => {
