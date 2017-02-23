@@ -31,10 +31,13 @@
                 <input type="text" class="form-control" ng-trim="false" ng-keyup="dvm.nameChanged()" required
                        ng-model="dvm.property[dvm.prefixes.dcterms + 'title'][0]['@value']">
             </div>
-            <string-select ng-model="dvm.property['@type']" display-text="'Type'" select-list="dvm.om.propertyTypes"
-                           on-change="dvm.property[dvm.prefixes.rdfs + 'range'] = []"></string-select>
             <text-area ng-model="dvm.property[dvm.prefixes.dcterms + 'description'][0]['@value']"
                        display-text="'Description'" muted-text="'(Optional)'"></text-area>
+            <p class="identifier"><strong>Type</strong></p>
+            <radio-button ng-model="dvm.property['@type']" value="[dvm.prefixes.owl + 'ObjectProperty']" display-text="'Object Property'" inline="true"></radio-button>
+            <radio-button ng-model="dvm.property['@type']" value="[dvm.prefixes.owl + 'DatatypeProperty']" display-text="'Data Property'" inline="true"></radio-button>
+            <p class="identifier"><strong>Characteristics</strong></p>
+            <checkbox ng-model="dvm.checkbox" display-text="'Functional Property'"></checkbox>
             <object-select ng-model="dvm.property[dvm.prefixes.rdfs + 'domain']" display-text="'Domain'"
                            muted-text="'(Optional)'" select-list="dvm.sm.listItem.subClasses"></object-select>
             <object-select ng-if="dvm.om.isObjectProperty(dvm.property)" class="range-object" ng-model="dvm.property[dvm.prefixes.rdfs + 'range']"

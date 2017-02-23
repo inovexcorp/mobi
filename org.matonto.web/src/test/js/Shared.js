@@ -106,7 +106,7 @@ function injectRemoveMatontoFilter() {
 
 function injectPrefixationFilter() {
     module(function($provide) {
-        $provide.value('prefixationFilter', jasmine.createSpy('prefixationFilter'));
+        $provide.value('prefixationFilter', jasmine.createSpy('prefixationFilter').and.callFake(_.identity));
     });
 }
 
@@ -759,6 +759,7 @@ function mockUtil() {
             this.createJson = jasmine.createSpy('createJson').and.returnValue({});
             this.getIRINamespace = jasmine.createSpy('getIRINamespace').and.returnValue({});
             this.getDate = jasmine.createSpy('getDate').and.returnValue(new Date());
+            this.condenseCommitId = jasmine.createSpy('condenseCommitId');
         });
     });
 }
