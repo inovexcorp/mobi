@@ -28,6 +28,9 @@
          * @ngdoc overview
          * @name commitHistoryTable
          *
+         * @description
+         * The `commitHistoryTable` module only provides the `commitHistoryTable` directive which creates
+         * a table and optionally a graph of the head commit of a branch.
          */
         .module('commitHistoryTable', [])
         /**
@@ -39,6 +42,17 @@
          * @requires util.service:utilService
          * @requires userManager.service:userManagerService
          *
+         * @description
+         * `commitHistoryTable` is a directive that creates a table containing the commit chain of the head commit of
+         * the branch identified by the passed record id amd branch JSON-LD object. Can optionally also display a SVG
+         * graph generated using Snap.svg showing the network the commits. Clicking on a commit id or its corresponding
+         * circle in the graph will open up a {@link commitInfoOverlay.directive:commitInfoOverlay commit info overlay}.
+         * The directive is replaced by the content of the template.
+         *
+         * @param {string} recordId The IRI string of a record in the local catalog
+         * @param {string} branch The JSON-LD object of a branch
+         * @param {string=''} commitId The IRI string of the head commit of the Branch to be used when determining whether
+         * the table should be updated.
          */
         .directive('commitHistoryTable', commitHistoryTable);
 
@@ -74,7 +88,11 @@
 
                     dvm.util = utilService;
                     dvm.um = userManagerService;
+                    dvm.showOverlay = false;
                     dvm.error = '';
+                    dvm.commit = undefined;
+                    dvm.additions = [];
+                    dvm.deletions = [];
                     dvm.commits = [];
                     dvm.circleRadius = 5;
                     dvm.circleSpacing = 50;
@@ -82,10 +100,17 @@
                     dvm.deltaX = 80 + dvm.circleRadius;
                     dvm.deltaY = 37;
 
-                    $scope.$watchGroup(['dvm.branch', 'dvm.recordId', 'dvm.commitId'], newValues => {
-                        dvm.getCommits();
-                    });
+                    $scope.$watchGroup(['dvm.branch', 'dvm.recordId', 'dvm.commitId'], newValues => dvm.getCommits());
 
+                    dvm.openCommitOverlay = function(commitId) {
+                        cm.getBranchCommit(commitId, dvm.branch['@id'], dvm.recordId, catalogId)
+                            .then(commit => {
+                                dvm.commit = _.find(dvm.commits, {id: commitId});
+                                dvm.additions = commit.additions;
+                                dvm.deletions = commit.deletions;
+                                dvm.showOverlay = true;
+                            }, errorMessage => dvm.error = errorMessage);
+                    }
                     dvm.getCommits = function() {
                         cm.getBranchCommits(dvm.branch['@id'], dvm.recordId, catalogId)
                             .then(commits => {
@@ -106,13 +131,17 @@
                         dvm.reset();
                         if (dvm.commits.length > 0) {
                             wrapper = snap.group();
+                            // First draw circles in a straight line
                             _.forEach(dvm.commits, (commit, i) => {
                                 var circle = snap.circle(0, dvm.circleSpacing/2 + (i * dvm.circleSpacing), dvm.circleRadius);
                                 var title = Snap.parse('<title>' + dvm.util.condenseCommitId(commit.id) + '</title>')
                                 circle.append(title);
+                                circle.attr({id: commit.id});
+                                circle.click(() => dvm.openCommitOverlay(commit.id));
                                 wrapper.add(circle);
                                 graphCommits.push({commit: commit, circle: circle});
                             });
+                            // Set up head commit and begin recursion
                             var c = graphCommits[0];
                             var color = colors[colorIdx % colors.length];
                             colorIdx++;
@@ -120,7 +149,9 @@
                             cols.push({x: 0, commits: [c.commit.id], color: color});
                             drawBranchTitle(c.circle);
                             recurse(c);
+                            // Update deltaX based on how many columns there are
                             dvm.deltaX += xI * dvm.columnSpacing;
+                            // Shift the x and y coordinates of everything using deltaX and deltaY
                             _.forEach(graphCommits, (c, idx) => {
                                 c.circle.attr({cx: c.circle.asPX('cx') + dvm.deltaX, cy: c.circle.asPX('cy') + dvm.deltaY});
                                 var strokeWidth = idx === 0 ? '2' : '1';
@@ -158,34 +189,43 @@
                     }
 
                     function recurse(c) {
+                        // Find the column this commit belongs to and the ids of its base and auxiliary commit commits
                         var col = _.find(cols, col => _.includes(col.commits, c.commit.id));
-                        var rightParent = c.commit.base;
-                        var leftParent = c.commit.auxiliary;
-                        if (leftParent) {
-                            var leftC = _.find(graphCommits, {commit: {id: leftParent}});
+                        var baseParent = c.commit.base;
+                        var auxParent = c.commit.auxiliary;
+                        // If there is an auxiliary parent, there is also a base parent
+                        if (auxParent) {
+                            // Shift the auxiliary parent to the left and draw a line between them
+                            var auxC = _.find(graphCommits, {commit: {id: auxParent}});
                             var color = colors[colorIdx % colors.length];
                             colorIdx++;
-                            leftC.circle.attr({cx: -dvm.columnSpacing * xI, fill: color});
-                            cols.push({x: -dvm.columnSpacing * xI, commits: [leftParent], color: color});
+                            auxC.circle.attr({cx: -dvm.columnSpacing * xI, fill: color});
+                            cols.push({x: -dvm.columnSpacing * xI, commits: [auxParent], color: color});
                             xI++;
-                            drawLine(c.circle, leftC.circle, color);
-                            var rightC = _.find(graphCommits, {commit: {id: rightParent}});
-                            rightC.circle.attr({cx: col.x, fill: col.color});
-                            col.commits.push(rightC.commit.id);
-                            drawLine(c.circle, rightC.circle, col.color);
-                            recurse(rightC);
-                            recurse(leftC);
-                        } else if (rightParent) {
-                            var rightC = _.find(graphCommits, {commit: {id: rightParent}});
-                            var rightCol = _.find(cols, col => _.includes(col.commits, rightParent));
-                            if (!rightCol) {
-                                rightC.circle.attr({cx: col.x, fill: col.color});
-                                col.commits.push(rightParent);
-                                drawLine(c.circle, rightC.circle, col.color);
-                                recurse(rightC);
+                            drawLine(c.circle, auxC.circle, color);
+                            // Shift the base parent to be beneath and draw a line between them
+                            var baseC = _.find(graphCommits, {commit: {id: baseParent}});
+                            baseC.circle.attr({cx: col.x, fill: col.color});
+                            col.commits.push(baseC.commit.id);
+                            drawLine(c.circle, baseC.circle, col.color);
+                            // Recurse on right first
+                            recurse(baseC);
+                            recurse(auxC);
+                        } else if (baseParent) {
+                            // Determine whether the base parent is already in a column
+                            var baseC = _.find(graphCommits, {commit: {id: baseParent}});
+                            var baseCol = _.find(cols, col => _.includes(col.commits, baseParent));
+                            if (!baseCol) {
+                                // If not in a column, push into current column and draw a line between them
+                                baseC.circle.attr({cx: col.x, fill: col.color});
+                                col.commits.push(baseParent);
+                                drawLine(c.circle, baseC.circle, col.color);
+                                // Continue recursion
+                                recurse(baseC);
                             } else {
-                                rightC.circle.attr({fill: rightCol.color});
-                                drawLine(c.circle, rightC.circle, col.color);
+                                // If in a column, draw a line between them and end this branch of recusion
+                                baseC.circle.attr({fill: baseCol.color});
+                                drawLine(c.circle, baseC.circle, col.color);
                             }
                         }
                     }
@@ -195,8 +235,10 @@
                         var pathStr = 'M' + start.x + ',' + (start.y + dvm.circleRadius);
                         if (start.x > end.x) {
                             pathStr += ' C' + start.x + ',' + (start.y + 3 * dvm.circleSpacing/4) + ' ' + end.x + ',' + (start.y + dvm.circleSpacing/4) + ' ' + end.x + ',' + (start.y + dvm.circleSpacing) + ' L';
-                        } else {
+                        } else if (start.x < end.x) {
                             pathStr += ' L' + start.x + ',' + (end.y - dvm.circleSpacing) + ' C' + start.x + ',' + (end.y - dvm.circleSpacing/4) + ' ' + end.x + ',' + (end.y - 3 * dvm.circleSpacing/4) + ' ';
+                        } else {
+                            pathStr += ' L';
                         }
                         pathStr += end.x + ',' + (end.y - dvm.circleRadius);
                         var path = snap.path(pathStr);

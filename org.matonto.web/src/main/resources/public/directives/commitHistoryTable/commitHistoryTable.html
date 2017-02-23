@@ -22,10 +22,11 @@
   -->
 <div class="commit-history-table">
     <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
+    <commit-info-overlay ng-if="dvm.showOverlay" commit="dvm.commit" additions="dvm.additions" deletions="dvm.deletions" overlay-flag="dvm.showOverlay"></commit-info-overlay>
     <div class="wrapper">
         <svg class="commit-graph" ng-style="{'height': graph ? dvm.commits.length * dvm.circleSpacing + dvm.deltaY : 0, 'width': graph ? dvm.deltaX + 10 : 0}"></svg>
         <div class="table-wrapper">
-            <table class="table table-hover">
+            <table class="table">
                 <thead class="thead-default">
                     <tr>
                         <th class="fit">Creator</th>
@@ -37,7 +38,7 @@
                 <tbody>
                     <tr ng-repeat="commit in dvm.commits track by commit.id">
                         <td class="fit" title="Username: {{commit.creator.username}}">{{dvm.um.getUserDisplay(commit.creator)}}</td>
-                        <td class="fit commit-id" title="{{commit.id}}">{{dvm.util.condenseCommitId(commit.id)}}</td>
+                        <td class="fit commit-id" title="{{commit.id}}"><a ng-click="dvm.openCommitOverlay(commit.id)">{{dvm.util.condenseCommitId(commit.id)}}</a></td>
                         <td title="{{commit.message}}" class="commit-message"><div><span>{{commit.message}}</span></div></td>
                         <td class="fit" title="{{dvm.util.getDate(commit.date, 'medium')}}">{{dvm.util.getDate(commit.date, 'short')}}</td>
                     </tr>

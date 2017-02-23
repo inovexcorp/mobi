@@ -2,6 +2,9 @@
 @import "./src/main/resources/public/css/variables";
 
 .commit-history-table {
+    circle {
+        cursor: pointer;
+    }
     .wrapper {
         display: flex;
 

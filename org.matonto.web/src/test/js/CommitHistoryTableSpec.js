@@ -27,7 +27,7 @@ describe('Commit History Table directive', function() {
     var commitId = 'commitId';
     var branch = {'@id': 'branchId'};
     var recordId = 'recordId';
-    var commits = [{'@id': commitId}];
+    var commits = [{id: commitId}];
     var paperMock = {
         clear: jasmine.createSpy('clear')
     };
@@ -60,7 +60,6 @@ describe('Commit History Table directive', function() {
         element = $compile(angular.element('<commit-history-table commit-id="commitId" branch="branch" record-id="recordId"></commit-history-table>'))(scope);
         scope.$digest();
         controller = element.controller('commitHistoryTable');
-        // scope.dvm = controller;
         isolatedScope = element.isolateScope();
     });
 
@@ -79,11 +78,28 @@ describe('Commit History Table directive', function() {
         it('with ths', function() {
             expect(element.find('th').length).toBe(4);
         });
+        it('with the correct styles based on whether a graph should be shown', function() {
+            var svg = element.find('svg');
+            expect(svg.css('height')).toBe('0px');
+            expect(svg.css('width')).toBe('0px');
+
+            isolatedScope.graph = true;
+            scope.$digest();
+            expect(svg.css('height')).toBe((controller.commits.length * controller.circleSpacing + controller.deltaY) + 'px');
+            expect(svg.css('width')).toBe((controller.deltaX + 10) + 'px');
+        });
         it('depending on whether there is a error', function() {
             expect(element.find('error-display').length).toBe(0);
             controller.error = error;
             scope.$apply();
             expect(element.find('error-display').length).toBe(1);
+        });
+        it('depending on whether the commit overlay should be shown', function() {
+            expect(element.find('commit-info-overlay').length).toBe(0);
+
+            controller.showOverlay = true;
+            scope.$digest();
+            expect(element.find('commit-info-overlay').length).toBe(1);
         });
     });
     describe('controller bound variable', function() {
@@ -179,5 +195,14 @@ describe('Commit History Table directive', function() {
             scope.$apply('recordId = "new"');
             expect(controller.getCommits).toHaveBeenCalled();
         });
+    });
+    it('should call openCommitOverlay when an id is clicked', function() {
+        scope.$apply();
+        controller.commits = commits;
+        scope.$digest();
+        spyOn(controller, 'openCommitOverlay');
+        var id = angular.element(element.querySelectorAll('table tr td.commit-id a')[0]);
+        id.triggerHandler('click');
+        expect(controller.openCommitOverlay).toHaveBeenCalledWith(commits[0].id);
     });
 });
