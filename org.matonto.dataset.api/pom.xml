@@ -98,6 +98,11 @@
                                 <ontology>
                                     <ontologyFile>${basedir}/../org.matonto.catalog.api/src/main/resources/mcat.ttl</ontologyFile>
                                     <outputPackage>org.matonto.catalog.api.ontologies.mcat</outputPackage>
+                                    <ontologyName>MCAT</ontologyName>
+                                </ontology>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/../org.matonto.rdf.orm.ontologies/src/main/resources/prov-o.ttl</ontologyFile>
+                                    <outputPackage>org.matonto.ontologies.provo</outputPackage>
                                 </ontology>
                             </references>
                             <outputLocation>${project.basedir}/src/main/java</outputLocation>

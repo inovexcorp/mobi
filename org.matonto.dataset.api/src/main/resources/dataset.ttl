@@ -6,6 +6,7 @@
 @prefix dct: <http://purl.org/dc/terms/> .
 @prefix prov: <http://www.w3.org/ns/prov-o#> .
 @prefix matg: <http://matonto.org/ontologies/graph#> .
+@prefix matcat: <http://matonto.org/ontologies/catalog#> .
 @prefix : <http://matonto.org/ontologies/dataset#> .
 @base <http://matonto.org/ontologies/dataset> .
 
@@ -42,7 +43,7 @@
 # DatasetRecord
 
 :DatasetRecord a owl:Class ;
-    rdfs:subClassOf :UnversionedRecord ;
+    rdfs:subClassOf matcat:UnversionedRecord ;
     rdfs:label "Dataset"@en ;
     rdfs:comment "A record describing a collection of RDF Graphs that make up an RDF Dataset."@en ;
     rdfs:seeAlso "https://www.w3.org/TR/rdf11-concepts/#section-dataset" .

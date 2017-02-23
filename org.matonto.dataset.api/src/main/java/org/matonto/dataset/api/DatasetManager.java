@@ -27,6 +27,7 @@ import org.matonto.dataset.api.builder.DatasetRecordConfig;
 import org.matonto.dataset.ontology.dataset.DatasetRecord;
 import org.matonto.rdf.api.Resource;
 
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -48,7 +49,7 @@ public interface DatasetManager {
      * @param dataset The Resource described by the DatasetRecord in the local catalog.
      * @return The DatasetRecord from the local catalog. DatasetRecord includes empty Dataset object.
      */
-    DatasetRecord getDatasetRecord(Resource dataset);
+    Optional<DatasetRecord> getDatasetRecord(Resource dataset);
 
     /**
      * Creates a dataset according to the specified configuration. Initial dataset structure is created in the specified
