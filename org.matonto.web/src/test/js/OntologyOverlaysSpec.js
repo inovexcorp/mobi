@@ -106,6 +106,8 @@ describe('Ontology Overlays directive', function() {
                 it('when afterSave is resolved', function() {
                     afterDeferred.resolve();
                     scope.$apply();
+                    expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
+                    expect(ontologyStateSvc.getEntityUsages).toHaveBeenCalledWith(ontologyStateSvc.getActiveEntityIRI());
                     expect(ontologyStateSvc.showSaveOverlay).toBe(false);
                     expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
                 });
