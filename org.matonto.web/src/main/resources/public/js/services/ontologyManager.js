@@ -355,8 +355,7 @@
                             }
                             return $q.reject();
                         })
-                        .then(ontology => resolve(ontology, inProgressCommit), () => sm.deleteOntologyState(recordId, branchId, commitId))
-                        .then(getLatest, deferred.reject);
+                        .then(ontology => resolve(ontology, inProgressCommit), () => sm.deleteOntologyState(recordId, branchId, commitId).then(getLatest, deferred.reject));
                 } else {
                     getLatest();
                 }
