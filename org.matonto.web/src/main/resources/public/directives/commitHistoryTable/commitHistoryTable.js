@@ -97,7 +97,7 @@
                     dvm.circleRadius = 5;
                     dvm.circleSpacing = 50;
                     dvm.columnSpacing = 25;
-                    dvm.deltaX = 80 + dvm.circleRadius;
+                    dvm.deltaX = 5 + dvm.circleRadius;
                     dvm.deltaY = 37;
 
                     $scope.$watchGroup(['dvm.branch', 'dvm.recordId', 'dvm.commitId'], newValues => dvm.getCommits());
@@ -152,11 +152,7 @@
                             // Update deltaX based on how many columns there are
                             dvm.deltaX += xI * dvm.columnSpacing;
                             // Shift the x and y coordinates of everything using deltaX and deltaY
-                            _.forEach(graphCommits, (c, idx) => {
-                                c.circle.attr({cx: c.circle.asPX('cx') + dvm.deltaX, cy: c.circle.asPX('cy') + dvm.deltaY});
-                                var strokeWidth = idx === 0 ? '2' : '1';
-                                drawDivider(c.circle, strokeWidth);
-                            });
+                            _.forEach(graphCommits, (c, idx) => c.circle.attr({cx: c.circle.asPX('cx') + dvm.deltaX, cy: c.circle.asPX('cy') + dvm.deltaY}));
                             _.forEach(wrapper.selectAll('path'), path => {
                                 var points = _.map(_.split(path.attr('d'), ' '), s => {
                                     var sections;
@@ -185,7 +181,7 @@
                         colorIdx = 0;
                         wrapper = undefined;
                         snap.clear();
-                        dvm.deltaX = 80 + dvm.circleRadius;
+                        dvm.deltaX = 5 + dvm.circleRadius;
                     }
 
                     function recurse(c) {
@@ -275,15 +271,6 @@
                         }
                         text.append(title);
                         wrapper.add(rect, triangle, text);
-                    }
-                    function drawDivider(circle, strokeWidth) {
-                        var lineY = circle.asPX('cy') - dvm.circleSpacing/2;
-                        var line = snap.line(0, lineY, dvm.deltaX + 10, lineY);
-                        line.attr({
-                            stroke: '#ddd',
-                            'stroke-width': strokeWidth
-                        });
-                        wrapper.insertBefore(line);
                     }
                 }]
             }

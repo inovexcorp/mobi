@@ -6,44 +6,43 @@
         cursor: pointer;
     }
     .wrapper {
-        display: flex;
+        position: relative;
 
-        .table-wrapper {
-            flex: 1;
+        svg {
+            position: absolute;
+        }
+        table {
+            td.fit, th.fit {
+                width: 1%;
+                white-space: nowrap;
+            }
+            td {
+                height: 50px;
+                vertical-align: middle;
+            }
+            .commit-id {
+                font-family: 'courier';
+            }
+            .commit-message {
+                position: relative;
 
-            table {
-                td.fit, th.fit {
-                    width: 1%;
-                    white-space: nowrap;
-                }
-                td {
-                    height: 50px;
-                    vertical-align: middle;
-                }
-                .commit-id {
-                    font-family: 'courier';
-                }
-                .commit-message {
-                    position: relative;
+                div {
+                    position: absolute;
+                    left: 0;
+                    right: 0;
+                    top: 0;
+                    bottom: 0;
 
-                    div {
-                        position: absolute;
-                        left: 0;
-                        right: 0;
-                        top: 0;
-                        bottom: 0;
-
-                        span {
-                            padding: 8px;
-                            display: block;
-                            position: relative;
-                            text-overflow: ellipsis;
-                            white-space: nowrap;
-                            overflow: hidden;
-                            top: 50%;
-                            -webkit-transform: translateY(-50%);
-                                    transform: translateY(-50%);
-                        }
+                    span {
+                        padding: 8px;
+                        display: block;
+                        position: relative;
+                        text-overflow: ellipsis;
+                        white-space: nowrap;
+                        overflow: hidden;
+                        top: 50%;
+                        -webkit-transform: translateY(-50%);
+                                transform: translateY(-50%);
                     }
                 }
             }

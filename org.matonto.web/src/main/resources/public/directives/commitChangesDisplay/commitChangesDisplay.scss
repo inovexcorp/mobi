@@ -6,6 +6,9 @@
         margin: 0;
         margin-bottom: 15px;
 
+        &:last-child {
+            margin-bottom: 0;
+        }
         .value-container {
             display: flex;
             flex-direction: row;

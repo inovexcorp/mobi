@@ -69,7 +69,6 @@ describe('Commit History Table directive', function() {
             expect(element.prop('tagName')).toBe('DIV');
             expect(element.hasClass('commit-history-table')).toBe(true);
             expect(element.querySelectorAll('.wrapper').length).toBe(1);
-            expect(element.querySelectorAll('.table-wrapper').length).toBe(1);
         });
         _.forEach(['table', 'thead', 'tbody', 'svg'], function(item) {
             it('with a ' + item, function() {
@@ -177,7 +176,7 @@ describe('Commit History Table directive', function() {
         it('should reset graph variables', function() {
             controller.reset();
             expect(paperMock.clear).toHaveBeenCalled();
-            expect(controller.deltaX).toBe(85);
+            expect(controller.deltaX).toBe(10);
         });
     });
     describe('$scope.$watch triggers when changing the', function() {

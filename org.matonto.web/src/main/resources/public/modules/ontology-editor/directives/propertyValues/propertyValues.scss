@@ -8,9 +8,6 @@
     margin: 10px;
     position: relative;
 
-    &:last-child {
-        margin-bottom: 0;
-    }
     /* Spacing for the property header */
     h5 {
         border-bottom: 1px solid $gray-lighter;
