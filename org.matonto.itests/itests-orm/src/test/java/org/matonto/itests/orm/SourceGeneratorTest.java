@@ -23,13 +23,18 @@ package org.matonto.itests.orm;
  * #L%
  */
 
-import com.xmlns.foaf._0._1.Agent;
-import com.xmlns.foaf._0._1.AgentFactory;
-import com.xmlns.foaf._0._1.OnlineChatAccount;
-import com.xmlns.foaf._0._1.OnlineChatAccountFactory;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.matonto.ontologies.foaf.Agent;
+import org.matonto.ontologies.foaf.AgentFactory;
+import org.matonto.ontologies.foaf.OnlineChatAccount;
+import org.matonto.ontologies.foaf.OnlineChatAccountFactory;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Value;
@@ -38,14 +43,19 @@ import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactoryService;
 import org.matonto.rdf.core.impl.sesame.ValueFactoryService;
 import org.matonto.rdf.orm.Thing;
 import org.matonto.rdf.orm.conversion.ValueConverterRegistry;
-import org.matonto.rdf.orm.conversion.impl.*;
+import org.matonto.rdf.orm.conversion.impl.DefaultValueConverterRegistry;
+import org.matonto.rdf.orm.conversion.impl.DoubleValueConverter;
+import org.matonto.rdf.orm.conversion.impl.FloatValueConverter;
+import org.matonto.rdf.orm.conversion.impl.IntegerValueConverter;
+import org.matonto.rdf.orm.conversion.impl.LiteralValueConverter;
+import org.matonto.rdf.orm.conversion.impl.ShortValueConverter;
+import org.matonto.rdf.orm.conversion.impl.StringValueConverter;
+import org.matonto.rdf.orm.conversion.impl.ValueValueConverter;
 import org.matonto.rdf.orm.impl.ThingFactory;
 
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-
-import static org.junit.Assert.*;
 
 public class SourceGeneratorTest {
 
