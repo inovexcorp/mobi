@@ -27,9 +27,9 @@
         .module('ontologyButtonStack', [])
         .directive('ontologyButtonStack', ontologyButtonStack);
 
-        ontologyButtonStack.$inject = ['ontologyStateService', 'ontologyManagerService', 'catalogManagerService'];
+        ontologyButtonStack.$inject = ['$q', 'ontologyStateService', 'ontologyManagerService', 'catalogManagerService'];
 
-        function ontologyButtonStack(ontologyStateService, ontologyManagerService, catalogManagerService) {
+        function ontologyButtonStack($q, ontologyStateService, ontologyManagerService, catalogManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -48,12 +48,10 @@
 
                     dvm.delete = function() {
                         cm.deleteInProgressCommit(dvm.os.listItem.recordId, catalogId)
+                            .then(() => om.updateOntology(dvm.os.listItem.recordId, dvm.os.listItem.branchId, dvm.os.listItem.commitId, dvm.os.state.type, dvm.os.listItem.upToDate), $q.reject)
                             .then(() => {
-                                om.updateOntology(dvm.os.listItem.recordId, dvm.os.listItem.branchId,
-                                    dvm.os.listItem.commitId, dvm.os.state.type).then(() => {
-                                        dvm.os.clearInProgressCommit();
-                                        dvm.showDeleteOverlay = false;
-                                    }, errorMessage => dvm.error = errorMessage);
+                                dvm.os.clearInProgressCommit();
+                                dvm.showDeleteOverlay = false;
                             }, errorMessage => dvm.error = errorMessage);
                     }
                 }
