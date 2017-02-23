@@ -355,8 +355,7 @@
                             }
                             return $q.reject();
                         })
-                        .then(ontology => resolve(ontology, inProgressCommit), () => sm.deleteOntologyState(recordId, branchId, commitId))
-                        .then(getLatest, deferred.reject);
+                        .then(ontology => resolve(ontology, inProgressCommit), () => sm.deleteOntologyState(recordId, branchId, commitId).then(getLatest, deferred.reject));
                 } else {
                     getLatest();
                 }
@@ -417,27 +416,29 @@
              * @param {string} recordId The record ID associated with the requested ontology.
              * @param {string} branchId The branch ID associated with the requested ontology.
              * @param {string} commitId The commit ID associated with the requested ontology.
+             * @param {string} [type='ontology'] The type of listItem that needs to be updated.
+             * @param {boolean} [upToDate=true] The flag indicating whether the ontology is upToDate or not.
              * @returns {Promise} A promise indicating the success or failure of the update.
              */
-            self.updateOntology = function(recordId, branchId, commitId, type = 'ontology') {
+            self.updateOntology = function(recordId, branchId, commitId, type = 'ontology', upToDate = true) {
+                var listItem;
                 var deferred = $q.defer();
-                var onSuccess = function(listItem) {
-                    sm.updateOntologyState(recordId, branchId, commitId)
-                        .then(() => {
-                            updateListItem(recordId, listItem);
-                            deferred.resolve();
-                        }, deferred.reject);
-                }
                 cm.getResource(commitId, branchId, recordId, catalogId, false)
                     .then(ontology => {
                         var ontologyId = self.getListItemByRecordId(recordId).ontologyId;
                         if (type === 'ontology') {
-                            self.createOntologyListItem(ontologyId, recordId, branchId, commitId, ontology,
-                                emptyInProgressCommit).then(onSuccess, deferred.reject);
+                            return self.createOntologyListItem(ontologyId, recordId, branchId, commitId, ontology, emptyInProgressCommit, upToDate);
                         } else if (type === 'vocabulary') {
-                            self.createVocabularyListItem(ontologyId, recordId, branchId, commitId, ontology,
-                                emptyInProgressCommit).then(onSuccess, deferred.reject);
+                            return self.createVocabularyListItem(ontologyId, recordId, branchId, commitId, ontology, emptyInProgressCommit, upToDate);
                         }
+                    }, $q.reject)
+                    .then(response => {
+                        listItem = response;
+                        return sm.updateOntologyState(recordId, branchId, commitId)
+                    }, $q.reject)
+                    .then(() => {
+                        updateListItem(recordId, listItem);
+                        deferred.resolve();
                     }, deferred.reject);
                 return deferred.promise;
             }
