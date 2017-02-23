@@ -273,7 +273,7 @@
                 }
             }
             self.getActiveEntityIRI = function() {
-                return self.getActivePage().entityIRI;
+                return _.get(self.getActivePage(), 'entityIRI');
             }
             self.selectItem = function(entityIRI, getUsages = true) {
                 if (entityIRI && entityIRI !== self.getActiveEntityIRI()) {

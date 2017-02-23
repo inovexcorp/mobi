@@ -45,7 +45,10 @@
                         dvm.om.saveChanges(dvm.sm.listItem.recordId, {additions: dvm.sm.listItem.additions, deletions: dvm.sm.listItem.deletions})
                             .then(() => dvm.sm.afterSave(), $q.reject)
                             .then(() => {
-                                dvm.sm.getEntityUsages(dvm.sm.getActiveEntityIRI());
+                                var entityIRI = dvm.sm.getActiveEntityIRI();
+                                if (dvm.sm.getActiveKey() !== 'project' && entityIRI) {
+                                    dvm.sm.getEntityUsages(entityIRI);
+                                }
                                 dvm.sm.showSaveOverlay = false;
                             }, errorMessage => dvm.error = errorMessage);
                     }
