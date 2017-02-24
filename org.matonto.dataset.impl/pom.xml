@@ -65,6 +65,18 @@
             <version>1.5.5-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>repository.impl.sesame</artifactId>
+            <version>1.5.8-SNAPSHOT</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>rdf.orm.ontologies</artifactId>
+            <version>1.5.8-SNAPSHOT</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>

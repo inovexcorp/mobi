@@ -23,15 +23,22 @@
 package org.matonto.dataset.impl
 
 import org.matonto.catalog.api.CatalogManager
+import org.matonto.dataset.api.builder.DatasetRecordConfig
 import org.matonto.dataset.ontology.dataset.DatasetFactory
 import org.matonto.dataset.ontology.dataset.DatasetRecordFactory
 import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory
+import org.matonto.rdf.core.utils.Values
 import org.matonto.rdf.orm.conversion.impl.*
 import org.matonto.rdf.orm.impl.ThingFactory
 import org.matonto.repository.api.Repository
 import org.matonto.repository.api.RepositoryConnection
 import org.matonto.repository.base.RepositoryResult
+import org.matonto.repository.impl.sesame.SesameRepositoryWrapper
+import org.openrdf.repository.sail.SailRepository
+import org.openrdf.rio.RDFFormat
+import org.openrdf.rio.Rio
+import org.openrdf.sail.memory.MemoryStore
 import spock.lang.Specification
 
 class SimpleDatasetManagerSpec extends Specification {
@@ -54,8 +61,12 @@ class SimpleDatasetManagerSpec extends Specification {
 
     // Objects
     def testIRI = vf.createIRI("http://test.com/1")
+    def memRepo
 
     def setup() {
+        memRepo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()))
+        memRepo.initialize()
+
         dsFactory.setValueFactory(vf)
         dsFactory.setModelFactory(mf)
         dsFactory.setValueConverterRegistry(vcr)
@@ -80,6 +91,7 @@ class SimpleDatasetManagerSpec extends Specification {
         vcr.registerValueConverter(new LiteralValueConverter())
 
         service.setDatasetRecordFactory(dsRecFactory)
+        service.setDatasetFactory(dsFactory)
 
         service.setCatalogManager(catalogManagerMock)
         service.setRepository(repositoryMock)
@@ -88,7 +100,7 @@ class SimpleDatasetManagerSpec extends Specification {
         repositoryMock.getConnection() >> connMock
         connMock.getStatements(*_) >> resultsMock
 
-        catalogManagerMock.getLocalCatalogIRI() >> vf.createIRI("http://test.com/localcatalog")
+        catalogManagerMock.getLocalCatalogIRI() >> vf.createIRI("http://matonto.org/test/catalog-local")
     }
 
     def "getDatasetRecord returns the correct DatasetRecord when the dataset exists"() {
@@ -124,4 +136,78 @@ class SimpleDatasetManagerSpec extends Specification {
         then:
         results == Optional.empty()
     }
+
+    def "listDatasets returns an empty set when there are no records"() {
+        setup:
+        service.setRepository(memRepo)
+        def conn = memRepo.getConnection()
+        def catalogData = Values.matontoModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_no-records.trig"), "", RDFFormat.TRIG))
+        conn.add(catalogData)
+
+        expect:
+        service.listDatasets().size() == 0
+    }
+
+    def "listDatasets returns a non-empty set when there are only databases"() {
+        setup:
+        service.setRepository(memRepo)
+        def conn = memRepo.getConnection()
+        def catalogData = Values.matontoModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_only-ds-records.trig"), "", RDFFormat.TRIG))
+        conn.add(catalogData)
+        def results = service.listDatasets()
+
+        expect:
+        results.size() == 2
+        results.contains(vf.createIRI("http://matonto.org/dataset/test1"))
+        results.contains(vf.createIRI("http://matonto.org/dataset/test2"))
+    }
+
+    def "createDataset returns the correct DatasetRecord"() {
+        setup:
+        def datasetIRI = vf.createIRI("http://test.com/dataset1")
+        def dataset = dsFactory.createNew(datasetIRI)
+        def recordIRI = vf.createIRI("http://test.com/record1")
+        def record = dsRecFactory.createNew(recordIRI)
+        record.setDataset(dataset)
+
+        def config = new DatasetRecordConfig.DatasetRecordBuilder("Test Dataset", [] as Set, "system")
+                .dataset(datasetIRI.stringValue())
+                .build()
+
+        1 * catalogManagerMock.createRecord(config, _ as DatasetRecordFactory) >> record
+
+        when:
+        def results = service.createDataset(config)
+
+        then:
+        results.getResource() == recordIRI
+        results.getDataset() != Optional.empty()
+        results.getDataset().get().getResource() == datasetIRI
+    }
+
+//    def "createDataset stores the DatasetRecord correctly"() {
+//        setup:
+//        def datasetIRI = vf.createIRI("http://test.com/dataset1")
+//        def dataset = dsFactory.createNew(datasetIRI)
+//        def recordIRI = vf.createIRI("http://test.com/record1")
+//        def record = dsRecFactory.createNew(recordIRI)
+//        record.setDataset(dataset)
+//
+//        def config = new DatasetRecordConfig.DatasetRecordBuilder("Test Dataset", [] as Set, "system")
+//                .dataset(datasetIRI.stringValue())
+//                .build()
+//
+//        1 * catalogManagerMock.createRecord(config, _ as DatasetRecordFactory) >> record
+//
+//        service.setRepository(memRepo)
+//        def conn = memRepo.getConnection()
+//        def catalogData = Values.matontoModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_no-records.trig"), "", RDFFormat.TRIG))
+//        conn.add(catalogData)
+//
+//        when:
+//        service.createDataset(config)
+//
+//        then:
+//        conn.getStatements(recordIRI, vf.createIRI(DatasetRecord.dataset_IRI), datasetIRI).hasNext()
+//    }
 }

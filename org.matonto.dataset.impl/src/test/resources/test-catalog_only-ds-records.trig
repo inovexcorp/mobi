@@ -1,0 +1,54 @@
+@prefix mcat: <http://matonto.org/ontologies/catalog#> .
+@prefix dataset: <http://matonto.org/ontologies/dataset#> .
+@prefix matuser: <http://matonto.org/ontologies/user/management#> .
+@prefix dc: <http://purl.org/dc/terms/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+
+### DATASETS
+
+GRAPH <http://matonto.org/record/dataset/test1> {
+    <http://matonto.org/record/dataset/test1> a dataset:DatasetRecord, mcat:UnversionedRecord, mcat:Record ;
+        mcat:catalog <http://matonto.org/test/catalog-local> ;
+        dc:title "Dataset" ;
+        dc:description "Description" ;
+        dc:identifier "Dataset" ;
+        dc:issued "2016-01-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-03-02T00:00:00Z"^^xsd:dateTime ;
+        dc:publisher matuser:tester ;
+        dataset:dataset <http://matonto.org/dataset/test1> .
+}
+
+GRAPH <http://matonto.org/dataset/test1> {
+    <http://matonto.org/dataset/test1> a dataset:Dataset .
+}
+
+GRAPH <http://matonto.org/record/dataset/test2> {
+    <http://matonto.org/record/dataset/test2> a dataset:DatasetRecord, mcat:UnversionedRecord, mcat:Record ;
+        mcat:catalog <http://matonto.org/test/catalog-local> ;
+        dc:title "Dataset" ;
+        dc:description "Description" ;
+        dc:identifier "Dataset" ;
+        dc:issued "2016-01-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-03-02T00:00:00Z"^^xsd:dateTime ;
+        dc:publisher matuser:tester ;
+        dataset:dataset <http://matonto.org/dataset/test2> .
+}
+
+GRAPH <http://matonto.org/dataset/test2> {
+    <http://matonto.org/dataset/test2> a dataset:Dataset .
+}
+
+### OTHER DATA
+
+
+### CATALOG
+
+GRAPH <http://matonto.org/test/catalog-local> {
+    <http://matonto.org/test/catalog-local> a mcat:Catalog .
+}
+
+GRAPH <http://matonto.org/test/catalog-distributed> {
+    <http://matonto.org/test/catalog-distributed> a mcat:Catalog .
+}

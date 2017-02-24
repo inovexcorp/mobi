@@ -27,12 +27,16 @@ import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Modified;
 import aQute.bnd.annotation.component.Reference;
+import org.apache.commons.io.IOUtils;
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.dataset.api.DatasetManager;
 import org.matonto.dataset.api.builder.DatasetRecordConfig;
+import org.matonto.dataset.ontology.dataset.DatasetFactory;
 import org.matonto.dataset.ontology.dataset.DatasetRecord;
 import org.matonto.dataset.ontology.dataset.DatasetRecordFactory;
 import org.matonto.exception.MatOntoException;
+import org.matonto.query.TupleQueryResult;
+import org.matonto.query.api.TupleQuery;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.Statement;
 import org.matonto.rdf.api.ValueFactory;
@@ -40,6 +44,8 @@ import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.base.RepositoryResult;
 
+import java.io.IOException;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -51,6 +57,21 @@ public class SimpleDatasetManager implements DatasetManager {
     private Repository systemRepository;
     private ValueFactory vf;
     private DatasetRecordFactory dsRecFactory;
+    private DatasetFactory dsFactory;
+
+    private static final String FIND_DATASETS_QUERY;
+    private static final String CATALOG_BINDING = "catalog";
+
+    static {
+        try {
+            FIND_DATASETS_QUERY = IOUtils.toString(
+                    SimpleDatasetManager.class.getResourceAsStream("/find-dataset-records.rq"),
+                    "UTF-8"
+            );
+        } catch (IOException e) {
+            throw new MatOntoException(e);
+        }
+    }
 
     @Reference
     void setCatalogManager(CatalogManager catalogManager) {
@@ -72,6 +93,11 @@ public class SimpleDatasetManager implements DatasetManager {
         this.dsRecFactory = factory;
     }
 
+    @Reference
+    void setDatasetFactory(DatasetFactory datasetFactory) {
+        this.dsFactory = datasetFactory;
+    }
+
     @Activate
     private void start(Map<String, Object> props) {
 
@@ -84,7 +110,17 @@ public class SimpleDatasetManager implements DatasetManager {
 
     @Override
     public Set<Resource> listDatasets() {
-        return null;
+        // TODO: Use required resource util
+        Set<Resource> datasets = new HashSet<>();
+        try (RepositoryConnection conn = systemRepository.getConnection()) {
+            TupleQuery query = conn.prepareTupleQuery(FIND_DATASETS_QUERY);
+            query.setBinding(CATALOG_BINDING, catalogManager.getLocalCatalogIRI());
+            TupleQueryResult result = query.evaluate();
+            result.forEach(bindingSet ->
+                    bindingSet.getValue("dataset")
+                            .ifPresent(value -> datasets.add(vf.createIRI(value.stringValue()))));
+        }
+        return datasets;
     }
 
     @Override
@@ -111,7 +147,12 @@ public class SimpleDatasetManager implements DatasetManager {
 
     @Override
     public DatasetRecord createDataset(DatasetRecordConfig config) {
-        return null;
+        DatasetRecord datasetRecord = catalogManager.createRecord(config, dsRecFactory);
+        datasetRecord.setDataset(dsFactory.createNew(vf.createIRI(config.getDataset())));
+
+        catalogManager.addRecord(catalogManager.getLocalCatalogIRI(), datasetRecord);
+
+        return datasetRecord;
     }
 
     @Override
