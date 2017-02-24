@@ -880,8 +880,9 @@ public interface CatalogRest {
 
     /**
      * Performs a merge between the two Branches identified by the provided IDs. The addition and deletion statements
-     * that are required to resolve any conflicts will be used to create the merged Commit. Returns a Response
-     * indicating whether the Branches were merged successfully.
+     * that are required to resolve any conflicts will be used to create the merged Commit. The target Branch will
+     * point to the new merge commit, but the source Branch will still point to the original head commit. Returns a
+     * Response indicating whether the Branches were merged successfully.
      *
      * @param context The context of the request.
      * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins

@@ -86,7 +86,7 @@ describe('Commit History Table directive', function() {
             isolatedScope.graph = true;
             scope.$digest();
             expect(svg.css('height')).toBe((controller.commits.length * controller.circleSpacing + controller.deltaY) + 'px');
-            expect(svg.css('width')).toBe((controller.deltaX + 10) + 'px');
+            expect(svg.css('width')).not.toBe('0px');
         });
         it('depending on whether there is a error', function() {
             expect(element.find('error-display').length).toBe(0);

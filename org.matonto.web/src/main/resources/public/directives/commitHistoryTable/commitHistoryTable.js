@@ -76,6 +76,7 @@
                 controllerAs: 'dvm',
                 controller: ['$scope', function($scope) {
                     var dvm = this;
+                    var titleWidth = 75;
                     var cm = catalogManagerService;
                     var catalogId = _.get(cm.localCatalog, '@id', '');
                     var snap = Snap('.commit-graph');
@@ -149,8 +150,8 @@
                             cols.push({x: 0, commits: [c.commit.id], color: color});
                             drawBranchTitle(c.circle);
                             recurse(c);
-                            // Update deltaX based on how many columns there are
-                            dvm.deltaX += xI * dvm.columnSpacing;
+                            // Update deltaX based on how many columns there are or the minimum width
+                            dvm.deltaX = _.max([dvm.deltaX + xI * dvm.columnSpacing, titleWidth + 10 + dvm.circleRadius]);
                             // Shift the x and y coordinates of everything using deltaX and deltaY
                             _.forEach(graphCommits, (c, idx) => c.circle.attr({cx: c.circle.asPX('cx') + dvm.deltaX, cy: c.circle.asPX('cy') + dvm.deltaY}));
                             _.forEach(wrapper.selectAll('path'), path => {
@@ -185,28 +186,40 @@
                     }
 
                     function recurse(c) {
-                        // Find the column this commit belongs to and the ids of its base and auxiliary commit commits
+                        // Find the column this commit belongs to and the ids of its base and auxiliary commits
                         var col = _.find(cols, col => _.includes(col.commits, c.commit.id));
                         var baseParent = c.commit.base;
                         var auxParent = c.commit.auxiliary;
                         // If there is an auxiliary parent, there is also a base parent
                         if (auxParent) {
-                            // Shift the auxiliary parent to the left and draw a line between them
-                            var auxC = _.find(graphCommits, {commit: {id: auxParent}});
-                            var color = colors[colorIdx % colors.length];
-                            colorIdx++;
-                            auxC.circle.attr({cx: -dvm.columnSpacing * xI, fill: color});
-                            cols.push({x: -dvm.columnSpacing * xI, commits: [auxParent], color: color});
-                            xI++;
-                            drawLine(c.circle, auxC.circle, color);
                             // Shift the base parent to be beneath and draw a line between them
                             var baseC = _.find(graphCommits, {commit: {id: baseParent}});
                             baseC.circle.attr({cx: col.x, fill: col.color});
                             col.commits.push(baseC.commit.id);
                             drawLine(c.circle, baseC.circle, col.color);
+                            // Determine whether auxiliary parent is already in a column
+                            var auxC = _.find(graphCommits, {commit: {id: auxParent}});
+                            var auxCol = _.find(cols, col => _.includes(col.commits, auxParent));
+                            var color;
+                            if (auxCol) {
+                                // If in a column, collect line color
+                                color = auxCol.color;
+                            } else {
+                                // If not in a column, shift the auxiliary parent to the left in new column and collect line color
+                                color = colors[colorIdx % colors.length];
+                                colorIdx++;
+                                auxC.circle.attr({cx: -dvm.columnSpacing * xI, fill: color});
+                                cols.push({x: -dvm.columnSpacing * xI, commits: [auxParent], color: color});
+                                xI++;
+                            }
+                            // Draw a line commit and auxiliary commit
+                            drawLine(c.circle, auxC.circle, color);
                             // Recurse on right first
                             recurse(baseC);
-                            recurse(auxC);
+                            // Recurse on left only if it wasn't in a column to begin with
+                            if (!auxCol) {
+                                recurse(auxC);
+                            }
                         } else if (baseParent) {
                             // Determine whether the base parent is already in a column
                             var baseC = _.find(graphCommits, {commit: {id: baseParent}});
@@ -230,9 +243,11 @@
                         var end = {x: parentCircle.asPX('cx'), y: parentCircle.asPX('cy')};
                         var pathStr = 'M' + start.x + ',' + (start.y + dvm.circleRadius);
                         if (start.x > end.x) {
-                            pathStr += ' C' + start.x + ',' + (start.y + 3 * dvm.circleSpacing/4) + ' ' + end.x + ',' + (start.y + dvm.circleSpacing/4) + ' ' + end.x + ',' + (start.y + dvm.circleSpacing) + ' L';
+                            pathStr += ' C' + start.x + ',' + (start.y + 3 * dvm.circleSpacing/4) + ' ' + end.x + ',' + (start.y + dvm.circleSpacing/4) + ' '
+                                + end.x + ',' + (_.min([start.y + dvm.circleSpacing, end.y - dvm.circleRadius])) + ' L';
                         } else if (start.x < end.x) {
-                            pathStr += ' L' + start.x + ',' + (end.y - dvm.circleSpacing) + ' C' + start.x + ',' + (end.y - dvm.circleSpacing/4) + ' ' + end.x + ',' + (end.y - 3 * dvm.circleSpacing/4) + ' ';
+                            pathStr += ' L' + start.x + ',' + (_.max([end.y - dvm.circleSpacing, start.y + dvm.circleRadius])) + ' C' + start.x + ',' + (end.y - dvm.circleSpacing/4) + ' '
+                                + end.x + ',' + (end.y - 3 * dvm.circleSpacing/4) + ' ';
                         } else {
                             pathStr += ' L';
                         }
@@ -249,7 +264,7 @@
                         var cx = circle.asPX('cx'),
                             cy = circle.asPX('cy'),
                             r = circle.asPX('r');
-                        var rect = snap.rect(cx - r - 80, cy - r - 5, 75, 20, 5, 5);
+                        var rect = snap.rect(cx - r - titleWidth - 5, cy - r - 5, titleWidth, 20, 5, 5);
                         rect.attr({
                             'fill-opacity': '0.5'
                         });
