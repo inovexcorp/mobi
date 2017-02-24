@@ -108,11 +108,12 @@ describe('Ontology Overlays directive', function() {
                         afterDeferred.resolve();
                     });
                     it('if getActiveKey is not project and getActiveEntityIRI is defined', function() {
+                        var id = 'id';
                         ontologyStateSvc.getActiveKey.and.returnValue('');
-                        ontologyStateSvc.getActiveEntityIRI.and.returnValue('id');
+                        ontologyStateSvc.getActiveEntityIRI.and.returnValue(id);
                         scope.$apply();
                         expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
-                        expect(ontologyStateSvc.getEntityUsages).toHaveBeenCalledWith(ontologyStateSvc.getActiveEntityIRI());
+                        expect(ontologyStateSvc.getEntityUsages).toHaveBeenCalledWith(id);
                         expect(ontologyStateSvc.showSaveOverlay).toBe(false);
                         expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
                     });

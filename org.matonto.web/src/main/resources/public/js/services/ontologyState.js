@@ -69,7 +69,7 @@
                             return sm.updateOntologyState(self.listItem.recordId, self.listItem.branchId, self.listItem.commitId);
                         }
                     }, $q.reject)
-                    .then(deferred.resolve, response => deferred.reject(response.statusText));
+                    .then(deferred.resolve, deferred.reject);
                 return deferred.promise;
             }
 
@@ -161,12 +161,12 @@
                 om.addToDeletions(self.listItem.recordId, oldEntity);
             }
             self.setSelected = function(entityIRI) {
-                if (self.getActiveKey() !== 'project' && !_.has(self.getActivePage(), 'usages')) {
-                    self.getEntityUsages(entityIRI);
+                if (self.getActiveKey() !== 'project' && !_.has(self.getActivePage(), 'usages') && self.selected) {
+                    self.setEntityUsages(entityIRI);
                 }
                 self.selected = om.getEntityByRecordId(self.listItem.recordId, entityIRI);
             }
-            self.getEntityUsages = function(entityIRI) {
+            self.setEntityUsages = function(entityIRI) {
                 om.getEntityUsages(self.listItem.recordId, entityIRI)
                     .then(bindings => _.set(self.getActivePage(), 'usages', bindings),
                         response => _.set(self.getActivePage(), 'usages', []));
@@ -279,7 +279,7 @@
                 if (entityIRI && entityIRI !== self.getActiveEntityIRI()) {
                     _.set(self.getActivePage(), 'entityIRI', entityIRI);
                     if (getUsages) {
-                        self.getEntityUsages(entityIRI);
+                        self.setEntityUsages(entityIRI);
                     }
                 }
                 self.setSelected(entityIRI);
