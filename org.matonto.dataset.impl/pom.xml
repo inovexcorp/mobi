@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.5.5-SNAPSHOT</version>
+        <version>1.5.8-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -42,12 +42,12 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>dataset.api</artifactId>
-            <version>1.5.5-SNAPSHOT</version>
+            <version>1.5.8-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>persistence.api</artifactId>
-            <version>1.5.5-SNAPSHOT</version>
+            <version>1.5.8-SNAPSHOT</version>
         </dependency>
 
         <!-- Test Dependencies -->
@@ -62,7 +62,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rdf.impl.sesame</artifactId>
-            <version>1.5.5-SNAPSHOT</version>
+            <version>1.5.8-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -93,6 +93,7 @@
                         <Export-Package>
                             org.matonto.dataset.api;provide:=true
                         </Export-Package>
+                        <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>
                         <_snapshot>${maven.build.timestamp}</_snapshot>
                     </instructions>

@@ -25,18 +25,21 @@ package org.matonto.dataset.impl;
 
 import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
+import aQute.bnd.annotation.component.Deactivate;
 import aQute.bnd.annotation.component.Modified;
 import aQute.bnd.annotation.component.Reference;
 import org.apache.commons.io.IOUtils;
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.dataset.api.DatasetManager;
 import org.matonto.dataset.api.builder.DatasetRecordConfig;
+import org.matonto.dataset.ontology.dataset.Dataset;
 import org.matonto.dataset.ontology.dataset.DatasetFactory;
 import org.matonto.dataset.ontology.dataset.DatasetRecord;
 import org.matonto.dataset.ontology.dataset.DatasetRecordFactory;
 import org.matonto.exception.MatOntoException;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.query.api.TupleQuery;
+import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.Statement;
 import org.matonto.rdf.api.ValueFactory;
@@ -50,7 +53,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-@Component
+@Component(immediate = true)
 public class SimpleDatasetManager implements DatasetManager {
 
     private CatalogManager catalogManager;
@@ -100,12 +103,14 @@ public class SimpleDatasetManager implements DatasetManager {
 
     @Activate
     private void start(Map<String, Object> props) {
-
     }
 
     @Modified
     protected void modified(Map<String, Object> props) {
-        //start(props);
+    }
+
+    @Deactivate
+    private void stop() {
     }
 
     @Override
@@ -147,10 +152,17 @@ public class SimpleDatasetManager implements DatasetManager {
 
     @Override
     public DatasetRecord createDataset(DatasetRecordConfig config) {
+        IRI datasetIRI = vf.createIRI(config.getDataset());
+
+        Dataset dataset = dsFactory.createNew(datasetIRI);
         DatasetRecord datasetRecord = catalogManager.createRecord(config, dsRecFactory);
-        datasetRecord.setDataset(dsFactory.createNew(vf.createIRI(config.getDataset())));
+        datasetRecord.setDataset(dataset);
 
         catalogManager.addRecord(catalogManager.getLocalCatalogIRI(), datasetRecord);
+
+        try(RepositoryConnection conn = systemRepository.getConnection()) {
+            conn.add(dataset.getModel());
+        }
 
         return datasetRecord;
     }
