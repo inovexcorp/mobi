@@ -61,6 +61,8 @@ public class SourceGenerator {
 
     private static final String DEFAULT_IMPL_FIELD = "DEFAULT_IMPL";
 
+    private static final String PROPERTY_IRI_GETTER_PREFIX = "_getPropertyIri_";
+
     private final String ontologyName;
     private final JCodeModel codeModel = new JCodeModel();
     private final Model metaModel;
@@ -225,14 +227,29 @@ public class SourceGenerator {
                 factory.constructor(JMod.PUBLIC).body().invoke("super").arg(JExpr.dotclass(interfaze))
                         .arg(JExpr.dotclass(clazz));
 
-                final JMethod getExisting = factory.method(JMod.PUBLIC, interfaze, "getExisting");
+                final JMethod getExisting = factory.method(JMod.PUBLIC, codeModel.ref(Optional.class).narrow(interfaze), "getExisting");
                 getExisting.annotate(Override.class);
                 getExisting.body()._return(
-                        JExpr._new(clazz).arg(getExisting.param(org.matonto.rdf.api.Resource.class, "resource"))
-                                .arg(getExisting.param(org.matonto.rdf.api.Model.class, "model"))
-                                .arg(getExisting.param(org.matonto.rdf.api.ValueFactory.class, "valueFactory"))
-                                .arg(getExisting.param(org.matonto.rdf.orm.conversion.ValueConverterRegistry.class,
-                                        "valueConverterRegistry")));
+
+                        JOp.cond(
+                                JExpr.ref("model").invoke("filter")
+                                        .arg(JExpr.ref("resource"))
+
+                                        //Instead of using nulls here, we can change it to look for our type.
+//                                        .arg(JExpr.ref("valueFactory").invoke("createIRI").arg(JExpr.ref("RDF_TYPE_IRI")))
+                                        .arg(JExpr._null())
+//                                        .arg(JExpr._this().invoke("getTypeIRI"))
+                                        .arg(JExpr._null())
+
+                                        .invoke("isEmpty"), codeModel.ref(Optional.class).staticInvoke("empty"),
+                                codeModel.ref(Optional.class).staticInvoke("of")
+                                        .arg(JExpr._new(clazz)
+                                                .arg(getExisting.param(org.matonto.rdf.api.Resource.class, "resource"))
+                                                .arg(getExisting.param(org.matonto.rdf.api.Model.class, "model"))
+                                                .arg(getExisting.param(org.matonto.rdf.api.ValueFactory.class, "valueFactory"))
+                                                .arg(getExisting.param(org.matonto.rdf.orm.conversion.ValueConverterRegistry.class,
+                                                        "valueConverterRegistry")))));
+
 
                 final JMethod getTypeIri = factory.method(JMod.PUBLIC, org.matonto.rdf.api.IRI.class, "getTypeIRI");
                 getTypeIri.annotate(Override.class);
@@ -272,6 +289,7 @@ public class SourceGenerator {
                         valueConverterRegistryParam);
 
             } catch (final Exception e) {
+                e.printStackTrace();
                 issues.add("Issue generating factory class: " + factoryName + ": " + e.getMessage());
             }
         });
@@ -329,6 +347,7 @@ public class SourceGenerator {
                             codeModel.ref(Class.class).narrow(interfaceClass.wildcard()), DEFAULT_IMPL_FIELD,
                             impl.dotclass()).javadoc().add("The default implementation for this interface");
                 } catch (Exception e) {
+                    e.printStackTrace();
                     issues.add("Issue generating implementation for '" + classIri.stringValue() + "': " + e.getMessage());
                 }
             }
@@ -350,6 +369,16 @@ public class SourceGenerator {
             // Generate setter.
             else if (interfaceMethod.name().startsWith("set")) {
                 generateFieldSetterForImpl(impl, interfaceMethod, interfaceClass);
+            }
+            // Else it's a property IRI getter.
+            else if (interfaceMethod.name().startsWith(PROPERTY_IRI_GETTER_PREFIX)) {
+                if(impl.methods().stream().noneMatch(method -> method.name().equals(interfaceMethod.name()))) {
+                    final JMethod method = impl.method(JMod.PUBLIC, codeModel._ref(org.matonto.rdf.api.IRI.class), interfaceMethod.name());
+                    method.annotate(Override.class);
+                    method.body()._return(
+                            JExpr._this().ref("valueFactory").invoke("createIRI")
+                                    .arg(interfaceClass.staticRef(interfaceMethod.name().replace(PROPERTY_IRI_GETTER_PREFIX, "") + "_IRI")));
+                }
             }
         });
     }
@@ -437,6 +466,7 @@ public class SourceGenerator {
                 if (!name.equals(CLASS_TYPE_IRI_FIELD)) {
                     final IRI propertyIri = interfaceFieldIriMap.get(clazz).get(name);
                     final String fieldName = name.substring(0, name.length() - 4);
+                    addTypeIriGetter(clazz, fieldVar, fieldName);
 
                     final JClass type = identifyType(propertyIri);
 
@@ -466,6 +496,10 @@ public class SourceGenerator {
             });
             classMethodIriMap.put(clazz, methodIriMap);
         });
+    }
+
+    private JMethod addTypeIriGetter(JDefinedClass interfaze, JFieldVar var, String name) {
+        return interfaze.method(JMod.PUBLIC, codeModel._ref(org.matonto.rdf.api.IRI.class), PROPERTY_IRI_GETTER_PREFIX + name);
     }
 
     private JMethod generateGetterMethodForInterface(final JDefinedClass clazz, final IRI interfaceIri,
@@ -572,6 +606,7 @@ public class SourceGenerator {
                                             try {
                                                 refOnt.generateSource(referenceOntologies);
                                             } catch (Exception e) {
+                                                e.printStackTrace();
                                                 issues.add("Problem generating referenced data: " + e.getMessage());
                                             }
                                         }
@@ -637,6 +672,7 @@ public class SourceGenerator {
             interfaces.put(null, ontologyThing);
             return ontologyThing;
         } catch (JClassAlreadyExistsException e) {
+            e.printStackTrace();
             throw new OntologyToJavaException("Ontology Super Thing class already exists, or conflicts with an existing class...", e);
         }
     }
@@ -702,6 +738,7 @@ public class SourceGenerator {
                 interfaceFieldRangeMap.put(clazz, rangeMap);
                 interfaces.put(classIri, clazz);
             } catch (Exception e) {
+                e.printStackTrace();
                 issues.add("Issue generating interface for '" + classIri.stringValue() + "': " + e.getMessage());
             }
         });

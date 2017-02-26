@@ -104,7 +104,7 @@ public class SourceGeneratorTest {
     public void testAgent() {
         final AgentFactory factory = new AgentFactory();
         final Agent a = factory.getExisting(valueFactory.createIRI("urn://matonto.org/orm/test/testAgent"), model,
-                valueFactory, valueConverterRegistry);
+                valueFactory, valueConverterRegistry).orElseThrow(() -> new RuntimeException("WHAT? No agent returned"));
         assertEquals(valueFactory.createLiteral(100), a.getAge().orElse(null));
         assertEquals(valueFactory.createLiteral("male"), a.getGender().orElse(null));
         final Set<Thing> mboxes = a.getMbox();

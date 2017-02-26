@@ -82,9 +82,9 @@ public class TestCoreThingApi {
     }
 
     @Test
-    public void testBasic() {
+    public void testBasic() throws Exception {
         final Thing t = thingFactory.getExisting(valueFactory.createIRI("urn://matonto.org/orm/test/testAgent"), model,
-                valueFactory);
+                valueFactory).orElseThrow(() -> new Exception("FAILED TO GET THING"));
 
         Value typeValue = t.getProperty(valueFactory.createIRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")).get();
         TestCase.assertEquals(valueFactory.createIRI("http://xmlns.com/foaf/0.1/Agent"), typeValue);
