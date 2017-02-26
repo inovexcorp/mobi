@@ -129,6 +129,7 @@ public class SourceGeneratorTest {
         assertEquals(valueFactory.createLiteral("tester@gmail.com"), mboxValue);
 
         assertEquals(valueFactory.createIRI("urn://matonto.org/orm/test/account"), mbox.getResource());
+        assertEquals(Agent.account_IRI, a._getPropertyIri_account().stringValue());
     }
 
     @Test
