@@ -24,8 +24,11 @@ package org.matonto.dataset.impl
 
 import org.matonto.catalog.api.CatalogManager
 import org.matonto.dataset.api.builder.DatasetRecordConfig
+import org.matonto.dataset.ontology.dataset.Dataset
 import org.matonto.dataset.ontology.dataset.DatasetFactory
+import org.matonto.dataset.ontology.dataset.DatasetRecord
 import org.matonto.dataset.ontology.dataset.DatasetRecordFactory
+import org.matonto.exception.MatOntoException
 import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory
 import org.matonto.rdf.core.utils.Values
@@ -60,7 +63,10 @@ class SimpleDatasetManagerSpec extends Specification {
     def resultsMock = Mock(RepositoryResult)
 
     // Objects
-    def testIRI = vf.createIRI("http://test.com/1")
+    def localCatalog = vf.createIRI("http://matonto.org/test/catalog-local")
+    def datasetPred = vf.createIRI(DatasetRecord.dataset_IRI)
+    def namedGraphPred = vf.createIRI(Dataset.namedGraph_IRI)
+    def defNamedGraphPred = vf.createIRI(Dataset.defaultNamedGraph_IRI)
     def memRepo
 
     def setup() {
@@ -100,7 +106,7 @@ class SimpleDatasetManagerSpec extends Specification {
         repositoryMock.getConnection() >> connMock
         connMock.getStatements(*_) >> resultsMock
 
-        catalogManagerMock.getLocalCatalogIRI() >> vf.createIRI("http://matonto.org/test/catalog-local")
+        catalogManagerMock.getLocalCatalogIRI() >> localCatalog
     }
 
     def "getDatasetRecord returns the correct DatasetRecord when the dataset exists"() {
@@ -113,7 +119,7 @@ class SimpleDatasetManagerSpec extends Specification {
         record.setDataset(dataset)
 
         resultsMock.hasNext() >> true
-        resultsMock.next() >> vf.createStatement(recordIri, testIRI, datasetIri)
+        resultsMock.next() >> vf.createStatement(recordIri, datasetPred, datasetIri)
         1 * catalogManagerMock.getRecord(!null, recordIri, !null) >> Optional.of(record)
 
         when:
@@ -209,5 +215,78 @@ class SimpleDatasetManagerSpec extends Specification {
 //
 //        then:
 //        conn.getStatements(recordIRI, vf.createIRI(DatasetRecord.dataset_IRI), datasetIRI).hasNext()
+//    }
+
+    def "deleteDataset() throws an Exception if the DatasetRecord does not exist"() {
+        setup:
+        def datasetIRI = vf.createIRI("http://test.com/dataset1")
+        resultsMock.hasNext() >> false
+
+        when:
+        service.deleteDataset(datasetIRI)
+
+        then:
+        thrown(MatOntoException.class)
+    }
+
+    def "deleteDataset() calls removeRecord() to delete the DatasetRecord"() {
+        setup:
+        def datasetIRI = vf.createIRI("http://test.com/dataset1")
+        def recordIRI = vf.createIRI("http://test.com/record1")
+        resultsMock.hasNext() >> true
+        resultsMock.next() >> vf.createStatement(recordIRI, datasetPred, datasetIRI)
+
+        when:
+        service.deleteDataset(datasetIRI)
+
+        then:
+        1 * catalogManagerMock.removeRecord(localCatalog, recordIRI)
+    }
+
+    def "deleteDataset() uses a RepositoryConnection to remove the dataset object"() {
+        setup:
+        def datasetIRI = vf.createIRI("http://test.com/dataset1")
+        def recordIRI = vf.createIRI("http://test.com/record1")
+        resultsMock.hasNext() >> true
+        resultsMock.next() >> vf.createStatement(recordIRI, datasetPred, datasetIRI)
+
+        when:
+        service.deleteDataset(datasetIRI)
+
+        then:
+        1 * connMock.remove(datasetIRI, null, null)
+    }
+
+//    def "deleteDataset() uses a RepositoryConnection to remove all the associated graphs"() {
+//        setup:
+//        def datasetIRI = vf.createIRI("http://test.com/dataset1")
+//        def recordIRI = vf.createIRI("http://test.com/record1")
+//
+//        1 * connMock.getStatements(*_) >> resultsMock
+//        resultsMock.hasNext() >> true
+//        resultsMock.next() >> vf.createStatement(recordIRI, datasetPred, datasetIRI)
+//
+//        def ngResultsMock = Mock(RepositoryResult)
+//        def ngStmt1 = vf.createStatement(datasetIRI, namedGraphPred, vf.createIRI("urn:ng1"))
+//        def ngStmt2 = vf.createStatement(datasetIRI, namedGraphPred, vf.createIRI("urn:ng2"))
+//        ngResultsMock.iterator() >> Mock(Iterator)
+//        ngResultsMock.hasNext() >>> [true, true, false]
+//        ngResultsMock.next() >>> [ngStmt1, ngStmt2]
+//
+//        def dngResultsMock = Mock(RepositoryResult)
+//        def dngStmt1 = vf.createStatement(datasetIRI, defNamedGraphPred, vf.createIRI("urn:dng1"))
+//        dngResultsMock.hasNext() >>> [true, false]
+//        dngResultsMock.next() >> dngStmt1
+//
+//        1 * connMock.getStatements(datasetIRI, namedGraphPred, null) >> [ngStmt1, ngStmt2] as Iterable
+//        1 * connMock.getStatements(datasetIRI, defNamedGraphPred, _) >> dngResultsMock
+//
+//        when:
+//        service.deleteDataset(datasetIRI)
+//
+//        then:
+//        1 * connMock.clear(vf.createIRI("urn:ng1"))
+//        1 * connMock.clear(vf.createIRI("urn:ng2"))
+//        1 * connMock.clear(vf.createIRI("urn:dng1"))
 //    }
 }

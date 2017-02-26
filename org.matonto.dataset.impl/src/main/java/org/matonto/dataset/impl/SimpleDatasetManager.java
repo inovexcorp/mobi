@@ -37,11 +37,14 @@ import org.matonto.dataset.ontology.dataset.DatasetFactory;
 import org.matonto.dataset.ontology.dataset.DatasetRecord;
 import org.matonto.dataset.ontology.dataset.DatasetRecordFactory;
 import org.matonto.exception.MatOntoException;
+import org.matonto.persistence.utils.Bindings;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.query.api.TupleQuery;
+import org.matonto.rdf.api.BNode;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.Statement;
+import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
@@ -115,33 +118,26 @@ public class SimpleDatasetManager implements DatasetManager {
 
     @Override
     public Set<Resource> listDatasets() {
-        // TODO: Use required resource util
         Set<Resource> datasets = new HashSet<>();
         try (RepositoryConnection conn = systemRepository.getConnection()) {
             TupleQuery query = conn.prepareTupleQuery(FIND_DATASETS_QUERY);
             query.setBinding(CATALOG_BINDING, catalogManager.getLocalCatalogIRI());
             TupleQueryResult result = query.evaluate();
-            result.forEach(bindingSet ->
-                    bindingSet.getValue("dataset")
-                            .ifPresent(value -> datasets.add(vf.createIRI(value.stringValue()))));
+            result.forEach(bindingSet -> datasets.add(Bindings.requiredResource(bindingSet, "dataset")));
         }
         return datasets;
     }
 
     @Override
     public Optional<DatasetRecord> getDatasetRecord(Resource dataset) {
-        RepositoryConnection conn = systemRepository.getConnection();
-        RepositoryResult<Statement> recordStmts =
-                conn.getStatements(null, vf.createIRI(DatasetRecord.dataset_IRI), dataset);
+        Optional<Resource> recordResource = getRecordResource(dataset);
 
-        if (!recordStmts.hasNext()) {
-            conn.close();
+        if (!recordResource.isPresent()) {
             return Optional.empty();
         }
 
-        Resource recordResource = recordStmts.next().getSubject();
-
-        Optional<DatasetRecord> datasetRecord = catalogManager.getRecord(catalogManager.getLocalCatalogIRI(), recordResource, dsRecFactory);
+        Optional<DatasetRecord> datasetRecord =
+                catalogManager.getRecord(catalogManager.getLocalCatalogIRI(), recordResource.get(), dsRecFactory);
 
         if (!datasetRecord.isPresent()) {
             throw new MatOntoException("Could not find the required DatasetRecord in the Catalog.");
@@ -160,7 +156,7 @@ public class SimpleDatasetManager implements DatasetManager {
 
         catalogManager.addRecord(catalogManager.getLocalCatalogIRI(), datasetRecord);
 
-        try(RepositoryConnection conn = systemRepository.getConnection()) {
+        try (RepositoryConnection conn = systemRepository.getConnection()) {
             conn.add(dataset.getModel());
         }
 
@@ -169,21 +165,123 @@ public class SimpleDatasetManager implements DatasetManager {
 
     @Override
     public void deleteDataset(Resource dataset) {
+        Resource recordResource = getRecordResource(dataset)
+                .orElseThrow(() -> new MatOntoException("Could not find the required DatasetRecord in the Catalog."));
 
+        catalogManager.removeRecord(catalogManager.getLocalCatalogIRI(), recordResource);
+
+        try (RepositoryConnection conn = systemRepository.getConnection()) {
+            conn.getStatements(dataset, vf.createIRI(Dataset.namedGraph_IRI), null)
+                    .forEach(stmt -> clearGraph(conn, stmt.getObject()));
+            conn.getStatements(dataset, vf.createIRI(Dataset.defaultNamedGraph_IRI), null)
+                    .forEach(stmt -> clearGraph(conn, stmt.getObject()));
+            conn.remove(dataset, null, null);
+        }
     }
 
     @Override
     public void safeDeleteDataset(Resource dataset) {
+        Resource recordResource = getRecordResource(dataset)
+                .orElseThrow(() -> new MatOntoException("Could not find the required DatasetRecord in the Catalog."));
 
+        catalogManager.removeRecord(catalogManager.getLocalCatalogIRI(), recordResource);
+
+        IRI ngPred = vf.createIRI(Dataset.namedGraph_IRI);
+        IRI dngPred = vf.createIRI(Dataset.defaultNamedGraph_IRI);
+
+        try (RepositoryConnection conn = systemRepository.getConnection()) {
+            conn.getStatements(dataset, ngPred, null).forEach(stmt -> {
+                Value graph = stmt.getObject();
+                if (safeToDelete(conn, dataset, graph)) {
+                    clearGraph(conn, graph);
+                }
+            });
+            conn.getStatements(dataset, dngPred, null).forEach(stmt -> {
+                Value graph = stmt.getObject();
+                if (safeToDelete(conn, dataset, graph)) {
+                    clearGraph(conn, graph);
+                }
+            });
+            conn.remove(dataset, null, null);
+        }
     }
 
     @Override
     public void clearDataset(Resource dataset) {
+        IRI ngPred = vf.createIRI(Dataset.namedGraph_IRI);
+        IRI dngPred = vf.createIRI(Dataset.defaultNamedGraph_IRI);
 
+        try (RepositoryConnection conn = systemRepository.getConnection()) {
+            conn.getStatements(dataset, ngPred, null).forEach(stmt -> clearGraph(conn, stmt.getObject()));
+            conn.getStatements(dataset, dngPred, null).forEach(stmt -> clearGraph(conn, stmt.getObject()));
+            conn.remove(dataset, ngPred, null);
+            conn.remove(dataset, dngPred, null);
+        }
     }
 
     @Override
     public void safeClearDataset(Resource dataset) {
+        IRI ngPred = vf.createIRI(Dataset.namedGraph_IRI);
+        IRI dngPred = vf.createIRI(Dataset.defaultNamedGraph_IRI);
 
+        try (RepositoryConnection conn = systemRepository.getConnection()) {
+            conn.getStatements(dataset, ngPred, null).forEach(stmt -> {
+                Value graph = stmt.getObject();
+                if (safeToDelete(conn, dataset, graph)) {
+                    clearGraph(conn, graph);
+                }
+            });
+            conn.getStatements(dataset, dngPred, null).forEach(stmt -> {
+                Value graph = stmt.getObject();
+                if (safeToDelete(conn, dataset, graph)) {
+                    clearGraph(conn, graph);
+                }
+            });
+            conn.remove(dataset, ngPred, null);
+            conn.remove(dataset, dngPred, null);
+        }
+    }
+
+    private Optional<Resource> getRecordResource(Resource dataset) {
+        try (RepositoryConnection conn = systemRepository.getConnection()) {
+            RepositoryResult<Statement> recordStmts =
+                    conn.getStatements(null, vf.createIRI(DatasetRecord.dataset_IRI), dataset);
+
+            if (!recordStmts.hasNext()) {
+                return Optional.empty();
+            }
+
+            return Optional.of(recordStmts.next().getSubject());
+        }
+    }
+
+    private void clearGraph(RepositoryConnection conn, Value graph) {
+        if (graph instanceof IRI) {
+            conn.clear(vf.createIRI(graph.stringValue()));
+        } else if (graph instanceof BNode) {
+            conn.clear(vf.createBNode(graph.stringValue()));
+        }
+    }
+
+    private boolean safeToDelete(RepositoryConnection conn, Resource dataset, Value graph) {
+        IRI ngPred = vf.createIRI(Dataset.namedGraph_IRI);
+        IRI dngPred = vf.createIRI(Dataset.defaultNamedGraph_IRI);
+        Boolean safeToDelete = true;
+
+        RepositoryResult<Statement> ngStmts = conn.getStatements(null, ngPred, graph);
+        while (ngStmts.hasNext()) {
+            if (ngStmts.next().getSubject() != dataset) {
+                safeToDelete = false;
+            }
+        }
+
+        RepositoryResult<Statement> dngStmts = conn.getStatements(null, dngPred, graph);
+        while (dngStmts.hasNext()) {
+            if (dngStmts.next().getSubject() != dataset) {
+                safeToDelete = false;
+            }
+        }
+
+        return safeToDelete;
     }
 }
