@@ -44,6 +44,7 @@
                     dvm.um = ontologyUtilsManagerService;
 
                     function getResults() {
+                        var results = {};
                         if (_.has(dvm.sm.getActivePage(), 'usages')) {
                             var deletedIRIs = _.map(dvm.sm.state.deletedEntities, 'matonto.originalIRI');
                             var filteredBindings = _.reject(dvm.sm.state[dvm.sm.getActiveKey()].usages, usage => {
@@ -51,7 +52,6 @@
                                     || _.indexOf(deletedIRIs, _.get(usage, 'o.value')) !== -1
                                     || _.indexOf(deletedIRIs, _.get(usage, 'p.value')) !== -1;
                             });
-                            var results = {};
                             _.forEach(filteredBindings, binding => {
                                 if (_.has(binding, 'p')) {
                                     results[binding.p.value] = _.union(_.get(results, binding.p.value, []),

@@ -162,7 +162,6 @@
             }
             self.setSelected = function(entityIRI, getUsages = true) {
                 self.selected = om.getEntityByRecordId(self.listItem.recordId, entityIRI);
-                var activeKey = self.getActiveKey();
                 if (getUsages && !_.has(self.getActivePage(), 'usages') && self.selected) {
                     self.setEntityUsages(entityIRI);
                 }
