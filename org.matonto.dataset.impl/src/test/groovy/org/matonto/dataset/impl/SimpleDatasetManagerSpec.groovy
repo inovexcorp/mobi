@@ -208,6 +208,7 @@ class SimpleDatasetManagerSpec extends Specification {
         results.getResource() == recordIRI
         results.getDataset() != Optional.empty()
         results.getDataset().get().getResource() == datasetIRI
+        results.getDataset().get().getSystemDefaultNamedGraph() != null
     }
 
     def "createDataset adds the Dataset model to the repo"() {
@@ -232,6 +233,7 @@ class SimpleDatasetManagerSpec extends Specification {
         1 * connMock.add(_ as Model) >> { args ->
             Model model = args[0]
             model.contains(datasetIRI, vf.createIRI(Resource.TYPE), vf.createIRI(Dataset.TYPE))
+            model.contains(datasetIRI, vf.createIRI(Dataset.systemDefaultNamedGraph_IRI), null)
         }
     }
 
