@@ -47,7 +47,7 @@
                             .then(() => {
                                 var entityIRI = dvm.sm.getActiveEntityIRI();
                                 if (dvm.sm.getActiveKey() !== 'project' && entityIRI) {
-                                    dvm.sm.getEntityUsages(entityIRI);
+                                    dvm.sm.setEntityUsages(entityIRI);
                                 }
                                 dvm.sm.showSaveOverlay = false;
                             }, errorMessage => dvm.error = errorMessage);

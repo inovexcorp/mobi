@@ -161,13 +161,13 @@
                 om.addToDeletions(self.listItem.recordId, oldEntity);
             }
             self.setSelected = function(entityIRI) {
+                self.selected = om.getEntityByRecordId(self.listItem.recordId, entityIRI);
                 if (self.getActiveKey() !== 'project' && !_.has(self.getActivePage(), 'usages') && self.selected) {
                     self.setEntityUsages(entityIRI);
                 }
-                self.selected = om.getEntityByRecordId(self.listItem.recordId, entityIRI);
             }
             self.setEntityUsages = function(entityIRI) {
-                om.getEntityUsages(self.listItem.recordId, entityIRI)
+                om.getEntityUsages(self.listItem.recordId, self.listItem.branchId, self.listItem.commitId, entityIRI)
                     .then(bindings => _.set(self.getActivePage(), 'usages', bindings),
                         response => _.set(self.getActivePage(), 'usages', []));
             }

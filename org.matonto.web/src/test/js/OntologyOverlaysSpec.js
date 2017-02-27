@@ -113,7 +113,7 @@ describe('Ontology Overlays directive', function() {
                         ontologyStateSvc.getActiveEntityIRI.and.returnValue(id);
                         scope.$apply();
                         expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
-                        expect(ontologyStateSvc.getEntityUsages).toHaveBeenCalledWith(id);
+                        expect(ontologyStateSvc.setEntityUsages).toHaveBeenCalledWith(id);
                         expect(ontologyStateSvc.showSaveOverlay).toBe(false);
                         expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
                     });
@@ -121,7 +121,7 @@ describe('Ontology Overlays directive', function() {
                         ontologyStateSvc.getActiveKey.and.returnValue('project');
                         scope.$apply();
                         expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
-                        expect(ontologyStateSvc.getEntityUsages).not.toHaveBeenCalled();
+                        expect(ontologyStateSvc.setEntityUsages).not.toHaveBeenCalled();
                         expect(ontologyStateSvc.showSaveOverlay).toBe(false);
                         expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
                     });
@@ -129,7 +129,7 @@ describe('Ontology Overlays directive', function() {
                         ontologyStateSvc.getActiveEntityIRI.and.returnValue(undefined);
                         scope.$apply();
                         expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
-                        expect(ontologyStateSvc.getEntityUsages).not.toHaveBeenCalled();
+                        expect(ontologyStateSvc.setEntityUsages).not.toHaveBeenCalled();
                         expect(ontologyStateSvc.showSaveOverlay).toBe(false);
                         expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
                     });
