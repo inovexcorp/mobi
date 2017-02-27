@@ -202,7 +202,7 @@
                                 col.commits.push(baseParent);
                             }
                             // Draw a line between commit and base parent
-                            drawLine(c.circle, baseC.circle, col.color);
+                            drawLine(c, baseC, col.color);
                             // Determine whether auxiliary parent is already in a column
                             var auxC = _.find(graphCommits, {commit: {id: auxParent}});
                             var auxCol = _.find(cols, col => _.includes(col.commits, auxParent));
@@ -219,7 +219,7 @@
                                 xI++;
                             }
                             // Draw a line between commit and auxiliary parent
-                            drawLine(c.circle, auxC.circle, auxColor);
+                            drawLine(c, auxC, auxColor);
                             // Recurse on right only if it wasn't in a column to begin with
                             if (!baseCol) {
                                 recurse(baseC);
@@ -236,26 +236,38 @@
                                 // If not in a column, push into current column and draw a line between them
                                 baseC.circle.attr({cx: col.x, fill: col.color});
                                 col.commits.push(baseParent);
-                                drawLine(c.circle, baseC.circle, col.color);
+                                drawLine(c, baseC, col.color);
                                 // Continue recursion
                                 recurse(baseC);
                             } else {
                                 // If in a column, draw a line between them and end this branch of recusion
-                                drawLine(c.circle, baseC.circle, col.color);
+                                drawLine(c, baseC, col.color);
                             }
                         }
                     }
-                    function drawLine(circle, parentCircle, color) {
-                        var start = {x: circle.asPX('cx'), y: circle.asPX('cy')};
-                        var end = {x: parentCircle.asPX('cx'), y: parentCircle.asPX('cy')};
+                    function drawLine(c, parentC, color) {
+                        var start = {x: c.circle.asPX('cx'), y: c.circle.asPX('cy')};
+                        var end = {x: parentC.circle.asPX('cx'), y: parentC.circle.asPX('cy')};
                         var pathStr = 'M' + start.x + ',' + (start.y + dvm.circleRadius);
                         if (start.x > end.x) {
+                            // If the starting commit is further right than the ending commit, curve first then go straight down
                             pathStr += ' C' + start.x + ',' + (start.y + 3 * dvm.circleSpacing/4) + ' ' + end.x + ',' + (start.y + dvm.circleSpacing/4) + ' '
                                 + end.x + ',' + (_.min([start.y + dvm.circleSpacing, end.y - dvm.circleRadius])) + ' L';
                         } else if (start.x < end.x) {
-                            pathStr += ' L' + start.x + ',' + (_.max([end.y - dvm.circleSpacing, start.y + dvm.circleRadius])) + ' C' + start.x + ',' + (end.y - dvm.circleSpacing/4) + ' '
-                                + end.x + ',' + (end.y - 3 * dvm.circleSpacing/4) + ' ';
+                            // If the starting commit is further left than the ending commmit, check if there are any commits in between in the same column
+                            // as the starting commit
+                            var inBetweenCommits = graphCommits.slice(_.indexOf(graphCommits, c) + 1, _.indexOf(graphCommits, parentC));
+                            if (_.find(inBetweenCommits, commit => commit.circle.asPX('cx') === start.x)) {
+                                // If there is a commit in the way, curve first then go straight down
+                                pathStr += ' C' + start.x + ',' + (start.y + 3 * dvm.circleSpacing/4) + ' ' + end.x + ',' + (start.y + dvm.circleSpacing/4) + ' '
+                                    + end.x + ',' + (start.y + dvm.circleSpacing) + ' L';
+                            } else {
+                                // If there isn't a commit in the way, go straight down then curve
+                                pathStr += ' L' + start.x + ',' + (_.max([end.y - dvm.circleSpacing, start.y + dvm.circleRadius])) + ' C' + start.x + ',' + (end.y - dvm.circleSpacing/4) + ' '
+                                    + end.x + ',' + (end.y - 3 * dvm.circleSpacing/4) + ' ';
+                            }
                         } else {
+                            // If the starting and ending commits are in the same column, go straight down
                             pathStr += ' L';
                         }
                         pathStr += end.x + ',' + (end.y - dvm.circleRadius);
