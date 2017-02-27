@@ -11,7 +11,7 @@
 
 <http://matonto.org/ontologies/platform/config> a owl:Ontology;
     owl:versionIRI <http://matonto.org/ontologies/platform/config/1.0>;
-    owl:imports <http://matonto.org/ontologies/user/management>;
+    owl:imports <http://matonto.org/ontologies/user/management>, <http://matonto.org/ontologies/matonto> ;
     rdfs:label "The MatOnto platform configuration ontology"@en;
     rdfs:comment "The MatOnto platform configuration ontology describes how user preferences, user state, and applications are expressed within the MatOnto framework."@en;
     dct:creator [foaf:name "Jordan Lewis"], [foaf:name "Megan Mercer"], [foaf:name "Stephen Kahmann"];
