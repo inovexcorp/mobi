@@ -29,6 +29,8 @@ import org.matonto.dataset.ontology.dataset.DatasetFactory
 import org.matonto.dataset.ontology.dataset.DatasetRecord
 import org.matonto.dataset.ontology.dataset.DatasetRecordFactory
 import org.matonto.exception.MatOntoException
+import org.matonto.ontologies.rdfs.Resource
+import org.matonto.rdf.api.Model
 import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory
 import org.matonto.rdf.core.utils.Values
@@ -68,6 +70,17 @@ class SimpleDatasetManagerSpec extends Specification {
     def namedGraphPred = vf.createIRI(Dataset.namedGraph_IRI)
     def defNamedGraphPred = vf.createIRI(Dataset.defaultNamedGraph_IRI)
     def memRepo
+    def conn
+    def datasetsInFile = [
+            vf.createIRI("http://matonto.org/dataset/test1"),
+            vf.createIRI("http://matonto.org/dataset/test2"),
+            vf.createIRI("http://matonto.org/dataset/test3"),
+            vf.createIRI("http://matonto.org/dataset/test4")
+    ]
+    def dataset1 = vf.createIRI("http://matonto.org/dataset/test1")
+    def dataset2 = vf.createIRI("http://matonto.org/dataset/test2")
+    def dataset3 = vf.createIRI("http://matonto.org/dataset/test3")
+    def dataset4 = vf.createIRI("http://matonto.org/dataset/test4")
 
     def setup() {
         memRepo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()))
@@ -107,6 +120,11 @@ class SimpleDatasetManagerSpec extends Specification {
         connMock.getStatements(*_) >> resultsMock
 
         catalogManagerMock.getLocalCatalogIRI() >> localCatalog
+    }
+
+    def cleanup() {
+        if (conn != null) conn.close()
+        memRepo.shutDown()
     }
 
     def "getDatasetRecord returns the correct DatasetRecord when the dataset exists"() {
@@ -149,23 +167,24 @@ class SimpleDatasetManagerSpec extends Specification {
         def conn = memRepo.getConnection()
         def catalogData = Values.matontoModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_no-records.trig"), "", RDFFormat.TRIG))
         conn.add(catalogData)
+        conn.close()
 
         expect:
         service.listDatasets().size() == 0
     }
 
-    def "listDatasets returns a non-empty set when there are only databases"() {
+    def "listDatasets returns the correct resources when there are only databases"() {
         setup:
         service.setRepository(memRepo)
         def conn = memRepo.getConnection()
         def catalogData = Values.matontoModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_only-ds-records.trig"), "", RDFFormat.TRIG))
         conn.add(catalogData)
         def results = service.listDatasets()
+        conn.close()
 
         expect:
-        results.size() == 2
-        results.contains(vf.createIRI("http://matonto.org/dataset/test1"))
-        results.contains(vf.createIRI("http://matonto.org/dataset/test2"))
+        results.size() == datasetsInFile.size()
+        datasetsInFile.forEach { results.contains(it) }
     }
 
     def "createDataset returns the correct DatasetRecord"() {
@@ -191,31 +210,30 @@ class SimpleDatasetManagerSpec extends Specification {
         results.getDataset().get().getResource() == datasetIRI
     }
 
-//    def "createDataset stores the DatasetRecord correctly"() {
-//        setup:
-//        def datasetIRI = vf.createIRI("http://test.com/dataset1")
-//        def dataset = dsFactory.createNew(datasetIRI)
-//        def recordIRI = vf.createIRI("http://test.com/record1")
-//        def record = dsRecFactory.createNew(recordIRI)
-//        record.setDataset(dataset)
-//
-//        def config = new DatasetRecordConfig.DatasetRecordBuilder("Test Dataset", [] as Set, "system")
-//                .dataset(datasetIRI.stringValue())
-//                .build()
-//
-//        1 * catalogManagerMock.createRecord(config, _ as DatasetRecordFactory) >> record
-//
-//        service.setRepository(memRepo)
-//        def conn = memRepo.getConnection()
-//        def catalogData = Values.matontoModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_no-records.trig"), "", RDFFormat.TRIG))
-//        conn.add(catalogData)
-//
-//        when:
-//        service.createDataset(config)
-//
-//        then:
-//        conn.getStatements(recordIRI, vf.createIRI(DatasetRecord.dataset_IRI), datasetIRI).hasNext()
-//    }
+    def "createDataset adds the Dataset model to the repo"() {
+        setup:
+        def datasetIRI = vf.createIRI("http://test.com/dataset1")
+        def dataset = dsFactory.createNew(datasetIRI)
+        def recordIRI = vf.createIRI("http://test.com/record1")
+        def record = dsRecFactory.createNew(recordIRI)
+
+        // Mock Record Creation
+        record.setDataset(dataset)
+        def config = new DatasetRecordConfig.DatasetRecordBuilder("Test Dataset", [] as Set, "system")
+                .dataset(datasetIRI.stringValue())
+                .build()
+        1 * catalogManagerMock.createRecord(config, _ as DatasetRecordFactory) >> record
+
+        when:
+        service.createDataset(config)
+
+        then:
+        1 * catalogManagerMock.addRecord(localCatalog, record)
+        1 * connMock.add(_ as Model) >> { args ->
+            Model model = args[0]
+            model.contains(datasetIRI, vf.createIRI(Resource.TYPE), vf.createIRI(Dataset.TYPE))
+        }
+    }
 
     def "deleteDataset() throws an Exception if the DatasetRecord does not exist"() {
         setup:
@@ -257,36 +275,239 @@ class SimpleDatasetManagerSpec extends Specification {
         1 * connMock.remove(datasetIRI, null, null)
     }
 
-//    def "deleteDataset() uses a RepositoryConnection to remove all the associated graphs"() {
-//        setup:
-//        def datasetIRI = vf.createIRI("http://test.com/dataset1")
-//        def recordIRI = vf.createIRI("http://test.com/record1")
-//
-//        1 * connMock.getStatements(*_) >> resultsMock
-//        resultsMock.hasNext() >> true
-//        resultsMock.next() >> vf.createStatement(recordIRI, datasetPred, datasetIRI)
-//
-//        def ngResultsMock = Mock(RepositoryResult)
-//        def ngStmt1 = vf.createStatement(datasetIRI, namedGraphPred, vf.createIRI("urn:ng1"))
-//        def ngStmt2 = vf.createStatement(datasetIRI, namedGraphPred, vf.createIRI("urn:ng2"))
-//        ngResultsMock.iterator() >> Mock(Iterator)
-//        ngResultsMock.hasNext() >>> [true, true, false]
-//        ngResultsMock.next() >>> [ngStmt1, ngStmt2]
-//
-//        def dngResultsMock = Mock(RepositoryResult)
-//        def dngStmt1 = vf.createStatement(datasetIRI, defNamedGraphPred, vf.createIRI("urn:dng1"))
-//        dngResultsMock.hasNext() >>> [true, false]
-//        dngResultsMock.next() >> dngStmt1
-//
-//        1 * connMock.getStatements(datasetIRI, namedGraphPred, null) >> [ngStmt1, ngStmt2] as Iterable
-//        1 * connMock.getStatements(datasetIRI, defNamedGraphPred, _) >> dngResultsMock
-//
-//        when:
-//        service.deleteDataset(datasetIRI)
-//
-//        then:
-//        1 * connMock.clear(vf.createIRI("urn:ng1"))
-//        1 * connMock.clear(vf.createIRI("urn:ng2"))
-//        1 * connMock.clear(vf.createIRI("urn:dng1"))
-//    }
+    def "deleteDataset() correctly removes DatasetRecord, Dataset when there are no associated graphs"() {
+        setup:
+        def recordIRI = vf.createIRI("http://matonto.org/record/dataset/test1")
+
+        service.setRepository(memRepo)
+        conn = memRepo.getConnection()
+        def catalogData = Values.matontoModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_only-ds-records.trig"), "", RDFFormat.TRIG))
+        conn.add(catalogData)
+
+        when:
+        service.deleteDataset(dataset1)
+
+        then:
+        1 * catalogManagerMock.removeRecord(localCatalog, recordIRI)
+        !conn.getStatements(dataset1, null, null).hasNext()
+        conn.getStatements(dataset2, null, null).hasNext()
+    }
+
+    def "deleteDataset() correctly removes DatasetRecord, Dataset, and associated graphs"() {
+        setup:
+        def recordIRI = vf.createIRI("http://matonto.org/record/dataset/test2")
+        def graph1 = vf.createIRI("http://matonto.org/dataset/test2/graph1")
+        def graph2 = vf.createIRI("http://matonto.org/dataset/test2/graph2")
+        def graph3 = vf.createIRI("http://matonto.org/dataset/test2/graph3")
+
+        service.setRepository(memRepo)
+        conn = memRepo.getConnection()
+        def catalogData = Values.matontoModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_only-ds-records.trig"), "", RDFFormat.TRIG))
+        conn.add(catalogData)
+
+        when:
+        service.deleteDataset(dataset2)
+
+        then:
+        1 * catalogManagerMock.removeRecord(localCatalog, recordIRI)
+        conn.getStatements(dataset1, null, null).hasNext()
+        !conn.getStatements(dataset2, null, null).hasNext()
+        !conn.getStatements(null, null, null, graph1).hasNext()
+        !conn.getStatements(null, null, null, graph2).hasNext()
+        !conn.getStatements(null, null, null, graph3).hasNext()
+    }
+
+    def "safeDeleteDataset() correctly removes DatasetRecord, Dataset when there are no associated graphs"() {
+        setup:
+        def recordIRI = vf.createIRI("http://matonto.org/record/dataset/test1")
+
+        service.setRepository(memRepo)
+        conn = memRepo.getConnection()
+        def catalogData = Values.matontoModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_only-ds-records.trig"), "", RDFFormat.TRIG))
+        conn.add(catalogData)
+
+        when:
+        service.safeDeleteDataset(dataset1)
+
+        then:
+        1 * catalogManagerMock.removeRecord(localCatalog, recordIRI)
+        !conn.getStatements(dataset1, null, null).hasNext()
+        conn.getStatements(dataset2, null, null).hasNext()
+    }
+
+    def "safeDeleteDataset() correctly removes DatasetRecord, Dataset, and associated graphs"() {
+        setup:
+        def recordIRI = vf.createIRI("http://matonto.org/record/dataset/test2")
+        def graph1 = vf.createIRI("http://matonto.org/dataset/test2/graph1")
+        def graph2 = vf.createIRI("http://matonto.org/dataset/test2/graph2")
+        def graph3 = vf.createIRI("http://matonto.org/dataset/test2/graph3")
+
+        service.setRepository(memRepo)
+        conn = memRepo.getConnection()
+        def catalogData = Values.matontoModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_only-ds-records.trig"), "", RDFFormat.TRIG))
+        conn.add(catalogData)
+
+        when:
+        service.safeDeleteDataset(dataset2)
+
+        then:
+        1 * catalogManagerMock.removeRecord(localCatalog, recordIRI)
+        conn.getStatements(dataset1, null, null).hasNext()
+        !conn.getStatements(dataset2, null, null).hasNext()
+        !conn.getStatements(null, null, null, graph1).hasNext()
+        !conn.getStatements(null, null, null, graph2).hasNext()
+        !conn.getStatements(null, null, null, graph3).hasNext()
+    }
+
+    def "safeDeleteDataset() correctly removes only associated graphs that are not used in other datasets"() {
+        setup:
+        def recordIRI = vf.createIRI("http://matonto.org/record/dataset/test3")
+        def graph1 = vf.createIRI("http://matonto.org/dataset/test3/graph1")
+        def graph2 = vf.createIRI("http://matonto.org/dataset/test3/graph2")
+        def graph3 = vf.createIRI("http://matonto.org/dataset/test3/graph3")
+        def graph4 = vf.createIRI("http://matonto.org/dataset/test3/graph4")
+        def graph5 = vf.createIRI("http://matonto.org/dataset/test3/graph5")
+
+        service.setRepository(memRepo)
+        conn = memRepo.getConnection()
+        def catalogData = Values.matontoModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_only-ds-records.trig"), "", RDFFormat.TRIG))
+        conn.add(catalogData)
+
+        when:
+        service.safeDeleteDataset(dataset3)
+
+        then:
+        1 * catalogManagerMock.removeRecord(localCatalog, recordIRI)
+        conn.getStatements(dataset1, null, null).hasNext()
+        conn.getStatements(dataset2, null, null).hasNext()
+        !conn.getStatements(dataset3, null, null).hasNext()
+        conn.getStatements(dataset4, null, null).hasNext()
+        !conn.getStatements(null, null, null, graph1).hasNext()
+        !conn.getStatements(null, null, null, graph2).hasNext()
+        !conn.getStatements(null, null, null, graph3).hasNext()
+        conn.getStatements(null, null, null, graph4).hasNext()
+        conn.getStatements(null, null, null, graph5).hasNext()
+    }
+
+    def "clearDataset() removes nothing when there are no associated graphs"() {
+        setup:
+        def recordIRI = vf.createIRI("http://matonto.org/record/dataset/test1")
+
+        service.setRepository(memRepo)
+        conn = memRepo.getConnection()
+        def catalogData = Values.matontoModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_only-ds-records.trig"), "", RDFFormat.TRIG))
+        conn.add(catalogData)
+
+        when:
+        service.clearDataset(dataset1)
+
+        then:
+        0 * catalogManagerMock.removeRecord(localCatalog, recordIRI)
+        conn.getStatements(dataset1, null, null).hasNext()
+        conn.getStatements(dataset2, null, null).hasNext()
+    }
+
+    def "clearDataset() only removes associated graphs"() {
+        setup:
+        def recordIRI = vf.createIRI("http://matonto.org/record/dataset/test2")
+        def graph1 = vf.createIRI("http://matonto.org/dataset/test2/graph1")
+        def graph2 = vf.createIRI("http://matonto.org/dataset/test2/graph2")
+        def graph3 = vf.createIRI("http://matonto.org/dataset/test2/graph3")
+
+        service.setRepository(memRepo)
+        conn = memRepo.getConnection()
+        def catalogData = Values.matontoModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_only-ds-records.trig"), "", RDFFormat.TRIG))
+        conn.add(catalogData)
+
+        when:
+        service.clearDataset(dataset2)
+
+        then:
+        0 * catalogManagerMock.removeRecord(localCatalog, recordIRI)
+        conn.getStatements(dataset1, null, null).hasNext()
+        conn.getStatements(dataset2, null, null).hasNext()
+        !conn.getStatements(null, null, null, graph1).hasNext()
+        !conn.getStatements(null, null, null, graph2).hasNext()
+        !conn.getStatements(null, null, null, graph3).hasNext()
+    }
+
+    def "safeClearDataset() removes nothing when there are no associated graphs"() {
+        setup:
+        def recordIRI = vf.createIRI("http://matonto.org/record/dataset/test1")
+
+        service.setRepository(memRepo)
+        conn = memRepo.getConnection()
+        def catalogData = Values.matontoModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_only-ds-records.trig"), "", RDFFormat.TRIG))
+        conn.add(catalogData)
+
+        when:
+        service.safeClearDataset(dataset1)
+
+        then:
+        0 * catalogManagerMock.removeRecord(localCatalog, recordIRI)
+        conn.getStatements(dataset1, null, null).hasNext()
+        conn.getStatements(dataset2, null, null).hasNext()
+        !conn.getStatements(dataset1, namedGraphPred, null).hasNext()
+        !conn.getStatements(dataset1, defNamedGraphPred, null).hasNext()
+    }
+
+    def "safeClearDataset() correctly removes associated graphs"() {
+        setup:
+        def recordIRI = vf.createIRI("http://matonto.org/record/dataset/test2")
+        def graph1 = vf.createIRI("http://matonto.org/dataset/test2/graph1")
+        def graph2 = vf.createIRI("http://matonto.org/dataset/test2/graph2")
+        def graph3 = vf.createIRI("http://matonto.org/dataset/test2/graph3")
+
+        service.setRepository(memRepo)
+        conn = memRepo.getConnection()
+        def catalogData = Values.matontoModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_only-ds-records.trig"), "", RDFFormat.TRIG))
+        conn.add(catalogData)
+
+        when:
+        service.safeClearDataset(dataset2)
+
+        then:
+        0 * catalogManagerMock.removeRecord(localCatalog, recordIRI)
+        conn.getStatements(dataset1, null, null).hasNext()
+        conn.getStatements(dataset2, null, null).hasNext()
+        !conn.getStatements(null, null, null, graph1).hasNext()
+        !conn.getStatements(null, null, null, graph2).hasNext()
+        !conn.getStatements(null, null, null, graph3).hasNext()
+        !conn.getStatements(dataset2, namedGraphPred, null).hasNext()
+        !conn.getStatements(dataset2, defNamedGraphPred, null).hasNext()
+    }
+
+    def "safeClearDataset() correctly removes only associated graphs that are not used in other datasets"() {
+        setup:
+        def recordIRI = vf.createIRI("http://matonto.org/record/dataset/test3")
+        def graph1 = vf.createIRI("http://matonto.org/dataset/test3/graph1")
+        def graph2 = vf.createIRI("http://matonto.org/dataset/test3/graph2")
+        def graph3 = vf.createIRI("http://matonto.org/dataset/test3/graph3")
+        def graph4 = vf.createIRI("http://matonto.org/dataset/test3/graph4")
+        def graph5 = vf.createIRI("http://matonto.org/dataset/test3/graph5")
+
+        service.setRepository(memRepo)
+        conn = memRepo.getConnection()
+        def catalogData = Values.matontoModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_only-ds-records.trig"), "", RDFFormat.TRIG))
+        conn.add(catalogData)
+
+        when:
+        service.safeClearDataset(dataset3)
+
+        then:
+        0 * catalogManagerMock.removeRecord(localCatalog, recordIRI)
+        conn.getStatements(dataset1, null, null).hasNext()
+        conn.getStatements(dataset2, null, null).hasNext()
+        conn.getStatements(dataset3, null, null).hasNext()
+        conn.getStatements(dataset4, null, null).hasNext()
+        !conn.getStatements(null, null, null, graph1).hasNext()
+        !conn.getStatements(null, null, null, graph2).hasNext()
+        !conn.getStatements(null, null, null, graph3).hasNext()
+        conn.getStatements(null, null, null, graph4).hasNext()
+        conn.getStatements(null, null, null, graph5).hasNext()
+        !conn.getStatements(dataset3, namedGraphPred, null).hasNext()
+        !conn.getStatements(dataset3, defNamedGraphPred, null).hasNext()
+        conn.getStatements(dataset4, defNamedGraphPred, graph4).hasNext()
+        conn.getStatements(dataset4, namedGraphPred, graph5).hasNext()
+    }
 }

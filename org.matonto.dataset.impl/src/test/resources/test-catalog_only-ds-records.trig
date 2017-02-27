@@ -37,7 +37,78 @@ GRAPH <http://matonto.org/record/dataset/test2> {
 }
 
 GRAPH <http://matonto.org/dataset/test2> {
-    <http://matonto.org/dataset/test2> a dataset:Dataset .
+    <http://matonto.org/dataset/test2> a dataset:Dataset ;
+        dataset:defaultNamedGraph <http://matonto.org/dataset/test2/graph1> ;
+        dataset:namedGraph <http://matonto.org/dataset/test2/graph2>, <http://matonto.org/dataset/test2/graph3> .
+}
+
+GRAPH <http://matonto.org/dataset/test2/graph1> {
+    <http://matonto.org/dataset/test2/graph1> a owl:Thing .
+}
+
+GRAPH <http://matonto.org/dataset/test2/graph2> {
+    <http://matonto.org/dataset/test2/graph2> a owl:Thing .
+}
+
+GRAPH <http://matonto.org/dataset/test2/graph3> {
+    <http://matonto.org/dataset/test2/graph3> a owl:Thing .
+}
+
+GRAPH <http://matonto.org/record/dataset/test3> {
+    <http://matonto.org/record/dataset/test3> a dataset:DatasetRecord, mcat:UnversionedRecord, mcat:Record ;
+        mcat:catalog <http://matonto.org/test/catalog-local> ;
+        dc:title "Dataset" ;
+        dc:description "Description" ;
+        dc:identifier "Dataset" ;
+        dc:issued "2016-01-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-03-02T00:00:00Z"^^xsd:dateTime ;
+        dc:publisher matuser:tester ;
+        dataset:dataset <http://matonto.org/dataset/test3> .
+}
+
+GRAPH <http://matonto.org/dataset/test3> {
+    <http://matonto.org/dataset/test3> a dataset:Dataset ;
+        dataset:defaultNamedGraph <http://matonto.org/dataset/test3/graph1> , <http://matonto.org/dataset/test3/graph4> ;
+        dataset:namedGraph <http://matonto.org/dataset/test3/graph2>, <http://matonto.org/dataset/test3/graph3> ,
+            <http://matonto.org/dataset/test3/graph5> .
+}
+
+GRAPH <http://matonto.org/dataset/test3/graph1> {
+    <http://matonto.org/dataset/test3/graph1> a owl:Thing .
+}
+
+GRAPH <http://matonto.org/dataset/test3/graph2> {
+    <http://matonto.org/dataset/test3/graph2> a owl:Thing .
+}
+
+GRAPH <http://matonto.org/dataset/test3/graph3> {
+    <http://matonto.org/dataset/test3/graph3> a owl:Thing .
+}
+
+GRAPH <http://matonto.org/dataset/test3/graph4> {
+    <http://matonto.org/dataset/test3/graph4> a owl:Thing .
+}
+
+GRAPH <http://matonto.org/dataset/test3/graph5> {
+    <http://matonto.org/dataset/test3/graph3> a owl:Thing .
+}
+
+GRAPH <http://matonto.org/record/dataset/test4> {
+    <http://matonto.org/record/dataset/test4> a dataset:DatasetRecord, mcat:UnversionedRecord, mcat:Record ;
+        mcat:catalog <http://matonto.org/test/catalog-local> ;
+        dc:title "Dataset" ;
+        dc:description "Description" ;
+        dc:identifier "Dataset" ;
+        dc:issued "2016-01-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-03-02T00:00:00Z"^^xsd:dateTime ;
+        dc:publisher matuser:tester ;
+        dataset:dataset <http://matonto.org/dataset/test4> .
+}
+
+GRAPH <http://matonto.org/dataset/test4> {
+    <http://matonto.org/dataset/test4> a dataset:Dataset ;
+        dataset:defaultNamedGraph <http://matonto.org/dataset/test3/graph4> ;
+        dataset:namedGraph <http://matonto.org/dataset/test3/graph5> .
 }
 
 ### OTHER DATA

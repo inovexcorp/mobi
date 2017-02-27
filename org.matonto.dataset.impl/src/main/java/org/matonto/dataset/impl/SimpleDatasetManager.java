@@ -270,14 +270,14 @@ public class SimpleDatasetManager implements DatasetManager {
 
         RepositoryResult<Statement> ngStmts = conn.getStatements(null, ngPred, graph);
         while (ngStmts.hasNext()) {
-            if (ngStmts.next().getSubject() != dataset) {
+            if (!ngStmts.next().getSubject().equals(dataset)) {
                 safeToDelete = false;
             }
         }
 
         RepositoryResult<Statement> dngStmts = conn.getStatements(null, dngPred, graph);
         while (dngStmts.hasNext()) {
-            if (dngStmts.next().getSubject() != dataset) {
+            if (!dngStmts.next().getSubject().equals(dataset)) {
                 safeToDelete = false;
             }
         }
