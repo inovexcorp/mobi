@@ -67,15 +67,11 @@ describe('Saved Changes Tab directive', function() {
         it('with a block-content', function() {
             expect(element.find('block-content').length).toBe(1);
         });
-        it('depending on how many saved changes there are', function() {
-            expect(element.querySelectorAll('block-content .changes').length).toBe(0);
-            expect(element.querySelectorAll('block-content .text-center').length).toBe(1);
-
-            controller.list = [''];
+        it('with a commit-changes-display', function() {
+            expect(element.find('commit-changes-display').length).toBe(0);
+            ontologyStateSvc.listItem.inProgressCommit.additions = [{}];
             scope.$digest();
-            expect(element.querySelectorAll('block-content .text-center').length).toBe(0);
-            expect(element.querySelectorAll('block-content .changes').length).toBe(1);
-            expect(element.querySelectorAll('block-content .changes .property-values').length).toBe(controller.list.length);
+            expect(element.find('commit-changes-display').length).toBe(1);
         });
         it('depending on whether the list item is up to date', function() {
             expect(element.querySelectorAll('block-content .text-center info-message').length).toBe(1);
@@ -86,7 +82,7 @@ describe('Saved Changes Tab directive', function() {
             expect(element.querySelectorAll('block-content .text-center info-message').length).toBe(0);
             expect(element.querySelectorAll('block-content .text-center error-display').length).toBe(1);
 
-            controller.list = [''];
+            ontologyStateSvc.listItem.inProgressCommit.additions = [{}];
             scope.$digest();
             expect(element.querySelectorAll('block-content .changes error-display').length).toBe(1);
 
@@ -96,16 +92,6 @@ describe('Saved Changes Tab directive', function() {
         });
     });
     describe('controller methods', function() {
-        it('should get the additions of the changes to an entity', function() {
-            ontologyStateSvc.listItem.inProgressCommit.additions = [{'@id': 'A', 'test': true}];
-            expect(controller.getAdditions('A')).toEqual({'test': true});
-            expect(controller.getAdditions('B')).toBeUndefined();
-        });
-        it('should get the deletions of the changes to an entity', function() {
-            ontologyStateSvc.listItem.inProgressCommit.deletions = [{'@id': 'A', 'test': true}];
-            expect(controller.getDeletions('A')).toEqual({'test': true});
-            expect(controller.getDeletions('B')).toBeUndefined();
-        });
         it('should go to a specific entity', function() {
             var event = {
                 stopPropagation: jasmine.createSpy('stopPropagation')
@@ -138,15 +124,6 @@ describe('Saved Changes Tab directive', function() {
                 expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
             });
         });
-    });
-    it('should call goTo when an entity title is clicked', function() {
-        controller.list = ['test'];
-        scope.$digest();
-        spyOn(controller, 'go');
-
-        var link = angular.element(element.querySelectorAll('block-content .changes .property-values h5 a')[0]);
-        link.triggerHandler('click');
-        expect(controller.go).toHaveBeenCalledWith(jasmine.any(Object), 'test');
     });
     it('should call update when the link is clicked', function() {
         ontologyStateSvc.listItem.upToDate = false;

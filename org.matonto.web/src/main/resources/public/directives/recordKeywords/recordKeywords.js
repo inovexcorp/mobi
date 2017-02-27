@@ -63,7 +63,7 @@
                 var dvm = this;
 
                 dvm.getKeywords = function(record) {
-                    return _.map(_.get(record, prefixes.catalog + 'keyword', []), '@value');
+                    return _.map(_.get(record, prefixes.catalog + 'keyword', []), '@value').sort();
                 }
             },
             templateUrl: 'directives/recordKeywords/recordKeywords.html'

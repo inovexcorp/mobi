@@ -21,20 +21,22 @@
  * #L%
  */
 describe('Commits Tab directive', function() {
-    var $compile, scope, $q, element;
+    var $compile, scope, $q, element, controller, ontologyStateSvc;
 
     beforeEach(function() {
         module('templates');
         module('commitsTab');
         mockOntologyState();
 
-        inject(function(_$compile_, _$rootScope_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            ontologyStateSvc = _ontologyStateService_;
         });
 
         element = $compile(angular.element('<commits-tab></commits-tab>'))(scope);
         scope.$digest();
+        controller = element.controller('commitsTab');
     });
 
     describe('contains the correct html', function() {
@@ -49,6 +51,13 @@ describe('Commits Tab directive', function() {
         });
         it('for .col-xs-8', function() {
             expect(element.querySelectorAll('.col-xs-8').length).toBe(1);
+        });
+    });
+    describe('controller methods', function() {
+        it('should get the currently selected branch', function() {
+            var branch = {'@id': 'branchId'};
+            ontologyStateSvc.listItem = {branches: [branch], branchId: branch['@id']};
+            expect(controller.getBranch()).toEqual(branch);
         });
     });
 });
