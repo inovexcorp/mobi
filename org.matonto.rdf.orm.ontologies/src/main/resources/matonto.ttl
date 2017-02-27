@@ -1,0 +1,14 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix dcam: <http://purl.org/dc/dcam/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix : <http://matonto.org/ontologies/matonto#> .
+
+<http://matonto.org/ontologies/matonto> a owl:Ontology ;
+    rdfs:label "The MatOnto Ontology"@en .
+
+:Identifier a rdfs:Class, owl:Class ;
+    rdfs:label "Identifier"@en ;
+    rdfs:comment "A Resource that represents an IRI or a Blank Node."@en .
