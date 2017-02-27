@@ -14,9 +14,9 @@
     owl:imports <http://matonto.org/ontologies/user/management>;
     rdfs:label "The MatOnto platform configuration ontology"@en;
     rdfs:comment "The MatOnto platform configuration ontology describes how user preferences, user state, and applications are expressed within the MatOnto framework."@en;
-    dct:creator [foaf:name "Jordan Lewis"], [foaf:name "Megan Mercer"];
+    dct:creator [foaf:name "Jordan Lewis"], [foaf:name "Megan Mercer"], [foaf:name "Stephen Kahmann"];
     foaf:maker [foaf:name "MatOnto"; foaf:homepage <http://matonto.org>];
-    dct:modified "2016-11-22"^^xsd:date.
+    dct:modified "2016-02-27"^^xsd:date.
 
 # Application
 
