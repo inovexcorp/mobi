@@ -51,9 +51,9 @@
          */
         .directive('recordType', recordType);
 
-        recordType.$inject = ['catalogManagerService'];
+        recordType.$inject = ['catalogManagerService', 'chroma'];
 
-        function recordType(catalogManagerService) {
+        function recordType(catalogManagerService, chroma) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
