@@ -38,6 +38,7 @@ import org.matonto.rdf.orm.conversion.impl.*
 import org.matonto.rdf.orm.impl.ThingFactory
 import org.matonto.repository.api.Repository
 import org.matonto.repository.api.RepositoryConnection
+import org.matonto.repository.api.RepositoryManager
 import org.matonto.repository.base.RepositoryResult
 import org.matonto.repository.impl.sesame.SesameRepositoryWrapper
 import org.openrdf.repository.sail.SailRepository
@@ -63,6 +64,7 @@ class SimpleDatasetManagerSpec extends Specification {
     def repositoryMock = Mock(Repository)
     def connMock = Mock(RepositoryConnection)
     def resultsMock = Mock(RepositoryResult)
+    def repoManagerMock = Mock(RepositoryManager)
 
     // Objects
     def localCatalog = vf.createIRI("http://matonto.org/test/catalog-local")
@@ -109,17 +111,22 @@ class SimpleDatasetManagerSpec extends Specification {
         vcr.registerValueConverter(new ValueValueConverter())
         vcr.registerValueConverter(new LiteralValueConverter())
 
+        // Set Services
         service.setDatasetRecordFactory(dsRecFactory)
         service.setDatasetFactory(dsFactory)
 
         service.setCatalogManager(catalogManagerMock)
         service.setRepository(repositoryMock)
         service.setValueFactory(vf)
+        service.setRepoManager(repoManagerMock)
 
+        // Mock Behavior
         repositoryMock.getConnection() >> connMock
         connMock.getStatements(*_) >> resultsMock
 
         catalogManagerMock.getLocalCatalogIRI() >> localCatalog
+
+        repoManagerMock.getRepository("system") >> Optional.of(repositoryMock)
     }
 
     def cleanup() {
@@ -135,6 +142,7 @@ class SimpleDatasetManagerSpec extends Specification {
         def recordIri = vf.createIRI("http://matonto.org/record/dataset/test")
         def record = dsRecFactory.createNew(recordIri)
         record.setDataset(dataset)
+        record.setRepository("system")
 
         resultsMock.hasNext() >> true
         resultsMock.next() >> vf.createStatement(recordIri, datasetPred, datasetIri)
@@ -146,6 +154,7 @@ class SimpleDatasetManagerSpec extends Specification {
         then:
         results != Optional.empty()
         results.get().getResource() == recordIri
+        results.get().getRepository().get() == "system"
         results.get().getDataset().get().getResource() == datasetIri
     }
 
@@ -235,6 +244,54 @@ class SimpleDatasetManagerSpec extends Specification {
             model.contains(datasetIRI, vf.createIRI(Resource.TYPE), vf.createIRI(Dataset.TYPE))
             model.contains(datasetIRI, vf.createIRI(Dataset.systemDefaultNamedGraph_IRI), null)
         }
+    }
+
+    def "createDataset adds the Dataset model to a non-system repo"() {
+        setup:
+        def datasetIRI = vf.createIRI("http://test.com/dataset1")
+        def dataset = dsFactory.createNew(datasetIRI)
+        def recordIRI = vf.createIRI("http://test.com/record1")
+        def record = dsRecFactory.createNew(recordIRI)
+
+        def testRepo = Mock(Repository)
+        def testConn = Mock(RepositoryConnection)
+
+        // Mock Record Creation
+        record.setDataset(dataset)
+        def config = new DatasetRecordConfig.DatasetRecordBuilder("Test Dataset", [] as Set, "test")
+                .dataset(datasetIRI.stringValue())
+                .build()
+        1 * catalogManagerMock.createRecord(config, _ as DatasetRecordFactory) >> record
+
+        when:
+        service.createDataset(config)
+
+        then:
+        1 * repoManagerMock.getRepository("test") >> Optional.of(testRepo)
+        1 * catalogManagerMock.addRecord(localCatalog, record)
+        1 * testRepo.getConnection() >> testConn
+        1 * testConn.add(_ as Model) >> { args ->
+            Model model = args[0]
+            model.contains(datasetIRI, vf.createIRI(Resource.TYPE), vf.createIRI(Dataset.TYPE))
+            model.contains(datasetIRI, vf.createIRI(Dataset.systemDefaultNamedGraph_IRI), null)
+        }
+    }
+
+    def "createDataset throws an exception if the dataset repository does not exist"() {
+        setup:
+        def datasetIRI = vf.createIRI("http://test.com/dataset1")
+        def config = new DatasetRecordConfig.DatasetRecordBuilder("Test Dataset", [] as Set, "test")
+                .dataset(datasetIRI.stringValue())
+                .build()
+
+        when:
+        service.createDataset(config)
+
+        then:
+        1 * repoManagerMock.getRepository("test") >> Optional.empty()
+        0 * catalogManagerMock.createRecord(*_)
+        0 * catalogManagerMock.addRecord(*_)
+        thrown(MatOntoException)
     }
 
     def "deleteDataset() throws an Exception if the DatasetRecord does not exist"() {

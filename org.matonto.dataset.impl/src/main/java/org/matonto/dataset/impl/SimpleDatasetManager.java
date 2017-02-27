@@ -48,6 +48,7 @@ import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
+import org.matonto.repository.api.RepositoryManager;
 import org.matonto.repository.base.RepositoryResult;
 
 import java.io.IOException;
@@ -64,6 +65,7 @@ public class SimpleDatasetManager implements DatasetManager {
     private ValueFactory vf;
     private DatasetRecordFactory dsRecFactory;
     private DatasetFactory dsFactory;
+    private RepositoryManager repoManager;
 
     private static final String FIND_DATASETS_QUERY;
     private static final String CATALOG_BINDING = "catalog";
@@ -103,6 +105,11 @@ public class SimpleDatasetManager implements DatasetManager {
     @Reference
     void setDatasetFactory(DatasetFactory datasetFactory) {
         this.dsFactory = datasetFactory;
+    }
+
+    @Reference
+    void setRepoManager(RepositoryManager repoManager) {
+        this.repoManager = repoManager;
     }
 
     @Activate
@@ -149,6 +156,9 @@ public class SimpleDatasetManager implements DatasetManager {
 
     @Override
     public DatasetRecord createDataset(DatasetRecordConfig config) {
+        Repository dsRepo = repoManager.getRepository(config.getRepositoryId()).orElseThrow(() ->
+                new MatOntoException(new IllegalArgumentException("Dataset target repository does not exist.")));
+
         IRI datasetIRI = vf.createIRI(config.getDataset());
         IRI sdgIRI = vf.createIRI(config.getDataset() + SYSTEM_DEFAULT_NG_SUFFIX);
 
@@ -157,10 +167,11 @@ public class SimpleDatasetManager implements DatasetManager {
 
         DatasetRecord datasetRecord = catalogManager.createRecord(config, dsRecFactory);
         datasetRecord.setDataset(dataset);
+        datasetRecord.setRepository(config.getRepositoryId());
 
         catalogManager.addRecord(catalogManager.getLocalCatalogIRI(), datasetRecord);
 
-        try (RepositoryConnection conn = systemRepository.getConnection()) {
+        try (RepositoryConnection conn = dsRepo.getConnection()) {
             conn.add(dataset.getModel());
         }
 

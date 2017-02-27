@@ -63,3 +63,9 @@
     rdfs:seeAlso "https://www.w3.org/TR/rdf11-concepts/#section-dataset" ;
     rdfs:domain :DatasetRecord ;
     rdfs:range :Dataset .
+
+:repository a owl:DatatypeProperty , owl:FunctionalProperty ;
+    rdfs:label "Repository"@en ;
+    rdfs:comment "The repository where the dataset object and its data is stored."@en ;
+    rdfs:domain :DatasetRecord ;
+    rdfs:range xsd:string .
