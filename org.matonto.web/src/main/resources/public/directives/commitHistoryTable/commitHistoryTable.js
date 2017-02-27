@@ -137,7 +137,6 @@
                                 var circle = snap.circle(0, dvm.circleSpacing/2 + (i * dvm.circleSpacing), dvm.circleRadius);
                                 var title = Snap.parse('<title>' + dvm.util.condenseCommitId(commit.id) + '</title>')
                                 circle.append(title);
-                                circle.attr({id: commit.id});
                                 circle.click(() => dvm.openCommitOverlay(commit.id));
                                 wrapper.add(circle);
                                 graphCommits.push({commit: commit, circle: circle});
@@ -180,8 +179,9 @@
                         cols = [];
                         xI = 1;
                         colorIdx = 0;
-                        wrapper = undefined;
                         snap.clear();
+                        snap = Snap('.commit-graph');
+                        wrapper = undefined;
                         dvm.deltaX = 5 + dvm.circleRadius;
                     }
 
@@ -192,30 +192,38 @@
                         var auxParent = c.commit.auxiliary;
                         // If there is an auxiliary parent, there is also a base parent
                         if (auxParent) {
-                            // Shift the base parent to be beneath and draw a line between them
+                            // Determine whether the base parent is already in a column
                             var baseC = _.find(graphCommits, {commit: {id: baseParent}});
-                            baseC.circle.attr({cx: col.x, fill: col.color});
-                            col.commits.push(baseC.commit.id);
+                            var baseCol = _.find(cols, col => _.includes(col.commits, baseParent));
+                            var baseColor = col.color;
+                            if (!baseCol) {
+                                // If not in a column, shift the base parent to be beneath the commit
+                                baseC.circle.attr({cx: col.x, fill: col.color});
+                                col.commits.push(baseParent);
+                            }
+                            // Draw a line between commit and base parent
                             drawLine(c.circle, baseC.circle, col.color);
                             // Determine whether auxiliary parent is already in a column
                             var auxC = _.find(graphCommits, {commit: {id: auxParent}});
                             var auxCol = _.find(cols, col => _.includes(col.commits, auxParent));
-                            var color;
+                            var auxColor;
                             if (auxCol) {
                                 // If in a column, collect line color
-                                color = auxCol.color;
+                                auxColor = auxCol.color;
                             } else {
                                 // If not in a column, shift the auxiliary parent to the left in new column and collect line color
-                                color = colors[colorIdx % colors.length];
+                                auxColor = colors[colorIdx % colors.length];
                                 colorIdx++;
-                                auxC.circle.attr({cx: -dvm.columnSpacing * xI, fill: color});
-                                cols.push({x: -dvm.columnSpacing * xI, commits: [auxParent], color: color});
+                                auxC.circle.attr({cx: -dvm.columnSpacing * xI, fill: auxColor});
+                                cols.push({x: -dvm.columnSpacing * xI, commits: [auxParent], color: auxColor});
                                 xI++;
                             }
-                            // Draw a line commit and auxiliary commit
-                            drawLine(c.circle, auxC.circle, color);
-                            // Recurse on right first
-                            recurse(baseC);
+                            // Draw a line between commit and auxiliary parent
+                            drawLine(c.circle, auxC.circle, auxColor);
+                            // Recurse on right only if it wasn't in a column to begin with
+                            if (!baseCol) {
+                                recurse(baseC);
+                            }
                             // Recurse on left only if it wasn't in a column to begin with
                             if (!auxCol) {
                                 recurse(auxC);
@@ -233,7 +241,6 @@
                                 recurse(baseC);
                             } else {
                                 // If in a column, draw a line between them and end this branch of recusion
-                                baseC.circle.attr({fill: baseCol.color});
                                 drawLine(c.circle, baseC.circle, col.color);
                             }
                         }

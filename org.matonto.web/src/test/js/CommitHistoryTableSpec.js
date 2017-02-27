@@ -29,7 +29,8 @@ describe('Commit History Table directive', function() {
     var recordId = 'recordId';
     var commits = [{id: commitId}];
     var paperMock = {
-        clear: jasmine.createSpy('clear')
+        clear: jasmine.createSpy('clear'),
+        selectAll: jasmine.createSpy('selectAll').and.returnValue([])
     };
 
     beforeEach(function() {
@@ -175,7 +176,7 @@ describe('Commit History Table directive', function() {
         });
         it('should reset graph variables', function() {
             controller.reset();
-            expect(paperMock.clear).toHaveBeenCalled();
+            expect(Snap).toHaveBeenCalled();
             expect(controller.deltaX).toBe(10);
         });
     });
