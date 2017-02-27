@@ -160,9 +160,10 @@
                 om.addToAdditions(self.listItem.recordId, angular.copy(self.selected));
                 om.addToDeletions(self.listItem.recordId, oldEntity);
             }
-            self.setSelected = function(entityIRI) {
+            self.setSelected = function(entityIRI, getUsages = true) {
                 self.selected = om.getEntityByRecordId(self.listItem.recordId, entityIRI);
-                if (self.getActiveKey() !== 'project' && !_.has(self.getActivePage(), 'usages') && self.selected) {
+                var activeKey = self.getActiveKey();
+                if (getUsages && !_.has(self.getActivePage(), 'usages') && self.selected) {
                     self.setEntityUsages(entityIRI);
                 }
             }
@@ -217,14 +218,14 @@
                 _.merge(newState, tabs);
                 self.states.push(newState);
             }
-            self.setState = function(recordId) {
+            self.setState = function(recordId, getUsages = false) {
                 self.state.active = false;
                 if (!recordId) {
                     self.state = self.newState;
                 } else {
                     self.state = _.find(self.states, {recordId});
                     self.listItem = om.getListItemByRecordId(recordId);
-                    self.setSelected(self.getActiveEntityIRI());
+                    self.setSelected(self.getActiveEntityIRI(), getUsages);
                 }
                 self.state.active = true;
             }
@@ -282,7 +283,7 @@
                         self.setEntityUsages(entityIRI);
                     }
                 }
-                self.setSelected(entityIRI);
+                self.setSelected(entityIRI, false);
             }
             self.unSelectItem = function() {
                 var activePage = self.getActivePage();

@@ -46,7 +46,8 @@
                             .then(() => dvm.sm.afterSave(), $q.reject)
                             .then(() => {
                                 var entityIRI = dvm.sm.getActiveEntityIRI();
-                                if (dvm.sm.getActiveKey() !== 'project' && entityIRI) {
+                                var activeKey = dvm.sm.getActiveKey();
+                                if (activeKey !== 'project' && activeKey !== 'individuals' && entityIRI) {
                                     dvm.sm.setEntityUsages(entityIRI);
                                 }
                                 dvm.sm.showSaveOverlay = false;
