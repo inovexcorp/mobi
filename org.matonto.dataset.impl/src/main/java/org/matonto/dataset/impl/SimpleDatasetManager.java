@@ -46,7 +46,6 @@ import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.Statement;
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
-import org.matonto.rdf.orm.impl.ThingFactory;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.base.RepositoryResult;
@@ -65,7 +64,6 @@ public class SimpleDatasetManager implements DatasetManager {
     private ValueFactory vf;
     private DatasetRecordFactory dsRecFactory;
     private DatasetFactory dsFactory;
-    private ThingFactory thingFactory;
 
     private static final String FIND_DATASETS_QUERY;
     private static final String CATALOG_BINDING = "catalog";
@@ -105,11 +103,6 @@ public class SimpleDatasetManager implements DatasetManager {
     @Reference
     void setDatasetFactory(DatasetFactory datasetFactory) {
         this.dsFactory = datasetFactory;
-    }
-
-    @Reference
-    void setThingFactory(ThingFactory thingFactory) {
-        this.thingFactory = thingFactory;
     }
 
     @Activate
@@ -160,7 +153,7 @@ public class SimpleDatasetManager implements DatasetManager {
         IRI sdgIRI = vf.createIRI(config.getDataset() + SYSTEM_DEFAULT_NG_SUFFIX);
 
         Dataset dataset = dsFactory.createNew(datasetIRI);
-        dataset.setSystemDefaultNamedGraph(thingFactory.createNew(sdgIRI));
+        dataset.setSystemDefaultNamedGraph(sdgIRI);
 
         DatasetRecord datasetRecord = catalogManager.createRecord(config, dsRecFactory);
         datasetRecord.setDataset(dataset);

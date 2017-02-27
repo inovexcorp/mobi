@@ -7,12 +7,13 @@
 @prefix prov: <http://www.w3.org/ns/prov-o#> .
 @prefix matg: <http://matonto.org/ontologies/graph#> .
 @prefix matcat: <http://matonto.org/ontologies/catalog#> .
+@prefix matonto: <http://matonto.org/ontologies/matonto#> .
 @prefix : <http://matonto.org/ontologies/dataset#> .
 @base <http://matonto.org/ontologies/dataset> .
 
 <http://matonto.org/ontologies/dataset> a owl:Ontology ;
     owl:versionIRI <http://matonto.org/ontologies/dataset#1.0> ;
-    owl:imports <http://matonto.org/ontologies/catalog> ;
+    owl:imports <http://matonto.org/ontologies/catalog> , <http://matonto.org/ontologies/matonto> ;
     rdfs:label "MatOnto Dataset Ontology"@en;
     rdfs:comment "The MatOnto dataset ontology describes the structure of dataset objects and how they relate to the MatOnto Catalog."@en;
     dct:creator [foaf:name "Stephen Kahmann"] ;
@@ -32,21 +33,21 @@
     by the system. This graph is used when loading default graph data and no other default named graph is specified"@en ;
     rdfs:seeAlso "https://www.w3.org/TR/rdf11-concepts/#section-dataset" ;
     rdfs:domain :Dataset ;
-    rdfs:range matg:Graph .
+    rdfs:range matonto:Identifier .
 
 :defaultNamedGraph a owl:ObjectProperty ;
     rdfs:label "Default Named Graph"@en ;
     rdfs:comment "A resource representing a default named graph of an RDF Dataset."@en ;
     rdfs:seeAlso "https://www.w3.org/TR/rdf11-concepts/#section-dataset" ;
     rdfs:domain :Dataset ;
-    rdfs:range matg:Graph .
+    rdfs:range matonto:Identifier .
 
 :namedGraph a owl:ObjectProperty ;
     rdfs:label "Named Graph"@en ;
     rdfs:comment "A resource representing a named graph of an RDF Dataset."@en ;
     rdfs:seeAlso "https://www.w3.org/TR/rdf11-concepts/#section-dataset" ;
     rdfs:domain :Dataset ;
-    rdfs:range matg:Graph .
+    rdfs:range matonto:Identifier .
 
 # DatasetRecord
 
