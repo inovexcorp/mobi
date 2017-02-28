@@ -104,6 +104,10 @@
                                     <ontologyFile>${project.basedir}/src/main/resources/prov-o.ttl</ontologyFile>
                                     <outputPackage>org.matonto.ontologies.provo</outputPackage>
                                 </ontology>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/src/main/resources/matonto.ttl</ontologyFile>
+                                    <outputPackage>org.matonto.ontologies.matonto</outputPackage>
+                                </ontology>
                             </generates>
                             <outputLocation>${project.basedir}/src/main/java</outputLocation>
                         </configuration>

@@ -312,7 +312,7 @@
                 <plugin>
                     <groupId>org.matonto.orm</groupId>
                     <artifactId>rdf-orm-maven-plugin</artifactId>
-                    <version>1.4.24</version>
+                    <version>1.5.9-SNAPSHOT</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.felix</groupId>
