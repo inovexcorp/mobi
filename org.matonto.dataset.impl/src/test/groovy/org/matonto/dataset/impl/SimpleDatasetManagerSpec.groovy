@@ -72,6 +72,7 @@ class SimpleDatasetManagerSpec extends Specification {
     def datasetPred = vf.createIRI(DatasetRecord.dataset_IRI)
     def namedGraphPred = vf.createIRI(Dataset.namedGraph_IRI)
     def defNamedGraphPred = vf.createIRI(Dataset.defaultNamedGraph_IRI)
+    def sysDefNgPred = vf.createIRI(Dataset.systemDefaultNamedGraph_IRI)
     def systemRepo
     def testRepo
     def systemConn
@@ -382,6 +383,7 @@ class SimpleDatasetManagerSpec extends Specification {
         def graph1 = vf.createIRI("http://matonto.org/dataset/test2/graph1")
         def graph2 = vf.createIRI("http://matonto.org/dataset/test2/graph2")
         def graph3 = vf.createIRI("http://matonto.org/dataset/test2/graph3")
+        def graph4 = vf.createIRI("http://matonto.org/dataset/test2_system_dng")
 
         bootstrapCatalog(datasetIRI, recordIRI)
 
@@ -396,6 +398,7 @@ class SimpleDatasetManagerSpec extends Specification {
         !systemConn.getStatements(null, null, null, graph1).hasNext()
         !systemConn.getStatements(null, null, null, graph2).hasNext()
         !systemConn.getStatements(null, null, null, graph3).hasNext()
+        !systemConn.getStatements(null, null, null, graph4).hasNext()
     }
 
     def "deleteDataset() correctly removes DatasetRecord, Dataset, and associated graphs in a non-system repository"() {
@@ -404,6 +407,7 @@ class SimpleDatasetManagerSpec extends Specification {
         def recordIRI = vf.createIRI("http://matonto.org/record/dataset/test5")
         def graph1 = vf.createIRI("http://matonto.org/dataset/test5/graph1")
         def graph2 = vf.createIRI("http://matonto.org/dataset/test5/graph2")
+        def graph3 = vf.createIRI("http://matonto.org/dataset/test5_system_dng")
 
         bootstrapCatalog(datasetIRI, recordIRI, "test")
 
@@ -420,10 +424,12 @@ class SimpleDatasetManagerSpec extends Specification {
         !systemConn.getStatements(dataset5, null, null).hasNext()
         !systemConn.getStatements(null, null, null, graph1).hasNext()
         !systemConn.getStatements(null, null, null, graph2).hasNext()
+        !systemConn.getStatements(null, null, null, graph3).hasNext()
         testConn.getStatements(dataset6, null, null).hasNext()
         !testConn.getStatements(dataset5, null, null).hasNext()
         !testConn.getStatements(null, null, null, graph1).hasNext()
         !testConn.getStatements(null, null, null, graph2).hasNext()
+        !testConn.getStatements(null, null, null, graph3).hasNext()
     }
 
     def "safeDeleteDataset() correctly removes DatasetRecord, Dataset when there are no associated graphs"() {
@@ -450,6 +456,7 @@ class SimpleDatasetManagerSpec extends Specification {
         def graph1 = vf.createIRI("http://matonto.org/dataset/test2/graph1")
         def graph2 = vf.createIRI("http://matonto.org/dataset/test2/graph2")
         def graph3 = vf.createIRI("http://matonto.org/dataset/test2/graph3")
+        def graph4 = vf.createIRI("http://matonto.org/dataset/test2_system_dng")
 
         bootstrapCatalog(datasetIRI, recordIRI)
 
@@ -464,6 +471,7 @@ class SimpleDatasetManagerSpec extends Specification {
         !systemConn.getStatements(null, null, null, graph1).hasNext()
         !systemConn.getStatements(null, null, null, graph2).hasNext()
         !systemConn.getStatements(null, null, null, graph3).hasNext()
+        !systemConn.getStatements(null, null, null, graph4).hasNext()
     }
 
     def "safeDeleteDataset() correctly removes only associated graphs that are not used in other datasets"() {
@@ -501,6 +509,7 @@ class SimpleDatasetManagerSpec extends Specification {
         def recordIRI = vf.createIRI("http://matonto.org/record/dataset/test5")
         def graph1 = vf.createIRI("http://matonto.org/dataset/test5/graph1")
         def graph2 = vf.createIRI("http://matonto.org/dataset/test5/graph2")
+        def graph3 = vf.createIRI("http://matonto.org/dataset/test5_system_dng")
 
         bootstrapCatalog(datasetIRI, recordIRI, "test")
 
@@ -517,10 +526,12 @@ class SimpleDatasetManagerSpec extends Specification {
         !systemConn.getStatements(dataset5, null, null).hasNext()
         !systemConn.getStatements(null, null, null, graph1).hasNext()
         !systemConn.getStatements(null, null, null, graph2).hasNext()
+        !systemConn.getStatements(null, null, null, graph3).hasNext()
         testConn.getStatements(dataset6, null, null).hasNext()
         !testConn.getStatements(dataset5, null, null).hasNext()
         !testConn.getStatements(null, null, null, graph1).hasNext()
         !testConn.getStatements(null, null, null, graph2).hasNext()
+        !testConn.getStatements(null, null, null, graph3).hasNext()
     }
 
     def "safeDeleteDataset() correctly removes only associated graphs that are not used in other datasets within the same non-system repository"() {
@@ -529,6 +540,7 @@ class SimpleDatasetManagerSpec extends Specification {
         def recordIRI = vf.createIRI("http://matonto.org/record/dataset/test6")
         def graph1 = vf.createIRI("http://matonto.org/dataset/test2/graph1")
         def graph2 = vf.createIRI("http://matonto.org/dataset/test2/graph2")
+        def graph3 = vf.createIRI("http://matonto.org/dataset/test2_system_dng")
 
         bootstrapCatalog(datasetIRI, recordIRI, "test")
 
@@ -545,9 +557,11 @@ class SimpleDatasetManagerSpec extends Specification {
         systemConn.getStatements(dataset2, null, null).hasNext()
         systemConn.getStatements(null, null, null, graph1).hasNext()
         systemConn.getStatements(null, null, null, graph2).hasNext()
+        systemConn.getStatements(null, null, null, graph3).hasNext()
         !testConn.getStatements(dataset6, null, null).hasNext()
         !testConn.getStatements(null, null, null, graph1).hasNext()
         !testConn.getStatements(null, null, null, graph2).hasNext()
+        !testConn.getStatements(null, null, null, graph3).hasNext()
     }
 
     def "clearDataset() removes nothing when there are no associated graphs"() {
@@ -574,6 +588,7 @@ class SimpleDatasetManagerSpec extends Specification {
         def graph1 = vf.createIRI("http://matonto.org/dataset/test2/graph1")
         def graph2 = vf.createIRI("http://matonto.org/dataset/test2/graph2")
         def graph3 = vf.createIRI("http://matonto.org/dataset/test2/graph3")
+        def graph4 = vf.createIRI("http://matonto.org/dataset/test2_system_dng")
 
         bootstrapCatalog(datasetIRI, recordIRI)
 
@@ -585,9 +600,13 @@ class SimpleDatasetManagerSpec extends Specification {
         repoManagerMock.getRepository("system") >> Optional.of(systemRepo)
         systemConn.getStatements(dataset1, null, null).hasNext()
         systemConn.getStatements(dataset2, null, null).hasNext()
+        systemConn.getStatements(dataset2, sysDefNgPred, null).hasNext()
+        !systemConn.getStatements(dataset2, namedGraphPred, null).hasNext()
+        !systemConn.getStatements(dataset2, defNamedGraphPred, null).hasNext()
         !systemConn.getStatements(null, null, null, graph1).hasNext()
         !systemConn.getStatements(null, null, null, graph2).hasNext()
         !systemConn.getStatements(null, null, null, graph3).hasNext()
+        !systemConn.getStatements(null, null, null, graph4).hasNext()
     }
 
     def "clearDataset() only removes associated graphs in a non-system repository"() {
@@ -596,6 +615,7 @@ class SimpleDatasetManagerSpec extends Specification {
         def recordIRI = vf.createIRI("http://matonto.org/record/dataset/test5")
         def graph1 = vf.createIRI("http://matonto.org/dataset/test5/graph1")
         def graph2 = vf.createIRI("http://matonto.org/dataset/test5/graph2")
+        def graph3 = vf.createIRI("http://matonto.org/dataset/test5_system_dng")
 
         bootstrapCatalog(datasetIRI, recordIRI, "test")
 
@@ -611,8 +631,12 @@ class SimpleDatasetManagerSpec extends Specification {
         repoManagerMock.getRepository("system") >> Optional.of(systemRepo)
         !systemConn.getStatements(dataset5, null, null).hasNext()
         testConn.getStatements(dataset5, null, null).hasNext()
+        testConn.getStatements(dataset5, sysDefNgPred, null).hasNext()
+        !testConn.getStatements(dataset5, namedGraphPred, null).hasNext()
+        !testConn.getStatements(dataset5, defNamedGraphPred, null).hasNext()
         !testConn.getStatements(null, null, null, graph1).hasNext()
         !testConn.getStatements(null, null, null, graph2).hasNext()
+        !testConn.getStatements(null, null, null, graph3).hasNext()
     }
 
     def "safeClearDataset() removes nothing when there are no associated graphs"() {
@@ -641,6 +665,7 @@ class SimpleDatasetManagerSpec extends Specification {
         def graph1 = vf.createIRI("http://matonto.org/dataset/test2/graph1")
         def graph2 = vf.createIRI("http://matonto.org/dataset/test2/graph2")
         def graph3 = vf.createIRI("http://matonto.org/dataset/test2/graph3")
+        def graph4 = vf.createIRI("http://matonto.org/dataset/test2_system_dng")
 
         bootstrapCatalog(datasetIRI, recordIRI)
 
@@ -652,11 +677,13 @@ class SimpleDatasetManagerSpec extends Specification {
         repoManagerMock.getRepository("system") >> Optional.of(systemRepo)
         systemConn.getStatements(dataset1, null, null).hasNext()
         systemConn.getStatements(dataset2, null, null).hasNext()
+        systemConn.getStatements(dataset2, sysDefNgPred, null).hasNext()
+        !systemConn.getStatements(dataset2, namedGraphPred, null).hasNext()
+        !systemConn.getStatements(dataset2, defNamedGraphPred, null).hasNext()
         !systemConn.getStatements(null, null, null, graph1).hasNext()
         !systemConn.getStatements(null, null, null, graph2).hasNext()
         !systemConn.getStatements(null, null, null, graph3).hasNext()
-        !systemConn.getStatements(dataset2, namedGraphPred, null).hasNext()
-        !systemConn.getStatements(dataset2, defNamedGraphPred, null).hasNext()
+        !systemConn.getStatements(null, null, null, graph4).hasNext()
     }
 
     def "safeClearDataset() correctly removes only associated graphs that are not used in other datasets"() {
