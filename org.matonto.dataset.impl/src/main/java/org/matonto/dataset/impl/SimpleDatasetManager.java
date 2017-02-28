@@ -180,12 +180,18 @@ public class SimpleDatasetManager implements DatasetManager {
 
     @Override
     public void deleteDataset(Resource dataset) {
-        Resource recordResource = getRecordResource(dataset)
+        DatasetRecord datasetRecord = getDatasetRecord(dataset)
                 .orElseThrow(() -> new MatOntoException("Could not find the required DatasetRecord in the Catalog."));
 
-        catalogManager.removeRecord(catalogManager.getLocalCatalogIRI(), recordResource);
+        String dsRepoID = datasetRecord.getRepository()
+                .orElseThrow(() -> new MatOntoException("DatasetRecord does not specify a dataset repository."));
 
-        try (RepositoryConnection conn = systemRepository.getConnection()) {
+        Repository dsRepo = repoManager.getRepository(dsRepoID)
+                .orElseThrow(() -> new MatOntoException("Dataset target repository does not exist."));
+
+        catalogManager.removeRecord(catalogManager.getLocalCatalogIRI(), datasetRecord.getResource());
+
+        try (RepositoryConnection conn = dsRepo.getConnection()) {
             conn.getStatements(dataset, vf.createIRI(Dataset.namedGraph_IRI), null)
                     .forEach(stmt -> clearGraph(conn, stmt.getObject()));
             conn.getStatements(dataset, vf.createIRI(Dataset.defaultNamedGraph_IRI), null)
@@ -196,15 +202,21 @@ public class SimpleDatasetManager implements DatasetManager {
 
     @Override
     public void safeDeleteDataset(Resource dataset) {
-        Resource recordResource = getRecordResource(dataset)
+        DatasetRecord datasetRecord = getDatasetRecord(dataset)
                 .orElseThrow(() -> new MatOntoException("Could not find the required DatasetRecord in the Catalog."));
 
-        catalogManager.removeRecord(catalogManager.getLocalCatalogIRI(), recordResource);
+        String dsRepoID = datasetRecord.getRepository()
+                .orElseThrow(() -> new MatOntoException("DatasetRecord does not specify a dataset repository."));
+
+        Repository dsRepo = repoManager.getRepository(dsRepoID)
+                .orElseThrow(() -> new MatOntoException("Dataset target repository does not exist."));
+
+        catalogManager.removeRecord(catalogManager.getLocalCatalogIRI(), datasetRecord.getResource());
 
         IRI ngPred = vf.createIRI(Dataset.namedGraph_IRI);
         IRI dngPred = vf.createIRI(Dataset.defaultNamedGraph_IRI);
 
-        try (RepositoryConnection conn = systemRepository.getConnection()) {
+        try (RepositoryConnection conn = dsRepo.getConnection()) {
             conn.getStatements(dataset, ngPred, null).forEach(stmt -> {
                 Value graph = stmt.getObject();
                 if (safeToDelete(conn, dataset, graph)) {

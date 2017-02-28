@@ -17,6 +17,7 @@ GRAPH <http://matonto.org/record/dataset/test1> {
         dc:issued "2016-01-01T00:00:00Z"^^xsd:dateTime ;
         dc:modified "2016-03-02T00:00:00Z"^^xsd:dateTime ;
         dc:publisher matuser:tester ;
+        dataset:repository "system" ;
         dataset:dataset <http://matonto.org/dataset/test1> .
 }
 
@@ -33,6 +34,7 @@ GRAPH <http://matonto.org/record/dataset/test2> {
         dc:issued "2016-01-01T00:00:00Z"^^xsd:dateTime ;
         dc:modified "2016-03-02T00:00:00Z"^^xsd:dateTime ;
         dc:publisher matuser:tester ;
+        dataset:repository "system" ;
         dataset:dataset <http://matonto.org/dataset/test2> .
 }
 
@@ -63,6 +65,7 @@ GRAPH <http://matonto.org/record/dataset/test3> {
         dc:issued "2016-01-01T00:00:00Z"^^xsd:dateTime ;
         dc:modified "2016-03-02T00:00:00Z"^^xsd:dateTime ;
         dc:publisher matuser:tester ;
+        dataset:repository "system" ;
         dataset:dataset <http://matonto.org/dataset/test3> .
 }
 
@@ -102,6 +105,7 @@ GRAPH <http://matonto.org/record/dataset/test4> {
         dc:issued "2016-01-01T00:00:00Z"^^xsd:dateTime ;
         dc:modified "2016-03-02T00:00:00Z"^^xsd:dateTime ;
         dc:publisher matuser:tester ;
+        dataset:repository "system" ;
         dataset:dataset <http://matonto.org/dataset/test4> .
 }
 
@@ -109,6 +113,45 @@ GRAPH <http://matonto.org/dataset/test4> {
     <http://matonto.org/dataset/test4> a dataset:Dataset ;
         dataset:defaultNamedGraph <http://matonto.org/dataset/test3/graph4> ;
         dataset:namedGraph <http://matonto.org/dataset/test3/graph5> .
+}
+
+GRAPH <http://matonto.org/record/dataset/test5> {
+    <http://matonto.org/record/dataset/test5> a dataset:DatasetRecord, mcat:UnversionedRecord, mcat:Record ;
+        mcat:catalog <http://matonto.org/test/catalog-local> ;
+        dc:title "Dataset" ;
+        dc:description "Description" ;
+        dc:identifier "Dataset" ;
+        dc:issued "2016-01-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-03-02T00:00:00Z"^^xsd:dateTime ;
+        dc:publisher matuser:tester ;
+        dataset:repository "test" ;
+        dataset:dataset <http://matonto.org/dataset/test5> .
+}
+
+GRAPH <http://matonto.org/record/dataset/test6> {
+    <http://matonto.org/record/dataset/test6> a dataset:DatasetRecord, mcat:UnversionedRecord, mcat:Record ;
+        mcat:catalog <http://matonto.org/test/catalog-local> ;
+        dc:title "Dataset" ;
+        dc:description "Description" ;
+        dc:identifier "Dataset" ;
+        dc:issued "2016-01-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-03-02T00:00:00Z"^^xsd:dateTime ;
+        dc:publisher matuser:tester ;
+        dataset:repository "test" ;
+        dataset:dataset <http://matonto.org/dataset/test6> .
+}
+
+GRAPH <http://matonto.org/record/dataset/test7> {
+    <http://matonto.org/record/dataset/test7> a dataset:DatasetRecord, mcat:UnversionedRecord, mcat:Record ;
+        mcat:catalog <http://matonto.org/test/catalog-local> ;
+        dc:title "Dataset" ;
+        dc:description "Description" ;
+        dc:identifier "Dataset" ;
+        dc:issued "2016-01-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-03-02T00:00:00Z"^^xsd:dateTime ;
+        dc:publisher matuser:tester ;
+        dataset:repository "test" ;
+        dataset:dataset <http://matonto.org/dataset/test7> .
 }
 
 ### OTHER DATA
