@@ -188,10 +188,7 @@ public class SimpleDatasetManager implements DatasetManager {
         catalogManager.removeRecord(catalogManager.getLocalCatalogIRI(), datasetRecord.getResource());
 
         try (RepositoryConnection conn = dsRepo.getConnection()) {
-            conn.getStatements(dataset, vf.createIRI(Dataset.namedGraph_IRI), null)
-                    .forEach(stmt -> clearGraph(conn, stmt.getObject()));
-            conn.getStatements(dataset, vf.createIRI(Dataset.defaultNamedGraph_IRI), null)
-                    .forEach(stmt -> clearGraph(conn, stmt.getObject()));
+            deleteGraphs(conn, dataset);
             conn.remove(dataset, null, null);
         }
     }
@@ -205,22 +202,8 @@ public class SimpleDatasetManager implements DatasetManager {
 
         catalogManager.removeRecord(catalogManager.getLocalCatalogIRI(), datasetRecord.getResource());
 
-        IRI ngPred = vf.createIRI(Dataset.namedGraph_IRI);
-        IRI dngPred = vf.createIRI(Dataset.defaultNamedGraph_IRI);
-
         try (RepositoryConnection conn = dsRepo.getConnection()) {
-            conn.getStatements(dataset, ngPred, null).forEach(stmt -> {
-                Value graph = stmt.getObject();
-                if (safeToDelete(conn, dataset, graph)) {
-                    clearGraph(conn, graph);
-                }
-            });
-            conn.getStatements(dataset, dngPred, null).forEach(stmt -> {
-                Value graph = stmt.getObject();
-                if (safeToDelete(conn, dataset, graph)) {
-                    clearGraph(conn, graph);
-                }
-            });
+            safeDeleteGraphs(conn, dataset);
             conn.remove(dataset, null, null);
         }
     }
@@ -232,14 +215,9 @@ public class SimpleDatasetManager implements DatasetManager {
 
         Repository dsRepo = getDatasetRepo(datasetRecord);
 
-        IRI ngPred = vf.createIRI(Dataset.namedGraph_IRI);
-        IRI dngPred = vf.createIRI(Dataset.defaultNamedGraph_IRI);
-
         try (RepositoryConnection conn = dsRepo.getConnection()) {
-            conn.getStatements(dataset, ngPred, null).forEach(stmt -> clearGraph(conn, stmt.getObject()));
-            conn.getStatements(dataset, dngPred, null).forEach(stmt -> clearGraph(conn, stmt.getObject()));
-            conn.remove(dataset, ngPred, null);
-            conn.remove(dataset, dngPred, null);
+            deleteGraphs(conn, dataset);
+            deleteGraphLinks(conn, dataset);
         }
     }
 
@@ -250,24 +228,9 @@ public class SimpleDatasetManager implements DatasetManager {
 
         Repository dsRepo = getDatasetRepo(datasetRecord);
 
-        IRI ngPred = vf.createIRI(Dataset.namedGraph_IRI);
-        IRI dngPred = vf.createIRI(Dataset.defaultNamedGraph_IRI);
-
         try (RepositoryConnection conn = dsRepo.getConnection()) {
-            conn.getStatements(dataset, ngPred, null).forEach(stmt -> {
-                Value graph = stmt.getObject();
-                if (safeToDelete(conn, dataset, graph)) {
-                    clearGraph(conn, graph);
-                }
-            });
-            conn.getStatements(dataset, dngPred, null).forEach(stmt -> {
-                Value graph = stmt.getObject();
-                if (safeToDelete(conn, dataset, graph)) {
-                    clearGraph(conn, graph);
-                }
-            });
-            conn.remove(dataset, ngPred, null);
-            conn.remove(dataset, dngPred, null);
+            safeDeleteGraphs(conn, dataset);
+            deleteGraphLinks(conn, dataset);
         }
     }
 
@@ -320,5 +283,36 @@ public class SimpleDatasetManager implements DatasetManager {
         }
 
         return safeToDelete;
+    }
+
+    private void deleteGraphs(RepositoryConnection conn, Resource dataset) {
+        IRI ngPred = vf.createIRI(Dataset.namedGraph_IRI);
+        IRI dngPred = vf.createIRI(Dataset.defaultNamedGraph_IRI);
+        conn.getStatements(dataset, ngPred, null).forEach(stmt -> clearGraph(conn, stmt.getObject()));
+        conn.getStatements(dataset, dngPred, null).forEach(stmt -> clearGraph(conn, stmt.getObject()));
+    }
+
+    private void safeDeleteGraphs(RepositoryConnection conn, Resource dataset) {
+        IRI ngPred = vf.createIRI(Dataset.namedGraph_IRI);
+        IRI dngPred = vf.createIRI(Dataset.defaultNamedGraph_IRI);
+        conn.getStatements(dataset, ngPred, null).forEach(stmt -> {
+            Value graph = stmt.getObject();
+            if (safeToDelete(conn, dataset, graph)) {
+                clearGraph(conn, graph);
+            }
+        });
+        conn.getStatements(dataset, dngPred, null).forEach(stmt -> {
+            Value graph = stmt.getObject();
+            if (safeToDelete(conn, dataset, graph)) {
+                clearGraph(conn, graph);
+            }
+        });
+    }
+
+    private void deleteGraphLinks(RepositoryConnection conn, Resource dataset) {
+        IRI ngPred = vf.createIRI(Dataset.namedGraph_IRI);
+        IRI dngPred = vf.createIRI(Dataset.defaultNamedGraph_IRI);
+        conn.remove(dataset, ngPred, null);
+        conn.remove(dataset, dngPred, null);
     }
 }
