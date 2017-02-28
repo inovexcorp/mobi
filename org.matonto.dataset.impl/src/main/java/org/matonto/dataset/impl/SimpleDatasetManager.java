@@ -183,11 +183,7 @@ public class SimpleDatasetManager implements DatasetManager {
         DatasetRecord datasetRecord = getDatasetRecord(dataset)
                 .orElseThrow(() -> new MatOntoException("Could not find the required DatasetRecord in the Catalog."));
 
-        String dsRepoID = datasetRecord.getRepository()
-                .orElseThrow(() -> new MatOntoException("DatasetRecord does not specify a dataset repository."));
-
-        Repository dsRepo = repoManager.getRepository(dsRepoID)
-                .orElseThrow(() -> new MatOntoException("Dataset target repository does not exist."));
+        Repository dsRepo = getDatasetRepo(datasetRecord);
 
         catalogManager.removeRecord(catalogManager.getLocalCatalogIRI(), datasetRecord.getResource());
 
@@ -205,11 +201,7 @@ public class SimpleDatasetManager implements DatasetManager {
         DatasetRecord datasetRecord = getDatasetRecord(dataset)
                 .orElseThrow(() -> new MatOntoException("Could not find the required DatasetRecord in the Catalog."));
 
-        String dsRepoID = datasetRecord.getRepository()
-                .orElseThrow(() -> new MatOntoException("DatasetRecord does not specify a dataset repository."));
-
-        Repository dsRepo = repoManager.getRepository(dsRepoID)
-                .orElseThrow(() -> new MatOntoException("Dataset target repository does not exist."));
+        Repository dsRepo = getDatasetRepo(datasetRecord);
 
         catalogManager.removeRecord(catalogManager.getLocalCatalogIRI(), datasetRecord.getResource());
 
@@ -235,10 +227,15 @@ public class SimpleDatasetManager implements DatasetManager {
 
     @Override
     public void clearDataset(Resource dataset) {
+        DatasetRecord datasetRecord = getDatasetRecord(dataset)
+                .orElseThrow(() -> new MatOntoException("Could not find the required DatasetRecord in the Catalog."));
+
+        Repository dsRepo = getDatasetRepo(datasetRecord);
+
         IRI ngPred = vf.createIRI(Dataset.namedGraph_IRI);
         IRI dngPred = vf.createIRI(Dataset.defaultNamedGraph_IRI);
 
-        try (RepositoryConnection conn = systemRepository.getConnection()) {
+        try (RepositoryConnection conn = dsRepo.getConnection()) {
             conn.getStatements(dataset, ngPred, null).forEach(stmt -> clearGraph(conn, stmt.getObject()));
             conn.getStatements(dataset, dngPred, null).forEach(stmt -> clearGraph(conn, stmt.getObject()));
             conn.remove(dataset, ngPred, null);
@@ -248,10 +245,15 @@ public class SimpleDatasetManager implements DatasetManager {
 
     @Override
     public void safeClearDataset(Resource dataset) {
+        DatasetRecord datasetRecord = getDatasetRecord(dataset)
+                .orElseThrow(() -> new MatOntoException("Could not find the required DatasetRecord in the Catalog."));
+
+        Repository dsRepo = getDatasetRepo(datasetRecord);
+
         IRI ngPred = vf.createIRI(Dataset.namedGraph_IRI);
         IRI dngPred = vf.createIRI(Dataset.defaultNamedGraph_IRI);
 
-        try (RepositoryConnection conn = systemRepository.getConnection()) {
+        try (RepositoryConnection conn = dsRepo.getConnection()) {
             conn.getStatements(dataset, ngPred, null).forEach(stmt -> {
                 Value graph = stmt.getObject();
                 if (safeToDelete(conn, dataset, graph)) {
@@ -280,6 +282,14 @@ public class SimpleDatasetManager implements DatasetManager {
 
             return Optional.of(recordStmts.next().getSubject());
         }
+    }
+
+    private Repository getDatasetRepo(DatasetRecord datasetRecord) {
+        String dsRepoID = datasetRecord.getRepository()
+                .orElseThrow(() -> new MatOntoException("DatasetRecord does not specify a dataset repository."));
+
+        return repoManager.getRepository(dsRepoID)
+                .orElseThrow(() -> new MatOntoException("Dataset target repository does not exist."));
     }
 
     private void clearGraph(RepositoryConnection conn, Value graph) {
