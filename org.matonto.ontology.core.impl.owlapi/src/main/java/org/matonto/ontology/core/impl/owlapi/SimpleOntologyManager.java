@@ -40,7 +40,9 @@ import org.matonto.ontology.core.api.OntologyId;
 import org.matonto.ontology.core.api.OntologyManager;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.ontology.utils.api.SesameTransformer;
+import org.matonto.persistence.utils.QueryResults;
 import org.matonto.query.TupleQueryResult;
+import org.matonto.query.api.GraphQuery;
 import org.matonto.query.api.TupleQuery;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
@@ -92,7 +94,8 @@ public class SimpleOntologyManager implements OntologyManager {
     private static final String GET_SUB_DATATYPE_PROPERTIES_OF;
     private static final String GET_SUB_OBJECT_PROPERTIES_OF;
     private static final String GET_CLASSES_WITH_INDIVIDUALS;
-    private static final String GET_ENTITY_USAGES;
+    private static final String SELECT_ENTITY_USAGES;
+    private static final String CONSTRUCT_ENTITY_USAGES;
     private static final String GET_CONCEPT_RELATIONSHIPS;
     private static final String GET_SEARCH_RESULTS;
     private static final String ENTITY_BINDING = "entity";
@@ -132,8 +135,16 @@ public class SimpleOntologyManager implements OntologyManager {
             throw new MatOntoException(e);
         }
         try {
-            GET_ENTITY_USAGES = IOUtils.toString(
+            SELECT_ENTITY_USAGES = IOUtils.toString(
                     SimpleOntologyManager.class.getResourceAsStream("/get-entity-usages.rq"),
+                    "UTF-8"
+            );
+        } catch (IOException e) {
+            throw new MatOntoException(e);
+        }
+        try {
+            CONSTRUCT_ENTITY_USAGES = IOUtils.toString(
+                    SimpleOntologyManager.class.getResourceAsStream("/construct-entity-usages.rq"),
                     "UTF-8"
             );
         } catch (IOException e) {
@@ -354,35 +365,51 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Override
-    public TupleQueryResult getSubDatatypePropertiesOf(Ontology ontology) {
+    public TupleQueryResult getSubDatatypePropertiesOf(Ontology ontology) throws MatontoOntologyException {
         return runQueryOnOntology(ontology, GET_SUB_DATATYPE_PROPERTIES_OF, null);
     }
 
     @Override
-    public TupleQueryResult getSubObjectPropertiesOf(Ontology ontology) {
+    public TupleQueryResult getSubObjectPropertiesOf(Ontology ontology) throws MatontoOntologyException {
         return runQueryOnOntology(ontology, GET_SUB_OBJECT_PROPERTIES_OF, null);
     }
 
     @Override
-    public TupleQueryResult getClassesWithIndividuals(Ontology ontology) {
+    public TupleQueryResult getClassesWithIndividuals(Ontology ontology) throws MatontoOntologyException {
         return runQueryOnOntology(ontology, GET_CLASSES_WITH_INDIVIDUALS, null);
     }
 
     @Override
-    public TupleQueryResult getEntityUsages(Ontology ontology, Resource entity) {
-        return runQueryOnOntology(ontology, GET_ENTITY_USAGES, tupleQuery -> {
+    public TupleQueryResult getEntityUsages(Ontology ontology, Resource entity) throws MatontoOntologyException {
+        return runQueryOnOntology(ontology, SELECT_ENTITY_USAGES, tupleQuery -> {
             tupleQuery.setBinding(ENTITY_BINDING, entity);
             return tupleQuery;
         });
     }
 
     @Override
-    public TupleQueryResult getConceptRelationships(Ontology ontology) {
+    public Model constructEntityUsages(Ontology ontology, Resource entity) throws MatontoOntologyException {
+        Repository repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
+        repo.initialize();
+        try (RepositoryConnection conn = repo.getConnection()) {
+            conn.add(ontology.asModel(modelFactory));
+            GraphQuery query = conn.prepareGraphQuery(CONSTRUCT_ENTITY_USAGES);
+            query.setBinding(ENTITY_BINDING, entity);
+            return QueryResults.asModel(query.evaluate(), modelFactory);
+        } catch (RepositoryException e) {
+            throw new MatontoOntologyException("Error in repository connection.", e);
+        } finally {
+            repo.shutDown();
+        }
+    }
+
+    @Override
+    public TupleQueryResult getConceptRelationships(Ontology ontology) throws MatontoOntologyException {
         return runQueryOnOntology(ontology, GET_CONCEPT_RELATIONSHIPS, null);
     }
 
     @Override
-    public TupleQueryResult getSearchResults(Ontology ontology, String searchText) {
+    public TupleQueryResult getSearchResults(Ontology ontology, String searchText) throws MatontoOntologyException {
         return runQueryOnOntology(ontology, GET_SEARCH_RESULTS, tupleQuery -> {
             tupleQuery.setBinding(SEARCH_TEXT, valueFactory.createLiteral(searchText.toLowerCase()));
             return tupleQuery;

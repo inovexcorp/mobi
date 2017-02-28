@@ -73,6 +73,7 @@ import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory;
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
@@ -89,6 +90,7 @@ import org.matonto.rdf.orm.conversion.impl.ShortValueConverter;
 import org.matonto.rdf.orm.conversion.impl.StringValueConverter;
 import org.matonto.rdf.orm.conversion.impl.ValueValueConverter;
 import org.matonto.rest.util.MatontoRestTestNg;
+import org.matonto.rest.util.RestUtils;
 import org.matonto.rest.util.UsernameTestFilter;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -116,10 +118,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.matonto.rest.util.RestUtils.encode;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anySetOf;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
@@ -186,6 +188,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
     private Model deletions;
     private Model ontologyModel;
     private Model importedOntologyModel;
+    private Model constructs;
+    private String entityUsagesConstruct;
     private Set<Annotation> annotations;
     private Set<AnnotationProperty> annotationProperties;
     private Set<OClass> classes;
@@ -342,6 +346,13 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         searchResults = getResource("/search-results.json");
         importedOntologyResults = getResourceArray("/imported-ontology-results.json");
         missingIRI = valueFactory.createIRI("http://matonto.org/missing");
+        Resource class1b = valueFactory.createIRI("http://matonto.org/ontology#Class1b");
+        IRI subClassOf = valueFactory.createIRI("http://www.w3.org/2000/01/rdf-schema#subClassOf");
+        Value class1a = valueFactory.createIRI("http://matonto.org/ontology#Class1a");
+        Resource individual1a = valueFactory.createIRI("http://matonto.org/ontology#Individual1a");
+        IRI type = valueFactory.createIRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
+        constructs = modelFactory.createModel(Stream.of(valueFactory.createStatement(class1b, subClassOf, class1a),
+                valueFactory.createStatement(individual1a, type, class1a)).collect(Collectors.toSet()));
 
         return new ResourceConfig()
                 .register(rest)
@@ -419,10 +430,15 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         when(ontologyManager.getConceptRelationships(ontology)).thenReturn(conceptRelationships);
         TupleQueryResult entityUsages = simpleOntologyManager.getEntityUsages(ontology, classId);
         when(ontologyManager.getEntityUsages(eq(ontology), any(Resource.class))).thenReturn(entityUsages);
+        Model constructModel = simpleOntologyManager.constructEntityUsages(ontology, classId);
+        when(ontologyManager.constructEntityUsages(eq(ontology), any(Resource.class))).thenReturn(constructModel);
         when(ontologyManager.getSearchResults(eq(ontology), anyString())).thenAnswer(invocationOnMock ->
                 simpleOntologyManager.getSearchResults(ontology, invocationOnMock.getArgumentAt(1, String.class)));
         when(sesameTransformer.matontoModel(any(org.openrdf.model.Model.class))).thenAnswer(invocationOnMock ->
                 Values.matontoModel(invocationOnMock.getArgumentAt(0, org.openrdf.model.Model.class)));
+        when(sesameTransformer.sesameModel(any(Model.class))).thenAnswer(invocationOnMock ->
+                Values.sesameModel(invocationOnMock.getArgumentAt(0, Model.class)));
+        entityUsagesConstruct = RestUtils.modelToJsonld(sesameTransformer.sesameModel(constructs));
     }
 
     private JSONObject getResource(String path) throws Exception {
@@ -3268,16 +3284,17 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         assertEquals(response.getStatus(), 400);
     }
 
-    // Test get entity usages
+    // Test get entity usages when queryType is "select"
 
     @Test
     public void testGetEntityUsages() {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entity-usages/"
                 + encode(classId.stringValue())).queryParam("branchId", branchId.stringValue()).queryParam("commitId",
-                commitId.stringValue()).request().get();
+                commitId.stringValue()).queryParam("queryType", "select").request().get();
 
         assertEquals(response.getStatus(), 200);
         verify(ontologyManager).retrieveOntology(any(Resource.class), any(Resource.class), any(Resource.class));
+        verify(ontologyManager).getEntityUsages(ontology, classId);
         assertGetOntology(true);
         assertEquals(getResponse(response), entityUsagesResult);
     }
@@ -3288,10 +3305,11 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entity-usages/"
                 + encode(classId.stringValue())).queryParam("branchId", branchId.stringValue()).queryParam("commitId",
-                commitId.stringValue()).request().get();
+                commitId.stringValue()).queryParam("queryType", "select").request().get();
 
         assertEquals(response.getStatus(), 200);
         verify(ontologyManager).retrieveOntology(any(Resource.class), any(Resource.class), any(Resource.class));
+        verify(ontologyManager).getEntityUsages(ontology, classId);
         assertGetOntology(false);
         assertEquals(getResponse(response), entityUsagesResult);
     }
@@ -3299,7 +3317,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
     @Test
     public void testGetEntityUsagesWithCommitIdAndMissingBranchId() {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entity-usages/"
-                + encode(classId.stringValue())).queryParam("commitId", commitId.stringValue()).request().get();
+                + encode(classId.stringValue())).queryParam("commitId", commitId.stringValue())
+                .queryParam("queryType", "select").request().get();
 
         assertEquals(response.getStatus(), 400);
     }
@@ -3307,10 +3326,12 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
     @Test
     public void testGetEntityUsagesMissingCommitId() {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entity-usages/"
-                + encode(classId.stringValue())).queryParam("branchId", branchId.stringValue()).request().get();
+                + encode(classId.stringValue())).queryParam("branchId", branchId.stringValue())
+                .queryParam("queryType", "select").request().get();
 
         assertEquals(response.getStatus(), 200);
         verify(ontologyManager).retrieveOntology(any(Resource.class), any(Resource.class));
+        verify(ontologyManager).getEntityUsages(ontology, classId);
         assertGetOntology(true);
         assertEquals(getResponse(response), entityUsagesResult);
     }
@@ -3318,10 +3339,11 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
     @Test
     public void testGetEntityUsagesMissingBranchIdAndCommitId() {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entity-usages/"
-                + encode(classId.stringValue())).request().get();
+                + encode(classId.stringValue())).queryParam("queryType", "select").request().get();
 
         assertEquals(response.getStatus(), 200);
         verify(ontologyManager).retrieveOntology(any(Resource.class));
+        verify(ontologyManager).getEntityUsages(ontology, classId);
         assertGetOntology(true);
         assertEquals(getResponse(response), entityUsagesResult);
     }
@@ -3333,7 +3355,83 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entity-usages/"
                 + encode(classId.stringValue())).queryParam("branchId", branchId.stringValue()).queryParam("commitId",
-                commitId.stringValue()).request().get();
+                commitId.stringValue()).queryParam("queryType", "select").request().get();
+
+        assertEquals(response.getStatus(), 400);
+    }
+
+    // Test get entity usages when queryType is "construct"
+
+    @Test
+    public void testGetEntityUsagesWhenConstruct() {
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entity-usages/"
+                + encode(classId.stringValue())).queryParam("branchId", branchId.stringValue()).queryParam("commitId",
+                commitId.stringValue()).queryParam("queryType", "construct").request().get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).retrieveOntology(any(Resource.class), any(Resource.class), any(Resource.class));
+        verify(ontologyManager).constructEntityUsages(ontology, classId);
+        assertGetOntology(true);
+        assertEquals(response.readEntity(String.class), entityUsagesConstruct);
+    }
+
+    @Test
+    public void testGetEntityUsagesWhenNoInProgressCommitWhenConstruct() {
+        setNoInProgressCommit();
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entity-usages/"
+                + encode(classId.stringValue())).queryParam("branchId", branchId.stringValue()).queryParam("commitId",
+                commitId.stringValue()).queryParam("queryType", "construct").request().get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).retrieveOntology(any(Resource.class), any(Resource.class), any(Resource.class));
+        verify(ontologyManager).constructEntityUsages(ontology, classId);
+        assertGetOntology(false);
+        assertEquals(response.readEntity(String.class), entityUsagesConstruct);
+    }
+
+    @Test
+    public void testGetEntityUsagesWithCommitIdAndMissingBranchIdWhenConstruct() {
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entity-usages/"
+                + encode(classId.stringValue())).queryParam("commitId", commitId.stringValue())
+                .queryParam("queryType", "construct").request().get();
+
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void testGetEntityUsagesMissingCommitIdWhenConstruct() {
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entity-usages/"
+                + encode(classId.stringValue())).queryParam("branchId", branchId.stringValue())
+                .queryParam("queryType", "construct").request().get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).retrieveOntology(any(Resource.class), any(Resource.class));
+        verify(ontologyManager).constructEntityUsages(ontology, classId);
+        assertGetOntology(true);
+        assertEquals(response.readEntity(String.class), entityUsagesConstruct);
+    }
+
+    @Test
+    public void testGetEntityUsagesMissingBranchIdAndCommitIdWhenConstruct() {
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entity-usages/"
+                + encode(classId.stringValue())).queryParam("queryType", "construct").request().get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).retrieveOntology(any(Resource.class));
+        verify(ontologyManager).constructEntityUsages(ontology, classId);
+        assertGetOntology(true);
+        assertEquals(response.readEntity(String.class), entityUsagesConstruct);
+    }
+
+    @Test
+    public void testGetEntityUsagesWhenRetrieveOntologyIsEmptyWhenConstruct() {
+        when(ontologyManager.retrieveOntology(any(Resource.class), any(Resource.class), any(Resource.class)))
+                .thenReturn(Optional.empty());
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entity-usages/"
+                + encode(classId.stringValue())).queryParam("branchId", branchId.stringValue()).queryParam("commitId",
+                commitId.stringValue()).queryParam("queryType", "construct").request().get();
 
         assertEquals(response.getStatus(), 400);
     }

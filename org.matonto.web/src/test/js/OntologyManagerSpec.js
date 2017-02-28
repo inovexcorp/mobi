@@ -2000,7 +2000,8 @@ describe('Ontology Manager service', function() {
         beforeEach(function() {
             params = paramSerializer({
                 branchId: branchId,
-                commitId: commitId
+                commitId: commitId,
+                queryType: 'select'
             });
         });
         it('when get succeeds', function() {

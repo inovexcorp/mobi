@@ -925,8 +925,9 @@ public interface OntologyRest {
                                        @QueryParam("commitId") String commitIdStr);
 
     /**
-     * Returns JSON SPARQL query results containing statements with the requested entity IRI as the predicate or object
-     * of each statement.
+     * Returns JSON SPARQL query results containing results with the requested entity IRI as the predicate or object
+     * of each result when the queryType is "select". Returns JSON-LD containing statements with the requested entity
+     * IRI as the predicate or object of each statement when the queryType is "construct".
      *
      * @param context the context of the request.
      * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
@@ -939,7 +940,8 @@ public interface OntologyRest {
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
-     * @return JSON SPARQL query results.
+     * @param queryType the String identifying whether you want to do a select or construct query.
+     * @return the proper JSON result described above.
      */
     @GET
     @Path("{recordId}/entity-usages/{entityIri}")
@@ -950,7 +952,8 @@ public interface OntologyRest {
                              @PathParam("recordId") String recordIdStr,
                              @PathParam("entityIri") String entityIRIStr,
                              @QueryParam("branchId") String branchIdStr,
-                             @QueryParam("commitId") String commitIdStr);
+                             @QueryParam("commitId") String commitIdStr,
+                             @DefaultValue("select") @QueryParam("queryType") String queryType);
 
     /**
      * Returns the JSON String of the resulting entities sorted by type from the ontology with the requested record ID
