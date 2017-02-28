@@ -262,11 +262,11 @@
             }
             /**
              * @ngdoc method
-             * @name updatePassword
+             * @name changePassword
              * @methodOf userManager.service:userManagerService
              *
              * @description
-             * Calls the PUT /matontorest/users/{username}/password endpoint to update the password of
+             * Calls the POST /matontorest/users/{username}/password endpoint to change the password of
              * a MatOnto user specified by the passed username. Requires the user's current password to
              * succeed. Returns a Promise that resolves if it was successful and rejects with an error
              * message if it was not.
@@ -277,14 +277,37 @@
              * @return {Promise} A Promise that resolves if the request was successful; rejects
              * with an error message otherwise
              */
-            self.updatePassword = function(username, password, newPassword) {
+            self.changePassword = function(username, password, newPassword) {
                 var deferred = $q.defer(),
                     config = {
                         params: {
                             currentPassword: password,
-                            newPassword: newPassword
+                            newPassword
                         }
                     };
+                $http.post(userPrefix + '/' + encodeURIComponent(username) + '/password', null, config)
+                    .then(response => deferred.resolve(), error => onError(error, deferred));
+                return deferred.promise;
+            }
+            /**
+             * @ngdoc method
+             * @name resetPassword
+             * @methodOf userManager.service:userManagerService
+             *
+             * @description
+             * Calls the PUT /matontorest/users/{username}/password endpoint to reset the password of
+             * a MatOnto user specified by the passed username. Can only be performed by an admin user.
+             * Returns a Promise that resolves if it was successful and rejects with an error message
+             * if it was not.
+             *
+             * @param {string} username the username of the user to update
+             * @param {string} newPassword the new password to save for the user
+             * @return {Promise} A Promise that resolves if the request was successful; rejects
+             * with an error message otherwise
+             */
+            self.resetPassword = function(username, newPassword) {
+                var deferred = $q.defer(),
+                    config = { params: { newPassword } };
                 $http.put(userPrefix + '/' + encodeURIComponent(username) + '/password', null, config)
                     .then(response => deferred.resolve(), error => onError(error, deferred));
                 return deferred.promise;
