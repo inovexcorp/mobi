@@ -2939,7 +2939,6 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         verify(catalogManager).createCommit(eq(testInProgressCommit), anyString(), any(Commit.class), any(Commit.class));
         verify(catalogManager).addCommitToBranch(any(Commit.class), eq(vf.createIRI(BRANCH_IRI)));
         verify(catalogManager, atLeastOnce()).getBranch(eq(vf.createIRI(BRANCH_IRI)), eq(branchFactory));
-        verify(catalogManager).updateHead(any(Resource.class), any(Resource.class));
     }
 
     @Test

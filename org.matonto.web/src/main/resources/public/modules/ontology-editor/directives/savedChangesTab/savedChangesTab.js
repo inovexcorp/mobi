@@ -37,7 +37,7 @@
                 templateUrl: 'modules/ontology-editor/directives/savedChangesTab/savedChangesTab.html',
                 scope: {},
                 controllerAs: 'dvm',
-                controller: ['$scope', function($scope) {
+                controller: function() {
                     var dvm = this;
                     var cm = catalogManagerService;
                     var catalogId = _.get(cm.localCatalog, '@id', '');
@@ -45,26 +45,6 @@
                     dvm.os = ontologyStateService;
                     dvm.om = ontologyManagerService;
                     dvm.util = utilService;
-
-                    function getList() {
-                        var inProgressCommit = dvm.os.listItem.inProgressCommit;
-                        return _.unionWith(_.map(inProgressCommit.additions, '@id'),
-                            _.map(inProgressCommit.deletions, '@id'), _.isEqual);
-                    }
-
-                    function getInProgressCommitComponent(id, prop) {
-                        var entity = angular.copy(_.find(dvm.os.listItem.inProgressCommit[prop], {'@id': id}));
-                        _.unset(entity, '@id');
-                        return entity;
-                    }
-
-                    dvm.getAdditions = function(id) {
-                        return getInProgressCommitComponent(id, 'additions');
-                    }
-
-                    dvm.getDeletions = function(id) {
-                        return getInProgressCommitComponent(id, 'deletions');
-                    }
 
                     dvm.go = function($event, id) {
                         $event.stopPropagation();
@@ -81,15 +61,7 @@
                                         dvm.util.createErrorToast);
                             });
                     }
-
-                    dvm.list = getList();
-
-                    $scope.$watch(function() {
-                        return dvm.os.listItem.inProgressCommit.additions + dvm.os.listItem.inProgressCommit.deletions;
-                    }, function() {
-                        dvm.list = getList();
-                    });
-                }]
+                }
             }
         }
 })();
