@@ -105,6 +105,7 @@ describe('Usages Block directive', function() {
         });
     });
     it('should update the results when the usages change', function() {
+        ontologyStateSvc.getActivePage.and.returnValue({usages: []});
         ontologyStateSvc.selected = {'@id': 'test'};
         ontologyStateSvc.state.deletedEntities = [{matonto: {originalIRI: 'A'}}];
         ontologyStateSvc.state.test.usages = [{s: {value: 'A'}, p: {value: 'B'}}, {s: {value: 'B'}, o: {value: 'A'}}, {s: {value: 'B'}, p: {value: 'A'}}, {s: {value: 'B'}, p: {value: 'B'}}, {s: {value: 'B'}, o: {value: 'B'}}];

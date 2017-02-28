@@ -1941,8 +1941,16 @@ describe('Ontology Manager service', function() {
     });
 
     describe('getImportedOntologies should call the proper functions', function() {
+        var params;
+        beforeEach(function() {
+            params = paramSerializer({
+                branchId: branchId,
+                commitId: commitId,
+                rdfFormat: format
+            });
+        });
         it('when get succeeds', function() {
-            $httpBackend.expectGET('/matontorest/ontologies/recordId/imported-ontologies')
+            $httpBackend.expectGET('/matontorest/ontologies/recordId/imported-ontologies?' + params)
                 .respond(200, [ontology]);
             ontologyManagerSvc.getImportedOntologies(recordId, branchId, commitId)
                 .then(function(response) {
@@ -1953,7 +1961,7 @@ describe('Ontology Manager service', function() {
             flushAndVerify();
         });
         it('when get is empty', function() {
-            $httpBackend.expectGET('/matontorest/ontologies/recordId/imported-ontologies')
+            $httpBackend.expectGET('/matontorest/ontologies/recordId/imported-ontologies?' + params)
                 .respond(204);
             ontologyManagerSvc.getImportedOntologies(recordId, branchId, commitId)
                 .then(function(response) {
@@ -1964,7 +1972,7 @@ describe('Ontology Manager service', function() {
             flushAndVerify();
         });
         it('when another success response', function() {
-            $httpBackend.expectGET('/matontorest/ontologies/recordId/imported-ontologies')
+            $httpBackend.expectGET('/matontorest/ontologies/recordId/imported-ontologies?' + params)
                 .respond(201, null, null, error);
             ontologyManagerSvc.getImportedOntologies(recordId, branchId, commitId)
                 .then(function() {
@@ -1975,7 +1983,7 @@ describe('Ontology Manager service', function() {
             flushAndVerify();
         });
         it('when get fails', function() {
-            $httpBackend.expectGET('/matontorest/ontologies/recordId/imported-ontologies')
+            $httpBackend.expectGET('/matontorest/ontologies/recordId/imported-ontologies?' + params)
                 .respond(400, null, null, error);
             ontologyManagerSvc.getImportedOntologies(recordId, branchId, commitId)
                 .then(function() {
@@ -1988,10 +1996,17 @@ describe('Ontology Manager service', function() {
     });
 
     describe('getEntityUsages should call the proper functions', function() {
+        var params;
+        beforeEach(function() {
+            params = paramSerializer({
+                branchId: branchId,
+                commitId: commitId
+            });
+        });
         it('when get succeeds', function() {
-            $httpBackend.expectGET('/matontorest/ontologies/recordId/entity-usages/classId')
+            $httpBackend.expectGET('/matontorest/ontologies/recordId/entity-usages/classId?' + params)
                 .respond(200, usages);
-            ontologyManagerSvc.getEntityUsages(recordId, classId)
+            ontologyManagerSvc.getEntityUsages(recordId, branchId, commitId, classId)
                 .then(function(response) {
                     expect(response).toEqual(usages.results.bindings);
                 }, function() {
@@ -2000,9 +2015,9 @@ describe('Ontology Manager service', function() {
             flushAndVerify();
         });
         it('when get is empty', function() {
-            $httpBackend.expectGET('/matontorest/ontologies/recordId/entity-usages/classId')
+            $httpBackend.expectGET('/matontorest/ontologies/recordId/entity-usages/classId?' + params)
                 .respond(204);
-            ontologyManagerSvc.getEntityUsages(recordId, classId)
+            ontologyManagerSvc.getEntityUsages(recordId, branchId, commitId, classId)
                 .then(function(response) {
                     expect(response).toEqual([]);
                 }, function() {
@@ -2011,9 +2026,9 @@ describe('Ontology Manager service', function() {
             flushAndVerify();
         });
         it('when get succeeds with other code', function() {
-            $httpBackend.expectGET('/matontorest/ontologies/recordId/entity-usages/classId')
+            $httpBackend.expectGET('/matontorest/ontologies/recordId/entity-usages/classId?' + params)
                 .respond(201);
-            ontologyManagerSvc.getEntityUsages(recordId, classId)
+            ontologyManagerSvc.getEntityUsages(recordId, branchId, commitId, classId)
                 .then(function() {
                     fail('Promise should have rejected');
                 }, function() {
@@ -2022,9 +2037,9 @@ describe('Ontology Manager service', function() {
             flushAndVerify();
         });
         it('when get fails', function() {
-            $httpBackend.expectGET('/matontorest/ontologies/recordId/entity-usages/classId')
+            $httpBackend.expectGET('/matontorest/ontologies/recordId/entity-usages/classId?' + params)
                 .respond(400, null, null, error);
-            ontologyManagerSvc.getEntityUsages(recordId, classId)
+            ontologyManagerSvc.getEntityUsages(recordId, branchId, commitId, classId)
                 .then(function() {
                     fail('Promise should have rejected');
                 }, function(response) {
