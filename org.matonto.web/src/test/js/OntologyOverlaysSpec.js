@@ -103,11 +103,36 @@ describe('Ontology Overlays directive', function() {
                     afterDeferred = $q.defer();
                     ontologyStateSvc.afterSave.and.returnValue(afterDeferred.promise);
                 });
-                it('when afterSave is resolved', function() {
-                    afterDeferred.resolve();
-                    scope.$apply();
-                    expect(ontologyStateSvc.showSaveOverlay).toBe(false);
-                    expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
+                describe('when afterSave is resolved', function() {
+                    beforeEach(function() {
+                        afterDeferred.resolve();
+                    });
+                    it('if getActiveKey is not project and getActiveEntityIRI is defined', function() {
+                        var id = 'id';
+                        ontologyStateSvc.getActiveKey.and.returnValue('');
+                        ontologyStateSvc.getActiveEntityIRI.and.returnValue(id);
+                        scope.$apply();
+                        expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
+                        expect(ontologyStateSvc.setEntityUsages).toHaveBeenCalledWith(id);
+                        expect(ontologyStateSvc.showSaveOverlay).toBe(false);
+                        expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
+                    });
+                    it('if getActiveKey is project', function() {
+                        ontologyStateSvc.getActiveKey.and.returnValue('project');
+                        scope.$apply();
+                        expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
+                        expect(ontologyStateSvc.setEntityUsages).not.toHaveBeenCalled();
+                        expect(ontologyStateSvc.showSaveOverlay).toBe(false);
+                        expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
+                    });
+                    it('if getActiveEntityIRI is undefined', function() {
+                        ontologyStateSvc.getActiveEntityIRI.and.returnValue(undefined);
+                        scope.$apply();
+                        expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
+                        expect(ontologyStateSvc.setEntityUsages).not.toHaveBeenCalled();
+                        expect(ontologyStateSvc.showSaveOverlay).toBe(false);
+                        expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
+                    });
                 });
                 it('when afterSave is rejected', function() {
                     var error = 'error';
