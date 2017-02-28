@@ -35,6 +35,21 @@ function createQueryString(obj) {
     return queryString;
 }
 
+function injectChromaConstant() {
+    module(function($provide) {
+        $provide.constant('chroma', {
+            scale: jasmine.createSpy('scale').and.returnValue({
+                colors: jasmine.createSpy('colors').and.callFake(function(num) {
+                    return _.fill(Array(num), '');
+                })
+            }),
+            brewer: {
+                Set1: ['']
+            }
+        });
+    });
+}
+
 function injectRegexConstant() {
     module(function($provide) {
         $provide.constant('REGEX', {

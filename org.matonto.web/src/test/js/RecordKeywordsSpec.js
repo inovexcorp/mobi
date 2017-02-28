@@ -40,7 +40,7 @@ describe('Record Keywords directive', function() {
         });
 
         scope.record = {};
-        scope.record[prefixes.catalog + 'keyword'] = [{'@value': '0'}, {'@value': '1'}];
+        scope.record[prefixes.catalog + 'keyword'] = [{'@value': 'b'}, {'@value': 'a'}];
         element = $compile(angular.element('<record-keywords record="record"></record-keywords>'))(scope);
         scope.$digest();
     });
@@ -60,14 +60,14 @@ describe('Record Keywords directive', function() {
         beforeEach(function() {
             controller = element.controller('recordKeywords');
         });
-        it('should return all the record keywords', function() {
-            expect(controller.getKeywords(scope.record)).toEqual(['0', '1']);
+        it('should return all the record keywords sorting alphabetically', function() {
+            expect(controller.getKeywords(scope.record)).toEqual(['a', 'b']);
         });
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
             controller = element.controller('recordKeywords');
-            spyOn(controller, 'getKeywords').and.returnValue(['0', '1']);
+            spyOn(controller, 'getKeywords').and.returnValue(['a', 'b']);
         });
         it('for wrapping containers', function() {
             expect(element.hasClass('record-keywords')).toBe(true);
