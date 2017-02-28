@@ -27,7 +27,7 @@
 
     <groupId>org.matonto</groupId>
     <artifactId>matonto-parent</artifactId>
-    <version>1.5.8-SNAPSHOT</version>
+    <version>1.5.11-SNAPSHOT</version>
 
     <packaging>pom</packaging>
 
@@ -312,7 +312,7 @@
                 <plugin>
                     <groupId>org.matonto.orm</groupId>
                     <artifactId>rdf-orm-maven-plugin</artifactId>
-                    <version>1.4.24</version>
+                    <version>1.5.9</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.felix</groupId>

@@ -35,11 +35,13 @@ import org.matonto.rdf.orm.OrmFactory;
 import org.matonto.rdf.orm.Thing;
 import org.matonto.rdf.orm.conversion.ValueConverter;
 import org.matonto.rdf.orm.conversion.ValueConverterRegistry;
+import org.matonto.rdf.orm.generate.ontology.MATONTO;
 import org.matonto.rdf.orm.impl.ThingImpl;
 import org.openrdf.model.IRI;
 import org.openrdf.model.Model;
 import org.openrdf.model.Resource;
 import org.openrdf.model.impl.LinkedHashModel;
+import org.openrdf.model.impl.SimpleValueFactory;
 import org.openrdf.model.vocabulary.OWL;
 import org.openrdf.model.vocabulary.RDF;
 import org.openrdf.model.vocabulary.RDFS;
@@ -511,10 +513,12 @@ public class SourceGenerator {
                 return codeModel.ref(ourClass.fullName());
             } else if (rangeIri.equals(RDFS.LITERAL)) {
                 return codeModel.ref(org.matonto.rdf.api.Literal.class);
-            } else if (rangeIri.equals(RDFS.RESOURCE)) {
-                return codeModel.ref(org.matonto.rdf.api.Resource.class);
             } else if (rangeIri.equals(XMLSchema.ANYURI)) {
                 return codeModel.ref(org.matonto.rdf.api.IRI.class);
+            } else if (rangeIri.equals(SimpleValueFactory.getInstance().createIRI(MATONTO.IDENTIFIER))) {
+                return codeModel.ref(org.matonto.rdf.api.Resource.class);
+            } else if (rangeIri.equals(RDFS.RESOURCE)) {
+                return codeModel.ref(org.matonto.rdf.api.Value.class);
             } else if (rangeIri.equals(XMLSchema.STRING)) {
                 return codeModel.ref(String.class);
             } else if (rangeIri.equals(XMLSchema.BOOLEAN)) {
