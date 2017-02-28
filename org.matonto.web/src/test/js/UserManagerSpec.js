@@ -83,9 +83,7 @@ describe('User Manager service', function() {
         });
         describe('if it has not been found before', function() {
             it('unless an error occurs', function(done) {
-                $httpBackend.whenGET('/matontorest/users/username?' + $httpParamSerializer(params)).respond(function(method, url, data, headers) {
-                    return [400, '', {}, 'Error Message'];
-                });
+                $httpBackend.whenGET('/matontorest/users/username?' + $httpParamSerializer(params)).respond(400, null, null, 'Error Message');
                 userManagerSvc.getUsername(params.iri).then(function(response) {
                     fail('Promise should have rejected');
                     done();
@@ -115,9 +113,7 @@ describe('User Manager service', function() {
             };
         });
         it('unless an error occurs', function(done) {
-            $httpBackend.whenPOST('/matontorest/users?' + $httpParamSerializer(params)).respond(function(method, url, data, headers) {
-                return [400, '', {}, 'Error Message'];
-            });
+            $httpBackend.whenPOST('/matontorest/users?' + $httpParamSerializer(params)).respond(400, null, null, 'Error Message');
             userManagerSvc.addUser({}, params.password).then(function(response) {
                 fail('Promise should have rejected');
                 done();
@@ -140,9 +136,7 @@ describe('User Manager service', function() {
     describe('should retrieve a user', function() {
         it('unless an error occurs', function(done) {
             var username = 'user';
-            $httpBackend.whenGET('/matontorest/users/' + username).respond(function(method, url, data, headers) {
-                return [400, '', {}, 'Error Message'];
-            });
+            $httpBackend.whenGET('/matontorest/users/' + username).respond(400, null, null, 'Error Message');
             userManagerSvc.getUser(username).then(function(response) {
                 fail('Promise should have rejected');
                 done();
@@ -168,9 +162,7 @@ describe('User Manager service', function() {
         });
         it('unless an error occurs', function(done) {
             var username = userManagerSvc.users[0].username;
-            $httpBackend.whenPUT('/matontorest/users/' + username).respond(function(method, url, data, headers) {
-                return [400, '', {}, 'Error Message'];
-            });
+            $httpBackend.whenPUT('/matontorest/users/' + username).respond(400, null, null, 'Error Message');
             userManagerSvc.updateUser(username, userManagerSvc.users[0]).then(function(response) {
                 fail('Promise should have rejected');
                 done();
@@ -192,7 +184,7 @@ describe('User Manager service', function() {
             $httpBackend.flush();
         });
     });
-    describe('should update a user password', function() {
+    describe('should change a user password', function() {
         beforeEach(function() {
             this.username = 'user';
             params = {
@@ -201,10 +193,33 @@ describe('User Manager service', function() {
             };
         });
         it('unless an error occurs', function(done) {
-            $httpBackend.whenPUT('/matontorest/users/' + this.username + '/password?' + $httpParamSerializer(params)).respond(function(method, url, data, headers) {
-                return [400, '', {}, 'Error Message'];
+            $httpBackend.whenPOST('/matontorest/users/' + this.username + '/password?' + $httpParamSerializer(params)).respond(400, null, null, 'Error Message');
+            userManagerSvc.changePassword(this.username, params.currentPassword, params.newPassword).then(function(response) {
+                fail('Promise should have rejected');
+                done();
+            }, function(response) {
+                expect(response).toBe('Error Message');
+                done();
             });
-            userManagerSvc.updatePassword(this.username, params.currentPassword, params.newPassword).then(function(response) {
+            $httpBackend.flush();
+        });
+        it('successfully', function(done) {
+            $httpBackend.whenPOST('/matontorest/users/' + this.username + '/password?' + $httpParamSerializer(params)).respond(200, [])
+            userManagerSvc.changePassword(this.username, params.currentPassword, params.newPassword).then(function(response) {
+                expect(true).toBe(true);
+                done();
+            });
+            $httpBackend.flush();
+        });
+    });
+    describe('should reset a user password', function() {
+        beforeEach(function() {
+            this.username = 'user';
+            params = { newPassword: 'newPassword' };
+        });
+        it('unless an error occurs', function(done) {
+            $httpBackend.whenPUT('/matontorest/users/' + this.username + '/password?' + $httpParamSerializer(params)).respond(400, null, null, 'Error Message');
+            userManagerSvc.resetPassword(this.username, params.newPassword).then(function(response) {
                 fail('Promise should have rejected');
                 done();
             }, function(response) {
@@ -215,13 +230,13 @@ describe('User Manager service', function() {
         });
         it('successfully', function(done) {
             $httpBackend.whenPUT('/matontorest/users/' + this.username + '/password?' + $httpParamSerializer(params)).respond(200, [])
-            userManagerSvc.updatePassword(this.username, params.currentPassword, params.newPassword).then(function(response) {
+            userManagerSvc.resetPassword(this.username, params.newPassword).then(function(response) {
                 expect(true).toBe(true);
                 done();
             });
             $httpBackend.flush();
         });
-    })
+    });
     describe('should delete a user', function() {
         beforeEach(function() {
             userManagerSvc.users = [{username: 'username'}];
@@ -229,9 +244,7 @@ describe('User Manager service', function() {
         });
         it('unless an error occurs', function(done) {
             var username = userManagerSvc.users[0].username;
-            $httpBackend.whenDELETE('/matontorest/users/' + username).respond(function(method, url, data, headers) {
-                return [400, '', {}, 'Error Message'];
-            });
+            $httpBackend.whenDELETE('/matontorest/users/' + username).respond(400, null, null, 'Error Message');
             userManagerSvc.deleteUser(username).then(function(response) {
                 fail('Promise should have rejected');
                 done();
@@ -263,9 +276,7 @@ describe('User Manager service', function() {
             };
         });
         it('unless an error occurs', function(done) {
-            $httpBackend.whenPUT('/matontorest/users/' + this.user.username + '/roles?' + $httpParamSerializer(params)).respond(function(method, url, data, headers) {
-                return [400, '', {}, 'Error Message'];
-            });
+            $httpBackend.whenPUT('/matontorest/users/' + this.user.username + '/roles?' + $httpParamSerializer(params)).respond(400, null, null, 'Error Message');
             userManagerSvc.addUserRoles(this.user.username, params.roles).then(function(response) {
                 fail('Promise should have rejected');
                 done();
@@ -294,9 +305,7 @@ describe('User Manager service', function() {
         });
         it('unless an error occurs', function(done) {
             var username = userManagerSvc.users[0].username;
-            $httpBackend.whenDELETE('/matontorest/users/' + username + '/roles?' + $httpParamSerializer(params)).respond(function(method, url, data, headers) {
-                return [400, '', {}, 'Error Message'];
-            });
+            $httpBackend.whenDELETE('/matontorest/users/' + username + '/roles?' + $httpParamSerializer(params)).respond(400, null, null, 'Error Message');
             userManagerSvc.deleteUserRole(username, params.role).then(function(response) {
                 fail('Promise should have rejected');
                 done();
@@ -327,9 +336,7 @@ describe('User Manager service', function() {
         });
         it('unless an error occurs', function(done) {
             var username = userManagerSvc.users[0].username;
-            $httpBackend.whenPUT('/matontorest/users/' + username + '/groups?' + $httpParamSerializer(params)).respond(function(method, url, data, headers) {
-                return [400, '', {}, 'Error Message'];
-            });
+            $httpBackend.whenPUT('/matontorest/users/' + username + '/groups?' + $httpParamSerializer(params)).respond(400, null, null, 'Error Message');
             userManagerSvc.addUserGroup(username, params.group).then(function(response) {
                 fail('Promise should have rejected');
                 done();
@@ -361,9 +368,7 @@ describe('User Manager service', function() {
         });
         it('unless an error occurs', function(done) {
             var username = userManagerSvc.users[0].username;
-            $httpBackend.whenDELETE('/matontorest/users/' + username + '/groups?' + $httpParamSerializer(params)).respond(function(method, url, data, headers) {
-                return [400, '', {}, 'Error Message'];
-            });
+            $httpBackend.whenDELETE('/matontorest/users/' + username + '/groups?' + $httpParamSerializer(params)).respond(400, null, null, 'Error Message');
             userManagerSvc.deleteUserGroup(username, params.group).then(function(response) {
                 fail('Promise should have rejected');
                 done();
@@ -387,9 +392,7 @@ describe('User Manager service', function() {
     });
     describe('should add a group', function() {
         it('unless an error occurs', function(done) {
-            $httpBackend.whenPOST('/matontorest/groups').respond(function(method, url, data, headers) {
-                return [400, '', {}, 'Error Message'];
-            });
+            $httpBackend.whenPOST('/matontorest/groups').respond(400, null, null, 'Error Message');
             userManagerSvc.addGroup({}).then(function(response) {
                 fail('Promise should have rejected');
                 done();
@@ -412,9 +415,7 @@ describe('User Manager service', function() {
     describe('should retrieve a group', function() {
         it('unless an error occurs', function(done) {
             var group = {title: 'group'};
-            $httpBackend.whenGET('/matontorest/groups/' + group.title).respond(function(method, url, data, headers) {
-                return [400, '', {}, 'Error Message'];
-            });
+            $httpBackend.whenGET('/matontorest/groups/' + group.title).respond(400, null, null, 'Error Message');
             userManagerSvc.getGroup(group.title).then(function(response) {
                 fail('Promise should have rejected');
                 done();
@@ -440,9 +441,7 @@ describe('User Manager service', function() {
         });
         it('unless an error occurs', function(done) {
             var groupTitle = userManagerSvc.groups[0].title;
-            $httpBackend.whenPUT('/matontorest/groups/' + groupTitle).respond(function(method, url, data, headers) {
-                return [400, '', {}, 'Error Message'];
-            });
+            $httpBackend.whenPUT('/matontorest/groups/' + groupTitle).respond(400, null, null, 'Error Message');
             userManagerSvc.updateGroup(groupTitle, userManagerSvc.groups[0]).then(function(response) {
                 fail('Promise should have rejected');
                 done();
@@ -470,9 +469,7 @@ describe('User Manager service', function() {
         });
         it('unless an error occurs', function(done) {
             var groupTitle = userManagerSvc.groups[0].title;
-            $httpBackend.whenDELETE('/matontorest/groups/' + groupTitle).respond(function(method, url, data, headers) {
-                return [400, '', {}, 'Error Message'];
-            });
+            $httpBackend.whenDELETE('/matontorest/groups/' + groupTitle).respond(400, null, null, 'Error Message');
             userManagerSvc.deleteGroup(groupTitle).then(function(response) {
                 fail('Promise should have rejected');
                 done();
@@ -501,9 +498,7 @@ describe('User Manager service', function() {
             };
         });
         it('unless an error occurs', function(done) {
-            $httpBackend.whenPUT('/matontorest/groups/' + this.group.title + '/roles?' + $httpParamSerializer(params)).respond(function(method, url, data, headers) {
-                return [400, '', {}, 'Error Message'];
-            });
+            $httpBackend.whenPUT('/matontorest/groups/' + this.group.title + '/roles?' + $httpParamSerializer(params)).respond(400, null, null, 'Error Message');
             userManagerSvc.addGroupRoles(this.group.title, params.roles).then(function(response) {
                 fail('Promise should have rejected');
                 done();
@@ -532,9 +527,7 @@ describe('User Manager service', function() {
         });
         it('unless an error occurs', function(done) {
             var groupTitle = userManagerSvc.groups[0].title;
-            $httpBackend.whenDELETE('/matontorest/groups/' + groupTitle + '/roles?' + $httpParamSerializer(params)).respond(function(method, url, data, headers) {
-                return [400, '', {}, 'Error Message'];
-            });
+            $httpBackend.whenDELETE('/matontorest/groups/' + groupTitle + '/roles?' + $httpParamSerializer(params)).respond(400, null, null, 'Error Message');
             userManagerSvc.deleteGroupRole(groupTitle, params.role).then(function(response) {
                 fail('Promise should have rejected');
                 done();
@@ -560,9 +553,7 @@ describe('User Manager service', function() {
             this.groupTitle = 'group';
         });
         it('unless an error occurs', function(done) {
-            $httpBackend.whenGET('/matontorest/groups/' + this.groupTitle + '/users').respond(function(method, url, data, headers) {
-                return [400, '', {}, 'Error Message'];
-            });
+            $httpBackend.whenGET('/matontorest/groups/' + this.groupTitle + '/users').respond(400, null, null, 'Error Message');
             userManagerSvc.getGroupUsers(this.groupTitle).then(function(response) {
                 fail('Promise should have rejected');
                 done();
@@ -593,9 +584,7 @@ describe('User Manager service', function() {
             userManagerSvc.groups = [this.group];
         });
         it('unless an error occurs', function(done) {
-            $httpBackend.whenPUT('/matontorest/groups/' + this.group.title + '/users?' + $httpParamSerializer(params)).respond(function(method, url, data, headers) {
-                return [400, '', {}, 'Error Message'];
-            });
+            $httpBackend.whenPUT('/matontorest/groups/' + this.group.title + '/users?' + $httpParamSerializer(params)).respond(400, null, null, 'Error Message');
             userManagerSvc.addGroupUsers(this.group.title, params.users).then(function(response) {
                 fail('Promise should have rejected');
                 done();
@@ -627,9 +616,7 @@ describe('User Manager service', function() {
             userManagerSvc.groups = [this.group];
         });
         it('unless an error occurs', function(done) {
-            $httpBackend.whenDELETE('/matontorest/groups/' + this.group.title + '/users?' + $httpParamSerializer(params)).respond(function(method, url, data, headers) {
-                return [400, '', {}, 'Error Message'];
-            });
+            $httpBackend.whenDELETE('/matontorest/groups/' + this.group.title + '/users?' + $httpParamSerializer(params)).respond(400, null, null, 'Error Message');
             userManagerSvc.deleteGroupUser(this.group.title, params.user).then(function(response) {
                 fail('Promise should have rejected');
                 done();

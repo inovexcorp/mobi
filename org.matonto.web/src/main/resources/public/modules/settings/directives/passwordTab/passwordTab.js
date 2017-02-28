@@ -51,9 +51,9 @@
          */
         .directive('passwordTab', passwordTab);
 
-        passwordTab.$inject = ['$q', 'userManagerService', 'loginManagerService'];
+        passwordTab.$inject = ['userManagerService', 'loginManagerService', 'utilService'];
 
-        function passwordTab($q, userManagerService, loginManagerService) {
+        function passwordTab(userManagerService, loginManagerService, utilService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -61,21 +61,19 @@
                 scope: {},
                 controller: function() {
                     var dvm = this;
+                    var util = utilService;
                     dvm.um = userManagerService;
                     dvm.lm = loginManagerService;
 
                     dvm.save = function() {
-                        dvm.um.updatePassword(dvm.lm.currentUser, dvm.currentPassword, dvm.password).then(response => {
+                        dvm.um.changePassword(dvm.lm.currentUser, dvm.currentPassword, dvm.password).then(response => {
                             dvm.errorMessage = '';
-                            dvm.success = true;
+                            util.createSuccessToast('Password successfully saved');
                             dvm.currentPassword = '';
                             dvm.password = '';
                             dvm.confirmedPassword = '';
                             dvm.form.$setPristine();
-                        }, error => {
-                            dvm.errorMessage = error;
-                            dvm.success = false;
-                        });
+                        }, error => dvm.errorMessage = error);
                     }
                 },
                 templateUrl: 'modules/settings/directives/passwordTab/passwordTab.html'

@@ -26,34 +26,33 @@
     angular
         /**
          * @ngdoc overview
-         * @name changePasswordOverlay
+         * @name resetPasswordOverlay
          *
          * @description
-         * The `changePasswordOverlay` module only provides the `changePasswordOverlay` directive which creates
-         * an overlay for changing the {@link userState.service:userStateService#selectedUser selected user's}
+         * The `resetPasswordOverlay` module only provides the `resetPasswordOverlay` directive which creates
+         * an overlay for resetting the {@link userState.service:userStateService#selectedUser selected user's}
          * password in MatOnto.
          */
-        .module('changePasswordOverlay', [])
+        .module('resetPasswordOverlay', [])
         /**
          * @ngdoc directive
-         * @name changePasswordOverlay.directive:changePasswordOverlay
+         * @name resetPasswordOverlay.directive:resetPasswordOverlay
          * @scope
          * @restrict E
          * @requires userManager.service:userManagerService
          * @requires userState.service:userStateService
          *
          * @description
-         * `changePasswordOverlay` is a directive that creates an overlay with a form to change the
+         * `resetPasswordOverlay` is a directive that creates an overlay with a form to reset the
          * {@link userState.service:userStateService#selectedUser selected user's} password in Matonto. The form
          * uses a {@link passwordConfirmInput.directive:passwordConfirmInput passwordConfirmInput} to confirm the
-         * new password. The current password must be provided and correct for the change to persist. The directive
-         * is replaced by the contents of its template.
+         * new password. The directive is replaced by the contents of its template.
          */
-        .directive('changePasswordOverlay', changePasswordOverlay);
+        .directive('resetPasswordOverlay', resetPasswordOverlay);
 
-    changePasswordOverlay.$inject = ['userStateService', 'userManagerService'];
+    resetPasswordOverlay.$inject = ['userStateService', 'userManagerService'];
 
-    function changePasswordOverlay(userStateService, userManagerService) {
+    function resetPasswordOverlay(userStateService, userManagerService) {
         return {
             restrict: 'E',
             replace: true,
@@ -65,13 +64,13 @@
                 dvm.um = userManagerService;
 
                 dvm.set = function() {
-                    dvm.um.updatePassword(dvm.state.selectedUser.username, dvm.currentPassword, dvm.password).then(response => {
+                    dvm.um.resetPassword(dvm.state.selectedUser.username, dvm.password).then(response => {
                         dvm.errorMessage = '';
-                        dvm.state.displayChangePasswordOverlay = false;
+                        dvm.state.displayResetPasswordOverlay = false;
                     }, error => dvm.errorMessage = error);
                 }
             },
-            templateUrl: 'modules/user-management/directives/changePasswordOverlay/changePasswordOverlay.html'
+            templateUrl: 'modules/user-management/directives/resetPasswordOverlay/resetPasswordOverlay.html'
         };
     }
 })();
