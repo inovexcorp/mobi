@@ -107,7 +107,23 @@ public interface UserRest {
                         User newUser);
 
     /**
-     * Updates the password of the specified user in MatOnto. In order to change the user's password,
+     * Resets the password of the specified user in MatOnto. This action is only allowed by admin users.
+     *
+     * @param context the context of the request
+     * @param username the current username of the user to update
+     * @param newPassword a new password for the user
+     * @return a Response indicating the success or failure of the request
+     */
+    @PUT
+    @Path("{username}/password")
+    @RolesAllowed("admin")
+    @ApiOperation("Resets a MatOnto user's password if user making request is the admin")
+    Response resetPassword(@Context ContainerRequestContext context,
+                           @PathParam("username") String username,
+                           @QueryParam("newPassword") String newPassword);
+
+    /**
+     * Changes the password of the specified user in MatOnto. In order to change the user's password,
      * the current password must be provided.
      *
      * @param context the context of the request
@@ -116,11 +132,11 @@ public interface UserRest {
      * @param newPassword a new password for the user
      * @return a Response indicating the success or failure of the request
      */
-    @PUT
+    @POST
     @Path("{username}/password")
     @RolesAllowed("user")
-    @ApiOperation("Update a MatOnto user's password")
-    Response updatePassword(@Context ContainerRequestContext context,
+    @ApiOperation("Changes a MatOnto user's password if it is the user making the request")
+    Response changePassword(@Context ContainerRequestContext context,
                             @PathParam("username") String username,
                             @QueryParam("currentPassword") String currentPassword,
                             @QueryParam("newPassword") String newPassword);
