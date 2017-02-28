@@ -45,23 +45,8 @@
 
                     function getResults() {
                         var results = {};
-                        if (_.has(dvm.sm.getActivePage(), 'usages')) {
-                            var deletedIRIs = _.map(dvm.sm.state.deletedEntities, 'matonto.originalIRI');
-                            var filteredBindings = _.reject(dvm.sm.state[dvm.sm.getActiveKey()].usages, usage => {
-                                return _.indexOf(deletedIRIs, _.get(usage, 's.value')) !== -1
-                                    || _.indexOf(deletedIRIs, _.get(usage, 'o.value')) !== -1
-                                    || _.indexOf(deletedIRIs, _.get(usage, 'p.value')) !== -1;
-                            });
-                            _.forEach(filteredBindings, binding => {
-                                if (_.has(binding, 'p')) {
-                                    results[binding.p.value] = _.union(_.get(results, binding.p.value, []),
-                                        [{subject: binding.s.value, predicate: binding.p.value, object: dvm.sm.selected['@id']}]);
-                                } else if (_.has(binding, 'o')) {
-                                    results[dvm.sm.selected['@id']] = _.union(_.get(results, dvm.sm.selected['@id'], []),
-                                        [{subject: binding.s.value, predicate: dvm.sm.selected['@id'], object: binding.o.value}]);
-                                }
-                            });
-                        }
+                        _.forEach(_.get(dvm.sm.getActivePage(), 'usages', []), binding =>
+                            results[binding.p.value] = _.union(_.get(results, binding.p.value, []), [{subject: binding.s.value, predicate: binding.p.value, object: binding.o.value}]));
                         return results;
                     }
 
@@ -72,7 +57,7 @@
                     }
 
                     $scope.$watch(function() {
-                        return dvm.sm.state[dvm.sm.getActiveKey()].usages;
+                        return dvm.sm.getActivePage().usages;
                     },function() {
                         dvm.results = getResults();
                     });
