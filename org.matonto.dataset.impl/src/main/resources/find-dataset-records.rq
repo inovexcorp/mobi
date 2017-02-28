@@ -9,5 +9,6 @@ WHERE {
 
 	?record a dataset:DatasetRecord ;
 	    mcat:catalog ?catalog ;
-	    dataset:dataset ?dataset .
+	    dataset:dataset ?dataset ;
+	    dataset:repository ?repository .
 }

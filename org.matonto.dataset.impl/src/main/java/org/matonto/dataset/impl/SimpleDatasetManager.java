@@ -69,6 +69,7 @@ public class SimpleDatasetManager implements DatasetManager {
 
     private static final String FIND_DATASETS_QUERY;
     private static final String CATALOG_BINDING = "catalog";
+    private static final String REPOSITORY_BINDING = "repository";
     private static final String SYSTEM_DEFAULT_NG_SUFFIX = "_system_dng";
 
     static {
@@ -125,11 +126,12 @@ public class SimpleDatasetManager implements DatasetManager {
     }
 
     @Override
-    public Set<Resource> listDatasets() {
+    public Set<Resource> getDatasets(String repositoryId) {
         Set<Resource> datasets = new HashSet<>();
         try (RepositoryConnection conn = systemRepository.getConnection()) {
             TupleQuery query = conn.prepareTupleQuery(FIND_DATASETS_QUERY);
             query.setBinding(CATALOG_BINDING, catalogManager.getLocalCatalogIRI());
+            query.setBinding(REPOSITORY_BINDING, vf.createLiteral(repositoryId));
             TupleQueryResult result = query.evaluate();
             result.forEach(bindingSet -> datasets.add(Bindings.requiredResource(bindingSet, "dataset")));
         }

@@ -97,9 +97,11 @@ class SimpleDatasetManagerSpec extends Specification {
     def setup() {
         systemRepo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()))
         systemRepo.initialize()
+        systemConn = systemRepo.getConnection()
 
         testRepo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()))
         testRepo.initialize()
+        testConn = testRepo.getConnection()
 
         dsFactory.setValueFactory(vf)
         dsFactory.setModelFactory(mf)
@@ -201,30 +203,37 @@ class SimpleDatasetManagerSpec extends Specification {
         thrown(MatOntoException)
     }
 
-    def "listDatasets returns an empty set when there are no records"() {
+    def "getDatasets() returns an empty set when there are no datasets in that repository"() {
         setup:
         service.setRepository(systemRepo)
-        def conn = systemRepo.getConnection()
-        def catalogData = Values.matontoModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_no-records.trig"), "", RDFFormat.TRIG))
-        conn.add(catalogData)
-        conn.close()
+        systemConn.add(Values.matontoModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_no-records.trig"), "", RDFFormat.TRIG)))
 
         expect:
-        service.listDatasets().size() == 0
+        service.getDatasets("system").size() == 0
     }
 
-    def "listDatasets returns the correct resources when there are only databases"() {
+    def "getDatasets() returns an empty set when there are no datasets in the local catalog in that repository, but there are other datasets in that repository"() {
         setup:
         service.setRepository(systemRepo)
-        def conn = systemRepo.getConnection()
-        def catalogData = Values.matontoModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_only-ds-records.trig"), "", RDFFormat.TRIG))
-        conn.add(catalogData)
-        def results = service.listDatasets()
-        conn.close()
+        systemConn.add(Values.matontoModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_no-catalog-records.trig"), "", RDFFormat.TRIG)))
 
         expect:
-        results.size() == datasetsInFile.size()
-        datasetsInFile.forEach { results.contains(it) }
+        service.getDatasets("system").size() == 0
+    }
+
+    def "getDatasets() returns a set with #size elements in the #repo repo"() {
+        setup:
+        service.setRepository(systemRepo)
+        systemConn.add(Values.matontoModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_only-ds-records.trig"), "", RDFFormat.TRIG)))
+        testConn.add(Values.matontoModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_test-repo-datasets.trig"), "", RDFFormat.TRIG)))
+
+        expect:
+        service.getDatasets(repo).size() == size
+
+        where:
+        repo | size
+        "system" | 4
+        "test" | 3
     }
 
     def "createDataset returns the correct DatasetRecord"() {
@@ -411,7 +420,6 @@ class SimpleDatasetManagerSpec extends Specification {
 
         bootstrapCatalog(datasetIRI, recordIRI, "test")
 
-        testConn = testRepo.getConnection()
         testConn.add(Values.matontoModel(
                 Rio.parse(this.getClass().getResourceAsStream("/test-catalog_test-repo-datasets.trig"), "", RDFFormat.TRIG)))
 
@@ -513,7 +521,6 @@ class SimpleDatasetManagerSpec extends Specification {
 
         bootstrapCatalog(datasetIRI, recordIRI, "test")
 
-        testConn = testRepo.getConnection()
         testConn.add(Values.matontoModel(
                 Rio.parse(this.getClass().getResourceAsStream("/test-catalog_test-repo-datasets.trig"), "", RDFFormat.TRIG)))
 
@@ -544,7 +551,6 @@ class SimpleDatasetManagerSpec extends Specification {
 
         bootstrapCatalog(datasetIRI, recordIRI, "test")
 
-        testConn = testRepo.getConnection()
         testConn.add(Values.matontoModel(
                 Rio.parse(this.getClass().getResourceAsStream("/test-catalog_test-repo-datasets.trig"), "", RDFFormat.TRIG)))
 
@@ -619,7 +625,6 @@ class SimpleDatasetManagerSpec extends Specification {
 
         bootstrapCatalog(datasetIRI, recordIRI, "test")
 
-        testConn = testRepo.getConnection()
         testConn.add(Values.matontoModel(
                 Rio.parse(this.getClass().getResourceAsStream("/test-catalog_test-repo-datasets.trig"), "", RDFFormat.TRIG)))
 
@@ -728,7 +733,6 @@ class SimpleDatasetManagerSpec extends Specification {
 
         bootstrapCatalog(datasetIRI, recordIRI, "test")
 
-        testConn = testRepo.getConnection()
         testConn.add(Values.matontoModel(
                 Rio.parse(this.getClass().getResourceAsStream("/test-catalog_test-repo-datasets.trig"), "", RDFFormat.TRIG)))
 
@@ -755,7 +759,6 @@ class SimpleDatasetManagerSpec extends Specification {
 
         bootstrapCatalog(datasetIRI, recordIRI, "test")
 
-        testConn = testRepo.getConnection()
         testConn.add(Values.matontoModel(
                 Rio.parse(this.getClass().getResourceAsStream("/test-catalog_test-repo-datasets.trig"), "", RDFFormat.TRIG)))
 
@@ -783,7 +786,6 @@ class SimpleDatasetManagerSpec extends Specification {
 
         service.setRepository(systemRepo)
 
-        systemConn = systemRepo.getConnection()
         systemConn.add(Values.matontoModel(
                 Rio.parse(this.getClass().getResourceAsStream("/test-catalog_only-ds-records.trig"), "", RDFFormat.TRIG)))
 

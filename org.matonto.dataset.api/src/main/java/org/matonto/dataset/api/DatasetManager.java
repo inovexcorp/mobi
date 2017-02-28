@@ -36,12 +36,37 @@ import java.util.Set;
 public interface DatasetManager {
 
     /**
-     * Retrieve the Resource for every Dataset in the local catalog. Note: This does not return the DatasetRecord
-     * Resource.
+     * Retrieve the Resource for every Dataset in the specified Repository as defined in the local catalog. Note: This
+     * method returns the Dataset Resource, not return the DatasetRecord Resource.
      *
-     * @return The Set of Resources for all the Dataset in the local catalog.
+     * @param repositoryId The Repository containing the desired datasets.
+     * @return The Set of Resources for all the Datasets in the specified Repository as defined in the local catalog.
      */
-    Set<Resource> listDatasets();
+    Set<Resource> getDatasets(String repositoryId);
+
+//    /**
+//     * Retrieves the DatasetRecords for all datasets in the local catalog.
+//     *
+//     * @return The DatasetRecords for all datasets in the local catalog. DatasetRecord includes empty Dataset object.
+//     */
+//    Set<DatasetRecord> getDatasetRecords();
+//
+//    /**
+//     * Retrieves the DatasetRecord for a dataset in the specified repository.
+//     *
+//     * @param dataset The Resource described by the DatasetRecord in the local catalog.
+//     * @param repositoryId  The Repository containing the specified dataset.
+//     * @return The DatasetRecord from the local catalog. DatasetRecord includes empty Dataset object.
+//     */
+//    Optional<DatasetRecord> getDatasetRecord(Resource dataset, String repositoryId);
+//
+//    /**
+//     * Retrieves the DatasetRecord for a dataset described by the specified DatasetRecord Resource.
+//     *
+//     * @param record The Resource of the DatasetRecord.
+//     * @return The DatasetRecord from the local catalog. DatasetRecord includes empty Dataset object.
+//     */
+//    Optional<DatasetRecord> getDatasetRecord(Resource record);
 
     /**
      * Retrieves the DatasetRecord for a dataset in the local catalog.
