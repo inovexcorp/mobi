@@ -175,14 +175,29 @@ class SimpleDatasetManagerSpec extends Specification {
 
     def "getDatasetRecord returns empty optional when the dataset does not exist"() {
         setup:
-        def recordIri = vf.createIRI("http://matonto.org/dataset/test")
+        def datasetIri = vf.createIRI("http://matonto.org/dataset/test")
         resultsMock.hasNext() >> false
 
         when:
-        def results = service.getDatasetRecord(recordIri)
+        def results = service.getDatasetRecord(datasetIri)
 
         then:
         results == Optional.empty()
+    }
+
+    def "getDatasetRecord throws an exception when the catalogManager unexpectedly doesn't return a record"() {
+        setup:
+        def datasetIri = vf.createIRI("http://matonto.org/dataset/test")
+        def recordIri = vf.createIRI("http://matonto.org/dataset/test")
+        resultsMock.hasNext() >> true
+        resultsMock.next() >> vf.createStatement(recordIri, datasetPred, datasetIri)
+
+        when:
+        service.getDatasetRecord(datasetIri)
+
+        then:
+        1 * catalogManagerMock.getRecord(!null, recordIri, !null) >> Optional.empty()
+        thrown(MatOntoException)
     }
 
     def "listDatasets returns an empty set when there are no records"() {

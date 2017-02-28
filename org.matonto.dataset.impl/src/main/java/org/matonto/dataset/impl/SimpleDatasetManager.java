@@ -266,23 +266,22 @@ public class SimpleDatasetManager implements DatasetManager {
     private boolean safeToDelete(RepositoryConnection conn, Resource dataset, Value graph) {
         IRI ngPred = vf.createIRI(Dataset.namedGraph_IRI);
         IRI dngPred = vf.createIRI(Dataset.defaultNamedGraph_IRI);
-        Boolean safeToDelete = true;
 
         RepositoryResult<Statement> ngStmts = conn.getStatements(null, ngPred, graph);
         while (ngStmts.hasNext()) {
             if (!ngStmts.next().getSubject().equals(dataset)) {
-                safeToDelete = false;
+                return false;
             }
         }
 
         RepositoryResult<Statement> dngStmts = conn.getStatements(null, dngPred, graph);
         while (dngStmts.hasNext()) {
             if (!dngStmts.next().getSubject().equals(dataset)) {
-                safeToDelete = false;
+                return false;
             }
         }
 
-        return safeToDelete;
+        return true;
     }
 
     private void deleteGraphs(RepositoryConnection conn, Resource dataset) {
