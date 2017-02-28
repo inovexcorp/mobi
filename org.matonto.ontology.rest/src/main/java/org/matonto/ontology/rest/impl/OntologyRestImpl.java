@@ -55,6 +55,7 @@ import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.ontology.rest.OntologyRest;
 import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.persistence.utils.JSONQueryResults;
+import org.matonto.query.GraphQueryResult;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.query.api.Binding;
 import org.matonto.rdf.api.BNode;
@@ -65,6 +66,7 @@ import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rest.util.ErrorUtils;
+import org.matonto.rest.util.RestUtils;
 import org.matonto.web.security.util.AuthenticationProps;
 import org.openrdf.model.vocabulary.OWL;
 
@@ -569,13 +571,18 @@ public class OntologyRestImpl implements OntologyRest {
 
     @Override
     public Response getEntityUsages(ContainerRequestContext context, String recordIdStr, String entityIRIStr,
-                                    String branchIdStr, String commitIdStr) {
+                                    String branchIdStr, String commitIdStr, String queryType) {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
-            TupleQueryResult results = ontologyManager.getEntityUsages(ontology, valueFactory.createIRI(entityIRIStr));
-            JSONObject response = JSONQueryResults.getResponse(results);
-            return Response.ok(response).build();
+            Resource entityIRI = valueFactory.createIRI(entityIRIStr);
+            if (queryType.equals("construct")) {
+                Model results = ontologyManager.constructEntityUsages(ontology, entityIRI);
+                return Response.ok(RestUtils.modelToJsonld(sesameTransformer.sesameModel(results))).build();
+            } else {
+                TupleQueryResult results = ontologyManager.getEntityUsages(ontology, entityIRI);
+                return Response.ok(JSONQueryResults.getResponse(results)).build();
+            }
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         }

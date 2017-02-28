@@ -23,8 +23,10 @@ package org.matonto.ontology.core.api;
  * #L%
  */
 
+import org.matonto.exception.MatOntoException;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.ontology.utils.api.SesameTransformer;
+import org.matonto.query.GraphQueryResult;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.query.api.BindingSet;
 import org.matonto.rdf.api.IRI;
@@ -226,6 +228,16 @@ public interface OntologyManager {
      * @throws MatontoOntologyException - if the repository is null
      */
     TupleQueryResult getEntityUsages(Ontology ontology, Resource entity) throws MatontoOntologyException;
+
+    /**
+     * Constructs the entity usages for the provided Resource in the provided Ontology.
+     *
+     * @param ontology the Ontology you wish to query.
+     * @param entity the Resource for the entity you want to get the usages of.
+     * @return a Model with the constructed statements.
+     * @throws MatontoOntologyException - if the repository is null
+     */
+    Model constructEntityUsages(Ontology ontology, Resource entity) throws MatontoOntologyException;
 
     /**
      * Gets the concept relationships in the provided Ontology.

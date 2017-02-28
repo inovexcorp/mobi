@@ -24,7 +24,7 @@
     <branch-select ng-model="dvm.sm.listItem.branchId"></branch-select>
     <tabset class="centered">
         <tab heading="'Project'" active="dvm.sm.state.project.active"
-             on-click="dvm.sm.setSelected(dvm.sm.state.project.entityIRI)">
+             on-click="dvm.sm.setSelected(dvm.sm.state.project.entityIRI, false)">
             <project-tab></project-tab>
         </tab>
         <tab heading="'Overview'" active="dvm.sm.state.overview.active"
@@ -40,11 +40,11 @@
             <properties-tab></properties-tab>
         </tab>
         <tab heading="'Individuals'" active="dvm.sm.state.individuals.active"
-             on-click="dvm.sm.setSelected(dvm.sm.state.individuals.entityIRI)">
+             on-click="dvm.sm.setSelected(dvm.sm.state.individuals.entityIRI, false)">
             <individuals-tab></individuals-tab>
         </tab>
         <tab heading="'Search'" active="dvm.sm.state.search.active"
-             on-click="dvm.sm.setSelected(dvm.sm.state.search.entityIRI)">
+             on-click="dvm.sm.setSelected(dvm.sm.state.search.entityIRI, false)">
             <search-tab></search-tab>
         </tab>
         <tab heading="dvm.savedChanges" active="dvm.sm.state.savedChanges.active">

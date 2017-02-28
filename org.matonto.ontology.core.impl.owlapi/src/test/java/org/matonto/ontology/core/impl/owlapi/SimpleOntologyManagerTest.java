@@ -44,6 +44,8 @@ import org.matonto.query.api.Binding;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
+import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory;
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
@@ -715,6 +717,21 @@ public class SimpleOntologyManagerTest {
         });
         assertEquals(0, subjects.size());
         assertEquals(0, predicates.size());
+    }
+
+    @Test
+    public void testConstructEntityUsages() throws Exception {
+        Resource class1b = valueFactory.createIRI("http://matonto.org/ontology#Class1b");
+        IRI subClassOf = valueFactory.createIRI("http://www.w3.org/2000/01/rdf-schema#subClassOf");
+        Value class1a = valueFactory.createIRI("http://matonto.org/ontology#Class1a");
+        Resource individual1a = valueFactory.createIRI("http://matonto.org/ontology#Individual1a");
+        IRI type = valueFactory.createIRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
+        Model expected = modelFactory.createModel(Stream.of(valueFactory.createStatement(class1b, subClassOf,
+                class1a), valueFactory.createStatement(individual1a, type, class1a)).collect(Collectors.toSet()));
+
+        Model result = manager.constructEntityUsages(ontology, (Resource) class1a);
+
+        assertTrue(result.equals(expected));
     }
 
     @Test
