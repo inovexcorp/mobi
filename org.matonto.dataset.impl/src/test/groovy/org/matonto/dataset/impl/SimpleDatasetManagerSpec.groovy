@@ -334,6 +334,19 @@ class SimpleDatasetManagerSpec extends Specification {
         results == Optional.empty()
     }
 
+    def "getDatasetRecords() returns a set with all DatasetRecords in the repo"() {
+        setup:
+        service.setRepository(systemRepo)
+        systemConn.add(Values.matontoModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_only-ds-records.trig"), "", RDFFormat.TRIG)))
+        testConn.add(Values.matontoModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_test-repo-datasets.trig"), "", RDFFormat.TRIG)))
+        def mockRecords = []
+        7.times { mockRecords << Optional.of(Mock(DatasetRecord)) }
+        catalogManagerMock.getRecord(*_) >>> mockRecords
+
+        expect:
+        service.getDatasetRecords().size() == 7
+    }
+
     def "getDatasets() returns an empty set when there are no datasets in that repository"() {
         setup:
         service.setRepository(systemRepo)

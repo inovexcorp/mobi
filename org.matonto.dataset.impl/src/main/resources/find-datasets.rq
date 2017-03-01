@@ -3,7 +3,7 @@ PREFIX mcat: <http://matonto.org/ontologies/catalog#>
 PREFIX dataset: <http://matonto.org/ontologies/dataset#>
 
 SELECT
-    DISTINCT ?record
+    DISTINCT ?dataset
 WHERE {
     ?catalog a mcat:Catalog .
 

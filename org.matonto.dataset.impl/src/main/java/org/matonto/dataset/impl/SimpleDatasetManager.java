@@ -68,6 +68,7 @@ public class SimpleDatasetManager implements DatasetManager {
     private RepositoryManager repoManager;
 
     private static final String FIND_DATASETS_QUERY;
+    private static final String FIND_DATASET_RECORDS_QUERY;
     private static final String CATALOG_BINDING = "catalog";
     private static final String REPOSITORY_BINDING = "repository";
     private static final String SYSTEM_DEFAULT_NG_SUFFIX = "_system_dng";
@@ -75,6 +76,10 @@ public class SimpleDatasetManager implements DatasetManager {
     static {
         try {
             FIND_DATASETS_QUERY = IOUtils.toString(
+                    SimpleDatasetManager.class.getResourceAsStream("/find-datasets.rq"),
+                    "UTF-8"
+            );
+            FIND_DATASET_RECORDS_QUERY = IOUtils.toString(
                     SimpleDatasetManager.class.getResourceAsStream("/find-dataset-records.rq"),
                     "UTF-8"
             );
@@ -136,6 +141,21 @@ public class SimpleDatasetManager implements DatasetManager {
             result.forEach(bindingSet -> datasets.add(Bindings.requiredResource(bindingSet, "dataset")));
         }
         return datasets;
+    }
+
+    @Override
+    public Set<DatasetRecord> getDatasetRecords() {
+        Set<DatasetRecord> datasetRecords = new HashSet<>();
+        try (RepositoryConnection conn = systemRepository.getConnection()) {
+            TupleQuery query = conn.prepareTupleQuery(FIND_DATASET_RECORDS_QUERY);
+            query.setBinding(CATALOG_BINDING, catalogManager.getLocalCatalogIRI());
+            TupleQueryResult result = query.evaluate();
+            result.forEach(bindingSet -> {
+                getDatasetRecord(Bindings.requiredResource(bindingSet, "record"))
+                        .ifPresent(datasetRecords::add);
+            });
+        }
+        return datasetRecords;
     }
 
     @Override

@@ -44,13 +44,13 @@ public interface DatasetManager {
      */
     Set<Resource> getDatasets(String repositoryId);
 
-//    /**
-//     * Retrieves the DatasetRecords for all datasets in the local catalog.
-//     *
-//     * @return The DatasetRecords for all datasets in the local catalog. DatasetRecord includes empty Dataset object.
-//     */
-//    Set<DatasetRecord> getDatasetRecords();
-//
+    /**
+     * Retrieves the DatasetRecords for all datasets in the local catalog.
+     *
+     * @return The DatasetRecords for all datasets in the local catalog. DatasetRecord includes empty Dataset object.
+     */
+    Set<DatasetRecord> getDatasetRecords();
+
     /**
      * Retrieves the DatasetRecord for a dataset in the specified repository.
      *
