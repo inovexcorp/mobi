@@ -57,20 +57,21 @@ describe('Create Individual Overlay directive', function() {
 
     describe('initializes with the correct values', function() {
         it('if parent ontology is opened', function() {
-            var ontology = {iriBegin: 'begin', iriThen: '/'};
-            ontologyStateSvc.listItem = ontology;
+            ontologyStateSvc.getDefaultPrefix.and.returnValue('begin/');
             element = $compile(angular.element('<create-individual-overlay></create-individual-overlay>'))(scope);
             scope.$digest();
             controller = element.controller('createIndividualOverlay');
-            expect(controller.prefix).toBe(ontology.iriBegin + ontology.iriThen);
+            expect(ontologyStateSvc.getDefaultPrefix).toHaveBeenCalled();
+            expect(controller.prefix).toBe('begin/');
             expect(controller.individual['@id']).toBe(controller.prefix);
             expect(controller.individual['@type']).toEqual([]);
         });
         it('if parent ontology is not opened', function() {
-            ontologyStateSvc.listItem = {ontologyId: 'iri'};
+            ontologyStateSvc.getDefaultPrefix.and.returnValue('iri#');
             element = $compile(angular.element('<create-individual-overlay></create-individual-overlay>'))(scope);
             scope.$digest();
             controller = element.controller('createIndividualOverlay');
+            expect(ontologyStateSvc.getDefaultPrefix).toHaveBeenCalled();
             expect(controller.prefix).toBe('iri#');
             expect(controller.individual['@id']).toBe(controller.prefix);
             expect(controller.individual['@type']).toEqual([]);
@@ -162,6 +163,7 @@ describe('Create Individual Overlay directive', function() {
             controller.onEdit('begin', 'then', 'end');
             expect(controller.iriHasChanged).toBe(true);
             expect(controller.individual['@id']).toBe('begin' + 'then' + 'end');
+            expect(ontologyStateSvc.setCommonIriParts).toHaveBeenCalledWith('begin', 'then');
         });
         describe('should get an ontology IRI', function() {
             it('if the item has an id set', function() {
