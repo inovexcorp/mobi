@@ -1,6 +1,6 @@
-@Version("1.7.0.${build}")
+@Version("1.0.0.${build}")
 
-package org.matonto.catalog.api.builder;
+package org.matonto.dataset.api.builder;
 
 /*-
  * #%L

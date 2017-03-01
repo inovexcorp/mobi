@@ -1,14 +1,12 @@
-@Version("1.7.0.${build}")
-
-package org.matonto.catalog.api.builder;
+package org.matonto.query.api.processor;
 
 /*-
  * #%L
- * org.matonto.catalog.api
+ * org.matonto.persistence.api
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -25,4 +23,13 @@ package org.matonto.catalog.api.builder;
  * #L%
  */
 
-import aQute.bnd.annotation.Version;
+/**
+ * A unit of processing that occurs as part of the processing chain of an Operation.
+ */
+public interface OperationProcessor {
+
+    /**
+     * Executes the processing in the context of the operation.
+     */
+    void process();
+}

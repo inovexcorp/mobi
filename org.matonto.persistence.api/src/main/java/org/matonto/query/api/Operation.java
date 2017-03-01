@@ -24,10 +24,17 @@ package org.matonto.query.api;
  */
 
 
+import org.matonto.query.api.processor.OperationProcessor;
 import org.matonto.query.exception.QueryInterruptedException;
 import org.matonto.query.exception.UpdateInterruptedException;
 import org.matonto.rdf.api.Value;
 
+import java.util.List;
+
+/**
+ * An operation executed against a Repository. Operation may be configured optional properties such as variable
+ * bindings, to include inferred triples, a maximum execution time, or a processing chain.
+ */
 public interface Operation {
 
     /**
@@ -104,4 +111,12 @@ public interface Operation {
      */
     int getMaxExecutionTime();
 
+    /**
+     * Returns the List of OperationProcessors set on this Operation when it was created. These
+     * Processors are run as part of the operation processing chain before evaluation against the
+     * Repository.
+     *
+     * @return The List of OperationProcessors set on this Operation.
+     */
+    List<OperationProcessor> getProcessors();
 }

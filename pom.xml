@@ -85,6 +85,8 @@
         <module>org.matonto.platform.config.api</module>
         <module>org.matonto.platform.config.rest</module>
         <module>org.matonto.platform.config.impl</module>
+        <module>org.matonto.dataset.api</module>
+        <module>org.matonto.dataset.impl</module>
     </modules>
 
     <properties>

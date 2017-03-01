@@ -215,6 +215,16 @@
             <artifactId>platform.config.impl</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>dataset.api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>dataset.impl</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
