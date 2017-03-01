@@ -38,7 +38,7 @@ import org.matonto.exception.MatOntoException;
 import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyId;
 import org.matonto.ontology.core.api.OntologyManager;
-import org.matonto.ontology.core.utils.MatontoOntologyException;
+import org.matonto.ontology.core.utils.MatontoOntologyCreationException;
 import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.persistence.utils.QueryResults;
 import org.matonto.query.TupleQueryResult;
@@ -51,7 +51,6 @@ import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
-import org.matonto.repository.exception.RepositoryException;
 import org.matonto.repository.impl.sesame.SesameRepositoryWrapper;
 import org.openrdf.repository.sail.SailRepository;
 import org.openrdf.sail.memory.MemoryStore;
@@ -211,32 +210,32 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Override
-    public Ontology createOntology(OntologyId ontologyId) throws MatontoOntologyException {
+    public Ontology createOntology(OntologyId ontologyId) throws MatontoOntologyCreationException {
         return new SimpleOntology(ontologyId, this);
     }
 
     @Override
-    public Ontology createOntology(File file) throws MatontoOntologyException, FileNotFoundException {
+    public Ontology createOntology(File file) throws MatontoOntologyCreationException, FileNotFoundException {
         return new SimpleOntology(file, this);
     }
 
     @Override
-    public Ontology createOntology(IRI iri) throws MatontoOntologyException {
+    public Ontology createOntology(IRI iri) throws MatontoOntologyCreationException {
         return new SimpleOntology(iri, this);
     }
 
     @Override
-    public Ontology createOntology(InputStream inputStream) throws MatontoOntologyException {
+    public Ontology createOntology(InputStream inputStream) throws MatontoOntologyCreationException {
         return new SimpleOntology(inputStream, this);
     }
 
     @Override
-    public Ontology createOntology(String json) throws MatontoOntologyException {
+    public Ontology createOntology(String json) throws MatontoOntologyCreationException {
         return new SimpleOntology(json, this);
     }
 
     @Override
-    public Ontology createOntology(Model model) throws MatontoOntologyException {
+    public Ontology createOntology(Model model) throws MatontoOntologyCreationException {
         try {
             OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
             OWLOntology ontology = manager.createOntology();
@@ -247,26 +246,26 @@ public class SimpleOntologyManager implements OntologyManager {
             parser.parse(new RioMemoryTripleSource(sesameModel), ontology, config);
             return SimpleOntologyValues.matontoOntology(ontology);
         } catch (OWLOntologyCreationException e) {
-            throw new MatontoOntologyException("Unable to create an ontology object.", e);
+            throw new MatontoOntologyCreationException("Unable to create an ontology object.", e);
         }
     }
 
     @Override
-    public Optional<Ontology> retrieveOntology(@Nonnull Resource recordId) throws MatontoOntologyException {
+    public Optional<Ontology> retrieveOntology(@Nonnull Resource recordId) throws MatontoOntologyCreationException {
         Optional<Ontology> result = Optional.empty();
         Optional<OntologyRecord> record = catalogManager.getRecord(catalogManager.getLocalCatalogIRI(), recordId,
                 ontologyRecordFactory);
         if (record.isPresent()) {
             Branch masterBranch = record.get().getMasterBranch().orElseThrow(() ->
-                    new MatontoOntologyException("The master Branch was not set on the OntologyRecord."));
+                    new MatontoOntologyCreationException("The master Branch was not set on the OntologyRecord."));
             masterBranch = catalogManager.getBranch(masterBranch.getResource(), branchFactory).orElseThrow(() ->
-                    new MatontoOntologyException("The master Branch could not be retrieved."));
+                    new MatontoOntologyCreationException("The master Branch could not be retrieved."));
             Commit commit = masterBranch.getHead().orElseThrow(() ->
-                    new MatontoOntologyException("The head Commit was not set on the master Branch."));
+                    new MatontoOntologyCreationException("The head Commit was not set on the master Branch."));
             try {
                 return Optional.of(createOntologyFromCommit(commit));
             } catch (OWLOntologyCreationException e) {
-                throw new MatontoOntologyException(e.getMessage(), e);
+                throw new MatontoOntologyCreationException(e.getMessage(), e);
             }
         }
         return result;
@@ -274,7 +273,7 @@ public class SimpleOntologyManager implements OntologyManager {
 
     @Override
     public Optional<Ontology> retrieveOntology(@Nonnull Resource recordId, @Nonnull Resource branchId) throws
-            MatontoOntologyException {
+            MatontoOntologyCreationException {
         Optional<Ontology> result = Optional.empty();
         Optional<OntologyRecord> record = catalogManager.getRecord(catalogManager.getLocalCatalogIRI(), recordId,
                 ontologyRecordFactory);
@@ -282,13 +281,13 @@ public class SimpleOntologyManager implements OntologyManager {
             for (Branch branch : record.get().getBranch()) {
                 if (branch.getResource().equals(branchId)) {
                     branch = catalogManager.getBranch(branchId, branchFactory).orElseThrow(() ->
-                            new MatontoOntologyException("The identified Branch could not be retrieved."));
+                            new MatontoOntologyCreationException("The identified Branch could not be retrieved."));
                     Commit headCommit = branch.getHead().orElseThrow(() ->
-                            new MatontoOntologyException("The head Commit was not set on the Branch."));
+                            new MatontoOntologyCreationException("The head Commit was not set on the Branch."));
                     try {
                         result = Optional.of(createOntologyFromCommit(headCommit));
                     } catch (OWLOntologyCreationException e) {
-                        throw new MatontoOntologyException(e.getMessage(), e);
+                        throw new MatontoOntologyCreationException(e.getMessage(), e);
                     }
                     break;
                 }
@@ -299,7 +298,7 @@ public class SimpleOntologyManager implements OntologyManager {
 
     @Override
     public Optional<Ontology> retrieveOntology(@Nonnull Resource recordId, @Nonnull Resource branchId,
-                                               @Nonnull Resource commitId) throws MatontoOntologyException {
+                                               @Nonnull Resource commitId) throws MatontoOntologyCreationException {
         Optional<Ontology> result = Optional.empty();
         Optional<OntologyRecord> record = catalogManager.getRecord(catalogManager.getLocalCatalogIRI(), recordId,
                 ontologyRecordFactory);
@@ -307,17 +306,17 @@ public class SimpleOntologyManager implements OntologyManager {
             for (Branch branch : record.get().getBranch()) {
                 if (branch.getResource().equals(branchId)) {
                     branch = catalogManager.getBranch(branch.getResource(), branchFactory).orElseThrow(() ->
-                            new MatontoOntologyException("The identified Branch could not be retrieved."));
+                            new MatontoOntologyCreationException("The identified Branch could not be retrieved."));
                     Commit headCommit = branch.getHead().orElseThrow(() ->
-                            new MatontoOntologyException("The head Commit was not set on the Branch."));
+                            new MatontoOntologyCreationException("The head Commit was not set on the Branch."));
                     List<Resource> commitChain = catalogManager.getCommitChain(headCommit.getResource());
                     if (commitChain.contains(commitId)) {
                         Commit commit = catalogManager.getCommit(commitId, commitFactory).orElseThrow(() ->
-                                new MatontoOntologyException("The identified Commit could not be retrieved."));
+                                new MatontoOntologyCreationException("The identified Commit could not be retrieved."));
                         try {
                             result = Optional.of(createOntologyFromCommit(commit));
                         } catch (OWLOntologyCreationException e) {
-                            throw new MatontoOntologyException(e.getMessage(), e);
+                            throw new MatontoOntologyCreationException(e.getMessage(), e);
                         }
                     }
                     break;
@@ -328,14 +327,14 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Override
-    public void deleteOntology(@Nonnull Resource recordId) throws MatontoOntologyException {
+    public void deleteOntology(@Nonnull Resource recordId) throws MatontoOntologyCreationException {
         OntologyRecord record = catalogManager.getRecord(catalogManager.getLocalCatalogIRI(), recordId,
                 ontologyRecordFactory).orElseThrow(() ->
-                new MatontoOntologyException("The OntologyRecord could not be retrieved."));
+                new MatontoOntologyCreationException("The OntologyRecord could not be retrieved."));
         try {
             catalogManager.removeRecord(catalogManager.getLocalCatalog().getResource(), record.getResource());
         } catch (MatOntoException e) {
-            throw new MatontoOntologyException(e.getMessage(), e);
+            throw new MatontoOntologyCreationException(e.getMessage(), e);
         }
     }
 
@@ -360,27 +359,27 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Override
-    public TupleQueryResult getSubClassesOf(Ontology ontology) throws MatontoOntologyException {
+    public TupleQueryResult getSubClassesOf(Ontology ontology) {
         return runQueryOnOntology(ontology, GET_SUB_CLASSES_OF, null);
     }
 
     @Override
-    public TupleQueryResult getSubDatatypePropertiesOf(Ontology ontology) throws MatontoOntologyException {
+    public TupleQueryResult getSubDatatypePropertiesOf(Ontology ontology) {
         return runQueryOnOntology(ontology, GET_SUB_DATATYPE_PROPERTIES_OF, null);
     }
 
     @Override
-    public TupleQueryResult getSubObjectPropertiesOf(Ontology ontology) throws MatontoOntologyException {
+    public TupleQueryResult getSubObjectPropertiesOf(Ontology ontology) {
         return runQueryOnOntology(ontology, GET_SUB_OBJECT_PROPERTIES_OF, null);
     }
 
     @Override
-    public TupleQueryResult getClassesWithIndividuals(Ontology ontology) throws MatontoOntologyException {
+    public TupleQueryResult getClassesWithIndividuals(Ontology ontology) {
         return runQueryOnOntology(ontology, GET_CLASSES_WITH_INDIVIDUALS, null);
     }
 
     @Override
-    public TupleQueryResult getEntityUsages(Ontology ontology, Resource entity) throws MatontoOntologyException {
+    public TupleQueryResult getEntityUsages(Ontology ontology, Resource entity) {
         return runQueryOnOntology(ontology, SELECT_ENTITY_USAGES, tupleQuery -> {
             tupleQuery.setBinding(ENTITY_BINDING, entity);
             return tupleQuery;
@@ -388,7 +387,7 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Override
-    public Model constructEntityUsages(Ontology ontology, Resource entity) throws MatontoOntologyException {
+    public Model constructEntityUsages(Ontology ontology, Resource entity) {
         Repository repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
         repo.initialize();
         try (RepositoryConnection conn = repo.getConnection()) {
@@ -396,20 +395,18 @@ public class SimpleOntologyManager implements OntologyManager {
             GraphQuery query = conn.prepareGraphQuery(CONSTRUCT_ENTITY_USAGES);
             query.setBinding(ENTITY_BINDING, entity);
             return QueryResults.asModel(query.evaluate(), modelFactory);
-        } catch (RepositoryException e) {
-            throw new MatontoOntologyException("Error in repository connection.", e);
         } finally {
             repo.shutDown();
         }
     }
 
     @Override
-    public TupleQueryResult getConceptRelationships(Ontology ontology) throws MatontoOntologyException {
+    public TupleQueryResult getConceptRelationships(Ontology ontology) {
         return runQueryOnOntology(ontology, GET_CONCEPT_RELATIONSHIPS, null);
     }
 
     @Override
-    public TupleQueryResult getSearchResults(Ontology ontology, String searchText) throws MatontoOntologyException {
+    public TupleQueryResult getSearchResults(Ontology ontology, String searchText) {
         return runQueryOnOntology(ontology, GET_SEARCH_RESULTS, tupleQuery -> {
             tupleQuery.setBinding(SEARCH_TEXT, valueFactory.createLiteral(searchText.toLowerCase()));
             return tupleQuery;
@@ -425,7 +422,7 @@ public class SimpleOntologyManager implements OntologyManager {
      */
     private Ontology createOntologyFromCommit(Commit commit) throws OWLOntologyCreationException {
         Model ontologyModel = catalogManager.getCompiledResource(commit.getResource()).orElseThrow(() ->
-                new MatontoOntologyException("The compiled resource could not be retrieved."));
+                new MatontoOntologyCreationException("The compiled resource could not be retrieved."));
         return createOntology(ontologyModel);
     }
 
@@ -447,8 +444,6 @@ public class SimpleOntologyManager implements OntologyManager {
                 query = addBinding.apply(query);
             }
             return query.evaluateAndReturn();
-        } catch (RepositoryException e) {
-            throw new MatontoOntologyException("Error in repository connection.", e);
         } finally {
             repo.shutDown();
         }

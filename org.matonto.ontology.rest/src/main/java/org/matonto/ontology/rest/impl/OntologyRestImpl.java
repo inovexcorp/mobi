@@ -24,6 +24,7 @@ package org.matonto.ontology.rest.impl;
  */
 
 import static org.matonto.rest.util.RestUtils.jsonldToModel;
+import static org.matonto.rest.util.RestUtils.modelToJsonld;
 
 import com.google.common.collect.Iterables;
 
@@ -55,7 +56,6 @@ import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.ontology.rest.OntologyRest;
 import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.persistence.utils.JSONQueryResults;
-import org.matonto.query.GraphQueryResult;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.query.api.Binding;
 import org.matonto.rdf.api.BNode;
@@ -66,7 +66,6 @@ import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rest.util.ErrorUtils;
-import org.matonto.rest.util.RestUtils;
 import org.matonto.web.security.util.AuthenticationProps;
 import org.openrdf.model.vocabulary.OWL;
 
@@ -578,10 +577,13 @@ public class OntologyRestImpl implements OntologyRest {
             Resource entityIRI = valueFactory.createIRI(entityIRIStr);
             if (queryType.equals("construct")) {
                 Model results = ontologyManager.constructEntityUsages(ontology, entityIRI);
-                return Response.ok(RestUtils.modelToJsonld(sesameTransformer.sesameModel(results))).build();
-            } else {
+                return Response.ok(modelToJsonld(sesameTransformer.sesameModel(results))).build();
+            } else if (queryType.equals("select")) {
                 TupleQueryResult results = ontologyManager.getEntityUsages(ontology, entityIRI);
                 return Response.ok(JSONQueryResults.getResponse(results)).build();
+            } else {
+                throw ErrorUtils.sendError("The queryType parameter is not select or construct as expected.",
+                        Response.Status.BAD_REQUEST);
             }
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);

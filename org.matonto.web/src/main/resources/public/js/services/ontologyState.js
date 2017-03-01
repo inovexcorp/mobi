@@ -393,8 +393,8 @@
                     self.openAt(self.getPathsTo(self.listItem[index], iri));
                 }
             }
-            function getOpenPath(recordId, entityIRI) {
-                return encodeURIComponent(recordId) + '.' + encodeURIComponent(entityIRI);
+            function getOpenPath() {
+                return _.join(_.map([...arguments], encodeURIComponent), '.');
             }
         }
 })();

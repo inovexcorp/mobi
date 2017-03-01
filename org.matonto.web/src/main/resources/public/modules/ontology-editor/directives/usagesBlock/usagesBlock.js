@@ -58,7 +58,7 @@
 
                     $scope.$watch(function() {
                         return dvm.sm.getActivePage().usages;
-                    },function() {
+                    }, function() {
                         dvm.results = getResults();
                     });
                 }]

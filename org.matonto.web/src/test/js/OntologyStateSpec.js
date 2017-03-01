@@ -133,9 +133,6 @@ describe('Ontology State service', function() {
 
     it('reset should clear the correct variables', function() {
         ontologyStateSvc.states = ['test'];
-        ontologyStateSvc.selected = {id: 'test'};
-        ontologyStateSvc.state = {id: 'test', active: false};
-        ontologyStateSvc.listItem = {id: 'test'};
         ontologyStateSvc.reset();
         expect(ontologyStateSvc.states).toEqual([]);
         expect(ontologyStateSvc.selected).toEqual({});
@@ -574,7 +571,7 @@ describe('Ontology State service', function() {
             expect(ontologyStateSvc.state).toEqual(ontologyStateSvc.newState);
             expect(ontologyStateSvc.state.active).toBe(true);
             expect(ontologyStateSvc.newState.active).toBe(true);
-            expect(ontologyStateSvc.selected).toBe(undefined);
+            expect(ontologyStateSvc.selected).toBeUndefined();
         });
         it('if the recordId does not match the current state', function() {
             var state = {recordId: 'id'};
@@ -597,7 +594,7 @@ describe('Ontology State service', function() {
             ontologyStateSvc.resetStateTabs();
             expect(ontologyStateSvc.state.classes).toEqual({});
             expect(ontologyStateSvc.state.project).toEqual({entityIRI: 'id'});
-            expect(ontologyStateSvc.selected).toBe(undefined);
+            expect(ontologyStateSvc.selected).toBeUndefined();
         });
         it('when getActiveKey is project', function() {
             spyOn(ontologyStateSvc, 'getActiveKey').and.returnValue('project');
@@ -682,7 +679,7 @@ describe('Ontology State service', function() {
     it('unSelectItem sets all the variables appropriately', function() {
         spyOn(ontologyStateSvc, 'getActivePage').and.returnValue(ontologyStateSvc.state.tab);
         ontologyStateSvc.unSelectItem();
-        expect(ontologyStateSvc.selected).toBe(undefined);
+        expect(ontologyStateSvc.selected).toBeUndefined();
         expect(!_.has(ontologyStateSvc.state.tab, 'entityIRI')).toBe(true);
         expect(!_.has(ontologyStateSvc.state.tab, 'usages')).toBe(true);
     });
@@ -1176,7 +1173,24 @@ describe('Ontology State service', function() {
                 'node3c': ['node2a']
             });
         });
-        /*it('should move the subEntities if required', function() {
+        /*
+            node1a
+                node2a
+                    node3a
+                    node3c
+                node2b
+                    node3a
+                node2c
+                    node3b
+                        node3a
+            node1b
+                node3b
+                    node3a
+        */
+        it('should move the subEntities if required', function() {
+            updateRefsSvc.remove.and.callFake(function(indexObject, entityIRI) {
+                _.unset(indexObject, 'node3c');
+            });
             ontologyStateSvc.deleteEntityFromHierarchy(hierarchy, 'node2a', indexObject);
             expect(hierarchy).toEqual([{
                 entityIRI: 'node1a',
@@ -1194,20 +1208,28 @@ describe('Ontology State service', function() {
                             entityIRI: 'node3a'
                         }]
                     }]
-                },
-                {
-                    entityIRI: 'node3c'
                 }]
+            },
+            {
+                entityIRI: 'node1b',
+                subEntities: [{
+                    entityIRI: 'node3b',
+                    subEntities: [{
+                        entityIRI: 'node3a'
+                    }]
+                }]
+            },
+            {
+                entityIRI: 'node3c'
             }]);
             expect(updateRefsSvc.remove).toHaveBeenCalledWith(indexObject, 'node2a');
             expect(indexObject).toEqual({
                 'node2b': ['node1a'],
                 'node2c': ['node1a'],
                 'node3a': ['node2a', 'node2b', 'node3b'],
-                'node3b': ['node2c'],
-                'node3c': ['node2a']
+                'node3b': ['node2c', 'node1b']
             });
-        });*/
+        });
     });
 
     describe('getPathsTo', function() {
@@ -1307,7 +1329,7 @@ describe('Ontology State service', function() {
             ontologyStateSvc.openAt(pathsArray);
             expect(_.get(ontologyStateSvc.state, encodeURIComponent(ontologyStateSvc.listItem.recordId) + '.'
                 + encodeURIComponent(_.join(_.slice(pathsArray[0], 0, pathsArray[0].length - 1), '.')) + '.isOpened'))
-                .toBe(undefined);
+                .toBeUndefined();
         });
         it('if the whole path to it is not opened, sets the first path provided open', function() {
             var pathsArray = [['path', 'one', 'here'], ['path', 'two', 'here']];
