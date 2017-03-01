@@ -139,21 +139,19 @@ public class SimpleDatasetManager implements DatasetManager {
     }
 
     @Override
-    public Optional<DatasetRecord> getDatasetRecord(Resource dataset) {
-        Optional<Resource> recordResource = getRecordResource(dataset);
+    public Optional<DatasetRecord> getDatasetRecord(Resource dataset, String repositoryId) {
+        Optional<Resource> recordResource = getRecordResource(dataset, repositoryId);
 
         if (!recordResource.isPresent()) {
             return Optional.empty();
         }
 
-        Optional<DatasetRecord> datasetRecord =
-                catalogManager.getRecord(catalogManager.getLocalCatalogIRI(), recordResource.get(), dsRecFactory);
+        return getDatasetRecord(recordResource.get());
+    }
 
-        if (!datasetRecord.isPresent()) {
-            throw new MatOntoException("Could not find the required DatasetRecord in the Catalog.");
-        }
-
-        return datasetRecord;
+    @Override
+    public Optional<DatasetRecord> getDatasetRecord(Resource record) {
+        return catalogManager.getRecord(catalogManager.getLocalCatalogIRI(), record, dsRecFactory);
     }
 
     @Override
@@ -181,8 +179,8 @@ public class SimpleDatasetManager implements DatasetManager {
     }
 
     @Override
-    public void deleteDataset(Resource dataset) {
-        DatasetRecord datasetRecord = getDatasetRecord(dataset)
+    public void deleteDataset(Resource dataset, String repositoryId) {
+        DatasetRecord datasetRecord = getDatasetRecord(dataset, repositoryId)
                 .orElseThrow(() -> new MatOntoException("Could not find the required DatasetRecord in the Catalog."));
 
         Repository dsRepo = getDatasetRepo(datasetRecord);
@@ -196,8 +194,8 @@ public class SimpleDatasetManager implements DatasetManager {
     }
 
     @Override
-    public void safeDeleteDataset(Resource dataset) {
-        DatasetRecord datasetRecord = getDatasetRecord(dataset)
+    public void safeDeleteDataset(Resource dataset, String repositoryId) {
+        DatasetRecord datasetRecord = getDatasetRecord(dataset, repositoryId)
                 .orElseThrow(() -> new MatOntoException("Could not find the required DatasetRecord in the Catalog."));
 
         Repository dsRepo = getDatasetRepo(datasetRecord);
@@ -211,8 +209,8 @@ public class SimpleDatasetManager implements DatasetManager {
     }
 
     @Override
-    public void clearDataset(Resource dataset) {
-        DatasetRecord datasetRecord = getDatasetRecord(dataset)
+    public void clearDataset(Resource dataset, String repositoryId) {
+        DatasetRecord datasetRecord = getDatasetRecord(dataset, repositoryId)
                 .orElseThrow(() -> new MatOntoException("Could not find the required DatasetRecord in the Catalog."));
 
         Repository dsRepo = getDatasetRepo(datasetRecord);
@@ -224,8 +222,8 @@ public class SimpleDatasetManager implements DatasetManager {
     }
 
     @Override
-    public void safeClearDataset(Resource dataset) {
-        DatasetRecord datasetRecord = getDatasetRecord(dataset)
+    public void safeClearDataset(Resource dataset, String repositoryId) {
+        DatasetRecord datasetRecord = getDatasetRecord(dataset, repositoryId)
                 .orElseThrow(() -> new MatOntoException("Could not find the required DatasetRecord in the Catalog."));
 
         Repository dsRepo = getDatasetRepo(datasetRecord);
@@ -236,16 +234,20 @@ public class SimpleDatasetManager implements DatasetManager {
         }
     }
 
-    private Optional<Resource> getRecordResource(Resource dataset) {
+    private Optional<Resource> getRecordResource(Resource dataset, String repositoryId) {
         try (RepositoryConnection conn = systemRepository.getConnection()) {
             RepositoryResult<Statement> recordStmts =
                     conn.getStatements(null, vf.createIRI(DatasetRecord.dataset_IRI), dataset);
 
-            if (!recordStmts.hasNext()) {
-                return Optional.empty();
+            while (recordStmts.hasNext()) {
+                Resource record = recordStmts.next().getSubject();
+                if (conn.getStatements(record, vf.createIRI(DatasetRecord.repository_IRI),
+                        vf.createLiteral(repositoryId)).hasNext()) {
+                    return Optional.of(record);
+                }
             }
 
-            return Optional.of(recordStmts.next().getSubject());
+            return Optional.empty();
         }
     }
 

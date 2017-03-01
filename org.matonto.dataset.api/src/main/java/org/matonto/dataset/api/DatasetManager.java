@@ -51,30 +51,22 @@ public interface DatasetManager {
 //     */
 //    Set<DatasetRecord> getDatasetRecords();
 //
-//    /**
-//     * Retrieves the DatasetRecord for a dataset in the specified repository.
-//     *
-//     * @param dataset The Resource described by the DatasetRecord in the local catalog.
-//     * @param repositoryId  The Repository containing the specified dataset.
-//     * @return The DatasetRecord from the local catalog. DatasetRecord includes empty Dataset object.
-//     */
-//    Optional<DatasetRecord> getDatasetRecord(Resource dataset, String repositoryId);
-//
-//    /**
-//     * Retrieves the DatasetRecord for a dataset described by the specified DatasetRecord Resource.
-//     *
-//     * @param record The Resource of the DatasetRecord.
-//     * @return The DatasetRecord from the local catalog. DatasetRecord includes empty Dataset object.
-//     */
-//    Optional<DatasetRecord> getDatasetRecord(Resource record);
-
     /**
-     * Retrieves the DatasetRecord for a dataset in the local catalog.
+     * Retrieves the DatasetRecord for a dataset in the specified repository.
      *
      * @param dataset The Resource described by the DatasetRecord in the local catalog.
+     * @param repositoryId  The Repository containing the specified dataset.
      * @return The DatasetRecord from the local catalog. DatasetRecord includes empty Dataset object.
      */
-    Optional<DatasetRecord> getDatasetRecord(Resource dataset);
+    Optional<DatasetRecord> getDatasetRecord(Resource dataset, String repositoryId);
+
+    /**
+     * Retrieves the DatasetRecord for a dataset described by the specified DatasetRecord Resource.
+     *
+     * @param record The Resource of the DatasetRecord.
+     * @return The DatasetRecord from the local catalog. DatasetRecord includes empty Dataset object.
+     */
+    Optional<DatasetRecord> getDatasetRecord(Resource record);
 
     /**
      * Creates a dataset according to the specified configuration. Initial dataset structure is created in the specified
@@ -92,7 +84,7 @@ public interface DatasetManager {
      *
      * @param dataset The Dataset Resource to be removed along with associated DatasetRecord and data.
      */
-    void deleteDataset(Resource dataset);
+    void deleteDataset(Resource dataset, String repositoryId);
 
     /**
      * Deletes the DatasetRecord, Dataset, and data graphs associated with the Dataset Resource. Note: This method
@@ -100,7 +92,7 @@ public interface DatasetManager {
      *
      * @param dataset The Dataset Resource to be removed along with associated DatasetRecord and data.
      */
-    void safeDeleteDataset(Resource dataset);
+    void safeDeleteDataset(Resource dataset, String repositoryId);
 
     /**
      * Removes all data associated with the Dataset Resource. DatasetRecord and Dataset are not removed. Note:
@@ -108,7 +100,7 @@ public interface DatasetManager {
      *
      * @param dataset The Dataset Resource to be cleared.
      */
-    void clearDataset(Resource dataset);
+    void clearDataset(Resource dataset, String repositoryId);
 
     /**
      * Removes all data associated with the Dataset Resource. DatasetRecord and Dataset are not removed. Note:
@@ -117,5 +109,5 @@ public interface DatasetManager {
      *
      * @param dataset The Dataset Resource to be cleared.
      */
-    void safeClearDataset(Resource dataset);
+    void safeClearDataset(Resource dataset, String repositoryId);
 }
