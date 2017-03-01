@@ -175,6 +175,7 @@ describe('Ontology State service', function() {
                         }, function() {
                             fail('Promise should have resolved');
                         });
+                    scope.$apply();
                 });
                 it('and createOntologyState rejects', function() {
                     createDeferred.reject(error);
@@ -191,6 +192,7 @@ describe('Ontology State service', function() {
                             expect(stateManagerSvc.createOntologyState).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, ontologyStateSvc.listItem.branchId, ontologyStateSvc.listItem.commitId);
                             expect(response).toEqual(error);
                         });
+                    scope.$apply();
                 });
             });
             describe('and getOntologyStateByRecordId is present', function() {
@@ -215,6 +217,7 @@ describe('Ontology State service', function() {
                         }, function() {
                             fail('Promise should have resolved');
                         });
+                    scope.$apply();
                 });
                 it('and createOntologyState rejects', function() {
                     updateDeferred.reject(error);
@@ -231,6 +234,7 @@ describe('Ontology State service', function() {
                             expect(stateManagerSvc.updateOntologyState).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, ontologyStateSvc.listItem.branchId, ontologyStateSvc.listItem.commitId);
                             expect(response).toEqual(error);
                         });
+                    scope.$apply();
                 });
             });
         });
@@ -243,6 +247,7 @@ describe('Ontology State service', function() {
                     expect(catalogManagerSvc.getInProgressCommit).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, '');
                     expect(response).toEqual(error);
                 });
+            scope.$apply();
         });
     });
 
