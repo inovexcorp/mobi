@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.5.10-SNAPSHOT</version>
+        <version>1.5.13-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -41,7 +41,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>dataset.api</artifactId>
-            <version>1.5.10-SNAPSHOT</version>
+            <version>1.5.12</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
@@ -51,6 +51,11 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>web.security</artifactId>
+            <version>1.4.24</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>ontology.utils</artifactId>
             <version>1.4.24</version>
         </dependency>
 
