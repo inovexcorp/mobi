@@ -34,7 +34,7 @@ public class RecordConfig {
     private Set<String> keywords;
     private Set<User> publishers;
 
-    private RecordConfig(Builder builder) {
+    protected RecordConfig(Builder builder) {
         title = builder.title;
         description = builder.description;
         identifier = builder.identifier;

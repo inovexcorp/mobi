@@ -15,7 +15,7 @@
 	<parent>
 		<artifactId>itests</artifactId>
 		<groupId>org.matonto</groupId>
-		<version>1.5.11</version>
+		<version>1.5.12</version>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 
@@ -49,6 +49,12 @@
 			<version>${project.version}</version>
 			<scope>test</scope>
 		</dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>rdf.orm.ontologies</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
 	</dependencies>
 
     <build>
@@ -68,11 +74,6 @@
                         <configuration>
                             <generates>
                                 <ontology>
-                                    <ontologyFile>${project.basedir}/src/test/resources/foaf.rdf</ontologyFile>
-                                    <outputPackage>com.xmlns.foaf._0._1</outputPackage>
-                                    <ontologyName>FOAF</ontologyName>
-                                </ontology>
-                                <ontology>
                                     <ontologyFile>${project.basedir}/src/test/resources/crazy.trig</ontologyFile>
                                     <outputPackage>org.matonto.delimited</outputPackage>
                                     <ontologyName>Delimited</ontologyName>
@@ -90,9 +91,8 @@
                             </generates>
                             <references>
                                 <ontology>
-                                    <ontologyFile>${project.basedir}/src/test/resources/foaf.rdf</ontologyFile>
-                                    <outputPackage>com.xmlns.foaf._0._1</outputPackage>
-                                    <ontologyName>FOAF</ontologyName>
+                                    <ontologyFile>${project.basedir}/../../org.matonto.rdf.orm.ontologies/src/main/resources/foaf.owl</ontologyFile>
+                                    <outputPackage>org.matonto.ontologies.foaf</outputPackage>
                                 </ontology>
                             </references>
                             <outputLocation>${project.basedir}/src/test/java</outputLocation>
