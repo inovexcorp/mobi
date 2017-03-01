@@ -36,6 +36,7 @@
             var om = ontologyManagerService;
             var sm = stateManagerService;
             var cm = catalogManagerService;
+            var util = utilService;
 
             self.states = [];
             self.newState = {active: true};
@@ -72,86 +73,40 @@
                     .then(deferred.resolve, deferred.reject);
                 return deferred.promise;
             }
-
             self.clearInProgressCommit = function() {
                 _.set(self.listItem, 'inProgressCommit.additions', []);
                 _.set(self.listItem, 'inProgressCommit.deletions', []);
             }
-
-            self.hasInvalidEntities = function(ontology) {
-                return _.some(ontology, {matonto:{valid: false}});
-            }
-
-            self.getOpenPath = function(recordId, entityIRI) {
-                return encodeURIComponent(recordId) + '.' + encodeURIComponent(entityIRI);
-            }
-
             self.setOpened = function(pathString, isOpened) {
                 _.set(self.state, encodeURIComponent(pathString) + '.isOpened', isOpened);
             }
-
             self.getOpened = function(pathString) {
                 return _.get(self.state, encodeURIComponent(pathString) + '.isOpened', false);
             }
-
-            self.openAt = function(pathsArray) {
-                var selectedPath = _.find(pathsArray, path => {
-                    var pathString = self.listItem.recordId;
-                    return _.every(_.initial(path), pathPart => {
-                        pathString += '.' + pathPart;
-                        return self.getOpened(pathString);
-                    });
-                });
-                if (!selectedPath) {
-                    selectedPath = _.head(pathsArray);
-                    var pathString = self.listItem.recordId;
-                    _.forEach(_.initial(selectedPath), pathPart => {
-                        pathString += '.' + pathPart;
-                        self.setOpened(pathString, true);
-                    });
-                }
-                $timeout(function() {
-                    var $element = document.querySelectorAll('[data-path-to="' + self.listItem.recordId + '.'
-                        + _.join(selectedPath, '.') + '"]');
-                    var $hierarchyBlock = document.querySelectorAll('[class*=hierarchy-block] .block-content');
-                    if ($element.length && $hierarchyBlock.length) {
-                        $hierarchyBlock[0].scrollTop = $element[0].offsetTop;
-                    }
-                });
-            }
-
             self.setNoDomainsOpened = function(recordId, isOpened) {
                 _.set(self.state, encodeURIComponent(recordId) + '.noDomainsOpened', isOpened);
             }
-
             self.getNoDomainsOpened = function(recordId) {
                 return _.get(self.state, encodeURIComponent(recordId) + '.noDomainsOpened', false);
             }
-
-            self.getIndividualsOpened = function(recordId, classIRI) {
-                return _.get(self.state, self.getOpenPath(recordId, classIRI) + '.individualsOpened', false);
-            }
-
             self.setIndividualsOpened = function(recordId, classIRI, isOpened) {
-                _.set(self.state, self.getOpenPath(recordId, classIRI) + '.individualsOpened', isOpened);
+                _.set(self.state, getOpenPath(recordId, classIRI) + '.individualsOpened', isOpened);
             }
-
-            self.getDataPropertiesOpened = function(recordId) {
-                return _.get(self.state, encodeURIComponent(recordId) + '.dataPropertiesOpened', false);
+            self.getIndividualsOpened = function(recordId, classIRI) {
+                return _.get(self.state, getOpenPath(recordId, classIRI) + '.individualsOpened', false);
             }
-
             self.setDataPropertiesOpened = function(recordId, isOpened) {
                 _.set(self.state, encodeURIComponent(recordId) + '.dataPropertiesOpened', isOpened);
             }
-
-            self.getObjectPropertiesOpened = function(recordId) {
-                return _.get(self.state, encodeURIComponent(recordId) + '.objectPropertiesOpened', false);
+            self.getDataPropertiesOpened = function(recordId) {
+                return _.get(self.state, encodeURIComponent(recordId) + '.dataPropertiesOpened', false);
             }
-
             self.setObjectPropertiesOpened = function(recordId, isOpened) {
                 _.set(self.state, encodeURIComponent(recordId) + '.objectPropertiesOpened', isOpened);
             }
-
+            self.getObjectPropertiesOpened = function(recordId) {
+                return _.get(self.state, encodeURIComponent(recordId) + '.objectPropertiesOpened', false);
+            }
             self.onEdit = function(iriBegin, iriThen, iriEnd) {
                 var newIRI = iriBegin + iriThen + iriEnd;
                 var oldEntity = angular.copy(self.selected);
@@ -159,6 +114,12 @@
                 self.getActivePage().entityIRI = newIRI;
                 om.addToAdditions(self.listItem.recordId, angular.copy(self.selected));
                 om.addToDeletions(self.listItem.recordId, oldEntity);
+                om.getEntityUsages(self.listItem.recordId, self.listItem.branchId, self.listItem.commitId, oldEntity['@id'], 'construct')
+                    .then(statements => {
+                        _.forEach(statements, statement => om.addToDeletions(self.listItem.recordId, statement));
+                        updateRefsService.update(statements, oldEntity['@id'], newIRI);
+                        _.forEach(statements, statement => om.addToAdditions(self.listItem.recordId, statement));
+                    }, errorMessage => util.createErrorToast('Associated entities were not updated due to an internal error.'));
             }
             self.setSelected = function(entityIRI, getUsages = true) {
                 self.selected = om.getEntityByRecordId(self.listItem.recordId, entityIRI);
@@ -250,16 +211,6 @@
                     self.selected = undefined;
                 }
             }
-            self.unsetEntityByIRI = function(iri) {
-                _.forOwn(self.state, prop => {
-                    if (_.get(prop, 'entityIRI', '') === iri) {
-                        _.unset(prop, 'entityIRI');
-                    }
-                });
-                if (_.get(self.selected, '@id', '') === iri) {
-                    self.selected = undefined;
-                }
-            }
             self.getActiveKey = function() {
                 return _.findKey(self.state, ['active', true]) || 'project';
             }
@@ -292,15 +243,11 @@
             }
             self.hasChanges = function(recordId) {
                 var listItem = om.getListItemByRecordId(recordId);
-                return _.get(listItem, 'additions', []).length || _.get(listItem, 'deletions', []).length;
-            }
-            self.isSavable = function(ontology, recordId) {
-                return self.hasChanges(recordId) && !self.hasInvalidEntities(ontology);
+                return !!_.get(listItem, 'additions', []).length || !!_.get(listItem, 'deletions', []).length;
             }
             self.isCommittable = function(recordId) {
                 var listItem = om.getListItemByRecordId(recordId);
-                return !!_.get(listItem, 'inProgressCommit.additions', []).length || !!_.get(listItem,
-                    'inProgressCommit.deletions', []).length;
+                return !!_.get(listItem, 'inProgressCommit.additions', []).length || !!_.get(listItem, 'inProgressCommit.deletions', []).length;
             }
             self.addEntityToHierarchy = function(hierarchy, entityIRI, indexObject, parentIRI) {
                 var hierarchyItem = {entityIRI};
@@ -369,18 +316,6 @@
                     }
                 });
             }
-            function getEntities(hierarchy, entityIRI, indexObject) {
-                var results = [];
-                var pathsToEntity = self.getPathsTo(indexObject, entityIRI);
-                _.forEach(pathsToEntity, path => {
-                    var entity = _.find(hierarchy, {entityIRI: path.shift()});
-                    while (path.length > 0) {
-                        entity = _.find(entity.subEntities, {entityIRI: path.shift()});
-                    }
-                    results.push(entity);
-                });
-                return results;
-            }
             self.getPathsTo = function(indexObject, entityIRI) {
                 var result = [];
                 if (_.has(indexObject, entityIRI)) {
@@ -414,12 +349,52 @@
                     commonGoTo('project', iri);
                 }
             }
+            self.openAt = function(pathsArray) {
+                var selectedPath = _.find(pathsArray, path => {
+                    var pathString = self.listItem.recordId;
+                    return _.every(_.initial(path), pathPart => {
+                        pathString += '.' + pathPart;
+                        return self.getOpened(pathString);
+                    });
+                });
+                if (!selectedPath) {
+                    selectedPath = _.head(pathsArray);
+                    var pathString = self.listItem.recordId;
+                    _.forEach(_.initial(selectedPath), pathPart => {
+                        pathString += '.' + pathPart;
+                        self.setOpened(pathString, true);
+                    });
+                }
+                $timeout(function() {
+                    var $element = document.querySelectorAll('[data-path-to="' + self.listItem.recordId + '.'
+                        + _.join(selectedPath, '.') + '"]');
+                    var $hierarchyBlock = document.querySelectorAll('[class*=hierarchy-block] .block-content');
+                    if ($element.length && $hierarchyBlock.length) {
+                        $hierarchyBlock[0].scrollTop = $element[0].offsetTop;
+                    }
+                });
+            }
+            function getEntities(hierarchy, entityIRI, indexObject) {
+                var results = [];
+                var pathsToEntity = self.getPathsTo(indexObject, entityIRI);
+                _.forEach(pathsToEntity, path => {
+                    var entity = _.find(hierarchy, {entityIRI: path.shift()});
+                    while (path.length > 0) {
+                        entity = _.find(entity.subEntities, {entityIRI: path.shift()});
+                    }
+                    results.push(entity);
+                });
+                return results;
+            }
             function commonGoTo(key, iri, index) {
                 self.setActivePage(key);
                 self.selectItem(iri);
                 if (index) {
                     self.openAt(self.getPathsTo(self.listItem[index], iri));
                 }
+            }
+            function getOpenPath(recordId, entityIRI) {
+                return encodeURIComponent(recordId) + '.' + encodeURIComponent(entityIRI);
             }
         }
 })();

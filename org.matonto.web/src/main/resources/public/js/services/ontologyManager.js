@@ -1373,12 +1373,10 @@
                 var config = {params: {branchId, commitId, queryType}};
                 $http.get(prefix + '/' + encodeURIComponent(recordId) + '/entity-usages/' + encodeURIComponent(entityIRI), config)
                     .then(response => {
-                        if(_.get(response, 'status') === 200) {
-                            deferred.resolve(response.data.results.bindings);
-                        } else if (_.get(response, 'status') === 204) {
-                            deferred.resolve([]);
+                        if (queryType === 'construct') {
+                            deferred.resolve(response.data);
                         } else {
-                            deferred.reject();
+                            deferred.resolve(response.data.results.bindings);
                         }
                     }, response => deferred.reject(response.statusText));
                 return deferred.promise;

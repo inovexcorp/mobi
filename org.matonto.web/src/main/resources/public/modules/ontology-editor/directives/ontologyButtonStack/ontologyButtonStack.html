@@ -25,7 +25,7 @@
         <circle-button class="btn-warning" ng-click="dvm.os.showCreateBranchOverlay = true" btn-icon="'fa-code-fork'" display-text="'Create Branch'" btn-small="true"></circle-button>
         <circle-button class="btn-danger" ng-click="dvm.showDeleteOverlay = true" btn-icon="'fa-trash-o'" display-text="'Delete Saved Changes'" ng-disabled="!dvm.os.isCommittable(dvm.os.listItem.recordId)" btn-small="true"></circle-button>
         <circle-button class="btn-success" ng-click="dvm.os.showCommitOverlay = true" btn-icon="'fa-git'" display-text="'Commit Saved Changes'" ng-disabled="!dvm.os.isCommittable(dvm.os.listItem.recordId)" btn-small="true"></circle-button>
-        <circle-button class="btn-primary" ng-click="dvm.os.showSaveOverlay = true" btn-icon="'fa-floppy-o'" display-text="'Save Changes'" ng-disabled="!dvm.os.isSavable(dvm.os.listItem.ontology, dvm.os.listItem.recordId)"></circle-button>
+        <circle-button class="btn-primary" ng-click="dvm.os.showSaveOverlay = true" btn-icon="'fa-floppy-o'" display-text="'Save Changes'" ng-disabled="!dvm.os.isSavable(dvm.os.listItem.recordId)"></circle-button>
     </circle-button-stack>
     <confirmation-overlay ng-if="dvm.showDeleteOverlay" header-text="'Delete Saved Changes'" confirm-click="dvm.delete()" cancel-click="dvm.showDeleteOverlay = false" confirm-text="'Yes'" cancel-text="'No'">
         <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
