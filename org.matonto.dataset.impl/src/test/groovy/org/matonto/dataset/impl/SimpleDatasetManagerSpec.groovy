@@ -439,13 +439,17 @@ class SimpleDatasetManagerSpec extends Specification {
 
         def testRepo = Mock(Repository)
         def testConn = Mock(RepositoryConnection)
+        def testResults = Mock(RepositoryResult)
 
         // Mock Record Creation
         record.setDataset(dataset)
         def config = new DatasetRecordConfig.DatasetRecordBuilder("Test Dataset", [] as Set, "test")
                 .dataset(datasetIRI.stringValue())
                 .build()
-        1 * catalogManagerMock.createRecord(config, _ as DatasetRecordFactory) >> record
+
+        catalogManagerMock.createRecord(config, _ as DatasetRecordFactory) >> record
+        testConn.getStatements(*_) >> testResults
+        testResults.hasNext() >> false
 
         when:
         service.createDataset(config)
@@ -453,12 +457,74 @@ class SimpleDatasetManagerSpec extends Specification {
         then:
         1 * repoManagerMock.getRepository("test") >> Optional.of(testRepo)
         1 * catalogManagerMock.addRecord(localCatalog, record)
-        1 * testRepo.getConnection() >> testConn
+        2 * testRepo.getConnection() >> testConn
         1 * testConn.add(_ as Model) >> { args ->
             Model model = args[0]
             model.contains(datasetIRI, vf.createIRI(Resource.TYPE), vf.createIRI(Dataset.TYPE))
             model.contains(datasetIRI, vf.createIRI(Dataset.systemDefaultNamedGraph_IRI), null)
         }
+    }
+
+    def "createDataset creates the DatasetRecord if the dataset already exists in another repo"() {
+        setup:
+        def repo = "system"
+        def datasetIRI = vf.createIRI("http://test.com/dataset1")
+        def dataset = dsFactory.createNew(datasetIRI)
+        def recordIRI = vf.createIRI("http://test.com/record1")
+        def record = dsRecFactory.createNew(recordIRI)
+
+        // Mock Record Creation
+        record.setDataset(dataset)
+        def config = new DatasetRecordConfig.DatasetRecordBuilder("Test Dataset", [] as Set, repo)
+                .dataset(datasetIRI.stringValue())
+                .build()
+
+        catalogManagerMock.createRecord(config, _ as DatasetRecordFactory) >> record
+        resultsMock.hasNext() >>> [false, true, false]
+        resultsMock.next() >>> [
+                vf.createStatement(recordIRI, datasetPred, datasetIRI),
+                vf.createStatement(recordIRI, repoPred, vf.createLiteral("someOtherRepo"))
+        ]
+
+        when:
+        service.createDataset(config)
+
+        then:
+        1 * catalogManagerMock.addRecord(localCatalog, record)
+        1 * connMock.add(_ as Model) >> { args ->
+            Model model = args[0]
+            model.contains(datasetIRI, vf.createIRI(Resource.TYPE), vf.createIRI(Dataset.TYPE))
+            model.contains(datasetIRI, vf.createIRI(Dataset.systemDefaultNamedGraph_IRI), null)
+        }
+    }
+
+    def "createDataset throws an exception if the dataset already exists in the specified repo"() {
+        setup:
+        def repo = "system"
+        def datasetIRI = vf.createIRI("http://test.com/dataset1")
+        def dataset = dsFactory.createNew(datasetIRI)
+        def recordIRI = vf.createIRI("http://test.com/record1")
+        def record = dsRecFactory.createNew(recordIRI)
+
+        // Mock Record Creation
+        record.setDataset(dataset)
+        def config = new DatasetRecordConfig.DatasetRecordBuilder("Test Dataset", [] as Set, repo)
+                .dataset(datasetIRI.stringValue())
+                .build()
+
+        catalogManagerMock.createRecord(config, _ as DatasetRecordFactory) >> record
+        resultsMock.hasNext() >>> [true, true, false]
+        resultsMock.next() >>> [
+                vf.createStatement(recordIRI, datasetPred, datasetIRI),
+                vf.createStatement(recordIRI, repoPred, vf.createLiteral(repo))
+        ]
+
+        when:
+        service.createDataset(config)
+
+        then:
+        0 * catalogManagerMock.addRecord(localCatalog, record)
+        thrown(MatOntoException)
     }
 
     def "createDataset throws an exception if the dataset repository does not exist"() {

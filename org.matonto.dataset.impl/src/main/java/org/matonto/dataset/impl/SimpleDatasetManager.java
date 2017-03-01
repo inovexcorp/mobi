@@ -182,6 +182,12 @@ public class SimpleDatasetManager implements DatasetManager {
         IRI datasetIRI = vf.createIRI(config.getDataset());
         IRI sdgIRI = vf.createIRI(config.getDataset() + SYSTEM_DEFAULT_NG_SUFFIX);
 
+        try (RepositoryConnection conn = dsRepo.getConnection()) {
+            if (conn.getStatements(datasetIRI, null, null).hasNext()) {
+                throw new MatOntoException("The dataset already exists in the specified repository.");
+            }
+        }
+
         Dataset dataset = dsFactory.createNew(datasetIRI);
         dataset.setSystemDefaultNamedGraph(sdgIRI);
 
@@ -254,6 +260,14 @@ public class SimpleDatasetManager implements DatasetManager {
         }
     }
 
+    /**
+     * Returns the DatasetRecord Resource associated with this dataset/repository combination if it exists.
+     *
+     * @param dataset The Dataset to search for
+     * @param repositoryId The Repository in which to search
+     * @return Optional of the DatasetRecord Resource if it exists, links to the specified dataset, and is associated
+     * with the correct dataset repository; otherwise, Optional.empty().
+     */
     private Optional<Resource> getRecordResource(Resource dataset, String repositoryId) {
         try (RepositoryConnection conn = systemRepository.getConnection()) {
             RepositoryResult<Statement> recordStmts =
