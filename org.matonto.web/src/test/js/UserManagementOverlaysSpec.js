@@ -23,11 +23,11 @@
 describe('User Management Overlays directive', function() {
     var $compile,
         scope,
-        userManagerSvc,
-        userStateSvc,
         $q,
-        $timeout,
-        controller;
+        element,
+        controller,
+        userManagerSvc,
+        userStateSvc;
 
     beforeEach(function() {
         module('templates');
@@ -35,22 +35,20 @@ describe('User Management Overlays directive', function() {
         mockUserState();
         mockUserManager();
 
-        inject(function(_userManagerService_, _userStateService_, _$timeout_, _$q_, _$compile_, _$rootScope_) {
-            userManagerSvc = _userManagerService_;
-            userStateSvc = _userStateService_;
-            $q = _$q_;
-            $timeout = _$timeout_;
+        inject(function(_$compile_, _$rootScope_, _$q_, _userManagerService_, _userStateService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            $q = _$q_;
+            userManagerSvc = _userManagerService_;
+            userStateSvc = _userStateService_;
         });
+
+        element = $compile(angular.element('<user-management-overlays></user-management-overlays>'))(scope);
+        scope.$digest();
+        controller = element.controller('userManagementOverlays');
     });
 
     describe('controller methods', function() {
-        beforeEach(function() {
-            this.element = $compile(angular.element('<user-management-overlays></user-management-overlays>'))(scope);
-            scope.$digest();
-            controller = this.element.controller('userManagementOverlays');
-        });
         describe('should delete a group', function() {
             beforeEach(function() {
                 userStateSvc.displayDeleteGroupConfirm = true;
@@ -59,7 +57,7 @@ describe('User Management Overlays directive', function() {
             it('unless an error occurs', function() {
                 userManagerSvc.deleteGroup.and.returnValue($q.reject('Error message'));
                 controller.deleteGroup();
-                $timeout.flush();
+                scope.$apply();
                 expect(userManagerSvc.deleteGroup).toHaveBeenCalledWith(this.group.title);
                 expect(controller.errorMessage).toBe('Error message');
                 expect(userStateSvc.displayDeleteGroupConfirm).toBe(true);
@@ -67,7 +65,7 @@ describe('User Management Overlays directive', function() {
             });
             it('successfully', function() {
                 controller.deleteGroup();
-                $timeout.flush();
+                scope.$apply();
                 expect(userManagerSvc.deleteGroup).toHaveBeenCalledWith(this.group.title);
                 expect(controller.errorMessage).toBe('');
                 expect(userStateSvc.displayDeleteGroupConfirm).toBe(false);
@@ -82,7 +80,7 @@ describe('User Management Overlays directive', function() {
             it('unless an error occurs', function() {
                 userManagerSvc.deleteUser.and.returnValue($q.reject('Error message'));
                 controller.deleteUser();
-                $timeout.flush();
+                scope.$apply();
                 expect(userManagerSvc.deleteUser).toHaveBeenCalledWith(this.user.username);
                 expect(controller.errorMessage).toBe('Error message');
                 expect(userStateSvc.displayDeleteUserConfirm).toBe(true);
@@ -90,7 +88,7 @@ describe('User Management Overlays directive', function() {
             });
             it('successfully', function() {
                 controller.deleteUser();
-                $timeout.flush();
+                scope.$apply();
                 expect(userManagerSvc.deleteUser).toHaveBeenCalledWith(this.user.username);
                 expect(controller.errorMessage).toBe('');
                 expect(userStateSvc.displayDeleteUserConfirm).toBe(false);
@@ -106,13 +104,13 @@ describe('User Management Overlays directive', function() {
             it('unless an error occurs', function() {
                 userManagerSvc.deleteUserGroup.and.returnValue($q.reject('Error message'));
                 controller.removeMember();
-                $timeout.flush();
+                scope.$apply();
                 expect(userManagerSvc.deleteUserGroup).toHaveBeenCalledWith(this.memberName, this.group.title);
                 expect(controller.errorMessage).toBe('Error message');
             });
             it('unless an error occurs', function() {
                 controller.removeMember();
-                $timeout.flush();
+                scope.$apply();
                 expect(userManagerSvc.deleteUserGroup).toHaveBeenCalledWith(this.memberName, this.group.title);
                 expect(controller.errorMessage).toBe('');
                 expect(userStateSvc.memberName).toBe('');
@@ -122,107 +120,102 @@ describe('User Management Overlays directive', function() {
         })
     });
     describe('contains the correct html', function() {
-        beforeEach(function() {
-            this.element = $compile(angular.element('<user-management-overlays></user-management-overlays>'))(scope);
-            scope.$digest();
-        });
         it('depending on whether a user is being created', function() {
             userStateSvc.displayCreateUserOverlay = true;
             scope.$digest();
-            expect(this.element.find('create-user-overlays').length).toBe(1);
+            expect(element.find('create-user-overlays').length).toBe(1);
 
             userStateSvc.displayCreateUserOverlay = false;
             scope.$digest();
-            expect(this.element.find('create-user-overlays').length).toBe(0);
+            expect(element.find('create-user-overlays').length).toBe(0);
         });
         it('depending on whether a group is being created', function() {
             userStateSvc.displayCreateGroupOverlay = true;
             scope.$digest();
-            expect(this.element.find('create-group-overlay').length).toBe(1);
+            expect(element.find('create-group-overlay').length).toBe(1);
 
             userStateSvc.displayCreateGroupOverlay = false;
             scope.$digest();
-            expect(this.element.find('create-group-overlay').length).toBe(0);
+            expect(element.find('create-group-overlay').length).toBe(0);
         });
-        it('depending on whether a password is being changed', function() {
-            userStateSvc.displayChangePasswordOverlay = true;
+        it('depending on whether a password is being reset', function() {
+            userStateSvc.displayResetPasswordOverlay = true;
             scope.$digest();
-            expect(this.element.find('change-password-overlay').length).toBe(1);
+            expect(element.find('reset-password-overlay').length).toBe(1);
 
-            userStateSvc.displayChangePasswordOverlay = false;
+            userStateSvc.displayResetPasswordOverlay = false;
             scope.$digest();
-            expect(this.element.find('change-password-overlay').length).toBe(0);
+            expect(element.find('reset-password-overlay').length).toBe(0);
         });
         it('depending on whether a user profile is being edited', function() {
             userStateSvc.displayEditUserProfileOverlay = true;
             scope.$digest();
-            expect(this.element.find('edit-user-profile-overlay').length).toBe(1);
+            expect(element.find('edit-user-profile-overlay').length).toBe(1);
 
             userStateSvc.displayEditUserProfileOverlay = false;
             scope.$digest();
-            expect(this.element.find('edit-user-profile-overlay').length).toBe(0);
+            expect(element.find('edit-user-profile-overlay').length).toBe(0);
         });
         it('depending on whether group information is being edited', function() {
             userStateSvc.displayEditGroupInfoOverlay = true;
             scope.$digest();
-            expect(this.element.find('edit-group-info-overlay').length).toBe(1);
+            expect(element.find('edit-group-info-overlay').length).toBe(1);
 
             userStateSvc.displayEditGroupInfoOverlay = false;
             scope.$digest();
-            expect(this.element.find('edit-group-info-overlay').length).toBe(0);
+            expect(element.find('edit-group-info-overlay').length).toBe(0);
         });
         it('depending on whether deleting an user should be confirmed', function() {
             userStateSvc.displayDeleteUserConfirm = true;
             scope.$digest();
-            var overlay = this.element.find('confirmation-overlay');
+            var overlay = element.find('confirmation-overlay');
             expect(overlay.length).toBe(1);
             expect(overlay.hasClass('delete-user-confirm')).toBe(true);
 
             userStateSvc.displayDeleteUserConfirm = false;
             scope.$digest();
-            expect(this.element.find('confirmation-overlay').length).toBe(0);
+            expect(element.find('confirmation-overlay').length).toBe(0);
         });
         it('depending on whether deleting a group should be confirmed', function() {
             userStateSvc.displayDeleteGroupConfirm = true;
             scope.$digest();
-            var overlay = this.element.find('confirmation-overlay');
+            var overlay = element.find('confirmation-overlay');
             expect(overlay.length).toBe(1);
             expect(overlay.hasClass('delete-group-confirm')).toBe(true);
 
             userStateSvc.displayDeleteGroupConfirm = false;
             scope.$digest();
-            expect(this.element.find('confirmation-overlay').length).toBe(0);
+            expect(element.find('confirmation-overlay').length).toBe(0);
         });
         it('depending on whether removing a group member should be confirmed', function() {
             userStateSvc.displayRemoveMemberConfirm = true;
             scope.$digest();
-            var overlay = this.element.find('confirmation-overlay');
+            var overlay = element.find('confirmation-overlay');
             expect(overlay.length).toBe(1);
             expect(overlay.hasClass('remove-member-confirm')).toBe(true);
 
             userStateSvc.displayRemoveMemberConfirm = false;
             scope.$digest();
-            expect(this.element.find('confirmation-overlay').length).toBe(0);
+            expect(element.find('confirmation-overlay').length).toBe(0);
         });
         describe('depending on whether an error occured', function() {
             beforeEach(function() {
-                controller = this.element.controller('userManagementOverlays');
                 controller.errorMessage = 'Error message';
             })
             it('when deleting a user', function() {
                 userStateSvc.displayDeleteUserConfirm = true;
                 scope.$digest();
-                expect(this.element.find('error-display').length).toBe(1);
+                expect(element.find('error-display').length).toBe(1);
             });
             it('when deleting a group', function() {
                 userStateSvc.displayDeleteGroupConfirm = true;
                 scope.$digest();
-                expect(this.element.find('error-display').length).toBe(1);
+                expect(element.find('error-display').length).toBe(1);
             });
             it('when removing a group member', function() {
                 userStateSvc.displayRemoveMemberConfirm = true;
                 scope.$digest();
-                expect(this.element.find('error-display').length).toBe(1);
+                expect(element.find('error-display').length).toBe(1);
             });
         });
     });
