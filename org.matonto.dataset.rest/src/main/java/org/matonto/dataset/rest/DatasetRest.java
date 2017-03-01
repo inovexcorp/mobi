@@ -51,7 +51,7 @@ public interface DatasetRest {
      */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed("users")
+    @RolesAllowed("user")
     @ApiOperation("Retrieves all DatasetRecords in the local Catalog")
     Response getDatasets();
 

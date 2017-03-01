@@ -27,6 +27,7 @@ package org.matonto.dataset.rest.impl;
 import static org.matonto.rest.util.RestUtils.getActiveUser;
 import static org.matonto.rest.util.RestUtils.modelToJsonld;
 
+import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -49,6 +50,7 @@ import java.util.stream.Collectors;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Response;
 
+@Component(immediate = true)
 public class DatasetRestImpl implements DatasetRest {
     private DatasetManager manager;
     private EngineManager engineManager;
