@@ -87,12 +87,28 @@ public interface DatasetManager {
     void deleteDataset(Resource dataset, String repositoryId);
 
     /**
+     * Deletes the DatasetRecord, Dataset, and data graphs associated with the DatasetRecord Resource. Note: This method
+     * removes all graphs from the specified dataset even if they are associated with other datasets.
+     *
+     * @param record The Resource of the DatasetRecord to be removed along with associated Dataset and data.
+     */
+    void deleteDataset(Resource record);
+
+    /**
      * Deletes the DatasetRecord, Dataset, and data graphs associated with the Dataset Resource. Note: This method
      * removes all graphs from the specified dataset if and only if they are not associated with other datasets.
      *
      * @param dataset The Dataset Resource to be removed along with associated DatasetRecord and data.
      */
     void safeDeleteDataset(Resource dataset, String repositoryId);
+
+    /**
+     * Deletes the DatasetRecord, Dataset, and data graphs associated with the DatasetRecord Resource. Note: This method
+     * removes all graphs from the specified dataset if and only if they are not associated with other datasets.
+     *
+     * @param record The Resource of DatasetRecord to be removed along with associated Dataset and data.
+     */
+    void safeDeleteDataset(Resource record);
 
     /**
      * Removes all data associated with the Dataset Resource. DatasetRecord and Dataset are not removed. Note:
@@ -103,6 +119,14 @@ public interface DatasetManager {
     void clearDataset(Resource dataset, String repositoryId);
 
     /**
+     * Removes all data associated with the Dataset of the DatasetRecord Resource. DatasetRecord and Dataset are not
+     * removed. Note: This method removes all graphs from the specified dataset even if they are associated with other datasets.
+     *
+     * @param record The Resource of the DatasetRecord to be cleared.
+     */
+    void clearDataset(Resource record);
+
+    /**
      * Removes all data associated with the Dataset Resource. DatasetRecord and Dataset are not removed. Note:
      * This method removes all graphs from the specified dataset if and only if they are not associated with other
      * datasets.
@@ -110,4 +134,13 @@ public interface DatasetManager {
      * @param dataset The Dataset Resource to be cleared.
      */
     void safeClearDataset(Resource dataset, String repositoryId);
+
+    /**
+     * Removes all data associated with the Dataset of the DatasetRecord Resource. DatasetRecord and Dataset are not
+     * removed. Note: This method removes all graphs from the specified dataset if and only if they are not associated with other
+     * datasets.
+     *
+     * @param record The Resource of the DatasetRecord to be cleared.
+     */
+    void safeClearDataset(Resource record);
 }
