@@ -43,7 +43,7 @@
                     dvm.om = ontologyManagerService;
                     dvm.sm = ontologyStateService;
                     dvm.schemes = [];
-                    dvm.prefix = _.get(dvm.sm.listItem, 'iriBegin', dvm.sm.listItem.ontologyId)
+                    dvm.prefix = _.replace(_.get(dvm.sm.listItem, 'iriBegin', dvm.sm.listItem.ontologyId), '#', '/')
                         + _.get(dvm.sm.listItem, 'iriThen', '#');
                     dvm.concept = {
                         '@id': dvm.prefix,

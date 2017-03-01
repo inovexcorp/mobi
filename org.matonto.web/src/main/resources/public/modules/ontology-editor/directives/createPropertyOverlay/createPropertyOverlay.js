@@ -47,9 +47,8 @@
                     dvm.om = ontologyManagerService;
                     dvm.sm = ontologyStateService;
 
-                    dvm.prefix = _.get(dvm.om.getListItemByRecordId(dvm.sm.listItem.recordId), 'iriBegin',
-                        dvm.sm.listItem.ontologyId) + _.get(dvm.om.getListItemByRecordId(dvm.sm.listItem.recordId),
-                        'iriThen', '#');
+                    dvm.prefix = _.replace(_.get(dvm.sm.listItem, 'iriBegin', dvm.sm.listItem.ontologyId), '#', '/')
+                        + _.get(dvm.sm.listItem, 'iriThen', '#');
 
                     dvm.property = {
                         '@id': dvm.prefix,

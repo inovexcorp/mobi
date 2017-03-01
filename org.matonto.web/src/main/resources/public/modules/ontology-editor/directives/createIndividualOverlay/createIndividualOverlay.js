@@ -44,8 +44,8 @@
                     dvm.om = ontologyManagerService;
                     dvm.sm = ontologyStateService;
 
-                    dvm.prefix = _.get(dvm.sm.listItem, 'iriBegin', dvm.sm.listItem.ontologyId) + _.get(dvm.sm.listItem,
-                        'iriThen', '#');
+                    dvm.prefix = _.replace(_.get(dvm.sm.listItem, 'iriBegin', dvm.sm.listItem.ontologyId), '#', '/')
+                        + _.get(dvm.sm.listItem, 'iriThen', '#');
 
                     dvm.individual = {
                         '@id': dvm.prefix,

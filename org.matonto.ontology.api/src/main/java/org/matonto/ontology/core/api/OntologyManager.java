@@ -52,7 +52,7 @@ public interface OntologyManager {
      * @return an Ontology with the desired recordId.
      * @throws MatontoOntologyCreationException - if the ontology can't be created.
      */
-    Ontology createOntology(OntologyId ontologyId) throws MatontoOntologyCreationException;
+    Ontology createOntology(OntologyId ontologyId);
 
     /**
      * Creates a new Ontology Object using the provided File.
@@ -60,8 +60,9 @@ public interface OntologyManager {
      * @param file the File that contains the data to make up the Ontology.
      * @return an Ontology created with the provided File.
      * @throws MatontoOntologyCreationException - if the ontology can't be created.
+     * @throws FileNotFoundException - if the file path is invalid.
      */
-    Ontology createOntology(File file) throws MatontoOntologyCreationException, FileNotFoundException;
+    Ontology createOntology(File file) throws FileNotFoundException;
 
     /**
      * Creates a new Ontology Object using the provided IRI.
@@ -70,7 +71,7 @@ public interface OntologyManager {
      * @return an Ontology resolved from the provided IRI.
      * @throws MatontoOntologyCreationException - if the ontology can't be created.
      */
-    Ontology createOntology(IRI iri) throws MatontoOntologyCreationException;
+    Ontology createOntology(IRI iri);
 
     /**
      * Creates a new Ontology Object using the provided InputStream.
@@ -79,7 +80,7 @@ public interface OntologyManager {
      * @return an Ontology created with the provided InputStream.
      * @throws MatontoOntologyCreationException - if the ontology can't be created.
      */
-    Ontology createOntology(InputStream inputStream) throws MatontoOntologyCreationException;
+    Ontology createOntology(InputStream inputStream);
 
     /**
      * Creates a new Ontology Object using the provided JSON-LD String.
@@ -88,7 +89,7 @@ public interface OntologyManager {
      * @return an Ontology created with the provided JSON-LD String.
      * @throws MatontoOntologyCreationException - if the ontology can't be created.
      */
-    Ontology createOntology(String json) throws MatontoOntologyCreationException;
+    Ontology createOntology(String json);
 
     /**
      * Creates a new Ontology Object using the provided Model.
@@ -97,7 +98,7 @@ public interface OntologyManager {
      * @return an Ontology created with the provided Model.
      * @throws MatontoOntologyCreationException - if the ontology can't be created.
      */
-    Ontology createOntology(Model model) throws MatontoOntologyCreationException;
+    Ontology createOntology(Model model);
 
     /**
      * Retrieves an Ontology using a record id and the head commit of its MASTER branch. Returns an Optional with
@@ -107,8 +108,10 @@ public interface OntologyManager {
      * @param recordId the record id for the OntologyRecord you want to retrieve.
      * @return an Optional with Ontology if record id is found, or an empty Optional instance if not found.
      * @throws MatontoOntologyCreationException - the ontology can't be created.
+     * @throws IllegalArgumentException - the ontology's master branch, head commit, or compiled resource can't be
+     *                                    retrieved.
      */
-    Optional<Ontology> retrieveOntology(@Nonnull Resource recordId) throws MatontoOntologyCreationException;
+    Optional<Ontology> retrieveOntology(@Nonnull Resource recordId);
 
     /**
      * Retrieves an Ontology using a record id and the head commit of a Branch identified by the provided branch id.
@@ -119,9 +122,10 @@ public interface OntologyManager {
      * @param branchId the branch id for the Branch you want to retrieve.
      * @return an Optional with Ontology if record id is found, or an empty Optional instance if not found.
      * @throws MatontoOntologyCreationException - the ontology can't be created.
+     * @throws IllegalArgumentException - the ontology's identified branch, head commit, or compiled resource can't be
+     *                                    retrieved.
      */
-    Optional<Ontology> retrieveOntology(@Nonnull Resource recordId, @Nonnull Resource branchId) throws
-            MatontoOntologyCreationException;
+    Optional<Ontology> retrieveOntology(@Nonnull Resource recordId, @Nonnull Resource branchId);
 
     /**
      * Retrieves an Ontology using an record id, a branch id, and the id of a commit on that branch from the
@@ -133,15 +137,18 @@ public interface OntologyManager {
      * @param commitId the commit id for the Commit you want to retrieve.
      * @return an Optional with Ontology if record id is found, or an empty Optional instance if not found.
      * @throws MatontoOntologyCreationException - the ontology can't be created.
+     * @throws IllegalArgumentException - the ontology's identified branch, identified commit, or compiled resource
+     *                                    can't be retrieved.
      */
     Optional<Ontology> retrieveOntology(@Nonnull Resource recordId, @Nonnull Resource branchId,
-                                        @Nonnull Resource commitId) throws MatontoOntologyCreationException;
+                                        @Nonnull Resource commitId);
 
     /**
      * Deletes the OntologyRecord and all associated Catalog elements with the given recordId, and returns true if
      * successfully removed.
      *
      * @param recordId the record id for the OntologyRecord you want to delete.
+     * @throws IllegalArgumentException - the OntologyRecord can't be retrieved.
      */
     void deleteOntology(@Nonnull Resource recordId);
 

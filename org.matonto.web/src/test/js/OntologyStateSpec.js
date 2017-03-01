@@ -286,11 +286,10 @@ describe('Ontology State service', function() {
 
     it('setNoDomainsOpened sets the correct property on the state object', function() {
         var path = 'this.is.the.path';
-        ontologyStateSvc.setNoDomainsOpened(path, true);
-        expect(_.get(ontologyStateSvc.state, encodeURIComponent(path) + '.noDomainsOpened')).toBe(true);
-
-        ontologyStateSvc.setNoDomainsOpened(path, false);
-        expect(_.get(ontologyStateSvc.state, encodeURIComponent(path) + '.noDomainsOpened')).toBe(false);
+        _.forEach([true, false], function(value) {
+            ontologyStateSvc.setNoDomainsOpened(path, value);
+            expect(_.get(ontologyStateSvc.state, encodeURIComponent(path) + '.noDomainsOpened')).toBe(value);
+        });
     });
 
     describe('getNoDomainsOpened gets the correct property value on the state object', function() {
@@ -310,11 +309,10 @@ describe('Ontology State service', function() {
     it('setIndividualsOpened sets the correct property on the state object', function() {
         var path = 'this.is.the';
         var path2 = 'path';
-        ontologyStateSvc.setIndividualsOpened(path, path2, true);
-        expect(_.get(ontologyStateSvc.state, encodeURIComponent(path) + '.' + encodeURIComponent(path2) + '.individualsOpened')).toBe(true);
-
-        ontologyStateSvc.setIndividualsOpened(path, path2, false);
-        expect(_.get(ontologyStateSvc.state, encodeURIComponent(path) + '.' + encodeURIComponent(path2) + '.individualsOpened')).toBe(false);
+        _.forEach([true, false], function(value) {
+            ontologyStateSvc.setIndividualsOpened(path, path2, value);
+            expect(_.get(ontologyStateSvc.state, encodeURIComponent(path) + '.' + encodeURIComponent(path2) + '.individualsOpened')).toBe(value);
+        });
     });
 
     describe('getIndividualsOpened gets the correct property value on the state object', function() {
@@ -335,11 +333,10 @@ describe('Ontology State service', function() {
 
     it('setDataPropertiesOpened sets the correct property on the state object', function() {
         var path = 'this.is.the.path';
-        ontologyStateSvc.setDataPropertiesOpened(path, true);
-        expect(_.get(ontologyStateSvc.state, encodeURIComponent(path) + '.dataPropertiesOpened')).toBe(true);
-
-        ontologyStateSvc.setDataPropertiesOpened(path, false);
-        expect(_.get(ontologyStateSvc.state, encodeURIComponent(path) + '.dataPropertiesOpened')).toBe(false);
+        _.forEach([true, false], function(value) {
+            ontologyStateSvc.setDataPropertiesOpened(path, value);
+            expect(_.get(ontologyStateSvc.state, encodeURIComponent(path) + '.dataPropertiesOpened')).toBe(value);
+        });
     });
 
     describe('getDataPropertiesOpened gets the correct property value on the state object', function() {
@@ -358,11 +355,10 @@ describe('Ontology State service', function() {
 
     it('setObjectPropertiesOpened sets the correct property on the state object', function() {
         var path = 'this.is.the.path';
-        ontologyStateSvc.setObjectPropertiesOpened(path, true);
-        expect(_.get(ontologyStateSvc.state, encodeURIComponent(path) + '.objectPropertiesOpened')).toBe(true);
-
-        ontologyStateSvc.setObjectPropertiesOpened(path, false);
-        expect(_.get(ontologyStateSvc.state, encodeURIComponent(path) + '.objectPropertiesOpened')).toBe(false);
+        _.forEach([true, false], function(value) {
+            ontologyStateSvc.setObjectPropertiesOpened(path, value);
+            expect(_.get(ontologyStateSvc.state, encodeURIComponent(path) + '.objectPropertiesOpened')).toBe(value);
+        });
     });
 
     describe('getObjectPropertiesOpened gets the correct property value on the state object', function() {
@@ -415,7 +411,7 @@ describe('Ontology State service', function() {
                 ontologyStateSvc.onEdit(iriBegin, iriThen, iriEnd);
                 expect(ontologyStateSvc.setCommonIriParts).not.toHaveBeenCalled();
             });
-            it('project', function() {
+            it('not project', function() {
                 spyOn(ontologyStateSvc, 'getActiveKey').and.returnValue('other');
                 spyOn(ontologyStateSvc, 'setCommonIriParts');
                 ontologyStateSvc.onEdit(iriBegin, iriThen, iriEnd);
