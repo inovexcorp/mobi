@@ -26,7 +26,6 @@
     angular
         .module('user-management', [
             /* Custom directives */
-            'changePasswordOverlay',
             'createGroupOverlay',
             'createUserOverlays',
             'editGroupInfoOverlay',
@@ -35,6 +34,7 @@
             'groupsPage',
             'memberTable',
             'permissionsInput',
+            'resetPasswordOverlay',
             'userManagementOverlays',
             'userManagementTabset',
             'usersList',

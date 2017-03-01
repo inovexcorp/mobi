@@ -49,7 +49,6 @@
          * @param {string} password the value to bind to the first password input
          * @param {string} [confirmedPassword=undefined] the value to bind to the second password input
          * @param {string} label the label for the first password input
-         * @param {boolean} [required=false] whether or not the inputs should be required
          */
         .directive('passwordConfirmInput', passwordConfirmInput)
         /**
@@ -89,12 +88,11 @@
                 scope: {
                     password: '=',
                     confirmedPassword: '=?',
-                    label: '<',
-                    required: '<?'
+                    label: '<'
                 },
                 link: function(scope, el, attrs, form) {
                     scope.form = form;
-                    scope.required = angular.isDefined(scope.required) ? scope.required : false;
+                    scope.required = attrs.hasOwnProperty('required');
                 },
                 controller: function() {
                     var dvm = this;

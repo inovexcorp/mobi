@@ -36,20 +36,37 @@ import java.util.Set;
 public interface DatasetManager {
 
     /**
-     * Retrieve the Resource for every Dataset in the local catalog. Note: This does not return the DatasetRecord
-     * Resource.
+     * Retrieve the Resource for every Dataset in the specified Repository as defined in the local catalog. Note: This
+     * method returns the Dataset Resource, not return the DatasetRecord Resource.
      *
-     * @return The Set of Resources for all the Dataset in the local catalog.
+     * @param repositoryId The Repository containing the desired datasets.
+     * @return The Set of Resources for all the Datasets in the specified Repository as defined in the local catalog.
      */
-    Set<Resource> listDatasets();
+    Set<Resource> getDatasets(String repositoryId);
 
     /**
-     * Retrieves the DatasetRecord for a dataset in the local catalog.
+     * Retrieves the DatasetRecords for all datasets in the local catalog.
+     *
+     * @return The DatasetRecords for all datasets in the local catalog. DatasetRecord includes empty Dataset object.
+     */
+    Set<DatasetRecord> getDatasetRecords();
+
+    /**
+     * Retrieves the DatasetRecord for a dataset in the specified repository.
      *
      * @param dataset The Resource described by the DatasetRecord in the local catalog.
+     * @param repositoryId  The Repository containing the specified dataset.
      * @return The DatasetRecord from the local catalog. DatasetRecord includes empty Dataset object.
      */
-    Optional<DatasetRecord> getDatasetRecord(Resource dataset);
+    Optional<DatasetRecord> getDatasetRecord(Resource dataset, String repositoryId);
+
+    /**
+     * Retrieves the DatasetRecord for a dataset described by the specified DatasetRecord Resource.
+     *
+     * @param record The Resource of the DatasetRecord.
+     * @return The DatasetRecord from the local catalog. DatasetRecord includes empty Dataset object.
+     */
+    Optional<DatasetRecord> getDatasetRecord(Resource record);
 
     /**
      * Creates a dataset according to the specified configuration. Initial dataset structure is created in the specified
@@ -58,6 +75,8 @@ public interface DatasetManager {
      * @param config The DatasetRecordConfig describing the details of the dataset to create.
      * @return The DatasetRecord that has been created in the local catalog. DatasetRecord includes empty Dataset
      * object.
+     * @throws IllegalArgumentException if the target dataset repository does not exist.
+     * @throws IllegalStateException if the target dataset already exists in the target repository.
      */
     DatasetRecord createDataset(DatasetRecordConfig config);
 
@@ -66,24 +85,54 @@ public interface DatasetManager {
      * removes all graphs from the specified dataset even if they are associated with other datasets.
      *
      * @param dataset The Dataset Resource to be removed along with associated DatasetRecord and data.
+     * @throws IllegalArgumentException if the DatasetRecord could not be found in the catalog.
      */
-    void deleteDataset(Resource dataset);
+    void deleteDataset(Resource dataset, String repositoryId);
+
+    /**
+     * Deletes the DatasetRecord, Dataset, and data graphs associated with the DatasetRecord Resource. Note: This method
+     * removes all graphs from the specified dataset even if they are associated with other datasets.
+     *
+     * @param record The Resource of the DatasetRecord to be removed along with associated Dataset and data.
+     * @throws IllegalArgumentException if the DatasetRecord could not be found in the catalog.
+     */
+    void deleteDataset(Resource record);
 
     /**
      * Deletes the DatasetRecord, Dataset, and data graphs associated with the Dataset Resource. Note: This method
      * removes all graphs from the specified dataset if and only if they are not associated with other datasets.
      *
      * @param dataset The Dataset Resource to be removed along with associated DatasetRecord and data.
+     * @throws IllegalArgumentException if the DatasetRecord could not be found in the catalog.
      */
-    void safeDeleteDataset(Resource dataset);
+    void safeDeleteDataset(Resource dataset, String repositoryId);
+
+    /**
+     * Deletes the DatasetRecord, Dataset, and data graphs associated with the DatasetRecord Resource. Note: This method
+     * removes all graphs from the specified dataset if and only if they are not associated with other datasets.
+     *
+     * @param record The Resource of DatasetRecord to be removed along with associated Dataset and data.
+     * @throws IllegalArgumentException if the DatasetRecord could not be found in the catalog.
+     */
+    void safeDeleteDataset(Resource record);
 
     /**
      * Removes all data associated with the Dataset Resource. DatasetRecord and Dataset are not removed. Note:
      * This method removes all graphs from the specified dataset even if they are associated with other datasets.
      *
      * @param dataset The Dataset Resource to be cleared.
+     * @throws IllegalArgumentException if the DatasetRecord could not be found in the catalog.
      */
-    void clearDataset(Resource dataset);
+    void clearDataset(Resource dataset, String repositoryId);
+
+    /**
+     * Removes all data associated with the Dataset of the DatasetRecord Resource. DatasetRecord and Dataset are not
+     * removed. Note: This method removes all graphs from the specified dataset even if they are associated with other datasets.
+     *
+     * @param record The Resource of the DatasetRecord to be cleared.
+     * @throws IllegalArgumentException if the DatasetRecord could not be found in the catalog.
+     */
+    void clearDataset(Resource record);
 
     /**
      * Removes all data associated with the Dataset Resource. DatasetRecord and Dataset are not removed. Note:
@@ -91,6 +140,17 @@ public interface DatasetManager {
      * datasets.
      *
      * @param dataset The Dataset Resource to be cleared.
+     * @throws IllegalArgumentException if the DatasetRecord could not be found in the catalog.
      */
-    void safeClearDataset(Resource dataset);
+    void safeClearDataset(Resource dataset, String repositoryId);
+
+    /**
+     * Removes all data associated with the Dataset of the DatasetRecord Resource. DatasetRecord and Dataset are not
+     * removed. Note: This method removes all graphs from the specified dataset if and only if they are not associated with other
+     * datasets.
+     *
+     * @param record The Resource of the DatasetRecord to be cleared.
+     * @throws IllegalArgumentException if the DatasetRecord could not be found in the catalog.
+     */
+    void safeClearDataset(Resource record);
 }

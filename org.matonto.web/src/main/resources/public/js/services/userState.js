@@ -91,7 +91,7 @@
              * `showGroups` holds a boolean indicating whether the
              * {@link groupsPage.directive:groupsPage groups page} should be shown.
              */
-            self.showGroups = true;
+            self.showGroups = false;
             /**
              * @ngdoc property
              * @name userState.service:userStateService#showUsers
@@ -102,7 +102,7 @@
              * `showUsers` holds a boolean indicating whether the
              * {@link usersPage.directive:usersPage users page} should be shown.
              */
-            self.showUsers = false;
+            self.showUsers = true;
             /**
              * @ngdoc property
              * @name userState.service:userStateService#selectedGroup
@@ -182,15 +182,15 @@
             self.displayCreateGroupOverlay = false;
             /**
              * @ngdoc property
-             * @name userState.service:userStateService#displayChangePasswordOverlay
+             * @name userState.service:userStateService#displayResetPasswordOverlay
              * @propertyOf userState.service:userStateService
              * @type {boolean}
              *
              * @description
-             * `displayChangePasswordOverlay` holds a boolean indicating whether or not the
-             * {@link changePasswordOverlay.directive:changePasswordOverlay Change Password Overlay} should be shown.
+             * `displayResetPasswordOverlay` holds a boolean indicating whether or not the
+             * {@link resetPasswordOverlay.directive:resetPasswordOverlay Reset Password Overlay} should be shown.
              */
-            self.displayChangePasswordOverlay = false;
+            self.displayResetPasswordOverlay = false;
             /**
              * @ngdoc property
              * @name userState.service:userStateService#displayEditProfileOverlay

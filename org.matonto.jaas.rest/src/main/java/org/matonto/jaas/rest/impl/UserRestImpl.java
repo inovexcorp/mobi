@@ -139,26 +139,33 @@ public class UserRestImpl implements UserRest {
     }
 
     @Override
-    public Response updatePassword(ContainerRequestContext context, String username, String currentPassword,
+    public Response changePassword(ContainerRequestContext context, String username, String currentPassword,
                                    String newPassword) {
-        if (username == null || currentPassword == null) {
-            throw ErrorUtils.sendError("Both current username and current password must be provided",
-                    Response.Status.BAD_REQUEST);
+        if (username == null) {
+            throw ErrorUtils.sendError("Current username must be provided", Response.Status.BAD_REQUEST);
+        }
+        checkCurrentUser(getActiveUsername(context), username);
+        if (currentPassword == null) {
+            throw ErrorUtils.sendError("Current password must be provided", Response.Status.BAD_REQUEST);
+        }
+        if (!engineManager.checkPassword(RdfEngine.COMPONENT_NAME, username, currentPassword)) {
+            throw ErrorUtils.sendError("Invalid password", Response.Status.UNAUTHORIZED);
         }
         if (newPassword == null) {
             throw ErrorUtils.sendError("New password must be provided", Response.Status.BAD_REQUEST);
         }
-        isAuthorizedUser(context, username);
-        if (!engineManager.checkPassword(RdfEngine.COMPONENT_NAME, username, currentPassword)) {
-            throw ErrorUtils.sendError("Invalid password", Response.Status.UNAUTHORIZED);
+        return changePassword(username, newPassword);
+    }
+
+    @Override
+    public Response resetPassword(ContainerRequestContext context, String username, String newPassword) {
+        if (username == null) {
+            throw ErrorUtils.sendError("Current username must be provided", Response.Status.BAD_REQUEST);
         }
-        User savedUser = engineManager.retrieveUser(RdfEngine.COMPONENT_NAME, username).orElseThrow(() ->
-                ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
-        User tempUser = engineManager.createUser(RdfEngine.COMPONENT_NAME,
-                new UserConfig.Builder("", newPassword, new HashSet<>()).build());
-        savedUser.setPassword(tempUser.getPassword().get());
-        engineManager.updateUser(RdfEngine.COMPONENT_NAME, savedUser);
-        return Response.ok().build();
+        if (newPassword == null) {
+            throw ErrorUtils.sendError("New password must be provided", Response.Status.BAD_REQUEST);
+        }
+        return changePassword(username, newPassword);
     }
 
     @Override
@@ -293,11 +300,51 @@ public class UserRestImpl implements UserRest {
         if (!engineManager.userExists(activeUsername)) {
             throw ErrorUtils.sendError("User not found", Response.Status.FORBIDDEN);
         }
-        boolean isAdmin = engineManager.getUserRoles(activeUsername).stream()
-                .map(Thing::getResource)
-                .anyMatch(resource -> resource.stringValue().contains("admin"));
-        if (!username.equals(activeUsername) && !isAdmin) {
+        if (!isAdminUser(activeUsername) && !activeUsername.equals(username)) {
             throw ErrorUtils.sendError("Not authorized to make this request", Response.Status.FORBIDDEN);
         }
+    }
+
+    /**
+     * Determines whether or not the User with the passed username is an admin.
+     *
+     * @param username The username of a User
+     * @return true if the identified User is an admin; false otherwise
+     */
+    private boolean isAdminUser(String username) {
+        return engineManager.getUserRoles(username).stream()
+                .map(Thing::getResource)
+                .anyMatch(resource -> resource.stringValue().contains("admin"));
+    }
+
+    /**
+     * Checks whether the User with the passed username is the same as the User with the other passed
+     * username.
+     *
+     * @param username The username of a User
+     * @param currentUsername The username of another User
+     */
+    private void checkCurrentUser(String username, String currentUsername) {
+        if (!username.equals(currentUsername)) {
+            throw ErrorUtils.sendError("Not authorized to make this request", Response.Status.FORBIDDEN);
+        }
+    }
+
+    /**
+     * Changes the password of the User with the passed username to the passed new password. Returns a Response
+     * if the update was successful.
+     *
+     * @param username The username of a User
+     * @param newPassword The new password for the identified User
+     * @return A Response indicating the success of the request
+     */
+    private Response changePassword(String username, String newPassword) {
+        User savedUser = engineManager.retrieveUser(RdfEngine.COMPONENT_NAME, username).orElseThrow(() ->
+                ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
+        User tempUser = engineManager.createUser(RdfEngine.COMPONENT_NAME,
+                new UserConfig.Builder("", newPassword, new HashSet<>()).build());
+        savedUser.setPassword(tempUser.getPassword().get());
+        engineManager.updateUser(RdfEngine.COMPONENT_NAME, savedUser);
+        return Response.ok().build();
     }
 }

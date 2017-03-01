@@ -1342,7 +1342,7 @@
             self.getImportedOntologies = function(recordId, branchId, commitId, rdfFormat = 'jsonld') {
                 var deferred = $q.defer();
                 var config = {params: {rdfFormat, branchId, commitId}};
-                $http.get(prefix + '/' + encodeURIComponent(recordId) + '/imported-ontologies', null, config)
+                $http.get(prefix + '/' + encodeURIComponent(recordId) + '/imported-ontologies', config)
                     .then(response => {
                         if (_.get(response, 'status') === 200) {
                             deferred.resolve(response.data);
@@ -1367,10 +1367,11 @@
              * @param {string} entityIRI The entity IRI of the entity you want the usages for from the repository.
              * @returns {Promise} A promise containing the JSON SPARQL query results bindings.
              */
-            self.getEntityUsages = function(recordId, entityIRI) {
+            self.getEntityUsages = function(recordId, branchId, commitId, entityIRI) {
                 var deferred = $q.defer();
-                $http.get(prefix + '/' + encodeURIComponent(recordId) + '/entity-usages/'
-                    + encodeURIComponent(entityIRI)).then(response => {
+                var config = {params: {branchId, commitId}};
+                $http.get(prefix + '/' + encodeURIComponent(recordId) + '/entity-usages/' + encodeURIComponent(entityIRI), config)
+                    .then(response => {
                         if(_.get(response, 'status') === 200) {
                             deferred.resolve(response.data.results.bindings);
                         } else if (_.get(response, 'status') === 204) {
