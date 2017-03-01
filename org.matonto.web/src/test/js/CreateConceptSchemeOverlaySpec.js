@@ -133,6 +133,7 @@ describe('Create Concept Scheme Overlay directive', function() {
             controller.onEdit('begin', 'then', 'end');
             expect(controller.scheme['@id']).toBe('begin' + 'then' + 'end');
             expect(controller.iriHasChanged).toBe(true);
+            expect(ontologyStateSvc.setCommonIriParts).toHaveBeenCalledWith('begin', 'then');
         });
         it('should create a concept', function() {
             var listItem = {ontology: [{}], conceptHierarchy: [], index: {}};

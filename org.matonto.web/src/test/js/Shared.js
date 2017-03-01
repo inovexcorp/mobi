@@ -502,6 +502,7 @@ function mockOntologyState() {
             this.getObjectPropertiesOpened = jasmine.createSpy('getObjectPropertiesOpened');
             this.setObjectPropertiesOpened = jasmine.createSpy('setObjectPropertiesOpened');
             this.onEdit = jasmine.createSpy('onEdit');
+            this.setCommonIriParts = jasmine.createSpy('setCommonIriParts');
             this.setSelected = jasmine.createSpy('setSelected');
             this.setEntityUsages = jasmine.createSpy('setEntityUsages');
             this.addState = jasmine.createSpy('addState');

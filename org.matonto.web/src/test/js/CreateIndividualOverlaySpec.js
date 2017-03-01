@@ -162,6 +162,7 @@ describe('Create Individual Overlay directive', function() {
             controller.onEdit('begin', 'then', 'end');
             expect(controller.iriHasChanged).toBe(true);
             expect(controller.individual['@id']).toBe('begin' + 'then' + 'end');
+            expect(ontologyStateSvc.setCommonIriParts).toHaveBeenCalledWith('begin', 'then');
         });
         describe('should get an ontology IRI', function() {
             it('if the item has an id set', function() {

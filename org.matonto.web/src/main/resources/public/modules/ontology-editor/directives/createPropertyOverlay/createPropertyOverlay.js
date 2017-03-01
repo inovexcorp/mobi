@@ -71,6 +71,7 @@
                     dvm.onEdit = function(iriBegin, iriThen, iriEnd) {
                         dvm.iriHasChanged = true;
                         dvm.property['@id'] = iriBegin + iriThen + iriEnd;
+                        dvm.sm.setCommonIriParts(iriBegin, iriThen);
                     }
 
                     dvm.create = function() {

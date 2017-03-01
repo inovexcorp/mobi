@@ -119,6 +119,8 @@ describe('Create Class Overlay directive', function() {
         it('onEdit changes iri based on the params', function() {
             controller.onEdit('begin', 'then', 'end');
             expect(controller.clazz['@id']).toBe('begin' + 'then' + 'end');
+            expect(controller.iriHasChanged).toBe(true);
+            expect(ontologyStateSvc.setCommonIriParts).toHaveBeenCalledWith('begin', 'then');
         });
         it('create calls the correct manager functions', function() {
             controller.clazz = {'@id': 'class-iri'};

@@ -63,6 +63,7 @@
                     dvm.onEdit = function(iriBegin, iriThen, iriEnd) {
                         dvm.iriHasChanged = true;
                         dvm.individual['@id'] = iriBegin + iriThen + iriEnd;
+                        dvm.sm.setCommonIriParts(iriBegin, iriThen);
                     }
 
                     dvm.getItemOntologyIri = function(item) {

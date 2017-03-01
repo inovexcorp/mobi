@@ -160,6 +160,8 @@ describe('Create Property Overlay directive', function() {
         it('onEdit changes iri based on the params', function() {
             controller.onEdit('begin', 'then', 'end');
             expect(controller.property['@id']).toBe('begin' + 'then' + 'end');
+            expect(controller.iriHasChanged).toBe(true);
+            expect(ontologyStateSvc.setCommonIriParts).toHaveBeenCalledWith('begin', 'then');
         });
         describe('create calls the correct manager functions', function() {
             beforeEach(function() {

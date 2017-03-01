@@ -27,10 +27,10 @@
         .module('ontologyState', [])
         .service('ontologyStateService', ontologyStateService);
 
-        ontologyStateService.$inject = ['$timeout', '$q', 'ontologyManagerService', 'updateRefsService',
+        ontologyStateService.$inject = ['$timeout', '$q', '$filter', 'ontologyManagerService', 'updateRefsService',
             'stateManagerService', 'utilService', 'catalogManagerService'];
 
-        function ontologyStateService($timeout, $q, ontologyManagerService, updateRefsService,
+        function ontologyStateService($timeout, $q, $filter, ontologyManagerService, updateRefsService,
             stateManagerService, utilService, catalogManagerService) {
             var self = this;
             var om = ontologyManagerService;
@@ -78,48 +78,60 @@
                 _.set(self.listItem, 'inProgressCommit.deletions', []);
             }
             self.setOpened = function(pathString, isOpened) {
-                _.set(self.state, encodeURIComponent(pathString) + '.isOpened', isOpened);
+                _.set(self.state, getOpenPath(pathString, 'isOpened'), isOpened);
             }
             self.getOpened = function(pathString) {
-                return _.get(self.state, encodeURIComponent(pathString) + '.isOpened', false);
+                return _.get(self.state, getOpenPath(pathString, 'isOpened'), false);
             }
             self.setNoDomainsOpened = function(recordId, isOpened) {
-                _.set(self.state, encodeURIComponent(recordId) + '.noDomainsOpened', isOpened);
+                _.set(self.state, getOpenPath(recordId, 'noDomainsOpened'), isOpened);
             }
             self.getNoDomainsOpened = function(recordId) {
-                return _.get(self.state, encodeURIComponent(recordId) + '.noDomainsOpened', false);
+                return _.get(self.state, getOpenPath(recordId, 'noDomainsOpened'), false);
             }
             self.setIndividualsOpened = function(recordId, classIRI, isOpened) {
-                _.set(self.state, getOpenPath(recordId, classIRI) + '.individualsOpened', isOpened);
+                _.set(self.state, getOpenPath(recordId, classIRI, 'individualsOpened'), isOpened);
             }
             self.getIndividualsOpened = function(recordId, classIRI) {
-                return _.get(self.state, getOpenPath(recordId, classIRI) + '.individualsOpened', false);
+                return _.get(self.state, getOpenPath(recordId, classIRI, 'individualsOpened'), false);
             }
             self.setDataPropertiesOpened = function(recordId, isOpened) {
-                _.set(self.state, encodeURIComponent(recordId) + '.dataPropertiesOpened', isOpened);
+                _.set(self.state, getOpenPath(recordId, 'dataPropertiesOpened'), isOpened);
             }
             self.getDataPropertiesOpened = function(recordId) {
-                return _.get(self.state, encodeURIComponent(recordId) + '.dataPropertiesOpened', false);
+                return _.get(self.state, getOpenPath(recordId, 'dataPropertiesOpened'), false);
             }
             self.setObjectPropertiesOpened = function(recordId, isOpened) {
-                _.set(self.state, encodeURIComponent(recordId) + '.objectPropertiesOpened', isOpened);
+                _.set(self.state, getOpenPath(recordId, 'objectPropertiesOpened'), isOpened);
             }
             self.getObjectPropertiesOpened = function(recordId) {
-                return _.get(self.state, encodeURIComponent(recordId) + '.objectPropertiesOpened', false);
+                return _.get(self.state, getOpenPath(recordId, 'objectPropertiesOpened'), false);
             }
             self.onEdit = function(iriBegin, iriThen, iriEnd) {
                 var newIRI = iriBegin + iriThen + iriEnd;
-                var oldEntity = angular.copy(self.selected);
-                updateRefsService.update(self.listItem, self.selected['@id'], newIRI);
+                var oldEntity = $filter('removeMatonto')(self.selected);
                 self.getActivePage().entityIRI = newIRI;
-                om.addToAdditions(self.listItem.recordId, angular.copy(self.selected));
-                om.addToDeletions(self.listItem.recordId, oldEntity);
+                if (_.some(self.listItem.additions, oldEntity)) {
+                    _.remove(self.listItem.additions, oldEntity);
+                    updateRefsService.update(self.listItem, self.selected['@id'], newIRI);
+                } else {
+                    updateRefsService.update(self.listItem, self.selected['@id'], newIRI);
+                    om.addToDeletions(self.listItem.recordId, oldEntity);
+                }
+                if (self.getActiveKey() !== 'project') {
+                    self.setCommonIriParts(iriBegin, iriThen);
+                }
+                om.addToAdditions(self.listItem.recordId, $filter('removeMatonto')(self.selected));
                 om.getEntityUsages(self.listItem.recordId, self.listItem.branchId, self.listItem.commitId, oldEntity['@id'], 'construct')
                     .then(statements => {
                         _.forEach(statements, statement => om.addToDeletions(self.listItem.recordId, statement));
                         updateRefsService.update(statements, oldEntity['@id'], newIRI);
                         _.forEach(statements, statement => om.addToAdditions(self.listItem.recordId, statement));
                     }, errorMessage => util.createErrorToast('Associated entities were not updated due to an internal error.'));
+            }
+            self.setCommonIriParts = function(iriBegin, iriThen) {
+                _.set(self.listItem, 'iriBegin', iriBegin);
+                _.set(self.listItem, 'iriThen', iriThen);
             }
             self.setSelected = function(entityIRI, getUsages = true) {
                 self.selected = om.getEntityByRecordId(self.listItem.recordId, entityIRI);

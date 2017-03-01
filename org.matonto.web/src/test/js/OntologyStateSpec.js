@@ -36,6 +36,7 @@ describe('Ontology State service', function() {
         mockStateManager();
         mockUtil();
         mockCatalogManager();
+        injectRemoveMatontoFilter();
 
         inject(function(ontologyStateService, _updateRefsService_, _ontologyManagerService_, _catalogManagerService_, _$q_, _$rootScope_, _utilService_, _stateManagerService_) {
             ontologyStateSvc = ontologyStateService;
@@ -388,19 +389,44 @@ describe('Ontology State service', function() {
             getDeferred = $q.defer();
             spyOn(ontologyStateSvc, 'getActivePage').and.returnValue({});
             ontologyManagerSvc.getEntityUsages.and.returnValue(getDeferred.promise);
-            ontologyStateSvc.onEdit(iriBegin, iriThen, iriEnd);
         });
-        it('regardless of getEntityUsages outcome', function() {
+        it('regardless of getEntityUsages outcome when no match in additions', function() {
+            ontologyStateSvc.onEdit(iriBegin, iriThen, iriEnd);
             expect(updateRefsSvc.update).toHaveBeenCalledWith(ontologyStateSvc.listItem, ontologyStateSvc.selected['@id'], newIRI);
             expect(ontologyStateSvc.getActivePage).toHaveBeenCalled();
             expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, angular.copy(ontologyStateSvc.selected));
             expect(ontologyManagerSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, angular.copy(ontologyStateSvc.selected));
             expect(ontologyManagerSvc.getEntityUsages).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, ontologyStateSvc.listItem.branchId, ontologyStateSvc.listItem.commitId, ontologyStateSvc.selected['@id'], 'construct');
         });
+        it('regardless of getEntityUsages outcome when match in additions', function() {
+            ontologyStateSvc.listItem.additions = [angular.copy(ontologyStateSvc.selected)];
+            ontologyStateSvc.onEdit(iriBegin, iriThen, iriEnd);
+            expect(updateRefsSvc.update).toHaveBeenCalledWith(ontologyStateSvc.listItem, ontologyStateSvc.selected['@id'], newIRI);
+            expect(ontologyStateSvc.getActivePage).toHaveBeenCalled();
+            expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, angular.copy(ontologyStateSvc.selected));
+            expect(ontologyManagerSvc.addToDeletions).not.toHaveBeenCalled();
+            expect(ontologyStateSvc.listItem.additions.length).toBe(0);
+            expect(ontologyManagerSvc.getEntityUsages).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, ontologyStateSvc.listItem.branchId, ontologyStateSvc.listItem.commitId, ontologyStateSvc.selected['@id'], 'construct');
+        });
+        describe('when getActiveKey is', function() {
+            it('project', function() {
+                spyOn(ontologyStateSvc, 'getActiveKey').and.returnValue('project');
+                spyOn(ontologyStateSvc, 'setCommonIriParts');
+                ontologyStateSvc.onEdit(iriBegin, iriThen, iriEnd);
+                expect(ontologyStateSvc.setCommonIriParts).not.toHaveBeenCalled();
+            });
+            it('project', function() {
+                spyOn(ontologyStateSvc, 'getActiveKey').and.returnValue('other');
+                spyOn(ontologyStateSvc, 'setCommonIriParts');
+                ontologyStateSvc.onEdit(iriBegin, iriThen, iriEnd);
+                expect(ontologyStateSvc.setCommonIriParts).toHaveBeenCalledWith(iriBegin, iriThen);
+            });
+        });
         it('when getEntityUsages resolves', function() {
             var statement = {'@id': 'test-id'};
             var response = [statement];
             getDeferred.resolve(response);
+            ontologyStateSvc.onEdit(iriBegin, iriThen, iriEnd);
             scope.$apply();
             expect(ontologyManagerSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, statement);
             expect(updateRefsSvc.update).toHaveBeenCalledWith(response, ontologyStateSvc.selected['@id'], newIRI);
@@ -408,9 +434,18 @@ describe('Ontology State service', function() {
         });
         it('when getEntityUsages rejects', function() {
             getDeferred.reject();
+            ontologyStateSvc.onEdit(iriBegin, iriThen, iriEnd);
             scope.$apply();
             expect(util.createErrorToast).toHaveBeenCalled();
         });
+    });
+
+    it('setCommonIriParts sets the proper values based on parameters', function() {
+        var begin = 'begin';
+        var then = 'then';
+        ontologyStateSvc.setCommonIriParts(begin, then);
+        expect(ontologyStateSvc.listItem.iriBegin).toEqual(begin);
+        expect(ontologyStateSvc.listItem.iriThen).toEqual(then);
     });
 
     describe('setSelected should set the correct values and call the correct methods', function() {
