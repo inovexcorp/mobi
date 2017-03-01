@@ -28,7 +28,6 @@ import org.matonto.dataset.ontology.dataset.Dataset
 import org.matonto.dataset.ontology.dataset.DatasetFactory
 import org.matonto.dataset.ontology.dataset.DatasetRecord
 import org.matonto.dataset.ontology.dataset.DatasetRecordFactory
-import org.matonto.exception.MatOntoException
 import org.matonto.ontologies.rdfs.Resource
 import org.matonto.rdf.api.IRI
 import org.matonto.rdf.api.Model
@@ -524,7 +523,7 @@ class SimpleDatasetManagerSpec extends Specification {
 
         then:
         0 * catalogManagerMock.addRecord(localCatalog, record)
-        thrown(MatOntoException)
+        thrown(IllegalStateException)
     }
 
     def "createDataset throws an exception if the dataset repository does not exist"() {
@@ -541,7 +540,7 @@ class SimpleDatasetManagerSpec extends Specification {
         1 * repoManagerMock.getRepository("test") >> Optional.empty()
         0 * catalogManagerMock.createRecord(*_)
         0 * catalogManagerMock.addRecord(*_)
-        thrown(MatOntoException)
+        thrown(IllegalArgumentException)
     }
 
     def "deleteDataset() throws an Exception if the DatasetRecord does not exist"() {
@@ -556,7 +555,7 @@ class SimpleDatasetManagerSpec extends Specification {
 
         then:
         0 * catalogManagerMock.getRecord(*_)
-        thrown(MatOntoException.class)
+        thrown(IllegalArgumentException)
     }
 
     def "deleteDataset() calls removeRecord() to delete the DatasetRecord"() {
