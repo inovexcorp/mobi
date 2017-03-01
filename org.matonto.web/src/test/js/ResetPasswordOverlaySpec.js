@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Edit Group Info Overlay directive', function() {
+describe('Reset Password Overlay directive', function() {
     var $compile,
         scope,
         $q,
@@ -31,7 +31,7 @@ describe('Edit Group Info Overlay directive', function() {
 
     beforeEach(function() {
         module('templates');
-        module('editGroupInfoOverlay');
+        module('resetPasswordOverlay');
         mockUserManager();
         mockUserState();
 
@@ -43,46 +43,46 @@ describe('Edit Group Info Overlay directive', function() {
             userStateSvc = _userStateService_;
         });
 
-        userStateSvc.selectedGroup = {title: 'group'};
-        element = $compile(angular.element('<edit-group-info-overlay></edit-group-info-overlay>'))(scope);
+        userStateSvc.selectedUser = {username: 'user'};
+        element = $compile(angular.element('<reset-password-overlay></reset-password-overlay>'))(scope);
         scope.$digest();
-        controller = element.controller('editGroupInfoOverlay');
+        controller = element.controller('resetPasswordOverlay');
     });
 
     describe('controller methods', function() {
-        describe('should save changes to the group information', function() {
+        describe('should reset the user password', function() {
             beforeEach(function() {
-                userStateSvc.displayEditGroupInfoOverlay = true;
-                userManagerSvc.groups = [userStateSvc.selectedGroup];
+                controller.password = 'abc';
+                userStateSvc.displayResetPasswordOverlay = true;
             });
             it('unless an error occurs', function() {
-                userManagerSvc.updateGroup.and.returnValue($q.reject('Error message'));
+                userManagerSvc.resetPassword.and.returnValue($q.reject('Error message'));
                 controller.set();
                 scope.$apply();
-                expect(userManagerSvc.updateGroup).toHaveBeenCalledWith(userStateSvc.selectedGroup.title, controller.newGroup);
+                expect(userManagerSvc.resetPassword).toHaveBeenCalledWith(userStateSvc.selectedUser.username, controller.password);
                 expect(controller.errorMessage).toBe('Error message');
-                expect(userStateSvc.displayEditGroupInfoOverlay).toBe(true);
+                expect(userStateSvc.displayResetPasswordOverlay).toBe(true);
             });
             it('successfully', function() {
-                var selectedGroup = userStateSvc.selectedGroup;
                 controller.set();
                 scope.$apply();
-                expect(userManagerSvc.updateGroup).toHaveBeenCalledWith(selectedGroup.title, controller.newGroup);
+                expect(userManagerSvc.resetPassword).toHaveBeenCalledWith(userStateSvc.selectedUser.username, controller.password);
                 expect(controller.errorMessage).toBe('');
-                expect(userStateSvc.displayEditGroupInfoOverlay).toBe(false);
-                expect(userStateSvc.selectedGroup).toEqual(controller.newGroup);
+                expect(userStateSvc.displayResetPasswordOverlay).toBe(false);
             });
         });
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.hasClass('edit-group-info-overlay')).toBe(true);
+            expect(element.hasClass('reset-password-overlay')).toBe(true);
             expect(element.querySelectorAll('form.content').length).toBe(1);
         });
-        it('with a text area', function() {
-            expect(element.find('text-area').length).toBe(1);
+        it('with a password confirm input', function() {
+            expect(element.find('password-confirm-input').length).toBe(1);
         });
         it('depending on the form validity', function() {
+            controller.currentPassword = 'abc';
+            scope.$digest();
             var button = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
             expect(button.attr('disabled')).toBeFalsy();
 
@@ -106,7 +106,7 @@ describe('Edit Group Info Overlay directive', function() {
     it('should set the correct state when the cancel button is clicked', function() {
         var cancelButton = angular.element(element.querySelectorAll('.btn-container button.btn-default')[0]);
         cancelButton.triggerHandler('click');
-        expect(userStateSvc.displayEditGroupInfoOverlay).toBe(false);
+        expect(userStateSvc.displayResetPasswordOverlay).toBe(false);
     });
     it('should call set when the button is clicked', function() {
         spyOn(controller, 'set');

@@ -59,16 +59,17 @@
                         self.listItem.additions = [];
                         self.listItem.deletions = [];
 
+                        _.forOwn(self.state, (value, key) => {
+                            _.unset(value, 'usages');
+                        });
+
                         if (_.isEmpty(sm.getOntologyStateByRecordId(self.listItem.recordId))) {
-                            sm.createOntologyState(self.listItem.recordId, self.listItem.branchId,
-                                self.listItem.commitId)
-                                    .then(deferred.resolve, response => deferred.reject(response.statusText));
+                            return sm.createOntologyState(self.listItem.recordId, self.listItem.branchId, self.listItem.commitId);
                         } else {
-                            sm.updateOntologyState(self.listItem.recordId, self.listItem.branchId,
-                                self.listItem.commitId)
-                                    .then(deferred.resolve, response => deferred.reject(response.statusText));
+                            return sm.updateOntologyState(self.listItem.recordId, self.listItem.branchId, self.listItem.commitId);
                         }
-                    }, deferred.reject);
+                    }, $q.reject)
+                    .then(deferred.resolve, deferred.reject);
                 return deferred.promise;
             }
 
@@ -159,8 +160,16 @@
                 om.addToAdditions(self.listItem.recordId, angular.copy(self.selected));
                 om.addToDeletions(self.listItem.recordId, oldEntity);
             }
-            self.setSelected = function(entityIRI) {
+            self.setSelected = function(entityIRI, getUsages = true) {
                 self.selected = om.getEntityByRecordId(self.listItem.recordId, entityIRI);
+                if (getUsages && !_.has(self.getActivePage(), 'usages') && self.selected) {
+                    self.setEntityUsages(entityIRI);
+                }
+            }
+            self.setEntityUsages = function(entityIRI) {
+                om.getEntityUsages(self.listItem.recordId, self.listItem.branchId, self.listItem.commitId, entityIRI)
+                    .then(bindings => _.set(self.getActivePage(), 'usages', bindings),
+                        response => _.set(self.getActivePage(), 'usages', []));
             }
             self.addState = function(recordId, entityIRI, type) {
                 var tabs = {};
@@ -208,14 +217,14 @@
                 _.merge(newState, tabs);
                 self.states.push(newState);
             }
-            self.setState = function(recordId) {
+            self.setState = function(recordId, getUsages = false) {
                 self.state.active = false;
                 if (!recordId) {
                     self.state = self.newState;
                 } else {
                     self.state = _.find(self.states, {recordId});
                     self.listItem = om.getListItemByRecordId(recordId);
-                    self.setSelected(self.getActiveEntityIRI());
+                    self.setSelected(self.getActiveEntityIRI(), getUsages);
                 }
                 self.state.active = true;
             }
@@ -235,6 +244,7 @@
                     if (key !== 'project') {
                         _.unset(value, 'entityIRI');
                     }
+                    _.unset(value, 'usages');
                 });
                 if (self.getActiveKey() !== 'project') {
                     self.selected = undefined;
@@ -263,18 +273,16 @@
                 }
             }
             self.getActiveEntityIRI = function() {
-                return self.getActivePage().entityIRI;
+                return _.get(self.getActivePage(), 'entityIRI');
             }
             self.selectItem = function(entityIRI, getUsages = true) {
                 if (entityIRI && entityIRI !== self.getActiveEntityIRI()) {
                     _.set(self.getActivePage(), 'entityIRI', entityIRI);
                     if (getUsages) {
-                        om.getEntityUsages(self.listItem.recordId, entityIRI)
-                            .then(bindings => _.set(self.getActivePage(), 'usages', bindings),
-                                response => _.set(self.getActivePage(), 'usages', []));
+                        self.setEntityUsages(entityIRI);
                     }
                 }
-                self.setSelected(entityIRI);
+                self.setSelected(entityIRI, false);
             }
             self.unSelectItem = function() {
                 var activePage = self.getActivePage();

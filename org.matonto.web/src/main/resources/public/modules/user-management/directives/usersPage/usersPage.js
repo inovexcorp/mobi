@@ -87,8 +87,8 @@
                 dvm.editProfile = function() {
                     dvm.state.displayEditUserProfileOverlay = true;
                 }
-                dvm.changePassword = function() {
-                    dvm.state.displayChangePasswordOverlay = true;
+                dvm.resetPassword = function() {
+                    dvm.state.displayResetPasswordOverlay = true;
                 }
                 dvm.changeRoles = function() {
                     var request = dvm.roles.admin ? dvm.um.addUserRoles(dvm.state.selectedUser.username, ['admin']) : dvm.um.deleteUserRole(dvm.state.selectedUser.username, 'admin');

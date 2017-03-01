@@ -359,11 +359,11 @@ public class UserRestImplTest extends MatontoRestTestNg {
     }
 
     @Test
-    public void updatePasswordTest() {
+    public void changePasswordTest() {
         Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/password")
                 .queryParam("currentPassword", "ABC")
                 .queryParam("newPassword", "XYZ")
-                .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
+                .request().post(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 200);
         verify(engineManager).checkPassword(anyString(), eq(UsernameTestFilter.USERNAME), eq("ABC"));
         verify(engineManager, atLeastOnce()).retrieveUser(anyString(), eq(UsernameTestFilter.USERNAME));
@@ -371,17 +371,78 @@ public class UserRestImplTest extends MatontoRestTestNg {
     }
 
     @Test
-    public void updatePasswordWithoutCurrentPasswordTest() {
+    public void changePasswordAsDifferentUserTest() {
+        Response response = target().path("users/error/password")
+                .queryParam("currentPassword", "ABC")
+                .queryParam("newPassword", "XYZ")
+                .request().post(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
+        assertEquals(response.getStatus(), 403);
+    }
+
+    @Test
+    public void changePasswordWithoutCurrentPasswordTest() {
         Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/password")
                 .queryParam("newPassword", "XYZ")
+                .request().post(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void changePasswordWithWrongPasswordTest() {
+        // Setup:
+        when(engineManager.checkPassword(anyString(), anyString(), eq("error"))).thenReturn(false);
+
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/password")
+                .queryParam("currentPassword", "error")
+                .queryParam("newPassword", "XYZ")
+                .request().post(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
+        assertEquals(response.getStatus(), 401);
+    }
+
+    @Test
+    public void changePasswordWithoutNewPasswordTest() {
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/password")
+                .queryParam("currentPassword", "ABC")
+                .request().post(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void changePasswordForUserThatDoesNotExistTest() {
+        // Setup:
+        when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.empty());
+
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/password")
+                .queryParam("currentPassword", "ABC")
+                .queryParam("newPassword", "XYZ")
+                .request().post(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void resetPasswordTest() {
+        Response response = target().path("users/username/password")
+                .queryParam("newPassword", "XYZ")
+                .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
+        assertEquals(response.getStatus(), 200);
+        verify(engineManager, atLeastOnce()).retrieveUser(anyString(), eq("username"));
+        verify(engineManager).updateUser(anyString(), any(User.class));
+    }
+
+    @Test
+    public void resetPasswordWithoutNewPasswordTest() {
+        Response response = target().path("users/username/password")
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
 
     @Test
-    public void updatePasswordWithoutNewPasswordTest() {
-        Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/password")
-                .queryParam("currentPassword", "ABC")
+    public void resetPasswordOfUserThatDoesNotExistTest() {
+        // Setup:
+        when(engineManager.retrieveUser(anyString(), eq("error"))).thenReturn(Optional.empty());
+
+        Response response = target().path("users/error/password")
+                .queryParam("newPassword", "XYZ")
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
