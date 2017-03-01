@@ -21,11 +21,8 @@
  * #L%
  */
 describe('Create Concept Scheme Overlay directive', function() {
-    var $compile, scope, $q, element, controller,
-        ontologyManagerSvc,
-        ontologyStateSvc,
-        prefixes,
-        splitIRIFilter;
+    var $compile, scope, $q, element, controller, ontologyManagerSvc, ontologyStateSvc, prefixes, splitIRIFilter;
+    var iri = 'iri#';
 
     beforeEach(function() {
         module('templates');
@@ -50,10 +47,26 @@ describe('Create Concept Scheme Overlay directive', function() {
             splitIRIFilter = _splitIRIFilter_;
         });
 
+        ontologyStateSvc.getDefaultPrefix.and.returnValue(iri);
         element = $compile(angular.element('<create-concept-scheme-overlay></create-concept-scheme-overlay>'))(scope);
         scope.$digest();
+        controller = element.controller('createConceptSchemeOverlay');
     });
 
+    describe('initializes with the correct values', function() {
+        it('if parent ontology is opened', function() {
+            expect(ontologyStateSvc.getDefaultPrefix).toHaveBeenCalled();
+            expect(controller.prefix).toBe(iri);
+            expect(controller.scheme['@id']).toBe(controller.prefix);
+            expect(controller.scheme['@type']).toEqual([prefixes.owl + 'NamedIndividual', prefixes.skos + 'ConceptScheme']);
+        });
+        it('if parent ontology is not opened', function() {
+            expect(ontologyStateSvc.getDefaultPrefix).toHaveBeenCalled();
+            expect(controller.prefix).toBe(iri);
+            expect(controller.scheme['@id']).toBe(controller.prefix);
+            expect(controller.scheme['@type']).toEqual([prefixes.owl + 'NamedIndividual', prefixes.skos + 'ConceptScheme']);
+        });
+    });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
@@ -109,9 +122,6 @@ describe('Create Concept Scheme Overlay directive', function() {
         });
     });
     describe('controller methods', function() {
-        beforeEach(function() {
-            controller = element.controller('createConceptSchemeOverlay');
-        });
         describe('should update the concept scheme id', function() {
             beforeEach(function() {
                 controller.scheme['@id'] = 'test';

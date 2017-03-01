@@ -21,14 +21,8 @@
  * #L%
  */
 describe('Create Class Overlay directive', function() {
-    var $compile,
-        scope,
-        element,
-        controller,
-        ontologyManagerSvc,
-        deferred,
-        ontologyStateSvc,
-        prefixes;
+    var $compile, scope, element, controller, ontologyManagerSvc, deferred, ontologyStateSvc, prefixes;
+    var iri = 'iri#';
 
     beforeEach(function() {
         module('templates');
@@ -50,10 +44,26 @@ describe('Create Class Overlay directive', function() {
             prefixes = _prefixes_;
         });
 
+        ontologyStateSvc.getDefaultPrefix.and.returnValue(iri);
         element = $compile(angular.element('<create-class-overlay></create-class-overlay>'))(scope);
         scope.$digest();
+        controller = element.controller('createClassOverlay');
     });
 
+    describe('initializes with the correct values', function() {
+        it('if parent ontology is opened', function() {
+            expect(ontologyStateSvc.getDefaultPrefix).toHaveBeenCalled();
+            expect(controller.prefix).toBe(iri);
+            expect(controller.clazz['@id']).toBe(controller.prefix);
+            expect(controller.clazz['@type']).toEqual(['Class']);
+        });
+        it('if parent ontology is not opened', function() {
+            expect(ontologyStateSvc.getDefaultPrefix).toHaveBeenCalled();
+            expect(controller.prefix).toBe(iri);
+            expect(controller.clazz['@id']).toBe(controller.prefix);
+            expect(controller.clazz['@type']).toEqual(['Class']);
+        });
+    });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
@@ -94,9 +104,6 @@ describe('Create Class Overlay directive', function() {
         });
     });
     describe('controller methods', function() {
-        beforeEach(function() {
-            controller = element.controller('createClassOverlay');
-        });
         describe('nameChanged', function() {
             beforeEach(function() {
                 controller.clazz = {};

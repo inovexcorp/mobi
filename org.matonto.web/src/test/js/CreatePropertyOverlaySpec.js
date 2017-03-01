@@ -21,15 +21,8 @@
  * #L%
  */
 describe('Create Property Overlay directive', function() {
-    var $compile,
-        scope,
-        element,
-        controller,
-        ontologyManagerSvc,
-        ontologyStateSvc,
-        prefixes,
-        splitIRIFilter,
-        functionalProperty;
+    var $compile, scope, element, controller, ontologyManagerSvc, ontologyStateSvc, prefixes, splitIRIFilter, functionalProperty;
+    var iri = 'iri#';
 
     beforeEach(function() {
         module('templates');
@@ -52,11 +45,25 @@ describe('Create Property Overlay directive', function() {
             splitIRIFilter = _splitIRIFilter_;
         });
 
+        ontologyStateSvc.getDefaultPrefix.and.returnValue(iri);
         element = $compile(angular.element('<create-property-overlay></create-property-overlay>'))(scope);
         scope.$digest();
         functionalProperty = prefixes.owl + 'FunctionalProperty';
+        controller = element.controller('createPropertyOverlay');
     });
 
+    describe('initializes with the correct values', function() {
+        it('if parent ontology is opened', function() {
+            expect(ontologyStateSvc.getDefaultPrefix).toHaveBeenCalled();
+            expect(controller.prefix).toBe(iri);
+            expect(controller.property['@id']).toBe(controller.prefix);
+        });
+        it('if parent ontology is not opened', function() {
+            expect(ontologyStateSvc.getDefaultPrefix).toHaveBeenCalled();
+            expect(controller.prefix).toBe(iri);
+            expect(controller.property['@id']).toBe(controller.prefix);
+        });
+    });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
@@ -135,9 +142,6 @@ describe('Create Property Overlay directive', function() {
         });
     });
     describe('controller methods', function() {
-        beforeEach(function() {
-            controller = element.controller('createPropertyOverlay');
-        });
         describe('nameChanged', function() {
             beforeEach(function() {
                 controller.property = {};
