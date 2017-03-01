@@ -523,6 +523,7 @@ function mockOntologyState() {
             this.getPathsTo = jasmine.createSpy('getPathsTo');
             this.goTo = jasmine.createSpy('goTo');
             this.openAt = jasmine.createSpy('openAt');
+            this.getDefaultPrefix = jasmine.createSpy('getDefaultPrefix');
         });
     });
 }

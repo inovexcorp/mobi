@@ -1387,4 +1387,18 @@ describe('Ontology State service', function() {
                 .toBe(true);
         });
     });
+
+    describe('getDefaultPrefix returns the proper value for the prefix associated with ontology', function() {
+        it('when there is no iriBegin or iriThen', function() {
+            ontologyStateSvc.listItem.ontologyId = 'ontologyId#';
+            expect(ontologyStateSvc.getDefaultPrefix()).toEqual('ontologyId/#');
+        });
+        it('when there is a iriBegin and iriThen', function() {
+            ontologyStateSvc.listItem = {
+                iriBegin: 'begin#',
+                iriThen: 'then'
+            }
+            expect(ontologyStateSvc.getDefaultPrefix()).toEqual('begin/then');
+        });
+    });
 });

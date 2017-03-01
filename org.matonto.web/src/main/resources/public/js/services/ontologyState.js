@@ -386,6 +386,9 @@
                     }
                 });
             }
+            self.getDefaultPrefix = function() {
+                return _.replace(_.get(self.listItem, 'iriBegin', self.listItem.ontologyId), '#', '/') + _.get(self.listItem, 'iriThen', '#');
+            }
             function getEntities(hierarchy, entityIRI, indexObject) {
                 var results = [];
                 var pathsToEntity = self.getPathsTo(indexObject, entityIRI);

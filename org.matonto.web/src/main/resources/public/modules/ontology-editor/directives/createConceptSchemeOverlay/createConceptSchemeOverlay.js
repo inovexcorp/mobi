@@ -45,8 +45,7 @@
                     dvm.sm = ontologyStateService;
                     dvm.util = utilService;
                     dvm.concepts = [];
-                    dvm.prefix = _.replace(_.get(dvm.sm.listItem, 'iriBegin', dvm.sm.listItem.ontologyId), '#', '/')
-                        + _.get(dvm.sm.listItem, 'iriThen', '#');
+                    dvm.prefix = dvm.sm.getDefaultPrefix();
                     dvm.scheme = {
                         '@id': dvm.prefix,
                         '@type': [prefixes.owl + 'NamedIndividual', prefixes.skos + 'ConceptScheme'],
