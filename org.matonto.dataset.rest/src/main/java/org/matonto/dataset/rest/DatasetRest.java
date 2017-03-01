@@ -40,29 +40,40 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 @Path("/datasets")
 @Api(value = "/datasets")
 public interface DatasetRest {
     /**
-     * Retrieves all the DatasetRecords in the local Catalog in a JSON array.
+     * Retrieves all the DatasetRecords in the local Catalog in a JSON array. Can optionally be paged if passed a
+     * limit and offset. Can optionally be sorted by property value if passed a sort IRI.
      *
+     * @param uriInfo The URI information of the request to be used in creating links to other pages of DatasetRecords
+     * @param offset The offset for a page of DatasetRecords
+     * @param limit The number of DatasetRecords to return in one page
+     * @param sort The IRI of the property to sort by
+     * @param asc Whether or not the list should be sorted ascending or descending. Default is ascending
      * @return A Response with a JSON array of DatasetRecords
      */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @ApiOperation("Retrieves all DatasetRecords in the local Catalog")
-    Response getDatasets();
+    Response getDatasetRecords(@Context UriInfo uriInfo,
+                               @QueryParam("offset") int offset,
+                               @QueryParam("limit") int limit,
+                               @QueryParam("sort") String sort,
+                               @DefaultValue("true") @QueryParam("ascending") boolean asc);
 
     /**
      * Creates a new DatasetRecord in the local Catalog using the passed information and Dataset with the passed
-     * IRI in the repository the passed id.
+     * IRI in the repository with the passed id.
      *
      * @param context The context of the request
-     * @param datasetIRI The required IRI for the new Dataset
-     * @param repositoryId The required id of a repository in MatOnto
      * @param title The required title for the new DatasetRecord
+     * @param repositoryId The required id of a repository in MatOnto
+     * @param datasetIRI The optional IRI for the new Dataset
      * @param description The optional description for the new DatasetRecord
      * @param keywords The optional comma separated list of keywords for the new DatasetRecord
      * @return A Response with the IRI string of the created DatasetRecord
@@ -71,15 +82,15 @@ public interface DatasetRest {
     @Produces(MediaType.TEXT_PLAIN)
     @RolesAllowed("user")
     @ApiOperation("Creates a new DatasetRecord in the local Catalog and Dataset in the specified repository")
-    Response createDataset(@Context ContainerRequestContext context,
-                           @FormDataParam("datasetIRI") String datasetIRI,
-                           @FormDataParam("repositoryId") String repositoryId,
-                           @FormDataParam("title") String title,
-                           @FormDataParam("description") String description,
-                           @FormDataParam("keywords") String keywords);
+    Response createDatasetRecord(@Context ContainerRequestContext context,
+                                 @FormDataParam("title") String title,
+                                 @FormDataParam("repositoryId") String repositoryId,
+                                 @FormDataParam("datasetIRI") String datasetIRI,
+                                 @FormDataParam("description") String description,
+                                 @FormDataParam("keywords") String keywords);
 
     /**
-     * Deletes a specific DatasetRecord and its Dataset from the local catalog. By default only removes named graphs
+     * Deletes a specific DatasetRecord and its Dataset from the local Catalog. By default only removes named graphs
      * that aren't used by another Dataset, but can be forced to delete them.
      *
      * @param datasetRecordId The IRI of a DatasetRecord
@@ -90,8 +101,8 @@ public interface DatasetRest {
     @Path("{datasetRecordId}")
     @RolesAllowed("user")
     @ApiOperation("Deletes a specific DatasetRecord in the local Catalog")
-    Response deleteDataset(@PathParam("datasetRecordId") String datasetRecordId,
-                           @DefaultValue("false") @QueryParam("force") boolean force);
+    Response deleteDatasetRecord(@PathParam("datasetRecordId") String datasetRecordId,
+                                 @DefaultValue("false") @QueryParam("force") boolean force);
 
     /**
      * Deletes all named graphs associated with the Dataset of a specific DatasetRecord. By default only removes named
@@ -105,6 +116,6 @@ public interface DatasetRest {
     @Path("{datasetRecordId}/data")
     @RolesAllowed("user")
     @ApiOperation("Clears the data within a specific DatasetRecord in the local Catalog")
-    Response clearDataset(@PathParam("datasetRecordId") String datasetRecordId,
-                          @DefaultValue("false") @QueryParam("force") boolean force);
+    Response clearDatasetRecord(@PathParam("datasetRecordId") String datasetRecordId,
+                                @DefaultValue("false") @QueryParam("force") boolean force);
 }

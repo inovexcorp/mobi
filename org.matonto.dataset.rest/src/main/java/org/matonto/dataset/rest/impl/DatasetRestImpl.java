@@ -24,13 +24,14 @@ package org.matonto.dataset.rest.impl;
  */
 
 
+import static org.matonto.rest.util.RestUtils.checkStringParam;
 import static org.matonto.rest.util.RestUtils.getActiveUser;
+import static org.matonto.rest.util.RestUtils.getObjectFromJsonld;
 import static org.matonto.rest.util.RestUtils.modelToJsonld;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
 import org.matonto.dataset.api.DatasetManager;
 import org.matonto.dataset.api.builder.DatasetRecordConfig;
@@ -39,16 +40,22 @@ import org.matonto.dataset.rest.DatasetRest;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.ontology.utils.api.SesameTransformer;
+import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rest.util.ErrorUtils;
+import org.matonto.rest.util.LinksUtils;
+import org.matonto.rest.util.jaxb.Links;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Optional;
+import java.util.Comparator;
+import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 @Component(immediate = true)
 public class DatasetRestImpl implements DatasetRest {
@@ -78,28 +85,50 @@ public class DatasetRestImpl implements DatasetRest {
     }
 
     @Override
-    public Response getDatasets() {
-        JSONArray array = new JSONArray();
+    public Response getDatasetRecords(UriInfo uriInfo, int offset, int limit, String sort, boolean asc) {
         try {
-            manager.getDatasetRecords().stream()
-                    .map(datasetRecord -> getObjectFromJsonld(
-                            modelToJsonld(transformer.sesameModel(datasetRecord.getModel()))))
-                    .forEach(array::add);
+            JSONArray results = new JSONArray();
+            Set<DatasetRecord> records = manager.getDatasetRecords();
+            Stream<DatasetRecord> stream = records.stream();
+            if (sort != null && !sort.isEmpty()) {
+                IRI sortIRI = vf.createIRI(sort);
+                Comparator<DatasetRecord> comparator = Comparator.comparing(record -> record.getProperty(sortIRI)
+                        .orElse(vf.createLiteral("")).stringValue());
+                if (!asc) {
+                    comparator = comparator.reversed();
+                }
+                stream = stream.sorted(comparator);
+            }
+            if (limit > 0) {
+                if (offset > records.size()) {
+                    throw ErrorUtils.sendError("Offset exceeds total size", Response.Status.BAD_REQUEST);
+                }
+                stream = stream
+                        .skip(offset)
+                        .limit(limit);
+            }
+            stream.map(datasetRecord -> getObjectFromJsonld(
+                    modelToJsonld(transformer.sesameModel(datasetRecord.getModel()))))
+                .forEach(results::add);
+            Links links = LinksUtils.buildLinks(uriInfo, results.size(), records.size(), limit, offset);
+            Response.ResponseBuilder response = Response.ok(results).header("X-Total-Count", records.size());
+            if (links.getNext() != null) {
+                response = response.link(links.getBase() + links.getNext(), "next");
+            }
+            if (links.getPrev() != null) {
+                response = response.link(links.getBase() + links.getPrev(), "prev");
+            }
+            return response.build();
         } catch (Exception ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
-        return Response.ok(array).build();
     }
 
     @Override
-    public Response createDataset(ContainerRequestContext context, String datasetIRI, String repositoryId, String title,
-                                  String description, String keywords) {
-        if (title == null || title.isEmpty()) {
-            throw ErrorUtils.sendError("Title is required", Response.Status.BAD_REQUEST);
-        }
-        if (repositoryId == null || repositoryId.isEmpty()) {
-            throw ErrorUtils.sendError("Repository id is required", Response.Status.BAD_REQUEST);
-        }
+    public Response createDatasetRecord(ContainerRequestContext context, String title, String repositoryId, String datasetIRI,
+                                        String description, String keywords) {
+        checkStringParam(title, "Title is required");
+        checkStringParam(repositoryId, "Repository id is required");
         User activeUser = getActiveUser(context, engineManager);
         DatasetRecordConfig.DatasetRecordBuilder builder = new DatasetRecordConfig.DatasetRecordBuilder(title,
                 Collections.singleton(activeUser), repositoryId);
@@ -112,20 +141,18 @@ public class DatasetRestImpl implements DatasetRest {
         if (keywords != null && !keywords.isEmpty()) {
             builder.keywords(Arrays.stream(StringUtils.split(keywords, ",")).collect(Collectors.toSet()));
         }
-        DatasetRecord record;
         try {
-            record = manager.createDataset(builder.build());
+            DatasetRecord record = manager.createDataset(builder.build());
+            return Response.status(201).entity(record.getResource().stringValue()).build();
         } catch (IllegalArgumentException | IllegalStateException ex) {
             throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (Exception ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
-
-        return Response.status(201).entity(record.getResource().stringValue()).build();
     }
 
     @Override
-    public Response deleteDataset(String datasetRecordId, boolean force) {
+    public Response deleteDatasetRecord(String datasetRecordId, boolean force) {
         Resource recordIRI = vf.createIRI(datasetRecordId);
         try {
             if (force) {
@@ -142,7 +169,7 @@ public class DatasetRestImpl implements DatasetRest {
     }
 
     @Override
-    public Response clearDataset(String datasetRecordId, boolean force) {
+    public Response clearDatasetRecord(String datasetRecordId, boolean force) {
         Resource recordIRI = vf.createIRI(datasetRecordId);
         try {
             if (force) {
@@ -156,22 +183,5 @@ public class DatasetRestImpl implements DatasetRest {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
         return Response.ok().build();
-    }
-
-    /**
-     * Grabs a single Entity object from a JSON-LD string and returns it as a JSONObject. Looks within the first
-     * context object if present.
-     *
-     * @param json A JSON-LD string.
-     * @return The first object representing a single Entity present in the JSON-LD array.
-     */
-    private JSONObject getObjectFromJsonld(String json) {
-        JSONArray array = JSONArray.fromObject(json);
-        JSONObject firstObject = array.getJSONObject(0);
-        if (firstObject.containsKey("@graph")) {
-            firstObject = Optional.ofNullable(firstObject.getJSONArray("@graph").optJSONObject(0))
-                    .orElse(new JSONObject());
-        }
-        return firstObject;
     }
 }

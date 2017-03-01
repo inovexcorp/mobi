@@ -72,14 +72,21 @@ import org.matonto.rest.util.MatontoRestTestNg;
 import org.matonto.rest.util.UsernameTestFilter;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.openrdf.model.vocabulary.DCTERMS;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Application;
+import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 
 public class DatasetRestImplTest extends MatontoRestTestNg {
@@ -89,7 +96,10 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
     private ValueConverterRegistry vcr;
     private DatasetRecordFactory datasetRecordFactory;
     private UserFactory userFactory;
-    private DatasetRecord record;
+    private DatasetRecord record1;
+    private DatasetRecord record2;
+    private DatasetRecord record3;
+    private String[] expectedSortOrder;
     private User user;
 
     @Mock
@@ -126,7 +136,17 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
         vcr.registerValueConverter(new ValueValueConverter());
         vcr.registerValueConverter(new LiteralValueConverter());
 
-        record = datasetRecordFactory.createNew(vf.createIRI("http://example.com/record"));
+        record1 = datasetRecordFactory.createNew(vf.createIRI("http://example.com/record1"));
+        record1.setProperty(vf.createLiteral("A"), vf.createIRI(DCTERMS.TITLE.stringValue()));
+        record2 = datasetRecordFactory.createNew(vf.createIRI("http://example.com/record2"));
+        record2.setProperty(vf.createLiteral("B"), vf.createIRI(DCTERMS.TITLE.stringValue()));
+        record3 = datasetRecordFactory.createNew(vf.createIRI("http://example.com/record3"));
+        record3.setProperty(vf.createLiteral("C"), vf.createIRI(DCTERMS.TITLE.stringValue()));
+        expectedSortOrder = new String[] {
+                record3.getResource().stringValue(),
+                record2.getResource().stringValue(),
+                record1.getResource().stringValue()
+        };
         user = userFactory.createNew(vf.createIRI("http://example.com/" + UsernameTestFilter.USERNAME));
 
         MockitoAnnotations.initMocks(this);
@@ -153,29 +173,88 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
 
         when(transformer.sesameModel(any(Model.class)))
                 .thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, Model.class)));
-        when(datasetManager.getDatasetRecords()).thenReturn(Collections.singleton(record));
-        when(datasetManager.createDataset(any(DatasetRecordConfig.class))).thenReturn(record);
+        when(datasetManager.getDatasetRecords()).thenReturn(Stream.of(record1, record2, record3)
+                .collect(Collectors.toSet()));
+        when(datasetManager.createDataset(any(DatasetRecordConfig.class))).thenReturn(record1);
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
     }
 
     @Test
-    public void getDatasetsTest() {
+    public void getDatasetRecordsTest() {
         Response response = target().path("datasets").request().get();
         assertEquals(response.getStatus(), 200);
         verify(datasetManager).getDatasetRecords();
         try {
             JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
-            assertEquals(result.size(), 1);
-            JSONObject obj = result.getJSONObject(0);
-            assertTrue(obj.containsKey("@id"));
-            assertEquals(obj.getString("@id"), record.getResource().stringValue());
+            assertEquals(result.size(), 3);
+            for (Object aResult : result) {
+                JSONObject recordObj = JSONObject.fromObject(aResult);
+                assertTrue(recordObj.containsKey("@id"));
+                assertTrue(recordObj.getString("@id").equals(record1.getResource().toString())
+                        || recordObj.getString("@id").equals(record2.getResource().toString())
+                        || recordObj.getString("@id").equals(record3.getResource().toString()));
+            }
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
     }
 
     @Test
-    public void getDatasetsWithErrorTest() {
+    public void getDatasetRecordsWithPaginationTest() {
+        Response response = target().path("datasets").queryParam("offset", 0).queryParam("limit", 10).request().get();
+        assertEquals(response.getStatus(), 200);
+        verify(datasetManager).getDatasetRecords();
+        MultivaluedMap<String, Object> headers = response.getHeaders();
+        assertEquals(headers.get("X-Total-Count").get(0), "3");
+        assertEquals(response.getLinks().size(), 0);
+        try {
+            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            assertEquals(result.size(), 3);
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void getDatasetRecordsWithPaginationAndLinksTest() {
+        Response response = target().path("datasets").queryParam("offset", 1).queryParam("limit", 1).request().get();
+        assertEquals(response.getStatus(), 200);
+        verify(datasetManager).getDatasetRecords();
+        MultivaluedMap<String, Object> headers = response.getHeaders();
+        assertEquals(headers.get("X-Total-Count").get(0), "3");
+        Set<Link> links = response.getLinks();
+        assertEquals(links.size(), 2);
+        assertTrue(response.hasLink("prev"));
+        assertTrue(response.hasLink("next"));
+        try {
+            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            assertEquals(result.size(), 1);
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void getDatasetRecordsWithSortingTest() {
+        Response response = target().path("datasets").queryParam("sort", DCTERMS.TITLE.stringValue())
+                .queryParam("ascending", false).request().get();
+        assertEquals(response.getStatus(), 200);
+        verify(datasetManager).getDatasetRecords();
+        try {
+            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            assertEquals(result.size(), 3);
+            for (int i = 0; i < result.size(); i++) {
+                JSONObject recordObj = result.getJSONObject(i);
+                assertTrue(recordObj.containsKey("@id"));
+                assertTrue(recordObj.getString("@id").equals(expectedSortOrder[i]));
+            }
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void getDatasetRecordsWithErrorTest() {
         // Setup:
         when(datasetManager.getDatasetRecords()).thenThrow(new MatOntoException());
 
@@ -184,7 +263,7 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
     }
 
     @Test
-    public void createDatasetTest() {
+    public void createDatasetRecordTest() {
         // Setup:
         FormDataMultiPart fd = new FormDataMultiPart().field("title", "title")
                 .field("datasetIRI", "http://example.com/dataset")
@@ -195,11 +274,11 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
         Response response = target().path("datasets").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 201);
         verify(datasetManager).createDataset(any(DatasetRecordConfig.class));
-        assertEquals(response.readEntity(String.class), record.getResource().stringValue());
+        assertEquals(response.readEntity(String.class), record1.getResource().stringValue());
     }
 
     @Test
-    public void createDatasetWithoutTitleTest() {
+    public void createDatasetRecordWithoutTitleTest() {
         // Setup:
         FormDataMultiPart fd = new FormDataMultiPart().field("repositoryId", "system");
 
@@ -208,7 +287,7 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
     }
 
     @Test
-    public void createDatasetWithoutRepositoryIdTest() {
+    public void createDatasetRecordWithoutRepositoryIdTest() {
         // Setup:
         FormDataMultiPart fd = new FormDataMultiPart().field("title", "title");
 
@@ -217,7 +296,7 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
     }
 
     @Test
-    public void createDatasetWithInvalidRespositoryIdTest() {
+    public void createDatasetRecordWithInvalidRespositoryIdTest() {
         // Setup:
         FormDataMultiPart fd = new FormDataMultiPart().field("title", "title")
                 .field("repositoryId", "error");
@@ -228,7 +307,7 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
     }
 
     @Test
-    public void createDatasetWithExistingDatasetIRITest() {
+    public void createDatasetRecordWithExistingDatasetIRITest() {
         // Setup:
         FormDataMultiPart fd = new FormDataMultiPart().field("title", "title")
                 .field("repositoryId", "system")
@@ -240,7 +319,7 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
     }
 
     @Test
-    public void createDatasetWithErrorTest() {
+    public void createDatasetRecordWithErrorTest() {
         // Setup:
         FormDataMultiPart fd = new FormDataMultiPart().field("title", "title")
                 .field("repositoryId", "system");
@@ -251,97 +330,97 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
     }
 
     @Test
-    public void deleteDatasetWithForceTest() {
-        Response response = target().path("datasets/" + encode(record.getResource().stringValue()))
+    public void deleteDatasetRecordWithForceTest() {
+        Response response = target().path("datasets/" + encode(record1.getResource().stringValue()))
                 .queryParam("force", true).request().delete();
         assertEquals(response.getStatus(), 200);
-        verify(datasetManager).deleteDataset(record.getResource());
+        verify(datasetManager).deleteDataset(record1.getResource());
         verify(datasetManager, never()).safeDeleteDataset(any(Resource.class));
     }
 
     @Test
-    public void deleteDatasetWithoutForceTest() {
-        Response response = target().path("datasets/" + encode(record.getResource().stringValue()))
+    public void deleteDatasetRecordWithoutForceTest() {
+        Response response = target().path("datasets/" + encode(record1.getResource().stringValue()))
                 .queryParam("force", false).request().delete();
         assertEquals(response.getStatus(), 200);
-        verify(datasetManager).safeDeleteDataset(record.getResource());
+        verify(datasetManager).safeDeleteDataset(record1.getResource());
         verify(datasetManager, never()).deleteDataset(any(Resource.class));
     }
 
     @Test
-    public void deleteDatasetThatDoesNotExistTest() {
+    public void deleteDatasetRecordThatDoesNotExistTest() {
         // Setup:
         doThrow(new IllegalArgumentException()).when(datasetManager).deleteDataset(any(Resource.class));
         doThrow(new IllegalArgumentException()).when(datasetManager).safeDeleteDataset(any(Resource.class));
 
-        Response response = target().path("datasets/" + encode(record.getResource().stringValue()))
+        Response response = target().path("datasets/" + encode(record1.getResource().stringValue()))
                 .queryParam("force", false).request().delete();
         assertEquals(response.getStatus(), 400);
 
-        response = target().path("datasets/" + encode(record.getResource().stringValue()))
+        response = target().path("datasets/" + encode(record1.getResource().stringValue()))
                 .queryParam("force", true).request().delete();
         assertEquals(response.getStatus(), 400);
     }
 
     @Test
-    public void deleteDatasetWithErrorTest() {
+    public void deleteDatasetRecordWithErrorTest() {
         // Setup:
         doThrow(new MatOntoException()).when(datasetManager).deleteDataset(any(Resource.class));
         doThrow(new MatOntoException()).when(datasetManager).safeDeleteDataset(any(Resource.class));
 
-        Response response = target().path("datasets/" + encode(record.getResource().stringValue()))
+        Response response = target().path("datasets/" + encode(record1.getResource().stringValue()))
                 .queryParam("force", false).request().delete();
         assertEquals(response.getStatus(), 500);
 
-        response = target().path("datasets/" + encode(record.getResource().stringValue()))
+        response = target().path("datasets/" + encode(record1.getResource().stringValue()))
                 .queryParam("force", true).request().delete();
         assertEquals(response.getStatus(), 500);
     }
 
     @Test
-    public void clearDatasetWithForceTest() {
-        Response response = target().path("datasets/" + encode(record.getResource().stringValue()) + "/data")
+    public void clearDatasetRecordWithForceTest() {
+        Response response = target().path("datasets/" + encode(record1.getResource().stringValue()) + "/data")
                 .queryParam("force", true).request().delete();
         assertEquals(response.getStatus(), 200);
-        verify(datasetManager).clearDataset(record.getResource());
+        verify(datasetManager).clearDataset(record1.getResource());
         verify(datasetManager, never()).safeClearDataset(any(Resource.class));
     }
 
     @Test
-    public void clearDatasetWithoutForceTest() {
-        Response response = target().path("datasets/" + encode(record.getResource().stringValue()) + "/data")
+    public void clearDatasetRecordWithoutForceTest() {
+        Response response = target().path("datasets/" + encode(record1.getResource().stringValue()) + "/data")
                 .queryParam("force", false).request().delete();
         assertEquals(response.getStatus(), 200);
-        verify(datasetManager).safeClearDataset(record.getResource());
+        verify(datasetManager).safeClearDataset(record1.getResource());
         verify(datasetManager, never()).clearDataset(any(Resource.class));
     }
 
     @Test
-    public void clearDatasetThatDoesNotExistTest() {
+    public void clearDatasetRecordThatDoesNotExistTest() {
         // Setup:
         doThrow(new IllegalArgumentException()).when(datasetManager).clearDataset(any(Resource.class));
         doThrow(new IllegalArgumentException()).when(datasetManager).safeClearDataset(any(Resource.class));
 
-        Response response = target().path("datasets/" + encode(record.getResource().stringValue()) + "/data")
+        Response response = target().path("datasets/" + encode(record1.getResource().stringValue()) + "/data")
                 .queryParam("force", false).request().delete();
         assertEquals(response.getStatus(), 400);
 
-        response = target().path("datasets/" + encode(record.getResource().stringValue()) + "/data")
+        response = target().path("datasets/" + encode(record1.getResource().stringValue()) + "/data")
                 .queryParam("force", true).request().delete();
         assertEquals(response.getStatus(), 400);
     }
 
     @Test
-    public void clearDatasetWithErrorTest() {
+    public void clearDatasetRecordWithErrorTest() {
         // Setup:
         doThrow(new MatOntoException()).when(datasetManager).clearDataset(any(Resource.class));
         doThrow(new MatOntoException()).when(datasetManager).safeClearDataset(any(Resource.class));
 
-        Response response = target().path("datasets/" + encode(record.getResource().stringValue()) + "/data")
+        Response response = target().path("datasets/" + encode(record1.getResource().stringValue()) + "/data")
                 .queryParam("force", false).request().delete();
         assertEquals(response.getStatus(), 500);
 
-        response = target().path("datasets/" + encode(record.getResource().stringValue()) + "/data")
+        response = target().path("datasets/" + encode(record1.getResource().stringValue()) + "/data")
                 .queryParam("force", true).request().delete();
         assertEquals(response.getStatus(), 500);
     }
