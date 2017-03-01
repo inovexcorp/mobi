@@ -47,9 +47,7 @@
                     dvm.om = ontologyManagerService;
                     dvm.sm = ontologyStateService;
 
-                    dvm.prefix = _.get(dvm.om.getListItemByRecordId(dvm.sm.listItem.recordId), 'iriBegin',
-                        dvm.sm.listItem.ontologyId) + _.get(dvm.om.getListItemByRecordId(dvm.sm.listItem.recordId),
-                        'iriThen', '#');
+                    dvm.prefix = dvm.sm.getDefaultPrefix();
 
                     dvm.property = {
                         '@id': dvm.prefix,
@@ -71,6 +69,7 @@
                     dvm.onEdit = function(iriBegin, iriThen, iriEnd) {
                         dvm.iriHasChanged = true;
                         dvm.property['@id'] = iriBegin + iriThen + iriEnd;
+                        dvm.sm.setCommonIriParts(iriBegin, iriThen);
                     }
 
                     dvm.create = function() {

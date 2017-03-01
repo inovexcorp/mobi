@@ -61,13 +61,6 @@
                         dvm.iriEnd = angular.copy(dvm.refresh.iriEnd);
                     }
 
-                    dvm.afterEdit = function() {
-                        var listItem = dvm.om.getListItemByRecordId(dvm.sm.listItem.recordId);
-                        _.set(listItem, 'iriBegin', angular.copy(dvm.iriBegin));
-                        _.set(listItem, 'iriThen', angular.copy(dvm.iriThen));
-                        dvm.sm.showIriOverlay = false;
-                    }
-
                     $scope.$watch('dvm.iri', function() {
                         dvm.setVariables(dvm);
                         dvm.setVariables(dvm.refresh);

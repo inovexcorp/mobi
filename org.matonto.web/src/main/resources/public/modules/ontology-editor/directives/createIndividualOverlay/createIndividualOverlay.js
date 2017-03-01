@@ -44,8 +44,7 @@
                     dvm.om = ontologyManagerService;
                     dvm.sm = ontologyStateService;
 
-                    dvm.prefix = _.get(dvm.sm.listItem, 'iriBegin', dvm.sm.listItem.ontologyId) + _.get(dvm.sm.listItem,
-                        'iriThen', '#');
+                    dvm.prefix = dvm.sm.getDefaultPrefix();
 
                     dvm.individual = {
                         '@id': dvm.prefix,
@@ -63,6 +62,7 @@
                     dvm.onEdit = function(iriBegin, iriThen, iriEnd) {
                         dvm.iriHasChanged = true;
                         dvm.individual['@id'] = iriBegin + iriThen + iriEnd;
+                        dvm.sm.setCommonIriParts(iriBegin, iriThen);
                     }
 
                     dvm.getItemOntologyIri = function(item) {

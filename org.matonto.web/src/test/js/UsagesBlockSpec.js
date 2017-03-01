@@ -105,13 +105,46 @@ describe('Usages Block directive', function() {
         });
     });
     it('should update the results when the usages change', function() {
-        ontologyStateSvc.getActivePage.and.returnValue({usages: []});
+        ontologyStateSvc.getActivePage.and.returnValue({
+            usages: [{
+                s: {value: 'A'},
+                p: {value: 'B'},
+                o: {value: 'test'}
+            }, {
+                s: {value: 'B'},
+                p: {value: 'test'},
+                o: {value: 'A'}
+            }, {
+                s: {value: 'B'},
+                p: {value: 'A'},
+                o: {value: 'test'}
+            }, {
+                s: {value: 'B'},
+                p: {value: 'B'},
+                o: {value: 'test'}
+            }, {
+                s: {value: 'B'},
+                p: {value: 'test'},
+                o: {value: 'B'}
+            }]
+        });
+        var expected = {
+            B: [{
+                subject: 'A', predicate: 'B', object: 'test'
+            }, {
+                subject: 'B', predicate: 'B', object: 'test'
+            }],
+            test: [{
+                subject: 'B', predicate: 'test', object: 'A'
+            }, {
+                subject: 'B', predicate: 'test', object: 'B'
+            }],
+            A: [{
+                subject: 'B', predicate: 'A', object: 'test'
+            }]
+        }
         ontologyStateSvc.selected = {'@id': 'test'};
-        ontologyStateSvc.state.deletedEntities = [{matonto: {originalIRI: 'A'}}];
-        ontologyStateSvc.state.test.usages = [{s: {value: 'A'}, p: {value: 'B'}}, {s: {value: 'B'}, o: {value: 'A'}}, {s: {value: 'B'}, p: {value: 'A'}}, {s: {value: 'B'}, p: {value: 'B'}}, {s: {value: 'B'}, o: {value: 'B'}}];
         scope.$digest();
-        expect(_.has(controller.results, 'A')).toBe(false);
-        expect(controller.results.B).toContain(jasmine.objectContaining({subject: 'B', predicate: 'B', object: 'test'}));
-        expect(controller.results.test).toContain(jasmine.objectContaining({subject: 'B', predicate: 'test', object: 'B'}));
+        expect(angular.copy(controller.results)).toEqual(expected);
     });
 });

@@ -45,8 +45,7 @@
                     dvm.sm = ontologyStateService;
                     dvm.util = utilService;
                     dvm.concepts = [];
-                    dvm.prefix = _.get(dvm.sm.listItem, 'iriBegin', dvm.sm.listItem.ontologyId) + _.get(dvm.sm.listItem,
-                        'iriThen', '#');
+                    dvm.prefix = dvm.sm.getDefaultPrefix();
                     dvm.scheme = {
                         '@id': dvm.prefix,
                         '@type': [prefixes.owl + 'NamedIndividual', prefixes.skos + 'ConceptScheme'],
@@ -65,6 +64,7 @@
                     dvm.onEdit = function(iriBegin, iriThen, iriEnd) {
                         dvm.iriHasChanged = true;
                         dvm.scheme['@id'] = iriBegin + iriThen + iriEnd;
+                        dvm.sm.setCommonIriParts(iriBegin, iriThen);
                     }
 
                     dvm.create = function() {
