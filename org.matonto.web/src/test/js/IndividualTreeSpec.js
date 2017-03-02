@@ -22,7 +22,7 @@
  */
 
 describe('Individual Tree directive', function() {
-    var $compile, scope, element, controller, ontologyStateSvc, ontologyManagerSvc, util;
+    var $compile, scope, element, ontologyStateSvc, ontologyManagerSvc, util;
 
     beforeEach(function() {
         module('templates');
@@ -54,12 +54,9 @@ describe('Individual Tree directive', function() {
 
         element = $compile(angular.element('<individual-tree></individual-tree>'))(scope);
         scope.$digest();
-        controller = element.controller('individualTree');
     });
 
     describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
-        });
         it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
             expect(element.hasClass('tree')).toBe(true);
@@ -96,12 +93,6 @@ describe('Individual Tree directive', function() {
             icon = angular.element(element.querySelectorAll('ul.class > li a i')[0]);
             expect(container.length).toBe(1);
             expect(icon.hasClass('fa-folder-open-o')).toBe(true);
-        });
-    });
-    describe('controller methods', function() {
-        it('getName calls the correct method', function() {
-            controller.getName({entityIRI: 'iri'});
-            expect(util.getBeautifulIRI).toHaveBeenCalledWith('iri');
         });
     });
 });

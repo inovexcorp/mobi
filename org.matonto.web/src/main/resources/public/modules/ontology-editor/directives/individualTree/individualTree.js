@@ -42,10 +42,6 @@
                     dvm.sm = ontologyStateService;
                     dvm.ou = ontologyUtilsManagerService;
                     dvm.util = utilService;
-
-                    dvm.getName = function(node) {
-                        return dvm.util.getBeautifulIRI(node.entityIRI);
-                    }
                 }
             }
         }

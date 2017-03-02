@@ -23,7 +23,7 @@
 
 
 describe('Hierarchy Tree directive', function() {
-    var $compile, scope, element, isolatedScope, ontologyStateSvc, controller, ontologyUtils;
+    var $compile, scope, element, isolatedScope, ontologyStateSvc, ontologyUtils;
 
     beforeEach(function() {
         module('templates');
@@ -51,7 +51,6 @@ describe('Hierarchy Tree directive', function() {
         }];
         element = $compile(angular.element('<hierarchy-tree hierarchy="hierarchy"></hierarchy-tree>'))(scope);
         scope.$digest();
-        controller = element.controller('hierarchyTree');
     });
 
     describe('in isolated scope', function() {
