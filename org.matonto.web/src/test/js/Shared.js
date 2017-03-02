@@ -551,6 +551,7 @@ function mockOntologyUtilsManager() {
             this.isBlankNodeString = jasmine.createSpy('isBlankNodeString');
             this.getBlankNodeValue = jasmine.createSpy('getBlankNodeValue');
             this.isLinkable = jasmine.createSpy('isLinkable');
+            this.getNameByIRI = jasmine.createSpy('getNameByIRI');
         });
     });
 }
