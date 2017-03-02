@@ -28,6 +28,7 @@ import static org.junit.Assert.fail;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.when;
 
+import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.Test;
@@ -195,5 +196,45 @@ public class RestUtilsTest {
         } catch (MatOntoWebException e) {
             assertEquals(401, e.getResponse().getStatus());
         }
+    }
+
+    @Test
+    public void checkStringParamTest() {
+        String errorMessage = "Error";
+        try {
+            RestUtils.checkStringParam("", errorMessage);
+        } catch (MatOntoWebException e) {
+            assertEquals(400, e.getResponse().getStatus());
+            assertEquals(errorMessage, e.getResponse().getStatusInfo().getReasonPhrase());
+        }
+
+        try {
+            RestUtils.checkStringParam(null, errorMessage);
+        } catch (MatOntoWebException e) {
+            assertEquals(400, e.getResponse().getStatus());
+            assertEquals(errorMessage, e.getResponse().getStatusInfo().getReasonPhrase());
+        }
+
+        RestUtils.checkStringParam("Test", errorMessage);
+    }
+
+    @Test
+    public void getObjectFromJsonldNoContextTest() {
+        JSONObject expected = JSONObject.fromObject("{'@id': 'test'}");
+        String jsonld = "[" + expected.toString() + "]";
+        assertEquals(expected, RestUtils.getObjectFromJsonld(jsonld));
+    }
+
+    @Test
+    public void getObjectFromJsonldWithContextTest() {
+        JSONObject expected = JSONObject.fromObject("{'@id': 'test'}");
+        String jsonld = "[{'@graph':[" + expected.toString() + "]}]";
+        assertEquals(expected, RestUtils.getObjectFromJsonld(jsonld));
+    }
+
+    @Test
+    public void getObjectFromJsonldThatDoesNotExistTest() {
+        assertEquals(new JSONObject(), RestUtils.getObjectFromJsonld("[]"));
+        assertEquals(new JSONObject(), RestUtils.getObjectFromJsonld("[{'@graph': []}]"));
     }
 }

@@ -24,6 +24,7 @@ package org.matonto.ontology.rest.impl;
  */
 
 import static org.matonto.rest.util.RestUtils.jsonldToModel;
+import static org.matonto.rest.util.RestUtils.modelToJsonld;
 
 import com.google.common.collect.Iterables;
 
@@ -569,13 +570,21 @@ public class OntologyRestImpl implements OntologyRest {
 
     @Override
     public Response getEntityUsages(ContainerRequestContext context, String recordIdStr, String entityIRIStr,
-                                    String branchIdStr, String commitIdStr) {
+                                    String branchIdStr, String commitIdStr, String queryType) {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
-            TupleQueryResult results = ontologyManager.getEntityUsages(ontology, valueFactory.createIRI(entityIRIStr));
-            JSONObject response = JSONQueryResults.getResponse(results);
-            return Response.ok(response).build();
+            Resource entityIRI = valueFactory.createIRI(entityIRIStr);
+            if (queryType.equals("construct")) {
+                Model results = ontologyManager.constructEntityUsages(ontology, entityIRI);
+                return Response.ok(modelToJsonld(sesameTransformer.sesameModel(results))).build();
+            } else if (queryType.equals("select")) {
+                TupleQueryResult results = ontologyManager.getEntityUsages(ontology, entityIRI);
+                return Response.ok(JSONQueryResults.getResponse(results)).build();
+            } else {
+                throw ErrorUtils.sendError("The queryType parameter is not select or construct as expected.",
+                        Response.Status.BAD_REQUEST);
+            }
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         }

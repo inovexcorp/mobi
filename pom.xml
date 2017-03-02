@@ -29,7 +29,7 @@
 
     <groupId>org.matonto</groupId>
     <artifactId>root</artifactId>
-    <version>1.5.13-SNAPSHOT</version>
+    <version>1.5.15-SNAPSHOT</version>
 
     <packaging>pom</packaging>
 
@@ -87,6 +87,7 @@
         <module>org.matonto.platform.config.impl</module>
         <module>org.matonto.dataset.api</module>
         <module>org.matonto.dataset.impl</module>
+        <module>org.matonto.dataset.rest</module>
     </modules>
 
     <properties>

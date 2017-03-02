@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.5.13-SNAPSHOT</version>
+        <version>1.5.15-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -50,7 +50,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.api</artifactId>
-            <version>1.5.2</version>
+            <version>1.5.13</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
@@ -60,7 +60,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>persistence.utils</artifactId>
-            <version>1.4.24</version>
+            <version>1.5.13</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
@@ -116,7 +116,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.core.impl.owlapi</artifactId>
-            <version>1.4.24</version>
+            <version>1.5.13</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
