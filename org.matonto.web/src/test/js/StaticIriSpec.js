@@ -165,17 +165,6 @@ describe('Static IRI directive', function() {
             expect(controller.iriThen).toBe('new');
             expect(controller.iriEnd).toBe('new');
         });
-        it('afterEdit update ontologyIriBegin and ontologyIriThen and sets showIriOverlay to false', function() {
-            ontologyStateSvc.showIriOverlay = true;
-            controller.iriBegin = 'new';
-            controller.iriThen = 'new';
-            controller.afterEdit();
-            expect(ontologyManagerSvc.getListItemByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId);
-            var listItem = ontologyManagerSvc.getListItemByRecordId(ontologyStateSvc.listItem.recordId);
-            expect(listItem.iriBegin).toBe('new');
-            expect(listItem.iriThen).toBe('new');
-            expect(ontologyStateSvc.showIriOverlay).toBe(false);
-        });
         it('check $watch', function() {
             controller.setVariables = jasmine.createSpy('setVariables');
             controller.iri = 'new';

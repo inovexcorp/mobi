@@ -54,8 +54,7 @@
                 '$$hashKey',
                 'originalIRI',
                 'unsaved',
-                'valid',
-                'ontologyId'
+                'valid'
             ];
 
         /**
