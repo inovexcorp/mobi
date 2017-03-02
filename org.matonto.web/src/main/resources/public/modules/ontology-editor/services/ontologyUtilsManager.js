@@ -106,5 +106,13 @@
             self.isLinkable = function(id) {
                 return _.has(sm.listItem.index, id) && !self.isBlankNodeString(id);
             }
+
+            self.getNameByIRI = function(iri) {
+                return om.getEntityName(om.getEntityByRecordId(sm.listItem.recordId, iri));
+            }
+
+            self.getNameByNode = function(node) {
+                return self.getNameByIRI(node.entityIRI);
+            }
         }
 })();

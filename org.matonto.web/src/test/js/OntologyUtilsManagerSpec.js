@@ -73,4 +73,20 @@ describe('Ontology Utils Manager service', function() {
         spyOn(ontologyUtilsManagerSvc, 'isBlankNodeString').and.returnValue(true);
         expect(ontologyUtilsManagerSvc.isLinkable('_:b')).toEqual(false);
     });
+    it('getNameByIRI should call the proper methods', function() {
+        var entity = {'@id': 'id'};
+        var iri = 'iri';
+        var recordId = 'recordId';
+        ontologyStateSvc.listItem.recordId = recordId;
+        ontologyManagerSvc.getEntityByRecordId.and.returnValue(entity);
+        ontologyManagerSvc.getEntityName.and.returnValue('result');
+        expect(ontologyUtilsManagerSvc.getNameByIRI(iri)).toEqual('result');
+        expect(ontologyManagerSvc.getEntityByRecordId).toHaveBeenCalledWith(recordId, iri);
+        expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith(entity);
+    });
+    it('getNameByNode calls the correct method', function() {
+        spyOn(ontologyUtilsManagerSvc, 'getNameByIRI').and.returnValue('result');
+        expect(ontologyUtilsManagerSvc.getNameByNode({entityIRI: 'iri'})).toEqual('result');
+        expect(ontologyUtilsManagerSvc.getNameByIRI).toHaveBeenCalledWith('iri');
+    });
 });

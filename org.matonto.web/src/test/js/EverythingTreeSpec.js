@@ -21,34 +21,33 @@
  * #L%
  */
 describe('Everything Tree directive', function() {
-    var $compile,
-        scope,
-        element,
-        ontologyStateSvc,
-        ontologyManagerSvc;
+    var $compile, scope, element, ontologyStateSvc, ontologyManagerSvc, controller, ontologyUtils;
 
     beforeEach(function() {
         module('templates');
         module('everythingTree');
         mockOntologyManager();
         mockOntologyState();
+        mockOntologyUtilsManager();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_, _ontologyUtilsManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyManagerSvc = _ontologyManagerService_;
             ontologyStateSvc = _ontologyStateService_;
+            ontologyUtils = _ontologyUtilsManagerService_;
         });
 
-        ontologyManagerSvc.getClasses.and.returnValue(['class1']);
-        ontologyManagerSvc.getClassProperties.and.returnValue(['property1']);
-        ontologyManagerSvc.getNoDomainProperties.and.returnValue(['property1']);
+        ontologyManagerSvc.getClasses.and.returnValue([{matonto: {originalIRI: 'class1'}}]);
+        ontologyManagerSvc.getClassProperties.and.returnValue([{matonto: {originalIRI: 'property1'}}]);
+        ontologyManagerSvc.getNoDomainProperties.and.returnValue([{matonto: {originalIRI: 'property1'}}]);
         ontologyManagerSvc.hasNoDomainProperties.and.returnValue(true);
         ontologyStateSvc.getOpened.and.returnValue(true);
         ontologyStateSvc.getNoDomainsOpened.and.returnValue(true);
 
         element = $compile(angular.element('<everything-tree></everything-tree>'))(scope);
         scope.$digest();
+        controller = element.controller('everythingTree');
     });
 
     describe('replaces the element with the correct html', function() {
@@ -87,6 +86,18 @@ describe('Everything Tree directive', function() {
                 scope.$digest();
 
                 expect(element.querySelectorAll('.container tree-item').length).toBe(1);
+            });
+        });
+    });
+    describe('controller methods', function() {
+        describe('getName calls the correct method', function() {
+            it('when @id exists', function() {
+                controller.getName({'@id': 'iri'});
+                expect(ontologyUtils.getNameByIRI).toHaveBeenCalledWith('iri');
+            });
+            it('when @id does not exist', function() {
+                controller.getName({matonto: {originalIRI: 'iri'}});
+                expect(ontologyUtils.getNameByIRI).toHaveBeenCalledWith('iri');
             });
         });
     });
