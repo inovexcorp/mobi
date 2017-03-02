@@ -52,16 +52,11 @@
                     dvm.om = ontologyManagerService;
                     dvm.sm = ontologyStateService;
 
-                    function getCurrentEntityIRI() {
-                        return _.get(dvm.currentEntity, 'matonto.originalIRI',
-                            _.get(dvm.currentEntity, 'matonto.anonymous', ''));
-                    }
-
                     dvm.getTreeDisplay = function() {
                         if (treeDisplay === 'pretty') {
                             return dvm.om.getEntityName(dvm.currentEntity, dvm.sm.state.type);
                         }
-                        return getCurrentEntityIRI();
+                        return _.get(dvm.currentEntity, 'matonto.originalIRI', _.get(dvm.currentEntity, 'matonto.anonymous', ''));
                     }
 
                     dvm.toggleOpen = function() {

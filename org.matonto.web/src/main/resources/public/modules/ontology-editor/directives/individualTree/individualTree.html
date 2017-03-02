@@ -21,24 +21,24 @@
   #L%
   -->
 <div class="tree individual-tree">
-    <ul class="class" ng-repeat="node in dvm.sm.listItem.classesWithIndividuals | orderBy track by node.entityIRI" ng-include="'individual_item'"
+    <ul class="class" ng-repeat="node in dvm.sm.listItem.classesWithIndividuals | orderBy:dvm.ou.getNameByNode track by node.entityIRI" ng-include="'individual_item'"
         ng-init="node = node; classOpened = dvm.sm.getIndividualsOpened(dvm.sm.listItem.recordId, node.entityIRI)"
         ng-if="dvm.om.hasClassIndividuals(dvm.sm.listItem.ontology, node.entityIRI)"></ul>
     <script type="text/ng-template" id="individual_item">
         <li>
             <a ng-click="classOpened = !classOpened; dvm.sm.setIndividualsOpened(dvm.sm.listItem.recordId, node.entityIRI, classOpened); $event.stopPropagation()">
                 <i class="fa fa-fw"
-                   ng-class="{'fa-folder-open-o': classOpened, 'fa-folder-o': !classOpened}"></i>{{dvm.util.getBeautifulIRI(node.entityIRI)}}
+                   ng-class="{'fa-folder-open-o': classOpened, 'fa-folder-o': !classOpened}"></i>{{dvm.ou.getNameByIRI(node.entityIRI)}}
             </a>
         </li>
         <li class="container" ng-if="classOpened">
             <ul>
-                <tree-item class="individual" ng-repeat="individual in dvm.om.getClassIndividuals(dvm.sm.listItem.ontology, node.entityIRI) track by individual.matonto.originalIRI"
+                <tree-item class="individual" ng-repeat="individual in dvm.om.getClassIndividuals(dvm.sm.listItem.ontology, node.entityIRI) | orderBy:dvm.om.getEntityName track by individual.matonto.originalIRI"
                            current-entity="individual"
                            is-active="dvm.sm.getActiveEntityIRI() === individual.matonto.originalIRI"
                            on-click="dvm.sm.selectItem(individual.matonto.originalIRI, false)"></tree-item>
             </ul>
-            <ul ng-repeat="node in node.subEntities track by node.entityIRI" ng-include="'individual_item'"
+            <ul ng-repeat="node in node.subEntities | orderBy:dvm.ou.getNameByNode track by node.entityIRI" ng-include="'individual_item'"
                 ng-init="node = node; classOpened = dvm.sm.getIndividualsOpened(dvm.sm.listItem.recordId, node.entityIRI)"></ul>
         </li>
     </script>
