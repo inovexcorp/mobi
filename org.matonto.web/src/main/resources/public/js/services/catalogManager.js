@@ -227,7 +227,7 @@
              * @param {number} paginatedConfig.limit The number of results per page
              * @param {Object} paginatedConfig.sortOption A sort option object from the `sortOptions` array
              * @param {string} paginatedConfig.recordType A record type IRI string from the `recordTypes` array
-             * @param {string} paginatedConfig.searchTest The text to search for within the list of Records
+             * @param {string} paginatedConfig.searchText The text to search for within the list of Records
              * @returns {Promise} A promise that either resolves with the paginated response or is rejected
              * with a error message
              */
@@ -282,7 +282,7 @@
              * @param {Object} recordConfig A configuration object containing metadata for the new Record
              * @param {string} recordConfig.type A record type IRI string from the `recordTypes` array
              * @param {string} recordConfig.title The required title of the new Record
-             * @param {string} recordConfig.identifier The required identifier string for the new Record
+             * @param {string} recordConfig.identifier The optional identifier string for the new Record
              * @param {string} recordConfig.description The optional description of the new Record
              * @param {string[]} recordConfig.keywords The optional keywords to associate with the new Record.
              * @return {Promise} A promise that resolves to the IRI of the new Record or is rejected with an error
