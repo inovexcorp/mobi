@@ -138,11 +138,11 @@ public class CLITransform implements Action {
             Model mapping = transformer.matontoModel(Rio.parse(new FileInputStream(mappingFile), "", format.get()));
             Model model;
             if (extension.equals("xls") || extension.equals("xlsx")) {
-                ExcelConfig config = new ExcelConfig.Builder(new FileInputStream(newFile), mapping)
+                ExcelConfig config = new ExcelConfig.ExcelConfigBuilder(new FileInputStream(newFile), mapping)
                         .containsHeaders(containsHeaders).build();
                 model = converter.convert(config);
             } else {
-                SVConfig config = new SVConfig.Builder(new FileInputStream(newFile), mapping)
+                SVConfig config = new SVConfig.SVConfigBuilder(new FileInputStream(newFile), mapping)
                         .containsHeaders(containsHeaders).separator(separator.charAt(0)).build();
                 model = converter.convert(config);
             }
