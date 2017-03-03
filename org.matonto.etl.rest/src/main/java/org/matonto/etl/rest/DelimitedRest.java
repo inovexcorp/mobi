@@ -44,7 +44,7 @@ public interface DelimitedRest {
      *
      * @param fileInputStream an InputStream of a delimited document passed as form data
      * @param fileDetail information about the file being uploaded, including the name
-     * @return a response with the name of the file created on the server
+     * @return a Response with the name of the file created on the server
     */
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
@@ -59,7 +59,7 @@ public interface DelimitedRest {
      *
      * @param fileInputStream an InputStream of a delimited document passed as form data
      * @param fileName the name of the uploaded file on the server to replace
-     * @return a response with the name of the file replaced on the server
+     * @return a Response with the name of the file replaced on the server
      */
     @PUT
     @Path("{documentName}")
@@ -78,7 +78,7 @@ public interface DelimitedRest {
      * @param rowEnd the number of rows to retrieve from the delimited document. NOTE:
      *               the default number of rows is 10
      * @param separator the character the columns are separated by
-     * @return a response with a JSON array. Each element in the array is a row in the
+     * @return a Response with a JSON array. Each element in the array is a row in the
      *         document. The row is an array of strings which are the cells in the row
      *         in the document.
      */
@@ -100,7 +100,7 @@ public interface DelimitedRest {
      * @param format the RDF serialization to use if getting a preview
      * @param containsHeaders whether the delimited file has headers
      * @param separator the character the columns are separated by if it is a CSV
-     * @return a response with a JSON object containing the mapping file name and a
+     * @return a Response with a JSON object containing the mapping file name and a
      *      string containing the converted data in the requested format
     */
     @POST
@@ -117,24 +117,48 @@ public interface DelimitedRest {
 
     /**
      * Maps the data in an uploaded delimited document into RDF in the requested format
-     * using an uploaded mapping. The file must be present in the data/tmp/ directory.
+     * using an uploaded Mapping and downloads the result in a file with the requested
+     * name. The file must be present in the data/tmp/ directory.
      *
      * @param fileName the name of the delimited document in the data/tmp/ directory
-     * @param mappingIRI the id of the mapping
-     * @param format the RDF serialization to use if getting a preview
+     * @param mappingIRI the id of the Mapping
+     * @param format the RDF serialization to use
      * @param containsHeaders whether the delimited file has headers
      * @param separator the character the columns are separated by if it is a CSV
-     * @return a response with the converted data in the requested format to download
+     * @param downloadFileName the name for the downloaded file
+     * @return a Response with the converted data in the requested format to download
      */
     @GET
     @Path("{documentName}/map")
     @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*", "application/*"})
     @RolesAllowed("user")
-    @ApiOperation("ETL an uploaded delimited document using an uploaded mapping file")
+    @ApiOperation("ETL an uploaded delimited document using an uploaded Mapping file and download the data")
     Response etlFile(@PathParam("documentName") String fileName,
                      @QueryParam("mappingIRI") String mappingIRI,
                      @DefaultValue("jsonld") @QueryParam("format") String format,
                      @DefaultValue("true") @QueryParam("containsHeaders") boolean containsHeaders,
                      @DefaultValue(",") @QueryParam("separator") String separator,
                      @QueryParam("fileName") String downloadFileName);
+
+    /**
+     * Maps the data in an uploaded delimited document into RDF using an uploaded Mapping and
+     * adds it to the system default named graph of the requested DatasetRecord's Dataset. The
+     * file must be present in the data/tmp/ directory.
+     *
+     * @param fileName the name of the delimited document in the data/tmp/ directory
+     * @param mappingIRI the id of the Mapping
+     * @param datasetRecordIRI the id of the DatasetRecord
+     * @param containsHeaders whether the delimited file has headers
+     * @param separator the character the columns are separated by if it is a CSV
+     * @return a Response indicating the success of the request
+     */
+    @POST
+    @Path("{documentName}/map")
+    @RolesAllowed("user")
+    @ApiOperation("ETL an uploaded delimited document using an uploaded Mapping file and load data into a Dataset")
+    Response etlFile(@PathParam("documentName") String fileName,
+                     @QueryParam("mappingIRI") String mappingIRI,
+                     @QueryParam("datasetRecordIRI") String datasetRecordIRI,
+                     @DefaultValue("true") @QueryParam("containsHeaders") boolean containsHeaders,
+                     @DefaultValue(",") @QueryParam("separator") String separator);
 }

@@ -24,7 +24,9 @@ package org.matonto.etl.rest.impl;
  */
 
 import static java.nio.file.FileVisitResult.CONTINUE;
+import static org.matonto.rest.util.RestUtils.checkStringParam;
 import static org.matonto.rest.util.RestUtils.getRDFFormat;
+import static org.matonto.rest.util.RestUtils.jsonldToModel;
 import static org.matonto.rest.util.RestUtils.modelToString;
 
 import aQute.bnd.annotation.component.Activate;
@@ -42,6 +44,10 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.matonto.dataset.api.DatasetManager;
+import org.matonto.dataset.ontology.dataset.Dataset;
+import org.matonto.dataset.ontology.dataset.DatasetRecord;
+import org.matonto.etl.api.config.DelimitedConfig;
 import org.matonto.etl.api.config.ExcelConfig;
 import org.matonto.etl.api.config.SVConfig;
 import org.matonto.etl.api.delimited.DelimitedConverter;
@@ -51,12 +57,16 @@ import org.matonto.etl.rest.DelimitedRest;
 import org.matonto.exception.MatOntoException;
 import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.Statement;
 import org.matonto.rdf.api.ValueFactory;
+import org.matonto.repository.api.Repository;
+import org.matonto.repository.api.RepositoryConnection;
+import org.matonto.repository.api.RepositoryManager;
+import org.matonto.repository.base.RepositoryResult;
+import org.matonto.repository.exception.RepositoryException;
 import org.matonto.rest.util.CharsetUtils;
 import org.matonto.rest.util.ErrorUtils;
 import org.openrdf.model.Model;
-import org.openrdf.rio.RDFFormat;
-import org.openrdf.rio.Rio;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,7 +82,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -91,6 +100,9 @@ public class DelimitedRestImpl implements DelimitedRest {
     private DelimitedConverter converter;
     private MappingManager mappingManager;
     private ValueFactory factory;
+    private DatasetManager datasetManager;
+    private RepositoryManager repositoryManager;
+
     private final Logger logger = LoggerFactory.getLogger(DelimitedRestImpl.class);
     private SesameTransformer transformer;
 
@@ -116,6 +128,16 @@ public class DelimitedRestImpl implements DelimitedRest {
     @Reference
     protected void setTransformer(SesameTransformer transformer) {
         this.transformer = transformer;
+    }
+
+    @Reference
+    protected void setDatasetManager(DatasetManager datasetManager) {
+        this.datasetManager = datasetManager;
+    }
+
+    @Reference
+    protected void setRepositoryManager(RepositoryManager repositoryManager) {
+        this.repositoryManager = repositoryManager;
     }
 
     @Activate
@@ -165,82 +187,24 @@ public class DelimitedRestImpl implements DelimitedRest {
     @Override
     public Response etlFilePreview(String fileName, String jsonld, String format, boolean containsHeaders,
                                    String separator) {
-        if (jsonld == null || jsonld.equals("")) {
-            throw ErrorUtils.sendError("Must provide a JSON-LD string", Response.Status.BAD_REQUEST);
-        }
+        checkStringParam(jsonld, "Must provide a JSON-LD string");
 
-        File delimitedFile = getUploadedFile(fileName).orElseThrow(() ->
-                ErrorUtils.sendError("Document not found", Response.Status.BAD_REQUEST));
-        String extension = FilenameUtils.getExtension(delimitedFile.getName());
+        // Convert the data
+        Model data = transformer.sesameModel(etlFile(fileName, () -> jsonldToModel(jsonld), containsHeaders, separator,
+                true));
 
-        // Parse JSON-LD mapping into a model
-        Model mappingModel;
-        try {
-            InputStream in = new ByteArrayInputStream(jsonld.getBytes(StandardCharsets.UTF_8));
-            mappingModel = Rio.parse(in, "", RDFFormat.JSONLD);
-        } catch (IOException e) {
-            throw ErrorUtils.sendError("Error converting mapping JSON-LD", Response.Status.BAD_REQUEST);
-        }
-
-        String result;
-        InputStream data = getDocumentInputStream(delimitedFile);
-        if (extension.equals("xls") || extension.equals("xlsx")) {
-            ExcelConfig config = new ExcelConfig.Builder(data, transformer.matontoModel(mappingModel))
-                    .containsHeaders(containsHeaders)
-                    .limit(NUM_LINE_PREVIEW)
-                    .build();
-            result = etlFile(format, () -> converter.convert(config));
-        } else {
-            SVConfig config = new SVConfig.Builder(data, transformer.matontoModel(mappingModel))
-                    .containsHeaders(containsHeaders)
-                    .separator(separator.charAt(0))
-                    .limit(NUM_LINE_PREVIEW)
-                    .build();
-            result = etlFile(format, () -> converter.convert(config));
-        }
-
-        // Write data back to Response
-        logger.info("File mapped: " + delimitedFile.getPath());
-        return Response.ok(result).build();
+        return Response.ok(modelToString(data, format)).build();
     }
 
     @Override
     public Response etlFile(String fileName, String mappingIRI, String format, boolean containsHeaders,
                             String separator, String downloadFileName) {
-        if (mappingIRI == null || mappingIRI.equals("")) {
-            throw ErrorUtils.sendError("Must provide the name of an uploaded mapping", Response.Status.BAD_REQUEST);
-        }
+        checkStringParam(mappingIRI, "Must provide the IRI of an uploaded mapping");
 
-        File delimitedFile = getUploadedFile(fileName).orElseThrow(() ->
-                ErrorUtils.sendError("Document not found", Response.Status.BAD_REQUEST));
-        String extension = FilenameUtils.getExtension(delimitedFile.getName());
-
-        // Collect uploaded mapping model
-        Model mappingModel;
-        Resource mappingId = mappingManager.createMappingId(factory.createIRI(mappingIRI)).getMappingIdentifier();
-        Optional<MappingWrapper> mappingOptional = mappingManager.retrieveMapping(mappingId);
-        if (mappingOptional.isPresent()) {
-            mappingModel = transformer.sesameModel(mappingOptional.get().getModel());
-        } else {
-            throw ErrorUtils.sendError("Mapping " + mappingId + " does not exist",
-                    Response.Status.BAD_REQUEST);
-        }
-
-        String result;
-        InputStream data = getDocumentInputStream(delimitedFile);
-        if (extension.equals("xls") || extension.equals("xlsx")) {
-            ExcelConfig config = new ExcelConfig.Builder(data, transformer.matontoModel(mappingModel))
-                    .containsHeaders(containsHeaders)
-                    .build();
-            result = etlFile(format, () -> converter.convert(config));
-        } else {
-            SVConfig config = new SVConfig.Builder(data, transformer.matontoModel(mappingModel))
-                    .containsHeaders(containsHeaders)
-                    .separator(separator.charAt(0))
-                    .build();
-            result = etlFile(format, () -> converter.convert(config));
-        }
-        logger.info("File mapped: " + delimitedFile.getPath());
+        // Convert the data
+        Model data = transformer.sesameModel(etlFile(fileName, () -> getUploadedMapping(mappingIRI), containsHeaders,
+                separator, false));
+        String result = modelToString(data, format);
 
         // Write data into a stream
         StreamingOutput stream = os -> {
@@ -256,40 +220,112 @@ public class DelimitedRestImpl implements DelimitedRest {
                 +  "." + fileExtension).header("Content-Type", mimeType).build();
 
         // Remove temp file
-        try {
-            Files.deleteIfExists(Paths.get(TEMP_DIR + "/" + fileName));
-        } catch (IOException e) {
-            throw ErrorUtils.sendError(e, "Error deleting delimited file", Response.Status.BAD_REQUEST);
-        }
+        removeTempFile(fileName);
 
         return response;
     }
 
-    /**
-     * A supplier for the result of running a conversion using a ExcelConfig or a SVConfig.
-     *
-     * @param <T> The type of the result of the conversion
-    */
-    private interface SupplierWithException<T> {
-        T get() throws IOException;
+    @Override
+    public Response etlFile(String fileName, String mappingIRI, String datasetRecordIRI, boolean containsHeaders,
+                            String separator) {
+        checkStringParam(mappingIRI, "Must provide the IRI of an uploaded mapping");
+        checkStringParam(datasetRecordIRI, "Must provide the IRI of a dataset record");
+
+        // Collect the DatasetRecord
+        DatasetRecord record = datasetManager.getDatasetRecord(factory.createIRI(datasetRecordIRI)).orElseThrow(() ->
+                ErrorUtils.sendError("Dataset " + datasetRecordIRI + " does not exist", Response.Status.BAD_REQUEST));
+
+        // Convert the data
+        org.matonto.rdf.api.Model data = etlFile(fileName, () -> getUploadedMapping(mappingIRI), containsHeaders,
+                separator, false);
+
+        // Add data to the dataset
+        String repositoryId = record.getRepository().orElseThrow(() ->
+                ErrorUtils.sendError("Record has no repository set", Response.Status.INTERNAL_SERVER_ERROR));
+        Dataset dataset = record.getDataset().orElseThrow(() ->
+                ErrorUtils.sendError("Record has no Dataset set", Response.Status.INTERNAL_SERVER_ERROR));
+        Repository repository = repositoryManager.getRepository(repositoryId)
+                .orElseThrow(() -> ErrorUtils.sendError("Repository is not available.", Response.Status.BAD_REQUEST));
+        try (RepositoryConnection conn = repository.getConnection()) {
+            RepositoryResult<Statement> statements = conn.getStatements(dataset.getResource(),
+                    factory.createIRI(Dataset.systemDefaultNamedGraph_IRI), null);
+            if (statements.hasNext()) {
+                Resource context = (Resource) statements.next().getObject();
+                conn.add(data, context);
+            } else {
+                throw ErrorUtils.sendError("Dataset has no system default named graph",
+                        Response.Status.INTERNAL_SERVER_ERROR);
+            }
+        } catch (RepositoryException ex) {
+            throw ErrorUtils.sendError("Error in repository connection", Response.Status.INTERNAL_SERVER_ERROR);
+        }
+
+        // Remove temp file
+        removeTempFile(fileName);
+
+        return Response.ok().build();
     }
 
     /**
-     * Converts delimited SV data in an InputStream into RDF and then writes the result into a string.
+     * Returns the result of an ETL operation against the file with the passed name using the mapping supplied by the
+     * passed function.
      *
-     * @param format the RDF serialization to return the data as
-     * @param supplier the supplier for getting the result of running a conversion using a Config
-     * @return a string with the delimited data converted into RDF
+     * @param fileName the name of the delimited document in the data/tmp/ directory
+     * @param mappingSupplier the supplier for getting a mapping model
+     * @param containsHeaders whether the delimited file has headers
+     * @param separator the character the columns are separated by if it is a CSV
+     * @return a MatOnto Model with the resulting mapped RDF data
      */
-    private String etlFile(String format, SupplierWithException<org.matonto.rdf.api.Model> supplier) {
-        // Convert InputStream to RDF
-        Model model;
+    private org.matonto.rdf.api.Model etlFile(String fileName, SupplierWithException<Model> mappingSupplier,
+                                              boolean containsHeaders, String separator, boolean limit) {
+        // Collect the delimited file and its extension
+        File delimitedFile = getUploadedFile(fileName).orElseThrow(() ->
+                ErrorUtils.sendError("Document not found", Response.Status.BAD_REQUEST));
+        String extension = FilenameUtils.getExtension(delimitedFile.getName());
+
+        // Collect the mapping model
+        Model mappingModel;
         try {
-            model = transformer.sesameModel(supplier.get());
+            mappingModel = mappingSupplier.get();
+        } catch (IOException e) {
+            throw ErrorUtils.sendError("Error converting mapping JSON-LD", Response.Status.BAD_REQUEST);
+        }
+
+        // Run the mapping against the delimited data
+        org.matonto.rdf.api.Model result;
+        InputStream data = getDocumentInputStream(delimitedFile);
+        if (extension.equals("xls") || extension.equals("xlsx")) {
+            ExcelConfig.ExcelConfigBuilder config = new ExcelConfig.ExcelConfigBuilder(data,
+                    transformer.matontoModel(mappingModel)).containsHeaders(containsHeaders);
+            if (limit) {
+                config.limit(NUM_LINE_PREVIEW);
+            }
+            result = etlFile(() -> converter.convert(config.build()));
+        } else {
+            SVConfig.SVConfigBuilder config = new SVConfig.SVConfigBuilder(data, transformer.matontoModel(mappingModel))
+                    .separator(separator.charAt(0))
+                    .containsHeaders(containsHeaders);
+            if (limit) {
+                config.limit(NUM_LINE_PREVIEW);
+            }
+            result = etlFile(() -> converter.convert(config.build()));
+        }
+        logger.info("File mapped: " + delimitedFile.getPath());
+        return result;
+    }
+
+    /**
+     * Converts delimited SV data in an InputStream into RDF.
+     *
+     * @param supplier the supplier for getting the result of running a conversion using a Config
+     * @return a MatOnto Model with the delimited data converted into RDF
+     */
+    private org.matonto.rdf.api.Model etlFile(SupplierWithException<org.matonto.rdf.api.Model> supplier) {
+        try {
+            return supplier.get();
         } catch (IOException | MatOntoException e) {
             throw ErrorUtils.sendError(e, "Error converting delimited file", Response.Status.BAD_REQUEST);
         }
-        return modelToString(model, format);
     }
 
     @Override
@@ -451,6 +487,31 @@ public class DelimitedRestImpl implements DelimitedRest {
         return UUID.randomUUID().toString();
     }
 
+    /**
+     * Retrieves a Sesame Model of an uploaded mapping by its IRI.
+     *
+     * @param mappingIRI the IRI of a mapping
+     * @return a Sesame Model with a mapping
+     */
+    private Model getUploadedMapping(String mappingIRI) {
+        // Collect uploaded mapping model
+        Resource mappingId = mappingManager.createMappingId(factory.createIRI(mappingIRI)).getMappingIdentifier();
+        Optional<MappingWrapper> mappingOptional = mappingManager.retrieveMapping(mappingId);
+        if (mappingOptional.isPresent()) {
+            return transformer.sesameModel(mappingOptional.get().getModel());
+        } else {
+            throw ErrorUtils.sendError("Mapping " + mappingId + " does not exist", Response.Status.BAD_REQUEST);
+        }
+    }
+
+    private void removeTempFile(String fileName) {
+        try {
+            Files.deleteIfExists(Paths.get(TEMP_DIR + "/" + fileName));
+        } catch (IOException e) {
+            throw ErrorUtils.sendError(e, "Error deleting delimited file", Response.Status.BAD_REQUEST);
+        }
+    }
+
     private void deleteDirectory(Path dir) throws IOException {
         if (Files.exists(dir)) {
             Files.walkFileTree(dir, new SimpleFileVisitor<Path>() {
@@ -482,5 +543,14 @@ public class DelimitedRestImpl implements DelimitedRest {
             throw ErrorUtils.sendError("Document not found", Response.Status.BAD_REQUEST);
         }
         return data;
+    }
+
+    /**
+     * A supplier for the result of running a conversion using a ExcelConfig or a SVConfig.
+     *
+     * @param <T> The type of the result of the conversion
+     */
+    private interface SupplierWithException<T> {
+        T get() throws IOException;
     }
 }
