@@ -524,9 +524,21 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
     }
 
     @Test
-    public void mapIntoDatasetWithUnavailableRepositoryTest() throws Exception {
+    public void mapIntoDatasetWithMissingRepositoryTest() throws Exception {
         // Setup:
         when(datasetRecord.getRepository()).thenReturn(Optional.empty());
+        String fileName = UUID.randomUUID().toString() + ".csv";
+        copyResourceToTemp("test.csv", fileName);
+
+        Response response = target().path("delimited-files/" + fileName + "/map").queryParam("mappingIRI", MAPPING_IRI)
+                .queryParam("datasetRecordIRI", DATASET_RECORD_IRI).request().post(Entity.json(""));
+        assertEquals(response.getStatus(), 500);
+    }
+
+    @Test
+    public void mapIntoDatasetWithUnavailableRepositoryTest() throws Exception {
+        // Setup:
+        when(datasetRecord.getRepository()).thenReturn(Optional.of("error"));
         String fileName = UUID.randomUUID().toString() + ".csv";
         copyResourceToTemp("test.csv", fileName);
 

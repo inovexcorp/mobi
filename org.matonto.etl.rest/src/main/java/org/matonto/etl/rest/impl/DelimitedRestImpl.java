@@ -47,6 +47,7 @@ import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.matonto.dataset.api.DatasetManager;
 import org.matonto.dataset.ontology.dataset.Dataset;
 import org.matonto.dataset.ontology.dataset.DatasetRecord;
+import org.matonto.etl.api.config.DelimitedConfig;
 import org.matonto.etl.api.config.ExcelConfig;
 import org.matonto.etl.api.config.SVConfig;
 import org.matonto.etl.api.delimited.DelimitedConverter;
@@ -191,9 +192,8 @@ public class DelimitedRestImpl implements DelimitedRest {
         // Convert the data
         Model data = transformer.sesameModel(etlFile(fileName, () -> jsonldToModel(jsonld), containsHeaders, separator,
                 true));
-        String result = modelToString(data, format);
 
-        return Response.ok(result).build();
+        return Response.ok(modelToString(data, format)).build();
     }
 
     @Override
@@ -240,7 +240,8 @@ public class DelimitedRestImpl implements DelimitedRest {
                 separator, false);
 
         // Add data to the dataset
-        String repositoryId = record.getRepository().orElse("");
+        String repositoryId = record.getRepository().orElseThrow(() ->
+                ErrorUtils.sendError("Record has no repository set", Response.Status.INTERNAL_SERVER_ERROR));
         Dataset dataset = record.getDataset().orElseThrow(() ->
                 ErrorUtils.sendError("Record has no Dataset set", Response.Status.INTERNAL_SERVER_ERROR));
         Repository repository = repositoryManager.getRepository(repositoryId)
@@ -294,16 +295,16 @@ public class DelimitedRestImpl implements DelimitedRest {
         org.matonto.rdf.api.Model result;
         InputStream data = getDocumentInputStream(delimitedFile);
         if (extension.equals("xls") || extension.equals("xlsx")) {
-            ExcelConfig.Builder config = new ExcelConfig.Builder(data, transformer.matontoModel(mappingModel))
-                    .containsHeaders(containsHeaders);
+            ExcelConfig.ExcelConfigBuilder config = new ExcelConfig.ExcelConfigBuilder(data,
+                    transformer.matontoModel(mappingModel)).containsHeaders(containsHeaders);
             if (limit) {
                 config.limit(NUM_LINE_PREVIEW);
             }
             result = etlFile(() -> converter.convert(config.build()));
         } else {
-            SVConfig.Builder config = new SVConfig.Builder(data, transformer.matontoModel(mappingModel))
-                    .containsHeaders(containsHeaders)
-                    .separator(separator.charAt(0));
+            SVConfig.SVConfigBuilder config = new SVConfig.SVConfigBuilder(data, transformer.matontoModel(mappingModel))
+                    .separator(separator.charAt(0))
+                    .containsHeaders(containsHeaders);
             if (limit) {
                 config.limit(NUM_LINE_PREVIEW);
             }
