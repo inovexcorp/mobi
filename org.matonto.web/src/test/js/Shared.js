@@ -317,7 +317,8 @@ function mockDelimitedManager() {
                     return $q.reject('Something went wrong');
                 }
             });
-            this.map = jasmine.createSpy('map');
+            this.mapAndDownload = jasmine.createSpy('mapAndDownload');
+            this.mapAndUpload = jasmine.createSpy('mapAndUpload').and.returnValue($q.when());
             this.reset = jasmine.createSpy('reset');
             this.getHeader = jasmine.createSpy('getHeader').and.returnValue('');
         });
@@ -768,6 +769,21 @@ function mockUtil() {
             this.getIRINamespace = jasmine.createSpy('getIRINamespace').and.returnValue({});
             this.getDate = jasmine.createSpy('getDate').and.returnValue(new Date());
             this.condenseCommitId = jasmine.createSpy('condenseCommitId');
+            this.paginatedConfigToParams = jasmine.createSpy('paginatedConfigToParams').and.returnValue({});
+            this.onError = jasmine.createSpy('onError').and.callFake(function(error, deferred) {
+                deferred.reject(_.get(error, 'statusText', ''));
+            });
+        });
+    });
+}
+
+function mockDatasetManager() {
+    module(function($provide) {
+        $provide.service('datasetManagerService', function($q) {
+            this.getDatasetRecords = jasmine.createSpy('getDatasetRecords').and.returnValue($q.when({}));
+            this.createDatasetRecord = jasmine.createSpy('createDatasetRecord').and.returnValue($q.when(''));
+            this.deleteDatasetRecord = jasmine.createSpy('deleteDatasetRecord').and.returnValue($q.when());
+            this.clearDatasetRecord = jasmine.createSpy('clearDatasetRecord').and.returnValue($q.when());
         });
     });
 }
