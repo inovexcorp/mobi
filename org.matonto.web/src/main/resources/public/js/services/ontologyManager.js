@@ -698,7 +698,7 @@
                                     commitId: response.data.commitId
                                 });
                             }, deferred.reject);
-                    }, response => deferred.reject(response.statusText));
+                    }, response => util.onError(response, deferred));
                 return deferred.promise;
             }
             /**
@@ -1349,9 +1349,9 @@
                         } else if (_.get(response, 'status') === 204) {
                             deferred.resolve([]);
                         } else {
-                            deferred.reject(_.get(response, 'statusText', defaultErrorMessage));
+                            util.onError(response, deferred, defaultErrorMessage);
                         }
-                    }, response => deferred.reject(response.statusText));
+                    }, response => util.onError(response, deferred));
                 return deferred.promise;
             }
             /**
@@ -1378,7 +1378,7 @@
                         } else {
                             deferred.resolve(response.data.results.bindings);
                         }
-                    }, response => deferred.reject(response.statusText));
+                    }, response => util.onError(response, deferred));
                 return deferred.promise;
             }
             /**
@@ -1524,7 +1524,7 @@
                         } else {
                             deferred.reject(defaultErrorMessage);
                         }
-                    }, response => deferred.reject(response.statusText));
+                    }, response => util.onError(response, deferred));
                 return deferred.promise;
             }
 
@@ -1607,7 +1607,7 @@
                         compareListItems
                     );
                     deferred.resolve(listItem);
-                }, response => deferred.reject(response.statusText));
+                }, response => util.onError(response, deferred));
                 return deferred.promise;
             }
             self.addOntologyToList = function(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit,
@@ -1675,7 +1675,7 @@
                         compareListItems
                     );
                     deferred.resolve(listItem);
-                }, response => deferred.reject(response.statusText));
+                }, response => util.onError(response, deferred));
                 return deferred.promise;
             }
             self.addVocabularyToList = function(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit,
