@@ -20,33 +20,36 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Catalog Manager service', function() {
+describe('Dataset Manager service', function() {
     var $httpBackend,
         $httpParamSerializer,
         datasetManagerSvc,
+        utilSvc,
         $q,
         recordId = 'http://matonto.org/records/test';
 
     beforeEach(function() {
         module('datasetManager');
+        mockUtil();
 
-        inject(function(datasetManagerService, _$httpBackend_, _$httpParamSerializer_, _$q_) {
+        inject(function(datasetManagerService, _$httpBackend_, _$httpParamSerializer_, _$q_, _utilService_) {
             datasetManagerSvc = datasetManagerService;
             $httpBackend = _$httpBackend_;
             $httpParamSerializer = _$httpParamSerializer_;
             $q = _$q_;
+            utilSvc = _utilService_;
         });
+
+        utilSvc.paginatedConfigToParams.and.callFake(_.identity);
     });
 
     describe('should retrieve a list of DatasetRecords', function() {
         beforeEach(function(){
             this.config = {
                 limit: 10,
-                pageIndex: 0,
-                sortOption: {
-                    field: 'http://purl.org/dc/terms/title',
-                    asc: true
-                }
+                offset: 0,
+                sort: 'http://purl.org/dc/terms/title',
+                ascending: true
             };
         });
         it('unless an error occurs', function(done) {
@@ -61,12 +64,7 @@ describe('Catalog Manager service', function() {
             $httpBackend.flush();
         });
         it('with all config passed', function(done) {
-            var params = $httpParamSerializer({
-                ascending: this.config.sortOption.asc,
-                limit: this.config.limit,
-                offset: this.config.pageIndex * this.config.limit,
-                sort: this.config.sortOption.field
-            });
+            var params = $httpParamSerializer(this.config);
             $httpBackend.whenGET('/matontorest/datasets?' + params).respond(200, []);
             datasetManagerSvc.getDatasetRecords(this.config).then(function(response) {
                 expect(response.data).toEqual([]);

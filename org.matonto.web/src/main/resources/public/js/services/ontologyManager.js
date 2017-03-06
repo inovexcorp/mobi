@@ -1541,7 +1541,7 @@
                     $http.get(prefix + '/' + encodeURIComponent(recordId) + '/classes-with-individuals', config),
                     $http.get(prefix + '/' + encodeURIComponent(recordId) + '/data-property-hierarchies', config),
                     $http.get(prefix + '/' + encodeURIComponent(recordId) + '/object-property-hierarchies', config),
-                    cm.getRecordBranches(recordId, catalogId, {applyUserFilter: false})
+                    cm.getRecordBranches(recordId, catalogId)
                 ]).then(response => {
                     listItem.annotations = _.unionWith(
                         _.get(response[0], 'data.annotationProperties'),

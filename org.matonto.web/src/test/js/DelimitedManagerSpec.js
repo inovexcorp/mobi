@@ -30,6 +30,7 @@ describe('Delimited Manager service', function() {
 
     beforeEach(function() {
         module('delimitedManager');
+        mockUtil();
         module(function($provide) {
             $provide.service('$window', function() {
                 this.location = '';

@@ -38,16 +38,18 @@
          * @name datasetManager.service:datasetManagerService
          * @requires $http
          * @requires $q
+         * @requires util.service:utilService
          *
          * @description
          * `datasetManagerService` is a service that provides access to the MatOnto Dataset REST endpoints.
          */
         .service('datasetManagerService', datasetManagerService);
 
-        datasetManagerService.$inject = ['$http', '$q'];
+        datasetManagerService.$inject = ['$http', '$q', 'utilService'];
 
-        function datasetManagerService($http, $q) {
+        function datasetManagerService($http, $q, utilService) {
             var self = this,
+                util = utilService,
                 prefix = '/matontorest/datasets';
 
             /**
@@ -73,10 +75,10 @@
             self.getDatasetRecords = function(paginatedConfig) {
                 var deferred = $q.defer(),
                     config = {
-                        params: paginatedConfigToParams(paginatedConfig)
+                        params: util.paginatedConfigToParams(paginatedConfig)
                     };
                 $http.get(prefix, config)
-                    .then(deferred.resolve, error => onError(error, deferred));
+                    .then(deferred.resolve, error => util.onError(error, deferred));
                 return deferred.promise;
             }
 
@@ -105,8 +107,7 @@
                     config = {
                         transformRequest: angular.identity,
                         headers: {
-                            'Content-Type': undefined,
-                            'Accept': 'text/plain'
+                            'Content-Type': undefined
                         }
                     };
                 fd.append('title', recordConfig.title);
@@ -121,7 +122,7 @@
                     fd.append('keywords', _.join(recordConfig.keywords, ','));
                 }
                 $http.post(prefix, fd, config)
-                    .then(response => deferred.resolve(response.data), error => onError(error, deferred));
+                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
                 return deferred.promise;
             }
 
@@ -144,7 +145,7 @@
                 var deferred = $q.defer(),
                     config = {params: {force}};
                 $http.delete(prefix + '/' + encodeURIComponent(datasetRecordIRI), config)
-                    .then(response => deferred.resolve(), error => onError(error, deferred));
+                    .then(response => deferred.resolve(), error => util.onError(error, deferred));
                 return deferred.promise;
             }
 
@@ -167,29 +168,8 @@
                 var deferred = $q.defer(),
                     config = {params: {force}};
                 $http.delete(prefix + '/' + encodeURIComponent(datasetRecordIRI) + '/data', config)
-                    .then(response => deferred.resolve(), error => onError(error, deferred));
+                    .then(response => deferred.resolve(), error => util.onError(error, deferred));
                 return deferred.promise;
-            }
-
-            function paginatedConfigToParams(paginatedConfig) {
-                var params = {};
-                if (_.has(paginatedConfig, 'sortOption.field')) {
-                    params.sort = paginatedConfig.sortOption.field;
-                }
-                if (_.has(paginatedConfig, 'sortOption.asc')) {
-                    params.ascending = paginatedConfig.sortOption.asc;
-                }
-                if (_.has(paginatedConfig, 'limit')) {
-                    params.limit = paginatedConfig.limit;
-                    if (_.has(paginatedConfig, 'pageIndex')) {
-                        params.offset = paginatedConfig.pageIndex * paginatedConfig.limit;
-                    }
-                }
-                return params;
-            }
-
-            function onError(error, deferred) {
-                deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.'));
             }
         }
 })();

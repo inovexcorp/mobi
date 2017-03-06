@@ -136,7 +136,7 @@ describe('Util service', function() {
         expect(splitIRIFilter).toHaveBeenCalledWith('iri');
         expect(_.isString(result)).toBe(true);
     });
-    describe('getDate should get the specified date entity', function() {
+    describe('should get the specified date entity', function() {
         it('when provided', function() {
             var date = '1/1/2000';
             expect(utilSvc.getDate(date, 'short')).toBe($filter('date')(new Date(date), 'short'));
@@ -145,8 +145,14 @@ describe('Util service', function() {
             expect(utilSvc.getDate('')).toBe('(No Date Specified)');
         });
     });
-    it('condenseCommitId returns the proper string', function() {
+    it('should condense a commit id', function() {
         var id = 'testId';
         expect(utilSvc.condenseCommitId(id)).toEqual($filter('splitIRI')(id).end.substr(0,10));
+    });
+    it('should turn a paginated configuration object into HTTP query parameters', function () {
+        expect(utilSvc.paginatedConfigToParams({sortOption: {field: 'test', asc: true}, limit: 10, pageIndex: 1})).toEqual({sort: 'test', ascending: true, limit: 10, offset: 10});
+        expect(utilSvc.paginatedConfigToParams({sortOption: {field: 'test'}, limit: 10})).toEqual({sort: 'test', limit: 10});
+        expect(utilSvc.paginatedConfigToParams({sortOption: {asc: true}, pageIndex: 0})).toEqual({ascending: true});
+        expect(utilSvc.paginatedConfigToParams({})).toEqual({});
     });
 });

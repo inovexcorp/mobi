@@ -48,10 +48,11 @@
          */
         .service('delimitedManagerService', delimitedManagerService);
 
-        delimitedManagerService.$inject = ['$http', '$httpParamSerializer', '$q', '$window'];
+        delimitedManagerService.$inject = ['$http', '$httpParamSerializer', '$q', '$window', 'utilService'];
 
-        function delimitedManagerService($http, $httpParamSerializer, $q, $window) {
+        function delimitedManagerService($http, $httpParamSerializer, $q, $window, utilService) {
             var self = this,
+                util = utilService,
                 prefix = '/matontorest/delimited-files';
 
 
@@ -154,7 +155,7 @@
                     };
                 fd.append('delimitedFile', file);
                 $http.post(prefix, fd, config)
-                    .then(response => deferred.resolve(response.data), error => onError(error, deferred));
+                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
 
                 return deferred.promise;
             }
@@ -196,7 +197,7 @@
                         }
                     }, error => {
                         self.dataRows = undefined;
-                        onError(error, deferred);
+                        util.onError(error, deferred);
                     });
 
                 return deferred.promise;
@@ -237,7 +238,7 @@
                     };
                 fd.append('jsonld', angular.toJson(jsonld));
                 $http.post(prefix + '/' + encodeURIComponent(self.fileName) + '/map-preview', fd, config)
-                    .then(response => deferred.resolve(response.data), error => onError(error, deferred));
+                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
                 return deferred.promise;
             }
 
@@ -292,12 +293,12 @@
                         params: {
                             mappingIRI,
                             datasetRecordIRI,
-                            containsHeaders: this.containsHeaders,
-                            separator: this.separator
+                            containsHeaders: self.containsHeaders,
+                            separator: self.separator
                         }
                     };
                 $http.post(prefix + '/' + encodeURIComponent(self.fileName) + '/map', null, config)
-                    .then(deferred.resolve, error => onError(error, deferred));
+                    .then(deferred.resolve, error => util.onError(error, deferred));
                 return deferred.promise;
             }
 
@@ -338,10 +339,6 @@
                 self.separator = ',';
                 self.containsHeaders = true;
                 self.preview = '';
-            }
-
-            function onError(error, deferred) {
-                deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.'));
             }
         }
 })();
