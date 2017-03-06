@@ -48,16 +48,17 @@
          */
         .service('delimitedManagerService', delimitedManagerService);
 
-        delimitedManagerService.$inject = ['$http', '$q', '$window'];
+        delimitedManagerService.$inject = ['$http', '$httpParamSerializer', '$q', '$window', 'utilService'];
 
-        function delimitedManagerService($http, $q, $window) {
+        function delimitedManagerService($http, $httpParamSerializer, $q, $window, utilService) {
             var self = this,
+                util = utilService,
                 prefix = '/matontorest/delimited-files';
 
 
             /**
              * @ngdoc property
-             * @name delimitedManager.delimitedManagerService#dataRows
+             * @name dataRows
              * @propertyOf delimitedManager.service:delimitedManagerService
              * @type {string}
              *
@@ -68,7 +69,7 @@
             self.dataRows = undefined;
             /**
              * @ngdoc property
-             * @name delimitedManager.delimitedManagerService#fileName
+             * @name fileName
              * @propertyOf delimitedManager.service:delimitedManagerService
              * @type {string}
              *
@@ -80,7 +81,7 @@
             self.fileName = '';
             /**
              * @ngdoc property
-             * @name delimitedManager.delimitedManagerService#separator
+             * @name separator
              * @propertyOf delimitedManager.service:delimitedManagerService
              * @type {string}
              *
@@ -94,7 +95,7 @@
             self.separator = ',';
             /**
              * @ngdoc property
-             * @name delimitedManager.delimitedManagerService#containsHeaders
+             * @name containsHeaders
              * @propertyOf delimitedManager.service:delimitedManagerService
              * @type {boolean}
              *
@@ -108,7 +109,7 @@
             self.containsHeaders = true;
             /**
              * @ngdoc property
-             * @name delimitedManager.delimitedManagerService#preview
+             * @name preview
              * @propertyOf delimitedManager.service:delimitedManagerService
              * @type {string/Object}
              *
@@ -119,7 +120,7 @@
             self.preview = '';
             /**
              * @ngdoc property
-             * @name delimitedManager.delimitedManagerService#serializeFormat
+             * @name serializeFormat
              * @propertyOf delimitedManager.service:delimitedManagerService
              * @type {string/Object}
              *
@@ -131,7 +132,7 @@
 
             /**
              * @ngdoc method
-             * @name delimitedManager.delimitedManagerService#upload
+             * @name upload
              * @methodOf delimitedManager.service:delimitedManagerService
              *
              * @description
@@ -139,7 +140,8 @@
              * Returns the resulting file name is a promise.
              *
              * @param {object} file a File object to upload (should be a SV or Excel file)
-             * @return {Promise} A Promise that resolves to the name of the uploaded delimited file.
+             * @return {Promise} A Promise that resolves to the name of the uploaded delimited file; rejects with an
+             * error message otherwise
              */
             self.upload = function(file) {
                 var deferred = $q.defer(),
@@ -153,18 +155,18 @@
                     };
                 fd.append('delimitedFile', file);
                 $http.post(prefix, fd, config)
-                    .then(response => deferred.resolve(response.data), response => deferred.reject(_.get(response, 'statusText', '')));
+                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
 
                 return deferred.promise;
             }
 
             /**
              * @ngdoc method
-             * @name delimitedManager.delimitedManagerService#previewFile
+             * @name previewFile
              * @methodOf delimitedManager.service:delimitedManagerService
              *
              * @description
-             * Makes a call to GET /matontorest/cdelimited-filessv/{fileName} to retrieve the passed in number of rows
+             * Makes a call to GET /matontorest/delimited-files/{fileName} to retrieve the passed in number of rows
              * of an uploaded delimited file. Uses {@link delimitedManager.delimitedManager#separator separator} and
              * {@link delimitedManager.delimitedManager#fileName fileName} to make the call. Depending on the value
              * of {@link delimitedManager.delimitedManager#containsHeaders containsHeaders}, either uses the first
@@ -173,8 +175,8 @@
              * success of the REST call.
              *
              * @param {number} rowEnd the number of rows to retrieve from the uploaded delimited file
-             * @return {Promise} A Promise that resolves if the call succeeded and rejects if the preview
-             * was empty or the call did not succeed
+             * @return {Promise} A Promise that resolves if the call succeeded; rejects if the preview was empty
+             * or the call did not succeed
              */
             self.previewFile = function(rowEnd) {
                 var deferred = $q.defer(),
@@ -193,9 +195,9 @@
                             self.dataRows = response.data;
                             deferred.resolve();
                         }
-                    }, response => {
+                    }, error => {
                         self.dataRows = undefined;
-                        deferred.reject(_.get(response, 'statusText', ''));
+                        util.onError(error, deferred);
                     });
 
                 return deferred.promise;
@@ -203,7 +205,7 @@
 
             /**
              * @ngdoc method
-             * @name delimitedManager.delimitedManagerService#previewMap
+             * @name previewMap
              * @methodOf delimitedManager.service:delimitedManagerService
              *
              * @description
@@ -236,34 +238,68 @@
                     };
                 fd.append('jsonld', angular.toJson(jsonld));
                 $http.post(prefix + '/' + encodeURIComponent(self.fileName) + '/map-preview', fd, config)
-                    .then(response => deferred.resolve(response.data), response => deferred.reject(_.get(response, 'statusText', '')));
+                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
                 return deferred.promise;
             }
 
             /**
              * @ngdoc method
-             * @name delimitedManager.service:delimitedManagerService#map
+             * @name mapAndDownload
              * @methodOf delimitedManager.service:delimitedManagerService
              *
              * @description
              * Opens the current window to the location of GET /matontorest/delimited-files/{fileName}/map which
              * will start a file download of the complete mapped delimited data in the specified format
-             * of an uploaded delimited file using a saved mapping specified by the passed in mapping
-             * name. Uses {@link delimitedManager.delimitedManager#separator separator},
+             * of an uploaded delimited file using a saved Mapping identified by the passed IRI. Uses
+             * {@link delimitedManager.delimitedManager#separator separator},
              * {@link delimitedManager.delimitedManager#containsHeaders containsHeaders}, and
              * {@link delimitedManager.delimitedManager#fileName fileName} to create the URL to set the window
              * location to.
              *
-             * @param {string} mappingId the IRI of a saved mapping
+             * @param {string} mappingIRI the IRI of a saved Mapping
              * @param {string} format the RDF format for the mapped data
              * @param {string} fileName the file name for the downloaded mapped data
              */
-            self.map = function(mappingId, format, fileName) {
-                var queryString = '?format=' + format + '&mappingIRI=' + mappingId + '&containsHeaders=' + self.containsHeaders + '&separator=' + self.separator;
+            self.mapAndDownload = function(mappingIRI, format, fileName) {
+                var params = {
+                    containsHeaders: self.containsHeaders,
+                    separator: self.separator,
+                    format,
+                    mappingIRI
+                };
                 if (fileName) {
-                    queryString += '&fileName=' + fileName;
+                    params.fileName = fileName;
                 }
-                $window.location = prefix + '/' + encodeURIComponent(self.fileName) + '/map' + queryString;
+                $window.location = prefix + '/' + encodeURIComponent(self.fileName) + '/map?' + $httpParamSerializer(params);
+            }
+
+            /**
+             * @ngdoc method
+             * @name mapAndUpload
+             * @methodOf delimitedManager.service:delimitedManagerService
+             *
+             * @description
+             * Calls the POST /matontorest/delimited-files/{fileName}/map to map the data of an uploaded delimited file
+             * using a saved Mapping identified by the passed IRI into the Dataset associated with the DatasetRecord
+             * identified by the passed IRI. Returns a Promise indicating the success of the request.
+             *
+             * @param {string} mappingIRI the IRI of a saved Mapping
+             * @param {string} datasetRecordIRI the IRI of a DatasetRecord
+             * @return {Promise} A Promise that resolves if the upload was successful; rejects with an error message otherwise
+             */
+            self.mapAndUpload = function(mappingIRI, datasetRecordIRI) {
+                var deferred = $q.defer(),
+                    config = {
+                        params: {
+                            mappingIRI,
+                            datasetRecordIRI,
+                            containsHeaders: self.containsHeaders,
+                            separator: self.separator
+                        }
+                    };
+                $http.post(prefix + '/' + encodeURIComponent(self.fileName) + '/map', null, config)
+                    .then(deferred.resolve, error => util.onError(error, deferred));
+                return deferred.promise;
             }
 
             /**
@@ -286,7 +322,7 @@
 
             /**
              * @ngdoc method
-             * @name delimitedManager.service:delimitedManagerService#reset
+             * @name reset
              * @methodOf delimitedManager.service:delimitedManagerService
              *
              * @description
