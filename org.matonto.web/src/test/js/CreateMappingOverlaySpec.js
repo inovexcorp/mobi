@@ -53,18 +53,15 @@ describe('Create Mapping Overlay directive', function() {
         mappingManagerSvc.mappingIds = [''];
         element = $compile(angular.element('<create-mapping-overlay></create-mapping-overlay>'))(scope);
         scope.$digest();
+        controller = element.controller('createMappingOverlay');
     });
 
     describe('should initialize with the correct values', function() {
         it('for the selected saved mapping id', function() {
-            controller = element.controller('createMappingOverlay');
             expect(controller.savedMappingId).toBe(mappingManagerSvc.mappingIds[0]);
         });
     });
     describe('controller methods', function() {
-        beforeEach(function() {
-            controller = element.controller('createMappingOverlay');
-        });
         describe('should set the correct state for continuing', function() {
             beforeEach(function() {
                 mapperStateSvc.mapping = {id: 'mapping'};
@@ -100,7 +97,6 @@ describe('Create Mapping Overlay directive', function() {
                     };
                     this.record[prefixes.dcterms + 'title'] = [{'@value': ''}];
                     this.record[prefixes.dcterms + 'description'] = [{'@value': ''}];
-                    this.record[prefixes.dcterms + 'identifier'] = [{'@value': ''}];
                     this.record[prefixes.dcterms + 'issued'] = [{'@value': ''}];
                     this.record[prefixes.dcterms + 'modified'] = [{'@value': ''}];
                     this.record[prefixes.catalog + 'keyword'] = [{'@value': ''}];
@@ -192,7 +188,6 @@ describe('Create Mapping Overlay directive', function() {
             expect(element.find('radio-button').length).toBe(2);
         });
         it('depending on whether an error has occured', function() {
-            controller = element.controller('createMappingOverlay');
             expect(element.find('error-display').length).toBe(0);
 
             controller.errorMessage = 'test';
@@ -215,7 +210,6 @@ describe('Create Mapping Overlay directive', function() {
             expect(options.length).toBe(mappingManagerSvc.mappingIds.length);
         });
         it('depending on the mapping type being created', function() {
-            controller = element.controller('createMappingOverlay');
             controller.mappingType = 'new';
             scope.$digest();
             var select = element.find('select');
@@ -226,7 +220,6 @@ describe('Create Mapping Overlay directive', function() {
             expect(select.attr('required')).toBeTruthy();
         });
         it('depending on the validity of the form', function() {
-            controller = element.controller('createMappingOverlay');
             var button = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
             expect(button.attr('disabled')).toBeFalsy();
 
@@ -242,23 +235,17 @@ describe('Create Mapping Overlay directive', function() {
         });
     });
     it('should change the mapping type being created if the saved mapping list is focused on', function() {
-        controller = element.controller('createMappingOverlay');
-
         element.find('select').triggerHandler('focus');
         expect(controller.mappingType).toBe('saved');
     });
     it('should call continue when the button is clicked', function() {
-        controller = element.controller('createMappingOverlay');
         spyOn(controller, 'continue');
-
         var continueButton = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
         continueButton.triggerHandler('click');
         expect(controller.continue).toHaveBeenCalled();
     });
     it('should call cancel when the button is clicked', function() {
-        controller = element.controller('createMappingOverlay');
         spyOn(controller, 'cancel');
-
         var continueButton = angular.element(element.querySelectorAll('.btn-container button.btn-default')[0]);
         continueButton.triggerHandler('click');
         expect(controller.cancel).toHaveBeenCalled();

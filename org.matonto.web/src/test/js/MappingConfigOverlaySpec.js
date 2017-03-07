@@ -356,7 +356,6 @@ describe('Mapping Config Overlay directive', function() {
                             this.ontologyInfo = {
                                 branchId: '',
                                 commitId: '',
-                                ontologyId: '',
                                 recordId: ''
                             };
                             mappingManagerSvc.getSourceOntologyInfo.and.returnValue(this.ontologyInfo);
@@ -394,7 +393,6 @@ describe('Mapping Config Overlay directive', function() {
                     recordId: '',
                     branchId: '',
                     commitId: '',
-                    ontologyId: ''
                 };
                 controller.selectedOntologyState = {
                     recordId: this.ontologyInfo.recordId,
@@ -421,65 +419,19 @@ describe('Mapping Config Overlay directive', function() {
             describe('if it changed', function() {
                 beforeEach(function() {
                     mapperStateSvc.invalidProps = [''];
-                    /*this.classMapping = {'@id': 'classMapping'};
-                    mappingManagerSvc.getAllClassMappings.and.returnValue([this.classMapping]);*/
+                    this.classMapping = {'@id': 'classMapping'};
+                    mappingManagerSvc.getAllClassMappings.and.returnValue([this.classMapping]);
+                    controller.classes = [{'@id': 'class1'}, {'@id': 'class2'}];
+                    mappingManagerSvc.getClassIdByMapping.and.returnValue('class1');
                 });
-                it('for the first time', function() {
+                it('setting appropriate state', function() {
                     controller.set();
-                    expect(mappingManagerSvc.createNewMapping).not.toHaveBeenCalled();
-                    expect(mapperStateSvc.invalidProps).toEqual(['']);
-                    expect(mappingManagerSvc.setSourceOntologyInfo).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, this.ontologyInfo.ontologyId, this.ontologyInfo.recordId, this.ontologyInfo.branchId, this.ontologyInfo.commitId);
+                    expect(mapperStateSvc.sourceOntologies).toEqual(controller.selectedOntologyState.latest.ontologies);
+                    expect(mappingManagerSvc.setSourceOntologyInfo).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, this.ontologyInfo.recordId, this.ontologyInfo.branchId, this.ontologyInfo.commitId);
                     expect(mapperStateSvc.mapping.record).toBe(controller.selectedRecord);
                     expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
-                    expect(mapperStateSvc.availableClasses).toEqual(controller.classes);
-                    // expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(this.classMapping['@id']);
-                    expect(mapperStateSvc.displayMappingConfigOverlay).toBe(false);
-                    expect(mapperStateSvc.changedMapping).toBe(true);
-                });
-                it('from a previous setting', function() {
-                    mappingManagerSvc.getSourceOntologyInfo.and.returnValue({test: true});
-                    var ontology = {entities: []};
-                    controller.set();
-                    expect(mappingManagerSvc.createNewMapping).toHaveBeenCalledWith(mapperStateSvc.mapping.id);
-                    expect(mapperStateSvc.invalidProps).toEqual([]);
-                    expect(mappingManagerSvc.setSourceOntologyInfo).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, this.ontologyInfo.ontologyId, this.ontologyInfo.recordId, this.ontologyInfo.branchId, this.ontologyInfo.commitId);
-                    expect(mapperStateSvc.mapping.record).toBe(controller.selectedRecord);
-                    expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
-                    expect(mapperStateSvc.availableClasses).toEqual(controller.classes);
-                    // expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(this.classMapping['@id']);
-                    expect(mapperStateSvc.displayMappingConfigOverlay).toBe(false);
-                    expect(mapperStateSvc.changedMapping).toBe(true);
-                });
-                /*it('and an existing base type was selected', function() {
-                    mappingManagerSvc.getClassMappingsByClassId.and.returnValue([this.classMapping]);
-                    controller.set();
-                    expect(mapperStateSvc.sourceOntologies).toBe(controller.selectedOntologyState.latest.ontologies);
-                    expect(mappingManagerSvc.findIncompatibleMappings).toHaveBeenCalled();
-                    expect(mappingManagerSvc.setSourceOntologyInfo).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, this.ontologyInfo.ontologyId, this.ontologyInfo.recordId, this.ontologyInfo.branchId, this.ontologyInfo.commitId);
-                    expect(mapperStateSvc.mapping.record).toBe(controller.selectedRecord);
-                    expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
-                    expect(mappingManagerSvc.getClassMappingsByClassId).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, controller.selectedBaseClass['@id']);
-                    expect(mappingManagerSvc.findSourceOntologyWithClass).not.toHaveBeenCalled();
-                    expect(mappingManagerSvc.addClass).not.toHaveBeenCalled();
-                    expect(mapperStateSvc.selectedClassMappingId).toBe(this.classMapping['@id']);
                     expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(this.classMapping['@id']);
-                    expect(mapperStateSvc.displayMappingConfigOverlay).toBe(false);
-                });
-                it('and a new base type was selected', function() {
-                    var ontology = {entities: []};
-                    mappingManagerSvc.addClass.and.returnValue(this.classMapping);
-                    mappingManagerSvc.findSourceOntologyWithClass.and.returnValue(ontology);
-                    controller.set();
-                    expect(mapperStateSvc.sourceOntologies).toBe(controller.selectedOntologyState.latest.ontologies);
-                    expect(mappingManagerSvc.findIncompatibleMappings).toHaveBeenCalled();
-                    expect(mappingManagerSvc.setSourceOntologyInfo).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, this.ontologyInfo.ontologyId, this.ontologyInfo.recordId, this.ontologyInfo.branchId, this.ontologyInfo.commitId);
-                    expect(mapperStateSvc.mapping.record).toBe(controller.selectedRecord);
-                    expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
-                    expect(mappingManagerSvc.getClassMappingsByClassId).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, controller.selectedBaseClass['@id']);
-                    expect(mappingManagerSvc.findSourceOntologyWithClass).toHaveBeenCalledWith(controller.selectedBaseClass['@id'], controller.selectedOntologyState.latest.ontologies);
-                    expect(mappingManagerSvc.addClass).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, ontology.entities, controller.selectedBaseClass['@id']);
-                    expect(mapperStateSvc.selectedClassMappingId).toBe(this.classMapping['@id']);
-                    expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(this.classMapping['@id']);
+                    expect(mapperStateSvc.availableClasses).toEqual([{'@id': 'class2'}]);
                     expect(mapperStateSvc.displayMappingConfigOverlay).toBe(false);
                     expect(mapperStateSvc.changedMapping).toBe(true);
                 });
@@ -518,7 +470,7 @@ describe('Mapping Config Overlay directive', function() {
                         controller.set();
                         expect(mappingManagerSvc.removeClass).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, this.badMapping['@id']);
                     });
-                });*/
+                });
             });
         });
         it('should set the correct state for canceling', function() {

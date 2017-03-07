@@ -154,7 +154,6 @@
                                 versionObj.commitId = commit.commit['@id'];
                                 var ontologyInfo = {
                                     recordId: dvm.selectedRecord['@id'],
-                                    ontologyId: dvm.util.getDctermsValue(dvm.selectedRecord, 'identifier'),
                                     branchId: ontologyState.branchId,
                                     commitId: versionObj.commitId
                                 };
@@ -188,7 +187,6 @@
                                         versionObj.commitId = commit.commit['@id'];
                                         var ontologyInfo = {
                                             recordId: dvm.selectedOntologyState.recordId,
-                                            ontologyId: dvm.util.getDctermsValue(dvm.selectedRecord, 'identifier'),
                                             branchId: dvm.selectedOntologyState.branchId,
                                             commitId: versionObj.commitId
                                         };
@@ -211,7 +209,7 @@
                                     versionObj.commitId = ontologyInfo.commitId;
                                     dvm.mm.getOntology(ontologyInfo).then(ontology => {
                                         versionObj.ontologies = [ontology];
-                                        return dvm.om.getImportedOntologies(ontologyInfo.recordId, ontologyInfo.branchId, versionObj.commitId);
+                                        return dvm.om.getImportedOntologies(ontologyInfo.recordId, ontologyInfo.branchId, ontologyInfo.commitId);
                                     }, $q.reject).then(imported => {
                                         _.forEach(imported, obj => {
                                             var ontology = {id: obj.id, entities: obj.ontology};
@@ -229,17 +227,12 @@
                     dvm.set = function() {
                         var selectedOntologyInfo = {
                             recordId: dvm.selectedOntologyState.recordId,
-                            ontologyId: dvm.util.getDctermsValue(dvm.selectedRecord, 'identifier'),
                             branchId: dvm.selectedOntologyState.branchId,
                             commitId: dvm.selectedOntologyState[dvm.selectedVersion].commitId
                         };
                         if (!_.isEqual(dvm.mm.getSourceOntologyInfo(dvm.state.mapping.jsonld), selectedOntologyInfo)) {
-                            if (!_.isEmpty(dvm.mm.getSourceOntologyInfo(dvm.state.mapping.jsonld))) {
-                                dvm.state.mapping.jsonld = dvm.mm.createNewMapping(dvm.state.mapping.id);
-                                dvm.state.invalidProps = [];
-                            }
                             dvm.state.sourceOntologies = dvm.selectedOntologyState[dvm.selectedVersion].ontologies;
-                            /*var incompatibleEntities = dvm.mm.findIncompatibleMappings(dvm.state.mapping.jsonld, dvm.state.sourceOntologies);
+                            var incompatibleEntities = dvm.mm.findIncompatibleMappings(dvm.state.mapping.jsonld, dvm.state.sourceOntologies);
                             _.forEach(incompatibleEntities, entity => {
                                 if (dvm.mm.isPropertyMapping(entity)) {
                                     var parentClassMapping = dvm.mm.isDataMapping(entity) ? dvm.mm.findClassWithDataMapping(dvm.state.mapping.jsonld, entity['@id']) : dvm.mm.findClassWithObjectMapping(dvm.state.mapping.jsonld, entity['@id']);
@@ -249,14 +242,13 @@
                                     dvm.mm.removeClass(dvm.state.mapping.jsonld, entity['@id']);
                                     dvm.state.removeAvailableProps(entity['@id']);
                                 }
-                            });*/
-                            dvm.mm.setSourceOntologyInfo(dvm.state.mapping.jsonld, selectedOntologyInfo.ontologyId, selectedOntologyInfo.recordId, selectedOntologyInfo.branchId, selectedOntologyInfo.commitId);
+                            });
+                            dvm.mm.setSourceOntologyInfo(dvm.state.mapping.jsonld, selectedOntologyInfo.recordId, selectedOntologyInfo.branchId, selectedOntologyInfo.commitId);
                             dvm.state.mapping.record = dvm.selectedRecord;
                             dvm.state.resetEdit();
-                            /*var classMappings = dvm.mm.getAllClassMappings(dvm.state.mapping.jsonld);
+                            var classMappings = dvm.mm.getAllClassMappings(dvm.state.mapping.jsonld);
                             _.forEach(classMappings, classMapping => dvm.state.setAvailableProps(classMapping['@id']));
-                            dvm.state.availableClasses = _.filter(dvm.classes, clazz => !_.find(classMappings, classMapping => dvm.mm.getClassIdByMapping(classMapping) === clazz['@id']));*/
-                            dvm.state.availableClasses = dvm.classes;
+                            dvm.state.availableClasses = _.filter(dvm.classes, clazz => !_.find(classMappings, classMapping => dvm.mm.getClassIdByMapping(classMapping) === clazz['@id']));
                             dvm.state.changedMapping = true;
                         }
 
