@@ -234,13 +234,15 @@
                             dvm.state.sourceOntologies = dvm.selectedOntologyState[dvm.selectedVersion].ontologies;
                             var incompatibleEntities = dvm.mm.findIncompatibleMappings(dvm.state.mapping.jsonld, dvm.state.sourceOntologies);
                             _.forEach(incompatibleEntities, entity => {
-                                if (dvm.mm.isPropertyMapping(entity)) {
-                                    var parentClassMapping = dvm.mm.isDataMapping(entity) ? dvm.mm.findClassWithDataMapping(dvm.state.mapping.jsonld, entity['@id']) : dvm.mm.findClassWithObjectMapping(dvm.state.mapping.jsonld, entity['@id']);
-                                    dvm.mm.removeProp(dvm.state.mapping.jsonld, parentClassMapping['@id'], entity['@id']);
-                                    _.remove(dvm.state.invalidProps, {'@id': entity['@id']});
-                                } else if (dvm.mm.isClassMapping(entity)) {
-                                    dvm.mm.removeClass(dvm.state.mapping.jsonld, entity['@id']);
-                                    dvm.state.removeAvailableProps(entity['@id']);
+                                if (_.find(dvm.state.mapping.jsonld, {'@id': entity['@id']})) {
+                                    if (dvm.mm.isPropertyMapping(entity)) {
+                                        var parentClassMapping = dvm.mm.isDataMapping(entity) ? dvm.mm.findClassWithDataMapping(dvm.state.mapping.jsonld, entity['@id']) : dvm.mm.findClassWithObjectMapping(dvm.state.mapping.jsonld, entity['@id']);
+                                        dvm.mm.removeProp(dvm.state.mapping.jsonld, parentClassMapping['@id'], entity['@id']);
+                                        _.remove(dvm.state.invalidProps, {'@id': entity['@id']});
+                                    } else if (dvm.mm.isClassMapping(entity)) {
+                                        dvm.mm.removeClass(dvm.state.mapping.jsonld, entity['@id']);
+                                        dvm.state.removeAvailableProps(entity['@id']);
+                                    }
                                 }
                             });
                             dvm.mm.setSourceOntologyInfo(dvm.state.mapping.jsonld, selectedOntologyInfo.recordId, selectedOntologyInfo.branchId, selectedOntologyInfo.commitId);

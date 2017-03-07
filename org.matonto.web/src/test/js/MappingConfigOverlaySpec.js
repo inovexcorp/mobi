@@ -439,6 +439,7 @@ describe('Mapping Config Overlay directive', function() {
                     beforeEach(function() {
                         this.badMapping = {'@id': 'bad'};
                         mappingManagerSvc.findIncompatibleMappings.and.returnValue([this.badMapping])
+                        mapperStateSvc.mapping.jsonld.push(this.badMapping);
                     });
                     describe('if they are property mappings', function() {
                         beforeEach(function() {
