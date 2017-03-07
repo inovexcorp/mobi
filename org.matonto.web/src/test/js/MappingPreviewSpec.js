@@ -23,12 +23,13 @@
 describe('Mapping Preview directive', function() {
     var $compile,
         scope,
+        element,
+        controller,
         utilSvc,
         ontologyManagerSvc,
         mapperStateSvc,
         delimitedManagerSvc,
-        prefixes,
-        controller;
+        prefixes;
 
     beforeEach(function() {
         module('templates');
@@ -50,14 +51,12 @@ describe('Mapping Preview directive', function() {
         });
 
         mapperStateSvc.mapping = {jsonld: []};
-        this.element = $compile(angular.element('<mapping-preview></mapping-preview>'))(scope);
+        element = $compile(angular.element('<mapping-preview></mapping-preview>'))(scope);
         scope.$digest();
+        controller = element.controller('mappingPreview');
     });
 
     describe('controller methods', function() {
-        beforeEach(function() {
-            controller = this.element.controller('mappingPreview');
-        });
         it('should get a class name', function() {
             var classMapping = {};
             var result = controller.getClassName(classMapping);
@@ -84,10 +83,10 @@ describe('Mapping Preview directive', function() {
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('mapping-preview')).toBe(true);
+            expect(element.hasClass('mapping-preview')).toBe(true);
         });
         it('with the correct classes based on whether the source ontology record was set', function() {
-            var sourceOntologyName = angular.element(this.element.querySelectorAll('.source-ontology')[0]);
+            var sourceOntologyName = angular.element(element.querySelectorAll('.source-ontology')[0]);
             expect(sourceOntologyName.hasClass('text-danger')).toBe(true);
             expect(sourceOntologyName.find('span').length).toBe(1);
 
@@ -103,7 +102,7 @@ describe('Mapping Preview directive', function() {
             var propMappings = [{}];
             mappingManagerSvc.getPropMappingsByClass.and.returnValue(propMappings);
             scope.$digest();
-            var classListItems = this.element.querySelectorAll('.list > li');
+            var classListItems = element.querySelectorAll('.list > li');
             expect(classListItems.length).toBe(classMappings.length);
             _.forEach(classListItems, function(item) {
                 expect(item.querySelectorAll('.props > li').length).toBe(propMappings.length);
@@ -123,14 +122,13 @@ describe('Mapping Preview directive', function() {
             expect(delimitedManagerSvc.getHeader).not.toHaveBeenCalled();
         });
         it('depending on whether a property mapping is valid', function() {
-            controller = this.element.controller('mappingPreview');
             spyOn(controller, 'isInvalid').and.returnValue(false);
             var classMappings = [{'@id': ''}];
             var propMappings = [{'@id': '', 'columnIndex': [{'@value': '0'}]}];
             mappingManagerSvc.getAllClassMappings.and.returnValue(classMappings);
             mappingManagerSvc.getPropMappingsByClass.and.returnValue(propMappings);
             scope.$digest();
-            var propItem = angular.element(this.element.querySelectorAll('.props > li')[0]);
+            var propItem = angular.element(element.querySelectorAll('.props > li')[0]);
             expect(propItem.hasClass('error-msg')).toBe(false);
 
             controller.isInvalid.and.returnValue(true);
