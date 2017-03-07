@@ -98,6 +98,7 @@
             /* Custom Services */
             'catalogManager',
             'catalogState',
+            'datasetManager',
             'delimitedManager',
             'loginManager',
             'mapperState',
