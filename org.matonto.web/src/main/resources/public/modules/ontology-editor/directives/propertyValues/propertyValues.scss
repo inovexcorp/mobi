@@ -53,7 +53,8 @@
             width:    -moz-calc(100% - 62px);
             width:         calc(100% - 62px);
 
-            .type-display {
+            .type-display,
+            .lang-display {
                 padding-left: 5px;
                 vertical-align: text-bottom;
             }

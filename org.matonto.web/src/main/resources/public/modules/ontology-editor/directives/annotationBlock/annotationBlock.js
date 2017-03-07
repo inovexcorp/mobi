@@ -47,6 +47,7 @@
                         dvm.sm.annotationValue = '';
                         dvm.sm.annotationType = undefined;
                         dvm.sm.annotationIndex = 0;
+                        dvm.sm.annotationLanguage = 'en';
                         dvm.sm.showAnnotationOverlay = true;
                     }
 
@@ -57,11 +58,13 @@
                     }
 
                     dvm.editClicked = function(annotation, index) {
+                        var annotationObj = dvm.sm.selected[dvm.ro.getItemIri(annotation)][index];
                         dvm.sm.editingAnnotation = true;
                         dvm.sm.annotationSelect = annotation;
-                        dvm.sm.annotationValue = dvm.sm.selected[dvm.ro.getItemIri(annotation)][index]['@value'];
+                        dvm.sm.annotationValue = annotationObj['@value'];
                         dvm.sm.annotationIndex = index;
-                        dvm.sm.annotationType = _.find(dvm.sm.listItem.dataPropertyRange, datatype => dvm.ro.getItemIri(datatype) === dvm.sm.selected[dvm.ro.getItemIri(annotation)][index]['@type']);
+                        dvm.sm.annotationType = _.find(dvm.sm.listItem.dataPropertyRange, datatype => dvm.ro.getItemIri(datatype) === annotationObj['@type']);
+                        dvm.sm.annotationLanguage = _.get(annotationObj, '@language', undefined);
                         dvm.sm.showAnnotationOverlay = true;
                     }
                 }

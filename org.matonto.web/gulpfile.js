@@ -85,6 +85,12 @@ var jsFiles = function(prefix) {
             prefix + 'handsontable/**/handsontable.full.css',
             prefix + 'angular-toastr/**/angular-toastr.min.css'
         ]
+    },
+    fontFiles = function(prefix) {
+        return [
+            prefix + 'bootstrap/fonts/**.*',
+            prefix + '/font-awesome/fonts/**.*'
+        ]
     };
 
 // Method to chunk array
@@ -291,15 +297,15 @@ gulp.task('inject-unminified', ['move-custom-js', 'html', 'move-node-js', 'move-
     return injectFiles(allFiles);
 });
 
-// Get icons from font-awesome for minified build
+// Get icons from font-awesome and bootstrap for minified build
 gulp.task('icons-minified', function() {
-    return gulp.src(nodeDir + '/font-awesome/fonts/**.*')
+    return gulp.src(fontFiles(nodeDir))
         .pipe(gulp.dest(dest + 'fonts'));
 });
 
-// Get icons from font-awesome for un-minified build
+// Get icons from font-awesome and bootstrap for un-minified build
 gulp.task('icons-unminified', function() {
-    return gulp.src(nodeDir + '/font-awesome/fonts/**.*')
+    return gulp.src(fontFiles(nodeDir))
         .pipe(gulp.dest(dest + 'css/fonts'));
 });
 

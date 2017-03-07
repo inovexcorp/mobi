@@ -142,11 +142,14 @@
                 }
             }
 
-            self.add = function(entity, prop, value, type) {
+            self.add = function(entity, prop, value, type, language) {
                 if (prop) {
                     var annotation = {'@value': value};
                     if (type) {
                         annotation['@type'] = type;
+                    }
+                    if (language) {
+                        annotation['@language'] = language;
                     }
                     if (_.has(entity, prop)) {
                         entity[prop].push(annotation);
@@ -156,13 +159,19 @@
                 }
             }
 
-            self.edit = function(entity, prop, value, index, type) {
+            self.edit = function(entity, prop, value, index, type, language) {
                 if (prop) {
                     var annotation = entity[prop][index];
                     annotation['@value'] = value;
-
                     if (type) {
                         annotation['@type'] = type;
+                    } else {
+                        _.unset(annotation, '@type');
+                    }
+                    if (language) {
+                        annotation['@language'] = language;
+                    } else {
+                        _.unset(annotation, '@language');
                     }
                 }
             }
