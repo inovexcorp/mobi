@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Language Select directive', function() {
-    var $compile, scope, element;
+    var $compile, scope, element, controller;
 
     beforeEach(function() {
         module('templates');
@@ -37,14 +37,12 @@ describe('Language Select directive', function() {
         scope.bindModel = 'test';
         element = $compile(angular.element('<language-select ng-model="bindModel"></string-select>'))(scope);
         scope.$digest();
+        controller = element.controller('languageSelect');
     });
 
     describe('controller bound variable', function() {
-        beforeEach(function() {
-            this.controller = element.controller('languageSelect');
-        });
         it('bindModel should be two way bound', function() {
-            this.controller.bindModel = 'different';
+            controller.bindModel = 'different';
             scope.$apply();
             expect(scope.bindModel).toEqual('different');
         });
@@ -63,13 +61,20 @@ describe('Language Select directive', function() {
         });
     });
     describe('controller methods', function() {
-        beforeEach(function() {
-            this.controller = element.controller('languageSelect');
-        });
         it('clear properly sets the variable', function() {
-            this.controller.clear();
+            controller.clear();
             scope.$apply();
             expect(scope.bindModel).toBeUndefined();
+        });
+    });
+    describe('check required attribute', function() {
+        it('when present', function() {
+            element = $compile(angular.element('<language-select ng-model="bindModel" required></string-select>'))(scope);
+            scope.$digest();
+            expect(element.isolateScope().required).toBe(true);
+        });
+        it('when missing', function() {
+            expect(element.isolateScope().required).toBe(false);
         });
     });
 });

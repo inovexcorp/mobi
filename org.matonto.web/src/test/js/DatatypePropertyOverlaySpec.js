@@ -136,7 +136,6 @@ describe('Datatype Property Overlay directive', function() {
                 expect(ontologyStateSvc.showDataPropertyOverlay).toBe(false);
                 expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                     jasmine.any(Object));
-
             });
             it('without a language', function() {
                 spyOn(controller, 'isStringType').and.returnValue(false);

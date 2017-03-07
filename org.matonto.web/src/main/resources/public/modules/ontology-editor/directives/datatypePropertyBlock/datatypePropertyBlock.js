@@ -59,7 +59,7 @@
                         dvm.sm.propertyValue = propertyObj['@value'];
                         dvm.sm.propertyType = type ? {'@id': dvm.ro.getItemIri(type)} : undefined;
                         dvm.sm.propertyIndex = index;
-                        dvm.sm.propertyLanguage = _.get(propertyObj, '@language', undefined);
+                        dvm.sm.propertyLanguage = _.get(propertyObj, '@language');
                         dvm.sm.showDataPropertyOverlay = true;
                     }
 

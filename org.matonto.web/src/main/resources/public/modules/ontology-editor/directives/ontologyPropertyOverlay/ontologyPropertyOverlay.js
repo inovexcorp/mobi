@@ -92,7 +92,7 @@
                         var property = dvm.ro.getItemIri(dvm.sm.ontologyProperty);
                         var value = getValue();
                         var oldObj = _.get(dvm.sm.selected, "['" + property + "']['" + dvm.sm.ontologyPropertyIndex + "']");
-                        dvm.om.addToDeletions(dvm.sm.listItem.recordId, createJson(_.get(oldObj, '@value', _.get(oldObj, '@id')), _.get(oldObj, '@language', undefined)));
+                        dvm.om.addToDeletions(dvm.sm.listItem.recordId, createJson(_.get(oldObj, '@value', _.get(oldObj, '@id')), _.get(oldObj, '@language')));
                         dvm.pm.edit(dvm.sm.selected, property, value, dvm.sm.ontologyPropertyIndex, null, dvm.sm.ontologyPropertyLanguage);
                         dvm.om.addToAdditions(dvm.sm.listItem.recordId, createJson(value, dvm.sm.ontologyPropertyLanguage));
                         dvm.sm.showOntologyPropertyOverlay = false;

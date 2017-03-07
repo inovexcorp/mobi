@@ -89,7 +89,7 @@ var jsFiles = function(prefix) {
     fontFiles = function(prefix) {
         return [
             prefix + 'bootstrap/fonts/**.*',
-            prefix + '/font-awesome/fonts/**.*'
+            prefix + 'font-awesome/fonts/**.*'
         ]
     };
 

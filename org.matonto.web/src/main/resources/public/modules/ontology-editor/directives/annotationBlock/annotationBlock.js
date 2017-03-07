@@ -64,7 +64,7 @@
                         dvm.sm.annotationValue = annotationObj['@value'];
                         dvm.sm.annotationIndex = index;
                         dvm.sm.annotationType = _.find(dvm.sm.listItem.dataPropertyRange, datatype => dvm.ro.getItemIri(datatype) === annotationObj['@type']);
-                        dvm.sm.annotationLanguage = _.get(annotationObj, '@language', undefined);
+                        dvm.sm.annotationLanguage = _.get(annotationObj, '@language');
                         dvm.sm.showAnnotationOverlay = true;
                     }
                 }

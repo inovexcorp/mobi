@@ -67,7 +67,7 @@
                         dvm.sm.ontologyPropertyValue = _.get(propertyObj, '@value');
                         // dvm.sm.ontologyPropertyType = _.get(dvm.sm.selected[dvm.ro.getItemIri(property)][index], '@type');
                         dvm.sm.ontologyPropertyIndex = index;
-                        dvm.sm.ontologyPropertyLanguage = _.get(propertyObj, '@language', undefined);
+                        dvm.sm.ontologyPropertyLanguage = _.get(propertyObj, '@language');
                         dvm.sm.showOntologyPropertyOverlay = true;
                     }
                 }
