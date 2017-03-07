@@ -71,6 +71,9 @@
                     dvm.dm = delimitedManagerService;
                     dvm.errorMessage = '';
 
+                    dvm.configNotSet = function() {
+                        return _.isEmpty(dvm.mm.getSourceOntologyInfo(dvm.state.mapping.jsonld));
+                    }
                     dvm.save = function() {
                         if (_.includes(dvm.mm.mappingIds, dvm.state.mapping.id)) {
                             dvm.mm.updateMapping(dvm.state.mapping.id, dvm.state.mapping.jsonld).then(success, onError);

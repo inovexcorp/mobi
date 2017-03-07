@@ -53,6 +53,13 @@ describe('Edit Mapping Page directive', function() {
     });
 
     describe('controller methods', function() {
+        it('should test whether the mapping config is not set', function() {
+            mappingManagerSvc.getSourceOntologyInfo.and.returnValue({});
+            expect(controller.configNotSet()).toBe(true);
+
+            mappingManagerSvc.getSourceOntologyInfo.and.returnValue({test: true});
+            expect(controller.configNotSet()).toBe(false);
+        });
         describe('should set the correct state for saving a mapping', function() {
             describe('if it already exists', function() {
                 beforeEach(function() {
@@ -152,7 +159,7 @@ describe('Edit Mapping Page directive', function() {
             });
         });
         it('depending on whether the mapping configuration has been set', function() {
-            mappingManagerSvc.getSourceOntologyInfo.and.returnValue(undefined);
+            spyOn(controller, 'configNotSet').and.returnValue(true);
             scope.$digest();
             var buttons = element.querySelectorAll('tab block-footer button.btn-primary');
             _.forEach(_.toArray(buttons), function(button) {
@@ -165,7 +172,7 @@ describe('Edit Mapping Page directive', function() {
                 expect(angular.element(button).attr('disabled')).toBeFalsy();
             });
 
-            mappingManagerSvc.getSourceOntologyInfo.and.returnValue({});
+            controller.configNotSet.and.returnValue(false);
             mapperStateSvc.mapping.jsonld = [];
             scope.$digest();
             _.forEach(_.toArray(buttons), function(button) {
