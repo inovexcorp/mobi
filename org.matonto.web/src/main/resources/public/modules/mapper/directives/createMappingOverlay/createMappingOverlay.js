@@ -94,7 +94,7 @@
                             var sourceOntologyInfo = dvm.mm.getSourceOntologyInfo(mapping);
                             if (_.get(sourceOntologyInfo, 'recordId')) {
                                 dvm.cm.getRecord(sourceOntologyInfo.recordId, dvm.cm.localCatalog['@id']).then(record => {
-                                    dvm.state.mapping.record = _.pick(record, ['@id', '@type', prefixes.dcterms + 'title', prefixes.dcterms + 'description', prefixes.dcterms + 'identifier', prefixes.dcterms + 'issued', prefixes.dcterms + 'modified', prefixes.catalog + 'keyword'])
+                                    dvm.state.mapping.record = _.pick(record, ['@id', '@type', prefixes.dcterms + 'title', prefixes.dcterms + 'description', prefixes.dcterms + 'issued', prefixes.dcterms + 'modified', prefixes.catalog + 'keyword'])
                                 });
                             }
                             return dvm.mm.getSourceOntologies(sourceOntologyInfo);

@@ -355,7 +355,7 @@
 
             /**
              * @ngdoc method
-             * @name getResourceDistributions
+             * @name getRecordDistributions
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
@@ -387,7 +387,7 @@
 
             /**
              * @ngdoc method
-             * @name getResourceDistribution
+             * @name getRecordDistribution
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
@@ -728,7 +728,7 @@
 
             /**
              * @ngdoc method
-             * @name getResourceDistribution
+             * @name getRecordDistribution
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description

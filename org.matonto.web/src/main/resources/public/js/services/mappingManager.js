@@ -127,7 +127,7 @@
                     .then(response => {
                         self.mappingIds = _.union(self.mappingIds, [response.data]);
                         deferred.resolve(response.data);
-                    }, error => onError(error, deferred));
+                    }, error => util.onError(error, deferred));
                 return deferred.promise;
             }
             /**
@@ -145,7 +145,7 @@
             self.getMapping = function(mappingId) {
                 var deferred = $q.defer();
                 $http.get(prefix + '/' + encodeURIComponent(mappingId))
-                    .then(response => deferred.resolve(_.get(response.data, '@graph', [])), error => onError(error, deferred));
+                    .then(response => deferred.resolve(_.get(response.data, '@graph', [])), error => util.onError(error, deferred));
                 return deferred.promise;
             }
             /**
@@ -179,7 +179,7 @@
             self.updateMapping = function(mappingId, newMapping) {
                 var deferred = $q.defer();
                 $http.put(prefix + '/' + encodeURIComponent(mappingId), angular.toJson(newMapping))
-                    .then(response => deferred.resolve(), error => onError(error, deferred));
+                    .then(response => deferred.resolve(), error => util.onError(error, deferred));
                 return deferred.promise;
             }
             /**
@@ -200,7 +200,7 @@
                     .then(response => {
                         _.pull(self.mappingIds, mappingId);
                         deferred.resolve();
-                    }, error => onError(error, deferred));
+                    }, error => util.onError(error, deferred));
                 return deferred.promise;
             }
 
@@ -249,11 +249,12 @@
              * Sets the `sourceOntology` property to a mapping's `Mapping` entity.
              *
              * @param {Object[]} mapping The mapping JSON-LD array
-             * @param {string} ontologyId The id of the ontology to set as the source ontology
+             * @param {string} recordId The id of the OntologyRecord to set
+             * @param {string} branchId The id of the branch of the OntologyRecord to set
+             * @param {string} commitId The id of the commit of the OntologyRecord to set
              */
-            self.setSourceOntologyInfo = function(mapping, ontologyId, recordId, branchId, commitId) {
+            self.setSourceOntologyInfo = function(mapping, recordId, branchId, commitId) {
                 var mappingEntity = getMappingEntity(mapping);
-                mappingEntity[prefixes.delim + 'sourceOntology'] = [{'@id': ontologyId}];
                 mappingEntity[prefixes.delim + 'sourceRecord'] = [{'@id': recordId}];
                 mappingEntity[prefixes.delim + 'sourceBranch'] = [{'@id': branchId}];
                 mappingEntity[prefixes.delim + 'sourceCommit'] = [{'@id': commitId}];
@@ -312,7 +313,7 @@
                 if (om.getEntity(ontology, classId)) {
                     // Collect IRI sections for prefix and create class mapping
                     var splitIri = $filter('splitIRI')(classId);
-                    var ontologyDataName = $filter('splitIRI')(self.getSourceOntologyId(mapping)).end.toLowerCase();
+                    var ontologyDataName = util.getBeautifulIRI(om.getOntologyIRI(ontology)).toLowerCase();
                     classEntity = {
                         '@id': getMappingEntity(mapping)['@id'] + '/' + uuid.v4(),
                         '@type': [prefixes.delim + 'ClassMapping']
@@ -344,8 +345,8 @@
                 // Check if class mapping exists in mapping
                 if (entityExists(mapping, classMappingId)) {
                     var classMapping = getEntityById(mapping, classMappingId);
-                    var ontologyDataName = util.getBeautifulIRI(self.getSourceOntologyId(mapping)).toLowerCase();
-                    classMapping[prefixes.delim + 'hasPrefix'] = [{'@value': prefixes.data + ontologyDataName + '/' + prefixEnd}];
+                    var splitPrefix = $filter('splitIRI')(util.getPropertyValue(classMapping, prefixes.delim + 'hasPrefix').slice(0, -1));
+                    classMapping[prefixes.delim + 'hasPrefix'] = [{'@value': splitPrefix.begin + splitPrefix.then + prefixEnd}];
                     classMapping[prefixes.delim + 'localName'] = [{'@value': localNamePattern}];
                 }
             }
@@ -511,7 +512,10 @@
              * }
              * ```
              *
-             * @param {string} ontologyId The id of the ontology to retrieve
+             * @param {Object} ontologyInfo The information of the OntologyRecord to retrieve
+             * @param {string} recordId The id of the OntologyRecord
+             * @param {string} branchId The id of the branch of the OntologyRecord
+             * @param {string} commitId The id of the commit of the OntologyRecord
              * @return {Promise} A Promise that resolves with a structured ontology if the call was successful;
              * rejects otherwise
              */
@@ -521,7 +525,7 @@
                 }
                 var deferred = $q.defer();
                 cm.getResource(ontologyInfo.commitId, ontologyInfo.branchId, ontologyInfo.recordId, cm.localCatalog['@id'], false)
-                    .then(response => deferred.resolve({id: ontologyInfo.ontologyId, entities: response, recordId: ontologyInfo.recordId}), deferred.reject);
+                    .then(response => deferred.resolve({id: om.getOntologyIRI(response), entities: response, recordId: ontologyInfo.recordId}), deferred.reject);
                 return deferred.promise;
             }
             /**
@@ -535,7 +539,10 @@
              * successfully, returns a promise the source ontologies. Otherwise, returns a promise that
              * rejects with an error message.
              *
-             * @param {string} ontologyId The id of the ontology to collect the imports closure of
+             * @param {Object} ontologyInfo The id of the ontology to collect the imports closure of
+             * @param {string} recordId The id of the OntologyRecord
+             * @param {string} branchId The id of the branch of the OntologyRecord
+             * @param {string} commitId The id of the commit of the OntologyRecord
              * @returns {Promise} A promise that resolves to an array of objects if no id is passed or the
              * source ontologies are found; rejects otherwise
              */
@@ -545,8 +552,8 @@
                 }
                 var sourceOntology,
                     deferred = $q.defer();
-                var ontologyObj = _.find(om.list, {ontologyId: ontologyInfo.ontologyId, recordId: ontologyInfo.recordId, branchId: ontologyInfo.branchId, commitId: ontologyInfo.commitId});
-                var promise = ontologyObj ? $q.when({id: ontologyInfo.ontologyId, entities: ontologyObj.ontology, recordId: ontologyInfo.recordId}) : self.getOntology(ontologyInfo);
+                var ontologyObj = _.find(om.list, {recordId: ontologyInfo.recordId, branchId: ontologyInfo.branchId, commitId: ontologyInfo.commitId});
+                var promise = ontologyObj ? $q.when({id: ontologyObj.ontologyId, entities: ontologyObj.ontology, recordId: ontologyInfo.recordId}) : self.getOntology(ontologyInfo);
                 promise.then(ontology => {
                     sourceOntology = ontology;
                     return om.getImportedOntologies(ontologyInfo.recordId, ontologyInfo.branchId, ontologyInfo.commitId);
@@ -560,55 +567,24 @@
             }
             /**
              * @ngdoc method
-             * @name getSourceOntologyId
-             * @methodOf mappingManager.service:mappingManagerService
-             *
-             * @description
-             * Collects the source ontology id of the passed mapping.
-             *
-             * @param {Object[]} mapping The mapping JSON-LD array
-             * @returns {string} The id of the source ontology of a mapping
-             */
-            self.getSourceOntologyId = function(mapping) {
-                return _.get(self.getSourceOntologyInfo(mapping), 'ontologyId', '');
-            }
-            /**
-             * @ngdoc method
              * @name getSourceOntologyInfo
              * @methodOf mappingManager.service:mappingManagerService
              *
              * @description
              * Collects all the source ontology information from the passed mapping. This includes the
-             * ontology id, the record id, the branch id, and the commit id.
+             * record id, the branch id, and the commit id.
              *
              * @param {Object[]} mapping The mapping JSON-LD array
-             * @return {Object} An object with keys for the ontology, record, branch, and commit ids of
+             * @return {Object} An object with keys for the record, branch, and commit ids of
              * the source ontology of the passed mapping
              */
             self.getSourceOntologyInfo = function(mapping) {
                 return _.mapValues(
-                    _.mapKeys(_.pick(getMappingEntity(mapping), [prefixes.delim + 'sourceOntology', prefixes.delim + 'sourceRecord', prefixes.delim + 'sourceBranch', prefixes.delim + 'sourceCommit']),
+                    _.mapKeys(_.pick(getMappingEntity(mapping), [prefixes.delim + 'sourceRecord', prefixes.delim + 'sourceBranch', prefixes.delim + 'sourceCommit']),
                         (val, key) => _.lowerFirst(_.replace(key, prefixes.delim + 'source', '')) + 'Id'
                     ),
                     (val, key) => _.get(val, "[0]['@id']")
                 );
-            }
-            /**
-             * @ngdoc method
-             * @name getSourceOntology
-             * @methodOf mappingManager.service:mappingManagerService
-             *
-             * @description
-             * Collects the source ontology of the passed mapping using the source ontology id and
-             * the passed list of structured ontologies.
-             *
-             * @param {Object[]} mapping The mapping JSON-LD array
-             * @param {Object[]} ontologies The list of ontologies to search through to find the
-             * source ontology
-             * @returns {Object} The source ontology of a mapping
-             */
-            self.getSourceOntology = function(mapping, ontologies) {
-                return _.find(ontologies, {id: self.getSourceOntologyId(mapping)});
             }
             /**
              * @ngdoc method
@@ -1051,10 +1027,7 @@
                 return _.get(getEntitiesByType(mapping, 'Mapping'), 0);
             }
             function validateOntologyInfo(obj) {
-                return _.intersection(_.keys(obj), ['ontologyId', 'recordId', 'branchId', 'commitId']).length === 4;
-            }
-            function onError(error, deferred) {
-                deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.'));
+                return _.intersection(_.keys(obj), ['recordId', 'branchId', 'commitId']).length === 3;
             }
         }
 })();

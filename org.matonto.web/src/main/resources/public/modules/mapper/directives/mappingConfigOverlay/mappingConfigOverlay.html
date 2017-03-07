@@ -53,7 +53,6 @@
             <div class="col-xs-6 preview-display">
                 <div class="ontology-record-info" ng-if="dvm.selectedRecord">
                     <h3>{{dvm.util.getDctermsValue(dvm.selectedRecord, 'title')}}</h3>
-                    <p><small>{{dvm.util.getDctermsValue(dvm.selectedRecord, 'identifier')}}</small></p>
                     <entity-dates entity="dvm.selectedRecord"></entity-dates>
                     <entity-description entity="dvm.selectedRecord"></entity-description>
                     <record-keywords record="dvm.selectedRecord"></record-keywords>
