@@ -27,9 +27,9 @@
         .module('datatypePropertyBlock', [])
         .directive('datatypePropertyBlock', datatypePropertyBlock);
 
-        datatypePropertyBlock.$inject = ['ontologyStateService', 'responseObj'];
+        datatypePropertyBlock.$inject = ['ontologyStateService', 'responseObj', 'prefixes'];
 
-        function datatypePropertyBlock(ontologyStateService, responseObj) {
+        function datatypePropertyBlock(ontologyStateService, responseObj, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -57,9 +57,13 @@
                         dvm.sm.editingProperty = true;
                         dvm.sm.propertySelect = property;
                         dvm.sm.propertyValue = propertyObj['@value'];
-                        dvm.sm.propertyType = type ? {'@id': dvm.ro.getItemIri(type)} : undefined;
                         dvm.sm.propertyIndex = index;
                         dvm.sm.propertyLanguage = _.get(propertyObj, '@language');
+                        if (dvm.sm.propertyLanguage) {
+                            dvm.sm.propertyType = {'@id': prefixes.rdf + 'langString'};
+                        } else {
+                            dvm.sm.propertyType = type ? {'@id': dvm.ro.getItemIri(type)} : undefined;
+                        }
                         dvm.sm.showDataPropertyOverlay = true;
                     }
 

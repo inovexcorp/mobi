@@ -123,6 +123,14 @@ describe('Ontology Utils Manager service', function() {
                 ontologyUtilsManagerSvc.addLanguageToNewEntity(entity, language);
                 expect(entity).toEqual(expected);
             });
+            it('and it has a skos:prefLabel', function() {
+                var entity = {};
+                entity[prefixes.skos + 'prefLabel'] = [{'@value': 'value'}];
+                var expected = {};
+                expected[prefixes.skos + 'prefLabel'] = [{'@value': 'value', '@language': language}];
+                ontologyUtilsManagerSvc.addLanguageToNewEntity(entity, language);
+                expect(entity).toEqual(expected);
+            });
         });
     });
 });

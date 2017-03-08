@@ -62,13 +62,19 @@
             propertyManagerService, catalogManagerService, utilService, stateManagerService) {
             var self = this;
             var prefix = '/matontorest/ontologies';
-            var defaultDatatypes = _.map(['anyURI', 'boolean', 'byte', 'dateTime', 'decimal', 'double', 'float', 'int',
-                'integer', 'language', 'long', 'string'], function(item) {
+            var xsdDatatypes = _.map(['anyURI', 'boolean', 'byte', 'dateTime', 'decimal', 'double', 'float', 'int', 'integer', 'language', 'long', 'string'], item => {
                 return {
                     'namespace': prefixes.xsd,
                     'localName': item
                 }
             });
+            var rdfDatatypes = _.map(['langString'], item => {
+                return {
+                    namespace: prefixes.rdf,
+                    localName: item
+                }
+            });
+            var defaultDatatypes = _.concat(xsdDatatypes, rdfDatatypes);
             var ontologyListItemTemplate = {
                 ontology: [],
                 ontologyId: '',
