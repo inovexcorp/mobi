@@ -24,24 +24,13 @@ package org.matonto.ontology.rest.impl;
  */
 
 import static org.matonto.rest.util.RestUtils.encode;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.matonto.ontology.core.api.Ontology;
-import org.matonto.ontology.core.api.OntologyManager;
-import org.matonto.ontology.core.utils.MatontoOntologyException;
-import org.matonto.rdf.api.IRI;
-import org.matonto.rdf.api.ValueFactory;
-import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
 import org.matonto.rest.util.MatontoRestTestNg;
-import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.ws.rs.core.Application;
@@ -50,24 +39,10 @@ import javax.ws.rs.core.Response;
 public class ImportedOntologyRestImplTest extends MatontoRestTestNg {
     private ImportedOntologyRestImpl rest;
 
-    @Mock
-    private Ontology ontology;
-
-    @Mock
-    private OntologyManager ontologyManager;
-
-    private ValueFactory valueFactory;
-
     @Override
     protected Application configureApp() throws Exception {
         MockitoAnnotations.initMocks(this);
-
-        valueFactory = SimpleValueFactory.getInstance();
-
         rest = new ImportedOntologyRestImpl();
-        rest.setValueFactory(valueFactory);
-        rest.setOntologyManager(ontologyManager);
-
         return new ResourceConfig().register(rest);
     }
 
@@ -76,22 +51,15 @@ public class ImportedOntologyRestImplTest extends MatontoRestTestNg {
         config.register(MultiPartFeature.class);
     }
 
-    @BeforeMethod
-    public void setupMocks() {
-        reset(ontologyManager);
-    }
-
     @Test
-    public void testGetImportedOntology() {
-        when(ontologyManager.createOntology(any(IRI.class))).thenReturn(ontology);
-        Response response = target().path("imported-ontologies/" + encode("http://matonto.org/")).request().get();
+    public void testVerifyUrl() {
+        Response response = target().path("imported-ontologies/" + encode("http://matonto.org/")).request().head();
         assertEquals(response.getStatus(), 200);
     }
 
     @Test
-    public void testGetImportedOntologyWhenErrorIsThrown() {
-        when(ontologyManager.createOntology(any(IRI.class))).thenThrow(new MatontoOntologyException("Error"));
-        Response response = target().path("imported-ontologies/" + encode("http://matonto.org/")).request().get();
+    public void testVerifyUrlWhenUrlIsNotThere() {
+        Response response = target().path("imported-ontologies/" + encode("https://not-there.com/")).request().head();
         assertEquals(response.getStatus(), 400);
     }
 }

@@ -1,5 +1,28 @@
 package org.matonto.ontology.rest;
 
+/*-
+ * #%L
+ * org.matonto.ontology.rest
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 
@@ -13,15 +36,14 @@ import javax.ws.rs.core.Response;
 @Api(value = "/imported-ontologies")
 public interface ImportedOntologyRest {
     /**
-     * Returns the ontology located at the provided URL and ensures that it is an Ontology Object as defined by OWLAPI.
+     * Checks to see if the provided URL is resolvable.
      *
-     * @param ontologyURL the String representing the resolvable URL for an ontology
-     * @return OK if the provided URL is resolvable and is an Ontology Object. BAD_REQUEST if the URL is not resolvable
-     *         or it is resolvable and is not an Ontology Object.
+     * @param url the String representing the URL to verify
+     * @return OK if the provided URL is resolvable. BAD_REQUEST if the URL is not resolvable.
      */
     @GET
-    @Path("{ontologyURL}")
+    @Path("{url}")
     @RolesAllowed("user")
-    @ApiOperation("Gets the ontology at the provided URL.")
-    Response getImportedOntology(@PathParam("ontologyURL") String ontologyURL);
+    @ApiOperation("Checks to see if the provided URL is resolvable.")
+    Response verifyUrl(@PathParam("url") String url);
 }

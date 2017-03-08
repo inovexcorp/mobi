@@ -418,12 +418,14 @@
              * @param {string} commitId The commit ID associated with the requested ontology.
              * @param {string} [type='ontology'] The type of listItem that needs to be updated.
              * @param {boolean} [upToDate=true] The flag indicating whether the ontology is upToDate or not.
+             * @param {boolean} [apply=false] The flag indicating whether the get should apply the inProgressCommit or
+             * not.
              * @returns {Promise} A promise indicating the success or failure of the update.
              */
-            self.updateOntology = function(recordId, branchId, commitId, type = 'ontology', upToDate = true) {
+            self.updateOntology = function(recordId, branchId, commitId, type = 'ontology', upToDate = true, apply = false) {
                 var listItem;
                 var deferred = $q.defer();
-                cm.getResource(commitId, branchId, recordId, catalogId, false)
+                cm.getResource(commitId, branchId, recordId, catalogId, apply)
                     .then(ontology => {
                         var ontologyId = self.getListItemByRecordId(recordId).ontologyId;
                         if (type === 'ontology') {
@@ -528,7 +530,9 @@
              * ontology ID.
              *
              * @param {string} recordId The record ID of the requested ontology.
-             * @param {Object[]} unsavedEntities The array of ontology entities with unsaved changes.
+             * @param {Object} differenceObj The object containing statements that represent changes made.
+             * @param {Object[]} differenceObj.additions The statements that were added.
+             * @param {Object[]} differenceObj.deletions The statements that were deleted.
              * @returns {Promise} A promise with the ontology ID.
              */
             self.saveChanges = function(recordId, differenceObj) {

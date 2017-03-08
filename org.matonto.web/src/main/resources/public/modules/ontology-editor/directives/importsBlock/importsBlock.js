@@ -40,6 +40,7 @@
                     var dvm = this;
                     dvm.prefixes = prefixes;
                     dvm.sm = ontologyStateService;
+                    dvm.showOverlay = false;
                 }
             }
         }

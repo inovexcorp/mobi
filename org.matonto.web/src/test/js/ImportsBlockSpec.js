@@ -21,11 +21,7 @@
  * #L%
  */
 describe('Imports Block directive', function() {
-    var $compile,
-        scope,
-        element,
-        ontologyStateSvc,
-        prefixes;
+    var $compile, scope, element, ontologyStateSvc, prefixes;
 
     beforeEach(function() {
         module('templates');
@@ -59,12 +55,21 @@ describe('Imports Block directive', function() {
         it('with a block-content', function() {
             expect(element.find('block-content').length).toBe(1);
         });
+        it('with an a', function() {
+            expect(element.querySelectorAll('a.pull-right').length).toBe(1);
+        });
+        it('with a imports-overlay', function() {
+            expect(element.find('imports-overlay').length).toBe(0);
+            element.controller('importsBlock').showOverlay = true;
+            scope.$apply();
+            expect(element.find('imports-overlay').length).toBe(1);
+        });
         it('depending on the length of the selected ontology imports', function() {
             expect(element.querySelectorAll('.text-info.message').length).toBe(1);
             expect(element.querySelectorAll('.import').length).toBe(0);
 
             ontologyStateSvc.selected[prefixes.owl + 'imports'] = [{'@id': 'import'}];
-            scope.$digest();
+            scope.$apply();
             expect(element.querySelectorAll('.text-info.message').length).toBe(0);
             expect(element.querySelectorAll('.import').length).toBe(1);
         });
