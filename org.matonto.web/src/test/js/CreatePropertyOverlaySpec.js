@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Create Property Overlay directive', function() {
-    var $compile, scope, element, controller, ontologyManagerSvc, ontologyStateSvc, prefixes, splitIRIFilter, functionalProperty;
+    var $compile, scope, element, controller, ontologyManagerSvc, ontologyStateSvc, prefixes, splitIRIFilter, functionalProperty, ontoUtils;
     var iri = 'iri#';
 
     beforeEach(function() {
@@ -35,14 +35,16 @@ describe('Create Property Overlay directive', function() {
         mockOntologyManager();
         mockOntologyState();
         mockPrefixes();
+        mockOntologyUtilsManager();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_, _prefixes_, _splitIRIFilter_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_, _prefixes_, _splitIRIFilter_, _ontologyUtilsManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyManagerSvc = _ontologyManagerService_;
             ontologyStateSvc = _ontologyStateService_;
             prefixes = _prefixes_;
             splitIRIFilter = _splitIRIFilter_;
+            ontoUtils = _ontologyUtilsManagerService_;
         });
 
         ontologyStateSvc.getDefaultPrefix.and.returnValue(iri);
@@ -91,6 +93,9 @@ describe('Create Property Overlay directive', function() {
         });
         it('with a .btn-container', function() {
             expect(element.querySelectorAll('.btn-container').length).toBe(1);
+        });
+        it('with an advanced-language-select', function() {
+            expect(element.find('advanced-language-select').length).toBe(1);
         });
         it('with custom buttons to create and cancel', function() {
             var buttons = element.find('button');
@@ -192,6 +197,7 @@ describe('Create Property Overlay directive', function() {
                 expect(_.has(controller.property, prefixes.rdfs + 'range')).toBe(false);
                 expect(_.has(controller.property, prefixes.rdfs + 'domain')).toBe(false);
                 expect(controller.property.matonto.originalIRI).toEqual(controller.property['@id']);
+                expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(controller.property, controller.language);
                 expect(ontologyManagerSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem,
                     controller.property);
                 expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(controller.property);
@@ -206,6 +212,7 @@ describe('Create Property Overlay directive', function() {
                 ontologyManagerSvc.isObjectProperty.and.returnValue(true);
                 controller.create();
                 expect(controller.property.matonto.originalIRI).toEqual(controller.property['@id']);
+                expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(controller.property, controller.language);
                 expect(ontologyManagerSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem,
                     controller.property);
                 expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(controller.property);
@@ -223,6 +230,7 @@ describe('Create Property Overlay directive', function() {
                 controller.property[prefixes.dcterms + 'description'] = [{'@value': 'description'}];
                 controller.create();
                 expect(controller.property.matonto.originalIRI).toEqual(controller.property['@id']);
+                expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(controller.property, controller.language);
                 expect(ontologyManagerSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem,
                     controller.property);
                 expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(controller.property);

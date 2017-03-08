@@ -27,9 +27,9 @@
         .module('createPropertyOverlay', [])
         .directive('createPropertyOverlay', createPropertyOverlay);
 
-        createPropertyOverlay.$inject = ['$filter', 'REGEX', 'ontologyManagerService', 'ontologyStateService', 'prefixes'];
+        createPropertyOverlay.$inject = ['$filter', 'REGEX', 'ontologyManagerService', 'ontologyStateService', 'prefixes', 'ontologyUtilsManagerService'];
 
-        function createPropertyOverlay($filter, REGEX, ontologyManagerService, ontologyStateService, prefixes) {
+        function createPropertyOverlay($filter, REGEX, ontologyManagerService, ontologyStateService, prefixes, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -40,13 +40,13 @@
                     var dvm = this;
                     var setAsObject = false;
                     var setAsDatatype = false;
+                    var ontoUtils = ontologyUtilsManagerService;
 
                     dvm.checkbox = false;
                     dvm.prefixes = prefixes;
                     dvm.iriPattern = REGEX.IRI;
                     dvm.om = ontologyManagerService;
                     dvm.sm = ontologyStateService;
-
                     dvm.prefix = dvm.sm.getDefaultPrefix();
 
                     dvm.property = {
@@ -85,6 +85,7 @@
                             }
                         });
                         _.set(dvm.property, 'matonto.originalIRI', dvm.property['@id']);
+                        ontoUtils.addLanguageToNewEntity(dvm.property, dvm.language);
                         // add the entity to the ontology
                         dvm.om.addEntity(dvm.sm.listItem, dvm.property);
                         // update relevant lists
