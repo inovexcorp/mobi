@@ -39,6 +39,7 @@
                         </div>
                         <text-input ng-model="dvm.title" input-name="title" required="true" display-text="'Title'" ng-keyup="dvm.nameChanged()"></text-input>
                         <text-area ng-model="dvm.description" input-name="description" display-text="'Description'" muted-text="'(Optional)'"></text-area>
+                        <advanced-language-select ng-model="dvm.language"></advanced-language-select>
                         <keyword-select ng-model="dvm.keywords"></keyword-select>
                         <editor-radio-buttons ng-model="dvm.type"></editor-radio-buttons>
                         <div class="btn-container clearfix">

@@ -42,6 +42,7 @@
         </div>
         <div ng-if="dvm.isAnnotationProperty()">
             <text-area ng-model="dvm.sm.ontologyPropertyValue" display-text="'Value'" required="required"></text-area>
+            <language-select ng-model="dvm.sm.ontologyPropertyLanguage"></language-select>
             <!--<object-select ng-model="dvm.sm.ontologyPropertyType" display-text="'Type'" multi-select="false"
                            select-list="dvm.sm.listItem.dataPropertyRange"></object-select>-->
         </div>

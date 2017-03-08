@@ -33,6 +33,7 @@
             </div>
             <text-area ng-model="dvm.property[dvm.prefixes.dcterms + 'description'][0]['@value']"
                        display-text="'Description'" muted-text="'(Optional)'"></text-area>
+            <advanced-language-select ng-model="dvm.language"></advanced-language-select>
             <p class="identifier"><strong>Type</strong></p>
             <radio-button ng-model="dvm.property['@type']" value="[dvm.prefixes.owl + 'ObjectProperty']" display-text="'Object Property'" inline="true"></radio-button>
             <radio-button ng-model="dvm.property['@type']" value="[dvm.prefixes.owl + 'DatatypeProperty']" display-text="'Data Property'" inline="true"></radio-button>

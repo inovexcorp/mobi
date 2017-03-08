@@ -85,6 +85,7 @@ describe('Annotation Block directive', function() {
             expect(ontologyStateSvc.annotationSelect).toEqual(undefined);
             expect(ontologyStateSvc.annotationValue).toBe('');
             expect(ontologyStateSvc.annotationIndex).toBe(0);
+            expect(ontologyStateSvc.annotationLanguage).toBe('en');
             expect(ontologyStateSvc.showAnnotationOverlay).toBe(true);
         });
         it('should set the correct manager values when opening the Remove Annotation Overlay', function() {
@@ -96,15 +97,16 @@ describe('Annotation Block directive', function() {
         it('should set the correct manager values when editing an annotation', function() {
             var annotationIRI = 'prop1';
             ontologyStateSvc.selected = {
-                'prop1': [{'@value': 'value', '@type': 'type'}]
+                'prop1': [{'@value': 'value', '@type': 'type', '@language': 'language'}]
             };
             ontologyStateSvc.listItem.dataPropertyRange = ['type'];
             controller.editClicked(annotationIRI, 0);
             expect(ontologyStateSvc.editingAnnotation).toBe(true);
             expect(ontologyStateSvc.annotationSelect).toEqual(annotationIRI);
-            expect(ontologyStateSvc.annotationValue).toBe(ontologyStateSvc.selected[annotationIRI][0]['@value']);
+            expect(ontologyStateSvc.annotationValue).toBe('value');
             expect(ontologyStateSvc.annotationIndex).toBe(0);
-            expect(ontologyStateSvc.annotationType).toBe(ontologyStateSvc.selected[annotationIRI][0]['@type']);
+            expect(ontologyStateSvc.annotationType).toBe('type');
+            expect(ontologyStateSvc.annotationLanguage).toBe('language');
             expect(ontologyStateSvc.showAnnotationOverlay).toBe(true);
         });
     });

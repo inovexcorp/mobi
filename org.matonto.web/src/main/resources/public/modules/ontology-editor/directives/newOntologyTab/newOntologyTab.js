@@ -27,11 +27,9 @@
         .module('newOntologyTab', [])
         .directive('newOntologyTab', newOntologyTab);
 
-        newOntologyTab.$inject = ['$filter', 'REGEX', 'ontologyManagerService', 'ontologyStateService', 'prefixes',
-            'stateManagerService', 'utilService'];
+        newOntologyTab.$inject = ['$filter', 'REGEX', 'ontologyManagerService', 'ontologyStateService', 'prefixes', 'stateManagerService', 'utilService', 'ontologyUtilsManagerService'];
 
-        function newOntologyTab($filter, REGEX, ontologyManagerService, ontologyStateService, prefixes,
-            stateManagerService, utilService) {
+        function newOntologyTab($filter, REGEX, ontologyManagerService, ontologyStateService, prefixes, stateManagerService, utilService, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -45,6 +43,7 @@
                         + '/';
                     var sm = stateManagerService;
                     var util = utilService;
+                    var ontoUtils = ontologyUtilsManagerService;
 
                     dvm.prefixes = prefixes;
                     dvm.iriPattern = REGEX.IRI;
@@ -67,6 +66,7 @@
                         if (dvm.description) {
                             util.setDctermsValue(dvm.ontology, 'description', dvm.description);
                         }
+                        ontoUtils.addLanguageToNewEntity(dvm.ontology, dvm.language);
                         if (dvm.type === 'vocabulary') {
                             dvm.ontology[prefixes.owl + 'imports'] = [{
                                 '@id': angular.copy(prefixes.skos).slice(0, -1)

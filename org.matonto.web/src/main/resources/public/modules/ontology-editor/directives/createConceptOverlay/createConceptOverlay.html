@@ -37,11 +37,12 @@
                     <ui-select-match placeholder="Select Concept Scheme(s)">
                         <span title="{{$item}}">{{($item | splitIRI).end}}</span>
                     </ui-select-match>
-                    <ui-select-choices group-by="dvm.getIRINamespace" repeat="{'@id': iri} as iri in dvm.om.getConceptSchemeIRIs(dvm.sm.listItem.ontology) | filter:$select.search | orderBy:'localName' track by iri">
+                    <ui-select-choices group-by="dvm.util.getIRINamespace" repeat="{'@id': iri} as iri in dvm.om.getConceptSchemeIRIs(dvm.sm.listItem.ontology) | filter:$select.search | orderBy:'localName' track by iri">
                         <div title="{{iri}}" ng-bind-html="(iri | splitIRI).end | highlight: $select.search | trusted"></div>
                     </ui-select-choices>
                 </ui-select>
             </div>
+            <advanced-language-select ng-model="dvm.language"></advanced-language-select>
             <div class="btn-container clearfix">
                 <button class="btn btn-primary pull-right" ng-disabled="dvm.form.$invalid" ng-click="dvm.create()">Create</button>
                 <button class="btn btn-default pull-right" ng-click="dvm.sm.showCreateConceptOverlay = false">Cancel</button>

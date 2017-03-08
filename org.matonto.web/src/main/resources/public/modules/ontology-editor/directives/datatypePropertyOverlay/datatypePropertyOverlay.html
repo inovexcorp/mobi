@@ -43,15 +43,18 @@
         <object-select ng-model="dvm.sm.propertyType" display-text="'Type'" select-list="dvm.sm.listItem.dataPropertyRange"
                        multi-select="false"></object-select>
 
+        <!-- language -->
+        <language-select ng-if="dvm.isStringType()" ng-model="dvm.sm.propertyLanguage" required></language-select>
+
         <!-- data property buttons -->
         <div class="btn-container clearfix">
             <button class="btn btn-primary pull-right" ng-if="!dvm.sm.editingProperty"
                     ng-disabled="dvm.propertyForm.$invalid || dvm.sm.propertySelect === undefined || !dvm.sm.propertyValue"
-                    ng-click="dvm.addProperty(dvm.sm.propertySelect, dvm.sm.propertyValue, dvm.sm.propertyType)">Add</button>
+                    ng-click="dvm.addProperty(dvm.sm.propertySelect, dvm.sm.propertyValue, dvm.sm.propertyType, dvm.sm.propertyLanguage)">Add</button>
 
             <button class="btn btn-primary pull-right" ng-if="dvm.sm.editingProperty"
                     ng-disabled="dvm.propertyForm.$invalid || !dvm.sm.propertyValue"
-                    ng-click="dvm.editProperty(dvm.sm.propertySelect, dvm.sm.propertyValue, dvm.sm.propertyType)">Edit</button>
+                    ng-click="dvm.editProperty(dvm.sm.propertySelect, dvm.sm.propertyValue, dvm.sm.propertyType, dvm.sm.propertyLanguage)">Edit</button>
 
             <button class="btn btn-default pull-right" ng-click="dvm.sm.showDataPropertyOverlay = false">Cancel</button>
         </div>

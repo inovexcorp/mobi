@@ -62,14 +62,19 @@
             propertyManagerService, catalogManagerService, utilService, stateManagerService) {
             var self = this;
             var prefix = '/matontorest/ontologies';
-            var defaultDatatypes = _.map(['anyURI', 'boolean', 'byte', 'dateTime', 'decimal', 'double', 'float', 'int',
-                'integer', 'language', 'long', 'string'], function(item) {
+            var xsdDatatypes = _.map(['anyURI', 'boolean', 'byte', 'dateTime', 'decimal', 'double', 'float', 'int', 'integer', 'language', 'long', 'string'], item => {
                 return {
                     'namespace': prefixes.xsd,
                     'localName': item
                 }
             });
-            var defaultErrorMessage = defaultErrorMessage;
+            var rdfDatatypes = _.map(['langString'], item => {
+                return {
+                    namespace: prefixes.rdf,
+                    localName: item
+                }
+            });
+            var defaultDatatypes = _.concat(xsdDatatypes, rdfDatatypes);
             var ontologyListItemTemplate = {
                 ontology: [],
                 ontologyId: '',
@@ -1349,7 +1354,7 @@
                         } else if (_.get(response, 'status') === 204) {
                             deferred.resolve([]);
                         } else {
-                            util.onError(response, deferred, defaultErrorMessage);
+                            util.onError(response, deferred);
                         }
                     }, response => util.onError(response, deferred));
                 return deferred.promise;
@@ -1524,7 +1529,7 @@
                         } else {
                             deferred.reject(defaultErrorMessage);
                         }
-                    }, response => util.onError(response, deferred));
+                    }, response => util.onError(response, deferred, defaultErrorMessage));
                 return deferred.promise;
             }
 

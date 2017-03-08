@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Create Class Overlay directive', function() {
-    var $compile, scope, element, controller, ontologyManagerSvc, deferred, ontologyStateSvc, prefixes;
+    var $compile, scope, element, controller, ontologyManagerSvc, deferred, ontologyStateSvc, prefixes, ontoUtils;
     var iri = 'iri#';
 
     beforeEach(function() {
@@ -33,8 +33,9 @@ describe('Create Class Overlay directive', function() {
         mockOntologyManager();
         mockOntologyState();
         mockPrefixes();
+        mockOntologyUtilsManager();
 
-        inject(function(_$q_, _$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_, _prefixes_) {
+        inject(function(_$q_, _$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_, _prefixes_, _ontologyUtilsManagerService_) {
             $q = _$q_;
             $compile = _$compile_;
             scope = _$rootScope_;
@@ -42,6 +43,7 @@ describe('Create Class Overlay directive', function() {
             ontologyStateSvc = _ontologyStateService_;
             deferred = _$q_.defer();
             prefixes = _prefixes_;
+            ontoUtils = _ontologyUtilsManagerService_;
         });
 
         ontologyStateSvc.getDefaultPrefix.and.returnValue(iri);
@@ -88,6 +90,9 @@ describe('Create Class Overlay directive', function() {
         it('with a .btn-container', function() {
             expect(element.querySelectorAll('.btn-container').length).toBe(1);
         });
+        it('with an advanced-language-select', function() {
+            expect(element.find('advanced-language-select').length).toBe(1);
+        });
         it('depending on whether there is an error', function() {
             expect(element.find('error-display').length).toBe(0);
 
@@ -130,11 +135,13 @@ describe('Create Class Overlay directive', function() {
             expect(ontologyStateSvc.setCommonIriParts).toHaveBeenCalledWith('begin', 'then');
         });
         it('create calls the correct manager functions', function() {
+            controller.language = 'en';
             controller.clazz = {'@id': 'class-iri'};
             controller.clazz[prefixes.dcterms + 'title'] = [{'@value': 'label'}];
             controller.clazz[prefixes.dcterms + 'description'] = [{'@value': 'description'}];
             controller.create();
             expect(_.get(controller.clazz, 'matonto.originalIRI')).toEqual(controller.clazz['@id']);
+            expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(controller.clazz, controller.language);
             expect(ontologyManagerSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem,
                 controller.clazz);
             expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,

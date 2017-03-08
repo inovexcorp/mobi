@@ -96,6 +96,7 @@ describe('Ontology Properties Block directive', function() {
             expect(ontologyStateSvc.ontologyProperty).toBeUndefined();
             expect(ontologyStateSvc.ontologyPropertyValue).toBe('');
             expect(ontologyStateSvc.ontologyPropertyIRI).toBe('');
+            expect(ontologyStateSvc.ontologyPropertyLanguage).toBe('en');
             expect(ontologyStateSvc.showOntologyPropertyOverlay).toBe(true);
         });
         it('should set the correct manager values when opening the Remove Ontology Property Overlay', function() {
@@ -107,15 +108,16 @@ describe('Ontology Properties Block directive', function() {
         it('should set the correct manager values when editing an ontology property', function() {
             var propertyIRI = 'prop1';
             ontologyStateSvc.selected = {
-                'prop1': [{'@value': 'value', '@type': 'type'}]
+                'prop1': [{'@value': 'value', '@type': 'type', '@id': 'id', '@language': 'lang'}]
             };
             ontologyStateSvc.listItem.dataPropertyRange = ['type'];
             controller.editClicked(propertyIRI, 0);
             expect(ontologyStateSvc.editingOntologyProperty).toBe(true);
             expect(ontologyStateSvc.ontologyProperty).toEqual(propertyIRI);
-            expect(ontologyStateSvc.ontologyPropertyValue).toBe(ontologyStateSvc.selected[propertyIRI][0]['@value']);
-            expect(ontologyStateSvc.ontologyPropertyIRI).toBe(ontologyStateSvc.selected[propertyIRI][0]['@value']);
+            expect(ontologyStateSvc.ontologyPropertyValue).toBe('value');
+            expect(ontologyStateSvc.ontologyPropertyIRI).toBe('id');
             expect(ontologyStateSvc.ontologyPropertyIndex).toBe(0);
+            expect(ontologyStateSvc.ontologyPropertyLanguage).toBe('lang');
             expect(ontologyStateSvc.showOntologyPropertyOverlay).toBe(true);
         });
     });
