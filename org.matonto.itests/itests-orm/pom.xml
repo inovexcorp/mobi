@@ -89,14 +89,14 @@
                                     <ontologyName>ProvO</ontologyName>
                                 </ontology>
                                 <ontology>
-                                    <ontologyFile>${project.basedir}/../../org.matonto.rdf.orm.ontologies/src/main/resources/foaf.owl</ontologyFile>
+                                    <ontologyFile>${project.basedir}/src/test/resources/foaf.rdf</ontologyFile>
                                     <outputPackage>org.matonto.foaf</outputPackage>
                                     <ontologyName>FOAF</ontologyName>
                                 </ontology>
                             </generates>
                             <references>
                                 <ontology>
-                                    <ontologyFile>${project.basedir}/../../org.matonto.rdf.orm.ontologies/src/main/resources/foaf.owl</ontologyFile>
+                                    <ontologyFile>${project.basedir}/src/test/resources/foaf.rdf</ontologyFile>
                                     <outputPackage>org.matonto.foaf</outputPackage>
                                     <ontologyName>FOAF</ontologyName>
                                 </ontology>

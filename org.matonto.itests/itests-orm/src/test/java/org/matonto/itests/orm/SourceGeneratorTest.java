@@ -25,7 +25,6 @@ package org.matonto.itests.orm;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.matonto.foaf.Agent;
 import org.matonto.foaf.AgentFactory;
@@ -101,11 +100,14 @@ public class SourceGeneratorTest {
                 valueFactory.createIRI("urn://matonto.org/orm/test/account"));
     }
 
-    // Ignore until generated ontologies using newest ORM.
-    @Ignore
+
     @Test
     public void testAgent() {
         final AgentFactory factory = new AgentFactory();
+        valueConverterRegistry.registerValueConverter(factory);
+        factory.setValueFactory(valueFactory);
+        factory.setModelFactory(modelFactory);
+        factory.setValueConverterRegistry(valueConverterRegistry);
         final Agent a = factory.getExisting(valueFactory.createIRI("urn://matonto.org/orm/test/testAgent"), model,
                 valueFactory, valueConverterRegistry).orElseThrow(() -> new RuntimeException("WHAT? No agent returned"));
         assertEquals(valueFactory.createLiteral(100), a.getAge().orElse(null));
@@ -134,12 +136,14 @@ public class SourceGeneratorTest {
         assertEquals(valueFactory.createIRI("urn://matonto.org/orm/test/account"), mbox.getResource());
     }
 
-    // Ignore until generated ontologies using newest ORM.
-    @Ignore
+
     @Test
     public void testMultiType() {
         final OnlineChatAccountFactory factory = new OnlineChatAccountFactory();
+        valueConverterRegistry.registerValueConverter(factory);
         factory.setValueFactory(valueFactory);
+        factory.setModelFactory(modelFactory);
+        factory.setValueConverterRegistry(valueConverterRegistry);
         OnlineChatAccount account = factory.createNew(valueFactory.createIRI("urn://matonto.org/orm/test/testOCA"), model, valueFactory, valueConverterRegistry);
         account.getModel().filter(account.getResource(), null, null).forEach(stmt -> System.out.println(stmt));
     }
