@@ -21,16 +21,7 @@
  * #L%
  */
 describe('New Ontology Tab directive', function() {
-    var $compile,
-        scope,
-        $q,
-        element,
-        controller,
-        ontologyStateSvc,
-        ontologyManagerSvc,
-        utilSvc,
-        stateManagerSvc,
-        prefixes;
+    var $compile, scope, $q, element, controller, ontologyStateSvc, ontologyManagerSvc, utilSvc, stateManagerSvc, prefixes, ontoUtils;
 
     beforeEach(function() {
         module('templates');
@@ -42,8 +33,9 @@ describe('New Ontology Tab directive', function() {
         mockOntologyState();
         mockPrefixes();
         mockStateManager();
+        mockOntologyUtilsManager();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _ontologyManagerService_, _utilService_, _stateManagerService_, _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _ontologyManagerService_, _utilService_, _stateManagerService_, _prefixes_, _ontologyUtilsManagerService_) {
             $q = _$q_;
             $compile = _$compile_;
             scope = _$rootScope_;
@@ -52,6 +44,7 @@ describe('New Ontology Tab directive', function() {
             utilSvc = _utilService_;
             stateManagerSvc = _stateManagerService_;
             prefixes = _prefixes_;
+            ontoUtils = _ontologyUtilsManagerService_;
         });
 
         element = $compile(angular.element('<new-ontology-tab></new-ontology-tab>'))(scope);
@@ -73,6 +66,9 @@ describe('New Ontology Tab directive', function() {
         });
         it('with a .btn-container', function() {
             expect(element.querySelectorAll('.btn-container').length).toBe(1);
+        });
+        it('with an advanced-language-select', function() {
+            expect(element.find('advanced-language-select').length).toBe(1);
         });
         it('with custom buttons to create and cancel', function() {
             var buttons = element.find('button');
@@ -162,6 +158,7 @@ describe('New Ontology Tab directive', function() {
                     scope.$apply();
                     expect(utilSvc.setDctermsValue).toHaveBeenCalledWith(controller.ontology, 'title', controller.title);
                     expect(utilSvc.setDctermsValue).toHaveBeenCalledWith(controller.ontology, 'description', controller.description);
+                    expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(controller.ontology, controller.language);
                     expect(_.has(controller.ontology, prefixes.owl + 'imports')).toBe(false);
                     expect(ontologyManagerSvc.createOntology).toHaveBeenCalledWith(controller.ontology, controller.title, controller.description, 'one,two', controller.type);
                     expect(stateManagerSvc.createOntologyState).toHaveBeenCalledWith(this.response.recordId, this.response.branchId, this.response.commitId);
@@ -176,6 +173,7 @@ describe('New Ontology Tab directive', function() {
                     expect(controller.ontology[prefixes.owl + 'imports']).toEqual([{'@id': prefixes.skos.slice(0, -1)}]);
                     expect(utilSvc.setDctermsValue).toHaveBeenCalledWith(controller.ontology, 'title', controller.title);
                     expect(utilSvc.setDctermsValue).toHaveBeenCalledWith(controller.ontology, 'description', controller.description);
+                    expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(controller.ontology, controller.language);
                     expect(ontologyManagerSvc.createOntology).toHaveBeenCalledWith(controller.ontology, controller.title, controller.description, 'one,two', controller.type);
                     expect(stateManagerSvc.createOntologyState).toHaveBeenCalledWith(this.response.recordId, this.response.branchId, this.response.commitId);
                     expect(ontologyStateSvc.addState).toHaveBeenCalledWith(this.response.recordId, this.response.entityIRI, controller.type);

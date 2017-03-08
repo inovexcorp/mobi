@@ -28,7 +28,7 @@
                 <ui-select-match placeholder="Select Language">
                     <span>{{$select.selected.label}} <small class="text-muted">@{{$select.selected.value}}</small></span>
                 </ui-select-match>
-                <ui-select-choices repeat="language.value as language in dvm.languages | orderBy:label | filter:$select.search">
+                <ui-select-choices repeat="language.value as language in dvm.languages | orderBy:'label' | filter:$select.search">
                     <span ng-bind-html="language.label | highlight:$select.search | trusted"></span>
                     <small class="text-muted" ng-bind-html="'@' + language.value | highlight:$select.search | trusted"></small>
                 </ui-select-choices>

@@ -26,6 +26,7 @@
     angular
         .module('ontology-editor', [
             /* New Directives */
+            'advancedLanguageSelect',
             'annotationBlock',
             'annotationOverlay',
             'associationBlock',

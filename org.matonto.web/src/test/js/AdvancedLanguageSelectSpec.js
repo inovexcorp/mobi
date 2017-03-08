@@ -20,14 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Language Select directive', function() {
+describe('Advanced Language Select directive', function() {
     var $compile, scope, element, controller;
 
     beforeEach(function() {
         module('templates');
-        module('languageSelect');
-        injectHighlightFilter();
-        injectTrustedFilter();
+        module('advancedLanguageSelect');
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;
@@ -35,9 +33,9 @@ describe('Language Select directive', function() {
         });
 
         scope.bindModel = 'test';
-        element = $compile(angular.element('<language-select ng-model="bindModel"></language-select>'))(scope);
+        element = $compile(angular.element('<advanced-language-select ng-model="bindModel"></advanced-language-select>'))(scope);
         scope.$digest();
-        controller = element.controller('languageSelect');
+        controller = element.controller('advancedLanguageSelect');
     });
 
     describe('controller bound variable', function() {
@@ -50,31 +48,33 @@ describe('Language Select directive', function() {
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('language-select')).toBe(true);
-            expect(element.hasClass('form-group')).toBe(true);
+            expect(element.hasClass('advanced-language-select')).toBe(true);
         });
-        it('with a custom-label', function() {
-            expect(element.find('custom-label').length).toBe(1);
+        it('for correct links', function() {
+            expect(element.querySelectorAll('.btn-link .fa-plus').length).toBe(1);
+            expect(element.querySelectorAll('.btn-link .fa-times').length).toBe(0);
+            controller.isShown = true;
+            scope.$apply();
+            expect(element.querySelectorAll('.btn-link .fa-plus').length).toBe(0);
+            expect(element.querySelectorAll('.btn-link .fa-times').length).toBe(1);
         });
-        it('with a ui-select', function() {
-            expect(element.find('ui-select').length).toBe(1);
+        it('for language-select', function() {
+            expect(element.find('language-select').length).toBe(0);
+            controller.isShown = true;
+            scope.$apply();
+            expect(element.find('language-select').length).toBe(1);
         });
     });
     describe('controller methods', function() {
-        it('clear properly sets the variable', function() {
-            controller.clear();
-            scope.$apply();
-            expect(scope.bindModel).toBeUndefined();
+        it('show sets the proper variables', function() {
+            controller.show();
+            expect(controller.isShown).toBe(true);
+            expect(controller.bindModel).toBe('en');
         });
-    });
-    describe('check required attribute', function() {
-        it('when present', function() {
-            element = $compile(angular.element('<language-select ng-model="bindModel" required></language-select>'))(scope);
-            scope.$digest();
-            expect(element.isolateScope().required).toBe(true);
-        });
-        it('when missing', function() {
-            expect(element.isolateScope().required).toBe(false);
+        it('hide sets the proper variables', function() {
+            controller.hide();
+            expect(controller.isShown).toBe(false);
+            expect(controller.bindModel).toBeUndefined();
         });
     });
 });

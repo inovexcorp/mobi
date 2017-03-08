@@ -70,6 +70,15 @@
                     }, {
                         label: 'Portuguese',
                         value: 'pt'
+                    }, {
+                        label: 'Russian',
+                        value: 'ru'
+                    }, {
+                        label: 'Hindi',
+                        value: 'hi'
+                    }, {
+                        label: 'Vietnamese',
+                        value: 'vi'
                     }];
 
                     dvm.clear = function() {

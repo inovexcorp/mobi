@@ -45,7 +45,13 @@
                     localName: item
                 }
             });
-            self.defaultAnnotations = _.concat(rdfsAnnotations, dcAnnotations);
+            var rdfAnnotations = _.map(['langString'], item => {
+                return {
+                    namespace: prefixes.rdf,
+                    localName: item
+                }
+            });
+            self.defaultAnnotations = _.concat(rdfsAnnotations, dcAnnotations, rdfAnnotations);
 
             self.skosAnnotations = _.map(['altLabel', 'changeNote', 'definition', 'editorialNote', 'example',
                 'hiddenLabel', 'historyNote', 'note', 'prefLabel', 'scopeNote'], item => {

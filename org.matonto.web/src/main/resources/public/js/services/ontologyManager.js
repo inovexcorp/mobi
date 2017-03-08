@@ -69,7 +69,6 @@
                     'localName': item
                 }
             });
-            var defaultErrorMessage = defaultErrorMessage;
             var ontologyListItemTemplate = {
                 ontology: [],
                 ontologyId: '',
@@ -1349,7 +1348,7 @@
                         } else if (_.get(response, 'status') === 204) {
                             deferred.resolve([]);
                         } else {
-                            util.onError(response, deferred, defaultErrorMessage);
+                            util.onError(response, deferred);
                         }
                     }, response => util.onError(response, deferred));
                 return deferred.promise;
@@ -1524,7 +1523,7 @@
                         } else {
                             deferred.reject(defaultErrorMessage);
                         }
-                    }, response => util.onError(response, deferred));
+                    }, response => util.onError(response, deferred, defaultErrorMessage));
                 return deferred.promise;
             }
 
