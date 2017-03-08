@@ -236,13 +236,9 @@ public class SourceGenerator {
                         JOp.cond(
                                 JExpr.ref("model").invoke("filter")
                                         .arg(JExpr.ref("resource"))
-
-                                        //Instead of using nulls here, we can change it to look for our type.
-//                                        .arg(JExpr.ref("valueFactory").invoke("createIRI").arg(JExpr.ref("RDF_TYPE_IRI")))
-                                        .arg(JExpr._null())
-//                                        .arg(JExpr._this().invoke("getTypeIRI"))
-                                        .arg(JExpr._null())
-
+                                        .arg(JExpr.ref("valueFactory").invoke("createIRI")
+                                                .arg(JExpr.ref("RDF_TYPE_IRI")))
+                                        .arg(JExpr._this().invoke("getTypeIRI"))
                                         .invoke("isEmpty"), codeModel.ref(Optional.class).staticInvoke("empty"),
                                 codeModel.ref(Optional.class).staticInvoke("of")
                                         .arg(JExpr._new(clazz)
@@ -374,7 +370,7 @@ public class SourceGenerator {
             }
             // Else it's a property IRI getter.
             else if (interfaceMethod.name().startsWith(PROPERTY_IRI_GETTER_PREFIX)) {
-                if(impl.methods().stream().noneMatch(method -> method.name().equals(interfaceMethod.name()))) {
+                if (impl.methods().stream().noneMatch(method -> method.name().equals(interfaceMethod.name()))) {
                     final JMethod method = impl.method(JMod.PUBLIC, codeModel._ref(org.matonto.rdf.api.IRI.class), interfaceMethod.name());
                     method.annotate(Override.class);
                     method.body()._return(
@@ -468,25 +464,37 @@ public class SourceGenerator {
                 if (!name.equals(CLASS_TYPE_IRI_FIELD)) {
                     final IRI propertyIri = interfaceFieldIriMap.get(clazz).get(name);
                     final String fieldName = name.substring(0, name.length() - 4);
-                    addTypeIriGetter(clazz, fieldVar, fieldName);
 
                     final JClass type = identifyType(propertyIri);
 
                     JClass getterType;
                     JClass setterType;
 
+                    JClass resourceGetterType;
+
                     if (isPropertyFunctional(propertyIri)) {
                         getterType = codeModel.ref(Optional.class).narrow(type);
                         setterType = type;
+                        resourceGetterType = codeModel.ref(Optional.class).narrow(org.matonto.rdf.api.Resource.class);
                     } else {
                         getterType = codeModel.ref(Set.class).narrow(type);
                         setterType = codeModel.ref(Set.class).narrow(type);
+                        resourceGetterType = codeModel.ref(Set.class).narrow(org.matonto.rdf.api.Resource.class);
                     }
 
                     if (type != null) {
                         methodIriMap.put(
-                                generateGetterMethodForInterface(clazz, iri, name, fieldName, propertyIri, getterType),
+                                generateGetterMethodForInterface(clazz, iri, name, fieldName, propertyIri, getterType, false),
                                 clazz.fields().get(fieldName + "_IRI"));
+                        // If it's a Object Property, then add a getResource additional method.
+                        if (!type.equals(codeModel.ref(org.matonto.rdf.api.Resource.class)) // Not already a resource.
+                                && !type.equals(codeModel.ref(org.matonto.rdf.api.Value.class)) // Not a Value
+                                && this.metaModel.filter(propertyIri, RDF.TYPE, null).objects().contains(OWL.OBJECTPROPERTY)) {
+                            methodIriMap.put(
+                                    generateGetterMethodForInterface(clazz, iri, name, fieldName, propertyIri, resourceGetterType, true),
+                                    clazz.fields().get(fieldName + "_IRI"));
+                        }
+
                         methodIriMap.put(
                                 generateSetterMethodForInterface(clazz, iri, name, fieldName, propertyIri, setterType),
                                 clazz.fields().get(fieldName + "_IRI"));
@@ -500,14 +508,10 @@ public class SourceGenerator {
         });
     }
 
-    private JMethod addTypeIriGetter(JDefinedClass interfaze, JFieldVar var, String name) {
-        return interfaze.method(JMod.PUBLIC, codeModel._ref(org.matonto.rdf.api.IRI.class), PROPERTY_IRI_GETTER_PREFIX + name);
-    }
-
     private JMethod generateGetterMethodForInterface(final JDefinedClass clazz, final IRI interfaceIri,
-                                                     final String name, final String fieldName, final IRI propertyIri, final JClass type) {
+                                                     final String name, final String fieldName, final IRI propertyIri, final JClass type, final boolean thingResource) {
         final JMethod method = clazz.method(JMod.PUBLIC, type,
-                generateMethodName(type.equals(boolean.class) ? "is" : "get", name));
+                generateMethodName(type.equals(boolean.class) ? "is" : "get", name) + (thingResource ? "_resource" : ""));
         method._throws(OrmException.class);
         final JDocComment comment = method.javadoc();
         comment.add("Get the " + fieldName + " property from this instance of a " + (interfaceIri != null ? interfaceIri.stringValue() : getOntologyName(this.packageName, this.ontologyName))
