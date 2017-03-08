@@ -1,4 +1,5 @@
 PREFIX mcat: <http://matonto.org/ontologies/catalog#>
+PREFIX dataset: <http://matonto.org/ontologies/dataset#>
 
 SELECT
     (COUNT(distinct ?record) as ?record_count)
@@ -7,7 +8,7 @@ WHERE {
 	    mcat:catalog ?catalog ;
 		?p ?o .
 
-	FILTER(?type IN (mcat:Record, mcat:UnversionedRecord, mcat:VersionedRecord, mcat:VersionedRDFRecord, mcat:OntologyRecord, mcat:MappingRecord, mcat:DatasetRecord))
+	FILTER(?type IN (mcat:Record, mcat:UnversionedRecord, mcat:VersionedRecord, mcat:VersionedRDFRecord, mcat:OntologyRecord, mcat:MappingRecord, dataset:DatasetRecord))
     FILTER EXISTS { ?record a ?type_filter . }
     FILTER IF(bound(?search_text), CONTAINS(lcase(?o), lcase(?search_text)), true)
 }

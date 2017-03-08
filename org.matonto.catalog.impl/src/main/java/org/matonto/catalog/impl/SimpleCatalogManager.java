@@ -91,14 +91,12 @@ import org.matonto.repository.exception.RepositoryException;
 import org.openrdf.model.vocabulary.DCTERMS;
 import org.openrdf.model.vocabulary.RDF;
 
-import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.security.InvalidParameterException;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -111,6 +109,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.annotation.Nonnull;
 
 @Component(
         configurationPolicy = ConfigurationPolicy.require,
@@ -315,8 +314,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public PaginatedSearchResults<Record> findRecord(Resource catalogId, PaginatedSearchParams searchParams) throws
-            MatOntoException {
+    public PaginatedSearchResults<Record> findRecord(Resource catalogId, PaginatedSearchParams searchParams) {
         try (RepositoryConnection conn = repository.getConnection()) {
             Optional<Resource> typeParam = searchParams.getTypeFilter();
             Optional<String> searchTextParam = searchParams.getSearchText();
@@ -344,31 +342,23 @@ public class SimpleCatalogManager implements CatalogManager {
             log.debug("Record count: " + totalCount);
 
             // Prepare Query
-            int limit = searchParams.getLimit();
             int offset = searchParams.getOffset();
-
+            int limit = searchParams.getLimit().orElse(totalCount);
             if (offset > totalCount) {
-                throw new MatOntoException("Offset exceeds total size");
+                throw new IllegalArgumentException("Offset exceeds total size");
             }
 
-            String sortBinding;
-            Resource sortByParam = searchParams.getSortBy();
-            if (sortingOptions.get(sortByParam) != null) {
-                sortBinding = sortingOptions.get(sortByParam);
-            } else {
-                log.warn("sortBy parameter must be in the allowed list. Sorting by modified date instead.");
-                sortBinding = "modified";
-            }
-
-            String querySuffix;
+            StringBuilder querySuffix = new StringBuilder("\nORDER BY ");
+            Resource sortByParam = searchParams.getSortBy().orElse(vf.createIRI(DCTERMS.MODIFIED.stringValue()));
             Optional<Boolean> ascendingParam = searchParams.getAscending();
             if (ascendingParam.isPresent() && ascendingParam.get()) {
-                querySuffix = String.format("\nORDER BY ?%s\nLIMIT %d\nOFFSET %d", sortBinding, limit, offset);
+                querySuffix.append("?").append(sortingOptions.getOrDefault(sortByParam, "modified"));
             } else {
-                querySuffix = String.format("\nORDER BY DESC(?%s)\nLIMIT %d\nOFFSET %d", sortBinding, limit, offset);
+                querySuffix.append("DESC(?").append(sortingOptions.getOrDefault(sortByParam, "modified")).append(")");
             }
+            querySuffix.append("\nLIMIT ").append(limit).append("\nOFFSET ").append(offset);
 
-            String queryString = FIND_RECORDS_QUERY + querySuffix;
+            String queryString = FIND_RECORDS_QUERY + querySuffix.toString();
             TupleQuery query = conn.prepareTupleQuery(queryString);
             query.setBinding(CATALOG_BINDING, catalogId);
             typeParam.ifPresent(resource -> query.setBinding(TYPE_FILTER_BINDING, resource));
@@ -381,28 +371,20 @@ public class SimpleCatalogManager implements CatalogManager {
             TupleQueryResult result = query.evaluate();
 
             List<Record> records = new ArrayList<>();
-            BindingSet resultsBindingSet;
-            while (result.hasNext() && (resultsBindingSet = result.next()).getBindingNames().contains(RECORD_BINDING)) {
-                Resource resource = vf.createIRI(Bindings.requiredResource(resultsBindingSet, RECORD_BINDING)
+            result.forEach(bindings -> {
+                Resource resource = vf.createIRI(Bindings.requiredResource(bindings, RECORD_BINDING)
                         .stringValue());
-                Record record = processRecordBindingSet(resultsBindingSet, resource);
-                records.add(record);
-            }
+                records.add(getRecord(catalogId, resource, recordFactory).get());
+            });
 
             result.close();
-            conn.close();
 
             log.debug("Result set size: " + records.size());
 
             int pageNumber = (offset / limit) + 1;
 
-            if (records.size() > 0) {
-                return new SimpleSearchResults<>(records, totalCount, limit, pageNumber);
-            } else {
-                return SearchResults.emptyResults();
-            }
-        } catch (RepositoryException e) {
-            throw new MatOntoException("Error in repository connection.", e);
+            return records.size() > 0 ? new SimpleSearchResults<>(records, totalCount, limit, pageNumber) :
+                    SearchResults.emptyResults();
         }
     }
 
