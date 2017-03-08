@@ -23,19 +23,14 @@ package org.matonto.itests.orm;
  * #L%
  */
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.matonto.ontologies.foaf.Agent;
-import org.matonto.ontologies.foaf.AgentFactory;
-import org.matonto.ontologies.foaf.OnlineChatAccount;
-import org.matonto.ontologies.foaf.OnlineChatAccountFactory;
+import org.matonto.foaf.Agent;
+import org.matonto.foaf.AgentFactory;
+import org.matonto.foaf.OnlineChatAccount;
+import org.matonto.foaf.OnlineChatAccountFactory;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Value;
@@ -44,19 +39,14 @@ import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactoryService;
 import org.matonto.rdf.core.impl.sesame.ValueFactoryService;
 import org.matonto.rdf.orm.Thing;
 import org.matonto.rdf.orm.conversion.ValueConverterRegistry;
-import org.matonto.rdf.orm.conversion.impl.DefaultValueConverterRegistry;
-import org.matonto.rdf.orm.conversion.impl.DoubleValueConverter;
-import org.matonto.rdf.orm.conversion.impl.FloatValueConverter;
-import org.matonto.rdf.orm.conversion.impl.IntegerValueConverter;
-import org.matonto.rdf.orm.conversion.impl.LiteralValueConverter;
-import org.matonto.rdf.orm.conversion.impl.ShortValueConverter;
-import org.matonto.rdf.orm.conversion.impl.StringValueConverter;
-import org.matonto.rdf.orm.conversion.impl.ValueValueConverter;
+import org.matonto.rdf.orm.conversion.impl.*;
 import org.matonto.rdf.orm.impl.ThingFactory;
 
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+
+import static org.junit.Assert.*;
 
 public class SourceGeneratorTest {
 
@@ -117,7 +107,7 @@ public class SourceGeneratorTest {
     public void testAgent() {
         final AgentFactory factory = new AgentFactory();
         final Agent a = factory.getExisting(valueFactory.createIRI("urn://matonto.org/orm/test/testAgent"), model,
-                valueFactory, valueConverterRegistry);//.orElseThrow(() -> new RuntimeException("WHAT? No agent returned"));
+                valueFactory, valueConverterRegistry).orElseThrow(() -> new RuntimeException("WHAT? No agent returned"));
         assertEquals(valueFactory.createLiteral(100), a.getAge().orElse(null));
         assertEquals(valueFactory.createLiteral("male"), a.getGender().orElse(null));
         final Set<Thing> mboxes = a.getMbox();
