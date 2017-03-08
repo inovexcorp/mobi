@@ -49,6 +49,7 @@
                         dvm.sm.ontologyPropertyIRI = '';
                         dvm.sm.ontologyPropertyValue = '';
                         // dvm.sm.ontologyPropertyType = undefined;
+                        dvm.sm.ontologyPropertyLanguage = 'en';
                         dvm.sm.showOntologyPropertyOverlay = true;
                     }
 
@@ -59,12 +60,14 @@
                     }
 
                     dvm.editClicked = function(property, index) {
+                        var propertyObj = dvm.sm.selected[dvm.ro.getItemIri(property)][index];
                         dvm.sm.editingOntologyProperty = true;
                         dvm.sm.ontologyProperty = property;
-                        dvm.sm.ontologyPropertyIRI = dvm.sm.selected[dvm.ro.getItemIri(property)][index]['@value'];
-                        dvm.sm.ontologyPropertyValue = dvm.sm.selected[dvm.ro.getItemIri(property)][index]['@value'];
+                        dvm.sm.ontologyPropertyIRI = _.get(propertyObj, '@id');
+                        dvm.sm.ontologyPropertyValue = _.get(propertyObj, '@value');
                         // dvm.sm.ontologyPropertyType = _.get(dvm.sm.selected[dvm.ro.getItemIri(property)][index], '@type');
                         dvm.sm.ontologyPropertyIndex = index;
+                        dvm.sm.ontologyPropertyLanguage = _.get(propertyObj, '@language');
                         dvm.sm.showOntologyPropertyOverlay = true;
                     }
                 }

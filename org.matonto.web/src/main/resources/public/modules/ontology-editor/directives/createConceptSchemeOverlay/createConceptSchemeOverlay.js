@@ -27,11 +27,9 @@
         .module('createConceptSchemeOverlay', [])
         .directive('createConceptSchemeOverlay', createConceptSchemeOverlay);
 
-        createConceptSchemeOverlay.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'prefixes',
-            'utilService'];
+        createConceptSchemeOverlay.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'prefixes', 'utilService', 'ontologyUtilsManagerService'];
 
-        function createConceptSchemeOverlay($filter, ontologyManagerService, ontologyStateService, prefixes,
-            utilService) {
+        function createConceptSchemeOverlay($filter, ontologyManagerService, ontologyStateService, prefixes, utilService, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -40,13 +38,14 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
+                    var ontoUtils = ontologyUtilsManagerService;
+
                     dvm.prefixes = prefixes;
                     dvm.om = ontologyManagerService;
                     dvm.sm = ontologyStateService;
                     dvm.util = utilService;
                     dvm.concepts = [];
-                    dvm.prefix = _.get(dvm.sm.listItem, 'iriBegin', dvm.sm.listItem.ontologyId) + _.get(dvm.sm.listItem,
-                        'iriThen', '#');
+                    dvm.prefix = dvm.sm.getDefaultPrefix();
                     dvm.scheme = {
                         '@id': dvm.prefix,
                         '@type': [prefixes.owl + 'NamedIndividual', prefixes.skos + 'ConceptScheme'],
@@ -65,6 +64,7 @@
                     dvm.onEdit = function(iriBegin, iriThen, iriEnd) {
                         dvm.iriHasChanged = true;
                         dvm.scheme['@id'] = iriBegin + iriThen + iriEnd;
+                        dvm.sm.setCommonIriParts(iriBegin, iriThen);
                     }
 
                     dvm.create = function() {
@@ -72,6 +72,7 @@
                         if (dvm.concepts.length) {
                             dvm.scheme[prefixes.skos + 'hasTopConcept'] = dvm.concepts;
                         }
+                        ontoUtils.addLanguageToNewEntity(dvm.scheme, dvm.language);
                         // add the entity to the ontology
                         dvm.om.addEntity(dvm.sm.listItem, dvm.scheme);
                         // update relevant lists

@@ -113,7 +113,7 @@ describe('Annotation Overlay directive', function() {
             expect(resObj.getItemIri).toHaveBeenCalledWith(ontologyStateSvc.annotationSelect);
             expect(propertyManagerSvc.add).toHaveBeenCalledWith(ontologyStateSvc.selected,
                 resObj.getItemIri(ontologyStateSvc.annotationSelect), ontologyStateSvc.annotationValue,
-                ontologyStateSvc.annotationType['@id']);
+                ontologyStateSvc.annotationType['@id'], ontologyStateSvc.annotationLanguage);
             expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                 jasmine.any(Object));
             expect(ontologyStateSvc.showAnnotationOverlay).toBe(false);
@@ -125,7 +125,8 @@ describe('Annotation Overlay directive', function() {
                 jasmine.any(Object));
             expect(propertyManagerSvc.edit).toHaveBeenCalledWith(ontologyStateSvc.selected,
                 resObj.getItemIri(ontologyStateSvc.annotationSelect), ontologyStateSvc.annotationValue,
-                ontologyStateSvc.annotationIndex, ontologyStateSvc.annotationType['@id']);
+                ontologyStateSvc.annotationIndex, ontologyStateSvc.annotationType['@id'],
+                ontologyStateSvc.annotationLanguage);
             expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                 jasmine.any(Object));
             expect(ontologyStateSvc.showAnnotationOverlay).toBe(false);

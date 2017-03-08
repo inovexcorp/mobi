@@ -28,9 +28,9 @@
         .directive('datatypePropertyOverlay', datatypePropertyOverlay);
 
         datatypePropertyOverlay.$inject = ['responseObj', 'ontologyManagerService', 'ontologyStateService',
-            'utilService'];
+            'utilService', 'prefixes'];
 
-        function datatypePropertyOverlay(responseObj, ontologyManagerService, ontologyStateService, utilService) {
+        function datatypePropertyOverlay(responseObj, ontologyManagerService, ontologyStateService, utilService, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -44,11 +44,13 @@
                     dvm.sm = ontologyStateService;
                     dvm.util = utilService;
 
-                    dvm.addProperty = function(select, value, type) {
+                    dvm.addProperty = function(select, value, type, language) {
                         var property = dvm.ro.getItemIri(select);
                         if (property) {
                             var valueObj = {'@value': value};
-                            if (type) {
+                            if (language && dvm.isStringType()) {
+                                valueObj['@language'] = language;
+                            } else if (type) {
                                 valueObj['@type'] = type['@id'];
                             }
                             if (_.has(dvm.sm.selected, property)) {
@@ -62,23 +64,31 @@
                         dvm.sm.showDataPropertyOverlay = false;
                     }
 
-                    dvm.editProperty = function(select, value, type) {
+                    dvm.editProperty = function(select, value, type, language) {
                         var property = dvm.ro.getItemIri(select);
                         if (property) {
+                            var propertyObj = dvm.sm.selected[property][dvm.sm.propertyIndex];
                             dvm.om.addToDeletions(dvm.sm.listItem.recordId, dvm.util.createJson(dvm.sm.selected['@id'],
-                                property, dvm.sm.selected[property][dvm.sm.propertyIndex]));
-                            dvm.sm.selected[property][dvm.sm.propertyIndex]['@value'] = value;
-                            if (_.get(type, '@id') !== dvm.sm.selected[property][dvm.sm.propertyIndex]['@type']) {
-                                if (type) {
-                                    dvm.sm.selected[property][dvm.sm.propertyIndex]['@type'] = type['@id'];
-                                } else {
-                                    _.unset(dvm.sm.selected[property][dvm.sm.propertyIndex], '@type');
-                                }
+                                property, propertyObj));
+                            propertyObj['@value'] = value;
+                            if (type && !(language && dvm.isStringType())) {
+                                propertyObj['@type'] = type['@id'];
+                            } else {
+                                _.unset(propertyObj, '@type');
+                            }
+                            if (language && dvm.isStringType()) {
+                                propertyObj['@language'] = language;
+                            } else {
+                                _.unset(propertyObj, '@language');
                             }
                             dvm.om.addToAdditions(dvm.sm.listItem.recordId, dvm.util.createJson(dvm.sm.selected['@id'],
-                                property, dvm.sm.selected[property][dvm.sm.propertyIndex]));
+                                property, propertyObj));
                         }
                         dvm.sm.showDataPropertyOverlay = false;
+                    }
+
+                    dvm.isStringType = function() {
+                        return prefixes.rdf + 'langString' === _.get(dvm.sm.propertyType, '@id', '');
                     }
                 }
             }

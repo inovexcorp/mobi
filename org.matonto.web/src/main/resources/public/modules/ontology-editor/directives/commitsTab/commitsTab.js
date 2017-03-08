@@ -39,6 +39,10 @@
                 controller: function() {
                     var dvm = this;
                     dvm.os = ontologyStateService;
+
+                    dvm.getBranch = function() {
+                        return _.find(dvm.os.listItem.branches, {'@id': dvm.os.listItem.branchId});
+                    }
                 }
             }
         }

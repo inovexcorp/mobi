@@ -27,10 +27,9 @@
         .module('ontologyUtilsManager', [])
         .service('ontologyUtilsManagerService', ontologyUtilsManagerService);
 
-        ontologyUtilsManagerService.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService',
-            'updateRefsService'];
+        ontologyUtilsManagerService.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'updateRefsService', 'prefixes'];
 
-        function ontologyUtilsManagerService($filter, ontologyManagerService, ontologyStateService, updateRefsService) {
+        function ontologyUtilsManagerService($filter, ontologyManagerService, ontologyStateService, updateRefsService, prefixes) {
             var self = this;
             var om = ontologyManagerService;
             var sm = ontologyStateService;
@@ -105,6 +104,24 @@
 
             self.isLinkable = function(id) {
                 return _.has(sm.listItem.index, id) && !self.isBlankNodeString(id);
+            }
+
+            self.getNameByIRI = function(iri) {
+                return om.getEntityName(om.getEntityByRecordId(sm.listItem.recordId, iri));
+            }
+
+            self.getNameByNode = function(node) {
+                return self.getNameByIRI(node.entityIRI);
+            }
+
+            self.addLanguageToNewEntity = function(entity, language) {
+                if (language) {
+                    _.forEach([prefixes.dcterms + 'title', prefixes.dcterms + 'description', prefixes.skos + 'prefLabel'], item => {
+                        if (_.get(entity, "['" + item + "'][0]")) {
+                            _.set(entity[item][0], '@language', language);
+                        }
+                    });
+                }
             }
         }
 })();

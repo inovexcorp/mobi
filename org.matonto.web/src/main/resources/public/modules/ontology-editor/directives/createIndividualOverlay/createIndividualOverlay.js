@@ -44,8 +44,7 @@
                     dvm.om = ontologyManagerService;
                     dvm.sm = ontologyStateService;
 
-                    dvm.prefix = _.get(dvm.sm.listItem, 'iriBegin', dvm.sm.listItem.ontologyId) + _.get(dvm.sm.listItem,
-                        'iriThen', '#');
+                    dvm.prefix = dvm.sm.getDefaultPrefix();
 
                     dvm.individual = {
                         '@id': dvm.prefix,
@@ -63,6 +62,7 @@
                     dvm.onEdit = function(iriBegin, iriThen, iriEnd) {
                         dvm.iriHasChanged = true;
                         dvm.individual['@id'] = iriBegin + iriThen + iriEnd;
+                        dvm.sm.setCommonIriParts(iriBegin, iriThen);
                     }
 
                     dvm.getItemOntologyIri = function(item) {
@@ -76,15 +76,14 @@
                         _.get(dvm.sm.listItem, 'individuals').push({namespace:split.begin + split.then,
                             localName: split.end});
                         var classesWithIndividuals = _.get(dvm.sm.listItem, 'classesWithIndividuals');
-                        _.set(dvm.sm.listItem, 'classesWithIndividuals', _.unionWith(classesWithIndividuals,
-                            _.map(dvm.individual['@type'], type => {return {entityIRI: type}}), _.isEqual));
+                        _.set(dvm.sm.listItem, 'classesWithIndividuals', _.unionWith(classesWithIndividuals, _.map(dvm.individual['@type'], type => ({entityIRI: type})), (obj1, obj2) => _.get(obj1, 'entityIRI') === _.get(obj2, 'entityIRI')));
                         // add the entity to the ontology
                         dvm.individual['@type'].push(prefixes.owl + 'NamedIndividual');
                         dvm.om.addEntity(dvm.sm.listItem, dvm.individual);
                         _.set(_.get(dvm.sm.listItem, 'index'), dvm.individual['@id'], dvm.sm.listItem.ontology.length - 1);
                         dvm.om.addToAdditions(dvm.sm.listItem.recordId, dvm.individual);
                         // select the new individual
-                        dvm.sm.selectItem(dvm.individual['@id']);
+                        dvm.sm.selectItem(dvm.individual['@id'], false);
                         // hide the overlay
                         dvm.sm.showCreateIndividualOverlay = false;
                     }

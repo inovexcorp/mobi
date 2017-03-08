@@ -53,9 +53,9 @@
          */
         .directive('runMappingOverlay', runMappingOverlay);
 
-        runMappingOverlay.$inject = ['$filter', 'mapperStateService', 'mappingManagerService', 'delimitedManagerService'];
+        runMappingOverlay.$inject = ['$filter', 'mapperStateService', 'mappingManagerService', 'delimitedManagerService', 'datasetManagerService', 'utilService'];
 
-        function runMappingOverlay($filter, mapperStateService, mappingManagerService, delimitedManagerService) {
+        function runMappingOverlay($filter, mapperStateService, mappingManagerService, delimitedManagerService, datasetManagerService, utilService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -66,9 +66,15 @@
                     dvm.state = mapperStateService;
                     dvm.mm = mappingManagerService;
                     dvm.dm = delimitedManagerService;
+                    dvm.dam = datasetManagerService;
+                    dvm.util = utilService;
                     dvm.fileName = ($filter('splitIRI')(dvm.state.mapping.id)).end;
                     dvm.format = 'turtle';
                     dvm.errorMessage = '';
+                    dvm.runMethod = 'download';
+                    dvm.datasetRecords = [];
+
+                    dvm.dam.getDatasetRecords().then(response => dvm.datasetRecords = response.data, onError);
 
                     dvm.run = function() {
                         if (dvm.state.editMapping) {
@@ -89,8 +95,15 @@
                         dvm.errorMessage = errorMessage;
                     }
                     function runMapping() {
+                        if (dvm.runMethod === 'download') {
+                            dvm.dm.mapAndDownload(dvm.state.mapping.id, dvm.format, dvm.fileName);
+                            reset();
+                        } else {
+                            dvm.dm.mapAndUpload(dvm.state.mapping.id, dvm.datasetRecordIRI).then(reset, onError);
+                        }
+                    }
+                    function reset() {
                         dvm.state.changedMapping = false;
-                        dvm.dm.map(dvm.state.mapping.id, dvm.format, dvm.fileName);
                         dvm.state.step = dvm.state.selectMappingStep;
                         dvm.state.initialize();
                         dvm.state.resetEdit();

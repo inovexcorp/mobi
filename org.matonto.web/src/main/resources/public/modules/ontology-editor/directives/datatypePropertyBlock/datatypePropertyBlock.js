@@ -27,9 +27,9 @@
         .module('datatypePropertyBlock', [])
         .directive('datatypePropertyBlock', datatypePropertyBlock);
 
-        datatypePropertyBlock.$inject = ['ontologyStateService', 'responseObj'];
+        datatypePropertyBlock.$inject = ['ontologyStateService', 'responseObj', 'prefixes'];
 
-        function datatypePropertyBlock(ontologyStateService, responseObj) {
+        function datatypePropertyBlock(ontologyStateService, responseObj, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -47,15 +47,23 @@
                         dvm.sm.propertyValue = '';
                         dvm.sm.propertyType = undefined;
                         dvm.sm.propertyIndex = 0;
+                        dvm.sm.propertyLanguage = 'en';
                         dvm.sm.showDataPropertyOverlay = true;
                     }
 
                     dvm.editDataProp = function(property, index) {
+                        var propertyObj = dvm.sm.selected[dvm.ro.getItemIri(property)][index];
+                        var type = _.find(dvm.sm.listItem.dataPropertyRange, datatype => dvm.ro.getItemIri(datatype) === propertyObj['@type']);
                         dvm.sm.editingProperty = true;
                         dvm.sm.propertySelect = property;
-                        dvm.sm.propertyValue = dvm.sm.selected[dvm.ro.getItemIri(property)][index]['@value'];
-                        dvm.sm.propertyType = _.find(dvm.sm.state.dataPropertyRange, datatype => dvm.ro.getItemIri(datatype) === dvm.sm.selected[dvm.ro.getItemIri(property)][index]['@type']);
+                        dvm.sm.propertyValue = propertyObj['@value'];
                         dvm.sm.propertyIndex = index;
+                        dvm.sm.propertyLanguage = _.get(propertyObj, '@language');
+                        if (dvm.sm.propertyLanguage) {
+                            dvm.sm.propertyType = {'@id': prefixes.rdf + 'langString'};
+                        } else {
+                            dvm.sm.propertyType = type ? {'@id': dvm.ro.getItemIri(type)} : undefined;
+                        }
                         dvm.sm.showDataPropertyOverlay = true;
                     }
 

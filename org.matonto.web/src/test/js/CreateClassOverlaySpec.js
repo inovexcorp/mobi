@@ -21,14 +21,8 @@
  * #L%
  */
 describe('Create Class Overlay directive', function() {
-    var $compile,
-        scope,
-        element,
-        controller,
-        ontologyManagerSvc,
-        deferred,
-        ontologyStateSvc,
-        prefixes;
+    var $compile, scope, element, controller, ontologyManagerSvc, deferred, ontologyStateSvc, prefixes, ontoUtils;
+    var iri = 'iri#';
 
     beforeEach(function() {
         module('templates');
@@ -39,8 +33,9 @@ describe('Create Class Overlay directive', function() {
         mockOntologyManager();
         mockOntologyState();
         mockPrefixes();
+        mockOntologyUtilsManager();
 
-        inject(function(_$q_, _$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_, _prefixes_) {
+        inject(function(_$q_, _$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_, _prefixes_, _ontologyUtilsManagerService_) {
             $q = _$q_;
             $compile = _$compile_;
             scope = _$rootScope_;
@@ -48,12 +43,29 @@ describe('Create Class Overlay directive', function() {
             ontologyStateSvc = _ontologyStateService_;
             deferred = _$q_.defer();
             prefixes = _prefixes_;
+            ontoUtils = _ontologyUtilsManagerService_;
         });
 
+        ontologyStateSvc.getDefaultPrefix.and.returnValue(iri);
         element = $compile(angular.element('<create-class-overlay></create-class-overlay>'))(scope);
         scope.$digest();
+        controller = element.controller('createClassOverlay');
     });
 
+    describe('initializes with the correct values', function() {
+        it('if parent ontology is opened', function() {
+            expect(ontologyStateSvc.getDefaultPrefix).toHaveBeenCalled();
+            expect(controller.prefix).toBe(iri);
+            expect(controller.clazz['@id']).toBe(controller.prefix);
+            expect(controller.clazz['@type']).toEqual(['Class']);
+        });
+        it('if parent ontology is not opened', function() {
+            expect(ontologyStateSvc.getDefaultPrefix).toHaveBeenCalled();
+            expect(controller.prefix).toBe(iri);
+            expect(controller.clazz['@id']).toBe(controller.prefix);
+            expect(controller.clazz['@type']).toEqual(['Class']);
+        });
+    });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
@@ -78,6 +90,9 @@ describe('Create Class Overlay directive', function() {
         it('with a .btn-container', function() {
             expect(element.querySelectorAll('.btn-container').length).toBe(1);
         });
+        it('with an advanced-language-select', function() {
+            expect(element.find('advanced-language-select').length).toBe(1);
+        });
         it('depending on whether there is an error', function() {
             expect(element.find('error-display').length).toBe(0);
 
@@ -94,9 +109,6 @@ describe('Create Class Overlay directive', function() {
         });
     });
     describe('controller methods', function() {
-        beforeEach(function() {
-            controller = element.controller('createClassOverlay');
-        });
         describe('nameChanged', function() {
             beforeEach(function() {
                 controller.clazz = {};
@@ -119,13 +131,17 @@ describe('Create Class Overlay directive', function() {
         it('onEdit changes iri based on the params', function() {
             controller.onEdit('begin', 'then', 'end');
             expect(controller.clazz['@id']).toBe('begin' + 'then' + 'end');
+            expect(controller.iriHasChanged).toBe(true);
+            expect(ontologyStateSvc.setCommonIriParts).toHaveBeenCalledWith('begin', 'then');
         });
         it('create calls the correct manager functions', function() {
+            controller.language = 'en';
             controller.clazz = {'@id': 'class-iri'};
             controller.clazz[prefixes.dcterms + 'title'] = [{'@value': 'label'}];
             controller.clazz[prefixes.dcterms + 'description'] = [{'@value': 'description'}];
             controller.create();
             expect(_.get(controller.clazz, 'matonto.originalIRI')).toEqual(controller.clazz['@id']);
+            expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(controller.clazz, controller.language);
             expect(ontologyManagerSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem,
                 controller.clazz);
             expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,

@@ -23,22 +23,20 @@
 
 
 describe('Hierarchy Tree directive', function() {
-    var $compile,
-        scope,
-        element,
-        isolatedScope,
-        ontologyStateSvc;
+    var $compile, scope, element, isolatedScope, ontologyStateSvc, ontologyUtils;
 
     beforeEach(function() {
         module('templates');
         module('hierarchyTree');
         mockOntologyState();
         mockOntologyManager();
+        mockOntologyUtilsManager();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyUtilsManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
+            ontologyUtils = _ontologyUtilsManagerService_;
         });
 
         ontologyStateSvc.getOpened.and.returnValue(true);

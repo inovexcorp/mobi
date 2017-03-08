@@ -258,13 +258,19 @@ describe('Ontology Manager service', function() {
                 originalIRI: schemeId
             }
         }
-        defaultDatatypes = _.map(['anyURI', 'boolean', 'byte', 'dateTime', 'decimal', 'double', 'float', 'int',
-            'integer', 'language', 'long', 'string'], function(item) {
+        var xsdDatatypes = _.map(['anyURI', 'boolean', 'byte', 'dateTime', 'decimal', 'double', 'float', 'int', 'integer', 'language', 'long', 'string'], function(item) {
             return {
                 'namespace': prefixes.xsd,
                 'localName': item
             }
         });
+        var rdfDatatypes = _.map(['langString'], function(item) {
+            return {
+                namespace: prefixes.rdf,
+                localName: item
+            }
+        });
+        defaultDatatypes = _.concat(xsdDatatypes, rdfDatatypes);
     });
 
     function flushAndVerify() {
@@ -1941,8 +1947,16 @@ describe('Ontology Manager service', function() {
     });
 
     describe('getImportedOntologies should call the proper functions', function() {
+        var params;
+        beforeEach(function() {
+            params = paramSerializer({
+                branchId: branchId,
+                commitId: commitId,
+                rdfFormat: format
+            });
+        });
         it('when get succeeds', function() {
-            $httpBackend.expectGET('/matontorest/ontologies/recordId/imported-ontologies')
+            $httpBackend.expectGET('/matontorest/ontologies/recordId/imported-ontologies?' + params)
                 .respond(200, [ontology]);
             ontologyManagerSvc.getImportedOntologies(recordId, branchId, commitId)
                 .then(function(response) {
@@ -1953,7 +1967,7 @@ describe('Ontology Manager service', function() {
             flushAndVerify();
         });
         it('when get is empty', function() {
-            $httpBackend.expectGET('/matontorest/ontologies/recordId/imported-ontologies')
+            $httpBackend.expectGET('/matontorest/ontologies/recordId/imported-ontologies?' + params)
                 .respond(204);
             ontologyManagerSvc.getImportedOntologies(recordId, branchId, commitId)
                 .then(function(response) {
@@ -1964,7 +1978,7 @@ describe('Ontology Manager service', function() {
             flushAndVerify();
         });
         it('when another success response', function() {
-            $httpBackend.expectGET('/matontorest/ontologies/recordId/imported-ontologies')
+            $httpBackend.expectGET('/matontorest/ontologies/recordId/imported-ontologies?' + params)
                 .respond(201, null, null, error);
             ontologyManagerSvc.getImportedOntologies(recordId, branchId, commitId)
                 .then(function() {
@@ -1975,7 +1989,7 @@ describe('Ontology Manager service', function() {
             flushAndVerify();
         });
         it('when get fails', function() {
-            $httpBackend.expectGET('/matontorest/ontologies/recordId/imported-ontologies')
+            $httpBackend.expectGET('/matontorest/ontologies/recordId/imported-ontologies?' + params)
                 .respond(400, null, null, error);
             ontologyManagerSvc.getImportedOntologies(recordId, branchId, commitId)
                 .then(function() {
@@ -1988,43 +2002,41 @@ describe('Ontology Manager service', function() {
     });
 
     describe('getEntityUsages should call the proper functions', function() {
-        it('when get succeeds', function() {
-            $httpBackend.expectGET('/matontorest/ontologies/recordId/entity-usages/classId')
-                .respond(200, usages);
-            ontologyManagerSvc.getEntityUsages(recordId, classId)
-                .then(function(response) {
-                    expect(response).toEqual(usages.results.bindings);
-                }, function() {
-                    fail('Promise should have resolved');
-                });
-            flushAndVerify();
+        var params;
+        beforeEach(function() {
+            params = paramSerializer({
+                branchId: branchId,
+                commitId: commitId
+            });
         });
-        it('when get is empty', function() {
-            $httpBackend.expectGET('/matontorest/ontologies/recordId/entity-usages/classId')
-                .respond(204);
-            ontologyManagerSvc.getEntityUsages(recordId, classId)
-                .then(function(response) {
-                    expect(response).toEqual([]);
-                }, function() {
-                    fail('Promise should have resolved');
-                });
-            flushAndVerify();
-        });
-        it('when get succeeds with other code', function() {
-            $httpBackend.expectGET('/matontorest/ontologies/recordId/entity-usages/classId')
-                .respond(201);
-            ontologyManagerSvc.getEntityUsages(recordId, classId)
-                .then(function() {
-                    fail('Promise should have rejected');
-                }, function() {
-                    expect(true).toBe(true);
-                });
-            flushAndVerify();
+        describe('when get succeeds', function() {
+            it('and queryType is select', function() {
+                $httpBackend.expectGET('/matontorest/ontologies/recordId/entity-usages/classId?' + params + '&queryType=select')
+                    .respond(200, usages);
+                ontologyManagerSvc.getEntityUsages(recordId, branchId, commitId, classId, 'select')
+                    .then(function(response) {
+                        expect(response).toEqual(usages.results.bindings);
+                    }, function() {
+                        fail('Promise should have resolved');
+                    });
+                flushAndVerify();
+            });
+            it('and queryType is construct', function() {
+                $httpBackend.expectGET('/matontorest/ontologies/recordId/entity-usages/classId?' + params + '&queryType=construct')
+                    .respond(200, usages);
+                ontologyManagerSvc.getEntityUsages(recordId, branchId, commitId, classId, 'construct')
+                    .then(function(response) {
+                        expect(response).toEqual(usages);
+                    }, function() {
+                        fail('Promise should have resolved');
+                    });
+                flushAndVerify();
+            });
         });
         it('when get fails', function() {
-            $httpBackend.expectGET('/matontorest/ontologies/recordId/entity-usages/classId')
+            $httpBackend.expectGET('/matontorest/ontologies/recordId/entity-usages/classId?' + params + '&queryType=select')
                 .respond(400, null, null, error);
-            ontologyManagerSvc.getEntityUsages(recordId, classId)
+            ontologyManagerSvc.getEntityUsages(recordId, branchId, commitId, classId)
                 .then(function() {
                     fail('Promise should have rejected');
                 }, function(response) {

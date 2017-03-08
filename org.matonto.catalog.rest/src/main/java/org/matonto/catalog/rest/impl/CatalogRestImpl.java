@@ -927,7 +927,6 @@ public class CatalogRestImpl implements CatalogRest {
                     getMergeMessage(sourceBranch, targetBranch),
                     targetHead, sourceHead);
             catalogManager.addCommitToBranch(newCommit, factory.createIRI(targetBranchId));
-            catalogManager.updateHead(sourceBranch.getResource(), newCommit.getResource());
             catalogManager.removeInProgressCommit(inProgressCommit.getResource());
             return Response.ok(newCommit.getResource().stringValue()).build();
         } catch (MatOntoException e) {

@@ -6,4 +6,4 @@
 (&(objectClass=org.matonto.sparql.rest.SparqlRest))
 (&(objectClass=org.matonto.jaas.rest.GroupRest))
 (&(objectClass=org.matonto.jaas.rest.UserRest))
-
+(&(objectClass=org.matonto.dataset.api.DatasetManager))

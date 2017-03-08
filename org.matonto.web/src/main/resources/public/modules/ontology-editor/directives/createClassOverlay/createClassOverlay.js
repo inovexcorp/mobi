@@ -27,9 +27,9 @@
         .module('createClassOverlay', [])
         .directive('createClassOverlay', createClassOverlay);
 
-        createClassOverlay.$inject = ['$filter', 'REGEX', 'ontologyManagerService', 'ontologyStateService', 'prefixes'];
+        createClassOverlay.$inject = ['$filter', 'REGEX', 'ontologyManagerService', 'ontologyStateService', 'prefixes', 'ontologyUtilsManagerService'];
 
-        function createClassOverlay($filter, REGEX, ontologyManagerService, ontologyStateService, prefixes) {
+        function createClassOverlay($filter, REGEX, ontologyManagerService, ontologyStateService, prefixes, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,15 +38,13 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
+                    var ontoUtils = ontologyUtilsManagerService;
 
                     dvm.prefixes = prefixes;
                     dvm.iriPattern = REGEX.IRI;
                     dvm.om = ontologyManagerService;
                     dvm.sm = ontologyStateService;
-
-                    dvm.prefix = _.get(dvm.sm.listItem, 'iriBegin', dvm.sm.listItem.ontologyId) + _.get(dvm.sm.listItem,
-                        'iriThen', '#');
-
+                    dvm.prefix = dvm.sm.getDefaultPrefix();
                     dvm.clazz = {
                         '@id': dvm.prefix,
                         '@type': [prefixes.owl + 'Class'],
@@ -68,12 +66,14 @@
                     dvm.onEdit = function(iriBegin, iriThen, iriEnd) {
                         dvm.iriHasChanged = true;
                         dvm.clazz['@id'] = iriBegin + iriThen + iriEnd;
+                        dvm.sm.setCommonIriParts(iriBegin, iriThen);
                     }
 
                     dvm.create = function() {
                         if (_.isEqual(dvm.clazz[prefixes.dcterms + 'description'][0]['@value'], '')) {
                             _.unset(dvm.clazz, prefixes.dcterms + 'description');
                         }
+                        ontoUtils.addLanguageToNewEntity(dvm.clazz, dvm.language);
                         _.set(dvm.clazz, 'matonto.originalIRI', dvm.clazz['@id']);
                         // add the entity to the ontology
                         dvm.om.addEntity(dvm.sm.listItem, dvm.clazz);

@@ -21,7 +21,8 @@
  * #L%
  */
 describe('Create Concept Overlay directive', function() {
-    var $compile, scope, $q, element, controller,  ontologyManagerSvc, ontologyStateSvc, prefixes, splitIRIFilter;
+    var $compile, scope, $q, element, controller,  ontologyManagerSvc, ontologyStateSvc, prefixes, splitIRIFilter, ontoUtils;
+    var iri = 'iri#';
 
     beforeEach(function() {
         module('templates');
@@ -35,8 +36,9 @@ describe('Create Concept Overlay directive', function() {
         mockOntologyState();
         mockPrefixes();
         mockUtil();
+        mockOntologyUtilsManager();
 
-        inject(function(_$q_, _$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_, _prefixes_, _splitIRIFilter_) {
+        inject(function(_$q_, _$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_, _prefixes_, _splitIRIFilter_, _ontologyUtilsManagerService_) {
             $q = _$q_;
             $compile = _$compile_;
             scope = _$rootScope_;
@@ -44,12 +46,28 @@ describe('Create Concept Overlay directive', function() {
             ontologyStateSvc = _ontologyStateService_;
             prefixes = _prefixes_;
             splitIRIFilter = _splitIRIFilter_;
+            ontoUtils = _ontologyUtilsManagerService_;
         });
 
+        ontologyStateSvc.getDefaultPrefix.and.returnValue(iri);
         element = $compile(angular.element('<create-concept-overlay></create-concept-overlay>'))(scope);
         scope.$digest();
+        controller = element.controller('createConceptOverlay');
     });
-
+    describe('initializes with the correct values', function() {
+        it('if parent ontology is opened', function() {
+            expect(ontologyStateSvc.getDefaultPrefix).toHaveBeenCalled();
+            expect(controller.prefix).toBe(iri);
+            expect(controller.concept['@id']).toBe(controller.prefix);
+            expect(controller.concept['@type']).toEqual([prefixes.owl + 'NamedIndividual', prefixes.skos + 'Concept']);
+        });
+        it('if parent ontology is not opened', function() {
+            expect(ontologyStateSvc.getDefaultPrefix).toHaveBeenCalled();
+            expect(controller.prefix).toBe(iri);
+            expect(controller.concept['@id']).toBe(controller.prefix);
+            expect(controller.concept['@type']).toEqual([prefixes.owl + 'NamedIndividual', prefixes.skos + 'Concept']);
+        });
+    });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
@@ -70,6 +88,9 @@ describe('Create Concept Overlay directive', function() {
         });
         it('with a .btn-container', function() {
             expect(element.querySelectorAll('.btn-container').length).toBe(1);
+        });
+        it('with an advanced-language-select', function() {
+            expect(element.find('advanced-language-select').length).toBe(1);
         });
         it('depending on whether there is an error', function() {
             expect(element.find('error-display').length).toBe(0);
@@ -103,9 +124,6 @@ describe('Create Concept Overlay directive', function() {
         });
     });
     describe('controller methods', function() {
-        beforeEach(function() {
-            controller = element.controller('createConceptOverlay');
-        });
         describe('should update the concept id', function() {
             beforeEach(function() {
                 controller.concept['@id'] = 'test';
@@ -127,6 +145,7 @@ describe('Create Concept Overlay directive', function() {
             controller.onEdit('begin', 'then', 'end');
             expect(controller.concept['@id']).toBe('begin' + 'then' + 'end');
             expect(controller.iriHasChanged).toBe(true);
+            expect(ontologyStateSvc.setCommonIriParts).toHaveBeenCalledWith('begin', 'then');
         });
         it('should create a concept', function() {
             var listItem = {ontology: [{}], conceptHierarchy: [], index: {}};
@@ -148,6 +167,7 @@ describe('Create Concept Overlay directive', function() {
             expect(schemes.scheme2[prefixes.skos + 'hasTopConcept'].length).toBe(1);
             expect(schemes.scheme2.matonto.unsaved).toBe(true);
             expect(controller.concept.matonto.originalIRI).toEqual(controller.concept['@id']);
+            expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(controller.concept, controller.language);
             expect(ontologyManagerSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, controller.concept);
             expect(listItem.conceptHierarchy).toContain({entityIRI: controller.concept['@id']});
             expect(listItem.index[controller.concept['@id']]).toBe(0);

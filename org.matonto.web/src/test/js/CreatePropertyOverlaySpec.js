@@ -21,15 +21,8 @@
  * #L%
  */
 describe('Create Property Overlay directive', function() {
-    var $compile,
-        scope,
-        element,
-        controller,
-        ontologyManagerSvc,
-        ontologyStateSvc,
-        prefixes,
-        splitIRIFilter,
-        functionalProperty;
+    var $compile, scope, element, controller, ontologyManagerSvc, ontologyStateSvc, prefixes, splitIRIFilter, functionalProperty, ontoUtils;
+    var iri = 'iri#';
 
     beforeEach(function() {
         module('templates');
@@ -42,21 +35,37 @@ describe('Create Property Overlay directive', function() {
         mockOntologyManager();
         mockOntologyState();
         mockPrefixes();
+        mockOntologyUtilsManager();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_, _prefixes_, _splitIRIFilter_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_, _prefixes_, _splitIRIFilter_, _ontologyUtilsManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyManagerSvc = _ontologyManagerService_;
             ontologyStateSvc = _ontologyStateService_;
             prefixes = _prefixes_;
             splitIRIFilter = _splitIRIFilter_;
+            ontoUtils = _ontologyUtilsManagerService_;
         });
 
+        ontologyStateSvc.getDefaultPrefix.and.returnValue(iri);
         element = $compile(angular.element('<create-property-overlay></create-property-overlay>'))(scope);
         scope.$digest();
         functionalProperty = prefixes.owl + 'FunctionalProperty';
+        controller = element.controller('createPropertyOverlay');
     });
 
+    describe('initializes with the correct values', function() {
+        it('if parent ontology is opened', function() {
+            expect(ontologyStateSvc.getDefaultPrefix).toHaveBeenCalled();
+            expect(controller.prefix).toBe(iri);
+            expect(controller.property['@id']).toBe(controller.prefix);
+        });
+        it('if parent ontology is not opened', function() {
+            expect(ontologyStateSvc.getDefaultPrefix).toHaveBeenCalled();
+            expect(controller.prefix).toBe(iri);
+            expect(controller.property['@id']).toBe(controller.prefix);
+        });
+    });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
@@ -84,6 +93,9 @@ describe('Create Property Overlay directive', function() {
         });
         it('with a .btn-container', function() {
             expect(element.querySelectorAll('.btn-container').length).toBe(1);
+        });
+        it('with an advanced-language-select', function() {
+            expect(element.find('advanced-language-select').length).toBe(1);
         });
         it('with custom buttons to create and cancel', function() {
             var buttons = element.find('button');
@@ -135,9 +147,6 @@ describe('Create Property Overlay directive', function() {
         });
     });
     describe('controller methods', function() {
-        beforeEach(function() {
-            controller = element.controller('createPropertyOverlay');
-        });
         describe('nameChanged', function() {
             beforeEach(function() {
                 controller.property = {};
@@ -160,6 +169,8 @@ describe('Create Property Overlay directive', function() {
         it('onEdit changes iri based on the params', function() {
             controller.onEdit('begin', 'then', 'end');
             expect(controller.property['@id']).toBe('begin' + 'then' + 'end');
+            expect(controller.iriHasChanged).toBe(true);
+            expect(ontologyStateSvc.setCommonIriParts).toHaveBeenCalledWith('begin', 'then');
         });
         describe('create calls the correct manager functions', function() {
             beforeEach(function() {
@@ -186,6 +197,7 @@ describe('Create Property Overlay directive', function() {
                 expect(_.has(controller.property, prefixes.rdfs + 'range')).toBe(false);
                 expect(_.has(controller.property, prefixes.rdfs + 'domain')).toBe(false);
                 expect(controller.property.matonto.originalIRI).toEqual(controller.property['@id']);
+                expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(controller.property, controller.language);
                 expect(ontologyManagerSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem,
                     controller.property);
                 expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(controller.property);
@@ -200,6 +212,7 @@ describe('Create Property Overlay directive', function() {
                 ontologyManagerSvc.isObjectProperty.and.returnValue(true);
                 controller.create();
                 expect(controller.property.matonto.originalIRI).toEqual(controller.property['@id']);
+                expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(controller.property, controller.language);
                 expect(ontologyManagerSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem,
                     controller.property);
                 expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(controller.property);
@@ -217,6 +230,7 @@ describe('Create Property Overlay directive', function() {
                 controller.property[prefixes.dcterms + 'description'] = [{'@value': 'description'}];
                 controller.create();
                 expect(controller.property.matonto.originalIRI).toEqual(controller.property['@id']);
+                expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(controller.property, controller.language);
                 expect(ontologyManagerSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem,
                     controller.property);
                 expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(controller.property);

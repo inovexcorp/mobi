@@ -62,14 +62,19 @@
             propertyManagerService, catalogManagerService, utilService, stateManagerService) {
             var self = this;
             var prefix = '/matontorest/ontologies';
-            var defaultDatatypes = _.map(['anyURI', 'boolean', 'byte', 'dateTime', 'decimal', 'double', 'float', 'int',
-                'integer', 'language', 'long', 'string'], function(item) {
+            var xsdDatatypes = _.map(['anyURI', 'boolean', 'byte', 'dateTime', 'decimal', 'double', 'float', 'int', 'integer', 'language', 'long', 'string'], item => {
                 return {
                     'namespace': prefixes.xsd,
                     'localName': item
                 }
             });
-            var defaultErrorMessage = defaultErrorMessage;
+            var rdfDatatypes = _.map(['langString'], item => {
+                return {
+                    namespace: prefixes.rdf,
+                    localName: item
+                }
+            });
+            var defaultDatatypes = _.concat(xsdDatatypes, rdfDatatypes);
             var ontologyListItemTemplate = {
                 ontology: [],
                 ontologyId: '',
@@ -698,7 +703,7 @@
                                     commitId: response.data.commitId
                                 });
                             }, deferred.reject);
-                    }, response => deferred.reject(response.statusText));
+                    }, response => util.onError(response, deferred));
                 return deferred.promise;
             }
             /**
@@ -1342,16 +1347,16 @@
             self.getImportedOntologies = function(recordId, branchId, commitId, rdfFormat = 'jsonld') {
                 var deferred = $q.defer();
                 var config = {params: {rdfFormat, branchId, commitId}};
-                $http.get(prefix + '/' + encodeURIComponent(recordId) + '/imported-ontologies', null, config)
+                $http.get(prefix + '/' + encodeURIComponent(recordId) + '/imported-ontologies', config)
                     .then(response => {
                         if (_.get(response, 'status') === 200) {
                             deferred.resolve(response.data);
                         } else if (_.get(response, 'status') === 204) {
                             deferred.resolve([]);
                         } else {
-                            deferred.reject(_.get(response, 'statusText', defaultErrorMessage));
+                            util.onError(response, deferred);
                         }
-                    }, response => deferred.reject(response.statusText));
+                    }, response => util.onError(response, deferred));
                 return deferred.promise;
             }
             /**
@@ -1365,20 +1370,20 @@
              *
              * @param {string} recordId The record ID of the ontology you want to get from the repository.
              * @param {string} entityIRI The entity IRI of the entity you want the usages for from the repository.
+             * @param {string} queryType The type of query you want to perform (either 'select' or 'construct').
              * @returns {Promise} A promise containing the JSON SPARQL query results bindings.
              */
-            self.getEntityUsages = function(recordId, entityIRI) {
+            self.getEntityUsages = function(recordId, branchId, commitId, entityIRI, queryType = 'select') {
                 var deferred = $q.defer();
-                $http.get(prefix + '/' + encodeURIComponent(recordId) + '/entity-usages/'
-                    + encodeURIComponent(entityIRI)).then(response => {
-                        if(_.get(response, 'status') === 200) {
-                            deferred.resolve(response.data.results.bindings);
-                        } else if (_.get(response, 'status') === 204) {
-                            deferred.resolve([]);
+                var config = {params: {branchId, commitId, queryType}};
+                $http.get(prefix + '/' + encodeURIComponent(recordId) + '/entity-usages/' + encodeURIComponent(entityIRI), config)
+                    .then(response => {
+                        if (queryType === 'construct') {
+                            deferred.resolve(response.data);
                         } else {
-                            deferred.reject();
+                            deferred.resolve(response.data.results.bindings);
                         }
-                    }, response => deferred.reject(response.statusText));
+                    }, response => util.onError(response, deferred));
                 return deferred.promise;
             }
             /**
@@ -1524,7 +1529,7 @@
                         } else {
                             deferred.reject(defaultErrorMessage);
                         }
-                    }, response => deferred.reject(response.statusText));
+                    }, response => util.onError(response, deferred, defaultErrorMessage));
                 return deferred.promise;
             }
 
@@ -1541,7 +1546,7 @@
                     $http.get(prefix + '/' + encodeURIComponent(recordId) + '/classes-with-individuals', config),
                     $http.get(prefix + '/' + encodeURIComponent(recordId) + '/data-property-hierarchies', config),
                     $http.get(prefix + '/' + encodeURIComponent(recordId) + '/object-property-hierarchies', config),
-                    cm.getRecordBranches(recordId, catalogId, {applyUserFilter: false})
+                    cm.getRecordBranches(recordId, catalogId)
                 ]).then(response => {
                     listItem.annotations = _.unionWith(
                         _.get(response[0], 'data.annotationProperties'),
@@ -1607,7 +1612,7 @@
                         compareListItems
                     );
                     deferred.resolve(listItem);
-                }, response => deferred.reject(response.statusText));
+                }, response => util.onError(response, deferred));
                 return deferred.promise;
             }
             self.addOntologyToList = function(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit,
@@ -1675,7 +1680,7 @@
                         compareListItems
                     );
                     deferred.resolve(listItem);
-                }, response => deferred.reject(response.statusText));
+                }, response => util.onError(response, deferred));
                 return deferred.promise;
             }
             self.addVocabularyToList = function(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit,

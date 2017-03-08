@@ -21,7 +21,7 @@
   #L%
   -->
 <span class="static-iri">
-    <strong class="text-muted">{{dvm.iri}} <!--<a ng-click="dvm.sm.showIriOverlay = true"><i class="fa fa-pencil"></i></a>--></strong>
+    <strong class="text-muted">{{dvm.iri}} <a ng-click="dvm.sm.showIriOverlay = true"><i class="fa fa-pencil"></i></a></strong>
 </span>
 <div ng-if="dvm.sm.showIriOverlay" class="overlay">
     <form name="dvm.iriForm" class="content clearfix" novalidate autocomplete="off">
@@ -54,7 +54,7 @@
         </div>
         <!-- buttons -->
         <div class="btn-container clearfix">
-            <button type="button" class="btn btn-primary pull-right" ng-click="onEdit({iriBegin: dvm.iriBegin, iriThen: dvm.iriThen, iriEnd: dvm.iriEnd}); dvm.afterEdit()" ng-disabled="dvm.iriForm.$invalid">Edit</button>
+            <button type="button" class="btn btn-primary pull-right" ng-click="onEdit({iriBegin: dvm.iriBegin, iriThen: dvm.iriThen, iriEnd: dvm.iriEnd}); dvm.sm.showIriOverlay = false" ng-disabled="dvm.iriForm.$invalid">Edit</button>
             <button type="button" class="btn btn-default pull-right" ng-click="dvm.sm.showIriOverlay = false">Cancel</button>
             <button type="button" class="btn btn-primary pull-left" ng-click="dvm.resetVariables()"><i class="fa fa-refresh"></i></button>
         </div>

@@ -28,77 +28,27 @@ import org.matonto.rdf.api.Model;
 import java.io.InputStream;
 import java.util.Optional;
 
-public class SVConfig {
-    private InputStream data;
-    private Model mapping;
-    private boolean containsHeaders = true;
+public class SVConfig extends DelimitedConfig {
     private char separator = ',';
-    private Long limit;
-    private long offset = 0;
 
-    private SVConfig(Builder builder) {
-        data = builder.data;
-        mapping = builder.mapping;
-        containsHeaders = builder.containsHeaders;
+    private SVConfig(SVConfigBuilder builder) {
+        super(builder);
         separator = builder.separator;
-        limit = builder.limit;
-        offset = builder.offset;
-    }
-
-    public InputStream getData() {
-        return data;
-    }
-
-    public Model getMapping() {
-        return mapping;
-    }
-
-    public boolean getContainsHeaders() {
-        return containsHeaders;
     }
 
     public char getSeparator() {
         return separator;
     }
 
-    public Optional<Long> getLimit() {
-        return Optional.ofNullable(limit);
-    }
-
-    public long getOffset() {
-        return offset;
-    }
-
-    public static class Builder {
-        private final InputStream data;
-        private final Model mapping;
-        private boolean containsHeaders = true;
+    public static class SVConfigBuilder extends Builder<SVConfigBuilder> {
         private char separator = ',';
-        private Long limit;
-        private long offset = 0;
 
-        public Builder(InputStream data, Model mapping) {
-            this.data = data;
-            this.mapping = mapping;
+        public SVConfigBuilder(InputStream data, Model mapping) {
+            super(data, mapping);
         }
 
-        public Builder containsHeaders(boolean containsHeaders) {
-            this.containsHeaders = containsHeaders;
-            return this;
-        }
-
-        public Builder separator(char separator) {
+        public SVConfigBuilder separator(char separator) {
             this.separator = separator;
-            return this;
-        }
-
-        public Builder limit(Long limit) {
-            this.limit = limit;
-            return this;
-        }
-
-        public Builder offset(long offset) {
-            this.offset = offset;
             return this;
         }
 
