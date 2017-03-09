@@ -27,10 +27,9 @@
         .module('createConceptOverlay', [])
         .directive('createConceptOverlay', createConceptOverlay);
 
-        createConceptOverlay.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'prefixes',
-            'utilService'];
+        createConceptOverlay.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'prefixes', 'utilService', 'ontologyUtilsManagerService'];
 
-        function createConceptOverlay($filter, ontologyManagerService, ontologyStateService, prefixes, utilService) {
+        function createConceptOverlay($filter, ontologyManagerService, ontologyStateService, prefixes, utilService, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -39,9 +38,12 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
+                    var ontoUtils = ontologyUtilsManagerService;
+
                     dvm.prefixes = prefixes;
                     dvm.om = ontologyManagerService;
                     dvm.sm = ontologyStateService;
+                    dvm.util = utilService;
                     dvm.schemes = [];
                     dvm.prefix = dvm.sm.getDefaultPrefix();
                     dvm.concept = {
@@ -75,6 +77,7 @@
                             }
                             entity.matonto.unsaved = true;
                         });
+                        ontoUtils.addLanguageToNewEntity(dvm.concept, dvm.language);
                         _.set(dvm.concept, 'matonto.originalIRI', dvm.concept['@id']);
                         // add the entity to the ontology
                         dvm.om.addEntity(dvm.sm.listItem, dvm.concept);

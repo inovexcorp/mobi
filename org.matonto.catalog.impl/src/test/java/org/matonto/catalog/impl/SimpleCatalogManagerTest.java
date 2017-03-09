@@ -37,8 +37,6 @@ import org.matonto.catalog.api.ontologies.mcat.Catalog;
 import org.matonto.catalog.api.ontologies.mcat.CatalogFactory;
 import org.matonto.catalog.api.ontologies.mcat.Commit;
 import org.matonto.catalog.api.ontologies.mcat.CommitFactory;
-import org.matonto.catalog.api.ontologies.mcat.DatasetRecord;
-import org.matonto.catalog.api.ontologies.mcat.DatasetRecordFactory;
 import org.matonto.catalog.api.ontologies.mcat.Distribution;
 import org.matonto.catalog.api.ontologies.mcat.DistributionFactory;
 import org.matonto.catalog.api.ontologies.mcat.InProgressCommit;
@@ -125,7 +123,6 @@ public class SimpleCatalogManagerTest {
     private VersionedRDFRecordFactory versionedRDFRecordFactory = new VersionedRDFRecordFactory();
     private OntologyRecordFactory ontologyRecordFactory = new OntologyRecordFactory();
     private MappingRecordFactory mappingRecordFactory = new MappingRecordFactory();
-    private DatasetRecordFactory datasetRecordFactory = new DatasetRecordFactory();
     private DistributionFactory distributionFactory = new DistributionFactory();
     private BranchFactory branchFactory = new BranchFactory();
     private InProgressCommitFactory inProgressCommitFactory = new InProgressCommitFactory();
@@ -201,10 +198,6 @@ public class SimpleCatalogManagerTest {
         mappingRecordFactory.setValueFactory(vf);
         mappingRecordFactory.setValueConverterRegistry(vcr);
 
-        datasetRecordFactory.setModelFactory(mf);
-        datasetRecordFactory.setValueFactory(vf);
-        datasetRecordFactory.setValueConverterRegistry(vcr);
-
         commitFactory.setModelFactory(mf);
         commitFactory.setValueFactory(vf);
         commitFactory.setValueConverterRegistry(vcr);
@@ -256,7 +249,6 @@ public class SimpleCatalogManagerTest {
         vcr.registerValueConverter(versionedRDFRecordFactory);
         vcr.registerValueConverter(ontologyRecordFactory);
         vcr.registerValueConverter(mappingRecordFactory);
-        vcr.registerValueConverter(datasetRecordFactory);
         vcr.registerValueConverter(distributionFactory);
         vcr.registerValueConverter(branchFactory);
         vcr.registerValueConverter(inProgressCommitFactory);
@@ -493,22 +485,6 @@ public class SimpleCatalogManagerTest {
     }
 
     @Test
-    public void testAddDatasetRecord() throws Exception {
-        Resource recordId = vf.createIRI("https://matonto.org/records#test");
-        DatasetRecord record = datasetRecordFactory.createNew(recordId);
-        record.addProperty(vf.createLiteral("record"), dcIdentifier);
-
-        RepositoryConnection conn = repo.getConnection();
-        assertFalse(conn.getStatements(recordId, null, null, recordId).hasNext());
-
-        manager.addRecord(distributedCatalogId, record);
-        assertTrue(conn.getStatements(recordId, null, vf.createIRI(DatasetRecord.TYPE), recordId).hasNext());
-        assertTrue(conn.getStatements(recordId, null, null, recordId).hasNext());
-        assertTrue(conn.getStatements(recordId, null, distributedCatalogId, recordId).hasNext());
-        conn.close();
-    }
-
-    @Test
     public void testUpdateRecord() throws Exception {
         Resource recordId = vf.createIRI("http://matonto.org/test/records#update");
 
@@ -636,28 +612,6 @@ public class SimpleCatalogManagerTest {
         conn.getStatements(recordId, null, null, recordId).forEachRemaining(recordModel::add);
 
         MappingRecord record = mappingRecordFactory.getExisting(recordId, recordModel);
-        record.setKeyword(Stream.of(vf.createLiteral("keyword1")).collect(Collectors.toSet()));
-
-        assertTrue(conn.getStatements(recordId, vf.createIRI(Record.catalog_IRI), distributedCatalogId, recordId).hasNext());
-        assertFalse(conn.getStatements(recordId, vf.createIRI(Record.keyword_IRI), vf.createLiteral("keyword1"),
-                recordId).hasNext());
-
-        manager.updateRecord(distributedCatalogId, record);
-        assertTrue(conn.getStatements(recordId, vf.createIRI(Record.catalog_IRI), distributedCatalogId, recordId).hasNext());
-        assertTrue(conn.getStatements(recordId, vf.createIRI(Record.keyword_IRI), vf.createLiteral("keyword1"),
-                recordId).hasNext());
-        conn.close();
-    }
-
-    @Test
-    public void testUpdateDatasetRecord() throws Exception {
-        Resource recordId = vf.createIRI("http://matonto.org/test/records#update");
-
-        RepositoryConnection conn = repo.getConnection();
-        Model recordModel = mf.createModel();
-        conn.getStatements(recordId, null, null, recordId).forEachRemaining(recordModel::add);
-
-        DatasetRecord record = datasetRecordFactory.getExisting(recordId, recordModel);
         record.setKeyword(Stream.of(vf.createLiteral("keyword1")).collect(Collectors.toSet()));
 
         assertTrue(conn.getStatements(recordId, vf.createIRI(Record.catalog_IRI), distributedCatalogId, recordId).hasNext());
@@ -898,40 +852,18 @@ public class SimpleCatalogManagerTest {
     }
 
     @Test
-    public void testGetDatasetRecord() throws Exception {
-        Resource recordId = vf.createIRI("http://matonto.org/test/records#dataset");
-
-        RepositoryConnection conn = repo.getConnection();
-        assertTrue(conn.getStatements(recordId, null, null, recordId).hasNext());
-        conn.close();
-
-        Optional<DatasetRecord> result = manager.getRecord(distributedCatalogId, recordId, datasetRecordFactory);
-        assertTrue(result.isPresent());
-        DatasetRecord record = result.get();
-        assertTrue(record.getProperty(vf.createIRI(DC_TITLE)).isPresent());
-        assertEquals("Dataset", record.getProperty(vf.createIRI(DC_TITLE)).get().stringValue());
-        assertTrue(record.getProperty(vf.createIRI(DC_DESCRIPTION)).isPresent());
-        assertEquals("Description", record.getProperty(vf.createIRI(DC_DESCRIPTION)).get().stringValue());
-        assertTrue(record.getProperty(vf.createIRI(DC_IDENTIFIER)).isPresent());
-        assertEquals("Dataset", record.getProperty(vf.createIRI(DC_IDENTIFIER)).get().stringValue());
-        assertTrue(record.getProperty(vf.createIRI(DC_MODIFIED)).isPresent());
-        assertTrue(record.getProperty(vf.createIRI(DC_ISSUED)).isPresent());
-    }
-
-    @Test
     public void testFindRecordsReturnsCorrectDataFirstPage() throws Exception {
         // given
         int limit = 1;
         int offset = 0;
-        IRI modified = vf.createIRI(DC_MODIFIED);
-        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder(limit, offset, modified).build();
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().limit(limit).offset(offset).build();
         // when
         PaginatedSearchResults<Record> records = manager.findRecord(distributedCatalogId, searchParams);
         // then
-        assertEquals(records.getPage().size(), 1);
-        assertEquals(records.getTotalSize(), TOTAL_SIZE);
-        assertEquals(records.getPageSize(), 1);
-        assertEquals(records.getPageNumber(), 1);
+        assertEquals(1, records.getPage().size());
+        assertEquals(TOTAL_SIZE, records.getTotalSize());
+        assertEquals(1, records.getPageSize());
+        assertEquals(1, records.getPageNumber());
     }
 
     @Test
@@ -939,8 +871,7 @@ public class SimpleCatalogManagerTest {
         // given
         int limit = 1;
         int offset = 1;
-        IRI modified = vf.createIRI(DC_MODIFIED);
-        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder(limit, offset, modified).build();
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().limit(limit).offset(offset).build();
         // when
         PaginatedSearchResults<Record> records = manager.findRecord(distributedCatalogId, searchParams);
         // then
@@ -955,8 +886,7 @@ public class SimpleCatalogManagerTest {
         // given
         int limit = 1000;
         int offset = 0;
-        IRI modified = vf.createIRI(DC_MODIFIED);
-        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder(limit, offset, modified).build();
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().limit(limit).offset(offset).build();
         // when
         PaginatedSearchResults<Record> records = manager.findRecord(distributedCatalogId, searchParams);
         // then
@@ -974,12 +904,12 @@ public class SimpleCatalogManagerTest {
         IRI title = vf.createIRI(DC_TITLE);
         int limit = 1;
         int offset = 0;
-        PaginatedSearchParams searchParams1 = new PaginatedSearchParams.Builder(limit, offset, modified).ascending(true).build();
-        PaginatedSearchParams searchParams2 = new PaginatedSearchParams.Builder(limit, offset, modified).ascending(false).build();
-        PaginatedSearchParams searchParams3 = new PaginatedSearchParams.Builder(limit, offset, issued).ascending(true).build();
-        PaginatedSearchParams searchParams4 = new PaginatedSearchParams.Builder(limit, offset, issued).ascending(false).build();
-        PaginatedSearchParams searchParams5 = new PaginatedSearchParams.Builder(limit, offset, title).ascending(true).build();
-        PaginatedSearchParams searchParams6 = new PaginatedSearchParams.Builder(limit, offset, title).ascending(false).build();
+        PaginatedSearchParams searchParams1 = new PaginatedSearchParams.Builder().limit(limit).offset(offset).sortBy(modified).ascending(true).build();
+        PaginatedSearchParams searchParams2 = new PaginatedSearchParams.Builder().limit(limit).offset(offset).sortBy(modified).ascending(false).build();
+        PaginatedSearchParams searchParams3 = new PaginatedSearchParams.Builder().limit(limit).offset(offset).sortBy(issued).ascending(true).build();
+        PaginatedSearchParams searchParams4 = new PaginatedSearchParams.Builder().limit(limit).offset(offset).sortBy(issued).ascending(false).build();
+        PaginatedSearchParams searchParams5 = new PaginatedSearchParams.Builder().limit(limit).offset(offset).sortBy(title).ascending(true).build();
+        PaginatedSearchParams searchParams6 = new PaginatedSearchParams.Builder().limit(limit).offset(offset).sortBy(title).ascending(false).build();
         // when
         PaginatedSearchResults<Record> resources1 = manager.findRecord(distributedCatalogId, searchParams1);
         PaginatedSearchResults<Record> resources2 = manager.findRecord(distributedCatalogId, searchParams2);
@@ -1001,15 +931,14 @@ public class SimpleCatalogManagerTest {
         // given
         int limit = 10;
         int offset = 0;
-        IRI modified = vf.createIRI(DC_MODIFIED);
-        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder(limit, offset, modified).searchText("Get").build();
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().limit(limit).offset(offset).searchText("Get").build();
         // when
         PaginatedSearchResults<Record> records = manager.findRecord(distributedCatalogId, searchParams);
         // then
-        assertEquals(records.getPage().size(), 1);
-        assertEquals(records.getTotalSize(), 1);
-        assertEquals(records.getPageSize(), 10);
-        assertEquals(records.getPageNumber(), 1);
+        assertEquals(1, records.getPage().size());
+        assertEquals(1, records.getTotalSize());
+        assertEquals(10, records.getPageSize());
+        assertEquals(1, records.getPageNumber());
     }
 
     @Test
@@ -1020,8 +949,7 @@ public class SimpleCatalogManagerTest {
         manager.setRepository(repo2);
         int limit = 1;
         int offset = 0;
-        IRI modified = vf.createIRI(DC_MODIFIED);
-        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder(limit, offset, modified).build();
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().limit(limit).offset(offset).build();
         // when
         PaginatedSearchResults<Record> records = manager.findRecord(distributedCatalogId, searchParams);
         // then
@@ -1034,9 +962,8 @@ public class SimpleCatalogManagerTest {
         // given
         int limit = 1;
         int offset = 0;
-        IRI modified = vf.createIRI(DC_MODIFIED);
         IRI localCatalogId = vf.createIRI("http://matonto.org/test/catalog-missing");
-        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder(limit, offset, modified).build();
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().limit(limit).offset(offset).build();
         // when
         PaginatedSearchResults<Record> records = manager.findRecord(localCatalogId, searchParams);
         // then
@@ -1049,10 +976,9 @@ public class SimpleCatalogManagerTest {
         // given
         int limit = 1000;
         int offset = 0;
-        IRI modified = vf.createIRI(DC_MODIFIED);
-        PaginatedSearchParams ontSearchParams = new PaginatedSearchParams.Builder(limit, offset, modified).typeFilter(ONT_TYPE).build();
-        PaginatedSearchParams mappingSearchParams = new PaginatedSearchParams.Builder(limit, offset, modified).typeFilter(MAPPING_TYPE).build();
-        PaginatedSearchParams fullSearchParams = new PaginatedSearchParams.Builder(limit, offset, modified).build();
+        PaginatedSearchParams ontSearchParams = new PaginatedSearchParams.Builder().limit(limit).offset(offset).typeFilter(ONT_TYPE).build();
+        PaginatedSearchParams mappingSearchParams = new PaginatedSearchParams.Builder().limit(limit).offset(offset).typeFilter(MAPPING_TYPE).build();
+        PaginatedSearchParams fullSearchParams = new PaginatedSearchParams.Builder().limit(limit).offset(offset).build();
         // when
         PaginatedSearchResults<Record> ontRecords = manager.findRecord(distributedCatalogId, ontSearchParams);
         PaginatedSearchResults<Record> mappingRecords = manager.findRecord(distributedCatalogId, mappingSearchParams);
@@ -1066,13 +992,12 @@ public class SimpleCatalogManagerTest {
         assertEquals(fullRecords.getTotalSize(), TOTAL_SIZE);
     }
 
-    @Test(expected = MatOntoException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testFindRecordWithOffsetThatIsTooLarge() {
         // given
         int limit = 10;
         int offset = 11;
-        IRI modified = vf.createIRI(DC_MODIFIED);
-        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder(limit, offset, modified).build();
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().limit(limit).offset(offset).build();
         // when
         manager.findRecord(distributedCatalogId, searchParams);
     }

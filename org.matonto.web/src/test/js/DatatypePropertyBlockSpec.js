@@ -21,11 +21,7 @@
  * #L%
  */
 describe('Datatype Property Block directive', function() {
-    var $compile,
-        scope,
-        element,
-        controller,
-        ontologyStateSvc;
+    var $compile, scope, element, controller, ontologyStateSvc, prefixes;
 
     beforeEach(function() {
         module('templates');
@@ -35,11 +31,13 @@ describe('Datatype Property Block directive', function() {
         injectShowPropertiesFilter();
         mockOntologyState();
         mockResponseObj();
+        mockPrefixes();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _responseObj_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _responseObj_, _prefixes_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
+            prefixes = _prefixes_;
         });
 
         ontologyStateSvc.selected = {
@@ -94,6 +92,7 @@ describe('Datatype Property Block directive', function() {
             expect(ontologyStateSvc.propertyValue).toBe('');
             expect(ontologyStateSvc.propertyType).toBeUndefined();
             expect(ontologyStateSvc.propertyIndex).toBe(0);
+            expect(ontologyStateSvc.propertyLanguage).toBe('en');
             expect(ontologyStateSvc.showDataPropertyOverlay).toBe(true);
         });
         it('should set the correct manager values when opening the Remove Data Property Overlay', function() {
@@ -102,18 +101,37 @@ describe('Datatype Property Block directive', function() {
             expect(controller.index).toBe(1);
             expect(controller.showRemoveOverlay).toBe(true);
         });
-        it('should set the correct manager values when editing a data property', function() {
-            var propertyIRI = 'prop1';
-            ontologyStateSvc.selected = {
-                'prop1': [{'@value': 'value', '@type': 'type'}]
-            };
-            ontologyStateSvc.listItem.dataPropertyRange = ['type'];
-            controller.editDataProp(propertyIRI, 0);
-            expect(ontologyStateSvc.editingProperty).toBe(true);
-            expect(ontologyStateSvc.propertySelect).toEqual(propertyIRI);
-            expect(ontologyStateSvc.propertyValue).toBe(ontologyStateSvc.selected[propertyIRI][0]['@value']);
-            expect(ontologyStateSvc.propertyIndex).toBe(0);
-            expect(ontologyStateSvc.showDataPropertyOverlay).toBe(true);
+        describe('should set the correct manager values when editing a data property', function() {
+            it('when @language is present', function() {
+                var propertyIRI = 'prop1';
+                ontologyStateSvc.selected = {
+                    'prop1': [{'@value': 'value', '@language': 'lang'}]
+                };
+                ontologyStateSvc.listItem.dataPropertyRange = ['type'];
+                controller.editDataProp(propertyIRI, 0);
+                expect(ontologyStateSvc.editingProperty).toBe(true);
+                expect(ontologyStateSvc.propertySelect).toEqual(propertyIRI);
+                expect(ontologyStateSvc.propertyValue).toBe('value');
+                expect(ontologyStateSvc.propertyIndex).toBe(0);
+                expect(ontologyStateSvc.propertyType).toEqual({'@id': prefixes.rdf + 'langString'});
+                expect(ontologyStateSvc.propertyLanguage).toBe('lang');
+                expect(ontologyStateSvc.showDataPropertyOverlay).toBe(true);
+            });
+            it('when @language is missing', function() {
+                var propertyIRI = 'prop1';
+                ontologyStateSvc.selected = {
+                    'prop1': [{'@value': 'value', '@type': 'type'}]
+                };
+                ontologyStateSvc.listItem.dataPropertyRange = ['type'];
+                controller.editDataProp(propertyIRI, 0);
+                expect(ontologyStateSvc.editingProperty).toBe(true);
+                expect(ontologyStateSvc.propertySelect).toEqual(propertyIRI);
+                expect(ontologyStateSvc.propertyValue).toBe('value');
+                expect(ontologyStateSvc.propertyIndex).toBe(0);
+                expect(ontologyStateSvc.propertyType).toEqual({'@id': 'type'});
+                expect(ontologyStateSvc.propertyLanguage).toBeUndefined();
+                expect(ontologyStateSvc.showDataPropertyOverlay).toBe(true);
+            });
         });
     });
     it('should call openAddDataPropOverlay when the link is clicked', function() {

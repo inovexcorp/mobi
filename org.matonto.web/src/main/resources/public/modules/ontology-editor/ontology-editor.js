@@ -26,6 +26,7 @@
     angular
         .module('ontology-editor', [
             /* New Directives */
+            'advancedLanguageSelect',
             'annotationBlock',
             'annotationOverlay',
             'associationBlock',
@@ -60,6 +61,7 @@
             'individualHierarchyBlock',
             'individualTree',
             'keywordSelect',
+            'languageSelect',
             'mergeTab',
             'newOntologyTab',
             'objectPropertyAxioms',

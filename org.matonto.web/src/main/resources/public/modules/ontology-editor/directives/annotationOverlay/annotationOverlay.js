@@ -46,26 +46,26 @@
                     dvm.sm = ontologyStateService;
                     dvm.util = utilService;
 
-                    function createJson(value) {
-                        return dvm.util.createJson(dvm.sm.selected['@id'], dvm.ro.getItemIri(dvm.sm.annotationSelect),
-                            {'@value': value});
+                    function createJson(value, language) {
+                        var valueObj = {'@value': value};
+                        if (language) {
+                            _.set(valueObj, '@language', language);
+                        }
+                        return dvm.util.createJson(dvm.sm.selected['@id'], dvm.ro.getItemIri(dvm.sm.annotationSelect), valueObj);
                     }
 
                     dvm.addAnnotation = function() {
-                        dvm.pm.add(dvm.sm.selected, dvm.ro.getItemIri(dvm.sm.annotationSelect), dvm.sm.annotationValue,
-                            _.get(dvm.sm.annotationType, '@id'));
-                        dvm.om.addToAdditions(dvm.sm.listItem.recordId, createJson(dvm.sm.annotationValue));
+                        dvm.pm.add(dvm.sm.selected, dvm.ro.getItemIri(dvm.sm.annotationSelect), dvm.sm.annotationValue, _.get(dvm.sm.annotationType, '@id'), dvm.sm.annotationLanguage);
+                        dvm.om.addToAdditions(dvm.sm.listItem.recordId, createJson(dvm.sm.annotationValue, dvm.sm.annotationLanguage));
                         dvm.sm.showAnnotationOverlay = false;
                     }
 
                     dvm.editAnnotation = function() {
                         var property = dvm.ro.getItemIri(dvm.sm.annotationSelect);
-                        var oldValue = _.get(dvm.sm.selected, "['" + property + "']['" + dvm.sm.annotationIndex
-                            + "']['@value']");
-                        dvm.om.addToDeletions(dvm.sm.listItem.recordId, createJson(oldValue));
-                        dvm.pm.edit(dvm.sm.selected, property, dvm.sm.annotationValue, dvm.sm.annotationIndex,
-                            _.get(dvm.sm.annotationType, '@id'));
-                        dvm.om.addToAdditions(dvm.sm.listItem.recordId, createJson(dvm.sm.annotationValue));
+                        var oldObj = _.get(dvm.sm.selected, "['" + property + "']['" + dvm.sm.annotationIndex + "']");
+                        dvm.om.addToDeletions(dvm.sm.listItem.recordId, createJson(_.get(oldObj, '@value'), _.get(oldObj, '@language')));
+                        dvm.pm.edit(dvm.sm.selected, property, dvm.sm.annotationValue, dvm.sm.annotationIndex, _.get(dvm.sm.annotationType, '@id'), dvm.sm.annotationLanguage);
+                        dvm.om.addToAdditions(dvm.sm.listItem.recordId, createJson(dvm.sm.annotationValue, dvm.sm.annotationLanguage));
                         dvm.sm.showAnnotationOverlay = false;
                     }
                 }

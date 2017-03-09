@@ -21,20 +21,20 @@
  * #L%
  */
 describe('Ontology Utils Manager service', function() {
-    var ontologyUtilsManagerSvc;
-    var ontologyManagerSvc;
-    var ontologyStateSvc;
+    var ontologyUtilsManagerSvc, ontologyManagerSvc, ontologyStateSvc, prefixes;
 
     beforeEach(function() {
         module('ontologyUtilsManager');
         mockOntologyManager();
         mockOntologyState();
         mockUpdateRefs();
+        mockPrefixes();
 
-        inject(function(ontologyUtilsManagerService, _ontologyManagerService_, _ontologyStateService_) {
+        inject(function(ontologyUtilsManagerService, _ontologyManagerService_, _ontologyStateService_, _prefixes_) {
             ontologyUtilsManagerSvc = ontologyUtilsManagerService;
             ontologyManagerSvc = _ontologyManagerService_;
             ontologyStateSvc = _ontologyStateService_;
+            prefixes = _prefixes_;
         });
     });
 
@@ -88,5 +88,49 @@ describe('Ontology Utils Manager service', function() {
         spyOn(ontologyUtilsManagerSvc, 'getNameByIRI').and.returnValue('result');
         expect(ontologyUtilsManagerSvc.getNameByNode({entityIRI: 'iri'})).toEqual('result');
         expect(ontologyUtilsManagerSvc.getNameByIRI).toHaveBeenCalledWith('iri');
+    });
+    describe('addLanguageToNewEntity should set the proper values', function() {
+        it('when language is undefined', function() {
+            var entity = {};
+            ontologyUtilsManagerSvc.addLanguageToNewEntity(entity);
+            expect(entity).toEqual({});
+        });
+        describe('when language is provided', function() {
+            var language = 'en';
+            it('and it has a dcterms:title', function() {
+                var entity = {};
+                entity[prefixes.dcterms + 'title'] = [{'@value': 'value'}];
+                var expected = {};
+                expected[prefixes.dcterms + 'title'] = [{'@value': 'value', '@language': language}];
+                ontologyUtilsManagerSvc.addLanguageToNewEntity(entity, language);
+                expect(entity).toEqual(expected);
+            });
+            it('and it has a dcterms:description', function() {
+                var entity = {};
+                entity[prefixes.dcterms + 'description'] = [{'@value': 'value'}];
+                var expected = {};
+                expected[prefixes.dcterms + 'description'] = [{'@value': 'value', '@language': language}];
+                ontologyUtilsManagerSvc.addLanguageToNewEntity(entity, language);
+                expect(entity).toEqual(expected);
+            });
+            it('and it has both dcterms:title and dcterms:description', function() {
+                var entity = {};
+                entity[prefixes.dcterms + 'description'] = [{'@value': 'description'}];
+                entity[prefixes.dcterms + 'title'] = [{'@value': 'title'}];
+                var expected = {};
+                expected[prefixes.dcterms + 'description'] = [{'@value': 'description', '@language': language}];
+                expected[prefixes.dcterms + 'title'] = [{'@value': 'title', '@language': language}];
+                ontologyUtilsManagerSvc.addLanguageToNewEntity(entity, language);
+                expect(entity).toEqual(expected);
+            });
+            it('and it has a skos:prefLabel', function() {
+                var entity = {};
+                entity[prefixes.skos + 'prefLabel'] = [{'@value': 'value'}];
+                var expected = {};
+                expected[prefixes.skos + 'prefLabel'] = [{'@value': 'value', '@language': language}];
+                ontologyUtilsManagerSvc.addLanguageToNewEntity(entity, language);
+                expect(entity).toEqual(expected);
+            });
+        });
     });
 });

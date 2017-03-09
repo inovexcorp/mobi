@@ -99,8 +99,8 @@ public interface CatalogRest {
                         @PathParam("catalogId") String catalogId,
                         @QueryParam("sort") String sort,
                         @QueryParam("type") String recordType,
-                        @DefaultValue("0") @QueryParam("offset") int offset,
-                        @DefaultValue("100") @QueryParam("limit") int limit,
+                        @QueryParam("offset") int offset,
+                        @QueryParam("limit") int limit,
                         @DefaultValue("true") @QueryParam("ascending") boolean asc,
                         @QueryParam("searchText") String searchText);
 

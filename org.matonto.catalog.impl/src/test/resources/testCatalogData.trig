@@ -1,3 +1,4 @@
+@prefix dataset: <http://matonto.org/ontologies/dataset#> .
 @prefix mcat: <http://matonto.org/ontologies/catalog#> .
 @prefix matuser: <http://matonto.org/ontologies/user/management#> .
 @prefix dc: <http://purl.org/dc/terms/> .
@@ -36,7 +37,7 @@ GRAPH <http://matonto.org/test/records#unique>
 
 GRAPH <http://matonto.org/test/records#dataset>
 {
-    <http://matonto.org/test/records#dataset> a mcat:DatasetRecord, mcat:VersionedRDFRecord, mcat:VersionedRecord, mcat:Record ;
+    <http://matonto.org/test/records#dataset> a dataset:DatasetRecord, mcat:VersionedRDFRecord, mcat:VersionedRecord, mcat:Record ;
         mcat:catalog <http://matonto.org/test/catalog-distributed> ;
         dc:title "Dataset" ;
         dc:description "Description" ;

@@ -258,13 +258,19 @@ describe('Ontology Manager service', function() {
                 originalIRI: schemeId
             }
         }
-        defaultDatatypes = _.map(['anyURI', 'boolean', 'byte', 'dateTime', 'decimal', 'double', 'float', 'int',
-            'integer', 'language', 'long', 'string'], function(item) {
+        var xsdDatatypes = _.map(['anyURI', 'boolean', 'byte', 'dateTime', 'decimal', 'double', 'float', 'int', 'integer', 'language', 'long', 'string'], function(item) {
             return {
                 'namespace': prefixes.xsd,
                 'localName': item
             }
         });
+        var rdfDatatypes = _.map(['langString'], function(item) {
+            return {
+                namespace: prefixes.rdf,
+                localName: item
+            }
+        });
+        defaultDatatypes = _.concat(xsdDatatypes, rdfDatatypes);
     });
 
     function flushAndVerify() {
