@@ -26,6 +26,7 @@ package org.matonto.catalog.api;
 import org.matonto.rdf.api.Resource;
 
 import java.util.Optional;
+import javax.ws.rs.core.Link;
 
 /**
  * Search parameters. Allows paging with the limit and offset parameters. Enforcing sorting with the required sortBy and
@@ -36,8 +37,8 @@ public class PaginatedSearchParams {
     private Resource typeFilter;
     private Resource sortBy;
     private Boolean ascending;
-    private int limit;
-    private int offset;
+    private Integer limit;
+    private int offset = 0;
 
     private PaginatedSearchParams(Builder builder) {
         this.searchText = builder.searchText;
@@ -56,16 +57,16 @@ public class PaginatedSearchParams {
         return Optional.ofNullable(typeFilter);
     }
 
-    public Resource getSortBy() {
-        return sortBy;
+    public Optional<Resource> getSortBy() {
+        return Optional.ofNullable(sortBy);
     }
 
     public Optional<Boolean> getAscending() {
         return Optional.ofNullable(ascending);
     }
 
-    public int getLimit() {
-        return limit;
+    public Optional<Integer> getLimit() {
+        return Optional.ofNullable(limit);
     }
 
     public int getOffset() {
@@ -73,25 +74,28 @@ public class PaginatedSearchParams {
     }
 
     public static class Builder {
-        private final int limit;
-        private final int offset;
-        private final Resource sortBy;
-
+        private Integer limit = null;
+        private int offset = 0;
+        private Resource sortBy = null;
         private String searchText = null;
         private Resource typeFilter = null;
         private Boolean ascending = null;
 
-        /**
-         * A builder for PaginatedSearchParams which requires a limit and offset for paging and a sorting preference.
-         *
-         * @param limit the maximum number of items on the page to be created
-         * @param offset the index of where the page should start in the list of results
-         * @param sortBy the IRI of the property the results should be sorted by
-         */
-        public Builder(int limit, int offset, Resource sortBy) {
+        public Builder() {}
+
+        public Builder limit(Integer limit) {
             this.limit = limit;
+            return this;
+        }
+
+        public Builder offset(int offset) {
             this.offset = offset;
+            return this;
+        }
+
+        public Builder sortBy(Resource sortBy) {
             this.sortBy = sortBy;
+            return this;
         }
 
         public Builder searchText(String val) {

@@ -94,8 +94,8 @@ public class LinksUtils {
         if (offset < 0) {
             throw ErrorUtils.sendError("Offset cannot be negative.", Response.Status.BAD_REQUEST);
         }
-        if (limit <= 0) {
-            throw ErrorUtils.sendError("Limit must be positive", Response.Status.BAD_REQUEST);
+        if (limit < 0) {
+            throw ErrorUtils.sendError("Limit cannot be negative", Response.Status.BAD_REQUEST);
         }
     }
 }

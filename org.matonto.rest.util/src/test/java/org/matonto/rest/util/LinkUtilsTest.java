@@ -73,16 +73,6 @@ public class LinkUtilsTest {
     }
 
     @Test
-    public void validateParamsWithZeroLimitTest() {
-        try {
-            LinksUtils.validateParams(0, 0);
-            fail("Exception should have been thrown");
-        } catch (MatOntoWebException ex) {
-            assertEquals(400, ex.getResponse().getStatus());
-        }
-    }
-
-    @Test
     public void validateParamsWithNegativeOffsetTest() {
         try {
             LinksUtils.validateParams(1, -1);
