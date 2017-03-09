@@ -21,24 +21,32 @@
  * #L%
  */
 describe('Imports Block directive', function() {
-    var $compile, scope, element, ontologyStateSvc, prefixes;
+    var $compile, scope, element, ontologyStateSvc, prefixes, controller, ontologyManagerSvc, propertyManagerSvc, $q;
 
     beforeEach(function() {
         module('templates');
         module('importsBlock');
         mockOntologyState();
         mockPrefixes();
+        mockUtil();
+        mockPropertyManager();
+        mockOntologyManager();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _prefixes_, _ontologyManagerService_, _propertyManagerService_, _$q_, _utilService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
             prefixes = _prefixes_;
+            ontologyManagerSvc = _ontologyManagerService_;
+            propertyManagerSvc = _propertyManagerService_;
+            $q = _$q_;
+            util = _utilService_;
         });
 
         ontologyStateSvc.selected[prefixes.owl + 'imports'] = [];
         element = $compile(angular.element('<imports-block></imports-block>'))(scope);
         scope.$digest();
+        controller = element.controller('importsBlock');
     });
 
     describe('replaces the element with the correct html', function() {
@@ -64,6 +72,12 @@ describe('Imports Block directive', function() {
             scope.$apply();
             expect(element.find('imports-overlay').length).toBe(1);
         });
+        it('depending on whether the remove overlay is shown', function() {
+            expect(element.find('confirmation-overlay').length).toBe(0);
+            element.controller('importsBlock').showRemoveOverlay = true;
+            scope.$apply();
+            expect(element.find('confirmation-overlay').length).toBe(1);
+        });
         it('depending on the length of the selected ontology imports', function() {
             expect(element.querySelectorAll('.text-info.message').length).toBe(1);
             expect(element.querySelectorAll('.import').length).toBe(0);
@@ -72,6 +86,84 @@ describe('Imports Block directive', function() {
             scope.$apply();
             expect(element.querySelectorAll('.text-info.message').length).toBe(0);
             expect(element.querySelectorAll('.import').length).toBe(1);
+        });
+    });
+    describe('controller methods', function() {
+        it('setupRemove should set the correct variables', function() {
+            controller.setupRemove('url');
+            expect(controller.url).toBe('url');
+            expect(controller.showRemoveOverlay).toBe(true);
+        });
+        describe('remove calls the proper functions', function() {
+            var saveDeferred;
+            beforeEach(function() {
+                controller.url = 'url';
+                saveDeferred = $q.defer();
+                ontologyManagerSvc.saveChanges.and.returnValue(saveDeferred.promise);
+                controller.remove();
+            });
+            describe('when save changes resolves', function() {
+                var afterDeferred;
+                beforeEach(function() {
+                    saveDeferred.resolve();
+                    afterDeferred = $q.defer();
+                    ontologyStateSvc.afterSave.and.returnValue(afterDeferred.promise);
+                });
+                describe('when after save resolves', function() {
+                    var updateDeferred;
+                    beforeEach(function() {
+                        afterDeferred.resolve();
+                        updateDeferred = $q.defer();
+                        ontologyManagerSvc.updateOntology.and.returnValue(updateDeferred.promise);
+                    });
+                    it('when update ontology resolves', function() {
+                        // controller.showRemoveOverlay = true;
+                        updateDeferred.resolve();
+                        scope.$apply();
+                        expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.selected['@id'], prefixes.owl + 'imports', {'@id': controller.url});
+                        expect(ontologyManagerSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, jasmine.any(Object));
+                        expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.selected, prefixes.owl + 'imports', controller.index);
+                        expect(ontologyManagerSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});
+                        expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
+                        expect(ontologyManagerSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, ontologyStateSvc.listItem.branchId, ontologyStateSvc.listItem.commitId, ontologyStateSvc.listItem.type, ontologyStateSvc.listItem.upToDate, ontologyStateSvc.listItem.inProgressCommit);
+                        expect(controller.showRemoveOverlay).toBe(false);
+                    });
+                    it('when update ontology rejects', function() {
+                        updateDeferred.reject('error');
+                        scope.$apply();
+                        expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.selected['@id'], prefixes.owl + 'imports', {'@id': controller.url});
+                        expect(ontologyManagerSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, jasmine.any(Object));
+                        expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.selected, prefixes.owl + 'imports', controller.index);
+                        expect(ontologyManagerSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});
+                        expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
+                        expect(ontologyManagerSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, ontologyStateSvc.listItem.branchId, ontologyStateSvc.listItem.commitId, ontologyStateSvc.listItem.type, ontologyStateSvc.listItem.upToDate, ontologyStateSvc.listItem.inProgressCommit);
+                        expect(controller.error).toBe('error');
+                    });
+                });
+                it('when after save rejects', function() {
+                    afterDeferred.reject('error');
+                    scope.$apply();
+                    expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.selected['@id'], prefixes.owl + 'imports', {'@id': controller.url});
+                    expect(ontologyManagerSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, jasmine.any(Object));
+                    expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.selected, prefixes.owl + 'imports', controller.index);
+                    expect(ontologyManagerSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});
+                    expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
+                    expect(controller.error).toBe('error');
+                });
+            });
+            it('when save changes rejects', function() {
+                saveDeferred.reject('error');
+                scope.$apply();
+                expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.selected['@id'], prefixes.owl + 'imports', {'@id': controller.url});
+                expect(ontologyManagerSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, jasmine.any(Object));
+                expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.selected, prefixes.owl + 'imports', controller.index);
+                expect(ontologyManagerSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});
+                expect(controller.error).toBe('error');
+            });
+        });
+        it('get should return the correct variable', function() {
+            expect(controller.get({'@id': 'id'})).toBe('id');
+            expect(controller.get()).toBeUndefined();
         });
     });
 });

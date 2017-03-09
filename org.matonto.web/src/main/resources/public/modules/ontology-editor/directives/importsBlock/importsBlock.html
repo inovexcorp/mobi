@@ -26,14 +26,19 @@
             <span>Imports</span><a class="pull-right" ng-click="dvm.showOverlay = true"><i class="fa fa-fw fa-plus"></i>Add Import</a>
         </block-header>
         <block-content>
-            <p ng-if="dvm.sm.selected[dvm.prefixes.owl + 'imports'].length"
-               ng-repeat="import in dvm.sm.selected[dvm.prefixes.owl + 'imports'] track by import['@id']" class="import">
+            <p ng-if="dvm.os.selected[dvm.prefixes.owl + 'imports'].length" ng-repeat="import in dvm.os.selected[dvm.prefixes.owl + 'imports'] | orderBy:dvm.get track by import['@id']" class="import">
                 <a href="{{import['@id']}}" target="_blank">{{import['@id']}}</a>
+                <a class="btn-link pull-right" ng-click="dvm.setupRemove(import['@id'], $index)" title="Delete"><i class="fa fa-times fa-fw"></i></a>
             </p>
-            <p ng-if="!dvm.sm.selected[dvm.prefixes.owl + 'imports'].length" class="text-info message">
+            <p ng-if="!dvm.os.selected[dvm.prefixes.owl + 'imports'].length" class="padding text-info message">
                 <i class="fa fa-info fa-fw"></i><span>This ontology does not have any imports.</span>
             </p>
         </block-content>
     </block>
     <imports-overlay ng-if="dvm.showOverlay" on-close="dvm.showOverlay = false"></imports-overlay>
+    <confirmation-overlay ng-if="dvm.showRemoveOverlay" header-text="'Remove Import'" confirm-click="dvm.remove()" cancel-click="dvm.showRemoveOverlay = false" confirm-text="'Submit'" cancel-text="'Cancel'">
+        <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
+        <div ng-if="dvm.hasChanges"><p><strong>NOTE: You have some unsaved changes.</strong></p><p>Would you like to save those changes and remove the import: <strong>{{dvm.url}}</strong>?</p></div>
+        <p ng-if="!dvm.hasChanges">Are you sure you want to remove the import: <strong>{{dvm.url}}</strong>?</p>
+    </confirmation-overlay>
 </div>

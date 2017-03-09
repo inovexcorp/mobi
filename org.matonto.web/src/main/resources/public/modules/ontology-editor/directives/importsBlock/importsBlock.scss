@@ -2,7 +2,13 @@
 @import "./src/main/resources/public/css/variables";
 
 .imports-block {
-    .block-content {
+    .import {
+        margin: 0;
         padding: 10px;
+
+        &:hover {
+            background: $gray-lighter;
+            cursor: pointer;
+        }
     }
 }

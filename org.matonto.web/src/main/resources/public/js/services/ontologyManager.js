@@ -418,7 +418,7 @@
              * @param {string} commitId The commit ID associated with the requested ontology.
              * @param {string} [type='ontology'] The type of listItem that needs to be updated.
              * @param {boolean} [upToDate=true] The flag indicating whether the ontology is upToDate or not.
-             * @param {boolean} [inProgressCommit=false] The Object containing the saved changes to apply.
+             * @param {boolean} [inProgressCommit=emptyInProgressCommit] The Object containing the saved changes to apply.
              * @returns {Promise} A promise indicating the success or failure of the update.
              */
             self.updateOntology = function(recordId, branchId, commitId, type = 'ontology', upToDate = true, inProgressCommit = emptyInProgressCommit) {
