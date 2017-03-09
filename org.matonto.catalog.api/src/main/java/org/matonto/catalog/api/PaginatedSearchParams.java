@@ -26,7 +26,6 @@ package org.matonto.catalog.api;
 import org.matonto.rdf.api.Resource;
 
 import java.util.Optional;
-import javax.ws.rs.core.Link;
 
 /**
  * Search parameters. Allows paging with the limit and offset parameters. Enforcing sorting with the required sortBy and
@@ -38,7 +37,7 @@ public class PaginatedSearchParams {
     private Resource sortBy;
     private Boolean ascending;
     private Integer limit;
-    private int offset = 0;
+    private int offset;
 
     private PaginatedSearchParams(Builder builder) {
         this.searchText = builder.searchText;
