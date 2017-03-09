@@ -85,7 +85,7 @@ public interface CatalogManager {
      * @param catalogId The Resource identifying the Catalog to find the Records in.
      * @param searchParams Search parameters.
      * @return The PaginatedSearchResults for a page matching the search criteria.
-     * @throws IllegalArgumentException Thrown if a connection to the repository could not be made.
+     * @throws IllegalArgumentException Thrown if the passed offset is greater than the number of results.
      */
     PaginatedSearchResults<Record> findRecord(Resource catalogId, PaginatedSearchParams searchParams);
 

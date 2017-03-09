@@ -74,9 +74,9 @@ public class PaginatedSearchParams {
     }
 
     public static class Builder {
-        private Integer limit;
+        private Integer limit = null;
         private int offset = 0;
-        private Resource sortBy;
+        private Resource sortBy = null;
         private String searchText = null;
         private Resource typeFilter = null;
         private Boolean ascending = null;
