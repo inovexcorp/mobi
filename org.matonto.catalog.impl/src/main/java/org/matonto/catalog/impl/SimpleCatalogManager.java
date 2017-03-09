@@ -1291,7 +1291,8 @@ public class SimpleCatalogManager implements CatalogManager {
      * @return True if the Resource is in the Repository; otherwise, false.
      * @throws RepositoryException If there is a problem communicating with the Repository.
      */
-    private boolean resourceExists(Resource resourceIRI, String type, RepositoryConnection conn) throws RepositoryException {
+    private boolean resourceExists(Resource resourceIRI, String type, RepositoryConnection conn)
+            throws RepositoryException {
         return conn.getStatements(null, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(type), resourceIRI)
                 .hasNext();
     }
