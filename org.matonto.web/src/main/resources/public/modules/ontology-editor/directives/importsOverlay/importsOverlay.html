@@ -20,20 +20,26 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="imports-overlay overlay">
-    <form name="dvm.form" class="content clearfix" novalidate autocomplete="off">
-        <h6>Import URL</h6>
+<div class="imports-overlay">
+    <div ng-if="!dvm.openConfirmation" class="overlay">
+        <form name="dvm.form" class="content clearfix" novalidate autocomplete="off">
+            <h6>Import URL</h6>
+            <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
+            <div ng-class="{'has-error': dvm.form.url.$error.pattern}" class="form-group">
+                <custom-label muted-text="'*Required'">URL</custom-label>
+                <input class="form-control" id="url" name="url" ng-model="dvm.url" ng-pattern="dvm.iriPattern" required />
+                <p ng-messages="dvm.form.url.$error" class="error-msg">
+                    <ng-message when="pattern">The value provided is not a valid URL.</ng-message>
+                </p>
+            </div>
+            <div class="btn-container clearfix">
+                <button class="btn btn-primary pull-right" ng-disabled="dvm.form.$invalid" ng-click="dvm.create()">Submit</button>
+                <button class="btn btn-default pull-right" ng-click="dvm.onClose()">Cancel</button>
+            </div>
+        </form>
+    </div>
+    <confirmation-overlay ng-if="dvm.openConfirmation" header-text="'Unsaved Changes Detected'" confirm-click="dvm.confirmed()" cancel-click="dvm.onClose()" confirm-text="'Submit'" cancel-text="'Cancel'">
         <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
-        <div ng-class="{'has-error': dvm.form.url.$error.pattern}" class="form-group">
-            <custom-label muted-text="'*Required'">URL</custom-label>
-            <input class="form-control" id="url" name="url" ng-model="dvm.url" ng-pattern="dvm.iriPattern" required />
-            <p ng-messages="dvm.form.url.$error" class="error-msg">
-                <ng-message when="pattern">The value provided is not a valid URL.</ng-message>
-            </p>
-        </div>
-        <div class="btn-container clearfix">
-            <button class="btn btn-primary pull-right" ng-disabled="dvm.form.$invalid" ng-click="dvm.create()">Submit</button>
-            <button class="btn btn-default pull-right" ng-click="dvm.onClose()">Cancel</button>
-        </div>
-    </form>
+        <p>You have some unsaved changes. Would you like to save those changes and continue?</p>
+    </confirmation-overlay>
 </div>

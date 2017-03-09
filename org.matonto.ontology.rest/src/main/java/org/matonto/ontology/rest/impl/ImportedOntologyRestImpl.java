@@ -39,11 +39,9 @@ public class ImportedOntologyRestImpl implements ImportedOntologyRest {
     public Response verifyUrl(String url) {
         HttpURLConnection conn = null;
         try {
-            HttpURLConnection.setFollowRedirects(false);
             conn = (HttpURLConnection) new URL(url).openConnection();
             conn.setRequestMethod("HEAD");
-            int responseCode = conn.getResponseCode();
-            if (responseCode > 199 && responseCode < 400) {
+            if (conn.getResponseCode() == HttpURLConnection.HTTP_OK) {
                 return Response.ok().build();
             } else {
                 return Response.status(Response.Status.BAD_REQUEST).build();

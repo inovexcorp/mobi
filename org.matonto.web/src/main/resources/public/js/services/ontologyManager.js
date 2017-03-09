@@ -418,20 +418,20 @@
              * @param {string} commitId The commit ID associated with the requested ontology.
              * @param {string} [type='ontology'] The type of listItem that needs to be updated.
              * @param {boolean} [upToDate=true] The flag indicating whether the ontology is upToDate or not.
-             * @param {boolean} [apply=false] The flag indicating whether the get should apply the inProgressCommit or
-             * not.
+             * @param {boolean} [inProgressCommit=false] The Object containing the saved changes to apply.
              * @returns {Promise} A promise indicating the success or failure of the update.
              */
-            self.updateOntology = function(recordId, branchId, commitId, type = 'ontology', upToDate = true, apply = false) {
+            self.updateOntology = function(recordId, branchId, commitId, type = 'ontology', upToDate = true, inProgressCommit = emptyInProgressCommit) {
                 var listItem;
                 var deferred = $q.defer();
+                var apply = !_.isEqual(inProgressCommit, emptyInProgressCommit);
                 cm.getResource(commitId, branchId, recordId, catalogId, apply)
                     .then(ontology => {
                         var ontologyId = self.getListItemByRecordId(recordId).ontologyId;
                         if (type === 'ontology') {
-                            return self.createOntologyListItem(ontologyId, recordId, branchId, commitId, ontology, emptyInProgressCommit, upToDate);
+                            return self.createOntologyListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate);
                         } else if (type === 'vocabulary') {
-                            return self.createVocabularyListItem(ontologyId, recordId, branchId, commitId, ontology, emptyInProgressCommit, upToDate);
+                            return self.createVocabularyListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate);
                         }
                     }, $q.reject)
                     .then(response => {

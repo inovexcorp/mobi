@@ -47,30 +47,27 @@
                     dvm.url = '';
                     dvm.iriPattern = REGEX.IRI;
                     dvm.error = '';
+                    dvm.openConfirmation = false;
 
                     dvm.create = function() {
                         $http.get('/matontorest/imported-ontologies/' + encodeURIComponent(dvm.url))
                             .then(response => {
-                                if (!hasChanges(os.listItem.inProgressCommit) && !hasChanges(os.listItem)) {
-                                    whenNoChangesExist();
+                                if (os.hasChanges(os.listItem.recordId)) {
+                                    dvm.openConfirmation = true;
                                 } else {
-                                    dvm.error = 'Not handled yet';
+                                    dvm.confirmed();
                                 }
                             }, () => dvm.error = 'The provided URL was unresolvable.');
                     }
 
-                    function whenNoChangesExist() {
+                    dvm.confirmed = function() {
                         var importsIRI = prefixes.owl + 'imports';
                         util.setPropertyId(os.selected, importsIRI, dvm.url);
                         om.addToAdditions(os.listItem.recordId, util.createJson(os.selected['@id'], importsIRI, {'@id': dvm.url}));
                         om.saveChanges(os.listItem.recordId, {additions: os.listItem.additions, deletions: os.listItem.deletions})
                             .then(() => os.afterSave(), $q.reject)
-                            .then(() => om.updateOntology(os.listItem.recordId, os.listItem.branchId, os.listItem.commitId, os.listItem.type, os.listItem.upToDate, os.listItem.upToDate), $q.reject)
+                            .then(() => om.updateOntology(os.listItem.recordId, os.listItem.branchId, os.listItem.commitId, os.listItem.type, os.listItem.upToDate, os.listItem.inProgressCommit), $q.reject)
                             .then(dvm.onClose, errorMessage => dvm.error = errorMessage);
-                    }
-
-                    function hasChanges(obj) {
-                        return !!(obj.additions.length || obj.deletions.length);
                     }
                 }
             }
