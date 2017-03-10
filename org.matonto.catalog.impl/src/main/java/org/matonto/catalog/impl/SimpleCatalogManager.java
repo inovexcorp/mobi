@@ -381,7 +381,7 @@ public class SimpleCatalogManager implements CatalogManager {
 
             log.debug("Result set size: " + records.size());
 
-            int pageNumber = (offset / limit) + 1;
+            int pageNumber = (limit > 0) ? (offset / limit) + 1 : 1;
 
             return records.size() > 0 ? new SimpleSearchResults<>(records, totalCount, limit, pageNumber) :
                     SearchResults.emptyResults();

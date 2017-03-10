@@ -23,6 +23,8 @@ package org.matonto.dataset.api;
  * #L%
  */
 
+import org.matonto.catalog.api.PaginatedSearchResults;
+import org.matonto.dataset.pagination.DatasetPaginatedSearchParams;
 import org.matonto.dataset.api.builder.DatasetRecordConfig;
 import org.matonto.dataset.ontology.dataset.DatasetRecord;
 import org.matonto.rdf.api.Resource;
@@ -45,11 +47,14 @@ public interface DatasetManager {
     Set<Resource> getDatasets(String repositoryId);
 
     /**
-     * Retrieves the DatasetRecords for all datasets in the local catalog.
+     * Retrieves DatasetRecords in the local catalog based on the passed search and pagination parameters. Acceptable
+     * sort properties are http://purl.org/dc/terms/title, http://purl.org/dc/terms/modified, and
+     * http://purl.org/dc/terms/issued.
      *
-     * @return The DatasetRecords for all datasets in the local catalog. DatasetRecord includes empty Dataset object.
+     * @return The PaginatedSearchResults of DatasetRecords in the local catalog. DatasetRecord includes empty Dataset
+     *      object.
      */
-    Set<DatasetRecord> getDatasetRecords();
+    PaginatedSearchResults<DatasetRecord> getDatasetRecords(DatasetPaginatedSearchParams searchParams);
 
     /**
      * Retrieves the DatasetRecord for a dataset in the specified repository.

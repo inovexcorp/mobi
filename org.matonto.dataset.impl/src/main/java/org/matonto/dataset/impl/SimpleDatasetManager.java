@@ -30,12 +30,16 @@ import aQute.bnd.annotation.component.Modified;
 import aQute.bnd.annotation.component.Reference;
 import org.apache.commons.io.IOUtils;
 import org.matonto.catalog.api.CatalogManager;
+import org.matonto.catalog.api.PaginatedSearchResults;
+import org.matonto.catalog.api.ontologies.mcat.Record;
 import org.matonto.dataset.api.DatasetManager;
 import org.matonto.dataset.api.builder.DatasetRecordConfig;
 import org.matonto.dataset.ontology.dataset.Dataset;
 import org.matonto.dataset.ontology.dataset.DatasetFactory;
 import org.matonto.dataset.ontology.dataset.DatasetRecord;
 import org.matonto.dataset.ontology.dataset.DatasetRecordFactory;
+import org.matonto.dataset.pagination.DatasetPaginatedSearchParams;
+import org.matonto.dataset.pagination.DatasetRecordSearchResults;
 import org.matonto.exception.MatOntoException;
 import org.matonto.persistence.utils.Bindings;
 import org.matonto.query.TupleQueryResult;
@@ -144,18 +148,10 @@ public class SimpleDatasetManager implements DatasetManager {
     }
 
     @Override
-    public Set<DatasetRecord> getDatasetRecords() {
-        Set<DatasetRecord> datasetRecords = new HashSet<>();
-        try (RepositoryConnection conn = systemRepository.getConnection()) {
-            TupleQuery query = conn.prepareTupleQuery(FIND_DATASET_RECORDS_QUERY);
-            query.setBinding(CATALOG_BINDING, catalogManager.getLocalCatalogIRI());
-            TupleQueryResult result = query.evaluate();
-            result.forEach(bindingSet -> {
-                getDatasetRecord(Bindings.requiredResource(bindingSet, "record"))
-                        .ifPresent(datasetRecords::add);
-            });
-        }
-        return datasetRecords;
+    public PaginatedSearchResults<DatasetRecord> getDatasetRecords(DatasetPaginatedSearchParams searchParams) {
+        PaginatedSearchResults<Record> results = catalogManager.findRecord(catalogManager.getLocalCatalogIRI(),
+                searchParams.build());
+        return new DatasetRecordSearchResults(results, dsRecFactory);
     }
 
     @Override
