@@ -43,6 +43,33 @@ describe('Dataset Manager service', function() {
         utilSvc.paginatedConfigToParams.and.callFake(_.identity);
     });
 
+    describe('should retrieve a page of results', function() {
+        beforeEach(function() {
+            this.url = '/test';
+        })
+        it('unless an error occurs', function(done) {
+            $httpBackend.whenGET(this.url).respond(400, null, null, 'Error Message');
+            datasetManagerSvc.getResultsPage(this.url).then(function(response) {
+                fail('Promise should have rejected');
+                done();
+            }, function(response) {
+                expect(response).toBe('Error Message');
+                done();
+            });
+            $httpBackend.flush();
+        });
+        it('successfully', function(done) {
+            $httpBackend.whenGET(this.url).respond(200, []);
+            datasetManagerSvc.getResultsPage(this.url).then(function(response) {
+                expect(response.data).toEqual([]);
+                done();
+            }, function(response) {
+                fail('Promise should have resolved');
+                done();
+            });
+            $httpBackend.flush();
+        });
+    });
     describe('should retrieve a list of DatasetRecords', function() {
         beforeEach(function(){
             this.config = {
@@ -91,7 +118,7 @@ describe('Dataset Manager service', function() {
         beforeEach(function() {
             this.recordConfig = {
                 title: 'Title',
-                repository: 'repo',
+                repositoryId: 'repo',
                 datasetIRI: 'dataset',
                 description: 'Description',
                 keywords: ['keyword0', 'keyword1']

@@ -782,12 +782,35 @@ function mockUtil() {
 function mockDatasetManager() {
     module(function($provide) {
         $provide.service('datasetManagerService', function($q) {
+            this.getResultsPage = jasmine.createSpy('getResultsPage').and.returnValue($q.when({}));
             this.getDatasetRecords = jasmine.createSpy('getDatasetRecords').and.returnValue($q.when({}));
             this.createDatasetRecord = jasmine.createSpy('createDatasetRecord').and.returnValue($q.when(''));
             this.deleteDatasetRecord = jasmine.createSpy('deleteDatasetRecord').and.returnValue($q.when());
             this.clearDatasetRecord = jasmine.createSpy('clearDatasetRecord').and.returnValue($q.when());
         });
     });
+}
+
+function mockDatasetState() {
+    module(function($provide) {
+        $provide.service('datasetStateService', function() {
+            this.paginationConfig = {
+                limit: 0,
+                sortOption: {field: '', asc: true},
+                pageIndex: 0,
+                searchText: ''
+            };
+            this.totalSize = 0;
+            this.links = {
+                prev: '',
+                next: ''
+            };
+            this.results = [];
+            this.setResults = jasmine.createSpy('setResults');
+            this.resetPagination = jasmine.createSpy('resetPagination');
+            this.setPagination = jasmine.createSpy('setPagination');
+        })
+    })
 }
 
 function mockToastr() {

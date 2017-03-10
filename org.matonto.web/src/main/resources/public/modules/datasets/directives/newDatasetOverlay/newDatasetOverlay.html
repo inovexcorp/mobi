@@ -1,0 +1,43 @@
+<!--
+  #%L
+  org.matonto.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="new-dataset-overlay overlay">
+    <form name="dvm.form" class="clearfix content" novalidate autocomplete="off">
+        <h6>Create New Dataset</h6>
+        <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
+        <div class="form-group">
+            <custom-label>Title</custom-label>
+            <input type="text" name="title" ng-model="dvm.recordConfig.title" required focus-me>
+        </div>
+        <div class="form-group">
+            <custom-label>Repository Id</custom-label>
+            <p class="form-control-static">{{dvm.recordConfig.repositoryId}}</p>
+        </div>
+        <text-input ng-model="dvm.recordConfig.datasetIRI" display-text="'Dataset IRI'" muted-text="'(Optional)'"></text-input>
+        <text-area ng-model="dvm.recordConfig.description" display-text="'Description'" muted-text="'(Optional)'"></text-area>
+        <keyword-select ng-model="dvm.keywords"></keyword-select>
+        <div class="btn-container clearfix">
+            <button class="btn btn-primary pull-right" ng-disabled="dvm.form.$invalid" ng-click="dvm.create()">Submit</button>
+            <button class="btn btn-default pull-right" ng-click="onClose()">Cancel</button>
+        </div>
+    </form>
+</div>

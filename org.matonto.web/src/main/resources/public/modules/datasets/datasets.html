@@ -20,6 +20,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="paging-details">
-    <p>Showing {{(totalSize > 0 ? ((pageIndex * limit) + 1) : 0) | number}} to {{Math.min(totalSize, (pageIndex + 1) * limit) | number}} of {{totalSize | number}}</p>
+<!-- mapper.html -->
+<div class="datasets-page clearfix full-height">
+    <datasets-tabset></datasets-tabset>
 </div>
