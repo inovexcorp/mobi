@@ -33,33 +33,37 @@ import java.util.stream.Collectors;
 
 public class DatasetRecordSearchResults implements PaginatedSearchResults<DatasetRecord> {
 
-    private PaginatedSearchResults<Record> results;
-    private DatasetRecordFactory factory;
+    private List<DatasetRecord> page;
+    private int pageSize;
+    private int totalSize;
+    private int pageNumber;
 
     public DatasetRecordSearchResults(PaginatedSearchResults<Record> results, DatasetRecordFactory factory) {
-        this.results = results;
-        this.factory = factory;
-    }
-
-    @Override
-    public List<DatasetRecord> getPage() {
-        return results.getPage().stream()
+        this.pageSize = results.getPageSize();
+        this.totalSize = results.getTotalSize();
+        this.pageNumber = results.getPageNumber();
+        this.page = results.getPage().stream()
                 .map(record -> factory.getExisting(record.getResource(), record.getModel()))
                 .collect(Collectors.toList());
     }
 
     @Override
+    public List<DatasetRecord> getPage() {
+        return page;
+    }
+
+    @Override
     public int getTotalSize() {
-        return results.getTotalSize();
+        return totalSize;
     }
 
     @Override
     public int getPageSize() {
-        return results.getPageSize();
+        return pageSize;
     }
 
     @Override
     public int getPageNumber() {
-        return results.getPageNumber();
+        return pageNumber;
     }
 }
