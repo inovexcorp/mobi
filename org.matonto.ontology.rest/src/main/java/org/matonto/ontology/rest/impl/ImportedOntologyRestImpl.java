@@ -44,10 +44,10 @@ public class ImportedOntologyRestImpl implements ImportedOntologyRest {
             if (conn.getResponseCode() == HttpURLConnection.HTTP_OK) {
                 return Response.ok().build();
             } else {
-                return Response.status(Response.Status.BAD_REQUEST).build();
+                throw ErrorUtils.sendError("The provided URL was unresolvable.", Response.Status.BAD_REQUEST);
             }
         } catch (IOException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         } finally {
             if (conn != null) {
                 conn.disconnect();

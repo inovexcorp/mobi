@@ -68,13 +68,23 @@ describe('Util service', function() {
             expect(utilSvc.getPropertyValue({}, 'prop')).toBe('');
         });
     });
-    it('should set a property value for an entity', function() {
-        var prop = 'property';
-        var value = 'value';
-        var entity = {};
-        var expected = {'property': [{'@value': value}]};
-        utilSvc.setPropertyValue(entity, prop, value);
-        expect(entity).toEqual(expected);
+    describe('should set a property value for an entity', function() {
+        it('when not there', function() {
+            var prop = 'property';
+            var value = 'value';
+            var entity = {};
+            var expected = {'property': [{'@value': value}]};
+            utilSvc.setPropertyValue(entity, prop, value);
+            expect(entity).toEqual(expected);
+        });
+        it('when there', function() {
+            var prop = 'property';
+            var value = 'value';
+            var entity = {'property': [{'@value': 'other'}]};
+            var expected = {'property': [{'@value': 'other'}, {'@value': value}]};
+            utilSvc.setPropertyValue(entity, prop, value);
+            expect(entity).toEqual(expected);
+        });
     });
     describe('should set a property id for an entity', function() {
         it('when not there', function() {

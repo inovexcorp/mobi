@@ -39,7 +39,8 @@ public interface ImportedOntologyRest {
      * Checks to see if the provided URL is resolvable.
      *
      * @param url the String representing the URL to verify
-     * @return OK if the provided URL is resolvable. BAD_REQUEST if the URL is not resolvable.
+     * @return OK if the provided URL is resolvable. BAD_REQUEST if the URL is not resolvable. INTERNAL_SERVER_ERROR if
+     *         a HttpURLConnection cannot be made.
      */
     @GET
     @Path("{url}")

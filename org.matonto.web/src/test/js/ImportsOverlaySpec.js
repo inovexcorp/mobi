@@ -84,11 +84,9 @@ describe('Imports Overlay directive', function() {
         it('depending on whether the url pattern is incorrect', function() {
             var formGroup = angular.element(element.querySelectorAll('.form-group')[0]);
             expect(formGroup.hasClass('has-error')).toBe(false);
-            controller.form = {
-                url: {
-                    '$error': {
-                        pattern: true
-                    }
+            controller.form.url = {
+                '$error': {
+                    pattern: true
                 }
             }
             scope.$digest();
@@ -214,6 +212,11 @@ describe('Imports Overlay directive', function() {
         var button = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
         button.triggerHandler('click');
         expect(controller.create).toHaveBeenCalled();
+    });
+    it('should call onClose when the button is clicked', function() {
+        var button = angular.element(element.querySelectorAll('.btn-container button.btn-default')[0]);
+        button.triggerHandler('click');
+        expect(scope.onClose).toHaveBeenCalled();
     });
     it('should set the correct state when the cancel button is clicked', function() {
         var button = angular.element(element.querySelectorAll('.btn-container button.btn-default')[0]);

@@ -68,11 +68,11 @@ describe('Imports Block directive', function() {
         });
         it('with a imports-overlay', function() {
             expect(element.find('imports-overlay').length).toBe(0);
-            element.controller('importsBlock').showOverlay = true;
+            element.controller('importsBlock').showNewOverlay = true;
             scope.$apply();
             expect(element.find('imports-overlay').length).toBe(1);
         });
-        it('depending on whether the remove overlay is shown', function() {
+        it('depending on whether confirmation is open', function() {
             expect(element.find('confirmation-overlay').length).toBe(0);
             element.controller('importsBlock').showRemoveOverlay = true;
             scope.$apply();
@@ -83,7 +83,7 @@ describe('Imports Block directive', function() {
             expect(element.querySelectorAll('.import').length).toBe(0);
 
             ontologyStateSvc.selected[prefixes.owl + 'imports'] = [{'@id': 'import'}];
-            scope.$apply();
+            scope.$digest();
             expect(element.querySelectorAll('.text-info.message').length).toBe(0);
             expect(element.querySelectorAll('.import').length).toBe(1);
         });
@@ -117,7 +117,6 @@ describe('Imports Block directive', function() {
                         ontologyManagerSvc.updateOntology.and.returnValue(updateDeferred.promise);
                     });
                     it('when update ontology resolves', function() {
-                        // controller.showRemoveOverlay = true;
                         updateDeferred.resolve();
                         scope.$apply();
                         expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.selected['@id'], prefixes.owl + 'imports', {'@id': controller.url});

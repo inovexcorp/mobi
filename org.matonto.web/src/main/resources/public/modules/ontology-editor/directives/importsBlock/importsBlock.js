@@ -43,9 +43,8 @@
                     var om = ontologyManagerService;
                     dvm.prefixes = prefixes;
                     dvm.os = ontologyStateService;
-                    dvm.showOverlay = false;
+                    dvm.showNewOverlay = false;
                     dvm.showRemoveOverlay = false;
-                    dvm.hasChanges = dvm.os.hasChanges(dvm.os.listItem.recordId);
 
                     dvm.setupRemove = function(url, index) {
                         dvm.url = url;

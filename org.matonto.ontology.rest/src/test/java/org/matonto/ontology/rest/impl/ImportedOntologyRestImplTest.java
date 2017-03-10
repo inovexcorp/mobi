@@ -30,7 +30,6 @@ import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.matonto.rest.util.MatontoRestTestNg;
-import org.mockito.MockitoAnnotations;
 import org.testng.annotations.Test;
 
 import javax.ws.rs.core.Application;
@@ -41,7 +40,6 @@ public class ImportedOntologyRestImplTest extends MatontoRestTestNg {
 
     @Override
     protected Application configureApp() throws Exception {
-        MockitoAnnotations.initMocks(this);
         rest = new ImportedOntologyRestImpl();
         return new ResourceConfig().register(rest);
     }
@@ -52,14 +50,26 @@ public class ImportedOntologyRestImplTest extends MatontoRestTestNg {
     }
 
     @Test
-    public void testVerifyUrl() {
-        Response response = target().path("imported-ontologies/" + encode("http://matonto.org/")).request().head();
+    public void testVerifyUrl() throws Exception {
+        Response response = target().path("imported-ontologies/" + encode("https://www.google.com/")).request().head();
         assertEquals(response.getStatus(), 200);
     }
 
     @Test
-    public void testVerifyUrlWhenUrlIsNotThere() {
-        Response response = target().path("imported-ontologies/" + encode("https://not-there.com/")).request().head();
+    public void testVerifyUrlWhenNotOK() throws Exception {
+        Response response = target().path("imported-ontologies/" + encode("http://www.stefan-birkner.de/system-rules/")).request().head();
         assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void testVerifyUrlWhenIOException() throws Exception {
+        Response response = target().path("imported-ontologies/" + encode("https://not-there.com")).request().head();
+        assertEquals(response.getStatus(), 500);
+    }
+
+    @Test
+    public void testVerifyUrlWhenMalformedURLException() throws Exception {
+        Response response = target().path("imported-ontologies/" + encode("malformed")).request().head();
+        assertEquals(response.getStatus(), 500);
     }
 }

@@ -92,7 +92,12 @@
              * @param {string} value The new value for the property
              */
             self.setPropertyValue = function(entity, propertyIRI, value) {
-                _.set(entity, "['" + propertyIRI + "'][0]['@value']", value);
+                var valueObj = {'@value': value};
+                if (_.has(entity, "['" + propertyIRI + "']")) {
+                    entity[propertyIRI].push(valueObj);
+                } else {
+                    _.set(entity, "['" + propertyIRI + "'][0]", valueObj);
+                }
             }
             /**
              * @ngdoc method
