@@ -23,6 +23,8 @@
 package org.matonto.dataset.impl
 
 import org.matonto.catalog.api.CatalogManager
+import org.matonto.catalog.api.PaginatedSearchResults
+import org.matonto.dataset.pagination.DatasetPaginatedSearchParams
 import org.matonto.dataset.api.builder.DatasetRecordConfig
 import org.matonto.dataset.ontology.dataset.Dataset
 import org.matonto.dataset.ontology.dataset.DatasetFactory
@@ -333,17 +335,23 @@ class SimpleDatasetManagerSpec extends Specification {
         results == Optional.empty()
     }
 
-    def "getDatasetRecords() returns a set with all DatasetRecords in the repo"() {
+    def "getDatasetRecords() returns PaginatedSearchResults with a set of DatasetRecords from the repo"() {
         setup:
-        service.setRepository(systemRepo)
-        systemConn.add(Values.matontoModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_only-ds-records.trig"), "", RDFFormat.TRIG)))
-        testConn.add(Values.matontoModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_test-repo-datasets.trig"), "", RDFFormat.TRIG)))
         def mockRecords = []
-        7.times { mockRecords << Optional.of(Mock(DatasetRecord)) }
-        catalogManagerMock.getRecord(*_) >>> mockRecords
+        def originalResults = Mock(PaginatedSearchResults)
+        7.times { mockRecords << Mock(DatasetRecord) }
+        originalResults.getPage() >> mockRecords
+        originalResults.getPageNumber() >> 1
+        originalResults.getTotalSize() >> 7
+        originalResults.getPageSize() >> 10
+        catalogManagerMock.findRecord(*_) >>> originalResults
 
         expect:
-        service.getDatasetRecords().size() == 7
+        def results = service.getDatasetRecords(new DatasetPaginatedSearchParams(vf))
+        results.getPage().size() == 7
+        results.getPageSize() == 10
+        results.getTotalSize() == 7
+        results.getPageNumber() == 1
     }
 
     def "getDatasets() returns an empty set when there are no datasets in that repository"() {

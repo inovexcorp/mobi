@@ -41,7 +41,9 @@ import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.matonto.catalog.api.PaginatedSearchResults;
 import org.matonto.dataset.api.DatasetManager;
+import org.matonto.dataset.pagination.DatasetPaginatedSearchParams;
 import org.matonto.dataset.api.builder.DatasetRecordConfig;
 import org.matonto.dataset.ontology.dataset.DatasetRecord;
 import org.matonto.dataset.ontology.dataset.DatasetRecordFactory;
@@ -76,7 +78,6 @@ import org.openrdf.model.vocabulary.DCTERMS;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
@@ -110,6 +111,9 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
 
     @Mock
     private EngineManager engineManager;
+
+    @Mock
+    private PaginatedSearchResults<DatasetRecord> results;
 
     @Override
     protected Application configureApp() throws Exception {
@@ -169,21 +173,25 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
 
     @BeforeMethod
     public void setupMocks() {
-        reset(datasetManager, transformer);
+        reset(datasetManager, transformer, results);
 
         when(transformer.sesameModel(any(Model.class)))
                 .thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, Model.class)));
-        when(datasetManager.getDatasetRecords()).thenReturn(Stream.of(record1, record2, record3)
-                .collect(Collectors.toSet()));
+        when(datasetManager.getDatasetRecords(any(DatasetPaginatedSearchParams.class))).thenReturn(results);
         when(datasetManager.createDataset(any(DatasetRecordConfig.class))).thenReturn(record1);
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
+        when(results.getPage()).thenReturn(Stream.of(record1, record2, record3)
+                .collect(Collectors.toList()));
+        when(results.getPageNumber()).thenReturn(1);
+        when(results.getPageSize()).thenReturn(10);
+        when(results.getTotalSize()).thenReturn(3);
     }
 
     @Test
     public void getDatasetRecordsTest() {
         Response response = target().path("datasets").request().get();
         assertEquals(response.getStatus(), 200);
-        verify(datasetManager).getDatasetRecords();
+        verify(datasetManager).getDatasetRecords(any(DatasetPaginatedSearchParams.class));
         try {
             JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
             assertEquals(result.size(), 3);
@@ -200,26 +208,15 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
     }
 
     @Test
-    public void getDatasetRecordsWithPaginationTest() {
-        Response response = target().path("datasets").queryParam("offset", 0).queryParam("limit", 10).request().get();
-        assertEquals(response.getStatus(), 200);
-        verify(datasetManager).getDatasetRecords();
-        MultivaluedMap<String, Object> headers = response.getHeaders();
-        assertEquals(headers.get("X-Total-Count").get(0), "3");
-        assertEquals(response.getLinks().size(), 0);
-        try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
-            assertEquals(result.size(), 3);
-        } catch (Exception e) {
-            fail("Expected no exception, but got: " + e.getMessage());
-        }
-    }
+    public void getDatasetRecordsWithLinksTest() {
+        // Setup:
+        when(results.getPage()).thenReturn(Collections.singletonList(record2));
+        when(results.getPageNumber()).thenReturn(2);
+        when(results.getPageSize()).thenReturn(1);
 
-    @Test
-    public void getDatasetRecordsWithPaginationAndLinksTest() {
         Response response = target().path("datasets").queryParam("offset", 1).queryParam("limit", 1).request().get();
         assertEquals(response.getStatus(), 200);
-        verify(datasetManager).getDatasetRecords();
+        verify(datasetManager).getDatasetRecords(any(DatasetPaginatedSearchParams.class));
         MultivaluedMap<String, Object> headers = response.getHeaders();
         assertEquals(headers.get("X-Total-Count").get(0), "3");
         Set<Link> links = response.getLinks();
@@ -235,28 +232,21 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
     }
 
     @Test
-    public void getDatasetRecordsWithSortingTest() {
-        Response response = target().path("datasets").queryParam("sort", DCTERMS.TITLE.stringValue())
-                .queryParam("ascending", false).request().get();
-        assertEquals(response.getStatus(), 200);
-        verify(datasetManager).getDatasetRecords();
-        try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
-            assertEquals(result.size(), 3);
-            for (int i = 0; i < result.size(); i++) {
-                JSONObject recordObj = result.getJSONObject(i);
-                assertTrue(recordObj.containsKey("@id"));
-                assertTrue(recordObj.getString("@id").equals(expectedSortOrder[i]));
-            }
-        } catch (Exception e) {
-            fail("Expected no exception, but got: " + e.getMessage());
-        }
+    public void getDatasetRecordsWithNegativeLimitTest() {
+        Response response = target().path("datasets").queryParam("limit", -1).request().get();
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void getDatasetRecordsWithNegativeOffsetTest() {
+        Response response = target().path("datasets").queryParam("offset", -1).request().get();
+        assertEquals(response.getStatus(), 400);
     }
 
     @Test
     public void getDatasetRecordsWithErrorTest() {
         // Setup:
-        when(datasetManager.getDatasetRecords()).thenThrow(new MatOntoException());
+        when(datasetManager.getDatasetRecords(any(DatasetPaginatedSearchParams.class))).thenThrow(new MatOntoException());
 
         Response response = target().path("datasets").request().get();
         assertEquals(response.getStatus(), 500);
