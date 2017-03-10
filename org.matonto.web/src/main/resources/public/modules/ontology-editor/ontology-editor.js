@@ -56,6 +56,7 @@
             'everythingTree',
             'hierarchyTree',
             'importsBlock',
+            'importsOverlay',
             'individualsTab',
             'individualHierarchyBlock',
             'individualTree',

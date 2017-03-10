@@ -85,14 +85,20 @@
              * @methodOf util.service:utilService
              *
              * @description
-             * Sets the first value of the specified property of the passed entity to the passed value.
+             * Sets the first or appends to the existing value of the specified property of the passed entity to the
+             * passed value.
              *
              * @param {Object} entity The entity to set the property value of
              * @param {string} propertyIRI The IRI of a property
              * @param {string} value The new value for the property
              */
             self.setPropertyValue = function(entity, propertyIRI, value) {
-                _.set(entity, "['" + propertyIRI + "'][0]['@value']", value);
+                var valueObj = {'@value': value};
+                if (_.has(entity, "['" + propertyIRI + "']")) {
+                    entity[propertyIRI].push(valueObj);
+                } else {
+                    _.set(entity, "['" + propertyIRI + "'][0]", valueObj);
+                }
             }
             /**
              * @ngdoc method
@@ -109,6 +115,27 @@
              */
             self.getPropertyId = function(entity, propertyIRI) {
                 return _.get(entity, "['" + propertyIRI + "'][0]['@id']", '');
+            }
+            /**
+             * @ngdoc method
+             * @name setPropertyId
+             * @methodOf util.service:utilService
+             *
+             * @description
+             * Sets the first or appends to the existing id of the specified property of the passed entity to the passed
+             * id.
+             *
+             * @param {Object} entity The entity to set the property value of
+             * @param {string} propertyIRI The IRI of a property
+             * @param {string} id The new id for the property
+             */
+            self.setPropertyId = function(entity, propertyIRI, id) {
+                var idObj = {'@id': id};
+                if (_.has(entity, "['" + propertyIRI + "']")) {
+                    entity[propertyIRI].push(idObj);
+                } else {
+                    _.set(entity, "['" + propertyIRI + "'][0]", idObj);
+                }
             }
             /**
              * @ngdoc method
