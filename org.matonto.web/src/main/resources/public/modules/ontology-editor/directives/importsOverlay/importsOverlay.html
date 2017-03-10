@@ -27,7 +27,7 @@
             <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
             <div ng-class="{'has-error': dvm.form.url.$error.pattern}" class="form-group">
                 <custom-label>URL</custom-label>
-                <input class="form-control" name="url" ng-model="dvm.url" ng-pattern="dvm.iriPattern" autofocus required />
+                <input class="form-control" name="url" ng-model="dvm.url" ng-pattern="dvm.iriPattern" focus-me required />
                 <p ng-messages="dvm.form.url.$error" class="error-msg">
                     <ng-message when="pattern">The value provided is not a valid URL.</ng-message>
                 </p>

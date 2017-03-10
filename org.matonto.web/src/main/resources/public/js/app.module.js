@@ -70,6 +70,7 @@
             'entityDescription',
             'errorDisplay',
             'fileInput',
+            'focusMe',
             'infoMessage',
             'pagination',
             'pagingDetails',

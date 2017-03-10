@@ -85,7 +85,8 @@
              * @methodOf util.service:utilService
              *
              * @description
-             * Sets the first value of the specified property of the passed entity to the passed value.
+             * Sets the first or appends to the existing value of the specified property of the passed entity to the
+             * passed value.
              *
              * @param {Object} entity The entity to set the property value of
              * @param {string} propertyIRI The IRI of a property
