@@ -29,7 +29,7 @@
          * @name focusMe
          *
          * @description
-         * The `focusMe` module provides the `focusMe` directive which provide a way to focus an element when it
+         * The `focusMe` module provides the `focusMe` directive which provides a way to focus an element when it
          * becomes visible.
          */
         .module('focusMe', [])
