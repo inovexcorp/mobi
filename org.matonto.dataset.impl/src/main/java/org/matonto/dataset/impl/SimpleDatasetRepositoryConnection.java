@@ -1,5 +1,6 @@
 package org.matonto.dataset.impl;
 
+import org.matonto.dataset.api.DatasetConnection;
 import org.matonto.query.api.BooleanQuery;
 import org.matonto.query.api.GraphQuery;
 import org.matonto.query.api.Operation;
@@ -15,7 +16,7 @@ import org.matonto.repository.base.RepositoryConnectionWrapper;
 import org.matonto.repository.base.RepositoryResult;
 import org.matonto.repository.exception.RepositoryException;
 
-public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapper {
+public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapper implements DatasetConnection {
 
     public SimpleDatasetRepositoryConnection(RepositoryConnection delegate) {
         setDelegate(delegate);
