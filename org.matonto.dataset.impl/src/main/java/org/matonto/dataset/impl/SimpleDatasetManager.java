@@ -32,6 +32,7 @@ import org.apache.commons.io.IOUtils;
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.PaginatedSearchResults;
 import org.matonto.catalog.api.ontologies.mcat.Record;
+import org.matonto.dataset.api.DatasetConnection;
 import org.matonto.dataset.api.DatasetManager;
 import org.matonto.dataset.api.builder.DatasetRecordConfig;
 import org.matonto.dataset.ontology.dataset.Dataset;
@@ -294,6 +295,16 @@ public class SimpleDatasetManager implements DatasetManager {
             safeDeleteGraphs(conn, dataset);
             deleteGraphLinks(conn, dataset);
         }
+    }
+
+    @Override
+    public DatasetConnection getConnection(Resource dataset, String repositoryId) {
+        return null;
+    }
+
+    @Override
+    public DatasetConnection getConnection(Resource record) {
+        return null;
     }
 
     /**

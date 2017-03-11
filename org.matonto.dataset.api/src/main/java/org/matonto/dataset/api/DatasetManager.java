@@ -158,4 +158,8 @@ public interface DatasetManager {
      * @throws IllegalArgumentException if the DatasetRecord could not be found in the catalog.
      */
     void safeClearDataset(Resource record);
+
+    DatasetConnection getConnection(Resource dataset, String repositoryId);
+
+    DatasetConnection getConnection(Resource record);
 }
