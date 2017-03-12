@@ -159,7 +159,24 @@ public interface DatasetManager {
      */
     void safeClearDataset(Resource record);
 
+    /**
+     * Returns a DatasetConnection for the specified dataset in the specified repository.
+     *
+     * @param dataset The dataset for which to return a DatasetConnection.
+     * @param repositoryId The repository where the datset is located.
+     * @return A DatasetConnection for the specified dataset.
+     * @throws IllegalArgumentException if the DatasetRecord could not be found in the catalog with this
+     * dataset/repository combination.
+     */
     DatasetConnection getConnection(Resource dataset, String repositoryId);
 
+    /**
+     * Returns a DatasetConnection for the specified dataset record. The DatasetConnection is associated with the
+     * Repository defined for the DatasetRecord in the catalog.
+     *
+     * @param record The dataset record for which to return a DatasetConnection.
+     * @return A DatasetConnection for the specified dataset.
+     * @throws IllegalArgumentException if the DatasetRecord could not be found in the catalog.
+     */
     DatasetConnection getConnection(Resource record);
 }

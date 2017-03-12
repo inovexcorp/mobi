@@ -299,12 +299,16 @@ public class SimpleDatasetManager implements DatasetManager {
 
     @Override
     public DatasetConnection getConnection(Resource dataset, String repositoryId) {
-        return null;
+        Resource record = getRecordResource(dataset, repositoryId)
+                .orElseThrow(() -> new IllegalArgumentException("Could not find the required DatasetRecord in the " +
+                        "Catalog with this dataset/repository combination."));
+        return getConnection(record);
     }
 
     @Override
     public DatasetConnection getConnection(Resource record) {
-        return null;
+        Repository dsRepo = getDatasetRepo(record);
+        return new SimpleDatasetRepositoryConnection(dsRepo.getConnection());
     }
 
     /**
@@ -330,6 +334,13 @@ public class SimpleDatasetManager implements DatasetManager {
 
             return Optional.empty();
         }
+    }
+
+    private Repository getDatasetRepo(Resource record) {
+        DatasetRecord datasetRecord = getDatasetRecord(record)
+                .orElseThrow(() -> new IllegalArgumentException("Could not find the required DatasetRecord in the Catalog."));
+
+        return getDatasetRepo(datasetRecord);
     }
 
     private Repository getDatasetRepo(DatasetRecord datasetRecord) {
