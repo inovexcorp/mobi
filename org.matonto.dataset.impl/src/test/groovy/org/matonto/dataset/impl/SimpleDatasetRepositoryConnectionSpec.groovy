@@ -32,4 +32,25 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         expect:
         conn.getRepositoryId() == repo
     }
+
+    def "size() returns 0 when there are no graphs in the dataset"() {
+    }
+
+    def "size() returns the total size of all statements in dataset graphs when no contexts are specified"() {
+    }
+
+    def "size(c) returns the correct size of one graph in the dataset"() {
+    }
+
+    def "size(c...) returns the correct size of multiple graphs in the dataset"() {
+    }
+
+    def "size(c...) returns the total size of all statements in dataset graphs when all contexts are specified"() {
+    }
+
+    def "size(c) returns 0 when the graph is not in the dataset"() {
+    }
+
+    def "size(c...) returns the correct number of statements when some of the graphs are in the dataset"() {
+    }
 }
