@@ -307,8 +307,16 @@ public class SimpleDatasetManager implements DatasetManager {
 
     @Override
     public DatasetConnection getConnection(Resource record) {
-        Repository dsRepo = getDatasetRepo(record);
-        return new SimpleDatasetRepositoryConnection(dsRepo.getConnection());
+        DatasetRecord datasetRecord = getDatasetRecord(record)
+                .orElseThrow(() -> new IllegalArgumentException("Could not find the required DatasetRecord in the Catalog."));
+        Resource dataset = datasetRecord.getDataset()
+                .orElseThrow(() -> new MatOntoException("Could not retrieve the Dataset IRI from the DatasetRecord."))
+                .getResource();
+        String repositoryId = datasetRecord.getRepository()
+                .orElseThrow(() -> new MatOntoException("Could not retrieve the Repository ID from the DatasetRecord."));
+
+        Repository dsRepo = getDatasetRepo(datasetRecord);
+        return new SimpleDatasetRepositoryConnection(dsRepo.getConnection(), dataset, repositoryId);
     }
 
     /**

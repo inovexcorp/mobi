@@ -24,12 +24,12 @@ package org.matonto.dataset.impl
 
 import org.matonto.catalog.api.CatalogManager
 import org.matonto.catalog.api.PaginatedSearchResults
-import org.matonto.dataset.pagination.DatasetPaginatedSearchParams
 import org.matonto.dataset.api.builder.DatasetRecordConfig
 import org.matonto.dataset.ontology.dataset.Dataset
 import org.matonto.dataset.ontology.dataset.DatasetFactory
 import org.matonto.dataset.ontology.dataset.DatasetRecord
 import org.matonto.dataset.ontology.dataset.DatasetRecordFactory
+import org.matonto.dataset.pagination.DatasetPaginatedSearchParams
 import org.matonto.ontologies.rdfs.Resource
 import org.matonto.rdf.api.IRI
 import org.matonto.rdf.api.Model
@@ -745,9 +745,34 @@ class SimpleDatasetManagerSpec extends Specification {
         ]
     }
 
-    // TODO: How do I test this
     def "getConnection(dataset, repository) returns a DatasetConnection over the correct dataset"() {
+        setup:
+        def repo = "system"
+        def datasetIRI = datasetsInFile[1]
+        def recordIRI = vf.createIRI("http://test.com/record1")
+        def record = mockRetrieveRecord(datasetIRI, repo, recordIRI)
 
+        when:
+        def dsConn = service.getConnection(datasetIRI, repo)
+
+        then:
+        1 * catalogManagerMock.getRecord(!null, recordIRI, !null) >> Optional.of(record)
+        dsConn.getDataset() == datasetIRI
+    }
+
+    def "getConnection(dataset, repository) returns a DatasetConnection over the correct repo"() {
+        setup:
+        def repo = "system"
+        def datasetIRI = datasetsInFile[1]
+        def recordIRI = vf.createIRI("http://test.com/record1")
+        def record = mockRetrieveRecord(datasetIRI, repo, recordIRI)
+
+        when:
+        def dsConn = service.getConnection(datasetIRI, repo)
+
+        then:
+        1 * catalogManagerMock.getRecord(!null, recordIRI, !null) >> Optional.of(record)
+        dsConn.getRepositoryId() == repo
     }
 
     def "getConnection(dataset, repository) throws an Exception if the DatasetRecord does not exist"() {
@@ -789,5 +814,17 @@ class SimpleDatasetManagerSpec extends Specification {
                 Rio.parse(this.getClass().getResourceAsStream("/test-catalog_only-ds-records.trig"), "", RDFFormat.TRIG)))
 
         1 * catalogManagerMock.getRecord(!null, recordIRI, !null) >> Optional.of(record)
+    }
+
+    private mockRetrieveRecord(datasetIRI, repo, recordIRI) {
+        def dataset = dsFactory.createNew(datasetIRI)
+        resultsMock.hasNext() >> true
+        resultsMock.next() >> vf.createStatement(recordIRI, datasetPred, datasetIRI)
+
+        def record = dsRecFactory.createNew(recordIRI)
+        record.setDataset(dataset)
+        record.setRepository(repo)
+
+        return record
     }
 }

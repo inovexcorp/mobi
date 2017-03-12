@@ -18,8 +18,13 @@ import org.matonto.repository.exception.RepositoryException;
 
 public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapper implements DatasetConnection {
 
-    public SimpleDatasetRepositoryConnection(RepositoryConnection delegate) {
+    private Resource dataset;
+    private String repositoryId;
+
+    public SimpleDatasetRepositoryConnection(RepositoryConnection delegate, Resource dataset, String repositoryId) {
         setDelegate(delegate);
+        this.dataset = dataset;
+        this.repositoryId = repositoryId;
     }
 
     @Override
@@ -145,5 +150,15 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     @Override
     public Update prepareUpdate(String update, String baseURI) throws RepositoryException, MalformedQueryException {
         return null;
+    }
+
+    @Override
+    public Resource getDataset() {
+        return dataset;
+    }
+
+    @Override
+    public String getRepositoryId() {
+        return repositoryId;
     }
 }
