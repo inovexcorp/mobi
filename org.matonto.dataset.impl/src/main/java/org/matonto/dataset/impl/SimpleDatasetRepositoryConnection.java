@@ -1,5 +1,6 @@
 package org.matonto.dataset.impl;
 
+import org.apache.commons.lang.NotImplementedException;
 import org.matonto.dataset.api.DatasetConnection;
 import org.matonto.query.api.BooleanQuery;
 import org.matonto.query.api.GraphQuery;
@@ -63,11 +64,6 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     }
 
     @Override
-    public void close() throws RepositoryException {
-
-    }
-
-    @Override
     public long size(Resource... contexts) throws RepositoryException {
         return 0;
     }
@@ -83,73 +79,53 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     }
 
     @Override
-    public void begin() throws RepositoryException {
-
-    }
-
-    @Override
-    public void commit() throws RepositoryException {
-
-    }
-
-    @Override
-    public void rollback() throws RepositoryException {
-
-    }
-
-    @Override
-    public boolean isActive() throws RepositoryException {
-        return false;
-    }
-
-    @Override
     public Operation prepareQuery(String query) throws RepositoryException, MalformedQueryException {
-        return null;
+        throw new NotImplementedException("Not yet implemented.");
     }
 
     @Override
     public Operation prepareQuery(String query, String baseURI) throws RepositoryException, MalformedQueryException {
-        return null;
+        throw new NotImplementedException("Not yet implemented.");
     }
 
     @Override
     public TupleQuery prepareTupleQuery(String query) throws RepositoryException, MalformedQueryException {
-        return null;
+        throw new NotImplementedException("Not yet implemented.");
     }
 
     @Override
     public TupleQuery prepareTupleQuery(String query, String baseURI) throws RepositoryException, MalformedQueryException {
-        return null;
+        throw new NotImplementedException("Not yet implemented.");
     }
 
     @Override
     public GraphQuery prepareGraphQuery(String query) throws RepositoryException, MalformedQueryException {
-        return null;
+        throw new NotImplementedException("Not yet implemented.");
     }
 
     @Override
     public GraphQuery prepareGraphQuery(String query, String baseURI) throws RepositoryException, MalformedQueryException {
-        return null;
+        throw new NotImplementedException("Not yet implemented.");
     }
 
     @Override
     public BooleanQuery prepareBooleanQuery(String query) throws RepositoryException, MalformedQueryException {
-        return null;
+        throw new NotImplementedException("Not yet implemented.");
     }
 
     @Override
     public BooleanQuery prepareBooleanQuery(String query, String baseURI) throws RepositoryException, MalformedQueryException {
-        return null;
+        throw new NotImplementedException("Not yet implemented.");
     }
 
     @Override
     public Update prepareUpdate(String update) throws RepositoryException, MalformedQueryException {
-        return null;
+        throw new NotImplementedException("Not yet implemented.");
     }
 
     @Override
     public Update prepareUpdate(String update, String baseURI) throws RepositoryException, MalformedQueryException {
-        return null;
+        throw new NotImplementedException("Not yet implemented.");
     }
 
     @Override
