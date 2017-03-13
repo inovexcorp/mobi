@@ -15,7 +15,7 @@
 	<parent>
 		<artifactId>itests</artifactId>
 		<groupId>org.matonto</groupId>
-		<version>1.5.23</version>
+		<version>1.5.24-SNAPSHOT</version>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 
