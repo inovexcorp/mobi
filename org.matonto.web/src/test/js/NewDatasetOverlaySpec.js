@@ -52,26 +52,24 @@ describe('New Dataset Overlay directive', function() {
         controller = element.controller('newDatasetOverlay');
     });
 
-    describe('in isolated scope', function() {
+    describe('controller bound variable', function() {
         it('onClose should be called in parent scope when invoked', function() {
-            var isolatedScope = element.isolateScope();
-            isolatedScope.onClose();
+            controller.onClose();
             expect(scope.onClose).toHaveBeenCalled();
         });
     });
     describe('controller methods', function() {
         describe('should create a dataset', function() {
             beforeEach(function() {
-                controller.keywords = ['a ', ' b'];
+                controller.keywords = ['a ', ' b', 'c d'];
             });
             it('unless an error occurs', function() {
                 datasetManagerSvc.createDatasetRecord.and.returnValue($q.reject('Error Message'));
                 controller.create();
                 scope.$apply();
-                expect(controller.recordConfig.keywords).toBe('a,b');
+                expect(controller.recordConfig.keywords).toEqual(['a', 'b', 'c d']);
                 expect(datasetManagerSvc.createDatasetRecord).toHaveBeenCalledWith(controller.recordConfig);
                 expect(utilSvc.createSuccessToast).not.toHaveBeenCalled();
-                expect(datasetStateSvc.resetPagination).not.toHaveBeenCalled();
                 expect(datasetStateSvc.setResults).not.toHaveBeenCalled();
                 expect(scope.onClose).not.toHaveBeenCalled();
                 expect(controller.error).toBe('Error Message');
@@ -79,10 +77,9 @@ describe('New Dataset Overlay directive', function() {
             it('successfully', function() {
                 controller.create();
                 scope.$apply();
-                expect(controller.recordConfig.keywords).toBe('a,b');
+                expect(controller.recordConfig.keywords).toEqual(['a', 'b', 'c d']);
                 expect(datasetManagerSvc.createDatasetRecord).toHaveBeenCalledWith(controller.recordConfig);
                 expect(utilSvc.createSuccessToast).toHaveBeenCalled();
-                expect(datasetStateSvc.resetPagination).toHaveBeenCalled();
                 expect(datasetStateSvc.setResults).toHaveBeenCalled();
                 expect(scope.onClose).toHaveBeenCalled();
                 expect(controller.error).toBe('');

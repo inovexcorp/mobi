@@ -47,9 +47,9 @@
          */
         .service('datasetStateService', datasetStateService);
 
-        datasetStateService.$inject = ['datasetManagerService', 'utilService', 'prefixes'];
+        datasetStateService.$inject = ['datasetManagerService', 'utilService', 'prefixes', '$q'];
 
-        function datasetStateService(datasetManagerService, utilService, prefixes) {
+        function datasetStateService(datasetManagerService, utilService, prefixes, $q) {
             var self = this;
             var dm = datasetManagerService;
             var util = utilService;
@@ -113,7 +113,7 @@
 
             /**
              * @ngdoc method
-             * @name resetPagination
+             * @name setResults
              * @methodOf datasetState.service:datasetStateService
              *
              * @description
@@ -124,7 +124,7 @@
              * @param {string=''} url The URL to be used to retrieve Dataset Record results if desired
              */
             self.setResults = function(url = '') {
-                var promise = url ? dm.getResultsPage(url) : dm.getDatasetRecords(self.paginationConfig);
+                var promise = url ? util.getResultsPage(url, response => $q.reject(util.getErrorMessage(response))) : dm.getDatasetRecords(self.paginationConfig);
                 promise.then(self.setPagination, util.createErrorToast);
             }
             /**
@@ -137,7 +137,6 @@
              */
             self.resetPagination = function() {
                 self.paginationConfig.pageIndex = 0;
-                self.paginationConfig.searchText = '';
                 self.links = {
                     prev: '',
                     next: ''

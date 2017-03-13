@@ -38,13 +38,7 @@
             float: right;
 
             .action {
-                color: $gray-light;
                 display: inline-block;
-                text-decoration: none;
-
-                &:hover {
-                    color: $gray;
-                }
             }
         }
         .description {

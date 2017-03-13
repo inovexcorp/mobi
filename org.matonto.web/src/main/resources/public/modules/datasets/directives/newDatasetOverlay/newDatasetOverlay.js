@@ -60,11 +60,12 @@
                 restrict: 'E',
                 replace: true,
                 templateUrl: 'modules/datasets/directives/newDatasetOverlay/newDatasetOverlay.html',
-                scope: {
+                scope: {},
+                bindToController: {
                     onClose: '&'
                 },
                 controllerAs: 'dvm',
-                controller: ['$scope', function($scope) {
+                controller: function() {
                     var dvm = this;
                     var state = datasetStateService;
                     var dm = datasetManagerService;
@@ -79,20 +80,15 @@
                     dvm.keywords = [];
 
                     dvm.create = function() {
-                        dvm.recordConfig.keywords = _.join(_.map(dvm.keywords, _.trim), ',');
+                        dvm.recordConfig.keywords = _.map(dvm.keywords, _.trim);
                         dm.createDatasetRecord(dvm.recordConfig)
                             .then(() => {
                                 util.createSuccessToast('Dataset successfully created');
-                                state.resetPagination();
                                 state.setResults();
-                                $scope.onClose();
-                            }, onError);
+                                dvm.onClose();
+                            }, errorMessage => dvm.error = errorMessage);
                     }
-
-                    function onError(errorMessage) {
-                        dvm.error = errorMessage;
-                    }
-                }]
+                }
             }
         }
 })();

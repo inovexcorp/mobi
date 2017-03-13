@@ -40,21 +40,19 @@
          * @scope
          * @restrict E
          * @requires catalogState.service:catalogStateService
-         * @requires catalogManager.service:catalogManagerService
          * @requires util.service:utilService
          *
          * @description
          * `catalogPagination` is a directive which creates a div with a
          * {@link pagination.directive:pagination pagination} directive passing a `getPage` method
-         * that retrieves a new set of pagination results using the
-         * {@link catalogManager.service:catalogManagerService catalogManagerService}.
-         * The directive is replaced by the contents of its template.
+         * that retrieves a new set of pagination results. The directive is replaced by the contents
+         * of its template.
          */
         .directive('catalogPagination', catalogPagination);
 
-    catalogPagination.$inject = ['catalogStateService', 'catalogManagerService', 'utilService'];
+    catalogPagination.$inject = ['catalogStateService', 'utilService', '$q'];
 
-    function catalogPagination(catalogStateService, catalogManagerService, utilService) {
+    function catalogPagination(catalogStateService, utilService, $q) {
         return {
             restrict: 'E',
             replace: true,
@@ -63,18 +61,17 @@
             controller: function() {
                 var dvm = this;
                 dvm.state = catalogStateService;
-                dvm.cm = catalogManagerService;
                 dvm.util = utilService;
 
                 dvm.getPage = function(direction) {
                     if (direction === 'next') {
-                        dvm.cm.getResultsPage(dvm.state.links.next)
+                        dvm.util.getResultsPage(dvm.state.links.next, response => $q.reject(dvm.util.getErrorMessage(response)))
                             .then(response => {
                                 dvm.state.currentPage += 1;
                                 dvm.state.setPagination(response);
                             }, dvm.util.createErrorToast);
                     } else {
-                        dvm.cm.getResultsPage(dvm.state.links.prev)
+                        dvm.util.getResultsPage(dvm.state.links.prev, response => $q.reject(dvm.util.getErrorMessage(response)))
                             .then(response => {
                                 dvm.state.currentPage -= 1;
                                 dvm.state.setPagination(response);

@@ -26,18 +26,19 @@
         <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
         <div class="form-group">
             <custom-label>Title</custom-label>
-            <input type="text" name="title" ng-model="dvm.recordConfig.title" required focus-me>
+            <input class="form-control" type="text" name="title" ng-model="dvm.recordConfig.title" required focus-me>
         </div>
         <div class="form-group">
-            <custom-label>Repository Id</custom-label>
+            <custom-label>Repository ID</custom-label>
             <p class="form-control-static">{{dvm.recordConfig.repositoryId}}</p>
         </div>
         <text-input ng-model="dvm.recordConfig.datasetIRI" display-text="'Dataset IRI'" muted-text="'(Optional)'"></text-input>
+        <small class="help-block">System will create a default IRI if not provided.</small>
         <text-area ng-model="dvm.recordConfig.description" display-text="'Description'" muted-text="'(Optional)'"></text-area>
         <keyword-select ng-model="dvm.keywords"></keyword-select>
         <div class="btn-container clearfix">
             <button class="btn btn-primary pull-right" ng-disabled="dvm.form.$invalid" ng-click="dvm.create()">Submit</button>
-            <button class="btn btn-default pull-right" ng-click="onClose()">Cancel</button>
+            <button class="btn btn-default pull-right" ng-click="dvm.onClose()">Cancel</button>
         </div>
     </form>
 </div>

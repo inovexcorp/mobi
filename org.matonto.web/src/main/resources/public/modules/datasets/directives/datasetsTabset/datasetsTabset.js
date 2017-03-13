@@ -67,6 +67,7 @@
 
                     dvm.onKeyUp = function(event) {
                         if (event.keyCode === 13) {
+                            dvm.state.resetPagination();
                             dvm.state.setResults();
                         }
                     }

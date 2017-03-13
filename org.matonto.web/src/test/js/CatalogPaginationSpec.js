@@ -23,43 +23,39 @@
 describe('Catalog Pagination directive', function() {
     var $compile,
         scope,
-        catalogManagerSvc,
-        catalogStateSvc,
-        utilSvc,
         $q,
-        controller;
+        element,
+        controller,
+        catalogStateSvc,
+        utilSvc;
 
     beforeEach(function() {
         module('templates');
         module('catalogPagination');
-        mockCatalogManager();
         mockCatalogState();
         mockUtil();
 
-        inject(function( _$compile_, _$rootScope_, _catalogManagerService_, _catalogStateService_, _utilService_, _$q_) {
+        inject(function( _$compile_, _$rootScope_, _catalogStateService_, _utilService_, _$q_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            catalogManagerSvc = _catalogManagerService_;
             catalogStateSvc = _catalogStateService_;
             utilSvc = _utilService_;
             $q = _$q_;
         });
 
-        this.element = $compile(angular.element('<catalog-pagination></catalog-pagination>'))(scope);
+        element = $compile(angular.element('<catalog-pagination></catalog-pagination>'))(scope);
         scope.$digest();
+        controller = element.controller('catalogPagination');
     });
 
     describe('controller methods', function() {
-        beforeEach(function() {
-            controller = this.element.controller('catalogPagination');
-        });
         describe('should get the indicated page of paginated results', function() {
             it('unless an error occurs', function() {
-                catalogManagerSvc.getResultsPage.and.returnValue($q.reject('Error message'));
+                utilSvc.getResultsPage.and.returnValue($q.reject('Error message'));
                 var currentPage = catalogStateSvc.currentPage;
                 controller.getPage('next');
                 scope.$apply();
-                expect(catalogManagerSvc.getResultsPage).toHaveBeenCalledWith(catalogStateSvc.links.next);
+                expect(utilSvc.getResultsPage).toHaveBeenCalledWith(catalogStateSvc.links.next, jasmine.any(Function));
                 expect(catalogStateSvc.currentPage).toBe(currentPage);
                 expect(catalogStateSvc.setPagination).not.toHaveBeenCalled();
                 expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error message');
@@ -67,7 +63,7 @@ describe('Catalog Pagination directive', function() {
                 currentPage = catalogStateSvc.currentPage;
                 controller.getPage('prev');
                 scope.$apply();
-                expect(catalogManagerSvc.getResultsPage).toHaveBeenCalledWith(catalogStateSvc.links.prev);
+                expect(utilSvc.getResultsPage).toHaveBeenCalledWith(catalogStateSvc.links.prev, jasmine.any(Function));
                 expect(catalogStateSvc.currentPage).toBe(currentPage);
                 expect(catalogStateSvc.setPagination).not.toHaveBeenCalled();
                 expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error message');
@@ -76,7 +72,7 @@ describe('Catalog Pagination directive', function() {
                 var currentPage = catalogStateSvc.currentPage;
                 controller.getPage('next');
                 scope.$apply();
-                expect(catalogManagerSvc.getResultsPage).toHaveBeenCalledWith(catalogStateSvc.links.next);
+                expect(utilSvc.getResultsPage).toHaveBeenCalledWith(catalogStateSvc.links.next, jasmine.any(Function));
                 expect(catalogStateSvc.currentPage).toBe(currentPage + 1);
                 expect(catalogStateSvc.setPagination).toHaveBeenCalled();
                 expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
@@ -84,7 +80,7 @@ describe('Catalog Pagination directive', function() {
                 currentPage = catalogStateSvc.currentPage;
                 controller.getPage('prev');
                 scope.$apply();
-                expect(catalogManagerSvc.getResultsPage).toHaveBeenCalledWith(catalogStateSvc.links.prev);
+                expect(utilSvc.getResultsPage).toHaveBeenCalledWith(catalogStateSvc.links.prev, jasmine.any(Function));
                 expect(catalogStateSvc.currentPage).toBe(currentPage - 1);
                 expect(catalogStateSvc.setPagination).toHaveBeenCalled();
                 expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
@@ -93,10 +89,10 @@ describe('Catalog Pagination directive', function() {
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('catalog-pagination')).toBe(true);
+            expect(element.hasClass('catalog-pagination')).toBe(true);
         });
         it('with a pagination', function() {
-            expect(this.element.find('pagination').length).toBe(1);
+            expect(element.find('pagination').length).toBe(1);
         });
     });
 });

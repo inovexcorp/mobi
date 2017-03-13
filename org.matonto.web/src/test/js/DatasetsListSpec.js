@@ -100,16 +100,58 @@ describe('Datasets List directive', function() {
                 expect(datasetStateSvc.setResults).not.toHaveBeenCalled();
 
             });
-            it('successfully', function() {
-                controller.delete();
-                scope.$apply();
-                expect(datasetManagerSvc.deleteDatasetRecord).toHaveBeenCalledWith('dataset');
-                expect(controller.showDeleteConfirm).toBe(false);
-                expect(utilSvc.createSuccessToast).toHaveBeenCalled();
-                expect(controller.error).toBe('');
-                expect(controller.selectedDataset).toBeUndefined();
-                expect(datasetStateSvc.resetPagination).toHaveBeenCalled();
-                expect(datasetStateSvc.setResults).toHaveBeenCalled();
+            describe('successfully', function() {
+                beforeEach(function() {
+                    this.index = datasetStateSvc.paginationConfig.pageIndex = 1;
+                });
+                it('if there is only one result on the current page', function() {
+                    datasetStateSvc.results = [{}];
+                    controller.delete();
+                    scope.$apply();
+                    expect(datasetManagerSvc.deleteDatasetRecord).toHaveBeenCalledWith('dataset');
+                    expect(controller.showDeleteConfirm).toBe(false);
+                    expect(utilSvc.createSuccessToast).toHaveBeenCalled();
+                    expect(controller.error).toBe('');
+                    expect(controller.selectedDataset).toBeUndefined();
+                    expect(datasetStateSvc.paginationConfig.pageIndex).toBe(this.index - 1);
+                    expect(datasetStateSvc.setResults).toHaveBeenCalled();
+                });
+                it('if there is more than one result on the current page', function() {
+                    datasetStateSvc.results = [{}, {}];
+                    controller.delete();
+                    scope.$apply();
+                    expect(datasetManagerSvc.deleteDatasetRecord).toHaveBeenCalledWith('dataset');
+                    expect(controller.showDeleteConfirm).toBe(false);
+                    expect(utilSvc.createSuccessToast).toHaveBeenCalled();
+                    expect(controller.error).toBe('');
+                    expect(controller.selectedDataset).toBeUndefined();
+                    expect(datasetStateSvc.paginationConfig.pageIndex).toBe(this.index);
+                    expect(datasetStateSvc.setResults).toHaveBeenCalled();
+                });
+                it('if there are no results on the current page', function() {
+                    controller.delete();
+                    scope.$apply();
+                    expect(datasetManagerSvc.deleteDatasetRecord).toHaveBeenCalledWith('dataset');
+                    expect(controller.showDeleteConfirm).toBe(false);
+                    expect(utilSvc.createSuccessToast).toHaveBeenCalled();
+                    expect(controller.error).toBe('');
+                    expect(controller.selectedDataset).toBeUndefined();
+                    expect(datasetStateSvc.paginationConfig.pageIndex).toBe(this.index);
+                    expect(datasetStateSvc.setResults).toHaveBeenCalled();
+                });
+                it('if the current page is the first one', function() {
+                    datasetStateSvc.paginationConfig.pageIndex = 0;
+                    datasetStateSvc.results = [{}];
+                    controller.delete();
+                    scope.$apply();
+                    expect(datasetManagerSvc.deleteDatasetRecord).toHaveBeenCalledWith('dataset');
+                    expect(controller.showDeleteConfirm).toBe(false);
+                    expect(utilSvc.createSuccessToast).toHaveBeenCalled();
+                    expect(controller.error).toBe('');
+                    expect(controller.selectedDataset).toBeUndefined();
+                    expect(datasetStateSvc.paginationConfig.pageIndex).toBe(0);
+                    expect(datasetStateSvc.setResults).toHaveBeenCalled();
+                });
             });
         });
         it('should clear a dataset', function() {

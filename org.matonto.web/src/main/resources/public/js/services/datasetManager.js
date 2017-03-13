@@ -52,12 +52,6 @@
                 util = utilService,
                 prefix = '/matontorest/datasets';
 
-            self.getResultsPage = function(url) {
-                var deferred = $q.defer();
-                $http.get(url).then(deferred.resolve, error => util.onError(error, deferred));
-                return deferred.promise;
-            }
-
             /**
              * @ngdoc method
              * @name getDatasetRecords

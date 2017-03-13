@@ -50,9 +50,11 @@ describe('Datasets Tabset directive', function() {
         it('should set the correct state if the enter key is pressed', function() {
             datasetStateSvc.setResults.calls.reset();
             controller.onKeyUp({keyCode: 0});
+            expect(datasetStateSvc.resetPagination).not.toHaveBeenCalled();
             expect(datasetStateSvc.setResults).not.toHaveBeenCalled();
 
             controller.onKeyUp({keyCode: 13});
+            expect(datasetStateSvc.resetPagination).toHaveBeenCalled();
             expect(datasetStateSvc.setResults).toHaveBeenCalled();
         });
     });

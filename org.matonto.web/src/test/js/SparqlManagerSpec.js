@@ -57,6 +57,7 @@ describe('SPARQL Manager service', function() {
         });
         it('unless an error occurs', function(done) {
             var statusMessage = 'Error message';
+            utilSvc.getErrorMessage.and.returnValue(statusMessage);
             $httpBackend.expectGET(this.url).respond(400, undefined, undefined, statusMessage);
             sparqlManagerSvc.queryRdf();
             $httpBackend.flush();

@@ -99,7 +99,9 @@
                                 dvm.showDeleteConfirm = false;
                                 dvm.error = '';
                                 dvm.selectedDataset = undefined;
-                                dvm.state.resetPagination();
+                                if (dvm.state.results.length === 1 && dvm.state.paginationConfig.pageIndex > 0) {
+                                    dvm.state.paginationConfig.pageIndex -= 1;
+                                }
                                 dvm.state.setResults();
                             }, onError);
                     }

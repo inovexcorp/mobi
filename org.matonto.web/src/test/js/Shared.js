@@ -418,6 +418,7 @@ function mockSparqlManager() {
             this.reset = jasmine.createSpy('reset');
             this.queryRdf = jasmine.createSpy('queryRdf');
             this.downloadResults = jasmine.createSpy('downloadResults');
+            this.setResults = jasmine.createSpy('setResults');
         });
     });
 }
@@ -753,7 +754,7 @@ function mockCatalogState() {
 
 function mockUtil() {
     module(function($provide) {
-        $provide.service('utilService', function() {
+        $provide.service('utilService', function($q) {
             this.getBeautifulIRI = jasmine.createSpy('getBeautifulIRI').and.callFake(_.identity);
             this.getPropertyValue = jasmine.createSpy('getPropertyValue').and.returnValue('');
             this.setPropertyValue = jasmine.createSpy('setPropertyValue').and.returnValue({});
@@ -775,6 +776,8 @@ function mockUtil() {
             this.onError = jasmine.createSpy('onError').and.callFake(function(error, deferred) {
                 deferred.reject(_.get(error, 'statusText', ''));
             });
+            this.getErrorMessage = jasmine.createSpy('getErrorMessage').and.returnValue('');
+            this.getResultsPage = jasmine.createSpy('getResultsPage').and.returnValue($q.when({}));
         });
     });
 }

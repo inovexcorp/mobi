@@ -43,9 +43,9 @@
          */
         .service('utilService', utilService);
 
-        utilService.$inject = ['$filter', 'prefixes', 'toastr'];
+        utilService.$inject = ['$filter', 'prefixes', 'toastr', '$http'];
 
-        function utilService($filter, prefixes, toastr) {
+        function utilService($filter, prefixes, toastr, $http) {
             var self = this;
 
             /**
@@ -370,6 +370,23 @@
             }
             /**
              * @ngdoc method
+             * @name getResultsPage
+             * @methodOf util.service:utilService
+             *
+             * @description
+             * Calls the passed URL which repesents a call to get paginated results and returns a Promise
+             * that resolves to the HTTP response if successful and calls the provided function if it
+             * failed.
+             *
+             * @param {string} url The URL to make a GET call to. Expects the response to be paginated
+             * @param {Function} errorFunction The function to call if the request fails
+             * @return {Promise} A Promise that resolves to the HTTP response if successful
+             */
+            self.getResultsPage = function(url, errorFunction) {
+                return $http.get(url).then(response => response, errorFunction);
+            }
+            /**
+             * @ngdoc method
              * @name onError
              * @methodOf util.service:utilService
              *
@@ -379,11 +396,27 @@
              *
              * @param {Object} error A HTTP response object
              * @param {?} deferred A deferred promise created by $q.defer()
-             * @param {string='Something went wrong. Please try again later.'} defaultMessage The optional
-             * default error text for the rejection
+             * @param {string} defaultMessage The optional default error text for the rejection
              */
-            self.onError = function(error, deferred, defaultMessage = 'Something went wrong. Please try again later.') {
-                deferred.reject(_.get(error, 'statusText', defaultMessage));
+            self.onError = function(error, deferred, defaultMessage) {
+                deferred.reject(self.getErrorMessage(error, defaultMessage));
+            }
+            /**
+             * @ngdoc method
+             * @name getErrorMessage
+             * @methodOf util.service:utilService
+             *
+             * @description
+             * Retrieves an error message from a HTTP response if available, otherwise uses the passed default
+             * message.
+             *
+             * @param {Object} error A response from a HTTP calls
+             * @param {string='Something went wrong. Please try again later.'} defaultMessage The optional message
+             * to use if the response doesn't have an error message
+             * @return {string} An error message for the passed HTTP response
+             */
+            self.getErrorMessage = function(error, defaultMessage = 'Something went wrong. Please try again later.') {
+                return _.get(error, 'statusText') || defaultMessage;
             }
         }
 })();
