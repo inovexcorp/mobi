@@ -756,7 +756,7 @@ class SimpleDatasetManagerSpec extends Specification {
         ]
     }
 
-    def "getConnection(dataset, repository) returns a DatasetConnection over the correct dataset"() {
+    def "getConnection(dataset, repository) returns a DatasetConnection over the correct dataset and repo"() {
         setup:
         def repo = "system"
         def datasetIRI = datasetsInFile[1]
@@ -768,19 +768,6 @@ class SimpleDatasetManagerSpec extends Specification {
 
         then:
         dsConn.getDataset() == datasetIRI
-    }
-
-    def "getConnection(dataset, repository) returns a DatasetConnection over the correct repo"() {
-        setup:
-        def repo = "system"
-        def datasetIRI = datasetsInFile[1]
-        def recordIRI = vf.createIRI("http://test.com/record1")
-        mockRetrieveRecord(datasetIRI, repo, recordIRI)
-
-        when:
-        def dsConn = service.getConnection(datasetIRI, repo)
-
-        then:
         dsConn.getRepositoryId() == repo
     }
 
