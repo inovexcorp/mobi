@@ -316,7 +316,7 @@ public class SimpleDatasetManager implements DatasetManager {
                 .orElseThrow(() -> new MatOntoException("Could not retrieve the Repository ID from the DatasetRecord."));
 
         Repository dsRepo = getDatasetRepo(datasetRecord);
-        return new SimpleDatasetRepositoryConnection(dsRepo.getConnection(), dataset, repositoryId);
+        return new SimpleDatasetRepositoryConnection(dsRepo.getConnection(), dataset, repositoryId, vf);
     }
 
     /**

@@ -85,6 +85,12 @@ class SimpleDatasetManagerSpec extends Specification {
     def repos = [ : ]
 
     @Shared
+    numSystemDS = 5
+
+    @Shared
+    numTestDS = 3
+
+    @Shared
     datasetsInFile = [
             [ "filler" ],
             vf.createIRI("http://matonto.org/dataset/test1"),
@@ -93,7 +99,8 @@ class SimpleDatasetManagerSpec extends Specification {
             vf.createIRI("http://matonto.org/dataset/test4"),
             vf.createIRI("http://matonto.org/dataset/test5"),
             vf.createIRI("http://matonto.org/dataset/test6"),
-            vf.createIRI("http://matonto.org/dataset/test7")
+            vf.createIRI("http://matonto.org/dataset/test7"),
+            vf.createIRI("http://matonto.org/dataset/test8")
     ]
 
     @Shared
@@ -105,7 +112,8 @@ class SimpleDatasetManagerSpec extends Specification {
             vf.createIRI("http://matonto.org/record/dataset/test4"),
             vf.createIRI("http://matonto.org/record/dataset/test5"),
             vf.createIRI("http://matonto.org/record/dataset/test6"),
-            vf.createIRI("http://matonto.org/record/dataset/test7")
+            vf.createIRI("http://matonto.org/record/dataset/test7"),
+            vf.createIRI("http://matonto.org/record/dataset/test8")
     ]
 
     @Shared
@@ -117,7 +125,8 @@ class SimpleDatasetManagerSpec extends Specification {
             [ vf.createIRI("http://matonto.org/dataset/test3/graph4") ],
             [ vf.createIRI("http://matonto.org/dataset/test5/graph1") ],
             [ vf.createIRI("http://matonto.org/dataset/test2/graph1") ],
-            [ vf.createIRI("http://matonto.org/dataset/test7/graph1") ]
+            [ vf.createIRI("http://matonto.org/dataset/test7/graph1") ],
+            []
     ]
 
     @Shared
@@ -129,7 +138,8 @@ class SimpleDatasetManagerSpec extends Specification {
             [ vf.createIRI("http://matonto.org/dataset/test3/graph5") ],
             [ vf.createIRI("http://matonto.org/dataset/test5/graph2") ],
             [ vf.createIRI("http://matonto.org/dataset/test2/graph2") ],
-            [ vf.createIRI("http://matonto.org/dataset/test7/graph2") ]
+            [ vf.createIRI("http://matonto.org/dataset/test7/graph2") ],
+            []
     ]
 
     @Shared
@@ -142,6 +152,7 @@ class SimpleDatasetManagerSpec extends Specification {
             [ vf.createIRI("http://matonto.org/dataset/test5_system_dng") ],
             [ vf.createIRI("http://matonto.org/dataset/test6_system_dng") ],
             [ vf.createIRI("http://matonto.org/dataset/test7_system_dng") ],
+            []
     ]
 
     def setup() {
@@ -383,8 +394,8 @@ class SimpleDatasetManagerSpec extends Specification {
 
         where:
         repo | size
-        "system" | 4
-        "test" | 3
+        "system" | numSystemDS
+        "test" | numTestDS
     }
 
     def "createDataset returns the correct DatasetRecord"() {
