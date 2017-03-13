@@ -43,9 +43,9 @@
          */
         .service('utilService', utilService);
 
-        utilService.$inject = ['$filter', 'prefixes', 'toastr', '$http'];
+        utilService.$inject = ['$filter', 'prefixes', 'toastr', '$http', '$q'];
 
-        function utilService($filter, prefixes, toastr, $http) {
+        function utilService($filter, prefixes, toastr, $http, $q) {
             var self = this;
 
             /**
@@ -379,10 +379,11 @@
              * failed.
              *
              * @param {string} url The URL to make a GET call to. Expects the response to be paginated
-             * @param {Function} errorFunction The function to call if the request fails
+             * @param {Function} errorFunction The optional function to call if the request fails. Default
+             * function rejects with the error message from the response.
              * @return {Promise} A Promise that resolves to the HTTP response if successful
              */
-            self.getResultsPage = function(url, errorFunction) {
+            self.getResultsPage = function(url, errorFunction = response => $q.reject(self.getErrorMessage(response))) {
                 return $http.get(url).then(response => response, errorFunction);
             }
             /**

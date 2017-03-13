@@ -56,7 +56,7 @@ describe('Dataset State service', function() {
                 utilSvc.getResultsPage.and.returnValue($q.reject('Error Message'));
                 datasetStateSvc.setResults(this.url);
                 $timeout.flush();
-                expect(utilSvc.getResultsPage).toHaveBeenCalledWith(this.url, jasmine.any(Function));
+                expect(utilSvc.getResultsPage).toHaveBeenCalledWith(this.url);
                 expect(datasetManagerSvc.getDatasetRecords).not.toHaveBeenCalled();
                 expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error Message');
                 expect(datasetStateSvc.setPagination).not.toHaveBeenCalled();
@@ -64,7 +64,7 @@ describe('Dataset State service', function() {
             it('successfully', function() {
                 datasetStateSvc.setResults(this.url);
                 $timeout.flush();
-                expect(utilSvc.getResultsPage).toHaveBeenCalledWith(this.url, jasmine.any(Function));
+                expect(utilSvc.getResultsPage).toHaveBeenCalledWith(this.url);
                 expect(datasetManagerSvc.getDatasetRecords).not.toHaveBeenCalled();
                 expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
                 expect(datasetStateSvc.setPagination).toHaveBeenCalledWith(jasmine.any(Object));

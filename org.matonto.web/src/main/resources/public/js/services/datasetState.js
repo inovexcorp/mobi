@@ -124,7 +124,7 @@
              * @param {string=''} url The URL to be used to retrieve Dataset Record results if desired
              */
             self.setResults = function(url = '') {
-                var promise = url ? util.getResultsPage(url, response => $q.reject(util.getErrorMessage(response))) : dm.getDatasetRecords(self.paginationConfig);
+                var promise = url ? util.getResultsPage(url) : dm.getDatasetRecords(self.paginationConfig);
                 promise.then(self.setPagination, util.createErrorToast);
             }
             /**

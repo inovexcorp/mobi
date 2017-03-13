@@ -123,12 +123,12 @@
                     }
                     dvm.getRecordPage = function(direction) {
                         if (direction === 'prev') {
-                            dvm.util.getResultsPage(dvm.links.prev, response => $q.reject(dvm.util.getErrorMessage(response))).then(response => {
+                            dvm.util.getResultsPage(dvm.links.prev).then(response => {
                                 dvm.recordsConfig.pageIndex -= 1;
                                 parseRecordResults(response);
                             }, onError);
                         } else {
-                            dvm.util.getResultsPage(dvm.links.next, response => $q.reject(dvm.util.getErrorMessage(response))).then(response => {
+                            dvm.util.getResultsPage(dvm.links.next).then(response => {
                                 dvm.recordsConfig.pageIndex += 1;
                                 parseRecordResults(response);
                             }, onError);

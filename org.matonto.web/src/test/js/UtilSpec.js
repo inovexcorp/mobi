@@ -187,10 +187,9 @@ describe('Util service', function() {
         expect(utilSvc.paginatedConfigToParams({})).toEqual({});
     });
     describe('should get a page of paginated results from a URL', function() {
-        var failFunction = jasmine.createSpy('failFunction');
         it('if the call succeeds', function(done) {
             $httpBackend.whenGET('/test').respond(200);
-            utilSvc.getResultsPage('/test', failFunction).then(function(response) {
+            utilSvc.getResultsPage('/test').then(function(response) {
                 expect(_.isObject(response)).toBe(true);
                 done();
             }, function(response) {
@@ -199,11 +198,35 @@ describe('Util service', function() {
             });
             $httpBackend.flush();
         });
-        it('if the call fails', function() {
-            $httpBackend.whenGET('/test').respond(400);
-            utilSvc.getResultsPage('/test', failFunction);
-            $httpBackend.flush();
-            expect(failFunction).toHaveBeenCalled();
+        describe('if the call fails', function() {
+            var failFunction;
+            beforeEach(function() {
+                failFunction = jasmine.createSpy('failFunction').and.returnValue($q.reject('Test'));
+                $httpBackend.whenGET('/test').respond(400);
+            });
+            it('with a passed error function', function(done) {
+                utilSvc.getResultsPage('/test', failFunction).then(function(response) {
+                    fail('Promise should have rejected.');
+                    done();
+                }, function(response) {
+                    expect(failFunction).toHaveBeenCalled();
+                    expect(response).toBe('Test');
+                    done();
+                });
+                $httpBackend.flush();
+            });
+            it('with a default error function', function(done) {
+                spyOn(utilSvc, 'getErrorMessage').and.returnValue('Test');
+                utilSvc.getResultsPage('/test').then(function(response) {
+                    fail('Promise should have rejected.');
+                    done();
+                }, function(response) {
+                    expect(utilSvc.getErrorMessage).toHaveBeenCalled();
+                    expect(response).toBe('Test');
+                    done();
+                });
+                $httpBackend.flush();
+            });
         });
     });
     it('should reject a deferred promise with an error message', function(done) {

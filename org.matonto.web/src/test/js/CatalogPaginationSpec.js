@@ -55,7 +55,7 @@ describe('Catalog Pagination directive', function() {
                 var currentPage = catalogStateSvc.currentPage;
                 controller.getPage('next');
                 scope.$apply();
-                expect(utilSvc.getResultsPage).toHaveBeenCalledWith(catalogStateSvc.links.next, jasmine.any(Function));
+                expect(utilSvc.getResultsPage).toHaveBeenCalledWith(catalogStateSvc.links.next);
                 expect(catalogStateSvc.currentPage).toBe(currentPage);
                 expect(catalogStateSvc.setPagination).not.toHaveBeenCalled();
                 expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error message');
@@ -63,7 +63,7 @@ describe('Catalog Pagination directive', function() {
                 currentPage = catalogStateSvc.currentPage;
                 controller.getPage('prev');
                 scope.$apply();
-                expect(utilSvc.getResultsPage).toHaveBeenCalledWith(catalogStateSvc.links.prev, jasmine.any(Function));
+                expect(utilSvc.getResultsPage).toHaveBeenCalledWith(catalogStateSvc.links.prev);
                 expect(catalogStateSvc.currentPage).toBe(currentPage);
                 expect(catalogStateSvc.setPagination).not.toHaveBeenCalled();
                 expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error message');
@@ -72,7 +72,7 @@ describe('Catalog Pagination directive', function() {
                 var currentPage = catalogStateSvc.currentPage;
                 controller.getPage('next');
                 scope.$apply();
-                expect(utilSvc.getResultsPage).toHaveBeenCalledWith(catalogStateSvc.links.next, jasmine.any(Function));
+                expect(utilSvc.getResultsPage).toHaveBeenCalledWith(catalogStateSvc.links.next);
                 expect(catalogStateSvc.currentPage).toBe(currentPage + 1);
                 expect(catalogStateSvc.setPagination).toHaveBeenCalled();
                 expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
@@ -80,7 +80,7 @@ describe('Catalog Pagination directive', function() {
                 currentPage = catalogStateSvc.currentPage;
                 controller.getPage('prev');
                 scope.$apply();
-                expect(utilSvc.getResultsPage).toHaveBeenCalledWith(catalogStateSvc.links.prev, jasmine.any(Function));
+                expect(utilSvc.getResultsPage).toHaveBeenCalledWith(catalogStateSvc.links.prev);
                 expect(catalogStateSvc.currentPage).toBe(currentPage - 1);
                 expect(catalogStateSvc.setPagination).toHaveBeenCalled();
                 expect(utilSvc.createErrorToast).not.toHaveBeenCalled();

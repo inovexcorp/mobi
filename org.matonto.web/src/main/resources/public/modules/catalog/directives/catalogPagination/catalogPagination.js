@@ -65,13 +65,13 @@
 
                 dvm.getPage = function(direction) {
                     if (direction === 'next') {
-                        dvm.util.getResultsPage(dvm.state.links.next, response => $q.reject(dvm.util.getErrorMessage(response)))
+                        dvm.util.getResultsPage(dvm.state.links.next)
                             .then(response => {
                                 dvm.state.currentPage += 1;
                                 dvm.state.setPagination(response);
                             }, dvm.util.createErrorToast);
                     } else {
-                        dvm.util.getResultsPage(dvm.state.links.prev, response => $q.reject(dvm.util.getErrorMessage(response)))
+                        dvm.util.getResultsPage(dvm.state.links.prev)
                             .then(response => {
                                 dvm.state.currentPage -= 1;
                                 dvm.state.setPagination(response);

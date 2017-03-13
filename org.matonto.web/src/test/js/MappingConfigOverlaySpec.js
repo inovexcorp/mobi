@@ -213,7 +213,7 @@ describe('Mapping Config Overlay directive', function() {
                 utilSvc.getResultsPage.and.returnValue($q.reject('Error message'));
                 controller.getRecordPage('prev');
                 scope.$apply();
-                expect(utilSvc.getResultsPage).toHaveBeenCalledWith(jasmine.any(String), jasmine.any(Function));
+                expect(utilSvc.getResultsPage).toHaveBeenCalledWith(jasmine.any(String));
                 expect(controller.errorMessage).toBe('Error message');
                 expect(controller.recordsConfig.pageIndex).toBe(this.pageIndex);
                 expect(controller.records).toEqual(this.response.data);
@@ -221,7 +221,7 @@ describe('Mapping Config Overlay directive', function() {
             it('if the direction is previous', function() {
                 controller.getRecordPage('prev');
                 scope.$apply();
-                expect(utilSvc.getResultsPage).toHaveBeenCalledWith(controller.links.prev, jasmine.any(Function));
+                expect(utilSvc.getResultsPage).toHaveBeenCalledWith(controller.links.prev);
                 expect(controller.recordsConfig.pageIndex).toBe(this.pageIndex - 1);
                 expect(controller.records).toEqual(this.response.data);
                 expect(controller.errorMessage).toBe('');
@@ -229,7 +229,7 @@ describe('Mapping Config Overlay directive', function() {
             it('if the direction is next', function() {
                 controller.getRecordPage('next');
                 scope.$apply();
-                expect(utilSvc.getResultsPage).toHaveBeenCalledWith(controller.links.next, jasmine.any(Function));
+                expect(utilSvc.getResultsPage).toHaveBeenCalledWith(controller.links.next);
                 expect(controller.recordsConfig.pageIndex).toBe(this.pageIndex + 1);
                 expect(controller.records).toEqual(this.response.data);
                 expect(controller.errorMessage).toBe('');

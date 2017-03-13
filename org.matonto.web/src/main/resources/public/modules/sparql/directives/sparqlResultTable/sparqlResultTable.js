@@ -67,11 +67,9 @@
                         if (direction === 'next') {
                             dvm.sparql.currentPage += 1;
                             dvm.sparql.setResults(dvm.sparql.links.next);
-                            // dvm.sparql.getResults(dvm.sparql.links.next);
                         } else {
                             dvm.sparql.currentPage -= 1;
                             dvm.sparql.setResults(dvm.sparql.links.prev);
-                            // dvm.sparql.getResults(dvm.sparql.links.prev);
                         }
                     }
                 }
