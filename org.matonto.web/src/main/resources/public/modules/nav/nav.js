@@ -36,6 +36,7 @@
             { icon: 'home', sref: 'root.home', isActive: $state.is('root.home'), name: 'Home' },
             { icon: 'pencil-square-o', sref: 'root.ontology-editor', isActive: $state.is('root.ontology-editor'), name: 'Ontology Editor'},
             { icon: 'map-o', sref: 'root.mapper', isActive: $state.is('root.mapper'), name: 'Mapping Tool' },
+            { icon: 'database', sref: 'root.datasets', isActive: $state.is('root.datasets'), name: 'Datasets' },
             { icon: 'terminal', sref: 'root.sparql', isActive: $state.is('root.sparql'), name: 'SPARQL Editor' },
             { icon: 'book', sref: 'root.catalog', isActive: $state.is('root.catalog'), name: 'Catalog' }
         ];

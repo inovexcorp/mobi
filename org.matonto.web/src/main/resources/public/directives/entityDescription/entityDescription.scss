@@ -1,6 +1,8 @@
 /* Core variables */
 @import "./src/main/resources/public/css/variables";
 
-.description {
-    word-wrap: break-word;
+.entity-description {
+    .description {
+        word-wrap: break-word;
+    }
 }

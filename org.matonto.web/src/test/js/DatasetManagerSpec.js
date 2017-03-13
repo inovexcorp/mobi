@@ -91,7 +91,7 @@ describe('Dataset Manager service', function() {
         beforeEach(function() {
             this.recordConfig = {
                 title: 'Title',
-                repository: 'repo',
+                repositoryId: 'repo',
                 datasetIRI: 'dataset',
                 description: 'Description',
                 keywords: ['keyword0', 'keyword1']

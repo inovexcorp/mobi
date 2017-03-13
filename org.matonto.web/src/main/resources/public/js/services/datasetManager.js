@@ -77,6 +77,9 @@
                     config = {
                         params: util.paginatedConfigToParams(paginatedConfig)
                     };
+                if (_.get(paginatedConfig, 'searchText')) {
+                    config.params.searchText = paginatedConfig.searchText;
+                }
                 $http.get(prefix, config)
                     .then(deferred.resolve, error => util.onError(error, deferred));
                 return deferred.promise;
@@ -111,7 +114,7 @@
                         }
                     };
                 fd.append('title', recordConfig.title);
-                fd.append('repositoryId', recordConfig.repository);
+                fd.append('repositoryId', recordConfig.repositoryId);
                 if (_.has(recordConfig, 'datasetIRI')) {
                     fd.append('datasetIRI', recordConfig.datasetIRI);
                 }

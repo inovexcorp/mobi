@@ -84,7 +84,7 @@ public class DatasetRestImpl implements DatasetRest {
     }
 
     @Override
-    public Response getDatasetRecords(UriInfo uriInfo, int offset, int limit, String sort, boolean asc) {
+    public Response getDatasetRecords(UriInfo uriInfo, int offset, int limit, String sort, boolean asc, String searchText) {
         try {
             LinksUtils.validateParams(limit, offset);
             DatasetPaginatedSearchParams params = new DatasetPaginatedSearchParams(vf).setOffset(offset)
@@ -94,6 +94,9 @@ public class DatasetRestImpl implements DatasetRest {
             }
             if (sort != null && !sort.isEmpty()) {
                 params.setSortBy(vf.createIRI(sort));
+            }
+            if (searchText != null && !searchText.isEmpty()) {
+                params.setSearchText(searchText);
             }
             PaginatedSearchResults<DatasetRecord> results = manager.getDatasetRecords(params);
             JSONArray array = JSONArray.fromObject(results.getPage().stream()

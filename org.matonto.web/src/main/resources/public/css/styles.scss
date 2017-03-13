@@ -11,6 +11,19 @@ body {
     top: 0;
     overflow-x: hidden;
 
+    /* Overall design styles */
+    .blue-bar {
+        height: 48px;
+        background-color: $highlight-blue;
+    }
+
+    .white-bar {
+        background-color: #fff;
+        box-shadow: 5px 5px 5px 0px $gray-light;
+        height: 52px;
+        text-align: center;
+    }
+
     /* All <a> tags have the pointer cursor */
     a {
         cursor: pointer;

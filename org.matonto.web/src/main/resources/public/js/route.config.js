@@ -150,6 +150,16 @@
                 data: {
                     title: 'User Management'
                 }
+            }).state('root.datasets', {
+                url: '/datasets',
+                views: {
+                    'container@': {
+                        templateUrl: 'modules/datasets/datasets.html'
+                    }
+                },
+                data: {
+                    title: 'Datasets'
+                }
             });
 
         authenticate.$inject = ['loginManagerService'];

@@ -207,30 +207,29 @@ describe('Mapping Config Overlay directive', function() {
         describe('should get a page of records', function() {
             beforeEach(function() {
                 this.pageIndex = controller.recordsConfig.pageIndex;
-            })
+                utilSvc.getResultsPage.and.returnValue($q.when(this.response));
+            });
             it('unless an error occurs', function() {
-                catalogManagerSvc.getResultsPage.and.returnValue($q.reject('Error message'));
+                utilSvc.getResultsPage.and.returnValue($q.reject('Error message'));
                 controller.getRecordPage('prev');
                 scope.$apply();
-                expect(catalogManagerSvc.getResultsPage).toHaveBeenCalled();
+                expect(utilSvc.getResultsPage).toHaveBeenCalledWith(jasmine.any(String));
                 expect(controller.errorMessage).toBe('Error message');
                 expect(controller.recordsConfig.pageIndex).toBe(this.pageIndex);
                 expect(controller.records).toEqual(this.response.data);
             });
             it('if the direction is previous', function() {
-                catalogManagerSvc.getResultsPage.and.returnValue($q.when(this.response));
                 controller.getRecordPage('prev');
                 scope.$apply();
-                expect(catalogManagerSvc.getResultsPage).toHaveBeenCalledWith(controller.links.prev);
+                expect(utilSvc.getResultsPage).toHaveBeenCalledWith(controller.links.prev);
                 expect(controller.recordsConfig.pageIndex).toBe(this.pageIndex - 1);
                 expect(controller.records).toEqual(this.response.data);
                 expect(controller.errorMessage).toBe('');
             });
             it('if the direction is next', function() {
-                catalogManagerSvc.getResultsPage.and.returnValue($q.when(this.response));
                 controller.getRecordPage('next');
                 scope.$apply();
-                expect(catalogManagerSvc.getResultsPage).toHaveBeenCalledWith(controller.links.next);
+                expect(utilSvc.getResultsPage).toHaveBeenCalledWith(controller.links.next);
                 expect(controller.recordsConfig.pageIndex).toBe(this.pageIndex + 1);
                 expect(controller.records).toEqual(this.response.data);
                 expect(controller.errorMessage).toBe('');
