@@ -41,7 +41,7 @@
         </block-content>
         <block-footer ng-if="dvm.sparql.data" class="footer-relative">
             <button class="btn btn-default download-button" ng-click="dvm.sparql.displayDownloadOverlay = true"><i class="fa fa-download"></i></button>
-            <paging-details page-size="dvm.sparql.data.length" total-size="dvm.sparql.totalSize" page-index="dvm.sparql.currentPage" limit="dvm.sparql.limit"></paging-details>
+            <paging-details total-size="dvm.sparql.totalSize" page-index="dvm.sparql.currentPage" limit="dvm.sparql.limit"></paging-details>
             <pagination links="dvm.sparql.links" current-page="dvm.sparql.currentPage" get-page="dvm.getPage(direction)"></pagination>
         </block-footer>
     </block>

@@ -21,5 +21,5 @@
   #L%
   -->
 <div class="paging-details">
-    <p>Showing {{(pageSize > 0 ? ((pageIndex * limit) + 1) : 0) | number}} to {{Math.min(totalSize, (pageIndex + 1) * limit) | number}} of {{totalSize | number}}</p>
+    <p>Showing {{(totalSize > 0 ? ((pageIndex * limit) + 1) : 0) | number}} to {{Math.min(totalSize, (pageIndex + 1) * limit) | number}} of {{totalSize | number}}</p>
 </div>

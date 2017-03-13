@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Util service', function() {
-    var utilSvc, prefixes, toastr, splitIRIFilter, beautifyFilter, $filter;
+    var utilSvc, prefixes, toastr, splitIRIFilter, beautifyFilter, $filter, $httpBackend, $q, $timeout;
 
     beforeEach(function() {
         module('util');
@@ -30,13 +30,16 @@ describe('Util service', function() {
         injectBeautifyFilter();
         mockToastr();
 
-        inject(function(utilService, _prefixes_, _toastr_, _splitIRIFilter_, _beautifyFilter_, _$filter_) {
+        inject(function(utilService, _prefixes_, _toastr_, _splitIRIFilter_, _beautifyFilter_, _$filter_, _$httpBackend_, _$q_, _$timeout_) {
             utilSvc = utilService;
             prefixes = _prefixes_;
             toastr = _toastr_;
             splitIRIFilter = _splitIRIFilter_;
             beautifyFilter = _beautifyFilter_;
             $filter = _$filter_;
+            $httpBackend = _$httpBackend_;
+            $q = _$q_;
+            $timeout = _$timeout_;
         });
     });
 
@@ -182,5 +185,68 @@ describe('Util service', function() {
         expect(utilSvc.paginatedConfigToParams({sortOption: {field: 'test'}, limit: 10})).toEqual({sort: 'test', limit: 10});
         expect(utilSvc.paginatedConfigToParams({sortOption: {asc: true}, pageIndex: 0})).toEqual({ascending: true});
         expect(utilSvc.paginatedConfigToParams({})).toEqual({});
+    });
+    describe('should get a page of paginated results from a URL', function() {
+        it('if the call succeeds', function(done) {
+            $httpBackend.whenGET('/test').respond(200);
+            utilSvc.getResultsPage('/test').then(function(response) {
+                expect(_.isObject(response)).toBe(true);
+                done();
+            }, function(response) {
+                fail('Promise should have resolved');
+                done();
+            });
+            $httpBackend.flush();
+        });
+        describe('if the call fails', function() {
+            var failFunction;
+            beforeEach(function() {
+                failFunction = jasmine.createSpy('failFunction').and.returnValue($q.reject('Test'));
+                $httpBackend.whenGET('/test').respond(400);
+            });
+            it('with a passed error function', function(done) {
+                utilSvc.getResultsPage('/test', failFunction).then(function(response) {
+                    fail('Promise should have rejected.');
+                    done();
+                }, function(response) {
+                    expect(failFunction).toHaveBeenCalled();
+                    expect(response).toBe('Test');
+                    done();
+                });
+                $httpBackend.flush();
+            });
+            it('with a default error function', function(done) {
+                spyOn(utilSvc, 'getErrorMessage').and.returnValue('Test');
+                utilSvc.getResultsPage('/test').then(function(response) {
+                    fail('Promise should have rejected.');
+                    done();
+                }, function(response) {
+                    expect(utilSvc.getErrorMessage).toHaveBeenCalled();
+                    expect(response).toBe('Test');
+                    done();
+                });
+                $httpBackend.flush();
+            });
+        });
+    });
+    it('should reject a deferred promise with an error message', function(done) {
+        spyOn(utilSvc, 'getErrorMessage').and.returnValue('Test');
+        var deferred = $q.defer();
+        utilSvc.onError({}, deferred, 'Test');
+        deferred.promise.then(function() {
+            fail('Promise should have rejected.');
+            done();
+        }, function(error) {
+            expect(error).toBe('Test');
+            expect(utilSvc.getErrorMessage).toHaveBeenCalledWith({}, 'Test');
+            done();
+        });
+        $timeout.flush();
+    });
+    it('should retrieve an error message from a http response', function() {
+        expect(utilSvc.getErrorMessage({}, 'default')).toBe('default');
+        expect(utilSvc.getErrorMessage({})).toBe('Something went wrong. Please try again later.');
+        expect(utilSvc.getErrorMessage({statusText: ''})).toBe('Something went wrong. Please try again later.');
+        expect(utilSvc.getErrorMessage({statusText: 'Test'})).toBe('Test');
     });
 });

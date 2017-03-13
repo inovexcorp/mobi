@@ -20,7 +20,18 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="entity-dates">
-    <span class="date"><span class="field-name">Date Issued:</span> <span>{{dvm.getDate(entity, 'issued')}}</span></span>
-    <span class="date"><span class="field-name">Date Modified:</span> <span>{{dvm.getDate(entity, 'modified')}}</span></span>
+<div class="datasets-tabset full-height">
+    <div class="blue-bar"></div>
+    <div class="datasets-page-content">
+        <div class="actions white-bar">
+            <form class="form-inline">
+                <div class="form-group">
+                    <input type="text" class="form-control" placeholder="Search" ng-model="dvm.state.paginationConfig.searchText" ng-keyup="dvm.onKeyUp($event)" />
+                </div>
+                <button type="button" class="btn btn-primary" ng-click="dvm.showNewOverlay = true">New Dataset</button>
+            </form>
+        </div>
+        <datasets-list></datasets-list>
+        <new-dataset-overlay ng-if="dvm.showNewOverlay === true" on-close="dvm.showNewOverlay = false"></new-dataset-overlay>
+    </div>
 </div>
