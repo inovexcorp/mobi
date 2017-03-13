@@ -761,13 +761,12 @@ class SimpleDatasetManagerSpec extends Specification {
         def repo = "system"
         def datasetIRI = datasetsInFile[1]
         def recordIRI = vf.createIRI("http://test.com/record1")
-        def record = mockRetrieveRecord(datasetIRI, repo, recordIRI)
+        mockRetrieveRecord(datasetIRI, repo, recordIRI)
 
         when:
         def dsConn = service.getConnection(datasetIRI, repo)
 
         then:
-        1 * catalogManagerMock.getRecord(!null, recordIRI, !null) >> Optional.of(record)
         dsConn.getDataset() == datasetIRI
     }
 
@@ -776,13 +775,12 @@ class SimpleDatasetManagerSpec extends Specification {
         def repo = "system"
         def datasetIRI = datasetsInFile[1]
         def recordIRI = vf.createIRI("http://test.com/record1")
-        def record = mockRetrieveRecord(datasetIRI, repo, recordIRI)
+        mockRetrieveRecord(datasetIRI, repo, recordIRI)
 
         when:
         def dsConn = service.getConnection(datasetIRI, repo)
 
         then:
-        1 * catalogManagerMock.getRecord(!null, recordIRI, !null) >> Optional.of(record)
         dsConn.getRepositoryId() == repo
     }
 
