@@ -90,6 +90,7 @@ public interface DatasetManager {
      * removes all graphs from the specified dataset even if they are associated with other datasets.
      *
      * @param dataset The Dataset Resource to be removed along with associated DatasetRecord and data.
+     * @param repositoryId The ID of the Repository where the Dataset is stored.
      * @throws IllegalArgumentException if the DatasetRecord could not be found in the catalog.
      */
     void deleteDataset(Resource dataset, String repositoryId);
@@ -108,6 +109,7 @@ public interface DatasetManager {
      * removes all graphs from the specified dataset if and only if they are not associated with other datasets.
      *
      * @param dataset The Dataset Resource to be removed along with associated DatasetRecord and data.
+     * @param repositoryId The ID of the Repository where the Dataset is stored.
      * @throws IllegalArgumentException if the DatasetRecord could not be found in the catalog.
      */
     void safeDeleteDataset(Resource dataset, String repositoryId);
@@ -126,6 +128,7 @@ public interface DatasetManager {
      * This method removes all graphs from the specified dataset even if they are associated with other datasets.
      *
      * @param dataset The Dataset Resource to be cleared.
+     * @param repositoryId The ID of the Repository where the Dataset is stored.
      * @throws IllegalArgumentException if the DatasetRecord could not be found in the catalog.
      */
     void clearDataset(Resource dataset, String repositoryId);
@@ -145,6 +148,7 @@ public interface DatasetManager {
      * datasets.
      *
      * @param dataset The Dataset Resource to be cleared.
+     * @param repositoryId The ID of the Repository where the Dataset is stored.
      * @throws IllegalArgumentException if the DatasetRecord could not be found in the catalog.
      */
     void safeClearDataset(Resource dataset, String repositoryId);
@@ -160,22 +164,22 @@ public interface DatasetManager {
     void safeClearDataset(Resource record);
 
     /**
-     * Returns a DatasetConnection for the specified dataset in the specified repository.
+     * Returns a DatasetConnection for the specified Dataset in the specified repository.
      *
-     * @param dataset The dataset for which to return a DatasetConnection.
-     * @param repositoryId The repository where the datset is located.
-     * @return A DatasetConnection for the specified dataset.
+     * @param dataset The Resource of the Dataset for which to return a DatasetConnection.
+     * @param repositoryId The ID of the Repository where the Dataset is stored.
+     * @return A DatasetConnection for the specified Dataset.
      * @throws IllegalArgumentException if the DatasetRecord could not be found in the catalog with this
-     * dataset/repository combination.
+     * Dataset/Repository combination.
      */
     DatasetConnection getConnection(Resource dataset, String repositoryId);
 
     /**
-     * Returns a DatasetConnection for the specified dataset record. The DatasetConnection is associated with the
+     * Returns a DatasetConnection for the specified DatasetRecord. The DatasetConnection is associated with the
      * Repository defined for the DatasetRecord in the catalog.
      *
-     * @param record The dataset record for which to return a DatasetConnection.
-     * @return A DatasetConnection for the specified dataset.
+     * @param record The Resource of the DatasetRecord for which to return a DatasetConnection.
+     * @return A DatasetConnection for the specified DatasetRecord.
      * @throws IllegalArgumentException if the DatasetRecord could not be found in the catalog.
      */
     DatasetConnection getConnection(Resource record);
