@@ -72,6 +72,7 @@
             'fileInput',
             'focusMe',
             'infoMessage',
+            'keywordSelect',
             'pagination',
             'pagingDetails',
             'passwordConfirmInput',
@@ -86,6 +87,7 @@
 
             /* Custom Modules */
             'catalog',
+            'datasets',
             'home',
             'login',
             'mapper',
@@ -100,6 +102,7 @@
             'catalogManager',
             'catalogState',
             'datasetManager',
+            'datasetState',
             'delimitedManager',
             'loginManager',
             'mapperState',

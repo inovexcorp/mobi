@@ -54,6 +54,7 @@ public interface DatasetRest {
      * @param limit The number of DatasetRecords to return in one page
      * @param sort The IRI of the property to sort by
      * @param asc Whether or not the list should be sorted ascending or descending. Default is ascending
+     * @param searchText The optional search text for the query
      * @return A Response with a JSON array of DatasetRecords
      */
     @GET
@@ -64,7 +65,8 @@ public interface DatasetRest {
                                @QueryParam("offset") int offset,
                                @QueryParam("limit") int limit,
                                @QueryParam("sort") String sort,
-                               @DefaultValue("true") @QueryParam("ascending") boolean asc);
+                               @DefaultValue("true") @QueryParam("ascending") boolean asc,
+                               @QueryParam("searchText") String searchText);
 
     /**
      * Creates a new DatasetRecord in the local Catalog using the passed information and Dataset with the passed

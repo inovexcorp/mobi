@@ -41,10 +41,9 @@
          *
          * @description
          * `pagingDetails` is a directive that creates a div element with a p containing a phrase describing
-         * a page of results based on the passed page size, total size, page index, and limit of results per
-         * page. The directive is replaced by the content of the template.
+         * a page of results based on the passed total size, page index, and limit of results per page. The
+         * directive is replaced by the content of the template.
          *
-         * @param {number} pageSize The number of results on the current page
          * @param {number} totalSize The total number of results
          * @param {number} pageIndex The index of the current page
          * @param {number} limit The limit on the numebr of results per page
@@ -56,7 +55,6 @@
                 restrict: 'E',
                 replace: true,
                 scope: {
-                    pageSize: '<',
                     totalSize: '<',
                     pageIndex: '<',
                     limit: '<'

@@ -419,6 +419,7 @@ function mockSparqlManager() {
             this.reset = jasmine.createSpy('reset');
             this.queryRdf = jasmine.createSpy('queryRdf');
             this.downloadResults = jasmine.createSpy('downloadResults');
+            this.setResults = jasmine.createSpy('setResults');
         });
     });
 }
@@ -758,7 +759,7 @@ function mockCatalogState() {
 
 function mockUtil() {
     module(function($provide) {
-        $provide.service('utilService', function() {
+        $provide.service('utilService', function($q) {
             this.getBeautifulIRI = jasmine.createSpy('getBeautifulIRI').and.callFake(_.identity);
             this.getPropertyValue = jasmine.createSpy('getPropertyValue').and.returnValue('');
             this.setPropertyValue = jasmine.createSpy('setPropertyValue').and.returnValue({});
@@ -780,6 +781,8 @@ function mockUtil() {
             this.onError = jasmine.createSpy('onError').and.callFake(function(error, deferred) {
                 deferred.reject(_.get(error, 'statusText', ''));
             });
+            this.getErrorMessage = jasmine.createSpy('getErrorMessage').and.returnValue('');
+            this.getResultsPage = jasmine.createSpy('getResultsPage').and.returnValue($q.when({}));
         });
     });
 }
@@ -787,12 +790,35 @@ function mockUtil() {
 function mockDatasetManager() {
     module(function($provide) {
         $provide.service('datasetManagerService', function($q) {
+            this.getResultsPage = jasmine.createSpy('getResultsPage').and.returnValue($q.when({}));
             this.getDatasetRecords = jasmine.createSpy('getDatasetRecords').and.returnValue($q.when({}));
             this.createDatasetRecord = jasmine.createSpy('createDatasetRecord').and.returnValue($q.when(''));
             this.deleteDatasetRecord = jasmine.createSpy('deleteDatasetRecord').and.returnValue($q.when());
             this.clearDatasetRecord = jasmine.createSpy('clearDatasetRecord').and.returnValue($q.when());
         });
     });
+}
+
+function mockDatasetState() {
+    module(function($provide) {
+        $provide.service('datasetStateService', function() {
+            this.paginationConfig = {
+                limit: 0,
+                sortOption: {field: '', asc: true},
+                pageIndex: 0,
+                searchText: ''
+            };
+            this.totalSize = 0;
+            this.links = {
+                prev: '',
+                next: ''
+            };
+            this.results = [];
+            this.setResults = jasmine.createSpy('setResults');
+            this.resetPagination = jasmine.createSpy('resetPagination');
+            this.setPagination = jasmine.createSpy('setPagination');
+        })
+    })
 }
 
 function mockToastr() {

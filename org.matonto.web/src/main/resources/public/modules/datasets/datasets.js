@@ -24,23 +24,10 @@
     'use strict';
 
     angular
-        .module('keywordSelect', [])
-        .directive('keywordSelect', keywordSelect);
-
-        function keywordSelect() {
-            return {
-                restrict: 'E',
-                replace: true,
-                templateUrl: 'modules/ontology-editor/directives/keywordSelect/keywordSelect.html',
-                scope: {},
-                bindToController: {
-                    bindModel: '=ngModel'
-                },
-                controllerAs: 'dvm',
-                controller: function() {
-                    var dvm = this;
-                    dvm.keywordList = [];
-                }
-            }
-        }
+        .module('datasets', [
+            /* Custom Directives */
+            'datasetsList',
+            'datasetsTabset',
+            'newDatasetOverlay'
+        ]);
 })();
