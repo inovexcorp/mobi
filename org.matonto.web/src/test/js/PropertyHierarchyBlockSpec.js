@@ -130,21 +130,35 @@ describe('Property Hierarchy Block directive', function() {
         beforeEach(function() {
             controller = element.controller('propertyHierarchyBlock');
         });
-        describe('should delete a class', function() {
+        describe('should delete', function() {
             it('if it is an object property', function() {
                 ontologyManagerSvc.isObjectProperty.and.returnValue(true);
                 controller.deleteProperty();
                 expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(ontologyStateSvc.selected);
                 expect(ontologyUtilsManagerSvc.deleteDataTypeProperty).not.toHaveBeenCalled();
                 expect(ontologyUtilsManagerSvc.deleteObjectProperty).toHaveBeenCalled();
+                expect(ontologyUtilsManagerSvc.deleteAnnotationProperty).not.toHaveBeenCalled();
                 expect(controller.showDeleteConfirmation).toBe(false);
             });
             it('if it is a datatype property', function() {
                 ontologyManagerSvc.isDataTypeProperty.and.returnValue(true);
                 controller.deleteProperty();
+                expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(ontologyStateSvc.selected);
                 expect(ontologyManagerSvc.isDataTypeProperty).toHaveBeenCalledWith(ontologyStateSvc.selected);
                 expect(ontologyUtilsManagerSvc.deleteDataTypeProperty).toHaveBeenCalled();
                 expect(ontologyUtilsManagerSvc.deleteObjectProperty).not.toHaveBeenCalled();
+                expect(ontologyUtilsManagerSvc.deleteAnnotationProperty).not.toHaveBeenCalled();
+                expect(controller.showDeleteConfirmation).toBe(false);
+            });
+            it('if it is an annotation property', function() {
+                ontologyManagerSvc.isAnnotation.and.returnValue(true);
+                controller.deleteProperty();
+                expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(ontologyStateSvc.selected);
+                expect(ontologyManagerSvc.isDataTypeProperty).toHaveBeenCalledWith(ontologyStateSvc.selected);
+                expect(ontologyManagerSvc.isAnnotation).toHaveBeenCalledWith(ontologyStateSvc.selected);
+                expect(ontologyUtilsManagerSvc.deleteDataTypeProperty).not.toHaveBeenCalled();
+                expect(ontologyUtilsManagerSvc.deleteObjectProperty).not.toHaveBeenCalled();
+                expect(ontologyUtilsManagerSvc.deleteAnnotationProperty).toHaveBeenCalled();
                 expect(controller.showDeleteConfirmation).toBe(false);
             });
         });
