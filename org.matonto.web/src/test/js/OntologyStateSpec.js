@@ -375,6 +375,28 @@ describe('Ontology State service', function() {
         });
     });
 
+    it('setAnnotationPropertiesOpened sets the correct property on the state object', function() {
+        var path = 'this.is.the.path';
+        _.forEach([true, false], function(value) {
+            ontologyStateSvc.setAnnotationPropertiesOpened(path, value);
+            expect(_.get(ontologyStateSvc.state, encodeURIComponent(path) + '.annotationPropertiesOpened')).toBe(value);
+        });
+    });
+
+    describe('getAnnotationPropertiesOpened gets the correct property value on the state object', function() {
+        it('when path is not found, returns false', function() {
+            var path = 'this.is.the.path';
+            expect(ontologyStateSvc.getAnnotationPropertiesOpened(path)).toBe(false);
+        });
+        it('when path is found', function() {
+            var path = 'this.is.the.path';
+            _.forEach([true, false], function(value) {
+                _.set(ontologyStateSvc.state, encodeURIComponent(path) + '.annotationPropertiesOpened', value);
+                expect(ontologyStateSvc.getAnnotationPropertiesOpened(path)).toBe(value);
+            });
+        });
+    });
+
     describe('onEdit calls the correct manager methods', function() {
         var iriBegin = 'begin';
         var iriThen = 'then';
@@ -1327,6 +1349,19 @@ describe('Ontology State service', function() {
                 expect(ontologyStateSvc.getPathsTo).toHaveBeenCalledWith(ontologyStateSvc.listItem.objectPropertyIndex, 'iri');
                 expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.getPathsTo(ontologyStateSvc.listItem.objectPropertyIndex, 'iri'));
                 expect(ontologyStateSvc.setObjectPropertiesOpened).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, true);
+            });
+            it('and is an annotation property', function() {
+                ontologyManagerSvc.isClass.and.returnValue(false);
+                ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
+                ontologyManagerSvc.isObjectProperty.and.returnValue(false);
+                ontologyManagerSvc.isAnnotation.and.returnValue(true);
+                spyOn(ontologyStateSvc, 'setAnnotationPropertiesOpened');
+                ontologyStateSvc.goTo('iri');
+                expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('properties');
+                expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
+                expect(ontologyStateSvc.getPathsTo).not.toHaveBeenCalled();
+                expect(ontologyStateSvc.openAt).not.toHaveBeenCalled();
+                expect(ontologyStateSvc.setAnnotationPropertiesOpened).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, true);
             });
             it('and is an individual', function() {
                 ontologyManagerSvc.isClass.and.returnValue(false);

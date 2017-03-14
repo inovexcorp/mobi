@@ -107,6 +107,12 @@
             self.getObjectPropertiesOpened = function(recordId) {
                 return _.get(self.state, getOpenPath(recordId, 'objectPropertiesOpened'), false);
             }
+            self.setAnnotationPropertiesOpened = function(recordId, isOpened) {
+                _.set(self.state, getOpenPath(recordId, 'annotationPropertiesOpened'), isOpened);
+            }
+            self.getAnnotationPropertiesOpened = function(recordId) {
+                return _.get(self.state, getOpenPath(recordId, 'annotationPropertiesOpened'), false);
+            }
             self.onEdit = function(iriBegin, iriThen, iriEnd) {
                 var newIRI = iriBegin + iriThen + iriEnd;
                 var oldEntity = $filter('removeMatonto')(self.selected);
@@ -355,6 +361,9 @@
                 } else if (om.isObjectProperty(entity)) {
                     commonGoTo('properties', iri, 'objectPropertyIndex');
                     self.setObjectPropertiesOpened(self.listItem.recordId, true);
+                } else if (om.isAnnotation(entity)) {
+                    commonGoTo('properties', iri);
+                    self.setAnnotationPropertiesOpened(self.listItem.recordId, true);
                 } else if (om.isIndividual(entity)) {
                     commonGoTo('individuals', iri);
                 } else if (om.isOntology(entity)) {
