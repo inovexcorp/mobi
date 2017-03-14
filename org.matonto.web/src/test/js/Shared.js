@@ -182,6 +182,7 @@ function mockOntologyManager() {
             this.hasDataTypeProperties = jasmine.createSpy('hasDataTypeProperties').and.returnValue(true);
             this.getDataTypeProperties = jasmine.createSpy('getDataTypeProperties').and.returnValue([]);
             this.getDataTypePropertyIRIs = jasmine.createSpy('getDataTypePropertyIRIs').and.returnValue([]);
+            this.isAnnotation = jasmine.createSpy('isAnnotation');
             this.hasAnnotations = jasmine.createSpy('hasAnnotations').and.returnValue(true);
             this.getAnnotations = jasmine.createSpy('getAnnotations').and.returnValue([]);
             this.getAnnotationIRIs = jasmine.createSpy('getAnnotationIRIs').and.returnValue([]);
@@ -503,6 +504,8 @@ function mockOntologyState() {
             this.setDataPropertiesOpened = jasmine.createSpy('setDataPropertiesOpened');
             this.getObjectPropertiesOpened = jasmine.createSpy('getObjectPropertiesOpened');
             this.setObjectPropertiesOpened = jasmine.createSpy('setObjectPropertiesOpened');
+            this.getAnnotationPropertiesOpened = jasmine.createSpy('getAnnotationPropertiesOpened');
+            this.setAnnotationPropertiesOpened = jasmine.createSpy('setAnnotationPropertiesOpened');
             this.onEdit = jasmine.createSpy('onEdit');
             this.setCommonIriParts = jasmine.createSpy('setCommonIriParts');
             this.setSelected = jasmine.createSpy('setSelected');
@@ -533,9 +536,11 @@ function mockOntologyState() {
 function mockOntologyUtilsManager() {
     module(function($provide) {
         $provide.service('ontologyUtilsManagerService', function() {
+            this.commonDelete = jasmine.createSpy('commonDelete');
             this.deleteClass = jasmine.createSpy('deleteClass');
             this.deleteObjectProperty = jasmine.createSpy('deleteObjectProperty');
             this.deleteDataTypeProperty = jasmine.createSpy('deleteDataTypeProperty');
+            this.deleteAnnotationProperty = jasmine.createSpy('deleteAnnotationProperty');
             this.deleteIndividual = jasmine.createSpy('deleteIndividual');
             this.deleteConcept = jasmine.createSpy('deleteConcept');
             this.deleteConceptScheme = jasmine.createSpy('deleteConceptScheme');

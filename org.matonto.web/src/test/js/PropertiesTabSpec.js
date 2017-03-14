@@ -24,15 +24,18 @@ describe('Properties Tab directive', function() {
     var $compile,
         scope,
         element,
-        ontologyStateSvc;
+        ontologyManagerSvc;
 
     beforeEach(function() {
         module('templates');
         module('propertiesTab');
+        mockOntologyManager();
+        mockOntologyState();
 
-        inject(function(_$compile_, _$rootScope_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            ontologyManagerSvc = _ontologyManagerService_;
         });
 
         element = $compile(angular.element('<properties-tab></properties-tab>'))(scope);
@@ -59,6 +62,12 @@ describe('Properties Tab directive', function() {
         });
         it('with a axiom-block', function() {
             expect(element.find('axiom-block').length).toBe(1);
+            ontologyManagerSvc.isAnnotation.and.returnValue(true);
+            scope.$apply();
+            expect(element.find('axiom-block').length).toBe(0);
+        });
+        it('with a characteristics-row', function() {
+            expect(element.find('characteristics-row').length).toBe(1);
         });
         it('with a usages-block', function() {
             expect(element.find('usages-block').length).toBe(1);

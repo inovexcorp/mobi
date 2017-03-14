@@ -24,16 +24,16 @@
     'use strict';
 
     angular
-        .module('propertiesTab', [])
-        .directive('propertiesTab', propertiesTab);
+        .module('characteristicsRow', [])
+        .directive('characteristicsRow', characteristicsRow);
 
-        propertiesTab.$inject = ['ontologyManagerService', 'ontologyStateService'];
+        characteristicsRow.$inject = ['ontologyManagerService', 'ontologyStateService'];
 
-        function propertiesTab(ontologyManagerService, ontologyStateService) {
+        function characteristicsRow(ontologyManagerService, ontologyStateService) {
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/propertiesTab/propertiesTab.html',
+                templateUrl: 'modules/ontology-editor/directives/characteristicsRow/characteristicsRow.html',
                 scope: {},
                 controllerAs: 'dvm',
                 controller: function() {
