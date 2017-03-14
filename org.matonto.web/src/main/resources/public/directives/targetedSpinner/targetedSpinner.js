@@ -66,21 +66,16 @@
 
         function targetedSpinnerService($rootScope) {
           return function($scope, requestConfig) {
-                var t = _.find($rootScope.trackedHttpRequests, tr => tr.requestConfig === requestConfig && tr.scope === $scope);
-                if (t) {
-                    return t;
-                }
-
                 // IMPORTANT! Tear down this tracker when the scope is destroyed.
                 $scope.$on('$destroy', function() {
-                    var tracker = _.find($rootScope.trackedHttpRequests, tr => tr.requestConfig === requestConfig && tr.scope === $scope);
+                    var tracker = _.find($rootScope.trackedHttpRequests, tr => _.isEqual(tr.requestConfig, requestConfig) && _.isEqual(tr.scope, $scope));
                     _.remove($rootScope.trackedHttpRequests, tracker);
                     if (_.has(tracker, 'canceller')) {
                         tracker.canceller.resolve();
                     }
                 });
 
-                t = { scope: $scope, requestConfig };
+                var t = { scope: $scope, requestConfig };
                 $rootScope.trackedHttpRequests.push(t);
                 return t;
             };

@@ -160,21 +160,26 @@
         function requestInterceptor($q, $rootScope) {
             $rootScope.pendingRequests = 0;
             $rootScope.trackedHttpRequests = [];
-            var canceller = $q.defer();
+
+            function findTracker(config) {
+                return _.find($rootScope.trackedHttpRequests, tr => config.url.match(tr.requestConfig.regex) && config.method === _.toUpper(tr.requestConfig.method));
+            }
+
             return {
                 'request': function (config) {
-                    var tracker = _.find($rootScope.trackedHttpRequests, tr => config.url.match(tr.requestConfig.regex) && config.method === tr.requestConfig.method);
+                    var tracker = findTracker(config);
                     if (tracker) {
+                        var canceller = $q.defer();
                         tracker.scope.showSpinner = true;
-                        tracker.canceller = canceller.promise;
-                        config.timeout = tracker.canceller;
+                        tracker.canceller = canceller;
+                        config.timeout = canceller.promise;
                     } else {
                         $rootScope.pendingRequests++;
                     }
                     return config || $q.when(config);
                 },
                 'requestError': function(rejection) {
-                    var tracker = _.find($rootScope.trackedHttpRequests, tr => rejection.config.url.match(tr.requestConfig.regex) && rejection.config.method === tr.requestConfig.method);
+                    var tracker = findTracker(rejection.config);
                     if (tracker) {
                         tracker.scope.showSpinner = false;
                         _.unset(tracker, 'canceller');
@@ -184,7 +189,7 @@
                     return $q.reject(rejection);
                 },
                 'response': function(response) {
-                    var tracker = _.find($rootScope.trackedHttpRequests, tr => response.config.url.match(tr.requestConfig.regex) && response.config.method === tr.requestConfig.method);
+                    var tracker = findTracker(response.config);
                     if (tracker) {
                         tracker.scope.showSpinner = false;
                         _.unset(tracker, 'canceller');
@@ -194,7 +199,7 @@
                     return response || $q.when(response);
                 },
                 'responseError': function(rejection) {
-                    var tracker = _.find($rootScope.trackedHttpRequests, tr => rejection.config.url.match(tr.requestConfig.regex) && rejection.config.method === tr.requestConfig.method);
+                    var tracker = findTracker(rejection.config);
                     if (tracker) {
                         tracker.scope.showSpinner = false;
                         _.unset(tracker, 'canceller');

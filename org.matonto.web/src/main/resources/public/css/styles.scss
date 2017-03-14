@@ -76,6 +76,10 @@ body {
     /* spinner background styles */
     .spinner-container {
         position: relative;
+
+        .spinner {
+            z-index: 8999;
+        }
     }
     .spinner {
         background: #fff;
