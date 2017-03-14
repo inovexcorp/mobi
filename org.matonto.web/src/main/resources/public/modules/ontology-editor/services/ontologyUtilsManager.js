@@ -37,14 +37,14 @@
             var util = utilService;
 
             self.commonDelete = function(entityIRI) {
-                om.getEntityUsages(os.listItem.recordId, os.listItem.branchId, os.listItem.commitId, os.selected['@id'], 'construct')
+                om.getEntityUsages(os.listItem.recordId, os.listItem.branchId, os.listItem.commitId, entityIRI, 'construct')
                     .then(statements => {
                         om.addToDeletions(os.listItem.recordId, os.selected);
                         om.removeEntity(os.listItem, entityIRI);
                         _.forEach(statements, statement => om.addToDeletions(os.listItem.recordId, statement));
-                        ur.remove(os.listItem.ontology, os.selected['@id']);
+                        ur.remove(os.listItem.ontology, entityIRI);
                         os.unSelectItem();
-                    }, errorMessage => util.createErrorToast(errorMessage));
+                    }, util.createErrorToast);
             }
 
             self.deleteClass = function() {

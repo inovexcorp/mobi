@@ -51,7 +51,7 @@ describe('Characteristics Row directive', function() {
                 expect(element.querySelectorAll('.row').length).toBe(0);
             });
             it('for a characteristics-block', function() {
-                expect(element.querySelectorAll('.row').length).toBe(0);
+                expect(element.find('characteristics-block').length).toBe(0);
             });
         });
         describe('when selected is an object property', function() {
@@ -64,7 +64,7 @@ describe('Characteristics Row directive', function() {
                 expect(element.querySelectorAll('.row').length).toBe(1);
             });
             it('for a characteristics-block', function() {
-                expect(element.querySelectorAll('.row').length).toBe(1);
+                expect(element.find('characteristics-block').length).toBe(1);
             });
         });
         describe('when selected is a data property', function() {
@@ -77,7 +77,7 @@ describe('Characteristics Row directive', function() {
                 expect(element.querySelectorAll('.row').length).toBe(1);
             });
             it('for a characteristics-block', function() {
-                expect(element.querySelectorAll('.row').length).toBe(1);
+                expect(element.find('characteristics-block').length).toBe(1);
             });
         });
     });

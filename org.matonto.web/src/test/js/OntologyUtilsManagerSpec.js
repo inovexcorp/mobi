@@ -55,16 +55,18 @@ describe('Ontology Utils Manager service', function() {
             getDeferred.resolve([{'@id': 'id'}]);
             ontologyUtilsManagerSvc.commonDelete('iri');
             scope.$apply();
+            expect(ontologyManagerSvc.getEntityUsages).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, ontologyStateSvc.listItem.branchId, ontologyStateSvc.listItem.commitId, 'iri', 'construct');
             expect(ontologyManagerSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, ontologyStateSvc.selected);
             expect(ontologyManagerSvc.removeEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, 'iri');
             expect(ontologyManagerSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, {'@id': 'id'});
-            expect(updateRefs.remove).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontology, ontologyStateSvc.selected['@id']);
+            expect(updateRefs.remove).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontology, 'iri');
             expect(ontologyStateSvc.unSelectItem).toHaveBeenCalled();
         });
         it('when getEntityUsages rejects', function() {
             getDeferred.reject('error');
             ontologyUtilsManagerSvc.commonDelete('iri');
             scope.$apply();
+            expect(ontologyManagerSvc.getEntityUsages).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, ontologyStateSvc.listItem.branchId, ontologyStateSvc.listItem.commitId, 'iri', 'construct');
             expect(util.createErrorToast).toHaveBeenCalledWith('error');
         });
     });

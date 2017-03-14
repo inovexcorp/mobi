@@ -131,7 +131,7 @@ describe('Property Hierarchy Block directive', function() {
             controller = element.controller('propertyHierarchyBlock');
         });
         describe('should delete', function() {
-            it('if it is an object property', function() {
+            it('an object property', function() {
                 ontologyManagerSvc.isObjectProperty.and.returnValue(true);
                 controller.deleteProperty();
                 expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(ontologyStateSvc.selected);
@@ -140,7 +140,7 @@ describe('Property Hierarchy Block directive', function() {
                 expect(ontologyUtilsManagerSvc.deleteAnnotationProperty).not.toHaveBeenCalled();
                 expect(controller.showDeleteConfirmation).toBe(false);
             });
-            it('if it is a datatype property', function() {
+            it('a datatype property', function() {
                 ontologyManagerSvc.isDataTypeProperty.and.returnValue(true);
                 controller.deleteProperty();
                 expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(ontologyStateSvc.selected);
@@ -150,7 +150,7 @@ describe('Property Hierarchy Block directive', function() {
                 expect(ontologyUtilsManagerSvc.deleteAnnotationProperty).not.toHaveBeenCalled();
                 expect(controller.showDeleteConfirmation).toBe(false);
             });
-            it('if it is an annotation property', function() {
+            it('an annotation property', function() {
                 ontologyManagerSvc.isAnnotation.and.returnValue(true);
                 controller.deleteProperty();
                 expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(ontologyStateSvc.selected);

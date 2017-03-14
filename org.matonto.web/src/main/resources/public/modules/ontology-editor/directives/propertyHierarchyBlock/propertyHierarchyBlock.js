@@ -41,7 +41,6 @@
                     dvm.os = ontologyStateService;
                     dvm.om = ontologyManagerService;
                     dvm.utils = ontologyUtilsManagerService;
-                    dvm.annotations = dvm.om.getAnnotations(dvm.os.listItem.ontology);
 
                     dvm.deleteProperty = function() {
                         if (dvm.om.isObjectProperty(dvm.os.selected)) {
