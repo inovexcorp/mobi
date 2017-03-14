@@ -74,6 +74,9 @@ body {
     }
 
     /* spinner background styles */
+    .spinner-container {
+        position: relative;
+    }
     .spinner {
         background: #fff;
         height: 100%;

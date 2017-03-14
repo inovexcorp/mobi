@@ -81,6 +81,7 @@
             'stepProgressBar',
             'tab',
             'tabset',
+            'targetedSpinner',
             'textArea',
             'textInput',
             'uniqueValue',
@@ -158,21 +159,48 @@
 
         function requestInterceptor($q, $rootScope) {
             $rootScope.pendingRequests = 0;
+            $rootScope.trackedHttpRequests = [];
+            var canceller = $q.defer();
             return {
                 'request': function (config) {
-                    $rootScope.pendingRequests++;
+                    var tracker = _.find($rootScope.trackedHttpRequests, tr => config.url.match(tr.requestConfig.regex) && config.method === tr.requestConfig.method);
+                    if (tracker) {
+                        tracker.scope.showSpinner = true;
+                        tracker.canceller = canceller.promise;
+                        config.timeout = tracker.canceller;
+                    } else {
+                        $rootScope.pendingRequests++;
+                    }
                     return config || $q.when(config);
                 },
                 'requestError': function(rejection) {
-                    $rootScope.pendingRequests--;
+                    var tracker = _.find($rootScope.trackedHttpRequests, tr => rejection.config.url.match(tr.requestConfig.regex) && rejection.config.method === tr.requestConfig.method);
+                    if (tracker) {
+                        tracker.scope.showSpinner = false;
+                        _.unset(tracker, 'canceller');
+                    } else {
+                        $rootScope.pendingRequests--;
+                    }
                     return $q.reject(rejection);
                 },
                 'response': function(response) {
-                    $rootScope.pendingRequests--;
+                    var tracker = _.find($rootScope.trackedHttpRequests, tr => response.config.url.match(tr.requestConfig.regex) && response.config.method === tr.requestConfig.method);
+                    if (tracker) {
+                        tracker.scope.showSpinner = false;
+                        _.unset(tracker, 'canceller');
+                    } else {
+                        $rootScope.pendingRequests--;
+                    }
                     return response || $q.when(response);
                 },
                 'responseError': function(rejection) {
-                    $rootScope.pendingRequests--;
+                    var tracker = _.find($rootScope.trackedHttpRequests, tr => rejection.config.url.match(tr.requestConfig.regex) && rejection.config.method === tr.requestConfig.method);
+                    if (tracker) {
+                        tracker.scope.showSpinner = false;
+                        _.unset(tracker, 'canceller');
+                    } else {
+                        $rootScope.pendingRequests--;
+                    }
                     return $q.reject(rejection);
                 }
             };
