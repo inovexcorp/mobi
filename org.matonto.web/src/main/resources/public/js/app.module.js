@@ -161,19 +161,21 @@
             $rootScope.pendingRequests = 0;
             $rootScope.trackedHttpRequests = [];
 
-            function findTracker(config) {
-                return _.find($rootScope.trackedHttpRequests, tr => config.url.match(tr.requestConfig.url) && config.method === _.toUpper(tr.requestConfig.method));
+            function findTrackers(config) {
+                return _.filter($rootScope.trackedHttpRequests, tr => config.url.match(tr.requestConfig.url) && config.method === _.toUpper(tr.requestConfig.method));
             }
 
-            function removeTrackerIfPresent(tracker) {
-                if (tracker) {
-                    if (tracker.scopes.length === 0) {
-                        _.remove($rootScope.trackedHttpRequests, tracker);
-                    } else {
-                        tracker.running = false;
-                        _.forEach(tracker.scopes, scope => scope.showSpinner = false);
-                        _.unset(tracker, 'canceller');
-                    }
+            function removeTrackersIfPresent(trackers) {
+                if (trackers.length > 0) {
+                    _.forEach(trackers, tracker => {
+                        if (tracker.scopes.length === 0) {
+                            _.remove($rootScope.trackedHttpRequests, tracker);
+                        } else {
+                            tracker.running = false;
+                            _.forEach(tracker.scopes, scope => scope.showSpinner = false);
+                            _.unset(tracker, 'canceller');
+                        }
+                    });
                 } else {
                     $rootScope.pendingRequests--;
                 }
@@ -181,12 +183,14 @@
 
             return {
                 'request': function (config) {
-                    var tracker = findTracker(config);
-                    if (tracker) {
+                    var trackers = findTrackers(config);
+                    if (trackers.length > 0) {
                         var canceller = $q.defer();
-                        tracker.running = true;
-                        _.forEach(tracker.scopes, scope => scope.showSpinner = true);
-                        tracker.canceller = canceller;
+                        _.forEach(trackers, tracker => {
+                            tracker.running = true;
+                            _.forEach(tracker.scopes, scope => scope.showSpinner = true);
+                            tracker.canceller = canceller;
+                        });
                         config.timeout = canceller.promise;
                     } else {
                         $rootScope.pendingRequests++;
@@ -194,15 +198,15 @@
                     return config || $q.when(config);
                 },
                 'requestError': function(rejection) {
-                    removeTrackerIfPresent(findTracker(rejection.config))
+                    removeTrackersIfPresent(findTrackers(rejection.config))
                     return $q.reject(rejection);
                 },
                 'response': function(response) {
-                    removeTrackerIfPresent(findTracker(response.config))
+                    removeTrackersIfPresent(findTrackers(response.config))
                     return response || $q.when(response);
                 },
                 'responseError': function(rejection) {
-                    removeTrackerIfPresent(findTracker(rejection.config))
+                    removeTrackersIfPresent(findTrackers(rejection.config))
                     return $q.reject(rejection);
                 }
             };
