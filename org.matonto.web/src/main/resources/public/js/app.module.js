@@ -162,7 +162,21 @@
             $rootScope.trackedHttpRequests = [];
 
             function findTracker(config) {
-                return _.find($rootScope.trackedHttpRequests, tr => config.url.match(tr.requestConfig.regex) && config.method === _.toUpper(tr.requestConfig.method));
+                return _.find($rootScope.trackedHttpRequests, tr => config.url.match(tr.requestConfig.url) && config.method === _.toUpper(tr.requestConfig.method));
+            }
+
+            function removeTrackerIfPresent(tracker) {
+                if (tracker) {
+                    if (tracker.scopes.length === 0) {
+                        _.remove($rootScope.trackedHttpRequests, tracker);
+                    } else {
+                        tracker.running = false;
+                        _.forEach(tracker.scopes, scope => scope.showSpinner = false);
+                        _.unset(tracker, 'canceller');
+                    }
+                } else {
+                    $rootScope.pendingRequests--;
+                }
             }
 
             return {
@@ -170,7 +184,8 @@
                     var tracker = findTracker(config);
                     if (tracker) {
                         var canceller = $q.defer();
-                        tracker.scope.showSpinner = true;
+                        tracker.running = true;
+                        _.forEach(tracker.scopes, scope => scope.showSpinner = true);
                         tracker.canceller = canceller;
                         config.timeout = canceller.promise;
                     } else {
@@ -179,33 +194,15 @@
                     return config || $q.when(config);
                 },
                 'requestError': function(rejection) {
-                    var tracker = findTracker(rejection.config);
-                    if (tracker) {
-                        tracker.scope.showSpinner = false;
-                        _.unset(tracker, 'canceller');
-                    } else {
-                        $rootScope.pendingRequests--;
-                    }
+                    removeTrackerIfPresent(findTracker(rejection.config))
                     return $q.reject(rejection);
                 },
                 'response': function(response) {
-                    var tracker = findTracker(response.config);
-                    if (tracker) {
-                        tracker.scope.showSpinner = false;
-                        _.unset(tracker, 'canceller');
-                    } else {
-                        $rootScope.pendingRequests--;
-                    }
+                    removeTrackerIfPresent(findTracker(response.config))
                     return response || $q.when(response);
                 },
                 'responseError': function(rejection) {
-                    var tracker = findTracker(rejection.config);
-                    if (tracker) {
-                        tracker.scope.showSpinner = false;
-                        _.unset(tracker, 'canceller');
-                    } else {
-                        $rootScope.pendingRequests--;
-                    }
+                    removeTrackerIfPresent(findTracker(rejection.config))
                     return $q.reject(rejection);
                 }
             };

@@ -29,70 +29,88 @@
          * @name targetedSpinner
          *
          * @description
-         * The `targetedSpinner` module provides the `targetedSpinnerService` factory and the
-         * `targetedSpinner` directive which together provide a way to call a function when a user
-         * clicks off of an element.
+         * The `targetedSpinner` module only provides the `targetedSpinner` directive which provides a way to
+         * inject a loading spinner into a particular element and tie it to a particular REST call.
          */
         .module('targetedSpinner', [])
-        /**
-         * @ngdoc service
-         * @name targetedSpinnerService.service:targetedSpinnerService
-         * @requires $document
-         *
-         * @description
-         * `targetedSpinnerService` is a service that attaches a click handler to the document that
-         * will call the passed expression for the passed scope if there isn't already a handler attached
-         * for that scope. When the scope is destroyed that click handler will be removed.
-         *
-         * @param {Function} $scope The scope to call the passed expression within
-         * @param {*} expr The expression to evaluate when the document is clicked
-         */
-        .factory('targetedSpinnerService', targetedSpinnerService)
         /**
          * @ngdoc directive
          * @name targetedSpinner.directive:targetedSpinner
          * @restrict A
          * @requires targetedSpinnerService.service:targetedSpinnerService
+         * @requires $compile
+         * @requires $rootScope
          *
          * @description
-         * `targetedSpinner` is a directive that creates a click handler for the parent element such
-         * that the click event does not propogate and calls the
-         * {@link targetedSpinnerService.service:targetedSpinnerService targetedSpinnerService}
-         * attaching a click handler to the document to call the passed expression from the directive.
+         * `targetedSpinner` is a directive that injects loading spinner HTML into the parent element and
+         * creates a tracker in the $rootScope for the parent scope and HTTP requests that match the passed
+         * configuration. This tracker integrates with the `requestInterceptor` on the `app` module so that
+         * HTTP requests that match the configuration only trigger the injected spinner for the parent scope
+         * instead of the full screen spinner. When the parent scope is destroyed, the tracker can optionally
+         * be removed and any in progress HTTP requests that match the tracker configuration are canceled.
+         *
+         * @param {Object} targetSpinner A configuration for the injected spinner
+         * @param {boolean} targetSpinner.destroy Whether or not the created tracker should be remove when the
+         * parent scope is destroyed
+         * @param {Object} targetSpinner.requestConfig A configuration for matching HTTP calls
+         * @param {string} targetSpinner.requestConfig.method A string representing a HTTP method that an HTTP
+         * call must have to be matched to the parent scope's spinner
+         * @param {string} targetSpinner.requestConfig.regex A regular expression within a string that an HTTP
+         * call's URL must match to be matched to the parent scope's spinner
          */
         .directive('targetedSpinner', targetedSpinner);
 
-        targetedSpinnerService.$inject = ['$rootScope'];
+        targetedSpinner.$inject = ['$compile', '$rootScope'];
 
-        function targetedSpinnerService($rootScope) {
-          return function($scope, requestConfig) {
-                // IMPORTANT! Tear down this tracker when the scope is destroyed.
-                $scope.$on('$destroy', function() {
-                    var tracker = _.find($rootScope.trackedHttpRequests, tr => _.isEqual(tr.requestConfig, requestConfig) && _.isEqual(tr.scope, $scope));
-                    _.remove($rootScope.trackedHttpRequests, tracker);
-                    if (_.has(tracker, 'canceller')) {
-                        tracker.canceller.resolve();
-                    }
-                });
-
-                var t = { scope: $scope, requestConfig };
-                $rootScope.trackedHttpRequests.push(t);
-                return t;
-            };
-        }
-
-        targetedSpinner.$inject = ['targetedSpinnerService', '$compile'];
-
-        function targetedSpinner(targetedSpinnerService, $compile) {
+        function targetedSpinner($compile, $rootScope) {
             return {
                 restrict: 'A',
                 link: function(scope, el, attrs) {
-                    var config = scope.$eval(attrs.targetedSpinner);
-                    if (_.get(config, 'method') && _.get(config, 'regex')) {
-                        scope.showSpinner = false;
-                        el.addClass('spinner-container');
-                        el.append($compile('<div class="spinner" ng-show="showSpinner"><i class="fa fa-4x fa-spin fa-spinner"></i></div>')(scope));
-                        targetedSpinnerService(scope, config);
+                    scope.cancelOnDestroy = !!attrs.cancelOnDestroy;
+                    var requestConfig = getConfig(scope.$eval(attrs.targetedSpinner));
+                    el.addClass('spinner-container');
+                    el.append($compile('<div class="spinner" ng-show="showSpinner"><i class="fa fa-4x fa-spin fa-spinner"></i></div>')(scope));
+                    setTracker();
+
+                    scope.$watch(attrs.cancelOnDestroy, function(newValue) {
+                        scope.cancelOnDestroy = !!newValue;
+                    });
+                    scope.$watch(attrs.targetedSpinner, function(newValue, oldValue) {
+                        var oldRequestConfig = getConfig(oldValue);
+                        var newRequestConfig = getConfig(newValue);
+                        if (!_.isEqual(newRequestConfig, oldRequestConfig)) {
+                            var oldTracker = _.find($rootScope.trackedHttpRequests, {requestConfig: oldRequestConfig});
+                            if (oldTracker) {
+                                _.remove(oldTracker.scopes, scope);
+                                if (oldTracker.scopes.length === 0) {
+                                    _.remove($rootScope.trackedHttpRequests, oldTracker);
+                                }
+                            }
+                            requestConfig = newRequestConfig;
+                            setTracker();
+                        }
+                    }, true);
+                    scope.$on('$destroy', function() {
+                        var tracker = _.find($rootScope.trackedHttpRequests, {requestConfig});
+                        if (_.every(_.get(tracker, 'scopes', []), 'cancelOnDestroy')) {
+                            if (_.has(tracker, 'canceller')) {
+                                tracker.canceller.resolve();
+                            }
+                        }
+                        _.remove(_.get(tracker, 'scopes'), scope);
+                    });
+
+                    function setTracker() {
+                        var tracker = _.find($rootScope.trackedHttpRequests, {requestConfig});
+                        if (!tracker) {
+                            tracker = {requestConfig, inProgress: false, scopes: []};
+                            $rootScope.trackedHttpRequests.push(tracker);
+                        }
+                        tracker.scopes.push(scope);
+                        scope.showSpinner = tracker.inProgress;
+                    }
+                    function getConfig(obj) {
+                        return _.pick(obj, ['method', 'url']);
                     }
                 }
             };
