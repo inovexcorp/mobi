@@ -50,7 +50,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.api</artifactId>
-            <version>1.5.20</version>
+            <version>1.5.26-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
@@ -116,7 +116,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.core.impl.owlapi</artifactId>
-            <version>1.5.20</version>
+            <version>1.5.26-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
