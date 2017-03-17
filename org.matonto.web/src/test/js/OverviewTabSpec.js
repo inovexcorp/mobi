@@ -59,6 +59,9 @@ describe('Overview Tab directive', function() {
         it('with a axiom-block', function() {
             expect(element.find('axiom-block').length).toBe(1);
         });
+        it('with a characteristics-row', function() {
+            expect(element.find('characteristics-row').length).toBe(1);
+        });
         it('with a usages-block', function() {
             expect(element.find('usages-block').length).toBe(1);
         });

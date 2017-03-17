@@ -61,8 +61,7 @@
 
                     dvm.nameChanged = function() {
                         if (!dvm.iriHasChanged) {
-                            dvm.property['@id'] = dvm.prefix + $filter('camelCase')(
-                                dvm.property[prefixes.dcterms + 'title'][0]['@value'], 'property');
+                            dvm.property['@id'] = dvm.prefix + $filter('camelCase')(dvm.property[prefixes.dcterms + 'title'][0]['@value'], 'property');
                         }
                     }
 
@@ -93,9 +92,14 @@
                         if (dvm.om.isObjectProperty(dvm.property)) {
                             _.get(dvm.sm.listItem, 'subObjectProperties').push({namespace:split.begin + split.then, localName: split.end});
                             _.get(dvm.sm.listItem, 'objectPropertyHierarchy').push({'entityIRI': dvm.property['@id']});
-                        } else {
+                            dvm.sm.setObjectPropertiesOpened(dvm.sm.listItem.recordId, true);
+                        } else if (dvm.om.isDataTypeProperty(dvm.property)) {
                             _.get(dvm.sm.listItem, 'subDataProperties').push({namespace:split.begin + split.then, localName: split.end});
                             _.get(dvm.sm.listItem, 'dataPropertyHierarchy').push({'entityIRI': dvm.property['@id']});
+                            dvm.sm.setDataPropertiesOpened(dvm.sm.listItem.recordId, true);
+                        } else if (dvm.om.isAnnotation(dvm.property)) {
+                            _.get(dvm.sm.listItem, 'annotations').push({namespace:split.begin + split.then, localName: split.end});
+                            dvm.sm.setAnnotationPropertiesOpened(dvm.sm.listItem.recordId, true);
                         }
                         _.set(_.get(dvm.sm.listItem, 'index'), dvm.property['@id'], dvm.sm.listItem.ontology.length - 1);
                         dvm.om.addToAdditions(dvm.sm.listItem.recordId, dvm.property);

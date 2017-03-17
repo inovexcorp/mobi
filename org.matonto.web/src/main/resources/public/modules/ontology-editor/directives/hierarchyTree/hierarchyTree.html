@@ -22,7 +22,7 @@
   -->
 <div class="tree hierarchy-tree">
     <ul ng-repeat="node in hierarchy | orderBy:dvm.ou.getNameByNode track by node.entityIRI"
-        ng-include="'hierarchy_item'" ng-init="node = node; path = dvm.sm.listItem.ontologyId + '.' + node.entityIRI"></ul>
+        ng-include="'hierarchy_item'" ng-init="node = node; path = dvm.sm.listItem.recordId + '.' + node.entityIRI"></ul>
     <script type="text/ng-template" id="hierarchy_item">
         <tree-item current-entity="dvm.om.getEntityByRecordId(dvm.sm.listItem.recordId, node.entityIRI)"
                    path="path" is-active="dvm.sm.getActiveEntityIRI() === node.entityIRI"
