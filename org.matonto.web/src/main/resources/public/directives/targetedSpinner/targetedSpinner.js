@@ -37,26 +37,34 @@
          * @ngdoc directive
          * @name targetedSpinner.directive:targetedSpinner
          * @restrict A
-         * @requires targetedSpinnerService.service:targetedSpinnerService
          * @requires $compile
          * @requires $rootScope
          *
          * @description
-         * `targetedSpinner` is a directive that injects loading spinner HTML into the parent element and
-         * creates a tracker in the $rootScope for the parent scope and HTTP requests that match the passed
-         * configuration. This tracker integrates with the `requestInterceptor` on the `app` module so that
-         * HTTP requests that match the configuration only trigger the injected spinner for the parent scope
-         * instead of the full screen spinner. When the parent scope is destroyed, the tracker can optionally
-         * be removed and any in progress HTTP requests that match the tracker configuration are canceled.
+         * `targetedSpinner` is a directive that injects a {@link spinner.directive:spinner spinner} into the
+         * parent element and creates a tracker in the `$rootScope` for HTTP requests that match the passed
+         * configuration if one does not already exist. Each tracker keeps track of which scopes are looking
+         * for the specific configuration. This tracker integrates with the `requestInterceptor` on the `app`
+         * module so that HTTP requests that match the configuration only trigger specific injected spinners
+         * instead of the full screen spinner. Can specify whether a matched in progress HTTP call should be
+         * canceled when the parent scope is destroyed, but this will only occur if all scopes watching for that
+         * request specify it should be canceled. Can specify whether a matched in progress HTTP call should be
+         * canceled when the passed configuration changes, but this will only occur if all scopes watching for
+         * that request specify it should be canceled. Can specify whether a matched in progress HTTP call
+         * should be canceled if another matching call is made, but this will only occur if all scopes watching
+         * for that request specify it should be canceled.
          *
-         * @param {Object} targetSpinner A configuration for the injected spinner
-         * @param {boolean} targetSpinner.destroy Whether or not the created tracker should be remove when the
-         * parent scope is destroyed
-         * @param {Object} targetSpinner.requestConfig A configuration for matching HTTP calls
-         * @param {string} targetSpinner.requestConfig.method A string representing a HTTP method that an HTTP
-         * call must have to be matched to the parent scope's spinner
-         * @param {string} targetSpinner.requestConfig.regex A regular expression within a string that an HTTP
-         * call's URL must match to be matched to the parent scope's spinner
+         * @param {Object} targetSpinner A configuration for matching HTTP calls
+         * @param {string} targetSpinner.method A string representing an HTTP method that a call must have to
+         * be linked to the parent scope's spinner
+         * @param {string} targetSpinner.url A regular expression within a string that an HTTP call's URL must
+         * match to be linked to the parent scope's spinner
+         * @param {boolean} cancelOnDestroy Whether or not matched in progress HTTP calls should be canceled
+         * when the parent scope is destroyed
+         * @param {boolean} cancelOnChange Whether or not matched in progress HTTP calls should be canceled
+         * when the configuration for matching HTTP calls changes
+         * @param {boolean} cancelOnNew Whether or not matched in progress HTTP calls should be canceled when
+         * a new matching HTTP call is made
          */
         .directive('targetedSpinner', targetedSpinner);
 
@@ -67,13 +75,21 @@
                 restrict: 'A',
                 link: function(scope, el, attrs) {
                     scope.cancelOnDestroy = !!attrs.cancelOnDestroy;
+                    scope.cancelOnChange = !!attrs.cancelOnChange;
+                    scope.cancelOnNew = !!attrs.cancelOnNew;
                     var requestConfig = getConfig(scope.$eval(attrs.targetedSpinner));
                     el.addClass('spinner-container');
-                    el.append($compile('<div class="spinner" ng-show="showSpinner"><i class="fa fa-4x fa-spin fa-spinner"></i></div>')(scope));
+                    el.append($compile('<spinner ng-show="showSpinner"></spinner>')(scope));
                     setTracker();
 
                     scope.$watch(attrs.cancelOnDestroy, function(newValue) {
                         scope.cancelOnDestroy = !!newValue;
+                    });
+                    scope.$watch(attrs.cancelOnChange, function(newValue) {
+                        scope.cancelOnChange = !!newValue;
+                    });
+                    scope.$watch(attrs.cancelOnNew, function(newValue) {
+                        scope.cancelOnNew = !!newValue;
                     });
                     scope.$watch(attrs.targetedSpinner, function(newValue, oldValue) {
                         var oldRequestConfig = getConfig(oldValue);
@@ -81,6 +97,9 @@
                         if (!_.isEqual(newRequestConfig, oldRequestConfig)) {
                             var oldTracker = _.find($rootScope.trackedHttpRequests, {requestConfig: oldRequestConfig});
                             if (oldTracker) {
+                                if (_.every(oldTracker.scopes, 'cancelOnChange') && _.has(oldTracker, 'canceller')) {
+                                    oldTracker.canceller.resolve();
+                                }
                                 _.remove(oldTracker.scopes, scope);
                                 if (oldTracker.scopes.length === 0) {
                                     _.remove($rootScope.trackedHttpRequests, oldTracker);

@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Targeted Spinner directive', function() {
-    var $compile, scope, element;
+    var $compile, scope, element, canceller;
 
     beforeEach(function() {
         module('targetedSpinner');
@@ -33,24 +33,29 @@ describe('Targeted Spinner directive', function() {
 
         scope.trackedHttpRequests = [];
         scope.requestConfig = {method: 'get', url: '\/test'};
+        canceller = {
+            resolve: jasmine.createSpy('resolve')
+        };
     });
 
-    it('should initialize with the correct value for cancelOnDestroy', function() {
-        element = $compile(angular.element('<div targeted-spinner=""></div>'))(scope);
-        scope.$digest();
-        expect(scope.cancelOnDestroy).toBe(false);
+    _.forEach([{var: 'cancelOnDestroy', attr: 'cancel-on-destroy'}, {var: 'cancelOnChange', attr: 'cancel-on-change'}, {var: 'cancelOnNew', attr: 'cancel-on-new'}], function(test) {
+        it('should initialize with the correct value for ' + test.var, function() {
+            element = $compile(angular.element('<div targeted-spinner=""></div>'))(scope);
+            scope.$digest();
+            expect(_.get(scope, test.var)).toBe(false);
 
-        element = $compile(angular.element('<div targeted-spinner="" cancel-on-Destroy></div>'))(scope);
-        scope.$digest();
-        expect(scope.cancelOnDestroy).toBe(false);
+            element = $compile(angular.element('<div targeted-spinner="" ' + test.attr + '></div>'))(scope);
+            scope.$digest();
+            expect(_.get(scope, test.var)).toBe(false);
 
-        element = $compile(angular.element('<div targeted-spinner="" cancel-on-destroy="false"></div>'))(scope);
-        scope.$digest();
-        expect(scope.cancelOnDestroy).toBe(false);
+            element = $compile(angular.element('<div targeted-spinner="" ' + test.attr + '="false"></div>'))(scope);
+            scope.$digest();
+            expect(_.get(scope, test.var)).toBe(false);
 
-        element = $compile(angular.element('<div targeted-spinner="" cancel-on-destroy="true"></div>'))(scope);
-        scope.$digest();
-        expect(scope.cancelOnDestroy).toBe(true);
+            element = $compile(angular.element('<div targeted-spinner="" ' + test.attr + '="true"></div>'))(scope);
+            scope.$digest();
+            expect(_.get(scope, test.var)).toBe(true);
+        });
     });
     describe('should inject a spinner and create a tracker', function() {
         it('unless it already exists', function() {
@@ -59,7 +64,7 @@ describe('Targeted Spinner directive', function() {
             element = $compile(angular.element('<div targeted-spinner="requestConfig"></div>'))(scope);
             scope.$digest();
             expect(element.hasClass('spinner-container')).toBe(true);
-            expect(element.children().length).toBe(1);
+            expect(element.find('spinner').length).toBe(1);
             expect(scope.showSpinner).toBe(true);
             expect(scope.trackedHttpRequests.length).toBe(1);
             expect(tracker.scopes).toContain(scope);
@@ -68,7 +73,7 @@ describe('Targeted Spinner directive', function() {
             element = $compile(angular.element('<div targeted-spinner="requestConfig"></div>'))(scope);
             scope.$digest();
             expect(element.hasClass('spinner-container')).toBe(true);
-            expect(element.children().length).toBe(1);
+            expect(element.find('spinner').length).toBe(1);
             expect(scope.showSpinner).toBe(false);
             expect(scope.trackedHttpRequests.length).toBe(1);
             expect(scope.trackedHttpRequests).toContain({requestConfig: scope.requestConfig, inProgress: false, scopes: [scope]});
@@ -76,7 +81,7 @@ describe('Targeted Spinner directive', function() {
     });
     describe('should update if the request configuration changes', function() {
         beforeEach(function() {
-            element = $compile(angular.element('<div targeted-spinner="requestConfig"></div>'))(scope);
+            element = $compile(angular.element('<div targeted-spinner="requestConfig" cancel-on-change="true"></div>'))(scope);
             scope.$digest();
         });
         describe('adding a new tracker', function() {
@@ -99,7 +104,7 @@ describe('Targeted Spinner directive', function() {
         });
         describe('updating the old tracker', function() {
             beforeEach(function() {
-                this.oldTracker = {requestConfig: angular.copy(scope.requestConfig), inProgress: true, scopes: []};
+                this.oldTracker = {requestConfig: angular.copy(scope.requestConfig), inProgress: true, scopes: [], canceller: canceller};
                 scope.trackedHttpRequests = [this.oldTracker];
                 scope.requestConfig.method = 'post';
             });
@@ -113,6 +118,17 @@ describe('Targeted Spinner directive', function() {
                 scope.$digest();
                 expect(scope.trackedHttpRequests.length).toBe(1);
                 expect(scope.trackedHttpRequests).not.toContain(this.oldTracker);
+            });
+            describe('and cancel any in progress call', function() {
+                it('unless a watching scope says not to cancel on change', function() {
+                    this.oldTracker.scopes.push({cancelOnChange: false});
+                    scope.$digest();
+                    expect(canceller.resolve).not.toHaveBeenCalled();
+                });
+                it('if all watching scopes say to cancel on change', function() {
+                    scope.$digest();
+                    expect(canceller.resolve).toHaveBeenCalled();
+                });
             });
         });
     });
@@ -133,19 +149,16 @@ describe('Targeted Spinner directive', function() {
         });
         describe('and cancel any in progress call', function() {
             beforeEach(function() {
-                this.canceller = {
-                    resolve: jasmine.createSpy('resolve')
-                };
-                this.tracker.canceller = this.canceller;
+                this.tracker.canceller = canceller;
             });
             it('unless a watching scope says not to', function() {
                 this.tracker.scopes.push({cancelOnDestroy: false});
                 this.tracker.scopes[0].$destroy();
-                expect(this.canceller.resolve).not.toHaveBeenCalled();
+                expect(canceller.resolve).not.toHaveBeenCalled();
             });
             it('if all watching scopes say to', function() {
                 this.tracker.scopes[0].$destroy();
-                expect(this.canceller.resolve).toHaveBeenCalled();
+                expect(canceller.resolve).toHaveBeenCalled();
             });
         });
     });
