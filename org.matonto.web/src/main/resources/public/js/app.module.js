@@ -156,17 +156,21 @@
             $httpProvider.interceptors.push('requestInterceptor');
         }
 
-        requestInterceptor.$inject = ['$q', '$rootScope'];
+        requestInterceptor.$inject = ['$q', '$rootScope', '$httpParamSerializer'];
 
-        function requestInterceptor($q, $rootScope) {
+        function requestInterceptor($q, $rootScope, $httpParamSerializer) {
             $rootScope.pendingRequests = 0;
             $rootScope.trackedHttpRequests = [];
 
             function findTrackers(config) {
-                return _.filter($rootScope.trackedHttpRequests, tr => config.url.match(tr.requestConfig.url) && config.method === _.toUpper(tr.requestConfig.method));
+                return _.filter($rootScope.trackedHttpRequests, tr => {
+                    var urlToMatch = config.url + (config.params ? '?' + $httpParamSerializer(config.params) : '');
+                    return urlToMatch.match(tr.requestConfig.url) && config.method === _.toUpper(tr.requestConfig.method);
+                });
             }
 
-            function removeTrackersIfPresent(trackers) {
+            function handleStop(config) {
+                var trackers = findTrackers(config);
                 if (trackers.length > 0) {
                     _.forEach(trackers, tracker => {
                         if (tracker.scopes.length === 0) {
@@ -180,7 +184,7 @@
                             tracker.canceledAndContinue = false;
                         }
                     });
-                } else {
+                } else if (!_.includes(config.url, '.html')) {
                     $rootScope.pendingRequests--;
                 }
             }
@@ -200,21 +204,21 @@
                             tracker.canceller = canceller;
                         });
                         config.timeout = canceller.promise;
-                    } else {
+                    } else if (!_.includes(config.url, '.html')) {
                         $rootScope.pendingRequests++;
                     }
                     return config || $q.when(config);
                 },
                 'requestError': function(rejection) {
-                    removeTrackersIfPresent(findTrackers(rejection.config))
+                    handleStop(rejection.config);
                     return $q.reject(rejection);
                 },
                 'response': function(response) {
-                    removeTrackersIfPresent(findTrackers(response.config))
+                    handleStop(response.config);
                     return response || $q.when(response);
                 },
                 'responseError': function(rejection) {
-                    removeTrackersIfPresent(findTrackers(rejection.config))
+                    handleStop(rejection.config);
                     return $q.reject(rejection);
                 }
             };

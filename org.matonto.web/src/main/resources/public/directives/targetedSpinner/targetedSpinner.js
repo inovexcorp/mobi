@@ -57,8 +57,8 @@
          * @param {Object} targetSpinner A configuration for matching HTTP calls
          * @param {string} targetSpinner.method A string representing an HTTP method that a call must have to
          * be linked to the parent scope's spinner
-         * @param {string} targetSpinner.url A regular expression within a string that an HTTP call's URL must
-         * match to be linked to the parent scope's spinner
+         * @param {string} targetSpinner.url A regular expression or a string that an HTTP call's URL must
+         * match to be linked to the parent scope's spinner; can include query parameters
          * @param {boolean} cancelOnDestroy Whether or not matched in progress HTTP calls should be canceled
          * when the parent scope is destroyed
          * @param {boolean} cancelOnChange Whether or not matched in progress HTTP calls should be canceled
@@ -74,23 +74,14 @@
             return {
                 restrict: 'A',
                 link: function(scope, el, attrs) {
-                    scope.cancelOnDestroy = !!attrs.cancelOnDestroy;
-                    scope.cancelOnChange = !!attrs.cancelOnChange;
-                    scope.cancelOnNew = !!attrs.cancelOnNew;
+                    scope.cancelOnDestroy = 'cancelOnDestroy' in attrs;
+                    scope.cancelOnChange = 'cancelOnChange' in attrs;
+                    scope.cancelOnNew = 'cancelOnNew' in attrs;
                     var requestConfig = getConfig(scope.$eval(attrs.targetedSpinner));
                     el.addClass('spinner-container');
                     el.append($compile('<spinner ng-show="showSpinner"></spinner>')(scope));
                     setTracker();
 
-                    scope.$watch(attrs.cancelOnDestroy, function(newValue) {
-                        scope.cancelOnDestroy = !!newValue;
-                    });
-                    scope.$watch(attrs.cancelOnChange, function(newValue) {
-                        scope.cancelOnChange = !!newValue;
-                    });
-                    scope.$watch(attrs.cancelOnNew, function(newValue) {
-                        scope.cancelOnNew = !!newValue;
-                    });
                     scope.$watch(attrs.targetedSpinner, function(newValue, oldValue) {
                         var oldRequestConfig = getConfig(oldValue);
                         var newRequestConfig = getConfig(newValue);
@@ -101,9 +92,6 @@
                                     oldTracker.canceller.resolve();
                                 }
                                 _.remove(oldTracker.scopes, scope);
-                                if (oldTracker.scopes.length === 0) {
-                                    _.remove($rootScope.trackedHttpRequests, oldTracker);
-                                }
                             }
                             requestConfig = newRequestConfig;
                             setTracker();

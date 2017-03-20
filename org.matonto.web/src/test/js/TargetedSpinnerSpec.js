@@ -46,14 +46,6 @@ describe('Targeted Spinner directive', function() {
 
             element = $compile(angular.element('<div targeted-spinner="" ' + test.attr + '></div>'))(scope);
             scope.$digest();
-            expect(_.get(scope, test.var)).toBe(false);
-
-            element = $compile(angular.element('<div targeted-spinner="" ' + test.attr + '="false"></div>'))(scope);
-            scope.$digest();
-            expect(_.get(scope, test.var)).toBe(false);
-
-            element = $compile(angular.element('<div targeted-spinner="" ' + test.attr + '="true"></div>'))(scope);
-            scope.$digest();
             expect(_.get(scope, test.var)).toBe(true);
         });
     });
@@ -81,7 +73,7 @@ describe('Targeted Spinner directive', function() {
     });
     describe('should update if the request configuration changes', function() {
         beforeEach(function() {
-            element = $compile(angular.element('<div targeted-spinner="requestConfig" cancel-on-change="true"></div>'))(scope);
+            element = $compile(angular.element('<div targeted-spinner="requestConfig" cancel-on-change></div>'))(scope);
             scope.$digest();
         });
         describe('adding a new tracker', function() {
@@ -98,26 +90,19 @@ describe('Targeted Spinner directive', function() {
             it('if one does not already exist', function() {
                 scope.$digest();
                 expect(scope.showSpinner).toBe(false);
-                expect(scope.trackedHttpRequests.length).toBe(1);
+                expect(scope.trackedHttpRequests.length).toBe(2);
                 expect(scope.trackedHttpRequests).toContain(jasmine.objectContaining({requestConfig: scope.requestConfig, inProgress: false, scopes: [scope]}));
             });
         });
         describe('updating the old tracker', function() {
             beforeEach(function() {
-                this.oldTracker = {requestConfig: angular.copy(scope.requestConfig), inProgress: true, scopes: [], canceller: canceller};
+                this.oldTracker = {requestConfig: angular.copy(scope.requestConfig), inProgress: true, scopes: [scope], canceller: canceller};
                 scope.trackedHttpRequests = [this.oldTracker];
                 scope.requestConfig.method = 'post';
             });
-            it('if it has other scopes', function() {
-                this.oldTracker.scopes = [{}];
+            it('by removing the scope', function() {
                 scope.$digest();
-                expect(scope.trackedHttpRequests.length).toBe(2);
-                expect(scope.trackedHttpRequests).toContain(this.oldTracker);
-            });
-            it('if it has no other scopes', function() {
-                scope.$digest();
-                expect(scope.trackedHttpRequests.length).toBe(1);
-                expect(scope.trackedHttpRequests).not.toContain(this.oldTracker);
+                expect(this.oldTracker.scopes).not.toContain(scope);
             });
             describe('and cancel any in progress call', function() {
                 it('unless a watching scope says not to cancel on change', function() {
