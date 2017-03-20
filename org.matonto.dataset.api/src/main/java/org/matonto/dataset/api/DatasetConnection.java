@@ -86,6 +86,22 @@ public interface DatasetConnection extends DelegatingRepositoryConnection {
     void add(Iterable<? extends Statement> statements, Resource... contexts) throws RepositoryException;
 
     /**
+     * Adds the supplied statements to this repository as a default named graph, optionally to one or more named
+     * contexts. Ensures that any necessary dataset default named graph statements are created. Any statement added
+     * without a context (or supplied context) will be added to the system default named graph for that dataset.
+     *
+     * @param statements - The statements that should be added.
+     * @param contexts - The contexts to add the statements to. Note that this parameter is a vararg and as such
+     *                 is optional. If no contexts are specified, the statements are added to any context specified
+     *                 in each statement, or if the statement contains no context, it is added to the system default
+     *                 named graph for that dataset. If one or more contexts are specified, the statements are added to
+     *                 these contexts, ignoring any context information in the statements themselves.
+     * @throws RepositoryException - If the statements could not be added to the repository, for example because
+     * the repository is not writable.
+     */
+    void addDefault(Iterable<? extends Statement> statements, Resource... contexts) throws RepositoryException;
+
+    /**
      * Adds a statement with the specified subject, predicate and object to this repository, optionally
      * to one or more named contexts. Ensures that any necessary dataset named graph statements are created. Any
      * statement added without a context (or supplied context) will be added to the system default named graph for that
@@ -103,6 +119,24 @@ public interface DatasetConnection extends DelegatingRepositoryConnection {
      */
     @Override
     void add(Resource subject, IRI predicate, Value object, Resource... contexts) throws RepositoryException;
+
+    /**
+     * Adds a statement with the specified subject, predicate and object to this repository, optionally
+     * to one or more named contexts. Ensures that any necessary dataset default named graph statements are created. Any
+     * statement added without a context (or supplied context) will be added to the system default named graph for that
+     * dataset.
+     *
+     * @param subject - The statement's subject.
+     * @param predicate - The statement's subject.
+     * @param object - The statement's object.
+     * @param contexts - The contexts to add the data to. Note that this parameter is a vararg and as such
+     *                 is optional. If no contexts are specified, the data are added to the system default
+     *                 named graph for that dataset. If one or more contexts are specified, the data are added to
+     *                 these contexts.
+     * @throws RepositoryException - If the data could not be added to the repository, for example because
+     * the repository is not writable.
+     */
+    void addDefault(Resource subject, IRI predicate, Value object, Resource... contexts) throws RepositoryException;
 
     /**
      * Returns the number of (explicit) statements that are in the specified contexts that exist in this Dataset.

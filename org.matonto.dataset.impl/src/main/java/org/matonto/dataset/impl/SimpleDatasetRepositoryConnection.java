@@ -77,8 +77,18 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     }
 
     @Override
+    public void addDefault(Iterable<? extends Statement> statements, Resource... contexts) throws RepositoryException {
+        addStatements(statements, Dataset.defaultNamedGraph_IRI, contexts);
+    }
+
+    @Override
     public void add(Resource subject, IRI predicate, Value object, Resource... contexts) throws RepositoryException {
         add(valueFactory.createStatement(subject, predicate, object), contexts);
+    }
+
+    @Override
+    public void addDefault(Resource subject, IRI predicate, Value object, Resource... contexts) throws RepositoryException {
+        addDefault(valueFactory.createStatement(subject, predicate, object), contexts);
     }
 
     @Override

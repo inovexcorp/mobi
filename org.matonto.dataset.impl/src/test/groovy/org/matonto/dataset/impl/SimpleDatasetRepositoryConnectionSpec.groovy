@@ -275,7 +275,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         systemConn.size(graphs[1]) == 1
 
         !systemConn.getStatements(dataset, sdNamedGraphPred, c2).hasNext()
-        !systemConn.getStatements(dataset, defNamedGraphPred, sdng).hasNext()
+        !systemConn.getStatements(dataset, defNamedGraphPred, c2).hasNext()
         systemConn.getStatements(dataset, namedGraphPred, c2).hasNext()
 
         !systemConn.getStatements(dataset, sdNamedGraphPred, graphs[0]).hasNext()
@@ -407,6 +407,76 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         !systemConn.getStatements(dataset, namedGraphPred, c).hasNext()
         systemConn.size(c) == 1
         systemConn.size(sdng) == 0
+    }
+
+    def "addDefault(s, p, o, c...) will add the necessary graph statements"() {
+        setup:
+        def s = vf.createIRI("urn:s")
+        def p = vf.createIRI("urn:p")
+        def o = vf.createLiteral("object")
+        def graphs = [ vf.createIRI("urn:c"), vf.createIRI("urn:c2") ] as Resource[]
+        def dataset = datasetsInFile[2]
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
+
+        when:
+        conn.addDefault(s, p, o, graphs)
+
+        then:
+        systemConn.size(graphs[0]) == 1
+        systemConn.size(graphs[1]) == 1
+        systemConn.getStatements(dataset, defNamedGraphPred, graphs[0]).hasNext()
+        systemConn.getStatements(dataset, defNamedGraphPred, graphs[1]).hasNext()
+    }
+
+    def "addDefault(model, c...) will add the necessary graph statements"() {
+        setup:
+        def s = vf.createIRI("urn:s")
+        def p = vf.createIRI("urn:p")
+        def o = vf.createLiteral("object")
+        def s2 = vf.createIRI("urn:s2")
+        def p2 = vf.createIRI("urn:p2")
+        def o2 = vf.createLiteral("object2")
+        def c2 = vf.createIRI("urn:c2")
+        def s3 = vf.createIRI("urn:s3")
+        def p3 = vf.createIRI("urn:p3")
+        def o3 = vf.createLiteral("object3")
+        def model1 = LinkedHashModelFactory.getInstance().createModel()
+        def model2 = LinkedHashModelFactory.getInstance().createModel()
+        model1.add(s, p, o)
+        model1.add(s2, p2, o2, c2)
+        model2.add(s3, p3, o3)
+        model2.add(s3, p3, o3, c2)
+
+        def sdng = vf.createIRI("http://matonto.org/dataset/test1_system_dng")
+        def graphs = [ vf.createIRI("urn:graph1"), vf.createIRI("urn:graph2") ] as Resource[]
+        def dataset = datasetsInFile[1]
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
+
+        when:
+        conn.addDefault(model1)
+        conn.addDefault(model2, graphs)
+
+        then:
+        systemConn.size(sdng) == 1
+        systemConn.size(c2) == 1
+        systemConn.size(graphs[0]) == 1
+        systemConn.size(graphs[1]) == 1
+
+        !systemConn.getStatements(dataset, sdNamedGraphPred, c2).hasNext()
+        systemConn.getStatements(dataset, defNamedGraphPred, c2).hasNext()
+        !systemConn.getStatements(dataset, namedGraphPred, c2).hasNext()
+
+        !systemConn.getStatements(dataset, sdNamedGraphPred, graphs[0]).hasNext()
+        systemConn.getStatements(dataset, defNamedGraphPred, graphs[0]).hasNext()
+        !systemConn.getStatements(dataset, namedGraphPred, graphs[0]).hasNext()
+
+        !systemConn.getStatements(dataset, sdNamedGraphPred, graphs[1]).hasNext()
+        systemConn.getStatements(dataset, defNamedGraphPred, graphs[1]).hasNext()
+        !systemConn.getStatements(dataset, namedGraphPred, graphs[1]).hasNext()
+
+        systemConn.getStatements(dataset, sdNamedGraphPred, sdng).hasNext()
+        !systemConn.getStatements(dataset, defNamedGraphPred, sdng).hasNext()
+        !systemConn.getStatements(dataset, namedGraphPred, sdng).hasNext()
     }
 
     def "begin starts a transaction"() {
