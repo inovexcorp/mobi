@@ -4,37 +4,46 @@ prefix skos: <http://www.w3.org/2004/02/skos/core#>
 select ?parent ?child
 where {
     {
-        ?parent rdf:type skos:Concept
+        ?parent rdf:type skos:Concept .
         optional {
-            ?child skos:broaderTransitive ?parent
+            ?child skos:broaderTransitive ?parent ;
+                   rdf:type skos:Concept .
         }
         optional {
-            ?child skos:broader ?parent
+            ?child skos:broader ?parent ;
+                   rdf:type skos:Concept .
         }
         optional {
-            ?child skos:broadMatch ?parent
+            ?child skos:broadMatch ?parent ;
+                   rdf:type skos:Concept .
         }
         optional {
-            ?child ^skos:narrowerTransitive ?parent
+            ?child ^skos:narrowerTransitive ?parent ;
+                   rdf:type skos:Concept .
         }
         optional {
-            ?child ^skos:narrower ?parent
+            ?child ^skos:narrower ?parent ;
+                   rdf:type skos:Concept .
         }
         optional {
-            ?child ^skos:narrowMatch ?parent
+            ?child ^skos:narrowMatch ?parent ;
+                   rdf:type skos:Concept .
         }
     }
     union
     {
-        ?parent rdf:type skos:ConceptScheme
+        ?parent rdf:type skos:ConceptScheme .
         optional {
-            ?child ^skos:hasTopConcept ?parent
+            ?child ^skos:hasTopConcept ?parent ;
+                   rdf:type skos:ConceptScheme .
         }
         optional {
-            ?child skos:topConceptOf ?parent
+            ?child skos:topConceptOf ?parent ;
+                   rdf:type skos:ConceptScheme .
         }
         optional {
-            ?child skos:inScheme ?parent
+            ?child skos:inScheme ?parent ;
+                   rdf:type skos:ConceptScheme .
         }
     }
 }

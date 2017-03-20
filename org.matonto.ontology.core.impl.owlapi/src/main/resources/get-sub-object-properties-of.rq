@@ -6,6 +6,7 @@ select ?parent ?child
 where {
     ?parent rdf:type owl:ObjectProperty .
     optional {
-        ?child rdfs:subPropertyOf ?parent .
+        ?child rdfs:subPropertyOf ?parent ;
+               rdf:type owl:ObjectProperty .
     }
 }
