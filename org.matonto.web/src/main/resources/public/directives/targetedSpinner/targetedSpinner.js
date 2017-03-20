@@ -99,10 +99,8 @@
                     }, true);
                     scope.$on('$destroy', function() {
                         var tracker = _.find($rootScope.trackedHttpRequests, {requestConfig});
-                        if (_.every(_.get(tracker, 'scopes', []), 'cancelOnDestroy')) {
-                            if (_.has(tracker, 'canceller')) {
-                                tracker.canceller.resolve();
-                            }
+                        if (_.every(_.get(tracker, 'scopes', []), 'cancelOnDestroy') && _.has(tracker, 'canceller')) {
+                            tracker.canceller.resolve();
                         }
                         _.remove(_.get(tracker, 'scopes'), scope);
                     });

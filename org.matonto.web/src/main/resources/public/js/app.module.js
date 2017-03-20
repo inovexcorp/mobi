@@ -179,8 +179,8 @@
                             if (!tracker.canceledAndContinue) {
                                 tracker.inProgress = false;
                                 _.forEach(tracker.scopes, scope => scope.showSpinner = false);
+                                _.unset(tracker, 'canceller');
                             }
-                            _.unset(tracker, 'canceller');
                             tracker.canceledAndContinue = false;
                         }
                     });
