@@ -40,63 +40,27 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
 
     @Override
     public void add(Statement stmt, Resource... contexts) throws RepositoryException {
-        // If there is already a transaction, we don't want to commit here
-        boolean needToCommit = false;
-        if (!isActive()) {
-            begin();
-            needToCommit = true;
-        }
-
-        if (varargsPresent(contexts)) {
-            getDelegate().add(stmt, contexts);
-            for (Resource context : contexts) {
-                getDelegate().add(dataset, valueFactory.createIRI(Dataset.namedGraph_IRI), context, dataset);
-            }
-        } else if (stmt.getContext().isPresent()) {
-            getDelegate().add(stmt);
-            getDelegate().add(dataset, valueFactory.createIRI(Dataset.namedGraph_IRI), stmt.getContext().get(), dataset);
-        } else {
-            getDelegate().add(stmt, getSystemDefaultNG());
-        }
-
-        if (needToCommit) {
-            commit();
-        }
+        addStatement(stmt, Dataset.namedGraph_IRI, contexts);
     }
 
     @Override
     public void addDefault(Statement stmt, Resource... contexts) throws RepositoryException {
-
+        addStatement(stmt, Dataset.defaultNamedGraph_IRI, contexts);
     }
-
-    //TODO: Dedupe stuff
 
     @Override
     public void add(Iterable<? extends Statement> statements, Resource... contexts) throws RepositoryException {
-        // If there is already a transaction, we don't want to commit here
-        boolean needToCommit = false;
-        if (!isActive()) {
-            begin();
-            needToCommit = true;
-        }
+        // Start a transaction if not currently in one
+        boolean startedTransaction = startTransaction();
 
         if (varargsPresent(contexts)) {
             getDelegate().add(statements, contexts);
-            for (Resource context : contexts) {
-                getDelegate().add(dataset, valueFactory.createIRI(Dataset.namedGraph_IRI), context, dataset);
-            }
+            addGraphStatements(Dataset.namedGraph_IRI, contexts);
         } else {
-            statements.forEach(stmt -> {
-               if (stmt.getContext().isPresent()) {
-                   getDelegate().add(stmt);
-                   getDelegate().add(dataset, valueFactory.createIRI(Dataset.namedGraph_IRI), stmt.getContext().get(), dataset);
-               } else {
-                   getDelegate().add(stmt, getSystemDefaultNG());
-               }
-            });
+            statements.forEach(stmt -> addStatement(stmt, Dataset.namedGraph_IRI));
         }
 
-        if (needToCommit) {
+        if (startedTransaction) {
             commit();
         }
     }
@@ -233,5 +197,74 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
         } else {
             throw new MatOntoException("Could not retrieve systemDefaultNamedGraph for dataset");
         }
+    }
+
+    /**
+     * Adds a statement to the dataset, optionally to one or more named contexts. Ensures that the provided dataset
+     * graph statement is created. Any statement added without a context (or supplied context) will be added to the
+     * system default named graph for that dataset.
+     *
+     * @param statement The statement to add.
+     * @param predicate The contexts to add the statement to. Note that this parameter is a vararg and as such
+     *                 is optional. If no contexts are specified, the statement is added to any context specified
+     *                 in each statement, or if the statement contains no context, it is added to the system default
+     *                 named graph for that dataset. If one or more contexts are specified, the statement is added to
+     *                 these contexts, ignoring any context information in the statement itself.
+     * @param contexts
+     */
+    private void addStatement(Statement statement, String predicate, Resource... contexts) {
+        // Start a transaction if not currently in one
+        boolean startedTransaction = startTransaction();
+
+        if (varargsPresent(contexts)) {
+            getDelegate().add(statement, contexts);
+            addGraphStatements(predicate, contexts);
+        } else {
+            addStatement(statement, predicate);
+        }
+
+        if (startedTransaction) {
+            commit();
+        }
+    }
+
+    /**
+     * Adds a statement to the dataset. If the statement has a context, then add it to that graph and add that graph to
+     * the dataset as a Named Graph.
+     *
+     * @param statement The Statement to add to the dataset.
+     */
+    private void addStatement(Statement statement, String predicate) {
+        if (statement.getContext().isPresent()) {
+            getDelegate().add(statement);
+            addGraphStatements(predicate, statement.getContext().get());
+        } else {
+            getDelegate().add(statement, getSystemDefaultNG());
+        }
+    }
+
+    /**
+     * Adds a set of graph statements to the dataset.
+     *
+     * @param predicate The predicate to use for the graph statements.
+     * @param contexts The graph identifiers.
+     */
+    private void addGraphStatements(String predicate, Resource... contexts) {
+        for (Resource context : contexts) {
+            getDelegate().add(dataset, valueFactory.createIRI(predicate), context, dataset);
+        }
+    }
+
+    /**
+     * Starts a transaction for this DatasetConnection if one is not already active.
+     *
+     * @return True is a transaction was started. False otherwise.
+     */
+    private boolean startTransaction() {
+        if (!isActive()) {
+            begin();
+            return true;
+        }
+        return false;
     }
 }

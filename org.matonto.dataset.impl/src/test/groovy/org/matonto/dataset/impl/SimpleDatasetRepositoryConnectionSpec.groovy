@@ -125,14 +125,18 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         def c = vf.createIRI("urn:c")
         def stmt = vf.createStatement(s, p, o, c)
         def dataset = datasetsInFile[1]
+        def sdng = vf.createIRI("http://matonto.org/dataset/test1_system_dng")
         def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
 
         when:
         conn.add(stmt)
 
         then:
-        systemConn.size(c) == 1
+        !systemConn.getStatements(dataset, sdNamedGraphPred, c).hasNext()
+        !systemConn.getStatements(dataset, defNamedGraphPred, c).hasNext()
         systemConn.getStatements(dataset, namedGraphPred, c).hasNext()
+        systemConn.size(c) == 1
+        systemConn.size(sdng) == 0
     }
 
     def "add(s) with a context will add data to an existing graph"() {
@@ -232,6 +236,8 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         model1.add(s2, p2, o2, c2)
         model2.add(s3, p3, o3)
         model2.add(s3, p3, o3, c2)
+
+        def sdng = vf.createIRI("http://matonto.org/dataset/test1_system_dng")
         def graphs = [ vf.createIRI("urn:graph1"), vf.createIRI("urn:graph2") ] as Resource[]
         def dataset = datasetsInFile[1]
         def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
@@ -241,13 +247,26 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         conn.add(model2, graphs)
 
         then:
-        systemConn.size(vf.createIRI("http://matonto.org/dataset/test2_system_dng")) == 1
+        systemConn.size(sdng) == 1
         systemConn.size(c2) == 1
         systemConn.size(graphs[0]) == 1
         systemConn.size(graphs[1]) == 1
+
+        !systemConn.getStatements(dataset, sdNamedGraphPred, c2).hasNext()
+        !systemConn.getStatements(dataset, defNamedGraphPred, sdng).hasNext()
         systemConn.getStatements(dataset, namedGraphPred, c2).hasNext()
+
+        !systemConn.getStatements(dataset, sdNamedGraphPred, graphs[0]).hasNext()
+        !systemConn.getStatements(dataset, defNamedGraphPred, graphs[0]).hasNext()
         systemConn.getStatements(dataset, namedGraphPred, graphs[0]).hasNext()
+
+        !systemConn.getStatements(dataset, sdNamedGraphPred, graphs[1]).hasNext()
+        !systemConn.getStatements(dataset, defNamedGraphPred, graphs[1]).hasNext()
         systemConn.getStatements(dataset, namedGraphPred, graphs[1]).hasNext()
+
+        systemConn.getStatements(dataset, sdNamedGraphPred, sdng).hasNext()
+        !systemConn.getStatements(dataset, defNamedGraphPred, sdng).hasNext()
+        !systemConn.getStatements(dataset, namedGraphPred, sdng).hasNext()
     }
 
     def "add(s) within a transaction does not internally commit"() {
@@ -324,6 +343,48 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         1 * conn.begin()
         1 * conn.commit()
         systemConn.size(vf.createIRI("http://matonto.org/dataset/test1_system_dng")) == 1
+    }
+
+    def "addDefault(s) without a context will add data to the sdng"() {
+        setup:
+        def s = vf.createIRI("urn:s")
+        def p = vf.createIRI("urn:p")
+        def o = vf.createLiteral("object")
+        def stmt = vf.createStatement(s, p, o)
+        def dataset = datasetsInFile[1]
+        def sdng = vf.createIRI("http://matonto.org/dataset/test1_system_dng")
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
+
+        when:
+        conn.addDefault(stmt)
+
+        then:
+        systemConn.getStatements(dataset, sdNamedGraphPred, sdng).hasNext()
+        !systemConn.getStatements(dataset, defNamedGraphPred, sdng).hasNext()
+        !systemConn.getStatements(dataset, namedGraphPred, sdng).hasNext()
+        systemConn.size(sdng) == 1
+    }
+
+    def "addDefault(s) with a context will add data to a new graph"() {
+        setup:
+        def s = vf.createIRI("urn:s")
+        def p = vf.createIRI("urn:p")
+        def o = vf.createLiteral("object")
+        def c = vf.createIRI("urn:c")
+        def stmt = vf.createStatement(s, p, o, c)
+        def dataset = datasetsInFile[1]
+        def sdng = vf.createIRI("http://matonto.org/dataset/test1_system_dng")
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
+
+        when:
+        conn.addDefault(stmt)
+
+        then:
+        !systemConn.getStatements(dataset, sdNamedGraphPred, c).hasNext()
+        systemConn.getStatements(dataset, defNamedGraphPred, c).hasNext()
+        !systemConn.getStatements(dataset, namedGraphPred, c).hasNext()
+        systemConn.size(c) == 1
+        systemConn.size(sdng) == 0
     }
 
     def "begin starts a transaction"() {
