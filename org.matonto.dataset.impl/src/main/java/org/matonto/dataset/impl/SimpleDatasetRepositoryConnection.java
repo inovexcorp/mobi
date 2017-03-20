@@ -40,16 +40,6 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
 
     @Override
     public void add(Statement stmt, Resource... contexts) throws RepositoryException {
-        Resource[] contextsToAdd;
-
-        if (varargsPresent(contexts)) {
-            contextsToAdd = contexts;
-        } else if (stmt.getContext().isPresent()) {
-            contextsToAdd = new Resource[] { stmt.getContext().get() };
-        } else {
-            contextsToAdd = new Resource[] { getSystemDefaultNG() };
-        }
-
         // If there is already a transaction, we don't want to commit here
         boolean needToCommit = false;
         if (!isActive()) {
@@ -57,9 +47,16 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
             needToCommit = true;
         }
 
-        getDelegate().add(stmt, contextsToAdd);
-        for (Resource context : contextsToAdd) {
-            getDelegate().add(dataset, valueFactory.createIRI(Dataset.namedGraph_IRI), context, dataset);
+        if (varargsPresent(contexts)) {
+            getDelegate().add(stmt, contexts);
+            for (Resource context : contexts) {
+                getDelegate().add(dataset, valueFactory.createIRI(Dataset.namedGraph_IRI), context, dataset);
+            }
+        } else if (stmt.getContext().isPresent()) {
+            getDelegate().add(stmt);
+            getDelegate().add(dataset, valueFactory.createIRI(Dataset.namedGraph_IRI), stmt.getContext().get(), dataset);
+        } else {
+            getDelegate().add(stmt, getSystemDefaultNG());
         }
 
         if (needToCommit) {
@@ -68,8 +65,14 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     }
 
     @Override
-    public void add(Iterable<? extends Statement> statements, Resource... contexts) throws RepositoryException {
+    public void addDefault(Statement stmt, Resource... contexts) throws RepositoryException {
 
+    }
+
+    //TODO: Dedupe stuff
+
+    @Override
+    public void add(Iterable<? extends Statement> statements, Resource... contexts) throws RepositoryException {
         // If there is already a transaction, we don't want to commit here
         boolean needToCommit = false;
         if (!isActive()) {

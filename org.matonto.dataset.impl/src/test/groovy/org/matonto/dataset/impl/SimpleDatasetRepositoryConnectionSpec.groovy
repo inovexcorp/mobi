@@ -33,6 +33,8 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
     RepositoryConnection testConn
     def repos = [ : ]
     def namedGraphPred = vf.createIRI(Dataset.namedGraph_IRI)
+    def defNamedGraphPred = vf.createIRI(Dataset.defaultNamedGraph_IRI)
+    def sdNamedGraphPred = vf.createIRI(Dataset.systemDefaultNamedGraph_IRI)
 
     @Shared
     datasetsInFile = [
@@ -101,13 +103,18 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         def p = vf.createIRI("urn:p")
         def o = vf.createLiteral("object")
         def stmt = vf.createStatement(s, p, o)
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, datasetsInFile[1], "system", vf)
+        def dataset = datasetsInFile[1]
+        def sdng = vf.createIRI("http://matonto.org/dataset/test1_system_dng")
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
 
         when:
         conn.add(stmt)
 
         then:
-        systemConn.size(vf.createIRI("http://matonto.org/dataset/test1_system_dng")) == 1
+        !systemConn.getStatements(dataset, namedGraphPred, sdng).hasNext()
+        !systemConn.getStatements(dataset, defNamedGraphPred, sdng).hasNext()
+        systemConn.getStatements(dataset, sdNamedGraphPred, sdng).hasNext()
+        systemConn.size(sdng) == 1
     }
 
     def "add(s) with a context will add data to a new graph"() {

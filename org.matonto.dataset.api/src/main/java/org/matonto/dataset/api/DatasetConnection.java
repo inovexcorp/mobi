@@ -26,7 +26,24 @@ public interface DatasetConnection extends DelegatingRepositoryConnection {
      * @throws RepositoryException - If the statement could not be added to the repository, for example because
      * the repository is not writable.
      */
+    @Override
     void add(Statement stmt, Resource... contexts) throws RepositoryException;
+
+    /**
+     * Adds the supplied statement to this repository, optionally to one or more named contexts. Ensures that any
+     * necessary dataset named graph statements are created. Any statement added without a context (or supplied context)
+     * will be added to the system default named graph for that dataset.
+     *
+     * @param stmt -  The statement to add.
+     * @param contexts - The contexts to add the statements to. Note that this parameter is a vararg and as such
+     *                 is optional. If no contexts are specified, the statement is added to any context specified
+     *                 in each statement, or if the statement contains no context, it is added without context.
+     *                 If one or more contexts are specified the statement is added to these contexts, ignoring
+     *                 any context information in the statement itself.
+     * @throws RepositoryException - If the statement could not be added to the repository, for example because
+     * the repository is not writable.
+     */
+    void addDefault(Statement stmt, Resource... contexts) throws RepositoryException;
 
     /**
      * Adds the supplied statements to this repository, optionally to one or more named contexts. Ensures that any
@@ -42,6 +59,7 @@ public interface DatasetConnection extends DelegatingRepositoryConnection {
      * @throws RepositoryException - If the statements could not be added to the repository, for example because
      * the repository is not writable.
      */
+    @Override
     void add(Iterable<? extends Statement> statements, Resource... contexts) throws RepositoryException;
 
     /**
@@ -61,6 +79,7 @@ public interface DatasetConnection extends DelegatingRepositoryConnection {
      * @throws RepositoryException - If the data could not be added to the repository, for example because
      * the repository is not writable.
      */
+    @Override
     void add(Resource subject, IRI predicate, Value object, Resource... contexts) throws RepositoryException;
 
     /**
