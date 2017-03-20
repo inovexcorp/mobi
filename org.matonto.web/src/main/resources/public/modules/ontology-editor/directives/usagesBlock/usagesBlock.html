@@ -30,14 +30,13 @@
                 </h5>
                 <div class="value-container" ng-repeat="statement in value" ng-hide="isClosed">
                     <span class="value-display">
-                        <span ng-repeat="(key, value) in statement" ng-include="'statement_part'" class="{{key}}"></span>
+                        <span ng-repeat="(key, value) in statement" class="{{key}}">
+                            <span ng-if="!dvm.um.isLinkable(value) || value === dvm.sm.selected['@id']" ng-class="{selected: value === dvm.sm.selected['@id']}">{{dvm.getBindingDisplay(value)}}</span>
+                            <a ng-if="dvm.um.isLinkable(value) && value !== dvm.sm.selected['@id']" ng-click="dvm.sm.goTo(value)">{{dvm.getBindingDisplay(value)}}</a>
+                        </span>
                     </span>
                 </div>
             </div>
         </block-content>
     </block>
-    <script type="text/ng-template" id="statement_part">
-        <span ng-if="!dvm.um.isLinkable(value) || value === dvm.sm.selected['@id']" ng-class="{selected: value === dvm.sm.selected['@id']}">{{dvm.getBindingDisplay(value)}}</span>
-        <a ng-if="dvm.um.isLinkable(value) && value !== dvm.sm.selected['@id']" ng-click="dvm.sm.goTo(value)">{{dvm.getBindingDisplay(value)}}</a>
-    </script>
 </div>
