@@ -3,6 +3,7 @@ package org.matonto.dataset.impl;
 import org.apache.commons.lang.NotImplementedException;
 import org.matonto.dataset.api.DatasetConnection;
 import org.matonto.dataset.ontology.dataset.Dataset;
+import org.matonto.exception.MatOntoException;
 import org.matonto.persistence.utils.Statements;
 import org.matonto.query.api.BooleanQuery;
 import org.matonto.query.api.GraphQuery;
@@ -39,7 +40,21 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
 
     @Override
     public void add(Statement stmt, Resource... contexts) throws RepositoryException {
+        Set<Resource> contextsToAdd = new HashSet<>();
 
+        if (varargsPresent(contexts)) {
+            contextsToAdd.addAll(Arrays.asList(contexts));
+        } else if (stmt.getContext().isPresent()) {
+            contextsToAdd.add(stmt.getContext().get());
+        } else {
+            contextsToAdd.add(getSystemDefaultNG());
+        }
+
+        getDelegate().begin();
+        getDelegate().add(stmt, contextsToAdd.toArray(new Resource[contextsToAdd.size()]));
+        contextsToAdd.forEach(context ->
+                getDelegate().add(dataset, valueFactory.createIRI(Dataset.namedGraph_IRI), context, dataset));
+        getDelegate().commit();
     }
 
     @Override
@@ -167,5 +182,17 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     private void getGraphs(Set<Resource> graphs, String predString) {
         getDelegate().getStatements(getDataset(), valueFactory.createIRI(predString), null)
                 .forEach(stmt -> Statements.objectResource(stmt).ifPresent(graphs::add));
+    }
+
+    private Resource getSystemDefaultNG() {
+        RepositoryResult<Statement> statements = getDelegate()
+                .getStatements(dataset, valueFactory.createIRI(Dataset.systemDefaultNamedGraph_IRI), null);
+
+        if (statements.hasNext()) {
+            return Statements.objectResource(statements.next())
+                    .orElseThrow(() -> new MatOntoException("Could not retrieve systemDefaultNamedGraph for dataset"));
+        } else {
+            throw new MatOntoException("Could not retrieve systemDefaultNamedGraph for dataset");
+        }
     }
 }

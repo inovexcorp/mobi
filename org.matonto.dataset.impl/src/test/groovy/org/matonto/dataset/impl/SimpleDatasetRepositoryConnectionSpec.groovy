@@ -1,5 +1,6 @@
 package org.matonto.dataset.impl
 
+import org.matonto.dataset.ontology.dataset.Dataset
 import org.matonto.rdf.api.Resource
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory
 import org.matonto.rdf.core.utils.Values
@@ -30,6 +31,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
     RepositoryConnection systemConn
     RepositoryConnection testConn
     def repos = [ : ]
+    def namedGraphPred = vf.createIRI(Dataset.namedGraph_IRI)
 
     @Shared
     datasetsInFile = [
@@ -90,6 +92,99 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
 
         expect:
         conn.getRepositoryId() == repo
+    }
+
+    def "add(s) without a context will add data to the sdng"() {
+        setup:
+        def s = vf.createIRI("urn:s")
+        def p = vf.createIRI("urn:p")
+        def o = vf.createLiteral("object")
+        def stmt = vf.createStatement(s, p, o)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, datasetsInFile[1], "system", vf)
+
+        when:
+        conn.add(stmt)
+
+        then:
+        systemConn.size(vf.createIRI("http://matonto.org/dataset/test1_system_dng")) == 1
+    }
+
+    def "add(s) with a context will add data to a new graph"() {
+        setup:
+        def s = vf.createIRI("urn:s")
+        def p = vf.createIRI("urn:p")
+        def o = vf.createLiteral("object")
+        def c = vf.createIRI("urn:c")
+        def stmt = vf.createStatement(s, p, o, c)
+        def dataset = datasetsInFile[1]
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
+
+        when:
+        conn.add(stmt)
+
+        then:
+        systemConn.size(c) == 1
+        systemConn.getStatements(dataset, namedGraphPred, c).hasNext()
+    }
+
+    def "add(s) with a context will add data to an existing graph"() {
+        setup:
+        def s = vf.createIRI("urn:s")
+        def p = vf.createIRI("urn:p")
+        def o = vf.createLiteral("object")
+        def c = vf.createIRI("http://matonto.org/dataset/test2/graph2")
+        def stmt = vf.createStatement(s, p, o, c)
+        def dataset = datasetsInFile[2]
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
+
+        when:
+        conn.add(stmt)
+
+        then:
+        systemConn.size(c) == 2
+        systemConn.getStatements(dataset, namedGraphPred, c).hasNext()
+    }
+
+    def "add(s, c) will add the necessary graph statement"() {
+        setup:
+        def s = vf.createIRI("urn:s")
+        def p = vf.createIRI("urn:p")
+        def o = vf.createLiteral("object")
+        def c = vf.createIRI("http://matonto.org/dataset/test2/graph2")
+        def stmt = vf.createStatement(s, p, o, c)
+        def graph = vf.createIRI("urn:c")
+        def dataset = datasetsInFile[2]
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
+
+        when:
+        conn.add(stmt, graph)
+
+        then:
+        systemConn.size(c) == 1
+        systemConn.size(graph) == 1
+        systemConn.getStatements(dataset, namedGraphPred, graph).hasNext()
+    }
+
+    def "add(s, c...) will add the necessary graph statements"() {
+        setup:
+        def s = vf.createIRI("urn:s")
+        def p = vf.createIRI("urn:p")
+        def o = vf.createLiteral("object")
+        def c = vf.createIRI("http://matonto.org/dataset/test2/graph2")
+        def stmt = vf.createStatement(s, p, o, c)
+        def graphs = [ vf.createIRI("urn:c"), vf.createIRI("urn:c2") ] as Resource[]
+        def dataset = datasetsInFile[2]
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
+
+        when:
+        conn.add(stmt, graphs)
+
+        then:
+        systemConn.size(c) == 1
+        systemConn.size(graphs[0]) == 1
+        systemConn.size(graphs[1]) == 1
+        systemConn.getStatements(dataset, namedGraphPred, graphs[0]).hasNext()
+        systemConn.getStatements(dataset, namedGraphPred, graphs[1]).hasNext()
     }
 
     def "size() returns #message"() {
