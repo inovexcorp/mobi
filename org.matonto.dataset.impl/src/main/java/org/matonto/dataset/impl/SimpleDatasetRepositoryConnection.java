@@ -50,19 +50,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
 
     @Override
     public void add(Iterable<? extends Statement> statements, Resource... contexts) throws RepositoryException {
-        // Start a transaction if not currently in one
-        boolean startedTransaction = startTransaction();
-
-        if (varargsPresent(contexts)) {
-            getDelegate().add(statements, contexts);
-            addGraphStatements(Dataset.namedGraph_IRI, contexts);
-        } else {
-            statements.forEach(stmt -> addStatement(stmt, Dataset.namedGraph_IRI));
-        }
-
-        if (startedTransaction) {
-            commit();
-        }
+        addStatements(statements, Dataset.namedGraph_IRI, contexts);
     }
 
     @Override
@@ -205,12 +193,12 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
      * system default named graph for that dataset.
      *
      * @param statement The statement to add.
-     * @param predicate The contexts to add the statement to. Note that this parameter is a vararg and as such
+     * @param predicate The String representing the predicate to use for the graph registration in the dataset.
+     * @param contexts The contexts to add the statement to. Note that this parameter is a vararg and as such
      *                 is optional. If no contexts are specified, the statement is added to any context specified
      *                 in each statement, or if the statement contains no context, it is added to the system default
      *                 named graph for that dataset. If one or more contexts are specified, the statement is added to
      *                 these contexts, ignoring any context information in the statement itself.
-     * @param contexts
      */
     private void addStatement(Statement statement, String predicate, Resource... contexts) {
         // Start a transaction if not currently in one
@@ -221,6 +209,35 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
             addGraphStatements(predicate, contexts);
         } else {
             addStatement(statement, predicate);
+        }
+
+        if (startedTransaction) {
+            commit();
+        }
+    }
+
+    /**
+     * Adds the statements to the dataset, optionally to one or more named contexts. Ensures that the provided dataset
+     * graph statements are created. Any statement added without a context (or supplied context) will be added to the
+     * system default named graph for that dataset.
+     *
+     * @param statements The statements to add.
+     * @param predicate The String representing the predicate to use for the graph registration in the dataset.
+     * @param contexts The contexts to add the statements to. Note that this parameter is a vararg and as such
+     *                 is optional. If no contexts are specified, the statements are added to any context specified
+     *                 in each statement, or if the statement contains no context, it is added to the system default
+     *                 named graph for that dataset. If one or more contexts are specified, the statements are added to
+     *                 these contexts, ignoring any context information in the statements themselves.
+     */
+    private void addStatements(Iterable<? extends Statement> statements, String predicate, Resource... contexts) {
+        // Start a transaction if not currently in one
+        boolean startedTransaction = startTransaction();
+
+        if (varargsPresent(contexts)) {
+            getDelegate().add(statements, contexts);
+            addGraphStatements(predicate, contexts);
+        } else {
+            statements.forEach(stmt -> addStatement(stmt, predicate));
         }
 
         if (startedTransaction) {
