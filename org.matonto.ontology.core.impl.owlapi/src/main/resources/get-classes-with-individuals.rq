@@ -5,13 +5,14 @@ select ?parent ?child
 where {
     ?parent rdf:type owl:Class .
     optional {
-        ?child rdfs:subClassOf ?parent .
+        ?child rdfs:subClassOf ?parent ;
+               rdf:type owl:Class .
     }
     {
         select distinct ?parent
         where {
-            ?individual rdf:type owl:NamedIndividual .
-            ?individual rdf:type ?parent .
+            ?individual rdf:type owl:NamedIndividual ;
+                        rdf:type ?parent .
             filter (?parent != owl:NamedIndividual)
         }
     }
