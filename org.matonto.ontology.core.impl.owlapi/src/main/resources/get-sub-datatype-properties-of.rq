@@ -6,6 +6,7 @@ select ?parent ?child
 where {
     ?parent rdf:type owl:DatatypeProperty .
     optional {
-        ?child rdfs:subPropertyOf ?parent .
+        ?child rdfs:subPropertyOf ?parent ;
+               rdf:type owl:DatatypeProperty .
     }
 }

@@ -51,7 +51,7 @@ public class ImportedOntologyRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void testVerifyUrl() throws Exception {
-        Response response = target().path("imported-ontologies/" + encode("https://www.google.com/")).request().head();
+        Response response = target().path("imported-ontologies/" + encode("https://www.w3.org/TR/owl2-syntax/")).request().head();
         assertEquals(response.getStatus(), 200);
     }
 
