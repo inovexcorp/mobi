@@ -40,7 +40,7 @@ describe('Hierarchy Tree directive', function() {
             ontologyManagerSvc = _ontologyManagerService_;
         });
 
-        ontologyManagerSvc.getEntityByRecordId.and.returnValue(true);
+        ontologyManagerSvc.getEntityByRecordId.and.returnValue({});
         ontologyStateSvc.getOpened.and.returnValue(true);
         scope.hierarchy = [{
             entityIRI: 'class1',
