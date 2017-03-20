@@ -87,7 +87,7 @@ describe('Hierarchy Tree directive', function() {
         });
         it('based on container tree-items', function() {
             expect(element.querySelectorAll('.container tree-item').length).toBe(1);
-            ontologyManagerSvc.getEntityByRecordId.and.returnValue(false);
+            ontologyManagerSvc.getEntityByRecordId.and.returnValue(undefined);
             scope.$digest();
             expect(element.querySelectorAll('.container tree-item').length).toBe(0);
         });
