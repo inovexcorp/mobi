@@ -60,8 +60,6 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
 
     @Override
     public void add(Iterable<? extends Statement> statements, Resource... contexts) throws RepositoryException {
-        Resource[] contextsToAdd;
-
         getDelegate().begin();
         if (varargsPresent(contexts)) {
             getDelegate().add(statements, contexts);
