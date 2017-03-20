@@ -50,17 +50,33 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
             contextsToAdd = new Resource[] { getSystemDefaultNG() };
         }
 
-        getDelegate().begin();
+        // If there is already a transaction, we don't want to commit here
+        boolean needToCommit = false;
+        if (!isActive()) {
+            begin();
+            needToCommit = true;
+        }
+
         getDelegate().add(stmt, contextsToAdd);
         for (Resource context : contextsToAdd) {
-                getDelegate().add(dataset, valueFactory.createIRI(Dataset.namedGraph_IRI), context, dataset);
+            getDelegate().add(dataset, valueFactory.createIRI(Dataset.namedGraph_IRI), context, dataset);
         }
-        getDelegate().commit();
+
+        if (needToCommit) {
+            commit();
+        }
     }
 
     @Override
     public void add(Iterable<? extends Statement> statements, Resource... contexts) throws RepositoryException {
-        getDelegate().begin();
+
+        // If there is already a transaction, we don't want to commit here
+        boolean needToCommit = false;
+        if (!isActive()) {
+            begin();
+            needToCommit = true;
+        }
+
         if (varargsPresent(contexts)) {
             getDelegate().add(statements, contexts);
             for (Resource context : contexts) {
@@ -72,11 +88,14 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
                    getDelegate().add(stmt);
                    getDelegate().add(dataset, valueFactory.createIRI(Dataset.namedGraph_IRI), stmt.getContext().get(), dataset);
                } else {
-                    getDelegate().add(stmt, getSystemDefaultNG());
+                   getDelegate().add(stmt, getSystemDefaultNG());
                }
             });
         }
-        getDelegate().commit();
+
+        if (needToCommit) {
+            commit();
+        }
     }
 
     @Override

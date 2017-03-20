@@ -243,6 +243,99 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         systemConn.getStatements(dataset, namedGraphPred, graphs[1]).hasNext()
     }
 
+    def "add(s) within a transaction does not internally commit"() {
+        setup:
+        def s = vf.createIRI("urn:s")
+        def p = vf.createIRI("urn:p")
+        def o = vf.createLiteral("object")
+        def stmt = vf.createStatement(s, p, o)
+        def conn = Spy(SimpleDatasetRepositoryConnection, constructorArgs: [systemConn, datasetsInFile[1], "system", vf])
+        conn.begin()
+
+        when:
+        conn.add(stmt)
+
+        then:
+        conn.commit()
+        0 * conn.begin()
+        0 * conn.commit()
+        systemConn.size(vf.createIRI("http://matonto.org/dataset/test1_system_dng")) == 1
+    }
+
+    def "add(iter) within a transaction does not internally commit"() {
+        setup:
+        def s = vf.createIRI("urn:s")
+        def p = vf.createIRI("urn:p")
+        def o = vf.createLiteral("object")
+        def stmt = vf.createStatement(s, p, o)
+        def model = LinkedHashModelFactory.getInstance().createModel()
+        model.add(stmt)
+        def conn = Spy(SimpleDatasetRepositoryConnection, constructorArgs: [systemConn, datasetsInFile[1], "system", vf])
+        conn.begin()
+
+        when:
+        conn.add(model)
+
+        then:
+        conn.commit()
+        0 * conn.begin()
+        0 * conn.commit()
+        systemConn.size(vf.createIRI("http://matonto.org/dataset/test1_system_dng")) == 1
+    }
+
+    def "add(s) without a transaction does internally commit"() {
+        setup:
+        def s = vf.createIRI("urn:s")
+        def p = vf.createIRI("urn:p")
+        def o = vf.createLiteral("object")
+        def stmt = vf.createStatement(s, p, o)
+        def conn = Spy(SimpleDatasetRepositoryConnection, constructorArgs: [systemConn, datasetsInFile[1], "system", vf])
+
+        when:
+        conn.add(stmt)
+
+        then:
+        1 * conn.begin()
+        1 * conn.commit()
+        systemConn.size(vf.createIRI("http://matonto.org/dataset/test1_system_dng")) == 1
+    }
+
+    def "add(iter) without a transaction does internally commit"() {
+        setup:
+        def s = vf.createIRI("urn:s")
+        def p = vf.createIRI("urn:p")
+        def o = vf.createLiteral("object")
+        def stmt = vf.createStatement(s, p, o)
+        def model = LinkedHashModelFactory.getInstance().createModel()
+        model.add(stmt)
+        def conn = Spy(SimpleDatasetRepositoryConnection, constructorArgs: [systemConn, datasetsInFile[1], "system", vf])
+
+        when:
+        conn.add(model)
+
+        then:
+        1 * conn.begin()
+        1 * conn.commit()
+        systemConn.size(vf.createIRI("http://matonto.org/dataset/test1_system_dng")) == 1
+    }
+
+    def "begin starts a transaction"() {
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, datasetsInFile[1], "system", vf)
+        conn.begin()
+
+        expect:
+        conn.isActive()
+    }
+
+    def "commit ends a transaction"() {
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, datasetsInFile[1], "system", vf)
+        conn.begin()
+        conn.commit()
+
+        expect:
+        !conn.isActive()
+    }
+
     def "size() returns #message"() {
         setup:
         def conn = new SimpleDatasetRepositoryConnection(systemConn, datasetsInFile[dataset], "system", vf)
