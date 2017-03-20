@@ -40,31 +40,50 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
 
     @Override
     public void add(Statement stmt, Resource... contexts) throws RepositoryException {
-        Set<Resource> contextsToAdd = new HashSet<>();
+        Resource[] contextsToAdd;
 
         if (varargsPresent(contexts)) {
-            contextsToAdd.addAll(Arrays.asList(contexts));
+            contextsToAdd = contexts;
         } else if (stmt.getContext().isPresent()) {
-            contextsToAdd.add(stmt.getContext().get());
+            contextsToAdd = new Resource[] { stmt.getContext().get() };
         } else {
-            contextsToAdd.add(getSystemDefaultNG());
+            contextsToAdd = new Resource[] { getSystemDefaultNG() };
         }
 
         getDelegate().begin();
-        getDelegate().add(stmt, contextsToAdd.toArray(new Resource[contextsToAdd.size()]));
-        contextsToAdd.forEach(context ->
-                getDelegate().add(dataset, valueFactory.createIRI(Dataset.namedGraph_IRI), context, dataset));
+        getDelegate().add(stmt, contextsToAdd);
+        for (Resource context : contextsToAdd) {
+                getDelegate().add(dataset, valueFactory.createIRI(Dataset.namedGraph_IRI), context, dataset);
+        }
         getDelegate().commit();
     }
 
     @Override
     public void add(Iterable<? extends Statement> statements, Resource... contexts) throws RepositoryException {
+        Resource[] contextsToAdd;
 
+        getDelegate().begin();
+        if (varargsPresent(contexts)) {
+            getDelegate().add(statements, contexts);
+            for (Resource context : contexts) {
+                getDelegate().add(dataset, valueFactory.createIRI(Dataset.namedGraph_IRI), context, dataset);
+            }
+        } else {
+            statements.forEach(stmt -> {
+               if (stmt.getContext().isPresent()) {
+                   getDelegate().add(stmt);
+                   getDelegate().add(dataset, valueFactory.createIRI(Dataset.namedGraph_IRI), stmt.getContext().get(), dataset);
+               } else {
+                    getDelegate().add(stmt, getSystemDefaultNG());
+               }
+            });
+        }
+        getDelegate().commit();
     }
 
     @Override
     public void add(Resource subject, IRI predicate, Value object, Resource... contexts) throws RepositoryException {
-
+        add(valueFactory.createStatement(subject, predicate, object), contexts);
     }
 
     @Override

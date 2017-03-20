@@ -2,6 +2,7 @@ package org.matonto.dataset.impl
 
 import org.matonto.dataset.ontology.dataset.Dataset
 import org.matonto.rdf.api.Resource
+import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory
 import org.matonto.rdf.core.utils.Values
 import org.matonto.repository.api.Repository
@@ -183,6 +184,61 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         systemConn.size(c) == 1
         systemConn.size(graphs[0]) == 1
         systemConn.size(graphs[1]) == 1
+        systemConn.getStatements(dataset, namedGraphPred, graphs[0]).hasNext()
+        systemConn.getStatements(dataset, namedGraphPred, graphs[1]).hasNext()
+    }
+
+    def "add(s, p, o, c...) will add the necessary graph statements"() {
+        setup:
+        def s = vf.createIRI("urn:s")
+        def p = vf.createIRI("urn:p")
+        def o = vf.createLiteral("object")
+        def graphs = [ vf.createIRI("urn:c"), vf.createIRI("urn:c2") ] as Resource[]
+        def dataset = datasetsInFile[2]
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
+
+        when:
+        conn.add(s, p, o, graphs)
+
+        then:
+        systemConn.size(graphs[0]) == 1
+        systemConn.size(graphs[1]) == 1
+        systemConn.getStatements(dataset, namedGraphPred, graphs[0]).hasNext()
+        systemConn.getStatements(dataset, namedGraphPred, graphs[1]).hasNext()
+    }
+
+    def "add(model, c...) will add the necessary graph statements"() {
+        setup:
+        def s = vf.createIRI("urn:s")
+        def p = vf.createIRI("urn:p")
+        def o = vf.createLiteral("object")
+        def s2 = vf.createIRI("urn:s2")
+        def p2 = vf.createIRI("urn:p2")
+        def o2 = vf.createLiteral("object2")
+        def c2 = vf.createIRI("urn:c2")
+        def s3 = vf.createIRI("urn:s3")
+        def p3 = vf.createIRI("urn:p3")
+        def o3 = vf.createLiteral("object3")
+        def model1 = LinkedHashModelFactory.getInstance().createModel()
+        def model2 = LinkedHashModelFactory.getInstance().createModel()
+        model1.add(s, p, o)
+        model1.add(s2, p2, o2, c2)
+        model2.add(s3, p3, o3)
+        model2.add(s3, p3, o3, c2)
+        def graphs = [ vf.createIRI("urn:graph1"), vf.createIRI("urn:graph2") ] as Resource[]
+        def dataset = datasetsInFile[1]
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
+
+        when:
+        conn.add(model1)
+        conn.add(model2, graphs)
+
+        then:
+        systemConn.size(vf.createIRI("http://matonto.org/dataset/test2_system_dng")) == 1
+        systemConn.size(c2) == 1
+        systemConn.size(graphs[0]) == 1
+        systemConn.size(graphs[1]) == 1
+        systemConn.getStatements(dataset, namedGraphPred, c2).hasNext()
         systemConn.getStatements(dataset, namedGraphPred, graphs[0]).hasNext()
         systemConn.getStatements(dataset, namedGraphPred, graphs[1]).hasNext()
     }
