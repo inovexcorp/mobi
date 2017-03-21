@@ -142,7 +142,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
 
     @Override
     public void clear(Resource... contexts) throws RepositoryException {
-
+        // TODO: Implement
     }
 
     @Override
@@ -165,41 +165,46 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
 
     @Override
     public Set<Resource> getNamedGraphs() {
+        // TODO: Implement
         return null;
     }
 
     @Override
     public Set<Resource> getDefaultNamedGraphs() {
+        // TODO: Implement
         return null;
     }
 
     @Override
     public Resource getSystemDefaultNamedGraph() {
+        // TODO: Implement
         return null;
     }
 
     @Override
     public void addNamedGraph(Resource graph) {
-
+        // TODO: Implement
     }
 
     @Override
     public void addDefaultNamedGraph(Resource graph) {
-
+        // TODO: Implement
     }
 
     @Override
     public void removeGraph(Resource graph) {
-
+        // TODO: Implement
     }
 
     @Override
     public RepositoryResult<Statement> getStatements(Resource subject, IRI predicate, Value object, Resource... contexts) throws RepositoryException {
+        // TODO: Implement
         return null;
     }
 
     @Override
     public RepositoryResult<Resource> getContextIDs() throws RepositoryException {
+        // TODO: Implement
         return null;
     }
 
