@@ -82,7 +82,7 @@ public interface StateRest {
 
     /**
      * Retrieves all resources associated with the State identified by ID. Will only retrieve the State if it belongs
-     * to the User making the request; returns a 400 code otherwise.
+     * to the User making the request; returns a 403 otherwise. If state cannot be found, returns a 400.
      *
      * @param context the context of the request
      * @param stateId the ID of the State to retrieve
@@ -97,7 +97,8 @@ public interface StateRest {
 
     /**
      * Updates the resources of the State identified by ID with the new statements passed as JSON-LD. Will only update
-     * the State if it belongs to the User making the request; returns a 400 code otherwise.
+     * the State if it belongs to the User making the request; returns a 403 code otherwise. If state cannot be found,
+     * returns a 400.
      *
      * @param context the context of the request
      * @param stateId the ID of the State to update
@@ -115,7 +116,8 @@ public interface StateRest {
 
     /**
      * Removes the State identified by ID and all associated resources if not used by other States. Will only delete
-     * the State if it belongs to the User making the request; returns a 400 code otherwise.
+     * the State if it belongs to the User making the request; returns a 403 code otherwise. If state cannot be found,
+     * returns a 400.
      *
      * @param context the context of the request
      * @param stateId the ID of the State to remove
