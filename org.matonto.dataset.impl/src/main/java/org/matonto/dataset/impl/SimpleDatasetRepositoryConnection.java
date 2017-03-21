@@ -196,17 +196,18 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
 
     @Override
     public void addNamedGraph(Resource graph) {
-        // TODO: Implement
+        getDelegate().add(getDataset(), valueFactory.createIRI(Dataset.namedGraph_IRI), graph, getDataset());
     }
 
     @Override
     public void addDefaultNamedGraph(Resource graph) {
-        // TODO: Implement
+        getDelegate().add(getDataset(), valueFactory.createIRI(Dataset.defaultNamedGraph_IRI), graph, getDataset());
     }
 
     @Override
     public void removeGraph(Resource graph) {
-        // TODO: Implement
+        getDelegate().remove(getDataset(), valueFactory.createIRI(Dataset.namedGraph_IRI), graph, getDataset());
+        getDelegate().remove(getDataset(), valueFactory.createIRI(Dataset.defaultNamedGraph_IRI), graph, getDataset());
     }
 
     @Override

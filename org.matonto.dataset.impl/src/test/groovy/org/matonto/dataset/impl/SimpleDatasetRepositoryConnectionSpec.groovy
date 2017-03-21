@@ -809,4 +809,74 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         systemConn.size(graph) == 0
         systemConn.getStatements(dataset, namedGraphPred, graph).hasNext()
     }
+
+    def "addDefaultNamedGraph(c) adds an existing graph to the dataset"() {
+        setup:
+        def graph = vf.createIRI("http://matonto.org/dataset/test3/graph1")
+        def dataset = datasetsInFile[2]
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
+
+        when:
+        conn.addDefaultNamedGraph(graph)
+
+        then:
+        systemConn.size(graph) == 1
+        systemConn.getStatements(dataset, defNamedGraphPred, graph).hasNext()
+    }
+
+    def "addDefaultNamedGraph(c) adds a non-existent graph to the dataset"() {
+        setup:
+        def graph = vf.createIRI("urn:test")
+        def dataset = datasetsInFile[2]
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
+
+        when:
+        conn.addDefaultNamedGraph(graph)
+
+        then:
+        systemConn.size(graph) == 0
+        systemConn.getStatements(dataset, defNamedGraphPred, graph).hasNext()
+    }
+
+    def "removeGraph(c) removes a graph from the dataset"() {
+        setup:
+        def graph = vf.createIRI("http://matonto.org/dataset/test2/graph1")
+        def dataset = datasetsInFile[2]
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
+
+        when:
+        conn.removeGraph(graph)
+
+        then:
+        systemConn.size(graph) == 1
+        !systemConn.getStatements(dataset, null, graph).hasNext()
+    }
+
+    def "removeGraph(c) does not remove a non-existent graph from the dataset"() {
+        setup:
+        def graph = vf.createIRI("urn:test")
+        def dataset = datasetsInFile[2]
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
+
+        when:
+        conn.removeGraph(graph)
+
+        then:
+        systemConn.size(graph) == 0
+        !systemConn.getStatements(dataset, null, graph).hasNext()
+    }
+
+    def "removeGraph(c) does not remove the system default named graph from the dataset"() {
+        setup:
+        def graph = vf.createIRI("http://matonto.org/dataset/test2_system_dng")
+        def dataset = datasetsInFile[2]
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
+
+        when:
+        conn.removeGraph(graph)
+
+        then:
+        systemConn.size(graph) == 1
+        systemConn.getStatements(dataset, sdNamedGraphPred, graph).hasNext()
+    }
 }
