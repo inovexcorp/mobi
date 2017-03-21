@@ -105,11 +105,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
             graphs.retainAll(Arrays.asList(contexts));
             getDelegate().remove(stmt, graphs.toArray(new Resource[graphs.size()]));
         } else {
-            if (stmt.getContext().isPresent() && graphs.contains(stmt.getContext().get())) {
-                getDelegate().remove(stmt);
-            } else {
-                getDelegate().remove(stmt, getSystemDefaultNG());
-            }
+            removeSingleStatement(stmt, graphs);
         }
 
         if (startedTransaction) {
@@ -119,12 +115,29 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
 
     @Override
     public void remove(Iterable<? extends Statement> statements, Resource... contexts) throws RepositoryException {
+        // Start a transaction if not currently in one
+        boolean startedTransaction = startTransaction();
 
+        Set<Resource> graphs = new HashSet<>();
+        getGraphs(graphs, Dataset.systemDefaultNamedGraph_IRI);
+        getGraphs(graphs, Dataset.defaultNamedGraph_IRI);
+        getGraphs(graphs, Dataset.namedGraph_IRI);
+
+        if (varargsPresent(contexts)) {
+            graphs.retainAll(Arrays.asList(contexts));
+            getDelegate().remove(statements, graphs.toArray(new Resource[graphs.size()]));
+        } else {
+            statements.forEach(stmt -> removeSingleStatement(stmt, graphs));
+        }
+
+        if (startedTransaction) {
+            commit();
+        }
     }
 
     @Override
     public void remove(Resource subject, IRI predicate, Value object, Resource... contexts) throws RepositoryException {
-
+        remove(valueFactory.createStatement(subject, predicate, object), contexts);
     }
 
     @Override
@@ -341,6 +354,20 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
             addGraphStatements(predicate, statement.getContext().get());
         } else {
             getDelegate().add(statement, getSystemDefaultNG());
+        }
+    }
+
+    /**
+     * Removes a statement from the dataset if the statement is in an accessible graph. If the statement has a context,
+     * then remove it from that graph; otherwise, remove it from the system default named graph.
+     *
+     * @param statement The Statement to remove from the dataset.
+     */
+    private void removeSingleStatement(Statement statement, Set<Resource> accessibleGraphs) {
+        if (statement.getContext().isPresent() && accessibleGraphs.contains(statement.getContext().get())) {
+            getDelegate().remove(statement);
+        } else {
+            getDelegate().remove(statement, getSystemDefaultNG());
         }
     }
 

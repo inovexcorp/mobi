@@ -532,6 +532,67 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         systemConn.size(c) == 1
     }
 
+    def "remove(s, p, o, c...) will remove the necessary graph statements"() {
+        setup:
+        def s = vf.createIRI("http://matonto.org/dataset/test2/graph1")
+        def p = vf.createIRI(org.matonto.ontologies.rdfs.Resource.type_IRI)
+        def o = vf.createIRI("http://www.w3.org/2002/07/owl#Thing")
+        def graphs = [ vf.createIRI("http://matonto.org/dataset/test2/graph1"), vf.createIRI("urn:c2") ] as Resource[]
+        def dataset = datasetsInFile[2]
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
+
+        when:
+        conn.remove(s, p, o, graphs)
+
+        then:
+        systemConn.size(graphs[0]) == 0
+        systemConn.getStatements(dataset, defNamedGraphPred, graphs[0]).hasNext()
+    }
+
+    def "remove(model, c...) will remove the necessary graph statements"() {
+        setup:
+        def s1 = vf.createIRI("http://matonto.org/dataset/test2/graph1")
+        def p1 = vf.createIRI(org.matonto.ontologies.rdfs.Resource.type_IRI)
+        def o1 = vf.createIRI("http://www.w3.org/2002/07/owl#Thing")
+        def s2 = vf.createIRI("http://matonto.org/dataset/test2/graph2")
+        def p2 = vf.createIRI(org.matonto.ontologies.rdfs.Resource.type_IRI)
+        def o2 = vf.createIRI("http://www.w3.org/2002/07/owl#Thing")
+        def s3 = vf.createIRI("http://matonto.org/dataset/test2/graph3")
+        def p3 = vf.createIRI(org.matonto.ontologies.rdfs.Resource.type_IRI)
+        def o3 = vf.createIRI("http://www.w3.org/2002/07/owl#Thing")
+
+        def c1 = vf.createIRI("http://matonto.org/dataset/test2/graph1")
+        def c2 = vf.createIRI("http://matonto.org/dataset/test2/graph2")
+        def c3 = vf.createIRI("http://matonto.org/dataset/test2/graph3")
+        def sdng = vf.createIRI("http://matonto.org/dataset/test2_system_dng")
+
+        def model1 = LinkedHashModelFactory.getInstance().createModel()
+        def model2 = LinkedHashModelFactory.getInstance().createModel()
+        model1.add(s1, p1, o1)
+        model1.add(s2, p2, o2, c2)
+        model2.add(s3, p3, o3)
+        model2.add(s3, p3, o3, c2)
+
+        def graphs = [ c3, vf.createIRI("urn:graph2") ] as Resource[]
+        def dataset = datasetsInFile[2]
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
+
+        when:
+        conn.remove(model1)
+        conn.remove(model2, graphs)
+
+        then:
+        systemConn.size(sdng) == 1
+        systemConn.size(c1) == 1
+        systemConn.size(c2) == 0
+        systemConn.size(c3) == 0
+
+        systemConn.getStatements(dataset, defNamedGraphPred, c1).hasNext()
+        systemConn.getStatements(dataset, namedGraphPred, c2).hasNext()
+        systemConn.getStatements(dataset, namedGraphPred, c3).hasNext()
+        systemConn.getStatements(dataset, sdNamedGraphPred, sdng).hasNext()
+    }
+
     def "begin starts a transaction"() {
         def conn = new SimpleDatasetRepositoryConnection(systemConn, datasetsInFile[1], "system", vf)
         conn.begin()
