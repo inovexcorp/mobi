@@ -182,14 +182,19 @@ public class SimpleStateManagerTest {
 
         assertTrue(manager.stateExistsForUser(vf.createIRI("http://matonto.org/states/0"), "test"));
         assertFalse(manager.stateExistsForUser(vf.createIRI("http://matonto.org/states/1"), "test"));
-        assertFalse(manager.stateExistsForUser(vf.createIRI("http://matonto.org/states/2"), "test"));
-        assertFalse(manager.stateExistsForUser(vf.createIRI("http://matonto.org/states/3"), "test"));
         conn.close();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void stateThatDoesNotExistExistsForUserTest() {
+        manager.stateExistsForUser(vf.createIRI("http://matonto.org/states/0"), "test");
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void stateExistsForUserThatDoesNotExistTest() {
         // Setup:
+        RepositoryConnection conn = repo.getConnection();
+        conn.add(vf.createIRI("http://matonto.org/states/0"), vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(State.TYPE));
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.empty());
 
         manager.stateExistsForUser(vf.createIRI("http://matonto.org/states/0"), "error");
@@ -354,7 +359,7 @@ public class SimpleStateManagerTest {
         newState.add(vf.createIRI("http://example.com/example"), vf.createIRI(DCTERMS.TITLE.stringValue()), vf.createLiteral("Title"));
 
         Resource result = manager.storeState(newState, "test");
-        verify(engineManager, times(1)).retrieveUser( eq("test"));
+        verify(engineManager, times(1)).retrieveUser(eq("test"));
         RepositoryConnection conn = repo.getConnection();
         Model stateModel = mf.createModel();
         conn.getStatements(result, null, null).forEach(stateModel::add);
@@ -383,7 +388,7 @@ public class SimpleStateManagerTest {
         newState.add(vf.createIRI("http://example.com/example"), vf.createIRI(DCTERMS.TITLE.stringValue()), vf.createLiteral("Title"));
 
         Resource result = manager.storeState(newState, "test", "test");
-        verify(engineManager, times(1)).retrieveUser( eq("test"));
+        verify(engineManager, times(1)).retrieveUser(eq("test"));
         verify(applicationManager, times(1)).getApplication("test");
         RepositoryConnection conn = repo.getConnection();
         Model stateModel = mf.createModel();

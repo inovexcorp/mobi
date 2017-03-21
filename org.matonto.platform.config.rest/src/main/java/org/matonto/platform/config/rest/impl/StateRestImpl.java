@@ -111,50 +111,48 @@ public class StateRestImpl implements StateRest {
             Resource stateId = (applicationId == null) ? stateManager.storeState(newState, username)
                     : stateManager.storeState(newState, username, applicationId);
             return Response.status(201).entity(stateId.stringValue()).build();
-        } catch (IOException e) {
-            throw ErrorUtils.sendError("Invalid JSON-LD", Response.Status.BAD_REQUEST);
+        } catch (IOException ex) {
+            throw ErrorUtils.sendError(ex, "Invalid JSON-LD", Response.Status.BAD_REQUEST);
         } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex.getMessage(), Response.Status.NOT_FOUND);
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.NOT_FOUND);
         } catch (MatOntoException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
-
     }
 
     @Override
     public Response getState(ContainerRequestContext context, String stateId) {
         String username = getActiveUsername(context);
-        if (!stateManager.stateExistsForUser(factory.createIRI(stateId), username)) {
-            throw ErrorUtils.sendError("Not allowed", Response.Status.FORBIDDEN);
-        }
         try {
+            if (!stateManager.stateExistsForUser(factory.createIRI(stateId), username)) {
+                throw ErrorUtils.sendError("Not allowed", Response.Status.FORBIDDEN);
+            }
             Model state = stateManager.getState(factory.createIRI(stateId));
             return Response.ok(convertModel(state)).build();
         } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex.getMessage(), Response.Status.NOT_FOUND);
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.NOT_FOUND);
         } catch (MatOntoException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
-
     }
 
     @Override
     public Response updateState(ContainerRequestContext context, String stateId, String newStateJson) {
         String username = getActiveUsername(context);
-        if (!stateManager.stateExistsForUser(factory.createIRI(stateId), username)) {
-            throw ErrorUtils.sendError("Not allowed", Response.Status.FORBIDDEN);
-        }
         try {
+            if (!stateManager.stateExistsForUser(factory.createIRI(stateId), username)) {
+                throw ErrorUtils.sendError("Not allowed", Response.Status.FORBIDDEN);
+            }
             Model newState = transformer.matontoModel(Rio.parse(IOUtils.toInputStream(newStateJson), "",
                     RDFFormat.JSONLD));
             if (newState.isEmpty()) {
                 throw ErrorUtils.sendError("Empty state model", Response.Status.BAD_REQUEST);
             }
             stateManager.updateState(factory.createIRI(stateId), newState);
-        } catch (IOException e) {
-            throw ErrorUtils.sendError("Invalid JSON-LD", Response.Status.BAD_REQUEST);
+        } catch (IOException ex) {
+            throw ErrorUtils.sendError(ex, "Invalid JSON-LD", Response.Status.BAD_REQUEST);
         } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex.getMessage(), Response.Status.NOT_FOUND);
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.NOT_FOUND);
         } catch (MatOntoException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -164,13 +162,13 @@ public class StateRestImpl implements StateRest {
     @Override
     public Response deleteState(ContainerRequestContext context, String stateId) {
         String username = getActiveUsername(context);
-        if (!stateManager.stateExistsForUser(factory.createIRI(stateId), username)) {
-            throw ErrorUtils.sendError("Not allowed", Response.Status.FORBIDDEN);
-        }
         try {
+            if (!stateManager.stateExistsForUser(factory.createIRI(stateId), username)) {
+                throw ErrorUtils.sendError("Not allowed", Response.Status.FORBIDDEN);
+            }
             stateManager.deleteState(factory.createIRI(stateId));
         } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex.getMessage(), Response.Status.NOT_FOUND);
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.NOT_FOUND);
         } catch (MatOntoException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }

@@ -242,7 +242,6 @@ public class StateRestImplTest extends MatontoRestTestNg {
     public void getStateThatIsNotYoursTest() {
         // Setup:
         when(stateManager.stateExistsForUser(any(Resource.class), anyString())).thenReturn(false);
-//        doThrow(new MatOntoException()).when(stateManager).getState(any(Resource.class), anyString());
 
         Response response = target().path("states/" + encode(stateId.stringValue())).request().get();
         assertEquals(response.getStatus(), 403);
@@ -252,7 +251,6 @@ public class StateRestImplTest extends MatontoRestTestNg {
     public void getStateThatDoesNotExistTest() {
         // Setup:
         when(stateManager.getState(any(Resource.class))).thenThrow(new IllegalArgumentException());
-//        doThrow(new MatOntoException("State not found")).when(stateManager).getState(any(Resource.class), anyString());
 
         Response response = target().path("states/" + encode(stateId.stringValue())).request().get();
         assertEquals(response.getStatus(), 404);

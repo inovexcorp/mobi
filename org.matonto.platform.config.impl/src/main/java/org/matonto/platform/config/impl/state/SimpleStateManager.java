@@ -136,73 +136,72 @@ public class SimpleStateManager implements StateManager {
 
     @Override
     public boolean stateExists(Resource stateId) {
-        RepositoryConnection conn = repository.getConnection();
-        boolean stateExists = conn.getStatements(stateId, factory.createIRI(RDF.TYPE.stringValue()),
-                factory.createIRI(State.TYPE))
-                .hasNext();
-        conn.close();
-        return stateExists;
+        try (RepositoryConnection conn = repository.getConnection()) {
+            return stateExists(stateId, conn);
+        }
     }
 
     @Override
     public boolean stateExistsForUser(Resource stateId, String username) {
-        RepositoryConnection conn = repository.getConnection();
         User user = engineManager.retrieveUser(username).orElseThrow(() ->
                 new IllegalArgumentException("User not found"));
-        boolean forUser = conn.getStatements(stateId, factory.createIRI(State.forUser_IRI),
-                user.getResource()).hasNext();
-        conn.close();
-        return forUser;
+        try (RepositoryConnection conn = repository.getConnection()) {
+            if (!stateExists(stateId, conn)) {
+                throw new IllegalArgumentException("State not found");
+            }
+            return conn.getStatements(stateId, factory.createIRI(State.forUser_IRI),
+                    user.getResource()).hasNext();
+        }
     }
 
     @Override
     public Map<Resource, Model> getStates(@Nullable String username, @Nullable String applicationId,
                                           Set<Resource> subjects) {
         Map<Resource, Model> states = new HashMap<>();
-        RepositoryConnection conn = repository.getConnection();
-        TupleQuery statesQuery;
-        if (applicationId != null && !applicationId.isEmpty()) {
-            Application app = applicationManager.getApplication(applicationId).orElseThrow(() ->
-                    new IllegalArgumentException("Application not found"));
-            statesQuery = conn.prepareTupleQuery(GET_APPLICATION_STATES_QUERY);
-            statesQuery.setBinding(APPLICATION_BINDING, app.getResource());
-        } else {
-            statesQuery = conn.prepareTupleQuery(GET_STATES_QUERY);
-        }
-        if (username != null && !username.isEmpty()) {
-            User user = engineManager.retrieveUser(username).orElseThrow(() ->
-                    new IllegalArgumentException("User not found"));
-            statesQuery.setBinding(USER_BINDING, user.getResource());
-        }
-        TupleQueryResult results = statesQuery.evaluate();
+        try (RepositoryConnection conn = repository.getConnection()) {
+            TupleQuery statesQuery;
+            if (applicationId != null && !applicationId.isEmpty()) {
+                Application app = applicationManager.getApplication(applicationId).orElseThrow(() ->
+                        new IllegalArgumentException("Application not found"));
+                statesQuery = conn.prepareTupleQuery(GET_APPLICATION_STATES_QUERY);
+                statesQuery.setBinding(APPLICATION_BINDING, app.getResource());
+            } else {
+                statesQuery = conn.prepareTupleQuery(GET_STATES_QUERY);
+            }
+            if (username != null && !username.isEmpty()) {
+                User user = engineManager.retrieveUser(username).orElseThrow(() ->
+                        new IllegalArgumentException("User not found"));
+                statesQuery.setBinding(USER_BINDING, user.getResource());
+            }
+            TupleQueryResult results = statesQuery.evaluate();
 
-        BindingSet bindings;
-        while (results.hasNext() && (bindings = results.next()).getBindingNames().contains(STATE_ID_BINDING)) {
-            Resource stateId = Bindings.requiredResource(bindings, STATE_ID_BINDING);
-            bindings.getBinding(RESOURCES_BINDING).ifPresent(binding -> {
-                Set<Resource> resources = Arrays.stream(StringUtils.split(binding.getValue().stringValue(), ","))
-                        .map(factory::createIRI)
-                        .collect(Collectors.toSet());
+            BindingSet bindings;
+            while (results.hasNext() && (bindings = results.next()).getBindingNames().contains(STATE_ID_BINDING)) {
+                Resource stateId = Bindings.requiredResource(bindings, STATE_ID_BINDING);
+                bindings.getBinding(RESOURCES_BINDING).ifPresent(binding -> {
+                    Set<Resource> resources = Arrays.stream(StringUtils.split(binding.getValue().stringValue(), ","))
+                            .map(factory::createIRI)
+                            .collect(Collectors.toSet());
 
-                if (subjects.isEmpty() || resources.containsAll(subjects)) {
-                    Model stateModel = modelFactory.createModel();
-                    resources.forEach(resource -> conn.getStatements(resource, null, null)
-                            .forEach(stateModel::add));
-                    states.put(stateId, stateModel);
-                }
-            });
+                    if (subjects.isEmpty() || resources.containsAll(subjects)) {
+                        Model stateModel = modelFactory.createModel();
+                        resources.forEach(resource -> conn.getStatements(resource, null, null)
+                                .forEach(stateModel::add));
+                        states.put(stateId, stateModel);
+                    }
+                });
+            }
+            return states;
         }
-        conn.close();
-        return states;
     }
 
     @Override
     public Resource storeState(Model newState, String username) {
         State state = createState(newState, username, stateFactory);
-        RepositoryConnection conn = repository.getConnection();
-        conn.add(state.getModel());
-        conn.close();
-        return state.getResource();
+        try (RepositoryConnection conn = repository.getConnection()) {
+            conn.add(state.getModel());
+            return state.getResource();
+        }
     }
 
     @Override
@@ -211,10 +210,10 @@ public class SimpleStateManager implements StateManager {
         Application app = applicationManager.getApplication(applicationId).orElseThrow(() ->
                 new IllegalArgumentException("Application not found"));
         state.setApplication(app);
-        RepositoryConnection conn = repository.getConnection();
-        conn.add(state.getModel());
-        conn.close();
-        return state.getResource();
+        try (RepositoryConnection conn = repository.getConnection()) {
+            conn.add(state.getModel());
+            return state.getResource();
+        }
     }
 
     @Override
@@ -224,12 +223,12 @@ public class SimpleStateManager implements StateManager {
         }
         Model result = modelFactory.createModel();
         Model stateModel = modelFactory.createModel();
-        RepositoryConnection conn = repository.getConnection();
-        conn.getStatements(stateId, null, null).forEach(stateModel::add);
-        stateModel.filter(stateId, factory.createIRI(State.stateResource_IRI), null).objects().forEach(value ->
-                conn.getStatements((Resource) value, null, null).forEach(result::add));
-        conn.close();
-        return result;
+        try (RepositoryConnection conn = repository.getConnection()) {
+            conn.getStatements(stateId, null, null).forEach(stateModel::add);
+            stateModel.filter(stateId, factory.createIRI(State.stateResource_IRI), null).objects().forEach(value ->
+                    conn.getStatements((Resource) value, null, null).forEach(result::add));
+            return result;
+        }
     }
 
     @Override
@@ -237,14 +236,14 @@ public class SimpleStateManager implements StateManager {
         if (!stateExists(stateId)) {
             throw new IllegalArgumentException("State not found");
         }
-        RepositoryConnection conn = repository.getConnection();
-        Model stateModel = modelFactory.createModel(newState);
-        conn.getStatements(stateId, null, null).forEach(stateModel::add);
-        State state = stateFactory.getExisting(stateId, stateModel);
-        removeState(state, conn);
-        state.setStateResource(newState.subjects());
-        conn.add(state.getModel());
-        conn.close();
+        try (RepositoryConnection conn = repository.getConnection()) {
+            Model stateModel = modelFactory.createModel(newState);
+            conn.getStatements(stateId, null, null).forEach(stateModel::add);
+            State state = stateFactory.getExisting(stateId, stateModel);
+            removeState(state, conn);
+            state.setStateResource(newState.subjects());
+            conn.add(state.getModel());
+        }
     }
 
     @Override
@@ -252,12 +251,12 @@ public class SimpleStateManager implements StateManager {
         if (!stateExists(stateId)) {
             throw new IllegalArgumentException("State not found");
         }
-        RepositoryConnection conn = repository.getConnection();
-        Model stateModel = modelFactory.createModel();
-        conn.getStatements(stateId, null, null).forEach(stateModel::add);
-        State state = stateFactory.getExisting(stateId, stateModel);
-        removeState(state, conn);
-        conn.close();
+        try (RepositoryConnection conn = repository.getConnection()) {
+            Model stateModel = modelFactory.createModel();
+            conn.getStatements(stateId, null, null).forEach(stateModel::add);
+            State state = stateFactory.getExisting(stateId, stateModel);
+            removeState(state, conn);
+        }
     }
 
     private void removeState(State state, RepositoryConnection conn) {
@@ -276,5 +275,11 @@ public class SimpleStateManager implements StateManager {
         stateObj.setForUser(user);
         stateObj.getModel().addAll(newState);
         return stateObj;
+    }
+
+    private boolean stateExists(Resource stateId, RepositoryConnection conn) {
+        return conn.getStatements(stateId, factory.createIRI(RDF.TYPE.stringValue()),
+                factory.createIRI(State.TYPE))
+                .hasNext();
     }
 }
