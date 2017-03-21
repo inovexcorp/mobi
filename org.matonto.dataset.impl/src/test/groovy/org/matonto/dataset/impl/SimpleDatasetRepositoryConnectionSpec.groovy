@@ -479,6 +479,59 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         !systemConn.getStatements(dataset, namedGraphPred, sdng).hasNext()
     }
 
+    def "remove(s) without a context will remove data from the sdng"() {
+        setup:
+        def s = vf.createIRI("http://test.com/someThing")
+        def p = vf.createIRI(org.matonto.ontologies.rdfs.Resource.type_IRI)
+        def o = vf.createIRI("http://www.w3.org/2002/07/owl#Thing")
+        def stmt = vf.createStatement(s, p, o)
+        def dataset = datasetsInFile[2]
+        def sdng = vf.createIRI("http://matonto.org/dataset/test2_system_dng")
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
+
+        when:
+        conn.remove(stmt)
+
+        then:
+        systemConn.getStatements(dataset, sdNamedGraphPred, sdng).hasNext()
+        systemConn.size(sdng) == 0
+    }
+
+    def "remove(s) with a context will remove data from that graph"() {
+        setup:
+        def s = vf.createIRI("http://matonto.org/dataset/test2/graph1")
+        def p = vf.createIRI(org.matonto.ontologies.rdfs.Resource.type_IRI)
+        def o = vf.createIRI("http://www.w3.org/2002/07/owl#Thing")
+        def c = vf.createIRI("http://matonto.org/dataset/test2/graph1")
+        def stmt = vf.createStatement(s, p, o, c)
+        def dataset = datasetsInFile[2]
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
+
+        when:
+        conn.remove(stmt)
+
+        then:
+        systemConn.getStatements(dataset, defNamedGraphPred, c).hasNext()
+        systemConn.size(c) == 0
+    }
+
+    def "remove(s) for a graph not in the dataset will not remove the statement"() {
+        setup:
+        def s = vf.createIRI("http://matonto.org/dataset/test3/graph1")
+        def p = vf.createIRI(org.matonto.ontologies.rdfs.Resource.type_IRI)
+        def o = vf.createIRI("http://www.w3.org/2002/07/owl#Thing")
+        def c = vf.createIRI("http://matonto.org/dataset/test3/graph1")
+        def stmt = vf.createStatement(s, p, o, c)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, datasetsInFile[2], "system", vf)
+
+        when:
+        conn.remove(stmt)
+
+        then:
+        systemConn.getStatements(datasetsInFile[3], defNamedGraphPred, c).hasNext()
+        systemConn.size(c) == 1
+    }
+
     def "begin starts a transaction"() {
         def conn = new SimpleDatasetRepositoryConnection(systemConn, datasetsInFile[1], "system", vf)
         conn.begin()

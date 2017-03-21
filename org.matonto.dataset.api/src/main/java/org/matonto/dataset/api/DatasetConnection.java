@@ -139,6 +139,21 @@ public interface DatasetConnection extends DelegatingRepositoryConnection {
     void addDefault(Resource subject, IRI predicate, Value object, Resource... contexts) throws RepositoryException;
 
     /**
+     * Removes the supplied statement from this dataset, optionally from one or more named contexts. Ensures the removal
+     * operations only affect graphs in this dataset. This operation will not remove empty graphs from the dataset.
+     *
+     * @param stmt -  The statement to remove.
+     * @param contexts - The contexts to remove the statements from. Note that this parameter is a vararg and as such
+     *                 is optional. If no contexts are specified, the statement is removed from any context specified
+     *                 in each statement, or if the statement contains no context, it is removed from the system default
+     *                 named graph. If one or more contexts are specified the statement is removed from these contexts,
+     *                 ignoring any context information in the statement itself.
+     * @throws RepositoryException - If the statement could not be removed from the repository, for example because
+     * the repository is not writable.
+     */
+    void remove(Statement stmt, Resource... contexts) throws RepositoryException;
+
+    /**
      * Returns the number of (explicit) statements that are in the specified contexts that exist in this Dataset.
      * Contexts that are not graphs in this Dataset will evaluate to a size of 0.
      *

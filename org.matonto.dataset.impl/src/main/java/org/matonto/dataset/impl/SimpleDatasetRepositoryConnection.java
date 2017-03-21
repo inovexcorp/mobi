@@ -93,7 +93,28 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
 
     @Override
     public void remove(Statement stmt, Resource... contexts) throws RepositoryException {
+        // Start a transaction if not currently in one
+        boolean startedTransaction = startTransaction();
 
+        Set<Resource> graphs = new HashSet<>();
+        getGraphs(graphs, Dataset.systemDefaultNamedGraph_IRI);
+        getGraphs(graphs, Dataset.defaultNamedGraph_IRI);
+        getGraphs(graphs, Dataset.namedGraph_IRI);
+
+        if (varargsPresent(contexts)) {
+            graphs.retainAll(Arrays.asList(contexts));
+            getDelegate().remove(stmt, graphs.toArray(new Resource[graphs.size()]));
+        } else {
+            if (stmt.getContext().isPresent() && graphs.contains(stmt.getContext().get())) {
+                getDelegate().remove(stmt);
+            } else {
+                getDelegate().remove(stmt, getSystemDefaultNG());
+            }
+        }
+
+        if (startedTransaction) {
+            commit();
+        }
     }
 
     @Override
