@@ -165,20 +165,21 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
 
     @Override
     public Set<Resource> getNamedGraphs() {
-        // TODO: Implement
-        return null;
+        Set<Resource> graphs = new HashSet<>();
+        getGraphs(graphs, Dataset.namedGraph_IRI);
+        return graphs;
     }
 
     @Override
     public Set<Resource> getDefaultNamedGraphs() {
-        // TODO: Implement
-        return null;
+        Set<Resource> graphs = new HashSet<>();
+        getGraphs(graphs, Dataset.defaultNamedGraph_IRI);
+        return graphs;
     }
 
     @Override
     public Resource getSystemDefaultNamedGraph() {
-        // TODO: Implement
-        return null;
+        return getSystemDefaultNG();
     }
 
     @Override
