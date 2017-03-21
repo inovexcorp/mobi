@@ -40,7 +40,6 @@ import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rest.util.ErrorUtils;
-import org.matonto.web.security.util.AuthenticationProps;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.Rio;
 
@@ -85,69 +84,79 @@ public class StateRestImpl implements StateRest {
         Set<Resource> subjects = subjectIds.stream()
                 .map(factory::createIRI)
                 .collect(Collectors.toSet());
-        Map<Resource, Model> results = stateManager.getStates(username, applicationId, subjects);
-        JSONArray array = new JSONArray();
-        results.keySet().forEach(resource -> {
-            JSONObject state = new JSONObject();
-            state.put("id", resource.stringValue());
-            state.put("model", convertModel(results.get(resource)));
-            array.add(state);
-        });
-
-        return Response.ok(array.toString()).build();
+        try {
+            Map<Resource, Model> results = stateManager.getStates(username, applicationId, subjects);
+            JSONArray array = new JSONArray();
+            results.keySet().forEach(resource -> {
+                JSONObject state = new JSONObject();
+                state.put("id", resource.stringValue());
+                state.put("model", convertModel(results.get(resource)));
+                array.add(state);
+            });
+            return Response.ok(array).build();
+        } catch (MatOntoException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @Override
     public Response createState(ContainerRequestContext context, String applicationId, String stateJson) {
         String username = getActiveUsername(context);
-        Model newState;
         try {
-            newState = transformer.matontoModel(Rio.parse(IOUtils.toInputStream(stateJson), "", RDFFormat.JSONLD));
+            Model newState = transformer.matontoModel(Rio.parse(IOUtils.toInputStream(stateJson), "",
+                    RDFFormat.JSONLD));
+            if (newState.isEmpty()) {
+                throw ErrorUtils.sendError("Empty state model", Response.Status.BAD_REQUEST);
+            }
+            Resource stateId = (applicationId == null) ? stateManager.storeState(newState, username)
+                    : stateManager.storeState(newState, username, applicationId);
+            return Response.status(201).entity(stateId.stringValue()).build();
         } catch (IOException e) {
             throw ErrorUtils.sendError("Invalid JSON-LD", Response.Status.BAD_REQUEST);
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex.getMessage(), Response.Status.NOT_FOUND);
+        } catch (MatOntoException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
-        if (newState.isEmpty()) {
-            throw ErrorUtils.sendError("Empty state model", Response.Status.BAD_REQUEST);
-        }
-        Resource stateId = (applicationId == null) ? stateManager.storeState(newState, username)
-                : stateManager.storeState(newState, username, applicationId);
 
-        return Response.status(201).entity(stateId.stringValue()).build();
     }
 
     @Override
     public Response getState(ContainerRequestContext context, String stateId) {
         String username = getActiveUsername(context);
-        Model state;
+        if (!stateManager.stateExistsForUser(factory.createIRI(stateId), username)) {
+            throw ErrorUtils.sendError("Not allowed", Response.Status.FORBIDDEN);
+        }
         try {
-            state = stateManager.getState(factory.createIRI(stateId), username);
+            Model state = stateManager.getState(factory.createIRI(stateId));
+            return Response.ok(convertModel(state)).build();
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex.getMessage(), Response.Status.NOT_FOUND);
         } catch (MatOntoException ex) {
-            if (ex.getMessage() != null && ex.getMessage().equals("State not found")) {
-                throw ErrorUtils.sendError(ex.getMessage(), Response.Status.NOT_FOUND);
-            } else {
-                throw ErrorUtils.sendError(ex.getMessage(), Response.Status.FORBIDDEN);
-            }
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
 
-        return Response.ok(convertModel(state)).build();
     }
 
     @Override
     public Response updateState(ContainerRequestContext context, String stateId, String newStateJson) {
         String username = getActiveUsername(context);
-        Model newState;
+        if (!stateManager.stateExistsForUser(factory.createIRI(stateId), username)) {
+            throw ErrorUtils.sendError("Not allowed", Response.Status.FORBIDDEN);
+        }
         try {
-            newState = transformer.matontoModel(Rio.parse(IOUtils.toInputStream(newStateJson), "", RDFFormat.JSONLD));
+            Model newState = transformer.matontoModel(Rio.parse(IOUtils.toInputStream(newStateJson), "",
+                    RDFFormat.JSONLD));
+            if (newState.isEmpty()) {
+                throw ErrorUtils.sendError("Empty state model", Response.Status.BAD_REQUEST);
+            }
+            stateManager.updateState(factory.createIRI(stateId), newState);
         } catch (IOException e) {
             throw ErrorUtils.sendError("Invalid JSON-LD", Response.Status.BAD_REQUEST);
-        }
-        if (newState.isEmpty()) {
-            throw ErrorUtils.sendError("Empty state model", Response.Status.BAD_REQUEST);
-        }
-        try {
-            stateManager.updateState(factory.createIRI(stateId), newState, username);
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex.getMessage(), Response.Status.NOT_FOUND);
         } catch (MatOntoException ex) {
-            throw ErrorUtils.sendError(ex.getMessage(), Response.Status.FORBIDDEN);
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
         return Response.ok().build();
     }
@@ -155,10 +164,15 @@ public class StateRestImpl implements StateRest {
     @Override
     public Response deleteState(ContainerRequestContext context, String stateId) {
         String username = getActiveUsername(context);
+        if (!stateManager.stateExistsForUser(factory.createIRI(stateId), username)) {
+            throw ErrorUtils.sendError("Not allowed", Response.Status.FORBIDDEN);
+        }
         try {
-            stateManager.deleteState(factory.createIRI(stateId), username);
+            stateManager.deleteState(factory.createIRI(stateId));
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex.getMessage(), Response.Status.NOT_FOUND);
         } catch (MatOntoException ex) {
-            throw ErrorUtils.sendError(ex.getMessage(), Response.Status.FORBIDDEN);
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
         return Response.ok().build();
     }

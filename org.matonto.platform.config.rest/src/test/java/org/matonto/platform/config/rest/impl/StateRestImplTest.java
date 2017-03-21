@@ -23,6 +23,20 @@ package org.matonto.platform.config.rest.impl;
  * #L%
  */
 
+import static org.matonto.rest.util.RestUtils.encode;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anySetOf;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
+
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.glassfish.jersey.client.ClientConfig;
@@ -39,40 +53,24 @@ import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory;
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
 import org.matonto.rdf.core.utils.Values;
 import org.matonto.rest.util.MatontoRestTestNg;
+import org.matonto.rest.util.RestUtils;
 import org.matonto.rest.util.UsernameTestFilter;
 import org.matonto.web.security.util.AuthenticationProps;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.openrdf.model.vocabulary.DCTERMS;
-import org.openrdf.rio.RDFFormat;
-import org.openrdf.rio.Rio;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Application;
-import javax.ws.rs.core.Response;
-import java.io.ByteArrayOutputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
-import static org.matonto.rest.util.RestUtils.encode;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anySetOf;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.Application;
+import javax.ws.rs.core.Response;
 
 public class StateRestImplTest extends MatontoRestTestNg {
     private StateRestImpl rest;
@@ -126,8 +124,8 @@ public class StateRestImplTest extends MatontoRestTestNg {
     public void setupMocks() {
         reset(stateManager);
         when(stateManager.getStates(anyString(), anyString(), anySetOf(Resource.class))).thenReturn(results);
-        when(stateManager.stateExists(any(Resource.class), anyString())).thenReturn(true);
-        when(stateManager.getState(any(Resource.class), anyString())).thenReturn(stateModel);
+        when(stateManager.stateExistsForUser(any(Resource.class), anyString())).thenReturn(true);
+        when(stateManager.getState(any(Resource.class))).thenReturn(stateModel);
         when(stateManager.storeState(any(Model.class), anyString())).thenReturn(stateId);
         when(stateManager.storeState(any(Model.class), anyString(), anyString())).thenReturn(stateId);
     }
@@ -230,7 +228,8 @@ public class StateRestImplTest extends MatontoRestTestNg {
     public void getStateTest() {
         Response response = target().path("states/" + encode(stateId.stringValue())).request().get();
         assertEquals(response.getStatus(), 200);
-        verify(stateManager).getState(eq(stateId), anyString());
+        verify(stateManager).stateExistsForUser(eq(stateId), anyString());
+        verify(stateManager).getState(stateId);
         try {
             String str = response.readEntity(String.class);
             assertEquals(str, modelToJsonld(stateModel));
@@ -240,9 +239,10 @@ public class StateRestImplTest extends MatontoRestTestNg {
     }
 
     @Test
-    public void getStateExceptionThrownTest() {
+    public void getStateThatIsNotYoursTest() {
         // Setup:
-        doThrow(new MatOntoException()).when(stateManager).getState(any(Resource.class), anyString());
+        when(stateManager.stateExistsForUser(any(Resource.class), anyString())).thenReturn(false);
+//        doThrow(new MatOntoException()).when(stateManager).getState(any(Resource.class), anyString());
 
         Response response = target().path("states/" + encode(stateId.stringValue())).request().get();
         assertEquals(response.getStatus(), 403);
@@ -251,10 +251,20 @@ public class StateRestImplTest extends MatontoRestTestNg {
     @Test
     public void getStateThatDoesNotExistTest() {
         // Setup:
-        doThrow(new MatOntoException("State not found")).when(stateManager).getState(any(Resource.class), anyString());
+        when(stateManager.getState(any(Resource.class))).thenThrow(new IllegalArgumentException());
+//        doThrow(new MatOntoException("State not found")).when(stateManager).getState(any(Resource.class), anyString());
 
         Response response = target().path("states/" + encode(stateId.stringValue())).request().get();
         assertEquals(response.getStatus(), 404);
+    }
+
+    @Test
+    public void getStateExceptionThrownTest() {
+        // Setup:
+        when(stateManager.getState(any(Resource.class))).thenThrow(new MatOntoException());
+
+        Response response = target().path("states/" + encode(stateId.stringValue())).request().get();
+        assertEquals(response.getStatus(), 500);
     }
 
     @Test
@@ -266,7 +276,8 @@ public class StateRestImplTest extends MatontoRestTestNg {
         Response response = target().path("states/" + encode(stateId.stringValue()))
                 .request().put(Entity.json(modelToJsonld(state)));
         assertEquals(response.getStatus(), 200);
-        verify(stateManager).updateState(eq(stateId), eq(state), anyString());
+        verify(stateManager).stateExistsForUser(eq(stateId), anyString());
+        verify(stateManager).updateState(eq(stateId), eq(state));
     }
 
     @Test
@@ -281,11 +292,23 @@ public class StateRestImplTest extends MatontoRestTestNg {
     }
 
     @Test
-    public void updateStateExceptionThrownTest() {
+    public void updateStateThatDoesNotExistTest() {
         // Setup:
-        doThrow(new MatOntoException()).when(stateManager).updateState(any(Resource.class), any(Model.class), anyString());
         Model state = mf.createModel();
         state.add(vf.createIRI("http://example.com"), vf.createIRI(DCTERMS.TITLE.stringValue()), vf.createLiteral("Title"));
+        doThrow(new IllegalArgumentException()).when(stateManager).updateState(any(Resource.class), any(Model.class));
+
+        Response response = target().path("states/" + encode(stateId.stringValue()))
+                .request().put(Entity.json(modelToJsonld(state)));
+        assertEquals(response.getStatus(), 404);
+    }
+
+    @Test
+    public void updateStateThatIsNotYoursTest() {
+        // Setup:
+        Model state = mf.createModel();
+        state.add(vf.createIRI("http://example.com"), vf.createIRI(DCTERMS.TITLE.stringValue()), vf.createLiteral("Title"));
+        when(stateManager.stateExistsForUser(any(Resource.class), anyString())).thenReturn(false);
 
         Response response = target().path("states/" + encode(stateId.stringValue()))
                 .request().put(Entity.json(modelToJsonld(state)));
@@ -293,26 +316,56 @@ public class StateRestImplTest extends MatontoRestTestNg {
     }
 
     @Test
+    public void updateStateExceptionThrownTest() {
+        // Setup:
+        Model state = mf.createModel();
+        state.add(vf.createIRI("http://example.com"), vf.createIRI(DCTERMS.TITLE.stringValue()), vf.createLiteral("Title"));
+        doThrow(new MatOntoException()).when(stateManager).updateState(any(Resource.class), any(Model.class));
+
+        Response response = target().path("states/" + encode(stateId.stringValue()))
+                .request().put(Entity.json(modelToJsonld(state)));
+        assertEquals(response.getStatus(), 500);
+    }
+
+    @Test
     public void deleteStateTest() {
         Response response = target().path("states/" + encode(stateId.stringValue()))
                 .request().delete();
         assertEquals(response.getStatus(), 200);
-        verify(stateManager).deleteState(eq(stateId), anyString());
+        verify(stateManager).deleteState(eq(stateId));
     }
 
     @Test
-    public void deleteStateExceptionThrownTest() {
+    public void deleteStateThatIsNotYoursTest() {
         // Setup:
-        doThrow(new MatOntoException()).when(stateManager).deleteState(any(Resource.class), anyString());
+        when(stateManager.stateExistsForUser(any(Resource.class), anyString())).thenReturn(false);
 
         Response response = target().path("states/" + encode(stateId.stringValue()))
                 .request().delete();
         assertEquals(response.getStatus(), 403);
     }
 
+    @Test
+    public void deleteStateThatDoesNotExistTest() {
+        // Setup:
+        doThrow(new IllegalArgumentException()).when(stateManager).deleteState(any(Resource.class));
+
+        Response response = target().path("states/" + encode(stateId.stringValue()))
+                .request().delete();
+        assertEquals(response.getStatus(), 404);
+    }
+
+    @Test
+    public void deleteStateExceptionThrownTest() {
+        // Setup:
+        doThrow(new MatOntoException()).when(stateManager).deleteState(any(Resource.class));
+
+        Response response = target().path("states/" + encode(stateId.stringValue()))
+                .request().delete();
+        assertEquals(response.getStatus(), 500);
+    }
+
     private String modelToJsonld(Model model) {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        Rio.write(transformer.sesameModel(model), out, RDFFormat.JSONLD);
-        return out.toString();
+        return RestUtils.modelToJsonld(transformer.sesameModel(model));
     }
 }
