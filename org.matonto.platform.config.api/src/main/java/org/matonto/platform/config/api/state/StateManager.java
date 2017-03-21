@@ -47,7 +47,7 @@ public interface StateManager {
      *      begins with "_:".
      * @param username the username of a User in MatOnto
      * @return true if the State is for the User; false otherwise
-     * @throws IllegalArgumentException Thrown if the State or User could not found
+     * @throws IllegalArgumentException Thrown if the State or User could not be found
      */
     boolean stateExistsForUser(Resource stateId, String username);
 
