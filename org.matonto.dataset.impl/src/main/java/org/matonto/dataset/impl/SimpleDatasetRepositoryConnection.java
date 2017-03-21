@@ -151,6 +151,36 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     }
 
     @Override
+    public Set<Resource> getNamedGraphs() {
+        return null;
+    }
+
+    @Override
+    public Set<Resource> getDefaultNamedGraphs() {
+        return null;
+    }
+
+    @Override
+    public Resource getSystemDefaultNamedGraph() {
+        return null;
+    }
+
+    @Override
+    public void addNamedGraph(Resource graph) {
+
+    }
+
+    @Override
+    public void addDefaultNamedGraph(Resource graph) {
+
+    }
+
+    @Override
+    public void removeGraph(Resource graph) {
+
+    }
+
+    @Override
     public RepositoryResult<Statement> getStatements(Resource subject, IRI predicate, Value object, Resource... contexts) throws RepositoryException {
         return null;
     }
@@ -262,7 +292,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
             getDelegate().add(statement, contexts);
             addGraphStatements(predicate, contexts);
         } else {
-            addStatement(statement, predicate);
+            addSingleStatement(statement, predicate);
         }
 
         if (startedTransaction) {
@@ -291,7 +321,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
             getDelegate().add(statements, contexts);
             addGraphStatements(predicate, contexts);
         } else {
-            statements.forEach(stmt -> addStatement(stmt, predicate));
+            statements.forEach(stmt -> addSingleStatement(stmt, predicate));
         }
 
         if (startedTransaction) {
@@ -305,7 +335,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
      *
      * @param statement The Statement to add to the dataset.
      */
-    private void addStatement(Statement statement, String predicate) {
+    private void addSingleStatement(Statement statement, String predicate) {
         if (statement.getContext().isPresent()) {
             getDelegate().add(statement);
             addGraphStatements(predicate, statement.getContext().get());

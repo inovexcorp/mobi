@@ -30,15 +30,17 @@ import org.matonto.rdf.api.Value;
 import org.matonto.repository.api.DelegatingRepositoryConnection;
 import org.matonto.repository.exception.RepositoryException;
 
+import java.util.Set;
+
 /**
  * A special type of RepositoryConnection that limits operations to a single Dataset in a Repository.
  */
 public interface DatasetConnection extends DelegatingRepositoryConnection {
 
     /**
-     * Adds the supplied statement to this repository, optionally to one or more named contexts. Ensures that any
-     * necessary dataset named graph statements are created. Any statement added without a context (or supplied context)
-     * will be added to the system default named graph for that dataset.
+     * Adds the supplied statement to this repository as a named graph, optionally to one or more named contexts.
+     * Ensures that any necessary dataset named graph statements are created. Any statement added without a context (or
+     * supplied context) will be added to the system default named graph for that dataset.
      *
      * @param stmt -  The statement to add.
      * @param contexts - The contexts to add the statement to. Note that this parameter is a vararg and as such
@@ -69,9 +71,9 @@ public interface DatasetConnection extends DelegatingRepositoryConnection {
     void addDefault(Statement stmt, Resource... contexts) throws RepositoryException;
 
     /**
-     * Adds the supplied statements to this repository, optionally to one or more named contexts. Ensures that any
-     * necessary dataset named graph statements are created. Any statement added without a context (or supplied context)
-     * will be added to the system default named graph for that dataset.
+     * Adds the supplied statements to this repository as a named graph, optionally to one or more named contexts.
+     * Ensures that any necessary dataset named graph statements are created. Any statement added without a context (or
+     * supplied context) will be added to the system default named graph for that dataset.
      *
      * @param statements - The statements that should be added.
      * @param contexts - The contexts to add the statements to. Note that this parameter is a vararg and as such
@@ -164,6 +166,18 @@ public interface DatasetConnection extends DelegatingRepositoryConnection {
      */
     @Override
     long size(Resource... contexts) throws RepositoryException;
+
+    Set<Resource> getNamedGraphs();
+
+    Set<Resource> getDefaultNamedGraphs();
+
+    Resource getSystemDefaultNamedGraph();
+
+    void addNamedGraph(Resource graph);
+
+    void addDefaultNamedGraph(Resource graph);
+
+    void removeGraph(Resource graph);
 
     /**
      * Returns the Resource representing the Dataset for this DatasetConnection.
