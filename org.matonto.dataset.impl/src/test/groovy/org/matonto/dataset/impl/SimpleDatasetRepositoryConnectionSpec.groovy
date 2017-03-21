@@ -705,4 +705,108 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         !systemConn.getStatements(dataset, namedGraphPred, null).hasNext()
         systemConn.getStatements(dataset, sdNamedGraphPred, null).hasNext()
     }
+
+    def "clear(c) removes a dataset graph and graph links"() {
+        setup:
+        def graph1 = vf.createIRI("http://matonto.org/dataset/test2/graph1")
+        def graph2 = vf.createIRI("http://matonto.org/dataset/test2/graph2")
+        def graph3 = vf.createIRI("http://matonto.org/dataset/test2/graph3")
+        def sdng = vf.createIRI("http://matonto.org/dataset/test2_system_dng")
+        def dataset = datasetsInFile[2]
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
+
+        when:
+        conn.clear(graph1)
+
+        then:
+        systemConn.size(graph1) == 0
+        systemConn.size(graph2) == 1
+        systemConn.size(graph3) == 1
+        systemConn.size(sdng) == 1
+
+        !systemConn.getStatements(dataset, null, graph1).hasNext()
+        systemConn.getStatements(dataset, null, graph2).hasNext()
+        systemConn.getStatements(dataset, null, graph3).hasNext()
+        systemConn.getStatements(dataset, null, sdng).hasNext()
+    }
+
+    def "clear(c...) removes a dataset graph and graph links"() {
+        setup:
+        def graph1 = vf.createIRI("http://matonto.org/dataset/test2/graph1")
+        def graph2 = vf.createIRI("http://matonto.org/dataset/test2/graph2")
+        def graph3 = vf.createIRI("http://matonto.org/dataset/test2/graph3")
+        def sdng = vf.createIRI("http://matonto.org/dataset/test2_system_dng")
+        def dataset = datasetsInFile[2]
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
+
+        when:
+        conn.clear(graph1, graph2)
+
+        then:
+        systemConn.size(graph1) == 0
+        systemConn.size(graph2) == 0
+        systemConn.size(graph3) == 1
+        systemConn.size(sdng) == 1
+
+        !systemConn.getStatements(dataset, null, graph1).hasNext()
+        !systemConn.getStatements(dataset, null, graph2).hasNext()
+        systemConn.getStatements(dataset, null, graph3).hasNext()
+        systemConn.getStatements(dataset, null, sdng).hasNext()
+    }
+
+    def "clear(c) does not remove a non-dataset graph"() {
+        setup:
+        def graph = vf.createIRI("http://matonto.org/dataset/test3/graph1")
+        def dataset = datasetsInFile[2]
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
+
+        when:
+        conn.clear(graph)
+
+        then:
+        systemConn.size(graph) == 1
+        systemConn.getStatements(datasetsInFile[3], null, graph).hasNext()
+    }
+
+    def "clear(sdng) does not remove the system default named graph"() {
+        setup:
+        def sdng = vf.createIRI("http://matonto.org/dataset/test2_system_dng")
+        def dataset = datasetsInFile[2]
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
+
+        when:
+        conn.clear(sdng)
+
+        then:
+        systemConn.size(sdng) == 0
+        systemConn.getStatements(dataset, sdNamedGraphPred, sdng).hasNext()
+    }
+
+    def "addNamedGraph(c) adds an existing graph to the dataset"() {
+        setup:
+        def graph = vf.createIRI("http://matonto.org/dataset/test3/graph1")
+        def dataset = datasetsInFile[2]
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
+
+        when:
+        conn.addNamedGraph(graph)
+
+        then:
+        systemConn.size(graph) == 1
+        systemConn.getStatements(dataset, namedGraphPred, graph).hasNext()
+    }
+
+    def "addNamedGraph(c) adds a non-existent graph to the dataset"() {
+        setup:
+        def graph = vf.createIRI("urn:test")
+        def dataset = datasetsInFile[2]
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
+
+        when:
+        conn.addNamedGraph(graph)
+
+        then:
+        systemConn.size(graph) == 0
+        systemConn.getStatements(dataset, namedGraphPred, graph).hasNext()
+    }
 }

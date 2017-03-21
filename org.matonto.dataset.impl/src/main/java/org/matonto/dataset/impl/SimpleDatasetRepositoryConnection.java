@@ -47,6 +47,7 @@ import org.matonto.repository.exception.RepositoryException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapper implements DatasetConnection {
 
@@ -142,16 +143,18 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
 
     @Override
     public void clear(Resource... contexts) throws RepositoryException {
-        IRI ngPred = valueFactory.createIRI(Dataset.namedGraph_IRI);
-        IRI dngPred = valueFactory.createIRI(Dataset.defaultNamedGraph_IRI);
-        IRI sdngPred = valueFactory.createIRI(Dataset.systemDefaultNamedGraph_IRI);
-
-        getDelegate().getStatements(getDataset(), ngPred, null)
-                .forEach(stmt -> Statements.objectResource(stmt).ifPresent(this::deleteGraph));
-        getDelegate().getStatements(getDataset(), dngPred, null)
-                .forEach(stmt -> Statements.objectResource(stmt).ifPresent(this::deleteGraph));
-        getDelegate().getStatements(getDataset(), sdngPred, null)
-                .forEach(stmt -> Statements.objectResource(stmt).ifPresent(graph -> getDelegate().clear(graph)));
+        if (varargsPresent(contexts)) {
+            for (Resource context : contexts) {
+                if (context.equals(getSystemDefaultNamedGraph())) {
+                    getDelegate().clear(getSystemDefaultNamedGraph());
+                } else {
+                    deleteDatasetGraph(context);
+                }
+            }
+        } else {
+            getDelegate().clear(getSystemDefaultNamedGraph());
+            deleteDatasetGraph(null);
+        }
     }
 
     @Override
@@ -411,8 +414,25 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
         return false;
     }
 
-    private void deleteGraph(Resource graph) {
-        getDelegate().clear(graph);
-        getDelegate().remove(getDataset(), null, graph, getDataset());
+    /**
+     *
+     * @param graph
+     */
+    private void deleteDatasetGraph(@Nullable Resource graph) {
+        IRI ngPred = valueFactory.createIRI(Dataset.namedGraph_IRI);
+        IRI dngPred = valueFactory.createIRI(Dataset.defaultNamedGraph_IRI);
+
+        getDelegate().getStatements(getDataset(), ngPred, graph, getDataset()).forEach(stmt ->
+            Statements.objectResource(stmt).ifPresent(context -> {
+                getDelegate().remove(getDataset(), ngPred, context, getDataset());
+                getDelegate().clear(context);
+            })
+        );
+        getDelegate().getStatements(getDataset(), dngPred, graph, getDataset()).forEach(stmt ->
+                Statements.objectResource(stmt).ifPresent(context -> {
+                    getDelegate().remove(getDataset(), dngPred, context, getDataset());
+                    getDelegate().clear(context);
+                })
+        );
     }
 }
