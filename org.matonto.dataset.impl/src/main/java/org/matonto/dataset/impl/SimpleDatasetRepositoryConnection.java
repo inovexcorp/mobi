@@ -142,7 +142,16 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
 
     @Override
     public void clear(Resource... contexts) throws RepositoryException {
-        // TODO: Implement
+        IRI ngPred = valueFactory.createIRI(Dataset.namedGraph_IRI);
+        IRI dngPred = valueFactory.createIRI(Dataset.defaultNamedGraph_IRI);
+        IRI sdngPred = valueFactory.createIRI(Dataset.systemDefaultNamedGraph_IRI);
+
+        getDelegate().getStatements(getDataset(), ngPred, null)
+                .forEach(stmt -> Statements.objectResource(stmt).ifPresent(this::deleteGraph));
+        getDelegate().getStatements(getDataset(), dngPred, null)
+                .forEach(stmt -> Statements.objectResource(stmt).ifPresent(this::deleteGraph));
+        getDelegate().getStatements(getDataset(), sdngPred, null)
+                .forEach(stmt -> Statements.objectResource(stmt).ifPresent(graph -> getDelegate().clear(graph)));
     }
 
     @Override
@@ -400,5 +409,10 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
             return true;
         }
         return false;
+    }
+
+    private void deleteGraph(Resource graph) {
+        getDelegate().clear(graph);
+        getDelegate().remove(getDataset(), null, graph, getDataset());
     }
 }

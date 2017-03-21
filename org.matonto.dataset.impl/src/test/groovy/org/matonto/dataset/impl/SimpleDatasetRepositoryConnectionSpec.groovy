@@ -686,4 +686,23 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         expect:
         conn.getDefaultNamedGraphs() == expectedGraphs
     }
+
+    def "clear() removes all graphs and graph links"() {
+        setup:
+        def dataset = datasetsInFile[2]
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
+
+        when:
+        conn.clear()
+
+        then:
+        systemConn.size(vf.createIRI("http://matonto.org/dataset/test2/graph1")) == 0
+        systemConn.size(vf.createIRI("http://matonto.org/dataset/test2/graph2")) == 0
+        systemConn.size(vf.createIRI("http://matonto.org/dataset/test2/graph3")) == 0
+        systemConn.size(vf.createIRI("http://matonto.org/dataset/test2_system_dng")) == 0
+
+        !systemConn.getStatements(dataset, defNamedGraphPred, null).hasNext()
+        !systemConn.getStatements(dataset, namedGraphPred, null).hasNext()
+        systemConn.getStatements(dataset, sdNamedGraphPred, null).hasNext()
+    }
 }
