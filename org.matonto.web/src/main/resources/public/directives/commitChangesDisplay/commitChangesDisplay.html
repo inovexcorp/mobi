@@ -27,8 +27,12 @@
             <i class="fa fa-fw" ng-class="{'fa-chevron-down': isClosed, 'fa-chevron-up': !isClosed}"></i>
         </h5>
         <div class="value-container" ng-hide="isClosed">
-            <pre class="additions">{{dvm.getAdditions(id) | json}}</pre>
-            <pre class="deletions">{{dvm.getDeletions(id) | json}}</pre>
+            <statement-container ng-if="dvm.results[id].additions.length" header="'Added statements:'">
+                <statement-display ng-repeat="addition in dvm.results[id].additions | orderBy:dvm.orderByPredicate" predicate="addition.p" object="addition.o" addition></statement-display>
+            </statement-container>
+            <statement-container ng-if="dvm.results[id].deletions.length" header="'Deleted statements:'">
+                <statement-display ng-repeat="deletion in dvm.results[id].deletions | orderBy:dvm.orderByPredicate" predicate="deletion.p" object="deletion.o" deletion></statement-display>
+            </statement-container>
         </div>
     </div>
 </div>

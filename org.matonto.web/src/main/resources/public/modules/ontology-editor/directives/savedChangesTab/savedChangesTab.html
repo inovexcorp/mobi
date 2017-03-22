@@ -23,10 +23,34 @@
 <div class="saved-changes-tab row">
     <div class="col-xs-8 col-xs-offset-2">
         <block>
-            <block-content class="padding">
+            <block-header ng-if="dvm.os.listItem.inProgressCommit.additions.length || dvm.os.listItem.inProgressCommit.deletions.length">
+                <error-display ng-if="!dvm.os.listItem.upToDate">There have been other commits made on this Branch.</error-display>
+                <div class="btn-container clearfix">
+                    <button class="btn btn-danger pull-left" ng-click="dvm.deleteChecked()" ng-disabled="dvm.getTotalChecked() === 0">Delete ({{dvm.getTotalChecked()}})</button>
+                    <a class="btn btn-link pull-left" ng-click="dvm.setChecked(true)">All</a>
+                    <a class="btn btn-link pull-left" ng-click="dvm.setChecked(false)">None</a>
+                </div>
+            </block-header>
+            <block-content>
                 <div ng-if="dvm.os.listItem.inProgressCommit.additions.length || dvm.os.listItem.inProgressCommit.deletions.length" class="changes">
-                    <error-display ng-if="!dvm.os.listItem.upToDate">There have been other commits made on this Branch.</error-display>
-                    <commit-changes-display additions="dvm.os.listItem.inProgressCommit.additions" deletions="dvm.os.listItem.inProgressCommit.deletions" click-event="dvm.go(event, id)"></commit-changes-display>
+                    <div class="property-values" ng-repeat="item in dvm.list | orderBy:dvm.orderByIRI">
+                        <h5 ng-click="isClosed = !isClosed" class="clearfix">
+                            <p class="text">{{dvm.util.getBeautifulIRI(item.id)}} <small><a ng-click="dvm.go($event, item.id)">{{item.id}}</a></small></p>
+                            <i class="fa fa-fw" ng-class="{'fa-chevron-down': isClosed, 'fa-chevron-up': !isClosed}"></i>
+                        </h5>
+                        <div class="value-container" ng-hide="isClosed">
+                            <statement-container ng-if="item.additions.length" header="'Added statements:'">
+                                <statement-display ng-repeat="addition in item.additions" predicate="addition.p" object="addition.o" addition>
+                                    <checkbox ng-model="addition.checked" change-event="dvm.onCheck(item.id, addition.p, addition.o, addition.checked)" is-disabled-when="addition.disabled"></checkbox>
+                                </statement-display>
+                            </statement-container>
+                            <statement-container ng-if="item.deletions.length" header="'Deleted statements:'">
+                                <statement-display ng-repeat="deletion in item.deletions" predicate="deletion.p" object="deletion.o" deletion>
+                                    <checkbox ng-model="deletion.checked" change-event="dvm.onCheck(item.id, deletion.p, deletion.o, deletion.checked)" is-disabled-when="deletion.disabled"></checkbox>
+                                </statement-display>
+                            </statement-container>
+                        </div>
+                    </div>
                 </div>
                 <div ng-if="!dvm.os.listItem.inProgressCommit.additions.length && !dvm.os.listItem.inProgressCommit.deletions.length" class="text-center">
                     <info-message ng-if="dvm.os.listItem.upToDate">You don't have any uncommitted changes.</info-message>

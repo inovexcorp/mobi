@@ -78,6 +78,8 @@
             'passwordConfirmInput',
             'radioButton',
             'recordKeywords',
+            'statementContainer',
+            'statementDisplay',
             'stepProgressBar',
             'tab',
             'tabset',

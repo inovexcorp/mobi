@@ -32,11 +32,14 @@ describe('Commit Changes Display directive', function() {
         module('templates');
         module('commitChangesDisplay');
         mockUtil();
+        mockPrefixes();
+        injectSplitIRIFilter();
 
-        inject(function(_$compile_, _$rootScope_, _utilService_) {
+        inject(function(_$compile_, _$rootScope_, _utilService_, _splitIRIFilter_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             utilSvc = _utilService_;
+            splitIRI = _splitIRIFilter_;
         });
 
         scope.additions = [];
@@ -78,28 +81,51 @@ describe('Commit Changes Display directive', function() {
             scope.$digest();
             expect(element.querySelectorAll('div.property-values').length).toBe(controller.list.length);
         });
-        it('depending on whether a click event is passed', function() {
-            controller.list = [''];
+        it('depending on whether there are additions', function() {
+            expect(element.find('statement-container').length).toBe(0);
+            expect(element.find('statement-display').length).toBe(0);
+            controller.list = ['id'];
+            controller.results = {'id': {additions: [''], deletions: []}};
             scope.$digest();
-            expect(element.querySelectorAll('h5 a').length).toBe(1);
-
-            element = $compile(angular.element('<commit-changes-display additions="additions" deletions="deletions"></commit-changes-display>'))(scope);
+            expect(element.find('statement-container').length).toBe(1);
+            expect(element.find('statement-display').length).toBe(1);
+        });
+        it('depending on whether there are additions', function() {
+            expect(element.find('statement-container').length).toBe(0);
+            expect(element.find('statement-display').length).toBe(0);
+            controller.list = ['id'];
+            controller.results = {'id': {additions: [], deletions: ['']}};
             scope.$digest();
-            expect(element.querySelectorAll('h5 a').length).toBe(0);
+            expect(element.find('statement-container').length).toBe(1);
+            expect(element.find('statement-display').length).toBe(1);
+        });
+        it('depending on whether there are additions and deletions', function() {
+            expect(element.find('statement-container').length).toBe(0);
+            expect(element.find('statement-display').length).toBe(0);
+            controller.list = ['id'];
+            controller.results = {'id': {additions: [''], deletions: ['']}};
+            scope.$digest();
+            expect(element.find('statement-container').length).toBe(2);
+            expect(element.find('statement-display').length).toBe(2);
         });
     });
     describe('controller methods', function() {
-        it('should get the additions of the changes to an entity', function() {
-            scope.additions = [{'@id': 'A', 'test': true}];
+        /*it('should get the additions of the changes to an entity', function() {
+            scope.additions = [{'@id': 'A', 'test': [{'@id': 'test'}]}];
             scope.$digest();
-            expect(controller.getAdditions('A')).toEqual({'test': true});
-            expect(controller.getAdditions('B')).toBeUndefined();
+            expect(controller.getAdditions('A')).toEqual([{p: 'test', o: {'@id': 'test'}}]);
+            expect(controller.getAdditions('B')).toEqual([]);
         });
         it('should get the deletions of the changes to an entity', function() {
-            scope.deletions = [{'@id': 'A', 'test': true}];
+            scope.deletions = [{'@id': 'A', 'test': [{'@id': 'test'}]}];
             scope.$digest();
-            expect(controller.getDeletions('A')).toEqual({'test': true});
-            expect(controller.getDeletions('B')).toBeUndefined();
+            expect(controller.getDeletions('A')).toEqual([{p: 'test', o: {'@id': 'test'}}]);
+            expect(controller.getDeletions('B')).toEqual([]);
+        });*/
+        it('orderByPredicate should return the correct value', function() {
+            splitIRI.and.returnValue({end: 'end'});
+            expect(controller.orderByPredicate({p: 'test'})).toBe('end');
+            expect(splitIRI).toHaveBeenCalledWith('test');
         });
     });
     it('should call clickEvent when an entity title is clicked', function() {

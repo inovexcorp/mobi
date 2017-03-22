@@ -24,23 +24,31 @@
     'use strict';
 
     angular
-        .module('vocabularyTab', [])
-        .directive('vocabularyTab', vocabularyTab);
+        /**
+         * @ngdoc overview
+         * @name statementContainer
+         *
+         */
+        .module('statementContainer', [])
+        /**
+         * @ngdoc directive
+         * @name statementContainer.directive:statementContainer
+         * @scope
+         * @restrict E
+         *
+         */
+        .directive('statementContainer', statementContainer);
 
-        vocabularyTab.$inject = ['ontologyStateService'];
-
-        function vocabularyTab(ontologyStateService) {
+        function statementContainer() {
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/vocabularyTab/vocabularyTab.html',
-                scope: {},
-                controllerAs: 'dvm',
-                controller: function() {
-                    var dvm = this;
-                    dvm.sm = ontologyStateService;
-                    dvm.savedChanges = '<i class="fa fa-exclamation-triangle"></i> Changes';
-                }
+                transclude: true,
+                scope: {
+                    header: '<'
+                },
+                templateUrl: 'directives/statementContainer/statementContainer.html',
+                controller: angular.noop
             }
         }
 })();

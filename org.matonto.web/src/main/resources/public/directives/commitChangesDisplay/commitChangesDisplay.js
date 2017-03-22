@@ -52,9 +52,9 @@
          */
         .directive('commitChangesDisplay', commitChangesDisplay);
 
-        commitChangesDisplay.$inject = ['utilService']
+        commitChangesDisplay.$inject = ['$filter', 'utilService', 'prefixes']
 
-        function commitChangesDisplay(utilService) {
+        function commitChangesDisplay($filter, utilService, prefixes) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -70,24 +70,39 @@
                     var dvm = this;
                     dvm.util = utilService;
                     dvm.list = [];
+                    dvm.results = {};
+                    dvm.checked = {};
 
-                    dvm.getAdditions = function(id) {
-                        return getChangesById(id, dvm.additions);
-                    }
-                    dvm.getDeletions = function(id) {
-                        return getChangesById(id, dvm.deletions);
+                    dvm.orderByPredicate = function(addition) {
+                        return $filter('splitIRI')(addition.p).end;
                     }
 
-                    function setList() {
-                        dvm.list = _.unionWith(_.map(dvm.additions, '@id'), _.map(dvm.deletions, '@id'), _.isEqual);
-                    }
                     function getChangesById(id, array) {
+                        var results = [];
                         var entity = angular.copy(_.find(array, {'@id': id}));
-                        _.unset(entity, '@id');
-                        return entity;
+                        _.forOwn(entity, (value, key) => {
+                            if (key !== '@id') {
+                                if (key === '@type') {
+                                    key = prefixes.rdf + 'type';
+                                }
+                                if (_.isArray(value)) {
+                                    _.forEach(value, item => results.push({p: key, o: item}));
+                                } else {
+                                    results.push({p: key, o: value});
+                                }
+                            }
+                        });
+                        return results;
                     }
 
-                    $scope.$watchGroup(['dvm.additions', 'dvm.deletions'], setList);
+                    $scope.$watchGroup(['dvm.additions', 'dvm.deletions'], () => {
+                        dvm.list = _.unionWith(_.map(dvm.additions, '@id'), _.map(dvm.deletions, '@id'), _.isEqual);
+                        dvm.results = {};
+                        _.forEach(dvm.list, id => dvm.results[id] = {
+                            additions: getChangesById(id, dvm.additions),
+                            deletions: getChangesById(id, dvm.deletions)
+                        });
+                    });
                 }],
                 templateUrl: 'directives/commitChangesDisplay/commitChangesDisplay.html'
             }

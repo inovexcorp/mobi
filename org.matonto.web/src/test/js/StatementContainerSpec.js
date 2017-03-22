@@ -20,41 +20,40 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Vocabulary Tab directive', function() {
-    var $compile,
-        scope,
-        element;
+describe('Statement Container directive', function() {
+    var $compile, element, scope;
 
     beforeEach(function() {
         module('templates');
-        module('vocabularyTab');
-        mockOntologyState();
+        module('statementContainer');
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;
             scope = _$rootScope_;
         });
 
-        element = $compile(angular.element('<vocabulary-tab></vocabulary-tab>'))(scope);
+        scope.header = 'header';
+        element = $compile(angular.element('<statement-container header="header"></statement-container>'))(scope);
         scope.$digest();
     });
-
-    describe('replaces the element with the correct html', function() {
+    it('isolated scope variable header is one way bound', function() {
+        element.isolateScope().header = 'new';
+        scope.$apply();
+        expect(scope.header).toBe('header');
+    });
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('vocabulary-tab')).toBe(true);
-            expect(element.hasClass('ontology-tab')).toBe(true);
+            expect(element.hasClass('statement-container')).toBe(true);
         });
-        it('with a tabset', function() {
-            expect(element.find('tabset').length).toBe(1);
+        it('with a p', function() {
+            expect(element.find('p').length).toBe(1);
         });
-        it('with tabs', function() {
-            expect(element.find('tab').length).toBe(6);
+        it('with a table', function() {
+            expect(element.find('table').length).toBe(1);
         });
-        _.forEach(['ontology-button-stack', 'project-tab', 'concepts-tab', 'search-tab', 'saved-changes-tab', 'merge-tab', 'commits-tab'], function(tag) {
-            it('with a ' + tag, function() {
-                expect(element.find(tag).length).toBe(1);
-            });
+        it('with a tbody', function() {
+            expect(element.find('tbody').length).toBe(1);
         });
     });
 });
