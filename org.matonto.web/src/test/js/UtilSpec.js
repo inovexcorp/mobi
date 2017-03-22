@@ -229,19 +229,36 @@ describe('Util service', function() {
             });
         });
     });
-    it('should reject a deferred promise with an error message', function(done) {
-        spyOn(utilSvc, 'getErrorMessage').and.returnValue('Test');
-        var deferred = $q.defer();
-        utilSvc.onError({}, deferred, 'Test');
-        deferred.promise.then(function() {
-            fail('Promise should have rejected.');
-            done();
-        }, function(error) {
-            expect(error).toBe('Test');
-            expect(utilSvc.getErrorMessage).toHaveBeenCalledWith({}, 'Test');
-            done();
+    describe('should reject a deferred promise with an error message', function() {
+        var deferred;
+        beforeEach(function() {
+            deferred = $q.defer();
+            spyOn(utilSvc, 'getErrorMessage').and.returnValue('Test');
         });
-        $timeout.flush();
+        it('unless the response was canceled', function(done) {
+            utilSvc.onError({status: -1}, deferred, 'Test');
+            deferred.promise.then(function() {
+                fail('Promise should have rejected.');
+                done();
+            }, function(error) {
+                expect(error).toBe('');
+                expect(utilSvc.getErrorMessage).not.toHaveBeenCalled();
+                done();
+            });
+            $timeout.flush();
+        });
+        it('successfully', function(done) {
+            utilSvc.onError({}, deferred, 'Test');
+            deferred.promise.then(function() {
+                fail('Promise should have rejected.');
+                done();
+            }, function(error) {
+                expect(error).toBe('Test');
+                expect(utilSvc.getErrorMessage).toHaveBeenCalledWith({}, 'Test');
+                done();
+            });
+            $timeout.flush();
+        });
     });
     it('should retrieve an error message from a http response', function() {
         expect(utilSvc.getErrorMessage({}, 'default')).toBe('default');
