@@ -23,11 +23,14 @@ package org.matonto.dataset.impl;
  * #L%
  */
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.NotImplementedException;
 import org.matonto.dataset.api.DatasetConnection;
 import org.matonto.dataset.ontology.dataset.Dataset;
 import org.matonto.exception.MatOntoException;
+import org.matonto.persistence.utils.Bindings;
 import org.matonto.persistence.utils.Statements;
+import org.matonto.query.TupleQueryResult;
 import org.matonto.query.api.BooleanQuery;
 import org.matonto.query.api.GraphQuery;
 import org.matonto.query.api.Operation;
@@ -44,6 +47,7 @@ import org.matonto.repository.base.RepositoryConnectionWrapper;
 import org.matonto.repository.base.RepositoryResult;
 import org.matonto.repository.exception.RepositoryException;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -54,6 +58,21 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     private Resource dataset;
     private String repositoryId;
     private ValueFactory valueFactory;
+
+    private static final String GET_GRAPHS_QUERY;
+    private static final String DATSET_BINDING = "dataset";
+    private static final String GRAPH_BINDING = "graph";
+
+    static {
+        try {
+            GET_GRAPHS_QUERY = IOUtils.toString(
+                    SimpleDatasetManager.class.getResourceAsStream("/get-graphs.rq"),
+                    "UTF-8"
+            );
+        } catch (IOException e) {
+            throw new MatOntoException(e);
+        }
+    }
 
     public SimpleDatasetRepositoryConnection(RepositoryConnection delegate, Resource dataset, String repositoryId, ValueFactory valueFactory) {
         setDelegate(delegate);
@@ -116,6 +135,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
 
     @Override
     public void remove(Iterable<? extends Statement> statements, Resource... contexts) throws RepositoryException {
+        // TODO: Trivial Implementation
         // Start a transaction if not currently in one
         boolean startedTransaction = startTransaction();
 
@@ -160,6 +180,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     @Override
     public long size(Resource... contexts) throws RepositoryException {
         // TODO: Would this be more efficient with a sparql query? I probably wouldn't need a value factory.
+        // TODO: Trivial Implementation
         Set<Resource> graphs = new HashSet<>();
         getGraphs(graphs, Dataset.systemDefaultNamedGraph_IRI);
         getGraphs(graphs, Dataset.defaultNamedGraph_IRI);
@@ -177,6 +198,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
 
     @Override
     public Set<Resource> getNamedGraphs() {
+        // TODO: Trivial Implementation
         Set<Resource> graphs = new HashSet<>();
         getGraphs(graphs, Dataset.namedGraph_IRI);
         return graphs;
@@ -184,6 +206,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
 
     @Override
     public Set<Resource> getDefaultNamedGraphs() {
+        // TODO: Trivial Implementation
         Set<Resource> graphs = new HashSet<>();
         getGraphs(graphs, Dataset.defaultNamedGraph_IRI);
         return graphs;
@@ -212,14 +235,27 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
 
     @Override
     public RepositoryResult<Statement> getStatements(Resource subject, IRI predicate, Value object, Resource... contexts) throws RepositoryException {
-        // TODO: Implement
-        return null;
+        // TODO: Trivial Implementation
+        // Maybe I can wrap a query result like in the getContextIDs impl
+        Set<Resource> graphs = new HashSet<>();
+        getGraphs(graphs, Dataset.systemDefaultNamedGraph_IRI);
+        getGraphs(graphs, Dataset.defaultNamedGraph_IRI);
+        getGraphs(graphs, Dataset.namedGraph_IRI);
+
+        if (varargsPresent(contexts)) {
+            graphs.retainAll(Arrays.asList(contexts));
+        }
+
+        return getDelegate().getStatements(subject, predicate, object, graphs.toArray(new Resource[graphs.size()]));
     }
 
     @Override
     public RepositoryResult<Resource> getContextIDs() throws RepositoryException {
-        // TODO: Implement
-        return null;
+        TupleQuery query = getDelegate().prepareTupleQuery(GET_GRAPHS_QUERY);
+        query.setBinding(DATSET_BINDING, getDataset());
+        TupleQueryResult result = query.evaluate();
+
+        return new DatasetGraphResultWrapper(result);
     }
 
     @Override
@@ -435,5 +471,33 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
                     getDelegate().clear(context);
                 })
         );
+    }
+
+    private static class DatasetGraphResultWrapper extends RepositoryResult<Resource> {
+
+        private TupleQueryResult queryResult;
+
+        DatasetGraphResultWrapper(TupleQueryResult queryResult) {
+            this.queryResult = queryResult;
+        }
+
+        @Override
+        public void close() {
+            queryResult.close();
+        }
+
+        @Override
+        public boolean hasNext() {
+            boolean hasNext = queryResult.hasNext();
+            if (!hasNext) {
+                close();
+            }
+            return hasNext;
+        }
+
+        @Override
+        public Resource next() {
+            return Bindings.requiredResource(queryResult.next(), GRAPH_BINDING);
+        }
     }
 }

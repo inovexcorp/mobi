@@ -23,6 +23,7 @@
 package org.matonto.dataset.impl
 
 import org.matonto.dataset.ontology.dataset.Dataset
+import org.matonto.persistence.utils.RepositoryResults
 import org.matonto.rdf.api.Resource
 import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory
@@ -878,5 +879,120 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         then:
         systemConn.size(graph) == 1
         systemConn.getStatements(dataset, sdNamedGraphPred, graph).hasNext()
+    }
+
+    def "getStatements(null, null, null) correctly returns all triples in the datset"() {
+        setup:
+        def dataset = datasetsInFile[2]
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
+        def graphs = [
+                vf.createIRI("http://matonto.org/dataset/test2/graph1"),
+                vf.createIRI("http://matonto.org/dataset/test2/graph2"),
+                vf.createIRI("http://matonto.org/dataset/test2/graph3"),
+                vf.createIRI("http://matonto.org/dataset/test2_system_dng")
+        ] as Resource[]
+
+        when:
+        def results = conn.getStatements(null, null, null)
+
+        then:
+        RepositoryResults.asList(results) == RepositoryResults.asList(systemConn.getStatements(null, null, null, graphs))
+    }
+
+    def "getStatements(s, null, null) correctly returns that subject in the datset"() {
+        setup:
+        def dataset = datasetsInFile[2]
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
+        def filter = vf.createIRI("http://matonto.org/dataset/test2/graph1")
+        def graphs = [
+                vf.createIRI("http://matonto.org/dataset/test2/graph1"),
+                vf.createIRI("http://matonto.org/dataset/test2/graph2"),
+                vf.createIRI("http://matonto.org/dataset/test2/graph3"),
+                vf.createIRI("http://matonto.org/dataset/test2_system_dng")
+        ] as Resource[]
+
+        when:
+        def results = RepositoryResults.asList(conn.getStatements(filter, null, null))
+
+        then:
+        results.size() == 1
+        results == RepositoryResults.asList(systemConn.getStatements(filter, null, null, graphs))
+    }
+
+    def "getStatements(null, p, null) correctly returns that predicate in the datset"() {
+        setup:
+        def dataset = datasetsInFile[2]
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
+        def filter = vf.createIRI(org.matonto.ontologies.rdfs.Resource.type_IRI)
+        def graphs = [
+                vf.createIRI("http://matonto.org/dataset/test2/graph1"),
+                vf.createIRI("http://matonto.org/dataset/test2/graph2"),
+                vf.createIRI("http://matonto.org/dataset/test2/graph3"),
+                vf.createIRI("http://matonto.org/dataset/test2_system_dng")
+        ] as Resource[]
+
+        when:
+        def results = RepositoryResults.asList(conn.getStatements(null, filter, null))
+
+        then:
+        results.size() == 4
+        results == RepositoryResults.asList(systemConn.getStatements(null, filter, null, graphs))
+    }
+
+    def "getStatements(null, null, o) correctly returns that object in the datset"() {
+        setup:
+        def dataset = datasetsInFile[2]
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
+        def filter = vf.createIRI("http://www.w3.org/2002/07/owl#Thing")
+        def graphs = [
+                vf.createIRI("http://matonto.org/dataset/test2/graph1"),
+                vf.createIRI("http://matonto.org/dataset/test2/graph2"),
+                vf.createIRI("http://matonto.org/dataset/test2/graph3"),
+                vf.createIRI("http://matonto.org/dataset/test2_system_dng")
+        ] as Resource[]
+
+        when:
+        def results = RepositoryResults.asList(conn.getStatements(null, null, filter))
+
+        then:
+        results.size() == 4
+        results == RepositoryResults.asList(systemConn.getStatements(null, null, filter, graphs))
+    }
+
+    def "getStatements(null, null, null, graphs) correctly returns those graphs in the datset"() {
+        setup:
+        def dataset = datasetsInFile[2]
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
+        def graphs = [
+                vf.createIRI("http://matonto.org/dataset/test2/graph1"),
+                vf.createIRI("http://matonto.org/dataset/test2/graph2"),
+                vf.createIRI("http://matonto.org/dataset/test2_system_dng")
+        ] as Resource[]
+
+        when:
+        def results = RepositoryResults.asList(conn.getStatements(null, null, null, graphs))
+
+        then:
+        results.size() == 3
+        results == RepositoryResults.asList(systemConn.getStatements(null, null, null, graphs))
+    }
+
+    def "getContextIDs() correctly returns the graphs in the datset"() {
+        setup:
+        def dataset = datasetsInFile[2]
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
+        def graphs = [
+                vf.createIRI("http://matonto.org/dataset/test2/graph1"),
+                vf.createIRI("http://matonto.org/dataset/test2/graph2"),
+                vf.createIRI("http://matonto.org/dataset/test2/graph3"),
+                vf.createIRI("http://matonto.org/dataset/test2_system_dng")
+        ]
+
+        when:
+        def results = RepositoryResults.asList(conn.getContextIDs())
+
+        then:
+        results.size() == 4
+        results == graphs
     }
 }
