@@ -6,6 +6,7 @@ select ?parent ?child
 where {
     ?parent rdf:type owl:Class .
     optional {
-        ?child rdfs:subClassOf ?parent .
+        ?child rdfs:subClassOf ?parent ;
+               rdf:type owl:Class .
     }
 }

@@ -24,7 +24,8 @@
     <ul ng-repeat="node in hierarchy | orderBy:dvm.ou.getNameByNode track by node.entityIRI"
         ng-include="'hierarchy_item'" ng-init="node = node; path = dvm.sm.listItem.recordId + '.' + node.entityIRI"></ul>
     <script type="text/ng-template" id="hierarchy_item">
-        <tree-item current-entity="dvm.om.getEntityByRecordId(dvm.sm.listItem.recordId, node.entityIRI)"
+        <tree-item ng-if="dvm.om.getEntityByRecordId(dvm.sm.listItem.recordId, node.entityIRI)"
+                   current-entity="dvm.om.getEntityByRecordId(dvm.sm.listItem.recordId, node.entityIRI)"
                    path="path" is-active="dvm.sm.getActiveEntityIRI() === node.entityIRI"
                    is-opened="dvm.sm.getOpened(path)" has-children="!!node.subEntities && node.subEntities.length"
                    on-click="dvm.sm.selectItem(node.entityIRI)" data-path-to="{{path}}"></tree-item>
