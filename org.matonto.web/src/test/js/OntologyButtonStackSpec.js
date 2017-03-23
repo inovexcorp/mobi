@@ -21,43 +21,20 @@
  * #L%
  */
 describe('Ontology Button Stack directive', function() {
-    var $compile,
-        scope,
-        $q,
-        element,
-        controller,
-        ontologyStateSvc,
-        catalogManagerSvc,
-        ontologyManagerSvc,
-        catalogId;
-
-    var error = 'error';
-    var id = 'id';
+    var $compile, scope, element;
 
     beforeEach(function() {
         module('templates');
         module('ontologyButtonStack');
-        injectRemoveMatontoFilter();
         mockOntologyState();
-        mockOntologyManager();
-        mockCatalogManager();
-        mockUtil();
-        mockUpdateRefs();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _catalogManagerService_,
-            _ontologyManagerService_) {
+        inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            $q = _$q_;
-            ontologyStateSvc = _ontologyStateService_;
-            catalogManagerSvc = _catalogManagerService_;
-            ontologyManagerSvc = _ontologyManagerService_;
         });
 
         element = $compile(angular.element('<ontology-button-stack></ontology-button-stack>'))(scope);
         scope.$digest();
-        catalogId = _.get(catalogManagerSvc.localCatalog, '@id', '');
-        controller = element.controller('ontologyButtonStack');
     });
 
     describe('replaces the element with the correct html', function() {
@@ -69,70 +46,7 @@ describe('Ontology Button Stack directive', function() {
             expect(element.find('circle-button-stack').length).toBe(1);
         });
         it('with circle-buttons', function() {
-            expect(element.find('circle-button').length).toBe(4);
-        });
-        it('depending on whether changes are being deleted', function() {
-            expect(element.find('confirmation-overlay').length).toBe(0);
-
-            controller.showDeleteOverlay = true;
-            scope.$digest();
-            expect(element.find('confirmation-overlay').length).toBe(1);
-        });
-        it('depending on whether an error occured while deleting', function() {
-            controller.showDeleteOverlay = true;
-            scope.$digest();
-            expect(element.find('error-display').length).toBe(0);
-
-            controller.error = error;
-            scope.$digest();
-            expect(element.find('error-display').length).toBe(1);
-        });
-    });
-    describe('controller methods', function() {
-        describe('delete calls the correct manager methods and sets the correct variables', function() {
-            var deleteDeferred;
-            beforeEach(function() {
-                deleteDeferred = $q.defer();
-                catalogManagerSvc.deleteInProgressCommit.and.returnValue(deleteDeferred.promise);
-                controller.showDeleteOverlay = true;
-                ontologyStateSvc.listItem.inProgressCommit.additions = [{'@id': id}];
-                ontologyStateSvc.listItem.inProgressCommit.deletions = [{'@id': id}];
-            });
-            describe('when deleteInProgressCommit resolves', function() {
-                var updateDeferred;
-                beforeEach(function() {
-                    updateDeferred = $q.defer();
-                    ontologyManagerSvc.updateOntology.and.returnValue(updateDeferred.promise);
-                    deleteDeferred.resolve();
-                    controller.delete();
-                });
-                it('and updateOntology resolves', function() {
-                    updateDeferred.resolve();
-                    scope.$digest();
-                    expect(catalogManagerSvc.deleteInProgressCommit).toHaveBeenCalledWith(
-                        ontologyStateSvc.listItem.recordId, catalogId);
-                    expect(ontologyManagerSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
-                        ontologyStateSvc.listItem.branchId, ontologyStateSvc.listItem.commitId,
-                        ontologyStateSvc.state.type, ontologyStateSvc.listItem.upToDate);
-                    expect(ontologyStateSvc.clearInProgressCommit).toHaveBeenCalled();
-                    expect(controller.showDeleteOverlay).toBe(false);
-                });
-                it('and updateOntology rejects', function() {
-                    updateDeferred.reject(error);
-                    scope.$digest();
-                    expect(catalogManagerSvc.deleteInProgressCommit).toHaveBeenCalledWith(
-                        ontologyStateSvc.listItem.recordId, catalogId);
-                    expect(controller.error).toEqual(error);
-                });
-            });
-            it('when deleteInProgressCommit rejects', function() {
-                deleteDeferred.reject(error);
-                controller.delete();
-                scope.$digest();
-                expect(catalogManagerSvc.deleteInProgressCommit).toHaveBeenCalledWith(
-                    ontologyStateSvc.listItem.recordId, catalogId);
-                expect(controller.error).toBe(error);
-            });
+            expect(element.find('circle-button').length).toBe(3);
         });
     });
 });

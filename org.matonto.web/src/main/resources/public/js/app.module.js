@@ -79,6 +79,8 @@
             'radioButton',
             'recordKeywords',
             'spinner',
+            'statementContainer',
+            'statementDisplay',
             'stepProgressBar',
             'tab',
             'tabset',

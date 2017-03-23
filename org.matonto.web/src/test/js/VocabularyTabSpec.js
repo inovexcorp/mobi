@@ -29,7 +29,6 @@ describe('Vocabulary Tab directive', function() {
         module('templates');
         module('vocabularyTab');
         mockOntologyState();
-        mockOntologyManager();
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;
