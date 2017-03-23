@@ -40,7 +40,7 @@ describe('Statement Container directive', function() {
             expect(element.prop('tagName')).toBe('DIV');
             expect(element.hasClass('statement-container')).toBe(true);
         });
-        it('with a p', function() {
+        it('without a p', function() {
             expect(element.find('p').length).toBe(0);
         });
         it('with a p when additions attribute is set', function() {
