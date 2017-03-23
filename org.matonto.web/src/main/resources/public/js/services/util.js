@@ -459,9 +459,9 @@
              * @description
              * Gets the localname for the provided partialStatement Object, {p: predicateIRI}.
              *
-             * @param {string} partialStatement The partial statement that should contain, at minimum, a `p` property\
+             * @param {Object} partialStatement The partial statement that should contain, at minimum, a `p` property
              * with a value of the predicate IRI whose localname you want.
-             * @return {string} The localname
+             * @return {string} The localname for the predicate provided in the partialStatement.
              */
             self.getPredicateLocalName = function(partialStatement) {
                 return $filter('splitIRI')(_.get(partialStatement, 'p', '')).end;

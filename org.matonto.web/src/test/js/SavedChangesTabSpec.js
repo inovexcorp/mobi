@@ -149,7 +149,6 @@ describe('Saved Changes Tab directive', function() {
             beforeEach(function() {
                 deleteDeferred = $q.defer();
                 catalogManagerSvc.deleteInProgressCommit.and.returnValue(deleteDeferred.promise);
-                controller.showDeleteOverlay = true;
                 ontologyStateSvc.listItem.inProgressCommit.additions = [{'@id': 'id'}];
                 ontologyStateSvc.listItem.inProgressCommit.deletions = [{'@id': 'id'}];
             });
@@ -167,7 +166,6 @@ describe('Saved Changes Tab directive', function() {
                     expect(catalogManagerSvc.deleteInProgressCommit).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, catalogId);
                     expect(ontologyManagerSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, ontologyStateSvc.listItem.branchId, ontologyStateSvc.listItem.commitId, ontologyStateSvc.state.type, ontologyStateSvc.listItem.upToDate);
                     expect(ontologyStateSvc.clearInProgressCommit).toHaveBeenCalled();
-                    expect(controller.showDeleteOverlay).toBe(false);
                 });
                 it('and updateOntology rejects', function() {
                     updateDeferred.reject('error');

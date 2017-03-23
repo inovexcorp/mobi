@@ -69,10 +69,7 @@
                     dvm.removeChanges = function() {
                         cm.deleteInProgressCommit(dvm.os.listItem.recordId, catalogId)
                             .then(() => dvm.om.updateOntology(dvm.os.listItem.recordId, dvm.os.listItem.branchId, dvm.os.listItem.commitId, dvm.os.state.type, dvm.os.listItem.upToDate), $q.reject)
-                            .then(() => {
-                                dvm.os.clearInProgressCommit();
-                                dvm.showDeleteOverlay = false;
-                            }, errorMessage => dvm.error = errorMessage);
+                            .then(() => dvm.os.clearInProgressCommit(), errorMessage => dvm.error = errorMessage);
                     }
 
                     /*dvm.setChecked = function(value) {
