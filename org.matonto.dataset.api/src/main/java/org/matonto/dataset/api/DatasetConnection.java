@@ -31,8 +31,6 @@ import org.matonto.repository.api.DelegatingRepositoryConnection;
 import org.matonto.repository.base.RepositoryResult;
 import org.matonto.repository.exception.RepositoryException;
 
-import java.util.Set;
-
 /**
  * A special type of RepositoryConnection that limits operations to a single Dataset in a Repository.
  */
@@ -246,18 +244,18 @@ public interface DatasetConnection extends DelegatingRepositoryConnection {
     RepositoryResult<Resource> getContextIDs() throws RepositoryException;
 
     /**
-     * Gets the Set of all named graph Resources in the dataset.
+     * Gets the resources that are used as named graphs in the dataset.
      *
      * @return the Set of all named graph Resources in the dataset.
      */
-    Set<Resource> getNamedGraphs();
+    RepositoryResult<Resource> getNamedGraphs();
 
     /**
-     * Gets the Set of all default named graph Resources in the dataset.
+     * Gets the resources that are used as default named graphs in the dataset.
      *
      * @return the Set of all default named graph Resources in the dataset.
      */
-    Set<Resource> getDefaultNamedGraphs();
+    RepositoryResult<Resource> getDefaultNamedGraphs();
 
     /**
      * Gets the system default named graph Resource in the dataset.

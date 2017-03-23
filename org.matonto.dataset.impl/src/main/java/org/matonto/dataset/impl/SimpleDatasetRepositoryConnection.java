@@ -60,6 +60,8 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     private ValueFactory valueFactory;
 
     private static final String GET_GRAPHS_QUERY;
+    private static final String GET_NAMED_GRAPHS_QUERY;
+    private static final String GET_DEFAULT_NAMED_GRAPHS_QUERY;
     private static final String DATSET_BINDING = "dataset";
     private static final String GRAPH_BINDING = "graph";
 
@@ -67,6 +69,14 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
         try {
             GET_GRAPHS_QUERY = IOUtils.toString(
                     SimpleDatasetManager.class.getResourceAsStream("/get-graphs.rq"),
+                    "UTF-8"
+            );
+            GET_NAMED_GRAPHS_QUERY = IOUtils.toString(
+                    SimpleDatasetManager.class.getResourceAsStream("/get-named-graphs.rq"),
+                    "UTF-8"
+            );
+            GET_DEFAULT_NAMED_GRAPHS_QUERY = IOUtils.toString(
+                    SimpleDatasetManager.class.getResourceAsStream("/get-default-named-graphs.rq"),
                     "UTF-8"
             );
         } catch (IOException e) {
@@ -197,19 +207,21 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     }
 
     @Override
-    public Set<Resource> getNamedGraphs() {
-        // TODO: Trivial Implementation
-        Set<Resource> graphs = new HashSet<>();
-        getGraphs(graphs, Dataset.namedGraph_IRI);
-        return graphs;
+    public RepositoryResult<Resource> getNamedGraphs() {
+        TupleQuery query = getDelegate().prepareTupleQuery(GET_NAMED_GRAPHS_QUERY);
+        query.setBinding(DATSET_BINDING, getDataset());
+        TupleQueryResult result = query.evaluate();
+
+        return new DatasetGraphResultWrapper(result);
     }
 
     @Override
-    public Set<Resource> getDefaultNamedGraphs() {
-        // TODO: Trivial Implementation
-        Set<Resource> graphs = new HashSet<>();
-        getGraphs(graphs, Dataset.defaultNamedGraph_IRI);
-        return graphs;
+    public RepositoryResult<Resource> getDefaultNamedGraphs() {
+        TupleQuery query = getDelegate().prepareTupleQuery(GET_DEFAULT_NAMED_GRAPHS_QUERY);
+        query.setBinding(DATSET_BINDING, getDataset());
+        TupleQueryResult result = query.evaluate();
+
+        return new DatasetGraphResultWrapper(result);
     }
 
     @Override

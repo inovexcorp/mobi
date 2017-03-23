@@ -671,10 +671,10 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         def expectedGraphs = [
                 vf.createIRI("http://matonto.org/dataset/test2/graph2"),
                 vf.createIRI("http://matonto.org/dataset/test2/graph3")
-        ] as Set
+        ]
 
         expect:
-        conn.getNamedGraphs() == expectedGraphs
+        RepositoryResults.asList(conn.getNamedGraphs()) == expectedGraphs
     }
 
     def "getDefaultNamedGraphs returns the correct set of resources"() {
@@ -682,10 +682,10 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         def conn = new SimpleDatasetRepositoryConnection(systemConn, datasetsInFile[2], "system", vf)
         def expectedGraphs = [
                 vf.createIRI("http://matonto.org/dataset/test2/graph1")
-        ] as Set
+        ]
 
         expect:
-        conn.getDefaultNamedGraphs() == expectedGraphs
+        RepositoryResults.asList(conn.getDefaultNamedGraphs()) == expectedGraphs
     }
 
     def "clear() removes all graphs and graph links"() {
