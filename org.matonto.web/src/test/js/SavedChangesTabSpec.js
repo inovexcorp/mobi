@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Saved Changes Tab directive', function() {
-    var $compile, scope, $q, element, controller, ontologyStateSvc, ontologyManagerSvc, utilSvc, catalogManagerSvc, prefixes;
+    var $compile, scope, $q, element, controller, ontologyStateSvc, ontologyManagerSvc, utilSvc, catalogManagerSvc, prefixes, catalogId;
 
     beforeEach(function() {
         module('templates');
@@ -43,6 +43,7 @@ describe('Saved Changes Tab directive', function() {
             prefixes = _prefixes_;
         });
 
+        catalogId = _.get(catalogManagerSvc.localCatalog, '@id', '');
         ontologyStateSvc.listItem.inProgressCommit = {additions: [], deletions: []};
         element = $compile(angular.element('<saved-changes-tab></saved-changes-tab>'))(scope);
         scope.$digest();
@@ -67,29 +68,30 @@ describe('Saved Changes Tab directive', function() {
             scope.$digest();
             expect(element.find('block-header').length).toBe(1);
         });
-        it('with a btn-container', function() {
+        it('with a .btn-container', function() {
             expect(element.querySelectorAll('.btn-container').length).toBe(0);
             ontologyStateSvc.listItem.inProgressCommit.additions = [{}];
             scope.$digest();
             expect(element.querySelectorAll('.btn-container').length).toBe(1);
         });
-        it('with btn', function() {
+        it('with .btn', function() {
             expect(element.querySelectorAll('.btn-container .btn').length).toBe(0);
             ontologyStateSvc.listItem.inProgressCommit.additions = [{}];
             scope.$digest();
-            expect(element.querySelectorAll('.btn-container .btn').length).toBe(3);
+            expect(element.querySelectorAll('.btn-container .btn').length).toBe(1);
         });
-        it('with property-values', function() {
+        it('with .property-values', function() {
             expect(element.querySelectorAll('.property-values').length).toBe(0);
             ontologyStateSvc.listItem.inProgressCommit.additions = [{'@id': 'id'}];
             scope.$apply();
             expect(element.querySelectorAll('.property-values').length).toBe(1);
         });
-        it('with statement-display', function() {
+        it('with statement-display dependent on how many additions/deletions there are', function() {
             expect(element.find('statement-display').length).toBe(0);
             ontologyStateSvc.listItem.inProgressCommit.additions = [{'@id': 'id', 'value': ['stuff']}];
+            utilSvc.getChangesById.and.returnValue([{}]);
             scope.$apply();
-            expect(element.find('statement-display').length).toBe(1);
+            expect(element.find('statement-display').length).toBe(2);
         });
         it('depending on whether the list item is up to date', function() {
             expect(element.querySelectorAll('block-content .text-center info-message').length).toBe(1);
@@ -142,7 +144,47 @@ describe('Saved Changes Tab directive', function() {
                 expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
             });
         });
-        describe('setChecked should set the checked variable to provided value for all items in the list', function() {
+        describe('removeChanges calls the correct manager methods and sets the correct variables', function() {
+            var deleteDeferred;
+            beforeEach(function() {
+                deleteDeferred = $q.defer();
+                catalogManagerSvc.deleteInProgressCommit.and.returnValue(deleteDeferred.promise);
+                controller.showDeleteOverlay = true;
+                ontologyStateSvc.listItem.inProgressCommit.additions = [{'@id': 'id'}];
+                ontologyStateSvc.listItem.inProgressCommit.deletions = [{'@id': 'id'}];
+            });
+            describe('when deleteInProgressCommit resolves', function() {
+                var updateDeferred;
+                beforeEach(function() {
+                    updateDeferred = $q.defer();
+                    ontologyManagerSvc.updateOntology.and.returnValue(updateDeferred.promise);
+                    deleteDeferred.resolve();
+                    controller.removeChanges();
+                });
+                it('and updateOntology resolves', function() {
+                    updateDeferred.resolve();
+                    scope.$digest();
+                    expect(catalogManagerSvc.deleteInProgressCommit).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, catalogId);
+                    expect(ontologyManagerSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, ontologyStateSvc.listItem.branchId, ontologyStateSvc.listItem.commitId, ontologyStateSvc.state.type, ontologyStateSvc.listItem.upToDate);
+                    expect(ontologyStateSvc.clearInProgressCommit).toHaveBeenCalled();
+                    expect(controller.showDeleteOverlay).toBe(false);
+                });
+                it('and updateOntology rejects', function() {
+                    updateDeferred.reject('error');
+                    scope.$digest();
+                    expect(catalogManagerSvc.deleteInProgressCommit).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, catalogId);
+                    expect(controller.error).toEqual('error');
+                });
+            });
+            it('when deleteInProgressCommit rejects', function() {
+                deleteDeferred.reject('error');
+                controller.removeChanges();
+                scope.$digest();
+                expect(catalogManagerSvc.deleteInProgressCommit).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, catalogId);
+                expect(controller.error).toBe('error');
+            });
+        });
+        /*describe('setChecked should set the checked variable to the provided value for all items in the list', function() {
             beforeEach(function() {
                 controller.list = [{
                     id: 'id',
@@ -159,23 +201,27 @@ describe('Saved Changes Tab directive', function() {
                     }]
                 }];
             });
-            it('should not set disabled if not on the list item', function() {
+            it('and not set disabled if not on the list item', function() {
                 controller.setChecked(true);
                 expect(controller.list[0].additions[0].checked).toBe(true);
+                expect(controller.list[0].additions[0].disabled).toBeUndefined();
                 expect(controller.list[0].additions[1].checked).toBe(true);
+                expect(controller.list[0].additions[1].disabled).toBeUndefined();
                 expect(controller.list[0].deletions[0].checked).toBe(true);
+                expect(controller.list[0].deletions[0].disabled).toBeUndefined();
             });
-            it('should set disabled if on the list item', function() {
+            it('and set disabled if on the list item', function() {
                 controller.list[0].disableAll = true;
                 controller.setChecked(true);
                 expect(controller.list[0].additions[0].checked).toBe(true);
+                expect(controller.list[0].additions[0].disabled).toBeUndefined();
                 expect(controller.list[0].additions[1].checked).toBe(true);
                 expect(controller.list[0].additions[1].disabled).toBe(true);
                 expect(controller.list[0].deletions[0].checked).toBe(true);
                 expect(controller.list[0].deletions[0].disabled).toBe(true);
             });
         });
-        describe('onCheck', function() {
+        describe('onAdditionCheck', function() {
             beforeEach(function() {
                 controller.list = [{
                     id: 'id',
@@ -189,22 +235,61 @@ describe('Saved Changes Tab directive', function() {
                 }];
             });
             it('checks nothing if predicate is not the typeIRI', function() {
-                controller.onCheck('id', 'not-typeIRI', 'object', true);
+                controller.onAdditionCheck('id', 'not-typeIRI', 'object', true);
                 expect(controller.list[0].additions[1].checked).toBeUndefined();
                 expect(controller.list[0].additions[1].disabled).toBeUndefined();
             });
             it('checks nothing if object is not in the types array', function() {
-                controller.onCheck('id', prefixes.rdf + 'type', 'object', true);
+                controller.onAdditionCheck('id', prefixes.rdf + 'type', 'object', true);
                 expect(controller.list[0].additions[1].checked).toBeUndefined();
                 expect(controller.list[0].additions[1].disabled).toBeUndefined();
             });
             it('checks all others if object is in the types array and predicate is the typeIRI', function() {
-                controller.onCheck('id', prefixes.rdf + 'type', prefixes.owl + 'Class', true);
+                controller.onAdditionCheck('id', prefixes.rdf + 'type', prefixes.owl + 'Class', true);
                 expect(controller.list[0].additions[1].checked).toBe(true);
                 expect(controller.list[0].additions[1].disabled).toBe(true);
             });
         });
-        describe('deleteChecked should delete all of the checked statements', function() {
+        describe('onDeletionCheck', function() {
+            beforeEach(function() {
+                controller.list = [{
+                    id: 'id',
+                    deletions: [{
+                        p: prefixes.rdf + 'type',
+                        o: prefixes.owl + 'Class'
+                    }, {
+                        p: 'predicate',
+                        o: 'object'
+                    }]
+                }];
+            });
+            it('checks and disables the typeIRI statement if the statement is checked and is not a typeIRI', function() {
+                controller.onDeletionCheck('id', 'predicate', prefixes.owl + 'Class', true);
+                expect(controller.list[0].deletions[0].checked).toBe(true);
+                expect(controller.list[0].deletions[0].disabled).toBe(true);
+            });
+            it('checks and disables the typeIRI statement if the statement is checked and is a typeIRI not in the types array', function() {
+                controller.onDeletionCheck('id', prefixes.rdf + 'type', prefixes.owl + 'FunctionalProperty', true);
+                expect(controller.list[0].deletions[0].checked).toBe(true);
+                expect(controller.list[0].deletions[0].disabled).toBe(true);
+            });
+            it('enables the typeIRI statement if the statement is not checked and is not a typeIRI', function() {
+                controller.onDeletionCheck('id', 'predicate', prefixes.owl + 'Class', false);
+                expect(controller.list[0].deletions[0].checked).toBeUndefined();
+                expect(controller.list[0].deletions[0].disabled).toBe(false);
+            });
+            it('enables the typeIRI statement if the statement is not checked and is not a typeIRI', function() {
+                controller.onDeletionCheck('id', prefixes.rdf + 'type', prefixes.owl + 'FunctionalProperty', false);
+                expect(controller.list[0].deletions[0].checked).toBeUndefined();
+                expect(controller.list[0].deletions[0].disabled).toBe(false);
+            });
+            it('does nothing if the statement is a typeIRI in the types array', function() {
+                controller.onDeletionCheck('id', prefixes.rdf + 'type', prefixes.owl + 'Class', false);
+                expect(controller.list[0].deletions[0].checked).toBeUndefined();
+                expect(controller.list[0].deletions[0].disabled).toBeUndefined();
+            });
+        });
+        describe('removeChecked should delete all of the checked statements', function() {
             var saveDeferred;
             beforeEach(function() {
                 saveDeferred = $q.defer();
@@ -226,7 +311,7 @@ describe('Saved Changes Tab directive', function() {
                     });
                     it('and updateOntology resolves', function() {
                         updateDeferred.resolve();
-                        controller.deleteChecked();
+                        controller.removeChecked();
                         scope.$apply();
                         expect(ontologyManagerSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, jasmine.any(Object));
                         expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
@@ -235,7 +320,7 @@ describe('Saved Changes Tab directive', function() {
                     });
                     it('and updateOntology rejects', function() {
                         updateDeferred.reject('error');
-                        controller.deleteChecked();
+                        controller.removeChecked();
                         scope.$apply();
                         expect(ontologyManagerSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, jasmine.any(Object));
                         expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
@@ -245,7 +330,7 @@ describe('Saved Changes Tab directive', function() {
                 });
                 it('and afterSave rejects', function() {
                     afterDeferred.reject('error');
-                    controller.deleteChecked();
+                    controller.removeChecked();
                     scope.$apply();
                     expect(ontologyManagerSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, jasmine.any(Object));
                     expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
@@ -254,7 +339,7 @@ describe('Saved Changes Tab directive', function() {
             });
             it('when saveChanges rejects', function() {
                 saveDeferred.reject('error');
-                controller.deleteChecked();
+                controller.removeChecked();
                 scope.$apply();
                 expect(ontologyManagerSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, jasmine.any(Object));
                 expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');
@@ -267,7 +352,7 @@ describe('Saved Changes Tab directive', function() {
                 deletions: [{checked: false}, {checked: true}]
             }];
             expect(controller.getTotalChecked()).toBe(2);
-        });
+        });*/
         it('orderByIRI should call the correct method', function() {
             utilSvc.getBeautifulIRI.and.returnValue('iri');
             expect(controller.orderByIRI({id: 'id'})).toBe('iri');

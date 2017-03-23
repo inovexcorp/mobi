@@ -39,7 +39,9 @@
          */
         .directive('statementDisplay', statementDisplay);
 
-        function statementDisplay() {
+        statementDisplay.$inject = ['$filter'];
+
+        function statementDisplay($filter) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -55,7 +57,13 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    dvm.o = _.get(dvm.object, '@value', _.get(dvm.object, '@id', dvm.object)) + (_.has(dvm.object, '@language') ? ' [language: ' + dvm.object['@language'] + ']' : '');
+                    if (_.has(dvm.object, '@id')) {
+                        dvm.fullObject = dvm.object['@id'];
+                        dvm.o = $filter('splitIRI')(dvm.fullObject).end;
+                    } else {
+                        dvm.o = _.get(dvm.object, '@value', dvm.object) + (_.has(dvm.object, '@language') ? ' [language: ' + dvm.object['@language'] + ']' : '');
+                        dvm.fullObject = dvm.o;
+                    }
                 },
                 link: function(scope, element, attrs) {
                     scope.isAddition = 'addition' in attrs;

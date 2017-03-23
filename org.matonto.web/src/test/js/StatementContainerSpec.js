@@ -32,14 +32,8 @@ describe('Statement Container directive', function() {
             scope = _$rootScope_;
         });
 
-        scope.header = 'header';
-        element = $compile(angular.element('<statement-container header="header"></statement-container>'))(scope);
+        element = $compile(angular.element('<statement-container></statement-container>'))(scope);
         scope.$digest();
-    });
-    it('isolated scope variable header is one way bound', function() {
-        element.isolateScope().header = 'new';
-        scope.$apply();
-        expect(scope.header).toBe('header');
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
@@ -47,7 +41,19 @@ describe('Statement Container directive', function() {
             expect(element.hasClass('statement-container')).toBe(true);
         });
         it('with a p', function() {
+            expect(element.find('p').length).toBe(0);
+        });
+        it('with a p when additions attribute is set', function() {
+            element = $compile(angular.element('<statement-container additions></statement-container>'))(scope);
+            scope.$digest();
             expect(element.find('p').length).toBe(1);
+            expect(angular.element(element.find('p')[0]).text()).toBe('Added Statements:');
+        });
+        it('with a p when deletions attribute is set', function() {
+            element = $compile(angular.element('<statement-container deletions></statement-container>'))(scope);
+            scope.$digest();
+            expect(element.find('p').length).toBe(1);
+            expect(angular.element(element.find('p')[0]).text()).toBe('Deleted Statements:');
         });
         it('with a table', function() {
             expect(element.find('table').length).toBe(1);

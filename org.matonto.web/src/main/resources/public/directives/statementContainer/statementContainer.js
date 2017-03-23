@@ -44,11 +44,13 @@
                 restrict: 'E',
                 replace: true,
                 transclude: true,
-                scope: {
-                    header: '<'
-                },
+                scope: {},
                 templateUrl: 'directives/statementContainer/statementContainer.html',
-                controller: angular.noop
+                controller: angular.noop,
+                link: function(scope, element, attrs) {
+                    scope.hasAdditions = 'additions' in attrs;
+                    scope.hasDeletions = 'deletions' in attrs;
+                }
             }
         }
 })();

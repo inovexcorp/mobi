@@ -419,5 +419,52 @@
             self.getErrorMessage = function(error, defaultMessage = 'Something went wrong. Please try again later.') {
                 return _.get(error, 'statusText') || defaultMessage;
             }
+            /**
+             * @ngdoc method
+             * @name getChangesById
+             * @methodOf util.service:utilService
+             *
+             * @description
+             * Gets the list of individual statements from the provided array which have a subject matching the provided
+             * id.
+             *
+             * @param {string} id The id which should match the subject of the statements you are looking for.
+             * @param {Object[]} array The array of JSON-LD statements that you are iterating through.
+             * @return {Object[]} An array of Objects, {p: string, o: string} which are the predicate and object for
+             * statements which have the provided id as a subject.
+             */
+            self.getChangesById = function(id, array) {
+                var results = [];
+                var entity = angular.copy(_.find(array, {'@id': id}));
+                _.forOwn(entity, (value, key) => {
+                    if (key !== '@id') {
+                        var actualKey = key;
+                        if (key === '@type') {
+                            actualKey = prefixes.rdf + 'type';
+                        }
+                        if (_.isArray(value)) {
+                            _.forEach(value, item => results.push({p: actualKey, o: item}));
+                        } else {
+                            results.push({p: actualKey, o: value});
+                        }
+                    }
+                });
+                return results;
+            }
+            /**
+             * @ngdoc method
+             * @name getPredicateLocalName
+             * @methodOf util.service:utilService
+             *
+             * @description
+             * Gets the localname for the provided partialStatement Object, {p: predicateIRI}.
+             *
+             * @param {string} partialStatement The partial statement that should contain, at minimum, a `p` property\
+             * with a value of the predicate IRI whose localname you want.
+             * @return {string} The localname
+             */
+            self.getPredicateLocalName = function(partialStatement) {
+                return $filter('splitIRI')(_.get(partialStatement, 'p', '')).end;
+            }
         }
 })();

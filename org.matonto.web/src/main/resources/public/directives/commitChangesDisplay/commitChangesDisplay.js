@@ -59,9 +59,7 @@
                 restrict: 'E',
                 controllerAs: 'dvm',
                 replace: true,
-                scope: {
-                    clickEvent: '&?'
-                },
+                scope: {},
                 bindToController: {
                     additions: '<',
                     deletions: '<'
@@ -71,36 +69,13 @@
                     dvm.util = utilService;
                     dvm.list = [];
                     dvm.results = {};
-                    dvm.checked = {};
-
-                    dvm.orderByPredicate = function(addition) {
-                        return $filter('splitIRI')(addition.p).end;
-                    }
-
-                    function getChangesById(id, array) {
-                        var results = [];
-                        var entity = angular.copy(_.find(array, {'@id': id}));
-                        _.forOwn(entity, (value, key) => {
-                            if (key !== '@id') {
-                                if (key === '@type') {
-                                    key = prefixes.rdf + 'type';
-                                }
-                                if (_.isArray(value)) {
-                                    _.forEach(value, item => results.push({p: key, o: item}));
-                                } else {
-                                    results.push({p: key, o: value});
-                                }
-                            }
-                        });
-                        return results;
-                    }
 
                     $scope.$watchGroup(['dvm.additions', 'dvm.deletions'], () => {
                         dvm.list = _.unionWith(_.map(dvm.additions, '@id'), _.map(dvm.deletions, '@id'), _.isEqual);
                         dvm.results = {};
                         _.forEach(dvm.list, id => dvm.results[id] = {
-                            additions: getChangesById(id, dvm.additions),
-                            deletions: getChangesById(id, dvm.deletions)
+                            additions: dvm.util.getChangesById(id, dvm.additions),
+                            deletions: dvm.util.getChangesById(id, dvm.deletions)
                         });
                     });
                 }],

@@ -21,7 +21,8 @@
   #L%
   -->
 <div class="statement-container">
-    <p>{{header}}</p>
+    <p ng-if="hasAdditions">Added Statements:</p>
+    <p ng-if="hasDeletions">Deleted Statements:</p>
     <table>
         <tbody ng-transclude></tbody>
     </table>

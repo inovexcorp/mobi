@@ -44,7 +44,6 @@ describe('Commit Changes Display directive', function() {
 
         scope.additions = [];
         scope.deletions = [];
-        scope.clickEvent = jasmine.createSpy('clickEvent');
         element = $compile(angular.element('<commit-changes-display additions="additions" deletions="deletions" click-event="clickEvent(event, id)"></commit-changes-display>'))(scope);
         scope.$digest();
         isolatedScope = element.isolateScope();
@@ -61,12 +60,6 @@ describe('Commit Changes Display directive', function() {
             isolatedScope.deletions = [{}];
             scope.$digest();
             expect(scope.deletions).toEqual([]);
-        });
-    });
-    describe('controller bound variable', function() {
-        it('clickEvent is called in parent scope when invoked', function() {
-            isolatedScope.clickEvent();
-            expect(scope.clickEvent).toHaveBeenCalled();
         });
     });
     describe('replaces the element with the correct html', function() {
@@ -90,7 +83,7 @@ describe('Commit Changes Display directive', function() {
             expect(element.find('statement-container').length).toBe(1);
             expect(element.find('statement-display').length).toBe(1);
         });
-        it('depending on whether there are additions', function() {
+        it('depending on whether there are deletions', function() {
             expect(element.find('statement-container').length).toBe(0);
             expect(element.find('statement-display').length).toBe(0);
             controller.list = ['id'];
@@ -108,32 +101,6 @@ describe('Commit Changes Display directive', function() {
             expect(element.find('statement-container').length).toBe(2);
             expect(element.find('statement-display').length).toBe(2);
         });
-    });
-    describe('controller methods', function() {
-        /*it('should get the additions of the changes to an entity', function() {
-            scope.additions = [{'@id': 'A', 'test': [{'@id': 'test'}]}];
-            scope.$digest();
-            expect(controller.getAdditions('A')).toEqual([{p: 'test', o: {'@id': 'test'}}]);
-            expect(controller.getAdditions('B')).toEqual([]);
-        });
-        it('should get the deletions of the changes to an entity', function() {
-            scope.deletions = [{'@id': 'A', 'test': [{'@id': 'test'}]}];
-            scope.$digest();
-            expect(controller.getDeletions('A')).toEqual([{p: 'test', o: {'@id': 'test'}}]);
-            expect(controller.getDeletions('B')).toEqual([]);
-        });*/
-        it('orderByPredicate should return the correct value', function() {
-            splitIRI.and.returnValue({end: 'end'});
-            expect(controller.orderByPredicate({p: 'test'})).toBe('end');
-            expect(splitIRI).toHaveBeenCalledWith('test');
-        });
-    });
-    it('should call clickEvent when an entity title is clicked', function() {
-        controller.list = ['test'];
-        scope.$digest();
-        var link = angular.element(element.querySelectorAll('h5 a')[0]);
-        link.triggerHandler('click');
-        expect(scope.clickEvent).toHaveBeenCalledWith(jasmine.any(Object), 'test');
     });
     describe('$scope.$watch triggers when changing the', function() {
         it('additions', function() {

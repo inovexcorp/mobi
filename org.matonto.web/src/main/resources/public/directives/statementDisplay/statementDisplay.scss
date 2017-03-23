@@ -18,9 +18,19 @@
 
     td {
         padding: 1px 10px;
+        word-break: break-word;
+
+        &.predicate {
+            width: 20%;
+        }
+
+        &.object {
+            width: 70%;
+        }
 
         &.transcluded {
             text-align: right;
+            width: 10%;
         }
     }
 }

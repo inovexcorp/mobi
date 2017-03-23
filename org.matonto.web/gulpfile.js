@@ -167,6 +167,10 @@ gulp.task('test-minified-4', ['test-minified-3'], function(done) {
     return runKarma([dest + '**/*.js'], tests[3], true, done);
 });
 
+gulp.task('test-minified-5', ['test-minified-4'], function(done) {
+    return runKarma([dest + '**/*.js'], tests[4], true, done);
+});
+
 // Run jasmine tests in PhantomJS with unminified source files
 gulp.task('test-unminified', ['cacheTemplates', 'move-custom-js'], function(done) {
     return runKarma(nodeJsFiles(nodeDir).concat(jsFiles(dest)), './src/test/js/*Spec.js', true, done);
@@ -186,6 +190,10 @@ gulp.task('test-unminified-3', ['test-unminified-2'], function(done) {
 
 gulp.task('test-unminified-4', ['test-unminified-3'], function(done) {
     return runKarma(nodeJsFiles(nodeDir).concat(jsFiles(dest)), tests[3], true, done);
+});
+
+gulp.task('test-unminified-5', ['test-unminified-4'], function(done) {
+    return runKarma(nodeJsFiles(nodeDir).concat(jsFiles(dest)), tests[4], true, done);
 });
 
 // Launch TDD environment for jasmine tests in Chrome
@@ -310,9 +318,9 @@ gulp.task('icons-unminified', function() {
 });
 
 // Production Task (minified)
-gulp.task('prod', ['test-minified-1', 'test-minified-2', 'test-minified-3', 'test-minified-4', 'minify-scripts', 'minify-css', 'html', 'images', 'inject-minified', 'icons-minified', 'ngdocs-minified']);
+gulp.task('prod', ['test-minified-1', 'test-minified-2', 'test-minified-3', 'test-minified-4', 'test-minified-5', 'minify-scripts', 'minify-css', 'html', 'images', 'inject-minified', 'icons-minified', 'ngdocs-minified']);
 // gulp.task('prod', ['test-minified', 'minify-scripts', 'minify-css', 'html', 'images', 'inject-minified', 'icons-minified', 'ngdocs-minified']);
 
 // Default Task (un-minified)
-gulp.task('default', ['test-unminified-1', 'test-unminified-2', 'test-unminified-3', 'test-unminified-4', 'move-custom-js', 'move-node-js', 'move-node-css', 'images', 'html', 'change-to-css', 'inject-unminified', 'icons-unminified', 'ngdocs-unminified']);
+gulp.task('default', ['test-unminified-1', 'test-unminified-2', 'test-unminified-3', 'test-unminified-4', 'test-unminified-5', 'move-custom-js', 'move-node-js', 'move-node-css', 'images', 'html', 'change-to-css', 'inject-unminified', 'icons-unminified', 'ngdocs-unminified']);
 // gulp.task('default', ['test-unminified', 'move-custom-js', 'move-node-js', 'move-node-css', 'images', 'html', 'change-to-css', 'inject-unminified', 'icons-unminified', 'ngdocs-unminified']);

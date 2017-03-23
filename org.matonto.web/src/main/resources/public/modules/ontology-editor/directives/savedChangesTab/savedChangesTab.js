@@ -61,12 +61,21 @@
                         cm.getBranchHeadCommit(dvm.os.listItem.branchId, dvm.os.listItem.recordId, catalogId)
                             .then(headCommit => {
                                 var commitId = _.get(headCommit, "commit['@id']", '');
-                                return dvm.om.updateOntology(dvm.os.listItem.recordId, dvm.os.listItem.branchId, commitId, dvm.os.listItem.type)
+                                return dvm.om.updateOntology(dvm.os.listItem.recordId, dvm.os.listItem.branchId, commitId, dvm.os.listItem.type);
                             }, $q.reject)
                             .then(() => dvm.util.createSuccessToast('Your ontology has been updated.'), dvm.util.createErrorToast);
                     }
 
-                    dvm.setChecked = function(value) {
+                    dvm.removeChanges = function() {
+                        cm.deleteInProgressCommit(dvm.os.listItem.recordId, catalogId)
+                            .then(() => dvm.om.updateOntology(dvm.os.listItem.recordId, dvm.os.listItem.branchId, dvm.os.listItem.commitId, dvm.os.state.type, dvm.os.listItem.upToDate), $q.reject)
+                            .then(() => {
+                                dvm.os.clearInProgressCommit();
+                                dvm.showDeleteOverlay = false;
+                            }, errorMessage => dvm.error = errorMessage);
+                    }
+
+                    /*dvm.setChecked = function(value) {
                         _.forEach(dvm.list, item => {
                             _.forEach(['additions', 'deletions'], attr => {
                                 _.forEach(_.get(item, attr, []), statement => {
@@ -81,25 +90,39 @@
                         });
                     }
 
-                    dvm.onCheck = function(subject, predicate, object, isChecked) {
+                    dvm.onAdditionCheck = function(subject, predicate, object, isChecked) {
                         if (predicate === typeIRI && _.includes(types, object)) {
                             var item = _.find(dvm.list, {id: subject});
-                            _.forEach(['additions', 'deletions'], attr => {
-                                _.forEach(_.get(item, attr, []), statement => {
-                                    if (statement.p !== predicate && statement.o !== object) {
-                                        statement.checked = isChecked;
-                                        statement.disabled = isChecked;
-                                    }
-                                });
+                            _.forEach(_.get(item, 'additions', []), statement => {
+                                if (statement.p !== predicate && statement.o !== object) {
+                                    statement.checked = isChecked;
+                                    statement.disabled = isChecked;
+                                }
                             });
                         }
                     }
 
-                    dvm.deleteChecked = function() {
+                    dvm.onDeletionCheck = function(subject, predicate, object, isChecked) {
+                        if (predicate !== typeIRI || (predicate === typeIRI && !_.includes(types, object))) {
+                            var typeStatement;
+                            var shouldBeDisabled = false;
+                            var item = _.find(dvm.list, {id: subject});
+                            _.forEach(_.get(item, 'deletions', []), statement => {
+                                if (statement.p === typeIRI && _.includes(types, statement.o)) {
+                                    if (isChecked) {
+                                        statement.checked = true;
+                                    }
+                                    statement.disabled = isChecked;
+                                }
+                            });
+                        }
+                    }
+
+                    dvm.removeChecked = function() {
                         var differenceObj = {
                             additions: [],
                             deletions: []
-                        }
+                        };
                         _.forEach(dvm.list, item => {
                             _.forEach(_.filter(item.additions, {checked: true}), addition => {
                                 var predicate = addition.p === typeIRI ? '@type' : addition.p;
@@ -123,7 +146,7 @@
                             count += _.filter(item.deletions, {checked: true}).length;
                         });
                         return count;
-                    }
+                    }*/
 
                     dvm.orderByIRI = function(item) {
                         return dvm.util.getBeautifulIRI(item.id);
@@ -132,8 +155,8 @@
                     $scope.$watchGroup(['dvm.os.listItem.inProgressCommit.additions', 'dvm.os.listItem.inProgressCommit.deletions'], () => {
                         var ids = _.unionWith(_.map(dvm.os.listItem.inProgressCommit.additions, '@id'), _.map(dvm.os.listItem.inProgressCommit.deletions, '@id'), _.isEqual);
                         dvm.list = _.map(ids, id => {
-                            var additions = getChangesById(id, dvm.os.listItem.inProgressCommit.additions);
-                            var deletions = getChangesById(id, dvm.os.listItem.inProgressCommit.deletions);
+                            var additions = dvm.util.getChangesById(id, dvm.os.listItem.inProgressCommit.additions);
+                            var deletions = dvm.util.getChangesById(id, dvm.os.listItem.inProgressCommit.deletions);
                             return {
                                 id,
                                 additions,
@@ -145,24 +168,6 @@
 
                     function hasSpecificType(array) {
                         return !!_.intersection(_.map(_.filter(array, {p: typeIRI}), 'o'), types).length;
-                    }
-
-                    function getChangesById(id, array) {
-                        var results = [];
-                        var entity = angular.copy(_.find(array, {'@id': id}));
-                        _.forOwn(entity, (value, key) => {
-                            if (key !== '@id') {
-                                if (key === '@type') {
-                                    key = typeIRI;
-                                }
-                                if (_.isArray(value)) {
-                                    _.forEach(value, item => results.push({p: key, o: item}));
-                                } else {
-                                    results.push({p: key, o: value});
-                                }
-                            }
-                        });
-                        return results;
                     }
                 }]
             }
