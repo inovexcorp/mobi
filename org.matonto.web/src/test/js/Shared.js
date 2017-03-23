@@ -783,6 +783,8 @@ function mockUtil() {
             });
             this.getErrorMessage = jasmine.createSpy('getErrorMessage').and.returnValue('');
             this.getResultsPage = jasmine.createSpy('getResultsPage').and.returnValue($q.when({}));
+            this.getChangesById = jasmine.createSpy('getChangesById');
+            this.getPredicateLocalName = jasmine.createSpy('getPredicateLocalName');
         });
     });
 }

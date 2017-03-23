@@ -1285,7 +1285,7 @@
              */
             self.addEntity = function(listItem, entityJSON) {
                 listItem.ontology.push(entityJSON);
-                _.set(_.get(listItem, 'index', {}), entityJSON['@id'], listItem.ontology.length - 1);
+                _.get(listItem, 'index', {})[entityJSON['@id']] = listItem.ontology.length - 1;
             }
             /**
              * @ngdoc method
