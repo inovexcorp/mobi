@@ -49,6 +49,14 @@
                             results[binding.p.value] = _.union(_.get(results, binding.p.value, []), [{subject: binding.s.value, predicate: binding.p.value, object: binding.o.value}]));
                         return results;
                     }
+                    function getWatchURL() {
+                        return '\/matontorest\/ontologies\/' + encodeURIComponent(_.get(dvm.sm.listItem, 'recordId')) + '\/entity-usages\/.*\?.*queryType=select.*tab=' + dvm.sm.getActiveKey();
+                    }
+
+                    $scope.requestConfig = {
+                        method: 'GET',
+                        url: getWatchURL()
+                    };
 
                     dvm.results = getResults();
 
@@ -56,6 +64,11 @@
                         return $filter('splitIRI')(binding).end;
                     }
 
+                    $scope.$watch(function() {
+                        return _.get(dvm.sm.listItem, 'recordId');
+                    }, function() {
+                        $scope.requestConfig.url = getWatchURL();
+                    });
                     $scope.$watch(function() {
                         return dvm.sm.getActivePage().usages;
                     }, function() {
