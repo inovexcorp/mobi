@@ -52,6 +52,7 @@
             width: -webkit-calc(100% - 62px);
             width:    -moz-calc(100% - 62px);
             width:         calc(100% - 62px);
+            word-wrap: break-word;
 
             .type-display,
             .lang-display {

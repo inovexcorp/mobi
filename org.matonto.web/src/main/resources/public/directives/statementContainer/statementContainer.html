@@ -20,10 +20,10 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="ontology-button-stack">
-    <circle-button-stack>
-        <circle-button class="btn-warning" ng-click="dvm.os.showCreateBranchOverlay = true" btn-icon="'fa-code-fork'" display-text="'Create Branch'" btn-small="true"></circle-button>
-        <circle-button class="btn-success" ng-click="dvm.os.showCommitOverlay = true" btn-icon="'fa-git'" display-text="'Commit Saved Changes'" ng-disabled="!dvm.os.isCommittable(dvm.os.listItem.recordId)" btn-small="true"></circle-button>
-        <circle-button class="btn-primary" ng-click="dvm.os.showSaveOverlay = true" btn-icon="'fa-floppy-o'" display-text="'Save Changes'" ng-disabled="!dvm.os.hasChanges(dvm.os.listItem.recordId)"></circle-button>
-    </circle-button-stack>
+<div class="statement-container">
+    <p ng-if="hasAdditions">Added Statements:</p>
+    <p ng-if="hasDeletions">Deleted Statements:</p>
+    <table>
+        <tbody ng-transclude></tbody>
+    </table>
 </div>

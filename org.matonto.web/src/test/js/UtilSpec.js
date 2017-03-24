@@ -266,4 +266,28 @@ describe('Util service', function() {
         expect(utilSvc.getErrorMessage({statusText: ''})).toBe('Something went wrong. Please try again later.');
         expect(utilSvc.getErrorMessage({statusText: 'Test'})).toBe('Test');
     });
+    it('should get correct statement predicates and objects for the provided id and array', function() {
+        var array = [{
+            '@id': 'id',
+            prop1: 'value1',
+            prop2: 'value2'
+        }, {
+            '@id': 'different',
+            prop3: 'value3',
+            prop4: 'value4'
+        }];
+        var expected = [{
+            p: 'prop1', o: 'value1'
+        }, {
+            p: 'prop2', o: 'value2'
+        }];
+        expect(utilSvc.getChangesById('id', array)).toEqual(expected);
+    });
+    it("should return the localname of the split IRI for the provided object's p property", function() {
+        splitIRIFilter.and.returnValue({end: 'localname'});
+        expect(utilSvc.getPredicateLocalName({p: 'predicate'})).toBe('localname');
+        expect(splitIRIFilter).toHaveBeenCalledWith('predicate');
+        utilSvc.getPredicateLocalName();
+        expect(splitIRIFilter).toHaveBeenCalledWith('');
+    });
 });
