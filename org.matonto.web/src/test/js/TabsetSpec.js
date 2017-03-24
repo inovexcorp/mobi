@@ -23,6 +23,7 @@
 describe('Tabset directive', function() {
     var $compile,
         element,
+        $timeout,
         controller,
         scope;
 
@@ -32,9 +33,10 @@ describe('Tabset directive', function() {
         injectTrustedFilter();
         mockOntologyState();
 
-        inject(function(_$compile_, _$rootScope_) {
+        inject(function(_$compile_, _$rootScope_, _$timeout_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            $timeout = _$timeout_;
         });
 
         element = $compile(angular.element('<tabset></tabset>'))(scope);
@@ -88,13 +90,15 @@ describe('Tabset directive', function() {
             controller.removeTab(tab);
             expect(controller.tabs).not.toContain(tab);
         });
-        it('select sets the active property to true for passed in tab and false for the others', function() {
-            var tab1 = {id: 'tab1', active: true};
-            var tab2 = {id: 'tab2', active: false};
+        it('select sets the active property to true for passed in tab and false for the others and calls onClick', function() {
+            var tab1 = {id: 'tab1', active: true, onClick: jasmine.createSpy('onClick')};
+            var tab2 = {id: 'tab2', active: false, onClick: jasmine.createSpy('onClick')};
             controller.tabs = [tab1, tab2];
             controller.select(tab2);
+            $timeout.flush();
             expect(_.find(controller.tabs, {id: 'tab1'}).active).toBe(false);
             expect(_.find(controller.tabs, {id: 'tab2'}).active).toBe(true);
+            expect(tab2.onClick).toHaveBeenCalled();
         });
     });
 });
