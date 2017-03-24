@@ -47,9 +47,9 @@
          */
         .service('sparqlManagerService', sparqlManagerService);
 
-        sparqlManagerService.$inject = ['$http', '$window', '$httpParamSerializer', 'utilService'];
+        sparqlManagerService.$inject = ['$http', '$q', '$window', '$httpParamSerializer', 'utilService'];
 
-        function sparqlManagerService($http, $window, $httpParamSerializer, utilService) {
+        function sparqlManagerService($http, $q, $window, $httpParamSerializer, utilService) {
             var prefix = '/matontorest/sparql';
             var self = this;
             var util = utilService;
@@ -231,26 +231,24 @@
                     }
                 }
                 $http.get(prefix + '/page', config)
-                    .then(onSuccess, onError);
+                    .then(onSuccess, response => self.errorMessage = getMessage(response));
             }
             /**
              * @ngdoc method
-             * @name getResults
+             * @name setResults
              * @methodOf sparqlManager.service:sparqlManagerService
              *
              * @description
-             * Uses the passed URL to get the next page of results from a SPARQL query. Expects a URL using the
-             * GET /sparql/page REST endpoint and sets the results to
-             * {@link sparqlManager.service:sparqlManagerService#data data}.
+             * Sets the results of a SPARQL query to the appropriate state variables using the passed HTTP
+             * response containing the results.
+             *
+             * @param {Object} response A HTTP response object containing paginated SPARQL query results
              */
-            self.getResults = function(url) {
-                $http.get(url)
-                    .then(onSuccess, onError);
+            self.setResults = function(url) {
+                util.getResultsPage(url, response => $q.reject(getMessage(response)))
+                    .then(onSuccess, errorMessage => self.errorMessage = errorMessage);
             }
 
-            function getMessage(response, defaultMessage) {
-                return _.get(response, 'statusText') || defaultMessage;
-            }
             function onSuccess(response) {
                 if (_.get(response, 'data.bindings', []).length) {
                     self.bindings = response.data.bindings;
@@ -264,8 +262,8 @@
                     self.infoMessage = 'There were no results for the submitted query.';
                 }
             }
-            function onError(response) {
-                self.errorMessage = getMessage(response, 'A server error has occurred. Please try again later.');
+            function getMessage(response) {
+                return util.getErrorMessage(response, 'A server error has occurred. Please try again later.');
             }
             function getPrefixString() {
                 return self.prefixes.length ? 'PREFIX ' + _.join(self.prefixes, '\nPREFIX ') + '\n\n' : '';

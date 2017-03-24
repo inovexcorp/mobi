@@ -43,9 +43,9 @@
          */
         .service('utilService', utilService);
 
-        utilService.$inject = ['$filter', 'prefixes', 'toastr'];
+        utilService.$inject = ['$filter', 'prefixes', 'toastr', '$http', '$q'];
 
-        function utilService($filter, prefixes, toastr) {
+        function utilService($filter, prefixes, toastr, $http, $q) {
             var self = this;
 
             /**
@@ -370,6 +370,24 @@
             }
             /**
              * @ngdoc method
+             * @name getResultsPage
+             * @methodOf util.service:utilService
+             *
+             * @description
+             * Calls the passed URL which repesents a call to get paginated results and returns a Promise
+             * that resolves to the HTTP response if successful and calls the provided function if it
+             * failed.
+             *
+             * @param {string} url The URL to make a GET call to. Expects the response to be paginated
+             * @param {Function} errorFunction The optional function to call if the request fails. Default
+             * function rejects with the error message from the response.
+             * @return {Promise} A Promise that resolves to the HTTP response if successful
+             */
+            self.getResultsPage = function(url, errorFunction = response => $q.reject(self.getErrorMessage(response))) {
+                return $http.get(url).then(response => response, errorFunction);
+            }
+            /**
+             * @ngdoc method
              * @name onError
              * @methodOf util.service:utilService
              *
@@ -379,11 +397,74 @@
              *
              * @param {Object} error A HTTP response object
              * @param {?} deferred A deferred promise created by $q.defer()
-             * @param {string='Something went wrong. Please try again later.'} defaultMessage The optional
-             * default error text for the rejection
+             * @param {string} defaultMessage The optional default error text for the rejection
              */
-            self.onError = function(error, deferred, defaultMessage = 'Something went wrong. Please try again later.') {
-                deferred.reject(_.get(error, 'statusText', defaultMessage));
+            self.onError = function(error, deferred, defaultMessage) {
+                deferred.reject(self.getErrorMessage(error, defaultMessage));
+            }
+            /**
+             * @ngdoc method
+             * @name getErrorMessage
+             * @methodOf util.service:utilService
+             *
+             * @description
+             * Retrieves an error message from a HTTP response if available, otherwise uses the passed default
+             * message.
+             *
+             * @param {Object} error A response from a HTTP calls
+             * @param {string='Something went wrong. Please try again later.'} defaultMessage The optional message
+             * to use if the response doesn't have an error message
+             * @return {string} An error message for the passed HTTP response
+             */
+            self.getErrorMessage = function(error, defaultMessage = 'Something went wrong. Please try again later.') {
+                return _.get(error, 'statusText') || defaultMessage;
+            }
+            /**
+             * @ngdoc method
+             * @name getChangesById
+             * @methodOf util.service:utilService
+             *
+             * @description
+             * Gets the list of individual statements from the provided array which have a subject matching the provided
+             * id.
+             *
+             * @param {string} id The id which should match the subject of the statements you are looking for.
+             * @param {Object[]} array The array of JSON-LD statements that you are iterating through.
+             * @return {Object[]} An array of Objects, {p: string, o: string} which are the predicate and object for
+             * statements which have the provided id as a subject.
+             */
+            self.getChangesById = function(id, array) {
+                var results = [];
+                var entity = angular.copy(_.find(array, {'@id': id}));
+                _.forOwn(entity, (value, key) => {
+                    if (key !== '@id') {
+                        var actualKey = key;
+                        if (key === '@type') {
+                            actualKey = prefixes.rdf + 'type';
+                        }
+                        if (_.isArray(value)) {
+                            _.forEach(value, item => results.push({p: actualKey, o: item}));
+                        } else {
+                            results.push({p: actualKey, o: value});
+                        }
+                    }
+                });
+                return results;
+            }
+            /**
+             * @ngdoc method
+             * @name getPredicateLocalName
+             * @methodOf util.service:utilService
+             *
+             * @description
+             * Gets the localname for the provided partialStatement Object, {p: predicateIRI}.
+             *
+             * @param {Object} partialStatement The partial statement that should contain, at minimum, a `p` property
+             * with a value of the predicate IRI whose localname you want.
+             * @return {string} The localname for the predicate provided in the partialStatement.
+             */
+            self.getPredicateLocalName = function(partialStatement) {
+                return $filter('splitIRI')(_.get(partialStatement, 'p', '')).end;
             }
         }
 })();

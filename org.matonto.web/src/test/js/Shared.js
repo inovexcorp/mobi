@@ -182,6 +182,7 @@ function mockOntologyManager() {
             this.hasDataTypeProperties = jasmine.createSpy('hasDataTypeProperties').and.returnValue(true);
             this.getDataTypeProperties = jasmine.createSpy('getDataTypeProperties').and.returnValue([]);
             this.getDataTypePropertyIRIs = jasmine.createSpy('getDataTypePropertyIRIs').and.returnValue([]);
+            this.isAnnotation = jasmine.createSpy('isAnnotation');
             this.hasAnnotations = jasmine.createSpy('hasAnnotations').and.returnValue(true);
             this.getAnnotations = jasmine.createSpy('getAnnotations').and.returnValue([]);
             this.getAnnotationIRIs = jasmine.createSpy('getAnnotationIRIs').and.returnValue([]);
@@ -418,6 +419,7 @@ function mockSparqlManager() {
             this.reset = jasmine.createSpy('reset');
             this.queryRdf = jasmine.createSpy('queryRdf');
             this.downloadResults = jasmine.createSpy('downloadResults');
+            this.setResults = jasmine.createSpy('setResults');
         });
     });
 }
@@ -502,6 +504,8 @@ function mockOntologyState() {
             this.setDataPropertiesOpened = jasmine.createSpy('setDataPropertiesOpened');
             this.getObjectPropertiesOpened = jasmine.createSpy('getObjectPropertiesOpened');
             this.setObjectPropertiesOpened = jasmine.createSpy('setObjectPropertiesOpened');
+            this.getAnnotationPropertiesOpened = jasmine.createSpy('getAnnotationPropertiesOpened');
+            this.setAnnotationPropertiesOpened = jasmine.createSpy('setAnnotationPropertiesOpened');
             this.onEdit = jasmine.createSpy('onEdit');
             this.setCommonIriParts = jasmine.createSpy('setCommonIriParts');
             this.setSelected = jasmine.createSpy('setSelected');
@@ -532,9 +536,11 @@ function mockOntologyState() {
 function mockOntologyUtilsManager() {
     module(function($provide) {
         $provide.service('ontologyUtilsManagerService', function() {
+            this.commonDelete = jasmine.createSpy('commonDelete');
             this.deleteClass = jasmine.createSpy('deleteClass');
             this.deleteObjectProperty = jasmine.createSpy('deleteObjectProperty');
             this.deleteDataTypeProperty = jasmine.createSpy('deleteDataTypeProperty');
+            this.deleteAnnotationProperty = jasmine.createSpy('deleteAnnotationProperty');
             this.deleteIndividual = jasmine.createSpy('deleteIndividual');
             this.deleteConcept = jasmine.createSpy('deleteConcept');
             this.deleteConceptScheme = jasmine.createSpy('deleteConceptScheme');
@@ -753,7 +759,7 @@ function mockCatalogState() {
 
 function mockUtil() {
     module(function($provide) {
-        $provide.service('utilService', function() {
+        $provide.service('utilService', function($q) {
             this.getBeautifulIRI = jasmine.createSpy('getBeautifulIRI').and.callFake(_.identity);
             this.getPropertyValue = jasmine.createSpy('getPropertyValue').and.returnValue('');
             this.setPropertyValue = jasmine.createSpy('setPropertyValue').and.returnValue({});
@@ -775,6 +781,10 @@ function mockUtil() {
             this.onError = jasmine.createSpy('onError').and.callFake(function(error, deferred) {
                 deferred.reject(_.get(error, 'statusText', ''));
             });
+            this.getErrorMessage = jasmine.createSpy('getErrorMessage').and.returnValue('');
+            this.getResultsPage = jasmine.createSpy('getResultsPage').and.returnValue($q.when({}));
+            this.getChangesById = jasmine.createSpy('getChangesById');
+            this.getPredicateLocalName = jasmine.createSpy('getPredicateLocalName');
         });
     });
 }
@@ -782,12 +792,35 @@ function mockUtil() {
 function mockDatasetManager() {
     module(function($provide) {
         $provide.service('datasetManagerService', function($q) {
+            this.getResultsPage = jasmine.createSpy('getResultsPage').and.returnValue($q.when({}));
             this.getDatasetRecords = jasmine.createSpy('getDatasetRecords').and.returnValue($q.when({}));
             this.createDatasetRecord = jasmine.createSpy('createDatasetRecord').and.returnValue($q.when(''));
             this.deleteDatasetRecord = jasmine.createSpy('deleteDatasetRecord').and.returnValue($q.when());
             this.clearDatasetRecord = jasmine.createSpy('clearDatasetRecord').and.returnValue($q.when());
         });
     });
+}
+
+function mockDatasetState() {
+    module(function($provide) {
+        $provide.service('datasetStateService', function() {
+            this.paginationConfig = {
+                limit: 0,
+                sortOption: {field: '', asc: true},
+                pageIndex: 0,
+                searchText: ''
+            };
+            this.totalSize = 0;
+            this.links = {
+                prev: '',
+                next: ''
+            };
+            this.results = [];
+            this.setResults = jasmine.createSpy('setResults');
+            this.resetPagination = jasmine.createSpy('resetPagination');
+            this.setPagination = jasmine.createSpy('setPagination');
+        })
+    })
 }
 
 function mockToastr() {

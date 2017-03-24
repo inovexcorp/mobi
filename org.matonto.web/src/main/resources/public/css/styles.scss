@@ -11,6 +11,19 @@ body {
     top: 0;
     overflow-x: hidden;
 
+    /* Overall design styles */
+    .blue-bar {
+        height: 48px;
+        background-color: $highlight-blue;
+    }
+
+    .white-bar {
+        background-color: #fff;
+        box-shadow: 5px 5px 5px 0px $gray-light;
+        height: 52px;
+        text-align: center;
+    }
+
     /* All <a> tags have the pointer cursor */
     a {
         cursor: pointer;
@@ -57,30 +70,6 @@ body {
         /* Error message spacing when below form inputs */
         .error-msg {
             margin: 5px 0 0;
-        }
-    }
-
-    /* spinner background styles */
-    .spinner {
-        background: #fff;
-        height: 100%;
-        left: 0;
-        opacity: .5;
-        position: absolute;
-        top: 0;
-        width: 100%;
-        z-index: 9001;
-
-        /* spinner icon styles */
-        .fa-spinner {
-            left: 50%;
-            position: absolute;
-            top: 50%;
-
-            -webkit-transform: translate(-50%, -50%);
-               -moz-transform: translate(-50%, -50%);
-                -ms-transform: translate(-50%, -50%);
-                    transform: translate(-50%, -50%);
         }
     }
 
@@ -216,6 +205,10 @@ ul {
             margin-left: 10px;
         }
     }
+}
+
+.checkbox input {
+    cursor: pointer;
 }
 
 /* adds spacing for icons in buttons */
@@ -571,34 +564,4 @@ body {
 /* Helper Classes */
 .padding {
     padding: 15px;
-}
-
-.circle-save-button {
-    bottom: 30px;
-    position: absolute;
-    right: 30px;
-    z-index: 10;
-
-    &.ng-enter {
-        -webkit-transition: 0.25s linear all;
-                transition: 0.25s linear all;
-        opacity: 0;
-        transform: rotate(0) scale(0);
-
-        &.ng-enter-active {
-            opacity: 1;
-            transform: rotate(360deg) scale(1);
-        }
-    }
-    &.ng-leave {
-        -webkit-transition: 0.25s linear all;
-                transition: 0.25s linear all;
-        opacity: 1;
-        transform: rotate(360deg) scale(1);
-
-        &.ng-leave-active {
-            opacity: 0;
-            transform: rotate(0) scale(0);
-        }
-    }
 }

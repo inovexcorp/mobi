@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Ontology Utils Manager service', function() {
-    var ontologyUtilsManagerSvc, ontologyManagerSvc, ontologyStateSvc, prefixes;
+    var ontologyUtilsManagerSvc, ontologyManagerSvc, ontologyStateSvc, prefixes, splitIRIFilter, util, updateRefs, scope, $q;
 
     beforeEach(function() {
         module('ontologyUtilsManager');
@@ -29,15 +29,117 @@ describe('Ontology Utils Manager service', function() {
         mockOntologyState();
         mockUpdateRefs();
         mockPrefixes();
+        injectSplitIRIFilter();
+        mockUtil();
 
-        inject(function(ontologyUtilsManagerService, _ontologyManagerService_, _ontologyStateService_, _prefixes_) {
+        inject(function(ontologyUtilsManagerService, _ontologyManagerService_, _ontologyStateService_, _prefixes_, _splitIRIFilter_, _utilService_, _updateRefsService_, _$rootScope_, _$q_) {
             ontologyUtilsManagerSvc = ontologyUtilsManagerService;
             ontologyManagerSvc = _ontologyManagerService_;
             ontologyStateSvc = _ontologyStateService_;
             prefixes = _prefixes_;
+            splitIRIFilter = _splitIRIFilter_;
+            util = _utilService_;
+            updateRefs = _updateRefsService_;
+            scope = _$rootScope_;
+            $q = _$q_;
         });
     });
 
+    describe('commonDelete calls the proper methods', function() {
+        var getDeferred;
+        beforeEach(function() {
+            getDeferred = $q.defer();
+            ontologyManagerSvc.getEntityUsages.and.returnValue(getDeferred.promise);
+        });
+        it('when getEntityUsages resolves', function() {
+            getDeferred.resolve([{'@id': 'id'}]);
+            ontologyUtilsManagerSvc.commonDelete('iri');
+            scope.$apply();
+            expect(ontologyManagerSvc.getEntityUsages).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, ontologyStateSvc.listItem.branchId, ontologyStateSvc.listItem.commitId, 'iri', 'construct');
+            expect(ontologyManagerSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, ontologyStateSvc.selected);
+            expect(ontologyManagerSvc.removeEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, 'iri');
+            expect(ontologyManagerSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, {'@id': 'id'});
+            expect(updateRefs.remove).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontology, 'iri');
+            expect(ontologyStateSvc.unSelectItem).toHaveBeenCalled();
+        });
+        it('when getEntityUsages rejects', function() {
+            getDeferred.reject('error');
+            ontologyUtilsManagerSvc.commonDelete('iri');
+            scope.$apply();
+            expect(ontologyManagerSvc.getEntityUsages).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, ontologyStateSvc.listItem.branchId, ontologyStateSvc.listItem.commitId, 'iri', 'construct');
+            expect(util.createErrorToast).toHaveBeenCalledWith('error');
+        });
+    });
+    it('deleteClass should call the proper methods', function() {
+        spyOn(ontologyUtilsManagerSvc, 'commonDelete');
+        ontologyStateSvc.getActiveEntityIRI.and.returnValue('begin/end');
+        splitIRIFilter.and.returnValue({begin: 'begin', then: '/', end: 'end'});
+        ontologyStateSvc.listItem.subClasses = [{namespace: 'begin/', localName: 'end'}];
+        ontologyStateSvc.listItem.classesWithIndividuals = ['begin/end'];
+        ontologyUtilsManagerSvc.deleteClass();
+        expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
+        expect(ontologyStateSvc.listItem.subClasses.length).toBe(0);
+        expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.classHierarchy, 'begin/end', ontologyStateSvc.listItem.classIndex);
+        expect(ontologyUtilsManagerSvc.commonDelete).toHaveBeenCalledWith('begin/end');
+    });
+    it('deleteObjectProperty should call the proper methods', function() {
+        spyOn(ontologyUtilsManagerSvc, 'commonDelete');
+        ontologyStateSvc.getActiveEntityIRI.and.returnValue('begin/end');
+        splitIRIFilter.and.returnValue({begin: 'begin', then: '/', end: 'end'});
+        ontologyStateSvc.listItem.subObjectProperties = [{namespace: 'begin/', localName: 'end'}];
+        ontologyUtilsManagerSvc.deleteObjectProperty();
+        expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
+        expect(ontologyStateSvc.listItem.subClasses.length).toBe(0);
+        expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.objectPropertyHierarchy, 'begin/end', ontologyStateSvc.listItem.objectPropertyIndex);
+        expect(ontologyUtilsManagerSvc.commonDelete).toHaveBeenCalledWith('begin/end');
+    });
+    it('deleteDataTypeProperty should call the proper methods', function() {
+        spyOn(ontologyUtilsManagerSvc, 'commonDelete');
+        ontologyStateSvc.getActiveEntityIRI.and.returnValue('begin/end');
+        splitIRIFilter.and.returnValue({begin: 'begin', then: '/', end: 'end'});
+        ontologyStateSvc.listItem.subDataProperties = [{namespace: 'begin/', localName: 'end'}];
+        ontologyUtilsManagerSvc.deleteDataTypeProperty();
+        expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
+        expect(ontologyStateSvc.listItem.subClasses.length).toBe(0);
+        expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.dataPropertyHierarchy, 'begin/end', ontologyStateSvc.listItem.dataPropertyIndex);
+        expect(ontologyUtilsManagerSvc.commonDelete).toHaveBeenCalledWith('begin/end');
+    });
+    it('deleteAnnotationProperty should call the proper methods', function() {
+        spyOn(ontologyUtilsManagerSvc, 'commonDelete');
+        ontologyStateSvc.getActiveEntityIRI.and.returnValue('begin/end');
+        splitIRIFilter.and.returnValue({begin: 'begin', then: '/', end: 'end'});
+        ontologyStateSvc.listItem.annotations = [{namespace: 'begin/', localName: 'end'}];
+        ontologyUtilsManagerSvc.deleteAnnotationProperty();
+        expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
+        expect(ontologyStateSvc.listItem.annotations.length).toBe(0);
+        expect(ontologyUtilsManagerSvc.commonDelete).toHaveBeenCalledWith('begin/end');
+    });
+    it('deleteIndividual should call the proper methods', function() {
+        spyOn(ontologyUtilsManagerSvc, 'commonDelete');
+        ontologyStateSvc.getActiveEntityIRI.and.returnValue('begin/end');
+        splitIRIFilter.and.returnValue({begin: 'begin', then: '/', end: 'end'});
+        ontologyStateSvc.listItem.individuals = ['begin/end'];
+        ontologyUtilsManagerSvc.deleteIndividual();
+        expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
+        expect(ontologyStateSvc.listItem.subClasses.length).toBe(0);
+        expect(ontologyUtilsManagerSvc.commonDelete).toHaveBeenCalledWith('begin/end');
+    });
+    it('deleteConcept should call the proper methods', function() {
+        spyOn(ontologyUtilsManagerSvc, 'commonDelete');
+        ontologyStateSvc.getActiveEntityIRI.and.returnValue('begin/end');
+        splitIRIFilter.and.returnValue({begin: 'begin', then: '/', end: 'end'});
+        ontologyStateSvc.listItem.subDataProperties = [{namespace: 'begin/', localName: 'end'}];
+        ontologyUtilsManagerSvc.deleteConcept();
+        expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
+        expect(ontologyStateSvc.listItem.subClasses.length).toBe(0);
+        expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptHierarchy, 'begin/end', ontologyStateSvc.listItem.conceptIndex);
+        expect(ontologyUtilsManagerSvc.commonDelete).toHaveBeenCalledWith('begin/end');
+    });
+    it('deleteConceptScheme should call the proper method', function() {
+        spyOn(ontologyUtilsManagerSvc, 'deleteConcept');
+        ontologyUtilsManagerSvc.deleteConceptScheme();
+        expect(ontologyUtilsManagerSvc.deleteConcept).toHaveBeenCalled();
+    });
     it('isBlankNodeString tests whether an id is a blank node', function() {
         var falseTests = ['', [], {}, true, false, undefined, null, 0, 1];
         var result;

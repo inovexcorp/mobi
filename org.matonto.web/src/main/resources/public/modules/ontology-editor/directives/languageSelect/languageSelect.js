@@ -34,9 +34,7 @@
                 restrict: 'E',
                 replace: true,
                 templateUrl: 'modules/ontology-editor/directives/languageSelect/languageSelect.html',
-                scope: {
-                    required: '<?'
-                },
+                scope: {},
                 bindToController: {
                     bindModel: '=ngModel'
                 },

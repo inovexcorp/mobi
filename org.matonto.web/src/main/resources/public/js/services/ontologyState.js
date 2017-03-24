@@ -107,6 +107,12 @@
             self.getObjectPropertiesOpened = function(recordId) {
                 return _.get(self.state, getOpenPath(recordId, 'objectPropertiesOpened'), false);
             }
+            self.setAnnotationPropertiesOpened = function(recordId, isOpened) {
+                _.set(self.state, getOpenPath(recordId, 'annotationPropertiesOpened'), isOpened);
+            }
+            self.getAnnotationPropertiesOpened = function(recordId) {
+                return _.get(self.state, getOpenPath(recordId, 'annotationPropertiesOpened'), false);
+            }
             self.onEdit = function(iriBegin, iriThen, iriEnd) {
                 var newIRI = iriBegin + iriThen + iriEnd;
                 var oldEntity = $filter('removeMatonto')(self.selected);
@@ -263,7 +269,7 @@
             }
             self.addEntityToHierarchy = function(hierarchy, entityIRI, indexObject, parentIRI) {
                 var hierarchyItem = {entityIRI};
-                var pathsToEntity = self.getPathsTo(indexObject, entityIRI);
+                var pathsToEntity = self.getPathsTo(hierarchy, indexObject, entityIRI);
                 if (pathsToEntity.length) {
                     if (pathsToEntity[0].length > 1) {
                         var path = pathsToEntity[0];
@@ -275,13 +281,13 @@
                         hierarchyItem = _.remove(hierarchy, hierarchyItem)[0];
                     }
                 }
-                if (parentIRI) {
+                if (parentIRI && self.getPathsTo(hierarchy, indexObject, parentIRI).length) {
                     _.forEach(getEntities(hierarchy, parentIRI, indexObject), parent =>
                         parent.subEntities = _.union(_.get(parent, 'subEntities', []), [hierarchyItem]));
+                    indexObject[entityIRI] = _.union(_.get(indexObject, entityIRI, []), [parentIRI]);
                 } else {
                     hierarchy.push(hierarchyItem);
                 }
-                indexObject[entityIRI] = _.union(_.get(indexObject, entityIRI, []), [parentIRI]);
             }
             self.deleteEntityFromParentInHierarchy = function(hierarchy, entityIRI, parentIRI, indexObject) {
                 var deletedEntity;
@@ -303,7 +309,7 @@
             }
             self.deleteEntityFromHierarchy = function(hierarchy, entityIRI, indexObject) {
                 var deletedEntity;
-                var paths = self.getPathsTo(indexObject, entityIRI);
+                var paths = self.getPathsTo(hierarchy, indexObject, entityIRI);
                 _.forEach(paths, path => {
                     if (path.length === 1) {
                         deletedEntity = _.remove(hierarchy, {entityIRI: path.shift()})[0];
@@ -321,24 +327,24 @@
                 _.unset(indexObject, entityIRI);
                 updateRefsService.remove(indexObject, entityIRI);
                 _.forEach(_.get(deletedEntity, 'subEntities', []), hierarchyItem => {
-                    var paths = self.getPathsTo(indexObject, hierarchyItem.entityIRI);
-                    if (paths.length === 1 && paths[0].length === 1) {
+                    var paths = self.getPathsTo(hierarchy, indexObject, hierarchyItem.entityIRI);
+                    if (paths.length === 0) {
                         hierarchy.push(hierarchyItem);
                         _.unset(indexObject, hierarchyItem.entityIRI);
                     }
                 });
             }
-            self.getPathsTo = function(indexObject, entityIRI) {
+            self.getPathsTo = function(hierarchy, indexObject, entityIRI) {
                 var result = [];
                 if (_.has(indexObject, entityIRI)) {
                     _.forEach(indexObject[entityIRI], parentIRI => {
-                        var paths = self.getPathsTo(indexObject, parentIRI);
+                        var paths = self.getPathsTo(hierarchy, indexObject, parentIRI);
                         _.forEach(paths, path => {
                             path.push(entityIRI);
                             result.push(path);
                         });
                     });
-                } else {
+                } else if (_.some(hierarchy, {entityIRI})) {
                     result.push([entityIRI]);
                 }
                 return result;
@@ -346,15 +352,18 @@
             self.goTo = function(iri) {
                 var entity = om.getEntityByRecordId(self.listItem.recordId, iri);
                 if (self.state.type === 'vocabulary') {
-                    commonGoTo('concepts', iri, 'conceptIndex');
+                    commonGoTo('concepts', iri, 'conceptIndex', 'conceptHierarchy');
                 } else if (om.isClass(entity)) {
-                    commonGoTo('classes', iri, 'classIndex');
+                    commonGoTo('classes', iri, 'classIndex', 'classHierarchy');
                 } else if (om.isDataTypeProperty(entity)) {
-                    commonGoTo('properties', iri, 'dataPropertyIndex');
+                    commonGoTo('properties', iri, 'dataPropertyIndex', 'dataPropertyHierarchy');
                     self.setDataPropertiesOpened(self.listItem.recordId, true);
                 } else if (om.isObjectProperty(entity)) {
-                    commonGoTo('properties', iri, 'objectPropertyIndex');
+                    commonGoTo('properties', iri, 'objectPropertyIndex', 'objectPropertyHierarchy');
                     self.setObjectPropertiesOpened(self.listItem.recordId, true);
+                } else if (om.isAnnotation(entity)) {
+                    commonGoTo('properties', iri);
+                    self.setAnnotationPropertiesOpened(self.listItem.recordId, true);
                 } else if (om.isIndividual(entity)) {
                     commonGoTo('individuals', iri);
                 } else if (om.isOntology(entity)) {
@@ -391,7 +400,7 @@
             }
             function getEntities(hierarchy, entityIRI, indexObject) {
                 var results = [];
-                var pathsToEntity = self.getPathsTo(indexObject, entityIRI);
+                var pathsToEntity = self.getPathsTo(hierarchy, indexObject, entityIRI);
                 _.forEach(pathsToEntity, path => {
                     var entity = _.find(hierarchy, {entityIRI: path.shift()});
                     while (path.length > 0) {
@@ -401,11 +410,11 @@
                 });
                 return results;
             }
-            function commonGoTo(key, iri, index) {
+            function commonGoTo(key, iri, index, hierarchy) {
                 self.setActivePage(key);
                 self.selectItem(iri);
                 if (index) {
-                    self.openAt(self.getPathsTo(self.listItem[index], iri));
+                    self.openAt(self.getPathsTo(self.listItem[hierarchy], self.listItem[index], iri));
                 }
             }
             function getOpenPath() {

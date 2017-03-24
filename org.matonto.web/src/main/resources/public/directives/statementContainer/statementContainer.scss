@@ -1,0 +1,15 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.statement-container {
+    margin: 10px;
+
+    p {
+        font-size: 14px;
+        margin: 0;
+    }
+
+    table {
+        width: 100%;
+    }
+}

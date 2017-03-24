@@ -27,9 +27,9 @@
         .module('vocabularyTab', [])
         .directive('vocabularyTab', vocabularyTab);
 
-        vocabularyTab.$inject = ['ontologyManagerService', 'ontologyStateService'];
+        vocabularyTab.$inject = ['ontologyStateService'];
 
-        function vocabularyTab(ontologyManagerService, ontologyStateService) {
+        function vocabularyTab(ontologyStateService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,8 +38,8 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    dvm.om = ontologyManagerService;
                     dvm.sm = ontologyStateService;
+                    dvm.savedChanges = '<i class="fa fa-exclamation-triangle"></i> Changes';
                 }
             }
         }
