@@ -28,6 +28,9 @@ import aQute.bnd.annotation.component.Reference;
 import org.matonto.repository.api.DelegatingRepository;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryManager;
+import org.matonto.repository.impl.sesame.SesameRepositoryWrapper;
+import org.openrdf.repository.sail.SailRepository;
+import org.openrdf.sail.memory.MemoryStore;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -59,5 +62,11 @@ public class SimpleRepositoryManager implements RepositoryManager {
     @Override
     public Map<String, Repository> getAllRepositories() {
         return new HashMap<>(initializedRepositories);
+    }
+
+    @Override
+    public Repository createMemoryRepository() {
+        // TODO: Should we create and return a service here? A service reference?
+        return new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
     }
 }

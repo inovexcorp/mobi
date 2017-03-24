@@ -1,4 +1,4 @@
-@Version("1.2.0.${build}")
+@Version("1.3.0.${build}")
 
 package org.matonto.repository.api;
 

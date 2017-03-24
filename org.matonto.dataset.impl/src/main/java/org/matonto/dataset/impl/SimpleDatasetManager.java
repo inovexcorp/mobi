@@ -32,6 +32,7 @@ import org.apache.commons.io.IOUtils;
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.PaginatedSearchResults;
 import org.matonto.catalog.api.ontologies.mcat.Record;
+import org.matonto.dataset.api.DatasetConnection;
 import org.matonto.dataset.api.DatasetManager;
 import org.matonto.dataset.api.builder.DatasetRecordConfig;
 import org.matonto.dataset.ontology.dataset.Dataset;
@@ -296,6 +297,31 @@ public class SimpleDatasetManager implements DatasetManager {
         }
     }
 
+    @Override
+    public DatasetConnection getConnection(Resource dataset, String repositoryId) {
+        if (!getRecordResource(dataset, repositoryId).isPresent()) {
+            throw new IllegalArgumentException("Could not find the required DatasetRecord in the Catalog with this " +
+                    "dataset/repository combination.");
+        }
+        Repository dsRepo = getDatasetRepo(repositoryId);
+
+        return new SimpleDatasetRepositoryConnection(dsRepo.getConnection(), dataset, repositoryId, vf);
+    }
+
+    @Override
+    public DatasetConnection getConnection(Resource record) {
+        DatasetRecord datasetRecord = getDatasetRecord(record)
+                .orElseThrow(() -> new IllegalArgumentException("Could not find the required DatasetRecord in the Catalog."));
+        Resource dataset = datasetRecord.getDataset()
+                .orElseThrow(() -> new MatOntoException("Could not retrieve the Dataset IRI from the DatasetRecord."))
+                .getResource();
+        String repositoryId = datasetRecord.getRepository()
+                .orElseThrow(() -> new MatOntoException("Could not retrieve the Repository ID from the DatasetRecord."));
+
+        Repository dsRepo = getDatasetRepo(datasetRecord);
+        return new SimpleDatasetRepositoryConnection(dsRepo.getConnection(), dataset, repositoryId, vf);
+    }
+
     /**
      * Returns the DatasetRecord Resource associated with this dataset/repository combination if it exists.
      *
@@ -324,8 +350,11 @@ public class SimpleDatasetManager implements DatasetManager {
     private Repository getDatasetRepo(DatasetRecord datasetRecord) {
         String dsRepoID = datasetRecord.getRepository()
                 .orElseThrow(() -> new MatOntoException("DatasetRecord does not specify a dataset repository."));
+        return getDatasetRepo(dsRepoID);
+    }
 
-        return repoManager.getRepository(dsRepoID)
+    private Repository getDatasetRepo(String repositoryId) {
+        return repoManager.getRepository(repositoryId)
                 .orElseThrow(() -> new MatOntoException("Dataset target repository does not exist."));
     }
 

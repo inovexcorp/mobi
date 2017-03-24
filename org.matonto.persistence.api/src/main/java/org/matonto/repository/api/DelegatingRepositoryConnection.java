@@ -1,6 +1,4 @@
-@Version("1.1.0.${build}")
-
-package org.matonto.repository.base;
+package org.matonto.repository.api;
 
 /*-
  * #%L
@@ -8,7 +6,7 @@ package org.matonto.repository.base;
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -25,4 +23,19 @@ package org.matonto.repository.base;
  * #L%
  */
 
-import aQute.bnd.annotation.Version;
+public interface DelegatingRepositoryConnection extends RepositoryConnection {
+
+    /**
+     * Gets the RepositoryConnection wrapped by this DelegatingRepositoryConnection.
+     *
+     * @return the RepositoryConnection wrapped by this DelegatingRepositoryConnection.
+     */
+    RepositoryConnection getDelegate();
+
+    /**
+     * Sets the RepositoryConnection wrapped by this DelegatingRepositoryConnection.
+     *
+     * @param delegate - The RepositoryConnection to be wrapped by this DelegatingRepositoryConnection.
+     */
+    void setDelegate(RepositoryConnection delegate);
+}
