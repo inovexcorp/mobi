@@ -516,7 +516,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         systemConn.size(c) == 0
     }
 
-    def "remove(s) for a graph not in the dataset will not remove the statement"() {
+    def "remove(s) for a graph not in the dataset will not remove the dataset graph statement"() {
         setup:
         def s = vf.createIRI("http://matonto.org/dataset/test3/graph1")
         def p = vf.createIRI(org.matonto.ontologies.rdfs.Resource.type_IRI)
@@ -533,7 +533,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         systemConn.size(c) == 1
     }
 
-    def "remove(s, p, o, c...) will remove the necessary graph statements"() {
+    def "remove(s, p, o, c...) will remove the necessary graph data"() {
         setup:
         def s = vf.createIRI("http://matonto.org/dataset/test2/graph1")
         def p = vf.createIRI(org.matonto.ontologies.rdfs.Resource.type_IRI)
@@ -550,7 +550,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         systemConn.getStatements(dataset, defNamedGraphPred, graphs[0]).hasNext()
     }
 
-    def "remove(model, c...) will remove the necessary graph statements"() {
+    def "remove(model, c...) will remove the necessary graph data"() {
         setup:
         def s1 = vf.createIRI("http://matonto.org/dataset/test2/graph1")
         def p1 = vf.createIRI(org.matonto.ontologies.rdfs.Resource.type_IRI)
