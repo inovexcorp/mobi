@@ -51,7 +51,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>persistence.api</artifactId>
-            <version>1.4.24</version>
+            <version>1.5.30-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
@@ -62,11 +62,6 @@
             <groupId>org.matonto</groupId>
             <artifactId>catalog.api</artifactId>
             <version>1.5.20</version>
-        </dependency>
-        <dependency>
-            <groupId>org.matonto</groupId>
-            <artifactId>repository.impl.sesame</artifactId>
-            <version>1.4.24</version>
         </dependency>
 
         <dependency>
@@ -109,6 +104,12 @@
             <version>1.4.24</version>
 		    <scope>test</scope>
 	    </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>repository.impl.core</artifactId>
+            <version>1.5.30-SNAPSHOT</version>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>org.spockframework</groupId>
             <artifactId>spock-core</artifactId>
