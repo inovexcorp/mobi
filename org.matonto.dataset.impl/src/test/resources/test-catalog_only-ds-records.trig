@@ -162,6 +162,24 @@ GRAPH <http://matonto.org/record/dataset/test7> {
         dataset:dataset <http://matonto.org/dataset/test7> .
 }
 
+GRAPH <http://matonto.org/record/dataset/test8> {
+    <http://matonto.org/record/dataset/test8> a dataset:DatasetRecord, mcat:UnversionedRecord, mcat:Record ;
+        mcat:catalog <http://matonto.org/test/catalog-local> ;
+        dc:title "Dataset" ;
+        dc:description "Description" ;
+        dc:identifier "Dataset" ;
+        dc:issued "2016-01-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-03-02T00:00:00Z"^^xsd:dateTime ;
+        dc:publisher matuser:tester ;
+        dataset:repository "system" ;
+        dataset:dataset <http://matonto.org/dataset/test8> .
+}
+
+GRAPH <http://matonto.org/dataset/test8> {
+    <http://matonto.org/dataset/test8> a dataset:Dataset ;
+        dataset:systemDefaultNamedGraph <http://matonto.org/dataset/test8_system_dng> .
+}
+
 ### OTHER DATA
 
 
