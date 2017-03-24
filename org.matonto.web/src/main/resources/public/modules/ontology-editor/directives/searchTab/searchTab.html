@@ -25,7 +25,7 @@
         <block>
             <block-header>Search</block-header>
             <block-search ng-model="dvm.sm.state.searchText" keyup-event="dvm.onKeyup($event)" clear-event="dvm.onClear()"></block-search>
-            <block-content class="padding">
+            <block-content class="padding" targeted-spinner="{method: 'get', url: '\/matontorest\/.*\/search-results'}" cancel-on-new cancel-on-destroy>
                 <error-display ng-if="dvm.sm.state.errorMessage">{{dvm.sm.state.errorMessage}}</error-display>
                 <info-message ng-if="dvm.sm.state.infoMessage">{{dvm.sm.state.infoMessage}}</info-message>
                 <div class="result" ng-repeat="(key, value) in dvm.sm.state.results track by key">

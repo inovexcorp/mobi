@@ -400,7 +400,7 @@
              * @param {string} defaultMessage The optional default error text for the rejection
              */
             self.onError = function(error, deferred, defaultMessage) {
-                deferred.reject(self.getErrorMessage(error, defaultMessage));
+                deferred.reject(_.get(error, 'status') === -1 ? '' : self.getErrorMessage(error, defaultMessage));
             }
             /**
              * @ngdoc method

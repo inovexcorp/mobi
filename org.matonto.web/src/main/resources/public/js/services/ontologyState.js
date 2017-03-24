@@ -146,9 +146,10 @@
                 }
             }
             self.setEntityUsages = function(entityIRI) {
-                om.getEntityUsages(self.listItem.recordId, self.listItem.branchId, self.listItem.commitId, entityIRI)
-                    .then(bindings => _.set(self.getActivePage(), 'usages', bindings),
-                        response => _.set(self.getActivePage(), 'usages', []));
+                var page = self.getActivePage();
+                om.getEntityUsages(self.listItem.recordId, self.listItem.branchId, self.listItem.commitId, entityIRI, 'select', self.getActiveKey())
+                    .then(bindings => _.set(page, 'usages', bindings),
+                        response => _.set(page, 'usages', []));
             }
             self.addState = function(recordId, entityIRI, type) {
                 var tabs = {};
@@ -203,7 +204,7 @@
                 } else {
                     self.state = _.find(self.states, {recordId});
                     self.listItem = om.getListItemByRecordId(recordId);
-                    self.setSelected(self.getActiveEntityIRI(), getUsages);
+                    self.setSelected(self.getActiveEntityIRI(), self.getActiveKey() === 'project' ? false : getUsages);
                 }
                 self.state.active = true;
             }
