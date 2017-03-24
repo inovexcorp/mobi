@@ -127,7 +127,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
         boolean startedTransaction = startTransaction();
 
         Set<Resource> graphs = new HashSet<>();
-        getGraphs(graphs, Dataset.systemDefaultNamedGraph_IRI);
+        graphs.add(getSystemDefaultNG());
         getGraphs(graphs, Dataset.defaultNamedGraph_IRI);
         getGraphs(graphs, Dataset.namedGraph_IRI);
 
@@ -150,7 +150,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
         boolean startedTransaction = startTransaction();
 
         Set<Resource> graphs = new HashSet<>();
-        getGraphs(graphs, Dataset.systemDefaultNamedGraph_IRI);
+        graphs.add(getSystemDefaultNG());
         getGraphs(graphs, Dataset.defaultNamedGraph_IRI);
         getGraphs(graphs, Dataset.namedGraph_IRI);
 
@@ -192,7 +192,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
         // TODO: Would this be more efficient with a sparql query? I probably wouldn't need a value factory.
         // TODO: Trivial Implementation
         Set<Resource> graphs = new HashSet<>();
-        getGraphs(graphs, Dataset.systemDefaultNamedGraph_IRI);
+        graphs.add(getSystemDefaultNG());
         getGraphs(graphs, Dataset.defaultNamedGraph_IRI);
         getGraphs(graphs, Dataset.namedGraph_IRI);
 
@@ -250,7 +250,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
         // TODO: Trivial Implementation
         // Maybe I can wrap a query result like in the getContextIDs impl
         Set<Resource> graphs = new HashSet<>();
-        getGraphs(graphs, Dataset.systemDefaultNamedGraph_IRI);
+        graphs.add(getSystemDefaultNG());
         getGraphs(graphs, Dataset.defaultNamedGraph_IRI);
         getGraphs(graphs, Dataset.namedGraph_IRI);
 
@@ -411,9 +411,10 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
 
     /**
      * Adds a statement to the dataset. If the statement has a context, then add it to that graph and add that graph to
-     * the dataset as a Named Graph.
+     * the dataset using the provided predicate; otherwise, add the data to the system default named graph.
      *
      * @param statement The Statement to add to the dataset.
+     * @param predicate The String representing the predicate to use to add the graph if it has a context.
      */
     private void addSingleStatement(Statement statement, String predicate) {
         if (statement.getContext().isPresent()) {
@@ -429,6 +430,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
      * then remove it from that graph; otherwise, remove it from the system default named graph.
      *
      * @param statement The Statement to remove from the dataset.
+     * @param accessibleGraphs The set of Resources that represent graphs from which the data can be removed.
      */
     private void removeSingleStatement(Statement statement, Set<Resource> accessibleGraphs) {
         if (statement.getContext().isPresent() && accessibleGraphs.contains(statement.getContext().get())) {
@@ -464,18 +466,22 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     }
 
     /**
+     * Deletes a graph from the repository and removes the named graph and default named graph predicates from this
+     * dataset.
      *
-     * @param graph
+     * @param graph The graph to delete and remove from the dataset.
      */
     private void deleteDatasetGraph(@Nullable Resource graph) {
         IRI ngPred = valueFactory.createIRI(Dataset.namedGraph_IRI);
         IRI dngPred = valueFactory.createIRI(Dataset.defaultNamedGraph_IRI);
 
+        // TODO: This would be much more efficient with a sparql query
+
         getDelegate().getStatements(getDataset(), ngPred, graph, getDataset()).forEach(stmt ->
-            Statements.objectResource(stmt).ifPresent(context -> {
-                getDelegate().remove(getDataset(), ngPred, context, getDataset());
-                getDelegate().clear(context);
-            })
+                Statements.objectResource(stmt).ifPresent(context -> {
+                    getDelegate().remove(getDataset(), ngPred, context, getDataset());
+                    getDelegate().clear(context);
+                })
         );
         getDelegate().getStatements(getDataset(), dngPred, graph, getDataset()).forEach(stmt ->
                 Statements.objectResource(stmt).ifPresent(context -> {

@@ -180,10 +180,8 @@ public interface DatasetConnection extends DelegatingRepositoryConnection {
      * @param predicate - The statement's subject.
      * @param object - The statement's object.
      * @param contexts - The contexts to remove the data from. Note that this parameter is a vararg and as such
-     *                 is optional. If no contexts are specified, the data is removed from any context specified
-     *                 in the actual data file, or if the data contains no context, it is removed from the system
-     *                 default named graph. If one or more contexts are specified the data is removed from these
-     *                 contexts, ignoring any context information in the data itself.
+     *                 is optional. If no contexts are specified, the data is removed from every context specified
+     *                 in the dataset.
      * @throws RepositoryException - If the data could not be removed from the repository, for example because
      * the repository is not writable.
      */
@@ -192,7 +190,8 @@ public interface DatasetConnection extends DelegatingRepositoryConnection {
 
     /**
      * Removes all statements from this dataset, optionally from one or more named contexts. Ensures the removal
-     * operations only affect graphs in this dataset. This operation will also remove the graphs from the dataset.
+     * operations only affect graphs in this dataset. This operation will remove all graph data and graph statements
+     * from the dataset.
      *
      * @param contexts - The context(s) to remove the data from. Note that this parameter is a vararg and as
      *                 such is optional. If no contexts are supplied the method operates on the entire dataset.
@@ -215,9 +214,10 @@ public interface DatasetConnection extends DelegatingRepositoryConnection {
     long size(Resource... contexts) throws RepositoryException;
 
     /**
-     * Gets all statements with a specific subject, predicate and/or object from the repository. The result is
-     * optionally restricted to the specified set of named contexts. If the repository supports inferencing,
-     * inferred statements will be included in the result.
+     * Gets all statements with a specific subject, predicate and/or object from the dataset. The result is
+     * optionally restricted to the specified set of named contexts. Ensures only graphs within the dataset are
+     * affected. If the repository supports inferencing, inferred statements will be included in the result. Care should
+     * be taken that the returned RepositoryResult is closed to free any resources that it keeps hold of.
      *
      * @param subject - A Resource specifying the subject, or null for a wildcard.
      * @param predicate - A URI specifying the predicate, or null for a wildcard.
@@ -234,8 +234,8 @@ public interface DatasetConnection extends DelegatingRepositoryConnection {
             throws RepositoryException;
 
     /**
-     * Gets all resources that are used as context identifiers. Care should be taken that the returned
-     * RepositoryResult is closed to free any resources that it keeps hold of.
+     * Gets all resources that are used as context identifiers. Care should be taken that the returned RepositoryResult
+     * is closed to free any resources that it keeps hold of.
      *
      * @return a RepositoryResult object containing Resources that are used as context identifiers.
      * @throws RepositoryException
@@ -244,14 +244,16 @@ public interface DatasetConnection extends DelegatingRepositoryConnection {
     RepositoryResult<Resource> getContextIDs() throws RepositoryException;
 
     /**
-     * Gets the resources that are used as named graphs in the dataset.
+     * Gets the resources that are used as named graphs in the dataset. Care should be taken that the returned
+     * RepositoryResult is closed to free any resources that it keeps hold of.
      *
      * @return the Set of all named graph Resources in the dataset.
      */
     RepositoryResult<Resource> getNamedGraphs();
 
     /**
-     * Gets the resources that are used as default named graphs in the dataset.
+     * Gets the resources that are used as default named graphs in the dataset. Care should be taken that the returned
+     * RepositoryResult is closed to free any resources that it keeps hold of.
      *
      * @return the Set of all default named graph Resources in the dataset.
      */
@@ -279,7 +281,7 @@ public interface DatasetConnection extends DelegatingRepositoryConnection {
     void addDefaultNamedGraph(Resource graph);
 
     /**
-     * Removes a graph from the dataset.
+     * Removes a graph from the dataset. Note that this does not delete the specified graph from the repository.
      *
      * @param graph the Resource representing the graph to remove from the dataset.
      */

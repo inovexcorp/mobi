@@ -176,7 +176,8 @@ GRAPH <http://matonto.org/record/dataset/test8> {
 }
 
 GRAPH <http://matonto.org/dataset/test8> {
-    <http://matonto.org/dataset/test8> a dataset:Dataset .
+    <http://matonto.org/dataset/test8> a dataset:Dataset ;
+        dataset:systemDefaultNamedGraph <http://matonto.org/dataset/test8_system_dng> .
 }
 
 ### OTHER DATA
