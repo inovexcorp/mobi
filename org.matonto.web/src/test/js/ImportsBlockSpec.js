@@ -117,6 +117,7 @@ describe('Imports Block directive', function() {
                         ontologyManagerSvc.updateOntology.and.returnValue(updateDeferred.promise);
                     });
                     it('when update ontology resolves', function() {
+                        ontologyStateSvc.isCommittable.and.returnValue(true);
                         updateDeferred.resolve();
                         scope.$apply();
                         expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.selected['@id'], prefixes.owl + 'imports', {'@id': controller.url});
@@ -125,6 +126,8 @@ describe('Imports Block directive', function() {
                         expect(ontologyManagerSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});
                         expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
                         expect(ontologyManagerSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, ontologyStateSvc.listItem.branchId, ontologyStateSvc.listItem.commitId, ontologyStateSvc.listItem.type, ontologyStateSvc.listItem.upToDate, ontologyStateSvc.listItem.inProgressCommit);
+                        expect(ontologyStateSvc.isCommittable).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId);
+                        expect(ontologyStateSvc.listItem.isSaved).toBe(true);
                         expect(controller.showRemoveOverlay).toBe(false);
                     });
                     it('when update ontology rejects', function() {
