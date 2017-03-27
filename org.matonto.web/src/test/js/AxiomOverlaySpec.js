@@ -145,7 +145,6 @@ describe('Axiom Overlay directive', function() {
                 expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, jasmine.any(Object));
                 expect(ontologyStateSvc.showAxiomOverlay).toBe(false);
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
-
             });
             it('if the selected entity does not have the axiom', function() {
                 controller.addAxiom();

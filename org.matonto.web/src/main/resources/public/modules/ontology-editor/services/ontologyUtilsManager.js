@@ -141,7 +141,7 @@
                         if (activeKey !== 'project' && activeKey !== 'individuals' && entityIRI) {
                             os.setEntityUsages(entityIRI);
                         }
-                        os.listItem.isSaved = true;
+                        os.listItem.isSaved = os.isCommittable(os.listItem.recordId);
                     }, errorMessage => {
                         util.createErrorToast(errorMessage);
                         os.listItem.isSaved = false;

@@ -259,6 +259,7 @@ describe('Ontology Utils Manager service', function() {
             describe('when afterSave is resolved', function() {
                 beforeEach(function() {
                     afterDeferred.resolve();
+                    ontologyStateSvc.isCommittable.and.returnValue(true);
                 });
                 it('if getActiveKey is not project and getActiveEntityIRI is defined', function() {
                     var id = 'id';
@@ -268,6 +269,7 @@ describe('Ontology Utils Manager service', function() {
                     expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
                     expect(ontologyStateSvc.setEntityUsages).toHaveBeenCalledWith(id);
                     expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
+                    expect(ontologyStateSvc.isCommittable).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId);
                     expect(ontologyStateSvc.listItem.isSaved).toBe(true);
                 });
                 it('if getActiveKey is project', function() {
@@ -276,6 +278,16 @@ describe('Ontology Utils Manager service', function() {
                     expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
                     expect(ontologyStateSvc.setEntityUsages).not.toHaveBeenCalled();
                     expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
+                    expect(ontologyStateSvc.isCommittable).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId);
+                    expect(ontologyStateSvc.listItem.isSaved).toBe(true);
+                });
+                it('if getActiveKey is individuals', function() {
+                    ontologyStateSvc.getActiveKey.and.returnValue('individuals');
+                    scope.$apply();
+                    expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
+                    expect(ontologyStateSvc.setEntityUsages).not.toHaveBeenCalled();
+                    expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
+                    expect(ontologyStateSvc.isCommittable).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId);
                     expect(ontologyStateSvc.listItem.isSaved).toBe(true);
                 });
                 it('if getActiveEntityIRI is undefined', function() {
@@ -284,6 +296,7 @@ describe('Ontology Utils Manager service', function() {
                     expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
                     expect(ontologyStateSvc.setEntityUsages).not.toHaveBeenCalled();
                     expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
+                    expect(ontologyStateSvc.isCommittable).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId);
                     expect(ontologyStateSvc.listItem.isSaved).toBe(true);
                 });
             });
