@@ -88,6 +88,7 @@
                         dvm.sm.selectItem(_.get(dvm.clazz, '@id'));
                         // hide the overlay
                         dvm.sm.showCreateClassOverlay = false;
+                        ontoUtils.saveCurrentChanges();
                     }
                 }
             }

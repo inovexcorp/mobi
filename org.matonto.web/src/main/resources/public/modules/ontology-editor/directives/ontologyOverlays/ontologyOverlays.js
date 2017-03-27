@@ -27,9 +27,9 @@
         .module('ontologyOverlays', [])
         .directive('ontologyOverlays', ontologyOverlays);
 
-        ontologyOverlays.$inject = ['$q', 'ontologyStateService', 'ontologyManagerService'];
+        ontologyOverlays.$inject = ['ontologyStateService'];
 
-        function ontologyOverlays($q, ontologyStateService, ontologyManagerService) {
+        function ontologyOverlays(ontologyStateService) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/ontology-editor/directives/ontologyOverlays/ontologyOverlays.html',
@@ -37,22 +37,7 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-
-                    dvm.sm = ontologyStateService;
-                    dvm.om = ontologyManagerService;
-
-                    dvm.save = function() {
-                        dvm.om.saveChanges(dvm.sm.listItem.recordId, {additions: dvm.sm.listItem.additions, deletions: dvm.sm.listItem.deletions})
-                            .then(() => dvm.sm.afterSave(), $q.reject)
-                            .then(() => {
-                                var entityIRI = dvm.sm.getActiveEntityIRI();
-                                var activeKey = dvm.sm.getActiveKey();
-                                if (activeKey !== 'project' && activeKey !== 'individuals' && entityIRI) {
-                                    dvm.sm.setEntityUsages(entityIRI);
-                                }
-                                dvm.sm.showSaveOverlay = false;
-                            }, errorMessage => dvm.error = errorMessage);
-                    }
+                    dvm.os = ontologyStateService;
                 }
             }
         }

@@ -52,6 +52,7 @@ describe('Ontology Utils Manager service', function() {
             ontologyManagerSvc.getEntityUsages.and.returnValue(getDeferred.promise);
         });
         it('when getEntityUsages resolves', function() {
+            spyOn(ontologyUtilsManagerSvc, 'saveCurrentChanges');
             getDeferred.resolve([{'@id': 'id'}]);
             ontologyUtilsManagerSvc.commonDelete('iri');
             scope.$apply();
@@ -61,6 +62,7 @@ describe('Ontology Utils Manager service', function() {
             expect(ontologyManagerSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, {'@id': 'id'});
             expect(updateRefs.remove).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontology, 'iri');
             expect(ontologyStateSvc.unSelectItem).toHaveBeenCalled();
+            expect(ontologyUtilsManagerSvc.saveCurrentChanges).toHaveBeenCalled();
         });
         it('when getEntityUsages rejects', function() {
             getDeferred.reject('error');
@@ -233,6 +235,71 @@ describe('Ontology Utils Manager service', function() {
                 ontologyUtilsManagerSvc.addLanguageToNewEntity(entity, language);
                 expect(entity).toEqual(expected);
             });
+        });
+    });
+
+    describe('saveCurrentChanges', function() {
+        var saveDeferred;
+        beforeEach(function() {
+            saveDeferred = $q.defer();
+            ontologyStateSvc.listItem.ontologyId = 'id';
+            ontologyManagerSvc.saveChanges.and.returnValue(saveDeferred.promise);
+            ontologyUtilsManagerSvc.saveCurrentChanges();
+        });
+        it('calls the correct manager function', function() {
+            expect(ontologyManagerSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});
+        });
+        describe('when resolved, sets the correct variable and calls correct manager function', function() {
+            var afterDeferred;
+            beforeEach(function() {
+                saveDeferred.resolve('id');
+                afterDeferred = $q.defer();
+                ontologyStateSvc.afterSave.and.returnValue(afterDeferred.promise);
+            });
+            describe('when afterSave is resolved', function() {
+                beforeEach(function() {
+                    afterDeferred.resolve();
+                });
+                it('if getActiveKey is not project and getActiveEntityIRI is defined', function() {
+                    var id = 'id';
+                    ontologyStateSvc.getActiveKey.and.returnValue('');
+                    ontologyStateSvc.getActiveEntityIRI.and.returnValue(id);
+                    scope.$apply();
+                    expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
+                    expect(ontologyStateSvc.setEntityUsages).toHaveBeenCalledWith(id);
+                    expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
+                    expect(ontologyStateSvc.listItem.isSaved).toBe(true);
+                });
+                it('if getActiveKey is project', function() {
+                    ontologyStateSvc.getActiveKey.and.returnValue('project');
+                    scope.$apply();
+                    expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
+                    expect(ontologyStateSvc.setEntityUsages).not.toHaveBeenCalled();
+                    expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
+                    expect(ontologyStateSvc.listItem.isSaved).toBe(true);
+                });
+                it('if getActiveEntityIRI is undefined', function() {
+                    ontologyStateSvc.getActiveEntityIRI.and.returnValue(undefined);
+                    scope.$apply();
+                    expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
+                    expect(ontologyStateSvc.setEntityUsages).not.toHaveBeenCalled();
+                    expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
+                    expect(ontologyStateSvc.listItem.isSaved).toBe(true);
+                });
+            });
+            it('when afterSave is rejected', function() {
+                afterDeferred.reject('error');
+                scope.$apply();
+                expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
+                expect(util.createErrorToast).toHaveBeenCalledWith('error');
+                expect(ontologyStateSvc.listItem.isSaved).toBe(false);
+            });
+        });
+        it('when rejected, sets the correct variable', function() {
+            saveDeferred.reject('error');
+            scope.$apply();
+            expect(util.createErrorToast).toHaveBeenCalledWith('error');
+            expect(ontologyStateSvc.listItem.isSaved).toBe(false);
         });
     });
 });

@@ -101,7 +101,8 @@
                     deletions: []
                 },
                 branches: [],
-                upToDate: true
+                upToDate: true,
+                isSaved: false
             };
             var vocabularyListItemTemplate = {
                 ontology: [],
@@ -118,7 +119,8 @@
                     deletions: []
                 },
                 branches: [],
-                upToDate: true
+                upToDate: true,
+                isSaved: false
             };
             var emptyInProgressCommit = {
                 additions: [],

@@ -27,11 +27,9 @@
         .module('ontologyState', [])
         .service('ontologyStateService', ontologyStateService);
 
-        ontologyStateService.$inject = ['$timeout', '$q', '$filter', 'ontologyManagerService', 'updateRefsService',
-            'stateManagerService', 'utilService', 'catalogManagerService'];
+        ontologyStateService.$inject = ['$timeout', '$q', '$filter', 'ontologyManagerService', 'updateRefsService', 'stateManagerService', 'utilService', 'catalogManagerService'];
 
-        function ontologyStateService($timeout, $q, $filter, ontologyManagerService, updateRefsService,
-            stateManagerService, utilService, catalogManagerService) {
+        function ontologyStateService($timeout, $q, $filter, ontologyManagerService, updateRefsService, stateManagerService, utilService, catalogManagerService) {
             var self = this;
             var om = ontologyManagerService;
             var sm = stateManagerService;
@@ -128,7 +126,7 @@
                     self.setCommonIriParts(iriBegin, iriThen);
                 }
                 om.addToAdditions(self.listItem.recordId, $filter('removeMatonto')(self.selected));
-                om.getEntityUsages(self.listItem.recordId, self.listItem.branchId, self.listItem.commitId, oldEntity['@id'], 'construct')
+                return om.getEntityUsages(self.listItem.recordId, self.listItem.branchId, self.listItem.commitId, oldEntity['@id'], 'construct')
                     .then(statements => {
                         _.forEach(statements, statement => om.addToDeletions(self.listItem.recordId, statement));
                         updateRefsService.update(statements, oldEntity['@id'], newIRI);

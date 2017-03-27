@@ -27,10 +27,9 @@
         .module('relationshipOverlay', [])
         .directive('relationshipOverlay', relationshipOverlay);
 
-        relationshipOverlay.$inject = ['$filter', 'responseObj', 'ontologyManagerService', 'ontologyStateService',
-            'utilService'];
+        relationshipOverlay.$inject = ['$filter', 'responseObj', 'ontologyManagerService', 'ontologyStateService', 'utilService', 'ontologyUtilsManagerService'];
 
-        function relationshipOverlay($filter, responseObj, ontologyManagerService, ontologyStateService, utilService) {
+        function relationshipOverlay($filter, responseObj, ontologyManagerService, ontologyStateService, utilService, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -41,6 +40,7 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
+                    var ontoUtils = ontologyUtilsManagerService;
                     dvm.om = ontologyManagerService;
                     dvm.ro = responseObj;
                     dvm.sm = ontologyStateService;
@@ -55,6 +55,7 @@
                         dvm.om.addToAdditions(dvm.sm.listItem.recordId, {'@id': dvm.sm.selected['@id'],
                             [axiom]: dvm.values});
                         dvm.sm.showRelationshipOverlay = false;
+                        ontoUtils.saveCurrentChanges();
                     }
                 }
             }

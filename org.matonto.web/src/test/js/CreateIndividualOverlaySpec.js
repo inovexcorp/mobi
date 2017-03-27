@@ -21,16 +21,7 @@
  * #L%
  */
 describe('Create Individual Overlay directive', function() {
-    var $compile,
-        scope,
-        element,
-        controller,
-        ontologyManagerSvc,
-        ontologyStateSvc,
-        resObj,
-        deferred,
-        prefixes,
-        splitIRIFilter;
+    var $compile, scope, element, controller, ontologyManagerSvc, ontologyStateSvc, resObj, deferred, prefixes, splitIRIFilter, ontoUtils;
 
     beforeEach(function() {
         module('templates');
@@ -43,8 +34,9 @@ describe('Create Individual Overlay directive', function() {
         mockOntologyState();
         mockResponseObj();
         mockPrefixes();
+        mockOntologyUtilsManager();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_, _responseObj_, _prefixes_, _splitIRIFilter_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_, _responseObj_, _prefixes_, _splitIRIFilter_, _ontologyUtilsManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyManagerSvc = _ontologyManagerService_;
@@ -52,6 +44,7 @@ describe('Create Individual Overlay directive', function() {
             prefixes = _prefixes_;
             resObj = _responseObj_;
             splitIRIFilter = _splitIRIFilter_;
+            ontoUtils = _ontologyUtilsManagerService_;
         });
     });
 
@@ -189,6 +182,7 @@ describe('Create Individual Overlay directive', function() {
             expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, controller.individual);
             expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(controller.individual['@id'], false);
             expect(ontologyStateSvc.showCreateIndividualOverlay).toBe(false);
+            expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
         });
     });
     it('should call create when the button is clicked', function() {

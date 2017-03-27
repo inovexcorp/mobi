@@ -83,6 +83,7 @@
                         dvm.sm.selectItem(_.get(dvm.scheme, '@id'));
                         // hide the overlay
                         dvm.sm.showCreateConceptSchemeOverlay = false;
+                        ontoUtils.saveCurrentChanges();
                     }
                 }
             }
