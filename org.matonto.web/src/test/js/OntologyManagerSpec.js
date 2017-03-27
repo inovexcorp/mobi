@@ -71,7 +71,7 @@ describe('Ontology Manager service', function() {
     var annotationId = 'annotationId';
     var individualId = 'individualId';
     var restrictionId = 'restrictionId';
-    var blankNodeId = '_:b0';
+    var blankNodeId = '_:genid0';
     var blankNodeObj = {
         '@id': blankNodeId
     }
