@@ -172,42 +172,46 @@
             }
 
             function handleStop(config) {
-                var trackers = findTrackers(config);
-                if (trackers.length > 0) {
-                    _.forEach(trackers, tracker => {
-                        if (tracker.scopes.length === 0) {
-                            _.remove($rootScope.trackedHttpRequests, tracker);
-                        } else {
-                            if (!tracker.canceledAndContinue) {
-                                tracker.inProgress = false;
-                                _.forEach(tracker.scopes, scope => scope.showSpinner = false);
-                                _.unset(tracker, 'canceller');
+                if (!_.includes(config.url, '.html')) {
+                    var trackers = findTrackers(config);
+                    if (trackers.length > 0) {
+                        _.forEach(trackers, tracker => {
+                            if (tracker.scopes.length === 0) {
+                                _.remove($rootScope.trackedHttpRequests, tracker);
+                            } else {
+                                if (!tracker.canceledAndContinue) {
+                                    tracker.inProgress = false;
+                                    _.forEach(tracker.scopes, scope => scope.showSpinner = false);
+                                    _.unset(tracker, 'canceller');
+                                }
+                                tracker.canceledAndContinue = false;
                             }
-                            tracker.canceledAndContinue = false;
-                        }
-                    });
-                } else if (!_.includes(config.url, '.html')) {
-                    $rootScope.pendingRequests--;
+                        });
+                    } else {
+                        $rootScope.pendingRequests--;
+                    }
                 }
             }
 
             return {
                 'request': function (config) {
-                    var trackers = findTrackers(config);
-                    if (trackers.length > 0) {
-                        var canceller = $q.defer();
-                        _.forEach(trackers, tracker => {
-                            if (tracker.inProgress && _.every(tracker.scopes, 'cancelOnNew') && _.has(tracker, 'canceller')) {
-                                tracker.canceledAndContinue = true;
-                                tracker.canceller.resolve();
-                            }
-                            tracker.inProgress = true;
-                            _.forEach(tracker.scopes, scope => scope.showSpinner = true);
-                            tracker.canceller = canceller;
-                        });
-                        config.timeout = canceller.promise;
-                    } else if (!_.includes(config.url, '.html')) {
-                        $rootScope.pendingRequests++;
+                    if (!_.includes(config.url, '.html')) {
+                        var trackers = findTrackers(config);
+                        if (trackers.length > 0) {
+                            var canceller = $q.defer();
+                            _.forEach(trackers, tracker => {
+                                if (tracker.inProgress && _.every(tracker.scopes, 'cancelOnNew') && _.has(tracker, 'canceller')) {
+                                    tracker.canceledAndContinue = true;
+                                    tracker.canceller.resolve();
+                                }
+                                tracker.inProgress = true;
+                                _.forEach(tracker.scopes, scope => scope.showSpinner = true);
+                                tracker.canceller = canceller;
+                            });
+                            config.timeout = canceller.promise;
+                        } else {
+                            $rootScope.pendingRequests++;
+                        }
                     }
                     return config || $q.when(config);
                 },

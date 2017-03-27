@@ -92,6 +92,9 @@
                                     oldTracker.canceller.resolve();
                                 }
                                 _.remove(oldTracker.scopes, scope);
+                                if (oldTracker.scopes.length === 0 && !oldTracker.inProgress) {
+                                    _.remove($rootScope.trackedHttpRequests, oldTracker);
+                                }
                             }
                             requestConfig = newRequestConfig;
                             setTracker();
@@ -103,6 +106,9 @@
                             tracker.canceller.resolve();
                         }
                         _.remove(_.get(tracker, 'scopes'), scope);
+                        if (_.get(tracker, 'scopes', []).length === 0 && !_.get(tracker, 'inProgress')) {
+                            _.remove($rootScope.trackedHttpRequests, tracker);
+                        }
                     });
 
                     function setTracker() {

@@ -99,7 +99,7 @@
             }
 
             self.isBlankNodeString = function(id) {
-                return _.isString(id) && _.includes(id, '_:b');
+                return _.isString(id) && _.includes(id, '_:genid');
             }
 
             self.getBlankNodeValue = function(id) {

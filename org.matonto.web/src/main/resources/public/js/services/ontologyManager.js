@@ -1203,7 +1203,7 @@
              * @returns {boolean} Returns true if it is a blank node entity, otherwise returns false.
              */
             self.isBlankNode = function(entity) {
-                return _.includes(_.get(entity, '@id', ''), '_:b');
+                return _.includes(_.get(entity, '@id', ''), '_:genid');
             }
             /**
              * @ngdoc method
@@ -1379,9 +1379,12 @@
              * @param {string} queryType The type of query you want to perform (either 'select' or 'construct').
              * @returns {Promise} A promise containing the JSON SPARQL query results bindings.
              */
-            self.getEntityUsages = function(recordId, branchId, commitId, entityIRI, queryType = 'select') {
+            self.getEntityUsages = function(recordId, branchId, commitId, entityIRI, queryType = 'select', tab = '') {
                 var deferred = $q.defer();
                 var config = {params: {branchId, commitId, queryType}};
+                if (tab) {
+                    config.params.tab = tab;
+                }
                 $http.get(prefix + '/' + encodeURIComponent(recordId) + '/entity-usages/' + encodeURIComponent(entityIRI), config)
                     .then(response => {
                         if (queryType === 'construct') {

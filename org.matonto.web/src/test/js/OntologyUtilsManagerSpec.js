@@ -150,7 +150,7 @@ describe('Ontology Utils Manager service', function() {
             expect(result).toBe(false);
         });
 
-        result = ontologyUtilsManagerSvc.isBlankNodeString('_:b');
+        result = ontologyUtilsManagerSvc.isBlankNodeString('_:genid');
         expect(result).toBe(true);
     });
     describe('getBlankNodeValue returns', function() {
@@ -171,11 +171,11 @@ describe('Ontology Utils Manager service', function() {
         });
     });
     it('isLinkable returns proper value', function() {
-        ontologyStateSvc.listItem.index = {iri: 0, '_:b': 1};
+        ontologyStateSvc.listItem.index = {iri: 0, '_:genid': 1};
         expect(ontologyUtilsManagerSvc.isLinkable('iri')).toEqual(true);
         expect(ontologyUtilsManagerSvc.isLinkable('word')).toEqual(false);
         spyOn(ontologyUtilsManagerSvc, 'isBlankNodeString').and.returnValue(true);
-        expect(ontologyUtilsManagerSvc.isLinkable('_:b')).toEqual(false);
+        expect(ontologyUtilsManagerSvc.isLinkable('_:genid')).toEqual(false);
     });
     it('getNameByIRI should call the proper methods', function() {
         var entity = {'@id': 'id'};

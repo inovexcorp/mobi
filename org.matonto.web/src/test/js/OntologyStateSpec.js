@@ -508,24 +508,26 @@ describe('Ontology State service', function() {
     describe('setEntityUsages should call the correct function', function() {
         var getDeferred;
         var id = 'id';
+        var key = 'project';
         var activePage = {};
         beforeEach(function() {
             getDeferred = $q.defer();
             ontologyManagerSvc.getEntityUsages.and.returnValue(getDeferred.promise);
-            ontologyStateSvc.setEntityUsages(id);
             spyOn(ontologyStateSvc, 'getActivePage').and.returnValue(activePage);
+            spyOn(ontologyStateSvc, 'getActiveKey').and.returnValue(key);
+            ontologyStateSvc.setEntityUsages(id);
         });
         it('when getEntityUsages resolves', function() {
             var response = [{'@id': 'id'}];
             getDeferred.resolve(response);
             scope.$apply();
-            expect(ontologyManagerSvc.getEntityUsages).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, ontologyStateSvc.listItem.branchId, ontologyStateSvc.listItem.commitId, id);
+            expect(ontologyManagerSvc.getEntityUsages).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, ontologyStateSvc.listItem.branchId, ontologyStateSvc.listItem.commitId, id, 'select', key);
             expect(activePage.usages).toEqual(response);
         });
         it('when getEntityUsages rejects', function() {
             getDeferred.reject('error');
             scope.$apply();
-            expect(ontologyManagerSvc.getEntityUsages).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, ontologyStateSvc.listItem.branchId, ontologyStateSvc.listItem.commitId, id);
+            expect(ontologyManagerSvc.getEntityUsages).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, ontologyStateSvc.listItem.branchId, ontologyStateSvc.listItem.commitId, id, 'select', key);
             expect(activePage.usages).toEqual([]);
         });
     });
@@ -599,6 +601,7 @@ describe('Ontology State service', function() {
             ontologyManagerSvc.getListItemByRecordId.and.returnValue(listItem);
             spyOn(ontologyStateSvc, 'setSelected');
             spyOn(ontologyStateSvc, 'getActiveEntityIRI').and.returnValue('id');
+            spyOn(ontologyStateSvc, 'getActiveKey').and.returnValue('');
             ontologyStateSvc.setState('id', true);
             expect(ontologyStateSvc.state).toEqual(state);
             expect(ontologyStateSvc.listItem).toEqual(listItem);

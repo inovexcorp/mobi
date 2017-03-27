@@ -88,9 +88,10 @@ describe('Targeted Spinner directive', function() {
                 expect(scope.trackedHttpRequests).toContain(jasmine.objectContaining({requestConfig: scope.requestConfig, inProgress: true, scopes: [scope]}));
             });
             it('if one does not already exist', function() {
+                scope.trackedHttpRequests = [];
                 scope.$digest();
                 expect(scope.showSpinner).toBe(false);
-                expect(scope.trackedHttpRequests.length).toBe(2);
+                expect(scope.trackedHttpRequests.length).toBe(1);
                 expect(scope.trackedHttpRequests).toContain(jasmine.objectContaining({requestConfig: scope.requestConfig, inProgress: false, scopes: [scope]}));
             });
         });
@@ -122,6 +123,7 @@ describe('Targeted Spinner directive', function() {
             element = $compile(angular.element('<div targeted-spinner="requestConfig" cancel-on-destroy="true"></div>'))(scope);
             scope.$digest();
             this.tracker = scope.trackedHttpRequests[0];
+            this.tracker.inProgress = true;
         });
         it('unless the tracker could not be found', function() {
             scope.trackedHttpRequests = [];
