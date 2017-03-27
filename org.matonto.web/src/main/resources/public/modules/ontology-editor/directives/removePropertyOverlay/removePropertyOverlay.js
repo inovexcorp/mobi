@@ -27,9 +27,9 @@
         .module('removePropertyOverlay', [])
         .directive('removePropertyOverlay', removePropertyOverlay);
 
-        removePropertyOverlay.$inject = ['ontologyStateService', 'propertyManagerService', 'ontologyManagerService'];
+        removePropertyOverlay.$inject = ['ontologyStateService', 'propertyManagerService', 'ontologyManagerService', 'ontologyUtilsManagerService'];
 
-        function removePropertyOverlay(ontologyStateService, propertyManagerService, ontologyManagerService) {
+        function removePropertyOverlay(ontologyStateService, propertyManagerService, ontologyManagerService, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -45,7 +45,7 @@
                 controller: function() {
                     var dvm = this;
                     var om = ontologyManagerService;
-
+                    var ontoUtils = ontologyUtilsManagerService;
                     dvm.sm = ontologyStateService;
                     dvm.pm = propertyManagerService;
 
@@ -60,6 +60,7 @@
                         om.addToDeletions(dvm.sm.listItem.recordId, json);
                         dvm.pm.remove(dvm.sm.selected, dvm.key, dvm.index);
                         dvm.overlayFlag = false;
+                        ontoUtils.saveCurrentChanges();
                     }
                 }
             }

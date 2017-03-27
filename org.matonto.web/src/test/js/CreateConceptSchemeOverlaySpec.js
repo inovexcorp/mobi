@@ -167,6 +167,7 @@ describe('Create Concept Scheme Overlay directive', function() {
                 controller.scheme);
             expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(controller.scheme['@id']);
             expect(ontologyStateSvc.showCreateConceptSchemeOverlay).toBe(false);
+            expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
         });
     });
     it('should call create when the button is clicked', function() {

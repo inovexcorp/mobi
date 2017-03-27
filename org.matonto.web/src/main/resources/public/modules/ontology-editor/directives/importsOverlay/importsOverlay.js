@@ -67,7 +67,10 @@
                         om.saveChanges(os.listItem.recordId, {additions: os.listItem.additions, deletions: os.listItem.deletions})
                             .then(() => os.afterSave(), $q.reject)
                             .then(() => om.updateOntology(os.listItem.recordId, os.listItem.branchId, os.listItem.commitId, os.listItem.type, os.listItem.upToDate, os.listItem.inProgressCommit), $q.reject)
-                            .then(dvm.onClose, errorMessage => dvm.error = errorMessage);
+                            .then(() => {
+                                os.listItem.isSaved = os.isCommittable(os.listItem.recordId);
+                                dvm.onClose();
+                            }, errorMessage => dvm.error = errorMessage);
                     }
                 }
             }

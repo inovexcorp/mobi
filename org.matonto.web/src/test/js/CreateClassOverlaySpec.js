@@ -148,6 +148,7 @@ describe('Create Class Overlay directive', function() {
                 controller.clazz);
             expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(controller.clazz['@id']);
             expect(ontologyStateSvc.showCreateClassOverlay).toBe(false);
+            expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
         });
     });
     it('should call create when the button is clicked', function() {
