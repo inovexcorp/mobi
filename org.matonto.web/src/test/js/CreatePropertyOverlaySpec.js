@@ -213,6 +213,7 @@ describe('Create Property Overlay directive', function() {
                     controller.property);
                 expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(controller.property['@id']);
                 expect(ontologyStateSvc.showCreatePropertyOverlay).toBe(false);
+                expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             });
             it('if the property is a object property', function() {
                 controller.property[prefixes.dcterms + 'description'] = [{'@value': 'description'}];
@@ -234,6 +235,7 @@ describe('Create Property Overlay directive', function() {
                     controller.property);
                 expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(controller.property['@id']);
                 expect(ontologyStateSvc.showCreatePropertyOverlay).toBe(false);
+                expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             });
             it('if the property is a datatype property', function() {
                 controller.property[prefixes.dcterms + 'description'] = [{'@value': 'description'}];
@@ -255,6 +257,7 @@ describe('Create Property Overlay directive', function() {
                     controller.property);
                 expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(controller.property['@id']);
                 expect(ontologyStateSvc.showCreatePropertyOverlay).toBe(false);
+                expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             });
             it('if the property is an annotation property', function() {
                 controller.property[prefixes.dcterms + 'description'] = [{'@value': 'description'}];
@@ -276,6 +279,7 @@ describe('Create Property Overlay directive', function() {
                     controller.property);
                 expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(controller.property['@id']);
                 expect(ontologyStateSvc.showCreatePropertyOverlay).toBe(false);
+                expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             });
             it('if controller.checkbox is true', function() {
                 controller.checkbox = true;

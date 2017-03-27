@@ -59,7 +59,10 @@
                         om.saveChanges(dvm.os.listItem.recordId, {additions: dvm.os.listItem.additions, deletions: dvm.os.listItem.deletions})
                             .then(() => dvm.os.afterSave(), $q.reject)
                             .then(() => om.updateOntology(dvm.os.listItem.recordId, dvm.os.listItem.branchId, dvm.os.listItem.commitId, dvm.os.listItem.type, dvm.os.listItem.upToDate, dvm.os.listItem.inProgressCommit), $q.reject)
-                            .then(() => dvm.showRemoveOverlay = false, errorMessage => dvm.error = errorMessage);
+                            .then(() => {
+                                dvm.os.listItem.isSaved = dvm.os.isCommittable(dvm.os.listItem.recordId);
+                                dvm.showRemoveOverlay = false;
+                            }, errorMessage => dvm.error = errorMessage);
                     }
 
                     dvm.get = function(obj) {

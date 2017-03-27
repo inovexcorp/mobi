@@ -27,10 +27,9 @@
         .module('datatypePropertyOverlay', [])
         .directive('datatypePropertyOverlay', datatypePropertyOverlay);
 
-        datatypePropertyOverlay.$inject = ['responseObj', 'ontologyManagerService', 'ontologyStateService',
-            'utilService', 'prefixes'];
+        datatypePropertyOverlay.$inject = ['responseObj', 'ontologyManagerService', 'ontologyStateService', 'utilService', 'prefixes', 'ontologyUtilsManagerService'];
 
-        function datatypePropertyOverlay(responseObj, ontologyManagerService, ontologyStateService, utilService, prefixes) {
+        function datatypePropertyOverlay(responseObj, ontologyManagerService, ontologyStateService, utilService, prefixes, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -39,6 +38,7 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
+                    var ontoUtils = ontologyUtilsManagerService;
                     dvm.om = ontologyManagerService;
                     dvm.ro = responseObj;
                     dvm.sm = ontologyStateService;
@@ -62,6 +62,7 @@
                         dvm.om.addToAdditions(dvm.sm.listItem.recordId, dvm.util.createJson(dvm.sm.selected['@id'],
                             property, valueObj));
                         dvm.sm.showDataPropertyOverlay = false;
+                        ontoUtils.saveCurrentChanges();
                     }
 
                     dvm.editProperty = function(select, value, type, language) {
@@ -85,6 +86,7 @@
                                 property, propertyObj));
                         }
                         dvm.sm.showDataPropertyOverlay = false;
+                        ontoUtils.saveCurrentChanges();
                     }
 
                     dvm.isStringType = function() {

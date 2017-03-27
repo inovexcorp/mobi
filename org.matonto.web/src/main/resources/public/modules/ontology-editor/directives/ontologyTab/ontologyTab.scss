@@ -4,4 +4,10 @@
 .ontology-tab {
     height: 100%;
     position: relative;
+
+    .saved-text {
+        position: absolute;
+        right: 15px;
+        top: 16px;
+    }
 }

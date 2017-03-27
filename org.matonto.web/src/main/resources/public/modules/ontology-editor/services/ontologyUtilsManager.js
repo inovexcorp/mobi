@@ -27,9 +27,9 @@
         .module('ontologyUtilsManager', [])
         .service('ontologyUtilsManagerService', ontologyUtilsManagerService);
 
-        ontologyUtilsManagerService.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'updateRefsService', 'prefixes', 'utilService'];
+        ontologyUtilsManagerService.$inject = ['$q', '$filter', 'ontologyManagerService', 'ontologyStateService', 'updateRefsService', 'prefixes', 'utilService'];
 
-        function ontologyUtilsManagerService($filter, ontologyManagerService, ontologyStateService, updateRefsService, prefixes, utilService) {
+        function ontologyUtilsManagerService($q, $filter, ontologyManagerService, ontologyStateService, updateRefsService, prefixes, utilService) {
             var self = this;
             var om = ontologyManagerService;
             var os = ontologyStateService;
@@ -44,6 +44,7 @@
                         _.forEach(statements, statement => om.addToDeletions(os.listItem.recordId, statement));
                         ur.remove(os.listItem.ontology, entityIRI);
                         os.unSelectItem();
+                        self.saveCurrentChanges();
                     }, util.createErrorToast);
             }
 
@@ -129,6 +130,22 @@
                         }
                     });
                 }
+            }
+
+            self.saveCurrentChanges = function() {
+                om.saveChanges(os.listItem.recordId, {additions: os.listItem.additions, deletions: os.listItem.deletions})
+                    .then(() => os.afterSave(), $q.reject)
+                    .then(() => {
+                        var entityIRI = os.getActiveEntityIRI();
+                        var activeKey = os.getActiveKey();
+                        if (activeKey !== 'project' && activeKey !== 'individuals' && entityIRI) {
+                            os.setEntityUsages(entityIRI);
+                        }
+                        os.listItem.isSaved = os.isCommittable(os.listItem.recordId);
+                    }, errorMessage => {
+                        util.createErrorToast(errorMessage);
+                        os.listItem.isSaved = false;
+                    });
             }
         }
 })();

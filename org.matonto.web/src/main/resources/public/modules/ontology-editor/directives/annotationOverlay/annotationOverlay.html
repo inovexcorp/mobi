@@ -25,7 +25,7 @@
         <h6>{{dvm.sm.editingAnnotation ? 'Edit Annotation' : 'Add Annotation'}}</h6>
         <div class="form-group">
             <label class="control-label">Annotation</label>
-            <ui-select ng-model="dvm.sm.annotationSelect" ng-disabled="dvm.sm.editingAnnotation">
+            <ui-select ng-model="dvm.sm.annotationSelect" ng-disabled="dvm.sm.editingAnnotation" autofocus>
                 <ui-select-match placeholder="Select an annotation">{{dvm.ro.getItemIri($select.selected)}}</ui-select-match>
                 <ui-select-choices group-by="dvm.util.getItemNamespace" repeat="annotation in dvm.sm.listItem.annotations | filter: $select.search | orderBy:'localName'">
                     <div ng-bind-html="annotation.localName | highlight: $select.search | trusted"></div>

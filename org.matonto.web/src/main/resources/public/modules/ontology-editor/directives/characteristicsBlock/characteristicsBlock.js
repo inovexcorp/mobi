@@ -27,9 +27,9 @@
         .module('characteristicsBlock', [])
         .directive('characteristicsBlock', characteristicsBlock);
 
-        characteristicsBlock.$inject = ['prefixes', 'ontologyManagerService', 'ontologyStateService'];
+        characteristicsBlock.$inject = ['prefixes', 'ontologyManagerService', 'ontologyStateService', 'ontologyUtilsManagerService'];
 
-        function characteristicsBlock(prefixes, ontologyManagerService, ontologyStateService) {
+        function characteristicsBlock(prefixes, ontologyManagerService, ontologyStateService, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -40,7 +40,7 @@
                     var dvm = this;
                     var om = ontologyManagerService;
                     var functionalPropertyIRI = prefixes.owl + 'FunctionalProperty';
-
+                    var ontoUtils = ontologyUtilsManagerService;
                     dvm.os = ontologyStateService;
                     dvm.functional = false;
 
@@ -52,6 +52,7 @@
                             removeTypeFrom(dvm.os.selected, functionalPropertyIRI);
                             handleCase(dvm.os.listItem.additions, om.addToDeletions);
                         }
+                        ontoUtils.saveCurrentChanges();
                     }
 
                     function handleCase(array, method) {

@@ -27,9 +27,9 @@
         .module('createIndividualOverlay', [])
         .directive('createIndividualOverlay', createIndividualOverlay);
 
-        createIndividualOverlay.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'responseObj', 'prefixes'];
+        createIndividualOverlay.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'responseObj', 'prefixes', 'ontologyUtilsManagerService'];
 
-        function createIndividualOverlay($filter, ontologyManagerService, ontologyStateService, responseObj, prefixes) {
+        function createIndividualOverlay($filter, ontologyManagerService, ontologyStateService, responseObj, prefixes, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,6 +38,7 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
+                    var ontoUtils = ontologyUtilsManagerService;
 
                     dvm.prefixes = prefixes;
                     dvm.ro = responseObj;
@@ -86,6 +87,7 @@
                         dvm.sm.selectItem(dvm.individual['@id'], false);
                         // hide the overlay
                         dvm.sm.showCreateIndividualOverlay = false;
+                        ontoUtils.saveCurrentChanges();
                     }
                 }
             }
