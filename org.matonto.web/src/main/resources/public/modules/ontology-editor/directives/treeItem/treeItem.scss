@@ -1,4 +1,11 @@
+@import "./src/main/resources/public/css/variables";
+
 .tree-item {
+    &.saved {
+        color: $brand-success;
+        font-weight: bold;
+    }
+
     .bold {
         font-weight: bold;
     }

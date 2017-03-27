@@ -226,6 +226,16 @@ ul {
         padding: 0;
     }
 
+    .saved a {
+        &:hover,
+        &.active,
+        &.active .unsaved-icon,
+        &.unsaved:hover .unsaved-icon {
+            background-color: $brand-success;
+        }
+    }
+
+
     /* Anchor inherits the color of parent and fills container completely */
     a {
         color: inherit;

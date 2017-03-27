@@ -108,13 +108,6 @@ describe('Tree Item directive', function() {
             expect(element.prop('tagName')).toBe('LI');
             expect(element.hasClass('tree-item')).toBe(true);
         });
-        it('depending on whether or not the currentEntity is valid', function() {
-            expect(element.hasClass('invalid')).toBe(false);
-
-            scope.currentEntity.matonto = {valid: false};
-            scope.$digest();
-            expect(element.hasClass('invalid')).toBe(true);
-        });
         it('depending on whether or not the currentEntity is unsaved', function() {
             expect(element.find('a').hasClass('unsaved')).toBe(false);
 
@@ -206,6 +199,14 @@ describe('Tree Item directive', function() {
                 angular.element(anchor).triggerHandler('dblclick');
                 expect(controller.toggleOpen).toHaveBeenCalled();
             });
+        });
+        it('isSaved returns whether or not the inProgressCommit additions or deletions contains the current entity @id', function() {
+            expect(controller.isSaved()).toBe(false);
+            controller.currentEntity = {'@id': 'id'};
+            ontologyStateSvc.listItem.inProgressCommit = {
+                additions: [{'@id': 'id'}]
+            }
+            expect(controller.isSaved()).toBe(true);
         });
     });
 });

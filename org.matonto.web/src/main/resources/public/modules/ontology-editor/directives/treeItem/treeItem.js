@@ -49,19 +49,24 @@
                 controller: function() {
                     var dvm = this;
                     var treeDisplay = settingsManagerService.getTreeDisplay();
+                    var os = ontologyStateService;
                     dvm.om = ontologyManagerService;
-                    dvm.sm = ontologyStateService;
 
                     dvm.getTreeDisplay = function() {
                         if (treeDisplay === 'pretty') {
-                            return dvm.om.getEntityName(dvm.currentEntity, dvm.sm.state.type);
+                            return dvm.om.getEntityName(dvm.currentEntity, os.state.type);
                         }
                         return _.get(dvm.currentEntity, 'matonto.originalIRI', _.get(dvm.currentEntity, 'matonto.anonymous', ''));
                     }
 
                     dvm.toggleOpen = function() {
                         dvm.isOpened = !dvm.isOpened;
-                        dvm.sm.setOpened(dvm.path, dvm.isOpened);
+                        os.setOpened(dvm.path, dvm.isOpened);
+                    }
+
+                    dvm.isSaved = function() {
+                        var ids = _.unionWith(_.map(os.listItem.inProgressCommit.additions, '@id'), _.map(os.listItem.inProgressCommit.deletions, '@id'), _.isEqual);
+                        return _.includes(ids, _.get(dvm.currentEntity, '@id'));
                     }
                 }
             }
