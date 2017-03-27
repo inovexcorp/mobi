@@ -1201,7 +1201,7 @@
              * @returns {boolean} Returns true if it is a blank node entity, otherwise returns false.
              */
             self.isBlankNode = function(entity) {
-                return _.includes(_.get(entity, '@id', ''), '_:b');
+                return _.includes(_.get(entity, '@id', ''), '_:genid');
             }
             /**
              * @ngdoc method
