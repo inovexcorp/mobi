@@ -1,0 +1,5 @@
+PREFIX test: <http://test.com#>
+
+SELECT ?s WHERE {
+    ?s a test:Thing .
+}
