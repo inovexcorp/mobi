@@ -688,16 +688,7 @@
                 }
                 $http.post(prefix, ontologyJson, config)
                     .then(response => {
-                        var listItem = {};
-                        if (type === 'ontology') {
-                            listItem = setupListItem(response.data.ontologyId, response.data.recordId,
-                                response.data.branchId, response.data.commitId, [ontologyJson], emptyInProgressCommit,
-                                ontologyListItemTemplate, type);
-                        } else if (type === 'vocabulary') {
-                            listItem = setupListItem(response.data.ontologyId, response.data.recordId,
-                                response.data.branchId, response.data.commitId, [ontologyJson], emptyInProgressCommit,
-                                vocabularyListItemTemplate, type);
-                        }
+                        var listItem = setupListItem(response.data.ontologyId, response.data.recordId, response.data.branchId, response.data.commitId, [ontologyJson], emptyInProgressCommit, type);
                         cm.getRecordBranch(response.data.branchId, response.data.recordId, catalogId)
                             .then(branch => {
                                 listItem.branches = [branch];
@@ -1336,11 +1327,7 @@
              * @returns {string} The beautified IRI string.
              */
             self.getEntityNameByIndex = function(entityIRI, listItem) {
-                var index = _.get(listItem, 'index', {});
-                if (_.has(index, entityIRI) && _.has(index[entityIRI], 'label')) {
-                    return index[entityIRI].label;
-                }
-                return utilService.getBeautifulIRI(entityIRI);
+                return _.get(listItem, "index['" + entityIRI + "'].label", utilService.getBeautifulIRI(entityIRI));
             }
             /**
              * @ngdoc method
@@ -1568,8 +1555,7 @@
             self.createOntologyListItem = function(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit,
                 upToDate = true) {
                 var deferred = $q.defer();
-                var listItem = setupListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit,
-                    ontologyListItemTemplate, 'ontology');
+                var listItem = setupListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, 'ontology');
                 var config = {params: {branchId, commitId}};
                 $q.all([
                     $http.get(prefix + '/' + encodeURIComponent(recordId) + '/iris', config),
@@ -1660,8 +1646,7 @@
             self.createVocabularyListItem = function(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit,
                 upToDate = true) {
                 var deferred = $q.defer();
-                var listItem = setupListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit,
-                    vocabularyListItemTemplate, 'vocabulary');
+                var listItem = setupListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, 'vocabulary');
                 var config = {params: {branchId, commitId}};
                 $q.all([
                     $http.get(prefix + '/' + encodeURIComponent(recordId) + '/iris', config),
@@ -1815,8 +1800,8 @@
                 }
                 return readableText;
             }
-            function setupListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, template, type) {
-                var listItem = angular.copy(template);
+            function setupListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, type) {
+                var listItem = (type === 'ontology') ? angular.copy(ontologyListItemTemplate) : angular.copy(vocabularyListItemTemplate);
                 var blankNodes = {};
                 var index = {};
                 _.forEach(ontology, (entity, i) => {
