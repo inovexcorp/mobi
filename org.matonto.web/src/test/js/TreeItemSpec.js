@@ -57,6 +57,7 @@ describe('Tree Item directive', function() {
         scope.path = '';
         element = $compile(angular.element('<tree-item path="path" is-opened="isOpened" current-entity="currentEntity" is-active="isActive" on-click="onClick()" has-children="hasChildren" is-bold="isBold"></tree-item>'))(scope);
         scope.$digest();
+        controller = element.controller('treeItem');
     });
 
     describe('in isolated scope', function() {
@@ -108,12 +109,15 @@ describe('Tree Item directive', function() {
             expect(element.prop('tagName')).toBe('LI');
             expect(element.hasClass('tree-item')).toBe(true);
         });
-        it('depending on whether or not the currentEntity is unsaved', function() {
-            expect(element.find('a').hasClass('unsaved')).toBe(false);
+        it('depending on whether or not the currentEntity is saved', function() {
+            expect(element.hasClass('saved')).toBe(false);
 
-            scope.currentEntity.matonto = {unsaved: true};
+            scope.currentEntity = {'@id': 'id'};
+            ontologyStateSvc.listItem.inProgressCommit = {
+                additions: [{'@id': 'id'}]
+            }
             scope.$digest();
-            expect(element.find('a').hasClass('unsaved')).toBe(true);
+            expect(element.hasClass('saved')).toBe(true);
         });
         it('depending on whether it has children', function() {
             var anchor = element.find('a');
@@ -146,9 +150,6 @@ describe('Tree Item directive', function() {
         });
     });
     describe('controller methods', function() {
-        beforeEach(function() {
-            controller = element.controller('treeItem');
-        });
         describe('getTreeDisplay', function() {
             it('should return originalIRI when not pretty', function() {
                 scope.currentEntity = {matonto: {originalIRI: 'originalIRI', anonymous: 'anon'}};
@@ -199,14 +200,6 @@ describe('Tree Item directive', function() {
                 angular.element(anchor).triggerHandler('dblclick');
                 expect(controller.toggleOpen).toHaveBeenCalled();
             });
-        });
-        it('isSaved returns whether or not the inProgressCommit additions or deletions contains the current entity @id', function() {
-            expect(controller.isSaved()).toBe(false);
-            controller.currentEntity = {'@id': 'id'};
-            ontologyStateSvc.listItem.inProgressCommit = {
-                additions: [{'@id': 'id'}]
-            }
-            expect(controller.isSaved()).toBe(true);
         });
     });
 });

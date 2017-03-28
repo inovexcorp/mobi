@@ -46,11 +46,12 @@
                 },
                 templateUrl: 'modules/ontology-editor/directives/treeItem/treeItem.html',
                 controllerAs: 'dvm',
-                controller: function() {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
                     var treeDisplay = settingsManagerService.getTreeDisplay();
                     var os = ontologyStateService;
                     dvm.om = ontologyManagerService;
+                    dvm.saved = isSaved();
 
                     dvm.getTreeDisplay = function() {
                         if (treeDisplay === 'pretty') {
@@ -64,11 +65,15 @@
                         os.setOpened(dvm.path, dvm.isOpened);
                     }
 
-                    dvm.isSaved = function() {
+                    function isSaved() {
                         var ids = _.unionWith(_.map(os.listItem.inProgressCommit.additions, '@id'), _.map(os.listItem.inProgressCommit.deletions, '@id'), _.isEqual);
                         return _.includes(ids, _.get(dvm.currentEntity, '@id'));
                     }
-                }
+
+                    $scope.$watch(() => os.listItem.inProgressCommit, () => {
+                        dvm.saved = isSaved();
+                    });
+                }]
             }
         }
 })();
