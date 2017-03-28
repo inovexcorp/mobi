@@ -214,6 +214,9 @@ function mockOntologyManager() {
             this.isConceptScheme = jasmine.createSpy('isConceptScheme').and.returnValue(true);
             this.hasConceptSchemes = jasmine.createSpy('hasConceptSchemes').and.returnValue(true);
             this.hasConcepts = jasmine.createSpy('hasConcepts').and.returnValue(true);
+            this.isRestriction = jasmine.createSpy('isRestriction').and.returnValue(true);
+            this.isBlankNode = jasmine.createSpy('isBlankNode').and.returnValue(true);
+            this.isBlankNodeId = jasmine.createSpy('isBlankNodeId').and.returnValue(false);
 
             this.getImportedOntologies = jasmine.createSpy('getImportedOntologies').and.returnValue($q.when([]));
             this.getObjectCopyByIri = jasmine.createSpy('getObjectCopyByIri').and.returnValue({});
@@ -544,7 +547,6 @@ function mockOntologyUtilsManager() {
             this.deleteIndividual = jasmine.createSpy('deleteIndividual');
             this.deleteConcept = jasmine.createSpy('deleteConcept');
             this.deleteConceptScheme = jasmine.createSpy('deleteConceptScheme');
-            this.isBlankNodeString = jasmine.createSpy('isBlankNodeString');
             this.getBlankNodeValue = jasmine.createSpy('getBlankNodeValue');
             this.isLinkable = jasmine.createSpy('isLinkable');
             this.getNameByIRI = jasmine.createSpy('getNameByIRI');

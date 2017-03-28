@@ -98,20 +98,16 @@
                 self.deleteConcept();
             }
 
-            self.isBlankNodeString = function(id) {
-                return _.isString(id) && _.includes(id, '_:genid');
-            }
-
             self.getBlankNodeValue = function(id) {
                 var result;
-                if (self.isBlankNodeString(id)) {
+                if (om.isBlankNodeId(id)) {
                     result = _.get(os.listItem.blankNodes, id, id);
                 }
                 return result;
             }
 
             self.isLinkable = function(id) {
-                return _.has(os.listItem.index, id) && !self.isBlankNodeString(id);
+                return _.has(os.listItem.index, id) && !om.isBlankNodeId(id);
             }
 
             self.getNameByIRI = function(iri) {
