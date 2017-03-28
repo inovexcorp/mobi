@@ -61,6 +61,7 @@
                         dvm.pm.remove(dvm.sm.selected, dvm.key, dvm.index);
                         dvm.overlayFlag = false;
                         ontoUtils.saveCurrentChanges();
+                        ontoUtils.updateLabel();
                     }
                 }
             }

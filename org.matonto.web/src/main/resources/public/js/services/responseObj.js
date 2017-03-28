@@ -44,7 +44,9 @@
          */
         .service('responseObj', responseObj);
 
-    function responseObj() {
+    responseObj.$inject = ['$filter'];
+
+    function responseObj($filter) {
         var self = this;
 
         /**
@@ -61,7 +63,7 @@
          */
         self.getItemIri = function(item) {
             var iri = '';
-            if(self.validateItem(item)) {
+            if (self.validateItem(item)) {
                 iri = item.namespace + item.localName;
             }
             return iri;
@@ -81,6 +83,26 @@
          */
         self.validateItem = function(item) {
             return _.has(item, 'namespace') && _.has(item, 'localName');
+        }
+
+        /**
+         * @ngdoc method
+         * @name createItemFromIri
+         * @methodOf responseObj.service:responseObj
+         *
+         * @description
+         * Constructs an object response "item" using the provided IRI. This "item" is an Object which contains
+         * localName and namespace properties.
+         *
+         * @param {Object} iri The IRI to use in creating the item
+         * @return {Object} The item which represents the provided IRI
+         */
+        self.createItemFromIri = function(iri) {
+            var split = $filter('splitIRI')(iri);
+            return {
+                namespace: split.begin + split.then,
+                localName: split.end
+            }
         }
     }
 })();

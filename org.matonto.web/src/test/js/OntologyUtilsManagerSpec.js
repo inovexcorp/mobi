@@ -315,4 +315,27 @@ describe('Ontology Utils Manager service', function() {
             expect(ontologyStateSvc.listItem.isSaved).toBe(false);
         });
     });
+
+    describe('updateLabel sets the label correctly', function() {
+        beforeEach(function() {
+            ontologyStateSvc.listItem = {
+                index: {
+                    iri: {
+                        label: 'old-value'
+                    }
+                }
+            };
+            ontologyManagerSvc.getEntityName.and.returnValue('new-value');
+        });
+        it('when the listItem.index contains the selected @id', function() {
+            ontologyStateSvc.selected = {'@id': 'iri'};
+            ontologyUtilsManagerSvc.updateLabel();
+            expect(ontologyStateSvc.listItem.index.iri.label).toBe('new-value');
+        });
+        it('when the listItem.index does not contain the selected @id', function() {
+            ontologyStateSvc.selected = {};
+            ontologyUtilsManagerSvc.updateLabel();
+            expect(ontologyStateSvc.listItem.index.iri.label).toBe('old-value');
+        });
+    });
 });

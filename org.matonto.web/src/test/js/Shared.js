@@ -241,6 +241,7 @@ function mockOntologyManager() {
             this.createVocabularyListItem = jasmine.createSpy('createVocabularyListItem').and.returnValue($q.when([]));
             this.addVocabularyToList = jasmine.createSpy('addVocabularyToList').and.returnValue($q.when([]));
             this.getEntityUsages = jasmine.createSpy('getEntityUsages').and.returnValue($q.when([]));
+            this.getEntityNameByIndex = jasmine.createSpy('getEntityNameByIndex');
         });
     });
 }
@@ -551,6 +552,7 @@ function mockOntologyUtilsManager() {
             this.getNameByNode = jasmine.createSpy('getNameByNode');
             this.addLanguageToNewEntity = jasmine.createSpy('addLanguageToNewEntity');
             this.saveCurrentChanges = jasmine.createSpy('saveCurrentChanges');
+            this.updateLabel = jasmine.createSpy('updateLabel');
         });
     });
 }
@@ -562,6 +564,7 @@ function mockResponseObj() {
                 return (obj && obj.localName) ? obj.localName : obj;
             });
             this.validateItem = jasmine.createSpy('validateItem').and.returnValue(true);
+            this.createItemFromIri = jasmine.createSpy('createItemFromIri');
         });
     });
 }

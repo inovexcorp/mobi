@@ -36,6 +36,7 @@ describe('Ontology Properties Block directive', function() {
         mockOntologyState();
         mockOntologyManager();
         mockResponseObj();
+        mockOntologyUtilsManager();
 
         inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyManagerService_, _responseObj_) {
             $compile = _$compile_;

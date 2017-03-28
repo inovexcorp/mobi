@@ -147,5 +147,15 @@
                         os.listItem.isSaved = false;
                     });
             }
+
+            self.updateLabel = function() {
+                if (_.has(os.listItem.index, os.selected['@id'])) {
+                    os.listItem.index[os.selected['@id']].label = om.getEntityName(os.selected, os.listItem.type);
+                }
+            }
+
+            self.getLabelForIRI = function(iri) {
+                return om.getEntityNameByIndex(iri, os.listItem);
+            }
         }
 })();

@@ -83,7 +83,6 @@
                         dvm.om.addEntity(dvm.sm.listItem, dvm.concept);
                         // update relevant lists
                         _.get(dvm.sm.listItem, 'conceptHierarchy').push({'entityIRI': dvm.concept['@id']});
-                        _.set(_.get(dvm.sm.listItem, 'index'), dvm.concept['@id'], dvm.sm.listItem.ontology.length - 1);
                         dvm.om.addToAdditions(dvm.sm.listItem.recordId, dvm.concept);
                         // select the new class
                         dvm.sm.selectItem(_.get(dvm.concept, '@id'));

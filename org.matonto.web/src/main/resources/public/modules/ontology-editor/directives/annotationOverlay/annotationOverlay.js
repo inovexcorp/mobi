@@ -58,6 +58,7 @@
                         dvm.om.addToAdditions(dvm.sm.listItem.recordId, createJson(dvm.sm.annotationValue, dvm.sm.annotationLanguage));
                         dvm.sm.showAnnotationOverlay = false;
                         ontoUtils.saveCurrentChanges();
+                        ontoUtils.updateLabel();
                     }
 
                     dvm.editAnnotation = function() {
@@ -68,6 +69,7 @@
                         dvm.om.addToAdditions(dvm.sm.listItem.recordId, createJson(dvm.sm.annotationValue, dvm.sm.annotationLanguage));
                         dvm.sm.showAnnotationOverlay = false;
                         ontoUtils.saveCurrentChanges();
+                        ontoUtils.updateLabel();
                     }
                 }
             }
