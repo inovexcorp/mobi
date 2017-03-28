@@ -123,14 +123,14 @@ describe('Tree Item directive', function() {
             var anchor = element.find('a');
             expect(anchor.length).toBe(1);
             expect(anchor.attr('ng-dblclick')).toBeTruthy();
-            expect(element.find('i').length).toBe(1);
+            expect(element.find('i').length).toBe(2);
 
             scope.hasChildren = false;
             scope.$digest();
             var anchor = element.find('a');
             expect(anchor.length).toBe(1);
             expect(anchor.attr('ng-dblclick')).toBeFalsy();
-            expect(element.find('i').length).toBe(1);
+            expect(element.find('i').length).toBe(2);
         });
         it('depending on whether it is active', function() {
             var anchor = element.find('a');

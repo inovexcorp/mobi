@@ -1,11 +1,15 @@
 @import "./src/main/resources/public/css/variables";
 
 .tree-item {
-    &.saved {
-        color: $brand-success;
-        font-weight: bold;
+    &.saved .fa-caret-left {
+        display: inherit;
     }
 
+    .fa-caret-left {
+        display: none;
+    }
+
+    &.saved,
     .bold {
         font-weight: bold;
     }

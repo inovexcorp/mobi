@@ -24,11 +24,13 @@
     <a ng-if="!hasChildren" ng-click="onClick()" ng-class="{'active': isActive}">
         <i class="fa fa-fw {{dvm.currentEntity.matonto.icon || 'fa-square-o'}}"></i>
         <span ng-class="{'bold': isBold}">{{dvm.getTreeDisplay()}}</span>
+        <i class="fa fa-fw fa-caret-left"></i>
     </a>
     <a ng-if="hasChildren" ng-click="onClick()" ng-dblclick="dvm.toggleOpen()" ng-class="{'active': isActive}">
         <i class="fa fa-fw"
            ng-class="{'fa-minus-square-o': dvm.isOpened, 'fa-plus-square-o': !dvm.isOpened}"
            ng-click="dvm.toggleOpen(); $event.stopPropagation()"></i>
         <span ng-class="{'bold': isBold}">{{dvm.getTreeDisplay()}}</span>
+        <i class="fa fa-fw fa-caret-left"></i>
     </a>
 </li>
