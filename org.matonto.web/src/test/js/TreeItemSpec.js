@@ -57,6 +57,7 @@ describe('Tree Item directive', function() {
         scope.path = '';
         element = $compile(angular.element('<tree-item path="path" is-opened="isOpened" current-entity="currentEntity" is-active="isActive" on-click="onClick()" has-children="hasChildren" is-bold="isBold"></tree-item>'))(scope);
         scope.$digest();
+        controller = element.controller('treeItem');
     });
 
     describe('in isolated scope', function() {
@@ -108,32 +109,28 @@ describe('Tree Item directive', function() {
             expect(element.prop('tagName')).toBe('LI');
             expect(element.hasClass('tree-item')).toBe(true);
         });
-        it('depending on whether or not the currentEntity is valid', function() {
-            expect(element.hasClass('invalid')).toBe(false);
+        it('depending on whether or not the currentEntity is saved', function() {
+            expect(element.hasClass('saved')).toBe(false);
 
-            scope.currentEntity.matonto = {valid: false};
+            scope.currentEntity = {'@id': 'id'};
+            ontologyStateSvc.listItem.inProgressCommit = {
+                additions: [{'@id': 'id'}]
+            }
             scope.$digest();
-            expect(element.hasClass('invalid')).toBe(true);
-        });
-        it('depending on whether or not the currentEntity is unsaved', function() {
-            expect(element.find('a').hasClass('unsaved')).toBe(false);
-
-            scope.currentEntity.matonto = {unsaved: true};
-            scope.$digest();
-            expect(element.find('a').hasClass('unsaved')).toBe(true);
+            expect(element.hasClass('saved')).toBe(true);
         });
         it('depending on whether it has children', function() {
             var anchor = element.find('a');
             expect(anchor.length).toBe(1);
             expect(anchor.attr('ng-dblclick')).toBeTruthy();
-            expect(element.find('i').length).toBe(1);
+            expect(element.find('i').length).toBe(2);
 
             scope.hasChildren = false;
             scope.$digest();
             var anchor = element.find('a');
             expect(anchor.length).toBe(1);
             expect(anchor.attr('ng-dblclick')).toBeFalsy();
-            expect(element.find('i').length).toBe(1);
+            expect(element.find('i').length).toBe(2);
         });
         it('depending on whether it is active', function() {
             var anchor = element.find('a');
@@ -153,9 +150,6 @@ describe('Tree Item directive', function() {
         });
     });
     describe('controller methods', function() {
-        beforeEach(function() {
-            controller = element.controller('treeItem');
-        });
         describe('getTreeDisplay', function() {
             it('should return originalIRI when not pretty', function() {
                 scope.currentEntity = {matonto: {originalIRI: 'originalIRI', anonymous: 'anon'}};
