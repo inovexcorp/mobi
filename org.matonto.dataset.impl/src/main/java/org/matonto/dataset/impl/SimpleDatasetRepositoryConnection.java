@@ -49,9 +49,9 @@ import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.base.RepositoryConnectionWrapper;
 import org.matonto.repository.base.RepositoryResult;
 import org.matonto.repository.exception.RepositoryException;
-import org.matonto.sparql.query.Query;
-import org.matonto.sparql.query.SparqlBaseListener;
-import org.matonto.sparql.query.SparqlParser;
+import org.matonto.sparql.utils.Query;
+import org.matonto.sparql.utils.SparqlBaseListener;
+import org.matonto.sparql.utils.SparqlParser;
 
 import java.io.IOException;
 import java.util.Arrays;
