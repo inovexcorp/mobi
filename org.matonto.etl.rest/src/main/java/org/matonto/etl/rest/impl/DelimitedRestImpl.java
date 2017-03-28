@@ -310,6 +310,12 @@ public class DelimitedRestImpl implements DelimitedRest {
             }
             result = etlFile(() -> converter.convert(config.build()));
         }
+        try {
+            // close the stream to clear locks on the file
+            data.close();
+        } catch (IOException e) {
+            throw ErrorUtils.sendError("Document not found", Response.Status.BAD_REQUEST);
+        }
         logger.info("File mapped: " + delimitedFile.getPath());
         return result;
     }
@@ -406,7 +412,8 @@ public class DelimitedRestImpl implements DelimitedRest {
         for (int i = 0; i <= numRows && i < csvRows.size(); i ++) {
             returnRows.add(i, csvRows.get(i));
         }
-
+        // close the reader to clear locks on the file
+        reader.close();
         return returnRows.toString();
     }
 
@@ -438,7 +445,8 @@ public class DelimitedRestImpl implements DelimitedRest {
                 rowList.add(columns);
             }
         }
-
+        // close the workbook to clear locks on the file
+        wb.close();
         return rowList.toString();
     }
 
