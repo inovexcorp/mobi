@@ -1,4 +1,4 @@
-package org.matonto.query.api.processor;
+package org.matonto.dataset.api.processor;
 
 /*-
  * #%L
@@ -23,9 +23,11 @@ package org.matonto.query.api.processor;
  * #L%
  */
 
+import org.matonto.query.api.processor.OperationProcessor;
+
 /**
- * An OperationProcessor that processes queries against datasets. The processor will rewrite SPARQL queries such that
- * they will correctly limit results and updates to datasets specified as part of the operation.
+ * An OperationProcessor that processes operations against datasets. The processor will rewrite SPARQL operations such
+ * that they will correctly limit queries and updates to the dataset specified as part of the operation.
  *
  * Dataset processing occurs in line with the SPARQL 1.1 Spec. That is, if a query provides a dataset description,
  * then it is used in place of any dataset that the Operation would use if no dataset description is provided in a
@@ -34,4 +36,9 @@ package org.matonto.query.api.processor;
  * dataset description is not acceptable to the service.
  */
 public interface DatasetProcessor extends OperationProcessor {
+
+    /**
+     * Processes an operation to ensure that query and update results are limited to graphs within a MatOnto Dataset.
+     */
+    void process();
 }
