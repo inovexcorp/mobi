@@ -21,13 +21,7 @@
  * #L%
  */
 describe('Annotation Overlay directive', function() {
-    var $compile,
-        scope,
-        element,
-        controller,
-        ontologyStateSvc,
-        propertyManagerSvc,
-        ontologyManagerSvc;
+    var $compile, scope, element, controller, ontologyStateSvc, propertyManagerSvc, ontologyManagerSvc, ontoUtils;
 
     beforeEach(function() {
         module('templates');
@@ -40,15 +34,16 @@ describe('Annotation Overlay directive', function() {
         mockResponseObj();
         mockPropertyManager();
         mockUtil();
+        mockOntologyUtilsManager();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _propertyManagerService_, _responseObj_,
-            _ontologyManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _propertyManagerService_, _responseObj_, _ontologyManagerService_, _ontologyUtilsManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
             propertyManagerSvc = _propertyManagerService_;
             resObj = _responseObj_;
             ontologyManagerSvc = _ontologyManagerService_;
+            ontoUtils = _ontologyUtilsManagerService_;
         });
 
         element = $compile(angular.element('<annotation-overlay></annotation-overlay>'))(scope);
@@ -111,25 +106,19 @@ describe('Annotation Overlay directive', function() {
         it('addAnnotation should call the appropriate manager functions', function() {
             controller.addAnnotation();
             expect(resObj.getItemIri).toHaveBeenCalledWith(ontologyStateSvc.annotationSelect);
-            expect(propertyManagerSvc.add).toHaveBeenCalledWith(ontologyStateSvc.selected,
-                resObj.getItemIri(ontologyStateSvc.annotationSelect), ontologyStateSvc.annotationValue,
-                ontologyStateSvc.annotationType['@id'], ontologyStateSvc.annotationLanguage);
-            expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
-                jasmine.any(Object));
+            expect(propertyManagerSvc.add).toHaveBeenCalledWith(ontologyStateSvc.selected, resObj.getItemIri(ontologyStateSvc.annotationSelect), ontologyStateSvc.annotationValue, ontologyStateSvc.annotationType['@id'], ontologyStateSvc.annotationLanguage);
+            expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, jasmine.any(Object));
             expect(ontologyStateSvc.showAnnotationOverlay).toBe(false);
+            expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
         });
         it('editAnnotation should call the appropriate manager functions', function() {
             controller.editAnnotation();
             expect(resObj.getItemIri).toHaveBeenCalledWith(ontologyStateSvc.annotationSelect);
-            expect(ontologyManagerSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
-                jasmine.any(Object));
-            expect(propertyManagerSvc.edit).toHaveBeenCalledWith(ontologyStateSvc.selected,
-                resObj.getItemIri(ontologyStateSvc.annotationSelect), ontologyStateSvc.annotationValue,
-                ontologyStateSvc.annotationIndex, ontologyStateSvc.annotationType['@id'],
-                ontologyStateSvc.annotationLanguage);
-            expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
-                jasmine.any(Object));
+            expect(ontologyManagerSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, jasmine.any(Object));
+            expect(propertyManagerSvc.edit).toHaveBeenCalledWith(ontologyStateSvc.selected, resObj.getItemIri(ontologyStateSvc.annotationSelect), ontologyStateSvc.annotationValue, ontologyStateSvc.annotationIndex, ontologyStateSvc.annotationType['@id'], ontologyStateSvc.annotationLanguage);
+            expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, jasmine.any(Object));
             expect(ontologyStateSvc.showAnnotationOverlay).toBe(false);
+            expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
         });
     });
 });

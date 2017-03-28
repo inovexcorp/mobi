@@ -27,11 +27,9 @@
         .module('annotationOverlay', [])
         .directive('annotationOverlay', annotationOverlay);
 
-        annotationOverlay.$inject = ['responseObj', 'ontologyManagerService', 'propertyManagerService',
-            'ontologyStateService', 'utilService'];
+        annotationOverlay.$inject = ['responseObj', 'ontologyManagerService', 'propertyManagerService', 'ontologyStateService', 'utilService', 'ontologyUtilsManagerService'];
 
-        function annotationOverlay(responseObj, ontologyManagerService, propertyManagerService, ontologyStateService,
-            utilService) {
+        function annotationOverlay(responseObj, ontologyManagerService, propertyManagerService, ontologyStateService, utilService, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -40,6 +38,7 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
+                    var ontoUtils = ontologyUtilsManagerService;
                     dvm.pm = propertyManagerService;
                     dvm.om = ontologyManagerService;
                     dvm.ro = responseObj;
@@ -58,6 +57,7 @@
                         dvm.pm.add(dvm.sm.selected, dvm.ro.getItemIri(dvm.sm.annotationSelect), dvm.sm.annotationValue, _.get(dvm.sm.annotationType, '@id'), dvm.sm.annotationLanguage);
                         dvm.om.addToAdditions(dvm.sm.listItem.recordId, createJson(dvm.sm.annotationValue, dvm.sm.annotationLanguage));
                         dvm.sm.showAnnotationOverlay = false;
+                        ontoUtils.saveCurrentChanges();
                     }
 
                     dvm.editAnnotation = function() {
@@ -67,6 +67,7 @@
                         dvm.pm.edit(dvm.sm.selected, property, dvm.sm.annotationValue, dvm.sm.annotationIndex, _.get(dvm.sm.annotationType, '@id'), dvm.sm.annotationLanguage);
                         dvm.om.addToAdditions(dvm.sm.listItem.recordId, createJson(dvm.sm.annotationValue, dvm.sm.annotationLanguage));
                         dvm.sm.showAnnotationOverlay = false;
+                        ontoUtils.saveCurrentChanges();
                     }
                 }
             }

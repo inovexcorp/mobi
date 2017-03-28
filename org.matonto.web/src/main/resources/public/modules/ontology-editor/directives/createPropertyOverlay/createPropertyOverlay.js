@@ -107,6 +107,7 @@
                         dvm.sm.selectItem(_.get(dvm.property, '@id'));
                         // hide the overlay
                         dvm.sm.showCreatePropertyOverlay = false;
+                        ontoUtils.saveCurrentChanges();
                     }
                 }
             }

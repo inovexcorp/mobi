@@ -550,6 +550,7 @@ function mockOntologyUtilsManager() {
             this.getNameByIRI = jasmine.createSpy('getNameByIRI');
             this.getNameByNode = jasmine.createSpy('getNameByNode');
             this.addLanguageToNewEntity = jasmine.createSpy('addLanguageToNewEntity');
+            this.saveCurrentChanges = jasmine.createSpy('saveCurrentChanges');
         });
     });
 }
