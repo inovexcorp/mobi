@@ -23,8 +23,11 @@ package org.matonto.dataset.impl;
  * #L%
  */
 
+import org.antlr.v4.runtime.TokenStreamRewriter;
+import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.NotImplementedException;
+import org.apache.log4j.Logger;
 import org.matonto.dataset.api.DatasetConnection;
 import org.matonto.dataset.ontology.dataset.Dataset;
 import org.matonto.exception.MatOntoException;
@@ -46,6 +49,9 @@ import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.base.RepositoryConnectionWrapper;
 import org.matonto.repository.base.RepositoryResult;
 import org.matonto.repository.exception.RepositoryException;
+import org.matonto.sparql.query.Query;
+import org.matonto.sparql.query.SparqlBaseListener;
+import org.matonto.sparql.query.SparqlParser;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -64,6 +70,8 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     private static final String GET_DEFAULT_NAMED_GRAPHS_QUERY;
     private static final String DATSET_BINDING = "dataset";
     private static final String GRAPH_BINDING = "graph";
+
+    private static final Logger log = Logger.getLogger(SimpleDatasetRepositoryConnection.class);
 
     static {
         try {
@@ -282,7 +290,17 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
 
     @Override
     public TupleQuery prepareTupleQuery(String query) throws RepositoryException, MalformedQueryException {
-        throw new NotImplementedException("Not yet implemented.");
+        SparqlParser parser = Query.getParser(query);
+        SparqlParser.QueryContext queryContext = parser.query();
+        TokenStreamRewriter rewriter = new TokenStreamRewriter(parser.getTokenStream());
+        ParseTreeWalker walker = new ParseTreeWalker();
+        DatasetListener listener = new DatasetListener(rewriter);
+        walker.walk(listener, queryContext);
+
+        String processedQuery = rewriter.getText();
+        log.debug("Dataset Processed Query: \n" + processedQuery);
+
+        return getDelegate().prepareTupleQuery(processedQuery);
     }
 
     @Override
@@ -516,6 +534,46 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
         @Override
         public Resource next() {
             return Bindings.requiredResource(queryResult.next(), GRAPH_BINDING);
+        }
+    }
+
+    private class DatasetListener extends SparqlBaseListener {
+        private TokenStreamRewriter rewriter;
+        private String datasetClause;
+
+        DatasetListener(TokenStreamRewriter rewriter) {
+            this.rewriter = rewriter;
+        }
+
+        @Override
+        public void enterDatasetClause(SparqlParser.DatasetClauseContext ctx) {
+            rewriter.delete(ctx.getStart(), ctx.getStop());
+        }
+
+        @Override
+        public void enterWhereClause(SparqlParser.WhereClauseContext ctx) {
+            rewriter.insertBefore(ctx.getStart(), getDatasetClause());
+        }
+
+        private String getDatasetClause() {
+            if (datasetClause == null) {
+                StringBuilder stringBuilder = new StringBuilder();
+                stringBuilder.append("FROM <");
+                stringBuilder.append(getSystemDefaultNamedGraph().stringValue());
+                stringBuilder.append(">");
+                getNamedGraphs().forEach(resource -> {
+                    stringBuilder.append("FROM NAMED <");
+                    stringBuilder.append(resource.stringValue());
+                    stringBuilder.append(">");
+                });
+                getDefaultNamedGraphs().forEach(resource -> {
+                    stringBuilder.append("FROM <");
+                    stringBuilder.append(resource.stringValue());
+                    stringBuilder.append(">");
+                });
+                this.datasetClause = stringBuilder.toString();
+            }
+            return datasetClause;
         }
     }
 }

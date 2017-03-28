@@ -23,6 +23,7 @@
 package org.matonto.dataset.impl
 
 import org.matonto.dataset.ontology.dataset.Dataset
+import org.matonto.persistence.utils.QueryResults
 import org.matonto.persistence.utils.RepositoryResults
 import org.matonto.rdf.api.Resource
 import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory
@@ -600,6 +601,10 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
 
         expect:
         conn.isActive()
+
+        cleanup:
+        conn.commit()
+        conn.close()
     }
 
     def "commit ends a transaction"() {
@@ -994,5 +999,61 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         then:
         results.size() == 4
         results == graphs
+    }
+
+    def "prepareTupleQuery(query) without a dataset declaration properly queries the dataset graphs"() {
+        setup:
+        def dataset = datasetsInFile[2]
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
+        def queryString = "SELECT * WHERE { ?s ?p ?o }"
+        def query = conn.prepareTupleQuery(queryString)
+
+        when:
+        def results = query.evaluate()
+
+        then:
+        QueryResults.asList(results).size() == 2
+    }
+
+    def "prepareTupleQuery(query) without a dataset declaration properly queries the dataset graphs with named"() {
+        setup:
+        def dataset = datasetsInFile[2]
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
+        def queryString = "SELECT * WHERE { {?s ?p ?o} UNION {GRAPH ?g {?s ?p ?o}} }"
+        def query = conn.prepareTupleQuery(queryString)
+
+        when:
+        def results = query.evaluate()
+
+        then:
+        QueryResults.asList(results).size() == 4
+    }
+
+    def "prepareTupleQuery(query) with a dataset declaration properly queries the dataset graphs"() {
+        setup:
+        def dataset = datasetsInFile[2]
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
+        def queryString = "SELECT * FROM <:g1> WHERE { ?s ?p ?o }"
+        def query = conn.prepareTupleQuery(queryString)
+
+        when:
+        def results = query.evaluate()
+
+        then:
+        QueryResults.asList(results).size() == 2
+    }
+
+    def "prepareTupleQuery(query) with a dataset declaration properly queries the dataset graphs with named"() {
+        setup:
+        def dataset = datasetsInFile[2]
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
+        def queryString = "SELECT * FROM <:g1> WHERE { {?s ?p ?o} UNION {GRAPH ?g {?s ?p ?o}} }"
+        def query = conn.prepareTupleQuery(queryString)
+
+        when:
+        def results = query.evaluate()
+
+        then:
+        QueryResults.asList(results).size() == 4
     }
 }
