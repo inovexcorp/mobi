@@ -25,7 +25,6 @@ package org.matonto.jaas.engines;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
-import org.apache.log4j.Logger;
 import org.matonto.jaas.api.engines.Engine;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.engines.GroupConfig;
@@ -33,7 +32,6 @@ import org.matonto.jaas.api.engines.UserConfig;
 import org.matonto.jaas.api.ontologies.usermanagement.Group;
 import org.matonto.jaas.api.ontologies.usermanagement.Role;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
-import org.matonto.rdf.api.Literal;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.orm.Thing;
@@ -51,7 +49,6 @@ import java.util.stream.Collectors;
     )
 public class SimpleEngineManager implements EngineManager {
     public static final String COMPONENT_NAME = "org.matonto.jaas.api.engines.EngineManager";
-    private final Logger log = Logger.getLogger(SimpleEngineManager.class);
     protected Map<String, Engine> engines = new HashMap<>();
 
     @Reference(type = '*', dynamic = true)

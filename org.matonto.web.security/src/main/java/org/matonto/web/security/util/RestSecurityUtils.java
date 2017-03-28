@@ -23,8 +23,9 @@ package org.matonto.web.security.util;
  * #L%
  */
 
-import org.apache.log4j.Logger;
 import org.matonto.jaas.api.modules.token.TokenCallback;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.security.auth.Subject;
 import javax.security.auth.callback.Callback;
@@ -37,7 +38,7 @@ import javax.security.auth.login.LoginException;
 
 public class RestSecurityUtils {
 
-    private static final Logger LOG = Logger.getLogger(RestSecurityUtils.class.getName());
+    private static final Logger LOG = LoggerFactory.getLogger(RestSecurityUtils.class.getName());
 
     public static boolean authenticateToken(String realm, Subject subject, String tokenString, Configuration configuration) {
         LoginContext loginContext;
