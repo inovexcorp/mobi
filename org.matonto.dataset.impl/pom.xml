@@ -54,6 +54,11 @@
             <artifactId>sparql.utils</artifactId>
             <version>1.5.32-SNAPSHOT</version>
         </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>persistence.utils</artifactId>
+            <version>1.5.32-SNAPSHOT</version>
+        </dependency>
 
         <!-- Test Dependencies -->
         <dependency>
@@ -81,11 +86,6 @@
             <artifactId>rdf.orm.ontologies</artifactId>
             <version>1.5.12</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.matonto</groupId>
-            <artifactId>persistence.utils</artifactId>
-            <version>1.5.32-SNAPSHOT</version>
         </dependency>
     </dependencies>
 

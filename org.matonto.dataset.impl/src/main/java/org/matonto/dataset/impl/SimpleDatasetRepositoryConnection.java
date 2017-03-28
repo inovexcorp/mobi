@@ -27,7 +27,6 @@ import org.antlr.v4.runtime.TokenStreamRewriter;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.NotImplementedException;
-import org.apache.log4j.Logger;
 import org.matonto.dataset.api.DatasetConnection;
 import org.matonto.dataset.ontology.dataset.Dataset;
 import org.matonto.exception.MatOntoException;
@@ -52,6 +51,8 @@ import org.matonto.repository.exception.RepositoryException;
 import org.matonto.sparql.utils.Query;
 import org.matonto.sparql.utils.SparqlBaseListener;
 import org.matonto.sparql.utils.SparqlParser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -71,7 +72,11 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     private static final String DATSET_BINDING = "dataset";
     private static final String GRAPH_BINDING = "graph";
 
-    private static final Logger log = Logger.getLogger(SimpleDatasetRepositoryConnection.class);
+    private static final String FROM = "FROM <";
+    private static final String FROM_NAMED = "FROM NAMED <";
+    private static final String GREATER = ">";
+
+    private static final Logger log = LoggerFactory.getLogger(SimpleDatasetRepositoryConnection.class);
 
     static {
         try {
@@ -558,18 +563,18 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
         private String getDatasetClause() {
             if (datasetClause == null) {
                 StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("FROM <");
+                stringBuilder.append(FROM);
                 stringBuilder.append(getSystemDefaultNamedGraph().stringValue());
-                stringBuilder.append(">");
+                stringBuilder.append(GREATER);
                 getNamedGraphs().forEach(resource -> {
-                    stringBuilder.append("FROM NAMED <");
+                    stringBuilder.append(FROM_NAMED);
                     stringBuilder.append(resource.stringValue());
-                    stringBuilder.append(">");
+                    stringBuilder.append(GREATER);
                 });
                 getDefaultNamedGraphs().forEach(resource -> {
-                    stringBuilder.append("FROM <");
+                    stringBuilder.append(FROM);
                     stringBuilder.append(resource.stringValue());
-                    stringBuilder.append(">");
+                    stringBuilder.append(GREATER);
                 });
                 this.datasetClause = stringBuilder.toString();
             }
