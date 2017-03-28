@@ -292,8 +292,9 @@ public class DelimitedRestImpl implements DelimitedRest {
         }
 
         // Run the mapping against the delimited data
-        org.matonto.rdf.api.Model result;
-        InputStream data = getDocumentInputStream(delimitedFile);
+        org.matonto.rdf.api.Model result = null;
+        try(InputStream data = getDocumentInputStream(delimitedFile))
+        {
         if (extension.equals("xls") || extension.equals("xlsx")) {
             ExcelConfig.ExcelConfigBuilder config = new ExcelConfig.ExcelConfigBuilder(data,
                     transformer.matontoModel(mappingModel)).containsHeaders(containsHeaders);
@@ -310,13 +311,10 @@ public class DelimitedRestImpl implements DelimitedRest {
             }
             result = etlFile(() -> converter.convert(config.build()));
         }
-        try {
-            // close the stream to clear locks on the file
-            data.close();
-        } catch (IOException e) {
-            throw ErrorUtils.sendError("Document not found", Response.Status.BAD_REQUEST);
-        }
         logger.info("File mapped: " + delimitedFile.getPath());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         return result;
     }
 
@@ -406,15 +404,14 @@ public class DelimitedRestImpl implements DelimitedRest {
      */
     private String convertCSVRows(File input, int numRows, char separator) throws IOException {
         Charset charset = getCharset(Files.readAllBytes(input.toPath()));
-        CSVReader reader = new CSVReader(new InputStreamReader(new FileInputStream(input), charset.name()), separator);
-        List<String[]> csvRows = reader.readAll();
-        JSONArray returnRows = new JSONArray();
-        for (int i = 0; i <= numRows && i < csvRows.size(); i ++) {
-            returnRows.add(i, csvRows.get(i));
-        }
-        // close the reader to clear locks on the file
-        reader.close();
+        try(CSVReader reader = new CSVReader(new InputStreamReader(new FileInputStream(input), charset.name()), separator))
+        {List<String[]> csvRows = reader.readAll();
+         JSONArray returnRows = new JSONArray();
+         for (int i = 0; i <= numRows && i < csvRows.size(); i ++) {
+             returnRows.add(i, csvRows.get(i));
+         }
         return returnRows.toString();
+        }
     }
 
     /**
@@ -428,26 +425,25 @@ public class DelimitedRestImpl implements DelimitedRest {
      * @throws InvalidFormatException file is not in a valid excel format
      */
     private String convertExcelRows(File input, int numRows) throws IOException, InvalidFormatException {
-        Workbook wb = WorkbookFactory.create(input);
-        // Only support single sheet files for now
-        Sheet sheet = wb.getSheetAt(0);
-        DataFormatter df = new DataFormatter();
-        JSONArray rowList = new JSONArray();
-        String[] columns;
-        for (Row row : sheet) {
-            if (row.getRowNum() <= numRows) {
-                columns = new String[row.getPhysicalNumberOfCells()];
-                int index = 0;
-                for (Cell cell : row) {
-                    columns[index] = df.formatCellValue(cell);
-                    index++;
+        try(Workbook wb = WorkbookFactory.create(input)) {
+            // Only support single sheet files for now
+            Sheet sheet = wb.getSheetAt(0);
+            DataFormatter df = new DataFormatter();
+            JSONArray rowList = new JSONArray();
+            String[] columns;
+            for (Row row : sheet) {
+                if (row.getRowNum() <= numRows) {
+                    columns = new String[row.getPhysicalNumberOfCells()];
+                    int index = 0;
+                    for (Cell cell : row) {
+                        columns[index] = df.formatCellValue(cell);
+                        index++;
+                    }
+                    rowList.add(columns);
                 }
-                rowList.add(columns);
             }
+            return rowList.toString();
         }
-        // close the workbook to clear locks on the file
-        wb.close();
-        return rowList.toString();
     }
 
     /**
