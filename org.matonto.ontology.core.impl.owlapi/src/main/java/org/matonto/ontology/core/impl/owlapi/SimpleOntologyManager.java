@@ -26,7 +26,6 @@ package org.matonto.ontology.core.impl.owlapi;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import org.apache.commons.io.IOUtils;
-import org.apache.log4j.Logger;
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.ontologies.mcat.Branch;
 import org.matonto.catalog.api.ontologies.mcat.BranchFactory;
@@ -78,7 +77,6 @@ import javax.annotation.Nullable;
 public class SimpleOntologyManager implements OntologyManager {
 
     protected static final String COMPONENT_NAME = "org.matonto.ontology.core.OntologyManager";
-    private static final Logger log = Logger.getLogger(SimpleOntologyManager.class);
     private ValueFactory valueFactory;
     private SesameTransformer sesameTransformer;
     private ModelFactory modelFactory;
