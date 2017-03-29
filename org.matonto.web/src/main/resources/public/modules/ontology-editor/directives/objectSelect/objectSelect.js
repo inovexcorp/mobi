@@ -27,11 +27,9 @@
         .module('objectSelect', [])
         .directive('objectSelect', objectSelect);
 
-        objectSelect.$inject = ['ontologyManagerService', 'responseObj', 'settingsManagerService',
-            'ontologyStateService', 'prefixes'];
+        objectSelect.$inject = ['ontologyManagerService', 'responseObj', 'settingsManagerService', 'ontologyStateService', 'prefixes', 'ontologyUtilsManagerService'];
 
-        function objectSelect(ontologyManagerService, responseObj, settingsManagerService, ontologyStateService,
-            prefixes) {
+        function objectSelect(ontologyManagerService, responseObj, settingsManagerService, ontologyStateService, prefixes, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -51,29 +49,31 @@
                 controllerAs: 'dvm',
                 controller: ['$scope', function($scope) {
                     var dvm = this;
+                    var ro = responseObj;
+                    var os = ontologyStateService;
                     $scope.multiSelect = angular.isDefined($scope.multiSelect) ? $scope.multiSelect : true;
 
-                    dvm.sm = ontologyStateService;
                     dvm.om = ontologyManagerService;
+                    dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.tooltipDisplay = settingsManagerService.getTooltipDisplay();
 
                     dvm.getItemOntologyIri = function(item) {
-                        return _.get(item, 'ontologyId', dvm.sm.listItem.ontologyId);
+                        return _.get(item, 'ontologyId', os.listItem.ontologyId);
                     }
 
                     dvm.getItemIri = function(item) {
-                        return _.get(item, '@id', responseObj.getItemIri(item));
+                        return _.get(item, '@id', ro.getItemIri(item));
                     }
 
                     dvm.getTooltipDisplay = function(item) {
                         var itemIri = dvm.getItemIri(item);
                         var result = itemIri;
                         if (!_.has(item, 'ontologyId')) {
-                            var selectedObject = dvm.om.getEntityByRecordId(dvm.sm.listItem.recordId, itemIri);
+                            var selectedObject = dvm.om.getEntityByRecordId(os.listItem.recordId, itemIri);
                             if (dvm.tooltipDisplay === 'comment') {
                                 result = dvm.om.getEntityDescription(selectedObject) || itemIri;
                             } else if (dvm.tooltipDisplay === 'label') {
-                                result = dvm.om.getEntityName(selectedObject, dvm.sm.state.type) || itemIri;
+                                result = dvm.om.getEntityName(selectedObject, os.state.type) || itemIri;
                             } else if (_.has(selectedObject, '@id')) {
                                 result = selectedObject['@id'];
                             }
@@ -82,13 +82,13 @@
                     }
 
                     dvm.isBlankNode = function(id) {
-                        return typeof id === 'string' && _.includes(id, '_:b');
+                        return typeof id === 'string' && _.includes(id, '_:genid');
                     }
 
                     dvm.getBlankNodeValue = function(id) {
                         var result;
                         if (dvm.isBlankNode(id)) {
-                            result = _.get(dvm.sm.listItem.blankNodes, id, id);
+                            result = _.get(os.listItem.blankNodes, id, id);
                         }
                         return result;
                     }

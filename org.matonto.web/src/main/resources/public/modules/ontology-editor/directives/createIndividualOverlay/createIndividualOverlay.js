@@ -38,8 +38,7 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    var ontoUtils = ontologyUtilsManagerService;
-
+                    dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.prefixes = prefixes;
                     dvm.ro = responseObj;
                     dvm.om = ontologyManagerService;
@@ -86,7 +85,7 @@
                         dvm.sm.selectItem(dvm.individual['@id'], false);
                         // hide the overlay
                         dvm.sm.showCreateIndividualOverlay = false;
-                        ontoUtils.saveCurrentChanges();
+                        dvm.ontoUtils.saveCurrentChanges();
                     }
                 }
             }

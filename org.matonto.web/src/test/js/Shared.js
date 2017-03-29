@@ -548,11 +548,12 @@ function mockOntologyUtilsManager() {
             this.isBlankNodeString = jasmine.createSpy('isBlankNodeString');
             this.getBlankNodeValue = jasmine.createSpy('getBlankNodeValue');
             this.isLinkable = jasmine.createSpy('isLinkable');
-            this.getNameByIRI = jasmine.createSpy('getNameByIRI');
             this.getNameByNode = jasmine.createSpy('getNameByNode');
             this.addLanguageToNewEntity = jasmine.createSpy('addLanguageToNewEntity');
             this.saveCurrentChanges = jasmine.createSpy('saveCurrentChanges');
             this.updateLabel = jasmine.createSpy('updateLabel');
+            this.getLabelForIRI = jasmine.createSpy('getLabelForIRI');
+            this.getDropDownText = jasmine.createSpy('getDropDownText');
         });
     });
 }

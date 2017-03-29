@@ -21,14 +21,7 @@
  * #L%
  */
 describe('Object Select directive', function() {
-    var $compile,
-        scope,
-        element,
-        isolatedScope,
-        controller,
-        prefixes,
-        ontologyStateSvc,
-        responseObj;
+    var $compile, scope, element, isolatedScope, controller, prefixes, ontologyStateSvc, responseObj;
 
     beforeEach(function() {
         module('templates');
@@ -41,6 +34,7 @@ describe('Object Select directive', function() {
         mockOntologyState();
         mockResponseObj();
         mockPrefixes();
+        mockOntologyUtilsManager();
 
         inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _settingsManagerService_, _responseObj_, _ontologyStateService_, _prefixes_) {
             $compile = _$compile_;
@@ -215,8 +209,8 @@ describe('Object Select directive', function() {
                     expect(controller.isBlankNode(item)).toBe(false);
                 });
             });
-            it('true for strings containing "_:b"', function() {
-                _.forEach(['_:b', '_:b1', 'stuff_:b'], function(item) {
+            it('true for strings containing "_:genid"', function() {
+                _.forEach(['_:genid', '_:genid1', 'stuff_:genid'], function(item) {
                     expect(controller.isBlankNode(item)).toBe(true);
                 });
             });
@@ -224,10 +218,10 @@ describe('Object Select directive', function() {
         describe('getBlankNodeValue should return', function() {
             beforeEach(function() {
                 ontologyStateSvc.listItem.blankNodes = {
-                    '_:b1': 'prop',
-                    '_:b2': 'class',
-                    '_:b3': 'union',
-                    '_:b4': 'intersection'
+                    '_:genid1': 'prop',
+                    '_:genid2': 'class',
+                    '_:genid3': 'union',
+                    '_:genid4': 'intersection'
                 }
                 scope.$digest();
             });
@@ -238,7 +232,7 @@ describe('Object Select directive', function() {
             });
             it('id if isBlankNode returns true and id does not match any property', function() {
                 spyOn(controller, 'isBlankNode').and.returnValue(true);
-                _.forEach(['_:b11', '_:b22', 'test', ''], function(item) {
+                _.forEach(['_:genid11', '_:genid22', 'test', ''], function(item) {
                     var result = controller.getBlankNodeValue(item);
                     expect(result).toBe(item);
                 });
@@ -246,10 +240,10 @@ describe('Object Select directive', function() {
             it('property name when id does match property', function() {
                 spyOn(controller, 'isBlankNode').and.returnValue(true);
                 var tests = [
-                    {id: '_:b1', result: 'prop'},
-                    {id: '_:b2', result: 'class'},
-                    {id: '_:b3', result: 'union'},
-                    {id: '_:b4', result: 'intersection'}
+                    {id: '_:genid1', result: 'prop'},
+                    {id: '_:genid2', result: 'class'},
+                    {id: '_:genid3', result: 'union'},
+                    {id: '_:genid4', result: 'intersection'}
                 ];
                 _.forEach(tests, function(item) {
                     var result = controller.getBlankNodeValue(item.id);

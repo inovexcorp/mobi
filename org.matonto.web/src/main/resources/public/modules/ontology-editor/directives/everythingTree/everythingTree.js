@@ -44,7 +44,7 @@
                     dvm.sm = ontologyStateService;
 
                     dvm.getName = function(entity) {
-                        return ou.getNameByIRI(_.get(entity, '@id', _.get(entity, 'matonto.originalIRI')));
+                        return ou.getLabelForIRI(_.get(entity, '@id', _.get(entity, 'matonto.originalIRI')));
                     }
                 }
             }

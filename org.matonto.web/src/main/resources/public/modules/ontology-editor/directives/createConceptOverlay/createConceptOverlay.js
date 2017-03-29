@@ -38,8 +38,7 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    var ontoUtils = ontologyUtilsManagerService;
-
+                    dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.prefixes = prefixes;
                     dvm.om = ontologyManagerService;
                     dvm.sm = ontologyStateService;
@@ -77,7 +76,7 @@
                             }
                             entity.matonto.unsaved = true;
                         });
-                        ontoUtils.addLanguageToNewEntity(dvm.concept, dvm.language);
+                        dvm.ontoUtils.addLanguageToNewEntity(dvm.concept, dvm.language);
                         _.set(dvm.concept, 'matonto.originalIRI', dvm.concept['@id']);
                         // add the entity to the ontology
                         dvm.om.addEntity(dvm.sm.listItem, dvm.concept);
@@ -88,7 +87,7 @@
                         dvm.sm.selectItem(_.get(dvm.concept, '@id'));
                         // hide the overlay
                         dvm.sm.showCreateConceptOverlay = false;
-                        ontoUtils.saveCurrentChanges();
+                        dvm.ontoUtils.saveCurrentChanges();
                     }
                 }
             }

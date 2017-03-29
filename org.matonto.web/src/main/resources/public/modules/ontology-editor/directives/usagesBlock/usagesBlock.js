@@ -27,8 +27,7 @@
         .module('usagesBlock', [])
         .directive('usagesBlock', usagesBlock);
 
-        usagesBlock.$inject = ['$filter', 'ontologyStateService', 'ontologyManagerService',
-            'ontologyUtilsManagerService'];
+        usagesBlock.$inject = ['$filter', 'ontologyStateService', 'ontologyManagerService', 'ontologyUtilsManagerService'];
 
         function usagesBlock($filter, ontologyStateService, ontologyManagerService, ontologyUtilsManagerService) {
             return {
@@ -59,10 +58,6 @@
                     };
 
                     dvm.results = getResults();
-
-                    dvm.getBindingDisplay = function(binding) {
-                        return $filter('splitIRI')(binding).end;
-                    }
 
                     $scope.$watch(function() {
                         return _.get(dvm.sm.listItem, 'recordId');

@@ -27,14 +27,15 @@
         .module('ontologyUtilsManager', [])
         .service('ontologyUtilsManagerService', ontologyUtilsManagerService);
 
-        ontologyUtilsManagerService.$inject = ['$q', '$filter', 'ontologyManagerService', 'ontologyStateService', 'updateRefsService', 'prefixes', 'utilService'];
+        ontologyUtilsManagerService.$inject = ['$q', '$filter', 'ontologyManagerService', 'ontologyStateService', 'updateRefsService', 'prefixes', 'utilService', 'responseObj'];
 
-        function ontologyUtilsManagerService($q, $filter, ontologyManagerService, ontologyStateService, updateRefsService, prefixes, utilService) {
+        function ontologyUtilsManagerService($q, $filter, ontologyManagerService, ontologyStateService, updateRefsService, prefixes, utilService, responseObj) {
             var self = this;
             var om = ontologyManagerService;
             var os = ontologyStateService;
             var ur = updateRefsService;
             var util = utilService;
+            var ro = responseObj;
 
             self.commonDelete = function(entityIRI) {
                 om.getEntityUsages(os.listItem.recordId, os.listItem.branchId, os.listItem.commitId, entityIRI, 'construct')
@@ -114,12 +115,8 @@
                 return _.has(os.listItem.index, id) && !self.isBlankNodeString(id);
             }
 
-            self.getNameByIRI = function(iri) {
-                return om.getEntityName(om.getEntityByRecordId(os.listItem.recordId, iri));
-            }
-
             self.getNameByNode = function(node) {
-                return self.getNameByIRI(node.entityIRI);
+                return self.getLabelForIRI(node.entityIRI);
             }
 
             self.addLanguageToNewEntity = function(entity, language) {
@@ -156,6 +153,10 @@
 
             self.getLabelForIRI = function(iri) {
                 return om.getEntityNameByIndex(iri, os.listItem);
+            }
+
+            self.getDropDownText = function(item) {
+                return om.getEntityNameByIndex(ro.getItemIri(item), os.listItem);
             }
         }
 })();
