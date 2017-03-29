@@ -80,18 +80,6 @@
                         }
                         return result;
                     }
-
-                    dvm.isBlankNode = function(id) {
-                        return typeof id === 'string' && _.includes(id, '_:genid');
-                    }
-
-                    dvm.getBlankNodeValue = function(id) {
-                        var result;
-                        if (dvm.isBlankNode(id)) {
-                            result = _.get(os.listItem.blankNodes, id, id);
-                        }
-                        return result;
-                    }
                 }]
             }
         }

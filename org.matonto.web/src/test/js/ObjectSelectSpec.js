@@ -203,53 +203,5 @@ describe('Object Select directive', function() {
                 });
             });
         });
-        describe('isBlankNode should return', function() {
-            it('false for falsey values', function() {
-                _.forEach([undefined, null, [], true], function(item) {
-                    expect(controller.isBlankNode(item)).toBe(false);
-                });
-            });
-            it('true for strings containing "_:genid"', function() {
-                _.forEach(['_:genid', '_:genid1', 'stuff_:genid'], function(item) {
-                    expect(controller.isBlankNode(item)).toBe(true);
-                });
-            });
-        });
-        describe('getBlankNodeValue should return', function() {
-            beforeEach(function() {
-                ontologyStateSvc.listItem.blankNodes = {
-                    '_:genid1': 'prop',
-                    '_:genid2': 'class',
-                    '_:genid3': 'union',
-                    '_:genid4': 'intersection'
-                }
-                scope.$digest();
-            });
-            it('undefined if isBlankNode returns false', function() {
-                spyOn(controller, 'isBlankNode').and.returnValue(false);
-                var result = controller.getBlankNodeValue();
-                expect(result).toBe(undefined);
-            });
-            it('id if isBlankNode returns true and id does not match any property', function() {
-                spyOn(controller, 'isBlankNode').and.returnValue(true);
-                _.forEach(['_:genid11', '_:genid22', 'test', ''], function(item) {
-                    var result = controller.getBlankNodeValue(item);
-                    expect(result).toBe(item);
-                });
-            });
-            it('property name when id does match property', function() {
-                spyOn(controller, 'isBlankNode').and.returnValue(true);
-                var tests = [
-                    {id: '_:genid1', result: 'prop'},
-                    {id: '_:genid2', result: 'class'},
-                    {id: '_:genid3', result: 'union'},
-                    {id: '_:genid4', result: 'intersection'}
-                ];
-                _.forEach(tests, function(item) {
-                    var result = controller.getBlankNodeValue(item.id);
-                    expect(result).toBe(item.result);
-                });
-            });
-        });
     });
 });

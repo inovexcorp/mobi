@@ -39,7 +39,7 @@
                 controller: ['$scope', function($scope) {
                     var dvm = this;
                     dvm.os = ontologyStateService;
-                    dvm.um = ontologyUtilsManagerService;
+                    dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.om = ontologyManagerService;
 
                     dvm.onKeyup = function($event) {

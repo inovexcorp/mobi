@@ -38,13 +38,13 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    var ou = ontologyUtilsManagerService;
+                    var ontoUtils = ontologyUtilsManagerService;
 
                     dvm.om = ontologyManagerService;
                     dvm.sm = ontologyStateService;
 
                     dvm.getName = function(entity) {
-                        return ou.getLabelForIRI(_.get(entity, '@id', _.get(entity, 'matonto.originalIRI')));
+                        return ontoUtils.getLabelForIRI(_.get(entity, '@id', _.get(entity, 'matonto.originalIRI')));
                     }
                 }
             }

@@ -40,7 +40,7 @@
                     var dvm = this;
                     dvm.om = ontologyManagerService;
                     dvm.sm = ontologyStateService;
-                    dvm.um = ontologyUtilsManagerService;
+                    dvm.ontoUtils = ontologyUtilsManagerService;
 
                     function getResults() {
                         var results = {};
