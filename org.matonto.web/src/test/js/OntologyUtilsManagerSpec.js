@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Ontology Utils Manager service', function() {
-    var ontologyUtilsManagerSvc, ontologyManagerSvc, ontologyStateSvc, prefixes, splitIRIFilter, util, updateRefs, scope, $q;
+    var ontologyUtilsManagerSvc, ontologyManagerSvc, ontologyStateSvc, prefixes, splitIRIFilter, util, updateRefs, scope, $q, responseObj;
 
     beforeEach(function() {
         module('ontologyUtilsManager');
@@ -31,8 +31,9 @@ describe('Ontology Utils Manager service', function() {
         mockPrefixes();
         injectSplitIRIFilter();
         mockUtil();
+        mockResponseObj();
 
-        inject(function(ontologyUtilsManagerService, _ontologyManagerService_, _ontologyStateService_, _prefixes_, _splitIRIFilter_, _utilService_, _updateRefsService_, _$rootScope_, _$q_) {
+        inject(function(ontologyUtilsManagerService, _ontologyManagerService_, _ontologyStateService_, _prefixes_, _splitIRIFilter_, _utilService_, _updateRefsService_, _$rootScope_, _$q_, _responseObj_) {
             ontologyUtilsManagerSvc = ontologyUtilsManagerService;
             ontologyManagerSvc = _ontologyManagerService_;
             ontologyStateSvc = _ontologyStateService_;
@@ -42,6 +43,7 @@ describe('Ontology Utils Manager service', function() {
             updateRefs = _updateRefsService_;
             scope = _$rootScope_;
             $q = _$q_;
+            responseObj = _responseObj_;
         });
     });
 
@@ -177,21 +179,10 @@ describe('Ontology Utils Manager service', function() {
         spyOn(ontologyUtilsManagerSvc, 'isBlankNodeString').and.returnValue(true);
         expect(ontologyUtilsManagerSvc.isLinkable('_:genid')).toEqual(false);
     });
-    it('getNameByIRI should call the proper methods', function() {
-        var entity = {'@id': 'id'};
-        var iri = 'iri';
-        var recordId = 'recordId';
-        ontologyStateSvc.listItem.recordId = recordId;
-        ontologyManagerSvc.getEntityByRecordId.and.returnValue(entity);
-        ontologyManagerSvc.getEntityName.and.returnValue('result');
-        expect(ontologyUtilsManagerSvc.getNameByIRI(iri)).toEqual('result');
-        expect(ontologyManagerSvc.getEntityByRecordId).toHaveBeenCalledWith(recordId, iri);
-        expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith(entity);
-    });
     it('getNameByNode calls the correct method', function() {
-        spyOn(ontologyUtilsManagerSvc, 'getNameByIRI').and.returnValue('result');
+        spyOn(ontologyUtilsManagerSvc, 'getLabelForIRI').and.returnValue('result');
         expect(ontologyUtilsManagerSvc.getNameByNode({entityIRI: 'iri'})).toEqual('result');
-        expect(ontologyUtilsManagerSvc.getNameByIRI).toHaveBeenCalledWith('iri');
+        expect(ontologyUtilsManagerSvc.getLabelForIRI).toHaveBeenCalledWith('iri');
     });
     describe('addLanguageToNewEntity should set the proper values', function() {
         it('when language is undefined', function() {
@@ -314,5 +305,42 @@ describe('Ontology Utils Manager service', function() {
             expect(util.createErrorToast).toHaveBeenCalledWith('error');
             expect(ontologyStateSvc.listItem.isSaved).toBe(false);
         });
+    });
+
+    describe('updateLabel sets the label correctly', function() {
+        beforeEach(function() {
+            ontologyStateSvc.listItem = {
+                index: {
+                    iri: {
+                        label: 'old-value'
+                    }
+                }
+            };
+            ontologyManagerSvc.getEntityName.and.returnValue('new-value');
+        });
+        it('when the listItem.index contains the selected @id', function() {
+            ontologyStateSvc.selected = {'@id': 'iri'};
+            ontologyUtilsManagerSvc.updateLabel();
+            expect(ontologyStateSvc.listItem.index.iri.label).toBe('new-value');
+        });
+        it('when the listItem.index does not contain the selected @id', function() {
+            ontologyStateSvc.selected = {};
+            ontologyUtilsManagerSvc.updateLabel();
+            expect(ontologyStateSvc.listItem.index.iri.label).toBe('old-value');
+        });
+    });
+
+    it('getLabelForIRI should call the proper methods', function() {
+        ontologyManagerSvc.getEntityNameByIndex.and.returnValue('result');
+        expect(ontologyUtilsManagerSvc.getLabelForIRI('iri')).toEqual('result');
+        expect(ontologyManagerSvc.getEntityNameByIndex).toHaveBeenCalledWith('iri', ontologyStateSvc.listItem);
+    });
+
+    it('getDropDownText should call the correct methods', function() {
+        responseObj.getItemIri.and.returnValue('iri');
+        ontologyManagerSvc.getEntityNameByIndex.and.returnValue('name');
+        expect(ontologyUtilsManagerSvc.getDropDownText({})).toBe('name');
+        expect(responseObj.getItemIri).toHaveBeenCalledWith({});
+        expect(ontologyManagerSvc.getEntityNameByIndex).toHaveBeenCalledWith('iri', ontologyStateSvc.listItem);
     });
 });

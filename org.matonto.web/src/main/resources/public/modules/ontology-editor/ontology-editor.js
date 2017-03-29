@@ -91,7 +91,6 @@
             'selectedDetails',
             'serializationSelect',
             'staticIri',
-            'stringSelect',
             'treeItem',
             'uploadOntologyTab',
             'usagesBlock',

@@ -22,14 +22,7 @@
  */
 
 describe('Tree Item directive', function() {
-    var $compile,
-        scope,
-        element,
-        controller,
-        isolatedScope,
-        ontologyStateSvc,
-        ontologyManagerSvc,
-        settingsManagerSvc;
+    var $compile, scope, element, controller, isolatedScope, ontologyStateSvc, ontologyManagerSvc, settingsManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -51,7 +44,7 @@ describe('Tree Item directive', function() {
         scope.hasChildren = true;
         scope.isActive = false;
         scope.onClick = jasmine.createSpy('onClick');
-        scope.currentEntity = {};
+        scope.currentEntity = {'@id': 'id'};
         scope.isOpened = true;
         scope.isBold = false;
         scope.path = '';
@@ -156,20 +149,20 @@ describe('Tree Item directive', function() {
                 scope.$digest();
                 var result = controller.getTreeDisplay();
                 expect(result).toBe('originalIRI');
-                expect(ontologyManagerSvc.getEntityName).not.toHaveBeenCalled();
+                expect(ontologyManagerSvc.getEntityNameByIndex).not.toHaveBeenCalled();
             });
             it('should return anonymous when not pretty and no originalIRI', function() {
                 scope.currentEntity = {matonto: {anonymous: 'anon'}};
                 scope.$digest();
                 var result = controller.getTreeDisplay();
                 expect(result).toBe('anon');
-                expect(ontologyManagerSvc.getEntityName).not.toHaveBeenCalled();
+                expect(ontologyManagerSvc.getEntityNameByIndex).not.toHaveBeenCalled();
             });
             it('should call getEntityName if pretty', function() {
                 settingsManagerSvc.getTreeDisplay.and.returnValue('pretty');
                 element = $compile(angular.element('<tree-item path="path" is-opened="isOpened" current-entity="currentEntity" is-active="isActive" on-click="onClick()" has-children="hasChildren"></tree-item>'))(scope);
                 scope.$digest();
-                expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith(controller.currentEntity, ontologyStateSvc.state.type);
+                expect(ontologyManagerSvc.getEntityNameByIndex).toHaveBeenCalledWith('id', ontologyStateSvc.listItem);
             });
         });
         describe('toggleOpen', function() {

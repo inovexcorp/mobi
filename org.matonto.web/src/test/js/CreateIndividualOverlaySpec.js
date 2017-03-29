@@ -167,7 +167,7 @@ describe('Create Individual Overlay directive', function() {
             });
         });
         it('should create an individual', function() {
-            var listItem = {ontology: [{}], individuals: [], classesWithIndividuals: [], index: {}};
+            var listItem = {ontology: [{}], individuals: [], classesWithIndividuals: []};
             var split = {begin: 'begin', then: 'then', end: 'end'};
             ontologyStateSvc.listItem = listItem;
             splitIRIFilter.and.returnValue(split);
@@ -178,7 +178,6 @@ describe('Create Individual Overlay directive', function() {
             expect(listItem.classesWithIndividuals).toContain({entityIRI: 'ClassA'});
             expect(controller.individual['@type']).toContain(prefixes.owl + 'NamedIndividual');
             expect(ontologyManagerSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, controller.individual);
-            expect(listItem.index[controller.individual['@id']]).toBe(0);
             expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, controller.individual);
             expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(controller.individual['@id'], false);
             expect(ontologyStateSvc.showCreateIndividualOverlay).toBe(false);

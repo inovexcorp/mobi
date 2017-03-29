@@ -38,8 +38,7 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    var ontoUtils = ontologyUtilsManagerService;
-
+                    dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.prefixes = prefixes;
                     dvm.om = ontologyManagerService;
                     dvm.sm = ontologyStateService;
@@ -77,19 +76,18 @@
                             }
                             entity.matonto.unsaved = true;
                         });
-                        ontoUtils.addLanguageToNewEntity(dvm.concept, dvm.language);
+                        dvm.ontoUtils.addLanguageToNewEntity(dvm.concept, dvm.language);
                         _.set(dvm.concept, 'matonto.originalIRI', dvm.concept['@id']);
                         // add the entity to the ontology
                         dvm.om.addEntity(dvm.sm.listItem, dvm.concept);
                         // update relevant lists
                         _.get(dvm.sm.listItem, 'conceptHierarchy').push({'entityIRI': dvm.concept['@id']});
-                        _.set(_.get(dvm.sm.listItem, 'index'), dvm.concept['@id'], dvm.sm.listItem.ontology.length - 1);
                         dvm.om.addToAdditions(dvm.sm.listItem.recordId, dvm.concept);
                         // select the new class
                         dvm.sm.selectItem(_.get(dvm.concept, '@id'));
                         // hide the overlay
                         dvm.sm.showCreateConceptOverlay = false;
-                        ontoUtils.saveCurrentChanges();
+                        dvm.ontoUtils.saveCurrentChanges();
                     }
                 }
             }

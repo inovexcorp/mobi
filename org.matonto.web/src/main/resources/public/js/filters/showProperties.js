@@ -61,7 +61,7 @@
                     }
                 });
             }
-            return arr;
+            return _.map(arr, responseObj.getItemIri);
         }
     }
 })();

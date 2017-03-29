@@ -41,7 +41,7 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    var ontoUtils = ontologyUtilsManagerService;
+                    dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.om = ontologyManagerService;
                     dvm.ro = responseObj;
                     dvm.sm = ontologyStateService;
@@ -58,7 +58,7 @@
                         }
                         dvm.om.addToAdditions(dvm.sm.listItem.recordId, {'@id': dvm.sm.selected['@id'], [axiom]: values});
                         dvm.sm.showAxiomOverlay = false;
-                        ontoUtils.saveCurrentChanges();
+                        dvm.ontoUtils.saveCurrentChanges();
                     }
                 }
             }

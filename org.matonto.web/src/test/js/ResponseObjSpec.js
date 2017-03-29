@@ -21,15 +21,17 @@
  * #L%
  */
 describe('Response Obj service', function() {
-    var responseObjSvc;
+    var responseObjSvc, splitIRI;
 
     beforeEach(function() {
         module('responseObj');
+        injectSplitIRIFilter();
 
         // To test out a service, you need to inject it and save a copy of it.
         // Then you call simply access the functions and variables provided
-        inject(function(responseObj) {
+        inject(function(responseObj, _splitIRIFilter_) {
             responseObjSvc = responseObj;
+            splitIRI = _splitIRIFilter_;
         });
     });
 
@@ -98,5 +100,10 @@ describe('Response Obj service', function() {
             result = responseObjSvc.getItemIri(test.value);
             expect(result).toBe(test.result);
         });
+    });
+    it('createItemFromIri should call the correct functions', function() {
+        splitIRI.and.returnValue({begin: 'begin', then: 'then', end: 'end'});
+        expect(responseObjSvc.createItemFromIri('iri')).toEqual({namespace: 'beginthen', localName: 'end'});
+        expect(splitIRI).toHaveBeenCalledWith('iri');
     });
 });

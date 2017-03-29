@@ -21,14 +21,7 @@
  * #L%
  */
 describe('Object Select directive', function() {
-    var $compile,
-        scope,
-        element,
-        isolatedScope,
-        controller,
-        prefixes,
-        ontologyStateSvc,
-        responseObj;
+    var $compile, scope, element, isolatedScope, controller, prefixes, ontologyStateSvc, responseObj;
 
     beforeEach(function() {
         module('templates');
@@ -41,6 +34,7 @@ describe('Object Select directive', function() {
         mockOntologyState();
         mockResponseObj();
         mockPrefixes();
+        mockOntologyUtilsManager();
 
         inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _settingsManagerService_, _responseObj_, _ontologyStateService_, _prefixes_) {
             $compile = _$compile_;
@@ -206,54 +200,6 @@ describe('Object Select directive', function() {
                     var result = controller.getTooltipDisplay();
                     expect(ontologyManagerService.getEntityName).toHaveBeenCalledWith({}, ontologyStateSvc.state.type); // The value of getEntity
                     expect(result).toEqual('new'); // The value of getItemIri
-                });
-            });
-        });
-        describe('isBlankNode should return', function() {
-            it('false for falsey values', function() {
-                _.forEach([undefined, null, [], true], function(item) {
-                    expect(controller.isBlankNode(item)).toBe(false);
-                });
-            });
-            it('true for strings containing "_:b"', function() {
-                _.forEach(['_:b', '_:b1', 'stuff_:b'], function(item) {
-                    expect(controller.isBlankNode(item)).toBe(true);
-                });
-            });
-        });
-        describe('getBlankNodeValue should return', function() {
-            beforeEach(function() {
-                ontologyStateSvc.listItem.blankNodes = {
-                    '_:b1': 'prop',
-                    '_:b2': 'class',
-                    '_:b3': 'union',
-                    '_:b4': 'intersection'
-                }
-                scope.$digest();
-            });
-            it('undefined if isBlankNode returns false', function() {
-                spyOn(controller, 'isBlankNode').and.returnValue(false);
-                var result = controller.getBlankNodeValue();
-                expect(result).toBe(undefined);
-            });
-            it('id if isBlankNode returns true and id does not match any property', function() {
-                spyOn(controller, 'isBlankNode').and.returnValue(true);
-                _.forEach(['_:b11', '_:b22', 'test', ''], function(item) {
-                    var result = controller.getBlankNodeValue(item);
-                    expect(result).toBe(item);
-                });
-            });
-            it('property name when id does match property', function() {
-                spyOn(controller, 'isBlankNode').and.returnValue(true);
-                var tests = [
-                    {id: '_:b1', result: 'prop'},
-                    {id: '_:b2', result: 'class'},
-                    {id: '_:b3', result: 'union'},
-                    {id: '_:b4', result: 'intersection'}
-                ];
-                _.forEach(tests, function(item) {
-                    var result = controller.getBlankNodeValue(item.id);
-                    expect(result).toBe(item.result);
                 });
             });
         });

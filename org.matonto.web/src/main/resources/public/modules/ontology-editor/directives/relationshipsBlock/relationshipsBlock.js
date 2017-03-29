@@ -27,9 +27,9 @@
         .module('relationshipsBlock', [])
         .directive('relationshipsBlock', relationshipsBlock);
 
-        relationshipsBlock.$inject = ['ontologyStateService', 'ontologyManagerService'];
+        relationshipsBlock.$inject = ['ontologyStateService', 'ontologyManagerService', 'ontologyUtilsManagerService'];
 
-        function relationshipsBlock(ontologyStateService, ontologyManagerService) {
+        function relationshipsBlock(ontologyStateService, ontologyManagerService, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -42,7 +42,8 @@
                 controller: function() {
                     var dvm = this;
                     dvm.om = ontologyManagerService;
-                    dvm.sm = ontologyStateService;
+                    dvm.os = ontologyStateService;
+                    dvm.ontoUtils = ontologyUtilsManagerService;
 
                     dvm.openRemoveOverlay = function(key, index) {
                         dvm.key = key;

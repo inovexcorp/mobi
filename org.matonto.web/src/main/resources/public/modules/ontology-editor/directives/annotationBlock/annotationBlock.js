@@ -27,9 +27,9 @@
         .module('annotationBlock', [])
         .directive('annotationBlock', annotationBlock);
 
-        annotationBlock.$inject = ['ontologyStateService', 'responseObj'];
+        annotationBlock.$inject = ['ontologyStateService', 'responseObj', 'ontologyUtilsManagerService'];
 
-        function annotationBlock(ontologyStateService, responseObj) {
+        function annotationBlock(ontologyStateService, responseObj, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -39,16 +39,17 @@
                 controller: function() {
                     var dvm = this;
                     dvm.ro = responseObj;
-                    dvm.sm = ontologyStateService;
+                    dvm.os = ontologyStateService;
+                    dvm.ontoUtils = ontologyUtilsManagerService;
 
                     dvm.openAddOverlay = function() {
-                        dvm.sm.editingAnnotation = false;
-                        dvm.sm.annotationSelect = undefined;
-                        dvm.sm.annotationValue = '';
-                        dvm.sm.annotationType = undefined;
-                        dvm.sm.annotationIndex = 0;
-                        dvm.sm.annotationLanguage = 'en';
-                        dvm.sm.showAnnotationOverlay = true;
+                        dvm.os.editingAnnotation = false;
+                        dvm.os.annotationSelect = undefined;
+                        dvm.os.annotationValue = '';
+                        dvm.os.annotationType = undefined;
+                        dvm.os.annotationIndex = 0;
+                        dvm.os.annotationLanguage = 'en';
+                        dvm.os.showAnnotationOverlay = true;
                     }
 
                     dvm.openRemoveOverlay = function(key, index) {
@@ -58,14 +59,14 @@
                     }
 
                     dvm.editClicked = function(annotation, index) {
-                        var annotationObj = dvm.sm.selected[dvm.ro.getItemIri(annotation)][index];
-                        dvm.sm.editingAnnotation = true;
-                        dvm.sm.annotationSelect = annotation;
-                        dvm.sm.annotationValue = annotationObj['@value'];
-                        dvm.sm.annotationIndex = index;
-                        dvm.sm.annotationType = _.find(dvm.sm.listItem.dataPropertyRange, datatype => dvm.ro.getItemIri(datatype) === annotationObj['@type']);
-                        dvm.sm.annotationLanguage = _.get(annotationObj, '@language');
-                        dvm.sm.showAnnotationOverlay = true;
+                        var annotationObj = dvm.os.selected[dvm.ro.getItemIri(annotation)][index];
+                        dvm.os.editingAnnotation = true;
+                        dvm.os.annotationSelect = annotation;
+                        dvm.os.annotationValue = annotationObj['@value'];
+                        dvm.os.annotationIndex = index;
+                        dvm.os.annotationType = _.find(dvm.os.listItem.dataPropertyRange, datatype => dvm.ro.getItemIri(datatype) === annotationObj['@type']);
+                        dvm.os.annotationLanguage = _.get(annotationObj, '@language');
+                        dvm.os.showAnnotationOverlay = true;
                     }
                 }
             }
