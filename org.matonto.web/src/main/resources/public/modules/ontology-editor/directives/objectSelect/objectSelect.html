@@ -24,8 +24,8 @@
     <custom-label muted-text="mutedText">{{displayText}}</custom-label>
     <!-- Multi Object Select -->
     <ui-select ng-if="multiSelect" multiple ng-model="dvm.bindModel" on-select="onChange()" on-remove="onChange()" ng-disabled="isDisabledWhen" ng-required="isRequiredWhen">
-        <ui-select-match placeholder="{{'Select ' + displayText}}" ui-lock-choice="dvm.ontoUtils.isBlankNodeString($item['@id'])">
-            <span title="{{dvm.getTooltipDisplay($item)}}">{{dvm.ontoUtils.getBlankNodeValue($item['@id']) || dvm.ontoUtils.getDropDownText($item['@id'])}}</span>
+        <ui-select-match placeholder="{{'Select ' + displayText}}" ui-lock-choice="dvm.ontoUtils.isBlankNodeString(dvm.getItemIri($item))">
+            <span title="{{dvm.getTooltipDisplay($item)}}">{{dvm.ontoUtils.getBlankNodeValue(dvm.getItemIri($item)) || dvm.ontoUtils.getDropDownText($item)}}</span>
         </ui-select-match>
         <ui-select-choices group-by="dvm.getItemOntologyIri" repeat="{'@id': dvm.getItemIri(item)} as item in selectList | removeIriFromArray:bindModel | filter:$select.search | orderBy:dvm.ontoUtils.getDropDownText">
             <div title="{{dvm.getTooltipDisplay(item)}}" ng-bind-html="dvm.ontoUtils.getDropDownText(item) | highlight:$select.search | trusted"></div>
@@ -33,8 +33,8 @@
     </ui-select>
     <!-- Single Object Select -->
     <ui-select ng-if="!multiSelect" ng-model="dvm.bindModel" on-select="onChange()" on-remove="onChange()" ng-disabled="isDisabledWhen" ng-required="isRequiredWhen">
-        <ui-select-match placeholder="{{'Select ' + displayText}}" ui-lock-choice="dvm.ontoUtils.isBlankNodeString($select.selected['@id'])">
-            <span title="{{dvm.getTooltipDisplay($select.selected)}}">{{dvm.ontoUtils.getBlankNodeValue($select.selected['@id']) || dvm.ontoUtils.getDropDownText($select.selected['@id'])}}</span>
+        <ui-select-match placeholder="{{'Select ' + displayText}}" ui-lock-choice="dvm.ontoUtils.isBlankNodeString(dvm.getItemIri($select.selected))">
+            <span title="{{dvm.getTooltipDisplay($select.selected)}}">{{dvm.ontoUtils.getBlankNodeValue(dvm.getItemIri($select.selected)) || dvm.ontoUtils.getDropDownText($select.selected)}}</span>
         </ui-select-match>
         <ui-select-choices group-by="dvm.getItemOntologyIri" repeat="{'@id': dvm.getItemIri(item)} as item in selectList | filter:$select.search | orderBy:dvm.ontoUtils.getDropDownText">
             <div title="{{dvm.getTooltipDisplay(item)}}" ng-bind-html="dvm.ontoUtils.getDropDownText(item) | highlight:$select.search | trusted"></div>
