@@ -48,7 +48,10 @@
 
                     dvm.onEdit = function(iriBegin, iriThen, iriEnd) {
                         dvm.os.onEdit(iriBegin, iriThen, iriEnd)
-                            .then(() => ontoUtils.saveCurrentChanges());
+                            .then(() => {
+                                ontoUtils.saveCurrentChanges();
+                                ontoUtils.updateLabel();
+                            });
                     }
                 }
             }

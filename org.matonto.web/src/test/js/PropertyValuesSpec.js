@@ -34,6 +34,7 @@ describe('Property Values directive', function() {
         mockResponseObj();
         mockOntologyState();
         mockOntologyUtilsManager();
+        mockOntologyManager();
 
         inject(function(_$compile_, _$rootScope_, _responseObj_, _ontologyUtilsManagerService_) {
             $compile = _$compile_;
@@ -111,14 +112,15 @@ describe('Property Values directive', function() {
         });
     });
     it('should call edit when the appropriate button is clicked', function() {
+        resObj.createItemFromIri.and.returnValue({});
         var editButton = angular.element(element.querySelectorAll('.value-container [title=Edit]')[0]);
         editButton.triggerHandler('click');
-        expect(scope.edit).toHaveBeenCalledWith(scope.property, 0);
+        expect(resObj.createItemFromIri).toHaveBeenCalledWith(scope.property);
+        expect(scope.edit).toHaveBeenCalledWith({}, 0);
     });
     it('should call remove when the appropriate button is clicked', function() {
-        resObj.getItemIri.and.returnValue('');
         var removeButton = angular.element(element.querySelectorAll('.value-container [title=Delete]')[0]);
         removeButton.triggerHandler('click');
-        expect(scope.remove).toHaveBeenCalledWith('', 0);
+        expect(scope.remove).toHaveBeenCalledWith(scope.property, 0);
     });
 });
