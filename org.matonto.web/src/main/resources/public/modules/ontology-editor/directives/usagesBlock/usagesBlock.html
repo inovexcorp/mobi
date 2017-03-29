@@ -26,7 +26,7 @@
         <block-content targeted-spinner="requestConfig" cancel-on-new>
             <div class="property-values" ng-repeat="(key, value) in dvm.results" ng-if="dvm.results">
                 <h5 ng-click="isClosed = !isClosed" class="clearfix">
-                    <p class="text">{{dvm.getBindingDisplay(key) | beautify}} <small>&lt;{{key}}&gt;</small></p><i class="fa fa-fw" ng-class="{'fa-chevron-down': isClosed, 'fa-chevron-up': !isClosed}"></i>
+                    <p class="text">{{dvm.ontoUtils.getLabelForIRI(key)}} <small>&lt;{{key}}&gt;</small></p><i class="fa fa-fw" ng-class="{'fa-chevron-down': isClosed, 'fa-chevron-up': !isClosed}"></i>
                 </h5>
                 <div class="value-container" ng-repeat="statement in value" ng-hide="isClosed">
                     <span class="value-display">
