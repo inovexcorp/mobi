@@ -23,16 +23,16 @@ package org.matonto.sparql.utils;
  * #L%
  */
 
-import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Recognizer;
+import org.matonto.sparql.utils.impl.CaseInsensitiveInputStream;
 
 public class Query {
 
     public static SparqlParser getParser(String query) {
-        SparqlLexer lexer = new SparqlLexer(new ANTLRInputStream(query));
+        SparqlLexer lexer = new SparqlLexer(new CaseInsensitiveInputStream(query));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         SparqlParser parser = new SparqlParser(tokens);
         parser.addErrorListener(new BaseErrorListener() {

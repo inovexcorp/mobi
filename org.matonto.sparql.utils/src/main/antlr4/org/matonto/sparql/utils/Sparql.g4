@@ -1,5 +1,8 @@
 grammar Sparql;
 
+// SPARQL is case-insensitive with the exception of 'a' (rdf:type) and escape sequences. Since all of these
+// cases refer to lower-case characters, it should be safe to use this grammar with a CaseInsensitiveInputStream
+
 query
     : prologue ( selectQuery | constructQuery | describeQuery | askQuery ) EOF
     ;
@@ -9,31 +12,31 @@ prologue
     ;
 
 baseDecl
-    : 'BASE' IRI_REF
+    : 'base' IRI_REF
     ;
 
 prefixDecl
-    : 'PREFIX' PNAME_NS IRI_REF
+    : 'prefix' PNAME_NS IRI_REF
     ;
 
 selectQuery
-    : 'SELECT' ( 'DISTINCT' | 'REDUCED' )? ( var+ | '*' ) datasetClause* whereClause solutionModifier
+    : 'select' ( 'distinct' | 'reduced' )? ( var+ | '*' ) datasetClause* whereClause solutionModifier
     ;
 
 constructQuery
-    : 'CONSTRUCT' constructTemplate datasetClause* whereClause solutionModifier
+    : 'construct' constructTemplate datasetClause* whereClause solutionModifier
     ;
 
 describeQuery
-    : 'DESCRIBE' ( varOrIRIref+ | '*' ) datasetClause* whereClause? solutionModifier
+    : 'describe' ( varOrIRIref+ | '*' ) datasetClause* whereClause? solutionModifier
     ;
 
 askQuery
-    : 'ASK' datasetClause* whereClause
+    : 'ask' datasetClause* whereClause
     ;
 
 datasetClause
-    : 'FROM' ( defaultGraphClause | namedGraphClause )
+    : 'from' ( defaultGraphClause | namedGraphClause )
     ;
 
 defaultGraphClause
@@ -41,7 +44,7 @@ defaultGraphClause
     ;
 
 namedGraphClause
-    : 'NAMED' sourceSelector
+    : 'named' sourceSelector
     ;
 
 sourceSelector
@@ -49,7 +52,7 @@ sourceSelector
     ;
 
 whereClause
-    : 'WHERE'? groupGraphPattern
+    : 'where'? groupGraphPattern
     ;
 
 solutionModifier
@@ -61,20 +64,20 @@ limitOffsetClauses
     ;
 
 orderClause
-    : 'ORDER' 'BY' orderCondition+
+    : 'order' 'by' orderCondition+
     ;
 
 orderCondition
-    : ( ( 'ASC' | 'DESC' ) brackettedExpression )
+    : ( ( 'asc' | 'desc' ) brackettedExpression )
     | ( constraint | var )
     ;
 
 limitClause
-    : 'LIMIT' INTEGER
+    : 'limit' INTEGER
     ;
 
 offsetClause
-    : 'OFFSET' INTEGER
+    : 'offset' INTEGER
     ;
 
 groupGraphPattern
@@ -90,19 +93,19 @@ graphPatternNotTriples
     ;
 
 optionalGraphPattern
-    : 'OPTIONAL' groupGraphPattern
+    : 'optional' groupGraphPattern
     ;
 
 graphGraphPattern
-    : 'GRAPH' varOrIRIref groupGraphPattern
+    : 'graph' varOrIRIref groupGraphPattern
     ;
 
 groupOrUnionGraphPattern
-    : groupGraphPattern ( 'UNION' groupGraphPattern )*
+    : groupGraphPattern ( 'union' groupGraphPattern )*
     ;
 
 filter
-    : 'FILTER' constraint
+    : 'filter' constraint
     ;
 
 constraint
@@ -238,21 +241,21 @@ brackettedExpression
     ;
 
 builtInCall
-    : 'STR' '(' expression ')'
-    | 'LANG' '(' expression ')'
-    | 'LANGMATCHES' '(' expression ',' expression ')'
-    | 'DATATYPE' '(' expression ')'
-    | 'BOUND' '(' var ')'
-    | 'sameTerm' '(' expression ',' expression ')'
-    | 'isIRI' '(' expression ')'
-    | 'isURI' '(' expression ')'
-    | 'isBLANK' '(' expression ')'
-    | 'isLITERAL' '(' expression ')'
+    : 'str' '(' expression ')'
+    | 'lang' '(' expression ')'
+    | 'langmatches' '(' expression ',' expression ')'
+    | 'datatype' '(' expression ')'
+    | 'bound' '(' var ')'
+    | 'sameterm' '(' expression ',' expression ')'
+    | 'isiri' '(' expression ')'
+    | 'isuri' '(' expression ')'
+    | 'isblank' '(' expression ')'
+    | 'isliteral' '(' expression ')'
     | regexExpression
     ;
 
 regexExpression
-    : 'REGEX' '(' expression ',' expression ( ',' expression )? ')'
+    : 'regex' '(' expression ',' expression ( ',' expression )? ')'
     ;
 
 iriRefOrFunction
