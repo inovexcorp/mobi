@@ -36,10 +36,10 @@
             <custom-label>Values</custom-label>
             <ui-select multiple ng-model="dvm.values" ng-disabled="!dvm.axiom">
                 <ui-select-match placeholder="Select values">
-                    <span title="{{dvm.ro.getItemIri($item)}}">{{$item.localName}}</span>
+                    <span title="{{dvm.ro.getItemIri($item)}}">{{dvm.ontoUtils.getDropDownText($item)}}</span>
                 </ui-select-match>
-                <ui-select-choices group-by="dvm.util.getItemNamespace" repeat="value in dvm.sm.listItem[dvm.axiom.valuesKey] | removeIriFromArray:dvm.sm.selected['@id'] | filter:$select.search | orderBy:'localName'">
-                    <div title="{{dvm.ro.getItemIri(value)}}" ng-bind-html="value.localName | highlight: $select.search | trusted"></div>
+                <ui-select-choices group-by="dvm.util.getItemNamespace" repeat="value in dvm.sm.listItem[dvm.axiom.valuesKey] | removeIriFromArray:dvm.sm.selected['@id'] | filter:$select.search | orderBy:dvm.ontoUtils.getDropDownText">
+                    <div title="{{dvm.ro.getItemIri(value)}}" ng-bind-html="dvm.ontoUtils.getDropDownText(value) | highlight: $select.search | trusted"></div>
                 </ui-select-choices>
             </ui-select>
         </div>
