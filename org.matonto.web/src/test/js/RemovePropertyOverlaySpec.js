@@ -98,6 +98,7 @@ describe('Remove Property Overlay directive', function() {
             expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.selected, controller.key, controller.index);
             expect(controller.overlayFlag).toBe(false);
             expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
+            expect(ontoUtils.updateLabel).toHaveBeenCalled();
         });
     });
     it('calls removeProperty when the button is clicked', function() {

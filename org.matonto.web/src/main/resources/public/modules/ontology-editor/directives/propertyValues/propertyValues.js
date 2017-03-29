@@ -45,8 +45,9 @@
                     var dvm = this;
                     dvm.ro = responseObj;
                     dvm.om = ontologyManagerService;
-                    dvm.um = ontologyUtilsManagerService;
-                    dvm.sm = ontologyStateService;
+                    dvm.ontoUtils = ontologyUtilsManagerService;
+                    dvm.os = ontologyStateService;
+                    dvm.om = ontologyManagerService;
                 }
             }
         }

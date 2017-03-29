@@ -27,9 +27,9 @@
         .module('datatypePropertyBlock', [])
         .directive('datatypePropertyBlock', datatypePropertyBlock);
 
-        datatypePropertyBlock.$inject = ['ontologyStateService', 'responseObj', 'prefixes'];
+        datatypePropertyBlock.$inject = ['ontologyStateService', 'responseObj', 'prefixes', 'ontologyUtilsManagerService'];
 
-        function datatypePropertyBlock(ontologyStateService, responseObj, prefixes) {
+        function datatypePropertyBlock(ontologyStateService, responseObj, prefixes, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -39,32 +39,33 @@
                 controller: function() {
                     var dvm = this;
                     dvm.ro = responseObj;
-                    dvm.sm = ontologyStateService;
+                    dvm.os = ontologyStateService;
+                    dvm.ontoUtils = ontologyUtilsManagerService;
 
                     dvm.openAddDataPropOverlay = function() {
-                        dvm.sm.editingProperty = false;
-                        dvm.sm.propertySelect = undefined;
-                        dvm.sm.propertyValue = '';
-                        dvm.sm.propertyType = undefined;
-                        dvm.sm.propertyIndex = 0;
-                        dvm.sm.propertyLanguage = 'en';
-                        dvm.sm.showDataPropertyOverlay = true;
+                        dvm.os.editingProperty = false;
+                        dvm.os.propertySelect = undefined;
+                        dvm.os.propertyValue = '';
+                        dvm.os.propertyType = undefined;
+                        dvm.os.propertyIndex = 0;
+                        dvm.os.propertyLanguage = 'en';
+                        dvm.os.showDataPropertyOverlay = true;
                     }
 
                     dvm.editDataProp = function(property, index) {
-                        var propertyObj = dvm.sm.selected[dvm.ro.getItemIri(property)][index];
-                        var type = _.find(dvm.sm.listItem.dataPropertyRange, datatype => dvm.ro.getItemIri(datatype) === propertyObj['@type']);
-                        dvm.sm.editingProperty = true;
-                        dvm.sm.propertySelect = property;
-                        dvm.sm.propertyValue = propertyObj['@value'];
-                        dvm.sm.propertyIndex = index;
-                        dvm.sm.propertyLanguage = _.get(propertyObj, '@language');
-                        if (dvm.sm.propertyLanguage) {
-                            dvm.sm.propertyType = {'@id': prefixes.rdf + 'langString'};
+                        var propertyObj = dvm.os.selected[dvm.ro.getItemIri(property)][index];
+                        var type = _.find(dvm.os.listItem.dataPropertyRange, datatype => dvm.ro.getItemIri(datatype) === propertyObj['@type']);
+                        dvm.os.editingProperty = true;
+                        dvm.os.propertySelect = property;
+                        dvm.os.propertyValue = propertyObj['@value'];
+                        dvm.os.propertyIndex = index;
+                        dvm.os.propertyLanguage = _.get(propertyObj, '@language');
+                        if (dvm.os.propertyLanguage) {
+                            dvm.os.propertyType = {'@id': prefixes.rdf + 'langString'};
                         } else {
-                            dvm.sm.propertyType = type ? {'@id': dvm.ro.getItemIri(type)} : undefined;
+                            dvm.os.propertyType = type ? {'@id': dvm.ro.getItemIri(type)} : undefined;
                         }
-                        dvm.sm.showDataPropertyOverlay = true;
+                        dvm.os.showDataPropertyOverlay = true;
                     }
 
                     dvm.showRemovePropertyOverlay = function(key, index) {

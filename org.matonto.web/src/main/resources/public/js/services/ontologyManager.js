@@ -688,16 +688,7 @@
                 }
                 $http.post(prefix, ontologyJson, config)
                     .then(response => {
-                        var listItem = {};
-                        if (type === 'ontology') {
-                            listItem = setupListItem(response.data.ontologyId, response.data.recordId,
-                                response.data.branchId, response.data.commitId, [ontologyJson], emptyInProgressCommit,
-                                ontologyListItemTemplate);
-                        } else if (type === 'vocabulary') {
-                            listItem = setupListItem(response.data.ontologyId, response.data.recordId,
-                                response.data.branchId, response.data.commitId, [ontologyJson], emptyInProgressCommit,
-                                vocabularyListItemTemplate);
-                        }
+                        var listItem = setupListItem(response.data.ontologyId, response.data.recordId, response.data.branchId, response.data.commitId, [ontologyJson], emptyInProgressCommit, type);
                         cm.getRecordBranch(response.data.branchId, response.data.recordId, catalogId)
                             .then(branch => {
                                 listItem.branches = [branch];
@@ -1278,11 +1269,11 @@
              * @returns {Object} An Object which represents the requested entity.
              */
             self.removeEntity = function(listItem, entityIRI) {
-                var entityIndex = _.get(listItem.index, entityIRI);
+                var entityPosition = _.get(listItem.index, entityIRI + '.position');
                 _.unset(listItem.index, entityIRI);
                 _.forOwn(listItem.index, (value, key) => {
-                    if (value > entityIndex) {
-                        listItem.index[key] = value - 1;
+                    if (value.position > entityPosition) {
+                        listItem.index[key].position = value.position - 1;
                     }
                 });
                 return _.remove(listItem.ontology, {matonto:{originalIRI: entityIRI}})[0];
@@ -1301,7 +1292,10 @@
              */
             self.addEntity = function(listItem, entityJSON) {
                 listItem.ontology.push(entityJSON);
-                _.get(listItem, 'index', {})[entityJSON['@id']] = listItem.ontology.length - 1;
+                _.get(listItem, 'index', {})[entityJSON['@id']] = {
+                    position: listItem.ontology.length - 1,
+                    label: self.getEntityName(entityJSON, listItem.type)
+                }
             }
             /**
              * @ngdoc method
@@ -1320,6 +1314,10 @@
                 var result = utilService.getPropertyValue(entity, prefixes.rdfs + 'label')
                     || utilService.getDctermsValue(entity, 'title')
                     || utilService.getPropertyValue(entity, prefixes.dc + 'title');
+                if (type === 'vocabulary') {
+                    result = utilService.getPropertyValue(entity, prefixes.skos + 'prefLabel')
+                        || utilService.getPropertyValue(entity, prefixes.skos + 'altLabel') || result;
+                }
                 if (!result) {
                     if (_.has(entity, '@id')) {
                         result = utilService.getBeautifulIRI(entity['@id']);
@@ -1327,11 +1325,23 @@
                         result = _.get(entity, 'matonto.anonymous', '');
                     }
                 }
-                if (type === 'vocabulary') {
-                    result = utilService.getPropertyValue(entity, prefixes.skos + 'prefLabel')
-                        || utilService.getPropertyValue(entity, prefixes.skos + 'altLabel') || result;
-                }
                 return result;
+            }
+            /**
+             * @ngdoc method
+             * @name getEntityNameByIndex
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Gets the entity's name using the provided entityIRI and listItem to find the entity's label in the index.
+             * If that entityIRI is not in the index, defaults to the
+             * {@link ontologyManager.service:ontologyManagerService#getEntityName getEntityName} behavior.
+             *
+             * @param {Object} entity The entity you want the name of.
+             * @returns {string} The beautified IRI string.
+             */
+            self.getEntityNameByIndex = function(entityIRI, listItem) {
+                return _.get(listItem, "index['" + entityIRI + "'].label", utilService.getBeautifulIRI(entityIRI));
             }
             /**
              * @ngdoc method
@@ -1559,8 +1569,7 @@
             self.createOntologyListItem = function(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit,
                 upToDate = true) {
                 var deferred = $q.defer();
-                var listItem = setupListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit,
-                    ontologyListItemTemplate);
+                var listItem = setupListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, 'ontology');
                 var config = {params: {branchId, commitId}};
                 $q.all([
                     $http.get(prefix + '/' + encodeURIComponent(recordId) + '/iris', config),
@@ -1651,8 +1660,7 @@
             self.createVocabularyListItem = function(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit,
                 upToDate = true) {
                 var deferred = $q.defer();
-                var listItem = setupListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit,
-                    vocabularyListItemTemplate);
+                var listItem = setupListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, 'vocabulary');
                 var config = {params: {branchId, commitId}};
                 $q.all([
                     $http.get(prefix + '/' + encodeURIComponent(recordId) + '/iris', config),
@@ -1806,14 +1814,17 @@
                 }
                 return readableText;
             }
-            function setupListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, template) {
-                var listItem = angular.copy(template);
+            function setupListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, type) {
+                var listItem = (type === 'ontology') ? angular.copy(ontologyListItemTemplate) : angular.copy(vocabularyListItemTemplate);
                 var blankNodes = {};
                 var index = {};
                 _.forEach(ontology, (entity, i) => {
                     if (_.has(entity, '@id')) {
                         _.set(entity, 'matonto.originalIRI', entity['@id']);
-                        index[entity['@id']] = i;
+                        index[entity['@id']] = {
+                            position: i,
+                            label: self.getEntityName(entity, type)
+                        }
                     } else {
                         _.set(entity, 'matonto.anonymous', ontologyId + ' (Anonymous Ontology)');
                     }
@@ -1864,8 +1875,8 @@
             function getEntityFromListItem(listItem, entityIRI) {
                 var index = _.get(listItem, 'index');
                 var ontology = _.get(listItem, 'ontology');
-                if (_.has(index, entityIRI)) {
-                    return ontology[_.get(index, entityIRI)];
+                if (_.has(index, entityIRI + '.position')) {
+                    return ontology[index[entityIRI].position];
                 } else {
                     return self.getEntity(ontology, entityIRI);
                 }

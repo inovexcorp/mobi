@@ -76,9 +76,18 @@ describe('Ontology Manager service', function() {
         '@id': blankNodeId
     }
     var index = {
-        ontologyId: 0,
-        classId: 1,
-        dataPropertyId: 2
+        ontologyId: {
+            position: 0,
+            label: 'ontology'
+        },
+        classId: {
+            position: 1,
+            label: 'class'
+        },
+        dataPropertyId: {
+            position: 2,
+            label: 'data property'
+        }
     }
     var usages = {
         results: {
@@ -1828,15 +1837,18 @@ describe('Ontology Manager service', function() {
     it('removeEntity removes the entity from the provided ontology and index', function() {
         expect(ontologyManagerSvc.removeEntity(listItem, classId)).toEqual(classObj);
         expect(_.has(listItem.index, classId)).toBe(false);
-        expect(listItem.index.dataPropertyId).toEqual(1);
+        expect(listItem.index.dataPropertyId.position).toEqual(1);
     });
 
     it('addEntity adds the entity to the provided ontology and index', function() {
+        spyOn(ontologyManagerSvc, 'getEntityName').and.returnValue('name');
         ontologyManagerSvc.addEntity(listItem, individualObj);
         expect(ontology.length).toBe(4);
         expect(ontology[3]).toEqual(individualObj);
         expect(_.has(listItem.index, individualId)).toBe(true);
-        expect(listItem.index[individualId]).toEqual(3);
+        expect(listItem.index[individualId].position).toEqual(3);
+        expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith(individualObj, listItem.type);
+        expect(listItem.index[individualId].label).toBe('name');
     });
 
     describe('getEntityName should return', function() {
@@ -1917,6 +1929,24 @@ describe('Ontology Manager service', function() {
             expect(util.getPropertyValue).toHaveBeenCalledWith(entity, prefixes.dc + 'title');
             expect(util.getPropertyValue).toHaveBeenCalledWith(entity, prefixes.skos + 'prefLabel');
             expect(util.getPropertyValue).toHaveBeenCalledWith(entity, prefixes.skos + 'altLabel');
+        });
+    });
+
+    describe('getEntityNameByIndex should return the proper value', function() {
+        it('when the entityIRI is in the index', function() {
+            var listItem = {
+                index: {
+                    iri: {
+                        label: 'name'
+                    }
+                }
+            };
+            expect(ontologyManagerSvc.getEntityNameByIndex('iri', listItem)).toBe('name');
+        });
+        it('when the entityIRI is not in the index', function() {
+            util.getBeautifulIRI.and.returnValue('entity name');
+            expect(ontologyManagerSvc.getEntityNameByIndex('iri', {type: 'ontology'})).toBe('entity name');
+            expect(util.getBeautifulIRI).toHaveBeenCalledWith('iri');
         });
     });
 

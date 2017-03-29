@@ -101,7 +101,6 @@
                             _.get(dvm.sm.listItem, 'annotations').push({namespace:split.begin + split.then, localName: split.end});
                             dvm.sm.setAnnotationPropertiesOpened(dvm.sm.listItem.recordId, true);
                         }
-                        _.set(_.get(dvm.sm.listItem, 'index'), dvm.property['@id'], dvm.sm.listItem.ontology.length - 1);
                         dvm.om.addToAdditions(dvm.sm.listItem.recordId, dvm.property);
                         // select the new property
                         dvm.sm.selectItem(_.get(dvm.property, '@id'));

@@ -85,12 +85,14 @@ describe('Selected Details directive', function() {
                 scope.$apply();
                 expect(ontologyStateSvc.onEdit).toHaveBeenCalledWith('begin', 'middle', 'end');
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
+                expect(ontoUtils.updateLabel).toHaveBeenCalled();
             });
             it('when ontologyState.onEdit rejects', function() {
                 editDeferred.reject();
                 scope.$apply();
                 expect(ontologyStateSvc.onEdit).toHaveBeenCalledWith('begin', 'middle', 'end');
                 expect(ontoUtils.saveCurrentChanges).not.toHaveBeenCalled();
+                expect(ontoUtils.updateLabel).not.toHaveBeenCalled();
             });
         });
     });

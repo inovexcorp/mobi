@@ -38,7 +38,7 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    var ontoUtils = ontologyUtilsManagerService;
+                    dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.om = ontologyManagerService;
                     dvm.ro = responseObj;
                     dvm.sm = ontologyStateService;
@@ -60,7 +60,7 @@
                         dvm.om.addToAdditions(dvm.sm.listItem.recordId, dvm.util.createJson(dvm.sm.selected['@id'],
                             property, value));
                         dvm.sm.showObjectPropertyOverlay = false;
-                        ontoUtils.saveCurrentChanges();
+                        dvm.ontoUtils.saveCurrentChanges();
                     }
 
                     dvm.editProperty = function(select, value) {
@@ -73,7 +73,7 @@
                                 property, value));
                         }
                         dvm.sm.showObjectPropertyOverlay = false;
-                        ontoUtils.saveCurrentChanges();
+                        dvm.ontoUtils.saveCurrentChanges();
                     }
                 }
             }

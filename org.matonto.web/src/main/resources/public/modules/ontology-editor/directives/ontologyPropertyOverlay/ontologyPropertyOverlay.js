@@ -38,7 +38,7 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    var ontoUtils = ontologyUtilsManagerService;
+                    dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.om = ontologyManagerService;
                     dvm.ro = responseObj;
                     dvm.sm = ontologyStateService;
@@ -85,7 +85,7 @@
                         dvm.pm.add(dvm.sm.selected, dvm.ro.getItemIri(dvm.sm.ontologyProperty), value, null, dvm.sm.ontologyPropertyLanguage);
                         dvm.om.addToAdditions(dvm.sm.listItem.recordId, createJson(value, dvm.sm.ontologyPropertyLanguage));
                         dvm.sm.showOntologyPropertyOverlay = false;
-                        ontoUtils.saveCurrentChanges();
+                        dvm.ontoUtils.saveCurrentChanges();
                     }
 
                     dvm.editProperty = function() {
@@ -96,7 +96,7 @@
                         dvm.pm.edit(dvm.sm.selected, property, value, dvm.sm.ontologyPropertyIndex, null, dvm.sm.ontologyPropertyLanguage);
                         dvm.om.addToAdditions(dvm.sm.listItem.recordId, createJson(value, dvm.sm.ontologyPropertyLanguage));
                         dvm.sm.showOntologyPropertyOverlay = false;
-                        ontoUtils.saveCurrentChanges();
+                        dvm.ontoUtils.saveCurrentChanges();
                     }
                 }
             }

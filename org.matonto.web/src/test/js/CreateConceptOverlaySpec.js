@@ -148,7 +148,7 @@ describe('Create Concept Overlay directive', function() {
             expect(ontologyStateSvc.setCommonIriParts).toHaveBeenCalledWith('begin', 'then');
         });
         it('should create a concept', function() {
-            var listItem = {ontology: [{}], conceptHierarchy: [], index: {}};
+            var listItem = {ontology: [{}], conceptHierarchy: []};
             var schemes = {
                 'scheme1': {'@id': 'scheme1', matonto: {}},
                 'scheme2': {'@id': 'scheme2', matonto: {}}
@@ -170,7 +170,6 @@ describe('Create Concept Overlay directive', function() {
             expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(controller.concept, controller.language);
             expect(ontologyManagerSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, controller.concept);
             expect(listItem.conceptHierarchy).toContain({entityIRI: controller.concept['@id']});
-            expect(listItem.index[controller.concept['@id']]).toBe(0);
             expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                 controller.concept);
             expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(controller.concept['@id']);

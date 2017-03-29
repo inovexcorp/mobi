@@ -26,13 +26,16 @@
         <block-content targeted-spinner="requestConfig" cancel-on-new>
             <div class="property-values" ng-repeat="(key, value) in dvm.results" ng-if="dvm.results">
                 <h5 ng-click="isClosed = !isClosed" class="clearfix">
-                    <p class="text">{{dvm.getBindingDisplay(key) | beautify}} <small>&lt;{{key}}&gt;</small></p><i class="fa fa-fw" ng-class="{'fa-chevron-down': isClosed, 'fa-chevron-up': !isClosed}"></i>
+                    <p class="text">{{dvm.ontoUtils.getLabelForIRI(key)}} <small>&lt;{{key}}&gt;</small></p><i class="fa fa-fw" ng-class="{'fa-chevron-down': isClosed, 'fa-chevron-up': !isClosed}"></i>
                 </h5>
                 <div class="value-container" ng-repeat="statement in value" ng-hide="isClosed">
                     <span class="value-display">
                         <span ng-repeat="(key, value) in statement" class="{{key}}">
-                            <span ng-if="!dvm.um.isLinkable(value) || value === dvm.sm.selected['@id']" ng-class="{selected: value === dvm.sm.selected['@id']}">{{dvm.getBindingDisplay(value)}}</span>
-                            <a ng-if="dvm.um.isLinkable(value) && value !== dvm.sm.selected['@id']" ng-click="dvm.sm.goTo(value)">{{dvm.getBindingDisplay(value)}}</a>
+                            <span ng-if="value === dvm.sm.selected['@id']" class="selected">{{dvm.ontoUtils.getLabelForIRI(value)}}</span>
+                            <span ng-if="value !== dvm.sm.selected['@id']">
+                                <span ng-if="!dvm.ontoUtils.isLinkable(value)">{{(key === 'predicate') ? (value | splitIRI).end : value}}</span>
+                                <a ng-if="dvm.ontoUtils.isLinkable(value)" ng-click="dvm.sm.goTo(value)">{{dvm.ontoUtils.getLabelForIRI(value)}}</a>
+                            </span>
                         </span>
                     </span>
                 </div>

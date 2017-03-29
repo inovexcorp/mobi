@@ -55,7 +55,7 @@
 
                     dvm.getTreeDisplay = function() {
                         if (treeDisplay === 'pretty') {
-                            return dvm.om.getEntityName(dvm.currentEntity, os.state.type);
+                            return dvm.om.getEntityNameByIndex(_.get(dvm.currentEntity, '@id'), os.listItem);
                         }
                         return _.get(dvm.currentEntity, 'matonto.originalIRI', _.get(dvm.currentEntity, 'matonto.anonymous', ''));
                     }
