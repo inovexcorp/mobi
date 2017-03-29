@@ -47,61 +47,64 @@
         function manchesterConverterService($filter, ontologyManagerService, prefixes) {
             var self = this;
             var om = ontologyManagerService;
+            var expressionClassName = 'manchester-expr';
+            var restrictionClassName = 'manchester-rest';
+            var literalClassName = 'manchester-lit';
+            var expressionKeywords = {
+                [prefixes.owl + 'unionOf']: ' or ',
+                [prefixes.owl + 'intersectionOf']: ' and ',
+                [prefixes.owl + 'complementOf']: 'not '
+            };
+            var restrictionKeywords = {
+                [prefixes.owl + 'someValuesFrom']: ' some ',
+                [prefixes.owl + 'allValuesFrom']: ' only ',
+                [prefixes.owl + 'hasValue']: ' value ',
+                [prefixes.owl + 'minCardinality']: ' min ',
+                [prefixes.owl + 'maxCardinality']: ' max ',
+                [prefixes.owl + 'cardinality']: ' exactly '
+            };
 
-            self.jsonldToManchester = function(id, jsonld) {
+            self.jsonldToManchester = function(id, jsonld, html = false) {
                 var entity = _.find(jsonld, {'@id': id});
                 var result = '';
                 if (om.isClass(entity)) {
-                    var listProp = _.intersection(_.keys(entity), [prefixes.owl + 'unionOf', prefixes.owl + 'intersectionOf']);
-                    if (listProp.length === 1) {
-                        var joiningWord = listProp[0] === prefixes.owl + 'unionOf' ? ' or ' : ' and ';
-                        var list = _.get(entity[listProp[0]], "[0]['@list']", []);
-                        result = _.join(_.map(list, item =>  getManchesterValue(item, jsonld)), joiningWord);
-                    } else if (_.has(entity, prefixes.owl + 'complementOf')) {
-                        var item = _.get(entity, '["' + prefixes.owl + 'complementOf"][0]');
-                        result = 'not ' + getManchesterValue(item, jsonld);
+                    var prop = _.intersection(_.keys(entity), _.keys(expressionKeywords));
+                    if (prop.length === 1) {
+                        var item = _.get(entity[prop[0]], '0');
+                        var keyword = html ? surround(expressionKeywords[prop[0]], expressionClassName) : expressionKeywords[prop[0]];
+                        if (_.has(item, '@list')) {
+                            result += _.join(_.map(_.get(item, '@list'), item =>  getManchesterValue(item, jsonld, html)), keyword);
+                        } else {
+                            result += keyword + getManchesterValue(item, jsonld, html);
+                        }
                     }
                 } else if (om.isRestriction(entity)) {
                     var onProperty = _.get(entity, '["' + prefixes.owl + 'onProperty"][0]["@id"]', '');
                     if (onProperty) {
                         var restriction = $filter('splitIRI')(onProperty).end;
-                        if (_.has(entity, prefixes.owl + 'someValuesFrom')) {
-                            var item = _.get(entity, '["' + prefixes.owl + 'someValuesFrom"][0]');
-                            result += restriction + ' some ' + getManchesterValue(item, jsonld);
-                        } else if (_.has(entity, prefixes.owl + 'allValuesFrom')) {
-                            var item = _.get(entity, '["' + prefixes.owl + 'allValuesFrom"][0]');
-                            result += restriction + ' only ' + getManchesterValue(item, jsonld);
-                        } else if (_.has(entity, prefixes.owl + 'hasValue')) {
-                            var item = _.get(entity, '["' + prefixes.owl + 'hasValue"][0]');
-                            result += restriction + ' value ';
-                            if (_.has(item, '@value')) {
-                                result += '"' + _.get(item, '@value') + '"';
-                            } else {
-                                result += getManchesterValue(item, jsonld);
-                            }
-                        } else if (_.has(entity, prefixes.owl + 'minCardinality')) {
-                            var value = _.get(entity, '["' + prefixes.owl + 'minCardinality"][0]["@value"]');
-                            result += restriction + ' min ' + value;
-                        } else if (_.has(entity, prefixes.owl + 'maxCardinality')) {
-                            var value = _.get(entity, '["' + prefixes.owl + 'maxCardinality"][0]["@value"]');
-                            result += restriction + ' max ' + value;
-                        } else if (_.has(entity, prefixes.owl + 'cardinality')) {
-                            var value = _.get(entity, '["' + prefixes.owl + 'cardinality"][0]["@value"]');
-                            result += restriction + ' exactly ' + value;
+                        var prop = _.intersection(_.keys(entity), _.keys(restrictionKeywords));
+                        if (prop.length === 1) {
+                            var item = _.get(entity[prop[0]], '0');
+                            var keyword = html ? surround(restrictionKeywords[prop[0]], restrictionClassName) : restrictionKeywords[prop[0]];
+                            result += restriction + keyword + getManchesterValue(item, jsonld, html);
                         }
                     }
                 }
                 return result;
             }
 
-            function getManchesterValue(item, jsonld) {
-                var value = _.get(item, '@id');
-                if (om.isBlankNodeId(value)) {
-                    var nestedManchester = self.jsonldToManchester(value, jsonld);
-                    return '(' + nestedManchester + ')';
+            function getManchesterValue(item, jsonld, html = false) {
+                if (_.has(item, '@value')) {
+                    var literal = _.get(item, '@type') === prefixes.xsd + 'string' ? '"' + item['@value'] + '"' : item['@value'];
+                    return html ? surround(literal, literalClassName) : literal;
                 } else {
-                    return $filter('splitIRI')(value).end;
+                    var value = _.get(item, '@id');
+                    return om.isBlankNodeId(value) ? '(' + self.jsonldToManchester(value, jsonld, html) + ')' : $filter('splitIRI')(value).end;
                 }
+            }
+
+            function surround(str, className) {
+                return '<span class="' + className + '">' + str + '</span>';
             }
         }
 })();
