@@ -40,13 +40,18 @@
     <dependencies>
         <dependency>
             <groupId>org.matonto</groupId>
+            <artifactId>dataset.api</artifactId>
+            <version>1.5.32-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
             <artifactId>rest.util</artifactId>
             <version>1.4.24</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>persistence.api</artifactId>
-            <version>1.4.24</version>
+            <version>1.5.32-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
