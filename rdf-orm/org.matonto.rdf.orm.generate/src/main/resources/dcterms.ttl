@@ -1,0 +1,102 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+
+<http://purl.org/dc/terms/> a owl:Ontology ;
+    dcterms:modified "2016-10-14"^^<http://www.w3.org/2001/XMLSchema#date> ;
+    rdfs:label "DCMI Metadata Terms - MatOnto Ontology Version"@en .
+
+dcterms:Agent a rdfs:Class, owl:Class ;
+    rdfs:comment "A resource that acts or has the power to act."@en ;
+    rdfs:isDefinedBy <http://purl.org/dc/terms/> ;
+    rdfs:label "Agent"@en .
+
+dcterms:FileFormat a rdfs:Class, owl:Class ;
+    rdfs:comment "A digital resource format."@en ;
+    rdfs:isDefinedBy <http://purl.org/dc/terms/> ;
+    rdfs:label "File Format"@en ;
+    rdfs:subClassOf dcterms:MediaType .
+
+dcterms:MediaType a rdfs:Class, owl:Class ;
+    rdfs:comment "A file format or physical medium."@en ;
+    rdfs:isDefinedBy <http://purl.org/dc/terms/> ;
+    rdfs:label "Media Type"@en ;
+    rdfs:subClassOf dcterms:MediaTypeOrExtent .
+
+dcterms:MediaTypeOrExtent a rdfs:Class, owl:Class ;
+    rdfs:comment "A media type or extent."@en ;
+    rdfs:isDefinedBy <http://purl.org/dc/terms/> ;
+    rdfs:label "Media Type or Extent"@en .
+
+dcterms:contributor a rdf:Property, owl:ObjectProperty ;
+    rdfs:comment "An entity responsible for making contributions to the resource."@en ;
+    rdfs:isDefinedBy <http://purl.org/dc/terms/> ;
+    rdfs:label "Contributor"@en ;
+    rdfs:range dcterms:Agent ;
+    rdfs:subPropertyOf <http://purl.org/dc/elements/1.1/contributor> .
+
+dcterms:creator a rdf:Property, owl:ObjectProperty ;
+    rdfs:comment "An entity primarily responsible for making the resource."@en ;
+    rdfs:isDefinedBy <http://purl.org/dc/terms/> ;
+    rdfs:label "Creator"@en ;
+    rdfs:range dcterms:Agent ;
+    rdfs:subPropertyOf <http://purl.org/dc/elements/1.1/creator>, dcterms:contributor ;
+    owl:equivalentProperty <http://xmlns.com/foaf/0.1/maker> .
+
+dcterms:date a rdf:Property, owl:DatatypeProperty ;
+    rdfs:comment "A point or period of time associated with an event in the lifecycle of the resource."@en ;
+    rdfs:isDefinedBy <http://purl.org/dc/terms/> ;
+    rdfs:label "Date"@en ;
+    rdfs:range rdfs:Literal ;
+    rdfs:subPropertyOf <http://purl.org/dc/elements/1.1/date> .
+
+dcterms:description a rdf:Property, owl:DatatypeProperty ;
+    rdfs:comment "An account of the resource."@en ;
+    rdfs:isDefinedBy <http://purl.org/dc/terms/> ;
+    rdfs:label "Description"@en ;
+    rdfs:range rdfs:Literal ;
+    rdfs:subPropertyOf <http://purl.org/dc/elements/1.1/description> .
+
+dcterms:format a rdf:Property, owl:ObjectProperty ;
+    rdfs:comment "The file format, physical medium, or dimensions of the resource."@en ;
+    rdfs:isDefinedBy <http://purl.org/dc/terms/> ;
+    rdfs:label "Format"@en ;
+    rdfs:range dcterms:MediaTypeOrExtent ;
+    rdfs:subPropertyOf <http://purl.org/dc/elements/1.1/format> .
+
+dcterms:identifier a rdf:Property, owl:DatatypeProperty ;
+    rdfs:comment "An unambiguous reference to the resource within a given context."@en ;
+    rdfs:isDefinedBy <http://purl.org/dc/terms/> ;
+    rdfs:label "Identifier"@en ;
+    rdfs:range rdfs:Literal ;
+    rdfs:subPropertyOf <http://purl.org/dc/elements/1.1/identifier> .
+
+dcterms:issued a rdf:Property, owl:DatatypeProperty ;
+    rdfs:comment "Date of formal issuance (e.g., publication) of the resource."@en ;
+    rdfs:isDefinedBy <http://purl.org/dc/terms/> ;
+    rdfs:label "Date Issued"@en ;
+    rdfs:range rdfs:Literal ;
+    rdfs:subPropertyOf <http://purl.org/dc/elements/1.1/date>, dcterms:date .
+
+dcterms:modified a rdf:Property, owl:DatatypeProperty ;
+    rdfs:comment "Date on which the resource was changed."@en ;
+    rdfs:isDefinedBy <http://purl.org/dc/terms/> ;
+    rdfs:label "Date Modified"@en ;
+    rdfs:range rdfs:Literal ;
+    rdfs:subPropertyOf <http://purl.org/dc/elements/1.1/date>, dcterms:date .
+
+dcterms:publisher a rdf:Property, owl:ObjectProperty ;
+    rdfs:comment "An entity responsible for making the resource available."@en ;
+    rdfs:isDefinedBy <http://purl.org/dc/terms/> ;
+    rdfs:label "Publisher"@en ;
+    rdfs:range dcterms:Agent ;
+    rdfs:subPropertyOf <http://purl.org/dc/elements/1.1/publisher> .
+
+dcterms:title a rdf:Property, owl:DatatypeProperty ;
+    rdfs:comment "A name given to the resource."@en ;
+    rdfs:isDefinedBy <http://purl.org/dc/terms/> ;
+    rdfs:label "Title"@en ;
+    rdfs:range rdfs:Literal ;
+    rdfs:subPropertyOf <http://purl.org/dc/elements/1.1/title> .

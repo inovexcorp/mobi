@@ -21,13 +21,17 @@
   #L%
   -->
 <div class="class-preview">
-    <div ng-if="dvm.classObj">
-        <h3>{{dvm.om.getEntityName(dvm.classObj)}}</h3>
-        <p>{{dvm.om.getEntityDescription(dvm.classObj)}}</p>
-        <h4>Properties <a class="header-link" ng-if="dvm.getProps().length > dvm.numPropPreview" ng-click="dvm.full = !dvm.full">See {{dvm.full ? 'Less' : 'More'}}</a></h4>
+    <h3>{{dvm.om.getEntityName(dvm.classObj)}}</h3>
+    <p class="text-muted"><small>{{dvm.classObj['@id']}}</small></p>
+    <div>
+        <span class="field-name">Description:</span>
+        <p>{{dvm.om.getEntityDescription(dvm.classObj) || "(None Specified)"}}</p>
+    </div>
+    <div>
+        <span class="field-name">Properties:</span>
         <ul class="props">
-            <li ng-if="!dvm.getProps().length">None</li>
-            <li ng-repeat="prop in dvm.getPropList() track by $index">{{prop}}</li>
+            <li ng-if="dvm.props.length === 0" class="last">None</li>
+            <li ng-repeat="prop in dvm.props track by prop.propObj['@id']" ng-class="{'last': $last}" title="{{prop.propObj['@id']}}">{{dvm.om.getEntityName(prop.propObj)}}</li>
         </ul>
     </div>
 </div>

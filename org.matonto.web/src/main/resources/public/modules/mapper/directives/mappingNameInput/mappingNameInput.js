@@ -91,8 +91,8 @@
                 controllerAs: 'dvm',
                 scope: {
                     name: '=',
-                    required: '=?',
-                    isActive: '=?',
+                    required: '<?',
+                    isActive: '<?',
                     focusEvent: '&'
                 },
                 link: function(scope, el, attrs, form) {

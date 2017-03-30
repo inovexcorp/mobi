@@ -27,9 +27,9 @@
         .module('everythingTree', [])
         .directive('everythingTree', everythingTree);
 
-        everythingTree.$inject = ['ontologyManagerService', 'ontologyStateService'];
+        everythingTree.$inject = ['ontologyManagerService', 'ontologyStateService', 'ontologyUtilsManagerService'];
 
-        function everythingTree(ontologyManagerService, ontologyStateService) {
+        function everythingTree(ontologyManagerService, ontologyStateService, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,8 +38,14 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
+                    var ontoUtils = ontologyUtilsManagerService;
+
                     dvm.om = ontologyManagerService;
                     dvm.sm = ontologyStateService;
+
+                    dvm.getName = function(entity) {
+                        return ontoUtils.getLabelForIRI(_.get(entity, '@id', _.get(entity, 'matonto.originalIRI')));
+                    }
                 }
             }
         }

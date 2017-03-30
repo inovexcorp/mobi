@@ -85,7 +85,7 @@ public class OrmGenerationMojo extends AbstractMojo {
                     // If the destination package already exists, remove the previous version.
                     FileUtils.deleteQuietly(new File(outputLocation + (outputLocation.endsWith(File.separator) ? "" : File.separator) + generate.getOutputPackage().replace('.', File.separatorChar)));
                     // Generate the source in the targeted output package.
-                    SourceGenerator.toSource(ontology, generate.getOutputPackage(), outputLocation, referenceOntologies);
+                    SourceGenerator.toSource(ontology, generate.getOutputPackage(), generate.getOntologyName(), outputLocation, referenceOntologies);
                 } catch (Exception e) {
                     // Catch an exception during source generation and throw MojoFailureException.
                     throw new MojoFailureException(String.format("Issue generating source from ontology specified: {%s} {%s} {%s}",
@@ -110,7 +110,7 @@ public class OrmGenerationMojo extends AbstractMojo {
         if(references != null) {
             for (final Ontology ont : references) {
                 try {
-                    referenceOntologies.add(new ReferenceOntology(ont.getOutputPackage(), GraphReadingUtility.readOntology(new File(ont.getOntologyFile()), "")));
+                    referenceOntologies.add(new ReferenceOntology(ont.getOutputPackage(), ont.getOntologyName(), GraphReadingUtility.readOntology(new File(ont.getOntologyFile()), "")));
                 }catch(IOException e){
                     throw new MojoExecutionException("Issue reading referenced ontology: " + ont.getOntologyFile(), e);
                 }

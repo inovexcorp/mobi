@@ -97,13 +97,17 @@
         <bundle start-level="80">mvn:org.matonto/catalog.api/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/catalog.impl/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/jaas/${project.version}</bundle>
+        <bundle start-level="80">mvn:org.matonto/jaas.api/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/rdf.orm/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/rdf.orm.ontologies/${project.version}</bundle>
+        <bundle start-level="80">mvn:org.matonto/platform.config.api/${project.version}</bundle>
+        <bundle start-level="80">mvn:org.matonto/platform.config.impl/${project.version}</bundle>
+        <bundle start-level="80">mvn:org.matonto/dataset.api/${project.version}</bundle>
+        <bundle start-level="80">mvn:org.matonto/dataset.impl/${project.version}</bundle>
     </feature>
     <feature name="matonto-cli" description="MatOnto CLI Bundles" version="${project.version}">
         <feature prerequisite="true">matonto-core</feature>
         <bundle start-level="80">mvn:org.matonto/etl.cli/${project.version}</bundle>
-        <bundle start-level="80">mvn:org.matonto/ontology.cli/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/persistence.cli/${project.version}</bundle>
     </feature>
     <feature name="matonto-web" description="MatOnto Web Bundles" version="${project.version}">
@@ -115,6 +119,8 @@
         <bundle start-level="80">mvn:org.matonto/sparql.rest/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/catalog.rest/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/jaas.rest/${project.version}</bundle>
+        <bundle start-level="80">mvn:org.matonto/platform.config.rest/${project.version}</bundle>
+        <bundle start-level="80">mvn:org.matonto/dataset.rest/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/web.security/${project.version}</bundle>
     </feature>
 </features>

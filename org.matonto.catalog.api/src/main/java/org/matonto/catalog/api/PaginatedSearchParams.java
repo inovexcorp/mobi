@@ -31,17 +31,89 @@ import java.util.Optional;
  * Search parameters. Allows paging with the limit and offset parameters. Enforcing sorting with the required sortBy and
  * optional ascending parameters.
  */
-public interface PaginatedSearchParams {
+public class PaginatedSearchParams {
+    private String searchText;
+    private Resource typeFilter;
+    private Resource sortBy;
+    private Boolean ascending;
+    private Integer limit;
+    private int offset;
 
-    Optional<String> getSearchTerm();
+    private PaginatedSearchParams(Builder builder) {
+        this.searchText = builder.searchText;
+        this.typeFilter = builder.typeFilter;
+        this.sortBy = builder.sortBy;
+        this.ascending = builder.ascending;
+        this.limit = builder.limit;
+        this.offset = builder.offset;
+    }
 
-    Optional<Resource> getTypeFilter();
+    public Optional<String> getSearchText() {
+        return Optional.ofNullable(searchText);
+    }
 
-    Resource getSortBy();
+    public Optional<Resource> getTypeFilter() {
+        return Optional.ofNullable(typeFilter);
+    }
 
-    Optional<Boolean> getAscending();
+    public Optional<Resource> getSortBy() {
+        return Optional.ofNullable(sortBy);
+    }
 
-    int getLimit();
+    public Optional<Boolean> getAscending() {
+        return Optional.ofNullable(ascending);
+    }
 
-    int getOffset();
+    public Optional<Integer> getLimit() {
+        return Optional.ofNullable(limit);
+    }
+
+    public int getOffset() {
+        return offset;
+    }
+
+    public static class Builder {
+        private Integer limit = null;
+        private int offset = 0;
+        private Resource sortBy = null;
+        private String searchText = null;
+        private Resource typeFilter = null;
+        private Boolean ascending = null;
+
+        public Builder() {}
+
+        public Builder limit(Integer limit) {
+            this.limit = limit;
+            return this;
+        }
+
+        public Builder offset(int offset) {
+            this.offset = offset;
+            return this;
+        }
+
+        public Builder sortBy(Resource sortBy) {
+            this.sortBy = sortBy;
+            return this;
+        }
+
+        public Builder searchText(String val) {
+            this.searchText = val;
+            return this;
+        }
+
+        public Builder typeFilter(Resource val) {
+            this.typeFilter = val;
+            return this;
+        }
+
+        public Builder ascending(boolean val) {
+            this.ascending = val;
+            return this;
+        }
+
+        public PaginatedSearchParams build() {
+            return new PaginatedSearchParams(this);
+        }
+    }
 }

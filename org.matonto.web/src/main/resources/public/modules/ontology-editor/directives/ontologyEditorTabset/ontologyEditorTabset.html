@@ -22,14 +22,14 @@
   -->
 <div class="ontology-editor-tabset">
     <tabset>
-        <tab ng-repeat="item in dvm.om.list track by item.ontologyId" heading="dvm.om.getEntityName(dvm.om.getOntologyEntity(item.ontology), type)"
-             on-close="dvm.onClose(item.ontologyId)" active="dvm.sm.getState(item.ontologyId).active"
-             on-click="dvm.sm.setState(item.ontologyId)" marked="dvm.sm.hasChanges(item.ontology, item.ontologyId)"
-             ng-init="type = dvm.sm.getState(item.ontologyId).type">
-            <ontology-tab ng-if="type === 'ontology'"></ontology-tab>
-            <vocabulary-tab ng-if="type === 'vocabulary'"></vocabulary-tab>
+        <tab ng-repeat="item in dvm.om.list track by item.recordId" ng-class="{'up-to-date': item.upToDate}"
+             heading="dvm.om.getEntityName(dvm.om.getOntologyEntity(item.ontology), type)"
+             on-close="dvm.onClose(item.recordId)" active="dvm.os.getState(item.recordId).active"
+             on-click="dvm.os.setState(item.recordId, true)">
+            <ontology-tab ng-if="dvm.os.getState(item.recordId).type === 'ontology'"></ontology-tab>
+            <vocabulary-tab ng-if="dvm.os.getState(item.recordId).type === 'vocabulary'"></vocabulary-tab>
         </tab>
-        <tab active="dvm.sm.getState().active" on-click="dvm.sm.setState()" is-last="true">
+        <tab active="dvm.os.getState().active" on-click="dvm.os.setState()" is-last="true">
             <ontology-default-tab></ontology-default-tab>
         </tab>
     </tabset>

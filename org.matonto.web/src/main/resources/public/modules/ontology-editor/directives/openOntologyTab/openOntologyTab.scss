@@ -54,7 +54,7 @@
                             margin: 0 0 5px;
                         }
 
-                        .description {
+                        p {
                             margin: 0;
                         }
                     }
@@ -62,7 +62,6 @@
                     .action-container {
                         display: flex;
                         align-items: center;
-                        padding: 0 10px;
 
                         .action {
                             color: $gray-light;
@@ -78,8 +77,17 @@
             }
         }
 
-        .paging-details {
+        .paging-container {
             padding: 0 15px;
+
+            .paging-details {
+                float: left;
+
+                p {
+                    line-height: 34px;
+                    margin: 0;
+                }
+            }
 
             .page-count {
                 float: left;

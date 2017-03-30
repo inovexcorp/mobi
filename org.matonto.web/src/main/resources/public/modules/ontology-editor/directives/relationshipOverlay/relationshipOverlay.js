@@ -27,9 +27,9 @@
         .module('relationshipOverlay', [])
         .directive('relationshipOverlay', relationshipOverlay);
 
-        relationshipOverlay.$inject = ['$filter', 'responseObj', 'ontologyManagerService', 'ontologyStateService'];
+        relationshipOverlay.$inject = ['$filter', 'responseObj', 'ontologyManagerService', 'ontologyStateService', 'utilService', 'ontologyUtilsManagerService'];
 
-        function relationshipOverlay($filter, responseObj, ontologyManagerService, ontologyStateService) {
+        function relationshipOverlay($filter, responseObj, ontologyManagerService, ontologyStateService, utilService, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -40,31 +40,22 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
+                    dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.om = ontologyManagerService;
                     dvm.ro = responseObj;
                     dvm.sm = ontologyStateService;
+                    dvm.util = utilService;
                     dvm.concepts = [];
-                    dvm.conceptList = dvm.om.getConceptIRIs(dvm.sm.ontology);
-                    dvm.schemeList = dvm.om.getConceptSchemeIRIs(dvm.sm.ontology);
-
-                    function closeAndMark() {
-                        dvm.sm.setUnsaved(dvm.sm.listItem.ontologyId, dvm.sm.selected.matonto.originalIRI, true);
-                        dvm.sm.showRelationshipOverlay = false;
-                    }
+                    dvm.conceptList = dvm.om.getConceptIRIs(dvm.sm.listItem.ontology);
+                    dvm.schemeList = dvm.om.getConceptSchemeIRIs(dvm.sm.listItem.ontology);
 
                     dvm.addRelationship = function() {
                         var axiom = dvm.ro.getItemIri(dvm.relationship);
                         dvm.sm.selected[axiom] = _.union(_.get(dvm.sm.selected, axiom, []), dvm.values);
-                        closeAndMark();
-                    }
-
-                    dvm.getIRINamespace = function(item) {
-                        var split = $filter('splitIRI')(item);
-                        return split.begin + split.then;
-                    }
-
-                    dvm.getItemNamespace = function(item) {
-                        return _.get(item, 'namespace', 'No namespace');
+                        dvm.om.addToAdditions(dvm.sm.listItem.recordId, {'@id': dvm.sm.selected['@id'],
+                            [axiom]: dvm.values});
+                        dvm.sm.showRelationshipOverlay = false;
+                        dvm.ontoUtils.saveCurrentChanges();
                     }
                 }
             }

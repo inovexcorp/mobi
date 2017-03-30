@@ -27,9 +27,9 @@
         .module('createPropertyOverlay', [])
         .directive('createPropertyOverlay', createPropertyOverlay);
 
-        createPropertyOverlay.$inject = ['$filter', 'REGEX', 'ontologyManagerService', 'ontologyStateService', 'prefixes'];
+        createPropertyOverlay.$inject = ['$filter', 'REGEX', 'ontologyManagerService', 'ontologyStateService', 'prefixes', 'ontologyUtilsManagerService'];
 
-        function createPropertyOverlay($filter, REGEX, ontologyManagerService, ontologyStateService, prefixes) {
+        function createPropertyOverlay($filter, REGEX, ontologyManagerService, ontologyStateService, prefixes, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -40,15 +40,14 @@
                     var dvm = this;
                     var setAsObject = false;
                     var setAsDatatype = false;
+                    var ontoUtils = ontologyUtilsManagerService;
 
+                    dvm.checkbox = false;
                     dvm.prefixes = prefixes;
                     dvm.iriPattern = REGEX.IRI;
                     dvm.om = ontologyManagerService;
                     dvm.sm = ontologyStateService;
-
-                    dvm.prefix = _.get(dvm.om.getListItemById(dvm.sm.state.ontologyId), 'iriBegin',
-                        dvm.om.getOntologyIRI(dvm.sm.ontology)) + _.get(dvm.om.getListItemById(dvm.sm.state.ontologyId),
-                        'iriThen', '#');
+                    dvm.prefix = dvm.sm.getDefaultPrefix();
 
                     dvm.property = {
                         '@id': dvm.prefix,
@@ -57,39 +56,27 @@
                         }],
                         [prefixes.dcterms + 'description']: [{
                             '@value': ''
-                        }],
-                        matonto: {
-                            created: true
-                        }
+                        }]
                     }
 
                     dvm.nameChanged = function() {
                         if (!dvm.iriHasChanged) {
-                            dvm.property['@id'] = dvm.prefix + $filter('camelCase')(
-                                dvm.property[prefixes.dcterms + 'title'][0]['@value'], 'property');
+                            dvm.property['@id'] = dvm.prefix + $filter('camelCase')(dvm.property[prefixes.dcterms + 'title'][0]['@value'], 'property');
                         }
                     }
 
                     dvm.onEdit = function(iriBegin, iriThen, iriEnd) {
                         dvm.iriHasChanged = true;
                         dvm.property['@id'] = iriBegin + iriThen + iriEnd;
-                    }
-
-                    function onCreateSuccess(response) {
-                        dvm.sm.showCreatePropertyOverlay = false;
-                        dvm.sm.selectItem('property-editor', response.entityIRI,
-                            dvm.om.getListItemById(response.ontologyId));
-                        // TODO: figure out how to open up where this property is listed
-                        // Potentially easier with the getPath function I'm working on
-                    }
-
-                    function onCreateError(errorMessage) {
-                        dvm.error = errorMessage;
+                        dvm.sm.setCommonIriParts(iriBegin, iriThen);
                     }
 
                     dvm.create = function() {
                         if (dvm.property[prefixes.dcterms + 'description'][0]['@value'] === '') {
                             _.unset(dvm.property, prefixes.dcterms + 'description');
+                        }
+                        if (dvm.checkbox) {
+                            dvm.property['@type'].push(prefixes.owl + 'FunctionalProperty');
                         }
                         _.forEach(['domain', 'range'], function(axiom) {
                             if (_.isEqual(dvm.property[prefixes.rdfs + axiom], [])) {
@@ -97,23 +84,29 @@
                             }
                         });
                         _.set(dvm.property, 'matonto.originalIRI', dvm.property['@id']);
+                        ontoUtils.addLanguageToNewEntity(dvm.property, dvm.language);
                         // add the entity to the ontology
-                        dvm.om.addEntity(dvm.sm.ontology, dvm.property);
+                        dvm.om.addEntity(dvm.sm.listItem, dvm.property);
                         // update relevant lists
                         var split = $filter('splitIRI')(dvm.property['@id']);
-                        var listItem = dvm.om.getListItemById(dvm.sm.state.ontologyId);
                         if (dvm.om.isObjectProperty(dvm.property)) {
-                            _.get(listItem, 'subObjectProperties').push({namespace:split.begin + split.then, localName: split.end});
-                            _.get(listItem, 'objectPropertyHierarchy').push({'entityIRI': dvm.property['@id']});
-                        } else {
-                            _.get(listItem, 'subDataProperties').push({namespace:split.begin + split.then, localName: split.end});
-                            _.get(listItem, 'dataPropertyHierarchy').push({'entityIRI': dvm.property['@id']});
+                            _.get(dvm.sm.listItem, 'subObjectProperties').push({namespace:split.begin + split.then, localName: split.end});
+                            _.get(dvm.sm.listItem, 'objectPropertyHierarchy').push({'entityIRI': dvm.property['@id']});
+                            dvm.sm.setObjectPropertiesOpened(dvm.sm.listItem.recordId, true);
+                        } else if (dvm.om.isDataTypeProperty(dvm.property)) {
+                            _.get(dvm.sm.listItem, 'subDataProperties').push({namespace:split.begin + split.then, localName: split.end});
+                            _.get(dvm.sm.listItem, 'dataPropertyHierarchy').push({'entityIRI': dvm.property['@id']});
+                            dvm.sm.setDataPropertiesOpened(dvm.sm.listItem.recordId, true);
+                        } else if (dvm.om.isAnnotation(dvm.property)) {
+                            _.get(dvm.sm.listItem, 'annotations').push({namespace:split.begin + split.then, localName: split.end});
+                            dvm.sm.setAnnotationPropertiesOpened(dvm.sm.listItem.recordId, true);
                         }
-                        _.set(_.get(listItem, 'index'), dvm.property['@id'], dvm.sm.ontology.length - 1);
-                        // select the new class
+                        dvm.om.addToAdditions(dvm.sm.listItem.recordId, dvm.property);
+                        // select the new property
                         dvm.sm.selectItem(_.get(dvm.property, '@id'));
                         // hide the overlay
                         dvm.sm.showCreatePropertyOverlay = false;
+                        ontoUtils.saveCurrentChanges();
                     }
                 }
             }

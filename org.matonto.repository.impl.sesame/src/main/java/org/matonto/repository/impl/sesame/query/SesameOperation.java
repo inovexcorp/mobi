@@ -23,11 +23,15 @@ package org.matonto.repository.impl.sesame.query;
  * #L%
  */
 
+import org.apache.commons.lang.NotImplementedException;
 import org.matonto.query.api.BindingSet;
 import org.matonto.query.api.Operation;
+import org.matonto.query.api.processor.OperationProcessor;
 import org.matonto.query.exception.QueryInterruptedException;
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.core.utils.Values;
+
+import java.util.List;
 
 public class SesameOperation implements Operation {
 
@@ -78,5 +82,10 @@ public class SesameOperation implements Operation {
     @Override
     public int getMaxExecutionTime() {
         return sesameOperation.getMaxExecutionTime();
+    }
+
+    @Override
+    public List<OperationProcessor> getProcessors() {
+        throw new NotImplementedException("Not yet implemented.");
     }
 }

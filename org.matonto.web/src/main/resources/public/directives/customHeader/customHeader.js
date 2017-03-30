@@ -27,9 +27,9 @@
         .module('customHeader', [])
         .directive('customHeader', customHeader);
 
-    customHeader.$inject = ['loginManagerService', 'ontologyStateService', 'ontologyManagerService', 'mapperStateService', 'mappingManagerService', 'delimitedManagerService', 'sparqlManagerService'];
+    customHeader.$inject = ['loginManagerService', 'catalogStateService', 'catalogManagerService', 'ontologyStateService', 'ontologyManagerService', 'mapperStateService', 'mappingManagerService', 'delimitedManagerService', 'sparqlManagerService', 'userStateService', 'userManagerService'];
 
-    function customHeader(loginManagerService, ontologyStateService, ontologyManagerService, mapperStateService, mappingManagerService, delimitedManagerService, sparqlManagerService) {
+    function customHeader(loginManagerService, catalogStateService, catalogManagerService, ontologyStateService, ontologyManagerService, mapperStateService, mappingManagerService, delimitedManagerService, sparqlManagerService, userStateService, userManagerService) {
         return {
             restrict: 'E',
             replace: true,
@@ -41,6 +41,7 @@
                 var dvm = this;
 
                 dvm.logout = function() {
+                    catalogStateService.reset();
                     ontologyStateService.reset();
                     ontologyManagerService.reset();
                     mapperStateService.initialize();
@@ -49,6 +50,8 @@
                     delimitedManagerService.reset();
                     sparqlManagerService.reset();
                     loginManagerService.logout();
+                    userStateService.reset();
+                    userManagerService.reset();
                 }
             },
             templateUrl: 'directives/customHeader/customHeader.html'

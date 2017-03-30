@@ -23,51 +23,56 @@ package org.matonto.ontology.rest.impl;
  * #L%
  */
 
+import static org.matonto.rest.util.RestUtils.jsonldToModel;
+import static org.matonto.rest.util.RestUtils.modelToJsonld;
+
+import com.google.common.collect.Iterables;
+
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
-import com.google.common.collect.Iterables;
 import net.sf.json.JSONArray;
+import net.sf.json.JSONException;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.matonto.catalog.api.CatalogManager;
+import org.matonto.catalog.api.Difference;
+import org.matonto.catalog.api.builder.RecordConfig;
+import org.matonto.catalog.api.ontologies.mcat.Commit;
+import org.matonto.catalog.api.ontologies.mcat.InProgressCommit;
+import org.matonto.catalog.api.ontologies.mcat.OntologyRecord;
+import org.matonto.catalog.api.ontologies.mcat.OntologyRecordFactory;
+import org.matonto.exception.MatOntoException;
+import org.matonto.jaas.api.engines.EngineManager;
+import org.matonto.jaas.api.ontologies.usermanagement.User;
+import org.matonto.jaas.engines.RdfEngine;
 import org.matonto.ontology.core.api.Annotation;
 import org.matonto.ontology.core.api.Entity;
 import org.matonto.ontology.core.api.NamedIndividual;
 import org.matonto.ontology.core.api.Ontology;
-import org.matonto.ontology.core.api.OntologyId;
 import org.matonto.ontology.core.api.OntologyManager;
 import org.matonto.ontology.core.api.propertyexpression.AnnotationProperty;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.ontology.rest.OntologyRest;
+import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.persistence.utils.JSONQueryResults;
-import org.matonto.persistence.utils.Values;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.query.api.Binding;
 import org.matonto.rdf.api.BNode;
 import org.matonto.rdf.api.IRI;
+import org.matonto.rdf.api.Model;
+import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.Value;
+import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rest.util.ErrorUtils;
-import org.openrdf.rio.RDFFormat;
-import org.openrdf.rio.RDFHandlerException;
-import org.openrdf.rio.Rio;
-import org.openrdf.rio.WriterConfig;
-import org.openrdf.rio.helpers.JSONLDMode;
-import org.openrdf.rio.helpers.JSONLDSettings;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.matonto.web.security.util.AuthenticationProps;
+import org.openrdf.model.vocabulary.OWL;
 
-import javax.annotation.Nonnull;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
-import java.io.BufferedWriter;
-import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -76,478 +81,560 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.Response;
 
 @Component(immediate = true)
 public class OntologyRestImpl implements OntologyRest {
 
-    private OntologyManager manager;
-    private Values values;
-    private final Logger logger = LoggerFactory.getLogger(OntologyRestImpl.class);
+    private ModelFactory modelFactory;
+    private ValueFactory valueFactory;
+    private OntologyManager ontologyManager;
+    private CatalogManager catalogManager;
+    private OntologyRecordFactory ontologyRecordFactory;
+    private EngineManager engineManager;
+    private SesameTransformer sesameTransformer;
 
-    private boolean stringParamIsMissing(String param) {
-        return param == null || param.length() == 0;
-    }
-
-    private void throwErrorIfMissingParam(String param, String errorMessage) {
-        if (stringParamIsMissing(param)) {
-            throw ErrorUtils.sendError(errorMessage, Response.Status.BAD_REQUEST);
-        }
+    @Reference
+    public void setModelFactory(ModelFactory modelFactory) {
+        this.modelFactory = modelFactory;
     }
 
     @Reference
-    public void setManager(OntologyManager manager) {
-        this.manager = manager;
+    public void setValueFactory(ValueFactory valueFactory) {
+        this.valueFactory = valueFactory;
     }
 
     @Reference
-    public void setValues(Values values) {
-        this.values = values;
+    public void setOntologyManager(OntologyManager ontologyManager) {
+        this.ontologyManager = ontologyManager;
+    }
+
+    @Reference
+    public void setCatalogManager(CatalogManager catalogManager) {
+        this.catalogManager = catalogManager;
+    }
+
+    @Reference
+    public void setOntologyRecordFactory(OntologyRecordFactory ontologyRecordFactory) {
+        this.ontologyRecordFactory = ontologyRecordFactory;
+    }
+
+    @Reference
+    public void setEngineManager(EngineManager engineManager) {
+        this.engineManager = engineManager;
+    }
+
+    @Reference
+    public void setSesameTransformer(SesameTransformer sesameTransformer) {
+        this.sesameTransformer = sesameTransformer;
     }
 
     @Override
-    public Response getAllOntologyIds() {
-        JSONArray json = new JSONArray();
-
-        Set<Resource> ontoIdRegistry = manager.getOntologyRegistry();
-
-        ontoIdRegistry.forEach(oid ->
-                json.add(oid.stringValue())
-        );
-
-        return Response.status(200).entity(json.toString()).build();
-    }
-
-    private Response getAllOntologies() {
-        List<String> ontologyIds = manager.getOntologyRegistry()
-                .stream()
-                .map(Resource::stringValue)
-                .collect(Collectors.toList());
-
-        return Response.status(200).entity(getOntologies(ontologyIds).toString()).build();
-    }
-
-    @Override
-    public Response getOntologies(String ontologyIdList) {
-        if (stringParamIsMissing(ontologyIdList)) {
-            return getAllOntologies();
+    public Response uploadFile(ContainerRequestContext context, InputStream fileInputStream, String title,
+                               String description, String keywords) {
+        throwErrorIfMissingStringParam(title, "The title is missing.");
+        if (fileInputStream == null) {
+            throw ErrorUtils.sendError("The file is missing.", Response.Status.BAD_REQUEST);
         }
-
-        List<String> ontologyIds = Arrays.asList(ontologyIdList.trim().split("\\s*,\\s*"));
-
-        if (ontologyIds.isEmpty()) {
-            throw ErrorUtils.sendError("Invalid ontology id(s) on the list", Response.Status.BAD_REQUEST);
-        }
-
-        return Response.status(200).entity(getOntologies(ontologyIds).toString()).build();
-    }
-
-    private JSONArray getOntologies(List<String> ontIds) {
-        JSONArray jsonArray = new JSONArray();
-
-        for (String id : ontIds) {
-            Optional<Ontology> optOntology;
-
-            try {
-                optOntology = getOntology(id);
-            } catch (MatontoOntologyException ex) {
-                throw ErrorUtils.sendError(ex, ex.getMessage(),
-                        Response.Status.INTERNAL_SERVER_ERROR);
-            }
-
-            if (optOntology.isPresent()) {
-                JSONObject json = new JSONObject();
-                json.put("ontologyId", id);
-                json.put("ontology", optOntology.get().asJsonLD().toString());
-                jsonArray.add(json);
-            } else {
-                logger.debug("Ontology " + id + " does not exist");
-            }
-        }
-
-        return jsonArray;
-    }
-
-    private Response getUploadResponse(boolean persisted, Ontology ontology) {
-        JSONObject json = new JSONObject();
-
-        if (persisted) {
-            OntologyId oid = ontology.getOntologyId();
-            json.put("ontologyId", oid.getOntologyIdentifier().stringValue());
-            Set<IRI> missingImports = ontology.getUnloadableImportIRIs();
-            if (!missingImports.isEmpty()) {
-                JSONArray array = new JSONArray();
-                missingImports.forEach(iri -> array.add(iri.stringValue()));
-                json.put("unloadableImportedOntologies", array.toString());
-            }
-        }
-
-        json.put("persisted", persisted);
-
-        return Response.status(200).entity(json.toString()).build();
-    }
-
-    @Override
-    public Response uploadFile(InputStream fileInputStream) {
-        boolean persisted = false;
-        Ontology ontology = null;
-
         try {
-            ontology = manager.createOntology(fileInputStream);
-            persisted = manager.storeOntology(ontology);
-        } catch (MatontoOntologyException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(),
-                    Response.Status.INTERNAL_SERVER_ERROR);
+            Ontology ontology = ontologyManager.createOntology(fileInputStream);
+            return uploadOntology(context, ontology, title, description, keywords);
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         } finally {
             IOUtils.closeQuietly(fileInputStream);
         }
-
-        return getUploadResponse(persisted, ontology);
     }
 
     @Override
-    public Response uploadOntologyJson(String ontologyJson) {
-        boolean persisted;
-        Ontology ontology;
-
+    public Response uploadOntologyJson(ContainerRequestContext context, String title, String description,
+                                       String keywords, String ontologyJson) {
+        throwErrorIfMissingStringParam(title, "The title is missing.");
+        throwErrorIfMissingStringParam(ontologyJson, "The ontologyJson is missing.");
         try {
-            ontology = manager.createOntology(ontologyJson);
-            persisted = manager.storeOntology(ontology);
-        } catch (MatontoOntologyException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(),
-                    Response.Status.INTERNAL_SERVER_ERROR);
+            Ontology ontology = ontologyManager.createOntology(ontologyJson);
+            return uploadOntology(context, ontology, title, description, keywords);
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         }
-
-        return getUploadResponse(persisted, ontology);
     }
 
     @Override
-    public Response getOntology(String ontologyIdStr, String rdfFormat) {
-        logger.info("Getting ontology " + ontologyIdStr);
-        JSONObject result = doWithOntology(ontologyIdStr,
-                ontology -> this.getOntologyAsJsonObject(ontology, rdfFormat));
-
-        return Response.status(200).entity(result.toString()).build();
-    }
-
-    private Optional<Ontology> getOntology(@Nonnull String ontologyIdStr) throws MatontoOntologyException {
-        String id = ontologyIdStr.trim();
-        Resource resource = values.getIriOrBnode(id);
-        return manager.retrieveOntology(resource);
-    }
-
-    @Override
-    public Response downloadOntologyFile(String ontologyIdStr, String rdfFormat, String fileName) {
-        logger.info("Downloading ontology " + ontologyIdStr);
-        JSONObject result = doWithOntology(ontologyIdStr, ontology -> {
-            final String content = getOntologyAsRdf(ontology, rdfFormat);
-            JSONObject json = new JSONObject();
-            json.put("ontology", content);
-            return json;
-        });
-        StreamingOutput stream = os -> {
-            Writer writer = new BufferedWriter(new OutputStreamWriter(os));
-            writer.write(result.get("ontology").toString());
-            writer.flush();
-            writer.close();
-        };
-
-        return Response.ok(stream).header("Content-Disposition", "attachment;filename=" + fileName
-                + "." + getRDFFormatFileExtension(rdfFormat)).header("Content-Type", getRDFFormatMimeType(rdfFormat))
-                .build();
-    }
-
-    @Override
-    public Response saveChangesToOntology(String ontologyIdStr, String resourceIdStr, String resourceJson) {
-        throwErrorIfMissingParam(ontologyIdStr, "ontologyIdStr is missing");
-        throwErrorIfMissingParam(resourceIdStr, "resourceIdStr is missing");
-        throwErrorIfMissingParam(resourceJson, "resourceJson is missing");
-
-        String ontologyId;
+    public Response saveChangesToOntology(ContainerRequestContext context, String recordIdStr, String branchIdStr,
+                                          String commitIdStr, String entityIdStr, String entityJson) {
         try {
-            Resource ontologyResource = values.getIriOrBnode(ontologyIdStr);
-            Resource changedResource = values.getIriOrBnode(resourceIdStr);
-            ontologyId = manager.saveChangesToOntology(ontologyResource, changedResource, resourceJson);
-        } catch (MatontoOntologyException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(),
-                    Response.Status.INTERNAL_SERVER_ERROR);
-        }
-
-        JSONObject json = new JSONObject();
-        json.put("updated", true);
-        json.put("id", ontologyId);
-
-        return Response.status(200).entity(json.toString()).build();
-    }
-
-    @Override
-    public Response deleteOntology(String ontologyIdStr) {
-        throwErrorIfMissingParam(ontologyIdStr, "ontologyIdStr is missing");
-
-        boolean deleted;
-        try {
-            Resource resource = values.getIriOrBnode(ontologyIdStr);
-            deleted = manager.deleteOntology(resource);
-        } catch (MatontoOntologyException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(),
-                    Response.Status.INTERNAL_SERVER_ERROR);
-        }
-
-        JSONObject json = new JSONObject();
-        json.put("deleted", deleted);
-
-        return Response.status(200).entity(json.toString()).build();
-    }
-
-    private Response deleteEntityFromOntology(String ontologyIdStr, String entityIdStr) {
-        throwErrorIfMissingParam(ontologyIdStr, "ontologyIdStr is missing");
-        throwErrorIfMissingParam(entityIdStr, "entityIdStr is missing");
-
-        Map<String, Set> changedEntities;
-        try {
-            Resource ontologyResource = values.getIriOrBnode(ontologyIdStr);
-            Resource entityResource = values.getIriOrBnode(entityIdStr);
-            changedEntities = manager.deleteEntityFromOntology(ontologyResource, entityResource);
-        } catch (MatontoOntologyException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(),
-                    Response.Status.INTERNAL_SERVER_ERROR);
-        }
-
-        JSONArray iris = new JSONArray();
-        iris.addAll(changedEntities.get("iris"));
-
-        JSONArray models = new JSONArray();
-        for (Object model : changedEntities.get("models")) {
-            OutputStream outputStream = new ByteArrayOutputStream();
-            WriterConfig config = new WriterConfig();
-            config.set(JSONLDSettings.JSONLD_MODE, JSONLDMode.FLATTEN);
-
-            try {
-                Rio.write((org.openrdf.model.Model)model, outputStream, RDFFormat.JSONLD, config);
-            } catch (RDFHandlerException e) {
-                throw new MatontoOntologyException("Error while parsing changed entity.");
+            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr).orElseThrow(() ->
+                    ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
+            Model entityModel = getModelForEntityInOntology(ontology, entityIdStr);
+            Difference diff = catalogManager.getDiff(entityModel, getModelFromJson(entityJson));
+            Resource inProgressCommitIRI = getUserInProgressCommitIRI(context, recordIdStr);
+            if (diff.getAdditions() != null) {
+                catalogManager.addAdditions(diff.getAdditions(), inProgressCommitIRI);
             }
-
-            models.add(outputStream.toString());
+            if (diff.getDeletions() != null) {
+                catalogManager.addDeletions(diff.getDeletions(), inProgressCommitIRI);
+            }
+            return Response.ok().build();
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         }
-
-        JSONObject json = new JSONObject();
-        json.put("deleted", true);
-        json.put("iris", iris);
-        json.put("models", models);
-
-        return Response.status(200).entity(json.toString()).build();
     }
 
     @Override
-    public Response deleteClassFromOntology(String ontologyIdStr, String classIdStr) {
-        return deleteEntityFromOntology(ontologyIdStr, classIdStr);
-    }
-
-    @Override
-    public Response deleteObjectPropertyFromOntology(String ontologyIdStr, String propertyIdStr) {
-        return deleteEntityFromOntology(ontologyIdStr, propertyIdStr);
-    }
-
-    @Override
-    public Response deleteDataPropertyFromOntology(String ontologyIdStr, String propertyIdStr) {
-        return deleteEntityFromOntology(ontologyIdStr, propertyIdStr);
-    }
-
-    @Override
-    public Response deleteIndividualFromOntology(String ontologyIdStr, String individualIdStr) {
-        return deleteEntityFromOntology(ontologyIdStr, individualIdStr);
-    }
-
-    private Response addEntityToOntology(String ontologyIdStr, String entityJson) {
-        throwErrorIfMissingParam(ontologyIdStr, "ontologyIdStr is missing");
-        throwErrorIfMissingParam(entityJson, "entityJson is missing");
-
-        boolean added;
+    public Response getIRIsInOntology(ContainerRequestContext context, String recordIdStr, String branchIdStr,
+                                      String commitIdStr) {
         try {
-            Resource ontologyResource = values.getIriOrBnode(ontologyIdStr);
-            added = manager.addEntityToOntology(ontologyResource, entityJson);
-        } catch (MatontoOntologyException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(),
-                    Response.Status.INTERNAL_SERVER_ERROR);
+            JSONObject result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr, this::getAllIRIs);
+            return Response.ok(result).build();
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         }
-
-        JSONObject json = new JSONObject();
-        json.put("added", added);
-
-        return Response.status(200).entity(json.toString()).build();
     }
 
     @Override
-    public Response addClassToOntology(String ontologyIdStr, String classJson) {
-        return addEntityToOntology(ontologyIdStr, classJson);
-    }
-
-    @Override
-    public Response addObjectPropertyToOntology(String ontologyIdStr, String propertyJson) {
-        return addEntityToOntology(ontologyIdStr, propertyJson);
-    }
-
-    @Override
-    public Response addDataPropertyToOntology(String ontologyIdStr, String propertyJson) {
-        return addEntityToOntology(ontologyIdStr, propertyJson);
-    }
-
-    @Override
-    public Response addAnnotationToOntology(String ontologyIdStr, String annotationJson) {
-        return addEntityToOntology(ontologyIdStr, annotationJson);
-    }
-
-    @Override
-    public Response addIndividualToOntology(String ontologyIdStr, String resourceJson) {
-        return addEntityToOntology(ontologyIdStr, resourceJson);
-    }
-
-    @Override
-    public Response getIRIsInOntology(String ontologyIdStr) {
-        JSONObject result = doWithOntology(ontologyIdStr, this::getAllIRIs);      
-        return Response.status(200).entity(result.toString()).build();
-    }
-
-    @Override
-    public Response getAnnotationsInOntology(String ontologyIdStr) {
-        JSONObject result = doWithOntology(ontologyIdStr, this::getAnnotationArray);
-        return Response.status(200).entity(result.toString()).build();
-    }
-
-    @Override
-    public Response getClassesInOntology(String ontologyIdStr) {
-        JSONObject result = doWithOntology(ontologyIdStr, this::getClassArray);
-        return Response.status(200).entity(result.toString()).build();
-    }
-
-    @Override
-    public Response getDatatypesInOntology(String ontologyIdStr) {
-        JSONObject result = doWithOntology(ontologyIdStr, this::getDatatypeArray);
-        return Response.status(200).entity(result.toString()).build();
-    }
-
-    @Override
-    public Response getObjectPropertiesInOntology(String ontologyIdStr) {
-        JSONObject result = doWithOntology(ontologyIdStr, this::getObjectPropertyArray);
-        return Response.status(200).entity(result.toString()).build();
-    }
-
-    @Override
-    public Response getDataPropertiesInOntology(String ontologyIdStr) {
-        JSONObject result = doWithOntology(ontologyIdStr, this::getDataPropertyArray);
-        return Response.status(200).entity(result.toString()).build();
-    }
-
-    @Override
-    public Response getNamedIndividualsInOntology(String ontologyIdStr) {
-        JSONObject result = doWithOntology(ontologyIdStr, this::getNamedIndividualArray);
-        return Response.status(200).entity(result.toString()).build();
-    }
-    
-    @Override
-    public Response getIRIsInImportedOntologies(String ontologyIdStr) {
-        JSONArray result = doWithImportedOntologies(ontologyIdStr, this::getAllIRIs);
-        
-        return Response.status(200).entity(result.toString()).build();
-    }
-
-    @Override
-    public Response getImportsClosure(String ontologyIdStr, String rdfFormat) {
-        Set<Ontology> importedOntologies;
-
+    public Response getAnnotationsInOntology(ContainerRequestContext context, String recordIdStr, String branchIdStr,
+                                             String commitIdStr) {
         try {
-            importedOntologies = getImportsClosure(ontologyIdStr);
-        } catch (MatontoOntologyException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(),
-                    Response.Status.INTERNAL_SERVER_ERROR);
-        }
-        JSONArray arr = new JSONArray();
-        importedOntologies.stream()
-            .filter(ontology -> !ontology.getOntologyId().getOntologyIdentifier().stringValue().equals(ontologyIdStr))
-            .map(ontology1 -> this.getOntologyAsJsonObject(ontology1, rdfFormat))
-            .forEach(arr::add);
-        return arr.size() == 0 ? Response.status(204).build() : Response.status(200).entity(arr.toString()).build();
-    }
-
-    private Set<Ontology> getImportsClosure(@Nonnull String ontologyIdStr) throws MatontoOntologyException {
-        Optional<Ontology> optOntology = getOntology(ontologyIdStr);
-        if (optOntology.isPresent()) {
-            return optOntology.get().getImportsClosure();
-        } else {
-            return new HashSet<>();
+            JSONObject result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr,
+                    this::getAnnotationArray);
+            return Response.ok(result).build();
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         }
     }
 
     @Override
-    public Response getAnnotationsInImportedOntologies(String ontologyIdStr) {
-        JSONArray result = doWithImportedOntologies(ontologyIdStr, this::getAnnotationArray);
-        return Response.status(200).entity(result.toString()).build();
+    public Response addAnnotationToOntology(ContainerRequestContext context, String recordIdStr,
+                                            String annotationJson) {
+        verifyJsonldType(annotationJson, OWL.ANNOTATIONPROPERTY.stringValue());
+        try {
+            return additionsToInProgressCommit(context, recordIdStr, getModelFromJson(annotationJson));
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+        }
     }
 
     @Override
-    public Response getClassesInImportedOntologies(String ontologyIdStr) {
-        JSONArray result = doWithImportedOntologies(ontologyIdStr, this::getClassArray);
-        return Response.status(200).entity(result.toString()).build();
+    public Response deleteAnnotationFromOntology(ContainerRequestContext context, String recordIdStr,
+                                                 String annotationIdStr, String branchIdStr, String commitIdStr) {
+        try {
+            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr).orElseThrow(() ->
+                    ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
+            return deletionsToInProgressCommit(context, ontology, annotationIdStr, recordIdStr);
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+        }
     }
 
     @Override
-    public Response getDatatypesInImportedOntologies(String ontologyIdStr) {
-        JSONArray result = doWithImportedOntologies(ontologyIdStr, this::getDatatypeArray);
-        return Response.status(200).entity(result.toString()).build();
+    public Response getClassesInOntology(ContainerRequestContext context, String recordIdStr, String branchIdStr,
+                                         String commitIdStr) {
+        try {
+            JSONObject result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr, this::getClassArray);
+            return Response.ok(result).build();
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+        }
     }
 
     @Override
-    public Response getObjectPropertiesInImportedOntologies(String ontologyIdStr) {
-        JSONArray result = doWithImportedOntologies(ontologyIdStr, this::getObjectPropertyArray);
-        return Response.status(200).entity(result.toString()).build();
+    public Response addClassToOntology(ContainerRequestContext context, String recordIdStr, String classJson) {
+        verifyJsonldType(classJson, OWL.CLASS.stringValue());
+        try {
+            return additionsToInProgressCommit(context, recordIdStr, getModelFromJson(classJson));
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+        }
     }
 
     @Override
-    public Response getDataPropertiesInImportedOntologies(String ontologyIdStr) {
-        JSONArray result = doWithImportedOntologies(ontologyIdStr, this::getDataPropertyArray);
-        return Response.status(200).entity(result.toString()).build();
+    public Response deleteClassFromOntology(ContainerRequestContext context, String recordIdStr, String classIdStr,
+                                            String branchIdStr, String commitIdStr) {
+        try {
+            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr).orElseThrow(() ->
+                    ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
+            return deletionsToInProgressCommit(context, ontology, classIdStr, recordIdStr);
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+        }
     }
 
     @Override
-    public Response getNamedIndividualsInImportedOntologies(String ontologyIdStr) {
-        JSONArray result = doWithImportedOntologies(ontologyIdStr, this::getNamedIndividualArray);
-        return Response.status(200).entity(result.toString()).build();
+    public Response getDatatypesInOntology(ContainerRequestContext context, String recordIdStr, String branchIdStr,
+                                           String commitIdStr) {
+        try {
+            JSONObject result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr,
+                    this::getDatatypeArray);
+            return Response.ok(result).build();
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+        }
     }
 
     @Override
-    public Response getOntologyClassHierarchy(String ontologyIdStr) {
-        TupleQueryResult queryResults = manager.getSubClassesOf(ontologyIdStr);
-        JSONObject response = getHierarchy(queryResults);
-        return Response.status(200).entity(response.toString()).build();
+    public Response addDatatypeToOntology(ContainerRequestContext context, String recordIdStr, String datatypeJson) {
+        verifyJsonldType(datatypeJson, OWL.DATATYPEPROPERTY.stringValue());
+        try {
+            return additionsToInProgressCommit(context, recordIdStr, getModelFromJson(datatypeJson));
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+        }
     }
 
     @Override
-    public Response getOntologyObjectPropertyHierarchy(String ontologyIdStr) {
-        TupleQueryResult queryResults = manager.getSubObjectPropertiesOf(ontologyIdStr);
-        JSONObject response = getHierarchy(queryResults);
-        return Response.status(200).entity(response.toString()).build();
+    public Response deleteDatatypeFromOntology(ContainerRequestContext context, String recordIdStr,
+                                               String datatypeIdStr, String branchIdStr, String commitIdStr) {
+        try {
+            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr).orElseThrow(() ->
+                    ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
+            return deletionsToInProgressCommit(context, ontology, datatypeIdStr, recordIdStr);
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+        }
     }
 
     @Override
-    public Response getOntologyDataPropertyHierarchy(String ontologyIdStr) {
-        TupleQueryResult queryResults = manager.getSubDatatypePropertiesOf(ontologyIdStr);
-        JSONObject response = getHierarchy(queryResults);
-        return Response.status(200).entity(response.toString()).build();
+    public Response getObjectPropertiesInOntology(ContainerRequestContext context, String recordIdStr,
+                                                  String branchIdStr, String commitIdStr) {
+        try {
+            JSONObject result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr,
+                    this::getObjectPropertyArray);
+            return Response.ok(result).build();
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+        }
     }
 
     @Override
-    public Response getConceptHierarchy(String ontologyIdStr) {
-        TupleQueryResult queryResults = manager.getConceptRelationships(ontologyIdStr);
-        JSONObject response = getHierarchy(queryResults);
-        return Response.status(200).entity(response.toString()).build();
+    public Response addObjectPropertyToOntology(ContainerRequestContext context, String recordIdStr,
+                                                String objectPropertyJson) {
+        verifyJsonldType(objectPropertyJson, OWL.OBJECTPROPERTY.stringValue());
+        try {
+            return additionsToInProgressCommit(context, recordIdStr, getModelFromJson(objectPropertyJson));
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+        }
     }
 
-    private JSONObject getHierarchy(TupleQueryResult queryResults) {
+    @Override
+    public Response deleteObjectPropertyFromOntology(ContainerRequestContext context, String recordIdStr,
+                                                     String objectPropertyIdStr, String branchIdStr,
+                                                     String commitIdStr) {
+        try {
+            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr).orElseThrow(() ->
+                    ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
+            return deletionsToInProgressCommit(context, ontology, objectPropertyIdStr, recordIdStr);
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+        }
+    }
+
+    @Override
+    public Response getDataPropertiesInOntology(ContainerRequestContext context, String recordIdStr,
+                                                String branchIdStr, String commitIdStr) {
+        try {
+            JSONObject result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr,
+                    this::getDataPropertyArray);
+            return Response.ok(result).build();
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+        }
+    }
+
+    @Override
+    public Response addDataPropertyToOntology(ContainerRequestContext context, String recordIdStr,
+                                              String dataPropertyJson) {
+        verifyJsonldType(dataPropertyJson, OWL.DATATYPEPROPERTY.stringValue());
+        try {
+            return additionsToInProgressCommit(context, recordIdStr, getModelFromJson(dataPropertyJson));
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+        }
+    }
+
+    @Override
+    public Response deleteDataPropertyFromOntology(ContainerRequestContext context, String recordIdStr,
+                                                   String dataPropertyIdStr, String branchIdStr, String commitIdStr) {
+        try {
+            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr).orElseThrow(() ->
+                    ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
+            return deletionsToInProgressCommit(context, ontology, dataPropertyIdStr, recordIdStr);
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+        }
+    }
+
+    @Override
+    public Response getNamedIndividualsInOntology(ContainerRequestContext context, String recordIdStr,
+                                                  String branchIdStr, String commitIdStr) {
+        try {
+            JSONObject result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr,
+                    this::getNamedIndividualArray);
+            return Response.ok(result).build();
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+        }
+    }
+
+    @Override
+    public Response addIndividualToOntology(ContainerRequestContext context, String recordIdStr,
+                                            String individualJson) {
+        verifyJsonldType(individualJson, OWL.INDIVIDUAL.stringValue());
+        try {
+            return additionsToInProgressCommit(context, recordIdStr, getModelFromJson(individualJson));
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+        }
+    }
+
+    @Override
+    public Response deleteIndividualFromOntology(ContainerRequestContext context, String recordIdStr,
+                                                 String individualIdStr, String branchIdStr, String commitIdStr) {
+        try {
+            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr).orElseThrow(() ->
+                    ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
+            return deletionsToInProgressCommit(context, ontology, individualIdStr, recordIdStr);
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+        }
+    }
+
+    @Override
+    public Response getIRIsInImportedOntologies(ContainerRequestContext context, String recordIdStr,
+                                                String branchIdStr, String commitIdStr) {
+        try {
+            JSONArray result = doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr,
+                    this::getAllIRIs);
+            return Response.ok(result).build();
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+        }
+    }
+
+    @Override
+    public Response getImportsClosure(ContainerRequestContext context, String recordIdStr, String rdfFormat,
+                                      String branchIdStr, String commitIdStr) {
+        try {
+            Set<Ontology> importedOntologies = getImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr);
+            JSONArray array = importedOntologies.stream()
+                    .map(ontology -> getOntologyAsJsonObject(ontology, rdfFormat))
+                    .collect(JSONArray::new, JSONArray::add, JSONArray::add);
+            return array.size() == 0 ? Response.noContent().build() : Response.ok(array).build();
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+        }
+    }
+
+    @Override
+    public Response getAnnotationsInImportedOntologies(ContainerRequestContext context, String recordIdStr,
+                                                       String branchIdStr, String commitIdStr) {
+        try {
+            JSONArray result = doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr,
+                    this::getAnnotationArray);
+            return Response.ok(result).build();
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+        }
+    }
+
+    @Override
+    public Response getClassesInImportedOntologies(ContainerRequestContext context, String recordIdStr,
+                                                   String branchIdStr, String commitIdStr) {
+        try {
+            JSONArray result = doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr,
+                    this::getClassArray);
+            return Response.ok(result).build();
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+        }
+    }
+
+    @Override
+    public Response getDatatypesInImportedOntologies(ContainerRequestContext context, String recordIdStr,
+                                                     String branchIdStr, String commitIdStr) {
+        try {
+            JSONArray result = doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr,
+                    this::getDatatypeArray);
+            return Response.ok(result).build();
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+        }
+    }
+
+    @Override
+    public Response getObjectPropertiesInImportedOntologies(ContainerRequestContext context, String recordIdStr,
+                                                            String branchIdStr, String commitIdStr) {
+        try {
+            JSONArray result = doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr,
+                    this::getObjectPropertyArray);
+            return Response.ok(result).build();
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+        }
+    }
+
+    @Override
+    public Response getDataPropertiesInImportedOntologies(ContainerRequestContext context, String recordIdStr,
+                                                          String branchIdStr, String commitIdStr) {
+        try {
+            JSONArray result = doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr,
+                    this::getDataPropertyArray);
+            return Response.ok(result).build();
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+        }
+    }
+
+    @Override
+    public Response getNamedIndividualsInImportedOntologies(ContainerRequestContext context, String recordIdStr,
+                                                            String branchIdStr, String commitIdStr) {
+        try {
+            JSONArray result = doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr,
+                    this::getNamedIndividualArray);
+            return Response.ok(result).build();
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+        }
+    }
+
+    @Override
+    public Response getOntologyClassHierarchy(ContainerRequestContext context, String recordIdStr, String branchIdStr,
+                                              String commitIdStr) {
+        try {
+            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr).orElseThrow(() ->
+                    ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
+            TupleQueryResult results = ontologyManager.getSubClassesOf(ontology);
+            JSONObject response = getHierarchy(results);
+            return Response.ok(response).build();
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+        }
+    }
+
+    @Override
+    public Response getOntologyObjectPropertyHierarchy(ContainerRequestContext context, String recordIdStr,
+                                                       String branchIdStr, String commitIdStr) {
+        try {
+            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr).orElseThrow(() ->
+                    ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
+            TupleQueryResult results = ontologyManager.getSubObjectPropertiesOf(ontology);
+            JSONObject response = getHierarchy(results);
+            return Response.ok(response).build();
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+        }
+    }
+
+    @Override
+    public Response getOntologyDataPropertyHierarchy(ContainerRequestContext context, String recordIdStr,
+                                                     String branchIdStr, String commitIdStr) {
+        try {
+            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr).orElseThrow(() ->
+                    ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
+            TupleQueryResult results = ontologyManager.getSubDatatypePropertiesOf(ontology);
+            JSONObject response = getHierarchy(results);
+            return Response.ok(response).build();
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+        }
+    }
+
+    @Override
+    public Response getConceptHierarchy(ContainerRequestContext context, String recordIdStr, String branchIdStr,
+                                        String commitIdStr) {
+        try {
+            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr).orElseThrow(() ->
+                    ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
+            TupleQueryResult results = ontologyManager.getConceptRelationships(ontology);
+            JSONObject response = getHierarchy(results);
+            return Response.ok(response).build();
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+        }
+    }
+
+    @Override
+    public Response getClassesWithIndividuals(ContainerRequestContext context, String recordIdStr, String branchIdStr,
+                                              String commitIdStr) {
+        try {
+            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr).orElseThrow(() ->
+                    ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
+            TupleQueryResult results = ontologyManager.getClassesWithIndividuals(ontology);
+            JSONObject response = getHierarchy(results);
+            return Response.ok(response).build();
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+        }
+    }
+
+    @Override
+    public Response getEntityUsages(ContainerRequestContext context, String recordIdStr, String entityIRIStr,
+                                    String branchIdStr, String commitIdStr, String queryType) {
+        try {
+            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr).orElseThrow(() ->
+                    ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
+            Resource entityIRI = valueFactory.createIRI(entityIRIStr);
+            if (queryType.equals("construct")) {
+                Model results = ontologyManager.constructEntityUsages(ontology, entityIRI);
+                return Response.ok(modelToJsonld(sesameTransformer.sesameModel(results))).build();
+            } else if (queryType.equals("select")) {
+                TupleQueryResult results = ontologyManager.getEntityUsages(ontology, entityIRI);
+                return Response.ok(JSONQueryResults.getResponse(results)).build();
+            } else {
+                throw ErrorUtils.sendError("The queryType parameter is not select or construct as expected.",
+                        Response.Status.BAD_REQUEST);
+            }
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+        }
+    }
+
+    @Override
+    public Response getSearchResults(ContainerRequestContext context, String recordIdStr, String searchText,
+                                     String branchIdStr, String commitIdStr) {
+        try {
+            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr).orElseThrow(() ->
+                    ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
+            throwErrorIfMissingStringParam(searchText, "The searchText is missing.");
+            TupleQueryResult results = ontologyManager.getSearchResults(ontology, searchText);
+            Map<String, Set<String>> response = new HashMap<>();
+            results.forEach(queryResult -> {
+                Value entity = Iterables.get(queryResult, 1).getValue();
+                Value filter = Iterables.get(queryResult, 0).getValue();
+                if (!(entity instanceof BNode) && !(filter instanceof BNode)) {
+                    String entityString = entity.stringValue();
+                    String filterString = filter.stringValue();
+                    if (response.containsKey(filterString)) {
+                        response.get(filterString).add(entityString);
+                    } else {
+                        Set<String> newSet = new HashSet<>();
+                        newSet.add(entityString);
+                        response.put(filterString, newSet);
+                    }
+                }
+            });
+            return response.size() == 0 ? Response.noContent().build() : Response.ok(JSONObject.fromObject(response))
+                    .build();
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+        }
+    }
+
+    /**
+     * Uses the provided Set to construct a hierarchy of the entities provided. Each BindingSet in the Set must have the
+     * parent set as the first binding and the child set as the second binding.
+     *
+     * @param tupleQueryResult the TupleQueryResult that contains the parent-child relationships for creating the
+     *                         hierarchy.
+     * @return a JSONObject containing the hierarchy of the entities provided.
+     */
+    private JSONObject getHierarchy(TupleQueryResult tupleQueryResult) {
         Map<String, Set<String>> results = new HashMap<>();
         Map<String, Set<String>> index = new HashMap<>();
         Set<String> topLevel = new HashSet<>();
         Set<String> lowerLevel = new HashSet<>();
-        queryResults.forEach(queryResult -> {
+        tupleQueryResult.forEach(queryResult -> {
             Value key = Iterables.get(queryResult, 0).getValue();
             Binding value = Iterables.get(queryResult, 1, null);
             if (!(key instanceof BNode)) {
@@ -576,17 +663,21 @@ public class OntologyRestImpl implements OntologyRest {
             }
         });
         topLevel.removeAll(lowerLevel);
-        JSONObject response = new JSONObject();
         JSONArray hierarchy = new JSONArray();
         topLevel.forEach(classIRI -> {
             JSONObject item = getHierarchyItem(classIRI, results);
             hierarchy.add(item);
         });
-        response.put("hierarchy", hierarchy);
-        response.put("index", JSONObject.fromObject(index));
-        return response;
+        return new JSONObject().element("hierarchy", hierarchy).element("index", JSONObject.fromObject(index));
     }
 
+    /**
+     * Creates an item to be stored in the hierarchy.
+     *
+     * @param itemIRI the base item's IRI.
+     * @param results the results which contains a map of parents and their associated children.
+     * @return a JSONObject representing an item in the hierarchy.
+     */
     private JSONObject getHierarchyItem(String itemIRI, Map<String, Set<String>> results) {
         JSONObject item = new JSONObject();
         item.put("entityIRI", itemIRI);
@@ -598,174 +689,144 @@ public class OntologyRestImpl implements OntologyRest {
         return item;
     }
 
-    @Override
-    public Response getClassesWithIndividuals(String ontologyIdStr) {
-        TupleQueryResult queryResults = manager.getClassesWithIndividuals(ontologyIdStr);
-        JSONObject response = getHierarchy(queryResults);
-        return Response.status(200).entity(response.toString()).build();
-    }
-
-    @Override
-    public Response getEntityUsages(String ontologyIdStr, String entityIRIStr) {
-        TupleQueryResult queryResults = manager.getEntityUsages(ontologyIdStr, entityIRIStr);
-        JSONObject response = JSONQueryResults.getResponse(queryResults);
-        return Response.status(200).entity(response.toString()).build();
-    }
-
-    @Override
-    public Response getSearchResults(String ontologyIdStr, String searchText) {
-        TupleQueryResult queryResults = manager.getSearchResults(ontologyIdStr, searchText);
-        Map<String, Set<String>> results = new HashMap<>();
-        queryResults.forEach(queryResult -> {
-            Value entity = Iterables.get(queryResult, 1).getValue();
-            Value filter = Iterables.get(queryResult, 0).getValue();
-            if (!(entity instanceof BNode) && !(filter instanceof BNode)) {
-                String entityString = entity.stringValue();
-                String filterString = filter.stringValue();
-                if (results.containsKey(filterString)) {
-                    results.get(filterString).add(entityString);
-                } else {
-                    Set<String> newSet = new HashSet<>();
-                    newSet.add(entityString);
-                    results.put(filterString, newSet);
-                }
-            }
-        });
-        return Response.status(200).entity(JSONObject.fromObject(results).toString()).build();
-    }
-
     /**
-     * Gets Annotation JSONArray.
-     */
-    private JSONObject getAnnotationArray(@Nonnull Ontology ontology) {
-        Set<IRI> iris = new HashSet<>();
-
-        iris.addAll(ontology.getAllAnnotations()
-                .stream()
-                .map(Annotation::getProperty)
-                .map(Entity::getIRI)
-                .collect(Collectors.toSet()));
-
-        iris.addAll(ontology.getAllAnnotationProperties()
-                .stream()
-                .map(AnnotationProperty::getIRI)
-                .collect(Collectors.toSet()));
-
-        JSONObject object = new JSONObject();
-        object.put("annotationProperties", iriListToJsonArray(iris));
-        return object;
-    }
-
-    /**
-     * Gets Class JSONArray.
-     */
-    private JSONObject getClassArray(@Nonnull Ontology ontology) {
-        List<IRI> iris = ontology.getAllClasses()
-                .stream()
-                .map(Entity::getIRI)
-                .collect(Collectors.toList());
-        
-        JSONObject object = new JSONObject();
-        object.put("classes", iriListToJsonArray(iris));
-        return object;
-    }
-
-    /**
-     * Gets Datatype JSONArray.
-     */
-    private JSONObject getDatatypeArray(@Nonnull Ontology ontology) {
-        List<IRI> iris = ontology.getAllDatatypes()
-                .stream()
-                .map(Entity::getIRI)
-                .collect(Collectors.toList());
-
-        JSONObject object = new JSONObject();
-        object.put("datatypes", iriListToJsonArray(iris));
-        return object;
-    }
-
-    /**
-     * Gets ObjectProperty JSONArray.
-     */
-    private JSONObject getObjectPropertyArray(@Nonnull Ontology ontology) {
-        List<IRI> iris = ontology.getAllObjectProperties()
-                .stream()
-                .map(Entity::getIRI)
-                .collect(Collectors.toList());
-
-        JSONObject object = new JSONObject();
-        object.put("objectProperties", iriListToJsonArray(iris));
-        return object;
-    }
-
-    /**
-     * Gets DataProperty JSONArray.
-     */
-    private JSONObject getDataPropertyArray(@Nonnull Ontology ontology) {
-        List<IRI> iris = ontology.getAllDataProperties()
-                .stream()
-                .map(Entity::getIRI)
-                .collect(Collectors.toList());
-
-        JSONObject object = new JSONObject();
-        object.put("dataProperties", iriListToJsonArray(iris));
-        return object;
-    }
-
-    /**
-     * Gets NamedIndividual JSONArray.
-     */
-    private JSONObject getNamedIndividualArray(Ontology ontology) {
-        List<IRI> iris = ontology.getAllIndividuals()
-                .stream()
-                .filter(ind -> ind instanceof NamedIndividual)
-                .map(ind -> ((NamedIndividual) ind).getIRI())
-                .collect(Collectors.toList());
-
-        JSONObject object = new JSONObject();
-        object.put("namedIndividuals", iriListToJsonArray(iris));
-        return object;
-    }
-
-    /**
-     * Gets the List of Entities in an Ontology identified by a lambda function.
+     * Checks to make sure that the provided String is not null or empty.
      *
-     * @param ontologyIdStr The Ontology to process.
-     * @param iriFunction The Function that takes an Ontology and returns a List of IRI corresponding to
-     *                    an Ontology component.
+     * @param param the parameter String to check
+     * @return true if it is null or empty; otherwise, false
+     */
+    private boolean stringParamIsMissing(String param) {
+        return param == null || param.length() == 0;
+    }
+
+    /**
+     * Checks to make sure that the parameter is present. If it is not, it throws an error with the provided String.
+     *
+     * @param param the parameter String to check
+     * @param errorMessage the message String for the thrown error
+     */
+    private void throwErrorIfMissingStringParam(String param, String errorMessage) {
+        if (stringParamIsMissing(param)) {
+            throw ErrorUtils.sendError(errorMessage, Response.Status.BAD_REQUEST);
+        }
+    }
+
+    /**
+     * Common method to extract the User from the ContainerRequestContext.
+     *
+     * @param context the ContainerRequestContext from which you want to get a User.
+     * @return the User associated with the ContainerRequestContext.
+     */
+    private User getUserFromContext(ContainerRequestContext context) {
+        return engineManager.retrieveUser(RdfEngine.COMPONENT_NAME, context.getProperty(AuthenticationProps.USERNAME)
+                .toString()).orElseThrow(() -> ErrorUtils.sendError("User not found", Response.Status.FORBIDDEN));
+    }
+
+    /**
+     * Gets the Resource for the InProgressCommit associated with the User from the provided ContainerRequestContext. If
+     * that User does not have an InProgressCommit, a new one will be created and that Resource will be returned.
+     *
+     * @param context the ContainerRequestContext from which you want to get a User.
+     * @param recordIdStr the record ID String to process.
+     * @return a Resource which identifies the InProgressCommit associated with the User from the context.
+     */
+    private Resource getUserInProgressCommitIRI(ContainerRequestContext context, String recordIdStr) {
+        User user = getUserFromContext(context);
+        Resource recordId = catalogManager.getRecord(catalogManager.getLocalCatalogIRI(),
+                valueFactory.createIRI(recordIdStr), ontologyRecordFactory).orElseThrow(() ->
+                ErrorUtils.sendError("OntologyRecord could not be found.", Response.Status.BAD_REQUEST)).getResource();
+        Optional<Resource> optionalResource = catalogManager.getInProgressCommitIRI(user.getResource(), recordId);
+        if (!optionalResource.isPresent()) {
+            InProgressCommit inProgressCommit = catalogManager.createInProgressCommit(user, recordId);
+            catalogManager.addInProgressCommit(inProgressCommit);
+            return inProgressCommit.getResource();
+        }
+        return optionalResource.get();
+    }
+
+    /**
+     * Optionally gets the Ontology based on the provided IDs.
+     *
+     * @param context the context of the request.
+     * @param recordIdStr the record ID String to process.
+     * @param branchIdStr the branch ID String to process.
+     * @param commitIdStr the commit ID String to process.
+     * @return an Optional containing the Ontology if it was found.
+     */
+    private Optional<Ontology> getOntology(ContainerRequestContext context, String recordIdStr, String branchIdStr,
+                                           String commitIdStr) {
+        throwErrorIfMissingStringParam(recordIdStr, "The recordIdStr is missing.");
+        Resource recordId = valueFactory.createIRI(recordIdStr);
+
+        Optional<Ontology> optionalOntology;
+        if (!stringParamIsMissing(commitIdStr)) {
+            throwErrorIfMissingStringParam(branchIdStr, "The branchIdStr is missing.");
+            optionalOntology = ontologyManager.retrieveOntology(recordId, valueFactory.createIRI(branchIdStr),
+                    valueFactory.createIRI(commitIdStr));
+        } else if (!stringParamIsMissing(branchIdStr)) {
+            optionalOntology = ontologyManager.retrieveOntology(recordId, valueFactory.createIRI(branchIdStr));
+        } else {
+            optionalOntology = ontologyManager.retrieveOntology(recordId);
+        }
+
+        if (optionalOntology.isPresent()) {
+            User user = getUserFromContext(context);
+            OntologyRecord record = catalogManager.getRecord(catalogManager.getLocalCatalogIRI(),
+                    valueFactory.createIRI(recordIdStr), ontologyRecordFactory).orElseThrow(() ->
+                    ErrorUtils.sendError("OntologyRecord could not be found.", Response.Status.BAD_REQUEST));
+            Optional<Resource> optionalInProgressCommitIRI = catalogManager.getInProgressCommitIRI(user
+                    .getResource(), record.getResource());
+
+            if (optionalInProgressCommitIRI.isPresent()) {
+                Model ontologyModel = catalogManager.applyInProgressCommit(optionalInProgressCommitIRI.get(),
+                        optionalOntology.get().asModel(modelFactory));
+                optionalOntology = Optional.of(ontologyManager.createOntology(ontologyModel));
+            }
+        }
+        return optionalOntology;
+    }
+
+    /**
+     * Gets the List of entity IRIs identified by a lambda function in an Ontology identified by the provided IDs.
+     *
+     * @param context the context of the request.
+     * @param recordIdStr the record ID String to process.
+     * @param branchIdStr the branch ID String to process.
+     * @param commitIdStr the commit ID String to process.
+     * @param iriFunction the Function that takes an Ontology and returns a List of IRI corresponding to an Ontology
+     *                    component.
      * @return The properly formatted JSON response with a List of a particular Ontology Component.
      */
-    private JSONObject doWithOntology(String ontologyIdStr, Function<Ontology, JSONObject> iriFunction) {
-        throwErrorIfMissingParam(ontologyIdStr, "ontologyIdStr is missing");
-
-        Optional<Ontology> optOntology;
-
-        try {
-            optOntology = getOntology(ontologyIdStr);
-        } catch (MatontoOntologyException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(),
-                    Response.Status.INTERNAL_SERVER_ERROR);
-        }
-
-        if (optOntology.isPresent()) {
-            return iriFunction.apply(optOntology.get());
+    private JSONObject doWithOntology(ContainerRequestContext context, String recordIdStr, String branchIdStr,
+                                      String commitIdStr, Function<Ontology, JSONObject> iriFunction) {
+        Optional<Ontology> optionalOntology = getOntology(context, recordIdStr, branchIdStr, commitIdStr);
+        if (optionalOntology.isPresent()) {
+            return iriFunction.apply(optionalOntology.get());
         } else {
-            throw ErrorUtils.sendError("Ontology " + ontologyIdStr + " does not exist.", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError("Ontology " + recordIdStr + " does not exist.", Response.Status.BAD_REQUEST);
         }
     }
-    
-    private JSONArray doWithImportedOntologies(String ontologyIdStr, Function<Ontology, JSONObject> iriFunction) {
-        throwErrorIfMissingParam(ontologyIdStr, "ontologyIdStr is missing");
 
+    /**
+     * Gets the List of entity IRIs identified by a lambda function in imported Ontologies for the Ontology identified
+     * by the provided IDs.
+     *
+     * @param recordIdStr the record ID String to process.
+     * @param branchIdStr the branch ID String to process.
+     * @param commitIdStr the commit ID String to process.
+     * @param iriFunction the Function that takes an Ontology and returns a List of IRI corresponding to an Ontology
+     *                    component.
+     * @return the JSON list of imported IRI lists determined by the provided Function.
+     */
+    private JSONArray doWithImportedOntologies(ContainerRequestContext context, String recordIdStr,
+                                               String branchIdStr, String commitIdStr,
+                                               Function<Ontology, JSONObject> iriFunction) {
         Set<Ontology> importedOntologies;
-
         try {
-            importedOntologies = getImportedOntologies(ontologyIdStr);
-        } catch (MatontoOntologyException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(),
-                    Response.Status.INTERNAL_SERVER_ERROR);
+            importedOntologies = getImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr);
+        } catch (MatontoOntologyException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
-
         if (!importedOntologies.isEmpty()) {
             JSONArray ontoArray = new JSONArray();
             for (Ontology ontology : importedOntologies) {
@@ -779,36 +840,149 @@ public class OntologyRestImpl implements OntologyRest {
         }
     }
 
-    private JSONArray iriListToJsonArray(@Nonnull Collection<IRI> iris) {
-        if (iris.isEmpty()) {
-            return new JSONArray();
+    /**
+     * Gets the imported Ontologies for the Ontology identified by the provided IDs.
+     *
+     * @param recordIdStr the record ID String to process.
+     * @param branchIdStr the branch ID String to process.
+     * @param commitIdStr the commit ID String to process.
+     * @return the Set of imported Ontologies.
+     */
+    private Set<Ontology> getImportedOntologies(ContainerRequestContext context, String recordIdStr,
+                                                String branchIdStr, String commitIdStr) {
+        Optional<Ontology> optionalOntology = getOntology(context, recordIdStr, branchIdStr, commitIdStr);
+        if (optionalOntology.isPresent()) {
+            Ontology baseOntology = optionalOntology.get();
+            return baseOntology.getImportsClosure().stream()
+                    .filter(ontology -> !ontology.getOntologyId().equals(baseOntology.getOntologyId()))
+                    .collect(Collectors.toSet());
+        } else {
+            throw ErrorUtils.sendError("Ontology " + recordIdStr + " does not exist.", Response.Status.BAD_REQUEST);
         }
+    }
 
+    /**
+     * Gets a JSONArray of Annotations from the provided Ontology.
+     *
+     * @param ontology the Ontology to get the Annotations from.
+     * @return a JSONArray of Annotations from the provided Ontology.
+     */
+    private JSONObject getAnnotationArray(Ontology ontology) {
+        Set<IRI> iris = new HashSet<>();
+        iris.addAll(ontology.getAllAnnotations()
+                .stream()
+                .map(Annotation::getProperty)
+                .map(Entity::getIRI)
+                .collect(Collectors.toSet()));
+        iris.addAll(ontology.getAllAnnotationProperties()
+                .stream()
+                .map(AnnotationProperty::getIRI)
+                .collect(Collectors.toSet()));
+        return new JSONObject().element("annotationProperties", iriListToJsonArray(iris));
+    }
+
+    /**
+     * Gets a JSONArray of Classes from the provided Ontology.
+     *
+     * @param ontology the Ontology to get the Annotations from.
+     * @return a JSONArray of Classes from the provided Ontology.
+     */
+    private JSONObject getClassArray(Ontology ontology) {
+        List<IRI> iris = ontology.getAllClasses()
+                .stream()
+                .map(Entity::getIRI)
+                .collect(Collectors.toList());
+        return new JSONObject().element("classes", iriListToJsonArray(iris));
+    }
+
+    /**
+     * Gets a JSONArray of Datatypes from the provided Ontology.
+     *
+     * @param ontology the Ontology to get the Annotations from.
+     * @return a JSONArray of Datatypes from the provided Ontology.
+     */
+    private JSONObject getDatatypeArray(Ontology ontology) {
+        List<IRI> iris = ontology.getAllDatatypes()
+                .stream()
+                .map(Entity::getIRI)
+                .collect(Collectors.toList());
+        return new JSONObject().element("datatypes", iriListToJsonArray(iris));
+    }
+
+    /**
+     * Gets a JSONArray of ObjectProperties from the provided Ontology.
+     *
+     * @param ontology the Ontology to get the Annotations from.
+     * @return a JSONArray of ObjectProperties from the provided Ontology.
+     */
+    private JSONObject getObjectPropertyArray(Ontology ontology) {
+        List<IRI> iris = ontology.getAllObjectProperties()
+                .stream()
+                .map(Entity::getIRI)
+                .collect(Collectors.toList());
+        return new JSONObject().element("objectProperties", iriListToJsonArray(iris));
+    }
+
+    /**
+     * Gets a JSONArray of DatatypeProperties from the provided Ontology.
+     *
+     * @param ontology the Ontology to get the Annotations from.
+     * @return a JSONArray of DatatypeProperties from the provided Ontology.
+     */
+    private JSONObject getDataPropertyArray(Ontology ontology) {
+        List<IRI> iris = ontology.getAllDataProperties()
+                .stream()
+                .map(Entity::getIRI)
+                .collect(Collectors.toList());
+        return new JSONObject().element("dataProperties", iriListToJsonArray(iris));
+    }
+
+    /**
+     * Gets a JSONArray of NamedIndividuals from the provided Ontology.
+     *
+     * @param ontology the Ontology to get the Annotations from.
+     * @return a JSONArray of NamedIndividuals from the provided Ontology.
+     */
+    private JSONObject getNamedIndividualArray(Ontology ontology) {
+        List<IRI> iris = ontology.getAllIndividuals()
+                .stream()
+                .filter(ind -> ind instanceof NamedIndividual)
+                .map(ind -> ((NamedIndividual) ind).getIRI())
+                .collect(Collectors.toList());
+        return new JSONObject().element("namedIndividuals", iriListToJsonArray(iris));
+    }
+
+    /**
+     * Creates a JSONArray of items in a specific format to more easily display the results to the users.
+     *
+     * @param iris the Collection of IRIs to restructure into this JSONArray.
+     * @return a JSONArray of the restructured items.
+     */
+    private JSONArray iriListToJsonArray(Collection<IRI> iris) {
         JSONArray array = new JSONArray();
+        if (iris.isEmpty()) {
+            return array;
+        }
         for (IRI iri : iris) {
-            JSONObject object = new JSONObject();
-            object.put("namespace", iri.getNamespace());
-            object.put("localName", iri.getLocalName());
+            JSONObject object = new JSONObject()
+                    .element("namespace", iri.getNamespace())
+                    .element("localName", iri.getLocalName());
             if (!array.contains(object)) {
                 array.add(object);
             }
         }
         return array;
     }
-    
-    private Set<Ontology> getImportedOntologies(@Nonnull String ontologyIdStr) throws MatontoOntologyException {
-        Optional<Ontology> optOntology = getOntology(ontologyIdStr);
-        if (optOntology.isPresent()) {
-            return optOntology.get().getDirectImports();
-        } else {
-            return new HashSet<>();
-        }
-    }
 
+    /**
+     * Gets the requested serialization of the provided Ontology.
+     *
+     * @param ontology the Ontology you want to serialize in a different format.
+     * @param rdfFormat the format you want.
+     * @return A String containing the newly serialized Ontology.
+     */
     private String getOntologyAsRdf(Ontology ontology, String rdfFormat) {
-        String normalizedFormat = rdfFormat.toLowerCase();
-
-        switch (normalizedFormat) {
+        switch (rdfFormat.toLowerCase()) {
             case "rdf/xml":
                 return ontology.asRdfXml().toString();
             case "owl/xml":
@@ -828,13 +1002,10 @@ public class OntologyRestImpl implements OntologyRest {
      * @return a JSONObject with the document format and the ontology in that format
      */
     private JSONObject getOntologyAsJsonObject(Ontology ontology, String rdfFormat) {
-        String content = getOntologyAsRdf(ontology, rdfFormat);
-
-        JSONObject json = new JSONObject();
-        json.put("documentFormat", rdfFormat);
-        json.put("id", ontology.getOntologyId().getOntologyIdentifier().stringValue());
-        json.put("ontology", content);
-        return json;
+        return new JSONObject()
+                .element("documentFormat", rdfFormat)
+                .element("id", ontology.getOntologyId().getOntologyIdentifier().stringValue())
+                .element("ontology", getOntologyAsRdf(ontology, rdfFormat));
     }
 
     /**
@@ -844,48 +1015,151 @@ public class OntologyRestImpl implements OntologyRest {
      * @return the JSONObject with the IRIs for all components of an ontology.
      */
     private JSONObject getAllIRIs(Ontology ontology) {
-        return combineJsonObjects(getAnnotationArray(ontology), getClassArray(ontology), 
+        return combineJsonObjects(getAnnotationArray(ontology), getClassArray(ontology),
                 getDatatypeArray(ontology), getObjectPropertyArray(ontology), getDataPropertyArray(ontology),
                 getNamedIndividualArray(ontology));
     }
 
-    private String getRDFFormatFileExtension(String format) {
-        switch (format.toLowerCase()) {
-            case "turtle":
-                return RDFFormat.TURTLE.getDefaultFileExtension();
-            case "rdf/xml":
-                return RDFFormat.RDFXML.getDefaultFileExtension();
-            case "owl/xml" :
-                return "owx";
-            case "jsonld":
-            default:
-                return RDFFormat.JSONLD.getDefaultFileExtension();
-        }
-    }
-
-    private String getRDFFormatMimeType(String format) {
-        switch (format.toLowerCase()) {
-            case "turtle":
-                return RDFFormat.TURTLE.getDefaultMIMEType();
-            case "rdf/xml":
-                return RDFFormat.RDFXML.getDefaultMIMEType();
-            case "owl/xml" :
-                return "application/owl+xml";
-            case "jsonld":
-            default:
-                return RDFFormat.JSONLD.getDefaultMIMEType();
-        }
-    }
-    
+    /**
+     * Combines multiple JSONObjects into a single JSONObject.
+     *
+     * @param objects the JSONObjects to combine.
+     * @return a JSONObject which has the combined key-value pairs from all of the provided JSONObjects.
+     */
     private JSONObject combineJsonObjects(JSONObject... objects) {
-        if (objects.length == 0) {
-            return new JSONObject();
-        }
-
         JSONObject json = new JSONObject();
+        if (objects.length == 0) {
+            return json;
+        }
         for (JSONObject each : objects) {
             each.keySet().forEach(key -> json.put(key, each.get(key)));
         }
         return json;
+    }
+
+    /**
+     * Creates a Model using the provided JSON-LD.
+     *
+     * @param json the JSON-LD to convert to a Model.
+     * @return a Model created using the JSON-LD.
+     */
+    private Model getModelFromJson(String json) {
+        return sesameTransformer.matontoModel(jsonldToModel(json));
+    }
+
+    /**
+     * Adds the provided Model to the requester's InProgressCommit additions.
+     *
+     * @param context the context of the request.
+     * @param recordIdStr the record ID String to process.
+     * @param entityModel the Model to add to the additions in the InProgressCommit.
+     * @return a Response indicating the success or failure of the addition.
+     */
+    private Response additionsToInProgressCommit(ContainerRequestContext context, String recordIdStr,
+                                                 Model entityModel) {
+        Resource inProgressCommitIRI = getUserInProgressCommitIRI(context, recordIdStr);
+        catalogManager.addAdditions(entityModel, inProgressCommitIRI);
+        return Response.status(201).build();
+    }
+
+    /**
+     * Adds the Statements associated with the entity identified by the provided ID to the requester's InProgressCommit
+     * deletions.
+     *
+     * @param context the context of the request.
+     * @param ontology the ontology to process.
+     * @param entityIdStr the ID of the entity to be deleted.
+     * @param recordIdStr the ID of the record which contains the entity to be deleted.
+     * @return a Response indicating the success or failure of the deletion.
+     */
+    private Response deletionsToInProgressCommit(ContainerRequestContext context, Ontology ontology,
+                                                 String entityIdStr, String recordIdStr) {
+        Resource inProgressCommitIRI = getUserInProgressCommitIRI(context, recordIdStr);
+        Model ontologyModel = ontology.asModel(modelFactory);
+        Resource entityId = valueFactory.createIRI(entityIdStr);
+        Model model = modelFactory.createModel(ontologyModel.stream()
+                .filter(statement -> statement.getSubject().equals(entityId)
+                        || statement.getPredicate().equals(entityId) || statement.getObject().equals(entityId))
+                .collect(Collectors.toSet()));
+        if (model.size() == 0) {
+            throw ErrorUtils.sendError(entityIdStr + " was not found within the ontology.",
+                    Response.Status.BAD_REQUEST);
+        }
+        catalogManager.addDeletions(model, inProgressCommitIRI);
+        return Response.ok().build();
+    }
+
+    /**
+     * Gets the entity from within the provided Ontology based on the provided entity ID.
+     *
+     * @param ontology the Ontology to process.
+     * @param entityIdStr the ID of the entity to get.
+     * @return a Model representation of the entity with the provided ID.
+     */
+    private Model getModelForEntityInOntology(Ontology ontology, String entityIdStr) {
+        Model ontologyModel = ontology.asModel(modelFactory);
+        return modelFactory.createModel(ontologyModel).filter(valueFactory.createIRI(entityIdStr), null, null);
+    }
+
+    /**
+     * Verifies that the provided JSON-LD contains the proper @type
+     *
+     * @param jsonldStr the JSON-LD of the entity being verified.
+     * @param type the @type that the entity should be.
+     */
+    private void verifyJsonldType(String jsonldStr, String type) {
+        try {
+            JSONObject json = JSONObject.fromObject(jsonldStr);
+            Optional<JSONArray> optTypeArray = Optional.ofNullable(json.optJSONArray("@type"));
+            if (!json.has("@id") || !optTypeArray.isPresent() || !optTypeArray.get().contains(type)) {
+                throw ErrorUtils.sendError("The JSON-LD does not contain the proper type: " + type + ".",
+                        Response.Status.BAD_REQUEST);
+            }
+        } catch (JSONException e) {
+            throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
+        }
+    }
+
+    /**
+     * Uploads the provided Ontology to a data store.
+     *
+     * @param context the context of the request.
+     * @param ontology the Ontology to upload.
+     * @param title the title for the OntologyRecord.
+     * @param description the description for the OntologyRecord.
+     * @param keywords the comma separated list of keywords associated with the OntologyRecord.
+     * @return a Response indicating the success of the upload.
+     */
+    private Response uploadOntology(ContainerRequestContext context, Ontology ontology, String title,
+                                    String description, String keywords) throws MatOntoException {
+        User user = getUserFromContext(context);
+        RecordConfig.Builder builder = new RecordConfig.Builder(title, Collections.singleton(user));
+        if (description != null) {
+            builder.description(description);
+        }
+        if (keywords != null) {
+            builder.keywords(Arrays.stream(StringUtils.split(keywords, ",")).collect(Collectors.toSet()));
+        }
+        Resource catalogId = catalogManager.getLocalCatalog().getResource();
+        OntologyRecord record = catalogManager.createRecord(builder.build(), ontologyRecordFactory);
+        catalogManager.addRecord(catalogId, record);
+        catalogManager.addMasterBranch(record.getResource());
+        record = catalogManager.getRecord(catalogId, record.getResource(), ontologyRecordFactory).get();
+
+        InProgressCommit inProgressCommit = catalogManager.createInProgressCommit(user, record.getResource());
+        catalogManager.addInProgressCommit(inProgressCommit);
+        catalogManager.addAdditions(ontology.asModel(modelFactory), inProgressCommit.getResource());
+
+        Commit commit = catalogManager.createCommit(inProgressCommit, "The initial commit.", null, null);
+        Resource masterBranchId = record.getMasterBranch().get().getResource();
+        catalogManager.addCommitToBranch(commit, masterBranchId);
+
+        catalogManager.removeInProgressCommit(inProgressCommit.getResource());
+        JSONObject response = new JSONObject()
+                .element("ontologyId", ontology.getOntologyId().getOntologyIdentifier().stringValue())
+                .element("recordId", record.getResource().stringValue())
+                .element("branchId", masterBranchId.stringValue())
+                .element("commitId", commit.getResource().stringValue());
+        return Response.status(201).entity(response).build();
     }
 }

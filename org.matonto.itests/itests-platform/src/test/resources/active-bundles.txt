@@ -6,7 +6,6 @@ org.matonto.etl.delimited
 org.matonto.etl.rdf
 org.matonto.etl.rest
 org.matonto.ontology.api
-org.matonto.ontology.cli
 org.matonto.ontology.core.impl.owlapi
 org.matonto.ontology.rest
 org.matonto.ontology.utils
@@ -25,3 +24,5 @@ org.matonto.catalog.rest
 org.matonto.jaas
 org.matonto.web.security
 org.matonto.rdf.orm
+org.matonto.dataset.api
+org.matonto.dataset.impl

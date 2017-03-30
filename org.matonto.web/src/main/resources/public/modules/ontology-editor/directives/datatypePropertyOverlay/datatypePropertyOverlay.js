@@ -27,9 +27,9 @@
         .module('datatypePropertyOverlay', [])
         .directive('datatypePropertyOverlay', datatypePropertyOverlay);
 
-        datatypePropertyOverlay.$inject = ['responseObj', 'ontologyManagerService', 'ontologyStateService'];
+        datatypePropertyOverlay.$inject = ['responseObj', 'ontologyManagerService', 'ontologyStateService', 'utilService', 'prefixes', 'ontologyUtilsManagerService'];
 
-        function datatypePropertyOverlay(responseObj, ontologyManagerService, ontologyStateService) {
+        function datatypePropertyOverlay(responseObj, ontologyManagerService, ontologyStateService, utilService, prefixes, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,20 +38,19 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
+                    dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.om = ontologyManagerService;
                     dvm.ro = responseObj;
                     dvm.sm = ontologyStateService;
+                    dvm.util = utilService;
 
-                    function closeAndMark() {
-                        dvm.sm.setUnsaved(dvm.sm.listItem.ontologyId, dvm.sm.getActiveEntityIRI(), true);
-                        dvm.sm.showDataPropertyOverlay = false;
-                    }
-
-                    dvm.addProperty = function(select, value, type) {
+                    dvm.addProperty = function(select, value, type, language) {
                         var property = dvm.ro.getItemIri(select);
                         if (property) {
                             var valueObj = {'@value': value};
-                            if (type) {
+                            if (language && dvm.isStringType()) {
+                                valueObj['@language'] = language;
+                            } else if (type) {
                                 valueObj['@type'] = type['@id'];
                             }
                             if (_.has(dvm.sm.selected, property)) {
@@ -60,26 +59,38 @@
                                 dvm.sm.selected[property] = [valueObj];
                             }
                         }
-                        closeAndMark();
+                        dvm.om.addToAdditions(dvm.sm.listItem.recordId, dvm.util.createJson(dvm.sm.selected['@id'],
+                            property, valueObj));
+                        dvm.sm.showDataPropertyOverlay = false;
+                        dvm.ontoUtils.saveCurrentChanges();
                     }
 
-                    dvm.editProperty = function(select, value, type) {
+                    dvm.editProperty = function(select, value, type, language) {
                         var property = dvm.ro.getItemIri(select);
                         if (property) {
-                            dvm.sm.selected[property][dvm.sm.propertyIndex]['@value'] = value;
-                        }
-                        if (_.get(type, '@id') !== dvm.sm.selected[property][dvm.sm.propertyIndex]['@type']) {
-                            if (type) {
-                                dvm.sm.selected[property][dvm.sm.propertyIndex]['@type'] = type['@id'];
+                            var propertyObj = dvm.sm.selected[property][dvm.sm.propertyIndex];
+                            dvm.om.addToDeletions(dvm.sm.listItem.recordId, dvm.util.createJson(dvm.sm.selected['@id'],
+                                property, propertyObj));
+                            propertyObj['@value'] = value;
+                            if (type && !(language && dvm.isStringType())) {
+                                propertyObj['@type'] = type['@id'];
                             } else {
-                                _.unset(dvm.sm.selected[property][dvm.sm.propertyIndex], '@type');
+                                _.unset(propertyObj, '@type');
                             }
+                            if (language && dvm.isStringType()) {
+                                propertyObj['@language'] = language;
+                            } else {
+                                _.unset(propertyObj, '@language');
+                            }
+                            dvm.om.addToAdditions(dvm.sm.listItem.recordId, dvm.util.createJson(dvm.sm.selected['@id'],
+                                property, propertyObj));
                         }
-                        closeAndMark();
+                        dvm.sm.showDataPropertyOverlay = false;
+                        dvm.ontoUtils.saveCurrentChanges();
                     }
 
-                    dvm.getItemNamespace = function(item) {
-                        return _.get(item, 'namespace', 'No namespace');
+                    dvm.isStringType = function() {
+                        return prefixes.rdf + 'langString' === _.get(dvm.sm.propertyType, '@id', '');
                     }
                 }
             }

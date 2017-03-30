@@ -51,9 +51,9 @@
          */
         .directive('mappingList', mappingList);
 
-        mappingList.$inject = ['mappingManagerService', 'mapperStateService'];
+        mappingList.$inject = ['utilService', 'mappingManagerService', 'mapperStateService', 'catalogManagerService', 'prefixes', '$q'];
 
-        function mappingList(mappingManagerService, mapperStateService) {
+        function mappingList(utilService, mappingManagerService, mapperStateService, catalogManagerService, prefixes, $q) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -64,6 +64,8 @@
                     var openedMappings = [];
                     dvm.state = mapperStateService;
                     dvm.mm = mappingManagerService;
+                    dvm.cm = catalogManagerService;
+                    dvm.util = utilService;
 
                     dvm.onClick = function(id) {
                         var openedMapping = _.find(openedMappings, {id: id});
@@ -73,13 +75,15 @@
                             dvm.mm.getMapping(id).then(jsonld => {
                                 var mapping = {
                                     jsonld,
-                                    id
+                                    id,
+                                    record: undefined
                                 };
                                 dvm.state.mapping = mapping;
                                 openedMappings.push(mapping);
-                            }, errorMessage => {
-                                console.log(errorMessage);
-                            });
+                                return dvm.cm.getRecord(_.get(dvm.mm.getSourceOntologyInfo(jsonld), 'recordId'), dvm.cm.localCatalog['@id']);
+                            }, error => $q.reject('Mapping ' + id + ' could not be found')).then(record => {
+                                dvm.state.mapping.record = _.pick(record, ['@id', '@type', prefixes.dcterms + 'title', prefixes.dcterms + 'description', prefixes.dcterms + 'issued', prefixes.dcterms + 'modified', prefixes.catalog + 'keyword'])
+                            }, dvm.util.createErrorToast);
                         }
                         _.remove(openedMappings, mapping => dvm.mm.mappingIds.indexOf(mapping.id) < 0);
                     }

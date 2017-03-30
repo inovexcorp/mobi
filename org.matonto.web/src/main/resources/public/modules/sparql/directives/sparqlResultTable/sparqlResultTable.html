@@ -21,17 +21,18 @@
   #L%
   -->
 <div class="sparql-results">
+    <download-query-overlay ng-if="dvm.sparql.displayDownloadOverlay"></download-query-overlay>
     <block>
         <block-content>
-            <table class="table table-hover">
+            <table class="table table-hover" ng-if="dvm.sparql.data">
                 <thead>
                     <tr>
-                        <th ng-repeat="binding in dvm.sparql.data.bindingNames">{{binding}}</th>
+                        <th ng-repeat="binding in dvm.sparql.bindings">{{binding}}</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr ng-repeat="result in dvm.sparql.data.paginatedResults.results">
-                        <td ng-repeat="binding in dvm.sparql.data.bindingNames">{{result[binding].value}}</td>
+                    <tr ng-repeat="result in dvm.sparql.data">
+                        <td ng-repeat="binding in dvm.sparql.bindings">{{result[binding].value}}</td>
                     </tr>
                 </tbody>
             </table>
@@ -39,11 +40,10 @@
             <info-message ng-if="dvm.sparql.infoMessage" class="message">{{dvm.sparql.infoMessage}}</info-message>
             <pre ng-if="dvm.sparql.errorMessage">{{dvm.sparql.errorDetails}}</pre>
         </block-content>
-        <block-footer ng-if="dvm.sparql.data.paginatedResults">
-            <div class="paging-details clearfix">
-                <p class="page-count">Showing {{(dvm.sparql.data.paginatedResults.start + 1) | number}} to {{(dvm.sparql.data.paginatedResults.start + dvm.sparql.data.paginatedResults.size) | number}} of {{dvm.sparql.data.paginatedResults.totalSize | number}}</p>
-                <pagination links="dvm.sparql.data.paginatedResults.links" current-page="dvm.sparql.currentPage" get-page="dvm.getPage(direction)"></pagination>
-            </div>
+        <block-footer ng-if="dvm.sparql.data" class="footer-relative">
+            <button class="btn btn-default download-button" ng-click="dvm.sparql.displayDownloadOverlay = true"><i class="fa fa-download"></i></button>
+            <paging-details total-size="dvm.sparql.totalSize" page-index="dvm.sparql.currentPage" limit="dvm.sparql.limit"></paging-details>
+            <pagination links="dvm.sparql.links" current-page="dvm.sparql.currentPage" get-page="dvm.getPage(direction)"></pagination>
         </block-footer>
     </block>
 </div>

@@ -23,49 +23,44 @@
 describe('Column Select directive', function() {
     var $compile,
         scope,
-        delimitedManagerSvc,
-        controller;
+        element,
+        isolatedScope,
+        controller,
+        delimitedManagerSvc;
 
     beforeEach(function() {
         module('templates');
         module('columnSelect');
         mockDelimitedManager();
-
-        module(function($provide) {
-            $provide.value('highlightFilter', jasmine.createSpy('highlightFilter'));
-            $provide.value('trustedFilter', jasmine.createSpy('trustedFilter'));
-        });
+        injectTrustedFilter();
+        injectHighlightFilter();
 
         inject(function(_$compile_, _$rootScope_, _delimitedManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             delimitedManagerSvc = _delimitedManagerService_;
         });
+
+        scope.columns = [];
+        scope.selectedColumn = '';
+        delimitedManagerSvc.dataRows = [[]];
+        element = $compile(angular.element('<column-select columns="columns" selected-column="selectedColumn"></column-select>'))(scope);
+        scope.$digest();
     });
 
     describe('in isolated scope', function() {
         beforeEach(function() {
-            scope.columns = [];
-            scope.selectedColumn = '';
-            delimitedManagerSvc.dataRows = [[]];
-            this.element = $compile(angular.element('<column-select columns="columns" selected-column="selectedColumn"></column-select>'))(scope);
-            scope.$digest();
+            isolatedScope = element.isolateScope();
         });
         it('columns should be one way bound', function() {
-            var isolatedScope = this.element.isolateScope();
             isolatedScope.columns = ['test'];
             scope.$digest();
-            expect(scope.columns).not.toEqual(['test']);
+            expect(scope.columns).toEqual([]);
         });
     });
     describe('controller bound variable', function() {
         beforeEach(function() {
-            scope.columns = [];
-            scope.selectedColumn = '';
-            delimitedManagerSvc.dataRows = [[]];
-            this.element = $compile(angular.element('<column-select columns="columns" selected-column="selectedColumn"></column-select>'))(scope);
-            scope.$digest();
-            controller = this.element.controller('columnSelect');
+            controller = element.controller('columnSelect');
         });
         it('selectedColumn should be two way bound', function() {
             controller.selectedColumn = '0';
@@ -74,16 +69,14 @@ describe('Column Select directive', function() {
         });
     });
     describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
-            delimitedManagerSvc.dataRows = [[]];
-            this.element = $compile(angular.element('<column-select columns="columns" selected-column="selectedColumn"></column-select>'))(scope);;
-            scope.$digest();
-        });
-        it('for wrapping containers', function() { 
-            expect(this.element.hasClass('column-select')).toBe(true);
+        it('for wrapping containers', function() {
+            expect(element.hasClass('column-select')).toBe(true);
         });
         it('with a column select', function() {
-            expect(this.element.find('ui-select').length).toBe(1);
+            expect(element.find('ui-select').length).toBe(1);
+        });
+        it('with a .help-block', function() {
+            expect(element.querySelectorAll('.help-block').length).toBe(1);
         });
     });
 });

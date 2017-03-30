@@ -42,7 +42,7 @@
          * @requires delimitedManager.service:delimitedManagerService
          * @requires mapperState.service:mapperStateService
          * @requires mappingManager.service:mappingManagerService
-         * @requires ontologyManager.service:ontologyManagerService
+         * @requires util.service:utilService
          *
          * @description
          * `fileUploadPage` is a directive that creates a Bootstrap `row` div with two columns containing
@@ -55,9 +55,9 @@
          */
         .directive('fileUploadPage', fileUploadPage);
 
-        fileUploadPage.$inject = ['mapperStateService', 'mappingManagerService', 'delimitedManagerService', 'ontologyManagerService'];
+        fileUploadPage.$inject = ['mapperStateService', 'mappingManagerService', 'delimitedManagerService', 'utilService'];
 
-        function fileUploadPage(mapperStateService, mappingManagerService, delimitedManagerService, ontologyManagerService) {
+        function fileUploadPage(mapperStateService, mappingManagerService, delimitedManagerService, utilService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -69,16 +69,12 @@
                     dvm.state = mapperStateService;
                     dvm.mm = mappingManagerService;
                     dvm.dm = delimitedManagerService;
-                    dvm.om = ontologyManagerService;
+                    dvm.util = utilService;
 
                     dvm.getDataMappingName = function(dataMappingId) {
                         var propId = dvm.mm.getPropIdByMappingId(dvm.state.mapping.jsonld, dataMappingId);
                         var classId = dvm.mm.getClassIdByMapping(dvm.mm.findClassWithDataMapping(dvm.state.mapping.jsonld, dataMappingId));
-                        var propOntology = dvm.mm.findSourceOntologyWithProp(propId, dvm.state.sourceOntologies);
-                        var classOntology = dvm.mm.findSourceOntologyWithClass(classId, dvm.state.sourceOntologies);
-                        var propName = dvm.om.getEntityName(dvm.om.getEntity(propOntology.entities, propId));
-                        var className = dvm.om.getEntityName(dvm.om.getEntity(classOntology.entities, classId));
-                        return dvm.mm.getPropMappingTitle(className, propName);
+                        return dvm.mm.getPropMappingTitle(dvm.util.getBeautifulIRI(classId), dvm.util.getBeautifulIRI(propId));
                     }
                     dvm.cancel = function() {
                     	dvm.state.displayCancelConfirm = true;
@@ -89,6 +85,7 @@
                         dvm.state.step = dvm.state.editMappingStep;
                         if (dvm.state.newMapping) {
                             dvm.state.displayMappingConfigOverlay = true;
+                            dvm.state.changedMapping = true;
                         }
                     }
                 }

@@ -35,11 +35,13 @@ import org.matonto.rdf.orm.OrmFactory;
 import org.matonto.rdf.orm.Thing;
 import org.matonto.rdf.orm.conversion.ValueConverter;
 import org.matonto.rdf.orm.conversion.ValueConverterRegistry;
+import org.matonto.rdf.orm.generate.ontology.MATONTO;
 import org.matonto.rdf.orm.impl.ThingImpl;
 import org.openrdf.model.IRI;
 import org.openrdf.model.Model;
 import org.openrdf.model.Resource;
-import org.openrdf.model.Statement;
+import org.openrdf.model.impl.LinkedHashModel;
+import org.openrdf.model.impl.SimpleValueFactory;
 import org.openrdf.model.vocabulary.OWL;
 import org.openrdf.model.vocabulary.RDF;
 import org.openrdf.model.vocabulary.RDFS;
@@ -51,6 +53,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class SourceGenerator {
 
@@ -59,7 +62,10 @@ public class SourceGenerator {
     private static final String CLASS_TYPE_IRI_FIELD = "TYPE";
 
     private static final String DEFAULT_IMPL_FIELD = "DEFAULT_IMPL";
+
+    private final String ontologyName;
     private final JCodeModel codeModel = new JCodeModel();
+    private final Model metaModel;
     private final Model model;
     private final String packageName;
     private Collection<IRI> classIris;
@@ -72,14 +78,24 @@ public class SourceGenerator {
 
     public SourceGenerator(final Model ontologyGraph, final String outputPackage, final Collection<ReferenceOntology> referenceOntologies)
             throws OntologyToJavaException, IOException {
+        this(ontologyGraph, outputPackage, null, referenceOntologies);
+    }
+
+    public SourceGenerator(final Model ontologyGraph, final String outputPackage, final String ontologyName, final Collection<ReferenceOntology> referenceOntologies)
+            throws OntologyToJavaException, IOException {
+        this.ontologyName = ontologyName;
         if (referenceOntologies != null) {
             this.referenceOntologies.addAll(referenceOntologies);
         }
         this.model = ontologyGraph;
+        this.metaModel = new LinkedHashModel(model);
         this.packageName = outputPackage;
         // LOG if we're not referencing an imported ontology.
         checkImports(this.model, this.referenceOntologies);
-        this.referenceOntologies.stream().forEach(ont -> checkImports(ont.getOntologyModel(), this.referenceOntologies));
+        this.referenceOntologies.forEach(ont -> {
+            checkImports(ont.getOntologyModel(), this.referenceOntologies);
+            this.metaModel.addAll(ont.getOntologyModel());
+        });
         // Built interfaces...
         generateIndividualInterfaces();
         // Link the interfaces inheritence-wise.
@@ -113,7 +129,12 @@ public class SourceGenerator {
 
     public static void toSource(final Model model, final String outputPackage, final String location, final Collection<ReferenceOntology> referencedOntologies)
             throws OntologyToJavaException, IOException {
-        final SourceGenerator generator = new SourceGenerator(model, outputPackage, referencedOntologies);
+        toSource(model, outputPackage, null, location, referencedOntologies);
+    }
+
+    public static void toSource(final Model model, final String outputPackage, final String name, final String location, final Collection<ReferenceOntology> referencedOntologies)
+            throws OntologyToJavaException, IOException {
+        final SourceGenerator generator = new SourceGenerator(model, outputPackage, name, referencedOntologies);
         generator.build(location);
     }
 
@@ -138,7 +159,7 @@ public class SourceGenerator {
      *                   the ontology)
      * @return The name of the field we'll use
      */
-    public static String getName(final boolean capitalize, final IRI iri, final Model model) {
+    static String getName(final boolean capitalize, final IRI iri, final Model model) {
         final String classIriString = iri.stringValue();
         String className = classIriString.contains("#") ? classIriString.substring(classIriString.lastIndexOf('#') + 1)
                 : classIriString.contains("/") ? classIriString.substring(classIriString.lastIndexOf('/') + 1) : null;
@@ -156,13 +177,14 @@ public class SourceGenerator {
      * @param input The input string
      * @return The stripped and cleaned output name
      */
-    private static String stripWhiteSpace(final String input) {
+    protected static String stripWhiteSpace(final String input) {
         StringBuilder builder = new StringBuilder();
         boolean lastIsWhiteSpace = false;
         boolean first = true;
         for (char c : input.toCharArray()) {
             if (first && !Character.isJavaIdentifierStart(c) && Character.isJavaIdentifierPart(c)) {
-                builder.append("_" + c);
+                builder.append("_");
+                builder.append(c);
                 first = false;
             } else if (Character.isWhitespace(c)) {
                 lastIsWhiteSpace = true;
@@ -181,7 +203,7 @@ public class SourceGenerator {
      * @param path
      * @throws IOException
      */
-    public void build(final String path) throws IOException {
+    private void build(final String path) throws IOException {
         File output = new File(path);
         output.mkdirs();
         codeModel.build(output);
@@ -220,13 +242,13 @@ public class SourceGenerator {
                         ._return(JExpr.ref("valueFactory").invoke("createIRI").arg(interfaze.staticRef("TYPE")));
 
                 // Get the parent type IRIs by adding a hash set of all the parent interface IRIs.
-                final JMethod getParentTypeIRIs = factory.method(JMod.PUBLIC, codeModel.ref(Set.class).narrow(org.matonto.rdf.api.IRI.class),"getParentTypeIRIs");
+                final JMethod getParentTypeIRIs = factory.method(JMod.PUBLIC, codeModel.ref(Set.class).narrow(org.matonto.rdf.api.IRI.class), "getParentTypeIRIs");
                 getParentTypeIRIs.annotate(Override.class);
                 JBlock body = getParentTypeIRIs.body();
-                JVar set = body.decl(JMod.FINAL, codeModel.ref(Set.class).narrow(org.matonto.rdf.api.IRI.class),"set",JExpr._new(codeModel.ref(HashSet.class).narrow(org.matonto.rdf.api.IRI.class)));
+                JVar set = body.decl(JMod.FINAL, codeModel.ref(Set.class).narrow(org.matonto.rdf.api.IRI.class), "set", JExpr._new(codeModel.ref(HashSet.class).narrow(org.matonto.rdf.api.IRI.class)));
                 Set<JClass> tracking = new HashSet<JClass>();
                 tracking.add(codeModel.ref(Thing.class));
-                recurseAddParentTypeIris(interfaze,body,set,tracking);
+                recurseAddParentTypeIris(interfaze, body, set, tracking);
                 body._return(JExpr.ref("set"));
 
 
@@ -261,17 +283,17 @@ public class SourceGenerator {
         }
     }
 
-    private void recurseAddParentTypeIris(JClass interfaze, JBlock body, JVar set, Set<JClass> alreadyHas){
-        interfaze._implements().forEachRemaining(item->{
-            if(!alreadyHas.contains(item)) {
+    private void recurseAddParentTypeIris(JClass interfaze, JBlock body, JVar set, Set<JClass> alreadyHas) {
+        interfaze._implements().forEachRemaining(item -> {
+            if (!alreadyHas.contains(item)) {
                 body.add(set.invoke("add").arg(JExpr.ref("valueFactory").invoke("createIRI").arg(item.staticRef("TYPE"))));
                 alreadyHas.add(item);
-                recurseAddParentTypeIris(item, body, set,alreadyHas);
+                recurseAddParentTypeIris(item, body, set, alreadyHas);
             }
         });
     }
 
-    private void recurseImplementations(JDefinedClass impl, JClass interfaceClass) {
+    private void recurseImplementations(final JDefinedClass impl, final JClass interfaceClass) {
         // implement the supplied interface class.
         impl._implements(interfaceClass);
         if (interfaceClass instanceof JDefinedClass) {
@@ -287,28 +309,30 @@ public class SourceGenerator {
     private void generateImplementations() throws OntologyToJavaException {
         final Collection<String> issues = new ArrayList<>();
         interfaces.forEach((classIri, interfaceClass) -> {
-            try {
+            if (classIri != null) {
+                try {
                 /*
                  * Define the implementation class, wire it to the correct
                  * interface and extend Thing.
                  */
-                final JDefinedClass impl = codeModel._class(JMod.PUBLIC,
-                        packageName + "." + interfaceClass.name() + "Impl", ClassType.CLASS);
-                interfaceImplMap.put(interfaceClass, impl);
-                impl._extends(codeModel.ref(ThingImpl.class));
-                impl._implements(interfaceClass);
-                impl.javadoc().add("This implementation of the '" + classIri.stringValue()
-                        + "' entity will allow developers to work in native java POJOs.");
-                // Constructors - call super from Thing.
-                generateImplConstructors(impl, interfaceClass);
-                recurseImplementations(impl, interfaceClass);
+                    final JDefinedClass impl = codeModel._class(JMod.PUBLIC,
+                            packageName + "." + interfaceClass.name() + "Impl", ClassType.CLASS);
+                    interfaceImplMap.put(interfaceClass, impl);
+                    impl._extends(codeModel.ref(ThingImpl.class));
+                    impl._implements(interfaceClass);
+                    impl.javadoc().add("This implementation of the '" + classIri.stringValue()
+                            + "' entity will allow developers to work in native java POJOs.");
+                    // Constructors - call super from Thing.
+                    generateImplConstructors(impl, interfaceClass);
+                    recurseImplementations(impl, interfaceClass);
 
-                // Generate default impl.
-                interfaceClass.field(JMod.PUBLIC | JMod.STATIC | JMod.FINAL,
-                        codeModel.ref(Class.class).narrow(interfaceClass.wildcard()), DEFAULT_IMPL_FIELD,
-                        impl.dotclass()).javadoc().add("The default implementation for this interface");
-            } catch (Exception e) {
-                issues.add("Issue generating implementation for '" + classIri.stringValue() + "': " + e.getMessage());
+                    // Generate default impl.
+                    interfaceClass.field(JMod.PUBLIC | JMod.STATIC | JMod.FINAL,
+                            codeModel.ref(Class.class).narrow(interfaceClass.wildcard()), DEFAULT_IMPL_FIELD,
+                            impl.dotclass()).javadoc().add("The default implementation for this interface");
+                } catch (Exception e) {
+                    issues.add("Issue generating implementation for '" + classIri.stringValue() + "': " + e.getMessage());
+                }
             }
         });
         if (!issues.isEmpty()) {
@@ -344,13 +368,13 @@ public class SourceGenerator {
                         .arg(JExpr.ref("valueConverterRegistry").invoke("convertTypes")
                                 .arg(interfaceMethod.params().get(0)).arg(JExpr._this()))
                         .arg(JExpr.ref("valueFactory").invoke("createIRI")
-                                .arg(classMethodIriMap.get(interfaceClass).get(interfaceMethod)));
+                                .arg(interfaceClass.staticRef(classMethodIriMap.get(interfaceClass).get(interfaceMethod))));
             } else {
                 method.body().invoke("setProperty")
                         .arg(JExpr.ref("valueConverterRegistry").invoke("convertType")
                                 .arg(interfaceMethod.params().get(0)).arg(JExpr._this()))
                         .arg(JExpr.ref("valueFactory").invoke("createIRI")
-                                .arg(classMethodIriMap.get(interfaceClass).get(interfaceMethod)));
+                                .arg(interfaceClass.staticRef(classMethodIriMap.get(interfaceClass).get(interfaceMethod))));
             }
             // TODO - add javadoc.
             // JDocComment jdoc = method.javadoc();
@@ -452,7 +476,7 @@ public class SourceGenerator {
                 generateMethodName(type.equals(boolean.class) ? "is" : "get", name));
         method._throws(OrmException.class);
         final JDocComment comment = method.javadoc();
-        comment.add("Get the " + fieldName + " property from this instance of a " + interfaceIri.stringValue()
+        comment.add("Get the " + fieldName + " property from this instance of a " + (interfaceIri != null ? interfaceIri.stringValue() : getOntologyName(this.packageName, this.ontologyName))
                 + "' type.<br><br>" + getFieldComment(propertyIri));
         comment.addReturn().add("The " + fieldName + " {@link " + type.binaryName() + "} value for this instance");
         return method;
@@ -476,18 +500,25 @@ public class SourceGenerator {
     /**
      * TODO - make better?
      *
-     * @param property
-     * @return
+     * @param property The IRI of the property you want to figure the type out for.
+     * @return The JClass representing the type of parameter the property specifies
      */
     private JClass identifyType(final IRI property) {
-        for (final Statement stmt : model.filter(property, RDFS.RANGE, null)) {
-            final IRI rangeIri = (IRI) stmt.getObject();
+        final Set<org.openrdf.model.Value> objects = this.metaModel.filter(property, RDFS.RANGE, null).objects();
+        if (objects.size() == 1) {
+            final IRI rangeIri = (IRI) objects.iterator().next();
             // Handle our types.
             final JDefinedClass ourClass = interfaces.get(rangeIri);
             if (ourClass != null) {
                 return codeModel.ref(ourClass.fullName());
             } else if (rangeIri.equals(RDFS.LITERAL)) {
                 return codeModel.ref(org.matonto.rdf.api.Literal.class);
+            } else if (rangeIri.equals(XMLSchema.ANYURI)) {
+                return codeModel.ref(org.matonto.rdf.api.IRI.class);
+            } else if (rangeIri.equals(SimpleValueFactory.getInstance().createIRI(MATONTO.IDENTIFIER))) {
+                return codeModel.ref(org.matonto.rdf.api.Resource.class);
+            } else if (rangeIri.equals(RDFS.RESOURCE)) {
+                return codeModel.ref(org.matonto.rdf.api.Value.class);
             } else if (rangeIri.equals(XMLSchema.STRING)) {
                 return codeModel.ref(String.class);
             } else if (rangeIri.equals(XMLSchema.BOOLEAN)) {
@@ -507,12 +538,18 @@ public class SourceGenerator {
             } else if (rangeIri.equals(OWL.THING)) {
                 return codeModel.ref(Thing.class);
             } else {
-                LOG.warn("Ibis does not know what type to make properties of range '" + rangeIri.stringValue()
+                LOG.warn("ORM does not know what type to make properties of range '" + rangeIri.stringValue()
                         + "' so we'll use Optional<Value> or Set<Value>");
-                return codeModel.ref(Value.class);
+                // TODO - evaluate for NPE potential.
+                return this.metaModel.filter(property, RDF.TYPE, null).objects().contains(OWL.OBJECTPROPERTY) ? codeModel.ref(Thing.class)
+                        : codeModel.ref(Value.class);
             }
+        } else {
+            // TODO - evaluate for NPE potential.
+            LOG.warn("Property '" + property + "' " + (objects.isEmpty() ? "doesn't specify a range." : "Specifies multiple ranges"));
+            return this.metaModel.filter(property, RDF.TYPE, null).objects().contains(OWL.OBJECTPROPERTY) ? codeModel.ref(Thing.class)
+                    : codeModel.ref(Value.class);
         }
-        return null;
     }
 
     /**
@@ -523,37 +560,39 @@ public class SourceGenerator {
     private void linkIndividualInterfaces() throws OntologyToJavaException {
         final List<String> issues = new ArrayList<>();
         interfaces.forEach((iri, clazz) -> {
-            model.filter(iri, RDFS.SUBCLASSOF, null).forEach(stmt -> {
-                org.openrdf.model.Value value = stmt.getObject();
-                if (value instanceof IRI) {
-                    final IRI extending = (IRI) stmt.getObject();
-                    if (!extending.equals(OWL.THING)) {
-                        LOG.debug("Class '" + iri.stringValue() + "' extends '" + extending + "'");
-                        if (interfaces.containsKey(extending)) {
-                            clazz._implements(interfaces.get(extending));
-                        } else {
-                            referenceOntologies.stream().forEach(refOnt -> {
-                                if (refOnt.containsClass(extending)) {
-                                    if (refOnt.getSourceGenerator() == null) {
-                                        try {
-                                            refOnt.generateSource(referenceOntologies);
-                                        }catch(Exception e){
-                                            issues.add("Problem generating referenced data: "+e.getMessage());
+            if (iri != null) {
+                model.filter(iri, RDFS.SUBCLASSOF, null).forEach(stmt -> {
+                    org.openrdf.model.Value value = stmt.getObject();
+                    if (value instanceof IRI) {
+                        final IRI extending = (IRI) stmt.getObject();
+                        if (!extending.equals(OWL.THING)) {
+                            LOG.debug("Class '" + (iri != null ? iri.stringValue() : getOntologyName(this.packageName, this.ontologyName)) + "' extends '" + extending + "'");
+                            if (interfaces.containsKey(extending)) {
+                                clazz._implements(interfaces.get(extending));
+                            } else {
+                                referenceOntologies.forEach(refOnt -> {
+                                    if (refOnt.containsClass(extending)) {
+                                        if (refOnt.getSourceGenerator() == null) {
+                                            try {
+                                                refOnt.generateSource(referenceOntologies);
+                                            } catch (Exception e) {
+                                                issues.add("Problem generating referenced data: " + e.getMessage());
+                                            }
                                         }
+                                        clazz._implements(refOnt.getSourceGenerator().getCodeModel()._getClass(refOnt.getClassName(extending)));
+                                        this.classMethodIriMap.putAll(refOnt.getSourceGenerator().getClassMethodIriMap());
                                     }
-                                    clazz._implements(refOnt.getSourceGenerator().getCodeModel()._getClass(refOnt.getClassName(extending)));
-                                    this.classMethodIriMap.putAll(refOnt.getSourceGenerator().getClassMethodIriMap());
-                                }
-                            });
+                                });
+                            }
                         }
+                    } else if (value instanceof org.openrdf.model.Resource) {
+                        // TODO - handle blank nodes somehow
+                    } else {
+                        issues.add("Unsupported rdfs:subclassOf property on '" + iri.stringValue()
+                                + "' which tried to extend '" + value.stringValue() + "'");
                     }
-                } else if (value instanceof org.openrdf.model.Resource) {
-                    // TODO - handle blank nodes somehow
-                } else {
-                    issues.add("Unsupported rdfs:subclassOf property on '" + iri.stringValue()
-                            + "' which tried to extend '" + value.stringValue() + "'");
-                }
-            });
+                });
+            }
         });
         if (!issues.isEmpty()) {
             throw new OntologyToJavaException("Could not generate POJOs from ontology due to the following issues:\n\t"
@@ -570,12 +609,40 @@ public class SourceGenerator {
      */
     private void getAncestors(final IRI root, final List<IRI> parents) {
         List<IRI> firstLevel = this.model.filter(root, RDFS.SUBCLASSOF, null).stream()
-                .map(stmt -> ((Statement) stmt).getObject()).filter(obj -> obj instanceof IRI).map(obj -> (IRI) obj)
+                .map(stmt -> stmt.getObject()).filter(obj -> obj instanceof IRI).map(obj -> (IRI) obj)
                 .filter(iri -> !parents.contains(iri)).collect(Collectors.toList());
         parents.addAll(firstLevel);
-        firstLevel.stream().forEach(newRoot -> {
+        firstLevel.forEach(newRoot -> {
             getAncestors(newRoot, parents);
         });
+    }
+
+
+    private JDefinedClass generateOntologyThing() throws OntologyToJavaException {
+        try {
+            final JDefinedClass ontologyThing = codeModel._class(JMod.PUBLIC, getOntologyName(this.packageName, this.ontologyName), ClassType.INTERFACE);
+            ontologyThing._extends(codeModel.ref(Thing.class));
+            // Track field names to the IRI.
+            final Map<String, IRI> fieldIriMap = new HashMap<>();
+            final Map<String, IRI> rangeMap = new HashMap<>();
+            identifyAllDomainProperties(metaModel).stream().filter(resource -> resource instanceof IRI).forEach(resource -> {
+                // Set a static final field for the IRI.
+                final String fieldName = getName(false, (IRI) resource, this.metaModel);
+                final IRI range = getRangeOfProperty((IRI) resource);
+                ontologyThing.field(JMod.PUBLIC | JMod.STATIC | JMod.FINAL, String.class, fieldName + "_IRI",
+                        JExpr.lit(resource.stringValue())).javadoc()
+                        .add("IRI of the predicate that this property will represent.<br><br>Domain: " + range);
+                fieldIriMap.put(fieldName + "_IRI", (IRI) resource);
+                rangeMap.put(fieldName, range);
+            });
+            interfaceFieldIriMap.put(ontologyThing, fieldIriMap);
+            interfaceFieldRangeMap.put(ontologyThing, rangeMap);
+            //TODO, null, or create some kind of unique IRI?
+            interfaces.put(null, ontologyThing);
+            return ontologyThing;
+        } catch (JClassAlreadyExistsException e) {
+            throw new OntologyToJavaException("Ontology Super Thing class already exists, or conflicts with an existing class...", e);
+        }
     }
 
     /**
@@ -587,6 +654,8 @@ public class SourceGenerator {
     private void generateIndividualInterfaces() throws OntologyToJavaException {
         final List<String> issues = new ArrayList<>();
 
+        final JDefinedClass ontologyThing = generateOntologyThing();
+
         identifyClasses().forEach(classIri -> {
             try {
                 final Model modelOfThisClass = this.model.filter(classIri, null, null);
@@ -597,7 +666,9 @@ public class SourceGenerator {
                 getAncestors(classIri, ancestors);
 
                 JDefinedClass clazz = codeModel._class(JMod.PUBLIC, className, ClassType.INTERFACE);
-                clazz._extends(Thing.class);
+                if (!clazz.equals(ontologyThing)) {
+                    clazz._extends(ontologyThing);
+                }
 
                 clazz.javadoc().add("Generated class representing things with the type: " + classIri.stringValue());
 
@@ -610,7 +681,7 @@ public class SourceGenerator {
 
 
                 // Look for properties on this domain.
-                final  Collection<Resource> resources = this.model.filter(null, RDFS.DOMAIN, classIri).subjects().stream().filter(subj -> {
+                final Collection<Resource> resources = this.model.filter(null, RDFS.DOMAIN, classIri).subjects().stream().filter(subj -> {
                     for (final IRI ancestorIri : ancestors) {
                         if (this.model.filter(subj, RDFS.DOMAIN, ancestorIri).size() > 0) {
                             return false;
@@ -692,7 +763,8 @@ public class SourceGenerator {
         final StringBuilder builder = new StringBuilder();
         final Model propertyStuff = model.filter(propertyIri, null, null);
         propertyStuff.filter(propertyIri, RDFS.COMMENT, null).forEach(stmt -> {
-            builder.append(stmt.getObject().stringValue() + "\n\n");
+            builder.append(stmt.getObject().stringValue());
+            builder.append("\n\n");
         });
         return builder.toString().trim();
     }
@@ -707,7 +779,7 @@ public class SourceGenerator {
 
         JExpression callGet = classMethodIriMap.containsKey(interfaceClass) ?
                 JExpr.invoke(returnsSet ? "getProperties" : "getProperty").arg(JExpr.ref("valueFactory")
-                        .invoke("createIRI").arg(classMethodIriMap.get(interfaceClass).get(interfaceMethod)))
+                        .invoke("createIRI").arg(interfaceClass.staticRef(classMethodIriMap.get(interfaceClass).get(interfaceMethod))))
                 : null;
 
         final JVar value = implMethod.body().decl(JMod.FINAL, returnType, "value", callGet);
@@ -735,13 +807,25 @@ public class SourceGenerator {
         return implMethod.body();
     }
 
-    private final IRI iriFromInterface(JDefinedClass interfaze) {
+    private IRI iriFromInterface(JDefinedClass interfaze) {
         for (final Map.Entry<IRI, JDefinedClass> entry : interfaces.entrySet()) {
             if (entry.getValue().equals(interfaze)) {
                 return entry.getKey();
             }
         }
         return null;
+    }
+
+    private static Set<Resource> identifyAllDomainProperties(final Model metaModel) {
+        final Set<Resource> resources = fetchAllDomainResources(OWL.OBJECTPROPERTY, metaModel).collect(Collectors.toSet());
+        resources.addAll(fetchAllDomainResources(OWL.DATATYPEPROPERTY, metaModel).collect(Collectors.toSet()));
+        resources.addAll(fetchAllDomainResources(RDF.PROPERTY, metaModel).collect(Collectors.toSet()));
+        return resources;
+    }
+
+    private static Stream<Resource> fetchAllDomainResources(final IRI typeIri, final Model metaModel) {
+        return metaModel.filter(null, RDF.TYPE, typeIri).subjects().stream()
+                .filter(resource -> metaModel.filter(resource, RDFS.DOMAIN, null).isEmpty());
     }
 
     public JCodeModel getCodeModel() {
@@ -766,5 +850,9 @@ public class SourceGenerator {
 
     public Map<IRI, JDefinedClass> getInterfaces() {
         return interfaces;
+    }
+
+    protected static String getOntologyName(final String packageName, final String ontologyName) {
+        return packageName + "." + (StringUtils.isBlank(ontologyName) ? "" : stripWhiteSpace(ontologyName)) + "_Thing";
     }
 }

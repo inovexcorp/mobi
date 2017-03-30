@@ -27,8 +27,7 @@
         .module('usagesBlock', [])
         .directive('usagesBlock', usagesBlock);
 
-        usagesBlock.$inject = ['$filter', 'ontologyStateService', 'ontologyManagerService',
-            'ontologyUtilsManagerService'];
+        usagesBlock.$inject = ['$filter', 'ontologyStateService', 'ontologyManagerService', 'ontologyUtilsManagerService'];
 
         function usagesBlock($filter, ontologyStateService, ontologyManagerService, ontologyUtilsManagerService) {
             return {
@@ -41,37 +40,33 @@
                     var dvm = this;
                     dvm.om = ontologyManagerService;
                     dvm.sm = ontologyStateService;
-                    dvm.um = ontologyUtilsManagerService;
+                    dvm.ontoUtils = ontologyUtilsManagerService;
 
                     function getResults() {
-                        var deletedIRIs = _.map(dvm.sm.state.deletedEntities, 'matonto.originalIRI');
-                        var filteredBindings = _.reject(dvm.sm.state[dvm.sm.getActiveKey()].usages, usage => {
-                            return _.indexOf(deletedIRIs, _.get(usage, 's.value')) !== -1
-                                || _.indexOf(deletedIRIs, _.get(usage, 'o.value')) !== -1
-                                || _.indexOf(deletedIRIs, _.get(usage, 'p.value')) !== -1;
-                        });
                         var results = {};
-                        _.forEach(filteredBindings, binding => {
-                            if (_.has(binding, 'p')) {
-                                results[binding.p.value] = _.union(_.get(results, binding.p.value, []),
-                                    [{subject: binding.s.value, predicate: binding.p.value, object: dvm.sm.selected['@id']}]);
-                            } else if (_.has(binding, 'o')) {
-                                results[dvm.sm.selected['@id']] = _.union(_.get(results, dvm.sm.selected['@id'], []),
-                                    [{subject: binding.s.value, predicate: dvm.sm.selected['@id'], object: binding.o.value}]);
-                            }
-                        });
+                        _.forEach(_.get(dvm.sm.getActivePage(), 'usages', []), binding =>
+                            results[binding.p.value] = _.union(_.get(results, binding.p.value, []), [{subject: binding.s.value, predicate: binding.p.value, object: binding.o.value}]));
                         return results;
                     }
+                    function getWatchURL() {
+                        return '\/matontorest\/ontologies\/' + encodeURIComponent(_.get(dvm.sm.listItem, 'recordId')) + '\/entity-usages\/.*\?.*queryType=select.*tab=' + dvm.sm.getActiveKey();
+                    }
+
+                    $scope.requestConfig = {
+                        method: 'GET',
+                        url: getWatchURL()
+                    };
 
                     dvm.results = getResults();
 
-                    dvm.getBindingDisplay = function(binding) {
-                        return $filter('splitIRI')(binding).end;
-                    }
-
                     $scope.$watch(function() {
-                        return dvm.sm.state[dvm.sm.getActiveKey()].usages;
-                    },function() {
+                        return _.get(dvm.sm.listItem, 'recordId');
+                    }, function() {
+                        $scope.requestConfig.url = getWatchURL();
+                    });
+                    $scope.$watch(function() {
+                        return dvm.sm.getActivePage().usages;
+                    }, function() {
                         dvm.results = getResults();
                     });
                 }]

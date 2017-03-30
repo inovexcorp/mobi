@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.3.11-SNAPSHOT</version>
+        <version>1.5.39-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -77,27 +77,29 @@
             <groupId>org.apache.karaf.jaas</groupId>
             <artifactId>org.apache.karaf.jaas.config</artifactId>
         </dependency>
+
+        <!-- Security Dependencies -->
         <dependency>
             <groupId>org.matonto</groupId>
-            <artifactId>jaas</artifactId>
-            <version>1.2.10</version>
+            <artifactId>jaas.api</artifactId>
+            <version>1.4.24</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>web.security</artifactId>
-            <version>1.2.10</version>
+            <version>1.4.24</version>
         </dependency>
 
         <!-- REST Dependencies -->
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.rest</artifactId>
-            <version>1.2.10</version>
+            <version>1.5.23</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>etl.rest</artifactId>
-            <version>1.2.10</version>
+            <version>1.5.2</version>
         </dependency>
     </dependencies>
 

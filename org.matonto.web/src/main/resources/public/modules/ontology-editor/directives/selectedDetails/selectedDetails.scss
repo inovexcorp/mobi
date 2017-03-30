@@ -4,22 +4,19 @@
 .selected-details {
     padding-bottom: 15px;
 
-    a,
-    span {
-        display: inline-block;
-        vertical-align: bottom;
-        line-height: 20px;
-    }
-
     .entity-name {
         font-size: 18px;
     }
 
-    .delete-entity {
-        float: right;
+    .type-wrapper {
+        margin: 0;
 
-        i {
-            padding-right: 5px;
+        .type-label {
+            padding-right: 3px;
+        }
+
+        .types {
+            font-size: .85em;
         }
     }
 }

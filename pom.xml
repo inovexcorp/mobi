@@ -29,7 +29,7 @@
 
     <groupId>org.matonto</groupId>
     <artifactId>root</artifactId>
-    <version>1.3.11-SNAPSHOT</version>
+    <version>1.5.39-SNAPSHOT</version>
 
     <packaging>pom</packaging>
 
@@ -54,9 +54,8 @@
         <module>org.matonto.etl.rdf</module>
         <module>org.matonto.etl.rest</module>
         <module>org.matonto.ontology.api</module>
-        <module>org.matonto.ontology.cli</module>
-        <module>org.matonto.ontology.rest</module>
         <module>org.matonto.ontology.core.impl.owlapi</module>
+        <module>org.matonto.ontology.rest</module>
         <module>org.matonto.web</module>
         <module>org.matonto.api</module>
         <module>org.matonto.repository.impl.sesame</module>
@@ -81,6 +80,14 @@
         <module>org.matonto.karaf.feature</module>
         <module>org.matonto.rdf.orm.ontologies</module>
         <module>rdf-orm</module>
+        <module>org.matonto.jaas.api</module>
+        <module>org.matonto.jaas.proxy</module>
+        <module>org.matonto.platform.config.api</module>
+        <module>org.matonto.platform.config.rest</module>
+        <module>org.matonto.platform.config.impl</module>
+        <module>org.matonto.dataset.api</module>
+        <module>org.matonto.dataset.impl</module>
+        <module>org.matonto.dataset.rest</module>
     </modules>
 
     <properties>
@@ -122,6 +129,9 @@
                     <useMissingFile>true</useMissingFile>
                     <missingFile>legal/THIRD-PARTY.properties</missingFile>
                     <excludedGroups>org.matonto</excludedGroups>
+                    <excludes>
+                        <exclude>**/test/resources/**</exclude>
+                    </excludes>
                 </configuration>
                 <inherited>false</inherited>
                 <executions>

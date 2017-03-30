@@ -61,12 +61,9 @@
 
                     dvm.getPreview = function() {
                         setMode(dvm.activePage.serialization);
-                        dvm.om.getPreview(dvm.sm.state.ontologyId, dvm.activePage.serialization)
-                            .then(response => {
-                                dvm.activePage.preview = response;
-                            }, response => {
-                                dvm.activePage.preview = response;
-                            });
+                        dvm.om.getPreview(dvm.sm.listItem.recordId, dvm.activePage.serialization)
+                            .then(response => dvm.activePage.preview = response,
+                                response => dvm.activePage.preview = response);
                     }
                 }
             }

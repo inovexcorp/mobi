@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.3.11-SNAPSHOT</version>
+        <version>1.5.39-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -88,11 +88,6 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.matonto</groupId>
-            <artifactId>ontology.cli</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -193,6 +188,46 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rdf.orm.ontologies</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>jaas.api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>jaas.proxy</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>platform.config.api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>platform.config.rest</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>platform.config.impl</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>dataset.api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>dataset.impl</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>dataset.rest</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>

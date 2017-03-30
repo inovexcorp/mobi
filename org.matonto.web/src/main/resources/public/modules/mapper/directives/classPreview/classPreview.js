@@ -40,12 +40,11 @@
          * @restrict E
          * @requires ontologyManager.service:ontologyManagerService
          * @requires mapperState.service:mapperStateService
-         * @requires prefixes.service:prefixes
          *
          * @description
          * `classPreview` is a directive that creates a div with a brief description of the passed
-         * class and its properties. It displays the name of the class and the list of its properties.
-         * The directive is replaced by the contents of its template.
+         * class and its properties. It displays the name of the class, its IRI, its description, and
+         * the list of its properties. The directive is replaced by the contents of its template.
          *
          * @param {Object} classObj the class object from an ontology to preview
          * @param {Object[]} ontologies A list of ontologies containing the class and to pull properties
@@ -53,9 +52,9 @@
          */
         .directive('classPreview', classPreview);
 
-        classPreview.$inject = ['prefixes', 'ontologyManagerService', 'mapperStateService'];
+        classPreview.$inject = ['mapperStateService', 'ontologyManagerService'];
 
-        function classPreview(prefixes, ontologyManagerService, mapperStateService) {
+        function classPreview(mapperStateService, ontologyManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -65,24 +64,19 @@
                     classObj: '<',
                     ontologies: '<'
                 },
-                controller: function() {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
                     dvm.om = ontologyManagerService;
                     dvm.state = mapperStateService;
-                    dvm.numPropPreview = 5;
-                    dvm.full = false;
+                    dvm.props = [];
 
-                    dvm.getProps = function() {
-                        return dvm.state.getClassProps(dvm.ontologies, dvm.classObj['@id']);
-                    }
-                    dvm.getPropList = function() {
-                        var props = dvm.getProps();
-                        if (!dvm.full) {
-                            props = _.take(props, dvm.numPropPreview);
+                    $scope.$watch('dvm.classObj', function(newValue, oldValue) {
+                        var props = dvm.state.getClassProps(dvm.ontologies, newValue['@id']);
+                        if (!_.isEqual(newValue, oldValue) || dvm.props.length !== props.length) {
+                            dvm.props = props;
                         }
-                        return _.map(props, prop => dvm.om.getBeautifulIRI(prop['@id']));
-                    }
-                },
+                    });
+                }],
                 templateUrl: 'modules/mapper/directives/classPreview/classPreview.html'
             }
         }

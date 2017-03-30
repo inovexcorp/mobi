@@ -27,9 +27,9 @@
         .module('objectPropertyAxioms', [])
         .directive('objectPropertyAxioms', objectPropertyAxioms);
 
-        objectPropertyAxioms.$inject = ['ontologyStateService', 'propertyManagerService', 'responseObj', 'prefixes'];
+        objectPropertyAxioms.$inject = ['ontologyStateService', 'propertyManagerService', 'responseObj', 'prefixes', 'ontologyUtilsManagerService'];
 
-        function objectPropertyAxioms(ontologyStateService, propertyManagerService, responseObj, prefixes) {
+        function objectPropertyAxioms(ontologyStateService, propertyManagerService, responseObj, prefixes, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,8 +38,10 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    dvm.sm = ontologyStateService;
+                    dvm.os = ontologyStateService;
                     dvm.pm = propertyManagerService;
+                    dvm.ro = responseObj;
+                    dvm.ontoUtils = ontologyUtilsManagerService;
 
                     dvm.openRemoveOverlay = function(key, index) {
                         dvm.key = key;
@@ -50,8 +52,8 @@
                     dvm.updateHierarchy = function(axiom, values) {
                         if (_.get(axiom, 'localName') === 'subPropertyOf') {
                             _.forEach(values, value => {
-                                dvm.sm.addEntityToHierarchy(dvm.sm.listItem.objectPropertyHierarchy,
-                                    dvm.sm.selected.matonto.originalIRI, dvm.sm.listItem.objectPropertyIndex,
+                                dvm.os.addEntityToHierarchy(dvm.os.listItem.objectPropertyHierarchy,
+                                    dvm.os.selected.matonto.originalIRI, dvm.os.listItem.objectPropertyIndex,
                                     dvm.ro.getItemIri(value));
                             });
                         }
@@ -59,8 +61,8 @@
 
                     dvm.removeFromHierarchy = function(axiomObject) {
                         if (prefixes.rdfs + 'subPropertyOf' === dvm.key) {
-                            dvm.sm.deleteEntityFromParentInHierarchy(dvm.sm.listItem.objectPropertyHierarchy,
-                                dvm.sm.selected.matonto.originalIRI, axiomObject['@id'], dvm.sm.listItem.objectPropertyIndex);
+                            dvm.os.deleteEntityFromParentInHierarchy(dvm.os.listItem.objectPropertyHierarchy,
+                                dvm.os.selected.matonto.originalIRI, axiomObject['@id'], dvm.os.listItem.objectPropertyIndex);
                         }
                     }
                 }

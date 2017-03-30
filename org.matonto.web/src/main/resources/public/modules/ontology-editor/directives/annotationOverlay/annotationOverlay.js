@@ -27,9 +27,9 @@
         .module('annotationOverlay', [])
         .directive('annotationOverlay', annotationOverlay);
 
-        annotationOverlay.$inject = ['responseObj', 'ontologyManagerService', 'propertyManagerService', 'ontologyStateService'];
+        annotationOverlay.$inject = ['responseObj', 'ontologyManagerService', 'propertyManagerService', 'ontologyStateService', 'utilService', 'ontologyUtilsManagerService'];
 
-        function annotationOverlay(responseObj, ontologyManagerService, propertyManagerService, ontologyStateService) {
+        function annotationOverlay(responseObj, ontologyManagerService, propertyManagerService, ontologyStateService, utilService, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,30 +38,38 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
+                    dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.pm = propertyManagerService;
                     dvm.om = ontologyManagerService;
                     dvm.ro = responseObj;
-                    dvm.sm = ontologyStateService;
+                    dvm.os = ontologyStateService;
+                    dvm.util = utilService;
 
-                    function closeAndMark() {
-                        dvm.sm.setUnsaved(dvm.sm.listItem.ontologyId, dvm.sm.selected.matonto.originalIRI, true);
-                        dvm.sm.showAnnotationOverlay = false;
+                    function createJson(value, language) {
+                        var valueObj = {'@value': value};
+                        if (language) {
+                            _.set(valueObj, '@language', language);
+                        }
+                        return dvm.util.createJson(dvm.os.selected['@id'], dvm.ro.getItemIri(dvm.os.annotationSelect), valueObj);
                     }
 
                     dvm.addAnnotation = function() {
-                        dvm.pm.add(dvm.sm.selected, dvm.ro.getItemIri(dvm.sm.annotationSelect), dvm.sm.annotationValue,
-                            _.get(dvm.sm.annotationType, '@id'));
-                        closeAndMark();
+                        dvm.pm.add(dvm.os.selected, dvm.ro.getItemIri(dvm.os.annotationSelect), dvm.os.annotationValue, _.get(dvm.os.annotationType, '@id'), dvm.os.annotationLanguage);
+                        dvm.om.addToAdditions(dvm.os.listItem.recordId, createJson(dvm.os.annotationValue, dvm.os.annotationLanguage));
+                        dvm.os.showAnnotationOverlay = false;
+                        dvm.ontoUtils.saveCurrentChanges();
+                        dvm.ontoUtils.updateLabel();
                     }
 
                     dvm.editAnnotation = function() {
-                        dvm.pm.edit(dvm.sm.selected, dvm.ro.getItemIri(dvm.sm.annotationSelect), dvm.sm.annotationValue,
-                            dvm.sm.annotationIndex, _.get(dvm.sm.annotationType, '@id'));
-                        closeAndMark();
-                    }
-
-                    dvm.getItemNamespace = function(item) {
-                        return _.get(item, 'namespace', 'No namespace');
+                        var property = dvm.ro.getItemIri(dvm.os.annotationSelect);
+                        var oldObj = _.get(dvm.os.selected, "['" + property + "']['" + dvm.os.annotationIndex + "']");
+                        dvm.om.addToDeletions(dvm.os.listItem.recordId, createJson(_.get(oldObj, '@value'), _.get(oldObj, '@language')));
+                        dvm.pm.edit(dvm.os.selected, property, dvm.os.annotationValue, dvm.os.annotationIndex, _.get(dvm.os.annotationType, '@id'), dvm.os.annotationLanguage);
+                        dvm.om.addToAdditions(dvm.os.listItem.recordId, createJson(dvm.os.annotationValue, dvm.os.annotationLanguage));
+                        dvm.os.showAnnotationOverlay = false;
+                        dvm.ontoUtils.saveCurrentChanges();
+                        dvm.ontoUtils.updateLabel();
                     }
                 }
             }

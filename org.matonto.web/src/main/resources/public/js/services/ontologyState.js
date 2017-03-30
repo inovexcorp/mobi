@@ -27,163 +27,134 @@
         .module('ontologyState', [])
         .service('ontologyStateService', ontologyStateService);
 
-        ontologyStateService.$inject = ['$rootScope', '$timeout', 'ontologyManagerService', 'updateRefsService'];
+        ontologyStateService.$inject = ['$timeout', '$q', '$filter', 'ontologyManagerService', 'updateRefsService', 'stateManagerService', 'utilService', 'catalogManagerService'];
 
-        function ontologyStateService($rootScope, $timeout, ontologyManagerService, updateRefsService) {
+        function ontologyStateService($timeout, $q, $filter, ontologyManagerService, updateRefsService, stateManagerService, utilService, catalogManagerService) {
             var self = this;
             var om = ontologyManagerService;
+            var sm = stateManagerService;
+            var cm = catalogManagerService;
+            var util = utilService;
+
             self.states = [];
             self.newState = {active: true};
             self.state = self.newState;
-            self.ontology = {};
             self.selected = {};
             self.listItem = {};
 
             self.reset = function() {
                 self.states = [];
-                self.ontology = {};
                 self.selected = {};
                 self.state = self.newState;
                 self.state.active = true;
                 self.listItem = {};
             }
-            self.afterSave = function(newId) {
-                if (self.state.ontologyId !== newId) {
-                    self.state.ontologyId = newId;
-                    self.state.project.entityIRI = om.getOntologyIRI(self.ontology);
-                }
-                _.unset(self.state, 'deletedEntities');
-            }
+            self.afterSave = function() {
+                var deferred = $q.defer();
+                cm.getInProgressCommit(self.listItem.recordId, _.get(cm.localCatalog, '@id', ''))
+                    .then(inProgressCommit => {
+                        self.listItem.inProgressCommit = inProgressCommit;
 
-            self.setUnsaved = function(ontologyId, entityIRI, isUnsaved) {
-                _.set(om.getEntityById(ontologyId, entityIRI), 'matonto.unsaved', isUnsaved);
-            }
+                        self.listItem.additions = [];
+                        self.listItem.deletions = [];
 
-            self.getUnsaved = function(ontologyId, entityIRI) {
-                return _.get(om.getEntityById(ontologyId, entityIRI), 'matonto.unsaved', false);
-            }
+                        _.forOwn(self.state, (value, key) => {
+                            _.unset(value, 'usages');
+                        });
 
-            self.hasUnsavedEntities = function(ontology) {
-                return _.some(ontology, {matonto:{unsaved: true}});
+                        if (_.isEmpty(sm.getOntologyStateByRecordId(self.listItem.recordId))) {
+                            return sm.createOntologyState(self.listItem.recordId, self.listItem.branchId, self.listItem.commitId);
+                        } else {
+                            return sm.updateOntologyState(self.listItem.recordId, self.listItem.branchId, self.listItem.commitId);
+                        }
+                    }, $q.reject)
+                    .then(deferred.resolve, deferred.reject);
+                return deferred.promise;
             }
-
-            self.getUnsavedEntities = function(ontology) {
-                return _.filter(ontology, {matonto:{unsaved: true}});
+            self.clearInProgressCommit = function() {
+                _.set(self.listItem, 'inProgressCommit.additions', []);
+                _.set(self.listItem, 'inProgressCommit.deletions', []);
             }
-
-            self.hasCreatedEntities = function(ontology) {
-                return _.some(ontology, {matonto:{created: true}});
-            }
-
-            self.getCreatedEntities = function(ontology) {
-                return _.filter(ontology, {matonto:{created: true}});
-            }
-
-            self.setValid = function(ontologyId, entityIRI, isValid) {
-                _.set(om.getEntityById(ontologyId, entityIRI), 'matonto.valid', isValid);
-            }
-
-            self.getValid = function(ontologyId, entityIRI) {
-                return _.get(om.getEntityById(ontologyId, entityIRI), 'matonto.valid', true);
-            }
-
-            self.hasInvalidEntities = function(ontology) {
-                return _.some(ontology, {matonto:{valid: false}});
-            }
-
-            self.getOpenPath = function(ontologyId, entityIRI) {
-                return encodeURIComponent(ontologyId) + '.' + encodeURIComponent(entityIRI);
-            }
-
             self.setOpened = function(pathString, isOpened) {
-                _.set(self.state, encodeURIComponent(pathString) + '.isOpened', isOpened);
+                _.set(self.state, getOpenPath(pathString, 'isOpened'), isOpened);
             }
-
             self.getOpened = function(pathString) {
-                return _.get(self.state, encodeURIComponent(pathString) + '.isOpened', false);
+                return _.get(self.state, getOpenPath(pathString, 'isOpened'), false);
             }
-
-            self.openAt = function(pathsArray) {
-                var selectedPath = _.find(pathsArray, path => {
-                    var pathString = self.listItem.ontologyId;
-                    return _.every(_.initial(path), pathPart => {
-                        pathString += '.' + pathPart;
-                        return self.getOpened(pathString);
-                    });
-                });
-                if (!selectedPath) {
-                    selectedPath = _.head(pathsArray);
-                    var pathString = self.listItem.ontologyId;
-                    _.forEach(_.initial(selectedPath), pathPart => {
-                        pathString += '.' + pathPart;
-                        self.setOpened(pathString, true);
-                    });
-                }
-                $timeout(function() {
-                    var $element = document.querySelectorAll('[data-path-to="' + self.listItem.ontologyId + '.'
-                        + _.join(selectedPath, '.') + '"]');
-                    var $hierarchyBlock = document.querySelectorAll('[class*=hierarchy-block] .block-content');
-                    if ($element.length && $hierarchyBlock.length) {
-                        $hierarchyBlock[0].scrollTop = $element[0].offsetTop;
-                    }
-                });
+            self.setNoDomainsOpened = function(recordId, isOpened) {
+                _.set(self.state, getOpenPath(recordId, 'noDomainsOpened'), isOpened);
             }
-
-            self.setNoDomainsOpened = function(ontologyId, isOpened) {
-                _.set(self.state, encodeURIComponent(ontologyId) + '.noDomainsOpened', isOpened);
+            self.getNoDomainsOpened = function(recordId) {
+                return _.get(self.state, getOpenPath(recordId, 'noDomainsOpened'), false);
             }
-
-            self.getNoDomainsOpened = function(ontologyId) {
-                return _.get(self.state, encodeURIComponent(ontologyId) + '.noDomainsOpened', false);
+            self.setIndividualsOpened = function(recordId, classIRI, isOpened) {
+                _.set(self.state, getOpenPath(recordId, classIRI, 'individualsOpened'), isOpened);
             }
-
-            self.getIndividualsOpened = function(ontologyId, classIRI) {
-                return _.get(self.state, self.getOpenPath(ontologyId, classIRI) + '.individualsOpened', false);
+            self.getIndividualsOpened = function(recordId, classIRI) {
+                return _.get(self.state, getOpenPath(recordId, classIRI, 'individualsOpened'), false);
             }
-
-            self.setIndividualsOpened = function(ontologyId, classIRI, isOpened) {
-                _.set(self.state, self.getOpenPath(ontologyId, classIRI) + '.individualsOpened', isOpened);
+            self.setDataPropertiesOpened = function(recordId, isOpened) {
+                _.set(self.state, getOpenPath(recordId, 'dataPropertiesOpened'), isOpened);
             }
-
-            self.getNoTypeIndividualsOpened = function(ontologyId) {
-                return _.get(self.state, encodeURIComponent(ontologyId) + '.noTypeIndividualsOpened', false);
+            self.getDataPropertiesOpened = function(recordId) {
+                return _.get(self.state, getOpenPath(recordId, 'dataPropertiesOpened'), false);
             }
-
-            self.setNoTypeIndividualsOpened = function(ontologyId, isOpened) {
-                _.set(self.state, encodeURIComponent(ontologyId) + '.noTypeIndividualsOpened', isOpened);
+            self.setObjectPropertiesOpened = function(recordId, isOpened) {
+                _.set(self.state, getOpenPath(recordId, 'objectPropertiesOpened'), isOpened);
             }
-
-            self.getDataPropertiesOpened = function(ontologyId) {
-                return _.get(self.state, encodeURIComponent(ontologyId) + '.dataPropertiesOpened', false);
+            self.getObjectPropertiesOpened = function(recordId) {
+                return _.get(self.state, getOpenPath(recordId, 'objectPropertiesOpened'), false);
             }
-
-            self.setDataPropertiesOpened = function(ontologyId, isOpened) {
-                _.set(self.state, encodeURIComponent(ontologyId) + '.dataPropertiesOpened', isOpened);
+            self.setAnnotationPropertiesOpened = function(recordId, isOpened) {
+                _.set(self.state, getOpenPath(recordId, 'annotationPropertiesOpened'), isOpened);
             }
-
-            self.getObjectPropertiesOpened = function(ontologyId) {
-                return _.get(self.state, encodeURIComponent(ontologyId) + '.objectPropertiesOpened', false);
+            self.getAnnotationPropertiesOpened = function(recordId) {
+                return _.get(self.state, getOpenPath(recordId, 'annotationPropertiesOpened'), false);
             }
-
-            self.setObjectPropertiesOpened = function(ontologyId, isOpened) {
-                _.set(self.state, encodeURIComponent(ontologyId) + '.objectPropertiesOpened', isOpened);
-            }
-
             self.onEdit = function(iriBegin, iriThen, iriEnd) {
                 var newIRI = iriBegin + iriThen + iriEnd;
-                updateRefsService.update(self.listItem, self.selected['@id'], newIRI);
-                self.selected['@id'] = newIRI;
-                self.setUnsaved(self.state.ontologyId, self.getActiveEntityIRI(), true);
+                var oldEntity = $filter('removeMatonto')(self.selected);
+                self.getActivePage().entityIRI = newIRI;
+                if (_.some(self.listItem.additions, oldEntity)) {
+                    _.remove(self.listItem.additions, oldEntity);
+                    updateRefsService.update(self.listItem, self.selected['@id'], newIRI);
+                } else {
+                    updateRefsService.update(self.listItem, self.selected['@id'], newIRI);
+                    om.addToDeletions(self.listItem.recordId, oldEntity);
+                }
+                if (self.getActiveKey() !== 'project') {
+                    self.setCommonIriParts(iriBegin, iriThen);
+                }
+                om.addToAdditions(self.listItem.recordId, $filter('removeMatonto')(self.selected));
+                return om.getEntityUsages(self.listItem.recordId, self.listItem.branchId, self.listItem.commitId, oldEntity['@id'], 'construct')
+                    .then(statements => {
+                        _.forEach(statements, statement => om.addToDeletions(self.listItem.recordId, statement));
+                        updateRefsService.update(statements, oldEntity['@id'], newIRI);
+                        _.forEach(statements, statement => om.addToAdditions(self.listItem.recordId, statement));
+                    }, errorMessage => util.createErrorToast('Associated entities were not updated due to an internal error.'));
             }
-            self.setSelected = function(entityIRI) {
-                self.selected = om.getEntityById(self.listItem.ontologyId, entityIRI);
+            self.setCommonIriParts = function(iriBegin, iriThen) {
+                _.set(self.listItem, 'iriBegin', iriBegin);
+                _.set(self.listItem, 'iriThen', iriThen);
             }
-            self.addState = function(ontologyId, entityIRI, type) {
+            self.setSelected = function(entityIRI, getUsages = true) {
+                self.selected = om.getEntityByRecordId(self.listItem.recordId, entityIRI);
+                if (getUsages && !_.has(self.getActivePage(), 'usages') && self.selected) {
+                    self.setEntityUsages(entityIRI);
+                }
+            }
+            self.setEntityUsages = function(entityIRI) {
+                var page = self.getActivePage();
+                om.getEntityUsages(self.listItem.recordId, self.listItem.branchId, self.listItem.commitId, entityIRI, 'select', self.getActiveKey())
+                    .then(bindings => _.set(page, 'usages', bindings),
+                        response => _.set(page, 'usages', []));
+            }
+            self.addState = function(recordId, entityIRI, type) {
                 var tabs = {};
                 var newState = {
-                    ontologyId: ontologyId,
+                    recordId,
                     active: false,
-                    type: type
+                    type
                 }
                 if (type === 'ontology') {
                     tabs = {
@@ -224,35 +195,41 @@
                 _.merge(newState, tabs);
                 self.states.push(newState);
             }
-            self.setState = function(ontologyId) {
+            self.setState = function(recordId, getUsages = false) {
                 self.state.active = false;
-                if (!ontologyId) {
+                if (!recordId) {
                     self.state = self.newState;
                 } else {
-                    self.state = _.find(self.states, {ontologyId});
-                    self.listItem = om.getListItemById(ontologyId);
-                    setVariables(ontologyId, self.getActiveEntityIRI());
+                    self.state = _.find(self.states, {recordId});
+                    self.listItem = om.getListItemByRecordId(recordId);
+                    self.setSelected(self.getActiveEntityIRI(), self.getActiveKey() === 'project' ? false : getUsages);
                 }
                 self.state.active = true;
             }
-            self.getState = function(ontologyId) {
-                if (!ontologyId) {
-                    return self.newState;
-                } else {
-                    return _.find(self.states, {ontologyId});
-                }
+            self.getState = function(recordId) {
+                return recordId ? _.find(self.states, {recordId}) : self.newState;
             }
-            self.deleteState = function(ontologyId) {
-                if (self.state.ontologyId === ontologyId) {
+            self.deleteState = function(recordId) {
+                if (self.state.recordId === recordId) {
                     self.state = self.newState;
                     self.state.active = true;
                     self.selected = undefined;
-                    self.ontology = undefined;
                 }
-                _.remove(self.states, {ontologyId});
+                _.remove(self.states, {recordId});
+            }
+            self.resetStateTabs = function() {
+                _.forOwn(self.state, (value, key) => {
+                    if (key !== 'project') {
+                        _.unset(value, 'entityIRI');
+                    }
+                    _.unset(value, 'usages');
+                });
+                if (self.getActiveKey() !== 'project') {
+                    self.selected = undefined;
+                }
             }
             self.getActiveKey = function() {
-                return _.findKey(self.state, ['active', true], 'project');
+                return _.findKey(self.state, ['active', true]) || 'project';
             }
             self.getActivePage = function() {
                 return self.state[self.getActiveKey()];
@@ -264,18 +241,16 @@
                 }
             }
             self.getActiveEntityIRI = function() {
-                return self.getActivePage().entityIRI;
+                return _.get(self.getActivePage(), 'entityIRI');
             }
-            self.selectItem = function(entityIRI, getUsages=true) {
+            self.selectItem = function(entityIRI, getUsages = true) {
                 if (entityIRI && entityIRI !== self.getActiveEntityIRI()) {
                     _.set(self.getActivePage(), 'entityIRI', entityIRI);
                     if (getUsages) {
-                        om.getEntityUsages(self.state.ontologyId, entityIRI)
-                            .then(bindings => _.set(self.getActivePage(), 'usages', bindings),
-                                response => _.set(self.getActivePage(), 'usages', []));
+                        self.setEntityUsages(entityIRI);
                     }
                 }
-                self.setSelected(entityIRI);
+                self.setSelected(entityIRI, false);
             }
             self.unSelectItem = function() {
                 var activePage = self.getActivePage();
@@ -283,23 +258,17 @@
                 _.unset(activePage, 'usages');
                 self.selected = undefined;
             }
-            self.addDeletedEntity = function() {
-                if (_.has(self.state, 'deletedEntities')) {
-                    self.state.deletedEntities.push(angular.copy(self.selected));
-                } else {
-                    _.set(self.state, 'deletedEntities', [angular.copy(self.selected)]);
-                }
+            self.hasChanges = function(recordId) {
+                var listItem = om.getListItemByRecordId(recordId);
+                return !!_.get(listItem, 'additions', []).length || !!_.get(listItem, 'deletions', []).length;
             }
-            self.hasChanges = function(ontology, ontologyId) {
-                return self.hasUnsavedEntities(ontology) || self.hasCreatedEntities(ontology)
-                    || _.get(self.getState(ontologyId), 'deletedEntities', []).length;
-            }
-            self.isSavable = function(ontology, ontologyId) {
-                return self.hasChanges(ontology, ontologyId) && !self.hasInvalidEntities(ontology);
+            self.isCommittable = function(recordId) {
+                var listItem = om.getListItemByRecordId(recordId);
+                return !!_.get(listItem, 'inProgressCommit.additions', []).length || !!_.get(listItem, 'inProgressCommit.deletions', []).length;
             }
             self.addEntityToHierarchy = function(hierarchy, entityIRI, indexObject, parentIRI) {
                 var hierarchyItem = {entityIRI};
-                var pathsToEntity = self.getPathsTo(indexObject, entityIRI);
+                var pathsToEntity = self.getPathsTo(hierarchy, indexObject, entityIRI);
                 if (pathsToEntity.length) {
                     if (pathsToEntity[0].length > 1) {
                         var path = pathsToEntity[0];
@@ -311,13 +280,13 @@
                         hierarchyItem = _.remove(hierarchy, hierarchyItem)[0];
                     }
                 }
-                if (parentIRI) {
+                if (parentIRI && self.getPathsTo(hierarchy, indexObject, parentIRI).length) {
                     _.forEach(getEntities(hierarchy, parentIRI, indexObject), parent =>
                         parent.subEntities = _.union(_.get(parent, 'subEntities', []), [hierarchyItem]));
+                    indexObject[entityIRI] = _.union(_.get(indexObject, entityIRI, []), [parentIRI]);
                 } else {
                     hierarchy.push(hierarchyItem);
                 }
-                indexObject[entityIRI] = _.union(_.get(indexObject, entityIRI, []), [parentIRI]);
             }
             self.deleteEntityFromParentInHierarchy = function(hierarchy, entityIRI, parentIRI, indexObject) {
                 var deletedEntity;
@@ -339,7 +308,7 @@
             }
             self.deleteEntityFromHierarchy = function(hierarchy, entityIRI, indexObject) {
                 var deletedEntity;
-                var paths = self.getPathsTo(indexObject, entityIRI);
+                var paths = self.getPathsTo(hierarchy, indexObject, entityIRI);
                 _.forEach(paths, path => {
                     if (path.length === 1) {
                         deletedEntity = _.remove(hierarchy, {entityIRI: path.shift()})[0];
@@ -357,16 +326,80 @@
                 _.unset(indexObject, entityIRI);
                 updateRefsService.remove(indexObject, entityIRI);
                 _.forEach(_.get(deletedEntity, 'subEntities', []), hierarchyItem => {
-                    var paths = self.getPathsTo(indexObject, hierarchyItem.entityIRI);
-                    if (paths.length === 1 && paths[0].length === 1) {
+                    var paths = self.getPathsTo(hierarchy, indexObject, hierarchyItem.entityIRI);
+                    if (paths.length === 0) {
                         hierarchy.push(hierarchyItem);
                         _.unset(indexObject, hierarchyItem.entityIRI);
                     }
                 });
             }
+            self.getPathsTo = function(hierarchy, indexObject, entityIRI) {
+                var result = [];
+                if (_.has(indexObject, entityIRI)) {
+                    _.forEach(indexObject[entityIRI], parentIRI => {
+                        var paths = self.getPathsTo(hierarchy, indexObject, parentIRI);
+                        _.forEach(paths, path => {
+                            path.push(entityIRI);
+                            result.push(path);
+                        });
+                    });
+                } else if (_.some(hierarchy, {entityIRI})) {
+                    result.push([entityIRI]);
+                }
+                return result;
+            }
+            self.goTo = function(iri) {
+                var entity = om.getEntityByRecordId(self.listItem.recordId, iri);
+                if (self.state.type === 'vocabulary') {
+                    commonGoTo('concepts', iri, 'conceptIndex', 'conceptHierarchy');
+                } else if (om.isClass(entity)) {
+                    commonGoTo('classes', iri, 'classIndex', 'classHierarchy');
+                } else if (om.isDataTypeProperty(entity)) {
+                    commonGoTo('properties', iri, 'dataPropertyIndex', 'dataPropertyHierarchy');
+                    self.setDataPropertiesOpened(self.listItem.recordId, true);
+                } else if (om.isObjectProperty(entity)) {
+                    commonGoTo('properties', iri, 'objectPropertyIndex', 'objectPropertyHierarchy');
+                    self.setObjectPropertiesOpened(self.listItem.recordId, true);
+                } else if (om.isAnnotation(entity)) {
+                    commonGoTo('properties', iri);
+                    self.setAnnotationPropertiesOpened(self.listItem.recordId, true);
+                } else if (om.isIndividual(entity)) {
+                    commonGoTo('individuals', iri);
+                } else if (om.isOntology(entity)) {
+                    commonGoTo('project', iri);
+                }
+            }
+            self.openAt = function(pathsArray) {
+                var selectedPath = _.find(pathsArray, path => {
+                    var pathString = self.listItem.recordId;
+                    return _.every(_.initial(path), pathPart => {
+                        pathString += '.' + pathPart;
+                        return self.getOpened(pathString);
+                    });
+                });
+                if (!selectedPath) {
+                    selectedPath = _.head(pathsArray);
+                    var pathString = self.listItem.recordId;
+                    _.forEach(_.initial(selectedPath), pathPart => {
+                        pathString += '.' + pathPart;
+                        self.setOpened(pathString, true);
+                    });
+                }
+                $timeout(function() {
+                    var $element = document.querySelectorAll('[data-path-to="' + self.listItem.recordId + '.'
+                        + _.join(selectedPath, '.') + '"]');
+                    var $hierarchyBlock = document.querySelectorAll('[class*=hierarchy-block] .block-content');
+                    if ($element.length && $hierarchyBlock.length) {
+                        $hierarchyBlock[0].scrollTop = $element[0].offsetTop;
+                    }
+                });
+            }
+            self.getDefaultPrefix = function() {
+                return _.replace(_.get(self.listItem, 'iriBegin', self.listItem.ontologyId), '#', '/') + _.get(self.listItem, 'iriThen', '#');
+            }
             function getEntities(hierarchy, entityIRI, indexObject) {
                 var results = [];
-                var pathsToEntity = self.getPathsTo(indexObject, entityIRI);
+                var pathsToEntity = self.getPathsTo(hierarchy, indexObject, entityIRI);
                 _.forEach(pathsToEntity, path => {
                     var entity = _.find(hierarchy, {entityIRI: path.shift()});
                     while (path.length > 0) {
@@ -376,47 +409,15 @@
                 });
                 return results;
             }
-            self.getPathsTo = function(indexObject, entityIRI) {
-                var result = [];
-                if (_.has(indexObject, entityIRI)) {
-                    _.forEach(indexObject[entityIRI], parentIRI => {
-                        var paths = self.getPathsTo(indexObject, parentIRI);
-                        _.forEach(paths, path => {
-                            path.push(entityIRI);
-                            result.push(path);
-                        });
-                    });
-                } else {
-                    result.push([entityIRI]);
-                }
-                return result;
-            }
-            function setVariables(ontologyId, entityIRI) {
-                self.ontology = om.getOntologyById(ontologyId);
-                self.setSelected(entityIRI);
-            }
-            self.goTo = function(iri) {
-                var entity = om.getEntityById(self.listItem.ontologyId, iri);
-                if (self.state.type === 'vocabulary') {
-                    commonGoTo('concepts', iri, 'conceptIndex');
-                } else if (om.isClass(entity)) {
-                    commonGoTo('classes', iri, 'classIndex');
-                } else if (om.isDataTypeProperty(entity)) {
-                    commonGoTo('properties', iri, 'dataPropertyIndex');
-                    self.setDataPropertiesOpened(self.listItem.ontologyId, true);
-                } else if (om.isObjectProperty(entity)) {
-                    commonGoTo('properties', iri, 'objectPropertyIndex');
-                    self.setObjectPropertiesOpened(self.listItem.ontologyId, true);
-                } else if (om.isIndividual(entity)) {
-                    commonGoTo('individuals', iri);
-                }
-            }
-            function commonGoTo(key, iri, index) {
+            function commonGoTo(key, iri, index, hierarchy) {
                 self.setActivePage(key);
                 self.selectItem(iri);
                 if (index) {
-                    self.openAt(self.getPathsTo(self.listItem[index], iri));
+                    self.openAt(self.getPathsTo(self.listItem[hierarchy], self.listItem[index], iri));
                 }
+            }
+            function getOpenPath() {
+                return _.join(_.map([...arguments], encodeURIComponent), '.');
             }
         }
 })();

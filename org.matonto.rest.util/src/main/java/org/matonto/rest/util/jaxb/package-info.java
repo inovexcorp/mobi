@@ -1,4 +1,4 @@
-@Version("1.1.0.${build}")
+@Version("2.1.0.${build}")
 
 package org.matonto.rest.util.jaxb;
 

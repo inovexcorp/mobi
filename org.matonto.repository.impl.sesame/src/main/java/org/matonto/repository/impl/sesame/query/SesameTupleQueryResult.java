@@ -72,14 +72,4 @@ public class SesameTupleQueryResult extends TupleQueryResult {
             throw new QueryEvaluationException(e);
         }
     }
-
-    @Override
-    public void remove() throws QueryEvaluationException {
-        try {
-            tupleQueryResult.close();
-        } catch (org.openrdf.query.QueryEvaluationException e) {
-            throw new QueryEvaluationException(e);
-        }
-    }
-
 }

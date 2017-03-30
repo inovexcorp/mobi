@@ -24,301 +24,644 @@ package org.matonto.jaas.rest.impl;
  */
 
 import net.sf.json.JSONArray;
-import org.apache.karaf.jaas.boot.ProxyLoginModule;
-import org.apache.karaf.jaas.boot.principal.GroupPrincipal;
-import org.apache.karaf.jaas.boot.principal.RolePrincipal;
-import org.apache.karaf.jaas.boot.principal.UserPrincipal;
-import org.apache.karaf.jaas.config.JaasRealm;
+import net.sf.json.JSONObject;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.junit.Assert;
-import org.matonto.jaas.modules.token.TokenBackingEngine;
-import org.matonto.jaas.modules.token.TokenBackingEngineFactory;
+import org.matonto.jaas.api.engines.EngineManager;
+import org.matonto.jaas.api.engines.UserConfig;
+import org.matonto.jaas.api.ontologies.usermanagement.*;
+import org.matonto.jaas.rest.providers.*;
+import org.matonto.ontologies.foaf.AgentFactory;
+import org.matonto.rdf.api.ModelFactory;
+import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.ValueFactory;
+import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory;
+import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
+import org.matonto.rdf.orm.Thing;
+import org.matonto.rdf.orm.conversion.ValueConverterRegistry;
+import org.matonto.rdf.orm.conversion.impl.*;
+import org.matonto.rdf.orm.impl.ThingFactory;
 import org.matonto.rest.util.MatontoRestTestNg;
+import org.matonto.rest.util.UsernameTestFilter;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.openrdf.model.vocabulary.DCTERMS;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import javax.security.auth.login.AppConfigurationEntry;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.security.Principal;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 public class UserRestImplTest extends MatontoRestTestNg {
     private UserRestImpl rest;
-    private List<UserPrincipal> users;
-    private List<GroupPrincipal> groups;
-    private List<RolePrincipal> roles;
+    private UserProvider userProvider;
+    private RoleProvider roleProvider;
+    private RoleSetProvider roleSetProvider;
+    private GroupProvider groupProvider;
+    private GroupSetProvider groupSetProvider;
+    private UserFactory userFactory;
+    private GroupFactory groupFactory;
+    private RoleFactory roleFactory;
+    private AgentFactory agentFactory;
+    private ThingFactory thingFactory;
+    private ValueFactory vf;
+    private ModelFactory mf;
+    private ValueConverterRegistry vcr;
+    private User user;
+    private Group group;
+    private Role role;
+    private Thing email;
+    private Set<User> users;
+    private Set<Group> groups;
+    private Set<Role> roles;
 
     @Mock
-    JaasRealm realm;
-
-    @Mock
-    TokenBackingEngine engine;
-
-    @Mock
-    TokenBackingEngineFactory factory;
+    EngineManager engineManager;
 
     @Override
     protected Application configureApp() throws Exception {
-        users = Collections.singletonList(new UserPrincipal("testUser"));
-        groups = Collections.singletonList(new GroupPrincipal("testGroup"));
-        roles = Collections.singletonList(new RolePrincipal("testRole"));
+        userProvider = new UserProvider();
+        roleProvider = new RoleProvider();
+        roleSetProvider = new RoleSetProvider();
+        groupProvider = new GroupProvider();
+        groupSetProvider = new GroupSetProvider();
+        userFactory = new UserFactory();
+        groupFactory = new GroupFactory();
+        roleFactory = new RoleFactory();
+        agentFactory = new AgentFactory();
+        thingFactory = new ThingFactory();
+        vf = SimpleValueFactory.getInstance();
+        mf = LinkedHashModelFactory.getInstance();
+        vcr = new DefaultValueConverterRegistry();
+        roleProvider.setFactory(vf);
+        roleSetProvider.setFactory(vf);
+        roleSetProvider.setRoleProvider(roleProvider);
+        groupProvider.setFactory(vf);
+        groupSetProvider.setFactory(vf);
+        groupSetProvider.setGroupProvider(groupProvider);
+        userFactory.setModelFactory(mf);
+        userFactory.setValueFactory(vf);
+        userFactory.setValueConverterRegistry(vcr);
+        groupFactory.setModelFactory(mf);
+        groupFactory.setValueFactory(vf);
+        groupFactory.setValueConverterRegistry(vcr);
+        roleFactory.setModelFactory(mf);
+        roleFactory.setValueFactory(vf);
+        roleFactory.setValueConverterRegistry(vcr);
+        agentFactory.setValueFactory(vf);
+        agentFactory.setModelFactory(mf);
+        agentFactory.setValueConverterRegistry(vcr);
+        thingFactory.setValueFactory(vf);
+        thingFactory.setModelFactory(mf);
+        thingFactory.setValueConverterRegistry(vcr);
+
+        vcr.registerValueConverter(userFactory);
+        vcr.registerValueConverter(groupFactory);
+        vcr.registerValueConverter(roleFactory);
+        vcr.registerValueConverter(agentFactory);
+        vcr.registerValueConverter(thingFactory);
+        vcr.registerValueConverter(new ResourceValueConverter());
+        vcr.registerValueConverter(new IRIValueConverter());
+        vcr.registerValueConverter(new DoubleValueConverter());
+        vcr.registerValueConverter(new IntegerValueConverter());
+        vcr.registerValueConverter(new FloatValueConverter());
+        vcr.registerValueConverter(new ShortValueConverter());
+        vcr.registerValueConverter(new StringValueConverter());
+        vcr.registerValueConverter(new ValueValueConverter());
+        vcr.registerValueConverter(new LiteralValueConverter());
+
+        email = thingFactory.createNew(vf.createIRI("mailto:example@example.com"));
+
+        role = roleFactory.createNew(vf.createIRI("http://matonto.org/roles/user"), email.getModel());
+        role.setProperty(vf.createLiteral("user"), vf.createIRI(DCTERMS.TITLE.stringValue()));
+        roles = Collections.singleton(role);
+
+        user = userFactory.createNew(vf.createIRI("http://matonto.org/users/" + UsernameTestFilter.USERNAME), email.getModel());
+        user.setHasUserRole(roles);
+        user.setUsername(vf.createLiteral(UsernameTestFilter.USERNAME));
+        user.setPassword(vf.createLiteral("ABC"));
+        user.setMbox(Collections.singleton(email));
+        users = Collections.singleton(user);
+
+        group = groupFactory.createNew(vf.createIRI("http://matonto.org/groups/testGroup"), email.getModel());
+        Role adminRole = roleFactory.createNew(vf.createIRI("http://matonto.org/roles/admin"), email.getModel());
+        adminRole.setProperty(vf.createLiteral("admin"), vf.createIRI(DCTERMS.TITLE.stringValue()));
+        group.setHasGroupRole(Collections.singleton(adminRole));
+        group.setMember(Collections.singleton(user));
+        groups = Collections.singleton(group);
+
         MockitoAnnotations.initMocks(this);
+        userProvider.setEngineManager(engineManager);
         rest = spy(new UserRestImpl());
-        rest.setRealm(realm);
-
-        Map<String, Object> tokenOptions = new HashMap<>();
-        tokenOptions.put(ProxyLoginModule.PROPERTY_MODULE, UserRestImpl.TOKEN_MODULE);
-
-        when(factory.getModuleClass()).thenReturn(UserRestImpl.TOKEN_MODULE);
-        when(factory.build(any(Map.class))).thenReturn(engine);
-        when(realm.getEntries()).thenReturn(new AppConfigurationEntry[] {
-                new AppConfigurationEntry("loginModule", AppConfigurationEntry.LoginModuleControlFlag.OPTIONAL,
-                        tokenOptions),
-                new AppConfigurationEntry("loginModule", AppConfigurationEntry.LoginModuleControlFlag.OPTIONAL,
-                        new HashMap<>())});
-        when(engine.listUsers()).thenReturn(users);
-        when(engine.listGroups(any(UserPrincipal.class))).thenReturn(groups);
-        when(engine.listRoles(any(Principal.class))).thenReturn(roles);
-        doNothing().when(engine).addUser(anyString(), anyString());
-        doNothing().when(engine).addGroup(anyString(), anyString());
-        doNothing().when(engine).addRole(anyString(), anyString());
-        doNothing().when(engine).deleteUser(anyString());
-        doNothing().when(engine).deleteGroup(anyString(), anyString());
-        doNothing().when(engine).deleteRole(anyString(), anyString());
-        doReturn(true).when(rest).isAuthorizedUser(any(), any());
-
-        rest.addEngineFactory(factory);
-
-        rest.start();
+        rest.setEngineManager(engineManager);
+        rest.setFactory(vf);
 
         return new ResourceConfig()
                 .register(rest)
-                .register(MultiPartFeature.class);
+                .register(MultiPartFeature.class)
+                .register(UsernameTestFilter.class)
+                .register(userProvider)
+                .register(groupProvider)
+                .register(groupSetProvider)
+                .register(roleProvider)
+                .register(roleSetProvider);
     }
 
     @Override
     protected void configureClient(ClientConfig config) {
         config.register(MultiPartFeature.class);
+        config.register(userProvider);
+        config.register(groupProvider);
+        config.register(groupSetProvider);
+        config.register(roleProvider);
+        config.register(roleSetProvider);
+    }
+
+    @BeforeMethod
+    public void setupMocks() {
+        reset(engineManager);
+        when(engineManager.getUsers(anyString())).thenReturn(users);
+        when(engineManager.userExists(anyString())).thenReturn(true);
+        when(engineManager.userExists(UsernameTestFilter.USERNAME)).thenReturn(true);
+        when(engineManager.createUser(anyString(), any(UserConfig.class))).thenReturn(user);
+        when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.of(user));
+        when(engineManager.checkPassword(anyString(), anyString(), anyString())).thenReturn(true);
+        when(engineManager.getGroups(anyString())).thenReturn(groups);
+        when(engineManager.groupExists(anyString())).thenReturn(true);
+        when(engineManager.retrieveGroup(anyString(), anyString())).thenReturn(Optional.of(group));
+        when(engineManager.getRole(anyString(), anyString())).thenReturn(Optional.of(role));
+        when(engineManager.getUserRoles(anyString(), anyString())).thenReturn(Stream.concat(roles.stream(),
+                group.getHasGroupRole().stream()).collect(Collectors.toSet()));
+        when(engineManager.getUserRoles(UsernameTestFilter.USERNAME)).thenReturn(Stream.concat(roles.stream(),
+                group.getHasGroupRole().stream()).collect(Collectors.toSet()));
+        when(engineManager.getUsername(any(Resource.class))).thenReturn(Optional.empty());
     }
 
     @Test
     public void listUsersTest() {
         Response response = target().path("users").request().get();
-        verify(engine, atLeastOnce()).listUsers();
-        Assert.assertEquals(200, response.getStatus());
+        verify(engineManager, atLeastOnce()).getUsers(anyString());
+        assertEquals(response.getStatus(), 200);
         try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
-            Assert.assertTrue(result.size() == users.size());
+            String str = response.readEntity(String.class);
+            JSONArray result = JSONArray.fromObject(str);
+            assertEquals(result.size(), users.size());
         } catch (Exception e) {
-            Assert.fail("Expected no exception, but got: " + e.getMessage());
+            fail("Expected no exception, but got: " + e.getMessage());
         }
     }
 
     @Test
     public void createUserTest() {
+        //Setup:
+        JSONObject user = new JSONObject();
+        user.put("username", "testUser");
+        user.put("email", "example@example.com");
+        user.put("firstName", "John");
+        user.put("lastName", "Doe");
+        when(engineManager.userExists(anyString())).thenReturn(false);
+
         Response response = target().path("users")
-                .queryParam("username", "testUser1").queryParam("password", "123")
-                .request().post(Entity.entity(null, MediaType.MULTIPART_FORM_DATA));
-        verify(engine).addUser("testUser1", "123");
-        Assert.assertEquals(200, response.getStatus());
-
-        response = target().path("users")
-                .queryParam("username", "testUser1")
-                .request().post(Entity.entity(null, MediaType.MULTIPART_FORM_DATA));
-        Assert.assertEquals(400, response.getStatus());
-
-        response = target().path("users")
                 .queryParam("password", "123")
-                .request().post(Entity.entity(null, MediaType.MULTIPART_FORM_DATA));
-        Assert.assertEquals(400, response.getStatus());
+                .request().post(Entity.entity(user.toString(), MediaType.APPLICATION_JSON));
+        assertEquals(response.getStatus(), 201);
+        verify(engineManager).storeUser(anyString(), any(User.class));
+    }
 
-        response = target().path("users")
-                .request().post(Entity.entity(null, MediaType.MULTIPART_FORM_DATA));
-        Assert.assertEquals(400, response.getStatus());
+    @Test
+    public void createUserWithoutPasswordTest() {
+        //Setup:
+        JSONObject user = new JSONObject();
+        user.put("username", "testUser");
+        user.put("email", "example@example.com");
+        user.put("firstName", "John");
+        user.put("lastName", "Doe");
+        when(engineManager.userExists(anyString())).thenReturn(false);
 
-        response = target().path("users").queryParam("username", "testUser")
-                .request().post(Entity.entity(null, MediaType.MULTIPART_FORM_DATA));
-        Assert.assertEquals(400, response.getStatus());
+        Response response = target().path("users")
+                .request().post(Entity.entity(user.toString(), MediaType.APPLICATION_JSON));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void createUserWithoutUsernameTest() {
+        //Setup:
+        JSONObject user = new JSONObject();
+        user.put("email", "example@example.com");
+        user.put("firstName", "John");
+        user.put("lastName", "Doe");
+        when(engineManager.userExists(anyString())).thenReturn(false);
+
+        Response response = target().path("users")
+                .queryParam("password", "123")
+                .request().post(Entity.entity(user.toString(), MediaType.APPLICATION_JSON));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void createExistingUserTest() {
+        //Setup:
+        JSONObject user = new JSONObject();
+        user.put("username", UsernameTestFilter.USERNAME);
+        user.put("email", "example@example.com");
+        user.put("firstName", "John");
+        user.put("lastName", "Doe");
+
+        Response response = target().path("users")
+                .queryParam("password", "123")
+                .request().post(Entity.entity(user.toString(), MediaType.APPLICATION_JSON));
+        assertEquals(response.getStatus(), 400);
     }
 
     @Test
     public void getUserTest() {
-        Response response = target().path("users/testUser").request().get();
-        Assert.assertEquals(200, response.getStatus());
-        Assert.assertTrue(response.readEntity(String.class).contains("testUser"));
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME).request().get();
+        assertEquals(response.getStatus(), 200);
+        verify(engineManager).retrieveUser(anyString(), eq(UsernameTestFilter.USERNAME));
+        JSONObject user = JSONObject.fromObject(response.readEntity(String.class));
+        assertTrue(user.containsKey("username"));
+    }
 
-        response = target().path("users/error").request().get();
-        Assert.assertEquals(400, response.getStatus());
+    @Test
+    public void getUserThatDoesNotExistTest() {
+        // Setup:
+        when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.empty());
+
+        Response response = target().path("users/error").request().get();
+        assertEquals(response.getStatus(), 404);
+        verify(engineManager).retrieveUser(anyString(), eq("error"));
     }
 
     @Test
     public void updateUserTest() {
-        doReturn(true).when(rest).validPassword("testUser", "ABC");
+        //Setup:
+        JSONObject user = new JSONObject();
+        user.put("username", UsernameTestFilter.USERNAME);
+        user.put("email", "maryjane@example.com");
+        user.put("firstName", "Mary");
+        user.put("lastName", "Jane");
 
-        Response response = target().path("users/testUser")
-                .queryParam("currentPassword", "ABC")
-                .queryParam("newPassword", "XYZ")
-                .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        Assert.assertEquals(200, response.getStatus());
-        verify(engine).addUser("testUser", "XYZ");
-
-        response = target().path("users/testUser")
-                .queryParam("username", "testUser1")
-                .queryParam("currentPassword", "ABC")
-                .queryParam("newPassword", "XYZ")
-                .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        Assert.assertEquals(200, response.getStatus());
-        verify(engine).addUser("testUser1", "XYZ");
-        verify(engine, atLeastOnce()).listGroups(any(UserPrincipal.class));
-        verify(engine, atLeastOnce()).listRoles(any(UserPrincipal.class));
-        verify(engine, atLeastOnce()).deleteUser("testUser");
-        verify(engine, times(groups.size())).addGroup(eq("testUser1"), anyString());
-        verify(engine, times(roles.size())).addRole(eq("testUser1"), anyString());
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME)
+                .request().put(Entity.entity(user.toString(), MediaType.APPLICATION_JSON));
+        assertEquals(response.getStatus(), 200);
+        verify(engineManager, atLeastOnce()).retrieveUser(anyString(), eq(UsernameTestFilter.USERNAME));
+        verify(engineManager).updateUser(anyString(), any(User.class));
     }
 
     @Test
-    public void updateUserWithoutCurrentPasswordReturns401() {
-        Response response = target().path("users/testUser")
+    public void updateUserWithDifferentUsernameTest() {
+        //Setup:
+        JSONObject user = new JSONObject();
+        user.put("username", "testUser");
+        user.put("email", "maryjane@example.com");
+        user.put("firstName", "Mary");
+        user.put("lastName", "Jane");
+        User newUser = userFactory.createNew(vf.createIRI("http://matonto.org/users/" + user.getString("username")));
+        newUser.setUsername(vf.createLiteral(user.getString("username")));
+        newUser.setFirstName(Collections.singleton(vf.createLiteral(user.getString("firstName"))));
+        newUser.setLastName(Collections.singleton(vf.createLiteral(user.getString("lastName"))));
+        newUser.setMbox(Collections.singleton(thingFactory.createNew(vf.createIRI("mailto:" + user.getString("email")))));
+        when(engineManager.createUser(anyString(), any(UserConfig.class))).thenReturn(newUser);
+
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME)
+                .request().put(Entity.entity(user.toString(), MediaType.APPLICATION_JSON));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void updateUserThatDoesNotExistTest() {
+        //Setup:
+        JSONObject user = new JSONObject();
+        user.put("username", "error");
+        user.put("email", "maryjane@example.com");
+        user.put("firstName", "Mary");
+        user.put("lastName", "Jane");
+        when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.empty());
+
+        Response response = target().path("users/error")
+                .request().put(Entity.entity(user.toString(), MediaType.APPLICATION_JSON));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void changePasswordTest() {
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/password")
+                .queryParam("currentPassword", "ABC")
+                .queryParam("newPassword", "XYZ")
+                .request().post(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
+        assertEquals(response.getStatus(), 200);
+        verify(engineManager).checkPassword(anyString(), eq(UsernameTestFilter.USERNAME), eq("ABC"));
+        verify(engineManager, atLeastOnce()).retrieveUser(anyString(), eq(UsernameTestFilter.USERNAME));
+        verify(engineManager).updateUser(anyString(), any(User.class));
+    }
+
+    @Test
+    public void changePasswordAsDifferentUserTest() {
+        Response response = target().path("users/error/password")
+                .queryParam("currentPassword", "ABC")
+                .queryParam("newPassword", "XYZ")
+                .request().post(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
+        assertEquals(response.getStatus(), 403);
+    }
+
+    @Test
+    public void changePasswordWithoutCurrentPasswordTest() {
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/password")
+                .queryParam("newPassword", "XYZ")
+                .request().post(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void changePasswordWithWrongPasswordTest() {
+        // Setup:
+        when(engineManager.checkPassword(anyString(), anyString(), eq("error"))).thenReturn(false);
+
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/password")
+                .queryParam("currentPassword", "error")
+                .queryParam("newPassword", "XYZ")
+                .request().post(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
+        assertEquals(response.getStatus(), 401);
+    }
+
+    @Test
+    public void changePasswordWithoutNewPasswordTest() {
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/password")
+                .queryParam("currentPassword", "ABC")
+                .request().post(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void changePasswordForUserThatDoesNotExistTest() {
+        // Setup:
+        when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.empty());
+
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/password")
+                .queryParam("currentPassword", "ABC")
+                .queryParam("newPassword", "XYZ")
+                .request().post(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void resetPasswordTest() {
+        Response response = target().path("users/username/password")
                 .queryParam("newPassword", "XYZ")
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        Assert.assertEquals(400, response.getStatus());
+        assertEquals(response.getStatus(), 200);
+        verify(engineManager, atLeastOnce()).retrieveUser(anyString(), eq("username"));
+        verify(engineManager).updateUser(anyString(), any(User.class));
     }
 
     @Test
-    public void updateUserNoChange() {
-        doReturn(true).when(rest).validPassword("testUser", "ABC");
-
-        Response response = target().path("users/testUser")
-                .queryParam("currentPassword", "ABC")
+    public void resetPasswordWithoutNewPasswordTest() {
+        Response response = target().path("users/username/password")
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        Assert.assertEquals(200, response.getStatus());
-        verify(engine).addUser("testUser", "ABC");
+        assertEquals(response.getStatus(), 400);
     }
 
     @Test
-    public void updateUserChangeUsername() {
-        doReturn(true).when(rest).validPassword("testUser", "ABC");
+    public void resetPasswordOfUserThatDoesNotExistTest() {
+        // Setup:
+        when(engineManager.retrieveUser(anyString(), eq("error"))).thenReturn(Optional.empty());
 
-        Response response = target().path("users/testUser")
-                .queryParam("username", "testUser2")
-                .queryParam("currentPassword", "ABC")
+        Response response = target().path("users/error/password")
+                .queryParam("newPassword", "XYZ")
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        Assert.assertEquals(200, response.getStatus());
-        verify(engine).addUser("testUser2", "ABC");
-        verify(engine, atLeastOnce()).listGroups(any(UserPrincipal.class));
-        verify(engine, atLeastOnce()).listRoles(any(UserPrincipal.class));
-        verify(engine, atLeastOnce()).deleteUser("testUser");
-        verify(engine, times(groups.size())).addGroup(eq("testUser2"), anyString());
-        verify(engine, times(roles.size())).addRole(eq("testUser2"), anyString());
+        assertEquals(response.getStatus(), 400);
     }
 
     @Test
     public void deleteUserTest() {
-        Response response = target().path("users/testUser").request().delete();
-        verify(engine).deleteUser("testUser");
-        Assert.assertEquals(200, response.getStatus());
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME).request().delete();
+        assertEquals(response.getStatus(), 200);
+        verify(engineManager).deleteUser(anyString(), eq(UsernameTestFilter.USERNAME));
+    }
 
-        response = target().path("users/error").request().get();
-        Assert.assertEquals(400, response.getStatus());
+    @Test
+    public void deleteUserThatDoesNotExistTest() {
+        //Setup:
+        when(engineManager.userExists("error")).thenReturn(false);
+
+        Response response = target().path("users/error").request().delete();
+        assertEquals(response.getStatus(), 400);
     }
 
     @Test
     public void getUserRolesTest() {
-        Response response = target().path("users/testUser/roles").request().get();
-        verify(engine).listRoles(any(UserPrincipal.class));
-        Assert.assertEquals(200, response.getStatus());
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/roles").request().get();
+        verify(engineManager).retrieveUser(anyString(), eq(UsernameTestFilter.USERNAME));
+        assertEquals(response.getStatus(), 200);
         try {
             JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
-            Assert.assertTrue(result.size() == roles.size());
+            assertEquals(result.size(), roles.size());
         } catch (Exception e) {
-            Assert.fail("Expected no exception, but got: " + e.getMessage());
+            fail("Expected no exception, but got: " + e.getMessage());
         }
-
-        response = target().path("users/error/roles").request().get();
-        Assert.assertEquals(400, response.getStatus());
     }
 
     @Test
-    public void addUserRoleTest() {
-        Response response = target().path("users/testUser/roles").queryParam("role", "testRole")
-                .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        verify(engine).addRole("testUser", "testRole");
-        Assert.assertEquals(200, response.getStatus());
+    public void getUserRolesIncludingGroupsTest() {
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/roles").queryParam("includeGroups", "true").request().get();
+        verify(engineManager).retrieveUser(anyString(), eq(UsernameTestFilter.USERNAME));
+        assertEquals(response.getStatus(), 200);
+        try {
+            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            assertEquals(result.size(), roles.size() + group.getHasGroupRole().size());
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
+    }
 
-        response = target().path("users/error/roles").queryParam("role", "testRole")
+    @Test
+    public void getUserRolesThatDoNotExistTest() {
+        //Setup:
+        when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.empty());
+
+        Response response = target().path("users/error/roles").request().get();
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void addUserRolesTest() {
+        // Setup:
+        Map<String, Role> roles = new HashMap<>();
+        IntStream.range(1, 3)
+                .mapToObj(Integer::toString)
+                .forEach(s -> roles.put(s, roleFactory.createNew(vf.createIRI("http://matonto.org/roles/" + s))));
+        User newUser = userFactory.createNew(vf.createIRI("http://matonto.org/users/" + UsernameTestFilter.USERNAME));
+        when(engineManager.getRole(anyString(), anyString())).thenAnswer(i -> Optional.of(roles.get(i.getArgumentAt(1, String.class))));
+        when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.of(newUser));
+
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/roles").queryParam("roles", roles.keySet().toArray())
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        Assert.assertEquals(400, response.getStatus());
+        assertEquals(response.getStatus(), 200);
+        verify(engineManager).retrieveUser(anyString(), eq(UsernameTestFilter.USERNAME));
+        roles.keySet().forEach(s -> verify(engineManager).getRole(anyString(), eq(s)));
+        verify(engineManager).updateUser(anyString(), any(User.class));
+    }
+
+    @Test
+    public void addRolesToUserThatDoesNotExistTest() {
+        //Setup:
+        when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.empty());
+        String[] roles = {"testRole"};
+
+        Response response = target().path("users/error/roles").queryParam("roles", roles)
+                .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void addRolesThatDoNotExistToUserTest() {
+        //Setup:
+        when(engineManager.getRole(anyString(), anyString())).thenReturn(Optional.empty());
+        String[] roles = {"testRole"};
+
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/roles").queryParam("roles", roles)
+                .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void addUserRolesWithoutRolesTest() {
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/roles")
+                .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
+        assertEquals(response.getStatus(), 400);
     }
 
     @Test
     public void removeUserRoleTest() {
-        Response response = target().path("users/testUser/roles").queryParam("role", "testRole")
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/roles").queryParam("role", "testRole")
                 .request().delete();
-        verify(engine).deleteRole("testUser", "testRole");
-        Assert.assertEquals(200, response.getStatus());
+        assertEquals(response.getStatus(), 200);
+        verify(engineManager).retrieveUser(anyString(), eq(UsernameTestFilter.USERNAME));
+        verify(engineManager).updateUser(anyString(), any(User.class));
+    }
 
-        response = target().path("users/error/roles").queryParam("role", "testRole")
+    @Test
+    public void removeRoleFromUserThatDoesNotExistTest() {
+        //Setup:
+        when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.empty());
+
+        Response response = target().path("users/error/roles").queryParam("role", "testRole")
                 .request().delete();
-        Assert.assertEquals(400, response.getStatus());
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void removeRoleThatDoesNotExistFromUserTest() {
+        //Setup:
+        when(engineManager.getRole(anyString(), anyString())).thenReturn(Optional.empty());
+
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/roles").queryParam("role", "error")
+                .request().delete();
+        assertEquals(response.getStatus(), 400);
     }
 
     @Test
     public void getUserGroupsTest() {
-        Response response = target().path("users/testUser/groups").request().get();
-        verify(engine).listGroups(any(UserPrincipal.class));
-        Assert.assertEquals(200, response.getStatus());
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/groups").request().get();
+        assertEquals(response.getStatus(), 200);
+        verify(engineManager).retrieveUser(anyString(), eq(UsernameTestFilter.USERNAME));
+        verify(engineManager).getGroups(anyString());
         try {
             JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
-            Assert.assertTrue(result.size() == roles.size());
+            assertEquals(result.size(), groups.size());
         } catch (Exception e) {
-            Assert.fail("Expected no exception, but got: " + e.getMessage());
+            fail("Expected no exception, but got: " + e.getMessage());
         }
-
-        response = target().path("users/error/groups").request().get();
-        Assert.assertEquals(400, response.getStatus());
     }
 
     @Test
     public void addUserGroupTest() {
-        Response response = target().path("users/testUser/groups").queryParam("group", "testGroup")
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/groups").queryParam("group", "testGroup")
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        verify(engine).addGroup("testUser", "testGroup");
-        Assert.assertEquals(200, response.getStatus());
+        assertEquals(response.getStatus(), 200);
+        verify(engineManager).retrieveGroup(anyString(), eq("testGroup"));
+        verify(engineManager).updateGroup(anyString(), any(Group.class));
+    }
 
-        response = target().path("users/error/groups").queryParam("group", "testGroup")
+    @Test
+    public void addGroupToUserThatDoesNotExistTest() {
+        //Setup:
+        when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.empty());
+
+        Response response = target().path("users/error/groups").queryParam("group", "testGroup")
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        Assert.assertEquals(400, response.getStatus());
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void addGroupThatDoesNotExistToUserTest() {
+        //Setup:
+        when(engineManager.retrieveGroup(anyString(), anyString())).thenReturn(Optional.empty());
+
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/groups").queryParam("group", "error")
+                .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
+        assertEquals(response.getStatus(), 400);
     }
 
     @Test
     public void removeUserGroupTest() {
-        Response response = target().path("users/testUser/groups").queryParam("group", "testGroup")
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/groups").queryParam("group", "testGroup")
                 .request().delete();
-        verify(engine).deleteGroup("testUser", "testGroup");
-        Assert.assertEquals(200, response.getStatus());
+        assertEquals(response.getStatus(), 200);
+        verify(engineManager).retrieveGroup(anyString(), eq("testGroup"));
+        verify(engineManager).updateGroup(anyString(), any(Group.class));
+    }
 
-        response = target().path("users/error/groups").queryParam("group", "testGroup")
+    @Test
+    public void removeGroupFromUserThatDoesNotExistTest() {
+        //Setup:
+        when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.empty());
+
+        Response response = target().path("users/error/groups").queryParam("group", "testGroup")
                 .request().delete();
-        Assert.assertEquals(400, response.getStatus());
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void removeGroupThatDoesNotExistFromUserTest() {
+        //Setup:
+        when(engineManager.retrieveGroup(anyString(), anyString())).thenReturn(Optional.empty());
+
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/groups").queryParam("group", "error")
+                .request().delete();
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void getUsernameTest() {
+        //Setup:
+        when(engineManager.getUsername(user.getResource())).thenReturn(Optional.of(UsernameTestFilter.USERNAME));
+
+        Response response = target().path("users/username").queryParam("iri", user.getResource())
+                .request().get();
+        assertEquals(response.getStatus(), 200);
+        assertEquals(response.readEntity(String.class), UsernameTestFilter.USERNAME);
+    }
+
+    @Test
+    public void getUserForUserThatDoesNotExistTest() {
+        Response response = target().path("users/username").queryParam("iri", "http://example.com/error")
+                .request().get();
+        assertEquals(response.getStatus(), 404);
     }
 }

@@ -31,6 +31,8 @@
             'ngCookies',
             'ngHandsontable',
             'ngMessages',
+            'toastr',
+            'ui.bootstrap',
             'ui.codemirror',
             'ui.router',
             'ui.select',
@@ -39,6 +41,7 @@
             'beautify',
             'camelCase',
             'escapeHTML',
+            'inArray',
             'prefixation',
             'removeIriFromArray',
             'removeMatonto',
@@ -52,22 +55,43 @@
             'blockFooter',
             'blockHeader',
             'blockSearch',
+            'checkbox',
             'circleButton',
+            'circleButtonStack',
+            'clickAnywhereButHere',
+            'commitChangesDisplay',
+            'commitHistoryTable',
+            'commitInfoOverlay',
             'confirmationOverlay',
             'customHeader',
             'customLabel',
+            'emailInput',
+            'entityDates',
+            'entityDescription',
             'errorDisplay',
             'fileInput',
+            'focusMe',
             'infoMessage',
+            'keywordSelect',
             'pagination',
+            'pagingDetails',
+            'passwordConfirmInput',
             'radioButton',
+            'recordKeywords',
+            'spinner',
+            'statementContainer',
+            'statementDisplay',
+            'stepProgressBar',
             'tab',
             'tabset',
+            'targetedSpinner',
             'textArea',
             'textInput',
+            'uniqueValue',
 
             /* Custom Modules */
             'catalog',
+            'datasets',
             'home',
             'login',
             'mapper',
@@ -75,10 +99,14 @@
             'ontology-editor',
             'settings',
             'sparql',
+            'user-management',
             'webtop',
 
             /* Custom Services */
             'catalogManager',
+            'catalogState',
+            'datasetManager',
+            'datasetState',
             'delimitedManager',
             'loginManager',
             'mapperState',
@@ -90,29 +118,115 @@
             'responseObj',
             'settingsManager',
             'sparqlManager',
-            'updateRefs'
+            'stateManager',
+            'updateRefs',
+            'userManager',
+            'userState',
+            'util'
         ])
-        .constant('_', window._)
+        .constant('chroma', window.chroma)
+        .constant('Snap', window.Snap)
         .constant('REGEX', {
             'IRI': /^(?:(?:https?|ftp):\/\/)(?:\S+(?::\S*)?@)?(?:(?!10(?:\.\d{1,3}){3})(?!127(?:\.\d{1,3}){3})(?!169\.254(?:\.\d{1,3}){2})(?!192\.168(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]+-?)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]+-?)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,})))(?::\d{2,5})?(?:\/[^\s]*)?$/i,
             'LOCALNAME': /^[a-zA-Z0-9._\-]+$/,
             'FILENAME': /^[\w\-. ]+$/
         })
+        .config(httpInterceptorConfig)
+        .factory('requestInterceptor', requestInterceptor)
         .service('beforeUnload', beforeUnload)
         .run(function(beforeUnload) {
             // We have to invoke the service at least once
         });
 
-        beforeUnload.$inject = ['$window', 'ontologyManagerService', 'ontologyStateService'];
+        beforeUnload.$inject = ['$window', 'ontologyManagerService', 'ontologyStateService', 'mapperStateService'];
 
-        function beforeUnload($window, ontologyManagerService, ontologyStateService) {
+        function beforeUnload($window, ontologyManagerService, ontologyStateService, mapperStateService) {
             $window.onbeforeunload = function(e) {
-                var hasChanges = _.some(ontologyManagerService.list, listItem => {
-                    return ontologyStateService.hasChanges(_.get(listItem, 'ontology'), _.get(listItem, 'ontologyId'));
+                var ontologyHasChanges = _.some(ontologyManagerService.list, listItem => {
+                    return ontologyStateService.hasChanges(_.get(listItem, 'recordId'));
                 });
-                if (hasChanges) {
+                var mappingHasChanges = mapperStateService.changedMapping;
+                if (ontologyHasChanges || mappingHasChanges) {
                     return true;
                 }
             }
+        }
+
+        httpInterceptorConfig.$inject = ['$httpProvider'];
+
+        function httpInterceptorConfig($httpProvider) {
+            $httpProvider.interceptors.push('requestInterceptor');
+        }
+
+        requestInterceptor.$inject = ['$q', '$rootScope', '$httpParamSerializer'];
+
+        function requestInterceptor($q, $rootScope, $httpParamSerializer) {
+            $rootScope.pendingRequests = 0;
+            $rootScope.trackedHttpRequests = [];
+
+            function findTrackers(config) {
+                return _.filter($rootScope.trackedHttpRequests, tr => {
+                    var urlToMatch = config.url + (config.params ? '?' + $httpParamSerializer(config.params) : '');
+                    return urlToMatch.match(tr.requestConfig.url) && config.method === _.toUpper(tr.requestConfig.method);
+                });
+            }
+
+            function handleStop(config) {
+                if (!_.includes(config.url, '.html')) {
+                    var trackers = findTrackers(config);
+                    if (trackers.length > 0) {
+                        _.forEach(trackers, tracker => {
+                            if (tracker.scopes.length === 0) {
+                                _.remove($rootScope.trackedHttpRequests, tracker);
+                            } else {
+                                if (!tracker.canceledAndContinue) {
+                                    tracker.inProgress = false;
+                                    _.forEach(tracker.scopes, scope => scope.showSpinner = false);
+                                    _.unset(tracker, 'canceller');
+                                }
+                                tracker.canceledAndContinue = false;
+                            }
+                        });
+                    } else {
+                        $rootScope.pendingRequests--;
+                    }
+                }
+            }
+
+            return {
+                'request': function (config) {
+                    if (!_.includes(config.url, '.html')) {
+                        var trackers = findTrackers(config);
+                        if (trackers.length > 0) {
+                            var canceller = $q.defer();
+                            _.forEach(trackers, tracker => {
+                                if (tracker.inProgress && _.every(tracker.scopes, 'cancelOnNew') && _.has(tracker, 'canceller')) {
+                                    tracker.canceledAndContinue = true;
+                                    tracker.canceller.resolve();
+                                }
+                                tracker.inProgress = true;
+                                _.forEach(tracker.scopes, scope => scope.showSpinner = true);
+                                tracker.canceller = canceller;
+                            });
+                            config.timeout = canceller.promise;
+                        } else {
+                            $rootScope.pendingRequests++;
+                        }
+                    }
+                    return config || $q.when(config);
+                },
+                'requestError': function(rejection) {
+                    handleStop(rejection.config);
+                    return $q.reject(rejection);
+                },
+                'response': function(response) {
+                    handleStop(response.config);
+                    return response || $q.when(response);
+                },
+                'responseError': function(rejection) {
+                    handleStop(rejection.config);
+                    return $q.reject(rejection);
+                }
+            };
         }
 })();

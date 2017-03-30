@@ -23,231 +23,230 @@ package org.matonto.jaas.rest.impl;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Modified;
 import aQute.bnd.annotation.component.Reference;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
-import org.apache.karaf.jaas.boot.ProxyLoginModule;
-import org.apache.karaf.jaas.boot.principal.GroupPrincipal;
-import org.apache.karaf.jaas.boot.principal.UserPrincipal;
-import org.apache.karaf.jaas.config.JaasRealm;
-import org.apache.karaf.jaas.modules.BackingEngine;
-import org.apache.karaf.jaas.modules.BackingEngineFactory;
+import org.matonto.jaas.api.config.MatontoConfiguration;
+import org.matonto.jaas.api.engines.EngineManager;
+import org.matonto.jaas.api.ontologies.usermanagement.Group;
+import org.matonto.jaas.api.ontologies.usermanagement.Role;
+import org.matonto.jaas.api.ontologies.usermanagement.User;
+import org.matonto.jaas.api.ontologies.usermanagement.UserFactory;
+import org.matonto.jaas.engines.RdfEngine;
 import org.matonto.jaas.rest.GroupRest;
+import org.matonto.ontologies.foaf.Agent;
+import org.matonto.rdf.api.Value;
+import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rest.util.ErrorUtils;
+import org.openrdf.model.vocabulary.DCTERMS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.security.auth.login.AppConfigurationEntry;
-import javax.ws.rs.core.Response;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.GenericEntity;
+import javax.ws.rs.core.Response;
 
 @Component(immediate = true)
 public class GroupRestImpl implements GroupRest {
-    protected JaasRealm realm;
-    protected Map<String, BackingEngineFactory> engineFactories = new HashMap<>();
-    protected BackingEngine engine;
+    protected EngineManager engineManager;
+    protected ValueFactory factory;
+    protected UserFactory userFactory;
+    protected MatontoConfiguration matontoConfiguration;
     private final Logger logger = LoggerFactory.getLogger(GroupRestImpl.class);
-    static final String TOKEN_MODULE = "org.matonto.jaas.modules.token.TokenLoginModule";
 
-    @Reference(target = "(realmId=matonto)")
-    protected void setRealm(JaasRealm realm) {
-        this.realm = realm;
+    @Reference
+    protected void setEngineManager(EngineManager engineManager) {
+        this.engineManager = engineManager;
     }
 
-    @Reference(type = '*', dynamic = true)
-    protected void addEngineFactory(BackingEngineFactory engineFactory) {
-        this.engineFactories.put(engineFactory.getModuleClass(), engineFactory);
+    @Reference
+    protected void setFactory(ValueFactory factory) {
+        this.factory = factory;
     }
 
-    protected void removeEngineFactory(BackingEngineFactory engineFactory) {
-        this.engineFactories.remove(engineFactory.getModuleClass());
+    @Reference
+    protected void setUserFactory(UserFactory userFactory) {
+        this.userFactory = userFactory;
     }
 
-    @Activate
-    protected void start() {
-        // Get ApplicationConfigEntry
-        AppConfigurationEntry entry = null;
-        for (AppConfigurationEntry configEntry : realm.getEntries()) {
-            if (configEntry.getOptions().get(ProxyLoginModule.PROPERTY_MODULE).equals(TOKEN_MODULE)) {
-                entry = configEntry;
-                break;
-            }
-        }
-
-        if (entry == null) throw new IllegalStateException("TokenLoginModule not registered with realm.");
-
-        // Get TokenBackingEngineFactory
-        BackingEngineFactory engineFactory;
-        if (engineFactories.containsKey(TOKEN_MODULE)) {
-            engineFactory = engineFactories.get(TOKEN_MODULE);
-        } else {
-            throw new IllegalStateException("Cannot find BackingEngineFactory service for TokenLoginModule.");
-        }
-
-        engine = engineFactory.build(entry.getOptions());
-    }
-
-    @Modified
-    protected void update() {
-        start();
+    @Reference
+    protected void setMatOntoConfiguration(MatontoConfiguration configuration) {
+        this.matontoConfiguration = configuration;
     }
 
     @Override
     public Response listGroups() {
-        JSONObject obj = new JSONObject();
-        engine.listGroups().forEach((groupPrincipal, string) ->
-                obj.put(groupPrincipal.getName(), JSONArray.fromObject(string.split(","))));
-        return Response.status(200).entity(obj.toString()).build();
+        Set<String> titles = engineManager.getGroups(RdfEngine.COMPONENT_NAME).stream()
+                .map(group -> group.getProperty(factory.createIRI(DCTERMS.TITLE.stringValue())))
+                .filter(Optional::isPresent)
+                .map(title -> title.get().stringValue())
+                .collect(Collectors.toSet());
+
+        return Response.status(200).entity(titles).build();
     }
 
     @Override
-    public Response createGroup(String groupName) {
-        if (groupName == null) {
-            throw ErrorUtils.sendError("Group name must be provided", Response.Status.BAD_REQUEST);
+    public Response createGroup(Group group) {
+        Value title = group.getProperty(factory.createIRI(DCTERMS.TITLE.stringValue())).orElseThrow(() ->
+                ErrorUtils.sendError("Group title must be provided", Response.Status.BAD_REQUEST));
+        if (engineManager.groupExists(title.stringValue())) {
+            throw ErrorUtils.sendError("Group " + title.stringValue() + " already exists", Response.Status.BAD_REQUEST);
         }
 
-        if (findGroup(groupName).isPresent()) {
-            throw ErrorUtils.sendError("Group already exists", Response.Status.BAD_REQUEST);
+        engineManager.storeGroup(RdfEngine.COMPONENT_NAME, group);
+        logger.info("Created group " + title.stringValue());
+        return Response.status(201).entity(title.stringValue()).build();
+    }
+
+    @Override
+    public Response getGroup(String groupTitle) {
+        if (groupTitle == null) {
+            throw ErrorUtils.sendError("Group title must be provided", Response.Status.BAD_REQUEST);
         }
 
-        engine.createGroup(groupName);
-        logger.info("Created group " + groupName);
+        Group group = engineManager.retrieveGroup(RdfEngine.COMPONENT_NAME, groupTitle).orElseThrow(() ->
+                ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.NOT_FOUND));
+
+        return Response.status(200).entity(group).build();
+    }
+
+    @Override
+    public Response updateGroup(String groupTitle, Group newGroup) {
+        if (groupTitle == null) {
+            throw ErrorUtils.sendError("Group title must be provided", Response.Status.BAD_REQUEST);
+        }
+        Value title = newGroup.getProperty(factory.createIRI(DCTERMS.TITLE.stringValue())).orElseThrow(() ->
+                ErrorUtils.sendError("Group title must be present in new group", Response.Status.BAD_REQUEST));
+        Group savedGroup = engineManager.retrieveGroup(RdfEngine.COMPONENT_NAME, groupTitle).orElseThrow(() ->
+                ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
+        if (!savedGroup.getProperty(factory.createIRI(DCTERMS.TITLE.stringValue())).get().equals(title)) {
+            throw ErrorUtils.sendError("Group titles must match", Response.Status.BAD_REQUEST);
+        }
+        if (!savedGroup.getHasGroupRole().isEmpty()) {
+            newGroup.setHasGroupRole(savedGroup.getHasGroupRole());
+        }
+        if (!savedGroup.getMember().isEmpty()) {
+            newGroup.setMember(savedGroup.getMember());
+        }
+
+        engineManager.updateGroup(RdfEngine.COMPONENT_NAME, newGroup);
         return Response.ok().build();
     }
 
     @Override
-    public Response getGroup(String groupName) {
-        if (groupName == null) {
-            throw ErrorUtils.sendError("Group name must be provided", Response.Status.BAD_REQUEST);
+    public Response deleteGroup(String groupTitle) {
+        if (groupTitle == null) {
+            throw ErrorUtils.sendError("Group title must be provided", Response.Status.BAD_REQUEST);
+        }
+        if (!engineManager.groupExists(groupTitle)) {
+            throw ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST);
         }
 
-        Map.Entry<GroupPrincipal, String> group = findGroup(groupName).orElseThrow(() ->
-                ErrorUtils.sendError("Group not found", Response.Status.BAD_REQUEST));
-
-        JSONObject obj = new JSONObject();
-        obj.put("name", group.getKey().getName());
-        obj.put("roles", JSONArray.fromObject(group.getValue().split(",")));
-        return Response.status(200).entity(obj.toString()).build();
-    }
-
-    @Override
-    public Response updateGroup(String groupName) {
-        // TODO: Implement
-        return Response.status(Response.Status.NOT_IMPLEMENTED).build();
-    }
-
-    @Override
-    public Response deleteGroup(String groupName) {
-        if (groupName == null) {
-            throw ErrorUtils.sendError("Group name must be provided", Response.Status.BAD_REQUEST);
-        }
-
-        if (!findGroup(groupName).isPresent()) {
-            throw ErrorUtils.sendError("Group not found", Response.Status.BAD_REQUEST);
-        }
-
-        // Engine will delete group when no users are left in it
-        engine.listUsers().stream()
-                .filter(userPrincipal -> isInGroup(userPrincipal, groupName))
-                .map(UserPrincipal::getName)
-                .forEach(user -> {
-                    engine.deleteGroup(user, groupName);
-                    logger.info("Deleting " + groupName + " from " + user);
-                });
-        logger.info("Deleted group " + groupName);
-
+        engineManager.deleteGroup(RdfEngine.COMPONENT_NAME, groupTitle);
+        logger.info("Deleted group " + groupTitle);
         return Response.ok().build();
     }
 
     @Override
-    public Response getGroupRoles(String groupName) {
-        if (groupName == null) {
-            throw ErrorUtils.sendError("Group name must be provided", Response.Status.BAD_REQUEST);
+    public Response getGroupRoles(String groupTitle) {
+        if (groupTitle == null) {
+            throw ErrorUtils.sendError("Group title must be provided", Response.Status.BAD_REQUEST);
         }
 
-        Map.Entry<GroupPrincipal, String> group = findGroup(groupName).orElseThrow(() ->
-                ErrorUtils.sendError("Group not found", Response.Status.BAD_REQUEST));
+        Group group = engineManager.retrieveGroup(RdfEngine.COMPONENT_NAME, groupTitle).orElseThrow(() ->
+                ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
 
-        JSONArray roles = JSONArray.fromObject(group.getValue().split(","));
-        return Response.status(200).entity(roles.toString()).build();
+        return Response.status(200).entity(new GenericEntity<Set<Role>>(group.getHasGroupRole()) {}).build();
     }
 
     @Override
-    public Response addGroupRole(String groupName, String role) {
-        if (groupName == null || role == null) {
-            throw ErrorUtils.sendError("Both groupName and role must be provided", Response.Status.BAD_REQUEST);
+    public Response addGroupRoles(String groupTitle, List<String> roles) {
+        if (groupTitle == null || roles.isEmpty()) {
+            throw ErrorUtils.sendError("Both group title and roles must be provided", Response.Status.BAD_REQUEST);
         }
-
-        if (!findGroup(groupName).isPresent()) {
-            throw ErrorUtils.sendError("Group not found", Response.Status.BAD_REQUEST);
-        }
-
-        logger.info("Adding role " + role + " to group " + groupName);
-        engine.addGroupRole(groupName, role);
+        Group savedGroup = engineManager.retrieveGroup(RdfEngine.COMPONENT_NAME, groupTitle).orElseThrow(() ->
+                ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
+        Set<Role> roleObjs = new HashSet<>();
+        roles.forEach(s -> roleObjs.add(engineManager.getRole(RdfEngine.COMPONENT_NAME, s).orElseThrow(() ->
+                ErrorUtils.sendError("Role " + s + " not found", Response.Status.BAD_REQUEST))));
+        Set<Role> allRoles = savedGroup.getHasGroupRole();
+        allRoles.addAll(roleObjs);
+        savedGroup.setHasGroupRole(allRoles);
+        engineManager.updateGroup(RdfEngine.COMPONENT_NAME, savedGroup);
+        logger.info("Role(s) " + String.join(", ", roles) + " to group " + groupTitle);
         return Response.ok().build();
     }
 
     @Override
-    public Response removeGroupRole(String groupName, String role) {
-        if (groupName == null || role == null) {
-            throw ErrorUtils.sendError("Both groupName and role must be provided", Response.Status.BAD_REQUEST);
+    public Response removeGroupRole(String groupTitle, String role) {
+        if (groupTitle == null || role == null) {
+            throw ErrorUtils.sendError("Both group title and role must be provided", Response.Status.BAD_REQUEST);
         }
 
-        if (!findGroup(groupName).isPresent()) {
-            throw ErrorUtils.sendError("Group not found", Response.Status.BAD_REQUEST);
-        }
-
-        logger.info("Removing role " + role + " from group " + groupName);
-        engine.deleteGroupRole(groupName, role);
+        Group savedGroup = engineManager.retrieveGroup(RdfEngine.COMPONENT_NAME, groupTitle).orElseThrow(() ->
+                ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
+        Role roleObj = engineManager.getRole(RdfEngine.COMPONENT_NAME, role).orElseThrow(() ->
+                ErrorUtils.sendError("Role " + role + " not found", Response.Status.BAD_REQUEST));
+        savedGroup.removeProperty(roleObj.getResource(), factory.createIRI(Group.hasGroupRole_IRI));
+        engineManager.updateGroup(RdfEngine.COMPONENT_NAME, savedGroup);
+        logger.info("Removed role " + role + " from group " + groupTitle);
         return Response.ok().build();
     }
 
     @Override
-    public Response getGroupUsers(String groupName) {
-        if (groupName == null) {
-            throw ErrorUtils.sendError("Group name must be provided", Response.Status.BAD_REQUEST);
+    public Response getGroupUsers(String groupTitle) {
+        if (groupTitle == null) {
+            throw ErrorUtils.sendError("Group title must be provided", Response.Status.BAD_REQUEST);
         }
 
-        if (!findGroup(groupName).isPresent()) {
-            throw ErrorUtils.sendError("Group not found", Response.Status.BAD_REQUEST);
-        }
+        Group savedGroup = engineManager.retrieveGroup(RdfEngine.COMPONENT_NAME, groupTitle).orElseThrow(() ->
+                ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
+        Set<User> members = savedGroup.getMember().stream()
+                .map(agent -> userFactory.getExisting(agent.getResource(), agent.getModel()))
+                .collect(Collectors.toSet());
 
-        List<String> users = engine.listUsers().stream()
-                .filter(userPrincipal -> isInGroup(userPrincipal, groupName))
-                .map(UserPrincipal::getName)
-                .collect(Collectors.toList());
-        logger.info("Deleted group " + groupName);
-
-        JSONArray usersJsonArray = JSONArray.fromObject(users);
-        return Response.status(200).entity(usersJsonArray.toString()).build();
+        return Response.status(200).entity(new GenericEntity<Set<User>>(members) {}).build();
     }
 
-    private Optional<Map.Entry<GroupPrincipal, String>> findGroup(String groupName) {
-        Map<GroupPrincipal, String> groups = engine.listGroups();
-        for (Map.Entry<GroupPrincipal, String> group : groups.entrySet()) {
-            if (group.getKey().getName().equals(groupName)) {
-                return Optional.of(group);
-            }
+    @Override
+    public Response addGroupUser(String groupTitle, List<String> usernames) {
+        if (groupTitle == null) {
+            throw ErrorUtils.sendError("Group title must be provided", Response.Status.BAD_REQUEST);
         }
-        return Optional.empty();
+
+        Group savedGroup = engineManager.retrieveGroup(RdfEngine.COMPONENT_NAME, groupTitle).orElseThrow(() ->
+                ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
+        Set<User> users = new HashSet<>();
+        for (String username : usernames) {
+            users.add(engineManager.retrieveUser(RdfEngine.COMPONENT_NAME, username).orElseThrow(() ->
+                    ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST)));
+        }
+        Set<Agent> newMembers = savedGroup.getMember();
+        newMembers.addAll(users);
+        savedGroup.setMember(newMembers);
+        engineManager.updateGroup(RdfEngine.COMPONENT_NAME, savedGroup);
+        logger.info("Added user(s) " + String.join(", ", usernames) + " to group " + groupTitle);
+        return Response.ok().build();
     }
 
-    private boolean isInGroup(UserPrincipal user, String groupName) {
-        List<GroupPrincipal> groups = engine.listGroups(user);
-        for (GroupPrincipal group : groups) {
-            if (group.getName().equals(groupName)) {
-                logger.info("User " + user.getName() + " is in " + groupName);
-                return true;
-            }
+    @Override
+    public Response removeGroupUser(String groupTitle, String username) {
+        if (groupTitle == null || username == null) {
+            throw ErrorUtils.sendError("Both group title and username must be provided", Response.Status.BAD_REQUEST);
         }
-        logger.info("User " + user.getName() + " is not in " + groupName);
-        return false;
+
+        Group savedGroup = engineManager.retrieveGroup(RdfEngine.COMPONENT_NAME, groupTitle).orElseThrow(() ->
+                ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
+        User savedUser = engineManager.retrieveUser(RdfEngine.COMPONENT_NAME, username).orElseThrow(() ->
+                ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
+        savedGroup.removeProperty(savedUser.getResource(), factory.createIRI(Group.member_IRI));
+        engineManager.updateGroup(RdfEngine.COMPONENT_NAME, savedGroup);
+        logger.info("Removed user " + username + " from group " + groupTitle);
+        return Response.ok().build();
     }
 }

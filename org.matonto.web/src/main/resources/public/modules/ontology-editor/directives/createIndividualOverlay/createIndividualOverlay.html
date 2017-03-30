@@ -20,7 +20,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="overlay">
+<div class="create-individual-overlay overlay">
     <div class="content">
         <h6>Create New OWL Named Individual</h6>
         <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
@@ -28,16 +28,16 @@
         <form name="dvm.form" class="clearfix" novalidate autocomplete="off">
             <div class="form-group">
                 <custom-label>Name</custom-label>
-                <input type="text" name="name" class="form-control" ng-trim="false" ng-keyup="dvm.nameChanged()" required ng-model="dvm.name" />
+                <input type="text" name="name" class="form-control" ng-trim="false" ng-keyup="dvm.nameChanged()" required ng-model="dvm.name" focus-me />
             </div>
             <div class="form-group">
                 <custom-label>Type</custom-label>
                 <ui-select multiple ng-model="dvm.individual['@type']">
                     <ui-select-match placeholder="Select a Class">
-                        <span title="{{dvm.getTooltipDisplay($item)}}">{{($item | splitIRI).end || $item.localName}}</span>
+                        <span title="{{dvm.getTooltipDisplay($item)}}">{{dvm.ontoUtils.getDropDownText($item)}}</span>
                     </ui-select-match>
-                    <ui-select-choices group-by="dvm.getItemOntologyIri" repeat="dvm.ro.getItemIri(item) as item in dvm.sm.listItem.subClasses | removeIriFromArray:dvm.individual['@type'] | filter:$select.search | orderBy:'localName'">
-                        <div title="{{dvm.getItemIri(item)}}" ng-bind-html="item.localName | highlight:$select.search | trusted"></div>
+                    <ui-select-choices group-by="dvm.getItemOntologyIri" repeat="dvm.ro.getItemIri(item) as item in dvm.sm.listItem.subClasses | removeIriFromArray:dvm.individual['@type'] | filter:$select.search | orderBy:dvm.ontoUtils.getDropDownText">
+                        <div title="{{dvm.getItemIri(item)}}" ng-bind-html="dvm.ontoUtils.getDropDownText(item) | highlight:$select.search | trusted"></div>
                     </ui-select-choices>
                 </ui-select>
             </div>
