@@ -84,6 +84,19 @@ body {
     }
 }
 
+/* Manchester Syntax styles */
+.manchester-expr {
+    color: $brand-primary;
+    font-weight: bold;
+}
+.manchester-rest {
+    color: $brand-success;
+    font-weight: bold;
+}
+.manchester-lit {
+    color: #FFAC3A;
+}
+
 /* clears out ul styles */
 ul {
     list-style: none;
