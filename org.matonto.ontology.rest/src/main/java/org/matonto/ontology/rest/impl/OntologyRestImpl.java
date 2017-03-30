@@ -23,6 +23,8 @@ package org.matonto.ontology.rest.impl;
  * #L%
  */
 
+import static org.matonto.rest.util.RestUtils.getRDFFormatFileExtension;
+import static org.matonto.rest.util.RestUtils.getRDFFormatMimeType;
 import static org.matonto.rest.util.RestUtils.jsonldToModel;
 import static org.matonto.rest.util.RestUtils.modelToJsonld;
 
@@ -69,7 +71,10 @@ import org.matonto.rest.util.ErrorUtils;
 import org.matonto.web.security.util.AuthenticationProps;
 import org.openrdf.model.vocabulary.OWL;
 
+import java.io.BufferedWriter;
 import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -83,6 +88,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
 
 @Component(immediate = true)
 public class OntologyRestImpl implements OntologyRest {
@@ -155,6 +161,38 @@ public class OntologyRestImpl implements OntologyRest {
         try {
             Ontology ontology = ontologyManager.createOntology(ontologyJson);
             return uploadOntology(context, ontology, title, description, keywords);
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+        }
+    }
+
+    @Override
+    public Response getOntology(ContainerRequestContext context, String recordIdStr, String branchIdStr,
+                                String commitIdStr, String rdfFormat) {
+        try {
+            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr).orElseThrow(() ->
+                    ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
+            return Response.ok(getOntologyAsRdf(ontology, rdfFormat)).build();
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+        }
+    }
+
+    @Override
+    public Response downloadOntologyFile(ContainerRequestContext context, String recordIdStr, String branchIdStr,
+                                         String commitIdStr, String rdfFormat, String fileName) {
+        try {
+            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr).orElseThrow(() ->
+                    ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
+            StreamingOutput stream = os -> {
+                Writer writer = new BufferedWriter(new OutputStreamWriter(os));
+                writer.write(getOntologyAsRdf(ontology, rdfFormat));
+                writer.flush();
+                writer.close();
+            };
+            return Response.ok(stream).header("Content-Disposition", "attachment;filename=" + fileName
+                    + "." + getRDFFormatFileExtension(rdfFormat)).header("Content-Type",
+                    getRDFFormatMimeType(rdfFormat)).build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         }

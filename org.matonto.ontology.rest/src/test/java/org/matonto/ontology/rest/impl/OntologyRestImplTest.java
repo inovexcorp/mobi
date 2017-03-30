@@ -689,6 +689,120 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         assertEquals(response.getStatus(), 400);
     }
 
+    // Test get ontology
+
+    @Test
+    public void testDownloadOntologyFile() {
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()))
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .request().accept(MediaType.APPLICATION_OCTET_STREAM_TYPE).get();
+
+        assertEquals(response.getStatus(), 200);
+        assertGetOntology(true);
+    }
+
+    @Test
+    public void testDownloadOntologyFileWithNoInProgressCommit() {
+        setNoInProgressCommit();
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()))
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .request().accept(MediaType.APPLICATION_OCTET_STREAM_TYPE).get();
+
+        assertEquals(response.getStatus(), 200);
+        assertGetOntology(false);
+    }
+
+    @Test
+    public void testDownloadOntologyFileWithCommitIdAndMissingBranchId() {
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()))
+                .queryParam("commitId", commitId.stringValue()).queryParam("entityId", catalogId.stringValue())
+                .request().accept(MediaType.APPLICATION_OCTET_STREAM_TYPE).get();
+
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void testDownloadOntologyFileMissingCommitId() {
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()))
+                .queryParam("branchId", branchId.stringValue()).request()
+                .accept(MediaType.APPLICATION_OCTET_STREAM_TYPE).get();
+
+        assertEquals(response.getStatus(), 200);
+        assertGetOntology(true);
+    }
+
+    @Test
+    public void testDownloadOntologyFileWhenRetrieveOntologyIsEmpty() {
+        when(ontologyManager.retrieveOntology(any(Resource.class), any(Resource.class), any(Resource.class)))
+                .thenReturn(Optional.empty());
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()))
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .request().accept(MediaType.APPLICATION_OCTET_STREAM_TYPE).get();
+
+        assertEquals(response.getStatus(), 400);
+    }
+
+    // Test download ontology file
+
+    @Test
+    public void testGetOntology() {
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()))
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .request().get();
+
+        assertEquals(response.getStatus(), 200);
+        assertGetOntology(true);
+        assertEquals(response.readEntity(String.class), ontologyJsonLd.toString());
+    }
+
+    @Test
+    public void testGetOntologyWithNoInProgressCommit() {
+        setNoInProgressCommit();
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()))
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .request().get();
+
+        assertEquals(response.getStatus(), 200);
+        assertGetOntology(false);
+        assertEquals(response.readEntity(String.class), ontologyJsonLd.toString());
+    }
+
+    @Test
+    public void testGetOntologyWithCommitIdAndMissingBranchId() {
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()))
+                .queryParam("commitId", commitId.stringValue()).queryParam("entityId", catalogId.stringValue())
+                .request().get();
+
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void testGetOntologyMissingCommitId() {
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()))
+                .queryParam("branchId", branchId.stringValue()).request().get();
+
+        assertEquals(response.getStatus(), 200);
+        assertGetOntology(true);
+        assertEquals(response.readEntity(String.class), ontologyJsonLd.toString());
+    }
+
+    @Test
+    public void testGetOntologyWhenRetrieveOntologyIsEmpty() {
+        when(ontologyManager.retrieveOntology(any(Resource.class), any(Resource.class), any(Resource.class)))
+                .thenReturn(Optional.empty());
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()))
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .request().get();
+
+        assertEquals(response.getStatus(), 400);
+    }
+
+
+
     // Test save changes to ontology
 
     @Test
