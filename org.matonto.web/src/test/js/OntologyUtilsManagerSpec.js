@@ -144,31 +144,20 @@ describe('Ontology Utils Manager service', function() {
         ontologyUtilsManagerSvc.deleteConceptScheme();
         expect(ontologyUtilsManagerSvc.deleteConcept).toHaveBeenCalled();
     });
-    it('isBlankNodeString tests whether an id is a blank node', function() {
-        var falseTests = ['', [], {}, true, false, undefined, null, 0, 1];
-        var result;
-        _.forEach(falseTests, function(test) {
-            result = ontologyUtilsManagerSvc.isBlankNodeString(test);
-            expect(result).toBe(false);
-        });
-
-        result = ontologyUtilsManagerSvc.isBlankNodeString('_:genid');
-        expect(result).toBe(true);
-    });
     describe('getBlankNodeValue returns', function() {
         beforeEach(function() {
             ontologyStateSvc.listItem.blankNodes = {key1: 'value1'};
         });
         it('value for the key provided contained in the object', function() {
-            spyOn(ontologyUtilsManagerSvc, 'isBlankNodeString').and.returnValue(true);
+            ontologyManagerSvc.isBlankNodeId.and.returnValue(true);
             expect(ontologyUtilsManagerSvc.getBlankNodeValue('key1')).toEqual(ontologyStateSvc.listItem.blankNodes['key1']);
         });
         it('key for the key provided not contained in the object', function() {
-            spyOn(ontologyUtilsManagerSvc, 'isBlankNodeString').and.returnValue(true);
+            ontologyManagerSvc.isBlankNodeId.and.returnValue(true);
             expect(ontologyUtilsManagerSvc.getBlankNodeValue('key2')).toEqual('key2');
         });
-        it('undefined if isBlankNodeString returns false', function() {
-            spyOn(ontologyUtilsManagerSvc, 'isBlankNodeString').and.returnValue(false);
+        it('undefined if isBlankNodeId returns false', function() {
+            ontologyManagerSvc.isBlankNodeId.and.returnValue(false);
             expect(ontologyUtilsManagerSvc.getBlankNodeValue('key1')).toEqual(undefined);
         });
     });
@@ -176,7 +165,7 @@ describe('Ontology Utils Manager service', function() {
         ontologyStateSvc.listItem.index = {iri: 0, '_:genid': 1};
         expect(ontologyUtilsManagerSvc.isLinkable('iri')).toEqual(true);
         expect(ontologyUtilsManagerSvc.isLinkable('word')).toEqual(false);
-        spyOn(ontologyUtilsManagerSvc, 'isBlankNodeString').and.returnValue(true);
+        ontologyManagerSvc.isBlankNodeId.and.returnValue(true);
         expect(ontologyUtilsManagerSvc.isLinkable('_:genid')).toEqual(false);
     });
     it('getNameByNode calls the correct method', function() {
