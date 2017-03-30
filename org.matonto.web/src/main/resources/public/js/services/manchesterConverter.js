@@ -29,6 +29,8 @@
          * @name manchesterConverter
          *
          * @description
+         * The `manchesterConverter` module only provides the `manchesterConverterService` service which
+         * provides utility functions for converting blank nodes into Manchester Syntax and vice versa.
          */
         .module('manchesterConverter', [])
         /**
@@ -39,6 +41,8 @@
          * @requires propertyManager.service:ontologyManagerService
          *
          * @description
+         * `manchesterConverterService` is a service that provides utility functions for converting JSON-LD
+         * blank nodes into Manchester Syntax and vice versa.
          */
         .service('manchesterConverterService', manchesterConverterService);
 
@@ -64,6 +68,24 @@
                 [prefixes.owl + 'cardinality']: ' exactly '
             };
 
+            /**
+             * @ngdoc method
+             * @name jsonldToManchester
+             * @methodOf manchesterConverter.service:manchesterConverterService
+             *
+             * @description
+             * Converts a blank node identified by the passed id and included in the passed JSON-LD array into a
+             * Manchester Syntax string. Includes the Manchester Syntax string for nested blank nodes as well.
+             * Currently supports class expressions with "unionOf", "intersectionOf", and "complementOf" and
+             * restrictions with "someValuesFrom", "allValuesFrom", "hasValue", "minCardinality", "maxCardinality",
+             * and "cardinality". Can optionally surround keywords and literals with HTML tags for formatting displays.
+             *
+             * @param {string} id The IRI of the blank node to begin with
+             * @param {Object[]} jsonld A JSON-LD array of all blank node in question and any supporting blanks
+             * nodes needed for the display
+             * @param {boolean} html Whether or not the resulting string should include HTML tags for formatting
+             * @return {string} A string containing the converted blank node with optional HTML tags for formatting
+             */
             self.jsonldToManchester = function(id, jsonld, html = false) {
                 var entity = _.find(jsonld, {'@id': id});
                 var result = '';
@@ -90,13 +112,19 @@
                         }
                     }
                 }
-                return result;
+                return result === '' ? id : result;
             }
 
             function getManchesterValue(item, jsonld, html = false) {
                 if (_.has(item, '@value')) {
-                    var literal = _.get(item, '@type') === prefixes.xsd + 'string' ? '"' + item['@value'] + '"' : item['@value'];
-                    return html ? surround(literal, literalClassName) : literal;
+                    var literal, lang = '';
+                    if (_.has(item, '@language')) {
+                        literal = '"' + item['@value'] + '"';
+                        lang = '@' + item['@language'];
+                    } else {
+                        var literal = _.get(item, '@type') === prefixes.xsd + 'string' ? '"' + item['@value'] + '"' : item['@value'];
+                    }
+                    return (html ? surround(literal, literalClassName) : literal) + lang;
                 } else {
                     var value = _.get(item, '@id');
                     return om.isBlankNodeId(value) ? '(' + self.jsonldToManchester(value, jsonld, html) + ')' : $filter('splitIRI')(value).end;

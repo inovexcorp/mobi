@@ -50,7 +50,7 @@ describe('Manchester Converter service', function() {
         });
     });
 
-    fdescribe('should convert JSON-LD into Manchester syntax', function() {
+    describe('should convert JSON-LD into Manchester syntax', function() {
         describe('if given a class expression', function() {
             beforeEach(function() {
                 this.blankNode = {
@@ -106,7 +106,7 @@ describe('Manchester Converter service', function() {
             });
             it('unless it is invalid', function() {
                 var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld);
-                expect(result).toBe('');
+                expect(result).toBe(this.blankNode['@id']);
             });
         });
         describe('if given a restriction', function() {
@@ -146,10 +146,21 @@ describe('Manchester Converter service', function() {
                 });
             });
             describe('with hasValue', function() {
-                it('and a literal', function() {
-                    this.blankNode[prefixes.owl + 'hasValue'] = [{'@value': 'test', '@type': prefixes.xsd + 'string'}];
-                    var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld);
-                    expect(result).toBe('PropA value "test"');
+                describe('and a literal', function() {
+                    it('with a language', function() {
+                        this.blankNode[prefixes.owl + 'hasValue'] = [{'@value': 'test', '@language': 'en'}];
+                        var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld);
+                        expect(result).toBe('PropA value "test"@en');
+                    });
+                    it('without a language', function() {
+                        this.blankNode[prefixes.owl + 'hasValue'] = [{'@value': 'test', '@type': prefixes.xsd + 'string'}];
+                        var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld);
+                        expect(result).toBe('PropA value "test"');
+
+                        this.blankNode[prefixes.owl + 'hasValue'] = [{'@value': 'true'}];
+                        var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld);
+                        expect(result).toBe('PropA value true');
+                    });
                 });
                 it('and a resource', function() {
                     this.blankNode[prefixes.owl + 'hasValue'] = [{'@id': 'ClassA'}];
@@ -198,11 +209,11 @@ describe('Manchester Converter service', function() {
             });
             it('unless it is invalid', function() {
                 var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld);
-                expect(result).toBe('');
+                expect(result).toBe(this.blankNode['@id']);
 
                 delete this.blankNode[prefixes.owl + 'onProperty'];
                 result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld);
-                expect(result).toBe('');
+                expect(result).toBe(this.blankNode['@id']);
             });
         });
         describe('with nested blank nodes', function() {
