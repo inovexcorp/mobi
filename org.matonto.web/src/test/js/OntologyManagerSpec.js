@@ -1760,11 +1760,22 @@ describe('Ontology Manager service', function() {
     });
 
     describe('isBlankNode should return', function() {
-        it('true if the entity contains the a blank node id', function() {
+        it('true if the entity contains a blank node id', function() {
             expect(ontologyManagerSvc.isBlankNode(blankNodeObj)).toBe(true);
         });
         it('false if the entity does not contain a blank node id', function() {
             expect(ontologyManagerSvc.isBlankNode({})).toBe(false);
+        });
+    });
+
+    describe('isBlankNodeId should return', function() {
+        it('true if the id is a blank node id', function() {
+            _.forEach(['', [], {}, true, false, undefined, null, 0, 1], function(test) {
+                expect(ontologyManagerSvc.isBlankNodeId(test)).toBe(false);
+            });
+        });
+        it('false if the id is not a blank node id', function() {
+            expect(ontologyManagerSvc.isBlankNodeId('_:genid')).toBe(true);
         });
     });
 

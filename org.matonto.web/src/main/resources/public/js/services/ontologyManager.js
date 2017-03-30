@@ -1194,7 +1194,21 @@
              * @returns {boolean} Returns true if it is a blank node entity, otherwise returns false.
              */
             self.isBlankNode = function(entity) {
-                return _.includes(_.get(entity, '@id', ''), '_:genid');
+                return self.isBlankNodeId(_.get(entity, '@id', ''));
+            }
+            /**
+             * @ngdoc method
+             * @name isBlankNodeId
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Checks if the provided entity id is a blank node id. Returns a boolean.
+             *
+             * @param {string} id The id to check.
+             * @return {boolean} Retrurns true if the id is a blank node id, otherwise returns false.
+             */
+            self.isBlankNodeId = function(id) {
+                return _.isString(id) && _.includes(id, '_:genid');
             }
             /**
              * @ngdoc method
