@@ -57,7 +57,7 @@ describe('Serialization Select directive', function() {
             expect(element.find('select').length).toBe(1);
         });
         it('with options', function() {
-            expect(element.find('option').length).toBe(4);
+            expect(element.find('option').length).toBe(5);
         });
     });
 });
