@@ -429,7 +429,7 @@ public class DelimitedRestImpl implements DelimitedRest {
             String[] columns;
             for (Row row : sheet) {
                 if (row.getRowNum() <= numRows) {
-                    //getLastCellNumber instead of getPhysicalNumberOfCells so that blank values don't cause cells to shift
+                    //getLastCellNumber instead of getPhysicalNumberOfCells so that blank values don't shift cells
                     columns = new String[row.getLastCellNum()];
                     for (int i = 0; i < row.getLastCellNum(); i++ ) {
                         columns[i] = df.formatCellValue(row.getCell(i));
