@@ -146,7 +146,7 @@ public class DelimitedConverterImpl implements DelimitedConverter {
                         || (limit.isPresent() && row.getRowNum() >= limit.get() + offset)) {
                     continue;
                 }
-                //getLastCellNumber instead of getPhysicalRows so that blank values don't cause cells to shift
+                //getLastCellNumber instead of getPhysicalNumberOfCells so that blank values don't cause cells to shift
                 nextRow = new String[row.getLastCellNum()];
                 for (int i = 0; i < row.getLastCellNum(); i++ ) {
                     nextRow[i] = df.formatCellValue(row.getCell(i));
