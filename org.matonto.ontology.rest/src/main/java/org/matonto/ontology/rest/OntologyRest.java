@@ -96,6 +96,59 @@ public interface OntologyRest {
                                 String ontologyJson);
 
     /**
+     * Returns the ontology associated with the requested record ID in the requested format.
+     *
+     * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:".
+     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
+     *                    master Branch.
+     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
+     *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
+     *                    otherwise, nothing will be returned.
+     * @param rdfFormat the desired RDF return format. NOTE: Optional param - defaults to "jsonld".
+     * @return a Response with the ontology in the requested format.
+     */
+    @GET
+    @Path("{recordId}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
+    @RolesAllowed("user")
+    @ApiOperation("Retrieves the ontology in the requested format.")
+    Response getOntology(@Context ContainerRequestContext context,
+                         @PathParam("recordId") String recordIdStr,
+                         @QueryParam("branchId") String branchIdStr,
+                         @QueryParam("commitId") String commitIdStr,
+                         @DefaultValue("jsonld") @QueryParam("rdfFormat") String rdfFormat);
+
+    /**
+     * Streams the ontology associated with the requested record ID to an OutputStream.
+     *
+     * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:".
+     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
+     *                    master Branch.
+     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
+     *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
+     *                    otherwise, nothing will be returned.
+     * @param rdfFormat the desired RDF return format. NOTE: Optional param - defaults to "jsonld".
+     * @return the ontology associated with requested record ID to download.
+     */
+    @GET
+    @Path("{recordId}")
+    @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*", "application/*"})
+    @RolesAllowed("user")
+    @ApiOperation("Streams the associated ontology to an OutputStream.")
+    Response downloadOntologyFile(@Context ContainerRequestContext context,
+                                  @PathParam("recordId") String recordIdStr,
+                                  @QueryParam("branchId") String branchIdStr,
+                                  @QueryParam("commitId") String commitIdStr,
+                                  @DefaultValue("jsonld") @QueryParam("rdfFormat") String rdfFormat,
+                                  @DefaultValue("ontology") @QueryParam("fileName") String fileName);
+
+    /**
      * Updates the InProgressCommit associated with the User making the request for the OntologyRecord identified by the
      * provided recordId.
      *
