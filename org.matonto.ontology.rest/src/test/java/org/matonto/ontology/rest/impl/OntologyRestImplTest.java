@@ -633,7 +633,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         Response response = target().path("ontologies").request().post(Entity.entity(fd,
                 MediaType.MULTIPART_FORM_DATA));
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatus(), 500);
     }
 
     // Test upload ontology json
@@ -686,7 +686,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("ontologies").queryParam("title", "title").queryParam("description",
                 "description").queryParam("keywords", "keyword1,keyword2").request().post(Entity.json(entity));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatus(), 500);
     }
 
     // Test get ontology
