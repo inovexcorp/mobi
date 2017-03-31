@@ -110,4 +110,8 @@ public class MatOntoWebException extends WebApplicationException {
     public MatOntoWebException(String message, Throwable ex, int status) {
         super(message, ex, Response.status(new CustomStatus(status, message)).build());
     }
+
+    public MatOntoWebException(final String message, final Throwable ex, final Response response) {
+        super(message, ex, response);
+    }
 }

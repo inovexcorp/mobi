@@ -53,49 +53,52 @@ describe('SPARQL Result Table directive', function() {
     });
 
     describe('replaces the element with the correct html', function() {
-        it('for a div', function() {
+        it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
+            expect(element.hasClass('sparql-result-table')).toBe(true);
         });
-        it('based on block', function() {
+        it('with a block', function() {
             expect(element.find('block').length).toBe(1);
         });
-        it('based on block-content', function() {
+        it('with a block-content', function() {
             expect(element.find('block-content').length).toBe(1);
         });
-        it('based on block-footer', function() {
+        it('with a block-footer', function() {
             expect(element.find('block-footer').length).toBe(1);
         });
-        it('based on table', function() {
-            expect(element.querySelectorAll('.table').length).toBe(1);
+        it('with a table', function() {
+            expect(element.querySelectorAll('table.table').length).toBe(1);
         });
-        it('based on pagination directive', function() {
+        it('with a pagination', function() {
             expect(element.find('pagination').length).toBe(1);
         });
         it('with a download button', function() {
             expect(element.querySelectorAll('button.download-button').length).toBe(1);
         });
-        it('<th>s should match bindingNames length', function() {
+        it('depending on how many binding names there are', function() {
             var theadList = element.querySelectorAll('thead');
             expect(element.html()).not.toContain('None');
             expect(theadList.length).toBe(1);
             var thead = theadList[0];
             expect(thead.querySelectorAll('th').length).toBe(sparqlManagerSvc.bindings.length);
         });
-        it('<tr>s should match results length', function() {
+        it('depending on how many results there are', function() {
             var tbodyList = element.querySelectorAll('tbody');
             expect(element.html()).not.toContain('None');
             expect(tbodyList.length).toBe(1);
             var tbody = tbodyList[0];
             expect(tbody.querySelectorAll('tr').length).toBe(sparqlManagerSvc.data.length);
         });
-        it('shows error message if populated', function() {
+        it('depending on whether an error occurred error message', function() {
             expect(element.find('error-display').length).toBe(0);
+            expect(element.find('pre').length).toBe(0);
 
             sparqlManagerSvc.errorMessage = 'Error message';
             scope.$digest();
             expect(element.find('error-display').length).toBe(1);
+            expect(element.find('pre').length).toBe(1);
         });
-        it('shows info message if populated', function() {
+        it('depending on whether there is an info message', function() {
             expect(element.find('info-message').length).toBe(0);
 
             sparqlManagerSvc.infoMessage = 'Info message';
