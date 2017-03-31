@@ -55,11 +55,9 @@
          */
         .service('ontologyManagerService', ontologyManagerService);
 
-        ontologyManagerService.$inject = ['$window', '$http', '$q', '$timeout', '$filter', 'prefixes',
-            'propertyManagerService', 'catalogManagerService', 'utilService', 'stateManagerService'];
+        ontologyManagerService.$inject = ['$window', '$http', '$q', '$timeout', '$filter', 'prefixes', 'propertyManagerService', 'catalogManagerService', 'utilService', 'stateManagerService', '$httpParamSerializer'];
 
-        function ontologyManagerService($window, $http, $q, $timeout, $filter, prefixes,
-            propertyManagerService, catalogManagerService, utilService, stateManagerService) {
+        function ontologyManagerService($window, $http, $q, $timeout, $filter, prefixes, propertyManagerService, catalogManagerService, utilService, stateManagerService, $httpParamSerializer) {
             var self = this;
             var prefix = '/matontorest/ontologies';
             var xsdDatatypes = _.map(['anyURI', 'boolean', 'byte', 'dateTime', 'decimal', 'double', 'float', 'int', 'integer', 'language', 'long', 'string'], item => {
@@ -388,7 +386,13 @@
              * @param {string} [fileName='ontology'] The name given to the downloaded file
              */
             self.downloadOntology = function(recordId, branchId, commitId, rdfFormat = 'jsonld', fileName = 'ontology') {
-                $window.location = prefix + '/' + encodeURIComponent(recordId) + '?branchId=' + encodeURIComponent(branchId) + '&commitId=' + encodeURIComponent(commitId) + '&rdfFormat=' + rdfFormat + '&fileName=' + fileName;
+                var params = $httpParamSerializer({
+                    branchId: encodeURIComponent(branchId),
+                    commitId: encodeURIComponent(commitId),
+                    rdfFormat,
+                    fileName
+                });
+                $window.location = prefix + '/' + encodeURIComponent(recordId) + '?' + params;
             }
             /**
              * @ngdoc method
