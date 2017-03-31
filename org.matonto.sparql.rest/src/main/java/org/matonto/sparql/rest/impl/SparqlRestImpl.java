@@ -86,7 +86,7 @@ public class SparqlRestImpl implements SparqlRest {
             String statusText = "Query is invalid. Please change the query and re-execute.";
             MatOntoWebException.CustomStatus status = new MatOntoWebException.CustomStatus(400, statusText);
             Response response = Response.status(status)
-                    .entity(new JSONObject().accumulate("details", ex.getCause().getMessage()))
+                    .entity(new JSONObject().element("details", ex.getCause().getMessage()))
                     .build();
             throw ErrorUtils.sendError(ex, statusText, response);
         }
