@@ -345,20 +345,21 @@
                             commitId = _.get(headCommit, "commit['@id']", '');
                             return sm.createOntologyState(recordId, branchId, commitId);
                         }, $q.reject)
-                        .then(() => cm.getResource(commitId, branchId, recordId, catalogId, false, rdfFormat), $q.reject)
+                        .then(() => retrieveOntology(recordId, branchId, commitId, rdfFormat), $q.reject)
                         .then(ontology => resolve(ontology, emptyInProgressCommit), deferred.reject);
                 }
                 if (!_.isEmpty(state)) {
                     var inProgressCommit = emptyInProgressCommit;
                     branchId = _.get(state, "model[0]['" + prefixes.ontologyState + "branch'][0]['@id']");
                     commitId = _.get(state, "model[0]['" + prefixes.ontologyState + "commit'][0]['@id']");
+
                     cm.getInProgressCommit(recordId, catalogId)
                         .then(response => {
                             inProgressCommit = response;
-                            return cm.getResource(commitId, branchId, recordId, catalogId, true, rdfFormat)
+                            return retrieveOntology(recordId, branchId, commitId, rdfFormat);
                         }, errorMessage => {
                             if (errorMessage === 'User has no InProgressCommit') {
-                                return cm.getResource(commitId, branchId, recordId, catalogId, false, rdfFormat);
+                                return retrieveOntology(recordId, branchId, commitId, rdfFormat);
                             }
                             return $q.reject();
                         })
@@ -370,6 +371,24 @@
                     deferred.resolve({ontology, recordId, branchId, commitId, inProgressCommit});
                 }
                 return deferred.promise;
+            }
+            /**
+             * @ngdoc method
+             * @name downloadOntology
+             * @methodOf catalogManager.service:catalogManagerService
+             *
+             * @description
+             * Calls the GET /matontorest/ontologies/{recordId} endpoint using the `window.location` variable which will
+             * start a download of the ontology starting at the identified Commit.
+             *
+             * @param {string} recordId The id of the Record the Branch should be part of
+             * @param {string} branchId The id of the Branch with the specified Commit
+             * @param {string} commitId The id of the Commit to retrieve the compiled resource from
+             * @param {string} [rdfFormat='jsonld'] The RDF format to return the compiled resource in
+             * @param {string} [fileName='ontology'] The name given to the downloaded file
+             */
+            self.downloadOntology = function(recordId, branchId, commitId, rdfFormat = 'jsonld', fileName = 'ontology') {
+                $window.location = prefix + '/' + encodeURIComponent(recordId) + '?branchId=' + encodeURIComponent(branchId) + '&commitId=' + encodeURIComponent(commitId) + '&rdfFormat=' + rdfFormat + '&fileName=' + fileName;
             }
             /**
              * @ngdoc method
@@ -431,8 +450,7 @@
             self.updateOntology = function(recordId, branchId, commitId, type = 'ontology', upToDate = true, inProgressCommit = emptyInProgressCommit) {
                 var listItem;
                 var deferred = $q.defer();
-                var apply = !_.isEqual(inProgressCommit, emptyInProgressCommit);
-                cm.getResource(commitId, branchId, recordId, catalogId, apply)
+                retrieveOntology(recordId, branchId, commitId)
                     .then(ontology => {
                         var ontologyId = self.getListItemByRecordId(recordId).ontologyId;
                         if (type === 'ontology') {
@@ -1880,6 +1898,23 @@
                 } else {
                     return self.getEntity(ontology, entityIRI);
                 }
+            }
+            function retrieveOntology(recordId, branchId, commitId, rdfFormat = 'jsonld') {
+                var deferred = $q.defer();
+                var config = {
+                    headers: {
+                        'Content-Type': undefined,
+                        'Accept': 'text/plain'
+                    },
+                    params: {
+                        branchId,
+                        commitId,
+                        rdfFormat
+                    }
+                }
+                $http.get(prefix + '/' + encodeURIComponent(recordId), config)
+                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
+                return deferred.promise;
             }
         }
 })();
