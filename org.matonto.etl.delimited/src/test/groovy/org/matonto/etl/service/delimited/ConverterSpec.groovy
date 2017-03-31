@@ -98,7 +98,7 @@ class ConverterSpec extends Specification {
         Model convertedModel = c.convert(config);
 
         expect:
-        convertedModel== m;
+        convertedModel == m;
     }
 
     def "Convert CSV File with Multiple Object per Row and Object and Data Properties with Blank Values"() {
@@ -112,7 +112,7 @@ class ConverterSpec extends Specification {
         Model convertedModel = c.convert(config);
 
         expect:
-        convertedModel== m;
+        convertedModel == m;
     }
 
     def "Test non-comma separator"() {
@@ -126,7 +126,7 @@ class ConverterSpec extends Specification {
         Model convertedModel = c.convert(config)
 
         expect:
-        convertedModel== m;
+        convertedModel == m;
     }
 
     def "Tab Separated"() {
@@ -140,7 +140,7 @@ class ConverterSpec extends Specification {
         Model convertedModel = c.convert(config)
 
         expect:
-        convertedModel== m;
+        convertedModel == m;
     }
 
     def "Tab Separated with Blanks"() {
@@ -168,7 +168,7 @@ class ConverterSpec extends Specification {
         Model convertedModel = c.convert(config)
 
         expect:
-        convertedModel== m;
+        convertedModel == m;
     }
 
     def "Without headers"() {
@@ -182,7 +182,7 @@ class ConverterSpec extends Specification {
         Model convertedModel = c.convert(config);
 
         expect:
-        convertedModel== m;
+        convertedModel == m;
     }
 
     def "Convert Excel 97-2003 File with Multiple Object per Row and Object and Data Properties"() {
@@ -196,7 +196,7 @@ class ConverterSpec extends Specification {
         Model convertedModel = c.convert(config);
 
         expect:
-        convertedModel== m;
+        convertedModel == m;
     }
 
     def "Convert Excel 97-2003 File with Multiple Object per Row and Object and Data Properties with Blank Values"() {
@@ -210,7 +210,7 @@ class ConverterSpec extends Specification {
         Model convertedModel = c.convert(config);
 
         expect:
-        convertedModel== m;
+        convertedModel == m;
     }
 
     def "Convert Excel 2007 File with Multiple Object per Row and Object and Data Properties"() {
@@ -224,7 +224,7 @@ class ConverterSpec extends Specification {
         Model convertedModel = c.convert(config);
 
         expect:
-        convertedModel== m;
+        convertedModel == m;
     }
 
     def "Convert Excel 2007 File with Multiple Object per Row and Object and Data Properties with Blank Values"() {
@@ -238,7 +238,7 @@ class ConverterSpec extends Specification {
         Model convertedModel = c.convert(config);
 
         expect:
-        convertedModel== m;
+        convertedModel == m;
     }
 
     def "Test Generation of Local Name #localName Results in #result"() {
@@ -294,7 +294,7 @@ class ConverterSpec extends Specification {
         Model convertedModel = c.convert(config);
 
         expect:
-        convertedModel== m;
+        convertedModel == m;
     }
 
     def "With a limit set with an offset"() {
@@ -311,7 +311,7 @@ class ConverterSpec extends Specification {
         Model convertedModel = c.convert(config);
 
         expect:
-        convertedModel== m;
+        convertedModel == m;
     }
 
     def "With an offset and headers"() {
@@ -328,7 +328,7 @@ class ConverterSpec extends Specification {
         Model convertedModel = c.convert(config);
 
         expect:
-        convertedModel== m;
+        convertedModel == m;
     }
 
     def "With an offset and no headers"() {
@@ -345,7 +345,7 @@ class ConverterSpec extends Specification {
         Model convertedModel = c.convert(config);
 
         expect:
-        convertedModel== m;
+        convertedModel == m;
     }
 
     def "Convert File with Missing Properties Ignored"() {
