@@ -1056,4 +1056,18 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         then:
         QueryResults.asList(results).size() == 4
     }
+
+    def "prepareTupleQuery(query) works regardless of case"() {
+        setup:
+        def dataset = datasetsInFile[2]
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
+        def queryString = "SELECT * FroM <:g1> WHERE { {?s a ?o} UNioN {GRAPH ?g {?s ?p ?o}} }"
+        def query = conn.prepareTupleQuery(queryString)
+
+        when:
+        def results = query.evaluate()
+
+        then:
+        QueryResults.asList(results).size() == 4
+    }
 }

@@ -25,22 +25,26 @@ package org.matonto.sparql.utils;
 
 import static org.junit.Assert.assertEquals;
 
-import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.BaseErrorListener;
-import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Recognizer;
+import org.antlr.v4.runtime.TokenStream;
 import org.antlr.v4.runtime.TokenStreamRewriter;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
+import org.apache.commons.io.IOUtils;
 import org.junit.Test;
 
-public class SparqlTest {
+import java.io.IOException;
+import java.io.InputStream;
+
+public class QueryTest {
+
+    private final String DATASET_REPLACEMENT = "FROM<test:iri>";
 
     @Test
     public void parseSimpleQuery() throws Exception {
-        SparqlLexer lexer = new SparqlLexer(new ANTLRInputStream(getClass().getResourceAsStream("/example1.rq")));
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
-        SparqlParser parser = new SparqlParser(tokens);
+        InputStream query = getClass().getResourceAsStream("/example1.rq");
+        SparqlParser parser = Query.getParser(streamToString(query));
         parser.addErrorListener(new BaseErrorListener() {
             @Override
             public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
@@ -52,9 +56,8 @@ public class SparqlTest {
 
     @Test
     public void replaceDatasetClause() throws Exception {
-        SparqlLexer lexer = new SparqlLexer(new ANTLRInputStream(getClass().getResourceAsStream("/example2.rq")));
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
-        SparqlParser parser = new SparqlParser(tokens);
+        InputStream query = getClass().getResourceAsStream("/example2.rq");
+        SparqlParser parser = Query.getParser(streamToString(query));
         parser.addErrorListener(new BaseErrorListener() {
             @Override
             public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
@@ -72,13 +75,49 @@ public class SparqlTest {
 
         // Test result
         String newText = rewriter.getText();
-        lexer = new SparqlLexer(new ANTLRInputStream(newText));
-        tokens = new CommonTokenStream(lexer);
-        parser = new SparqlParser(tokens);
-        assertEquals("FROM<test:iri>", parser.query().selectQuery().datasetClause().get(0).getText());
+        parser = Query.getParser(newText);
+        String datasetText = parser.query().selectQuery().datasetClause().get(0).getText();
+        assertEquals(DATASET_REPLACEMENT, datasetText);
     }
 
-    private static class DatasetListener extends SparqlBaseListener {
+    @Test
+    public void insensitiveToCase() throws Exception {
+        String queryString = "select * WHERE { ?s ?P ?o }";
+        String queryNoSpaces = "select*WHERE{?s?P?o}";
+        SparqlParser parser = Query.getParser(queryString);
+        TokenStream tokens = parser.getTokenStream();
+        parser.addErrorListener(new BaseErrorListener() {
+            @Override
+            public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
+                throw new IllegalStateException("failed to parse at line " + line + " due to " + msg, e);
+            }
+        });
+
+        assertEquals(queryNoSpaces, parser.query().selectQuery().getText());
+        assertEquals(queryString, tokens.getText());
+    }
+
+    @Test
+    public void insensitiveToCaseBuiltInCall() throws Exception {
+        String queryString = "select * WHERE { ?s ?P ?o FILTeR (sameTeRm(?s, ?o))}";
+        SparqlParser parser = Query.getParser(queryString);
+        TokenStream tokens = parser.getTokenStream();
+        parser.addErrorListener(new BaseErrorListener() {
+            @Override
+            public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
+                throw new IllegalStateException("failed to parse at line " + line + " due to " + msg, e);
+            }
+        });
+
+        parser.query();
+        assertEquals(queryString, tokens.getText());
+    }
+
+    private String streamToString(InputStream inputStream) throws IOException {
+        return IOUtils.toString(inputStream, "UTF-8");
+    }
+
+    private class DatasetListener extends SparqlBaseListener {
 
         TokenStreamRewriter rewriter;
 
@@ -88,7 +127,7 @@ public class SparqlTest {
 
         @Override
         public void enterDatasetClause(SparqlParser.DatasetClauseContext ctx) {
-            rewriter.replace(ctx.getStart(), ctx.getStop(), "FROM <test:iri>");
+            rewriter.replace(ctx.getStart(), ctx.getStop(), DATASET_REPLACEMENT);
         }
     }
 }
