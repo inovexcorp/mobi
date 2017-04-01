@@ -43,14 +43,16 @@
          *
          * @description
          * `sparqlEditor` is a directive that creates a {@link block.directive:block block} with a form for creating
-         * a {@link sparqlManager.service:sparqlManagerService#queryString SPARQL query} and submitting it. The
-         * directive is replaced by the contents of its template.
+         * a {@link sparqlManager.service:sparqlManagerService#queryString SPARQL query}, selecting
+         * {@link sparqlManager.service:sparqlManagerService#prefixes prefixes} and a
+         * {@link sparqlManager.service:sparqlManagerService#datasetRecordIRI dataset} and submitting it. The directive
+         * is replaced by the contents of its template.
          */
         .directive('sparqlEditor', sparqlEditor);
 
-        sparqlEditor.$inject = ['sparqlManagerService', 'prefixes'];
+        sparqlEditor.$inject = ['sparqlManagerService', 'prefixes', 'datasetManagerService', 'utilService'];
 
-        function sparqlEditor(sparqlManagerService, prefixes) {
+        function sparqlEditor(sparqlManagerService, prefixes, datasetManagerService, utilService) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/sparql/directives/sparqlEditor/sparqlEditor.html',
@@ -59,11 +61,14 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
+                    var dam = datasetManagerService;
+                    dvm.util = utilService;
                     dvm.sparql = sparqlManagerService;
+                    dvm.datasetRecords = [];
 
-                    dvm.prefixList = _.map(prefixes, function(value, key) {
-                        return key + ': <' + value + '>';
-                    });
+                    dam.getDatasetRecords()
+                        .then(response => dvm.datasetRecords = response.data, () => dvm.util.createErrorToast('Error retrieving datasets'));
+                    dvm.prefixList = _.map(prefixes, (value, key) => key + ': <' + value + '>');
                     dvm.editorOptions = {
                         mode: 'application/sparql-query',
                         indentUnit: 4,

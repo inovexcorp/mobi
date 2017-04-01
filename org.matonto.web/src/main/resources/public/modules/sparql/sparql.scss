@@ -3,22 +3,31 @@
 
 .sparql {
     background-color: $gray-lighter;
-    height: 100%;
 
-    > .tabset > .tabset-headings {
-        background-color: $highlight-blue;
-    }
-
-    .row {
+    .sparql-container {
         display: flex;
         flex-direction: column;
 
-        .block-container {
+        .sparql-page-content {
             flex: 1;
-            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
 
-            &:last-child {
-                margin-bottom: 0;
+            .row {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                margin: 0;
+                padding: 15px 0;
+
+                .block-container {
+                    flex: 1;
+                    margin-bottom: 15px;
+
+                    &:last-child {
+                        margin-bottom: 0;
+                    }
+                }
             }
         }
     }

@@ -414,6 +414,7 @@ function mockSparqlManager() {
             this.totalSize = 0;
             this.bindings = [];
             this.queryString = '';
+            this.datasetRecordIRI = '';
             this.errorMessage = '';
             this.infoMessage = '';
             this.reset = jasmine.createSpy('reset');
