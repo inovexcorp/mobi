@@ -31,10 +31,10 @@ import org.matonto.sparql.utils.impl.CaseInsensitiveInputStream;
 
 public class Query {
 
-    public static SparqlParser getParser(String query) {
-        SparqlLexer lexer = new SparqlLexer(new CaseInsensitiveInputStream(query));
+    public static Sparql11Parser getParser(String query) {
+        Sparql11Lexer lexer = new Sparql11Lexer(new CaseInsensitiveInputStream(query));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
-        SparqlParser parser = new SparqlParser(tokens);
+        Sparql11Parser parser = new Sparql11Parser(tokens);
         parser.addErrorListener(new BaseErrorListener() {
             @Override
             public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
