@@ -21,14 +21,7 @@
  * #L%
  */
 describe('Remove Property Overlay directive', function() {
-    var $compile,
-        scope,
-        $q,
-        element,
-        controller,
-        ontologyStateSvc,
-        ontologyManagerSvc,
-        propertyManagerSvc;
+    var $compile, scope, $q, element, controller, ontologyStateSvc, ontologyManagerSvc, propertyManagerSvc, ontoUtils;
 
     beforeEach(function() {
         module('templates');
@@ -36,14 +29,16 @@ describe('Remove Property Overlay directive', function() {
         mockOntologyState();
         mockPropertyManager();
         mockOntologyManager();
+        mockOntologyUtilsManager();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _ontologyManagerService_, _propertyManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _ontologyManagerService_, _propertyManagerService_, _ontologyUtilsManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
             ontologyStateSvc = _ontologyStateService_;
             ontologyManagerSvc = _ontologyManagerService_;
             propertyManagerSvc = _propertyManagerService_;
+            ontoUtils = _ontologyUtilsManagerService_;
         });
 
         scope.index = 0;
@@ -99,11 +94,11 @@ describe('Remove Property Overlay directive', function() {
             _.set(ontologyStateSvc.selected, 'key[0]', 'value');
             controller.removeProperty();
             expect(scope.onSubmit).toHaveBeenCalled();
-            expect(ontologyManagerSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
-                jasmine.any(Object));
-            expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.selected, controller.key,
-                controller.index);
+            expect(ontologyManagerSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, jasmine.any(Object));
+            expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.selected, controller.key, controller.index);
             expect(controller.overlayFlag).toBe(false);
+            expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
+            expect(ontoUtils.updateLabel).toHaveBeenCalled();
         });
     });
     it('calls removeProperty when the button is clicked', function() {

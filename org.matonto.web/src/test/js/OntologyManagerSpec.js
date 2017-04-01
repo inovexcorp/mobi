@@ -71,14 +71,23 @@ describe('Ontology Manager service', function() {
     var annotationId = 'annotationId';
     var individualId = 'individualId';
     var restrictionId = 'restrictionId';
-    var blankNodeId = '_:b0';
+    var blankNodeId = '_:genid0';
     var blankNodeObj = {
         '@id': blankNodeId
     }
     var index = {
-        ontologyId: 0,
-        classId: 1,
-        dataPropertyId: 2
+        ontologyId: {
+            position: 0,
+            label: 'ontology'
+        },
+        classId: {
+            position: 1,
+            label: 'class'
+        },
+        dataPropertyId: {
+            position: 2,
+            label: 'data property'
+        }
     }
     var usages = {
         results: {
@@ -351,10 +360,13 @@ describe('Ontology Manager service', function() {
     });
 
     describe('getOntology calls the correct methods', function() {
-        var resourceDeferred, expected;
+        var params, expected;
         beforeEach(function() {
-            resourceDeferred = $q.defer();
-            catalogManagerSvc.getResource.and.returnValue(resourceDeferred.promise);
+            params = paramSerializer({
+                branchId: branchId,
+                commitId: commitId,
+                rdfFormat: format
+            });
             expected = {
                 recordId: recordId,
                 ontology: ontology,
@@ -374,23 +386,23 @@ describe('Ontology Manager service', function() {
                 beforeEach(function() {
                     getDeferred.resolve(inProgressCommit);
                 });
-                it('and getResource is resolved', function() {
-                    resourceDeferred.resolve(ontology);
+                it('and GET endpoint is successful', function() {
+                    $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '?' + params)
+                        .respond(200, ontology);
                     ontologyManagerSvc.getOntology(recordId, format).then(function(response) {
                         expect(response).toEqual(expected);
                     }, function() {
                         fail('Promise should have resolved');
                     });
-                    scope.$apply();
+                    flushAndVerify();
                     expect(catalogManagerSvc.getInProgressCommit).toHaveBeenCalledWith(recordId, catalogId);
-                    expect(catalogManagerSvc.getResource).toHaveBeenCalledWith(commitId, branchId, recordId, catalogId,
-                        true, format);
                     expect(stateManagerSvc.deleteOntologyState).not.toHaveBeenCalled();
                 });
-                describe('and getResource is rejected', function() {
+                describe('and GET endpoint is not successful', function() {
                     var deleteDeferred;
                     beforeEach(function() {
-                        resourceDeferred.reject(error);
+                        $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '?' + params)
+                            .respond(400, null, null, error);
                         deleteDeferred = $q.defer();
                         stateManagerSvc.deleteOntologyState.and.returnValue(deleteDeferred.promise);
                     });
@@ -427,6 +439,11 @@ describe('Ontology Manager service', function() {
                                     commitDeferred.resolve(commitObj2);
                                     createDeferred = $q.defer();
                                     stateManagerSvc.createOntologyState.and.returnValue(createDeferred.promise);
+                                    params = paramSerializer({
+                                        branchId: branchId,
+                                        commitId: commitId2,
+                                        rdfFormat: format
+                                    });
                                 });
                                 describe('and createOntologyState is resolved', function() {
                                     var firstTime;
@@ -434,48 +451,40 @@ describe('Ontology Manager service', function() {
                                         firstTime = true;
                                         createDeferred.resolve();
                                     });
-                                    it('and getResource is resolved', function() {
-                                        catalogManagerSvc.getResource.and.callFake(function(cId, bId, rId, catId, apply, format) {
-                                            return (cId === commitId) ? $q.reject() : $q.resolve(ontology);
-                                        });
+                                    it('and GET endpoint is successful', function() {
+                                        $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '?' + params)
+                                            .respond(200, ontology);
                                         ontologyManagerSvc.getOntology(recordId, format).then(function(response) {
                                             _.set(expected2, 'inProgressCommit', emptyInProgressCommit);
                                             expect(response).toEqual(expected2);
                                         }, function() {
                                             fail('Promise should have resolved');
                                         });
-                                        scope.$apply();
+                                        flushAndVerify();
                                         expect(catalogManagerSvc.getInProgressCommit).toHaveBeenCalledWith(recordId, catalogId);
-                                        expect(catalogManagerSvc.getResource).toHaveBeenCalledWith(commitId, branchId, recordId, catalogId,
-                                            true, format);
                                         expect(stateManagerSvc.deleteOntologyState).toHaveBeenCalledWith(recordId, branchId, commitId);
                                         expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(recordId, catalogId);
                                         expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(branchId, recordId,
                                             catalogId);
                                         expect(stateManagerSvc.createOntologyState).toHaveBeenCalledWith(recordId, branchId,
                                             commitId2);
-                                        expect(catalogManagerSvc.getResource).toHaveBeenCalledWith(commitId2, branchId, recordId,
-                                            catalogId, false, format);
                                     });
-                                    it('and getResource is rejected', function() {
-                                        catalogManagerSvc.getResource.and.returnValue($q.reject(error));
+                                    it('and GET endpoint is not successful', function() {
+                                        $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '?' + params)
+                                            .respond(400, null, null, error);
                                         ontologyManagerSvc.getOntology(recordId, format).then(function() {
                                             fail('Promise should have rejected');
                                         }, function(response) {
                                             expect(response).toEqual(error);
                                         });
-                                        scope.$apply();
+                                        flushAndVerify();
                                         expect(catalogManagerSvc.getInProgressCommit).toHaveBeenCalledWith(recordId, catalogId);
-                                        expect(catalogManagerSvc.getResource).toHaveBeenCalledWith(commitId, branchId, recordId, catalogId,
-                                            true, format);
                                         expect(stateManagerSvc.deleteOntologyState).toHaveBeenCalledWith(recordId, branchId, commitId);
                                         expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(recordId, catalogId);
                                         expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(branchId, recordId,
                                             catalogId);
                                         expect(stateManagerSvc.createOntologyState).toHaveBeenCalledWith(recordId, branchId,
                                             commitId2);
-                                        expect(catalogManagerSvc.getResource).toHaveBeenCalledWith(commitId2, branchId, recordId,
-                                            catalogId, false, format);
                                     });
                                 });
                                 it('and createOntologyState is rejected', function() {
@@ -485,10 +494,8 @@ describe('Ontology Manager service', function() {
                                     }, function(response) {
                                         expect(response).toEqual(error);
                                     });
-                                    scope.$apply();
+                                    flushAndVerify();
                                     expect(catalogManagerSvc.getInProgressCommit).toHaveBeenCalledWith(recordId, catalogId);
-                                    expect(catalogManagerSvc.getResource).toHaveBeenCalledWith(commitId, branchId, recordId, catalogId,
-                                        true, format);
                                     expect(stateManagerSvc.deleteOntologyState).toHaveBeenCalledWith(recordId, branchId, commitId);
                                     expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(recordId, catalogId);
                                     expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(branchId, recordId,
@@ -503,10 +510,8 @@ describe('Ontology Manager service', function() {
                                 }, function(response) {
                                     expect(response).toEqual(error);
                                 });
-                                scope.$apply();
+                                flushAndVerify();
                                 expect(catalogManagerSvc.getInProgressCommit).toHaveBeenCalledWith(recordId, catalogId);
-                                expect(catalogManagerSvc.getResource).toHaveBeenCalledWith(commitId, branchId, recordId, catalogId,
-                                    true, format);
                                 expect(stateManagerSvc.deleteOntologyState).toHaveBeenCalledWith(recordId, branchId, commitId);
                                 expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(recordId, catalogId);
                                 expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(branchId, recordId, catalogId);
@@ -519,10 +524,8 @@ describe('Ontology Manager service', function() {
                             }, function(response) {
                                 expect(response).toEqual(error);
                             });
-                            scope.$apply();
+                            flushAndVerify();
                             expect(catalogManagerSvc.getInProgressCommit).toHaveBeenCalledWith(recordId, catalogId);
-                            expect(catalogManagerSvc.getResource).toHaveBeenCalledWith(commitId, branchId, recordId, catalogId,
-                                true, format);
                             expect(stateManagerSvc.deleteOntologyState).toHaveBeenCalledWith(recordId, branchId, commitId);
                             expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(recordId, catalogId);
                             expect(catalogManagerSvc.getBranchHeadCommit).not.toHaveBeenCalled();
@@ -536,10 +539,8 @@ describe('Ontology Manager service', function() {
                         }, function(response) {
                             expect(response).toEqual(error);
                         });
-                        scope.$apply();
+                        flushAndVerify();
                         expect(catalogManagerSvc.getInProgressCommit).toHaveBeenCalledWith(recordId, catalogId);
-                        expect(catalogManagerSvc.getResource).toHaveBeenCalledWith(commitId, branchId, recordId, catalogId,
-                            true, format);
                         expect(stateManagerSvc.deleteOntologyState).toHaveBeenCalledWith(recordId, branchId, commitId);
                     });
                 });
@@ -548,24 +549,242 @@ describe('Ontology Manager service', function() {
                 describe('with message "User has no InProgressCommit"', function() {
                     beforeEach(function() {
                         getDeferred.reject('User has no InProgressCommit');
-                    });
-                    it('and getResource is resolved', function() {
-                        resourceDeferred.resolve(ontology);
                         stateManagerSvc.getOntologyStateByRecordId.and.returnValue({model: [ontologyState]});
+                    });
+                    it('and GET endpoint is successful', function() {
+                        $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '?' + params)
+                            .respond(200, ontology);
                         ontologyManagerSvc.getOntology(recordId, format).then(function(response) {
                             _.set(expected, 'inProgressCommit', emptyInProgressCommit);
                             expect(response).toEqual(expected);
                         }, function() {
                             fail('Promise should have resolved');
                         });
-                        scope.$apply();
+                        flushAndVerify();
                         expect(catalogManagerSvc.getInProgressCommit).toHaveBeenCalledWith(recordId, catalogId);
-                        expect(catalogManagerSvc.getResource).toHaveBeenCalledWith(commitId, branchId, recordId,
-                            catalogId, false, format);
                     });
-                    it('and getResource is rejected', function() {
-                        resourceDeferred.reject(error);
-                        stateManagerSvc.getOntologyStateByRecordId.and.returnValue({model: [ontologyState]});
+                    describe('and GET endpoint is not successful', function() {
+                        var deleteDeferred;
+                        beforeEach(function() {
+                            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '?' + params)
+                                .respond(400, null, null, error);
+                            deleteDeferred = $q.defer();
+                            stateManagerSvc.deleteOntologyState.and.returnValue(deleteDeferred.promise);
+                        });
+                        describe('and deleteOntologyState is resolved', function() {
+                            var masterDeferred;
+                            beforeEach(function() {
+                                deleteDeferred.resolve();
+                                masterDeferred = $q.defer();
+                                catalogManagerSvc.getRecordMasterBranch.and.returnValue(masterDeferred.promise);
+                            });
+                            describe('and getMasterBranch is resolved', function() {
+                                var commitDeferred;
+                                beforeEach(function() {
+                                    masterDeferred.resolve({'@id': branchId});
+                                    commitDeferred = $q.defer();
+                                    catalogManagerSvc.getBranchHeadCommit.and.returnValue(commitDeferred.promise);
+                                });
+                                describe('and getBranchHeadCommit is resolved', function() {
+                                    var createDeferred;
+                                    beforeEach(function() {
+                                        commitDeferred.resolve(commitObj);
+                                        createDeferred = $q.defer();
+                                        stateManagerSvc.createOntologyState.and.returnValue(createDeferred.promise);
+                                    });
+                                    describe('and createOntologyState is resolved', function() {
+                                        beforeEach(function() {
+                                            createDeferred.resolve();
+                                        });
+                                        it('and GET endpoint is successful', function() {
+                                            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '?' + params)
+                                                .respond(200, ontology);
+                                            ontologyManagerSvc.getOntology(recordId, format).then(function(response) {
+                                                _.set(expected, 'inProgressCommit', emptyInProgressCommit);
+                                                expect(response).toEqual(expected);
+                                            }, function() {
+                                                fail('Promise should have resolved');
+                                            });
+                                            flushAndVerify();
+                                            expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(recordId, catalogId);
+                                            expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(branchId, recordId,
+                                                catalogId);
+                                            expect(stateManagerSvc.createOntologyState).toHaveBeenCalledWith(recordId, branchId,
+                                                commitId);
+                                        });
+                                        it('and GET endpoint is not successful', function() {
+                                            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '?' + params)
+                                                .respond(400, null, null, error);
+                                            ontologyManagerSvc.getOntology(recordId, format).then(function() {
+                                                fail('Promise should have rejected');
+                                            }, function(response) {
+                                                expect(response).toEqual(error);
+                                            });
+                                            flushAndVerify();
+                                            expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(recordId, catalogId);
+                                            expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(branchId, recordId,
+                                                catalogId);
+                                            expect(stateManagerSvc.createOntologyState).toHaveBeenCalledWith(recordId, branchId,
+                                                commitId);
+                                        });
+                                    });
+                                    it('and createOntologyState is rejected', function() {
+                                        createDeferred.reject(error);
+                                        ontologyManagerSvc.getOntology(recordId, format).then(function() {
+                                            fail('Promise should have rejected');
+                                        }, function(response) {
+                                            expect(response).toEqual(error);
+                                        });
+                                        flushAndVerify();
+                                        expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(recordId, catalogId);
+                                        expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(branchId, recordId,
+                                            catalogId);
+                                        expect(stateManagerSvc.createOntologyState).toHaveBeenCalledWith(recordId, branchId, commitId);
+                                    });
+                                });
+                                it('and getBranchHeadCommit is rejected', function() {
+                                    commitDeferred.reject(error);
+                                    ontologyManagerSvc.getOntology(recordId, format).then(function() {
+                                        fail('Promise should have rejected');
+                                    }, function(response) {
+                                        expect(response).toEqual(error);
+                                    });
+                                    flushAndVerify();
+                                    expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(recordId, catalogId);
+                                    expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(branchId, recordId, catalogId);
+                                });
+                            });
+                            it('and getMasterBranch is rejected', function() {
+                                masterDeferred.reject(error);
+                                ontologyManagerSvc.getOntology(recordId, format).then(function() {
+                                    fail('Promise should have rejected');
+                                }, function(response) {
+                                    expect(response).toEqual(error);
+                                });
+                                flushAndVerify();
+                                expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(recordId, catalogId);
+                                expect(catalogManagerSvc.getBranchHeadCommit).not.toHaveBeenCalled();
+                            });
+                        });
+                        it('and deleteOntologyState is rejected', function() {
+                            deleteDeferred.reject(error);
+                            ontologyManagerSvc.getOntology(recordId, format).then(function(response) {
+                                fail('Promise should have rejected');
+                            }, function(response) {
+                                expect(response).toEqual(error);
+                            });
+                            flushAndVerify();
+                            expect(catalogManagerSvc.getInProgressCommit).toHaveBeenCalledWith(recordId, catalogId);
+                            expect(stateManagerSvc.deleteOntologyState).toHaveBeenCalledWith(recordId, branchId, commitId);
+                        });
+                    });
+                });
+                describe('with other message', function() {
+                    var deleteDeferred;
+                    beforeEach(function() {
+                        $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '?' + params)
+                            .respond(200, ontology);
+                        getDeferred.reject(error);
+                        deleteDeferred = $q.defer();
+                        stateManagerSvc.deleteOntologyState.and.returnValue(deleteDeferred.promise);
+                    });
+                    describe('and deleteOntologyState is resolved', function() {
+                        var masterDeferred;
+                        beforeEach(function() {
+                            deleteDeferred.resolve();
+                            masterDeferred = $q.defer();
+                            catalogManagerSvc.getRecordMasterBranch.and.returnValue(masterDeferred.promise);
+                        });
+                        describe('and getMasterBranch is resolved', function() {
+                            var commitDeferred;
+                            beforeEach(function() {
+                                masterDeferred.resolve({'@id': branchId});
+                                commitDeferred = $q.defer();
+                                catalogManagerSvc.getBranchHeadCommit.and.returnValue(commitDeferred.promise);
+                            });
+                            describe('and getBranchHeadCommit is resolved', function() {
+                                var createDeferred;
+                                beforeEach(function() {
+                                    commitDeferred.resolve(commitObj);
+                                    createDeferred = $q.defer();
+                                    stateManagerSvc.createOntologyState.and.returnValue(createDeferred.promise);
+                                });
+                                describe('and createOntologyState is resolved', function() {
+                                    beforeEach(function() {
+                                        createDeferred.resolve();
+                                    });
+                                    it('and GET endpoint is successful', function() {
+                                        $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '?' + params)
+                                            .respond(200, ontology);
+                                        ontologyManagerSvc.getOntology(recordId, format).then(function(response) {
+                                            _.set(expected, 'inProgressCommit', emptyInProgressCommit);
+                                            expect(response).toEqual(expected);
+                                        }, function() {
+                                            fail('Promise should have resolved');
+                                        });
+                                        scope.$apply();
+                                        expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(recordId, catalogId);
+                                        expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(branchId, recordId,
+                                            catalogId);
+                                        expect(stateManagerSvc.createOntologyState).toHaveBeenCalledWith(recordId, branchId,
+                                            commitId);
+                                    });
+                                    it('and GET endpoint is not successful', function() {
+                                        $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '?' + params)
+                                            .respond(400, null, null, error);
+                                        ontologyManagerSvc.getOntology(recordId, format).then(function() {
+                                            fail('Promise should have rejected');
+                                        }, function(response) {
+                                            expect(response).toEqual(error);
+                                        });
+                                        scope.$apply();
+                                        expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(recordId, catalogId);
+                                        expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(branchId, recordId,
+                                            catalogId);
+                                        expect(stateManagerSvc.createOntologyState).toHaveBeenCalledWith(recordId, branchId,
+                                            commitId);
+                                    });
+                                });
+                                it('and createOntologyState is rejected', function() {
+                                    createDeferred.reject(error);
+                                    ontologyManagerSvc.getOntology(recordId, format).then(function() {
+                                        fail('Promise should have rejected');
+                                    }, function(response) {
+                                        expect(response).toEqual(error);
+                                    });
+                                    scope.$apply();
+                                    expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(recordId, catalogId);
+                                    expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(branchId, recordId,
+                                        catalogId);
+                                    expect(stateManagerSvc.createOntologyState).toHaveBeenCalledWith(recordId, branchId, commitId);
+                                });
+                            });
+                            it('and getBranchHeadCommit is rejected', function() {
+                                commitDeferred.reject(error);
+                                ontologyManagerSvc.getOntology(recordId, format).then(function() {
+                                    fail('Promise should have rejected');
+                                }, function(response) {
+                                    expect(response).toEqual(error);
+                                });
+                                scope.$apply();
+                                expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(recordId, catalogId);
+                                expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(branchId, recordId, catalogId);
+                            });
+                        });
+                        it('and getMasterBranch is rejected', function() {
+                            masterDeferred.reject(error);
+                            ontologyManagerSvc.getOntology(recordId, format).then(function() {
+                                fail('Promise should have rejected');
+                            }, function(response) {
+                                expect(response).toEqual(error);
+                            });
+                            scope.$apply();
+                            expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(recordId, catalogId);
+                            expect(catalogManagerSvc.getBranchHeadCommit).not.toHaveBeenCalled();
+                        });
+                    });
+                    it('and deleteOntologyState is rejected', function() {
+                        deleteDeferred.reject(error);
                         ontologyManagerSvc.getOntology(recordId, format).then(function(response) {
                             fail('Promise should have rejected');
                         }, function(response) {
@@ -573,21 +792,8 @@ describe('Ontology Manager service', function() {
                         });
                         scope.$apply();
                         expect(catalogManagerSvc.getInProgressCommit).toHaveBeenCalledWith(recordId, catalogId);
-                        expect(catalogManagerSvc.getResource).toHaveBeenCalledWith(commitId, branchId, recordId,
-                            catalogId, false, format);
                         expect(stateManagerSvc.deleteOntologyState).toHaveBeenCalledWith(recordId, branchId, commitId);
                     });
-                });
-                it('with other message', function() {
-                    getDeferred.reject(error);
-                    stateManagerSvc.getOntologyStateByRecordId.and.returnValue({model: [ontologyState]});
-                    ontologyManagerSvc.getOntology(recordId, format).then(function(response) {
-                        fail('Promise should have rejected');
-                    }, function(response) {
-                        expect(response).toEqual(error);
-                    });
-                    scope.$apply();
-                    expect(stateManagerSvc.deleteOntologyState).toHaveBeenCalledWith(recordId, branchId, commitId);
                 });
             });
         });
@@ -612,14 +818,12 @@ describe('Ontology Manager service', function() {
                         stateManagerSvc.createOntologyState.and.returnValue(createDeferred.promise);
                     });
                     describe('and createOntologyState is resolved', function() {
-                        var resourceDeferred;
                         beforeEach(function() {
                             createDeferred.resolve();
-                            resourceDeferred = $q.defer();
-                            catalogManagerSvc.getResource.and.returnValue(resourceDeferred.promise);
                         });
-                        it('and getResource is resolved', function() {
-                            resourceDeferred.resolve(ontology);
+                        it('and GET endpoint is successful', function() {
+                            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '?' + params)
+                                .respond(200, ontology);
                             ontologyManagerSvc.getOntology(recordId, format).then(function(response) {
                                 _.set(expected, 'inProgressCommit', emptyInProgressCommit);
                                 expect(response).toEqual(expected);
@@ -632,11 +836,10 @@ describe('Ontology Manager service', function() {
                                 catalogId);
                             expect(stateManagerSvc.createOntologyState).toHaveBeenCalledWith(recordId, branchId,
                                 commitId);
-                            expect(catalogManagerSvc.getResource).toHaveBeenCalledWith(commitId, branchId, recordId,
-                                catalogId, false, format);
                         });
-                        it('and getResource is rejected', function() {
-                            resourceDeferred.reject(error);
+                        it('and GET endpoint is not successful', function() {
+                            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '?' + params)
+                                .respond(400, null, null, error);
                             ontologyManagerSvc.getOntology(recordId, format).then(function() {
                                 fail('Promise should have rejected');
                             }, function(response) {
@@ -648,8 +851,6 @@ describe('Ontology Manager service', function() {
                                 catalogId);
                             expect(stateManagerSvc.createOntologyState).toHaveBeenCalledWith(recordId, branchId,
                                 commitId);
-                            expect(catalogManagerSvc.getResource).toHaveBeenCalledWith(commitId, branchId, recordId,
-                                catalogId, false, format);
                         });
                     });
                     it('and createOntologyState is rejected', function() {
@@ -664,7 +865,6 @@ describe('Ontology Manager service', function() {
                         expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(branchId, recordId,
                             catalogId);
                         expect(stateManagerSvc.createOntologyState).toHaveBeenCalledWith(recordId, branchId, commitId);
-                        expect(catalogManagerSvc.getResource).not.toHaveBeenCalled();
                     });
                 });
                 it('and getBranchHeadCommit is rejected', function() {
@@ -677,7 +877,6 @@ describe('Ontology Manager service', function() {
                     scope.$apply();
                     expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(recordId, catalogId);
                     expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(branchId, recordId, catalogId);
-                    expect(catalogManagerSvc.getResource).not.toHaveBeenCalled();
                 });
             });
             it('and getMasterBranch is rejected', function() {
@@ -690,8 +889,26 @@ describe('Ontology Manager service', function() {
                 scope.$apply();
                 expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(recordId, catalogId);
                 expect(catalogManagerSvc.getBranchHeadCommit).not.toHaveBeenCalled();
-                expect(catalogManagerSvc.getResource).not.toHaveBeenCalled();
             });
+        });
+    });
+
+    describe('downloadOntology should set the $window.location properly', function() {
+        it('with a format', function() {
+            ontologyManagerSvc.downloadOntology(recordId, branchId, commitId, 'turtle');
+            expect(windowSvc.location).toBe('/matontorest/ontologies/' + encodeURIComponent(recordId) + '?branchId=' + encodeURIComponent(branchId) + '&commitId=' + encodeURIComponent(commitId) + '&fileName=ontology&rdfFormat=turtle');
+        });
+        it('without a format', function() {
+            ontologyManagerSvc.downloadOntology(recordId, branchId, commitId);
+            expect(windowSvc.location).toBe('/matontorest/ontologies/' + encodeURIComponent(recordId) + '?branchId=' + encodeURIComponent(branchId) + '&commitId=' + encodeURIComponent(commitId) + '&fileName=ontology&rdfFormat=jsonld');
+        });
+        it('with a fileName', function() {
+            ontologyManagerSvc.downloadOntology(recordId, branchId, commitId, 'turtle', 'fileName');
+            expect(windowSvc.location).toBe('/matontorest/ontologies/' + encodeURIComponent(recordId) + '?branchId=' + encodeURIComponent(branchId) + '&commitId=' + encodeURIComponent(commitId) + '&fileName=fileName&rdfFormat=turtle');
+        });
+        it('without a fileName', function() {
+            ontologyManagerSvc.downloadOntology(recordId, branchId, commitId, 'turtle');
+            expect(windowSvc.location).toBe('/matontorest/ontologies/' + encodeURIComponent(recordId) + '?branchId=' + encodeURIComponent(branchId) + '&commitId=' + encodeURIComponent(commitId) + '&fileName=ontology&rdfFormat=turtle');
         });
     });
 
@@ -805,14 +1022,18 @@ describe('Ontology Manager service', function() {
     });
 
     describe('updateOntology should call the proper methods', function() {
-        var getDeferred;
+        var params;
         beforeEach(function() {
-            getDeferred = $q.defer();
-            catalogManagerSvc.getResource.and.returnValue(getDeferred.promise);
+            params = paramSerializer({
+                branchId: branchId,
+                commitId: commitId,
+                rdfFormat: format
+            });
         });
-        describe('and getResource resolves', function() {
+        describe('and GET endpoint is successful', function() {
             beforeEach(function() {
-                getDeferred.resolve(ontology);
+                $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '?' + params)
+                    .respond(200, ontology);
                 spyOn(ontologyManagerSvc, 'getListItemByRecordId').and.returnValue(listItem);
             });
             describe('and type is "ontology"', function() {
@@ -924,14 +1145,13 @@ describe('Ontology Manager service', function() {
                 });
             });
         });
-        it('and getResource rejects', function() {
-            getDeferred.reject(error);
+        it('and GET endpoint is not successful', function() {
+            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '?' + params)
+                .respond(400, null, null, error);
             ontologyManagerSvc.updateOntology(recordId, branchId, commitId)
                 .then(function() {
                     fail('Promise should have rejected');
                 }, function(response) {
-                    expect(catalogManagerSvc.getResource).toHaveBeenCalledWith(commitId, branchId, recordId, catalogId,
-                        false);
                     expect(response).toEqual(error);
                 });
             scope.$apply();
@@ -1751,11 +1971,22 @@ describe('Ontology Manager service', function() {
     });
 
     describe('isBlankNode should return', function() {
-        it('true if the entity contains the a blank node id', function() {
+        it('true if the entity contains a blank node id', function() {
             expect(ontologyManagerSvc.isBlankNode(blankNodeObj)).toBe(true);
         });
         it('false if the entity does not contain a blank node id', function() {
             expect(ontologyManagerSvc.isBlankNode({})).toBe(false);
+        });
+    });
+
+    describe('isBlankNodeId should return', function() {
+        it('true if the id is a blank node id', function() {
+            _.forEach(['', [], {}, true, false, undefined, null, 0, 1], function(test) {
+                expect(ontologyManagerSvc.isBlankNodeId(test)).toBe(false);
+            });
+        });
+        it('false if the id is not a blank node id', function() {
+            expect(ontologyManagerSvc.isBlankNodeId('_:genid')).toBe(true);
         });
     });
 
@@ -1817,15 +2048,18 @@ describe('Ontology Manager service', function() {
     it('removeEntity removes the entity from the provided ontology and index', function() {
         expect(ontologyManagerSvc.removeEntity(listItem, classId)).toEqual(classObj);
         expect(_.has(listItem.index, classId)).toBe(false);
-        expect(listItem.index.dataPropertyId).toEqual(1);
+        expect(listItem.index.dataPropertyId.position).toEqual(1);
     });
 
     it('addEntity adds the entity to the provided ontology and index', function() {
+        spyOn(ontologyManagerSvc, 'getEntityName').and.returnValue('name');
         ontologyManagerSvc.addEntity(listItem, individualObj);
         expect(ontology.length).toBe(4);
         expect(ontology[3]).toEqual(individualObj);
         expect(_.has(listItem.index, individualId)).toBe(true);
-        expect(listItem.index[individualId]).toEqual(3);
+        expect(listItem.index[individualId].position).toEqual(3);
+        expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith(individualObj, listItem.type);
+        expect(listItem.index[individualId].label).toBe('name');
     });
 
     describe('getEntityName should return', function() {
@@ -1909,6 +2143,24 @@ describe('Ontology Manager service', function() {
         });
     });
 
+    describe('getEntityNameByIndex should return the proper value', function() {
+        it('when the entityIRI is in the index', function() {
+            var listItem = {
+                index: {
+                    iri: {
+                        label: 'name'
+                    }
+                }
+            };
+            expect(ontologyManagerSvc.getEntityNameByIndex('iri', listItem)).toBe('name');
+        });
+        it('when the entityIRI is not in the index', function() {
+            util.getBeautifulIRI.and.returnValue('entity name');
+            expect(ontologyManagerSvc.getEntityNameByIndex('iri', {type: 'ontology'})).toBe('entity name');
+            expect(util.getBeautifulIRI).toHaveBeenCalledWith('iri');
+        });
+    });
+
     describe('getEntityDescription should return', function() {
         it('rdfs:comment if present', function() {
             util.getPropertyValue.and.returnValue(description);
@@ -1956,7 +2208,7 @@ describe('Ontology Manager service', function() {
             });
         });
         it('when get succeeds', function() {
-            $httpBackend.expectGET('/matontorest/ontologies/recordId/imported-ontologies?' + params)
+            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/imported-ontologies?' + params)
                 .respond(200, [ontology]);
             ontologyManagerSvc.getImportedOntologies(recordId, branchId, commitId)
                 .then(function(response) {
@@ -1967,7 +2219,7 @@ describe('Ontology Manager service', function() {
             flushAndVerify();
         });
         it('when get is empty', function() {
-            $httpBackend.expectGET('/matontorest/ontologies/recordId/imported-ontologies?' + params)
+            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/imported-ontologies?' + params)
                 .respond(204);
             ontologyManagerSvc.getImportedOntologies(recordId, branchId, commitId)
                 .then(function(response) {
@@ -1978,7 +2230,7 @@ describe('Ontology Manager service', function() {
             flushAndVerify();
         });
         it('when another success response', function() {
-            $httpBackend.expectGET('/matontorest/ontologies/recordId/imported-ontologies?' + params)
+            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/imported-ontologies?' + params)
                 .respond(201, null, null, error);
             ontologyManagerSvc.getImportedOntologies(recordId, branchId, commitId)
                 .then(function() {
@@ -1989,7 +2241,7 @@ describe('Ontology Manager service', function() {
             flushAndVerify();
         });
         it('when get fails', function() {
-            $httpBackend.expectGET('/matontorest/ontologies/recordId/imported-ontologies?' + params)
+            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/imported-ontologies?' + params)
                 .respond(400, null, null, error);
             ontologyManagerSvc.getImportedOntologies(recordId, branchId, commitId)
                 .then(function() {
@@ -2011,7 +2263,7 @@ describe('Ontology Manager service', function() {
         });
         describe('when get succeeds', function() {
             it('and queryType is select', function() {
-                $httpBackend.expectGET('/matontorest/ontologies/recordId/entity-usages/classId?' + params + '&queryType=select')
+                $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/entity-usages/classId?' + params + '&queryType=select')
                     .respond(200, usages);
                 ontologyManagerSvc.getEntityUsages(recordId, branchId, commitId, classId, 'select')
                     .then(function(response) {
@@ -2022,7 +2274,7 @@ describe('Ontology Manager service', function() {
                 flushAndVerify();
             });
             it('and queryType is construct', function() {
-                $httpBackend.expectGET('/matontorest/ontologies/recordId/entity-usages/classId?' + params + '&queryType=construct')
+                $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/entity-usages/classId?' + params + '&queryType=construct')
                     .respond(200, usages);
                 ontologyManagerSvc.getEntityUsages(recordId, branchId, commitId, classId, 'construct')
                     .then(function(response) {
@@ -2034,7 +2286,7 @@ describe('Ontology Manager service', function() {
             });
         });
         it('when get fails', function() {
-            $httpBackend.expectGET('/matontorest/ontologies/recordId/entity-usages/classId?' + params + '&queryType=select')
+            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/entity-usages/classId?' + params + '&queryType=select')
                 .respond(400, null, null, error);
             ontologyManagerSvc.getEntityUsages(recordId, branchId, commitId, classId)
                 .then(function() {
@@ -2128,7 +2380,7 @@ describe('Ontology Manager service', function() {
             });
         });
         it('when get succeeds', function() {
-            $httpBackend.expectGET('/matontorest/ontologies/recordId/search-results?' + params)
+            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/search-results?' + params)
                 .respond(200, searchResults);
             ontologyManagerSvc.getSearchResults(recordId, branchId, commitId, searchText)
                 .then(function(response) {
@@ -2139,7 +2391,7 @@ describe('Ontology Manager service', function() {
             flushAndVerify();
         });
         it('when get is empty', function() {
-            $httpBackend.expectGET('/matontorest/ontologies/recordId/search-results?' + params)
+            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/search-results?' + params)
                 .respond(204);
             ontologyManagerSvc.getSearchResults(recordId, branchId, commitId, searchText)
                 .then(function(response) {
@@ -2150,7 +2402,7 @@ describe('Ontology Manager service', function() {
             flushAndVerify();
         });
         it('when get succeeds with different code', function() {
-            $httpBackend.expectGET('/matontorest/ontologies/recordId/search-results?' + params)
+            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/search-results?' + params)
                 .respond(201);
             ontologyManagerSvc.getSearchResults(recordId, branchId, commitId, searchText)
                 .then(function() {
@@ -2161,7 +2413,7 @@ describe('Ontology Manager service', function() {
             flushAndVerify();
         });
         it('when get fails', function() {
-            $httpBackend.expectGET('/matontorest/ontologies/recordId/search-results?' + params)
+            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/search-results?' + params)
                 .respond(400, null, null, error);
             ontologyManagerSvc.getSearchResults(recordId, branchId, commitId, searchText)
                 .then(function() {
@@ -2182,15 +2434,15 @@ describe('Ontology Manager service', function() {
                 commitId: commitId
             });
             getDeferred = $q.defer();
-            iris = $httpBackend.expectGET('/matontorest/ontologies/recordId/iris?' + params);
-            importedIris = $httpBackend.expectGET('/matontorest/ontologies/recordId/imported-iris?' + params);
-            classHierarchies = $httpBackend.expectGET('/matontorest/ontologies/recordId/class-hierarchies?' + params);
+            iris = $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/iris?' + params);
+            importedIris = $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/imported-iris?' + params);
+            classHierarchies = $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/class-hierarchies?' + params);
             classesWithIndividuals = $httpBackend
-                .expectGET('/matontorest/ontologies/recordId/classes-with-individuals?' + params);
+                .expectGET('/matontorest/ontologies/' + recordId + '/classes-with-individuals?' + params);
             dataPropertyHierarchies = $httpBackend
-                .expectGET('/matontorest/ontologies/recordId/data-property-hierarchies?' + params);
+                .expectGET('/matontorest/ontologies/' + recordId + '/data-property-hierarchies?' + params);
             objectPropertyHierarchies = $httpBackend
-                .expectGET('/matontorest/ontologies/recordId/object-property-hierarchies?' + params);
+                .expectGET('/matontorest/ontologies/' + recordId + '/object-property-hierarchies?' + params);
             catalogManagerSvc.getRecordBranches.and.returnValue(getDeferred.promise);
         });
         it('when all promises resolve', function() {
@@ -2324,9 +2576,9 @@ describe('Ontology Manager service', function() {
                 commitId: commitId
             });
             getDeferred = $q.defer();
-            iris = $httpBackend.expectGET('/matontorest/ontologies/recordId/iris?' + params);
-            importedIris = $httpBackend.expectGET('/matontorest/ontologies/recordId/imported-iris?' + params);
-            conceptHierarchies = $httpBackend.expectGET('/matontorest/ontologies/recordId/concept-hierarchies?'
+            iris = $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/iris?' + params);
+            importedIris = $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/imported-iris?' + params);
+            conceptHierarchies = $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/concept-hierarchies?'
                 + params);
             catalogManagerSvc.getRecordBranches.and.returnValue(getDeferred.promise);
         });

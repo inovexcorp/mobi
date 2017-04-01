@@ -23,10 +23,11 @@ package org.matonto.jaas.api.modules.password;
  * #L%
  */
 
-import org.apache.log4j.Logger;
 import org.matonto.jaas.api.config.LoginModuleConfig;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.principals.UserPrincipal;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Map;
@@ -41,7 +42,7 @@ import javax.security.auth.login.LoginException;
 import javax.security.auth.spi.LoginModule;
 
 public class PasswordLoginModule implements LoginModule {
-    private static final Logger LOG = Logger.getLogger(PasswordLoginModule.class.getName());
+    private static final Logger LOG = LoggerFactory.getLogger(PasswordLoginModule.class.getName());
     private EngineManager engineManager;
     private String engineName;
     private Subject subject;

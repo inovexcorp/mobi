@@ -84,6 +84,19 @@ body {
     }
 }
 
+/* Manchester Syntax styles */
+.manchester-expr {
+    color: $brand-primary;
+    font-weight: bold;
+}
+.manchester-rest {
+    color: $brand-success;
+    font-weight: bold;
+}
+.manchester-lit {
+    color: #FFAC3A;
+}
+
 /* clears out ul styles */
 ul {
     list-style: none;
@@ -230,28 +243,10 @@ ul {
     a {
         color: inherit;
         cursor: pointer;
-        display: inline-block;
-        overflow-x: hidden;
-        padding: 3px 19px 3px 4px;
-        position: relative;
+        display: flex;
+        padding: 3px 4px;
         text-decoration: none;
-        text-overflow: ellipsis;
-        vertical-align: top;
-        width: 100%;
-        white-space: nowrap;
 
-        /* The tree node changes are unsaved */
-        &.unsaved .unsaved-icon {
-            color: $brand-success;
-            line-height: 19px;
-            margin: 0;
-            padding: 0 5px;
-            position: absolute;
-            right: 4px;
-            top: 3px;
-        }
-
-        /* Hover changes color and background color */
         &:hover,
         &.active,
         &.active .unsaved-icon,
@@ -260,8 +255,15 @@ ul {
             color: #fff;
         }
 
-        /* adds some spacing to the right of the icons */
+        > span {
+            flex: 1;
+            overflow-x: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
         > .fa.fa-fw {
+            line-height: 20px;
             margin-right: 2px;
 
             &.fa-minus-square-o:hover:before {
@@ -271,25 +273,11 @@ ul {
             &.fa-plus-square-o:hover:before {
                 content: '\f0fe';
             }
-        }
-    }
 
-    /* The create links are a different color by default so need their own styles */
-    .creator a {
-        color: $brand-primary;
-
-        /* Changes color to white on hover */
-        &:hover,
-        &.active {
-            color: #fff;
-        }
-
-        /* Gray out text whenever the link is disabled */
-        &.disabled,
-        &.disabled:hover {
-            background-color: #fff;
-            color: $gray-lighter;
-            cursor: not-allowed;
+            &.fa-caret-left {
+                margin-right: 0;
+                margin-left: 2px;
+            }
         }
     }
 

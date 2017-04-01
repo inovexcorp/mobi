@@ -49,6 +49,7 @@ import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.api.RepositoryManager;
 import org.matonto.rest.util.ErrorUtils;
 import org.matonto.rest.util.LinksUtils;
+import org.matonto.rest.util.MatOntoWebException;
 import org.matonto.rest.util.jaxb.Links;
 import org.matonto.sparql.rest.SparqlRest;
 import org.slf4j.Logger;
@@ -97,8 +98,12 @@ public class SparqlRestImpl implements SparqlRest {
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MalformedQueryException ex) {
-            throw ErrorUtils.sendError(ex, "Query is invalid. Please change the query and re-execute.",
-                    Response.Status.BAD_REQUEST);
+            String statusText = "Query is invalid. Please change the query and re-execute.";
+            MatOntoWebException.CustomStatus status = new MatOntoWebException.CustomStatus(400, statusText);
+            Response response = Response.status(status)
+                    .entity(new JSONObject().element("details", ex.getCause().getMessage()).toString())
+                    .build();
+            throw ErrorUtils.sendError(ex, statusText, response);
         } catch (MatOntoException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -112,8 +117,12 @@ public class SparqlRestImpl implements SparqlRest {
             TupleQuery query = conn.prepareTupleQuery(queryString);
             return query.evaluateAndReturn();
         } catch (MalformedQueryException ex) {
-            throw ErrorUtils.sendError(ex, "Query is invalid. Please change the query and re-execute.",
-                    Response.Status.BAD_REQUEST);
+            String statusText = "Query is invalid. Please change the query and re-execute.";
+            MatOntoWebException.CustomStatus status = new MatOntoWebException.CustomStatus(400, statusText);
+            Response response = Response.status(status)
+                    .entity(new JSONObject().element("details", ex.getCause().getMessage()).toString())
+                    .build();
+            throw ErrorUtils.sendError(ex, statusText, response);
         } catch (MatOntoException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -303,6 +312,5 @@ public class SparqlRestImpl implements SparqlRest {
             os.flush();
             os.close();
         };
-
     }
 }

@@ -25,7 +25,6 @@ package org.matonto.etl.service.rdf;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
-import org.apache.log4j.Logger;
 import org.matonto.etl.api.rdf.RDFExportService;
 import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.rdf.api.IRI;
@@ -43,6 +42,8 @@ import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.RDFHandler;
 import org.openrdf.rio.Rio;
 import org.openrdf.rio.helpers.BufferedGroupingRDFHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -55,7 +56,7 @@ import java.util.Optional;
 @Component(provide = RDFExportService.class)
 public class RDFExportServiceImpl implements RDFExportService {
 
-    private static final Logger LOGGER = Logger.getLogger(RDFExportServiceImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(RDFExportServiceImpl.class);
 
     private Map<String, Repository> initializedRepositories = new HashMap<>();
 

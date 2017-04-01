@@ -151,7 +151,7 @@ describe('Create Concept Scheme Overlay directive', function() {
             expect(ontologyStateSvc.setCommonIriParts).toHaveBeenCalledWith('begin', 'then');
         });
         it('should create a concept', function() {
-            var listItem = {ontology: [{}], conceptHierarchy: [], index: {}};
+            var listItem = {ontology: [{}], conceptHierarchy: []};
             controller.concepts = [{}];
             ontologyStateSvc.listItem = listItem;
             controller.scheme = {'@id': 'scheme'};
@@ -162,11 +162,11 @@ describe('Create Concept Scheme Overlay directive', function() {
             expect(ontologyManagerSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, controller.scheme);
             expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(controller.scheme, controller.language);
             expect(listItem.conceptHierarchy).toContain({entityIRI: controller.scheme['@id']});
-            expect(listItem.index[controller.scheme['@id']]).toBe(0);
             expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                 controller.scheme);
             expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(controller.scheme['@id']);
             expect(ontologyStateSvc.showCreateConceptSchemeOverlay).toBe(false);
+            expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
         });
     });
     it('should call create when the button is clicked', function() {

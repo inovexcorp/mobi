@@ -23,12 +23,17 @@ package org.matonto.jaas.api.utils;
  * #L%
  */
 
-import com.nimbusds.jose.*;
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.JWSHeader;
+import com.nimbusds.jose.JWSSigner;
+import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.security.SecureRandom;
@@ -42,7 +47,7 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.MediaType;
 
 public class TokenUtils {
-    private static final Logger LOG = Logger.getLogger(TokenUtils.class.getName());
+    private static final Logger LOG = LoggerFactory.getLogger(TokenUtils.class.getName());
 
     // Generate random 256-bit (32-byte) shared secret
     private static final SecureRandom random = new SecureRandom();

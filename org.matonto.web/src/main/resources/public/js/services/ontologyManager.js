@@ -55,11 +55,9 @@
          */
         .service('ontologyManagerService', ontologyManagerService);
 
-        ontologyManagerService.$inject = ['$window', '$http', '$q', '$timeout', '$filter', 'prefixes',
-            'propertyManagerService', 'catalogManagerService', 'utilService', 'stateManagerService'];
+        ontologyManagerService.$inject = ['$window', '$http', '$q', '$timeout', '$filter', 'prefixes', 'propertyManagerService', 'catalogManagerService', 'utilService', 'stateManagerService', '$httpParamSerializer'];
 
-        function ontologyManagerService($window, $http, $q, $timeout, $filter, prefixes,
-            propertyManagerService, catalogManagerService, utilService, stateManagerService) {
+        function ontologyManagerService($window, $http, $q, $timeout, $filter, prefixes, propertyManagerService, catalogManagerService, utilService, stateManagerService, $httpParamSerializer) {
             var self = this;
             var prefix = '/matontorest/ontologies';
             var xsdDatatypes = _.map(['anyURI', 'boolean', 'byte', 'dateTime', 'decimal', 'double', 'float', 'int', 'integer', 'language', 'long', 'string'], item => {
@@ -101,7 +99,8 @@
                     deletions: []
                 },
                 branches: [],
-                upToDate: true
+                upToDate: true,
+                isSaved: false
             };
             var vocabularyListItemTemplate = {
                 ontology: [],
@@ -118,7 +117,8 @@
                     deletions: []
                 },
                 branches: [],
-                upToDate: true
+                upToDate: true,
+                isSaved: false
             };
             var emptyInProgressCommit = {
                 additions: [],
@@ -343,20 +343,21 @@
                             commitId = _.get(headCommit, "commit['@id']", '');
                             return sm.createOntologyState(recordId, branchId, commitId);
                         }, $q.reject)
-                        .then(() => cm.getResource(commitId, branchId, recordId, catalogId, false, rdfFormat), $q.reject)
+                        .then(() => retrieveOntology(recordId, branchId, commitId, rdfFormat), $q.reject)
                         .then(ontology => resolve(ontology, emptyInProgressCommit), deferred.reject);
                 }
                 if (!_.isEmpty(state)) {
                     var inProgressCommit = emptyInProgressCommit;
                     branchId = _.get(state, "model[0]['" + prefixes.ontologyState + "branch'][0]['@id']");
                     commitId = _.get(state, "model[0]['" + prefixes.ontologyState + "commit'][0]['@id']");
+
                     cm.getInProgressCommit(recordId, catalogId)
                         .then(response => {
                             inProgressCommit = response;
-                            return cm.getResource(commitId, branchId, recordId, catalogId, true, rdfFormat)
+                            return retrieveOntology(recordId, branchId, commitId, rdfFormat);
                         }, errorMessage => {
                             if (errorMessage === 'User has no InProgressCommit') {
-                                return cm.getResource(commitId, branchId, recordId, catalogId, false, rdfFormat);
+                                return retrieveOntology(recordId, branchId, commitId, rdfFormat);
                             }
                             return $q.reject();
                         })
@@ -368,6 +369,30 @@
                     deferred.resolve({ontology, recordId, branchId, commitId, inProgressCommit});
                 }
                 return deferred.promise;
+            }
+            /**
+             * @ngdoc method
+             * @name downloadOntology
+             * @methodOf catalogManager.service:catalogManagerService
+             *
+             * @description
+             * Calls the GET /matontorest/ontologies/{recordId} endpoint using the `window.location` variable which will
+             * start a download of the ontology starting at the identified Commit.
+             *
+             * @param {string} recordId The id of the Record the Branch should be part of
+             * @param {string} branchId The id of the Branch with the specified Commit
+             * @param {string} commitId The id of the Commit to retrieve the compiled resource from
+             * @param {string} [rdfFormat='jsonld'] The RDF format to return the compiled resource in
+             * @param {string} [fileName='ontology'] The name given to the downloaded file
+             */
+            self.downloadOntology = function(recordId, branchId, commitId, rdfFormat = 'jsonld', fileName = 'ontology') {
+                var params = $httpParamSerializer({
+                    branchId: encodeURIComponent(branchId),
+                    commitId: encodeURIComponent(commitId),
+                    rdfFormat,
+                    fileName
+                });
+                $window.location = prefix + '/' + encodeURIComponent(recordId) + '?' + params;
             }
             /**
              * @ngdoc method
@@ -429,8 +454,7 @@
             self.updateOntology = function(recordId, branchId, commitId, type = 'ontology', upToDate = true, inProgressCommit = emptyInProgressCommit) {
                 var listItem;
                 var deferred = $q.defer();
-                var apply = !_.isEqual(inProgressCommit, emptyInProgressCommit);
-                cm.getResource(commitId, branchId, recordId, catalogId, apply)
+                retrieveOntology(recordId, branchId, commitId)
                     .then(ontology => {
                         var ontologyId = self.getListItemByRecordId(recordId).ontologyId;
                         if (type === 'ontology') {
@@ -686,16 +710,7 @@
                 }
                 $http.post(prefix, ontologyJson, config)
                     .then(response => {
-                        var listItem = {};
-                        if (type === 'ontology') {
-                            listItem = setupListItem(response.data.ontologyId, response.data.recordId,
-                                response.data.branchId, response.data.commitId, [ontologyJson], emptyInProgressCommit,
-                                ontologyListItemTemplate);
-                        } else if (type === 'vocabulary') {
-                            listItem = setupListItem(response.data.ontologyId, response.data.recordId,
-                                response.data.branchId, response.data.commitId, [ontologyJson], emptyInProgressCommit,
-                                vocabularyListItemTemplate);
-                        }
+                        var listItem = setupListItem(response.data.ontologyId, response.data.recordId, response.data.branchId, response.data.commitId, [ontologyJson], emptyInProgressCommit, type);
                         cm.getRecordBranch(response.data.branchId, response.data.recordId, catalogId)
                             .then(branch => {
                                 listItem.branches = [branch];
@@ -1201,7 +1216,21 @@
              * @returns {boolean} Returns true if it is a blank node entity, otherwise returns false.
              */
             self.isBlankNode = function(entity) {
-                return _.includes(_.get(entity, '@id', ''), '_:b');
+                return self.isBlankNodeId(_.get(entity, '@id', ''));
+            }
+            /**
+             * @ngdoc method
+             * @name isBlankNodeId
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Checks if the provided entity id is a blank node id. Returns a boolean.
+             *
+             * @param {string} id The id to check.
+             * @return {boolean} Retrurns true if the id is a blank node id, otherwise returns false.
+             */
+            self.isBlankNodeId = function(id) {
+                return _.isString(id) && _.includes(id, '_:genid');
             }
             /**
              * @ngdoc method
@@ -1262,11 +1291,11 @@
              * @returns {Object} An Object which represents the requested entity.
              */
             self.removeEntity = function(listItem, entityIRI) {
-                var entityIndex = _.get(listItem.index, entityIRI);
+                var entityPosition = _.get(listItem.index, entityIRI + '.position');
                 _.unset(listItem.index, entityIRI);
                 _.forOwn(listItem.index, (value, key) => {
-                    if (value > entityIndex) {
-                        listItem.index[key] = value - 1;
+                    if (value.position > entityPosition) {
+                        listItem.index[key].position = value.position - 1;
                     }
                 });
                 return _.remove(listItem.ontology, {matonto:{originalIRI: entityIRI}})[0];
@@ -1285,7 +1314,10 @@
              */
             self.addEntity = function(listItem, entityJSON) {
                 listItem.ontology.push(entityJSON);
-                _.get(listItem, 'index', {})[entityJSON['@id']] = listItem.ontology.length - 1;
+                _.get(listItem, 'index', {})[entityJSON['@id']] = {
+                    position: listItem.ontology.length - 1,
+                    label: self.getEntityName(entityJSON, listItem.type)
+                }
             }
             /**
              * @ngdoc method
@@ -1304,6 +1336,10 @@
                 var result = utilService.getPropertyValue(entity, prefixes.rdfs + 'label')
                     || utilService.getDctermsValue(entity, 'title')
                     || utilService.getPropertyValue(entity, prefixes.dc + 'title');
+                if (type === 'vocabulary') {
+                    result = utilService.getPropertyValue(entity, prefixes.skos + 'prefLabel')
+                        || utilService.getPropertyValue(entity, prefixes.skos + 'altLabel') || result;
+                }
                 if (!result) {
                     if (_.has(entity, '@id')) {
                         result = utilService.getBeautifulIRI(entity['@id']);
@@ -1311,11 +1347,23 @@
                         result = _.get(entity, 'matonto.anonymous', '');
                     }
                 }
-                if (type === 'vocabulary') {
-                    result = utilService.getPropertyValue(entity, prefixes.skos + 'prefLabel')
-                        || utilService.getPropertyValue(entity, prefixes.skos + 'altLabel') || result;
-                }
                 return result;
+            }
+            /**
+             * @ngdoc method
+             * @name getEntityNameByIndex
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Gets the entity's name using the provided entityIRI and listItem to find the entity's label in the index.
+             * If that entityIRI is not in the index, defaults to the
+             * {@link ontologyManager.service:ontologyManagerService#getEntityName getEntityName} behavior.
+             *
+             * @param {Object} entity The entity you want the name of.
+             * @returns {string} The beautified IRI string.
+             */
+            self.getEntityNameByIndex = function(entityIRI, listItem) {
+                return _.get(listItem, "index['" + entityIRI + "'].label", utilService.getBeautifulIRI(entityIRI));
             }
             /**
              * @ngdoc method
@@ -1543,8 +1591,7 @@
             self.createOntologyListItem = function(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit,
                 upToDate = true) {
                 var deferred = $q.defer();
-                var listItem = setupListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit,
-                    ontologyListItemTemplate);
+                var listItem = setupListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, 'ontology');
                 var config = {params: {branchId, commitId}};
                 $q.all([
                     $http.get(prefix + '/' + encodeURIComponent(recordId) + '/iris', config),
@@ -1635,8 +1682,7 @@
             self.createVocabularyListItem = function(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit,
                 upToDate = true) {
                 var deferred = $q.defer();
-                var listItem = setupListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit,
-                    vocabularyListItemTemplate);
+                var listItem = setupListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, 'vocabulary');
                 var config = {params: {branchId, commitId}};
                 $q.all([
                     $http.get(prefix + '/' + encodeURIComponent(recordId) + '/iris', config),
@@ -1790,14 +1836,17 @@
                 }
                 return readableText;
             }
-            function setupListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, template) {
-                var listItem = angular.copy(template);
+            function setupListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, type) {
+                var listItem = (type === 'ontology') ? angular.copy(ontologyListItemTemplate) : angular.copy(vocabularyListItemTemplate);
                 var blankNodes = {};
                 var index = {};
                 _.forEach(ontology, (entity, i) => {
                     if (_.has(entity, '@id')) {
                         _.set(entity, 'matonto.originalIRI', entity['@id']);
-                        index[entity['@id']] = i;
+                        index[entity['@id']] = {
+                            position: i,
+                            label: self.getEntityName(entity, type)
+                        }
                     } else {
                         _.set(entity, 'matonto.anonymous', ontologyId + ' (Anonymous Ontology)');
                     }
@@ -1848,11 +1897,28 @@
             function getEntityFromListItem(listItem, entityIRI) {
                 var index = _.get(listItem, 'index');
                 var ontology = _.get(listItem, 'ontology');
-                if (_.has(index, entityIRI)) {
-                    return ontology[_.get(index, entityIRI)];
+                if (_.has(index, entityIRI + '.position')) {
+                    return ontology[index[entityIRI].position];
                 } else {
                     return self.getEntity(ontology, entityIRI);
                 }
+            }
+            function retrieveOntology(recordId, branchId, commitId, rdfFormat = 'jsonld') {
+                var deferred = $q.defer();
+                var config = {
+                    headers: {
+                        'Content-Type': undefined,
+                        'Accept': 'text/plain'
+                    },
+                    params: {
+                        branchId,
+                        commitId,
+                        rdfFormat
+                    }
+                }
+                $http.get(prefix + '/' + encodeURIComponent(recordId), config)
+                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
+                return deferred.promise;
             }
         }
 })();

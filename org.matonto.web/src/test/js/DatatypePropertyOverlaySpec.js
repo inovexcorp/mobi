@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Datatype Property Overlay directive', function() {
-    var $compile, scope, element, controller, ontologyStateSvc, ontologyManagerSvc, responseObj, prefixes;
+    var $compile, scope, element, controller, ontologyStateSvc, ontologyManagerSvc, responseObj, prefixes, ontoUtils;
 
     beforeEach(function() {
         module('templates');
@@ -34,14 +34,16 @@ describe('Datatype Property Overlay directive', function() {
         mockResponseObj();
         mockUtil();
         mockPrefixes();
+        mockOntologyUtilsManager();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyManagerService_, _responseObj_, _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyManagerService_, _responseObj_, _prefixes_, _ontologyUtilsManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
             ontologyManagerSvc = _ontologyManagerService_;
             responseObj = _responseObj_;
             prefixes = _prefixes_;
+            ontoUtils = _ontologyUtilsManagerService_;
         });
 
         element = $compile(angular.element('<datatype-property-overlay></datatype-property-overlay>'))(scope);
@@ -106,6 +108,7 @@ describe('Datatype Property Overlay directive', function() {
                 expect(ontologyStateSvc.showDataPropertyOverlay).toBe(false);
                 expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                     jasmine.any(Object));
+                expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             });
             it('without a type and no language', function() {
                 controller.addProperty({}, this.value);
@@ -114,6 +117,7 @@ describe('Datatype Property Overlay directive', function() {
                 expect(ontologyStateSvc.showDataPropertyOverlay).toBe(false);
                 expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                     jasmine.any(Object));
+                expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             });
             it('with a language and isStringType is true', function() {
                 spyOn(controller, 'isStringType').and.returnValue(true);
@@ -125,6 +129,7 @@ describe('Datatype Property Overlay directive', function() {
                 expect(ontologyStateSvc.showDataPropertyOverlay).toBe(false);
                 expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                     jasmine.any(Object));
+                expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             });
             it('with a language and isStringType is false', function() {
                 spyOn(controller, 'isStringType').and.returnValue(false);
@@ -136,6 +141,7 @@ describe('Datatype Property Overlay directive', function() {
                 expect(ontologyStateSvc.showDataPropertyOverlay).toBe(false);
                 expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                     jasmine.any(Object));
+                expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             });
             it('without a language', function() {
                 spyOn(controller, 'isStringType').and.returnValue(false);
@@ -146,6 +152,7 @@ describe('Datatype Property Overlay directive', function() {
                 expect(ontologyStateSvc.showDataPropertyOverlay).toBe(false);
                 expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                     jasmine.any(Object));
+                expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             });
         });
         describe('should edit a data property', function() {
@@ -164,6 +171,7 @@ describe('Datatype Property Overlay directive', function() {
                 expect(ontologyStateSvc.showDataPropertyOverlay).toBe(false);
                 expect(ontologyManagerSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                     jasmine.any(Object));
+                expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             });
             it('if the type is not provided and no language', function() {
                 controller.editProperty({}, this.value);
@@ -173,6 +181,7 @@ describe('Datatype Property Overlay directive', function() {
                 expect(ontologyStateSvc.showDataPropertyOverlay).toBe(false);
                 expect(ontologyManagerSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                     jasmine.any(Object));
+                expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             });
             it('if the language is provided and isStringType is true', function() {
                 spyOn(controller, 'isStringType').and.returnValue(true);
@@ -185,6 +194,7 @@ describe('Datatype Property Overlay directive', function() {
                 expect(ontologyStateSvc.showDataPropertyOverlay).toBe(false);
                 expect(ontologyManagerSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                     jasmine.any(Object));
+                expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             });
             it('if the language is provided and isStringType is false', function() {
                 spyOn(controller, 'isStringType').and.returnValue(false);
@@ -197,6 +207,7 @@ describe('Datatype Property Overlay directive', function() {
                 expect(ontologyStateSvc.showDataPropertyOverlay).toBe(false);
                 expect(ontologyManagerSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                     jasmine.any(Object));
+                expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             });
             it('if the language is not provided', function() {
                 var type = {'@id': 'type'};
@@ -207,6 +218,7 @@ describe('Datatype Property Overlay directive', function() {
                 expect(ontologyStateSvc.showDataPropertyOverlay).toBe(false);
                 expect(ontologyManagerSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                     jasmine.any(Object));
+                expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             });
         });
         describe('should determine if type if a string type', function() {
