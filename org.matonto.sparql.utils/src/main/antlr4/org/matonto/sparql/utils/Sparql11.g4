@@ -1,5 +1,8 @@
 grammar Sparql11;
 
+// SPARQL is case-insensitive with the exception of 'a' (rdf:type) and escape sequences. Since all of these
+// cases refer to lower-case characters, it should be safe to use this grammar with a CaseInsensitiveInputStream
+
 options{
     language = Java;
 }
