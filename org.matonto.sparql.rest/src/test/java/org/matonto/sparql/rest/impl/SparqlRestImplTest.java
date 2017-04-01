@@ -287,10 +287,22 @@ public class SparqlRestImplTest extends MatontoRestTestNg {
         Response response = target().path("sparql").queryParam("query", RestUtils.encode("+"))
                 .queryParam("fileType", "csv").request().get();
         assertEquals(response.getStatus(), 400);
+        try {
+            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
+            assertTrue(result.containsKey("details"));
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
 
         response = target().path("sparql").queryParam("query", RestUtils.encode("+")).queryParam("dataset", DATASET_ID)
                 .queryParam("fileType", "csv").request().get();
         assertEquals(response.getStatus(), 400);
+        try {
+            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
+            assertTrue(result.containsKey("details"));
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
     }
 
     @Test
@@ -370,12 +382,8 @@ public class SparqlRestImplTest extends MatontoRestTestNg {
     }
 
     @Test
-    public void getPagedResultsWithNonPositiveLimitTest() {
+    public void getPagedResultsWithNegativeLimitTest() {
         Response response = target().path("sparql/page").queryParam("query", ALL_QUERY)
-                .queryParam("limit", 0).request().get();
-        assertEquals(response.getStatus(), 400);
-
-        response = target().path("sparql/page").queryParam("query", ALL_QUERY)
                 .queryParam("limit", -1).request().get();
         assertEquals(response.getStatus(), 400);
     }
@@ -410,9 +418,21 @@ public class SparqlRestImplTest extends MatontoRestTestNg {
     public void getPagedResultsWithInvalidQueryTest() {
         Response response = target().path("sparql/page").queryParam("query", encode("+")).request().get();
         assertEquals(response.getStatus(), 400);
+        try {
+            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
+            assertTrue(result.containsKey("details"));
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
 
         response = target().path("sparql/page").queryParam("query", encode("+")).queryParam("dataset", DATASET_ID)
                 .request().get();
         assertEquals(response.getStatus(), 400);
+        try {
+            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
+            assertTrue(result.containsKey("details"));
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
     }
 }

@@ -44,7 +44,7 @@ public class QueryTest {
     @Test
     public void parseSimpleQuery() throws Exception {
         InputStream query = getClass().getResourceAsStream("/example1.rq");
-        SparqlParser parser = Query.getParser(streamToString(query));
+        Sparql11Parser parser = Query.getParser(streamToString(query));
         parser.addErrorListener(new BaseErrorListener() {
             @Override
             public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
@@ -57,7 +57,7 @@ public class QueryTest {
     @Test
     public void replaceDatasetClause() throws Exception {
         InputStream query = getClass().getResourceAsStream("/example2.rq");
-        SparqlParser parser = Query.getParser(streamToString(query));
+        Sparql11Parser parser = Query.getParser(streamToString(query));
         parser.addErrorListener(new BaseErrorListener() {
             @Override
             public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
@@ -65,7 +65,7 @@ public class QueryTest {
             }
         });
 
-        SparqlParser.QueryContext queryContext = parser.query();
+        Sparql11Parser.QueryContext queryContext = parser.query();
 
         // Rewrite the dataset clause
         TokenStreamRewriter rewriter = new TokenStreamRewriter(parser.getTokenStream());
@@ -82,9 +82,9 @@ public class QueryTest {
 
     @Test
     public void insensitiveToCase() throws Exception {
-        String queryString = "select * WHERE { ?s ?P ?o }";
-        String queryNoSpaces = "select*WHERE{?s?P?o}";
-        SparqlParser parser = Query.getParser(queryString);
+        String queryString = "select * WHERE { ?x ?Y ?z }";
+        String queryNoSpaces = "select*WHERE{?x?Y?z}";
+        Sparql11Parser parser = Query.getParser(queryString);
         TokenStream tokens = parser.getTokenStream();
         parser.addErrorListener(new BaseErrorListener() {
             @Override
@@ -100,7 +100,7 @@ public class QueryTest {
     @Test
     public void insensitiveToCaseBuiltInCall() throws Exception {
         String queryString = "select * WHERE { ?s ?P ?o FILTeR (sameTeRm(?s, ?o))}";
-        SparqlParser parser = Query.getParser(queryString);
+        Sparql11Parser parser = Query.getParser(queryString);
         TokenStream tokens = parser.getTokenStream();
         parser.addErrorListener(new BaseErrorListener() {
             @Override
@@ -117,7 +117,7 @@ public class QueryTest {
         return IOUtils.toString(inputStream, "UTF-8");
     }
 
-    private class DatasetListener extends SparqlBaseListener {
+    private class DatasetListener extends Sparql11BaseListener {
 
         TokenStreamRewriter rewriter;
 
@@ -126,7 +126,7 @@ public class QueryTest {
         }
 
         @Override
-        public void enterDatasetClause(SparqlParser.DatasetClauseContext ctx) {
+        public void enterDatasetClause(Sparql11Parser.DatasetClauseContext ctx) {
             rewriter.replace(ctx.getStart(), ctx.getStop(), DATASET_REPLACEMENT);
         }
     }

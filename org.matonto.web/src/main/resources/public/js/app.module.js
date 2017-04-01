@@ -109,6 +109,7 @@
             'datasetState',
             'delimitedManager',
             'loginManager',
+            'manchesterConverter',
             'mapperState',
             'mappingManager',
             'ontologyManager',

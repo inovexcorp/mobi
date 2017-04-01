@@ -1,7 +1,7 @@
 /* Core variables */
 @import "./src/main/resources/public/css/variables";
 
-.sparql-results {
+.sparql-result-table {
     height: 100%;
     position: relative;
 
@@ -10,6 +10,10 @@
     }
     .message {
         margin: 10px;
+    }
+    pre {
+        background-color: #fff;
+        border: 0;
     }
     .footer-relative {
         position: relative;

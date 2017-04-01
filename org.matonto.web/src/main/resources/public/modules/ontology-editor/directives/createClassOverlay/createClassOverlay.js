@@ -82,12 +82,12 @@
                         _.get(dvm.sm.listItem, 'subClasses').push({namespace:split.begin + split.then,
                             localName: split.end});
                         _.get(dvm.sm.listItem, 'classHierarchy').push({'entityIRI': dvm.clazz['@id']});
-                        _.set(_.get(dvm.sm.listItem, 'index'), dvm.clazz['@id'], dvm.sm.listItem.ontology.length - 1);
                         dvm.om.addToAdditions(dvm.sm.listItem.recordId, dvm.clazz);
                         // select the new class
                         dvm.sm.selectItem(_.get(dvm.clazz, '@id'));
                         // hide the overlay
                         dvm.sm.showCreateClassOverlay = false;
+                        ontoUtils.saveCurrentChanges();
                     }
                 }
             }

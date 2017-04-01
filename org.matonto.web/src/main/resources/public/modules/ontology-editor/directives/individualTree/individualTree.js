@@ -40,7 +40,7 @@
                     var dvm = this;
                     dvm.om = ontologyManagerService;
                     dvm.sm = ontologyStateService;
-                    dvm.ou = ontologyUtilsManagerService;
+                    dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.util = utilService;
                 }
             }

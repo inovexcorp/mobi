@@ -96,14 +96,6 @@ describe('Usages Block directive', function() {
             expect(result.querySelectorAll('.value-container').length).toBe(_.keys(controller.results.iri).length);
         });
     });
-    describe('controller methods', function() {
-        it('should get the display for a binding', function() {
-            var split = {begin: 'begin', then: 'then', end: 'end'};
-            splitIRIFilter.and.returnValue(split);
-            expect(controller.getBindingDisplay('test')).toBe('end');
-            expect(splitIRIFilter).toHaveBeenCalledWith('test');
-        });
-    });
     it('should update the results when the usages change', function() {
         ontologyStateSvc.getActivePage.and.returnValue({
             usages: [{

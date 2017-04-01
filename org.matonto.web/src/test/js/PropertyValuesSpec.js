@@ -24,8 +24,10 @@ describe('Property Values directive', function() {
     var $compile,
         scope,
         element,
+        isolatedScope,
         resObj,
-        ontologyUtilsManagerSvc;
+        ontologyUtilsManagerSvc,
+        ontologyManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -34,43 +36,43 @@ describe('Property Values directive', function() {
         mockResponseObj();
         mockOntologyState();
         mockOntologyUtilsManager();
+        mockOntologyManager();
 
-        inject(function(_$compile_, _$rootScope_, _responseObj_, _ontologyUtilsManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _responseObj_, _ontologyUtilsManagerService_, _ontologyManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             resObj = _responseObj_;
             ontologyUtilsManagerSvc = _ontologyUtilsManagerService_;
+            ontologyManagerSvc = _ontologyManagerService_;
         });
 
-        scope.entity = {'prop': [{'@id': 'value1'}, {'@id': '_:b0'}]};
+        scope.entity = {'prop': [{'@id': 'value1'}, {'@id': '_:genid0'}]};
         scope.property = 'prop';
         scope.edit = jasmine.createSpy('edit');
         scope.remove = jasmine.createSpy('remove');
         element = $compile(angular.element('<property-values property="property" entity="entity" edit="edit(property, index)" remove="remove(iri, index)"></property-values>'))(scope);
         scope.$digest();
+        isolatedScope = element.isolateScope();
     });
 
     describe('in isolated scope', function() {
-        beforeEach(function() {
-            this.isolatedScope = element.isolateScope();
-        });
         it('property should be one way bound', function() {
-            this.isolatedScope.property = 'test';
+            isolatedScope.property = 'test';
             scope.$digest();
             expect(scope.property).toBe('prop');
         });
         it('entity should be one way bound', function() {
             var entity = angular.copy(scope.entity);
-            this.isolatedScope.entity = {test: 'test'};
+            isolatedScope.entity = {test: 'test'};
             scope.$digest();
             expect(scope.entity).not.toEqual({test: 'test'});
         });
         it('edit should be called in the parent scope', function() {
-            this.isolatedScope.edit();
+            isolatedScope.edit();
             expect(scope.edit).toHaveBeenCalled();
         });
         it('remove should be called in the parent scope', function() {
-            this.isolatedScope.remove();
+            isolatedScope.remove();
             expect(scope.remove).toHaveBeenCalled();
         });
     });
@@ -84,8 +86,8 @@ describe('Property Values directive', function() {
             expect(values.length).toBe(2);
         });
         it('depending on whether a value is a blank node', function() {
-            ontologyUtilsManagerSvc.isBlankNodeString.and.callFake(function(string) {
-                return string === '_:b0';
+            ontologyManagerSvc.isBlankNodeId.and.callFake(function(string) {
+                return string === '_:genid0';
             });
             scope.$digest();
             var editButtons = element.querySelectorAll('.value-container [title=Edit]');
@@ -111,14 +113,15 @@ describe('Property Values directive', function() {
         });
     });
     it('should call edit when the appropriate button is clicked', function() {
+        resObj.createItemFromIri.and.returnValue({});
         var editButton = angular.element(element.querySelectorAll('.value-container [title=Edit]')[0]);
         editButton.triggerHandler('click');
-        expect(scope.edit).toHaveBeenCalledWith(scope.property, 0);
+        expect(resObj.createItemFromIri).toHaveBeenCalledWith(scope.property);
+        expect(scope.edit).toHaveBeenCalledWith({}, 0);
     });
     it('should call remove when the appropriate button is clicked', function() {
-        resObj.getItemIri.and.returnValue('');
         var removeButton = angular.element(element.querySelectorAll('.value-container [title=Delete]')[0]);
         removeButton.triggerHandler('click');
-        expect(scope.remove).toHaveBeenCalledWith('', 0);
+        expect(scope.remove).toHaveBeenCalledWith(scope.property, 0);
     });
 });

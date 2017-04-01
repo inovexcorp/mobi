@@ -35,6 +35,7 @@ describe('Object Property Block directive', function() {
         injectShowPropertiesFilter();
         mockOntologyState();
         mockResponseObj();
+        mockOntologyUtilsManager();
 
         inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _responseObj_) {
             $compile = _$compile_;

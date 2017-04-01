@@ -27,9 +27,9 @@
         .module('axiomOverlay', [])
         .directive('axiomOverlay', axiomOverlay);
 
-        axiomOverlay.$inject = ['responseObj', 'ontologyManagerService', 'ontologyStateService', 'utilService'];
+        axiomOverlay.$inject = ['responseObj', 'ontologyManagerService', 'ontologyStateService', 'utilService', 'ontologyUtilsManagerService'];
 
-        function axiomOverlay(responseObj, ontologyManagerService, ontologyStateService, utilService) {
+        function axiomOverlay(responseObj, ontologyManagerService, ontologyStateService, utilService, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -41,6 +41,7 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
+                    dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.om = ontologyManagerService;
                     dvm.ro = responseObj;
                     dvm.sm = ontologyStateService;
@@ -55,9 +56,9 @@
                         } else {
                             dvm.sm.selected[axiom] = values;
                         }
-                        dvm.om.addToAdditions(dvm.sm.listItem.recordId, {'@id': dvm.sm.selected['@id'],
-                            [axiom]: values});
+                        dvm.om.addToAdditions(dvm.sm.listItem.recordId, {'@id': dvm.sm.selected['@id'], [axiom]: values});
                         dvm.sm.showAxiomOverlay = false;
+                        dvm.ontoUtils.saveCurrentChanges();
                     }
                 }
             }

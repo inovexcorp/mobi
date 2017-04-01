@@ -49,8 +49,8 @@ import org.matonto.repository.base.RepositoryConnectionWrapper;
 import org.matonto.repository.base.RepositoryResult;
 import org.matonto.repository.exception.RepositoryException;
 import org.matonto.sparql.utils.Query;
-import org.matonto.sparql.utils.SparqlBaseListener;
-import org.matonto.sparql.utils.SparqlParser;
+import org.matonto.sparql.utils.Sparql11BaseListener;
+import org.matonto.sparql.utils.Sparql11Parser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -295,22 +295,12 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
 
     @Override
     public TupleQuery prepareTupleQuery(String query) throws RepositoryException, MalformedQueryException {
-        SparqlParser parser = Query.getParser(query);
-        SparqlParser.QueryContext queryContext = parser.query();
-        TokenStreamRewriter rewriter = new TokenStreamRewriter(parser.getTokenStream());
-        ParseTreeWalker walker = new ParseTreeWalker();
-        DatasetListener listener = new DatasetListener(rewriter);
-        walker.walk(listener, queryContext);
-
-        String processedQuery = rewriter.getText();
-        log.debug("Dataset Processed Query: \n" + processedQuery);
-
-        return getDelegate().prepareTupleQuery(processedQuery);
+        return getDelegate().prepareTupleQuery(rewriteQuery(query));
     }
 
     @Override
     public TupleQuery prepareTupleQuery(String query, String baseURI) throws RepositoryException, MalformedQueryException {
-        throw new NotImplementedException("Not yet implemented.");
+        return getDelegate().prepareTupleQuery(rewriteQuery(query), baseURI);
     }
 
     @Override
@@ -514,6 +504,26 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
         );
     }
 
+    /**
+     * Rewrites a SPARQL query replacing the dataset clauses with appropriate dataset clauses for this dataset.
+     *
+     * @param query The query to rewrite.
+     * @return A String representing the query rewritten with dataset clauses appropriate for this dataset.
+     */
+    private String rewriteQuery(String query) {
+        Sparql11Parser parser = Query.getParser(query);
+        Sparql11Parser.QueryContext queryContext = parser.query();
+        TokenStreamRewriter rewriter = new TokenStreamRewriter(parser.getTokenStream());
+        ParseTreeWalker walker = new ParseTreeWalker();
+        DatasetListener listener = new DatasetListener(rewriter);
+        walker.walk(listener, queryContext);
+
+        String processedQuery = rewriter.getText();
+        log.debug("Dataset Processed Query: \n" + processedQuery);
+
+        return processedQuery;
+    }
+
     private static class DatasetGraphResultWrapper extends RepositoryResult<Resource> {
 
         private TupleQueryResult queryResult;
@@ -542,7 +552,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
         }
     }
 
-    private class DatasetListener extends SparqlBaseListener {
+    private class DatasetListener extends Sparql11BaseListener {
         private TokenStreamRewriter rewriter;
         private String datasetClause;
 
@@ -551,13 +561,16 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
         }
 
         @Override
-        public void enterDatasetClause(SparqlParser.DatasetClauseContext ctx) {
+        public void enterDatasetClause(Sparql11Parser.DatasetClauseContext ctx) {
             rewriter.delete(ctx.getStart(), ctx.getStop());
         }
 
         @Override
-        public void enterWhereClause(SparqlParser.WhereClauseContext ctx) {
-            rewriter.insertBefore(ctx.getStart(), getDatasetClause());
+        public void enterWhereClause(Sparql11Parser.WhereClauseContext ctx) {
+            // Only add a dataset clause to the root select query, not a subselect
+            if (ctx.getParent() instanceof Sparql11Parser.SelectQueryContext) {
+                rewriter.insertBefore(ctx.getStart(), getDatasetClause());
+            }
         }
 
         private String getDatasetClause() {

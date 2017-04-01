@@ -108,6 +108,16 @@
             self.errorMessage = '';
             /**
              * @ngdoc property
+             * @name errorDetails
+             * @propertyOf sparqlManager.service:sparqlManagerService
+             * @type {string}
+             *
+             * @description
+             * Details about an error obtained from attempting to run a SPARQL query against the MatOnto repository.
+             */
+            self.errorDetails = '';
+            /**
+             * @ngdoc property
              * @name infoMessage
              * @propertyOf sparqlManager.service:sparqlManagerService
              * @type {string}
@@ -235,6 +245,7 @@
                 self.currentPage = 0;
                 self.data = undefined;
                 self.errorMessage = '';
+                self.errorDetails = '';
                 self.infoMessage = '';
 
                 var prefixes = getPrefixString();
@@ -281,6 +292,7 @@
                 }
             }
             function getMessage(response) {
+                self.errorDetails = _.get(response, 'data.details', '');
                 return util.getErrorMessage(response, 'A server error has occurred. Please try again later.');
             }
             function getPrefixString() {

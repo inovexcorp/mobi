@@ -62,12 +62,14 @@ describe('SPARQL Manager service', function() {
         it('unless an error occurs', function() {
             this.url += $httpParamSerializer(params);
             var statusMessage = 'Error message';
+            var details = 'Details';
             utilSvc.getErrorMessage.and.returnValue(statusMessage);
-            $httpBackend.expectGET(this.url).respond(400, undefined, undefined, statusMessage);
+            $httpBackend.expectGET(this.url).respond(400, {details: details}, undefined, statusMessage);
             sparqlManagerSvc.queryRdf();
             $httpBackend.flush();
 
             expect(sparqlManagerSvc.errorMessage).toEqual(statusMessage);
+            expect(sparqlManagerSvc.errorDetails).toEqual(details);
             expect(sparqlManagerSvc.currentPage).toBe(0);
             expect(sparqlManagerSvc.data).toBeUndefined();
         });

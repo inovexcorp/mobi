@@ -33,6 +33,7 @@ describe('Relationships Block directive', function() {
         injectShowPropertiesFilter();
         mockOntologyState();
         mockOntologyManager();
+        mockOntologyUtilsManager();
 
         inject(function(_$compile_, _$rootScope_, _ontologyStateService_) {
             $compile = _$compile_;

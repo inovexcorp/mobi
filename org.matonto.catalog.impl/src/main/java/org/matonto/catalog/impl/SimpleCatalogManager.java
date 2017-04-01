@@ -32,7 +32,6 @@ import aQute.bnd.annotation.metatype.Configurable;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.log4j.Logger;
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.Conflict;
 import org.matonto.catalog.api.Difference;
@@ -90,6 +89,8 @@ import org.matonto.repository.base.RepositoryResult;
 import org.matonto.repository.exception.RepositoryException;
 import org.openrdf.model.vocabulary.DCTERMS;
 import org.openrdf.model.vocabulary.RDF;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.security.InvalidParameterException;
@@ -119,7 +120,7 @@ import javax.annotation.Nonnull;
 public class SimpleCatalogManager implements CatalogManager {
 
     static final String COMPONENT_NAME = "org.matonto.catalog.api.CatalogManager";
-    private static final Logger log = Logger.getLogger(SimpleCatalogManager.class);
+    private static final Logger log = LoggerFactory.getLogger(SimpleCatalogManager.class);
     private Repository repository;
     private ValueFactory vf;
     private ModelFactory mf;
