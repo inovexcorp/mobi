@@ -41,7 +41,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>dataset.api</artifactId>
-            <version>1.5.32-SNAPSHOT</version>
+            <version>1.5.45-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
@@ -51,7 +51,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>persistence.api</artifactId>
-            <version>1.5.32-SNAPSHOT</version>
+            <version>1.5.45-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
