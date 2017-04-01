@@ -39,7 +39,6 @@ import org.openrdf.rio.Rio
 import org.openrdf.sail.memory.MemoryStore
 import spock.lang.Shared
 import spock.lang.Specification
-import spock.lang.Unroll
 
 class SimpleDatasetRepositoryConnectionSpec extends Specification {
 
@@ -1002,7 +1001,6 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         results == graphs
     }
 
-    @Unroll
     def "prepareTupleQuery(query) #msg"() {
         setup:
         def dataset = datasetsInFile[2]
@@ -1024,5 +1022,19 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         "with a dataset declaration properly queries the dataset graphs with named"     | "SELECT * FROM <:g1> WHERE { {?s ?p ?o} UNION {GRAPH ?g {?s ?p ?o}} }"    | 4
         "works regardless of case"                                                      | "SELECT * FroM <:g1> WHERE { {?s a ?o} UNioN {GRAPH ?g {?s ?p ?o}} }"     | 4
         "works with a subquery and dataset clause"                                      | "SELECT * from <:g1> WHERE { ?s ?p ?o . { select * where { ?s a ?o } }}"    | 2
+    }
+
+    def "prepareTupleQuery(query, baseUri) works"() {
+        setup:
+        def dataset = datasetsInFile[2]
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
+        def queryString = "SELECT * WHERE { ?s ?p ?o }"
+        def tupleQuery = conn.prepareTupleQuery(queryString, "urn:test")
+
+        when:
+        def results = tupleQuery.evaluate()
+
+        then:
+        QueryResults.asList(results).size() == 2
     }
 }
