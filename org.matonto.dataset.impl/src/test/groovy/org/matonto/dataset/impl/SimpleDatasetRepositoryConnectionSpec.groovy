@@ -39,6 +39,7 @@ import org.openrdf.rio.Rio
 import org.openrdf.sail.memory.MemoryStore
 import spock.lang.Shared
 import spock.lang.Specification
+import spock.lang.Unroll
 
 class SimpleDatasetRepositoryConnectionSpec extends Specification {
 
@@ -1001,73 +1002,27 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         results == graphs
     }
 
-    def "prepareTupleQuery(query) without a dataset declaration properly queries the dataset graphs"() {
+    @Unroll
+    def "prepareTupleQuery(query) #msg"() {
         setup:
         def dataset = datasetsInFile[2]
         def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
-        def queryString = "SELECT * WHERE { ?s ?p ?o }"
-        def query = conn.prepareTupleQuery(queryString)
+        def queryString = query
+        def tupleQuery = conn.prepareTupleQuery(queryString)
 
         when:
-        def results = query.evaluate()
+        def results = tupleQuery.evaluate()
 
         then:
-        QueryResults.asList(results).size() == 2
-    }
+        QueryResults.asList(results).size() == expectedSize
 
-    def "prepareTupleQuery(query) without a dataset declaration properly queries the dataset graphs with named"() {
-        setup:
-        def dataset = datasetsInFile[2]
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
-        def queryString = "SELECT * WHERE { {?s ?p ?o} UNION {GRAPH ?g {?s ?p ?o}} }"
-        def query = conn.prepareTupleQuery(queryString)
-
-        when:
-        def results = query.evaluate()
-
-        then:
-        QueryResults.asList(results).size() == 4
-    }
-
-    def "prepareTupleQuery(query) with a dataset declaration properly queries the dataset graphs"() {
-        setup:
-        def dataset = datasetsInFile[2]
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
-        def queryString = "SELECT * FROM <:g1> WHERE { ?s ?p ?o }"
-        def query = conn.prepareTupleQuery(queryString)
-
-        when:
-        def results = query.evaluate()
-
-        then:
-        QueryResults.asList(results).size() == 2
-    }
-
-    def "prepareTupleQuery(query) with a dataset declaration properly queries the dataset graphs with named"() {
-        setup:
-        def dataset = datasetsInFile[2]
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
-        def queryString = "SELECT * FROM <:g1> WHERE { {?s ?p ?o} UNION {GRAPH ?g {?s ?p ?o}} }"
-        def query = conn.prepareTupleQuery(queryString)
-
-        when:
-        def results = query.evaluate()
-
-        then:
-        QueryResults.asList(results).size() == 4
-    }
-
-    def "prepareTupleQuery(query) works regardless of case"() {
-        setup:
-        def dataset = datasetsInFile[2]
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
-        def queryString = "SELECT * FroM <:g1> WHERE { {?s a ?o} UNioN {GRAPH ?g {?s ?p ?o}} }"
-        def query = conn.prepareTupleQuery(queryString)
-
-        when:
-        def results = query.evaluate()
-
-        then:
-        QueryResults.asList(results).size() == 4
+        where:
+        msg | query | expectedSize
+        "without a dataset declaration properly queries the dataset graphs"             | "SELECT * WHERE { ?s ?p ?o }"                                             | 2
+        "without a dataset declaration properly queries the dataset graphs with named"  | "SELECT * WHERE { {?s ?p ?o} UNION {GRAPH ?g {?s ?p ?o}} }"               | 4
+        "with a dataset declaration properly queries the dataset graphs"                | "SELECT * FROM NAMED <:g1> WHERE { ?s ?p ?o }"                            | 2
+        "with a dataset declaration properly queries the dataset graphs with named"     | "SELECT * FROM <:g1> WHERE { {?s ?p ?o} UNION {GRAPH ?g {?s ?p ?o}} }"    | 4
+        "works regardless of case"                                                      | "SELECT * FroM <:g1> WHERE { {?s a ?o} UNioN {GRAPH ?g {?s ?p ?o}} }"     | 4
+        "works with a subquery and dataset clause"                                      | "SELECT * from <:g1> WHERE { ?s ?p ?o . { select * where { ?s a ?o } }}"    | 2
     }
 }
