@@ -24,17 +24,18 @@ package org.matonto.web.authentication.context;
  */
 
 import com.nimbusds.jwt.SignedJWT;
-import org.apache.log4j.Logger;
 import org.matonto.jaas.api.utils.TokenUtils;
 import org.matonto.web.authentication.AuthHttpContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 
 public class UserLogoutTokenContext extends AuthHttpContext {
 
-    private final Logger log = Logger.getLogger(this.getClass().getName());
+    private final Logger log = LoggerFactory.getLogger(this.getClass().getName());
 
     @Override
     protected boolean handleAuth(HttpServletRequest request, HttpServletResponse response) throws IOException {
