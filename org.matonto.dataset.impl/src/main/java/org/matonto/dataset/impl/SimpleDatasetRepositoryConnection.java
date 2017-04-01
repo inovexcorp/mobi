@@ -305,12 +305,12 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
 
     @Override
     public GraphQuery prepareGraphQuery(String query) throws RepositoryException, MalformedQueryException {
-        return getDelegate().prepareGraphQuery(rewriteQuery(query));
+        throw new NotImplementedException("Not yet implemented.");
     }
 
     @Override
     public GraphQuery prepareGraphQuery(String query, String baseURI) throws RepositoryException, MalformedQueryException {
-        return getDelegate().prepareGraphQuery(rewriteQuery(query), baseURI);
+        throw new NotImplementedException("Not yet implemented.");
     }
 
     @Override
