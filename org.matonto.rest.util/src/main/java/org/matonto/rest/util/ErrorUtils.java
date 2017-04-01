@@ -46,6 +46,12 @@ public class ErrorUtils {
         return new MatOntoWebException(msg, thw, status);
     }
 
+    public static MatOntoWebException sendError(Throwable thw, String msg, Response response)
+            throws MatOntoWebException {
+        logger.error(String.format("%d: %s", response.getStatus(), msg), thw);
+        return new MatOntoWebException(msg, thw, response);
+    }
+
     /**
      * Logs the HTTP error and returns a WebApplicationException with the error status
      * and message.

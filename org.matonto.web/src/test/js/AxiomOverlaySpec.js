@@ -21,13 +21,7 @@
  * #L%
  */
 describe('Axiom Overlay directive', function() {
-    var $compile,
-        scope,
-        element,
-        controller,
-        ontologyStateSvc,
-        propertyManagerSvc,
-        ontologyManagerSvc;
+    var $compile, scope, element, controller, ontologyStateSvc, propertyManagerSvc, ontologyManagerSvc, ontoUtils;
 
     beforeEach(function() {
         module('templates');
@@ -39,13 +33,15 @@ describe('Axiom Overlay directive', function() {
         injectRegexConstant();
         injectHighlightFilter();
         injectTrustedFilter();
+        mockOntologyUtilsManager();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _responseObj_, _ontologyManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _responseObj_, _ontologyManagerService_, _ontologyUtilsManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
             resObj = _responseObj_;
             ontologyManagerSvc = _ontologyManagerService_;
+            ontoUtils = _ontologyUtilsManagerService_;
         });
 
         scope.axiomList = [];
@@ -148,12 +144,14 @@ describe('Axiom Overlay directive', function() {
                 expect(ontologyStateSvc.selected.axiom).toContain(previousValue);
                 expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, jasmine.any(Object));
                 expect(ontologyStateSvc.showAxiomOverlay).toBe(false);
+                expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             });
             it('if the selected entity does not have the axiom', function() {
                 controller.addAxiom();
                 expect(ontologyStateSvc.selected.axiom.length).toBe(controller.values.length);
                 expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, jasmine.any(Object));
                 expect(ontologyStateSvc.showAxiomOverlay).toBe(false);
+                expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             });
         });
     });

@@ -27,9 +27,9 @@
         .module('objectPropertyBlock', [])
         .directive('objectPropertyBlock', objectPropertyBlock);
 
-        objectPropertyBlock.$inject = ['ontologyStateService', 'responseObj'];
+        objectPropertyBlock.$inject = ['ontologyStateService', 'responseObj', 'ontologyUtilsManagerService'];
 
-        function objectPropertyBlock(ontologyStateService, responseObj) {
+        function objectPropertyBlock(ontologyStateService, responseObj, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -39,22 +39,23 @@
                 controller: function() {
                     var dvm = this;
                     dvm.ro = responseObj;
-                    dvm.sm = ontologyStateService;
+                    dvm.os = ontologyStateService;
+                    dvm.ontoUtils = ontologyUtilsManagerService;
 
                     dvm.openAddObjectPropOverlay = function() {
-                        dvm.sm.editingProperty = false;
-                        dvm.sm.propertySelect = undefined;
-                        dvm.sm.propertyValue = '';
-                        dvm.sm.propertyIndex = 0;
-                        dvm.sm.showObjectPropertyOverlay = true;
+                        dvm.os.editingProperty = false;
+                        dvm.os.propertySelect = undefined;
+                        dvm.os.propertyValue = '';
+                        dvm.os.propertyIndex = 0;
+                        dvm.os.showObjectPropertyOverlay = true;
                     }
 
                     dvm.editObjectProp = function(property, index) {
-                        dvm.sm.editingProperty = true;
-                        dvm.sm.propertySelect = property;
-                        dvm.sm.propertyValue = dvm.sm.selected[dvm.ro.getItemIri(property)][index]['@id'];
-                        dvm.sm.propertyIndex = index;
-                        dvm.sm.showObjectPropertyOverlay = true;
+                        dvm.os.editingProperty = true;
+                        dvm.os.propertySelect = property;
+                        dvm.os.propertyValue = dvm.os.selected[dvm.ro.getItemIri(property)][index]['@id'];
+                        dvm.os.propertyIndex = index;
+                        dvm.os.showObjectPropertyOverlay = true;
                     }
 
                     dvm.showRemovePropertyOverlay = function(key, index) {

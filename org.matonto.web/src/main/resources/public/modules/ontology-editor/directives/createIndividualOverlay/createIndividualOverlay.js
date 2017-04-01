@@ -27,9 +27,9 @@
         .module('createIndividualOverlay', [])
         .directive('createIndividualOverlay', createIndividualOverlay);
 
-        createIndividualOverlay.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'responseObj', 'prefixes'];
+        createIndividualOverlay.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'responseObj', 'prefixes', 'ontologyUtilsManagerService'];
 
-        function createIndividualOverlay($filter, ontologyManagerService, ontologyStateService, responseObj, prefixes) {
+        function createIndividualOverlay($filter, ontologyManagerService, ontologyStateService, responseObj, prefixes, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,7 +38,7 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-
+                    dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.prefixes = prefixes;
                     dvm.ro = responseObj;
                     dvm.om = ontologyManagerService;
@@ -80,12 +80,12 @@
                         // add the entity to the ontology
                         dvm.individual['@type'].push(prefixes.owl + 'NamedIndividual');
                         dvm.om.addEntity(dvm.sm.listItem, dvm.individual);
-                        _.set(_.get(dvm.sm.listItem, 'index'), dvm.individual['@id'], dvm.sm.listItem.ontology.length - 1);
                         dvm.om.addToAdditions(dvm.sm.listItem.recordId, dvm.individual);
                         // select the new individual
                         dvm.sm.selectItem(dvm.individual['@id'], false);
                         // hide the overlay
                         dvm.sm.showCreateIndividualOverlay = false;
+                        dvm.ontoUtils.saveCurrentChanges();
                     }
                 }
             }

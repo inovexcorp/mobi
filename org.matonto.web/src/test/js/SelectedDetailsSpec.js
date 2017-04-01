@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Selected Details directive', function() {
-    var $compile, scope, element, ontologyStateSvc, $filter, controller;
+    var $compile, scope, element, ontologyStateSvc, $filter, controller, $q, ontoUtils;
 
     beforeEach(function() {
         module('templates');
@@ -29,12 +29,15 @@ describe('Selected Details directive', function() {
         mockOntologyManager();
         mockOntologyState();
         injectPrefixationFilter();
+        mockOntologyUtilsManager();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _$filter_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _$filter_, _ontologyUtilsManagerService_, _$q_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
             $filter = _$filter_;
+            ontoUtils = _ontologyUtilsManagerService_;
+            $q = _$q_;
         });
 
         element = $compile(angular.element('<selected-details></selected-details>'))(scope);
@@ -68,6 +71,28 @@ describe('Selected Details directive', function() {
                 var expected = 'test, test2';
                 ontologyStateSvc.selected = {'@type': ['test', 'test2']};
                 expect(controller.getTypes()).toEqual(expected);
+            });
+        });
+        describe('onEdit calls the proper functions', function() {
+            var editDeferred;
+            beforeEach(function() {
+                editDeferred = $q.defer();
+                ontologyStateSvc.onEdit.and.returnValue(editDeferred.promise);
+                controller.onEdit('begin', 'middle', 'end');
+            });
+            it('when ontologyState.onEdit resolves', function() {
+                editDeferred.resolve();
+                scope.$apply();
+                expect(ontologyStateSvc.onEdit).toHaveBeenCalledWith('begin', 'middle', 'end');
+                expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
+                expect(ontoUtils.updateLabel).toHaveBeenCalled();
+            });
+            it('when ontologyState.onEdit rejects', function() {
+                editDeferred.reject();
+                scope.$apply();
+                expect(ontologyStateSvc.onEdit).toHaveBeenCalledWith('begin', 'middle', 'end');
+                expect(ontoUtils.saveCurrentChanges).not.toHaveBeenCalled();
+                expect(ontoUtils.updateLabel).not.toHaveBeenCalled();
             });
         });
     });

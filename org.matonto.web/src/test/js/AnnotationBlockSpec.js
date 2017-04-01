@@ -37,6 +37,7 @@ describe('Annotation Block directive', function() {
         mockOntologyState();
         mockOntologyManager();
         mockResponseObj();
+        mockOntologyUtilsManager();
 
         inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _responseObj_, _ontologyManagerService_) {
             $compile = _$compile_;
