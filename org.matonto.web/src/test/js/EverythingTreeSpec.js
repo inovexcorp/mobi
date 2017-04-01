@@ -93,11 +93,11 @@ describe('Everything Tree directive', function() {
         describe('getName calls the correct method', function() {
             it('when @id exists', function() {
                 controller.getName({'@id': 'iri'});
-                expect(ontologyUtils.getNameByIRI).toHaveBeenCalledWith('iri');
+                expect(ontologyUtils.getLabelForIRI).toHaveBeenCalledWith('iri');
             });
             it('when @id does not exist', function() {
                 controller.getName({matonto: {originalIRI: 'iri'}});
-                expect(ontologyUtils.getNameByIRI).toHaveBeenCalledWith('iri');
+                expect(ontologyUtils.getLabelForIRI).toHaveBeenCalledWith('iri');
             });
         });
     });

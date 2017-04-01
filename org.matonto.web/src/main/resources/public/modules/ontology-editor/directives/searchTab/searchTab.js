@@ -38,41 +38,41 @@
                 controllerAs: 'dvm',
                 controller: ['$scope', function($scope) {
                     var dvm = this;
-                    dvm.sm = ontologyStateService;
-                    dvm.um = ontologyUtilsManagerService;
+                    dvm.os = ontologyStateService;
+                    dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.om = ontologyManagerService;
 
                     dvm.onKeyup = function($event) {
                         if ($event.keyCode === 13) {
-                            dvm.sm.unSelectItem();
-                            dvm.om.getSearchResults(dvm.sm.listItem.recordId, dvm.sm.listItem.branchId,
-                                dvm.sm.listItem.commitId, dvm.sm.state.searchText).then(results => {
-                                    dvm.sm.state.errorMessage = '';
-                                    dvm.sm.state.results = results;
-                                    dvm.sm.state.infoMessage = !_.isEmpty(results) ? ''
+                            dvm.os.unSelectItem();
+                            dvm.om.getSearchResults(dvm.os.listItem.recordId, dvm.os.listItem.branchId,
+                                dvm.os.listItem.commitId, dvm.os.state.searchText).then(results => {
+                                    dvm.os.state.errorMessage = '';
+                                    dvm.os.state.results = results;
+                                    dvm.os.state.infoMessage = !_.isEmpty(results) ? ''
                                         : 'There were no results for your search text.';
-                                    dvm.sm.state.highlightText = dvm.sm.state.searchText;
+                                    dvm.os.state.highlightText = dvm.os.state.searchText;
                                 }, errorMessage => {
-                                    dvm.sm.state.errorMessage = errorMessage;
-                                    dvm.sm.state.infoMessage = '';
+                                    dvm.os.state.errorMessage = errorMessage;
+                                    dvm.os.state.infoMessage = '';
                                 });
                         }
                     }
 
                     dvm.onClear = function() {
-                        dvm.sm.state.errorMessage = '';
-                        dvm.sm.state.highlightText = '';
-                        dvm.sm.state.infoMessage = '';
-                        dvm.sm.state.results = {};
-                        dvm.sm.state.searchText = '';
-                        dvm.sm.state.selected = {};
+                        dvm.os.state.errorMessage = '';
+                        dvm.os.state.highlightText = '';
+                        dvm.os.state.infoMessage = '';
+                        dvm.os.state.results = {};
+                        dvm.os.state.searchText = '';
+                        dvm.os.state.selected = {};
                     }
 
                     function setSelected() {
-                        dvm.sm.state.selected = _.omit(angular.copy(dvm.sm.selected), '@id', '@type', 'matonto');
+                        dvm.os.state.selected = _.omit(angular.copy(dvm.os.selected), '@id', '@type', 'matonto');
                     }
 
-                    $scope.$watch('dvm.sm.selected', setSelected);
+                    $scope.$watch('dvm.os.selected', setSelected);
                 }]
             }
         }

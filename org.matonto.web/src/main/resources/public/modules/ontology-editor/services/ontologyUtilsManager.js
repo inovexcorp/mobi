@@ -27,14 +27,15 @@
         .module('ontologyUtilsManager', [])
         .service('ontologyUtilsManagerService', ontologyUtilsManagerService);
 
-        ontologyUtilsManagerService.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'updateRefsService', 'prefixes', 'utilService'];
+        ontologyUtilsManagerService.$inject = ['$q', '$filter', 'ontologyManagerService', 'ontologyStateService', 'updateRefsService', 'prefixes', 'utilService', 'responseObj'];
 
-        function ontologyUtilsManagerService($filter, ontologyManagerService, ontologyStateService, updateRefsService, prefixes, utilService) {
+        function ontologyUtilsManagerService($q, $filter, ontologyManagerService, ontologyStateService, updateRefsService, prefixes, utilService, responseObj) {
             var self = this;
             var om = ontologyManagerService;
             var os = ontologyStateService;
             var ur = updateRefsService;
             var util = utilService;
+            var ro = responseObj;
 
             self.commonDelete = function(entityIRI) {
                 om.getEntityUsages(os.listItem.recordId, os.listItem.branchId, os.listItem.commitId, entityIRI, 'construct')
@@ -44,6 +45,7 @@
                         _.forEach(statements, statement => om.addToDeletions(os.listItem.recordId, statement));
                         ur.remove(os.listItem.ontology, entityIRI);
                         os.unSelectItem();
+                        self.saveCurrentChanges();
                     }, util.createErrorToast);
             }
 
@@ -97,28 +99,20 @@
                 self.deleteConcept();
             }
 
-            self.isBlankNodeString = function(id) {
-                return _.isString(id) && _.includes(id, '_:b');
-            }
-
             self.getBlankNodeValue = function(id) {
                 var result;
-                if (self.isBlankNodeString(id)) {
+                if (om.isBlankNodeId(id)) {
                     result = _.get(os.listItem.blankNodes, id, id);
                 }
                 return result;
             }
 
             self.isLinkable = function(id) {
-                return _.has(os.listItem.index, id) && !self.isBlankNodeString(id);
-            }
-
-            self.getNameByIRI = function(iri) {
-                return om.getEntityName(om.getEntityByRecordId(os.listItem.recordId, iri));
+                return _.has(os.listItem.index, id) && !om.isBlankNodeId(id);
             }
 
             self.getNameByNode = function(node) {
-                return self.getNameByIRI(node.entityIRI);
+                return self.getLabelForIRI(node.entityIRI);
             }
 
             self.addLanguageToNewEntity = function(entity, language) {
@@ -129,6 +123,36 @@
                         }
                     });
                 }
+            }
+
+            self.saveCurrentChanges = function() {
+                om.saveChanges(os.listItem.recordId, {additions: os.listItem.additions, deletions: os.listItem.deletions})
+                    .then(() => os.afterSave(), $q.reject)
+                    .then(() => {
+                        var entityIRI = os.getActiveEntityIRI();
+                        var activeKey = os.getActiveKey();
+                        if (activeKey !== 'project' && activeKey !== 'individuals' && entityIRI) {
+                            os.setEntityUsages(entityIRI);
+                        }
+                        os.listItem.isSaved = os.isCommittable(os.listItem.recordId);
+                    }, errorMessage => {
+                        util.createErrorToast(errorMessage);
+                        os.listItem.isSaved = false;
+                    });
+            }
+
+            self.updateLabel = function() {
+                if (_.has(os.listItem.index, os.selected['@id'])) {
+                    os.listItem.index[os.selected['@id']].label = om.getEntityName(os.selected, os.listItem.type);
+                }
+            }
+
+            self.getLabelForIRI = function(iri) {
+                return om.getEntityNameByIndex(iri, os.listItem);
+            }
+
+            self.getDropDownText = function(item) {
+                return om.getEntityNameByIndex(ro.getItemIri(item), os.listItem);
             }
         }
 })();

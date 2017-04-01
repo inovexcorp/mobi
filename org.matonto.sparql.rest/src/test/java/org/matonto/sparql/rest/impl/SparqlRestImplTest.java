@@ -139,6 +139,12 @@ public class SparqlRestImplTest extends MatontoRestTestNg {
         Response response = target().path("sparql").queryParam("query", RestUtils.encode("+"))
                 .queryParam("fileType", "csv").request().get();
         assertEquals(response.getStatus(), 400);
+        try {
+            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
+            assertTrue(result.containsKey("details"));
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
     }
 
     @Test
@@ -216,5 +222,11 @@ public class SparqlRestImplTest extends MatontoRestTestNg {
     public void getPagedResultsWithInvalidQueryTest() {
         Response response = target().path("sparql/page").queryParam("query", encode("+")).request().get();
         assertEquals(response.getStatus(), 400);
+        try {
+            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
+            assertTrue(result.containsKey("details"));
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
     }
 }
