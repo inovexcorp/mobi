@@ -1,6 +1,6 @@
-@Version("1.3.1.${build}")
+@Version("1.6.0.${build}")
 
-package org.matonto.repository.api;
+package org.matonto.query.api.processor;
 
 /*-
  * #%L

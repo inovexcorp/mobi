@@ -1,10 +1,10 @@
-@Version("1.3.1.${build}")
+@Version("1.0.0.${build}")
 
-package org.matonto.repository.api;
+package org.matonto.dataset.api.processor;
 
 /*-
  * #%L
- * org.matonto.persistence.api
+ * org.matonto.catalog.api
  * $Id:$
  * $HeadURL:$
  * %%
