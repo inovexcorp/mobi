@@ -27,6 +27,7 @@ import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
@@ -148,7 +149,7 @@ public class SparqlRestImpl implements SparqlRest {
         //        }, QUERY_TIME_OUT_SECONDS * 1000);
 
         TupleQueryResult queryResults;
-        if (datasetRecordId != null && !datasetRecordId.isEmpty()) {
+        if (!StringUtils.isEmpty(datasetRecordId)) {
             Resource recordId = valueFactory.createIRI(datasetRecordId);
             queryResults = getDatasetQueryResults(queryString, recordId);
         } else {
@@ -173,7 +174,7 @@ public class SparqlRestImpl implements SparqlRest {
             throw ErrorUtils.sendError("Parameter 'queryString' must be set.", Response.Status.BAD_REQUEST);
         }
         TupleQueryResult queryResults;
-        if (datasetRecordId != null && !datasetRecordId.isEmpty()) {
+        if (!StringUtils.isEmpty(datasetRecordId)) {
             Resource recordId = valueFactory.createIRI(datasetRecordId);
             queryResults = getDatasetQueryResults(queryString, recordId);
         } else {
@@ -210,7 +211,7 @@ public class SparqlRestImpl implements SparqlRest {
                                     int offset) {
         LinksUtils.validateParams(limit, offset);
         TupleQueryResult queryResults;
-        if (datasetRecordId != null && !datasetRecordId.isEmpty()) {
+        if (!StringUtils.isEmpty(datasetRecordId)) {
             Resource recordId = valueFactory.createIRI(datasetRecordId);
             queryResults = getDatasetQueryResults(queryString, recordId);
         } else {
