@@ -23,13 +23,29 @@
 <form name="dvm.form" class="sparql-editor">
     <div class="top-section">
         <div class="form-group">
-            <custom-label muted-text="mutedText">Prefixes:</custom-label>
+            <custom-label>Prefixes:</custom-label>
             <ui-select multiple ng-model="dvm.sparql.prefixes">
                 <ui-select-match placeholder="Select prefix(es)">{{$item}}</ui-select-match>
                 <ui-select-choices repeat="prefix in dvm.prefixList | filter:$select.search">
                     <div ng-bind-html="prefix | escapeHTML | highlight:$select.search | trusted"></div>
                 </ui-select-choices>
             </ui-select>
+        </div>
+        <div class="form-group">
+            <custom-label>Dataset:</custom-label>
+            <div class="flex-container">
+                <div class="select-container">
+                    <ui-select ng-model="dvm.sparql.datasetRecordIRI" ng-disabled="dvm.datasetRecords.length === 0">
+                        <ui-select-match placeholder="Select a dataset to query">
+                            <span title="{{$select.selected['@id']}}">{{dvm.util.getDctermsValue($select.selected, 'title')}}</span>
+                        </ui-select-match>
+                        <ui-select-choices repeat="record['@id'] as record in dvm.datasetRecords | filter:$select.search">
+                            <div title="{{record['@id']}}" ng-bind-html="dvm.util.getDctermsValue(record, 'title') | highlight:$select.search | trusted"></div>
+                        </ui-select-choices>
+                    </ui-select>
+                </div>
+                <a ng-click="dvm.clear()" class="btn-clear"><i class="fa fa-fw fa-times"></i>Clear</a>
+            </div>
         </div>
         <div class="btn-container">
             <button class="btn btn-primary" ng-click="dvm.sparql.queryRdf()"><i class="fa fa-play fa-fw"></i><span>Submit</span></button>
