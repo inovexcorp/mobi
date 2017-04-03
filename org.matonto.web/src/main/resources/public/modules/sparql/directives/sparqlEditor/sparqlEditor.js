@@ -77,6 +77,10 @@
                         lineWrapping: true,
                         matchBrackets: true
                     }
+
+                    dvm.clear = function() {
+                        dvm.sparql.datasetRecordIRI = '';
+                    }
                 }
             }
         }

@@ -21,7 +21,7 @@
  * #L%
  */
 describe('SPARQL Editor directive', function() {
-    var $compile, scope, $q, element, controller, prefixes, datasetManagerSvc, datasets;
+    var $compile, scope, $q, element, controller, sparqlManagerSvc, prefixes, datasetManagerSvc, datasets;
 
     beforeEach(function() {
         module('templates');
@@ -37,10 +37,11 @@ describe('SPARQL Editor directive', function() {
             $provide.value('escapeHTMLFilter', jasmine.createSpy('escapeHTMLFilter'));
         });
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _prefixes_, _datasetManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _sparqlManagerService_, _prefixes_, _datasetManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
+            sparqlManagerSvc = _sparqlManagerService_;
             prefixes = _prefixes_;
             datasetManagerSvc = _datasetManagerService_;
         });
@@ -70,6 +71,13 @@ describe('SPARQL Editor directive', function() {
         });
         it('with a ui-codemirror', function() {
             expect(element.find('ui-codemirror').length).toBe(1);
+        });
+    });
+    describe('controller methods', function() {
+        it('should clear the selected dataset record', function() {
+            sparqlManagerSvc.datasetRecordIRI = 'test';
+            controller.clear();
+            expect(sparqlManagerSvc.datasetRecordIRI).toBe('');
         });
     });
 });
