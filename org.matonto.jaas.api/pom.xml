@@ -50,12 +50,12 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rdf.orm</artifactId>
-            <version>1.4.24</version>
+            <version>1.5.45</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rdf.orm.ontologies</artifactId>
-            <version>1.4.24</version>
+            <version>1.5.45</version>
         </dependency>
         <dependency>
             <groupId>org.osgi</groupId>

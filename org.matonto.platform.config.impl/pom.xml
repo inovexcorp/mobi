@@ -41,22 +41,22 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>platform.config.api</artifactId>
-            <version>1.5.28</version>
+            <version>1.5.45</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>api</artifactId>
-            <version>1.4.24</version>
+            <version>1.5.45</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>jaas.api</artifactId>
-            <version>1.5.28</version>
+            <version>1.5.45</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>jaas</artifactId>
-            <version>1.5.28</version>
+            <version>1.5.45</version>
         </dependency>
 
         <dependency>
@@ -90,7 +90,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>repository.impl.sesame</artifactId>
-            <version>1.4.24</version>
+            <version>1.5.45</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
