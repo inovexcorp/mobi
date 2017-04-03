@@ -26,6 +26,7 @@ package org.matonto.etl.service.delimited;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.opencsv.CSVReader;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormatter;
@@ -228,7 +229,7 @@ public class DelimitedConverterImpl implements DelimitedConverter {
             Property prop = dataMapping.getHasProperty().iterator().next();
 
             if (columnIndex < nextLine.length && columnIndex >= 0) {
-                if (nextLine[columnIndex] != null && !nextLine[columnIndex].isEmpty()) {
+                if (!StringUtils.isEmpty(nextLine[columnIndex])) {
                     convertedRDF.add(classInstance, valueFactory.createIRI(prop.getResource().stringValue()),
                             valueFactory.createLiteral(nextLine[columnIndex]));
                 } // else don't create a stmt for blank values
