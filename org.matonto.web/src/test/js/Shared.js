@@ -245,6 +245,7 @@ function mockOntologyManager() {
             this.addVocabularyToList = jasmine.createSpy('addVocabularyToList').and.returnValue($q.when([]));
             this.getEntityUsages = jasmine.createSpy('getEntityUsages').and.returnValue($q.when([]));
             this.getEntityNameByIndex = jasmine.createSpy('getEntityNameByIndex');
+            this.downloadOntology = jasmine.createSpy('downloadOntology');
         });
     });
 }
@@ -418,6 +419,7 @@ function mockSparqlManager() {
             this.totalSize = 0;
             this.bindings = [];
             this.queryString = '';
+            this.datasetRecordIRI = '';
             this.errorMessage = '';
             this.infoMessage = '';
             this.reset = jasmine.createSpy('reset');

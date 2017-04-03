@@ -23,6 +23,7 @@
 package org.matonto.dataset.impl
 
 import org.matonto.dataset.ontology.dataset.Dataset
+import org.matonto.persistence.utils.QueryResults
 import org.matonto.persistence.utils.RepositoryResults
 import org.matonto.rdf.api.Resource
 import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory
@@ -600,6 +601,10 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
 
         expect:
         conn.isActive()
+
+        cleanup:
+        conn.commit()
+        conn.close()
     }
 
     def "commit ends a transaction"() {
@@ -994,5 +999,42 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         then:
         results.size() == 4
         results == graphs
+    }
+
+    def "prepareTupleQuery(query) #msg"() {
+        setup:
+        def dataset = datasetsInFile[2]
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
+        def queryString = query
+        def tupleQuery = conn.prepareTupleQuery(queryString)
+
+        when:
+        def results = tupleQuery.evaluate()
+
+        then:
+        QueryResults.asList(results).size() == expectedSize
+
+        where:
+        msg | query | expectedSize
+        "without a dataset declaration properly queries the dataset graphs"             | "SELECT * WHERE { ?s ?p ?o }"                                             | 2
+        "without a dataset declaration properly queries the dataset graphs with named"  | "SELECT * WHERE { {?s ?p ?o} UNION {GRAPH ?g {?s ?p ?o}} }"               | 4
+        "with a dataset declaration properly queries the dataset graphs"                | "SELECT * FROM NAMED <:g1> WHERE { ?s ?p ?o }"                            | 2
+        "with a dataset declaration properly queries the dataset graphs with named"     | "SELECT * FROM <:g1> WHERE { {?s ?p ?o} UNION {GRAPH ?g {?s ?p ?o}} }"    | 4
+        "works regardless of case"                                                      | "SELECT * FroM <:g1> WHERE { {?s a ?o} UNioN {GRAPH ?g {?s ?p ?o}} }"     | 4
+        "works with a subquery and dataset clause"                                      | "SELECT * from <:g1> WHERE { ?s ?p ?o . { select * where { ?s a ?o } }}"    | 2
+    }
+
+    def "prepareTupleQuery(query, baseUri) works"() {
+        setup:
+        def dataset = datasetsInFile[2]
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
+        def queryString = "SELECT * WHERE { ?s ?p ?o }"
+        def tupleQuery = conn.prepareTupleQuery(queryString, "urn:test")
+
+        when:
+        def results = tupleQuery.evaluate()
+
+        then:
+        QueryResults.asList(results).size() == 2
     }
 }

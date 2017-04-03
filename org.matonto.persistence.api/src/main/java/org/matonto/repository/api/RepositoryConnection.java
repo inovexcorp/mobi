@@ -253,7 +253,6 @@ public interface RepositoryConnection extends AutoCloseable {
      *         If the supplied query is not a tuple query.
      * @throws MalformedQueryException
      *         If the supplied query is malformed.
-     * @since 4.0
      */
     TupleQuery prepareTupleQuery(String query)
             throws RepositoryException, MalformedQueryException;
@@ -290,7 +289,6 @@ public interface RepositoryConnection extends AutoCloseable {
      *         If the supplied query is not a graph query.
      * @throws MalformedQueryException
      *         If the supplied query is malformed.
-     * @since 4.0
      */
     GraphQuery prepareGraphQuery(String query)
             throws RepositoryException, MalformedQueryException;
@@ -327,7 +325,6 @@ public interface RepositoryConnection extends AutoCloseable {
      *         If the supplied query is not a boolean query.
      * @throws MalformedQueryException
      *         If the supplied SPARQL query is malformed.
-     * @since 4.0
      */
     BooleanQuery prepareBooleanQuery(String query)
             throws RepositoryException, MalformedQueryException;
@@ -360,7 +357,6 @@ public interface RepositoryConnection extends AutoCloseable {
      *         {@link RepositoryConnection}.
      * @throws MalformedQueryException
      *         If the supplied update operation string is malformed.
-     * @since 4.0
      */
     Update prepareUpdate(String update)
             throws RepositoryException, MalformedQueryException;
