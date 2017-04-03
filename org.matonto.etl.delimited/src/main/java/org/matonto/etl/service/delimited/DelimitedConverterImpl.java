@@ -121,7 +121,19 @@ public class DelimitedConverterImpl implements DelimitedConverter {
         long index = config.getOffset();
         Optional<Long> limit = config.getLimit();
         while ((nextLine = reader.readNext()) != null && (!limit.isPresent() || index < limit.get() + offset)) {
-            writeClassMappingsToModel(convertedRDF, nextLine, classMappings);
+            //Exporting to CSV from Excel can cause empty rows to contain columns
+            //Therefore, we must ensure at least one cell has values before processing the row
+            boolean rowContainsValues = false;
+            for (String cell : nextLine) {
+                if (!cell.isEmpty()) {
+                    rowContainsValues = true;
+                    writeClassMappingsToModel(convertedRDF, nextLine, classMappings);
+                    break;
+                }
+            }
+            if (!rowContainsValues) {
+                LOGGER.warn(String.format("Skipping empty row number: %d", index + 1));
+            }
             index++;
         }
         return convertedRDF;
@@ -140,20 +152,37 @@ public class DelimitedConverterImpl implements DelimitedConverter {
             boolean containsHeaders = config.getContainsHeaders();
             long offset = config.getOffset();
             Optional<Long> limit = config.getLimit();
+            long lastRowNumber = -1;
 
             //Traverse each row and convert column into RDF
             for (Row row : sheet) {
                 // If headers exist or the row is before the offset point, skip the row
                 if ((containsHeaders && row.getRowNum() == 0) || row.getRowNum() - (containsHeaders ? 1 : 0) < offset
                         || (limit.isPresent() && row.getRowNum() >= limit.get() + offset)) {
+                    lastRowNumber++;
                     continue;
+                }
+                // Logging the automatic skip of empty rows with no formatting
+                while (row.getRowNum() > lastRowNumber + 1) {
+                    LOGGER.warn(String.format("Skipping empty row number: %d", lastRowNumber + 1));
+                    lastRowNumber++;
                 }
                 //getLastCellNumber instead of getPhysicalNumberOfCells so that blank values don't cause cells to shift
                 nextRow = new String[row.getLastCellNum()];
+                boolean rowContainsValues = false;
                 for (int i = 0; i < row.getLastCellNum(); i++ ) {
                     nextRow[i] = df.formatCellValue(row.getCell(i));
+                    if (!rowContainsValues && !nextRow[i].isEmpty()) {
+                        rowContainsValues = true;
+                    }
                 }
-                writeClassMappingsToModel(convertedRDF, nextRow, classMappings);
+                //Skipping empty rows
+                if (rowContainsValues) {
+                    writeClassMappingsToModel(convertedRDF, nextRow, classMappings);
+                } else {
+                    LOGGER.warn(String.format("Skipping empty row number: %d", row.getRowNum()));
+                }
+                lastRowNumber++;
             }
         } catch (InvalidFormatException e) {
             throw new MatOntoException(e);
