@@ -53,6 +53,9 @@ class ConverterSpec extends Specification {
     def out = new ClassPathResource("testOutput.ttl").getFile();
     def testOutput = new FileReader(out);
 
+    def outWithBlanks = new ClassPathResource("testOutputWithBlanks.ttl").getFile();
+    def testOutputWithBlanks = new FileReader(outWithBlanks);
+
     def setup() {
         classMappingFactory.setValueFactory(vf);
         classMappingFactory.setValueConverterRegistry(vcr);
@@ -95,7 +98,21 @@ class ConverterSpec extends Specification {
         Model convertedModel = c.convert(config);
 
         expect:
-        m == convertedModel;
+        convertedModel == m;
+    }
+
+    def "Convert CSV File with Multiple Object per Row and Object and Data Properties with Blank Values"() {
+        setup:
+        InputStream csv = new ClassPathResource("testFileWithBlanks.csv").getInputStream();
+        InputStream mappingFile = new ClassPathResource("newestMapping.ttl").getInputStream();
+        c.generateUuid() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
+        Model m = Values.matontoModel(Rio.parse(testOutputWithBlanks, "", RDFFormat.TURTLE));
+        Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE));
+        SVConfig config = new SVConfig.SVConfigBuilder(csv, mapping).containsHeaders(true).separator((char) ',').build();
+        Model convertedModel = c.convert(config);
+
+        expect:
+        convertedModel == m;
     }
 
     def "Test non-comma separator"() {
@@ -109,7 +126,7 @@ class ConverterSpec extends Specification {
         Model convertedModel = c.convert(config)
 
         expect:
-        m == convertedModel;
+        convertedModel == m;
     }
 
     def "Tab Separated"() {
@@ -123,7 +140,21 @@ class ConverterSpec extends Specification {
         Model convertedModel = c.convert(config)
 
         expect:
-        m == convertedModel;
+        convertedModel == m;
+    }
+
+    def "Tab Separated with Blanks"() {
+        setup:
+        InputStream csv = new ClassPathResource("tabFileWithBlanks.csv").getInputStream();
+        InputStream mappingFile = new ClassPathResource("newestMapping.ttl").getInputStream();
+        c.generateUuid() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
+        Model m = Values.matontoModel(Rio.parse(testOutputWithBlanks, "", RDFFormat.TURTLE));
+        Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE));
+        SVConfig config = new SVConfig.SVConfigBuilder(csv, mapping).containsHeaders(true).separator((char) '\t').build();
+        Model convertedModel = c.convert(config)
+
+        expect:
+        convertedModel == m;
     }
 
     def "Mapping with default Local Name"() {
@@ -137,7 +168,7 @@ class ConverterSpec extends Specification {
         Model convertedModel = c.convert(config)
 
         expect:
-        m == convertedModel;
+        convertedModel == m;
     }
 
     def "Without headers"() {
@@ -151,7 +182,7 @@ class ConverterSpec extends Specification {
         Model convertedModel = c.convert(config);
 
         expect:
-        m == convertedModel;
+        convertedModel == m;
     }
 
     def "Convert Excel 97-2003 File with Multiple Object per Row and Object and Data Properties"() {
@@ -165,7 +196,21 @@ class ConverterSpec extends Specification {
         Model convertedModel = c.convert(config);
 
         expect:
-        m == convertedModel;
+        convertedModel == m;
+    }
+
+    def "Convert Excel 97-2003 File with Multiple Object per Row and Object and Data Properties with Blank Values"() {
+        setup:
+        InputStream xls = new ClassPathResource("testFileWithBlanks.xls").getInputStream();
+        InputStream mappingFile = new ClassPathResource("newestMapping.ttl").getInputStream();
+        c.generateUuid() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
+        Model m = Values.matontoModel(Rio.parse(testOutputWithBlanks, "", RDFFormat.TURTLE));
+        Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE));
+        ExcelConfig config = new ExcelConfig.ExcelConfigBuilder(xls, mapping).containsHeaders(true).build();
+        Model convertedModel = c.convert(config);
+
+        expect:
+        convertedModel == m;
     }
 
     def "Convert Excel 2007 File with Multiple Object per Row and Object and Data Properties"() {
@@ -179,7 +224,21 @@ class ConverterSpec extends Specification {
         Model convertedModel = c.convert(config);
 
         expect:
-        m == convertedModel;
+        convertedModel == m;
+    }
+
+    def "Convert Excel 2007 File with Multiple Object per Row and Object and Data Properties with Blank Values"() {
+        setup:
+        InputStream xls = new ClassPathResource("testFileWithBlanks.xlsx").getInputStream();
+        InputStream mappingFile = new ClassPathResource("newestMapping.ttl").getInputStream();
+        c.generateUuid() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
+        Model m = Values.matontoModel(Rio.parse(testOutputWithBlanks, "", RDFFormat.TURTLE))
+        Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE));
+        ExcelConfig config = new ExcelConfig.ExcelConfigBuilder(xls, mapping).containsHeaders(true).build();
+        Model convertedModel = c.convert(config);
+
+        expect:
+        convertedModel == m;
     }
 
     def "Test Generation of Local Name #localName Results in #result"() {
@@ -235,7 +294,7 @@ class ConverterSpec extends Specification {
         Model convertedModel = c.convert(config);
 
         expect:
-        m == convertedModel;
+        convertedModel == m;
     }
 
     def "With a limit set with an offset"() {
@@ -252,7 +311,7 @@ class ConverterSpec extends Specification {
         Model convertedModel = c.convert(config);
 
         expect:
-        m == convertedModel;
+        convertedModel == m;
     }
 
     def "With an offset and headers"() {
@@ -269,7 +328,7 @@ class ConverterSpec extends Specification {
         Model convertedModel = c.convert(config);
 
         expect:
-        m == convertedModel;
+        convertedModel == m;
     }
 
     def "With an offset and no headers"() {
@@ -286,7 +345,7 @@ class ConverterSpec extends Specification {
         Model convertedModel = c.convert(config);
 
         expect:
-        m == convertedModel;
+        convertedModel == m;
     }
 
     def "Convert File with Missing Properties Ignored"() {
