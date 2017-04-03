@@ -331,6 +331,23 @@ class ConverterSpec extends Specification {
         convertedModel == m;
     }
 
+    def "Convert CSV File with an offset and headers and blank rows"() {
+        setup:
+        InputStream csv = new ClassPathResource("testFileWithBlanks.csv").getInputStream();
+        InputStream mappingFile = new ClassPathResource("newestMapping.ttl").getInputStream();
+        c.generateUuid() >>> ["bcd", "cdf", "dfg", "fgh", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
+        out = new ClassPathResource("testOffsetOutputWithBlankRows.ttl").getFile();
+        testOutput = new FileReader(out);
+        Model m = Values.matontoModel(Rio.parse(testOutput, "", RDFFormat.TURTLE));
+        Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE));
+        SVConfig config = new SVConfig.SVConfigBuilder(csv, mapping).containsHeaders(true).separator((char) ',')
+                .offset(2).build();
+        Model convertedModel = c.convert(config);
+
+        expect:
+        convertedModel == m;
+    }
+
     def "Convert Excel 97-2003 File with an offset and headers and blank rows"() {
         setup:
         InputStream xls = new ClassPathResource("testFileWithBlanks.xls").getInputStream();
