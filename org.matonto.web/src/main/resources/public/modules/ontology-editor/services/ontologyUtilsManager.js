@@ -40,9 +40,9 @@
             self.commonDelete = function(entityIRI) {
                 om.getEntityUsages(os.listItem.recordId, os.listItem.branchId, os.listItem.commitId, entityIRI, 'construct')
                     .then(statements => {
-                        om.addToDeletions(os.listItem.recordId, os.selected);
-                        om.removeEntity(os.listItem, entityIRI);
-                        _.forEach(statements, statement => om.addToDeletions(os.listItem.recordId, statement));
+                        os.addToDeletions(os.listItem.recordId, os.selected);
+                        os.removeEntity(os.listItem, entityIRI);
+                        _.forEach(statements, statement => os.addToDeletions(os.listItem.recordId, statement));
                         ur.remove(os.listItem.ontology, entityIRI);
                         os.unSelectItem();
                         self.saveCurrentChanges();
@@ -126,7 +126,7 @@
             }
 
             self.saveCurrentChanges = function() {
-                om.saveChanges(os.listItem.recordId, {additions: os.listItem.additions, deletions: os.listItem.deletions})
+                os.saveChanges(os.listItem.recordId, {additions: os.listItem.additions, deletions: os.listItem.deletions})
                     .then(() => os.afterSave(), $q.reject)
                     .then(() => {
                         var entityIRI = os.getActiveEntityIRI();
@@ -148,11 +148,11 @@
             }
 
             self.getLabelForIRI = function(iri) {
-                return om.getEntityNameByIndex(iri, os.listItem);
+                return os.getEntityNameByIndex(iri, os.listItem);
             }
 
             self.getDropDownText = function(item) {
-                return om.getEntityNameByIndex(ro.getItemIri(item), os.listItem);
+                return os.getEntityNameByIndex(ro.getItemIri(item), os.listItem);
             }
         }
 })();

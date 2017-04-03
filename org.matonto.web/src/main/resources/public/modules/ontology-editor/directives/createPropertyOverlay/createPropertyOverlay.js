@@ -46,8 +46,8 @@
                     dvm.prefixes = prefixes;
                     dvm.iriPattern = REGEX.IRI;
                     dvm.om = ontologyManagerService;
-                    dvm.sm = ontologyStateService;
-                    dvm.prefix = dvm.sm.getDefaultPrefix();
+                    dvm.os = ontologyStateService;
+                    dvm.prefix = dvm.os.getDefaultPrefix();
 
                     dvm.property = {
                         '@id': dvm.prefix,
@@ -68,7 +68,7 @@
                     dvm.onEdit = function(iriBegin, iriThen, iriEnd) {
                         dvm.iriHasChanged = true;
                         dvm.property['@id'] = iriBegin + iriThen + iriEnd;
-                        dvm.sm.setCommonIriParts(iriBegin, iriThen);
+                        dvm.os.setCommonIriParts(iriBegin, iriThen);
                     }
 
                     dvm.create = function() {
@@ -86,26 +86,26 @@
                         _.set(dvm.property, 'matonto.originalIRI', dvm.property['@id']);
                         ontoUtils.addLanguageToNewEntity(dvm.property, dvm.language);
                         // add the entity to the ontology
-                        dvm.om.addEntity(dvm.sm.listItem, dvm.property);
+                        dvm.os.addEntity(dvm.os.listItem, dvm.property);
                         // update relevant lists
                         var split = $filter('splitIRI')(dvm.property['@id']);
                         if (dvm.om.isObjectProperty(dvm.property)) {
-                            _.get(dvm.sm.listItem, 'subObjectProperties').push({namespace:split.begin + split.then, localName: split.end});
-                            _.get(dvm.sm.listItem, 'objectPropertyHierarchy').push({'entityIRI': dvm.property['@id']});
-                            dvm.sm.setObjectPropertiesOpened(dvm.sm.listItem.recordId, true);
+                            _.get(dvm.os.listItem, 'subObjectProperties').push({namespace:split.begin + split.then, localName: split.end});
+                            _.get(dvm.os.listItem, 'objectPropertyHierarchy').push({'entityIRI': dvm.property['@id']});
+                            dvm.os.setObjectPropertiesOpened(dvm.os.listItem.recordId, true);
                         } else if (dvm.om.isDataTypeProperty(dvm.property)) {
-                            _.get(dvm.sm.listItem, 'subDataProperties').push({namespace:split.begin + split.then, localName: split.end});
-                            _.get(dvm.sm.listItem, 'dataPropertyHierarchy').push({'entityIRI': dvm.property['@id']});
-                            dvm.sm.setDataPropertiesOpened(dvm.sm.listItem.recordId, true);
+                            _.get(dvm.os.listItem, 'subDataProperties').push({namespace:split.begin + split.then, localName: split.end});
+                            _.get(dvm.os.listItem, 'dataPropertyHierarchy').push({'entityIRI': dvm.property['@id']});
+                            dvm.os.setDataPropertiesOpened(dvm.os.listItem.recordId, true);
                         } else if (dvm.om.isAnnotation(dvm.property)) {
-                            _.get(dvm.sm.listItem, 'annotations').push({namespace:split.begin + split.then, localName: split.end});
-                            dvm.sm.setAnnotationPropertiesOpened(dvm.sm.listItem.recordId, true);
+                            _.get(dvm.os.listItem, 'annotations').push({namespace:split.begin + split.then, localName: split.end});
+                            dvm.os.setAnnotationPropertiesOpened(dvm.os.listItem.recordId, true);
                         }
-                        dvm.om.addToAdditions(dvm.sm.listItem.recordId, dvm.property);
+                        dvm.os.addToAdditions(dvm.os.listItem.recordId, dvm.property);
                         // select the new property
-                        dvm.sm.selectItem(_.get(dvm.property, '@id'));
+                        dvm.os.selectItem(_.get(dvm.property, '@id'));
                         // hide the overlay
-                        dvm.sm.showCreatePropertyOverlay = false;
+                        dvm.os.showCreatePropertyOverlay = false;
                         ontoUtils.saveCurrentChanges();
                     }
                 }

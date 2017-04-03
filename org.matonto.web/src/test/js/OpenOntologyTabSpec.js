@@ -131,20 +131,20 @@ describe('Open Ontology Tab directive', function() {
     describe('controller methods', function() {
         describe('should open an ontology', function() {
             it('unless an error occurs', function() {
-                ontologyManagerSvc.openOntology.and.returnValue($q.reject('Error message'));
+                ontologyStateSvc.openOntology.and.returnValue($q.reject('Error message'));
                 controller.open();
                 scope.$apply();
-                expect(ontologyManagerSvc.openOntology).toHaveBeenCalledWith(controller.recordId, controller.type);
+                expect(ontologyStateSvc.openOntology).toHaveBeenCalledWith(controller.recordId, controller.type);
                 expect(ontologyStateSvc.addState).not.toHaveBeenCalled();
                 expect(ontologyStateSvc.setState).not.toHaveBeenCalled();
                 expect(controller.errorMessage).toBe('Error message');
             });
             it('successfully', function() {
                 var ontologyId = 'ontologyId';
-                ontologyManagerSvc.openOntology.and.returnValue($q.resolve(ontologyId));
+                ontologyStateSvc.openOntology.and.returnValue($q.resolve(ontologyId));
                 controller.open();
                 scope.$apply();
-                expect(ontologyManagerSvc.openOntology).toHaveBeenCalledWith(controller.recordId, controller.type);
+                expect(ontologyStateSvc.openOntology).toHaveBeenCalledWith(controller.recordId, controller.type);
                 expect(ontologyStateSvc.addState).toHaveBeenCalledWith(controller.recordId, ontologyId, controller.type);
                 expect(ontologyStateSvc.setState).toHaveBeenCalledWith(controller.recordId);
                 expect(controller.errorMessage).toBeUndefined();
@@ -196,7 +196,7 @@ describe('Open Ontology Tab directive', function() {
             });
         });
         it('should get the list of unopened ontology records', function() {
-            ontologyManagerSvc.list = [{'recordId': 'recordA'}];
+            ontologyStateSvc.list = [{'recordId': 'recordA'}];
             controller.getAllOntologyRecords('sort');
             scope.$apply();
             expect(ontologyManagerSvc.getAllOntologyRecords).toHaveBeenCalledWith('sort');

@@ -21,38 +21,18 @@
  * #L%
  */
 describe('Ontology Manager service', function() {
-    var $httpBackend, ontologyManagerSvc, catalogManagerSvc, stateManagerSvc, scope, ontologyState, prefixes, $q, util,
-        windowSvc, listItem, filter, ontologyObj, paramSerializer, classObj, objectPropertyObj, dataPropertyObj,
-        annotationObj, individualObj, restrictionObj, ontology, getResponse, conceptObj, schemeObj, defaultDatatypes;
+    var $httpBackend, ontologyManagerSvc, catalogManagerSvc, scope, prefixes, $q, windowSvc, util, ontologyObj, paramSerializer, classObj, objectPropertyObj, dataPropertyObj,annotationObj, individualObj, restrictionObj, conceptObj, schemeObj, ontology;
     var recordId = 'recordId';
     var ontologyId = 'ontologyId';
     var branchId = 'branchId';
-    var branch = {
-        '@id': branchId
-    };
     var commitId = 'commitId';
     var catalogId = 'catalogId';
     var format = 'jsonld';
-    var commitObj = {
-        commit: {
-            '@id': commitId
-        }
-    }
     var file = {};
     var title = 'title';
     var description = 'description';
     var keywords = 'keyword1,keyword2';
-    var ontologyType = 'ontology';
-    var vocabularyType = 'vocabulary';
     var error = 'error';
-    var inProgressCommit = {
-        additions: ['test'],
-        deletions: ['test']
-    }
-    var emptyInProgressCommit = {
-        additions: [],
-        deletions: []
-    }
     var records = {
         data: [{
             'dcterms:identifier': 'id1'
@@ -61,8 +41,6 @@ describe('Ontology Manager service', function() {
         }]
     }
     var fileName = 'fileName';
-    var jsonFilter = 'json';
-    var differenceObj = {additions: '', deletions: ''};
     var originalIRI = 'originalIRI';
     var anonymous = 'anonymous';
     var classId = 'classId';
@@ -75,114 +53,41 @@ describe('Ontology Manager service', function() {
     var blankNodeObj = {
         '@id': blankNodeId
     }
-    var index = {
-        ontologyId: {
-            position: 0,
-            label: 'ontology'
-        },
-        classId: {
-            position: 1,
-            label: 'class'
-        },
-        dataPropertyId: {
-            position: 2,
-            label: 'data property'
-        }
-    }
     var usages = {
         results: {
             bindings: []
         }
-    }
+    };
     var conceptId = 'conceptId';
     var schemeId = 'schemeId';
     var searchResults = [];
     var searchText = 'searchText';
-    var datatypeId = 'datatypeId';
-    var annotationId2 = 'annotationId2';
-    var classId2 = 'classId2';
-    var dataPropertyId2 = 'dataPropertyId2';
-    var objectPropertyId2 = 'objectProperty2';
-    var individualId2 = 'individualId2';
-    var datatypeId2 = 'datatypeId2';
-    var irisResponse = {
-        annotationProperties: [{localName: annotationId, namespace: annotationId}],
-        classes: [{localName: classId, namespace: classId}],
-        dataProperties: [{localName: dataPropertyId, namespace: dataPropertyId}],
-        objectProperties: [{localName: objectPropertyId, namespace: objectPropertyId}],
-        namedIndividuals: [{localName: individualId, namespace: individualId}],
-        datatypes: [{localName: datatypeId, namespace: datatypeId}]
-    };
-    var importedIrisResponse = [{
-        id: ontologyId,
-        annotationProperties: [{localName: annotationId2, namespace: annotationId2}],
-        classes: [{localName: classId2, namespace: classId2}],
-        dataProperties: [{localName: dataPropertyId2, namespace: dataPropertyId2}],
-        objectProperties: [{localName: objectPropertyId2, namespace: objectPropertyId2}],
-        individuals: [{localName: individualId2, namespace: individualId2}],
-        datatypes: [{localName: datatypeId2, namespace: datatypeId2}]
-    }];
-    var classHierarchiesResponse = {
-        hierarchy: [],
-        index: {}
-    };
-    var conceptHierarchiesResponse = {
-        hierarchy: [],
-        index: {}
-    };
-    var classesWithIndividualsResponse = {
-        hierarchy: [],
-        index: {}
-    };
-    var dataPropertyHierarchiesResponse = {
-        hierarchy: [],
-        index: {}
-    };
-    var objectPropertyHierarchiesResponse = {
-        hierarchy: [],
-        index: {}
-    };
-    var branches = [branch];
 
     beforeEach(function() {
         module('ontologyManager');
         mockPrefixes();
-        mockPropertyManager();
         mockCatalogManager();
         mockUtil();
-        mockStateManager();
-        mockUtil();
-        injectRemoveMatontoFilter();
 
         module(function($provide) {
             $provide.service('$window', function() {
                 this.location = '';
             });
-            $provide.value('jsonFilter', function() {
-                return jsonFilter;
-            });
         });
 
-        inject(function(ontologyManagerService, _$httpBackend_, _$q_, _$rootScope_, _catalogManagerService_,
-            _stateManagerService_, _prefixes_, _utilService_, _$window_, _$filter_, $httpParamSerializer) {
+        inject(function(ontologyManagerService, _$httpBackend_, _$q_, _$rootScope_, _$window_, _catalogManagerService_, _prefixes_, _utilService_, $httpParamSerializer) {
             ontologyManagerSvc = ontologyManagerService;
             $httpBackend = _$httpBackend_;
             $q = _$q_;
             scope = _$rootScope_;
+            windowSvc = _$window_;
             catalogManagerSvc = _catalogManagerService_;
-            stateManagerSvc = _stateManagerService_;
             prefixes = _prefixes_;
             util = _utilService_;
-            windowSvc = _$window_;
-            filter = _$filter_;
             paramSerializer = $httpParamSerializer;
         });
 
         catalogManagerSvc.localCatalog = {'@id': catalogId};
-        ontologyState = {'@id': 'id'};
-        ontologyState[prefixes.ontologyState + 'record'] = [{'@id': recordId}];
-        ontologyState[prefixes.ontologyState + 'branch'] = [{'@id': branchId}];
-        ontologyState[prefixes.ontologyState + 'commit'] = [{'@id': commitId}];
         ontologyManagerSvc.initialize();
         ontologyObj = {
             '@id': ontologyId,
@@ -213,45 +118,27 @@ describe('Ontology Manager service', function() {
             matonto: {
                 originalIRI: dataPropertyId
             }
-        }
+        };
         annotationObj = {
             '@id': annotationId,
             '@type': [prefixes.owl + 'AnnotationProperty'],
             matonto: {
                 originalIRI: annotationId
             }
-        }
+        };
         individualObj = {
             '@id': individualId,
             '@type': [prefixes.owl + 'NamedIndividual', classId],
             matonto: {
                 originalIRI: individualId
             }
-        }
+        };
         restrictionObj = {
             '@id': restrictionId,
             '@type': [prefixes.owl + 'Restriction'],
             matonto: {
                 originalIRI: restrictionId
             }
-        }
-        ontology = [ontologyObj, classObj, dataPropertyObj];
-        listItem = {
-            ontology: ontology,
-            ontologyId: ontologyId,
-            recordId: recordId,
-            commitId: commitId,
-            branchId: branchId,
-            branches: [branch],
-            index: index,
-            upToDate: true
-        }
-        getResponse = {
-            recordId: recordId,
-            branchId: branchId,
-            commitId: commitId,
-            inProgressCommit: inProgressCommit,
-            ontology: ontology
         }
         conceptObj = {
             '@id': conceptId,
@@ -267,19 +154,7 @@ describe('Ontology Manager service', function() {
                 originalIRI: schemeId
             }
         }
-        var xsdDatatypes = _.map(['anyURI', 'boolean', 'byte', 'dateTime', 'decimal', 'double', 'float', 'int', 'integer', 'language', 'long', 'string'], function(item) {
-            return {
-                'namespace': prefixes.xsd,
-                'localName': item
-            }
-        });
-        var rdfDatatypes = _.map(['langString'], function(item) {
-            return {
-                namespace: prefixes.rdf,
-                localName: item
-            }
-        });
-        defaultDatatypes = _.concat(xsdDatatypes, rdfDatatypes);
+        ontology = [ontologyObj, classObj, dataPropertyObj];
     });
 
     function flushAndVerify() {
@@ -290,44 +165,44 @@ describe('Ontology Manager service', function() {
 
     it('reset should clear the proper variables', function() {
         ontologyManagerSvc.ontologyRecords = ['record'];
-        ontologyManagerSvc.list = ['item'];
         ontologyManagerSvc.reset();
         expect(ontologyManagerSvc.ontologyRecords).toEqual([]);
-        expect(ontologyManagerSvc.list).toEqual([]);
     });
-
     describe('getAllOntologyRecords gets a list of all ontology records', function() {
         var getDeferred;
         beforeEach(function() {
             getDeferred = $q.defer();
             catalogManagerSvc.getRecords.and.returnValue(getDeferred.promise);
         });
-        it('when getRecords resolves', function() {
+        it('when getRecords resolves', function(done) {
             getDeferred.resolve(records);
             ontologyManagerSvc.getAllOntologyRecords({})
                 .then(function(response) {
                     expect(catalogManagerSvc.getRecords).toHaveBeenCalled();
                     expect(response).toEqual(records.data);
+                    done();
                 }, function() {
                     fail('Promise should have resolved');
+                    done();
                 });
             scope.$apply();
         });
-        it('when getRecords rejects', function() {
+        it('when getRecords rejects', function(done) {
             getDeferred.reject(error);
             ontologyManagerSvc.getAllOntologyRecords({})
                 .then(function() {
                     fail('Promise should have rejected');
+                    done();
                 }, function(response) {
                     expect(catalogManagerSvc.getRecords).toHaveBeenCalled();
                     expect(response).toEqual(error);
+                    done();
                 });
             scope.$apply();
         });
     });
-
     describe('uploadFile hits the proper endpoint', function() {
-        it('with description and keywords', function() {
+        it('with description and keywords', function(done) {
             $httpBackend.expectPOST('/matontorest/ontologies',
                 function(data) {
                     return data instanceof FormData;
@@ -337,12 +212,14 @@ describe('Ontology Manager service', function() {
             ontologyManagerSvc.uploadFile(file, title, description, keywords)
                 .then(function() {
                     expect(true).toBe(true);
+                    done();
                 }, function() {
                     fail('Promise should have resolved');
+                    done();
                 });
             flushAndVerify();
         });
-        it('with no description or keywords', function() {
+        it('with no description or keywords', function(done) {
             $httpBackend.expectPOST('/matontorest/ontologies',
                 function(data) {
                     return data instanceof FormData;
@@ -352,547 +229,89 @@ describe('Ontology Manager service', function() {
             ontologyManagerSvc.uploadFile(file, title)
                 .then(function() {
                     expect(true).toBe(true);
+                    done();
                 }, function() {
                     fail('Promise should have resolved');
+                    done();
+                });
+            flushAndVerify();
+        });
+        it('unless an error occurs', function(done) {
+            var params = paramSerializer({ title: title });
+            $httpBackend.expectPOST('/matontorest/ontologies',
+                function(data) {
+                    return data instanceof FormData;
+                },
+                function(headers) {
+                    return headers['Content-Type'] === undefined;
+                }).respond(400, null, null, error);
+            ontologyManagerSvc.uploadFile(file, title)
+                .then(function() {
+                    fail('Promise should have rejected');
+                    done();
+                }, function(response) {
+                    expect(response).toEqual(error);
+                    expect(util.onError).toHaveBeenCalled();
+                    done();
                 });
             flushAndVerify();
         });
     });
-
-    describe('getOntology calls the correct methods', function() {
-        var params, expected;
-        beforeEach(function() {
-            params = paramSerializer({
-                branchId: branchId,
-                commitId: commitId,
-                rdfFormat: format
+    describe('uploadJson hits the proper endpoint', function() {
+        it('with description and keywords', function(done) {
+            var params = paramSerializer({
+                title: title,
+                description: description,
+                keywords: keywords
             });
-            expected = {
-                recordId: recordId,
-                ontology: ontology,
-                branchId: branchId,
-                commitId: commitId,
-                inProgressCommit: inProgressCommit
-            }
+            $httpBackend.expectPOST('/matontorest/ontologies?' + params, ontologyObj,
+                function(headers) {
+                    return headers['Content-Type'] === 'application/json';
+                }).respond(200, {ontologyId: ontologyId, recordId: recordId});
+            ontologyManagerSvc.uploadJson(ontologyObj, title, description, keywords)
+                .then(function(data) {
+                    expect(data).toEqual({ontologyId: ontologyId, recordId: recordId});
+                    done();
+                }, function() {
+                    fail('Promise should have resolved');
+                    done();
+                });
+            flushAndVerify();
         });
-        describe('if state exists', function() {
-            var getDeferred;
-            beforeEach(function() {
-                getDeferred = $q.defer();
-                catalogManagerSvc.getInProgressCommit.and.returnValue(getDeferred.promise);
-                stateManagerSvc.getOntologyStateByRecordId.and.returnValue({model: [ontologyState]});
-            });
-            describe('and getInProgressCommit is resolved', function() {
-                beforeEach(function() {
-                    getDeferred.resolve(inProgressCommit);
+        it('with no description or keywords', function(done) {
+            var params = paramSerializer({ title: title });
+            $httpBackend.expectPOST('/matontorest/ontologies?' + params, ontologyObj,
+                function(headers) {
+                    return headers['Content-Type'] === 'application/json';
+                }).respond(200, {ontologyId: ontologyId, recordId: recordId});
+            ontologyManagerSvc.uploadJson(ontologyObj, title)
+                .then(function(data) {
+                    expect(data).toEqual({ontologyId: ontologyId, recordId: recordId});
+                    done();
+                }, function() {
+                    fail('Promise should have resolved');
+                    done();
                 });
-                it('and GET endpoint is successful', function() {
-                    $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '?' + params)
-                        .respond(200, ontology);
-                    ontologyManagerSvc.getOntology(recordId, format).then(function(response) {
-                        expect(response).toEqual(expected);
-                    }, function() {
-                        fail('Promise should have resolved');
-                    });
-                    flushAndVerify();
-                    expect(catalogManagerSvc.getInProgressCommit).toHaveBeenCalledWith(recordId, catalogId);
-                    expect(stateManagerSvc.deleteOntologyState).not.toHaveBeenCalled();
-                });
-                describe('and GET endpoint is not successful', function() {
-                    var deleteDeferred;
-                    beforeEach(function() {
-                        $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '?' + params)
-                            .respond(400, null, null, error);
-                        deleteDeferred = $q.defer();
-                        stateManagerSvc.deleteOntologyState.and.returnValue(deleteDeferred.promise);
-                    });
-                    describe('and deleteOntologyState is resolved', function() {
-                        var masterDeferred;
-                        beforeEach(function() {
-                            deleteDeferred.resolve();
-                            masterDeferred = $q.defer();
-                            catalogManagerSvc.getRecordMasterBranch.and.returnValue(masterDeferred.promise);
-                        });
-                        describe('and getMasterBranch is resolved', function() {
-                            var commitDeferred;
-                            beforeEach(function() {
-                                masterDeferred.resolve({'@id': branchId});
-                                commitDeferred = $q.defer();
-                                catalogManagerSvc.getBranchHeadCommit.and.returnValue(commitDeferred.promise);
-                            });
-                            describe('and getBranchHeadCommit is resolved', function() {
-                                var createDeferred, expected2;
-                                var commitId2 = 'commitId2';
-                                var commitObj2 = {
-                                    commit: {
-                                        '@id': commitId2
-                                    }
-                                }
-                                beforeEach(function() {
-                                    expected2 = {
-                                        recordId: recordId,
-                                        ontology: ontology,
-                                        branchId: branchId,
-                                        commitId: commitId2,
-                                        inProgressCommit: inProgressCommit
-                                    }
-                                    commitDeferred.resolve(commitObj2);
-                                    createDeferred = $q.defer();
-                                    stateManagerSvc.createOntologyState.and.returnValue(createDeferred.promise);
-                                    params = paramSerializer({
-                                        branchId: branchId,
-                                        commitId: commitId2,
-                                        rdfFormat: format
-                                    });
-                                });
-                                describe('and createOntologyState is resolved', function() {
-                                    var firstTime;
-                                    beforeEach(function() {
-                                        firstTime = true;
-                                        createDeferred.resolve();
-                                    });
-                                    it('and GET endpoint is successful', function() {
-                                        $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '?' + params)
-                                            .respond(200, ontology);
-                                        ontologyManagerSvc.getOntology(recordId, format).then(function(response) {
-                                            _.set(expected2, 'inProgressCommit', emptyInProgressCommit);
-                                            expect(response).toEqual(expected2);
-                                        }, function() {
-                                            fail('Promise should have resolved');
-                                        });
-                                        flushAndVerify();
-                                        expect(catalogManagerSvc.getInProgressCommit).toHaveBeenCalledWith(recordId, catalogId);
-                                        expect(stateManagerSvc.deleteOntologyState).toHaveBeenCalledWith(recordId, branchId, commitId);
-                                        expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(recordId, catalogId);
-                                        expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(branchId, recordId,
-                                            catalogId);
-                                        expect(stateManagerSvc.createOntologyState).toHaveBeenCalledWith(recordId, branchId,
-                                            commitId2);
-                                    });
-                                    it('and GET endpoint is not successful', function() {
-                                        $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '?' + params)
-                                            .respond(400, null, null, error);
-                                        ontologyManagerSvc.getOntology(recordId, format).then(function() {
-                                            fail('Promise should have rejected');
-                                        }, function(response) {
-                                            expect(response).toEqual(error);
-                                        });
-                                        flushAndVerify();
-                                        expect(catalogManagerSvc.getInProgressCommit).toHaveBeenCalledWith(recordId, catalogId);
-                                        expect(stateManagerSvc.deleteOntologyState).toHaveBeenCalledWith(recordId, branchId, commitId);
-                                        expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(recordId, catalogId);
-                                        expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(branchId, recordId,
-                                            catalogId);
-                                        expect(stateManagerSvc.createOntologyState).toHaveBeenCalledWith(recordId, branchId,
-                                            commitId2);
-                                    });
-                                });
-                                it('and createOntologyState is rejected', function() {
-                                    createDeferred.reject(error);
-                                    ontologyManagerSvc.getOntology(recordId, format).then(function() {
-                                        fail('Promise should have rejected');
-                                    }, function(response) {
-                                        expect(response).toEqual(error);
-                                    });
-                                    flushAndVerify();
-                                    expect(catalogManagerSvc.getInProgressCommit).toHaveBeenCalledWith(recordId, catalogId);
-                                    expect(stateManagerSvc.deleteOntologyState).toHaveBeenCalledWith(recordId, branchId, commitId);
-                                    expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(recordId, catalogId);
-                                    expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(branchId, recordId,
-                                        catalogId);
-                                    expect(stateManagerSvc.createOntologyState).toHaveBeenCalledWith(recordId, branchId, commitId2);
-                                });
-                            });
-                            it('and getBranchHeadCommit is rejected', function() {
-                                commitDeferred.reject(error);
-                                ontologyManagerSvc.getOntology(recordId, format).then(function() {
-                                    fail('Promise should have rejected');
-                                }, function(response) {
-                                    expect(response).toEqual(error);
-                                });
-                                flushAndVerify();
-                                expect(catalogManagerSvc.getInProgressCommit).toHaveBeenCalledWith(recordId, catalogId);
-                                expect(stateManagerSvc.deleteOntologyState).toHaveBeenCalledWith(recordId, branchId, commitId);
-                                expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(recordId, catalogId);
-                                expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(branchId, recordId, catalogId);
-                            });
-                        });
-                        it('and getMasterBranch is rejected', function() {
-                            masterDeferred.reject(error);
-                            ontologyManagerSvc.getOntology(recordId, format).then(function() {
-                                fail('Promise should have rejected');
-                            }, function(response) {
-                                expect(response).toEqual(error);
-                            });
-                            flushAndVerify();
-                            expect(catalogManagerSvc.getInProgressCommit).toHaveBeenCalledWith(recordId, catalogId);
-                            expect(stateManagerSvc.deleteOntologyState).toHaveBeenCalledWith(recordId, branchId, commitId);
-                            expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(recordId, catalogId);
-                            expect(catalogManagerSvc.getBranchHeadCommit).not.toHaveBeenCalled();
-                        });
-                    });
-                    it('and deleteOntologyState is rejected', function() {
-                        deleteDeferred.reject(error);
-                        stateManagerSvc.getOntologyStateByRecordId.and.returnValue({model: [ontologyState]});
-                        ontologyManagerSvc.getOntology(recordId, format).then(function(response) {
-                            fail('Promise should have rejected');
-                        }, function(response) {
-                            expect(response).toEqual(error);
-                        });
-                        flushAndVerify();
-                        expect(catalogManagerSvc.getInProgressCommit).toHaveBeenCalledWith(recordId, catalogId);
-                        expect(stateManagerSvc.deleteOntologyState).toHaveBeenCalledWith(recordId, branchId, commitId);
-                    });
-                });
-            });
-            describe('and getInProgressCommit is rejected', function() {
-                describe('with message "User has no InProgressCommit"', function() {
-                    beforeEach(function() {
-                        getDeferred.reject('User has no InProgressCommit');
-                        stateManagerSvc.getOntologyStateByRecordId.and.returnValue({model: [ontologyState]});
-                    });
-                    it('and GET endpoint is successful', function() {
-                        $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '?' + params)
-                            .respond(200, ontology);
-                        ontologyManagerSvc.getOntology(recordId, format).then(function(response) {
-                            _.set(expected, 'inProgressCommit', emptyInProgressCommit);
-                            expect(response).toEqual(expected);
-                        }, function() {
-                            fail('Promise should have resolved');
-                        });
-                        flushAndVerify();
-                        expect(catalogManagerSvc.getInProgressCommit).toHaveBeenCalledWith(recordId, catalogId);
-                    });
-                    describe('and GET endpoint is not successful', function() {
-                        var deleteDeferred;
-                        beforeEach(function() {
-                            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '?' + params)
-                                .respond(400, null, null, error);
-                            deleteDeferred = $q.defer();
-                            stateManagerSvc.deleteOntologyState.and.returnValue(deleteDeferred.promise);
-                        });
-                        describe('and deleteOntologyState is resolved', function() {
-                            var masterDeferred;
-                            beforeEach(function() {
-                                deleteDeferred.resolve();
-                                masterDeferred = $q.defer();
-                                catalogManagerSvc.getRecordMasterBranch.and.returnValue(masterDeferred.promise);
-                            });
-                            describe('and getMasterBranch is resolved', function() {
-                                var commitDeferred;
-                                beforeEach(function() {
-                                    masterDeferred.resolve({'@id': branchId});
-                                    commitDeferred = $q.defer();
-                                    catalogManagerSvc.getBranchHeadCommit.and.returnValue(commitDeferred.promise);
-                                });
-                                describe('and getBranchHeadCommit is resolved', function() {
-                                    var createDeferred;
-                                    beforeEach(function() {
-                                        commitDeferred.resolve(commitObj);
-                                        createDeferred = $q.defer();
-                                        stateManagerSvc.createOntologyState.and.returnValue(createDeferred.promise);
-                                    });
-                                    describe('and createOntologyState is resolved', function() {
-                                        beforeEach(function() {
-                                            createDeferred.resolve();
-                                        });
-                                        it('and GET endpoint is successful', function() {
-                                            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '?' + params)
-                                                .respond(200, ontology);
-                                            ontologyManagerSvc.getOntology(recordId, format).then(function(response) {
-                                                _.set(expected, 'inProgressCommit', emptyInProgressCommit);
-                                                expect(response).toEqual(expected);
-                                            }, function() {
-                                                fail('Promise should have resolved');
-                                            });
-                                            flushAndVerify();
-                                            expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(recordId, catalogId);
-                                            expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(branchId, recordId,
-                                                catalogId);
-                                            expect(stateManagerSvc.createOntologyState).toHaveBeenCalledWith(recordId, branchId,
-                                                commitId);
-                                        });
-                                        it('and GET endpoint is not successful', function() {
-                                            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '?' + params)
-                                                .respond(400, null, null, error);
-                                            ontologyManagerSvc.getOntology(recordId, format).then(function() {
-                                                fail('Promise should have rejected');
-                                            }, function(response) {
-                                                expect(response).toEqual(error);
-                                            });
-                                            flushAndVerify();
-                                            expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(recordId, catalogId);
-                                            expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(branchId, recordId,
-                                                catalogId);
-                                            expect(stateManagerSvc.createOntologyState).toHaveBeenCalledWith(recordId, branchId,
-                                                commitId);
-                                        });
-                                    });
-                                    it('and createOntologyState is rejected', function() {
-                                        createDeferred.reject(error);
-                                        ontologyManagerSvc.getOntology(recordId, format).then(function() {
-                                            fail('Promise should have rejected');
-                                        }, function(response) {
-                                            expect(response).toEqual(error);
-                                        });
-                                        flushAndVerify();
-                                        expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(recordId, catalogId);
-                                        expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(branchId, recordId,
-                                            catalogId);
-                                        expect(stateManagerSvc.createOntologyState).toHaveBeenCalledWith(recordId, branchId, commitId);
-                                    });
-                                });
-                                it('and getBranchHeadCommit is rejected', function() {
-                                    commitDeferred.reject(error);
-                                    ontologyManagerSvc.getOntology(recordId, format).then(function() {
-                                        fail('Promise should have rejected');
-                                    }, function(response) {
-                                        expect(response).toEqual(error);
-                                    });
-                                    flushAndVerify();
-                                    expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(recordId, catalogId);
-                                    expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(branchId, recordId, catalogId);
-                                });
-                            });
-                            it('and getMasterBranch is rejected', function() {
-                                masterDeferred.reject(error);
-                                ontologyManagerSvc.getOntology(recordId, format).then(function() {
-                                    fail('Promise should have rejected');
-                                }, function(response) {
-                                    expect(response).toEqual(error);
-                                });
-                                flushAndVerify();
-                                expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(recordId, catalogId);
-                                expect(catalogManagerSvc.getBranchHeadCommit).not.toHaveBeenCalled();
-                            });
-                        });
-                        it('and deleteOntologyState is rejected', function() {
-                            deleteDeferred.reject(error);
-                            ontologyManagerSvc.getOntology(recordId, format).then(function(response) {
-                                fail('Promise should have rejected');
-                            }, function(response) {
-                                expect(response).toEqual(error);
-                            });
-                            flushAndVerify();
-                            expect(catalogManagerSvc.getInProgressCommit).toHaveBeenCalledWith(recordId, catalogId);
-                            expect(stateManagerSvc.deleteOntologyState).toHaveBeenCalledWith(recordId, branchId, commitId);
-                        });
-                    });
-                });
-                describe('with other message', function() {
-                    var deleteDeferred;
-                    beforeEach(function() {
-                        $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '?' + params)
-                            .respond(200, ontology);
-                        getDeferred.reject(error);
-                        deleteDeferred = $q.defer();
-                        stateManagerSvc.deleteOntologyState.and.returnValue(deleteDeferred.promise);
-                    });
-                    describe('and deleteOntologyState is resolved', function() {
-                        var masterDeferred;
-                        beforeEach(function() {
-                            deleteDeferred.resolve();
-                            masterDeferred = $q.defer();
-                            catalogManagerSvc.getRecordMasterBranch.and.returnValue(masterDeferred.promise);
-                        });
-                        describe('and getMasterBranch is resolved', function() {
-                            var commitDeferred;
-                            beforeEach(function() {
-                                masterDeferred.resolve({'@id': branchId});
-                                commitDeferred = $q.defer();
-                                catalogManagerSvc.getBranchHeadCommit.and.returnValue(commitDeferred.promise);
-                            });
-                            describe('and getBranchHeadCommit is resolved', function() {
-                                var createDeferred;
-                                beforeEach(function() {
-                                    commitDeferred.resolve(commitObj);
-                                    createDeferred = $q.defer();
-                                    stateManagerSvc.createOntologyState.and.returnValue(createDeferred.promise);
-                                });
-                                describe('and createOntologyState is resolved', function() {
-                                    beforeEach(function() {
-                                        createDeferred.resolve();
-                                    });
-                                    it('and GET endpoint is successful', function() {
-                                        $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '?' + params)
-                                            .respond(200, ontology);
-                                        ontologyManagerSvc.getOntology(recordId, format).then(function(response) {
-                                            _.set(expected, 'inProgressCommit', emptyInProgressCommit);
-                                            expect(response).toEqual(expected);
-                                        }, function() {
-                                            fail('Promise should have resolved');
-                                        });
-                                        scope.$apply();
-                                        expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(recordId, catalogId);
-                                        expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(branchId, recordId,
-                                            catalogId);
-                                        expect(stateManagerSvc.createOntologyState).toHaveBeenCalledWith(recordId, branchId,
-                                            commitId);
-                                    });
-                                    it('and GET endpoint is not successful', function() {
-                                        $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '?' + params)
-                                            .respond(400, null, null, error);
-                                        ontologyManagerSvc.getOntology(recordId, format).then(function() {
-                                            fail('Promise should have rejected');
-                                        }, function(response) {
-                                            expect(response).toEqual(error);
-                                        });
-                                        scope.$apply();
-                                        expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(recordId, catalogId);
-                                        expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(branchId, recordId,
-                                            catalogId);
-                                        expect(stateManagerSvc.createOntologyState).toHaveBeenCalledWith(recordId, branchId,
-                                            commitId);
-                                    });
-                                });
-                                it('and createOntologyState is rejected', function() {
-                                    createDeferred.reject(error);
-                                    ontologyManagerSvc.getOntology(recordId, format).then(function() {
-                                        fail('Promise should have rejected');
-                                    }, function(response) {
-                                        expect(response).toEqual(error);
-                                    });
-                                    scope.$apply();
-                                    expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(recordId, catalogId);
-                                    expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(branchId, recordId,
-                                        catalogId);
-                                    expect(stateManagerSvc.createOntologyState).toHaveBeenCalledWith(recordId, branchId, commitId);
-                                });
-                            });
-                            it('and getBranchHeadCommit is rejected', function() {
-                                commitDeferred.reject(error);
-                                ontologyManagerSvc.getOntology(recordId, format).then(function() {
-                                    fail('Promise should have rejected');
-                                }, function(response) {
-                                    expect(response).toEqual(error);
-                                });
-                                scope.$apply();
-                                expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(recordId, catalogId);
-                                expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(branchId, recordId, catalogId);
-                            });
-                        });
-                        it('and getMasterBranch is rejected', function() {
-                            masterDeferred.reject(error);
-                            ontologyManagerSvc.getOntology(recordId, format).then(function() {
-                                fail('Promise should have rejected');
-                            }, function(response) {
-                                expect(response).toEqual(error);
-                            });
-                            scope.$apply();
-                            expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(recordId, catalogId);
-                            expect(catalogManagerSvc.getBranchHeadCommit).not.toHaveBeenCalled();
-                        });
-                    });
-                    it('and deleteOntologyState is rejected', function() {
-                        deleteDeferred.reject(error);
-                        ontologyManagerSvc.getOntology(recordId, format).then(function(response) {
-                            fail('Promise should have rejected');
-                        }, function(response) {
-                            expect(response).toEqual(error);
-                        });
-                        scope.$apply();
-                        expect(catalogManagerSvc.getInProgressCommit).toHaveBeenCalledWith(recordId, catalogId);
-                        expect(stateManagerSvc.deleteOntologyState).toHaveBeenCalledWith(recordId, branchId, commitId);
-                    });
-                });
-            });
+            flushAndVerify();
         });
-        describe('if state does not exist', function() {
-            var masterDeferred;
-            beforeEach(function() {
-                masterDeferred = $q.defer();
-                catalogManagerSvc.getRecordMasterBranch.and.returnValue(masterDeferred.promise);
-            });
-            describe('and getMasterBranch is resolved', function() {
-                var commitDeferred;
-                beforeEach(function() {
-                    masterDeferred.resolve({'@id': branchId});
-                    commitDeferred = $q.defer();
-                    catalogManagerSvc.getBranchHeadCommit.and.returnValue(commitDeferred.promise);
-                });
-                describe('and getBranchHeadCommit is resolved', function() {
-                    var createDeferred;
-                    beforeEach(function() {
-                        commitDeferred.resolve(commitObj);
-                        createDeferred = $q.defer();
-                        stateManagerSvc.createOntologyState.and.returnValue(createDeferred.promise);
-                    });
-                    describe('and createOntologyState is resolved', function() {
-                        beforeEach(function() {
-                            createDeferred.resolve();
-                        });
-                        it('and GET endpoint is successful', function() {
-                            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '?' + params)
-                                .respond(200, ontology);
-                            ontologyManagerSvc.getOntology(recordId, format).then(function(response) {
-                                _.set(expected, 'inProgressCommit', emptyInProgressCommit);
-                                expect(response).toEqual(expected);
-                            }, function() {
-                                fail('Promise should have resolved');
-                            });
-                            scope.$apply();
-                            expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(recordId, catalogId);
-                            expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(branchId, recordId,
-                                catalogId);
-                            expect(stateManagerSvc.createOntologyState).toHaveBeenCalledWith(recordId, branchId,
-                                commitId);
-                        });
-                        it('and GET endpoint is not successful', function() {
-                            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '?' + params)
-                                .respond(400, null, null, error);
-                            ontologyManagerSvc.getOntology(recordId, format).then(function() {
-                                fail('Promise should have rejected');
-                            }, function(response) {
-                                expect(response).toEqual(error);
-                            });
-                            scope.$apply();
-                            expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(recordId, catalogId);
-                            expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(branchId, recordId,
-                                catalogId);
-                            expect(stateManagerSvc.createOntologyState).toHaveBeenCalledWith(recordId, branchId,
-                                commitId);
-                        });
-                    });
-                    it('and createOntologyState is rejected', function() {
-                        createDeferred.reject(error);
-                        ontologyManagerSvc.getOntology(recordId, format).then(function() {
-                            fail('Promise should have rejected');
-                        }, function(response) {
-                            expect(response).toEqual(error);
-                        });
-                        scope.$apply();
-                        expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(recordId, catalogId);
-                        expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(branchId, recordId,
-                            catalogId);
-                        expect(stateManagerSvc.createOntologyState).toHaveBeenCalledWith(recordId, branchId, commitId);
-                    });
-                });
-                it('and getBranchHeadCommit is rejected', function() {
-                    commitDeferred.reject(error);
-                    ontologyManagerSvc.getOntology(recordId, format).then(function() {
-                        fail('Promise should have rejected');
-                    }, function(response) {
-                        expect(response).toEqual(error);
-                    });
-                    scope.$apply();
-                    expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(recordId, catalogId);
-                    expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(branchId, recordId, catalogId);
-                });
-            });
-            it('and getMasterBranch is rejected', function() {
-                masterDeferred.reject(error);
-                ontologyManagerSvc.getOntology(recordId, format).then(function() {
+        it('unless an error occurs', function(done) {
+            var params = paramSerializer({ title: title });
+            $httpBackend.expectPOST('/matontorest/ontologies?' + params, ontologyObj,
+                function(headers) {
+                    return headers['Content-Type'] === 'application/json';
+                }).respond(400, null, null, error);
+            ontologyManagerSvc.uploadJson(ontologyObj, title)
+                .then(function() {
                     fail('Promise should have rejected');
+                    done();
                 }, function(response) {
                     expect(response).toEqual(error);
+                    expect(util.onError).toHaveBeenCalled();
+                    done();
                 });
-                scope.$apply();
-                expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(recordId, catalogId);
-                expect(catalogManagerSvc.getBranchHeadCommit).not.toHaveBeenCalled();
-            });
+                flushAndVerify();
         });
     });
-
     describe('downloadOntology should set the $window.location properly', function() {
         it('with a format', function() {
             ontologyManagerSvc.downloadOntology(recordId, branchId, commitId, 'turtle');
@@ -911,117 +330,265 @@ describe('Ontology Manager service', function() {
             expect(windowSvc.location).toBe('/matontorest/ontologies/' + encodeURIComponent(recordId) + '?branchId=' + encodeURIComponent(branchId) + '&commitId=' + encodeURIComponent(commitId) + '&fileName=ontology&rdfFormat=turtle');
         });
     });
-
-    describe('uploadThenGet should call the proper methods', function() {
-        var uploadDeferred;
+    describe('getOntology hits the proper endpoint', function() {
+        var params;
         beforeEach(function() {
-            uploadDeferred = $q.defer();
-            spyOn(ontologyManagerSvc, 'uploadFile').and.returnValue(uploadDeferred.promise);
+            params = paramSerializer({ branchId: branchId, commitId: commitId, rdfFormat: format });
         });
-        describe('when uploadFile resolves', function() {
-            var resolvedResponse = {
-                data: {
-                    recordId: recordId,
-                    ontologyId: ontologyId
-                }
-            }
-            var getDeferred;
-            beforeEach(function() {
-                uploadDeferred.resolve(resolvedResponse);
-                getDeferred = $q.defer();
-                spyOn(ontologyManagerSvc, 'getOntology').and.returnValue(getDeferred.promise);
-            });
-            describe('and getOntology resolves', function() {
-                beforeEach(function() {
-                    getDeferred.resolve(getResponse);
+        it('unless an error occurs', function(done) {
+            $httpBackend.expectGET('/matontorest/ontologies/' + encodeURIComponent(recordId) + '?' + params,
+                function(headers) {
+                    return headers['Accept'] === 'text/plain';
+                }).respond(400, null, null, error);
+            ontologyManagerSvc.getOntology(recordId, branchId, commitId, format)
+                .then(function() {
+                    fail('Promise should have rejected');
+                    done();
+                }, function(response) {
+                    expect(response).toEqual(error);
+                    expect(util.onError).toHaveBeenCalled();
+                    done();
                 });
-                describe('and type is "ontology"', function() {
-                    var addDeferred;
-                    beforeEach(function() {
-                        addDeferred = $q.defer();
-                        spyOn(ontologyManagerSvc, 'addOntologyToList').and.returnValue(addDeferred.promise);
-                    });
-                    it('and addOntologyToList resolves', function() {
-                        addDeferred.resolve();
-                        ontologyManagerSvc.uploadThenGet({}, title, description, keywords, ontologyType)
-                            .then(function(response) {
-                                expect(ontologyManagerSvc.addOntologyToList).toHaveBeenCalledWith(ontologyId, recordId,
-                                    branchId, commitId, ontology, inProgressCommit);
-                                expect(response).toEqual(recordId);
-                            }, function() {
-                                fail('Promise should have resolved');
-                            });
-                        scope.$apply();
-                    });
-                    it('and addOntologyToList rejects', function() {
-                        addDeferred.reject(error);
-                        ontologyManagerSvc.uploadThenGet({}, title, description, keywords, ontologyType)
-                            .then(function() {
-                                fail('Promise should have rejected');
-                            }, function(response) {
-                                expect(ontologyManagerSvc.addOntologyToList).toHaveBeenCalledWith(ontologyId, recordId,
-                                    branchId, commitId, ontology, inProgressCommit);
-                                expect(response).toEqual(error);
-                            });
-                        scope.$apply();
-                    });
-                });
-                describe('and type is "vocabulary"', function() {
-                    var addDeferred;
-                    beforeEach(function() {
-                        addDeferred = $q.defer();
-                        spyOn(ontologyManagerSvc, 'addVocabularyToList').and.returnValue(addDeferred.promise);
-                    });
-                    it('and addOntologyToList resolves', function() {
-                        addDeferred.resolve();
-                        ontologyManagerSvc.uploadThenGet({}, title, description, keywords, vocabularyType)
-                            .then(function(response) {
-                                expect(ontologyManagerSvc.addVocabularyToList).toHaveBeenCalledWith(ontologyId,
-                                    recordId, branchId, commitId, ontology, inProgressCommit);
-                                expect(response).toEqual(recordId);
-                            }, function() {
-                                fail('Promise should have resolved');
-                            });
-                        scope.$apply();
-                    });
-                    it('and addOntologyToList rejects', function() {
-                        addDeferred.reject(error);
-                        ontologyManagerSvc.uploadThenGet({}, title, description, keywords, vocabularyType)
-                            .then(function() {
-                                fail('Promise should have rejected');
-                            }, function(response) {
-                                expect(ontologyManagerSvc.addVocabularyToList).toHaveBeenCalledWith(ontologyId,
-                                    recordId, branchId, commitId, ontology, inProgressCommit);
-                                expect(response).toEqual(error);
-                            });
-                        scope.$apply();
-                    });
-                });
-            });
-            it('and getOntology rejects', function() {
-                getDeferred.reject(error);
-                ontologyManagerSvc.uploadThenGet({}, title, description, keywords)
-                    .then(function() {
-                        fail('Promise should have rejected');
-                    }, function(response) {
-                        expect(response).toEqual(error);
-                    });
-                scope.$apply();
-            });
+            flushAndVerify();
         });
-        it('when uploadFile rejects', function() {
-            uploadDeferred.reject(error);
-            ontologyManagerSvc.uploadThenGet({}, title, description, keywords)
+        it('successfully', function(done) {
+            $httpBackend.expectGET('/matontorest/ontologies/' + encodeURIComponent(recordId) + '?' + params,
+                function(headers) {
+                    return headers['Accept'] === 'text/plain';
+                }).respond(200, ontology);
+            ontologyManagerSvc.getOntology(recordId, branchId, commitId, format)
+                .then(function(data) {
+                    expect(data).toEqual(ontology);
+                    done();
+                }, function(response) {
+                    fail('Promise should have resolved');
+                    done();
+                });
+            flushAndVerify();
+        });
+    });
+    describe('getIris retrieves all IRIs in an ontology', function() {
+        var params;
+        beforeEach(function() {
+            params = paramSerializer({ branchId: branchId, commitId: commitId });
+        });
+        it('unless an error occurs', function(done) {
+            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/iris?' + params).respond(400, null, null, error);
+            ontologyManagerSvc.getIris(recordId, branchId, commitId)
+                .then(function() {
+                    fail('Promise should have rejected');
+                    done();
+                }, function(response) {
+                    expect(response).toEqual(error);
+                    expect(util.onError).toHaveBeenCalled();
+                    done();
+                });
+            flushAndVerify();
+        });
+        it('successfully', function(done) {
+            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/iris?' + params).respond(200, {});
+            ontologyManagerSvc.getIris(recordId, branchId, commitId)
+                .then(function(response) {
+                    expect(response).toEqual({});
+                    done();
+                }, function() {
+                    fail('Promise should have resolved');
+                    done();
+                });
+            flushAndVerify();
+        });
+    });
+    describe('getImportedIris retrieves all IRIs in an ontology', function() {
+        var params;
+        beforeEach(function() {
+            params = paramSerializer({ branchId: branchId, commitId: commitId });
+        });
+        it('unless an error occurs', function(done) {
+            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/imported-iris?' + params).respond(400, null, null, error);
+            ontologyManagerSvc.getImportedIris(recordId, branchId, commitId)
+                .then(function() {
+                    fail('Promise should have rejected');
+                    done();
+                }, function(response) {
+                    expect(response).toEqual(error);
+                    expect(util.onError).toHaveBeenCalled();
+                    done();
+                });
+            flushAndVerify();
+        });
+        it('unless there are none', function(done) {
+            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/imported-iris?' + params).respond(204);
+            ontologyManagerSvc.getImportedIris(recordId, branchId, commitId)
+                .then(function(response) {
+                    expect(response).toEqual([]);
+                    done();
+                }, function() {
+                    fail('Promise should have resolved');
+                    done();
+                });
+            flushAndVerify();
+        });
+        it('successfully', function(done) {
+            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/imported-iris?' + params).respond(200, [{}]);
+            ontologyManagerSvc.getImportedIris(recordId, branchId, commitId)
+                .then(function(response) {
+                    expect(response).toEqual([{}]);
+                    done();
+                }, function() {
+                    fail('Promise should have resolved');
+                    done();
+                });
+            flushAndVerify();
+        });
+    });
+    describe('getClassHierarchies retrieves all IRIs in an ontology', function() {
+        var params;
+        beforeEach(function() {
+            params = paramSerializer({ branchId: branchId, commitId: commitId });
+        });
+        it('unless an error occurs', function(done) {
+            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/class-hierarchies?' + params).respond(400, null, null, error);
+            ontologyManagerSvc.getClassHierarchies(recordId, branchId, commitId)
+                .then(function() {
+                    fail('Promise should have rejected');
+                    done();
+                }, function(response) {
+                    expect(response).toEqual(error);
+                    expect(util.onError).toHaveBeenCalled();
+                    done();
+                });
+            flushAndVerify();
+        });
+        it('successfully', function(done) {
+            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/class-hierarchies?' + params).respond(200, {});
+            ontologyManagerSvc.getClassHierarchies(recordId, branchId, commitId)
+                .then(function(response) {
+                    expect(response).toEqual({});
+                    done();
+                }, function() {
+                    fail('Promise should have resolved');
+                    done();
+                });
+            flushAndVerify();
+        });
+    });
+    describe('getClassesWithIndividuals retrieves all IRIs in an ontology', function() {
+        var params;
+        beforeEach(function() {
+            params = paramSerializer({ branchId: branchId, commitId: commitId });
+        });
+        it('unless an error occurs', function(done) {
+            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/classes-with-individuals?' + params).respond(400, null, null, error);
+            ontologyManagerSvc.getClassesWithIndividuals(recordId, branchId, commitId)
+                .then(function() {
+                    fail('Promise should have rejected');
+                    done();
+                }, function(response) {
+                    expect(response).toEqual(error);
+                    expect(util.onError).toHaveBeenCalled();
+                    done();
+                });
+            flushAndVerify();
+        });
+        it('successfully', function(done) {
+            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/classes-with-individuals?' + params).respond(200, {});
+            ontologyManagerSvc.getClassesWithIndividuals(recordId, branchId, commitId)
+                .then(function(response) {
+                    expect(response).toEqual({});
+                    done();
+                }, function() {
+                    fail('Promise should have resolved');
+                    done();
+                });
+            flushAndVerify();
+        });
+    });
+    describe('getDataPropertyHierarchies retrieves all IRIs in an ontology', function() {
+        var params;
+        beforeEach(function() {
+            params = paramSerializer({ branchId: branchId, commitId: commitId });
+        });
+        it('unless an error occurs', function(done) {
+            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/data-property-hierarchies?' + params).respond(400, null, null, error);
+            ontologyManagerSvc.getDataPropertyHierarchies(recordId, branchId, commitId)
+                .then(function() {
+                    fail('Promise should have rejected');
+                    done();
+                }, function(response) {
+                    expect(response).toEqual(error);
+                    expect(util.onError).toHaveBeenCalled();
+                    done();
+                });
+            flushAndVerify();
+        });
+        it('successfully', function(done) {
+            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/data-property-hierarchies?' + params).respond(200, {});
+            ontologyManagerSvc.getDataPropertyHierarchies(recordId, branchId, commitId)
+                .then(function(response) {
+                    expect(response).toEqual({});
+                    done();
+                }, function() {
+                    fail('Promise should have resolved');
+                    done();
+                });
+            flushAndVerify();
+        });
+    });
+    describe('getObjectPropertyHierarchies retrieves all IRIs in an ontology', function() {
+        var params;
+        beforeEach(function() {
+            params = paramSerializer({ branchId: branchId, commitId: commitId });
+        });
+        it('unless an error occurs', function() {
+            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/object-property-hierarchies?' + params).respond(400, null, null, error);
+            ontologyManagerSvc.getObjectPropertyHierarchies(recordId, branchId, commitId)
                 .then(function() {
                     fail('Promise should have rejected');
                 }, function(response) {
                     expect(response).toEqual(error);
+                    expect(util.onError).toHaveBeenCalled();
                 });
-            scope.$apply();
+            flushAndVerify();
+        });
+        it('successfully', function() {
+            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/object-property-hierarchies?' + params).respond(200, {});
+            ontologyManagerSvc.getObjectPropertyHierarchies(recordId, branchId, commitId)
+                .then(function(response) {
+                    expect(response).toEqual({});
+                }, function() {
+                    fail('Promise should have resolved');
+                });
+            flushAndVerify();
         });
     });
-
-    describe('updateOntology should call the proper methods', function() {
+    describe('getConceptHierarchies retrieves all IRIs in an ontology', function() {
+        var params;
+        beforeEach(function() {
+            params = paramSerializer({ branchId: branchId, commitId: commitId });
+        });
+        it('unless an error occurs', function() {
+            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/concept-hierarchies?' + params).respond(400, null, null, error);
+            ontologyManagerSvc.getConceptHierarchies(recordId, branchId, commitId)
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toEqual(error);
+                    expect(util.onError).toHaveBeenCalled();
+                });
+            flushAndVerify();
+        });
+        it('successfully', function() {
+            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/concept-hierarchies?' + params).respond(200, {});
+            ontologyManagerSvc.getConceptHierarchies(recordId, branchId, commitId)
+                .then(function(response) {
+                    expect(response).toEqual({});
+                }, function() {
+                    fail('Promise should have resolved');
+                });
+            flushAndVerify();
+        });
+    });
+    describe('getImportedOntologies should call the proper functions', function() {
         var params;
         beforeEach(function() {
             params = paramSerializer({
@@ -1030,466 +597,171 @@ describe('Ontology Manager service', function() {
                 rdfFormat: format
             });
         });
-        describe('and GET endpoint is successful', function() {
-            beforeEach(function() {
-                $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '?' + params)
-                    .respond(200, ontology);
-                spyOn(ontologyManagerSvc, 'getListItemByRecordId').and.returnValue(listItem);
-            });
-            describe('and type is "ontology"', function() {
-                var createDeferred;
-                beforeEach(function() {
-                    createDeferred = $q.defer();
-                    spyOn(ontologyManagerSvc, 'createOntologyListItem').and.returnValue(createDeferred.promise);
+        it('when get succeeds', function(done) {
+            $httpBackend.expectGET('/matontorest/ontologies/recordId/imported-ontologies?' + params)
+                .respond(200, [ontology]);
+            ontologyManagerSvc.getImportedOntologies(recordId, branchId, commitId)
+                .then(function(response) {
+                    expect(response).toEqual([ontology]);
+                    done();
+                }, function() {
+                    fail('Promise should have resolved');
+                    done();
                 });
-                describe('and createOntologyListItem resolves', function() {
-                    var updateDeferred;
-                    beforeEach(function() {
-                        createDeferred.resolve();
-                        updateDeferred = $q.defer();
-                        stateManagerSvc.updateOntologyState.and.returnValue(updateDeferred.promise);
-                    });
-                    it('and updateOntologyState resolves', function() {
-                        updateDeferred.resolve();
-                        ontologyManagerSvc.updateOntology(recordId, branchId, commitId, ontologyType, listItem.upToDate)
-                            .then(function(response) {
-                                expect(ontologyManagerSvc.createOntologyListItem).toHaveBeenCalledWith(ontologyId,
-                                    recordId, branchId, commitId, ontology, emptyInProgressCommit, listItem.upToDate);
-                                expect(stateManagerSvc.updateOntologyState).toHaveBeenCalledWith(recordId, branchId,
-                                    commitId);
-                            }, function() {
-                                fail('Promise should have resolved');
-                            });
-                        scope.$apply();
-                    });
-                    it('and updateOntologyState rejects', function() {
-                        updateDeferred.reject(error);
-                        ontologyManagerSvc.updateOntology(recordId, branchId, commitId, ontologyType, listItem.upToDate)
-                            .then(function() {
-                                fail('Promise should have rejected');
-                            }, function(response) {
-                                expect(ontologyManagerSvc.createOntologyListItem).toHaveBeenCalledWith(ontologyId,
-                                    recordId, branchId, commitId, ontology, emptyInProgressCommit, listItem.upToDate);
-                                expect(stateManagerSvc.updateOntologyState).toHaveBeenCalledWith(recordId, branchId,
-                                    commitId);
-                                expect(response).toEqual(error);
-                            });
-                        scope.$apply();
-                    });
-                });
-                it('and createOntologyListItem rejects', function() {
-                    createDeferred.reject(error);
-                    ontologyManagerSvc.updateOntology(recordId, branchId, commitId, ontologyType, listItem.upToDate)
-                        .then(function() {
-                            fail('Promise should have rejected');
-                        }, function(response) {
-                            expect(ontologyManagerSvc.createOntologyListItem).toHaveBeenCalledWith(ontologyId, recordId,
-                                branchId, commitId, ontology, emptyInProgressCommit, listItem.upToDate);
-                            expect(response).toEqual(error);
-                        });
-                    scope.$apply();
-                });
-            });
-            describe('and type is "vocabulary"', function() {
-                var createDeferred;
-                beforeEach(function() {
-                    createDeferred = $q.defer();
-                    spyOn(ontologyManagerSvc, 'createVocabularyListItem').and.returnValue(createDeferred.promise);
-                });
-                describe('and createVocabularyListItem resolves', function() {
-                    var updateDeferred;
-                    beforeEach(function() {
-                        createDeferred.resolve();
-                        updateDeferred = $q.defer();
-                        stateManagerSvc.updateOntologyState.and.returnValue(updateDeferred.promise);
-                    });
-                    it('and updateOntologyState resolves', function() {
-                        updateDeferred.resolve();
-                        ontologyManagerSvc.updateOntology(recordId, branchId, commitId, vocabularyType, listItem.upToDate)
-                            .then(function(response) {
-                                expect(ontologyManagerSvc.createVocabularyListItem).toHaveBeenCalledWith(ontologyId,
-                                    recordId, branchId, commitId, ontology, emptyInProgressCommit, listItem.upToDate);
-                                expect(stateManagerSvc.updateOntologyState).toHaveBeenCalledWith(recordId, branchId,
-                                    commitId);
-                            }, function() {
-                                fail('Promise should have resolved');
-                            });
-                        scope.$apply();
-                    });
-                    it('and updateOntologyState rejects', function() {
-                        updateDeferred.reject(error);
-                        ontologyManagerSvc.updateOntology(recordId, branchId, commitId, vocabularyType, listItem.upToDate)
-                            .then(function() {
-                                fail('Promise should have rejected');
-                            }, function(response) {
-                                expect(ontologyManagerSvc.createVocabularyListItem).toHaveBeenCalledWith(ontologyId,
-                                    recordId, branchId, commitId, ontology, emptyInProgressCommit, listItem.upToDate);
-                                expect(stateManagerSvc.updateOntologyState).toHaveBeenCalledWith(recordId, branchId,
-                                    commitId);
-                                expect(response).toEqual(error);
-                            });
-                        scope.$apply();
-                    });
-                });
-                it('and createVocabularyListItem rejects', function() {
-                    createDeferred.reject(error);
-                    ontologyManagerSvc.updateOntology(recordId, branchId, commitId, vocabularyType, listItem.upToDate)
-                        .then(function() {
-                            fail('Promise should have rejected');
-                        }, function(response) {
-                            expect(ontologyManagerSvc.createVocabularyListItem).toHaveBeenCalledWith(ontologyId,
-                                recordId, branchId, commitId, ontology, emptyInProgressCommit, listItem.upToDate);
-                            expect(response).toEqual(error);
-                        });
-                    scope.$apply();
-                });
-            });
+            flushAndVerify();
         });
-        it('and GET endpoint is not successful', function() {
-            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '?' + params)
+        it('when get is empty', function(done) {
+            $httpBackend.expectGET('/matontorest/ontologies/recordId/imported-ontologies?' + params)
+                .respond(204);
+            ontologyManagerSvc.getImportedOntologies(recordId, branchId, commitId)
+                .then(function(response) {
+                    expect(response).toEqual([]);
+                    done();
+                }, function() {
+                    fail('Promise should have resolved');
+                    done();
+                });
+            flushAndVerify();
+        });
+        it('when another success response', function(done) {
+            $httpBackend.expectGET('/matontorest/ontologies/recordId/imported-ontologies?' + params)
+                .respond(201, null, null, error);
+            ontologyManagerSvc.getImportedOntologies(recordId, branchId, commitId)
+                .then(function() {
+                    fail('Promise should have rejected');
+                    done();
+                }, function(response) {
+                    expect(response).toEqual(error);
+                    done();
+                });
+            flushAndVerify();
+        });
+        it('when get fails', function(done) {
+            $httpBackend.expectGET('/matontorest/ontologies/recordId/imported-ontologies?' + params)
                 .respond(400, null, null, error);
-            ontologyManagerSvc.updateOntology(recordId, branchId, commitId)
+            ontologyManagerSvc.getImportedOntologies(recordId, branchId, commitId)
                 .then(function() {
                     fail('Promise should have rejected');
+                    done();
                 }, function(response) {
                     expect(response).toEqual(error);
+                    done();
                 });
-            scope.$apply();
+            flushAndVerify();
         });
     });
-
-    describe('openOntology should call the proper methods', function() {
-        var getDeferred;
+    describe('getEntityUsages should call the proper functions', function() {
+        var params;
         beforeEach(function() {
-            getDeferred = $q.defer();
-            spyOn(ontologyManagerSvc, 'getOntology').and.returnValue(getDeferred.promise);
-        });
-        describe('and getOntology resolves', function() {
-            var branchDeferred;
-            beforeEach(function() {
-                branchDeferred = $q.defer();
-                catalogManagerSvc.getBranchHeadCommit.and.returnValue(branchDeferred.promise);
-                getDeferred.resolve(getResponse);
-            });
-            describe('and getBranchHeadCommit resolves', function() {
-                beforeEach(function() {
-                    branchDeferred.resolve(commitObj);
-                    spyOn(ontologyManagerSvc, 'getOntologyIRI').and.returnValue(ontologyId);
-                });
-                describe('and type is "ontology"', function() {
-                    var addDeferred;
-                    beforeEach(function() {
-                        addDeferred = $q.defer();
-                        spyOn(ontologyManagerSvc, 'addOntologyToList').and.returnValue(addDeferred.promise);
-                    });
-                    it('and addOntologyToList resolves', function() {
-                        addDeferred.resolve();
-                        ontologyManagerSvc.openOntology(recordId, ontologyType)
-                            .then(function(response) {
-                                expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(branchId, recordId,
-                                    catalogId);
-                                expect(ontologyManagerSvc.getOntologyIRI).toHaveBeenCalledWith(ontology);
-                                expect(ontologyManagerSvc.addOntologyToList).toHaveBeenCalledWith(ontologyId, recordId,
-                                    branchId, commitId, ontology, inProgressCommit, true);
-                                expect(response).toEqual(ontologyId);
-                            }, function() {
-                                fail('Promise should have resolved');
-                            });
-                        scope.$apply();
-                    });
-                    it('and addOntologyToList rejects', function() {
-                        addDeferred.reject(error);
-                        ontologyManagerSvc.openOntology(recordId, ontologyType)
-                            .then(function() {
-                                fail('Promise should have rejected');
-                            }, function(response) {
-                                expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(branchId, recordId,
-                                    catalogId);
-                                expect(ontologyManagerSvc.getOntologyIRI).toHaveBeenCalledWith(ontology);
-                                expect(ontologyManagerSvc.addOntologyToList).toHaveBeenCalledWith(ontologyId, recordId,
-                                    branchId, commitId, ontology, inProgressCommit, true);
-                                expect(response).toEqual(error);
-                            });
-                        scope.$apply();
-                    });
-                });
-                describe('and type is "vocabulary"', function() {
-                    var addDeferred;
-                    beforeEach(function() {
-                        addDeferred = $q.defer();
-                        spyOn(ontologyManagerSvc, 'addVocabularyToList').and.returnValue(addDeferred.promise);
-                    });
-                    it('and addVocabularyToList resolves', function() {
-                        addDeferred.resolve();
-                        ontologyManagerSvc.openOntology(recordId, vocabularyType)
-                            .then(function(response) {
-                                expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(branchId, recordId,
-                                    catalogId);
-                                expect(ontologyManagerSvc.addVocabularyToList).toHaveBeenCalledWith(ontologyId,
-                                    recordId, branchId, commitId, ontology, inProgressCommit, true);
-                                expect(response).toEqual(ontologyId);
-                            }, function() {
-                                fail('Promise should have resolved');
-                            });
-                        scope.$apply();
-                    });
-                    it('and addVocabularyToList rejects', function() {
-                        addDeferred.reject(error);
-                        ontologyManagerSvc.openOntology(recordId, vocabularyType)
-                            .then(function() {
-                                fail('Promise should have rejected');
-                            }, function(response) {
-                                expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(branchId, recordId,
-                                    catalogId);
-                                expect(ontologyManagerSvc.addVocabularyToList).toHaveBeenCalledWith(ontologyId,
-                                    recordId, branchId, commitId, ontology, inProgressCommit, true);
-                                expect(response).toEqual(error);
-                            });
-                        scope.$apply();
-                    });
-                });
-            });
-            it('and getBranchHeadCommit rejects', function() {
-                branchDeferred.reject(error);
-                ontologyManagerSvc.openOntology(recordId)
-                    .then(function() {
-                        fail('Promise should have rejected');
-                    }, function(response) {
-                        expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(branchId, recordId,
-                            catalogId);
-                        expect(response).toEqual(error);
-                    });
-                scope.$apply();
+            params = paramSerializer({
+                branchId: branchId,
+                commitId: commitId
             });
         });
-        it('and getOntology rejects', function() {
-            getDeferred.reject(error);
-            ontologyManagerSvc.openOntology(recordId)
+        describe('when get succeeds', function() {
+            it('and queryType is select', function(done) {
+                $httpBackend.expectGET('/matontorest/ontologies/recordId/entity-usages/classId?' + params + '&queryType=select')
+                    .respond(200, usages);
+                ontologyManagerSvc.getEntityUsages(recordId, branchId, commitId, classId, 'select')
+                    .then(function(response) {
+                        expect(response).toEqual(usages.results.bindings);
+                        done();
+                    }, function() {
+                        fail('Promise should have resolved');
+                        done();
+                    });
+                flushAndVerify();
+            });
+            it('and queryType is construct', function(done) {
+                $httpBackend.expectGET('/matontorest/ontologies/recordId/entity-usages/classId?' + params + '&queryType=construct')
+                    .respond(200, usages);
+                ontologyManagerSvc.getEntityUsages(recordId, branchId, commitId, classId, 'construct')
+                    .then(function(response) {
+                        expect(response).toEqual(usages);
+                        done();
+                    }, function() {
+                        fail('Promise should have resolved');
+                        done();
+                    });
+                flushAndVerify();
+            });
+        });
+        it('when get fails', function(done) {
+            $httpBackend.expectGET('/matontorest/ontologies/recordId/entity-usages/classId?' + params + '&queryType=select')
+                .respond(400, null, null, error);
+            ontologyManagerSvc.getEntityUsages(recordId, branchId, commitId, classId)
                 .then(function() {
                     fail('Promise should have rejected');
+                    done();
                 }, function(response) {
                     expect(response).toEqual(error);
+                    done();
                 });
-            scope.$apply();
+            flushAndVerify();
         });
     });
-
-    it('closeOntology removes the correct object from the list', function() {
-        ontologyManagerSvc.list = [{recordId: recordId}];
-        ontologyManagerSvc.closeOntology(recordId);
-        expect(ontologyManagerSvc.list).toEqual([]);
-    });
-
-    it('removeBranch removes the correct object from the branches list', function() {
-        spyOn(ontologyManagerSvc, 'getListItemByRecordId').and.returnValue(listItem);
-        ontologyManagerSvc.removeBranch(recordId, branchId);
-        expect(ontologyManagerSvc.getListItemByRecordId).toHaveBeenCalledWith(recordId);
-        expect(listItem.branches).toEqual([]);
-    });
-
-    describe('getPreview should call the correct methods', function() {
-        var getDeferred;
+    describe('getSearchResults should call the correct functions', function() {
+        var params;
         beforeEach(function() {
-            getDeferred = $q.defer();
-            spyOn(ontologyManagerSvc, 'getOntology').and.returnValue(getDeferred.promise);
-        });
-        describe('when getOntology resolves', function() {
-            beforeEach(function() {
-                getDeferred.resolve(getResponse);
-            });
-            it('and rdfFormat is jsonld', function() {
-                ontologyManagerSvc.getPreview(recordId, format)
-                    .then(function(response) {
-                        expect(response).toEqual(jsonFilter);
-                    }, function() {
-                        fail('Promise should have resolved');
-                    });
-                scope.$apply();
-            });
-            it('and rdfFormat is not jsonld', function() {
-                ontologyManagerSvc.getPreview(recordId, 'other')
-                    .then(function(response) {
-                        expect(response).toEqual(ontology);
-                    }, function() {
-                        fail('Promise should have resolved');
-                    });
-                scope.$apply();
+            params = paramSerializer({
+                searchText: searchText,
+                branchId: branchId,
+                commitId: commitId
             });
         });
-        it('when getOntology rejects', function() {
-            getDeferred.reject(error);
-            ontologyManagerSvc.getPreview(recordId)
+        it('when get succeeds', function(done) {
+            $httpBackend.expectGET('/matontorest/ontologies/recordId/search-results?' + params)
+                .respond(200, searchResults);
+            ontologyManagerSvc.getSearchResults(recordId, branchId, commitId, searchText)
+                .then(function(response) {
+                    expect(response).toEqual(searchResults);
+                    done();
+                }, function() {
+                    fail('Promise should have resolved');
+                    done();
+                });
+            flushAndVerify();
+        });
+        it('when get is empty', function(done) {
+            $httpBackend.expectGET('/matontorest/ontologies/recordId/search-results?' + params)
+                .respond(204);
+            ontologyManagerSvc.getSearchResults(recordId, branchId, commitId, searchText)
+                .then(function(response) {
+                    expect(response).toEqual([]);
+                    done();
+                }, function() {
+                    fail('Promise should have resolved');
+                    done();
+                });
+            flushAndVerify();
+        });
+        it('when get succeeds with different code', function(done) {
+            $httpBackend.expectGET('/matontorest/ontologies/recordId/search-results?' + params)
+                .respond(201);
+            ontologyManagerSvc.getSearchResults(recordId, branchId, commitId, searchText)
                 .then(function() {
                     fail('Promise should have rejected');
+                    done();
+                }, function(response) {
+                    expect(response).toEqual('An error has occurred with your search.');
+                    done();
+                });
+            flushAndVerify();
+        });
+        it('when get fails', function(done) {
+            $httpBackend.expectGET('/matontorest/ontologies/recordId/search-results?' + params)
+                .respond(400, null, null, error);
+            ontologyManagerSvc.getSearchResults(recordId, branchId, commitId, searchText)
+                .then(function() {
+                    fail('Promise should have rejected');
+                    done();
                 }, function(response) {
                     expect(response).toEqual(error);
+                    done();
                 });
-            scope.$apply();
+            flushAndVerify();
         });
     });
-
-    describe('saveChanges should call the correct methods', function() {
-        var getDeferred;
-        beforeEach(function() {
-            getDeferred = $q.defer();
-            catalogManagerSvc.getInProgressCommit.and.returnValue(getDeferred.promise);
-        });
-        describe('when getInProgressCommit resolves', function() {
-            var updateDeferred;
-            beforeEach(function() {
-                updateDeferred = $q.defer();
-                catalogManagerSvc.updateInProgressCommit.and.returnValue(updateDeferred.promise);
-                getDeferred.resolve();
-            });
-            it('and updateInProgressCommit resolves', function() {
-                var resolved = 'this';
-                updateDeferred.resolve(resolved);
-                ontologyManagerSvc.saveChanges(recordId, differenceObj)
-                    .then(function(response) {
-                        expect(response).toEqual(resolved);
-                    }, function() {
-                        fail('Promise should have resolved');
-                    });
-                scope.$apply();
-            });
-            it('and updateInProgressCommit rejects', function() {
-                updateDeferred.reject(error);
-                ontologyManagerSvc.saveChanges(recordId, differenceObj)
-                    .then(function() {
-                        fail('Promise should have rejected');
-                    }, function(response) {
-                        expect(response).toEqual(error);
-                    });
-                scope.$apply();
-            });
-        });
-        describe('when getInProgressCommit rejects', function() {
-            describe('and the error message is "User has no InProgressCommit"', function() {
-                var createDeferred;
-                beforeEach(function() {
-                    createDeferred = $q.defer();
-                    catalogManagerSvc.createInProgressCommit.and.returnValue(createDeferred.promise);
-                    getDeferred.reject('User has no InProgressCommit');
-                });
-                describe('and createInProgressCommit resolves', function() {
-                    var updateDeferred;
-                    beforeEach(function() {
-                        updateDeferred = $q.defer();
-                        catalogManagerSvc.updateInProgressCommit.and.returnValue(updateDeferred.promise);
-                        createDeferred.resolve();
-                    });
-                    it('and updateInProgressCommit resolves', function() {
-                        var resolved = 'this';
-                        updateDeferred.resolve(resolved);
-                        ontologyManagerSvc.saveChanges(recordId, differenceObj)
-                            .then(function(response) {
-                                expect(catalogManagerSvc.createInProgressCommit).toHaveBeenCalledWith(recordId,
-                                    catalogId);
-                                expect(response).toEqual(resolved);
-                            }, function() {
-                                fail('Promise should have resolved');
-                            });
-                        scope.$apply();
-                    });
-                    it('and updateInProgressCommit rejects', function() {
-                        updateDeferred.reject(error);
-                        ontologyManagerSvc.saveChanges(recordId, differenceObj)
-                            .then(function() {
-                                fail('Promise should have rejected');
-                            }, function(response) {
-                                expect(catalogManagerSvc.createInProgressCommit).toHaveBeenCalledWith(recordId,
-                                    catalogId);
-                                expect(response).toEqual(error);
-                            });
-                        scope.$apply();
-                    });
-                });
-                it('and createInProgressCommit rejects', function() {
-                    createDeferred.reject(error);
-                    ontologyManagerSvc.saveChanges(recordId, differenceObj)
-                        .then(function() {
-                            fail('Promise should have rejected');
-                        }, function(response) {
-                            expect(catalogManagerSvc.createInProgressCommit).toHaveBeenCalledWith(recordId,
-                                catalogId);
-                            expect(response).toEqual(error);
-                        });
-                    scope.$apply();
-                });
-            });
-            it('and the error message is not "User has no InProgressCommit"', function() {
-                getDeferred.reject(error);
-                ontologyManagerSvc.saveChanges(recordId, differenceObj)
-                    .then(function() {
-                        fail('Promise should have rejected');
-                    }, function(response) {
-                        expect(response).toEqual(error);
-                    });
-                scope.$apply();
-            });
-        });
-    });
-
-    describe('addToAdditions should call the correct functions', function() {
-        it('when entity is in the additions list', function() {
-            var statement = {'@id': 'id', 'prop': 'value'};
-            var listItem = {'additions': [{'@id': 'id'}]};
-            spyOn(ontologyManagerSvc, 'getListItemByRecordId').and.returnValue(listItem);
-            ontologyManagerSvc.addToAdditions(recordId, statement);
-            expect(ontologyManagerSvc.getListItemByRecordId).toHaveBeenCalledWith(recordId);
-            expect(listItem.additions[0]).toEqual(statement);
-        });
-        it('when entity is not in the additions list', function() {
-            var statement = {'@id': 'id', 'prop': 'value'};
-            var listItem = {'additions': []};
-            spyOn(ontologyManagerSvc, 'getListItemByRecordId').and.returnValue(listItem);
-            ontologyManagerSvc.addToAdditions(recordId, statement);
-            expect(ontologyManagerSvc.getListItemByRecordId).toHaveBeenCalledWith(recordId);
-            expect(listItem.additions[0]).toEqual(statement);
-        });
-    });
-
-    describe('addToDeletions should call the correct functions', function() {
-        it('when entity is in the deletions list', function() {
-            var statement = {'@id': 'id', 'prop': 'value'};
-            var listItem = {'deletions': [{'@id': 'id'}]};
-            spyOn(ontologyManagerSvc, 'getListItemByRecordId').and.returnValue(listItem);
-            ontologyManagerSvc.addToDeletions(recordId, statement);
-            expect(ontologyManagerSvc.getListItemByRecordId).toHaveBeenCalledWith(recordId);
-            expect(listItem.deletions[0]).toEqual(statement);
-        });
-        it('when entity is not in the deletions list', function() {
-            var statement = {'@id': 'id', 'prop': 'value'};
-            var listItem = {'deletions': []};
-            spyOn(ontologyManagerSvc, 'getListItemByRecordId').and.returnValue(listItem);
-            ontologyManagerSvc.addToDeletions(recordId, statement);
-            expect(ontologyManagerSvc.getListItemByRecordId).toHaveBeenCalledWith(recordId);
-            expect(listItem.deletions[0]).toEqual(statement);
-        });
-    });
-
-    describe('getListItemByRecordId should return the correct object', function() {
-        beforeEach(function() {
-            ontologyManagerSvc.list = [listItem];
-        });
-        it('when the ontologyId is in the list', function() {
-            expect(ontologyManagerSvc.getListItemByRecordId(recordId)).toEqual(listItem);
-        });
-        it('when the ontologyId is not in the list', function() {
-            expect(ontologyManagerSvc.getListItemByRecordId('other')).toEqual(undefined);
-        });
-    });
-
-    describe('getOntologyByRecordId should return the correct object', function() {
-        it('when the ontologyId is in the list', function() {
-            spyOn(ontologyManagerSvc, 'getListItemByRecordId').and.returnValue(listItem);
-            expect(ontologyManagerSvc.getOntologyByRecordId(recordId)).toEqual(listItem.ontology);
-        });
-        it('when the ontologyId is not in the list', function() {
-            expect(ontologyManagerSvc.getOntologyByRecordId('other')).toEqual([]);
-        });
-    });
-
     describe('isOntology should return', function() {
         it('true if the entity contains the ontology type', function() {
             expect(ontologyManagerSvc.isOntology(ontologyObj)).toBe(true);
@@ -1498,7 +770,6 @@ describe('Ontology Manager service', function() {
             expect(ontologyManagerSvc.isOntology({})).toBe(false);
         });
     });
-
     describe('hasOntologyEntity should return', function() {
         it('true if there is an ontology entity in the ontology', function() {
             expect(ontologyManagerSvc.hasOntologyEntity([ontologyObj])).toBe(true);
@@ -1507,7 +778,6 @@ describe('Ontology Manager service', function() {
             expect(ontologyManagerSvc.hasOntologyEntity([])).toBe(false);
         });
     });
-
     describe('getOntologyEntity should return', function() {
         it('correct object if there is an ontology entity in the ontology', function() {
             expect(ontologyManagerSvc.getOntologyEntity([ontologyObj])).toBe(ontologyObj);
@@ -1516,7 +786,6 @@ describe('Ontology Manager service', function() {
             expect(ontologyManagerSvc.getOntologyEntity([])).toBe(undefined);
         });
     });
-
     describe('getOntologyIRI should return', function() {
         it('@id if there is an ontology entity in the ontology with @id', function() {
             expect(ontologyManagerSvc.getOntologyIRI([ontologyObj])).toBe(ontologyId);
@@ -1544,101 +813,6 @@ describe('Ontology Manager service', function() {
             expect(ontologyManagerSvc.getOntologyIRI([])).toBe('');
         });
     });
-
-    describe('createOntology calls the correct methods', function() {
-        describe('when post succeeds', function() {
-            describe('with description and keywords', function() {
-                var getDeferred, params;
-                beforeEach(function() {
-                    getDeferred = $q.defer();
-                    catalogManagerSvc.getRecordBranch.and.returnValue(getDeferred.promise);
-                    params = paramSerializer({
-                        title: title,
-                        description: description,
-                        keywords: keywords
-                    });
-                    ontologyManagerSvc.list = [];
-                });
-                it('and getRecordBranch resolves', function() {
-                    getDeferred.resolve(branch);
-                    $httpBackend.expectPOST('/matontorest/ontologies?' + params, ontologyObj, function(headers) {
-                        return headers['Content-Type'] === 'application/json';
-                    }).respond(200, {ontologyId: ontologyId, recordId: recordId, branchId: branchId, commitId: commitId});
-                    ontologyManagerSvc.createOntology(ontologyObj, title, description, keywords)
-                        .then(function(response) {
-                            expect(response).toEqual({entityIRI: ontologyObj['@id'], recordId: recordId, branchId: branchId,
-                                commitId: commitId});
-                            expect(ontologyManagerSvc.list.length).toBe(1);
-                        }, function() {
-                            fail('Promise should have resolved');
-                        });
-                    flushAndVerify();
-                });
-                it('and getRecordBranch rejects', function() {
-                    getDeferred.reject(error);
-                    $httpBackend.expectPOST('/matontorest/ontologies?' + params, ontologyObj, function(headers) {
-                        return headers['Content-Type'] === 'application/json';
-                    }).respond(200, {ontologyId: ontologyId, recordId: recordId, branchId: branchId, commitId: commitId});
-                    ontologyManagerSvc.createOntology(ontologyObj, title, description, keywords)
-                        .then(function() {
-                            fail('Promise should have rejected');
-                        }, function(response) {
-                            expect(response).toEqual(error);
-                        });
-                    flushAndVerify();
-                });
-            });
-            describe('with no description and keywords', function() {
-                var getDeferred, params;
-                beforeEach(function() {
-                    getDeferred = $q.defer();
-                    catalogManagerSvc.getRecordBranch.and.returnValue(getDeferred.promise);
-                    params = paramSerializer({title: title});
-                    ontologyManagerSvc.list = [];
-                });
-                it('and getRecordBranch resolves', function() {
-                    getDeferred.resolve(branch);
-                    $httpBackend.expectPOST('/matontorest/ontologies?' + params, ontologyObj, function(headers) {
-                        return headers['Content-Type'] === 'application/json';
-                    }).respond(200, {ontologyId: ontologyId, recordId: recordId, branchId: branchId, commitId: commitId});
-                    ontologyManagerSvc.createOntology(ontologyObj, title)
-                        .then(function(response) {
-                            expect(response).toEqual({entityIRI: ontologyObj['@id'], recordId: recordId, branchId: branchId,
-                                commitId: commitId});
-                            expect(ontologyManagerSvc.list.length).toBe(1);
-                        }, function() {
-                            fail('Promise should have resolved');
-                        });
-                    flushAndVerify();
-                });
-                it('and getRecordBranch rejects', function() {
-                    getDeferred.reject(error);
-                    $httpBackend.expectPOST('/matontorest/ontologies?' + params, ontologyObj, function(headers) {
-                        return headers['Content-Type'] === 'application/json';
-                    }).respond(200, {ontologyId: ontologyId, recordId: recordId, branchId: branchId, commitId: commitId});
-                    ontologyManagerSvc.createOntology(ontologyObj, title)
-                        .then(function() {
-                            fail('Promise should have rejected');
-                        }, function(response) {
-                            expect(response).toEqual(error);
-                        });
-                    flushAndVerify();
-                });
-            });
-        });
-        it('when post fails', function() {
-            $httpBackend.expectPOST('/matontorest/ontologies', ontologyObj, function(headers) {
-                return headers['Content-Type'] === 'application/json';
-            }).respond(400, null, null, error);
-            ontologyManagerSvc.createOntology(ontologyObj, title)
-                .then(function() {
-                    fail('Promise should have rejected');
-                }, function(response) {
-                    expect(response).toEqual(error);
-                });
-        });
-    });
-
     describe('isClass should return', function() {
         it('true if the entity contains the class type', function() {
             expect(ontologyManagerSvc.isClass(classObj)).toBe(true);
@@ -1647,7 +821,6 @@ describe('Ontology Manager service', function() {
             expect(ontologyManagerSvc.isClass({})).toBe(false);
         });
     });
-
     describe('hasClasses should return', function() {
         it('true if there are any class entities in the ontology', function() {
             expect(ontologyManagerSvc.hasClasses([classObj, ontologyObj])).toBe(true);
@@ -1656,7 +829,6 @@ describe('Ontology Manager service', function() {
             expect(ontologyManagerSvc.hasClasses([ontologyObj])).toBe(false);
         });
     });
-
     describe('getClasses should return', function() {
         it('correct class objects if there are any in the ontology', function() {
             expect(ontologyManagerSvc.getClasses([classObj, ontologyObj])).toEqual([classObj]);
@@ -1665,7 +837,6 @@ describe('Ontology Manager service', function() {
             expect(ontologyManagerSvc.getClasses([ontologyObj])).toEqual([]);
         });
     });
-
     describe('getClassIRIs should return', function() {
         it('classId if there are classes in the ontology', function() {
             expect(ontologyManagerSvc.getClassIRIs([ontologyObj, classObj])).toEqual([classId]);
@@ -1674,7 +845,6 @@ describe('Ontology Manager service', function() {
             expect(ontologyManagerSvc.getClassIRIs([ontologyObj])).toEqual([]);
         });
     });
-
     describe('hasClassProperties should return', function() {
         it('true if there are any entities with a domain of the provided class in the ontology', function() {
             expect(ontologyManagerSvc.hasClassProperties([classObj, ontologyObj, objectPropertyObj], classId))
@@ -1684,7 +854,6 @@ describe('Ontology Manager service', function() {
             expect(ontologyManagerSvc.hasClassProperties([classObj, ontologyObj], classId)).toBe(false);
         });
     });
-
     describe('getClassProperties should return', function() {
         it('correct objects if there are any entities with a domain of the provided class in the ontology', function() {
             expect(ontologyManagerSvc.getClassProperties([classObj, ontologyObj, objectPropertyObj], classId))
@@ -1694,7 +863,6 @@ describe('Ontology Manager service', function() {
             expect(ontologyManagerSvc.getClassProperties([classObj, ontologyObj], classId)).toEqual([]);
         });
     });
-
     describe('getClassPropertyIRIs should return', function() {
         it('correct IRIs if there are any entities with a domain of the provided class in the ontology', function() {
             expect(ontologyManagerSvc.getClassPropertyIRIs([classObj, ontologyObj, objectPropertyObj], classId))
@@ -1704,7 +872,6 @@ describe('Ontology Manager service', function() {
             expect(ontologyManagerSvc.getClassPropertyIRIs([classObj, ontologyObj], classId)).toEqual([]);
         });
     });
-
     describe('isObjectProperty should return', function() {
         it('true if the entity contains the object property type', function() {
             expect(ontologyManagerSvc.isObjectProperty(objectPropertyObj)).toBe(true);
@@ -1713,7 +880,6 @@ describe('Ontology Manager service', function() {
             expect(ontologyManagerSvc.isObjectProperty({})).toBe(false);
         });
     });
-
     describe('isDataTypeProperty should return', function() {
         it('true if the entity contains the data property type', function() {
             expect(ontologyManagerSvc.isDataTypeProperty(dataPropertyObj)).toBe(true);
@@ -1722,7 +888,6 @@ describe('Ontology Manager service', function() {
             expect(ontologyManagerSvc.isDataTypeProperty({})).toBe(false);
         });
     });
-
     describe('isProperty should return', function() {
         it('true if the entity contains the object property type', function() {
             expect(ontologyManagerSvc.isProperty(objectPropertyObj)).toBe(true);
@@ -1734,7 +899,6 @@ describe('Ontology Manager service', function() {
             expect(ontologyManagerSvc.isProperty({})).toBe(false);
         });
     });
-
     describe('hasNoDomainProperties should return', function() {
         it('true if the ontology contains a property without the rdfs:domain set', function() {
             expect(ontologyManagerSvc.hasNoDomainProperties([ontologyObj, dataPropertyObj])).toBe(true);
@@ -1746,7 +910,6 @@ describe('Ontology Manager service', function() {
             expect(ontologyManagerSvc.hasNoDomainProperties([ontologyObj, objectPropertyObj])).toBe(false);
         });
     });
-
     describe('getNoDomainProperties should return', function() {
         it('correct object if the ontology contains a property without the rdfs:domain set', function() {
             expect(ontologyManagerSvc.getNoDomainProperties([ontologyObj, dataPropertyObj])).toEqual([dataPropertyObj]);
@@ -1758,7 +921,6 @@ describe('Ontology Manager service', function() {
             expect(ontologyManagerSvc.getNoDomainProperties([ontologyObj, objectPropertyObj])).toEqual([]);
         });
     });
-
     describe('getNoDomainPropertyIRIs should return', function() {
         it('correct IRI if the ontology contains a property without the rdfs:domain set', function() {
             expect(ontologyManagerSvc.getNoDomainPropertyIRIs([ontologyObj, dataPropertyObj]))
@@ -1771,7 +933,6 @@ describe('Ontology Manager service', function() {
             expect(ontologyManagerSvc.getNoDomainPropertyIRIs([ontologyObj, objectPropertyObj])).toEqual([]);
         });
     });
-
     describe('hasObjectProperties should return', function() {
         it('true if there are any object property entities in the ontology', function() {
             expect(ontologyManagerSvc.hasObjectProperties([objectPropertyObj, ontologyObj])).toBe(true);
@@ -1780,7 +941,6 @@ describe('Ontology Manager service', function() {
             expect(ontologyManagerSvc.hasObjectProperties([ontologyObj])).toBe(false);
         });
     });
-
     describe('getObjectProperties should return', function() {
         it('correct object property objects if there are any in the ontology', function() {
             expect(ontologyManagerSvc.getObjectProperties([objectPropertyObj, ontologyObj]))
@@ -1790,7 +950,6 @@ describe('Ontology Manager service', function() {
             expect(ontologyManagerSvc.getObjectProperties([ontologyObj])).toEqual([]);
         });
     });
-
     describe('getObjectPropertyIRIs should return', function() {
         it('objectPropertyId if there are object properties in the ontology', function() {
             expect(ontologyManagerSvc.getObjectPropertyIRIs([ontologyObj, objectPropertyObj]))
@@ -1800,7 +959,6 @@ describe('Ontology Manager service', function() {
             expect(ontologyManagerSvc.getObjectPropertyIRIs([ontologyObj])).toEqual([]);
         });
     });
-
     describe('hasDataTypeProperties should return', function() {
         it('true if there are any data property entities in the ontology', function() {
             expect(ontologyManagerSvc.hasDataTypeProperties([dataPropertyObj, ontologyObj])).toBe(true);
@@ -1809,7 +967,6 @@ describe('Ontology Manager service', function() {
             expect(ontologyManagerSvc.hasDataTypeProperties([ontologyObj])).toBe(false);
         });
     });
-
     describe('getDataTypeProperties should return', function() {
         it('correct data property objects if there are any in the ontology', function() {
             expect(ontologyManagerSvc.getDataTypeProperties([dataPropertyObj, ontologyObj]))
@@ -1819,7 +976,6 @@ describe('Ontology Manager service', function() {
             expect(ontologyManagerSvc.getDataTypeProperties([ontologyObj])).toEqual([]);
         });
     });
-
     describe('getDataTypePropertyIRIs should return', function() {
         it('dataPropertyId if there are data properties in the ontology', function() {
             expect(ontologyManagerSvc.getDataTypePropertyIRIs([ontologyObj, dataPropertyObj]))
@@ -1829,7 +985,6 @@ describe('Ontology Manager service', function() {
             expect(ontologyManagerSvc.getDataTypePropertyIRIs([ontologyObj])).toEqual([]);
         });
     });
-
     describe('isAnnotation should return', function() {
         it('true if the entity contains the annotation property type', function() {
             expect(ontologyManagerSvc.isAnnotation(annotationObj)).toBe(true);
@@ -1838,7 +993,6 @@ describe('Ontology Manager service', function() {
             expect(ontologyManagerSvc.isAnnotation({})).toBe(false);
         });
     });
-
     describe('hasAnnotations should return', function() {
         it('true if there are any annotation entities in the ontology', function() {
             expect(ontologyManagerSvc.hasAnnotations([annotationObj, ontologyObj])).toBe(true);
@@ -1847,7 +1001,6 @@ describe('Ontology Manager service', function() {
             expect(ontologyManagerSvc.hasAnnotations([ontologyObj])).toBe(false);
         });
     });
-
     describe('getAnnotations should return', function() {
         it('correct annotation objects if there are any in the ontology', function() {
             expect(ontologyManagerSvc.getAnnotations([annotationObj, ontologyObj])).toEqual([annotationObj]);
@@ -1856,7 +1009,6 @@ describe('Ontology Manager service', function() {
             expect(ontologyManagerSvc.getAnnotations([ontologyObj])).toEqual([]);
         });
     });
-
     describe('getAnnotationIRIs should return', function() {
         it('annotationId if there are annotations in the ontology', function() {
             expect(ontologyManagerSvc.getAnnotationIRIs([ontologyObj, annotationObj])).toEqual([annotationId]);
@@ -1865,7 +1017,6 @@ describe('Ontology Manager service', function() {
             expect(ontologyManagerSvc.getAnnotationIRIs([ontologyObj])).toEqual([]);
         });
     });
-
     describe('isIndividual should return', function() {
         it('true if the entity contains the named individual type', function() {
             expect(ontologyManagerSvc.isIndividual(individualObj)).toBe(true);
@@ -1874,7 +1025,6 @@ describe('Ontology Manager service', function() {
             expect(ontologyManagerSvc.isIndividual({})).toBe(false);
         });
     });
-
     describe('hasIndividuals should return', function() {
         it('true if there are any individual entities in the ontology', function() {
             expect(ontologyManagerSvc.hasIndividuals([individualObj, ontologyObj])).toBe(true);
@@ -1883,7 +1033,6 @@ describe('Ontology Manager service', function() {
             expect(ontologyManagerSvc.hasIndividuals([ontologyObj])).toBe(false);
         });
     });
-
     describe('getIndividuals should return', function() {
         it('correct individual objects if there are any in the ontology', function() {
             expect(ontologyManagerSvc.getIndividuals([individualObj, ontologyObj])).toEqual([individualObj]);
@@ -1892,7 +1041,6 @@ describe('Ontology Manager service', function() {
             expect(ontologyManagerSvc.getIndividuals([ontologyObj])).toEqual([]);
         });
     });
-
     describe('hasNoTypeIndividuals should return', function() {
         it('true if there are any in the ontology with no other @type', function() {
             var diffIndividualObj = {
@@ -1911,7 +1059,6 @@ describe('Ontology Manager service', function() {
             expect(ontologyManagerSvc.hasNoTypeIndividuals([ontologyObj])).toBe(false);
         });
     });
-
     describe('getNoTypeIndividuals should return', function() {
         it('correct individual objects if there are any in the ontology with no other @type', function() {
             var diffIndividualObj = {
@@ -1931,7 +1078,6 @@ describe('Ontology Manager service', function() {
             expect(ontologyManagerSvc.getNoTypeIndividuals([ontologyObj])).toEqual([]);
         });
     });
-
     describe('hasClassIndividuals should return', function() {
         it('true if there are any entities with a type of the provided class in the ontology', function() {
             expect(ontologyManagerSvc.hasClassIndividuals([individualObj, ontologyObj, objectPropertyObj], classId))
@@ -1941,7 +1087,6 @@ describe('Ontology Manager service', function() {
             expect(ontologyManagerSvc.hasClassIndividuals([classObj, ontologyObj], classId)).toBe(false);
         });
     });
-
     describe('getClassIndividuals should return', function() {
         it('correct object if there are any entities with a type of the provided class in the ontology', function() {
             expect(ontologyManagerSvc.getClassIndividuals([individualObj, ontologyObj, objectPropertyObj], classId))
@@ -1951,7 +1096,6 @@ describe('Ontology Manager service', function() {
             expect(ontologyManagerSvc.getClassIndividuals([classObj, ontologyObj], classId)).toEqual([]);
         });
     });
-
     describe('isRestriction should return', function() {
         it('true if the entity contains the restriction type', function() {
             expect(ontologyManagerSvc.isRestriction(restrictionObj)).toBe(true);
@@ -1960,7 +1104,6 @@ describe('Ontology Manager service', function() {
             expect(ontologyManagerSvc.isRestriction({})).toBe(false);
         });
     });
-
     describe('getRestrictions should return', function() {
         it('correct restriction objects if there are any in the ontology', function() {
             expect(ontologyManagerSvc.getRestrictions([restrictionObj, ontologyObj])).toEqual([restrictionObj]);
@@ -1969,7 +1112,6 @@ describe('Ontology Manager service', function() {
             expect(ontologyManagerSvc.getRestrictions([ontologyObj])).toEqual([]);
         });
     });
-
     describe('isBlankNode should return', function() {
         it('true if the entity contains a blank node id', function() {
             expect(ontologyManagerSvc.isBlankNode(blankNodeObj)).toBe(true);
@@ -1978,7 +1120,6 @@ describe('Ontology Manager service', function() {
             expect(ontologyManagerSvc.isBlankNode({})).toBe(false);
         });
     });
-
     describe('isBlankNodeId should return', function() {
         it('true if the id is a blank node id', function() {
             _.forEach(['', [], {}, true, false, undefined, null, 0, 1], function(test) {
@@ -1989,7 +1130,6 @@ describe('Ontology Manager service', function() {
             expect(ontologyManagerSvc.isBlankNodeId('_:genid')).toBe(true);
         });
     });
-
     describe('getBlankNodes should return', function() {
         it('correct blank node objects if there are any in the ontology', function() {
             expect(ontologyManagerSvc.getBlankNodes([blankNodeObj, ontologyObj])).toEqual([blankNodeObj]);
@@ -1998,7 +1138,6 @@ describe('Ontology Manager service', function() {
             expect(ontologyManagerSvc.getBlankNodes([ontologyObj])).toEqual([]);
         });
     });
-
     describe('getEntity returns', function() {
         it('object when present', function() {
             expect(ontologyManagerSvc.getEntity([classObj, ontologyObj], classId)).toEqual(classObj);
@@ -2007,61 +1146,6 @@ describe('Ontology Manager service', function() {
             expect(ontologyManagerSvc.getEntity([], classId)).toBe(undefined);
         });
     });
-
-    describe('getEntity returns', function() {
-        it('object when present', function() {
-            expect(ontologyManagerSvc.getEntity([classObj, ontologyObj], classId)).toEqual(classObj);
-        });
-        it('undefined when not present', function() {
-            expect(ontologyManagerSvc.getEntity([], classId)).toBe(undefined);
-        });
-    });
-
-    describe('getEntityByRecordId returns', function() {
-        it('object when present using index', function() {
-            spyOn(ontologyManagerSvc, 'getListItemByRecordId').and.returnValue(listItem);
-            expect(ontologyManagerSvc.getEntityByRecordId(recordId, classId)).toEqual(classObj);
-            expect(ontologyManagerSvc.getListItemByRecordId).toHaveBeenCalledWith(recordId);
-        });
-        it('object when present not using index', function() {
-            var diffListItem = {
-                ontology: ontology,
-                ontologyId: ontologyId,
-                recordId: recordId,
-                commitId: commitId,
-                branchId: branchId,
-                branches: [branch]
-            }
-            spyOn(ontologyManagerSvc, 'getListItemByRecordId').and.returnValue(diffListItem);
-            spyOn(ontologyManagerSvc, 'getEntity').and.callThrough();
-            expect(ontologyManagerSvc.getEntityByRecordId(recordId, classId)).toEqual(classObj);
-            expect(ontologyManagerSvc.getListItemByRecordId).toHaveBeenCalledWith(recordId);
-            expect(ontologyManagerSvc.getEntity).toHaveBeenCalledWith(ontology, classId);
-        });
-        it('undefined when not present', function() {
-            spyOn(ontologyManagerSvc, 'getListItemByRecordId').and.callThrough();
-            expect(ontologyManagerSvc.getEntityByRecordId('', classId)).toEqual(undefined);
-            expect(ontologyManagerSvc.getListItemByRecordId).toHaveBeenCalledWith('');
-        });
-    });
-
-    it('removeEntity removes the entity from the provided ontology and index', function() {
-        expect(ontologyManagerSvc.removeEntity(listItem, classId)).toEqual(classObj);
-        expect(_.has(listItem.index, classId)).toBe(false);
-        expect(listItem.index.dataPropertyId.position).toEqual(1);
-    });
-
-    it('addEntity adds the entity to the provided ontology and index', function() {
-        spyOn(ontologyManagerSvc, 'getEntityName').and.returnValue('name');
-        ontologyManagerSvc.addEntity(listItem, individualObj);
-        expect(ontology.length).toBe(4);
-        expect(ontology[3]).toEqual(individualObj);
-        expect(_.has(listItem.index, individualId)).toBe(true);
-        expect(listItem.index[individualId].position).toEqual(3);
-        expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith(individualObj, listItem.type);
-        expect(listItem.index[individualId].label).toBe('name');
-    });
-
     describe('getEntityName should return', function() {
         it('returns the rdfs:label if present', function() {
             util.getPropertyValue.and.returnValue(title);
@@ -2142,25 +1226,6 @@ describe('Ontology Manager service', function() {
             expect(util.getPropertyValue).toHaveBeenCalledWith(entity, prefixes.skos + 'altLabel');
         });
     });
-
-    describe('getEntityNameByIndex should return the proper value', function() {
-        it('when the entityIRI is in the index', function() {
-            var listItem = {
-                index: {
-                    iri: {
-                        label: 'name'
-                    }
-                }
-            };
-            expect(ontologyManagerSvc.getEntityNameByIndex('iri', listItem)).toBe('name');
-        });
-        it('when the entityIRI is not in the index', function() {
-            util.getBeautifulIRI.and.returnValue('entity name');
-            expect(ontologyManagerSvc.getEntityNameByIndex('iri', {type: 'ontology'})).toBe('entity name');
-            expect(util.getBeautifulIRI).toHaveBeenCalledWith('iri');
-        });
-    });
-
     describe('getEntityDescription should return', function() {
         it('rdfs:comment if present', function() {
             util.getPropertyValue.and.returnValue(description);
@@ -2197,107 +1262,6 @@ describe('Ontology Manager service', function() {
             expect(util.getPropertyValue).toHaveBeenCalledWith(entity, prefixes.dc + 'description');
         });
     });
-
-    describe('getImportedOntologies should call the proper functions', function() {
-        var params;
-        beforeEach(function() {
-            params = paramSerializer({
-                branchId: branchId,
-                commitId: commitId,
-                rdfFormat: format
-            });
-        });
-        it('when get succeeds', function() {
-            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/imported-ontologies?' + params)
-                .respond(200, [ontology]);
-            ontologyManagerSvc.getImportedOntologies(recordId, branchId, commitId)
-                .then(function(response) {
-                    expect(response).toEqual([ontology]);
-                }, function() {
-                    fail('Promise should have resolved');
-                });
-            flushAndVerify();
-        });
-        it('when get is empty', function() {
-            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/imported-ontologies?' + params)
-                .respond(204);
-            ontologyManagerSvc.getImportedOntologies(recordId, branchId, commitId)
-                .then(function(response) {
-                    expect(response).toEqual([]);
-                }, function() {
-                    fail('Promise should have resolved');
-                });
-            flushAndVerify();
-        });
-        it('when another success response', function() {
-            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/imported-ontologies?' + params)
-                .respond(201, null, null, error);
-            ontologyManagerSvc.getImportedOntologies(recordId, branchId, commitId)
-                .then(function() {
-                    fail('Promise should have rejected');
-                }, function(response) {
-                    expect(response).toEqual(error);
-                });
-            flushAndVerify();
-        });
-        it('when get fails', function() {
-            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/imported-ontologies?' + params)
-                .respond(400, null, null, error);
-            ontologyManagerSvc.getImportedOntologies(recordId, branchId, commitId)
-                .then(function() {
-                    fail('Promise should have rejected');
-                }, function(response) {
-                    expect(response).toEqual(error);
-                });
-            flushAndVerify();
-        });
-    });
-
-    describe('getEntityUsages should call the proper functions', function() {
-        var params;
-        beforeEach(function() {
-            params = paramSerializer({
-                branchId: branchId,
-                commitId: commitId
-            });
-        });
-        describe('when get succeeds', function() {
-            it('and queryType is select', function() {
-                $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/entity-usages/classId?' + params + '&queryType=select')
-                    .respond(200, usages);
-                ontologyManagerSvc.getEntityUsages(recordId, branchId, commitId, classId, 'select')
-                    .then(function(response) {
-                        expect(response).toEqual(usages.results.bindings);
-                    }, function() {
-                        fail('Promise should have resolved');
-                    });
-                flushAndVerify();
-            });
-            it('and queryType is construct', function() {
-                $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/entity-usages/classId?' + params + '&queryType=construct')
-                    .respond(200, usages);
-                ontologyManagerSvc.getEntityUsages(recordId, branchId, commitId, classId, 'construct')
-                    .then(function(response) {
-                        expect(response).toEqual(usages);
-                    }, function() {
-                        fail('Promise should have resolved');
-                    });
-                flushAndVerify();
-            });
-        });
-        it('when get fails', function() {
-            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/entity-usages/classId?' + params + '&queryType=select')
-                .respond(400, null, null, error);
-            ontologyManagerSvc.getEntityUsages(recordId, branchId, commitId, classId)
-                .then(function() {
-                    fail('Promise should have rejected');
-                }, function(response) {
-                    expect(response).toEqual(error);
-                });
-            flushAndVerify();
-        });
-    });
-
     describe('isConcept should return', function() {
         it('true if the entity contains the concept type', function() {
             expect(ontologyManagerSvc.isConcept(conceptObj)).toBe(true);
@@ -2306,7 +1270,6 @@ describe('Ontology Manager service', function() {
             expect(ontologyManagerSvc.isConcept({})).toBe(false);
         });
     });
-
     describe('hasConcepts should return', function() {
         it('true if there are any concept entities in the ontology', function() {
             expect(ontologyManagerSvc.hasConcepts([conceptObj, ontologyObj])).toBe(true);
@@ -2315,7 +1278,6 @@ describe('Ontology Manager service', function() {
             expect(ontologyManagerSvc.hasConcepts([ontologyObj])).toBe(false);
         });
     });
-
     describe('getConcepts should return', function() {
         it('correct concept objects if there are any in the ontology', function() {
             expect(ontologyManagerSvc.getConcepts([conceptObj, ontologyObj])).toEqual([conceptObj]);
@@ -2324,7 +1286,6 @@ describe('Ontology Manager service', function() {
             expect(ontologyManagerSvc.getConcepts([ontologyObj])).toEqual([]);
         });
     });
-
     describe('getConceptIRIs should return', function() {
         it('conceptId if there are concepts in the ontology', function() {
             expect(ontologyManagerSvc.getConceptIRIs([ontologyObj, conceptObj])).toEqual([conceptId]);
@@ -2333,7 +1294,6 @@ describe('Ontology Manager service', function() {
             expect(ontologyManagerSvc.getConceptIRIs([ontologyObj])).toEqual([]);
         });
     });
-
     describe('isConceptScheme should return', function() {
         it('true if the entity contains the concept scheme type', function() {
             expect(ontologyManagerSvc.isConceptScheme(schemeObj)).toBe(true);
@@ -2342,7 +1302,6 @@ describe('Ontology Manager service', function() {
             expect(ontologyManagerSvc.isConceptScheme({})).toBe(false);
         });
     });
-
     describe('hasConceptSchemes should return', function() {
         it('true if there are any concept scheme entities in the ontology', function() {
             expect(ontologyManagerSvc.hasConceptSchemes([schemeObj, ontologyObj])).toBe(true);
@@ -2351,7 +1310,6 @@ describe('Ontology Manager service', function() {
             expect(ontologyManagerSvc.hasConceptSchemes([ontologyObj])).toBe(false);
         });
     });
-
     describe('getConceptSchemes should return', function() {
         it('correct concept scheme objects if there are any in the ontology', function() {
             expect(ontologyManagerSvc.getConceptSchemes([schemeObj, ontologyObj])).toEqual([schemeObj]);
@@ -2360,310 +1318,12 @@ describe('Ontology Manager service', function() {
             expect(ontologyManagerSvc.getConceptSchemes([ontologyObj])).toEqual([]);
         });
     });
-
     describe('getConceptSchemeIRIs should return', function() {
         it('schemeId if there are concept schemes in the ontology', function() {
             expect(ontologyManagerSvc.getConceptSchemeIRIs([ontologyObj, schemeObj])).toEqual([schemeId]);
         });
         it('[] if there are no concept schemes in the ontology', function() {
             expect(ontologyManagerSvc.getConceptSchemeIRIs([ontologyObj])).toEqual([]);
-        });
-    });
-
-    describe('getSearchResults should call the correct functions', function() {
-        var params;
-        beforeEach(function() {
-            params = paramSerializer({
-                searchText: searchText,
-                branchId: branchId,
-                commitId: commitId
-            });
-        });
-        it('when get succeeds', function() {
-            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/search-results?' + params)
-                .respond(200, searchResults);
-            ontologyManagerSvc.getSearchResults(recordId, branchId, commitId, searchText)
-                .then(function(response) {
-                    expect(response).toEqual(searchResults);
-                }, function() {
-                    fail('Promise should have resolved');
-                });
-            flushAndVerify();
-        });
-        it('when get is empty', function() {
-            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/search-results?' + params)
-                .respond(204);
-            ontologyManagerSvc.getSearchResults(recordId, branchId, commitId, searchText)
-                .then(function(response) {
-                    expect(response).toEqual([]);
-                }, function() {
-                    fail('Promise should have resolved');
-                });
-            flushAndVerify();
-        });
-        it('when get succeeds with different code', function() {
-            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/search-results?' + params)
-                .respond(201);
-            ontologyManagerSvc.getSearchResults(recordId, branchId, commitId, searchText)
-                .then(function() {
-                    fail('Promise should have rejected');
-                }, function(response) {
-                    expect(response).toEqual('An error has occurred with your search.');
-                });
-            flushAndVerify();
-        });
-        it('when get fails', function() {
-            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/search-results?' + params)
-                .respond(400, null, null, error);
-            ontologyManagerSvc.getSearchResults(recordId, branchId, commitId, searchText)
-                .then(function() {
-                    fail('Promise should have rejected');
-                }, function(response) {
-                    expect(response).toEqual(error);
-                });
-            flushAndVerify();
-        });
-    });
-
-    describe('createOntologyListItem should call the correct functions', function() {
-        var iris, importedIris, classHierarchies, classesWithIndividuals, dataPropertyHierarchies,
-            objectPropertyHierarchies, getDeferred, params;
-        beforeEach(function() {
-            params = paramSerializer({
-                branchId: branchId,
-                commitId: commitId
-            });
-            getDeferred = $q.defer();
-            iris = $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/iris?' + params);
-            importedIris = $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/imported-iris?' + params);
-            classHierarchies = $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/class-hierarchies?' + params);
-            classesWithIndividuals = $httpBackend
-                .expectGET('/matontorest/ontologies/' + recordId + '/classes-with-individuals?' + params);
-            dataPropertyHierarchies = $httpBackend
-                .expectGET('/matontorest/ontologies/' + recordId + '/data-property-hierarchies?' + params);
-            objectPropertyHierarchies = $httpBackend
-                .expectGET('/matontorest/ontologies/' + recordId + '/object-property-hierarchies?' + params);
-            catalogManagerSvc.getRecordBranches.and.returnValue(getDeferred.promise);
-        });
-        it('when all promises resolve', function() {
-            iris.respond(200, irisResponse);
-            importedIris.respond(200, importedIrisResponse);
-            classHierarchies.respond(200, classHierarchiesResponse);
-            classesWithIndividuals.respond(200, classesWithIndividualsResponse);
-            dataPropertyHierarchies.respond(200, dataPropertyHierarchiesResponse);
-            objectPropertyHierarchies.respond(200, objectPropertyHierarchiesResponse);
-            getDeferred.resolve({data: branches});
-            ontologyManagerSvc.createOntologyListItem(ontologyId, recordId, branchId, commitId, ontology,
-                inProgressCommit, true).then(function(response) {
-                    expect(_.get(response, 'annotations')).toEqual([{
-                        localName: annotationId2, namespace: annotationId2, ontologyId: ontologyId
-                    }, {
-                        localName: annotationId, namespace: annotationId
-                    }]);
-                    expect(_.get(response, 'subClasses')).toEqual([{
-                        localName: classId2, namespace: classId2, ontologyId: ontologyId
-                    }, {
-                        localName: classId, namespace: classId
-                    }]);
-                    expect(_.get(response, 'subDataProperties')).toEqual([{
-                        localName: dataPropertyId2, namespace: dataPropertyId2, ontologyId: ontologyId
-                    }, {
-                        localName: dataPropertyId, namespace: dataPropertyId
-                    }]);
-                    expect(_.get(response, 'subObjectProperties')).toEqual([{
-                        localName: objectPropertyId2, namespace: objectPropertyId2, ontologyId: ontologyId
-                    }, {
-                        localName: objectPropertyId, namespace: objectPropertyId
-                    }]);
-                    expect(_.get(response, 'individuals')).toEqual([{
-                        localName: individualId2, namespace: individualId2, ontologyId: ontologyId
-                    }, {
-                        localName: individualId, namespace: individualId
-                    }]);
-                    expect(_.get(response, 'dataPropertyRange')).toEqual(_.concat([{
-                        localName: datatypeId2, namespace: datatypeId2, ontologyId: ontologyId
-                    }, {
-                        localName: datatypeId, namespace: datatypeId
-                    }], defaultDatatypes));
-                    expect(_.get(response, 'classHierarchy')).toEqual(classHierarchiesResponse.hierarchy);
-                    expect(_.get(response, 'classIndex')).toEqual(classHierarchiesResponse.index);
-                    expect(_.get(response, 'classesWithIndividuals')).toEqual(classesWithIndividualsResponse.hierarchy);
-                    expect(_.get(response, 'classesWithIndividualsIndex'))
-                        .toEqual(classesWithIndividualsResponse.index);
-                    expect(_.get(response, 'dataPropertyHierarchy')).toEqual(dataPropertyHierarchiesResponse.hierarchy);
-                    expect(_.get(response, 'dataPropertyIndex')).toEqual(dataPropertyHierarchiesResponse.index);
-                    expect(_.get(response, 'objectPropertyHierarchy'))
-                        .toEqual(objectPropertyHierarchiesResponse.hierarchy);
-                    expect(_.get(response, 'objectPropertyIndex')).toEqual(objectPropertyHierarchiesResponse.index);
-                    expect(_.get(response, 'branches')).toEqual(branches);
-                    expect(_.get(response, 'upToDate')).toBe(true);
-                }, function() {
-                    fail('Promise should have resolved');
-                });
-            flushAndVerify();
-        });
-        it('when one call fails', function() {
-            iris.respond(400, null, null, error);
-            importedIris.respond(200);
-            classHierarchies.respond(200);
-            classesWithIndividuals.respond(200);
-            dataPropertyHierarchies.respond(200);
-            objectPropertyHierarchies.respond(200);
-            getDeferred.resolve();
-            ontologyManagerSvc.createOntologyListItem(ontologyId, recordId, branchId, commitId, ontology,
-                inProgressCommit, true).then(function() {
-                    fail('Promise should have rejected');
-                }, function(response) {
-                    expect(response).toEqual(error);
-                });
-            flushAndVerify();
-        });
-        it('when more than one call fails', function() {
-            iris.respond(400, null, null, error);
-            importedIris.respond(400, null, null, error);
-            classHierarchies.respond(200);
-            classesWithIndividuals.respond(200);
-            dataPropertyHierarchies.respond(200);
-            objectPropertyHierarchies.respond(200);
-            getDeferred.resolve();
-            ontologyManagerSvc.createOntologyListItem(ontologyId, recordId, branchId, commitId, ontology,
-                inProgressCommit, true).then(function() {
-                    fail('Promise should have rejected');
-                }, function(response) {
-                    expect(response).toEqual(error);
-                });
-            flushAndVerify();
-        });
-    });
-
-    describe('addOntologyToList should call the correct functions', function() {
-        var createDeferred;
-        beforeEach(function() {
-            ontologyManagerSvc.list = [];
-            createDeferred = $q.defer();
-            spyOn(ontologyManagerSvc, 'createOntologyListItem').and.returnValue(createDeferred.promise);
-        });
-        it('when createOntologyListItem resolves', function() {
-            createDeferred.resolve(listItem);
-            ontologyManagerSvc.addOntologyToList(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit)
-                .then(function() {
-                    expect(ontologyManagerSvc.list.length).toBe(1);
-                    expect(ontologyManagerSvc.createOntologyListItem).toHaveBeenCalledWith(ontologyId, recordId,
-                        branchId, commitId, ontology, inProgressCommit, true);
-                }, function() {
-                    fail('Promise should have resolved');
-                });
-        });
-        it('when createOntologyListItem rejects', function() {
-            createDeferred.reject(error);
-            ontologyManagerSvc.addOntologyToList(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit)
-                .then(function() {
-                    fail('Promise should have rejected');
-                }, function(response) {
-                    expect(response).toEqual(error);
-                    expect(ontologyManagerSvc.createOntologyListItem).toHaveBeenCalledWith(ontologyId, recordId,
-                        branchId, commitId, ontology, inProgressCommit, true);
-                });
-        });
-    });
-
-    describe('createVocabularyListItem should call the correct functions', function() {
-        var iris, importedIris, classHierarchies, classesWithIndividuals, dataPropertyHierarchies,
-            objectPropertyHierarchies, getDeferred, params;
-        beforeEach(function() {
-            params = paramSerializer({
-                branchId: branchId,
-                commitId: commitId
-            });
-            getDeferred = $q.defer();
-            iris = $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/iris?' + params);
-            importedIris = $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/imported-iris?' + params);
-            conceptHierarchies = $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/concept-hierarchies?'
-                + params);
-            catalogManagerSvc.getRecordBranches.and.returnValue(getDeferred.promise);
-        });
-        it('when all promises resolve', function() {
-            iris.respond(200, irisResponse);
-            importedIris.respond(200, importedIrisResponse);
-            conceptHierarchies.respond(200, conceptHierarchiesResponse);
-            getDeferred.resolve({data: branches});
-            ontologyManagerSvc.createVocabularyListItem(ontologyId, recordId, branchId, commitId, ontology,
-                inProgressCommit, true).then(function(response) {
-                    expect(_.get(response, 'subDataProperties')).toEqual([{
-                        localName: dataPropertyId2, namespace: dataPropertyId2, ontologyId: ontologyId
-                    }, {
-                        localName: dataPropertyId, namespace: dataPropertyId
-                    }]);
-                    expect(_.get(response, 'subObjectProperties')).toEqual([{
-                        localName: objectPropertyId2, namespace: objectPropertyId2, ontologyId: ontologyId
-                    }, {
-                        localName: objectPropertyId, namespace: objectPropertyId
-                    }]);
-                    expect(_.get(response, 'conceptHierarchy')).toEqual(conceptHierarchiesResponse.hierarchy);
-                    expect(_.get(response, 'conceptIndex')).toEqual(conceptHierarchiesResponse.index);
-                    expect(_.get(response, 'branches')).toEqual(branches);
-                    expect(_.get(response, 'upToDate')).toBe(true);
-                }, function() {
-                    fail('Promise should have resolved');
-                });
-            flushAndVerify();
-        });
-        it('when one call fails', function() {
-            iris.respond(400, null, null, error);
-            importedIris.respond(200);
-            conceptHierarchies.respond(200);
-            getDeferred.resolve();
-            ontologyManagerSvc.createVocabularyListItem(ontologyId, recordId, branchId, commitId, ontology,
-                inProgressCommit, true).then(function() {
-                    fail('Promise should have rejected');
-                }, function(response) {
-                    expect(response).toEqual(error);
-                });
-            flushAndVerify();
-        });
-        it('when more than one call fails', function() {
-            iris.respond(400, null, null, error);
-            importedIris.respond(400, null, null, error);
-            conceptHierarchies.respond(200);
-            getDeferred.resolve();
-            ontologyManagerSvc.createVocabularyListItem(ontologyId, recordId, branchId, commitId, ontology,
-                inProgressCommit, true).then(function() {
-                    fail('Promise should have rejected');
-                }, function(response) {
-                    expect(response).toEqual(error);
-                });
-            flushAndVerify();
-        });
-    });
-
-    describe('addVocabularyToList should call the correct functions', function() {
-        var createDeferred;
-        beforeEach(function() {
-            ontologyManagerSvc.list = [];
-            createDeferred = $q.defer();
-            spyOn(ontologyManagerSvc, 'createVocabularyListItem').and.returnValue(createDeferred.promise);
-        });
-        it('when createVocabularyListItem resolves', function() {
-            createDeferred.resolve(listItem);
-            ontologyManagerSvc.addVocabularyToList(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit)
-                .then(function() {
-                    expect(ontologyManagerSvc.list.length).toBe(1);
-                    expect(ontologyManagerSvc.createVocabularyListItem).toHaveBeenCalledWith(ontologyId, recordId,
-                        branchId, commitId, ontology, inProgressCommit, true);
-                }, function() {
-                    fail('Promise should have resolved');
-                });
-        });
-        it('when createVocabularyListItem rejects', function() {
-            createDeferred.reject(error);
-            ontologyManagerSvc.addVocabularyToList(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit)
-                .then(function() {
-                    fail('Promise should have rejected');
-                }, function(response) {
-                    expect(response).toEqual(error);
-                    expect(ontologyManagerSvc.createVocabularyListItem).toHaveBeenCalledWith(ontologyId, recordId,
-                        branchId, commitId, ontology, inProgressCommit, true);
-                });
         });
     });
 });

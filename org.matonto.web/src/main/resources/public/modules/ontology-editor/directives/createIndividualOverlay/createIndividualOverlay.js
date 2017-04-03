@@ -27,9 +27,9 @@
         .module('createIndividualOverlay', [])
         .directive('createIndividualOverlay', createIndividualOverlay);
 
-        createIndividualOverlay.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'responseObj', 'prefixes', 'ontologyUtilsManagerService'];
+        createIndividualOverlay.$inject = ['$filter', 'ontologyStateService', 'responseObj', 'prefixes', 'ontologyUtilsManagerService'];
 
-        function createIndividualOverlay($filter, ontologyManagerService, ontologyStateService, responseObj, prefixes, ontologyUtilsManagerService) {
+        function createIndividualOverlay($filter, ontologyStateService, responseObj, prefixes, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -41,17 +41,16 @@
                     dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.prefixes = prefixes;
                     dvm.ro = responseObj;
-                    dvm.om = ontologyManagerService;
-                    dvm.sm = ontologyStateService;
+                    dvm.os = ontologyStateService;
 
-                    dvm.prefix = dvm.sm.getDefaultPrefix();
+                    dvm.prefix = dvm.os.getDefaultPrefix();
 
                     dvm.individual = {
                         '@id': dvm.prefix,
                         '@type': []
                     };
 
-                    dvm.subClasses = _.map(dvm.sm.state.subClasses, obj => dvm.ro.getItemIri(obj));
+                    dvm.subClasses = _.map(dvm.os.state.subClasses, obj => dvm.ro.getItemIri(obj));
 
                     dvm.nameChanged = function() {
                         if (!dvm.iriHasChanged) {
@@ -62,29 +61,29 @@
                     dvm.onEdit = function(iriBegin, iriThen, iriEnd) {
                         dvm.iriHasChanged = true;
                         dvm.individual['@id'] = iriBegin + iriThen + iriEnd;
-                        dvm.sm.setCommonIriParts(iriBegin, iriThen);
+                        dvm.os.setCommonIriParts(iriBegin, iriThen);
                     }
 
                     dvm.getItemOntologyIri = function(item) {
-                        return _.get(item, 'ontologyId', dvm.sm.listItem.ontologyId);
+                        return _.get(item, 'ontologyId', dvm.os.listItem.ontologyId);
                     }
 
                     dvm.create = function() {
                         _.set(dvm.individual, 'matonto.originalIRI', dvm.individual['@id']);
                         // update relevant lists
                         var split = $filter('splitIRI')(dvm.individual['@id']);
-                        _.get(dvm.sm.listItem, 'individuals').push({namespace:split.begin + split.then,
+                        _.get(dvm.os.listItem, 'individuals').push({namespace:split.begin + split.then,
                             localName: split.end});
-                        var classesWithIndividuals = _.get(dvm.sm.listItem, 'classesWithIndividuals');
-                        _.set(dvm.sm.listItem, 'classesWithIndividuals', _.unionWith(classesWithIndividuals, _.map(dvm.individual['@type'], type => ({entityIRI: type})), (obj1, obj2) => _.get(obj1, 'entityIRI') === _.get(obj2, 'entityIRI')));
+                        var classesWithIndividuals = _.get(dvm.os.listItem, 'classesWithIndividuals');
+                        _.set(dvm.os.listItem, 'classesWithIndividuals', _.unionWith(classesWithIndividuals, _.map(dvm.individual['@type'], type => ({entityIRI: type})), (obj1, obj2) => _.get(obj1, 'entityIRI') === _.get(obj2, 'entityIRI')));
                         // add the entity to the ontology
                         dvm.individual['@type'].push(prefixes.owl + 'NamedIndividual');
-                        dvm.om.addEntity(dvm.sm.listItem, dvm.individual);
-                        dvm.om.addToAdditions(dvm.sm.listItem.recordId, dvm.individual);
+                        dvm.os.addEntity(dvm.os.listItem, dvm.individual);
+                        dvm.os.addToAdditions(dvm.os.listItem.recordId, dvm.individual);
                         // select the new individual
-                        dvm.sm.selectItem(dvm.individual['@id'], false);
+                        dvm.os.selectItem(dvm.individual['@id'], false);
                         // hide the overlay
-                        dvm.sm.showCreateIndividualOverlay = false;
+                        dvm.os.showCreateIndividualOverlay = false;
                         dvm.ontoUtils.saveCurrentChanges();
                     }
                 }

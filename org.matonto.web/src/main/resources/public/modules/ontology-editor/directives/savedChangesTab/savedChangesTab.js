@@ -27,9 +27,9 @@
         .module('savedChangesTab', [])
         .directive('savedChangesTab', savedChangesTab);
 
-        savedChangesTab.$inject = ['$q', 'ontologyStateService', 'ontologyManagerService', 'utilService', 'catalogManagerService', 'prefixes'];
+        savedChangesTab.$inject = ['$q', 'ontologyStateService', 'utilService', 'catalogManagerService', 'prefixes'];
 
-        function savedChangesTab($q, ontologyStateService, ontologyManagerService, utilService, catalogManagerService, prefixes) {
+        function savedChangesTab($q, ontologyStateService, utilService, catalogManagerService, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -44,7 +44,6 @@
                     var types = [prefixes.owl + 'Class', prefixes.owl + 'ObjectProperty', prefixes.owl + 'DatatypeProperty', prefixes.owl + 'AnnotationProperty', prefixes.owl + 'NamedIndividual', prefixes.skos + 'Concept', prefixes.skos + 'ConceptScheme'];
 
                     dvm.os = ontologyStateService;
-                    dvm.om = ontologyManagerService;
                     dvm.util = utilService;
                     dvm.list = [];
                     dvm.checkedStatements = {
@@ -61,14 +60,14 @@
                         cm.getBranchHeadCommit(dvm.os.listItem.branchId, dvm.os.listItem.recordId, catalogId)
                             .then(headCommit => {
                                 var commitId = _.get(headCommit, "commit['@id']", '');
-                                return dvm.om.updateOntology(dvm.os.listItem.recordId, dvm.os.listItem.branchId, commitId, dvm.os.listItem.type);
+                                return dvm.os.updateOntology(dvm.os.listItem.recordId, dvm.os.listItem.branchId, commitId, dvm.os.listItem.type);
                             }, $q.reject)
                             .then(() => dvm.util.createSuccessToast('Your ontology has been updated.'), dvm.util.createErrorToast);
                     }
 
                     dvm.removeChanges = function() {
                         cm.deleteInProgressCommit(dvm.os.listItem.recordId, catalogId)
-                            .then(() => dvm.om.updateOntology(dvm.os.listItem.recordId, dvm.os.listItem.branchId, dvm.os.listItem.commitId, dvm.os.state.type, dvm.os.listItem.upToDate), $q.reject)
+                            .then(() => dvm.os.updateOntology(dvm.os.listItem.recordId, dvm.os.listItem.branchId, dvm.os.listItem.commitId, dvm.os.state.type, dvm.os.listItem.upToDate), $q.reject)
                             .then(() => dvm.os.clearInProgressCommit(), errorMessage => dvm.error = errorMessage);
                     }
 
@@ -130,9 +129,9 @@
                                 differenceObj.additions.push(dvm.util.createJson(item.id, predicate, deletion.o));
                             });
                         });
-                        dvm.om.saveChanges(dvm.os.listItem.recordId, differenceObj)
+                        dvm.os.saveChanges(dvm.os.listItem.recordId, differenceObj)
                             .then(() => dvm.os.afterSave(), $q.reject)
-                            .then(() => dvm.om.updateOntology(dvm.os.listItem.recordId, dvm.os.listItem.branchId, dvm.os.listItem.commitId, dvm.os.listItem.type, dvm.os.listItem.upToDate, dvm.os.listItem.inProgressCommit), $q.reject)
+                            .then(() => dvm.os.updateOntology(dvm.os.listItem.recordId, dvm.os.listItem.branchId, dvm.os.listItem.commitId, dvm.os.listItem.type, dvm.os.listItem.upToDate, dvm.os.listItem.inProgressCommit), $q.reject)
                             .then(() => dvm.util.createSuccessToast('Checked changes removed'), dvm.util.createErrorToast);
                     }
 

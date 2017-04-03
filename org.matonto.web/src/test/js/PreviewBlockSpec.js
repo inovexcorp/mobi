@@ -26,9 +26,7 @@ describe('Preview Block directive', function() {
         $q,
         element,
         controller,
-        ontologyStateSvc,
-        ontologyManagerSvc,
-        ontologyUtilsManagerSvc;
+        ontologyStateSvc;
 
     beforeEach(function() {
         module('templates');
@@ -36,12 +34,11 @@ describe('Preview Block directive', function() {
         mockOntologyState();
         mockOntologyManager();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _ontologyManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
             ontologyStateSvc = _ontologyStateService_;
-            ontologyManagerSvc = _ontologyManagerService_;
         });
 
         element = $compile(angular.element('<preview-block></preview-block>'))(scope);
@@ -110,7 +107,7 @@ describe('Preview Block directive', function() {
                 controller.getPreview();
                 scope.$apply();
                 expect(controller.activePage.mode).toBe(test.mode);
-                expect(ontologyManagerSvc.getPreview).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, test.serialization);
+                expect(ontologyStateSvc.getPreview).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, test.serialization);
                 expect(controller.activePage.preview).toEqual({});
             });
         });

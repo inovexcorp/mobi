@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Create Individual Overlay directive', function() {
-    var $compile, scope, element, controller, ontologyManagerSvc, ontologyStateSvc, resObj, deferred, prefixes, splitIRIFilter, ontoUtils;
+    var $compile, scope, element, controller, ontologyStateSvc, resObj, deferred, prefixes, splitIRIFilter, ontoUtils;
 
     beforeEach(function() {
         module('templates');
@@ -30,16 +30,14 @@ describe('Create Individual Overlay directive', function() {
         injectSplitIRIFilter();
         injectTrustedFilter();
         injectHighlightFilter();
-        mockOntologyManager();
         mockOntologyState();
         mockResponseObj();
         mockPrefixes();
         mockOntologyUtilsManager();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_, _responseObj_, _prefixes_, _splitIRIFilter_, _ontologyUtilsManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _responseObj_, _prefixes_, _splitIRIFilter_, _ontologyUtilsManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            ontologyManagerSvc = _ontologyManagerService_;
             ontologyStateSvc = _ontologyStateService_;
             prefixes = _prefixes_;
             resObj = _responseObj_;
@@ -131,7 +129,6 @@ describe('Create Individual Overlay directive', function() {
     });
     describe('controller methods', function() {
         beforeEach(function() {
-            ontologyManagerSvc.getOntologyIRI.and.returnValue('iri');
             element = $compile(angular.element('<create-individual-overlay></create-individual-overlay>'))(scope);
             scope.$digest();
             controller = element.controller('createIndividualOverlay');
@@ -177,8 +174,8 @@ describe('Create Individual Overlay directive', function() {
             expect(listItem.individuals).toContain({namespace: split.begin + split.then, localName: split.end});
             expect(listItem.classesWithIndividuals).toContain({entityIRI: 'ClassA'});
             expect(controller.individual['@type']).toContain(prefixes.owl + 'NamedIndividual');
-            expect(ontologyManagerSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, controller.individual);
-            expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, controller.individual);
+            expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, controller.individual);
+            expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, controller.individual);
             expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(controller.individual['@id'], false);
             expect(ontologyStateSvc.showCreateIndividualOverlay).toBe(false);
             expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();

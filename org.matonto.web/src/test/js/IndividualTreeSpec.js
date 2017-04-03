@@ -61,12 +61,6 @@ describe('Individual Tree directive', function() {
             expect(element.prop('tagName')).toBe('DIV');
             expect(element.hasClass('tree')).toBe(true);
         });
-        it('depending on the number of ontologies', function() {
-            var ontologies = element.querySelectorAll('ul.ontology');
-            var treeItems = element.querySelectorAll('ul.ontology > tree-item');
-            expect(ontologies.length).toBe(ontologyManagerSvc.list.length);
-            expect(treeItems.length).toBe(ontologyManagerSvc.list.length);
-        });
         it('depending on the number of classes', function() {
             var classes = element.querySelectorAll('ul.class');
             var links = element.querySelectorAll('ul.class > li a');

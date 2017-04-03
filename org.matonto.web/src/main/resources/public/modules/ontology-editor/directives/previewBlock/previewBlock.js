@@ -27,9 +27,9 @@
         .module('previewBlock', [])
         .directive('previewBlock', previewBlock);
 
-        previewBlock.$inject = ['ontologyStateService', 'ontologyManagerService'];
+        previewBlock.$inject = ['ontologyStateService'];
 
-        function previewBlock(ontologyStateService, ontologyManagerService) {
+        function previewBlock(ontologyStateService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,9 +38,8 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    dvm.sm = ontologyStateService;
-                    dvm.om = ontologyManagerService;
-                    dvm.activePage = dvm.sm.getActivePage();
+                    dvm.os = ontologyStateService;
+                    dvm.activePage = dvm.os.getActivePage();
                     dvm.options = {
                         mode: dvm.activePage.mode,
                         lineNumbers: true,
@@ -61,7 +60,7 @@
 
                     dvm.getPreview = function() {
                         setMode(dvm.activePage.serialization);
-                        dvm.om.getPreview(dvm.sm.listItem.recordId, dvm.activePage.serialization)
+                        dvm.os.getPreview(dvm.os.listItem.recordId, dvm.activePage.serialization)
                             .then(response => dvm.activePage.preview = response,
                                 response => dvm.activePage.preview = response);
                     }

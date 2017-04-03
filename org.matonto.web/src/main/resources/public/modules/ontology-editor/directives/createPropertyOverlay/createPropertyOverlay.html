@@ -42,15 +42,15 @@
                 <p class="identifier"><strong>Characteristics</strong></p>
                 <checkbox ng-model="dvm.checkbox" display-text="'Functional Property'"></checkbox>
                 <object-select ng-model="dvm.property[dvm.prefixes.rdfs + 'domain']" display-text="'Domain'"
-                               muted-text="'(Optional)'" select-list="dvm.sm.listItem.subClasses"></object-select>
+                               muted-text="'(Optional)'" select-list="dvm.os.listItem.subClasses"></object-select>
                 <object-select ng-if="dvm.om.isObjectProperty(dvm.property)" class="range-object" ng-model="dvm.property[dvm.prefixes.rdfs + 'range']"
-                               display-text="'Range'" muted-text="'(Optional)'" select-list="dvm.sm.listItem.subClasses"></object-select>
+                               display-text="'Range'" muted-text="'(Optional)'" select-list="dvm.os.listItem.subClasses"></object-select>
                 <object-select ng-if="dvm.om.isDataTypeProperty(dvm.property)" class="range-datatype" ng-model="dvm.property[dvm.prefixes.rdfs + 'range']"
-                               display-text="'Range'" muted-text="'(Optional)'" select-list="dvm.sm.listItem.dataPropertyRange"></object-select>
+                               display-text="'Range'" muted-text="'(Optional)'" select-list="dvm.os.listItem.dataPropertyRange"></object-select>
             </div>
             <div class="btn-container clearfix">
                 <button class="btn btn-primary pull-right" ng-disabled="dvm.createPropertyForm.$invalid || !dvm.property['@type'].length" ng-click="dvm.create()">Create</button>
-                <button class="btn btn-default pull-right" ng-click="dvm.sm.showCreatePropertyOverlay = false">Cancel</button>
+                <button class="btn btn-default pull-right" ng-click="dvm.os.showCreatePropertyOverlay = false">Cancel</button>
             </div>
         </form>
     </div>
