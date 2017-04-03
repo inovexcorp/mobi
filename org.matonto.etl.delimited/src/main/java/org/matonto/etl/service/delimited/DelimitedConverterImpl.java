@@ -26,7 +26,6 @@ package org.matonto.etl.service.delimited;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.opencsv.CSVReader;
-import org.apache.log4j.Logger;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormatter;
@@ -49,6 +48,8 @@ import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.orm.Thing;
 import org.matonto.rest.util.CharsetUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -68,7 +69,7 @@ import java.util.regex.Pattern;
 
 @Component(provide = DelimitedConverter.class)
 public class DelimitedConverterImpl implements DelimitedConverter {
-    private static final Logger LOGGER = Logger.getLogger(DelimitedConverterImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DelimitedConverterImpl.class);
     private static final String LOCAL_NAME_PATTERN = "\\$\\{(\\d+|UUID)\\}";
     private static final String DEFAULT_PREFIX = "http://matonto.org/data/";
 

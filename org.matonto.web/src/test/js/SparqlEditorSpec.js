@@ -21,8 +21,7 @@
  * #L%
  */
 describe('SPARQL Editor directive', function() {
-    var $compile,
-        scope;
+    var $compile, scope, $q, element, controller, sparqlManagerSvc, prefixes, datasetManagerSvc, datasets;
 
     beforeEach(function() {
         module('templates');
@@ -31,29 +30,54 @@ describe('SPARQL Editor directive', function() {
         injectHighlightFilter();
         mockPrefixes();
         mockSparqlManager();
+        mockDatasetManager();
+        mockUtil();
 
         module(function($provide) {
             $provide.value('escapeHTMLFilter', jasmine.createSpy('escapeHTMLFilter'));
         });
 
-        inject(function(_$compile_, _$rootScope_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _sparqlManagerService_, _prefixes_, _datasetManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            $q = _$q_;
+            sparqlManagerSvc = _sparqlManagerService_;
+            prefixes = _prefixes_;
+            datasetManagerSvc = _datasetManagerService_;
         });
 
-        this.element = $compile(angular.element('<sparql-editor></sparql-editor>'))(scope);
+        datasets = [{'@id': 'dataset'}];
+        datasetManagerSvc.getDatasetRecords.and.returnValue($q.when({data: datasets}));
+        element = $compile(angular.element('<sparql-editor></sparql-editor>'))(scope);
         scope.$digest();
+        controller = element.controller('sparqlEditor');
     });
 
+    describe('initializes with the correct values', function() {
+        it('for prefixes', function() {
+            expect(controller.prefixList.length).toBe(_.keys(prefixes).length);
+        });
+        it('for a dataset record list', function() {
+            scope.$apply();
+            expect(controller.datasetRecords).toEqual(datasets);
+        });
+    });
     describe('replaces the element with the correct html', function() {
         it('for a form', function() {
-            expect(this.element.prop('tagName')).toBe('FORM');
+            expect(element.prop('tagName')).toBe('FORM');
         });
         it('based on form-group', function() {
-            expect(this.element.querySelectorAll('.form-group').length).toBe(1);
+            expect(element.querySelectorAll('.form-group').length).toBe(2);
         });
         it('with a ui-codemirror', function() {
-            expect(this.element.find('ui-codemirror').length).toBe(1);
+            expect(element.find('ui-codemirror').length).toBe(1);
+        });
+    });
+    describe('controller methods', function() {
+        it('should clear the selected dataset record', function() {
+            sparqlManagerSvc.datasetRecordIRI = 'test';
+            controller.clear();
+            expect(sparqlManagerSvc.datasetRecordIRI).toBe('');
         });
     });
 });
