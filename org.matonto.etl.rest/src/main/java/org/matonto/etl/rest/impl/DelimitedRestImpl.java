@@ -429,11 +429,10 @@ public class DelimitedRestImpl implements DelimitedRest {
             String[] columns;
             for (Row row : sheet) {
                 if (row.getRowNum() <= numRows) {
-                    columns = new String[row.getPhysicalNumberOfCells()];
-                    int index = 0;
-                    for (Cell cell : row) {
-                        columns[index] = df.formatCellValue(cell);
-                        index++;
+                    //getLastCellNumber instead of getPhysicalNumberOfCells so that blank values don't shift cells
+                    columns = new String[row.getLastCellNum()];
+                    for (int i = 0; i < row.getLastCellNum(); i++ ) {
+                        columns[i] = df.formatCellValue(row.getCell(i));
                     }
                     rowList.add(columns);
                 }
