@@ -26,7 +26,9 @@ describe('Preview Block directive', function() {
         $q,
         element,
         controller,
-        ontologyStateSvc;
+        ontologyStateSvc,
+        ontologyManagerSvc;
+    var jsonFilter = 'json';
 
     beforeEach(function() {
         module('templates');
@@ -34,11 +36,18 @@ describe('Preview Block directive', function() {
         mockOntologyState();
         mockOntologyManager();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_) {
+        module(function($provide) {
+            $provide.value('jsonFilter', function() {
+                return jsonFilter;
+            });
+        });
+
+        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _ontologyManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
             ontologyStateSvc = _ontologyStateService_;
+            ontologyManagerSvc = _ontologyManagerService_;
         });
 
         element = $compile(angular.element('<preview-block></preview-block>'))(scope);
@@ -87,28 +96,34 @@ describe('Preview Block directive', function() {
         beforeEach(function() {
             controller = element.controller('previewBlock');
         });
-        it('should get a preview', function() {
-            var tests = [
-                {
-                    serialization: 'turtle',
-                    mode: 'text/turtle'
-                },
-                {
-                    serialization: 'jsonld',
-                    mode: 'application/ld+json'
-                },
-                {
-                    serialization: 'rdf/xml',
-                    mode: 'application/xml'
-                }
-            ];
-            _.forEach(tests, function(test) {
-                controller.activePage = {serialization: test.serialization};
+        describe('should get a preview', function() {
+            it('if the format is JSON-LD', function() {
+                controller.activePage = {serialization: 'jsonld'};
                 controller.getPreview();
                 scope.$apply();
-                expect(controller.activePage.mode).toBe(test.mode);
-                expect(ontologyStateSvc.getPreview).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, test.serialization);
-                expect(controller.activePage.preview).toEqual({});
+                expect(controller.activePage.mode).toBe('application/ld+json');
+                expect(ontologyManagerSvc.getOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, ontologyStateSvc.listItem.branchId, ontologyStateSvc.listItem.commitId, 'jsonld');
+                expect(controller.activePage.preview).toEqual(jsonFilter);
+            });
+            it('if the format is not JSON-LD', function() {
+                var tests = [
+                    {
+                        serialization: 'turtle',
+                        mode: 'text/turtle'
+                    },
+                    {
+                        serialization: 'rdf/xml',
+                        mode: 'application/xml'
+                    }
+                ];
+                _.forEach(tests, function(test) {
+                    controller.activePage = {serialization: test.serialization};
+                    controller.getPreview();
+                    scope.$apply();
+                    expect(controller.activePage.mode).toBe(test.mode);
+                    expect(ontologyManagerSvc.getOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, ontologyStateSvc.listItem.branchId, ontologyStateSvc.listItem.commitId, test.serialization);
+                    expect(controller.activePage.preview).toEqual({});
+                });
             });
         });
     });

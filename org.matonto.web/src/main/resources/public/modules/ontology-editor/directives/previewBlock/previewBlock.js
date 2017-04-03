@@ -27,9 +27,9 @@
         .module('previewBlock', [])
         .directive('previewBlock', previewBlock);
 
-        previewBlock.$inject = ['ontologyStateService'];
+        previewBlock.$inject = ['$filter', 'ontologyStateService', 'ontologyManagerService'];
 
-        function previewBlock(ontologyStateService) {
+        function previewBlock($filter, ontologyStateService, ontologyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,6 +38,7 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
+                    var om = ontologyManagerService;
                     dvm.os = ontologyStateService;
                     dvm.activePage = dvm.os.getActivePage();
                     dvm.options = {
@@ -60,8 +61,8 @@
 
                     dvm.getPreview = function() {
                         setMode(dvm.activePage.serialization);
-                        dvm.os.getPreview(dvm.os.listItem.recordId, dvm.activePage.serialization)
-                            .then(response => dvm.activePage.preview = response,
+                        om.getOntology(dvm.os.listItem.recordId, dvm.os.listItem.branchId, dvm.os.listItem.commitId, dvm.activePage.serialization)
+                            .then(ontology => dvm.activePage.preview = (dvm.activePage.serialization === 'jsonld' ? $filter('json')(ontology) : ontology),
                                 response => dvm.activePage.preview = response);
                     }
                 }

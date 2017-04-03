@@ -1043,46 +1043,6 @@ describe('Ontology State service', function() {
         expect(ontologyStateSvc.getListItemByRecordId).toHaveBeenCalledWith(recordId);
         expect(listItem.branches).toEqual([]);
     });
-    describe('getPreview should call the correct methods', function() {
-        var getDeferred;
-        beforeEach(function() {
-            getDeferred = $q.defer();
-            spyOn(ontologyStateSvc, 'getOntology').and.returnValue(getDeferred.promise);
-        });
-        describe('when getOntology resolves', function() {
-            beforeEach(function() {
-                getDeferred.resolve(getResponse);
-            });
-            it('and rdfFormat is jsonld', function() {
-                ontologyStateSvc.getPreview(recordId, format)
-                    .then(function(response) {
-                        expect(response).toEqual(jsonFilter);
-                    }, function() {
-                        fail('Promise should have resolved');
-                    });
-                scope.$apply();
-            });
-            it('and rdfFormat is not jsonld', function() {
-                ontologyStateSvc.getPreview(recordId, 'other')
-                    .then(function(response) {
-                        expect(response).toEqual(ontology);
-                    }, function() {
-                        fail('Promise should have resolved');
-                    });
-                scope.$apply();
-            });
-        });
-        it('when getOntology rejects', function() {
-            getDeferred.reject(error);
-            ontologyStateSvc.getPreview(recordId)
-                .then(function() {
-                    fail('Promise should have rejected');
-                }, function(response) {
-                    expect(response).toEqual(error);
-                });
-            scope.$apply();
-        });
-    });
     describe('saveChanges should call the correct methods', function() {
         var getDeferred;
         beforeEach(function() {

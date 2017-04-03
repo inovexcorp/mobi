@@ -24,7 +24,25 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name ontologyState
+         */
         .module('ontologyState', [])
+        /**
+         * @ngdoc service
+         * @name ontologyState.service:ontologyStateService
+         * @requires $timeout
+         * @requires $q
+         * @requires $filter
+         * @requires ontologyManager.service:ontologyManagerService
+         * @requires updateRefs.service:updateRefsService
+         * @requires stateManager.service:stateManagerService
+         * @requires util.service:utilService
+         * @requires catalogManager.service:catalogManagerService
+         * @requires propertyManager.service:propertyManagerService
+         * @requires prefixes.service:prefixes
+         */
         .service('ontologyStateService', ontologyStateService);
 
         ontologyStateService.$inject = ['$timeout', '$q', '$filter', 'ontologyManagerService', 'updateRefsService', 'stateManagerService', 'utilService', 'catalogManagerService', 'propertyManagerService', 'prefixes'];
@@ -91,7 +109,7 @@
             /**
              * @ngdoc property
              * @name list
-             * @methodOf ontologyState.service:ontologyStateService
+             * @propertyOf ontologyState.service:ontologyStateService
              * @type {Object[]}
              *
              * @description
@@ -147,9 +165,9 @@
              * @methodOf ontologyState.service:ontologyStateService
              *
              * @description
-             * Calls the GET /matontorest/ontologies/{recordId} endpoint which gets an ontology from the MatOnto
-             * repository with the JSON-LD ontology string provided. Returns a promise which includes the serialized
-             * ontology.
+             * Retrieves the last visible state of the ontology for the current user in the provided RDF format. If
+             * the user has not opened the ontology yet or the branch they were viewing no longer exists, retrieves
+             * the latest state of the ontology.
              *
              * @param {string} recordId The record ID of the ontology you want to get from the repository.
              * @param {string} [rdfFormat='jsonld'] The format string to identify the serialization requested.
@@ -187,10 +205,16 @@
              * @ngdoc method
              * @name getLatestOntology
              * @methodOf ontologyState.service:ontologyStateService
-             * 
-             * @param  {[type]} recordId  [description]
-             * @param  {String} rdfFormat [description]
-             * @return {[type]}           [description]
+             *
+             * @description
+             * Retrieves the latest state of an ontology, being the head commit of the master branch, and returns
+             * a promise containing the ontology id, record id, branch id, commit id, inProgressCommit, and
+             * serialized ontology.
+             *
+             * @param {string} recordId The record ID of the ontology you want to get from the repository.
+             * @param {string} rdfFormat The format string to identify the serialization requested.
+             * @return {Promise} A promise containing the ontology id, record id, branch id, commit id,
+             *                    inProgressCommit, and JSON-LD serialization of the ontology.
              */
             self.getLatestOntology = function(recordId, rdfFormat = 'jsonld') {
                 var branchId, commitId;
@@ -208,33 +232,11 @@
             }
             /**
              * @ngdoc method
-             * @name getPreview
-             * @methodOf ontologyState.service:ontologyStateService
-             *
-             * @description
-             * Used to get the string representation of the requested serialization of the ontology. It calls
-             * {@link ontologyManager.service:ontologyManagerService#getOntology getOntology} to get the specified
-             * ontology from the MatOnto repository. Returns a promise with the string representation of the ontology.
-             *
-             * @param {string} recordId The record ID of the requested ontology.
-             * @param {string} [rdfFormat='jsonld'] The format string to identify the serialization requested.
-             * @returns {Promise} A promise with the string representation of the ontology.
-             */
-            self.getPreview = function(recordId, rdfFormat = 'jsonld') {
-                var deferred = $q.defer();
-                self.getOntology(recordId, rdfFormat)
-                    .then(response => deferred.resolve((rdfFormat === 'jsonld') ? $filter('json')(response.ontology)
-                            : response.ontology), deferred.reject);
-                return deferred.promise;
-            }
-            /**
-             * @ngdoc method
              * @name createOntology
              * @methodOf ontologyState.service:ontologyStateService
              *
              * @description
-             * Calls the POST /matontorest/ontologies endpoint which uploads an ontology to the MatOnto repository
-             * with the JSON-LD ontology string provided. Creates a new OntologyRecord for the associated ontology.
+             * Uploads the provided JSON-LD as a new ontology and creates a new list item for the new ontology.
              * Returns a promise with the entityIRI and ontologyId for the state of the newly created ontology.
              *
              * @param {string} ontologyJson The JSON-LD representing the ontology.
@@ -270,17 +272,15 @@
              * @methodOf ontologyState.service:ontologyStateService
              *
              * @description
-             * Calls the POST /matontorest/ontologies endpoint which uploads an ontology to the MatOnto repository
-             * with the file provided and then calls
-             * {@link ontologyManager.service:ontologyManagerService#getOntology getOntology} to get the ontology they
-             * just uploaded. Returns a promise.
+             * Uploads the provided file as an ontology and creates a new list item for the new ontology. Returns a
+             * promise with the record id of the new OntologyRecord.
              *
              * @param {File} file The ontology file.
              * @param {string} title The record title.
              * @param {string} description The record description.
              * @param {string} keywords The record list of keywords separated by commas.
              * @param {string} type The type identifier for the file uploaded.
-             * @returns {Promise} A promise with the ontology ID or error message.
+             * @returns {Promise} A promise with the ontology record ID or error message.
              */
             self.uploadThenGet = function(file, title, description, keywords, type = 'ontology') {
                 var deferred = $q.defer();
@@ -540,12 +540,12 @@
              * @methodOf ontologyState.service:ontologyStateService
              *
              * @description
-             * Gets the associated object from the {@link ontologyManager.service:ontologyManagerService#list list} that
+             * Gets the associated object from the {@link ontologyState.service:ontologyStateService#list list} that
              * contains the requested record ID. Returns the list item.
              *
              * @param {string} recordId The record ID of the requested ontology.
              * @returns {Object} The associated Object from the
-             * {@link ontologyManager.service:ontologyManagerService#list list}.
+             * {@link ontologyState.service:ontologyStateService#list list}.
              */
             self.getListItemByRecordId = function(recordId) {
                 return _.find(self.list, {recordId});
@@ -556,7 +556,7 @@
              * @methodOf ontologyState.service:ontologyStateService
              *
              * @description
-             * Gets the ontology from the {@link ontologyManager.service:ontologyManagerService#list list} using the
+             * Gets the ontology from the {@link ontologyState.service:ontologyStateService#list list} using the
              * requested recordId ID. Returns the JSON-LD of the ontology.
              *
              * @param {string} recordId The record ID of the requested ontology.
@@ -588,8 +588,7 @@
              *
              * @description
              * Gets the entity's name using the provided entityIRI and listItem to find the entity's label in the index.
-             * If that entityIRI is not in the index, defaults to the
-             * {@link ontologyManager.service:ontologyManagerService#getEntityName getEntityName} behavior.
+             * If that entityIRI is not in the index, retrieves the beautiful IRI of the entity IRI.
              *
              * @param {Object} entity The entity you want the name of.
              * @returns {string} The beautified IRI string.
@@ -603,9 +602,7 @@
              * @methodOf ontologyState.service:ontologyStateService
              *
              * @description
-             * Saves all changes to the ontology with the specified ontology ID. It calls the POST
-             * /matontorest/ontology/{recordId} for each of the unsaved entities. Returns a promise with the new
-             * ontology ID.
+             * Saves all changes to the ontology with the specified record id by updating the in progress commit.
              *
              * @param {string} recordId The record ID of the requested ontology.
              * @param {Object} differenceObj The object containing statements that represent changes made.
@@ -643,7 +640,7 @@
              *
              * @description
              * Used to open an ontology from the MatOnto repository. It calls
-             * {@link ontologyManager.service:ontologyManagerService#getOntology getOntology} to get the specified
+             * {@link ontologyState.service:ontologyStateService#getOntology getOntology} to get the specified
              * ontology from the MatOnto repository. Returns a promise.
              *
              * @param {string} recordId The record ID of the requested ontology.
@@ -680,7 +677,7 @@
              *
              * @description
              * Used to close an ontology from the MatOnto application. It removes the ontology list item from the
-             * {@link ontologyManager.service:ontologyManagerService#list list}.
+             * {@link ontologyState.service:ontologyStateService#list list}.
              *
              * @param {string} recordId The record ID of the requested ontology.
              */

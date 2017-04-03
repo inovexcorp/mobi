@@ -482,7 +482,6 @@ function mockOntologyState() {
             this.initialize = jasmine.createSpy('initialize');
             this.reset = jasmine.createSpy('reset');
             this.getOntology = jasmine.createSpy('getOntology').and.returnValue({});
-            this.getPreview = jasmine.createSpy('getPreview').and.returnValue($q.resolve({}));
             this.createOntology = jasmine.createSpy('createOntology').and.returnValue($q.resolve({}));
             this.uploadThenGet = jasmine.createSpy('uploadThenGet').and.returnValue($q.resolve(''));
             this.updateOntology = jasmine.createSpy('updateOntology');
