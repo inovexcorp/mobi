@@ -32,7 +32,6 @@ import aQute.bnd.annotation.metatype.Configurable;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.karaf.jaas.modules.Encryption;
 import org.apache.karaf.jaas.modules.encryption.EncryptionSupport;
-import org.apache.log4j.Logger;
 import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.engines.Engine;
 import org.matonto.jaas.api.engines.GroupConfig;
@@ -60,6 +59,8 @@ import org.matonto.repository.exception.RepositoryException;
 import org.openrdf.model.vocabulary.DCTERMS;
 import org.openrdf.model.vocabulary.RDF;
 import org.osgi.framework.BundleContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -78,7 +79,7 @@ import java.util.stream.Stream;
 )
 public class RdfEngine implements Engine {
     public static final String COMPONENT_NAME = "org.matonto.jaas.engines.RdfEngine";
-    private static final Logger logger = Logger.getLogger(RdfEngine.class);
+    private static final Logger logger = LoggerFactory.getLogger(RdfEngine.class);
 
     private Resource context;
     private String userNamespace;

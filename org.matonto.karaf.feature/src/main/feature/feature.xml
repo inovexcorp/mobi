@@ -38,6 +38,7 @@
         <bundle start-level="80">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.aopalliance/1.0_6</bundle>
         <bundle start-level="80">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.jcip-annotations/1.0_2</bundle>
         <bundle start-level="80">mvn:org.mapdb/mapdb/1.0.7</bundle>
+        <bundle start-level="80">mvn:org.antlr/antlr4-runtime/4.6</bundle>
 
         <!-- Shared Dependencies -->
         <bundle start-level="80">mvn:biz.aQute.bnd/biz.aQute.bndlib/${bndlib.version}</bundle>
@@ -104,6 +105,7 @@
         <bundle start-level="80">mvn:org.matonto/platform.config.impl/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/dataset.api/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/dataset.impl/${project.version}</bundle>
+        <bundle start-level="80">mvn:org.matonto/sparql.utils/${project.version}</bundle>
     </feature>
     <feature name="matonto-cli" description="MatOnto CLI Bundles" version="${project.version}">
         <feature prerequisite="true">matonto-core</feature>

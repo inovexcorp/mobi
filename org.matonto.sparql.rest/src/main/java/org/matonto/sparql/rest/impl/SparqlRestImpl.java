@@ -27,12 +27,15 @@ import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.matonto.dataset.api.DatasetConnection;
+import org.matonto.dataset.api.DatasetManager;
 import org.matonto.exception.MatOntoException;
 import org.matonto.persistence.utils.JSONQueryResults;
 import org.matonto.query.TupleQueryResult;
@@ -40,6 +43,8 @@ import org.matonto.query.api.Binding;
 import org.matonto.query.api.BindingSet;
 import org.matonto.query.api.TupleQuery;
 import org.matonto.query.exception.MalformedQueryException;
+import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.ValueFactory;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.api.RepositoryManager;
@@ -67,6 +72,8 @@ public class SparqlRestImpl implements SparqlRest {
     // private static final int QUERY_TIME_OUT_SECONDS = 120;
 
     private RepositoryManager repositoryManager;
+    private DatasetManager datasetManager;
+    private ValueFactory valueFactory;
 
     private final Logger log = LoggerFactory.getLogger(SparqlRestImpl.class);
 
@@ -75,9 +82,37 @@ public class SparqlRestImpl implements SparqlRest {
         this.repositoryManager = repositoryManager;
     }
 
+    @Reference
+    public void setDatasetManager(DatasetManager datasetManager) {
+        this.datasetManager = datasetManager;
+    }
+
+    @Reference
+    public void setValueFactory(ValueFactory valueFactory) {
+        this.valueFactory = valueFactory;
+    }
+
+    private TupleQueryResult getDatasetQueryResults(String queryString, Resource recordId) {
+        try (DatasetConnection conn = datasetManager.getConnection(recordId)) {
+            TupleQuery query = conn.prepareTupleQuery(queryString);
+            return query.evaluateAndReturn();
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+        } catch (MalformedQueryException ex) {
+            String statusText = "Query is invalid. Please change the query and re-execute.";
+            MatOntoWebException.CustomStatus status = new MatOntoWebException.CustomStatus(400, statusText);
+            Response response = Response.status(status)
+                    .entity(new JSONObject().element("details", ex.getMessage()).toString())
+                    .build();
+            throw ErrorUtils.sendError(ex, statusText, response);
+        } catch (MatOntoException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     private TupleQueryResult getQueryResults(String queryString) {
-        Repository repository = repositoryManager.getRepository("system")
-                .orElseThrow(() -> ErrorUtils.sendError("Repository is not available.", Response.Status.BAD_REQUEST));
+        Repository repository = repositoryManager.getRepository("system").orElseThrow(() ->
+                ErrorUtils.sendError("Repository is not available.", Response.Status.INTERNAL_SERVER_ERROR));
 
         try (RepositoryConnection conn = repository.getConnection()) {
             TupleQuery query = conn.prepareTupleQuery(queryString);
@@ -86,14 +121,16 @@ public class SparqlRestImpl implements SparqlRest {
             String statusText = "Query is invalid. Please change the query and re-execute.";
             MatOntoWebException.CustomStatus status = new MatOntoWebException.CustomStatus(400, statusText);
             Response response = Response.status(status)
-                    .entity(new JSONObject().element("details", ex.getCause().getMessage()))
+                    .entity(new JSONObject().element("details", ex.getCause().getMessage()).toString())
                     .build();
             throw ErrorUtils.sendError(ex, statusText, response);
+        } catch (MatOntoException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
 
     @Override
-    public Response queryRdf(String queryString) {
+    public Response queryRdf(String queryString, String datasetRecordId) {
         if (queryString == null) {
             throw ErrorUtils.sendError("Parameter 'queryString' must be set.", Response.Status.BAD_REQUEST);
         }
@@ -111,12 +148,18 @@ public class SparqlRestImpl implements SparqlRest {
         //            }
         //        }, QUERY_TIME_OUT_SECONDS * 1000);
 
-        TupleQueryResult queryResults = getQueryResults(queryString);
+        TupleQueryResult queryResults;
+        if (!StringUtils.isEmpty(datasetRecordId)) {
+            Resource recordId = valueFactory.createIRI(datasetRecordId);
+            queryResults = getDatasetQueryResults(queryString, recordId);
+        } else {
+            queryResults = getQueryResults(queryString);
+        }
 
         if (queryResults.hasNext()) {
             try {
                 JSONObject json = JSONQueryResults.getResponse(queryResults);
-                return Response.ok().entity(json.toString()).build();
+                return Response.ok().entity(json).build();
             } catch (MatOntoException ex) {
                 throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
             }
@@ -126,11 +169,17 @@ public class SparqlRestImpl implements SparqlRest {
     }
 
     @Override
-    public Response downloadQuery(String queryString, String fileExtension, String fileName) {
+    public Response downloadQuery(String queryString, String datasetRecordId, String fileExtension, String fileName) {
         if (queryString == null) {
             throw ErrorUtils.sendError("Parameter 'queryString' must be set.", Response.Status.BAD_REQUEST);
         }
-        TupleQueryResult queryResults = getQueryResults(queryString);
+        TupleQueryResult queryResults;
+        if (!StringUtils.isEmpty(datasetRecordId)) {
+            Resource recordId = valueFactory.createIRI(datasetRecordId);
+            queryResults = getDatasetQueryResults(queryString, recordId);
+        } else {
+            queryResults = getQueryResults(queryString);
+        }
         StreamingOutput stream;
         String mimeType;
         switch (fileExtension) {
@@ -158,10 +207,16 @@ public class SparqlRestImpl implements SparqlRest {
     }
 
     @Override
-    public Response getPagedResults(String queryString, UriInfo uriInfo, int limit,
-                                                              int offset) {
+    public Response getPagedResults(UriInfo uriInfo, String queryString, String datasetRecordId, int limit,
+                                    int offset) {
         LinksUtils.validateParams(limit, offset);
-        TupleQueryResult queryResults = getQueryResults(queryString);
+        TupleQueryResult queryResults;
+        if (!StringUtils.isEmpty(datasetRecordId)) {
+            Resource recordId = valueFactory.createIRI(datasetRecordId);
+            queryResults = getDatasetQueryResults(queryString, recordId);
+        } else {
+            queryResults = getQueryResults(queryString);
+        }
         if (queryResults.hasNext()) {
             List<JSONObject> bindings = JSONQueryResults.getBindings(queryResults);
             if (offset > bindings.size()) {
@@ -258,6 +313,5 @@ public class SparqlRestImpl implements SparqlRest {
             os.flush();
             os.close();
         };
-
     }
 }
