@@ -21,11 +21,7 @@
  * #L%
  */
 describe('SPARQL Manager service', function() {
-    var $httpBackend,
-        $httpParamSerializer,
-        sparqlManagerSvc,
-        windowSvc,
-        utilSvc;
+    var $httpBackend, $httpParamSerializer, sparqlManagerSvc, windowSvc, utilSvc, params;
 
     beforeEach(function() {
         module('sparqlManager');
@@ -44,18 +40,27 @@ describe('SPARQL Manager service', function() {
             windowSvc = _$window_;
             utilSvc = _utilService_;
         });
+
+        params = { query: sparqlManagerSvc.queryString };
     });
 
     describe('should query the repository', function() {
         beforeEach(function() {
-            var params = {
-                limit: sparqlManagerSvc.limit,
-                query: sparqlManagerSvc.queryString,
-                offset: sparqlManagerSvc.currentPage * sparqlManagerSvc.limit
-            }
-            this.url = '/matontorest/sparql/page?' + $httpParamSerializer(params);
+            params.limit = sparqlManagerSvc.limit;
+            params.offset = sparqlManagerSvc.currentPage * sparqlManagerSvc.limit;
+            this.url = '/matontorest/sparql/page?';
         });
-        it('unless an error occurs', function(done) {
+        it('with a dataset', function() {
+            sparqlManagerSvc.datasetRecordIRI = 'dataset';
+            params.dataset = sparqlManagerSvc.datasetRecordIRI;
+            this.url += $httpParamSerializer(params);
+            $httpBackend.expectGET(this.url).respond(200);
+            sparqlManagerSvc.queryRdf();
+            $httpBackend.flush();
+            expect(true).toBe(true);
+        });
+        it('unless an error occurs', function() {
+            this.url += $httpParamSerializer(params);
             var statusMessage = 'Error message';
             var details = 'Details';
             utilSvc.getErrorMessage.and.returnValue(statusMessage);
@@ -67,9 +72,9 @@ describe('SPARQL Manager service', function() {
             expect(sparqlManagerSvc.errorDetails).toEqual(details);
             expect(sparqlManagerSvc.currentPage).toBe(0);
             expect(sparqlManagerSvc.data).toBeUndefined();
-            done();
         });
         it('when returning no bindings', function(done) {
+            this.url += $httpParamSerializer(params);
             $httpBackend.expectGET(this.url).respond(200, {bindings: [], data: []});
             sparqlManagerSvc.queryRdf();
             $httpBackend.flush();
@@ -80,6 +85,7 @@ describe('SPARQL Manager service', function() {
             done();
         });
         it('when returning bindings', function(done) {
+            this.url += $httpParamSerializer(params);
             var nextLink = 'http://example.com/next';
             var prevLink = 'http://example.com/prev';
             var headers = {
@@ -100,23 +106,26 @@ describe('SPARQL Manager service', function() {
     });
     describe('should download query results', function() {
         beforeEach(function() {
-            this.params = {
-                query: sparqlManagerSvc.queryString,
-                fileType: 'csv'
-            };
+            params.fileType = 'csv';
+        });
+        it('with a dataset', function() {
+            sparqlManagerSvc.datasetRecordIRI = 'dataset';
+            params.dataset = sparqlManagerSvc.datasetRecordIRI;
+            sparqlManagerSvc.downloadResults(params.fileType);
+            expect(windowSvc.location).toBe('/matontorest/sparql?' + $httpParamSerializer(params));
         });
         it('with a file name', function() {
-            this.params.fileName = 'test';
-            sparqlManagerSvc.downloadResults(this.params.fileType, this.params.fileName);
-            expect(windowSvc.location).toBe('/matontorest/sparql?' + $httpParamSerializer(this.params));
+            params.fileName = 'test';
+            sparqlManagerSvc.downloadResults(params.fileType, params.fileName);
+            expect(windowSvc.location).toBe('/matontorest/sparql?' + $httpParamSerializer(params));
         });
         it('without a file name', function() {
-            sparqlManagerSvc.downloadResults(this.params.fileType);
-            expect(windowSvc.location).toBe('/matontorest/sparql?' + $httpParamSerializer(this.params));
+            sparqlManagerSvc.downloadResults(params.fileType);
+            expect(windowSvc.location).toBe('/matontorest/sparql?' + $httpParamSerializer(params));
 
             windowSvc.location = '';
-            sparqlManagerSvc.downloadResults(this.params.fileType, '');
-            expect(windowSvc.location).toBe('/matontorest/sparql?' + $httpParamSerializer(this.params));
+            sparqlManagerSvc.downloadResults(params.fileType, '');
+            expect(windowSvc.location).toBe('/matontorest/sparql?' + $httpParamSerializer(params));
         });
     });
 });

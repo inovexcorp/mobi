@@ -78,6 +78,16 @@
             self.queryString = '';
             /**
              * @ngdoc property
+             * @name datasetRecordIRI
+             * @propertyOf sparqlManager.service:sparqlManagerService
+             * @type {string}
+             *
+             * @description
+             * The IRI of a DatasetRecord in the MatOnto repository to perform the query against.
+             */
+            self.datasetRecordIRI = '';
+            /**
+             * @ngdoc property
              * @name data
              * @propertyOf sparqlManager.service:sparqlManagerService
              * @type {Object[]}
@@ -196,11 +206,12 @@
              * @methodOf sparqlManager.service:sparqlManagerService
              *
              * @description
-             * Calls the GET /matontorest/sparql endpoint using the `window.location` variable which will start
-             * a download of the results of running the current
+             * Calls the GET /matontorest/sparql endpoint using the `window.location` variable which
+             * will start a download of the results of running the current
              * {@link sparqlManager.service:sparqlManagerService#queryString query} and
-             * {@link sparqlManager.service:sparqlManagerService#prefixes prefixes} in the specified file type
-             * with an optional file name.
+             * {@link sparqlManager.service:sparqlManagerService#prefixes prefixes}, optionally using
+             * the selected {@link sparqlManager.service:sparqlManagerService#datasetRecordIRI dataset},
+             * in the specified file type with an optional file name.
              *
              * @param {string} fileType The type of file to download based on file extension
              * @param {string=''} fileName The optional name of the downloaded file
@@ -213,6 +224,9 @@
                 if (fileName) {
                     paramsObj.fileName = fileName;
                 }
+                if (self.datasetRecordIRI) {
+                    paramsObj.dataset = self.datasetRecordIRI;
+                }
                 $window.location = prefix + '?' + $httpParamSerializer(paramsObj);
             }
             /**
@@ -223,8 +237,9 @@
              * @description
              * Calls the GET /sparql/page REST endpoint to conduct a SPARQL query using the current
              * {@link sparqlManager.service:sparqlManagerService#queryString query} and
-             * {@link sparqlManager.service:sparqlManagerService#prefixes prefixes} and sets the results
-             * to {@link sparqlManager.service:sparqlManagerService#data data}.
+             * {@link sparqlManager.service:sparqlManagerService#prefixes prefixes}, optionally using
+             * the selected {@link sparqlManager.service:sparqlManagerService#datasetRecordIRI dataset},
+             * and sets the results to {@link sparqlManager.service:sparqlManagerService#data data}.
              */
             self.queryRdf = function() {
                 self.currentPage = 0;
@@ -240,6 +255,9 @@
                         limit: self.limit,
                         offset: self.currentPage * self.limit
                     }
+                };
+                if (self.datasetRecordIRI) {
+                    config.params.dataset = self.datasetRecordIRI;
                 }
                 $http.get(prefix + '/page', config)
                     .then(onSuccess, response => self.errorMessage = getMessage(response));
