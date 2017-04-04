@@ -2,54 +2,53 @@
 @import "./src/main/resources/public/css/variables";
 
 .class-mapping-details {
-	display: flex;
-	flex-direction: column;
+    display: flex;
+    flex-direction: column;
 
-	.class-mapping-props {
-		flex: 1;
-		display: flex;
-		flex-direction: column;
+    .class-mapping-props {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
 
         .properties-field-name {
             overflow: hidden;
             margin-bottom: 5px;
         }
-		.prop-list {
-			flex: 1;
-			overflow-y: auto;
-			border: 1px solid #ddd;
-			border-radius: 4px;
+        .prop-list {
+            flex: 1;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
 
-			.list-group-item {
-				outline: 0;
-				border-radius: 0;
+            .list-group-item {
+                outline: 0;
+                border-radius: 0;
 
-				.prop-actions a {
-					margin-left: 10px;
-				}
-				&.invalid {
-					background-color: $brand-danger-light;
+                .prop-actions a {
+                    margin-left: 10px;
+                }
+                &.invalid {
+                    background-color: $brand-danger-light;
 
-					&.active {
-						background-color: $brand-danger;
-					}
-				}
-				&.active {
+                    &.active {
+                        background-color: $brand-danger;
+                    }
+                }
+                &.active {
+                    .prop-actions a {
+                        color: white;
 
-					.prop-actions a {
-						color: white;
-
-						&:hover,
-						&:focus {
-							color: lightgrey;
-						}
-					}
-				}
-				&:hover {
+                        &:hover,
+                        &:focus {
+                            color: lightgrey;
+                        }
+                    }
+                }
+                &:hover {
                     cursor:pointer;
                 }
-			}
+            }
 
-		}
-	}
+        }
+    }
 }
