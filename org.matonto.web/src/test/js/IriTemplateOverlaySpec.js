@@ -54,7 +54,7 @@ describe('IRI Template Overlay directive', function() {
             utilSvc = _utilService_;
         });
 
-        this.begin = '/test';
+        this.begin = 'http://test';
         this.then = '/';
         this.localName = '${0}';
         var classMapping = {
@@ -79,8 +79,8 @@ describe('IRI Template Overlay directive', function() {
     describe('should intialize with the correct values', function() {
         it('based on the selected class mapping id', function() {
             controller = element.controller('iriTemplateOverlay');
-            expect(controller.beginning).toBe('/');
-            expect(controller.beginsWith).toBe('test');
+            expect(controller.beginning).toBe('http://');
+            expect(controller.beginsWith).toBe('/test');
             expect(controller.then).toBe(this.then);
             var cleanOptions = _.forEach(controller.localNameOptions, function(opt) {
                 delete opt['$$hashKey'];

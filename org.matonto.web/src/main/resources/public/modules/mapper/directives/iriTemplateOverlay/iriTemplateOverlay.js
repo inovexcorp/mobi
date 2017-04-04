@@ -72,8 +72,9 @@
                     var prefix = dvm.util.getPropertyValue(classMapping, prefixes.delim + 'hasPrefix');
                     var regex = new RegExp(prefixes.data + '(.*?)\/');
                     var prefixEnd = prefix.replace(regex, '');
-                    dvm.beginning = _.pullAt(prefix.match(regex), 0)[0];
-                    dvm.beginsWith = prefixEnd.slice(0, -1);
+                    var fullStart = (_.pullAt(prefix.match(regex), 0)[0]);
+                    dvm.beginning = 'http://';
+                    dvm.beginsWith = fullStart.substr(7,fullStart.length) + prefixEnd.slice(0, -1);
                     dvm.then = prefixEnd[prefixEnd.length - 1];
                     dvm.localNameOptions = [{text: 'UUID', value: '${UUID}'}];
                     for (var idx = 0; idx < dvm.dm.dataRows[0].length; idx++) {
