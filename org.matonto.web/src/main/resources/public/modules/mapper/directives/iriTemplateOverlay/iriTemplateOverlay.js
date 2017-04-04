@@ -73,8 +73,7 @@
                     var regex = new RegExp(prefixes.data + '(.*?)\/');
                     var prefixEnd = prefix.replace(regex, '');
                     var fullStart = (_.pullAt(prefix.match(regex), 0)[0]);
-                    dvm.beginning = 'http://';
-                    dvm.beginsWith = fullStart.substr(7,fullStart.length) + prefixEnd.slice(0, -1);
+                    dvm.beginsWith = (fullStart + prefixEnd.slice(0, -1)).replace(/\s+/g, '');;
                     dvm.then = prefixEnd[prefixEnd.length - 1];
                     dvm.localNameOptions = [{text: 'UUID', value: '${UUID}'}];
                     for (var idx = 0; idx < dvm.dm.dataRows[0].length; idx++) {

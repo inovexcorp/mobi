@@ -79,8 +79,7 @@ describe('IRI Template Overlay directive', function() {
     describe('should intialize with the correct values', function() {
         it('based on the selected class mapping id', function() {
             controller = element.controller('iriTemplateOverlay');
-            expect(controller.beginning).toBe('http://');
-            expect(controller.beginsWith).toBe('/test');
+            expect(controller.beginsWith).toBe('http://test');
             expect(controller.then).toBe(this.then);
             var cleanOptions = _.forEach(controller.localNameOptions, function(opt) {
                 delete opt['$$hashKey'];
@@ -114,8 +113,8 @@ describe('IRI Template Overlay directive', function() {
             expect(element.querySelectorAll('.help-block').length).toBe(1);
         });
         it('with the correct classes for errors', function() {
-            var failTests = ['/', '#', '?', ':', 'test/', '/test', 'test#', '#test', 'test?', '?test', 'test:', ':test', 'test#test', 'test?test', 'test:test'];
-            var successTests = ['test', 'test/test', 'TEST_test', 'test.test'];
+            var failTests = ['/', '#', '?', 'test/', '/test', 'test#', '#test', 'test?', '?test', 't: test', 'test#test', 'test?test', 'test/test'];
+            var successTests = ['t:test', 'test:/test', 'TEST:test', 't:test.test'];
             controller = element.controller('iriTemplateOverlay');
             controller.beginsWith = '';
             scope.$digest();

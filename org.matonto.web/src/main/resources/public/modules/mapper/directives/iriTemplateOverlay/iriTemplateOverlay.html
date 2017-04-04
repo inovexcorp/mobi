@@ -25,10 +25,7 @@
         <h6>Edit IRI Template</h6>
         <div class="template-begins-with form-group" ng-class="{'has-error': iriTemplateForm.beginsWith.$invalid}">
             <label class="control-label" for="beginsWith">Begins With</label>
-            <div class="input-group">
-                <div id="beginning" class="input-group-addon">{{dvm.beginning}}</div>
-                <input type="text" id="beginsWith" name="beginsWith" class="form-control" aria-describedby="beginning" ng-model="dvm.beginsWith" ng-pattern="/^[a-zA-Z0-9._\-]+[a-zA-Z0-9._\-\/]+[a-zA-Z0-9._\-]$/" required>
-            </div>
+            <input type="text" id="beginsWith" name="beginsWith" class="form-control" aria-describedby="beginning" ng-model="dvm.beginsWith" ng-pattern="/^[a-zA-Z0-9._\-]+[:]+[a-zA-Z0-9._\-\/]+[a-zA-Z0-9._\-]$/" required>
             <div ng-messages="iriTemplateForm.beginsWith.$error" class="error-msg">
                 <ng-message when="required">This field is required</ng-message>
                 <ng-message when="pattern">This value is invalid</ng-message>
