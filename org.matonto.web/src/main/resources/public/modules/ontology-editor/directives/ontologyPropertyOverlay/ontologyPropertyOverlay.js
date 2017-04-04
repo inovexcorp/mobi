@@ -41,18 +41,18 @@
                     dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.om = ontologyManagerService;
                     dvm.ro = responseObj;
-                    dvm.sm = ontologyStateService;
+                    dvm.os = ontologyStateService;
                     dvm.iriPattern = REGEX.IRI;
                     dvm.pm = propertyManagerService;
-                    dvm.properties = _.union(dvm.om.ontologyProperties, dvm.sm.listItem.annotations);
+                    dvm.properties = _.union(dvm.om.ontologyProperties, dvm.os.listItem.annotations);
                     dvm.util = utilService;
 
                     function getValue() {
                         var value = '';
                         if (dvm.isOntologyProperty()) {
-                            value = dvm.sm.ontologyPropertyIRI;
+                            value = dvm.os.ontologyPropertyIRI;
                         } else if (dvm.isAnnotationProperty()) {
-                            value = dvm.sm.ontologyPropertyValue;
+                            value = dvm.os.ontologyPropertyValue;
                         }
                         return value;
                     }
@@ -67,35 +67,35 @@
                         if (language) {
                             _.set(valueObj, '@language', language);
                         }
-                        return dvm.util.createJson(dvm.sm.selected['@id'], dvm.ro.getItemIri(dvm.sm.ontologyProperty), valueObj);
+                        return dvm.util.createJson(dvm.os.selected['@id'], dvm.ro.getItemIri(dvm.os.ontologyProperty), valueObj);
                     }
 
                     dvm.isOntologyProperty = function() {
-                        return !!dvm.sm.ontologyProperty && _.some(dvm.om.ontologyProperties, property =>
-                            dvm.ro.getItemIri(dvm.sm.ontologyProperty) === dvm.ro.getItemIri(property));
+                        return !!dvm.os.ontologyProperty && _.some(dvm.om.ontologyProperties, property =>
+                            dvm.ro.getItemIri(dvm.os.ontologyProperty) === dvm.ro.getItemIri(property));
                     }
 
                     dvm.isAnnotationProperty = function() {
-                        return !!dvm.sm.ontologyProperty && _.some(dvm.sm.listItem.annotations, property =>
-                            dvm.ro.getItemIri(dvm.sm.ontologyProperty) === dvm.ro.getItemIri(property));
+                        return !!dvm.os.ontologyProperty && _.some(dvm.os.listItem.annotations, property =>
+                            dvm.ro.getItemIri(dvm.os.ontologyProperty) === dvm.ro.getItemIri(property));
                     }
 
                     dvm.addProperty = function() {
                         var value = getValue();
-                        dvm.pm.add(dvm.sm.selected, dvm.ro.getItemIri(dvm.sm.ontologyProperty), value, null, dvm.sm.ontologyPropertyLanguage);
-                        dvm.om.addToAdditions(dvm.sm.listItem.recordId, createJson(value, dvm.sm.ontologyPropertyLanguage));
-                        dvm.sm.showOntologyPropertyOverlay = false;
+                        dvm.pm.add(dvm.os.selected, dvm.ro.getItemIri(dvm.os.ontologyProperty), value, null, dvm.os.ontologyPropertyLanguage);
+                        dvm.os.addToAdditions(dvm.os.listItem.recordId, createJson(value, dvm.os.ontologyPropertyLanguage));
+                        dvm.os.showOntologyPropertyOverlay = false;
                         dvm.ontoUtils.saveCurrentChanges();
                     }
 
                     dvm.editProperty = function() {
-                        var property = dvm.ro.getItemIri(dvm.sm.ontologyProperty);
+                        var property = dvm.ro.getItemIri(dvm.os.ontologyProperty);
                         var value = getValue();
-                        var oldObj = _.get(dvm.sm.selected, "['" + property + "']['" + dvm.sm.ontologyPropertyIndex + "']");
-                        dvm.om.addToDeletions(dvm.sm.listItem.recordId, createJson(_.get(oldObj, '@value', _.get(oldObj, '@id')), _.get(oldObj, '@language')));
-                        dvm.pm.edit(dvm.sm.selected, property, value, dvm.sm.ontologyPropertyIndex, null, dvm.sm.ontologyPropertyLanguage);
-                        dvm.om.addToAdditions(dvm.sm.listItem.recordId, createJson(value, dvm.sm.ontologyPropertyLanguage));
-                        dvm.sm.showOntologyPropertyOverlay = false;
+                        var oldObj = _.get(dvm.os.selected, "['" + property + "']['" + dvm.os.ontologyPropertyIndex + "']");
+                        dvm.os.addToDeletions(dvm.os.listItem.recordId, createJson(_.get(oldObj, '@value', _.get(oldObj, '@id')), _.get(oldObj, '@language')));
+                        dvm.pm.edit(dvm.os.selected, property, value, dvm.os.ontologyPropertyIndex, null, dvm.os.ontologyPropertyLanguage);
+                        dvm.os.addToAdditions(dvm.os.listItem.recordId, createJson(value, dvm.os.ontologyPropertyLanguage));
+                        dvm.os.showOntologyPropertyOverlay = false;
                         dvm.ontoUtils.saveCurrentChanges();
                     }
                 }

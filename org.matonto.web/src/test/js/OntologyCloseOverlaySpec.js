@@ -21,25 +21,17 @@
  * #L%
  */
 describe('Ontology Close Overlay directive', function() {
-    var $compile,
-        scope,
-        element,
-        controller,
-        ontologyStateSvc,
-        ontologyManagerSvc,
-        deferred;
+    var $compile, scope, element, controller, ontologyStateSvc, deferred;
 
     beforeEach(function() {
         module('templates');
         module('ontologyCloseOverlay');
-        mockOntologyManager();
         mockOntologyState();
 
-        inject(function(_$q_, _$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_) {
+        inject(function(_$q_, _$compile_, _$rootScope_, _ontologyStateService_) {
             $q = _$q_;
             $compile = _$compile_;
             scope = _$rootScope_;
-            ontologyManagerSvc = _ontologyManagerService_;
             ontologyStateSvc = _ontologyStateService_;
             deferred = _$q_.defer();
         });
@@ -85,12 +77,12 @@ describe('Ontology Close Overlay directive', function() {
         });
         describe('saveThenClose', function() {
             beforeEach(function() {
-                ontologyManagerSvc.saveChanges.and.returnValue(deferred.promise);
+                ontologyStateSvc.saveChanges.and.returnValue(deferred.promise);
                 ontologyStateSvc.getState.and.returnValue({deletedEntities: []});
                 controller.saveThenClose();
             });
             it('calls the correct manager functions', function() {
-                expect(ontologyManagerSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
+                expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                     {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});
             });
             describe('when resolved, calls the correct controller function', function() {
@@ -125,7 +117,7 @@ describe('Ontology Close Overlay directive', function() {
         it('close calls the correct manager functions and sets the correct manager variable', function() {
             controller.close();
             expect(ontologyStateSvc.deleteState).toHaveBeenCalledWith(ontologyStateSvc.recordIdToClose);
-            expect(ontologyManagerSvc.closeOntology).toHaveBeenCalledWith(ontologyStateSvc.recordIdToClose);
+            expect(ontologyStateSvc.closeOntology).toHaveBeenCalledWith(ontologyStateSvc.recordIdToClose);
             expect(ontologyStateSvc.showCloseOverlay).toBe(false);
         });
     });

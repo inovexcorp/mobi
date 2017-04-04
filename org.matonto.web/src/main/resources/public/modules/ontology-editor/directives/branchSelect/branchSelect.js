@@ -28,10 +28,10 @@
         .directive('branchSelect', branchSelect);
 
         branchSelect.$inject = ['$q', 'catalogManagerService', 'ontologyStateService',
-            'utilService', 'stateManagerService', 'ontologyManagerService'];
+            'utilService', 'stateManagerService'];
 
         function branchSelect($q, catalogManagerService, ontologyStateService, utilService,
-            stateManagerService, ontologyManagerService) {
+            stateManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -45,7 +45,6 @@
                     var dvm = this;
                     var cm = catalogManagerService;
                     var sm = stateManagerService;
-                    var om = ontologyManagerService;
                     var catalogId = _.get(cm.localCatalog, '@id', '');
 
                     dvm.os = ontologyStateService;
@@ -61,7 +60,7 @@
                                 var commitId = _.get(headCommit, "commit['@id']", '');
                                 $q.all([
                                     sm.updateOntologyState(dvm.os.listItem.recordId, branchId, commitId),
-                                    om.updateOntology(dvm.os.listItem.recordId, branchId, commitId)
+                                    dvm.os.updateOntology(dvm.os.listItem.recordId, branchId, commitId)
                                 ]).then(dvm.os.resetStateTabs());
                             });
                     }
@@ -81,7 +80,7 @@
                     dvm.delete = function() {
                         cm.deleteRecordBranch(dvm.branch['@id'], dvm.os.listItem.recordId, catalogId)
                             .then(() => {
-                                om.removeBranch(dvm.os.listItem.recordId, dvm.branch['@id']);
+                                dvm.os.removeBranch(dvm.os.listItem.recordId, dvm.branch['@id']);
                                 dvm.showDeleteConfirmation = false;
                             }, errorMessage => dvm.deleteError = errorMessage);
                     }

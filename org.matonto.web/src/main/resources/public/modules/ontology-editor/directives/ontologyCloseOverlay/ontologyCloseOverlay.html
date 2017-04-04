@@ -25,13 +25,13 @@
         <h6>Close Ontology</h6>
         <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
         <div class="main">
-            <p>Are you sure that you want to close <strong>{{dvm.sm.listItem.ontologyId}}</strong> from your workspace without saving?</p>
+            <p>Are you sure that you want to close <strong>{{dvm.os.listItem.ontologyId}}</strong> from your workspace without saving?</p>
             <p><strong>NOTE: You will lose all unsaved changes.</strong></p>
         </div>
         <div class="btn-container clearfix">
             <button class="btn btn-primary pull-right save-close-btn" ng-click="dvm.saveThenClose()">Save and Close</button>
             <button class="btn btn-primary pull-right close-btn" ng-click="dvm.close()">Close Without Saving</button>
-            <button class="btn btn-default pull-right" ng-click="dvm.sm.showCloseOverlay = false">Cancel</button>
+            <button class="btn btn-default pull-right" ng-click="dvm.os.showCloseOverlay = false">Cancel</button>
         </div>
     </form>
 </div>

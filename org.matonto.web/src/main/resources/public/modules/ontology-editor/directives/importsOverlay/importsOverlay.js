@@ -27,9 +27,9 @@
         .module('importsOverlay', [])
         .directive('importsOverlay', importsOverlay);
 
-        importsOverlay.$inject = ['$http', '$q', 'REGEX', 'ontologyStateService', 'utilService', 'prefixes', 'ontologyManagerService'];
+        importsOverlay.$inject = ['$http', '$q', 'REGEX', 'ontologyStateService', 'utilService', 'prefixes'];
 
-        function importsOverlay($http, $q, REGEX, ontologyStateService, utilService, prefixes, ontologyManagerService) {
+        function importsOverlay($http, $q, REGEX, ontologyStateService, utilService, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -43,7 +43,6 @@
                     var dvm = this;
                     var os = ontologyStateService;
                     var util = utilService;
-                    var om = ontologyManagerService;
                     dvm.url = '';
                     dvm.iriPattern = REGEX.IRI;
                     dvm.error = '';
@@ -63,10 +62,10 @@
                     dvm.confirmed = function() {
                         var importsIRI = prefixes.owl + 'imports';
                         util.setPropertyId(os.selected, importsIRI, dvm.url);
-                        om.addToAdditions(os.listItem.recordId, util.createJson(os.selected['@id'], importsIRI, {'@id': dvm.url}));
-                        om.saveChanges(os.listItem.recordId, {additions: os.listItem.additions, deletions: os.listItem.deletions})
+                        os.addToAdditions(os.listItem.recordId, util.createJson(os.selected['@id'], importsIRI, {'@id': dvm.url}));
+                        os.saveChanges(os.listItem.recordId, {additions: os.listItem.additions, deletions: os.listItem.deletions})
                             .then(() => os.afterSave(), $q.reject)
-                            .then(() => om.updateOntology(os.listItem.recordId, os.listItem.branchId, os.listItem.commitId, os.listItem.type, os.listItem.upToDate, os.listItem.inProgressCommit), $q.reject)
+                            .then(() => os.updateOntology(os.listItem.recordId, os.listItem.branchId, os.listItem.commitId, os.listItem.type, os.listItem.upToDate, os.listItem.inProgressCommit), $q.reject)
                             .then(() => {
                                 os.listItem.isSaved = os.isCommittable(os.listItem.recordId);
                                 dvm.onClose();

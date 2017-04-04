@@ -69,7 +69,7 @@
                         var itemIri = dvm.getItemIri(item);
                         var result = itemIri;
                         if (!_.has(item, 'ontologyId')) {
-                            var selectedObject = dvm.om.getEntityByRecordId(os.listItem.recordId, itemIri);
+                            var selectedObject = os.getEntityByRecordId(os.listItem.recordId, itemIri);
                             if (dvm.tooltipDisplay === 'comment') {
                                 result = dvm.om.getEntityDescription(selectedObject) || itemIri;
                             } else if (dvm.tooltipDisplay === 'label') {
