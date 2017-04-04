@@ -32,6 +32,7 @@ describe('Property Values directive', function() {
     beforeEach(function() {
         module('templates');
         module('propertyValues');
+        injectTrustedFilter();
         injectBeautifyFilter();
         mockResponseObj();
         mockOntologyState();
@@ -89,7 +90,12 @@ describe('Property Values directive', function() {
             ontologyManagerSvc.isBlankNodeId.and.callFake(function(string) {
                 return string === '_:genid0';
             });
+            ontologyUtilsManagerSvc.getBlankNodeValue.and.callFake(function(string) {
+                return string === '_:genid0' ? '<span>test</span>' : '';
+            });
             scope.$digest();
+            var blankNodeValue = element.querySelectorAll('.value-container .value-display .blank-node-value');
+            expect(blankNodeValue.length).toBe(1);
             var editButtons = element.querySelectorAll('.value-container [title=Edit]');
             expect(editButtons.length).toBe(1);
             var deleteButtons = element.querySelectorAll('.value-container [title=Delete]');
