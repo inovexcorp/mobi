@@ -52,11 +52,9 @@
          */
         .service('loginManagerService', loginManagerService);
 
-        loginManagerService.$inject = ['$q', '$http', '$state', 'catalogManagerService', 'catalogStateService',
-            'ontologyManagerService', 'mappingManagerService', 'userManagerService', 'stateManagerService'];
+        loginManagerService.$inject = ['$q', '$http', '$state', 'catalogManagerService', 'catalogStateService', 'ontologyManagerService', 'mappingManagerService', 'userManagerService', 'stateManagerService', 'ontologyStateService'];
 
-        function loginManagerService($q, $http, $state, catalogManagerService, catalogStateService,
-            ontologyManagerService, mappingManagerService, userManagerService, stateManagerService) {
+        function loginManagerService($q, $http, $state, catalogManagerService, catalogStateService, ontologyManagerService, mappingManagerService, userManagerService, stateManagerService, ontologyStateService) {
             var self = this,
                 anon = 'self anon';
 
@@ -162,6 +160,7 @@
                         catalogManagerService.initialize().then(() => {
                             catalogStateService.initialize();
                             ontologyManagerService.initialize();
+                            ontologyStateService.initialize();
                         });
                         mappingManagerService.initialize();
                         userManagerService.initialize();

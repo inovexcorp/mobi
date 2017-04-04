@@ -43,18 +43,18 @@
                     dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.om = ontologyManagerService;
                     dvm.ro = responseObj;
-                    dvm.sm = ontologyStateService;
+                    dvm.os = ontologyStateService;
                     dvm.util = utilService;
                     dvm.concepts = [];
-                    dvm.conceptList = dvm.om.getConceptIRIs(dvm.sm.listItem.ontology);
-                    dvm.schemeList = dvm.om.getConceptSchemeIRIs(dvm.sm.listItem.ontology);
+                    dvm.conceptList = dvm.om.getConceptIRIs(dvm.os.listItem.ontology);
+                    dvm.schemeList = dvm.om.getConceptSchemeIRIs(dvm.os.listItem.ontology);
 
                     dvm.addRelationship = function() {
                         var axiom = dvm.ro.getItemIri(dvm.relationship);
-                        dvm.sm.selected[axiom] = _.union(_.get(dvm.sm.selected, axiom, []), dvm.values);
-                        dvm.om.addToAdditions(dvm.sm.listItem.recordId, {'@id': dvm.sm.selected['@id'],
+                        dvm.os.selected[axiom] = _.union(_.get(dvm.os.selected, axiom, []), dvm.values);
+                        dvm.os.addToAdditions(dvm.os.listItem.recordId, {'@id': dvm.os.selected['@id'],
                             [axiom]: dvm.values});
-                        dvm.sm.showRelationshipOverlay = false;
+                        dvm.os.showRelationshipOverlay = false;
                         dvm.ontoUtils.saveCurrentChanges();
                     }
                 }

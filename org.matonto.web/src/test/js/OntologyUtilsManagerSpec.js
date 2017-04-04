@@ -59,9 +59,9 @@ describe('Ontology Utils Manager service', function() {
             ontologyUtilsManagerSvc.commonDelete('iri');
             scope.$apply();
             expect(ontologyManagerSvc.getEntityUsages).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, ontologyStateSvc.listItem.branchId, ontologyStateSvc.listItem.commitId, 'iri', 'construct');
-            expect(ontologyManagerSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, ontologyStateSvc.selected);
-            expect(ontologyManagerSvc.removeEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, 'iri');
-            expect(ontologyManagerSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, {'@id': 'id'});
+            expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, ontologyStateSvc.selected);
+            expect(ontologyStateSvc.removeEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, 'iri');
+            expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, {'@id': 'id'});
             expect(updateRefs.remove).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontology, 'iri');
             expect(ontologyStateSvc.unSelectItem).toHaveBeenCalled();
             expect(ontologyUtilsManagerSvc.saveCurrentChanges).toHaveBeenCalled();
@@ -223,11 +223,11 @@ describe('Ontology Utils Manager service', function() {
         beforeEach(function() {
             saveDeferred = $q.defer();
             ontologyStateSvc.listItem.ontologyId = 'id';
-            ontologyManagerSvc.saveChanges.and.returnValue(saveDeferred.promise);
+            ontologyStateSvc.saveChanges.and.returnValue(saveDeferred.promise);
             ontologyUtilsManagerSvc.saveCurrentChanges();
         });
         it('calls the correct manager function', function() {
-            expect(ontologyManagerSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});
+            expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});
         });
         describe('when resolved, sets the correct variable and calls correct manager function', function() {
             var afterDeferred;
@@ -320,16 +320,16 @@ describe('Ontology Utils Manager service', function() {
     });
 
     it('getLabelForIRI should call the proper methods', function() {
-        ontologyManagerSvc.getEntityNameByIndex.and.returnValue('result');
+        ontologyStateSvc.getEntityNameByIndex.and.returnValue('result');
         expect(ontologyUtilsManagerSvc.getLabelForIRI('iri')).toEqual('result');
-        expect(ontologyManagerSvc.getEntityNameByIndex).toHaveBeenCalledWith('iri', ontologyStateSvc.listItem);
+        expect(ontologyStateSvc.getEntityNameByIndex).toHaveBeenCalledWith('iri', ontologyStateSvc.listItem);
     });
 
     it('getDropDownText should call the correct methods', function() {
         responseObj.getItemIri.and.returnValue('iri');
-        ontologyManagerSvc.getEntityNameByIndex.and.returnValue('name');
+        ontologyStateSvc.getEntityNameByIndex.and.returnValue('name');
         expect(ontologyUtilsManagerSvc.getDropDownText({})).toBe('name');
         expect(responseObj.getItemIri).toHaveBeenCalledWith({});
-        expect(ontologyManagerSvc.getEntityNameByIndex).toHaveBeenCalledWith('iri', ontologyStateSvc.listItem);
+        expect(ontologyStateSvc.getEntityNameByIndex).toHaveBeenCalledWith('iri', ontologyStateSvc.listItem);
     });
 });

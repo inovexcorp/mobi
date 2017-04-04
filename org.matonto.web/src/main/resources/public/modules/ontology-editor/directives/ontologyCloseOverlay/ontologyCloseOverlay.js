@@ -27,9 +27,9 @@
         .module('ontologyCloseOverlay', [])
         .directive('ontologyCloseOverlay', ontologyCloseOverlay);
 
-        ontologyCloseOverlay.$inject = ['$q', 'ontologyManagerService', 'ontologyStateService'];
+        ontologyCloseOverlay.$inject = ['$q', 'ontologyStateService'];
 
-        function ontologyCloseOverlay($q, ontologyManagerService, ontologyStateService) {
+        function ontologyCloseOverlay($q, ontologyStateService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,21 +38,19 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-
-                    dvm.om = ontologyManagerService;
-                    dvm.sm = ontologyStateService;
+                    dvm.os = ontologyStateService;
                     dvm.error = '';
 
                     dvm.saveThenClose = function() {
-                        dvm.om.saveChanges(dvm.sm.listItem.recordId, {additions: dvm.sm.listItem.additions, deletions: dvm.sm.listItem.deletions})
-                            .then(() => dvm.sm.afterSave(), $q.reject)
+                        dvm.os.saveChanges(dvm.os.listItem.recordId, {additions: dvm.os.listItem.additions, deletions: dvm.os.listItem.deletions})
+                            .then(() => dvm.os.afterSave(), $q.reject)
                             .then(() => dvm.close(), errorMessage => dvm.error = errorMessage);
                     }
 
                     dvm.close = function() {
-                        dvm.sm.deleteState(dvm.sm.recordIdToClose);
-                        dvm.om.closeOntology(dvm.sm.recordIdToClose);
-                        dvm.sm.showCloseOverlay = false;
+                        dvm.os.deleteState(dvm.os.recordIdToClose);
+                        dvm.os.closeOntology(dvm.os.recordIdToClose);
+                        dvm.os.showCloseOverlay = false;
                     }
                 }
             }

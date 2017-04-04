@@ -41,10 +41,10 @@
                     dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.prefixes = prefixes;
                     dvm.om = ontologyManagerService;
-                    dvm.sm = ontologyStateService;
+                    dvm.os = ontologyStateService;
                     dvm.util = utilService;
                     dvm.concepts = [];
-                    dvm.prefix = dvm.sm.getDefaultPrefix();
+                    dvm.prefix = dvm.os.getDefaultPrefix();
                     dvm.scheme = {
                         '@id': dvm.prefix,
                         '@type': [prefixes.owl + 'NamedIndividual', prefixes.skos + 'ConceptScheme'],
@@ -63,7 +63,7 @@
                     dvm.onEdit = function(iriBegin, iriThen, iriEnd) {
                         dvm.iriHasChanged = true;
                         dvm.scheme['@id'] = iriBegin + iriThen + iriEnd;
-                        dvm.sm.setCommonIriParts(iriBegin, iriThen);
+                        dvm.os.setCommonIriParts(iriBegin, iriThen);
                     }
 
                     dvm.create = function() {
@@ -73,14 +73,14 @@
                         }
                         dvm.ontoUtils.addLanguageToNewEntity(dvm.scheme, dvm.language);
                         // add the entity to the ontology
-                        dvm.om.addEntity(dvm.sm.listItem, dvm.scheme);
+                        dvm.os.addEntity(dvm.os.listItem, dvm.scheme);
                         // update relevant lists
-                        _.get(dvm.sm.listItem, 'conceptHierarchy').push({'entityIRI': dvm.scheme['@id']});
-                        dvm.om.addToAdditions(dvm.sm.listItem.recordId, dvm.scheme);
+                        _.get(dvm.os.listItem, 'conceptHierarchy').push({'entityIRI': dvm.scheme['@id']});
+                        dvm.os.addToAdditions(dvm.os.listItem.recordId, dvm.scheme);
                         // select the new concept
-                        dvm.sm.selectItem(_.get(dvm.scheme, '@id'));
+                        dvm.os.selectItem(_.get(dvm.scheme, '@id'));
                         // hide the overlay
-                        dvm.sm.showCreateConceptSchemeOverlay = false;
+                        dvm.os.showCreateConceptSchemeOverlay = false;
                         dvm.ontoUtils.saveCurrentChanges();
                     }
                 }

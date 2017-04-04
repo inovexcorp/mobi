@@ -27,9 +27,9 @@
         .module('importsBlock', [])
         .directive('importsBlock', importsBlock);
 
-        importsBlock.$inject = ['$q', 'ontologyStateService', 'prefixes', 'utilService', 'propertyManagerService', 'ontologyManagerService'];
+        importsBlock.$inject = ['$q', 'ontologyStateService', 'prefixes', 'utilService', 'propertyManagerService'];
 
-        function importsBlock($q, ontologyStateService, prefixes, utilService, propertyManagerService, ontologyManagerService) {
+        function importsBlock($q, ontologyStateService, prefixes, utilService, propertyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -40,7 +40,6 @@
                     var dvm = this;
                     var util = utilService;
                     var pm = propertyManagerService;
-                    var om = ontologyManagerService;
                     dvm.prefixes = prefixes;
                     dvm.os = ontologyStateService;
                     dvm.showNewOverlay = false;
@@ -54,11 +53,11 @@
 
                     dvm.remove = function() {
                         var importsIRI = dvm.prefixes.owl + 'imports';
-                        om.addToDeletions(dvm.os.listItem.recordId, util.createJson(dvm.os.selected['@id'], importsIRI, {'@id': dvm.url}));
+                        dvm.os.addToDeletions(dvm.os.listItem.recordId, util.createJson(dvm.os.selected['@id'], importsIRI, {'@id': dvm.url}));
                         pm.remove(dvm.os.selected, importsIRI, dvm.index);
-                        om.saveChanges(dvm.os.listItem.recordId, {additions: dvm.os.listItem.additions, deletions: dvm.os.listItem.deletions})
+                        dvm.os.saveChanges(dvm.os.listItem.recordId, {additions: dvm.os.listItem.additions, deletions: dvm.os.listItem.deletions})
                             .then(() => dvm.os.afterSave(), $q.reject)
-                            .then(() => om.updateOntology(dvm.os.listItem.recordId, dvm.os.listItem.branchId, dvm.os.listItem.commitId, dvm.os.listItem.type, dvm.os.listItem.upToDate, dvm.os.listItem.inProgressCommit), $q.reject)
+                            .then(() => dvm.os.updateOntology(dvm.os.listItem.recordId, dvm.os.listItem.branchId, dvm.os.listItem.commitId, dvm.os.listItem.type, dvm.os.listItem.upToDate, dvm.os.listItem.inProgressCommit), $q.reject)
                             .then(() => {
                                 dvm.os.listItem.isSaved = dvm.os.isCommittable(dvm.os.listItem.recordId);
                                 dvm.showRemoveOverlay = false;
