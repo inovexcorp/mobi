@@ -186,7 +186,7 @@ describe('Class Mapping Details directive', function() {
             var property = {'@id': 'prop'};
             mappingManagerSvc.getPropMappingsByClass.and.returnValue([property]);
             scope.$digest();
-            var propButton = angular.element(element.querySelectorAll('.prop-list div')[0]);
+            var propButton = angular.element(element.querySelectorAll('.prop-list .list-group-item')[0]);
             expect(propButton.hasClass('active')).toBe(false);
 
             mapperStateSvc.selectedPropMappingId = property['@id'];
@@ -214,7 +214,7 @@ describe('Class Mapping Details directive', function() {
         spyOn(controller, 'getPropValue').and.returnValue('');
         scope.$digest();
         spyOn(controller, 'getLinkedColumnIndex').and.returnValue('0');
-        var listDiv = angular.element(element.querySelectorAll('.prop-list div')[0]);
+        var listDiv = angular.element(element.querySelectorAll('.prop-list .list-group-item')[0]);
         listDiv.triggerHandler('click');
         expect(mapperStateSvc.selectedPropMappingId).toBe(property['@id']);
         expect(mapperStateSvc.highlightIndexes).toEqual(['0']);
@@ -227,7 +227,7 @@ describe('Class Mapping Details directive', function() {
         spyOn(controller, 'getPropValue').and.returnValue('');
         spyOn(controller, 'switchClass');
         scope.$digest();
-        var listDiv = angular.element(element.querySelectorAll('.prop-list div')[0]);
+        var listDiv = angular.element(element.querySelectorAll('.prop-list .list-group-item')[0]);
         listDiv.triggerHandler('dblclick');
         expect(controller.switchClass).toHaveBeenCalled();
     });
@@ -239,8 +239,8 @@ describe('Class Mapping Details directive', function() {
         spyOn(controller, 'getPropValue').and.returnValue('');
         spyOn(controller, 'editProp');
         scope.$digest();
-        var listDiv = angular.element(element.querySelectorAll('.prop-list div .edit-prop')[0]);
-        listDiv.triggerHandler('click');
+        var link = angular.element(element.querySelectorAll('.prop-list .list-group-item .edit-prop')[0]);
+        link.triggerHandler('click');
         expect(controller.editProp).toHaveBeenCalledWith(property);
     });
     it('should call deleteProp when a delete property link is clicked', function() {
@@ -251,7 +251,7 @@ describe('Class Mapping Details directive', function() {
         spyOn(controller, 'getPropValue').and.returnValue('');
         spyOn(controller, 'deleteProp');
         scope.$digest();
-        var link = angular.element(element.querySelectorAll('.prop-list div .delete-prop')[0]);
+        var link = angular.element(element.querySelectorAll('.prop-list .list-group-item .delete-prop')[0]);
         link.triggerHandler('click');
         expect(controller.deleteProp).toHaveBeenCalledWith(property);
     });

@@ -35,6 +35,7 @@
 					}
 				}
 				&.active {
+
 					.prop-actions a {
 						color: white;
 
@@ -44,10 +45,11 @@
 						}
 					}
 				}
+				&:hover {
+                    cursor:pointer;
+                }
 			}
-			.list-group-item:hover {
-			   cursor:pointer;
-			}
+
 		}
 	}
 }
