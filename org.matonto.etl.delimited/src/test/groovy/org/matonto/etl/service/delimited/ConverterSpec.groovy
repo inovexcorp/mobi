@@ -56,6 +56,9 @@ class ConverterSpec extends Specification {
     def outWithBlanks = new ClassPathResource("testOutputWithBlanks.ttl").getFile();
     def testOutputWithBlanks = new FileReader(outWithBlanks);
 
+    def outWithFormattingAndBlanks = new ClassPathResource("testOutputWithFormattingAndBlanks.ttl").getFile();
+    def testOutputWithFormattingAndBlanks = new FileReader(outWithFormattingAndBlanks);
+
     def setup() {
         classMappingFactory.setValueFactory(vf);
         classMappingFactory.setValueConverterRegistry(vcr);
@@ -218,7 +221,7 @@ class ConverterSpec extends Specification {
         convertedModel == m;
     }
 
-    def "Convert Excel 2007 File with Multiple Object per Row and Object and Data Properties with Blank Values"() {
+    def "Convert Excel 2007 File with Multiple Object per Row and Object and Data Properties with Blank Values and Blank Rows"() {
         setup:
         InputStream xls = new ClassPathResource("testFileWithBlanks.xlsx").getInputStream();
         InputStream mappingFile = new ClassPathResource("newestMapping.ttl").getInputStream();
@@ -226,6 +229,27 @@ class ConverterSpec extends Specification {
         Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE));
         ExcelConfig config = new ExcelConfig.ExcelConfigBuilder(xls, mapping).containsHeaders(true).build();
         Model convertedModel = c.convert(config);
+
+        expect:
+        convertedModel == m;
+    }
+
+    def "Convert Excel 2007 File with Formatting and Blank Values and Blank Rows"() {
+        setup:
+        InputStream xls = new ClassPathResource("testFileWithFormattingAndBlanks.xlsx").getInputStream();
+        InputStream mappingFile = new ClassPathResource("formattedExcelMapping.ttl").getInputStream();
+        Model m = Values.matontoModel(Rio.parse(testOutputWithFormattingAndBlanks, "", RDFFormat.TURTLE))
+        Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE));
+        ExcelConfig config = new ExcelConfig.ExcelConfigBuilder(xls, mapping).containsHeaders(true).build();
+
+        when:
+        Model convertedModel = c.convert(config);
+
+        then:
+        c.generateUuid() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "mno", "nop",
+                              "opq", "pqr", "qrs", "rst", "stu", "tuv", "uvw", "vwx", "wxy", "xyz", "yza", "zab", "123",
+                              "234" , "345" , "456" , "567" , "678" , "789" , "890" , "987" , "876" , "765" , "654" ,
+                              "543" , "432" , "321"]
 
         expect:
         convertedModel == m;
