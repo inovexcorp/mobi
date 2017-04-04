@@ -26,6 +26,7 @@ package org.matonto.etl.service.delimited;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.opencsv.CSVReader;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormatter;
@@ -147,11 +148,10 @@ public class DelimitedConverterImpl implements DelimitedConverter {
                         || (limit.isPresent() && row.getRowNum() >= limit.get() + offset)) {
                     continue;
                 }
-                nextRow = new String[row.getPhysicalNumberOfCells()];
-                int cellIndex = 0;
-                for (Cell cell : row) {
-                    nextRow[cellIndex] = df.formatCellValue(cell);
-                    cellIndex++;
+                //getLastCellNumber instead of getPhysicalNumberOfCells so that blank values don't cause cells to shift
+                nextRow = new String[row.getLastCellNum()];
+                for (int i = 0; i < row.getLastCellNum(); i++ ) {
+                    nextRow[i] = df.formatCellValue(row.getCell(i));
                 }
                 writeClassMappingsToModel(convertedRDF, nextRow, classMappings);
             }
@@ -229,8 +229,10 @@ public class DelimitedConverterImpl implements DelimitedConverter {
             Property prop = dataMapping.getHasProperty().iterator().next();
 
             if (columnIndex < nextLine.length && columnIndex >= 0) {
-                convertedRDF.add(classInstance, valueFactory.createIRI(prop.getResource().stringValue()),
-                        valueFactory.createLiteral(nextLine[columnIndex]));
+                if (!StringUtils.isEmpty(nextLine[columnIndex])) {
+                    convertedRDF.add(classInstance, valueFactory.createIRI(prop.getResource().stringValue()),
+                            valueFactory.createLiteral(nextLine[columnIndex]));
+                } // else don't create a stmt for blank values
             } else {
                 LOGGER.warn(String.format("Column %d missing for %s: %s",
                         columnIndex, classInstance.stringValue(), prop.getResource().stringValue()));
