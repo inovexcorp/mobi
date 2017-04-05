@@ -21,14 +21,17 @@
   #L%
   -->
 <div class="user-management-tabset full-height">
-    <tabset>
-    	<tabset class="centered">
-            <tab heading="'Users'" active="dvm.state.showUsers">
-                <users-page></users-page>
-            </tab>
-            <tab heading="'Groups'" active="dvm.state.showGroups">
-                <groups-page></groups-page>
-            </tab>
-        </tabset>
-	</tabset>
+    <div class="user-management-container full-height">
+        <div class="blue-bar"></div>
+        <div class="user-management-page-content">
+        	<tabset class="centered">
+                <tab heading="'Users'" active="dvm.state.showUsers">
+                    <users-page></users-page>
+                </tab>
+                <tab heading="'Groups'" active="dvm.state.showGroups">
+                    <groups-page></groups-page>
+                </tab>
+            </tabset>
+        </div>
+    </div>
 </div>
