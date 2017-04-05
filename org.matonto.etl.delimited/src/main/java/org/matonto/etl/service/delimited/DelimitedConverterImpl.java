@@ -25,6 +25,7 @@ package org.matonto.etl.service.delimited;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
+import com.google.common.base.CharMatcher;
 import com.opencsv.CSVReader;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
@@ -326,7 +327,12 @@ public class DelimitedConverterImpl implements DelimitedConverter {
             } else {
                 int colIndex = Integer.parseInt(mat.group(1));
                 if (colIndex < currentLine.length && colIndex >= 0) {
-                    mat.appendReplacement(result, currentLine[colIndex]);
+                    //remove whitespace
+                    String replacement = CharMatcher.WHITESPACE.removeFrom(currentLine[colIndex]);
+                    if (LOGGER.isDebugEnabled() && !replacement.equals(currentLine[colIndex])) {
+                        LOGGER.debug(String.format("Local name for IRI was converted from \"%s\" to \"%s\" in order to remove whitespace.", currentLine[colIndex], replacement));
+                    }
+                    mat.appendReplacement(result, replacement);
                 } else {
                     LOGGER.warn(String.format("Missing data for local name from column %d", colIndex));
                     return Optional.empty();
