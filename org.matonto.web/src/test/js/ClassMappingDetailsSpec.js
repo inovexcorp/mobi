@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Class Mapping Details directive', function() {
+fdescribe('Class Mapping Details directive', function() {
     var $compile,
         scope,
         element,
@@ -54,12 +54,10 @@ describe('Class Mapping Details directive', function() {
         delimitedManagerSvc.dataRows = [['']];
         element = $compile(angular.element('<class-mapping-details></class-mapping-details>'))(scope);
         scope.$digest();
+            controller = element.controller('classMappingDetails');
     });
 
     describe('controller methods', function() {
-        beforeEach(function() {
-            controller = element.controller('classMappingDetails');
-        });
         it('should create the IRI template for the class mapping', function() {
             expect(_.isString(controller.getIriTemplate())).toBe(true);
         });
@@ -102,6 +100,15 @@ describe('Class Mapping Details directive', function() {
                 var result = controller.getPropValue({});
                 expect(result).toBe(className);
             });
+        });
+        it('should retrieve a preview of a data property value', function() {
+            delimitedManagerSvc.dataRows = [['first'], ['second']];
+            spyOn(controller, 'getLinkedColumnIndex').and.returnValue('0');
+            expect(controller.getDataValuePreview({})).toBe('second');
+            expect(controller.getLinkedColumnIndex).toHaveBeenCalledWith({});
+            delimitedManagerSvc.containsHeaders = false;
+            expect(controller.getDataValuePreview({})).toBe('first');
+            expect(controller.getLinkedColumnIndex).toHaveBeenCalledWith({});
         });
         describe('should switch the selected class mapping', function() {
             beforeEach(function() {
@@ -182,6 +189,15 @@ describe('Class Mapping Details directive', function() {
             scope.$digest();
             expect(element.querySelectorAll('.prop-list .list-group-item').length).toBe(properties.length);
         });
+        it('depending on whether a property is a data or object property', function() {
+            mappingManagerSvc.isDataMapping.and.returnValue(true);
+            mappingManagerSvc.getPropMappingsByClass.and.returnValue([{}]);
+            scope.$digest();
+            expect(element.querySelectorAll('.prop-list .list-group-item .data-prop-value').length).toBe(1);
+            mappingManagerSvc.isObjectMapping.and.returnValue(true);
+            scope.$digest();
+            expect(element.querySelectorAll('.prop-list .list-group-item .object-prop-value').length).toBe(1);
+        });
         it('depending on whether a property is selected', function() {
             var property = {'@id': 'prop'};
             mappingManagerSvc.getPropMappingsByClass.and.returnValue([property]);
@@ -200,7 +216,6 @@ describe('Class Mapping Details directive', function() {
         expect(mapperStateSvc.editIriTemplate).toBe(true);
     });
     it('should call addProp when the Add Property link is clicked', function() {
-        controller = element.controller('classMappingDetails');
         spyOn(controller, 'addProp');
         var button = angular.element(element.querySelectorAll('.class-mapping-props button.add-prop-mapping-button')[0]);
         button.triggerHandler('click');
@@ -209,7 +224,6 @@ describe('Class Mapping Details directive', function() {
     it('should select a property when clicked', function() {
         var property = {'@id': 'prop'};
         mappingManagerSvc.getPropMappingsByClass.and.returnValue([property]);
-        controller = element.controller('classMappingDetails');
         spyOn(controller, 'getPropName').and.returnValue('');
         spyOn(controller, 'getPropValue').and.returnValue('');
         scope.$digest();
@@ -222,7 +236,6 @@ describe('Class Mapping Details directive', function() {
     it('should call switchClass when a property is double clicked', function() {
         var property = {};
         mappingManagerSvc.getPropMappingsByClass.and.returnValue([property]);
-        controller = element.controller('classMappingDetails');
         spyOn(controller, 'getPropName').and.returnValue('');
         spyOn(controller, 'getPropValue').and.returnValue('');
         spyOn(controller, 'switchClass');
@@ -234,7 +247,6 @@ describe('Class Mapping Details directive', function() {
     it('should call editProp when an edit property link is clicked', function() {
         var property = {};
         mappingManagerSvc.getPropMappingsByClass.and.returnValue([property]);
-        controller = element.controller('classMappingDetails');
         spyOn(controller, 'getPropName').and.returnValue('');
         spyOn(controller, 'getPropValue').and.returnValue('');
         spyOn(controller, 'editProp');
@@ -246,7 +258,6 @@ describe('Class Mapping Details directive', function() {
     it('should call deleteProp when a delete property link is clicked', function() {
         var property = {};
         mappingManagerSvc.getPropMappingsByClass.and.returnValue([property]);
-        controller = element.controller('classMappingDetails');
         spyOn(controller, 'getPropName').and.returnValue('');
         spyOn(controller, 'getPropValue').and.returnValue('');
         spyOn(controller, 'deleteProp');

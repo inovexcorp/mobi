@@ -90,6 +90,10 @@
                             return dvm.getClassName(_.find(dvm.state.mapping.jsonld, {'@id': dvm.getLinkedClassId(propMapping)}));
                         }
                     }
+                    dvm.getDataValuePreview = function(propMapping) {
+                        var firstRowIndex = dvm.dm.containsHeaders ? 1 : 0;
+                        return _.get(dvm.dm.dataRows, '[' + firstRowIndex + '][' + dvm.getLinkedColumnIndex(propMapping) + ']');
+                    }
                     dvm.getLinkedClassId = function(propMapping) {
                         return dvm.util.getPropertyId(propMapping, prefixes.delim + 'classMapping');
                     }

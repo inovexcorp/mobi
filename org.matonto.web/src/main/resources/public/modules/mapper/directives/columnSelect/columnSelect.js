@@ -66,8 +66,12 @@
                     var dvm = this;
                     dvm.dm = delimitedManagerService;
 
-                    dvm.compare = function(actual, expected) {
-                        return _.includes(_.toUpper(dvm.dm.getHeader(actual)), _.toUpper(expected));
+                    dvm.compare = function(idx, expected) {
+                        return _.includes(_.toUpper(dvm.dm.getHeader(idx)), _.toUpper(expected));
+                    }
+                    dvm.getValuePreview = function() {
+                        var firstRowIndex = dvm.dm.containsHeaders ? 1 : 0;
+                        return _.get(dvm.dm.dataRows, '[' + firstRowIndex + '][' + dvm.selectedColumn + ']');
                     }
                 },
                 templateUrl: 'modules/mapper/directives/columnSelect/columnSelect.html'
