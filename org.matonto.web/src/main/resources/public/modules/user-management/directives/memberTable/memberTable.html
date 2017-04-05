@@ -22,7 +22,8 @@
   -->
 <table class="member-table table table-condensed" click-anywhere-but-here="dvm.addingMember = false">
     <tr ng-repeat="user in dvm.getMembers() track by user.username" class="member">
-      <td>{{user.username}}</td>
+      <td ng-if="dvm.state.displayCreateGroupOverlay">{{user.username}}</td>
+      <td ng-if="dvm.state.showGroups && !dvm.state.displayCreateGroupOverlay"><a ng-click="dvm.goToUser(user)">{{user.username}}</a></td>
       <td>
         <span><button class="btn btn-link" ng-click="dvm.state.memberName = user.username; dvm.removeMember()" ng-disabled="user.username === dvm.lm.currentUser || !dvm.um.isAdmin(dvm.lm.currentUser)">
           <i class="fa fa-trash-o"></i>

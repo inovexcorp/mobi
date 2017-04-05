@@ -92,6 +92,11 @@
                         dvm.addingMember = false;
                         dvm.addMember();
                     }
+                    dvm.goToUser = function (user) {
+                        dvm.state.showGroups = false;
+                        dvm.state.showUsers = true;
+                        dvm.state.selectedUser = user;
+                    }
                 },
                 templateUrl: 'modules/user-management/directives/memberTable/memberTable.html'
             }
