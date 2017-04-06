@@ -48,6 +48,7 @@
             'showProperties',
             'splitIRI',
             'trusted',
+            'usernameSearch',
 
             /* Custom Directives */
             'block',
