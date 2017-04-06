@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Property Values directive', function() {
+describe('Property Values directive', function() {
     var $compile,
         scope,
         element,
