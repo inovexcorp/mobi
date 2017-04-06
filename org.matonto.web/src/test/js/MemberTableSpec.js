@@ -170,6 +170,43 @@ describe('Member Table directive', function() {
             expect(removeButton.attr('disabled')).toBeFalsy();
             expect(this.element.querySelectorAll('.add-member').length).toBe(1);
         });
+        it('check group page linking to user page: true - true', function() {
+            userStateSvc.displayCreateGroupOverlay = true;
+            userStateSvc.showGroups = true;
+            scope.$digest();
+            users = this.element.querySelectorAll('.member-table > tbody > tr > td.username');
+            expect(users.length).toBeGreaterThan(0);
+            for (var i = 0; i < users.length; i++) {
+                expect(users[i].getElementsByTagName("a").length).toEqual(0);
+            }
+        });
+        it('check group page linking to user page: true - false', function() {
+            userStateSvc.displayCreateGroupOverlay = true;
+            userStateSvc.showGroups = false;
+            scope.$digest();
+            users = this.element.querySelectorAll('.member-table > tbody > tr > td.username');
+            expect(users.length).toBeGreaterThan(0);
+            for (var i = 0; i < users.length; i++) {
+                expect(users[i].getElementsByTagName("a").length).toEqual(0);
+            }
+        });
+        it('check group page linking to user page: false - true', function() {
+            userStateSvc.displayCreateGroupOverlay = false;
+            userStateSvc.showGroups = true;
+            scope.$digest();
+            users = this.element.querySelectorAll('.member-table > tbody > tr > td.username');
+            expect(users.length).toBeGreaterThan(0);
+            for (var i = 0; i < users.length; i++) {
+                expect(users[i].getElementsByTagName("a").length).toEqual(1);
+            }
+        });
+        it('check group page linking to user page: false - false', function() {
+            userStateSvc.displayCreateGroupOverlay = false;
+            userStateSvc.showGroups = false;
+            scope.$digest();
+            users = this.element.querySelectorAll('.member-table > tbody > tr > td.username');
+            expect(users.length).toEqual(0);
+        });
     });
     it('should set the correct state and call removeMember when a delete button is clicked', function() {
         userManagerSvc.users = [{username: 'user1'}];
