@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Property Values directive', function() {
+fdescribe('Property Values directive', function() {
     var $compile,
         scope,
         element,
@@ -47,6 +47,9 @@ describe('Property Values directive', function() {
             ontologyManagerSvc = _ontologyManagerService_;
         });
 
+        ontologyManagerSvc.isBlankNodeId.and.callFake(function(string) {
+            return string === '_:genid0';
+        });
         scope.entity = {'prop': [{'@id': 'value1'}, {'@id': '_:genid0'}]};
         scope.property = 'prop';
         scope.edit = jasmine.createSpy('edit');
@@ -87,9 +90,6 @@ describe('Property Values directive', function() {
             expect(values.length).toBe(2);
         });
         it('depending on whether a value is a blank node', function() {
-            ontologyManagerSvc.isBlankNodeId.and.callFake(function(string) {
-                return string === '_:genid0';
-            });
             ontologyUtilsManagerSvc.getBlankNodeValue.and.callFake(function(string) {
                 return string === '_:genid0' ? '<span>test</span>' : '';
             });
