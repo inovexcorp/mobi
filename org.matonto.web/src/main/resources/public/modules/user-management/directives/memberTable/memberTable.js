@@ -92,7 +92,7 @@
                         dvm.addingMember = false;
                         dvm.addMember();
                     }
-                    dvm.goToUser = function (user) {
+                    dvm.goToUser = function(user) {
                         dvm.state.showGroups = false;
                         dvm.state.showUsers = true;
                         dvm.state.selectedUser = user;
