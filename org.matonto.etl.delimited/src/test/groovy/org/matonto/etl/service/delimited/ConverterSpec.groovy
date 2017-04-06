@@ -280,6 +280,31 @@ class ConverterSpec extends Specification {
         "12345"             | null
     }
 
+    def "Test Generation of Local Name #localName Results in #result when whitespace is present"() {
+        setup:
+        String[] nextLine = ["ab cd\t     \r\n","efgh","ij\tkl","mnop","qrst"]
+        def cm = Mock(ClassMapping)
+
+        when:
+        def result2 = c.generateLocalName(cm, nextLine)
+
+        then:
+        c.generateUuid() >> "12345"
+        cm.getLocalName() >>> Optional.ofNullable(localName)
+        result2.get() == result
+
+        where:
+        result              | localName
+        "12345"             | "\${UUID}"
+        "12345/abcd"        | "\${UUID}/\${0}"
+        "abcd"              | "\${0}"
+        "abcd/12345"        | "\${0}/\${UUID}"
+        "abcd/12345/ijkl"   | "\${0}/\${UUID}/\${2}"
+        "abcd/abcd"         | "\${0}/\${0}"
+        "12345"             | ""
+        "12345"             | null
+    }
+
     def "Test Generation of Local Name with missing columns results in empty optional"() {
         setup:
         String[] nextLine = ["abcd","efgh","ijkl","mnop","qrst"]
