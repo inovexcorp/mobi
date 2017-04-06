@@ -41,7 +41,7 @@
                 <div class="list-group-item-text">
                     <div ng-if="dvm.mm.isDataMapping(propMapping)" class="data-prop-value">
                         <p><span class="field-name">Column: </span>{{dvm.getPropValue(propMapping)}}</p>
-                        <p><span class="field-name">Preview: </span>{{dvm.getDataValuePreview(propMapping)}}</p>
+                        <p><span class="field-name">Preview: </span><span ng-if="dvm.getDataValuePreview(propMapping)">{{dvm.getDataValuePreview(propMapping)}}</span><span class="text-muted" ng-if="!dvm.getDataValuePreview(propMapping)">(None)</span></p>
                     </div>
                     <div ng-if="dvm.mm.isObjectMapping(propMapping)" class="object-prop-value">
                         <p><span class="field-name">Class: </span>{{dvm.getPropValue(propMapping)}}</p>
