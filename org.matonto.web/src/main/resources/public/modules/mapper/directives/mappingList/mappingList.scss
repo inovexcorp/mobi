@@ -2,6 +2,9 @@
 @import "./src/main/resources/public/css/variables";
 
 .mapping-list {
+    &.tree a {
+        display: inherit;
+    }
     ul {
         margin-top: 10px;
     }
