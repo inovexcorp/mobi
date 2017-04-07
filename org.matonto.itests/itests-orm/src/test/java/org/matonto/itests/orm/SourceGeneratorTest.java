@@ -100,7 +100,6 @@ public class SourceGeneratorTest {
                 valueFactory.createIRI("urn://matonto.org/orm/test/account"));
     }
 
-
     @Test
     public void testAgent() {
         final AgentFactory factory = new AgentFactory();
@@ -135,7 +134,6 @@ public class SourceGeneratorTest {
 
         assertEquals(valueFactory.createIRI("urn://matonto.org/orm/test/account"), mbox.getResource());
     }
-
 
     @Test
     public void testMultiType() {
