@@ -21,7 +21,7 @@
   #L%
   -->
 <div class="prop-select">
-    <ui-select ng-model="dvm.selectedProp" on-select="onChange()" ng-disabled="isDisabledWhen">
+    <ui-select ng-model="dvm.selectedProp" on-select="onChange()" ng-disabled="isDisabledWhen" autofocus>
         <ui-select-match placeholder="Select a property">
             <span title="{{$select.selected.propObj['@id']}}">{{dvm.om.getEntityName($select.selected.propObj)}}</span>
         </ui-select-match>
