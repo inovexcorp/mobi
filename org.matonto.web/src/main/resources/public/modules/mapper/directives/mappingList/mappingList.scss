@@ -2,7 +2,7 @@
 @import "./src/main/resources/public/css/variables";
 
 .mapping-list {
-    .tree a {
+    &.tree a {
         display: inherit;
     }
     ul {
