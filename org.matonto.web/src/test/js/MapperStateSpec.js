@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Mapper State service', function() {
+describe('Mapper State service', function() {
     var $httpBackend,
         mapperStateSvc,
         prefixes,
