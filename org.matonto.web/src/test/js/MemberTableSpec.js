@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Member Table directive', function() {
+describe('Member Table directive', function() {
     var $compile,
         scope,
         userStateSvc,
