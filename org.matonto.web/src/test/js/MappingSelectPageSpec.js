@@ -23,12 +23,13 @@
 describe('Mapping Select Page directive', function() {
     var $compile,
         scope,
+        $q,
+        element,
+        controller,
         mappingManagerSvc,
         mapperStateSvc,
         ontologyManagerSvc,
-        utilSvc,
-        $q,
-        controller;
+        utilSvc;
 
     beforeEach(function() {
         module('templates');
@@ -50,14 +51,12 @@ describe('Mapping Select Page directive', function() {
         });
 
         mapperStateSvc.mapping = {jsonld: []};
-        this.element = $compile(angular.element('<mapping-select-page></mapping-select-page>'))(scope);
+        element = $compile(angular.element('<mapping-select-page></mapping-select-page>'))(scope);
         scope.$digest();
+        controller = element.controller('mappingSelectPage');
     });
 
     describe('controller methods', function() {
-        beforeEach(function() {
-            controller = this.element.controller('mappingSelectPage');
-        });
         it('should set the correct state for editing a mapping', function() {
             spyOn(controller, 'loadOntologyAndContinue');
             controller.edit();
@@ -90,10 +89,18 @@ describe('Mapping Select Page directive', function() {
                 mappingManagerSvc.getSourceOntologies.and.returnValue($q.when(this.ontologies));
             });
             it('if the ontology and mapping are compatiable', function() {
+                var classId = 'class1';
+                var otherClass = {classObj: {'@id': 'class2'}};
+                mappingManagerSvc.getAllClassMappings.and.returnValue([{}]);
+                mappingManagerSvc.getClassIdByMapping.and.returnValue(classId);
+                mapperStateSvc.getClasses.and.returnValue([{classObj: {'@id': classId}}, otherClass]);
                 mappingManagerSvc.areCompatible.and.returnValue(true);
                 controller.loadOntologyAndContinue();
                 scope.$apply();
                 expect(mapperStateSvc.sourceOntologies).toEqual(this.ontologies);
+                expect(mappingManagerSvc.getAllClassMappings).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld);
+                expect(mapperStateSvc.getClasses).toHaveBeenCalledWith(this.ontologies);
+                expect(mapperStateSvc.availableClasses).toEqual([otherClass]);
                 expect(mapperStateSvc.step).toBe(mapperStateSvc.fileUploadStep);
                 expect(mapperStateSvc.invalidOntology).toBe(false);
             });
@@ -102,6 +109,9 @@ describe('Mapping Select Page directive', function() {
                 controller.loadOntologyAndContinue();
                 scope.$apply();
                 expect(mapperStateSvc.sourceOntologies).toEqual([]);
+                expect(mappingManagerSvc.getAllClassMappings).not.toHaveBeenCalled();
+                expect(mapperStateSvc.getClasses).not.toHaveBeenCalled();
+                expect(mapperStateSvc.availableClasses).toEqual([]);
                 expect(mapperStateSvc.step).not.toBe(mapperStateSvc.fileUploadStep);
                 expect(mapperStateSvc.invalidOntology).toBe(true);
             });
@@ -109,52 +119,52 @@ describe('Mapping Select Page directive', function() {
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('mapping-select-page')).toBe(true);
-            expect(this.element.hasClass('row')).toBe(true);
-            expect(this.element.querySelectorAll('.col-xs-4').length).toBe(1);
-            expect(this.element.querySelectorAll('.col-xs-8').length).toBe(1);
+            expect(element.hasClass('mapping-select-page')).toBe(true);
+            expect(element.hasClass('row')).toBe(true);
+            expect(element.querySelectorAll('.col-xs-4').length).toBe(1);
+            expect(element.querySelectorAll('.col-xs-8').length).toBe(1);
         });
         it('with blocks', function() {
-            expect(this.element.find('block').length).toBe(2);
+            expect(element.find('block').length).toBe(2);
         });
         it('with a mapping list', function() {
-            expect(this.element.find('mapping-list').length).toBe(1);
+            expect(element.find('mapping-list').length).toBe(1);
         });
         it('with a block search header for the mapping list', function() {
-            expect(this.element.querySelectorAll('.col-xs-4 block-search').length).toBe(1);
+            expect(element.querySelectorAll('.col-xs-4 block-search').length).toBe(1);
         });
         it('with buttons for creating a mapping and deleting a mapping', function() {
-            var createButton = this.element.querySelectorAll('.col-xs-4 block-header button.btn-link')[0];
+            var createButton = element.querySelectorAll('.col-xs-4 block-header button.btn-link')[0];
             expect(createButton).toBeDefined();
             expect(angular.element(createButton).text().trim()).toContain('Create');
 
-            var deleteButton = this.element.querySelectorAll('.col-xs-4 block-footer button.btn-link')[0];
+            var deleteButton = element.querySelectorAll('.col-xs-4 block-footer button.btn-link')[0];
             expect(deleteButton).toBeDefined();
             expect(angular.element(deleteButton).text().trim()).toContain('Delete');
         });
         it('with buttons for downloading, editing, and running a mapping', function() {
-            var buttons = this.element.querySelectorAll('.col-xs-8 block-header button.btn-link');
+            var buttons = element.querySelectorAll('.col-xs-8 block-header button.btn-link');
             expect(buttons.length).toBe(3);
             _.forEach(_.toArray(buttons), function(button) {
                 expect(['Edit', 'Run', 'Download']).toContain(angular.element(button).text().trim());
             });
         });
         it('depending on whether a mapping has been selected', function() {
-            var deleteButton = angular.element(this.element.querySelectorAll('.col-xs-4 block-footer button.btn-link')[0]);
-            var mappingHeader = angular.element(this.element.querySelectorAll('.col-xs-8 block-header .mapping-preview-header')[0]);
+            var deleteButton = angular.element(element.querySelectorAll('.col-xs-4 block-footer button.btn-link')[0]);
+            var mappingHeader = angular.element(element.querySelectorAll('.col-xs-8 block-header .mapping-preview-header')[0]);
             expect(deleteButton.attr('disabled')).toBeFalsy();
             expect(mappingHeader.hasClass('invisible')).toBe(false);
-            expect(this.element.find('mapping-preview').length).toBe(1);
+            expect(element.find('mapping-preview').length).toBe(1);
 
             mapperStateSvc.mapping = undefined;
             scope.$digest();
             expect(deleteButton.attr('disabled')).toBeTruthy();
             expect(mappingHeader.hasClass('invisible')).toBe(true);
-            expect(this.element.find('mapping-preview').length).toBe(0);
+            expect(element.find('mapping-preview').length).toBe(0);
         });
         it('depending on whether the mapping source ontology exists', function() {
-            var editButton = angular.element(this.element.querySelectorAll('.col-xs-8 block-header button.btn-link.edit-btn')[0]);
-            var runButton = angular.element(this.element.querySelectorAll('.col-xs-8 block-header button.btn-link.run-btn')[0]);
+            var editButton = angular.element(element.querySelectorAll('.col-xs-8 block-header button.btn-link.edit-btn')[0]);
+            var runButton = angular.element(element.querySelectorAll('.col-xs-8 block-header button.btn-link.run-btn')[0]);
             expect(editButton.attr('disabled')).toBeTruthy();
             expect(runButton.attr('disabled')).toBeTruthy();
 
@@ -165,42 +175,32 @@ describe('Mapping Select Page directive', function() {
         });
     });
     it('should call createMapping when the button is clicked', function() {
-        controller = this.element.controller('mappingSelectPage');
         spyOn(controller, 'createMapping');
-
-        var createButton = angular.element(this.element.querySelectorAll('.col-xs-4 block-header button.btn-link')[0]);
+        var createButton = angular.element(element.querySelectorAll('.col-xs-4 block-header button.btn-link')[0]);
         angular.element(createButton).triggerHandler('click');
         expect(controller.createMapping).toHaveBeenCalled();
     });
     it('should call deleteMapping when the button is clicked', function() {
-        controller = this.element.controller('mappingSelectPage');
         spyOn(controller, 'deleteMapping');
-
-        var deleteButton = angular.element(this.element.querySelectorAll('.col-xs-4 block-footer button.btn-link')[0]);
+        var deleteButton = angular.element(element.querySelectorAll('.col-xs-4 block-footer button.btn-link')[0]);
         angular.element(deleteButton).triggerHandler('click');
         expect(controller.deleteMapping).toHaveBeenCalled();
     });
     it('should call downloadMapping when the button is clicked', function() {
-        controller = this.element.controller('mappingSelectPage');
         spyOn(controller, 'downloadMapping');
-
-        var downloadButton = angular.element(this.element.querySelectorAll('.col-xs-8 block-header button.btn-link.download-btn')[0]);
+        var downloadButton = angular.element(element.querySelectorAll('.col-xs-8 block-header button.btn-link.download-btn')[0]);
         angular.element(downloadButton).triggerHandler('click');
         expect(controller.downloadMapping).toHaveBeenCalled();
     });
     it('should call edit when the button is clicked', function() {
-        controller = this.element.controller('mappingSelectPage');
         spyOn(controller, 'edit');
-
-        var editButton = angular.element(this.element.querySelectorAll('.col-xs-8 block-header button.btn-link.edit-btn')[0]);
+        var editButton = angular.element(element.querySelectorAll('.col-xs-8 block-header button.btn-link.edit-btn')[0]);
         angular.element(editButton).triggerHandler('click');
         expect(controller.edit).toHaveBeenCalled();
     });
     it('should call run when the button is clicked', function() {
-        controller = this.element.controller('mappingSelectPage');
         spyOn(controller, 'run');
-
-        var runButton = angular.element(this.element.querySelectorAll('.col-xs-8 block-header button.btn-link.run-btn')[0]);
+        var runButton = angular.element(element.querySelectorAll('.col-xs-8 block-header button.btn-link.run-btn')[0]);
         angular.element(runButton).triggerHandler('click');
         expect(controller.run).toHaveBeenCalled();
     });
