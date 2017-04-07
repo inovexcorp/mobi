@@ -70,21 +70,28 @@
             'entityDescription',
             'errorDisplay',
             'fileInput',
+            'focusMe',
             'infoMessage',
+            'keywordSelect',
             'pagination',
             'pagingDetails',
             'passwordConfirmInput',
             'radioButton',
             'recordKeywords',
+            'spinner',
+            'statementContainer',
+            'statementDisplay',
             'stepProgressBar',
             'tab',
             'tabset',
+            'targetedSpinner',
             'textArea',
             'textInput',
             'uniqueValue',
 
             /* Custom Modules */
             'catalog',
+            'datasets',
             'home',
             'login',
             'mapper',
@@ -99,8 +106,10 @@
             'catalogManager',
             'catalogState',
             'datasetManager',
+            'datasetState',
             'delimitedManager',
             'loginManager',
+            'manchesterConverter',
             'mapperState',
             'mappingManager',
             'ontologyManager',
@@ -150,25 +159,73 @@
             $httpProvider.interceptors.push('requestInterceptor');
         }
 
-        requestInterceptor.$inject = ['$q', '$rootScope'];
+        requestInterceptor.$inject = ['$q', '$rootScope', '$httpParamSerializer'];
 
-        function requestInterceptor($q, $rootScope) {
+        function requestInterceptor($q, $rootScope, $httpParamSerializer) {
             $rootScope.pendingRequests = 0;
+            $rootScope.trackedHttpRequests = [];
+
+            function findTrackers(config) {
+                return _.filter($rootScope.trackedHttpRequests, tr => {
+                    var urlToMatch = config.url + (config.params ? '?' + $httpParamSerializer(config.params) : '');
+                    return urlToMatch.match(tr.requestConfig.url) && config.method === _.toUpper(tr.requestConfig.method);
+                });
+            }
+
+            function handleStop(config) {
+                if (!_.includes(config.url, '.html')) {
+                    var trackers = findTrackers(config);
+                    if (trackers.length > 0) {
+                        _.forEach(trackers, tracker => {
+                            if (tracker.scopes.length === 0) {
+                                _.remove($rootScope.trackedHttpRequests, tracker);
+                            } else {
+                                if (!tracker.canceledAndContinue) {
+                                    tracker.inProgress = false;
+                                    _.forEach(tracker.scopes, scope => scope.showSpinner = false);
+                                    _.unset(tracker, 'canceller');
+                                }
+                                tracker.canceledAndContinue = false;
+                            }
+                        });
+                    } else {
+                        $rootScope.pendingRequests--;
+                    }
+                }
+            }
+
             return {
                 'request': function (config) {
-                    $rootScope.pendingRequests++;
+                    if (!_.includes(config.url, '.html')) {
+                        var trackers = findTrackers(config);
+                        if (trackers.length > 0) {
+                            var canceller = $q.defer();
+                            _.forEach(trackers, tracker => {
+                                if (tracker.inProgress && _.every(tracker.scopes, 'cancelOnNew') && _.has(tracker, 'canceller')) {
+                                    tracker.canceledAndContinue = true;
+                                    tracker.canceller.resolve();
+                                }
+                                tracker.inProgress = true;
+                                _.forEach(tracker.scopes, scope => scope.showSpinner = true);
+                                tracker.canceller = canceller;
+                            });
+                            config.timeout = canceller.promise;
+                        } else {
+                            $rootScope.pendingRequests++;
+                        }
+                    }
                     return config || $q.when(config);
                 },
                 'requestError': function(rejection) {
-                    $rootScope.pendingRequests--;
+                    handleStop(rejection.config);
                     return $q.reject(rejection);
                 },
                 'response': function(response) {
-                    $rootScope.pendingRequests--;
+                    handleStop(response.config);
                     return response || $q.when(response);
                 },
                 'responseError': function(rejection) {
-                    $rootScope.pendingRequests--;
+                    handleStop(rejection.config);
                     return $q.reject(rejection);
                 }
             };

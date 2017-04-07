@@ -23,11 +23,13 @@
 package org.matonto.dataset.impl
 
 import org.matonto.catalog.api.CatalogManager
+import org.matonto.catalog.api.PaginatedSearchResults
 import org.matonto.dataset.api.builder.DatasetRecordConfig
 import org.matonto.dataset.ontology.dataset.Dataset
 import org.matonto.dataset.ontology.dataset.DatasetFactory
 import org.matonto.dataset.ontology.dataset.DatasetRecord
 import org.matonto.dataset.ontology.dataset.DatasetRecordFactory
+import org.matonto.dataset.pagination.DatasetPaginatedSearchParams
 import org.matonto.ontologies.rdfs.Resource
 import org.matonto.rdf.api.IRI
 import org.matonto.rdf.api.Model
@@ -83,6 +85,12 @@ class SimpleDatasetManagerSpec extends Specification {
     def repos = [ : ]
 
     @Shared
+    numSystemDS = 5
+
+    @Shared
+    numTestDS = 3
+
+    @Shared
     datasetsInFile = [
             [ "filler" ],
             vf.createIRI("http://matonto.org/dataset/test1"),
@@ -91,7 +99,8 @@ class SimpleDatasetManagerSpec extends Specification {
             vf.createIRI("http://matonto.org/dataset/test4"),
             vf.createIRI("http://matonto.org/dataset/test5"),
             vf.createIRI("http://matonto.org/dataset/test6"),
-            vf.createIRI("http://matonto.org/dataset/test7")
+            vf.createIRI("http://matonto.org/dataset/test7"),
+            vf.createIRI("http://matonto.org/dataset/test8")
     ]
 
     @Shared
@@ -103,7 +112,8 @@ class SimpleDatasetManagerSpec extends Specification {
             vf.createIRI("http://matonto.org/record/dataset/test4"),
             vf.createIRI("http://matonto.org/record/dataset/test5"),
             vf.createIRI("http://matonto.org/record/dataset/test6"),
-            vf.createIRI("http://matonto.org/record/dataset/test7")
+            vf.createIRI("http://matonto.org/record/dataset/test7"),
+            vf.createIRI("http://matonto.org/record/dataset/test8")
     ]
 
     @Shared
@@ -115,7 +125,8 @@ class SimpleDatasetManagerSpec extends Specification {
             [ vf.createIRI("http://matonto.org/dataset/test3/graph4") ],
             [ vf.createIRI("http://matonto.org/dataset/test5/graph1") ],
             [ vf.createIRI("http://matonto.org/dataset/test2/graph1") ],
-            [ vf.createIRI("http://matonto.org/dataset/test7/graph1") ]
+            [ vf.createIRI("http://matonto.org/dataset/test7/graph1") ],
+            []
     ]
 
     @Shared
@@ -127,7 +138,8 @@ class SimpleDatasetManagerSpec extends Specification {
             [ vf.createIRI("http://matonto.org/dataset/test3/graph5") ],
             [ vf.createIRI("http://matonto.org/dataset/test5/graph2") ],
             [ vf.createIRI("http://matonto.org/dataset/test2/graph2") ],
-            [ vf.createIRI("http://matonto.org/dataset/test7/graph2") ]
+            [ vf.createIRI("http://matonto.org/dataset/test7/graph2") ],
+            []
     ]
 
     @Shared
@@ -140,6 +152,7 @@ class SimpleDatasetManagerSpec extends Specification {
             [ vf.createIRI("http://matonto.org/dataset/test5_system_dng") ],
             [ vf.createIRI("http://matonto.org/dataset/test6_system_dng") ],
             [ vf.createIRI("http://matonto.org/dataset/test7_system_dng") ],
+            []
     ]
 
     def setup() {
@@ -333,17 +346,23 @@ class SimpleDatasetManagerSpec extends Specification {
         results == Optional.empty()
     }
 
-    def "getDatasetRecords() returns a set with all DatasetRecords in the repo"() {
+    def "getDatasetRecords() returns PaginatedSearchResults with a set of DatasetRecords from the repo"() {
         setup:
-        service.setRepository(systemRepo)
-        systemConn.add(Values.matontoModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_only-ds-records.trig"), "", RDFFormat.TRIG)))
-        testConn.add(Values.matontoModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_test-repo-datasets.trig"), "", RDFFormat.TRIG)))
         def mockRecords = []
-        7.times { mockRecords << Optional.of(Mock(DatasetRecord)) }
-        catalogManagerMock.getRecord(*_) >>> mockRecords
+        def originalResults = Mock(PaginatedSearchResults)
+        7.times { mockRecords << Mock(DatasetRecord) }
+        originalResults.getPage() >> mockRecords
+        originalResults.getPageNumber() >> 1
+        originalResults.getTotalSize() >> 7
+        originalResults.getPageSize() >> 10
+        catalogManagerMock.findRecord(*_) >>> originalResults
 
         expect:
-        service.getDatasetRecords().size() == 7
+        def results = service.getDatasetRecords(new DatasetPaginatedSearchParams(vf))
+        results.getPage().size() == 7
+        results.getPageSize() == 10
+        results.getTotalSize() == 7
+        results.getPageNumber() == 1
     }
 
     def "getDatasets() returns an empty set when there are no datasets in that repository"() {
@@ -375,8 +394,8 @@ class SimpleDatasetManagerSpec extends Specification {
 
         where:
         repo | size
-        "system" | 4
-        "test" | 3
+        "system" | numSystemDS
+        "test" | numTestDS
     }
 
     def "createDataset returns the correct DatasetRecord"() {
@@ -737,6 +756,48 @@ class SimpleDatasetManagerSpec extends Specification {
         ]
     }
 
+    def "getConnection(dataset, repository) returns a DatasetConnection over the correct dataset and repo"() {
+        setup:
+        def repo = "system"
+        def datasetIRI = datasetsInFile[1]
+        def recordIRI = vf.createIRI("http://test.com/record1")
+        mockRetrieveRecord(datasetIRI, repo, recordIRI)
+
+        when:
+        def dsConn = service.getConnection(datasetIRI, repo)
+
+        then:
+        dsConn.getDataset() == datasetIRI
+        dsConn.getRepositoryId() == repo
+    }
+
+    def "getConnection(dataset, repository) throws an Exception if the DatasetRecord does not exist"() {
+        setup:
+        def repo = "system"
+        def datasetIRI = vf.createIRI("http://test.com/dataset1")
+
+        resultsMock.hasNext() >> false
+
+        when:
+        service.getConnection(datasetIRI, repo)
+
+        then:
+        0 * catalogManagerMock.getRecord(*_)
+        thrown(IllegalArgumentException)
+    }
+
+    def "getConnection(record) throws an Exception if the DatasetRecord does not exist"() {
+        setup:
+        def recordIRI = vf.createIRI("http://test.com/record/dataset1")
+
+        when:
+        service.getConnection(recordIRI)
+
+        then:
+        1 * catalogManagerMock.getRecord(*_) >> Optional.empty()
+        thrown(IllegalArgumentException)
+    }
+
     private void bootstrapCatalog(IRI datasetIRI, IRI recordIRI, String repo = "system") {
         def dataset = dsFactory.createNew(datasetIRI)
         def record = dsRecFactory.createNew(recordIRI)
@@ -749,5 +810,17 @@ class SimpleDatasetManagerSpec extends Specification {
                 Rio.parse(this.getClass().getResourceAsStream("/test-catalog_only-ds-records.trig"), "", RDFFormat.TRIG)))
 
         1 * catalogManagerMock.getRecord(!null, recordIRI, !null) >> Optional.of(record)
+    }
+
+    private mockRetrieveRecord(datasetIRI, repo, recordIRI) {
+        def dataset = dsFactory.createNew(datasetIRI)
+        resultsMock.hasNext() >> true
+        resultsMock.next() >> vf.createStatement(recordIRI, datasetPred, datasetIRI)
+
+        def record = dsRecFactory.createNew(recordIRI)
+        record.setDataset(dataset)
+        record.setRepository(repo)
+
+        return record
     }
 }

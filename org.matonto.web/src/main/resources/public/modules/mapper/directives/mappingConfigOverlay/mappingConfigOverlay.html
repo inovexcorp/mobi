@@ -39,7 +39,7 @@
                             <span>{{dvm.util.getDctermsValue(record, 'title')}}</span>
                         </button>
                     </div>
-                    <paging-details page-size="dvm.records.length" total-size="dvm.totalSize" page-index="dvm.recordsConfig.pageIndex" limit="dvm.recordsConfig.limit"></paging-details>
+                    <paging-details total-size="dvm.totalSize" page-index="dvm.recordsConfig.pageIndex" limit="dvm.recordsConfig.limit"></paging-details>
                     <pagination links="dvm.links" current-page="dvm.recordsConfig.pageIndex" get-page="dvm.getRecordPage(direction)"></pagination>
                 </div>
                 <div class="form-group">

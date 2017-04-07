@@ -39,17 +39,17 @@
                 controller: function() {
                     var dvm = this;
                     dvm.om = ontologyManagerService;
-                    dvm.sm = ontologyStateService;
+                    dvm.os = ontologyStateService;
                     dvm.type = 'ontology';
 
                     dvm.upload = function() {
-                        dvm.om.uploadThenGet(dvm.file, dvm.title, dvm.description,
+                        dvm.os.uploadThenGet(dvm.file, dvm.title, dvm.description,
                             _.join(_.map(dvm.keywords, _.trim), ','), dvm.type).then(recordId => {
-                                var listItem = dvm.om.getListItemByRecordId(recordId);
-                                dvm.sm.addState(recordId, dvm.om.getOntologyIRI(listItem.ontology), dvm.type);
-                                dvm.sm.setState(recordId);
-                                dvm.sm.showUploadTab = false;
-                            }, response => dvm.error = response.statusText);
+                                var listItem = dvm.os.getListItemByRecordId(recordId);
+                                dvm.os.addState(recordId, dvm.om.getOntologyIRI(listItem.ontology), dvm.type);
+                                dvm.os.setState(recordId);
+                                dvm.os.showUploadTab = false;
+                            }, errorMessage => dvm.error = errorMessage);
                     }
                 }
             }

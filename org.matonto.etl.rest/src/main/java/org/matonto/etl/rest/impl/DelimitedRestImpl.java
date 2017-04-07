@@ -292,25 +292,25 @@ public class DelimitedRestImpl implements DelimitedRest {
         }
 
         // Run the mapping against the delimited data
-        org.matonto.rdf.api.Model result;
-        InputStream data = getDocumentInputStream(delimitedFile);
-        if (extension.equals("xls") || extension.equals("xlsx")) {
-            ExcelConfig.ExcelConfigBuilder config = new ExcelConfig.ExcelConfigBuilder(data,
-                    transformer.matontoModel(mappingModel)).containsHeaders(containsHeaders);
-            if (limit) {
-                config.limit(NUM_LINE_PREVIEW);
+        org.matonto.rdf.api.Model result = null;
+        try (InputStream data = getDocumentInputStream(delimitedFile)) {
+            if (extension.equals("xls") || extension.equals("xlsx")) {
+                ExcelConfig.ExcelConfigBuilder config = new ExcelConfig.ExcelConfigBuilder(data, transformer.matontoModel(mappingModel)).containsHeaders(containsHeaders);
+                if (limit) {
+                    config.limit(NUM_LINE_PREVIEW);
+                }
+                result = etlFile(() -> converter.convert(config.build()));
+            } else {
+                SVConfig.SVConfigBuilder config = new SVConfig.SVConfigBuilder(data, transformer.matontoModel(mappingModel)).separator(separator.charAt(0)).containsHeaders(containsHeaders);
+                if (limit) {
+                    config.limit(NUM_LINE_PREVIEW);
+                }
+                result = etlFile(() -> converter.convert(config.build()));
             }
-            result = etlFile(() -> converter.convert(config.build()));
-        } else {
-            SVConfig.SVConfigBuilder config = new SVConfig.SVConfigBuilder(data, transformer.matontoModel(mappingModel))
-                    .separator(separator.charAt(0))
-                    .containsHeaders(containsHeaders);
-            if (limit) {
-                config.limit(NUM_LINE_PREVIEW);
-            }
-            result = etlFile(() -> converter.convert(config.build()));
+            logger.info("File mapped: " + delimitedFile.getPath());
+        } catch (IOException e) {
+            throw ErrorUtils.sendError(e, "Exception reading ETL file", Response.Status.BAD_REQUEST);
         }
-        logger.info("File mapped: " + delimitedFile.getPath());
         return result;
     }
 
@@ -400,14 +400,14 @@ public class DelimitedRestImpl implements DelimitedRest {
      */
     private String convertCSVRows(File input, int numRows, char separator) throws IOException {
         Charset charset = getCharset(Files.readAllBytes(input.toPath()));
-        CSVReader reader = new CSVReader(new InputStreamReader(new FileInputStream(input), charset.name()), separator);
-        List<String[]> csvRows = reader.readAll();
-        JSONArray returnRows = new JSONArray();
-        for (int i = 0; i <= numRows && i < csvRows.size(); i ++) {
-            returnRows.add(i, csvRows.get(i));
+        try (CSVReader reader = new CSVReader(new InputStreamReader(new FileInputStream(input), charset.name()), separator)) {
+            List<String[]> csvRows = reader.readAll();
+            JSONArray returnRows = new JSONArray();
+            for (int i = 0; i <= numRows && i < csvRows.size(); i++) {
+                returnRows.add(i, csvRows.get(i));
+            }
+            return returnRows.toString();
         }
-
-        return returnRows.toString();
     }
 
     /**
@@ -421,25 +421,24 @@ public class DelimitedRestImpl implements DelimitedRest {
      * @throws InvalidFormatException file is not in a valid excel format
      */
     private String convertExcelRows(File input, int numRows) throws IOException, InvalidFormatException {
-        Workbook wb = WorkbookFactory.create(input);
-        // Only support single sheet files for now
-        Sheet sheet = wb.getSheetAt(0);
-        DataFormatter df = new DataFormatter();
-        JSONArray rowList = new JSONArray();
-        String[] columns;
-        for (Row row : sheet) {
-            if (row.getRowNum() <= numRows) {
-                columns = new String[row.getPhysicalNumberOfCells()];
-                int index = 0;
-                for (Cell cell : row) {
-                    columns[index] = df.formatCellValue(cell);
-                    index++;
+        try (Workbook wb = WorkbookFactory.create(input)) {
+            // Only support single sheet files for now
+            Sheet sheet = wb.getSheetAt(0);
+            DataFormatter df = new DataFormatter();
+            JSONArray rowList = new JSONArray();
+            String[] columns;
+            for (Row row : sheet) {
+                if (row.getRowNum() <= numRows) {
+                    //getLastCellNumber instead of getPhysicalNumberOfCells so that blank values don't shift cells
+                    columns = new String[row.getLastCellNum()];
+                    for (int i = 0; i < row.getLastCellNum(); i++ ) {
+                        columns[i] = df.formatCellValue(row.getCell(i));
+                    }
+                    rowList.add(columns);
                 }
-                rowList.add(columns);
             }
+            return rowList.toString();
         }
-
-        return rowList.toString();
     }
 
     /**

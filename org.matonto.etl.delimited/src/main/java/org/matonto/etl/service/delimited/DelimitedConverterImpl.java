@@ -25,8 +25,9 @@ package org.matonto.etl.service.delimited;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
+import com.google.common.base.CharMatcher;
 import com.opencsv.CSVReader;
-import org.apache.log4j.Logger;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormatter;
@@ -49,6 +50,8 @@ import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.orm.Thing;
 import org.matonto.rest.util.CharsetUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -68,7 +71,7 @@ import java.util.regex.Pattern;
 
 @Component(provide = DelimitedConverter.class)
 public class DelimitedConverterImpl implements DelimitedConverter {
-    private static final Logger LOGGER = Logger.getLogger(DelimitedConverterImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DelimitedConverterImpl.class);
     private static final String LOCAL_NAME_PATTERN = "\\$\\{(\\d+|UUID)\\}";
     private static final String DEFAULT_PREFIX = "http://matonto.org/data/";
 
@@ -119,7 +122,19 @@ public class DelimitedConverterImpl implements DelimitedConverter {
         long index = config.getOffset();
         Optional<Long> limit = config.getLimit();
         while ((nextLine = reader.readNext()) != null && (!limit.isPresent() || index < limit.get() + offset)) {
-            writeClassMappingsToModel(convertedRDF, nextLine, classMappings);
+            //Exporting to CSV from Excel can cause empty rows to contain columns
+            //Therefore, we must ensure at least one cell has values before processing the row
+            boolean rowContainsValues = false;
+            for (String cell : nextLine) {
+                if (!cell.isEmpty()) {
+                    rowContainsValues = true;
+                    writeClassMappingsToModel(convertedRDF, nextLine, classMappings);
+                    break;
+                }
+            }
+            if (!rowContainsValues) {
+                LOGGER.debug(String.format("Skipping empty row number: %d", index + 1));
+            }
             index++;
         }
         return convertedRDF;
@@ -138,21 +153,37 @@ public class DelimitedConverterImpl implements DelimitedConverter {
             boolean containsHeaders = config.getContainsHeaders();
             long offset = config.getOffset();
             Optional<Long> limit = config.getLimit();
+            long lastRowNumber = -1;
 
             //Traverse each row and convert column into RDF
             for (Row row : sheet) {
                 // If headers exist or the row is before the offset point, skip the row
                 if ((containsHeaders && row.getRowNum() == 0) || row.getRowNum() - (containsHeaders ? 1 : 0) < offset
                         || (limit.isPresent() && row.getRowNum() >= limit.get() + offset)) {
+                    lastRowNumber++;
                     continue;
                 }
-                nextRow = new String[row.getPhysicalNumberOfCells()];
-                int cellIndex = 0;
-                for (Cell cell : row) {
-                    nextRow[cellIndex] = df.formatCellValue(cell);
-                    cellIndex++;
+                // Logging the automatic skip of empty rows with no formatting
+                while (row.getRowNum() > lastRowNumber + 1) {
+                    LOGGER.debug(String.format("Skipping empty row number: %d", lastRowNumber + 1));
+                    lastRowNumber++;
                 }
-                writeClassMappingsToModel(convertedRDF, nextRow, classMappings);
+                //getLastCellNumber instead of getPhysicalNumberOfCells so that blank values don't cause cells to shift
+                nextRow = new String[row.getLastCellNum()];
+                boolean rowContainsValues = false;
+                for (int i = 0; i < row.getLastCellNum(); i++ ) {
+                    nextRow[i] = df.formatCellValue(row.getCell(i));
+                    if (!rowContainsValues && !nextRow[i].isEmpty()) {
+                        rowContainsValues = true;
+                    }
+                }
+                //Skipping empty rows
+                if (rowContainsValues) {
+                    writeClassMappingsToModel(convertedRDF, nextRow, classMappings);
+                } else {
+                    LOGGER.debug(String.format("Skipping empty row number: %d", row.getRowNum()));
+                }
+                lastRowNumber++;
             }
         } catch (InvalidFormatException e) {
             throw new MatOntoException(e);
@@ -228,8 +259,10 @@ public class DelimitedConverterImpl implements DelimitedConverter {
             Property prop = dataMapping.getHasProperty().iterator().next();
 
             if (columnIndex < nextLine.length && columnIndex >= 0) {
-                convertedRDF.add(classInstance, valueFactory.createIRI(prop.getResource().stringValue()),
-                        valueFactory.createLiteral(nextLine[columnIndex]));
+                if (!StringUtils.isEmpty(nextLine[columnIndex])) {
+                    convertedRDF.add(classInstance, valueFactory.createIRI(prop.getResource().stringValue()),
+                            valueFactory.createLiteral(nextLine[columnIndex]));
+                } // else don't create a stmt for blank values
             } else {
                 LOGGER.warn(String.format("Column %d missing for %s: %s",
                         columnIndex, classInstance.stringValue(), prop.getResource().stringValue()));
@@ -294,7 +327,12 @@ public class DelimitedConverterImpl implements DelimitedConverter {
             } else {
                 int colIndex = Integer.parseInt(mat.group(1));
                 if (colIndex < currentLine.length && colIndex >= 0) {
-                    mat.appendReplacement(result, currentLine[colIndex]);
+                    //remove whitespace
+                    String replacement = CharMatcher.WHITESPACE.removeFrom(currentLine[colIndex]);
+                    if (LOGGER.isDebugEnabled() && !replacement.equals(currentLine[colIndex])) {
+                        LOGGER.debug(String.format("Local name for IRI was converted from \"%s\" to \"%s\" in order to remove whitespace.", currentLine[colIndex], replacement));
+                    }
+                    mat.appendReplacement(result, replacement);
                 } else {
                     LOGGER.warn(String.format("Missing data for local name from column %d", colIndex));
                     return Optional.empty();

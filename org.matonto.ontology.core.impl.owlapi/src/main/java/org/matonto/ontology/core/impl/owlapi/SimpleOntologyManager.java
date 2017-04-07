@@ -26,7 +26,6 @@ package org.matonto.ontology.core.impl.owlapi;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import org.apache.commons.io.IOUtils;
-import org.apache.log4j.Logger;
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.ontologies.mcat.Branch;
 import org.matonto.catalog.api.ontologies.mcat.BranchFactory;
@@ -51,9 +50,7 @@ import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
-import org.matonto.repository.impl.sesame.SesameRepositoryWrapper;
-import org.openrdf.repository.sail.SailRepository;
-import org.openrdf.sail.memory.MemoryStore;
+import org.matonto.repository.api.RepositoryManager;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.RioRDFXMLDocumentFormatFactory;
 import org.semanticweb.owlapi.model.MissingImportHandlingStrategy;
@@ -80,11 +77,11 @@ import javax.annotation.Nullable;
 public class SimpleOntologyManager implements OntologyManager {
 
     protected static final String COMPONENT_NAME = "org.matonto.ontology.core.OntologyManager";
-    private static final Logger log = Logger.getLogger(SimpleOntologyManager.class);
     private ValueFactory valueFactory;
     private SesameTransformer sesameTransformer;
     private ModelFactory modelFactory;
     private CatalogManager catalogManager;
+    private RepositoryManager repositoryManager;
     private OntologyRecordFactory ontologyRecordFactory;
     private CommitFactory commitFactory;
     private BranchFactory branchFactory;
@@ -187,6 +184,11 @@ public class SimpleOntologyManager implements OntologyManager {
     @Reference
     public void setCatalogManager(CatalogManager catalogManager) {
         this.catalogManager = catalogManager;
+    }
+
+    @Reference
+    public void setRepositoryManager(RepositoryManager repositoryManager) {
+        this.repositoryManager = repositoryManager;
     }
 
     @Reference
@@ -371,7 +373,7 @@ public class SimpleOntologyManager implements OntologyManager {
 
     @Override
     public Model constructEntityUsages(Ontology ontology, Resource entity) {
-        Repository repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
+        Repository repo = repositoryManager.createMemoryRepository();
         repo.initialize();
         try (RepositoryConnection conn = repo.getConnection()) {
             conn.add(ontology.asModel(modelFactory));
@@ -417,7 +419,7 @@ public class SimpleOntologyManager implements OntologyManager {
      */
     private TupleQueryResult runQueryOnOntology(Ontology ontology, String queryString,
                                                 @Nullable Function<TupleQuery, TupleQuery> addBinding) {
-        Repository repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
+        Repository repo = repositoryManager.createMemoryRepository();
         repo.initialize();
         try (RepositoryConnection conn = repo.getConnection()) {
             conn.add(ontology.asModel(modelFactory));

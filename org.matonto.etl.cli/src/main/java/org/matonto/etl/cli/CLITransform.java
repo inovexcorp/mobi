@@ -22,15 +22,14 @@ package org.matonto.etl.cli;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import org.apache.commons.io.FilenameUtils;
 
+import org.apache.commons.io.FilenameUtils;
 import org.apache.karaf.shell.api.action.Action;
 import org.apache.karaf.shell.api.action.Argument;
 import org.apache.karaf.shell.api.action.Command;
 import org.apache.karaf.shell.api.action.Option;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
-import org.apache.log4j.Logger;
 import org.matonto.etl.api.config.ExcelConfig;
 import org.matonto.etl.api.config.SVConfig;
 import org.matonto.etl.api.delimited.DelimitedConverter;
@@ -40,6 +39,8 @@ import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.rdf.api.Model;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.Rio;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -73,7 +74,7 @@ public class CLITransform implements Action {
             description = "The separator character for the delimited file if it is an SV.")
     String separator = ",";
 
-    private static final Logger LOGGER = Logger.getLogger(CLITransform.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(CLITransform.class);
 
     @Reference
     private DelimitedConverter converter;

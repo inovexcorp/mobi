@@ -39,8 +39,8 @@
                 controller: function() {
                     var dvm = this;
                     dvm.om = ontologyManagerService;
-                    dvm.sm = ontologyStateService;
-                    dvm.ou = ontologyUtilsManagerService;
+                    dvm.os = ontologyStateService;
+                    dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.util = utilService;
                 }
             }

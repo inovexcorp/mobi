@@ -27,7 +27,9 @@
         .module('tabset', [])
         .directive('tabset', tabset);
 
-        function tabset() {
+        tabset.$inject = ['$timeout'];
+
+        function tabset($timeout) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -59,6 +61,9 @@
                             }
                         });
                         selectedTab.active = true;
+                        $timeout(function() {
+                            selectedTab.onClick();
+                        });
                     }
                 }
             }

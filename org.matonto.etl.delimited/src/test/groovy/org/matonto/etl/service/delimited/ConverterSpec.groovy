@@ -53,6 +53,12 @@ class ConverterSpec extends Specification {
     def out = new ClassPathResource("testOutput.ttl").getFile();
     def testOutput = new FileReader(out);
 
+    def outWithBlanks = new ClassPathResource("testOutputWithBlanks.ttl").getFile();
+    def testOutputWithBlanks = new FileReader(outWithBlanks);
+
+    def outWithFormattingAndBlanks = new ClassPathResource("testOutputWithFormattingAndBlanks.ttl").getFile();
+    def testOutputWithFormattingAndBlanks = new FileReader(outWithFormattingAndBlanks);
+
     def setup() {
         classMappingFactory.setValueFactory(vf);
         classMappingFactory.setValueConverterRegistry(vcr);
@@ -82,116 +88,208 @@ class ConverterSpec extends Specification {
         c.setValueFactory(vf)
         c.setModelFactory(mf);
         c.setClassMappingFactory(classMappingFactory);
+        c.generateUuid() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
     }
 
     def "Convert CSV File with Multiple Object per Row and Object and Data Properties"() {
         setup:
         InputStream csv = new ClassPathResource("testFile.csv").getInputStream();
         InputStream mappingFile = new ClassPathResource("newestMapping.ttl").getInputStream();
-        c.generateUuid() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
         Model m = Values.matontoModel(Rio.parse(testOutput, "", RDFFormat.TURTLE));
         Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE));
         SVConfig config = new SVConfig.SVConfigBuilder(csv, mapping).containsHeaders(true).separator((char) ',').build();
         Model convertedModel = c.convert(config);
 
         expect:
-        m == convertedModel;
+        convertedModel == m;
+    }
+
+    def "Convert CSV File with Multiple Object per Row and Object and Data Properties with Blank Values"() {
+        setup:
+        InputStream csv = new ClassPathResource("testFileWithBlanks.csv").getInputStream();
+        InputStream mappingFile = new ClassPathResource("newestMapping.ttl").getInputStream();
+        Model m = Values.matontoModel(Rio.parse(testOutputWithBlanks, "", RDFFormat.TURTLE));
+        Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE));
+        SVConfig config = new SVConfig.SVConfigBuilder(csv, mapping).containsHeaders(true).separator((char) ',').build();
+        Model convertedModel = c.convert(config);
+
+        expect:
+        convertedModel == m;
     }
 
     def "Test non-comma separator"() {
         setup:
         InputStream csv = new ClassPathResource("semicolonFile.csv").getInputStream();
         InputStream mappingFile = new ClassPathResource("newestMapping.ttl").getInputStream();
-        c.generateUuid() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
         Model m = Values.matontoModel(Rio.parse(testOutput, "", RDFFormat.TURTLE));
         Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE));
         SVConfig config = new SVConfig.SVConfigBuilder(csv, mapping).containsHeaders(true).separator((char) ';').build();
         Model convertedModel = c.convert(config)
 
         expect:
-        m == convertedModel;
+        convertedModel == m;
     }
 
     def "Tab Separated"() {
         setup:
         InputStream csv = new ClassPathResource("tabFile.csv").getInputStream();
         InputStream mappingFile = new ClassPathResource("newestMapping.ttl").getInputStream();
-        c.generateUuid() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
         Model m = Values.matontoModel(Rio.parse(testOutput, "", RDFFormat.TURTLE));
         Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE));
         SVConfig config = new SVConfig.SVConfigBuilder(csv, mapping).containsHeaders(true).separator((char) '\t').build();
         Model convertedModel = c.convert(config)
 
         expect:
-        m == convertedModel;
+        convertedModel == m;
+    }
+
+    def "Tab Separated with Blanks"() {
+        setup:
+        InputStream csv = new ClassPathResource("tabFileWithBlanks.csv").getInputStream();
+        InputStream mappingFile = new ClassPathResource("newestMapping.ttl").getInputStream();
+        Model m = Values.matontoModel(Rio.parse(testOutputWithBlanks, "", RDFFormat.TURTLE));
+        Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE));
+        SVConfig config = new SVConfig.SVConfigBuilder(csv, mapping).containsHeaders(true).separator((char) '\t').build();
+        Model convertedModel = c.convert(config)
+
+        expect:
+        convertedModel == m;
     }
 
     def "Mapping with default Local Name"() {
         setup:
         InputStream csv = new ClassPathResource("testFile.csv").getInputStream();
         InputStream mappingFile = new ClassPathResource("mappingNoLocalName.ttl").getInputStream();
-        c.generateUuid() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
         Model m = Values.matontoModel(Rio.parse(testOutput, "", RDFFormat.TURTLE));
         Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE));
         SVConfig config = new SVConfig.SVConfigBuilder(csv, mapping).containsHeaders(true).separator((char) ',').build();
         Model convertedModel = c.convert(config)
 
         expect:
-        m == convertedModel;
+        convertedModel == m;
     }
 
     def "Without headers"() {
         setup:
         InputStream csv = new ClassPathResource("testFileNoHeaders.csv").getInputStream();
         InputStream mappingFile = new ClassPathResource("newestMapping.ttl").getInputStream();
-        c.generateUuid() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
         Model m = Values.matontoModel(Rio.parse(testOutput, "", RDFFormat.TURTLE));
         Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE));
         SVConfig config = new SVConfig.SVConfigBuilder(csv, mapping).containsHeaders(false).separator((char) ',').build();
         Model convertedModel = c.convert(config);
 
         expect:
-        m == convertedModel;
+        convertedModel == m;
     }
 
     def "Convert Excel 97-2003 File with Multiple Object per Row and Object and Data Properties"() {
         setup:
         InputStream xls = new ClassPathResource("testFile.xls").getInputStream();
         InputStream mappingFile = new ClassPathResource("newestMapping.ttl").getInputStream();
-        c.generateUuid() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
         Model m = Values.matontoModel(Rio.parse(testOutput, "", RDFFormat.TURTLE));
         Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE));
         ExcelConfig config = new ExcelConfig.ExcelConfigBuilder(xls, mapping).containsHeaders(true).build();
         Model convertedModel = c.convert(config);
 
         expect:
-        m == convertedModel;
+        convertedModel == m;
+    }
+
+    def "Convert Excel 97-2003 File with Multiple Object per Row and Object and Data Properties with Blank Values"() {
+        setup:
+        InputStream xls = new ClassPathResource("testFileWithBlanks.xls").getInputStream();
+        InputStream mappingFile = new ClassPathResource("newestMapping.ttl").getInputStream();
+        Model m = Values.matontoModel(Rio.parse(testOutputWithBlanks, "", RDFFormat.TURTLE));
+        Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE));
+        ExcelConfig config = new ExcelConfig.ExcelConfigBuilder(xls, mapping).containsHeaders(true).build();
+        Model convertedModel = c.convert(config);
+
+        expect:
+        convertedModel == m;
     }
 
     def "Convert Excel 2007 File with Multiple Object per Row and Object and Data Properties"() {
         setup:
         InputStream xls = new ClassPathResource("testFile.xlsx").getInputStream();
         InputStream mappingFile = new ClassPathResource("newestMapping.ttl").getInputStream();
-        c.generateUuid() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
         Model m = Values.matontoModel(Rio.parse(testOutput, "", RDFFormat.TURTLE))
         Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE));
         ExcelConfig config = new ExcelConfig.ExcelConfigBuilder(xls, mapping).containsHeaders(true).build();
         Model convertedModel = c.convert(config);
 
         expect:
-        m == convertedModel;
+        convertedModel == m;
+    }
+
+    def "Convert Excel 2007 File with Multiple Object per Row and Object and Data Properties with Blank Values and Blank Rows"() {
+        setup:
+        InputStream xls = new ClassPathResource("testFileWithBlanks.xlsx").getInputStream();
+        InputStream mappingFile = new ClassPathResource("newestMapping.ttl").getInputStream();
+        Model m = Values.matontoModel(Rio.parse(testOutputWithBlanks, "", RDFFormat.TURTLE))
+        Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE));
+        ExcelConfig config = new ExcelConfig.ExcelConfigBuilder(xls, mapping).containsHeaders(true).build();
+        Model convertedModel = c.convert(config);
+
+        expect:
+        convertedModel == m;
+    }
+
+    def "Convert Excel 2007 File with Formatting and Blank Values and Blank Rows"() {
+        setup:
+        InputStream xls = new ClassPathResource("testFileWithFormattingAndBlanks.xlsx").getInputStream();
+        InputStream mappingFile = new ClassPathResource("formattedExcelMapping.ttl").getInputStream();
+        Model m = Values.matontoModel(Rio.parse(testOutputWithFormattingAndBlanks, "", RDFFormat.TURTLE))
+        Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE));
+        ExcelConfig config = new ExcelConfig.ExcelConfigBuilder(xls, mapping).containsHeaders(true).build();
+
+        when:
+        Model convertedModel = c.convert(config);
+
+        then:
+        c.generateUuid() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "mno", "nop",
+                              "opq", "pqr", "qrs", "rst", "stu", "tuv", "uvw", "vwx", "wxy", "xyz", "yza", "zab", "123",
+                              "234" , "345" , "456" , "567" , "678" , "789" , "890" , "987" , "876" , "765" , "654" ,
+                              "543" , "432" , "321"]
+
+        expect:
+        convertedModel == m;
     }
 
     def "Test Generation of Local Name #localName Results in #result"() {
         setup:
         String[] nextLine = ["abcd","efgh","ijkl","mnop","qrst"]
-        c.generateUuid() >> "12345"
         def cm = Mock(ClassMapping)
 
         when:
         def result2 = c.generateLocalName(cm, nextLine)
 
         then:
+        c.generateUuid() >> "12345"
+        cm.getLocalName() >>> Optional.ofNullable(localName)
+        result2.get() == result
+
+        where:
+        result              | localName
+        "12345"             | "\${UUID}"
+        "12345/abcd"        | "\${UUID}/\${0}"
+        "abcd"              | "\${0}"
+        "abcd/12345"        | "\${0}/\${UUID}"
+        "abcd/12345/ijkl"   | "\${0}/\${UUID}/\${2}"
+        "abcd/abcd"         | "\${0}/\${0}"
+        "12345"             | ""
+        "12345"             | null
+    }
+
+    def "Test Generation of Local Name #localName Results in #result when whitespace is present"() {
+        setup:
+        String[] nextLine = ["ab cd\t     \r\n","efgh","ij\tkl","mnop","qrst"]
+        def cm = Mock(ClassMapping)
+
+        when:
+        def result2 = c.generateLocalName(cm, nextLine)
+
+        then:
+        c.generateUuid() >> "12345"
         cm.getLocalName() >>> Optional.ofNullable(localName)
         result2.get() == result
 
@@ -225,7 +323,6 @@ class ConverterSpec extends Specification {
         setup:
         InputStream csv = new ClassPathResource("testFile.csv").getInputStream();
         InputStream mappingFile = new ClassPathResource("newestMapping.ttl").getInputStream();
-        c.generateUuid() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
         out = new ClassPathResource("testLimitNoOffsetOutput.ttl").getFile();
         testOutput = new FileReader(out);
         Model m = Values.matontoModel(Rio.parse(testOutput, "", RDFFormat.TURTLE));
@@ -235,14 +332,13 @@ class ConverterSpec extends Specification {
         Model convertedModel = c.convert(config);
 
         expect:
-        m == convertedModel;
+        convertedModel == m;
     }
 
     def "With a limit set with an offset"() {
         setup:
         InputStream csv = new ClassPathResource("testFile.csv").getInputStream();
         InputStream mappingFile = new ClassPathResource("newestMapping.ttl").getInputStream();
-        c.generateUuid() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
         out = new ClassPathResource("testLimitWithOffsetOutput.ttl").getFile();
         testOutput = new FileReader(out);
         Model m = Values.matontoModel(Rio.parse(testOutput, "", RDFFormat.TURTLE));
@@ -252,14 +348,13 @@ class ConverterSpec extends Specification {
         Model convertedModel = c.convert(config);
 
         expect:
-        m == convertedModel;
+        convertedModel == m;
     }
 
     def "With an offset and headers"() {
         setup:
         InputStream csv = new ClassPathResource("testFile.csv").getInputStream();
         InputStream mappingFile = new ClassPathResource("newestMapping.ttl").getInputStream();
-        c.generateUuid() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
         out = new ClassPathResource("testOffsetOutput.ttl").getFile();
         testOutput = new FileReader(out);
         Model m = Values.matontoModel(Rio.parse(testOutput, "", RDFFormat.TURTLE));
@@ -269,14 +364,59 @@ class ConverterSpec extends Specification {
         Model convertedModel = c.convert(config);
 
         expect:
-        m == convertedModel;
+        convertedModel == m;
+    }
+
+    def "Convert CSV File with an offset and headers and blank rows"() {
+        setup:
+        InputStream csv = new ClassPathResource("testFileWithBlanks.csv").getInputStream();
+        InputStream mappingFile = new ClassPathResource("newestMapping.ttl").getInputStream();
+        out = new ClassPathResource("testOffsetOutputWithBlankRows.ttl").getFile();
+        testOutput = new FileReader(out);
+        Model m = Values.matontoModel(Rio.parse(testOutput, "", RDFFormat.TURTLE));
+        Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE));
+        SVConfig config = new SVConfig.SVConfigBuilder(csv, mapping).containsHeaders(true).separator((char) ',')
+                .offset(2).build();
+        Model convertedModel = c.convert(config);
+
+        expect:
+        convertedModel == m;
+    }
+
+    def "Convert Excel 97-2003 File with an offset and headers and blank rows"() {
+        setup:
+        InputStream xls = new ClassPathResource("testFileWithBlanks.xls").getInputStream();
+        InputStream mappingFile = new ClassPathResource("newestMapping.ttl").getInputStream();
+        out = new ClassPathResource("testOffsetOutputWithBlankRows.ttl").getFile();
+        testOutput = new FileReader(out);
+        Model m = Values.matontoModel(Rio.parse(testOutput, "", RDFFormat.TURTLE));
+        Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE));
+        ExcelConfig config = new ExcelConfig.ExcelConfigBuilder(xls, mapping).containsHeaders(true).offset(2).build();
+        Model convertedModel = c.convert(config);
+
+        expect:
+        convertedModel == m;
+    }
+
+    def "Convert Excel 2007 File with an offset and headers and blank rows"() {
+        setup:
+        InputStream xls = new ClassPathResource("testFileWithBlanks.xlsx").getInputStream();
+        InputStream mappingFile = new ClassPathResource("newestMapping.ttl").getInputStream();
+        out = new ClassPathResource("testOffsetOutputWithBlankRows.ttl").getFile();
+        testOutput = new FileReader(out);
+        Model m = Values.matontoModel(Rio.parse(testOutput, "", RDFFormat.TURTLE));
+        Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE));
+        ExcelConfig config = new ExcelConfig.ExcelConfigBuilder(xls, mapping).containsHeaders(true).offset(2).build();
+        Model convertedModel = c.convert(config);
+
+        expect:
+        convertedModel == m;
     }
 
     def "With an offset and no headers"() {
         setup:
         InputStream csv = new ClassPathResource("testFileNoHeaders.csv").getInputStream();
         InputStream mappingFile = new ClassPathResource("newestMapping.ttl").getInputStream();
-        c.generateUuid() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
         out = new ClassPathResource("testOffsetOutput.ttl").getFile();
         testOutput = new FileReader(out);
         Model m = Values.matontoModel(Rio.parse(testOutput, "", RDFFormat.TURTLE));
@@ -286,7 +426,7 @@ class ConverterSpec extends Specification {
         Model convertedModel = c.convert(config);
 
         expect:
-        m == convertedModel;
+        convertedModel == m;
     }
 
     def "Convert File with Missing Properties Ignored"() {
@@ -295,7 +435,6 @@ class ConverterSpec extends Specification {
         InputStream mappingFile = new ClassPathResource("newestMapping.ttl").getInputStream();
         out = new ClassPathResource("testPropertiesMissingOut.ttl").getFile();
         testOutput = new FileReader(out);
-        c.generateUuid() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
         Model m = Values.matontoModel(Rio.parse(testOutput, "", RDFFormat.TURTLE));
         Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE));
         SVConfig config = new SVConfig.SVConfigBuilder(csv, mapping).containsHeaders(true).separator((char) ',').build();

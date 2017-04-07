@@ -23,6 +23,14 @@ package org.matonto.ontology.core.impl.owlapi;
  * #L%
  */
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -59,6 +67,8 @@ import org.matonto.rdf.orm.conversion.impl.ResourceValueConverter;
 import org.matonto.rdf.orm.conversion.impl.ShortValueConverter;
 import org.matonto.rdf.orm.conversion.impl.StringValueConverter;
 import org.matonto.rdf.orm.conversion.impl.ValueValueConverter;
+import org.matonto.repository.api.RepositoryManager;
+import org.matonto.repository.impl.core.SimpleRepositoryManager;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.openrdf.rio.RDFFormat;
@@ -75,14 +85,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(SimpleOntologyValues.class)
@@ -117,6 +119,7 @@ public class SimpleOntologyManagerTest {
     private IRI versionIRI;
     private org.semanticweb.owlapi.model.IRI owlOntologyIRI;
     private org.semanticweb.owlapi.model.IRI owlVersionIRI;
+    private RepositoryManager repoManager = new SimpleRepositoryManager();
 
     @Before
     public void setUp() throws Exception {
@@ -192,6 +195,7 @@ public class SimpleOntologyManagerTest {
         manager.setOntologyRecordFactory(ontologyRecordFactory);
         manager.setCommitFactory(commitFactory);
         manager.setBranchFactory(branchFactory);
+        manager.setRepositoryManager(repoManager);
     }
 
     @Test

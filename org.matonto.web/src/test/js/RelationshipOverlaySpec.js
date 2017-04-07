@@ -21,14 +21,7 @@
  * #L%
  */
 describe('Relationship Overlay directive', function() {
-    var $compile,
-        scope,
-        element,
-        controller,
-        ontologyStateSvc,
-        ontologyManagerSvc,
-        resObj,
-        splitIRIFilter;
+    var $compile, scope, element, controller, ontologyStateSvc, ontologyManagerSvc, resObj, splitIRIFilter, ontoUtils;
 
     beforeEach(function() {
         module('templates');
@@ -40,14 +33,16 @@ describe('Relationship Overlay directive', function() {
         mockOntologyManager();
         mockOntologyState();
         mockUtil();
+        mockOntologyUtilsManager();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _responseObj_, _ontologyManagerService_, _splitIRIFilter_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _responseObj_, _ontologyManagerService_, _splitIRIFilter_, _ontologyUtilsManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
             resObj = _responseObj_;
             ontologyManagerSvc = _ontologyManagerService_;
             splitIRIFilter = _splitIRIFilter_;
+            ontoUtils = _ontologyUtilsManagerService_;
         });
 
         scope.relationshipList = [];
@@ -126,8 +121,9 @@ describe('Relationship Overlay directive', function() {
             controller.addRelationship();
             expect(resObj.getItemIri).toHaveBeenCalledWith(controller.relationship);
             expect(ontologyStateSvc.selected.axiom).toEqual(controller.values);
-            expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, jasmine.any(Object));
+            expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, jasmine.any(Object));
             expect(ontologyStateSvc.showRelationshipOverlay).toBe(false);
+            expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
         });
     });
     it('should call addRelationship when the button is clicked', function() {

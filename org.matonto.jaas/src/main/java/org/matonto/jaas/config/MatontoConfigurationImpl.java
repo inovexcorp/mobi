@@ -27,7 +27,6 @@ import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Modified;
 import aQute.bnd.annotation.component.Reference;
-import org.apache.log4j.Logger;
 import org.matonto.jaas.api.config.LoginModuleConfig;
 import org.matonto.jaas.api.config.MatontoConfiguration;
 import org.matonto.jaas.api.engines.EngineManager;
@@ -46,7 +45,6 @@ import javax.security.auth.login.Configuration;
         provide = MatontoConfiguration.class
     )
 public class MatontoConfigurationImpl extends MatontoConfiguration {
-    private static final Logger log = Logger.getLogger(MatontoConfigurationImpl.class);
     public static final String COMPONENT_NAME = "org.matonto.jaas.api.config.MatontoConfiguration";
     private static final String RDF_ENGINE = "org.matonto.jaas.engines.RdfEngine";
     protected EngineManager engineManager;

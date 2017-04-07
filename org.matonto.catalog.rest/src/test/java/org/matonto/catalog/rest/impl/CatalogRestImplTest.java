@@ -42,8 +42,6 @@ import org.matonto.catalog.api.ontologies.mcat.Catalog;
 import org.matonto.catalog.api.ontologies.mcat.CatalogFactory;
 import org.matonto.catalog.api.ontologies.mcat.Commit;
 import org.matonto.catalog.api.ontologies.mcat.CommitFactory;
-import org.matonto.catalog.api.ontologies.mcat.DatasetRecord;
-import org.matonto.catalog.api.ontologies.mcat.DatasetRecordFactory;
 import org.matonto.catalog.api.ontologies.mcat.Distribution;
 import org.matonto.catalog.api.ontologies.mcat.DistributionFactory;
 import org.matonto.catalog.api.ontologies.mcat.InProgressCommit;
@@ -136,7 +134,6 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     private VersionedRDFRecordFactory versionedRDFRecordFactory;
     private OntologyRecordFactory ontologyRecordFactory;
     private MappingRecordFactory mappingRecordFactory;
-    private DatasetRecordFactory datasetRecordFactory;
     private DistributionFactory distributionFactory;
     private VersionFactory versionFactory;
     private TagFactory tagFactory;
@@ -156,7 +153,6 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     private VersionedRDFRecord testVersionedRDFRecord;
     private OntologyRecord testOntologyRecord;
     private MappingRecord testMappingRecord;
-    private DatasetRecord testDatasetRecord;
     private Distribution testDistribution;
     private Version testVersion;
     private Tag testTag;
@@ -212,7 +208,6 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         versionedRDFRecordFactory = new VersionedRDFRecordFactory();
         ontologyRecordFactory = new OntologyRecordFactory();
         mappingRecordFactory = new MappingRecordFactory();
-        datasetRecordFactory = new DatasetRecordFactory();
         distributionFactory = new DistributionFactory();
         versionFactory = new VersionFactory();
         tagFactory = new TagFactory();
@@ -242,9 +237,6 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         mappingRecordFactory.setModelFactory(mf);
         mappingRecordFactory.setValueFactory(vf);
         mappingRecordFactory.setValueConverterRegistry(vcr);
-        datasetRecordFactory.setModelFactory(mf);
-        datasetRecordFactory.setValueFactory(vf);
-        datasetRecordFactory.setValueConverterRegistry(vcr);
         distributionFactory.setModelFactory(mf);
         distributionFactory.setValueFactory(vf);
         distributionFactory.setValueConverterRegistry(vcr);
@@ -277,7 +269,6 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         vcr.registerValueConverter(versionedRDFRecordFactory);
         vcr.registerValueConverter(ontologyRecordFactory);
         vcr.registerValueConverter(mappingRecordFactory);
-        vcr.registerValueConverter(datasetRecordFactory);
         vcr.registerValueConverter(distributionFactory);
         vcr.registerValueConverter(versionFactory);
         vcr.registerValueConverter(tagFactory);
@@ -328,7 +319,6 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         testVersionedRDFRecord.setBranch(Stream.of(testBranch, testUserBranch).collect(Collectors.toSet()));
         testOntologyRecord = ontologyRecordFactory.createNew(vf.createIRI(RECORD_IRI));
         testMappingRecord = mappingRecordFactory.createNew(vf.createIRI(RECORD_IRI));
-        testDatasetRecord = datasetRecordFactory.createNew(vf.createIRI(RECORD_IRI));
         user = userFactory.createNew(vf.createIRI(USER_IRI));
         compiledResource = mf.createModel();
         compiledResourceWithChanges = mf.createModel(compiledResource);
@@ -354,8 +344,6 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         rest.addRecordFactory(versionedRDFRecordFactory);
         rest.addRecordFactory(ontologyRecordFactory);
         rest.addRecordFactory(mappingRecordFactory);
-        rest.addRecordFactory(datasetRecordFactory);
-
 
         return new ResourceConfig()
                 .register(rest)
@@ -398,8 +386,6 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
                 .thenReturn(Optional.of(testOntologyRecord));
         when(catalogManager.getRecord(any(Resource.class), any(Resource.class), eq(mappingRecordFactory)))
                 .thenReturn(Optional.of(testMappingRecord));
-        when(catalogManager.getRecord(any(Resource.class), any(Resource.class), eq(datasetRecordFactory)))
-                .thenReturn(Optional.of(testDatasetRecord));
         when(catalogManager.createRecord(any(RecordConfig.class), eq(recordFactory))).thenReturn(testRecord);
         when(catalogManager.createRecord(any(RecordConfig.class), eq(unversionedRecordFactory)))
                 .thenReturn(testUnversionedRecord);
@@ -411,8 +397,6 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
                 .thenReturn(testOntologyRecord);
         when(catalogManager.createRecord(any(RecordConfig.class), eq(mappingRecordFactory)))
                 .thenReturn(testMappingRecord);
-        when(catalogManager.createRecord(any(RecordConfig.class), eq(datasetRecordFactory)))
-                .thenReturn(testDatasetRecord);
         when(catalogManager.getDistribution(any(Resource.class))).thenReturn(Optional.of(testDistribution));
         when(catalogManager.createDistribution(any(DistributionConfig.class))).thenReturn(testDistribution);
         when(catalogManager.getVersion(any(Resource.class), eq(versionFactory))).thenReturn(Optional.of(testVersion));
@@ -585,7 +569,6 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         when(results.getPageNumber()).thenReturn(1);
 
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records")
-                .queryParam("sort", DCTERMS.TITLE.stringValue())
                 .queryParam("offset", 1)
                 .queryParam("limit", 1).request().get();
         assertEquals(response.getStatus(), 200);
@@ -599,27 +582,23 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     }
 
     @Test
-    public void getRecordsWithInvalidSortIriTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records")
-                .queryParam("sort", DCTERMS.DESCRIPTION.stringValue()).request().get();
-        assertEquals(response.getStatus(), 400);
-    }
-
-    @Test
     public void getRecordsWithNegativeOffsetTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records")
-                .queryParam("sort", DCTERMS.TITLE.stringValue()).queryParam("offset", "-1").request().get();
+        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records").queryParam("offset", -1).request().get();
         assertEquals(response.getStatus(), 400);
     }
 
     @Test
-    public void getRecordsWithNonPositiveLimitTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records")
-                .queryParam("sort", DCTERMS.TITLE.stringValue()).queryParam("limit", "-1").request().get();
+    public void getRecordsWithNegativeLimitTest() {
+        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records").queryParam("limit", -1).request().get();
         assertEquals(response.getStatus(), 400);
+    }
 
-        response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records")
-                .queryParam("sort", DCTERMS.TITLE.stringValue()).queryParam("limit", "0").request().get();
+    @Test
+    public void getRecordsWithOffsetThatIsTooLargeTest() {
+        // Setup:
+        doThrow(new IllegalArgumentException()).when(catalogManager).findRecord(eq(vf.createIRI(LOCAL_IRI)), any(PaginatedSearchParams.class));
+
+        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records").queryParam("offset", 9999).request().get();
         assertEquals(response.getStatus(), 400);
     }
 
@@ -630,7 +609,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records")
                 .queryParam("sort", DCTERMS.TITLE.stringValue()).request().get();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatus(), 500);
     }
 
     // POST catalogs/{catalogId}/records
@@ -665,12 +644,6 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     @Test
     public void createMappingRecordTest() {
         testCreateRecordByType(mappingRecordFactory);
-        verify(catalogManager).addMasterBranch(any(Resource.class));
-    }
-
-    @Test
-    public void createDatasetRecordTest() {
-        testCreateRecordByType(datasetRecordFactory);
         verify(catalogManager).addMasterBranch(any(Resource.class));
     }
 
@@ -877,25 +850,21 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     @Test
     public void getUnversionedRecordsWithNegativeOffsetTest() {
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/distributions")
-                .queryParam("sort", DCTERMS.TITLE.stringValue()).queryParam("offset", "-1").request().get();
+                .queryParam("sort", DCTERMS.TITLE.stringValue()).queryParam("offset", -1).request().get();
         assertEquals(response.getStatus(), 400);
     }
 
     @Test
-    public void getUnversionedRecordsWithNonPositiveLimitTest() {
+    public void getUnversionedRecordsWithNegativeLimitTest() {
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/distributions")
-                .queryParam("sort", DCTERMS.TITLE.stringValue()).queryParam("limit", "-1").request().get();
-        assertEquals(response.getStatus(), 400);
-
-        response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/distributions")
-                .queryParam("sort", DCTERMS.TITLE.stringValue()).queryParam("limit", "0").request().get();
+                .queryParam("sort", DCTERMS.TITLE.stringValue()).queryParam("limit", -1).request().get();
         assertEquals(response.getStatus(), 400);
     }
 
     @Test
     public void getUnversionedRecordsWithOffsetThatIsTooLargeTest() {
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/distributions")
-                .queryParam("sort", DCTERMS.TITLE.stringValue()).queryParam("offset", "100").request().get();
+                .queryParam("sort", DCTERMS.TITLE.stringValue()).queryParam("offset", 100).request().get();
         assertEquals(response.getStatus(), 400);
     }
 
@@ -1201,25 +1170,21 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     @Test
     public void getVersionsWithNegativeOffsetTest() {
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/versions")
-                .queryParam("sort", DCTERMS.TITLE.stringValue()).queryParam("offset", "-1").request().get();
+                .queryParam("sort", DCTERMS.TITLE.stringValue()).queryParam("offset", -1).request().get();
         assertEquals(response.getStatus(), 400);
     }
 
     @Test
-    public void getVersionsWithNonPositiveLimitTest() {
+    public void getVersionsWithNegativeLimitTest() {
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/versions")
-                .queryParam("sort", DCTERMS.TITLE.stringValue()).queryParam("limit", "-1").request().get();
-        assertEquals(response.getStatus(), 400);
-
-        response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/versions")
-                .queryParam("sort", DCTERMS.TITLE.stringValue()).queryParam("limit", "0").request().get();
+                .queryParam("sort", DCTERMS.TITLE.stringValue()).queryParam("limit", -1).request().get();
         assertEquals(response.getStatus(), 400);
     }
 
     @Test
     public void getVersionsWithOffsetThatIsTooLargeTest() {
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/versions")
-                .queryParam("sort", DCTERMS.TITLE.stringValue()).queryParam("offset", "100").request().get();
+                .queryParam("sort", DCTERMS.TITLE.stringValue()).queryParam("offset", 100).request().get();
         assertEquals(response.getStatus(), 400);
     }
 
@@ -1551,7 +1516,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     public void getVersionedDistributionsWithNegativeOffsetTest() {
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI) + "/distributions")
-                .queryParam("sort", DCTERMS.TITLE.stringValue()).queryParam("offset", "-1").request().get();
+                .queryParam("sort", DCTERMS.TITLE.stringValue()).queryParam("offset", -1).request().get();
         assertEquals(response.getStatus(), 400);
     }
 
@@ -1559,12 +1524,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     public void getVersionedDistributionsWithNonPositiveLimitTest() {
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI) + "/distributions")
-                .queryParam("sort", DCTERMS.TITLE.stringValue()).queryParam("limit", "-1").request().get();
-        assertEquals(response.getStatus(), 400);
-
-        response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
-                + "/versions/" + encode(VERSION_IRI) + "/distributions")
-                .queryParam("sort", DCTERMS.TITLE.stringValue()).queryParam("limit", "0").request().get();
+                .queryParam("sort", DCTERMS.TITLE.stringValue()).queryParam("limit", -1).request().get();
         assertEquals(response.getStatus(), 400);
     }
 
@@ -1572,7 +1532,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     public void getVersionedDistributionsWithOffsetThatIsTooLargeTest() {
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI) + "/distributions")
-                .queryParam("sort", DCTERMS.TITLE.stringValue()).queryParam("offset", "100").request().get();
+                .queryParam("sort", DCTERMS.TITLE.stringValue()).queryParam("offset", 100).request().get();
         assertEquals(response.getStatus(), 400);
     }
 
@@ -2081,25 +2041,21 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     @Test
     public void getBranchesWithNegativeOffsetTest() {
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/branches")
-                .queryParam("sort", DCTERMS.TITLE.stringValue()).queryParam("offset", "-1").request().get();
+                .queryParam("sort", DCTERMS.TITLE.stringValue()).queryParam("offset", -1).request().get();
         assertEquals(response.getStatus(), 400);
     }
 
     @Test
-    public void getBranchesWithNonPositiveLimitTest() {
+    public void getBranchesWithNegativeLimitTest() {
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/branches")
-                .queryParam("sort", DCTERMS.TITLE.stringValue()).queryParam("limit", "-1").request().get();
-        assertEquals(response.getStatus(), 400);
-
-        response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/branches")
-                .queryParam("sort", DCTERMS.TITLE.stringValue()).queryParam("limit", "0").request().get();
+                .queryParam("sort", DCTERMS.TITLE.stringValue()).queryParam("limit", -1).request().get();
         assertEquals(response.getStatus(), 400);
     }
 
     @Test
     public void getBranchesWithOffsetThatIsTooLargeTest() {
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/branches")
-                .queryParam("sort", DCTERMS.TITLE.stringValue()).queryParam("offset", "100").request().get();
+                .queryParam("sort", DCTERMS.TITLE.stringValue()).queryParam("offset", 100).request().get();
         assertEquals(response.getStatus(), 400);
     }
 
@@ -3602,14 +3558,13 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         assertEquals(response.getStatus(), 200);
         try {
             JSONArray array = JSONArray.fromObject(response.readEntity(String.class));
-            assertEquals(array.size(), 7);
+            assertEquals(array.size(), 6);
             assertTrue(array.contains(recordFactory.getTypeIRI().stringValue()));
             assertTrue(array.contains(unversionedRecordFactory.getTypeIRI().stringValue()));
             assertTrue(array.contains(versionedRecordFactory.getTypeIRI().stringValue()));
             assertTrue(array.contains(versionedRDFRecordFactory.getTypeIRI().stringValue()));
             assertTrue(array.contains(ontologyRecordFactory.getTypeIRI().stringValue()));
             assertTrue(array.contains(mappingRecordFactory.getTypeIRI().stringValue()));
-            assertTrue(array.contains(datasetRecordFactory.getTypeIRI().stringValue()));
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }

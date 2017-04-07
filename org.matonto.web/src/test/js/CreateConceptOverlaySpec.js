@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Create Concept Overlay directive', function() {
-    var $compile, scope, $q, element, controller,  ontologyManagerSvc, ontologyStateSvc, prefixes, splitIRIFilter, ontoUtils;
+    var $compile, scope, $q, element, controller, ontologyManagerSvc, ontologyStateSvc, prefixes, splitIRIFilter, ontoUtils;
     var iri = 'iri#';
 
     beforeEach(function() {
@@ -148,14 +148,14 @@ describe('Create Concept Overlay directive', function() {
             expect(ontologyStateSvc.setCommonIriParts).toHaveBeenCalledWith('begin', 'then');
         });
         it('should create a concept', function() {
-            var listItem = {ontology: [{}], conceptHierarchy: [], index: {}};
+            var listItem = {ontology: [{}], conceptHierarchy: []};
             var schemes = {
                 'scheme1': {'@id': 'scheme1', matonto: {}},
                 'scheme2': {'@id': 'scheme2', matonto: {}}
             };
             schemes.scheme1[prefixes.skos + 'hasTopConcept'] = [{'@id': 'test'}];
             controller.schemes = _.values(schemes);
-            ontologyManagerSvc.getEntityByRecordId.and.callFake(function(recordId, schemeId) {
+            ontologyStateSvc.getEntityByRecordId.and.callFake(function(recordId, schemeId) {
                 return _.get(schemes, schemeId);
             });
             ontologyStateSvc.listItem = listItem;
@@ -168,13 +168,13 @@ describe('Create Concept Overlay directive', function() {
             expect(schemes.scheme2.matonto.unsaved).toBe(true);
             expect(controller.concept.matonto.originalIRI).toEqual(controller.concept['@id']);
             expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(controller.concept, controller.language);
-            expect(ontologyManagerSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, controller.concept);
+            expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, controller.concept);
             expect(listItem.conceptHierarchy).toContain({entityIRI: controller.concept['@id']});
-            expect(listItem.index[controller.concept['@id']]).toBe(0);
-            expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
+            expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                 controller.concept);
             expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(controller.concept['@id']);
             expect(ontologyStateSvc.showCreateConceptOverlay).toBe(false);
+            expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
         });
     });
     it('should call create when the button is clicked', function() {

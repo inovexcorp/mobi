@@ -20,7 +20,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="sparql-results">
+<div class="sparql-result-table">
     <download-query-overlay ng-if="dvm.sparql.displayDownloadOverlay"></download-query-overlay>
     <block>
         <block-content>
@@ -37,11 +37,12 @@
                 </tbody>
             </table>
             <error-display ng-if="dvm.sparql.errorMessage" class="message">{{dvm.sparql.errorMessage}}</error-display>
+            <pre ng-if="dvm.sparql.errorMessage">{{dvm.sparql.errorDetails}}</pre>
             <info-message ng-if="dvm.sparql.infoMessage" class="message">{{dvm.sparql.infoMessage}}</info-message>
         </block-content>
         <block-footer ng-if="dvm.sparql.data" class="footer-relative">
             <button class="btn btn-default download-button" ng-click="dvm.sparql.displayDownloadOverlay = true"><i class="fa fa-download"></i></button>
-            <paging-details page-size="dvm.sparql.data.length" total-size="dvm.sparql.totalSize" page-index="dvm.sparql.currentPage" limit="dvm.sparql.limit"></paging-details>
+            <paging-details total-size="dvm.sparql.totalSize" page-index="dvm.sparql.currentPage" limit="dvm.sparql.limit"></paging-details>
             <pagination links="dvm.sparql.links" current-page="dvm.sparql.currentPage" get-page="dvm.getPage(direction)"></pagination>
         </block-footer>
     </block>

@@ -29,7 +29,6 @@ describe('Hierarchy Tree directive', function() {
         module('templates');
         module('hierarchyTree');
         mockOntologyState();
-        mockOntologyManager();
         mockOntologyUtilsManager();
 
         inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyUtilsManagerService_) {
@@ -39,6 +38,7 @@ describe('Hierarchy Tree directive', function() {
             ontologyUtils = _ontologyUtilsManagerService_;
         });
 
+        ontologyStateSvc.getEntityByRecordId.and.returnValue({});
         ontologyStateSvc.getOpened.and.returnValue(true);
         scope.hierarchy = [{
             entityIRI: 'class1',
@@ -85,6 +85,9 @@ describe('Hierarchy Tree directive', function() {
         });
         it('based on container tree-items', function() {
             expect(element.querySelectorAll('.container tree-item').length).toBe(1);
+            ontologyStateSvc.getEntityByRecordId.and.returnValue(undefined);
+            scope.$digest();
+            expect(element.querySelectorAll('.container tree-item').length).toBe(0);
         });
     });
 });

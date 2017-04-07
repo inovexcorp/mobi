@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Datatype Property Overlay directive', function() {
-    var $compile, scope, element, controller, ontologyStateSvc, ontologyManagerSvc, responseObj, prefixes;
+    var $compile, scope, element, controller, ontologyStateSvc, responseObj, prefixes, ontoUtils;
 
     beforeEach(function() {
         module('templates');
@@ -34,14 +34,15 @@ describe('Datatype Property Overlay directive', function() {
         mockResponseObj();
         mockUtil();
         mockPrefixes();
+        mockOntologyUtilsManager();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyManagerService_, _responseObj_, _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _responseObj_, _prefixes_, _ontologyUtilsManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
-            ontologyManagerSvc = _ontologyManagerService_;
             responseObj = _responseObj_;
             prefixes = _prefixes_;
+            ontoUtils = _ontologyUtilsManagerService_;
         });
 
         element = $compile(angular.element('<datatype-property-overlay></datatype-property-overlay>'))(scope);
@@ -104,16 +105,18 @@ describe('Datatype Property Overlay directive', function() {
                 expect(ontologyStateSvc.selected.prop).toBeDefined();
                 expect(ontologyStateSvc.selected.prop).toContain({'@value': this.value, '@type': type['@id']});
                 expect(ontologyStateSvc.showDataPropertyOverlay).toBe(false);
-                expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
+                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                     jasmine.any(Object));
+                expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             });
             it('without a type and no language', function() {
                 controller.addProperty({}, this.value);
                 expect(ontologyStateSvc.selected.prop).toBeDefined();
                 expect(ontologyStateSvc.selected.prop).toContain({'@value': this.value});
                 expect(ontologyStateSvc.showDataPropertyOverlay).toBe(false);
-                expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
+                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                     jasmine.any(Object));
+                expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             });
             it('with a language and isStringType is true', function() {
                 spyOn(controller, 'isStringType').and.returnValue(true);
@@ -123,8 +126,9 @@ describe('Datatype Property Overlay directive', function() {
                 expect(ontologyStateSvc.selected.prop).toBeDefined();
                 expect(ontologyStateSvc.selected.prop).toContain({'@value': this.value, '@language': language});
                 expect(ontologyStateSvc.showDataPropertyOverlay).toBe(false);
-                expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
+                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                     jasmine.any(Object));
+                expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             });
             it('with a language and isStringType is false', function() {
                 spyOn(controller, 'isStringType').and.returnValue(false);
@@ -134,8 +138,9 @@ describe('Datatype Property Overlay directive', function() {
                 expect(ontologyStateSvc.selected.prop).toBeDefined();
                 expect(ontologyStateSvc.selected.prop).toContain({'@value': this.value, '@type': type['@id']});
                 expect(ontologyStateSvc.showDataPropertyOverlay).toBe(false);
-                expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
+                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                     jasmine.any(Object));
+                expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             });
             it('without a language', function() {
                 spyOn(controller, 'isStringType').and.returnValue(false);
@@ -144,8 +149,9 @@ describe('Datatype Property Overlay directive', function() {
                 expect(ontologyStateSvc.selected.prop).toBeDefined();
                 expect(ontologyStateSvc.selected.prop).toContain({'@value': this.value, '@type': type['@id']});
                 expect(ontologyStateSvc.showDataPropertyOverlay).toBe(false);
-                expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
+                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                     jasmine.any(Object));
+                expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             });
         });
         describe('should edit a data property', function() {
@@ -158,55 +164,60 @@ describe('Datatype Property Overlay directive', function() {
             it('if the type is provided and no language', function() {
                 var type = {'@id': 'type'};
                 controller.editProperty({}, this.value, type);
-                expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
+                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                     jasmine.any(Object));
                 expect(ontologyStateSvc.selected.prop[ontologyStateSvc.propertyIndex]).toEqual({'@value': this.value, '@type': type['@id']});
                 expect(ontologyStateSvc.showDataPropertyOverlay).toBe(false);
-                expect(ontologyManagerSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
+                expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                     jasmine.any(Object));
+                expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             });
             it('if the type is not provided and no language', function() {
                 controller.editProperty({}, this.value);
-                expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
+                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                     jasmine.any(Object));
                 expect(ontologyStateSvc.selected.prop[ontologyStateSvc.propertyIndex]).toEqual({'@value': this.value});
                 expect(ontologyStateSvc.showDataPropertyOverlay).toBe(false);
-                expect(ontologyManagerSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
+                expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                     jasmine.any(Object));
+                expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             });
             it('if the language is provided and isStringType is true', function() {
                 spyOn(controller, 'isStringType').and.returnValue(true);
                 var language = 'en';
                 var type = {'@id': 'type'};
                 controller.editProperty({}, this.value, type, language);
-                expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
+                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                     jasmine.any(Object));
                 expect(ontologyStateSvc.selected.prop[ontologyStateSvc.propertyIndex]).toEqual({'@value': this.value, '@language': language});
                 expect(ontologyStateSvc.showDataPropertyOverlay).toBe(false);
-                expect(ontologyManagerSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
+                expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                     jasmine.any(Object));
+                expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             });
             it('if the language is provided and isStringType is false', function() {
                 spyOn(controller, 'isStringType').and.returnValue(false);
                 var language = 'en';
                 var type = {'@id': 'type'};
                 controller.editProperty({}, this.value, type, language);
-                expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
+                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                     jasmine.any(Object));
                 expect(ontologyStateSvc.selected.prop[ontologyStateSvc.propertyIndex]).toEqual({'@value': this.value, '@type': type['@id']});
                 expect(ontologyStateSvc.showDataPropertyOverlay).toBe(false);
-                expect(ontologyManagerSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
+                expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                     jasmine.any(Object));
+                expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             });
             it('if the language is not provided', function() {
                 var type = {'@id': 'type'};
                 controller.editProperty({}, this.value, type);
-                expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
+                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                     jasmine.any(Object));
                 expect(ontologyStateSvc.selected.prop[ontologyStateSvc.propertyIndex]).toEqual({'@value': this.value, '@type': type['@id']});
                 expect(ontologyStateSvc.showDataPropertyOverlay).toBe(false);
-                expect(ontologyManagerSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
+                expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                     jasmine.any(Object));
+                expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             });
         });
         describe('should determine if type if a string type', function() {

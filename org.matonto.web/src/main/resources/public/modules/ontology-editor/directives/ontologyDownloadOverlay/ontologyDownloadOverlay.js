@@ -27,9 +27,9 @@
         .module('ontologyDownloadOverlay', [])
         .directive('ontologyDownloadOverlay', ontologyDownloadOverlay);
 
-        ontologyDownloadOverlay.$inject = ['$q', '$filter', 'REGEX', 'ontologyStateService', 'ontologyManagerService', 'catalogManagerService'];
+        ontologyDownloadOverlay.$inject = ['$q', '$filter', 'REGEX', 'ontologyStateService', 'ontologyManagerService'];
 
-        function ontologyDownloadOverlay($q, $filter, REGEX, ontologyStateService, ontologyManagerService, catalogManagerService) {
+        function ontologyDownloadOverlay($q, $filter, REGEX, ontologyStateService, ontologyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,24 +38,15 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    var cm = catalogManagerService;
+                    var om = ontologyManagerService;
 
                     dvm.fileNamePattern = REGEX.FILENAME;
-                    dvm.sm = ontologyStateService;
-                    dvm.om = ontologyManagerService;
-                    dvm.fileName = $filter('splitIRI')(dvm.sm.listItem.ontologyId).end;
-                    dvm.error = '';
+                    dvm.os = ontologyStateService;
+                    dvm.fileName = $filter('splitIRI')(dvm.os.listItem.ontologyId).end;
 
                     dvm.download = function() {
-                        var catalogId = _.get(cm.localCatalog, '@id');
-                        cm.getInProgressCommit(dvm.sm.listItem.recordId, catalogId)
-                            .then(inProgressCommit => cm.downloadResource(dvm.sm.listItem.commitId, dvm.sm.listItem.branchId, dvm.sm.listItem.recordId, catalogId, true, dvm.serialization, dvm.fileName), errorMessage => {
-                                if (errorMessage === 'User has no InProgressCommit') {
-                                    return cm.downloadResource(dvm.sm.listItem.commitId, dvm.sm.listItem.branchId, dvm.sm.listItem.recordId, catalogId, false, dvm.serialization, dvm.fileName);
-                                }
-                                return $q.reject(errorMessage);
-                            })
-                            .then(() => dvm.sm.showDownloadOverlay = false, errorMessage => dvm.error = errorMessage);
+                        om.downloadOntology(dvm.os.listItem.recordId, dvm.os.listItem.branchId, dvm.os.listItem.commitId, dvm.serialization, dvm.fileName);
+                        dvm.os.showDownloadOverlay = false;
                     }
                 }
             }

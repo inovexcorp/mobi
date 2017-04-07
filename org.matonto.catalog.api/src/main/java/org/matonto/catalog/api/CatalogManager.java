@@ -25,7 +25,13 @@ package org.matonto.catalog.api;
 
 import org.matonto.catalog.api.builder.DistributionConfig;
 import org.matonto.catalog.api.builder.RecordConfig;
-import org.matonto.catalog.api.ontologies.mcat.*;
+import org.matonto.catalog.api.ontologies.mcat.Branch;
+import org.matonto.catalog.api.ontologies.mcat.Catalog;
+import org.matonto.catalog.api.ontologies.mcat.Commit;
+import org.matonto.catalog.api.ontologies.mcat.Distribution;
+import org.matonto.catalog.api.ontologies.mcat.InProgressCommit;
+import org.matonto.catalog.api.ontologies.mcat.Record;
+import org.matonto.catalog.api.ontologies.mcat.Version;
 import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.rdf.api.IRI;
@@ -33,9 +39,11 @@ import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.orm.OrmFactory;
 
-import javax.annotation.Nonnull;
 import java.security.InvalidParameterException;
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import javax.annotation.Nonnull;
 
 public interface CatalogManager {
 
@@ -70,15 +78,16 @@ public interface CatalogManager {
     Catalog getLocalCatalog() throws MatOntoException;
 
     /**
-     * Searches the provided Catalog for Records that match the provided PaginatedSearchParams.
+     * Searches the provided Catalog for Records that match the provided PaginatedSearchParams. Acceptable
+     * sortBy parameters are http://purl.org/dc/terms/title, http://purl.org/dc/terms/modified, and
+     * http://purl.org/dc/terms/issued.
      *
      * @param catalogId The Resource identifying the Catalog to find the Records in.
      * @param searchParams Search parameters.
      * @return The PaginatedSearchResults for a page matching the search criteria.
-     * @throws MatOntoException Thrown if a connection to the repository could not be made.
+     * @throws IllegalArgumentException Thrown if the passed offset is greater than the number of results.
      */
-    PaginatedSearchResults<Record> findRecord(Resource catalogId, PaginatedSearchParams searchParams) throws
-            MatOntoException;
+    PaginatedSearchResults<Record> findRecord(Resource catalogId, PaginatedSearchParams searchParams);
 
     /**
      * Gets a Set of all Resources identifying Records which exist within the Catalog identified by the provided

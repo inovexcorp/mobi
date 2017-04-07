@@ -52,16 +52,14 @@
          */
         .directive('commitChangesDisplay', commitChangesDisplay);
 
-        commitChangesDisplay.$inject = ['utilService']
+        commitChangesDisplay.$inject = ['$filter', 'utilService', 'prefixes']
 
-        function commitChangesDisplay(utilService) {
+        function commitChangesDisplay($filter, utilService, prefixes) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
                 replace: true,
-                scope: {
-                    clickEvent: '&?'
-                },
+                scope: {},
                 bindToController: {
                     additions: '<',
                     deletions: '<'
@@ -70,24 +68,16 @@
                     var dvm = this;
                     dvm.util = utilService;
                     dvm.list = [];
+                    dvm.results = {};
 
-                    dvm.getAdditions = function(id) {
-                        return getChangesById(id, dvm.additions);
-                    }
-                    dvm.getDeletions = function(id) {
-                        return getChangesById(id, dvm.deletions);
-                    }
-
-                    function setList() {
+                    $scope.$watchGroup(['dvm.additions', 'dvm.deletions'], () => {
                         dvm.list = _.unionWith(_.map(dvm.additions, '@id'), _.map(dvm.deletions, '@id'), _.isEqual);
-                    }
-                    function getChangesById(id, array) {
-                        var entity = angular.copy(_.find(array, {'@id': id}));
-                        _.unset(entity, '@id');
-                        return entity;
-                    }
-
-                    $scope.$watchGroup(['dvm.additions', 'dvm.deletions'], setList);
+                        dvm.results = {};
+                        _.forEach(dvm.list, id => dvm.results[id] = {
+                            additions: dvm.util.getChangesById(id, dvm.additions),
+                            deletions: dvm.util.getChangesById(id, dvm.deletions)
+                        });
+                    });
                 }],
                 templateUrl: 'directives/commitChangesDisplay/commitChangesDisplay.html'
             }

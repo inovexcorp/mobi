@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Create Class Overlay directive', function() {
-    var $compile, scope, element, controller, ontologyManagerSvc, deferred, ontologyStateSvc, prefixes, ontoUtils;
+    var $compile, scope, element, controller, deferred, ontologyStateSvc, prefixes, ontoUtils;
     var iri = 'iri#';
 
     beforeEach(function() {
@@ -30,16 +30,14 @@ describe('Create Class Overlay directive', function() {
         injectRegexConstant();
         injectCamelCaseFilter();
         injectSplitIRIFilter();
-        mockOntologyManager();
         mockOntologyState();
         mockPrefixes();
         mockOntologyUtilsManager();
 
-        inject(function(_$q_, _$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_, _prefixes_, _ontologyUtilsManagerService_) {
+        inject(function(_$q_, _$compile_, _$rootScope_, _ontologyStateService_, _prefixes_, _ontologyUtilsManagerService_) {
             $q = _$q_;
             $compile = _$compile_;
             scope = _$rootScope_;
-            ontologyManagerSvc = _ontologyManagerService_;
             ontologyStateSvc = _ontologyStateService_;
             deferred = _$q_.defer();
             prefixes = _prefixes_;
@@ -142,12 +140,13 @@ describe('Create Class Overlay directive', function() {
             controller.create();
             expect(_.get(controller.clazz, 'matonto.originalIRI')).toEqual(controller.clazz['@id']);
             expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(controller.clazz, controller.language);
-            expect(ontologyManagerSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem,
+            expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem,
                 controller.clazz);
-            expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
+            expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                 controller.clazz);
             expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(controller.clazz['@id']);
             expect(ontologyStateSvc.showCreateClassOverlay).toBe(false);
+            expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
         });
     });
     it('should call create when the button is clicked', function() {

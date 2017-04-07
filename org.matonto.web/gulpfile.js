@@ -167,6 +167,10 @@ gulp.task('test-minified-4', ['test-minified-3'], function(done) {
     return runKarma([dest + '**/*.js'], tests[3], true, done);
 });
 
+gulp.task('test-minified-5', ['test-minified-4'], function(done) {
+    return runKarma([dest + '**/*.js'], tests[4], true, done);
+});
+
 // Run jasmine tests in PhantomJS with unminified source files
 gulp.task('test-unminified', ['cacheTemplates', 'move-custom-js'], function(done) {
     return runKarma(nodeJsFiles(nodeDir).concat(jsFiles(dest)), './src/test/js/*Spec.js', true, done);
@@ -186,6 +190,10 @@ gulp.task('test-unminified-3', ['test-unminified-2'], function(done) {
 
 gulp.task('test-unminified-4', ['test-unminified-3'], function(done) {
     return runKarma(nodeJsFiles(nodeDir).concat(jsFiles(dest)), tests[3], true, done);
+});
+
+gulp.task('test-unminified-5', ['test-unminified-4'], function(done) {
+    return runKarma(nodeJsFiles(nodeDir).concat(jsFiles(dest)), tests[4], true, done);
 });
 
 // Launch TDD environment for jasmine tests in Chrome
@@ -307,6 +315,10 @@ gulp.task('icons-minified', function() {
 gulp.task('icons-unminified', function() {
     return gulp.src(fontFiles(nodeDir))
         .pipe(gulp.dest(dest + 'css/fonts'));
+});
+
+gulp.task('clearcache', function() {
+    cache.clearAll();
 });
 
 // Production Task (minified)

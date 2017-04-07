@@ -38,15 +38,17 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    dvm.sm = ontologyStateService;
+                    dvm.os = ontologyStateService;
                     dvm.om = ontologyManagerService;
                     dvm.utils = ontologyUtilsManagerService;
 
                     dvm.deleteProperty = function() {
-                        if (dvm.om.isObjectProperty(dvm.sm.selected)) {
+                        if (dvm.om.isObjectProperty(dvm.os.selected)) {
                             dvm.utils.deleteObjectProperty();
-                        } else if (dvm.om.isDataTypeProperty(dvm.sm.selected)) {
+                        } else if (dvm.om.isDataTypeProperty(dvm.os.selected)) {
                             dvm.utils.deleteDataTypeProperty();
+                        } else if (dvm.om.isAnnotation(dvm.os.selected)) {
+                            dvm.utils.deleteAnnotationProperty();
                         }
                         dvm.showDeleteConfirmation = false;
                     }

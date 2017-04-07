@@ -24,18 +24,18 @@
     <div class="col-xs-4">
         <block>
             <block-header>Search</block-header>
-            <block-search ng-model="dvm.sm.state.searchText" keyup-event="dvm.onKeyup($event)" clear-event="dvm.onClear()"></block-search>
-            <block-content class="padding">
-                <error-display ng-if="dvm.sm.state.errorMessage">{{dvm.sm.state.errorMessage}}</error-display>
-                <info-message ng-if="dvm.sm.state.infoMessage">{{dvm.sm.state.infoMessage}}</info-message>
-                <div class="result" ng-repeat="(key, value) in dvm.sm.state.results track by key">
+            <block-search ng-model="dvm.os.state.searchText" keyup-event="dvm.onKeyup($event)" clear-event="dvm.onClear()"></block-search>
+            <block-content class="padding" targeted-spinner="{method: 'get', url: '\/matontorest\/.*\/search-results'}" cancel-on-new cancel-on-destroy>
+                <error-display ng-if="dvm.os.state.errorMessage">{{dvm.os.state.errorMessage}}</error-display>
+                <info-message ng-if="dvm.os.state.infoMessage">{{dvm.os.state.infoMessage}}</info-message>
+                <div class="result" ng-repeat="(key, value) in dvm.os.state.results track by key">
                     <span class="result-header text-muted" ng-click="isClosed = !isClosed"><strong>{{key | prefixation}}</strong><i class="fa fa-fw pull-right" ng-class="{'fa-chevron-down': isClosed, 'fa-chevron-up': !isClosed}"></i></span>
                     <ul class="tree" ng-if="!isClosed">
                         <tree-item ng-repeat="item in value track by item"
-                                   current-entity="dvm.om.getEntityByRecordId(dvm.sm.listItem.recordId, item)"
-                                   is-active="dvm.sm.getActiveEntityIRI() === item"
-                                   on-click="dvm.sm.selectItem(item, false)"
-                                   ng-dblclick="dvm.sm.goTo(item)"></tree-item>
+                                   current-entity="dvm.os.getEntityByRecordId(dvm.os.listItem.recordId, item)"
+                                   is-active="dvm.os.getActiveEntityIRI() === item"
+                                   on-click="dvm.os.selectItem(item, false)"
+                                   ng-dblclick="dvm.os.goTo(item)"></tree-item>
                     </ul>
                 </div>
             </block-content>
@@ -45,13 +45,13 @@
         <block>
             <block-header>Properties</block-header>
             <block-content>
-                <div class="property-values" ng-repeat="(key, value) in dvm.sm.state.selected track by key">
+                <div class="property-values" ng-repeat="(key, value) in dvm.os.state.selected track by key">
                     <h5 ng-click="isClosed = !isClosed" class="clearfix">
-                        <p class="text"><span ng-bind-html="(key | splitIRI).end | beautify | highlight:dvm.sm.state.highlightText | trusted"></span> <small>&lt;<span ng-bind-html="key | highlight:dvm.sm.state.highlightText | trusted"></span>&gt;</small></p><i class="fa fa-fw" ng-class="{'fa-chevron-down': isClosed, 'fa-chevron-up': !isClosed}"></i>
+                        <p class="text"><span ng-bind-html="dvm.os.getEntityNameByIndex(key, dvm.os.listItem) | highlight:dvm.os.state.highlightText | trusted"></span> <small>&lt;<span ng-bind-html="key | highlight:dvm.os.state.highlightText | trusted"></span>&gt;</small></p><i class="fa fa-fw" ng-class="{'fa-chevron-down': isClosed, 'fa-chevron-up': !isClosed}"></i>
                     </h5>
                     <div class="value-container" ng-repeat="item in value" ng-hide="isClosed">
-                        <span ng-if="::dvm.um.isLinkable(item['@id'])" class="value-display"><a ng-click="dvm.sm.goTo(item['@id'])" ng-bind-html="item['@id'] | highlight:dvm.sm.state.highlightText | trusted"></a></span>
-                        <span ng-if="::!dvm.um.isLinkable(item['@id'])" class="value-display" ng-bind-html="(dvm.um.getBlankNodeValue(item['@id']) || item['@id'] || item['@value']) | highlight:dvm.sm.state.highlightText | trusted"><small ng-if="item['@type']" class="text-muted type-display">[type: <span ng-bind-html="item['@type'] | prefixation | highlight:dvm.sm.state.highlightText | trusted"></span>]</small></span>
+                        <span ng-if="::dvm.ontoUtils.isLinkable(item['@id'])" class="value-display"><span ng-bind-html="dvm.ontoUtils.getLabelForIRI(item['@id']) | highlight:dvm.os.state.highlightText | trusted"></span> <small><<a ng-click="dvm.os.goTo(item['@id'])" ng-bind-html="item['@id'] | highlight:dvm.os.state.highlightText | trusted"></a>></small></span>
+                        <span ng-if="::!dvm.ontoUtils.isLinkable(item['@id'])" class="value-display" ng-bind-html="(dvm.ontoUtils.getBlankNodeValue(item['@id']) || item['@id'] || item['@value']) | highlight:dvm.os.state.highlightText | trusted"><small ng-if="item['@type']" class="text-muted type-display">[type: <span ng-bind-html="item['@type'] | prefixation | highlight:dvm.os.state.highlightText | trusted"></span>]</small></span>
                     </div>
                 </div>
             </block-content>

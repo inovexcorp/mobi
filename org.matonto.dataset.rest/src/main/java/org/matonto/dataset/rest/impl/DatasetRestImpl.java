@@ -26,33 +26,32 @@ package org.matonto.dataset.rest.impl;
 
 import static org.matonto.rest.util.RestUtils.checkStringParam;
 import static org.matonto.rest.util.RestUtils.getActiveUser;
-import static org.matonto.rest.util.RestUtils.getObjectFromJsonld;
 import static org.matonto.rest.util.RestUtils.modelToJsonld;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import net.sf.json.JSONArray;
 import org.apache.commons.lang3.StringUtils;
+import org.matonto.catalog.api.PaginatedSearchResults;
 import org.matonto.dataset.api.DatasetManager;
+import org.matonto.dataset.pagination.DatasetPaginatedSearchParams;
 import org.matonto.dataset.api.builder.DatasetRecordConfig;
 import org.matonto.dataset.ontology.dataset.DatasetRecord;
 import org.matonto.dataset.rest.DatasetRest;
+import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.ontology.utils.api.SesameTransformer;
-import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rest.util.ErrorUtils;
 import org.matonto.rest.util.LinksUtils;
+import org.matonto.rest.util.RestUtils;
 import org.matonto.rest.util.jaxb.Links;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
-import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -85,33 +84,28 @@ public class DatasetRestImpl implements DatasetRest {
     }
 
     @Override
-    public Response getDatasetRecords(UriInfo uriInfo, int offset, int limit, String sort, boolean asc) {
+    public Response getDatasetRecords(UriInfo uriInfo, int offset, int limit, String sort, boolean asc, String searchText) {
         try {
-            JSONArray results = new JSONArray();
-            Set<DatasetRecord> records = manager.getDatasetRecords();
-            Stream<DatasetRecord> stream = records.stream();
-            if (sort != null && !sort.isEmpty()) {
-                IRI sortIRI = vf.createIRI(sort);
-                Comparator<DatasetRecord> comparator = Comparator.comparing(record -> record.getProperty(sortIRI)
-                        .orElse(vf.createLiteral("")).stringValue());
-                if (!asc) {
-                    comparator = comparator.reversed();
-                }
-                stream = stream.sorted(comparator);
-            }
+            LinksUtils.validateParams(limit, offset);
+            DatasetPaginatedSearchParams params = new DatasetPaginatedSearchParams(vf).setOffset(offset)
+                    .setAscending(asc);
             if (limit > 0) {
-                if (offset > records.size()) {
-                    throw ErrorUtils.sendError("Offset exceeds total size", Response.Status.BAD_REQUEST);
-                }
-                stream = stream
-                        .skip(offset)
-                        .limit(limit);
+                params.setLimit(limit);
             }
-            stream.map(datasetRecord -> getObjectFromJsonld(
-                    modelToJsonld(transformer.sesameModel(datasetRecord.getModel()))))
-                .forEach(results::add);
-            Links links = LinksUtils.buildLinks(uriInfo, results.size(), records.size(), limit, offset);
-            Response.ResponseBuilder response = Response.ok(results).header("X-Total-Count", records.size());
+            if (sort != null && !sort.isEmpty()) {
+                params.setSortBy(vf.createIRI(sort));
+            }
+            if (searchText != null && !searchText.isEmpty()) {
+                params.setSearchText(searchText);
+            }
+            PaginatedSearchResults<DatasetRecord> results = manager.getDatasetRecords(params);
+            JSONArray array = JSONArray.fromObject(results.getPage().stream()
+                    .map(datasetRecord -> modelToJsonld(transformer.sesameModel(datasetRecord.getModel())))
+                    .map(RestUtils::getObjectFromJsonld)
+                    .collect(Collectors.toList()));
+
+            Links links = LinksUtils.buildLinks(uriInfo, array.size(), results.getTotalSize(), limit, offset);
+            Response.ResponseBuilder response = Response.ok(array).header("X-Total-Count", results.getTotalSize());
             if (links.getNext() != null) {
                 response = response.link(links.getBase() + links.getNext(), "next");
             }
@@ -119,7 +113,9 @@ public class DatasetRestImpl implements DatasetRest {
                 response = response.link(links.getBase() + links.getPrev(), "prev");
             }
             return response.build();
-        } catch (Exception ex) {
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
+        } catch (MatOntoException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
     }

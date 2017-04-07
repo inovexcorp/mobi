@@ -27,7 +27,7 @@
 
     <groupId>org.matonto</groupId>
     <artifactId>matonto-parent</artifactId>
-    <version>1.5.20-SNAPSHOT</version>
+    <version>1.6.8-SNAPSHOT</version>
 
     <packaging>pom</packaging>
 
@@ -188,9 +188,14 @@
                 <version>${opencsv.version}</version>
             </dependency>
             <dependency>
-                <groupId>log4j</groupId>
-                <artifactId>log4j</artifactId>
-                <version>1.2.17</version>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-core</artifactId>
+                <version>${logback.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-classic</artifactId>
+                <version>${logback.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.commons</groupId>
@@ -249,6 +254,12 @@
             </dependency>
 
             <!-- Test Dependencies -->
+            <dependency>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
+                <version>4.12</version>
+                <scope>test</scope>
+            </dependency>
             <dependency>
                 <groupId>org.hamcrest</groupId>
                 <artifactId>hamcrest-all</artifactId>

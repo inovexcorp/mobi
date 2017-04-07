@@ -23,6 +23,12 @@ package org.matonto.catalog.rest.impl;
  * #L%
  */
 
+import static org.matonto.rest.util.RestUtils.getActiveUser;
+import static org.matonto.rest.util.RestUtils.getRDFFormatFileExtension;
+import static org.matonto.rest.util.RestUtils.getRDFFormatMimeType;
+import static org.matonto.rest.util.RestUtils.jsonldToModel;
+import static org.matonto.rest.util.RestUtils.modelToString;
+
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import net.sf.json.JSONArray;
@@ -39,13 +45,10 @@ import org.matonto.catalog.api.ontologies.mcat.Branch;
 import org.matonto.catalog.api.ontologies.mcat.Catalog;
 import org.matonto.catalog.api.ontologies.mcat.Commit;
 import org.matonto.catalog.api.ontologies.mcat.CommitFactory;
-import org.matonto.catalog.api.ontologies.mcat.DatasetRecord;
 import org.matonto.catalog.api.ontologies.mcat.Distribution;
 import org.matonto.catalog.api.ontologies.mcat.DistributionFactory;
 import org.matonto.catalog.api.ontologies.mcat.InProgressCommit;
 import org.matonto.catalog.api.ontologies.mcat.InProgressCommitFactory;
-import org.matonto.catalog.api.ontologies.mcat.MappingRecord;
-import org.matonto.catalog.api.ontologies.mcat.OntologyRecord;
 import org.matonto.catalog.api.ontologies.mcat.Record;
 import org.matonto.catalog.api.ontologies.mcat.Tag;
 import org.matonto.catalog.api.ontologies.mcat.UnversionedRecord;
@@ -74,10 +77,6 @@ import org.matonto.rest.util.jaxb.Links;
 import org.openrdf.model.vocabulary.DCTERMS;
 import org.openrdf.model.vocabulary.RDF;
 
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
-import javax.ws.rs.core.UriInfo;
 import java.io.BufferedWriter;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
@@ -94,12 +93,10 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static org.matonto.rest.util.RestUtils.getActiveUser;
-import static org.matonto.rest.util.RestUtils.getRDFFormatFileExtension;
-import static org.matonto.rest.util.RestUtils.getRDFFormatMimeType;
-import static org.matonto.rest.util.RestUtils.jsonldToModel;
-import static org.matonto.rest.util.RestUtils.modelToString;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
+import javax.ws.rs.core.UriInfo;
 
 @Component(immediate = true)
 public class CatalogRestImpl implements CatalogRest {
@@ -237,9 +234,14 @@ public class CatalogRestImpl implements CatalogRest {
     public Response getRecords(UriInfo uriInfo, String catalogId, String sort, String recordType, int offset, int limit,
                                boolean asc, String searchText) {
         try {
-            validatePaginationParams(sort, offset, limit);
-            PaginatedSearchParams.Builder builder = new PaginatedSearchParams.Builder(limit, offset,
-                    factory.createIRI(sort)).ascending(asc);
+            LinksUtils.validateParams(limit, offset);
+            PaginatedSearchParams.Builder builder = new PaginatedSearchParams.Builder().offset(offset).ascending(asc);
+            if (limit > 0) {
+                builder.limit(limit);
+            }
+            if (sort != null) {
+                builder.sortBy(factory.createIRI(sort));
+            }
             if (recordType != null) {
                 builder.typeFilter(factory.createIRI(recordType));
             }
@@ -249,8 +251,10 @@ public class CatalogRestImpl implements CatalogRest {
             PaginatedSearchResults<Record> records = catalogManager.findRecord(factory.createIRI(catalogId),
                     builder.build());
             return createPaginatedResponse(uriInfo, records.getPage(), records.getTotalSize(), limit, offset);
-        } catch (MatOntoException ex) {
+        } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+        } catch (MatOntoException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -279,8 +283,7 @@ public class CatalogRestImpl implements CatalogRest {
 
             Record newRecord = catalogManager.createRecord(builder.build(), recordFactories.get(typeIRI));
             catalogManager.addRecord(factory.createIRI(catalogId), newRecord);
-            if (typeIRI.equals(VersionedRDFRecord.TYPE) || typeIRI.equals(OntologyRecord.TYPE)
-                    || typeIRI.equals(MappingRecord.TYPE) || typeIRI.equals(DatasetRecord.TYPE)) {
+            if (VersionedRDFRecord.class.isAssignableFrom(recordFactories.get(typeIRI).getType())) {
                 catalogManager.addMasterBranch(newRecord.getResource());
             }
             return Response.status(201).entity(newRecord.getResource().stringValue()).build();

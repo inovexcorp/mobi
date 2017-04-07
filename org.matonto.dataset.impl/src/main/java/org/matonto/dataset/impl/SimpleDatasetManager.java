@@ -30,12 +30,17 @@ import aQute.bnd.annotation.component.Modified;
 import aQute.bnd.annotation.component.Reference;
 import org.apache.commons.io.IOUtils;
 import org.matonto.catalog.api.CatalogManager;
+import org.matonto.catalog.api.PaginatedSearchResults;
+import org.matonto.catalog.api.ontologies.mcat.Record;
+import org.matonto.dataset.api.DatasetConnection;
 import org.matonto.dataset.api.DatasetManager;
 import org.matonto.dataset.api.builder.DatasetRecordConfig;
 import org.matonto.dataset.ontology.dataset.Dataset;
 import org.matonto.dataset.ontology.dataset.DatasetFactory;
 import org.matonto.dataset.ontology.dataset.DatasetRecord;
 import org.matonto.dataset.ontology.dataset.DatasetRecordFactory;
+import org.matonto.dataset.pagination.DatasetPaginatedSearchParams;
+import org.matonto.dataset.pagination.DatasetRecordSearchResults;
 import org.matonto.exception.MatOntoException;
 import org.matonto.persistence.utils.Bindings;
 import org.matonto.query.TupleQueryResult;
@@ -144,18 +149,10 @@ public class SimpleDatasetManager implements DatasetManager {
     }
 
     @Override
-    public Set<DatasetRecord> getDatasetRecords() {
-        Set<DatasetRecord> datasetRecords = new HashSet<>();
-        try (RepositoryConnection conn = systemRepository.getConnection()) {
-            TupleQuery query = conn.prepareTupleQuery(FIND_DATASET_RECORDS_QUERY);
-            query.setBinding(CATALOG_BINDING, catalogManager.getLocalCatalogIRI());
-            TupleQueryResult result = query.evaluate();
-            result.forEach(bindingSet -> {
-                getDatasetRecord(Bindings.requiredResource(bindingSet, "record"))
-                        .ifPresent(datasetRecords::add);
-            });
-        }
-        return datasetRecords;
+    public PaginatedSearchResults<DatasetRecord> getDatasetRecords(DatasetPaginatedSearchParams searchParams) {
+        PaginatedSearchResults<Record> results = catalogManager.findRecord(catalogManager.getLocalCatalogIRI(),
+                searchParams.build());
+        return new DatasetRecordSearchResults(results, dsRecFactory);
     }
 
     @Override
@@ -300,6 +297,31 @@ public class SimpleDatasetManager implements DatasetManager {
         }
     }
 
+    @Override
+    public DatasetConnection getConnection(Resource dataset, String repositoryId) {
+        if (!getRecordResource(dataset, repositoryId).isPresent()) {
+            throw new IllegalArgumentException("Could not find the required DatasetRecord in the Catalog with this " +
+                    "dataset/repository combination.");
+        }
+        Repository dsRepo = getDatasetRepo(repositoryId);
+
+        return new SimpleDatasetRepositoryConnection(dsRepo.getConnection(), dataset, repositoryId, vf);
+    }
+
+    @Override
+    public DatasetConnection getConnection(Resource record) {
+        DatasetRecord datasetRecord = getDatasetRecord(record)
+                .orElseThrow(() -> new IllegalArgumentException("Could not find the required DatasetRecord in the Catalog."));
+        Resource dataset = datasetRecord.getDataset()
+                .orElseThrow(() -> new MatOntoException("Could not retrieve the Dataset IRI from the DatasetRecord."))
+                .getResource();
+        String repositoryId = datasetRecord.getRepository()
+                .orElseThrow(() -> new MatOntoException("Could not retrieve the Repository ID from the DatasetRecord."));
+
+        Repository dsRepo = getDatasetRepo(datasetRecord);
+        return new SimpleDatasetRepositoryConnection(dsRepo.getConnection(), dataset, repositoryId, vf);
+    }
+
     /**
      * Returns the DatasetRecord Resource associated with this dataset/repository combination if it exists.
      *
@@ -328,8 +350,11 @@ public class SimpleDatasetManager implements DatasetManager {
     private Repository getDatasetRepo(DatasetRecord datasetRecord) {
         String dsRepoID = datasetRecord.getRepository()
                 .orElseThrow(() -> new MatOntoException("DatasetRecord does not specify a dataset repository."));
+        return getDatasetRepo(dsRepoID);
+    }
 
-        return repoManager.getRepository(dsRepoID)
+    private Repository getDatasetRepo(String repositoryId) {
+        return repoManager.getRepository(repositoryId)
                 .orElseThrow(() -> new MatOntoException("Dataset target repository does not exist."));
     }
 

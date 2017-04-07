@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.5.20-SNAPSHOT</version>
+        <version>1.6.8-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -45,22 +45,22 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>jaas.api</artifactId>
-            <version>1.4.24</version>
+            <version>1.5.45</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>jaas.proxy</artifactId>
-            <version>1.4.24</version>
+            <version>1.5.45</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rdf.orm</artifactId>
-            <version>1.4.24</version>
+            <version>1.5.45</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rdf.orm.ontologies</artifactId>
-            <version>1.4.24</version>
+            <version>1.5.45</version>
         </dependency>
         <dependency>
             <groupId>org.osgi</groupId>
@@ -79,8 +79,8 @@
             <artifactId>biz.aQute.bndlib</artifactId>
         </dependency>
         <dependency>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
         </dependency>
         <dependency>
             <groupId>javax.ws.rs</groupId>
@@ -114,13 +114,13 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>repository.impl.sesame</artifactId>
-            <version>1.4.24</version>
+            <version>1.5.45</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rdf.impl.sesame</artifactId>
-            <version>1.4.24</version>
+            <version>1.5.45</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

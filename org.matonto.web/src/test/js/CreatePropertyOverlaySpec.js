@@ -80,15 +80,21 @@ describe('Create Property Overlay directive', function() {
             expect(element.find('static-iri').length).toBe(1);
         });
         it('with radio-buttons', function() {
-            expect(element.find('radio-button').length).toBe(2);
+            expect(element.find('radio-button').length).toBe(3);
         });
         it('with a checkbox', function() {
+            expect(element.find('checkbox').length).toBe(0);
+            ontologyManagerSvc.isObjectProperty.and.returnValue(true);
+            scope.$apply();
             expect(element.find('checkbox').length).toBe(1);
         });
         it('with a text-area', function() {
             expect(element.find('text-area').length).toBe(1);
         });
         it('with a object-select for domain', function() {
+            expect(element.querySelectorAll('object-select[display-text="\'Domain\'"]').length).toBe(0);
+            ontologyManagerSvc.isObjectProperty.and.returnValue(true);
+            scope.$apply();
             expect(element.querySelectorAll('object-select[display-text="\'Domain\'"]').length).toBe(1);
         });
         it('with a .btn-container', function() {
@@ -179,8 +185,8 @@ describe('Create Property Overlay directive', function() {
                     objectPropertyHierarchy: [],
                     subDataProperties: [],
                     dataPropertyHierarchy: [],
-                    index: {},
-                    ontology: [{}]
+                    ontology: [{}],
+                    annotations: []
                 };
                 this.split = {begin: 'begin', then: 'then', end: 'end'};
                 ontologyStateSvc.listItem = this.listItem;
@@ -198,14 +204,14 @@ describe('Create Property Overlay directive', function() {
                 expect(_.has(controller.property, prefixes.rdfs + 'domain')).toBe(false);
                 expect(controller.property.matonto.originalIRI).toEqual(controller.property['@id']);
                 expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(controller.property, controller.language);
-                expect(ontologyManagerSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem,
+                expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem,
                     controller.property);
                 expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(controller.property);
-                expect(this.listItem.index[controller.property['@id']]).toBe(0);
-                expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
+                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                     controller.property);
                 expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(controller.property['@id']);
                 expect(ontologyStateSvc.showCreatePropertyOverlay).toBe(false);
+                expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             });
             it('if the property is a object property', function() {
                 controller.property[prefixes.dcterms + 'description'] = [{'@value': 'description'}];
@@ -213,36 +219,62 @@ describe('Create Property Overlay directive', function() {
                 controller.create();
                 expect(controller.property.matonto.originalIRI).toEqual(controller.property['@id']);
                 expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(controller.property, controller.language);
-                expect(ontologyManagerSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem,
+                expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem,
                     controller.property);
                 expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(controller.property);
                 expect(this.listItem.subObjectProperties).toContain({namespace: this.split.begin + this.split.then, localName: this.split.end});
                 expect(this.listItem.objectPropertyHierarchy).toContain({entityIRI: controller.property['@id']});
                 expect(this.listItem.subDataProperties).toEqual([]);
                 expect(this.listItem.dataPropertyHierarchy).toEqual([]);
-                expect(this.listItem.index[controller.property['@id']]).toBe(0);
-                expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
+                expect(this.listItem.annotations).toEqual([]);
+                expect(ontologyStateSvc.setObjectPropertiesOpened).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, true);
+                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                     controller.property);
                 expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(controller.property['@id']);
                 expect(ontologyStateSvc.showCreatePropertyOverlay).toBe(false);
+                expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             });
             it('if the property is a datatype property', function() {
                 controller.property[prefixes.dcterms + 'description'] = [{'@value': 'description'}];
+                ontologyManagerSvc.isDataTypeProperty.and.returnValue(true);
                 controller.create();
                 expect(controller.property.matonto.originalIRI).toEqual(controller.property['@id']);
                 expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(controller.property, controller.language);
-                expect(ontologyManagerSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem,
+                expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem,
                     controller.property);
                 expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(controller.property);
                 expect(this.listItem.subObjectProperties).toEqual([]);
                 expect(this.listItem.objectPropertyHierarchy).toEqual([]);
+                expect(this.listItem.annotations).toEqual([]);
                 expect(this.listItem.subDataProperties).toContain({namespace: this.split.begin + this.split.then, localName: this.split.end});
                 expect(this.listItem.dataPropertyHierarchy).toContain({entityIRI: controller.property['@id']});
-                expect(this.listItem.index[controller.property['@id']]).toBe(0);
-                expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
+                expect(ontologyStateSvc.setDataPropertiesOpened).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, true);
+                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                     controller.property);
                 expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(controller.property['@id']);
                 expect(ontologyStateSvc.showCreatePropertyOverlay).toBe(false);
+                expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
+            });
+            it('if the property is an annotation property', function() {
+                controller.property[prefixes.dcterms + 'description'] = [{'@value': 'description'}];
+                ontologyManagerSvc.isAnnotation.and.returnValue(true);
+                controller.create();
+                expect(controller.property.matonto.originalIRI).toEqual(controller.property['@id']);
+                expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(controller.property, controller.language);
+                expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem,
+                    controller.property);
+                expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(controller.property);
+                expect(this.listItem.subObjectProperties).toEqual([]);
+                expect(this.listItem.objectPropertyHierarchy).toEqual([]);
+                expect(this.listItem.subDataProperties).toEqual([]);
+                expect(this.listItem.dataPropertyHierarchy).toEqual([]);
+                expect(this.listItem.annotations).toContain({namespace: this.split.begin + this.split.then, localName: this.split.end});
+                expect(ontologyStateSvc.setAnnotationPropertiesOpened).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, true);
+                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
+                    controller.property);
+                expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(controller.property['@id']);
+                expect(ontologyStateSvc.showCreatePropertyOverlay).toBe(false);
+                expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             });
             it('if controller.checkbox is true', function() {
                 controller.checkbox = true;

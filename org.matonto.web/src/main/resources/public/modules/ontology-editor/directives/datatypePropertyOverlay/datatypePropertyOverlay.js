@@ -27,10 +27,9 @@
         .module('datatypePropertyOverlay', [])
         .directive('datatypePropertyOverlay', datatypePropertyOverlay);
 
-        datatypePropertyOverlay.$inject = ['responseObj', 'ontologyManagerService', 'ontologyStateService',
-            'utilService', 'prefixes'];
+        datatypePropertyOverlay.$inject = ['responseObj', 'ontologyStateService', 'utilService', 'prefixes', 'ontologyUtilsManagerService'];
 
-        function datatypePropertyOverlay(responseObj, ontologyManagerService, ontologyStateService, utilService, prefixes) {
+        function datatypePropertyOverlay(responseObj, ontologyStateService, utilService, prefixes, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -39,9 +38,9 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    dvm.om = ontologyManagerService;
+                    dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.ro = responseObj;
-                    dvm.sm = ontologyStateService;
+                    dvm.os = ontologyStateService;
                     dvm.util = utilService;
 
                     dvm.addProperty = function(select, value, type, language) {
@@ -53,22 +52,23 @@
                             } else if (type) {
                                 valueObj['@type'] = type['@id'];
                             }
-                            if (_.has(dvm.sm.selected, property)) {
-                                dvm.sm.selected[property].push(valueObj);
+                            if (_.has(dvm.os.selected, property)) {
+                                dvm.os.selected[property].push(valueObj);
                             } else {
-                                dvm.sm.selected[property] = [valueObj];
+                                dvm.os.selected[property] = [valueObj];
                             }
                         }
-                        dvm.om.addToAdditions(dvm.sm.listItem.recordId, dvm.util.createJson(dvm.sm.selected['@id'],
+                        dvm.os.addToAdditions(dvm.os.listItem.recordId, dvm.util.createJson(dvm.os.selected['@id'],
                             property, valueObj));
-                        dvm.sm.showDataPropertyOverlay = false;
+                        dvm.os.showDataPropertyOverlay = false;
+                        dvm.ontoUtils.saveCurrentChanges();
                     }
 
                     dvm.editProperty = function(select, value, type, language) {
                         var property = dvm.ro.getItemIri(select);
                         if (property) {
-                            var propertyObj = dvm.sm.selected[property][dvm.sm.propertyIndex];
-                            dvm.om.addToDeletions(dvm.sm.listItem.recordId, dvm.util.createJson(dvm.sm.selected['@id'],
+                            var propertyObj = dvm.os.selected[property][dvm.os.propertyIndex];
+                            dvm.os.addToDeletions(dvm.os.listItem.recordId, dvm.util.createJson(dvm.os.selected['@id'],
                                 property, propertyObj));
                             propertyObj['@value'] = value;
                             if (type && !(language && dvm.isStringType())) {
@@ -81,14 +81,15 @@
                             } else {
                                 _.unset(propertyObj, '@language');
                             }
-                            dvm.om.addToAdditions(dvm.sm.listItem.recordId, dvm.util.createJson(dvm.sm.selected['@id'],
+                            dvm.os.addToAdditions(dvm.os.listItem.recordId, dvm.util.createJson(dvm.os.selected['@id'],
                                 property, propertyObj));
                         }
-                        dvm.sm.showDataPropertyOverlay = false;
+                        dvm.os.showDataPropertyOverlay = false;
+                        dvm.ontoUtils.saveCurrentChanges();
                     }
 
                     dvm.isStringType = function() {
-                        return prefixes.rdf + 'langString' === _.get(dvm.sm.propertyType, '@id', '');
+                        return prefixes.rdf + 'langString' === _.get(dvm.os.propertyType, '@id', '');
                     }
                 }
             }

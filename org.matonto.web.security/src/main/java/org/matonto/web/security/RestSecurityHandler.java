@@ -27,7 +27,6 @@ import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.eclipsesource.jaxrs.provider.security.AuthenticationHandler;
 import com.eclipsesource.jaxrs.provider.security.AuthorizationHandler;
-import org.apache.log4j.Logger;
 import org.matonto.jaas.api.config.MatontoConfiguration;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.ontologies.usermanagement.Role;
@@ -35,6 +34,8 @@ import org.matonto.jaas.api.principals.UserPrincipal;
 import org.matonto.jaas.api.utils.TokenUtils;
 import org.matonto.web.security.util.AuthenticationProps;
 import org.matonto.web.security.util.RestSecurityUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.security.Principal;
 import java.util.List;
@@ -45,7 +46,7 @@ import javax.ws.rs.core.SecurityContext;
 
 @Component(immediate = true)
 public class RestSecurityHandler implements AuthenticationHandler, AuthorizationHandler {
-    private static final Logger LOG = Logger.getLogger(RestSecurityHandler.class.getName());
+    private static final Logger LOG = LoggerFactory.getLogger(RestSecurityHandler.class.getName());
 
     protected MatontoConfiguration matOntoConfiguration;
     protected EngineManager engineManager;

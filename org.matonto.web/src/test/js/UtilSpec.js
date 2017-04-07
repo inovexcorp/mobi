@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Util service', function() {
-    var utilSvc, prefixes, toastr, splitIRIFilter, beautifyFilter, $filter;
+    var utilSvc, prefixes, toastr, splitIRIFilter, beautifyFilter, $filter, $httpBackend, $q, $timeout;
 
     beforeEach(function() {
         module('util');
@@ -30,13 +30,16 @@ describe('Util service', function() {
         injectBeautifyFilter();
         mockToastr();
 
-        inject(function(utilService, _prefixes_, _toastr_, _splitIRIFilter_, _beautifyFilter_, _$filter_) {
+        inject(function(utilService, _prefixes_, _toastr_, _splitIRIFilter_, _beautifyFilter_, _$filter_, _$httpBackend_, _$q_, _$timeout_) {
             utilSvc = utilService;
             prefixes = _prefixes_;
             toastr = _toastr_;
             splitIRIFilter = _splitIRIFilter_;
             beautifyFilter = _beautifyFilter_;
             $filter = _$filter_;
+            $httpBackend = _$httpBackend_;
+            $q = _$q_;
+            $timeout = _$timeout_;
         });
     });
 
@@ -68,13 +71,41 @@ describe('Util service', function() {
             expect(utilSvc.getPropertyValue({}, 'prop')).toBe('');
         });
     });
-    it('should set a property value for an entity', function() {
-        var prop = 'property';
-        var value = 'value';
-        var entity = {};
-        var expected = {'property': [{'@value': value}]};
-        utilSvc.setPropertyValue(entity, prop, value);
-        expect(entity).toEqual(expected);
+    describe('should set a property value for an entity', function() {
+        it('when not there', function() {
+            var prop = 'property';
+            var value = 'value';
+            var entity = {};
+            var expected = {'property': [{'@value': value}]};
+            utilSvc.setPropertyValue(entity, prop, value);
+            expect(entity).toEqual(expected);
+        });
+        it('when there', function() {
+            var prop = 'property';
+            var value = 'value';
+            var entity = {'property': [{'@value': 'other'}]};
+            var expected = {'property': [{'@value': 'other'}, {'@value': value}]};
+            utilSvc.setPropertyValue(entity, prop, value);
+            expect(entity).toEqual(expected);
+        });
+    });
+    describe('should set a property id for an entity', function() {
+        it('when not there', function() {
+            var prop = 'property';
+            var id = 'id';
+            var entity = {};
+            var expected = {'property': [{'@id': id}]};
+            utilSvc.setPropertyId(entity, prop, id);
+            expect(entity).toEqual(expected);
+        });
+        it('when there', function() {
+            var prop = 'property';
+            var id = 'id';
+            var entity = {'property': [{'@id': 'otherId'}]};
+            var expected = {'property': [{'@id': 'otherId'}, {'@id': id}]};
+            utilSvc.setPropertyId(entity, prop, id);
+            expect(entity).toEqual(expected);
+        });
     });
     describe('should get a dcterms property value from an entity', function() {
         it('if it contains the property', function() {
@@ -154,5 +185,109 @@ describe('Util service', function() {
         expect(utilSvc.paginatedConfigToParams({sortOption: {field: 'test'}, limit: 10})).toEqual({sort: 'test', limit: 10});
         expect(utilSvc.paginatedConfigToParams({sortOption: {asc: true}, pageIndex: 0})).toEqual({ascending: true});
         expect(utilSvc.paginatedConfigToParams({})).toEqual({});
+    });
+    describe('should get a page of paginated results from a URL', function() {
+        it('if the call succeeds', function(done) {
+            $httpBackend.whenGET('/test').respond(200);
+            utilSvc.getResultsPage('/test').then(function(response) {
+                expect(_.isObject(response)).toBe(true);
+                done();
+            }, function(response) {
+                fail('Promise should have resolved');
+                done();
+            });
+            $httpBackend.flush();
+        });
+        describe('if the call fails', function() {
+            var failFunction;
+            beforeEach(function() {
+                failFunction = jasmine.createSpy('failFunction').and.returnValue($q.reject('Test'));
+                $httpBackend.whenGET('/test').respond(400);
+            });
+            it('with a passed error function', function(done) {
+                utilSvc.getResultsPage('/test', failFunction).then(function(response) {
+                    fail('Promise should have rejected.');
+                    done();
+                }, function(response) {
+                    expect(failFunction).toHaveBeenCalled();
+                    expect(response).toBe('Test');
+                    done();
+                });
+                $httpBackend.flush();
+            });
+            it('with a default error function', function(done) {
+                spyOn(utilSvc, 'getErrorMessage').and.returnValue('Test');
+                utilSvc.getResultsPage('/test').then(function(response) {
+                    fail('Promise should have rejected.');
+                    done();
+                }, function(response) {
+                    expect(utilSvc.getErrorMessage).toHaveBeenCalled();
+                    expect(response).toBe('Test');
+                    done();
+                });
+                $httpBackend.flush();
+            });
+        });
+    });
+    describe('should reject a deferred promise with an error message', function() {
+        var deferred;
+        beforeEach(function() {
+            deferred = $q.defer();
+            spyOn(utilSvc, 'getErrorMessage').and.returnValue('Test');
+        });
+        it('unless the response was canceled', function(done) {
+            utilSvc.onError({status: -1}, deferred, 'Test');
+            deferred.promise.then(function() {
+                fail('Promise should have rejected.');
+                done();
+            }, function(error) {
+                expect(error).toBe('');
+                expect(utilSvc.getErrorMessage).not.toHaveBeenCalled();
+                done();
+            });
+            $timeout.flush();
+        });
+        it('successfully', function(done) {
+            utilSvc.onError({}, deferred, 'Test');
+            deferred.promise.then(function() {
+                fail('Promise should have rejected.');
+                done();
+            }, function(error) {
+                expect(error).toBe('Test');
+                expect(utilSvc.getErrorMessage).toHaveBeenCalledWith({}, 'Test');
+                done();
+            });
+            $timeout.flush();
+        });
+    });
+    it('should retrieve an error message from a http response', function() {
+        expect(utilSvc.getErrorMessage({}, 'default')).toBe('default');
+        expect(utilSvc.getErrorMessage({})).toBe('Something went wrong. Please try again later.');
+        expect(utilSvc.getErrorMessage({statusText: ''})).toBe('Something went wrong. Please try again later.');
+        expect(utilSvc.getErrorMessage({statusText: 'Test'})).toBe('Test');
+    });
+    it('should get correct statement predicates and objects for the provided id and array', function() {
+        var array = [{
+            '@id': 'id',
+            prop1: 'value1',
+            prop2: 'value2'
+        }, {
+            '@id': 'different',
+            prop3: 'value3',
+            prop4: 'value4'
+        }];
+        var expected = [{
+            p: 'prop1', o: 'value1'
+        }, {
+            p: 'prop2', o: 'value2'
+        }];
+        expect(utilSvc.getChangesById('id', array)).toEqual(expected);
+    });
+    it("should return the localname of the split IRI for the provided object's p property", function() {
+        splitIRIFilter.and.returnValue({end: 'localname'});
+        expect(utilSvc.getPredicateLocalName({p: 'predicate'})).toBe('localname');
+        expect(splitIRIFilter).toHaveBeenCalledWith('predicate');
+        utilSvc.getPredicateLocalName();
+        expect(splitIRIFilter).toHaveBeenCalledWith('');
     });
 });
