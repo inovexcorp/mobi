@@ -71,7 +71,7 @@
                     }
                     dvm.getValuePreview = function() {
                         var firstRowIndex = dvm.dm.containsHeaders ? 1 : 0;
-                        return _.get(dvm.dm.dataRows, '[' + firstRowIndex + '][' + dvm.selectedColumn + ']');
+                        return _.get(dvm.dm.dataRows, '[' + firstRowIndex + '][' + dvm.selectedColumn + ']', '(None)');
                     }
                 },
                 templateUrl: 'modules/mapper/directives/columnSelect/columnSelect.html'

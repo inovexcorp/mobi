@@ -92,7 +92,7 @@
                     }
                     dvm.getDataValuePreview = function(propMapping) {
                         var firstRowIndex = dvm.dm.containsHeaders ? 1 : 0;
-                        return _.get(dvm.dm.dataRows, '[' + firstRowIndex + '][' + dvm.getLinkedColumnIndex(propMapping) + ']');
+                        return _.get(dvm.dm.dataRows, '[' + firstRowIndex + '][' + dvm.getLinkedColumnIndex(propMapping) + ']', '(None)');
                     }
                     dvm.getLinkedClassId = function(propMapping) {
                         return dvm.util.getPropertyId(propMapping, prefixes.delim + 'classMapping');

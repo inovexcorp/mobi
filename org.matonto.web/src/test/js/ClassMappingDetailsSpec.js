@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Class Mapping Details directive', function() {
+describe('Class Mapping Details directive', function() {
     var $compile,
         scope,
         element,
@@ -54,7 +54,7 @@ fdescribe('Class Mapping Details directive', function() {
         delimitedManagerSvc.dataRows = [['']];
         element = $compile(angular.element('<class-mapping-details></class-mapping-details>'))(scope);
         scope.$digest();
-            controller = element.controller('classMappingDetails');
+        controller = element.controller('classMappingDetails');
     });
 
     describe('controller methods', function() {
