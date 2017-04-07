@@ -26,7 +26,9 @@
     </h5>
     <div class="value-container" ng-repeat="value in entity[property]" ng-hide="isClosed">
         <span ng-if="::dvm.ontoUtils.isLinkable(value['@id'])" class="value-display">{{dvm.ontoUtils.getLabelForIRI(value['@id'])}} <small><<a ng-click="dvm.os.goTo(value['@id'])">{{value['@id']}}</a>></small></span>
-        <span ng-if="::!dvm.ontoUtils.isLinkable(value['@id'])" class="value-display">{{dvm.ontoUtils.getBlankNodeValue(value['@id']) || value['@id'] || value['@value']}}<small class="text-muted lang-display" ng-if="value['@language']">[language: {{value['@language']}}]</small><small ng-if="value['@type']" class="text-muted type-display">[type: {{value['@type'] | prefixation}}]</small></span>
+        <span ng-if="::!dvm.ontoUtils.isLinkable(value['@id'])" class="value-display">
+            <span ng-if="::dvm.om.isBlankNodeId(value['@id'])" ng-bind-html="dvm.ontoUtils.getBlankNodeValue(value['@id']) | trusted" class="blank-node-value"></span>
+            <span ng-if="::!dvm.om.isBlankNodeId(value['@id'])">{{value['@id'] || value['@value']}}<small class="text-muted lang-display" ng-if="value['@language']">[language: {{value['@language']}}]</small><small ng-if="value['@type']" class="text-muted type-display">[type: {{value['@type'] | prefixation}}]</small></span></span>
         <button ng-if="!dvm.om.isBlankNodeId(value['@id']) && remove" type="button" class="btn btn-link pull-right" ng-click="remove({iri: property, index: $index})" title="Delete"><i class="fa fa-times fa-fw"></i></button>
         <button ng-if="!dvm.om.isBlankNodeId(value['@id']) && edit" type="button" class="btn btn-link pull-right" ng-click="edit({property: dvm.ro.createItemFromIri(property), index: $index});" title="Edit"><i class="fa fa-pencil fa-fw"></i></button>
     </div>

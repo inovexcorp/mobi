@@ -129,6 +129,7 @@ describe('Ontology State service', function() {
         mockCatalogManager();
         injectRemoveMatontoFilter();
         mockPrefixes();
+        mockManchesterConverter();
 
         module(function($provide) {
             $provide.value('jsonFilter', function() {

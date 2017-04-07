@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Member Table directive', function() {
+fdescribe('Member Table directive', function() {
     var $compile,
         scope,
         userStateSvc,
@@ -169,6 +169,18 @@ describe('Member Table directive', function() {
             scope.$digest();
             expect(removeButton.attr('disabled')).toBeFalsy();
             expect(this.element.querySelectorAll('.add-member').length).toBe(1);
+        });
+        it('depending on whether the create group overlay is displayed', function() {
+            userStateSvc.displayCreateGroupOverlay = true;
+            scope.$digest();
+            users = this.element.querySelectorAll('.member-table > tbody > tr > td.username > a');
+            expect(users.length).toEqual(0);
+        });
+        it('depending on whether the create group overlay is not displayed', function() {
+            userStateSvc.displayCreateGroupOverlay = false;
+            scope.$digest();
+            users = this.element.querySelectorAll('.member-table > tbody > tr > td.username > a');
+            expect(users.length).toBeGreaterThan(0);
         });
     });
     it('should set the correct state and call removeMember when a delete button is clicked', function() {
