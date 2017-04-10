@@ -29,8 +29,8 @@
          * @name usernameSearch
          *
          * @description 
-         * The `usernameSearch` module only provides the `usernameSearch` filter which takes
-         * a string and converts it to camel case.
+         * The `usernameSearch` module only provides the `usernameSearch` filter
+         * which finds matches between an array of users and a search string.
          */
         .module('usernameSearch', [])
         /**
@@ -39,15 +39,18 @@
          * @kind function
          *
          * @description 
-         * Takes a string and converts it to camel case with a captial first letter if
-         * the type if "class" or a lowercase first letter if the type is not "class". 
-         * If the value is falsey or an object, returns an empty string.
+         * Takes an array of users and finds matches to a given search string.
+         * Matches are made based on any of the following user values:
+         *   user.username
+         *   user.firstName
+         *   user.lastName
+         *   user.firstName + " " + user.lastName
+         *   user.lastName + " " + user.firstName
+         *   user.lastName + ," " + user.firstName
          *
-         * @param {string} value The string to camel case
-         * @param {string} type The type of camel casing that should be performed. Either
-         * "class" or something else.
-         * @returns {string} Either an empty string is the value is not a string or the 
-         * value in camel case if it is a string.
+         * @param {array} users The array of users to match
+         * @param {string} searchTerm The string to use in matching
+         * @returns {array} Either an empty array or the matching users, if any.
          */
         .filter('usernameSearch', usernameSearch);
 
