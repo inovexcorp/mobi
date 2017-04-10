@@ -90,9 +90,12 @@
                         dvm.state.displayDownloadMappingOverlay = true;
                     }
                     dvm.loadOntologyAndContinue = function() {
-                        dvm.mm.getSourceOntologies(dvm.mm.getSourceOntologyInfo(dvm.state.mapping.jsonld)).then(recordIds => {
-                            if (dvm.mm.areCompatible(dvm.state.mapping, recordIds)) {
-                                dvm.state.sourceOntologies = recordIds;
+                        dvm.mm.getSourceOntologies(dvm.mm.getSourceOntologyInfo(dvm.state.mapping.jsonld)).then(ontologies => {
+                            if (dvm.mm.areCompatible(dvm.state.mapping, ontologies)) {
+                                dvm.state.sourceOntologies = ontologies;
+                                var usedClassIds = _.map(dvm.mm.getAllClassMappings(dvm.state.mapping.jsonld), dvm.mm.getClassIdByMapping);
+                                dvm.state.availableClasses = _.filter(dvm.state.getClasses(ontologies), clazz => !_.includes(usedClassIds, clazz.classObj['@id']));
+                                dvm.state.mappingSearchString = '';
                                 dvm.state.step = dvm.state.fileUploadStep;
                             } else {
                                 dvm.state.invalidOntology = true;

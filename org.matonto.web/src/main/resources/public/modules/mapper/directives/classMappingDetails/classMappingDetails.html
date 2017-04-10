@@ -38,7 +38,15 @@
                     <a class="delete-prop" ng-click="dvm.deleteProp(propMapping)"><i class="fa fa-trash"></i></a>
                 </div>
                 <h4 class="list-group-item-heading">{{dvm.getPropName(propMapping)}}</h4>
-                <p class="list-group-item-text">{{dvm.getPropValue(propMapping)}}</p>
+                <div class="list-group-item-text">
+                    <div ng-if="dvm.mm.isDataMapping(propMapping)" class="data-prop-value">
+                        <div><span class="field-name">Column: </span>{{dvm.getPropValue(propMapping)}}</div>
+                        <div><span class="field-name">Preview: </span><span ng-class="{'text-muted': dvm.getDataValuePreview(propMapping) === '(None)'}">{{dvm.getDataValuePreview(propMapping)}}</span></div>
+                    </div>
+                    <div ng-if="dvm.mm.isObjectMapping(propMapping)" class="object-prop-value">
+                        <p><span class="field-name">Class: </span>{{dvm.getPropValue(propMapping)}}</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

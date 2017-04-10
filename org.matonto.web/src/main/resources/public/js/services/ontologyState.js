@@ -45,14 +45,15 @@
          */
         .service('ontologyStateService', ontologyStateService);
 
-        ontologyStateService.$inject = ['$timeout', '$q', '$filter', 'ontologyManagerService', 'updateRefsService', 'stateManagerService', 'utilService', 'catalogManagerService', 'propertyManagerService', 'prefixes'];
+        ontologyStateService.$inject = ['$timeout', '$q', '$filter', 'ontologyManagerService', 'updateRefsService', 'stateManagerService', 'utilService', 'catalogManagerService', 'propertyManagerService', 'prefixes', 'manchesterConverterService'];
 
-        function ontologyStateService($timeout, $q, $filter, ontologyManagerService, updateRefsService, stateManagerService, utilService, catalogManagerService, propertyManagerService, prefixes) {
+        function ontologyStateService($timeout, $q, $filter, ontologyManagerService, updateRefsService, stateManagerService, utilService, catalogManagerService, propertyManagerService, prefixes, manchesterConverterService) {
             var self = this;
             var om = ontologyManagerService;
             var sm = stateManagerService;
             var cm = catalogManagerService;
             var util = utilService;
+            var mc = manchesterConverterService;
             var catalogId = '';
 
             var ontologyListItemTemplate = {
@@ -1043,12 +1044,9 @@
                     }
                     if (om.isProperty(entity)) {
                         _.set(entity, 'matonto.icon', getIcon(entity));
-                    } else if (om.isRestriction(entity)) {
-                        let id = _.get(entity, '@id');
-                        _.set(blankNodes, id, getReadableRestrictionText(id, entity));
                     } else if (om.isBlankNode(entity)) {
                         let id = _.get(entity, '@id');
-                        _.set(blankNodes, id, getReadableBlankNodeText(id, entity));
+                        _.set(blankNodes, id, mc.jsonldToManchester(id, ontology, true));
                     }
                 });
                 listItem.ontologyId = ontologyId;
@@ -1127,46 +1125,6 @@
                 } else  {
                     listItem[prop].push(filteredJson);
                 }
-            }
-            function getReadableRestrictionText(restrictionId, restriction) {
-                var readableText = restrictionId;
-                var keys = _.keys(restriction);
-                _.pull(keys, prefixes.owl + 'onProperty', prefixes.owl + 'onClass', '@id', '@type', 'matonto');
-                if (keys.length === 1 && _.isArray(restriction[keys[0]]) && restriction[keys[0]].length === 1) {
-                    var detailedKey = keys[0];
-                    var detailedValue = restriction[detailedKey][0];
-                    var onValue = _.get(restriction, prefixes.owl + 'onProperty',
-                        _.get(restriction, prefixes.owl + 'onClass'));
-                    if (onValue && _.isArray(onValue) && onValue.length === 1) {
-                        var onId = _.get(onValue[0], '@id');
-                        readableText = $filter('splitIRI')(onId).end + ' ' + $filter('splitIRI')(detailedKey).end + ' ';
-                        if (_.has(detailedValue, '@id')) {
-                            readableText += $filter('splitIRI')(detailedValue['@id']).end;
-                        } else if (_.has(detailedValue, '@value') && _.has(detailedValue, '@type')) {
-                            readableText += detailedValue['@value'] + ' '
-                                + $filter('splitIRI')(detailedValue['@type']).end;
-                        }
-                    }
-                }
-                return readableText;
-            }
-            function getReadableBlankNodeText(blankNodeId, blankNode) {
-                var readableText = blankNodeId;
-                var list = [];
-                var joiningWord;
-                if (_.has(blankNode, prefixes.owl + 'unionOf')) {
-                    list = _.get(blankNode[prefixes.owl + 'unionOf'], "[0]['@list']", []);
-                    joiningWord = ' or ';
-                } else if (_.has(blankNode, prefixes.owl + 'intersectionOf')) {
-                    list = _.get(blankNode[prefixes.owl + 'intersectionOf'], "[0]['@list']", []);
-                    joiningWord = ' and ';
-                }
-                if (list.length) {
-                    readableText = _.join(_.map(list, item => {
-                        return $filter('splitIRI')(_.get(item, '@id')).end;
-                    }), joiningWord);
-                }
-                return readableText;
             }
             function compareListItems(obj1, obj2) {
                 return _.isEqual(_.get(obj1, 'localName'), _.get(obj2, 'localName'))

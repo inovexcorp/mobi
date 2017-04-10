@@ -842,6 +842,14 @@ function mockDatasetState() {
     })
 }
 
+function mockManchesterConverter() {
+    module(function($provide) {
+        $provide.service('manchesterConverterService', function() {
+            this.jsonldToManchester = jasmine.createSpy('jsonldToManchester').and.returnValue('');
+        });
+    })
+}
+
 function mockToastr() {
     module(function($provide) {
         $provide.service('toastr', function() {

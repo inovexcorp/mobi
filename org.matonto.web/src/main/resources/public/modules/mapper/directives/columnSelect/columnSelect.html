@@ -30,4 +30,5 @@
         </ui-select-choices>
     </ui-select>
     <small class="help-block">Columns are saved by zero-based index</small>
+    <div ng-if="dvm.selectedColumn"><span class="field-name">Value: </span><span ng-class="{'text-muted': dvm.getValuePreview() === '(None)'}">{{dvm.getValuePreview()}}</span></div>
 </div>

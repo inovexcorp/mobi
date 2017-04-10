@@ -26,7 +26,8 @@ describe('Mapper State service', function() {
         prefixes,
         ontologyManagerSvc,
         mappingManagerSvc,
-        delimitedManagerSvc;
+        delimitedManagerSvc,
+        utilSvc;
 
     beforeEach(function() {
         module('mapperState');
@@ -34,13 +35,15 @@ describe('Mapper State service', function() {
         mockMappingManager();
         mockOntologyManager();
         mockDelimitedManager();
+        mockUtil();
 
-        inject(function(mapperStateService, _prefixes_, _ontologyManagerService_, _mappingManagerService_, _delimitedManagerService_) {
+        inject(function(mapperStateService, _prefixes_, _ontologyManagerService_, _mappingManagerService_, _delimitedManagerService_, _utilService_) {
             prefixes = _prefixes_;
             mapperStateSvc = mapperStateService;
             ontologyManagerSvc = _ontologyManagerService_;
             mappingManagerSvc = _mappingManagerService_;
             delimitedManagerSvc = _delimitedManagerService_;
+            utilSvc = _utilService_;
         });
 
         mapperStateSvc.mapping = {jsonld: [], id: 'mapping'};
@@ -73,15 +76,29 @@ describe('Mapper State service', function() {
         expect(mapperStateSvc.sourceOntologies).toEqual([]);
         expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
     });
+    it('should set the list of invalid property mappings', function() {
+        delimitedManagerSvc.dataRows = [['']];
+        var invalidProp = {'@id': 'invalid'};
+        invalidProp[prefixes.delim + 'columnIndex'] = '1';
+        var validProp = {'@id': 'valid'};
+        validProp[prefixes.delim + 'columnIndex'] = '0';
+        utilSvc.getPropertyValue.and.callFake(function(obj, prop) {
+            return obj[prop];
+        });
+        mappingManagerSvc.getAllDataMappings.and.returnValue([invalidProp, validProp]);
+        mapperStateSvc.setInvalidProps();
+        expect(mapperStateSvc.invalidProps).toContain(jasmine.objectContaining({'@id': invalidProp['@id'], index: 1}));
+    });
     it('should return a list of all the mapped column indexes', function() {
         var dataMappings = [{}];
-        dataMappings[0][prefixes.delim + 'columnIndex'] = [{'@value': '0'}];
+        utilSvc.getPropertyValue.and.returnValue('0');
         mappingManagerSvc.getAllDataMappings.and.returnValue(dataMappings);
         var results = mapperStateSvc.getMappedColumns();
         expect(_.isArray(results)).toBe(true);
         expect(results.length).toBe(dataMappings.length);
         _.forEach(results, function(result, idx) {
-            expect(result).toBe(dataMappings[idx][prefixes.delim + 'columnIndex'][0]['@value']);
+            expect(utilSvc.getPropertyValue).toHaveBeenCalledWith(dataMappings[idx], prefixes.delim + 'columnIndex');
+            expect(result).toBe('0');
         });
     });
     it('should update availableColumns depending on whether a property mapping has been selected', function() {
@@ -91,8 +108,9 @@ describe('Mapper State service', function() {
         expect(mapperStateSvc.availableColumns).not.toContain('0');
         expect(mapperStateSvc.availableColumns).toContain('1');
 
-        mapperStateSvc.selectedPropMappingId = 'prop'
-        mapperStateSvc.mapping.jsonld = [{'@id': 'prop', 'columnIndex': [{'@value': '0'}]}];
+        mapperStateSvc.selectedPropMappingId = 'prop';
+        mapperStateSvc.mapping.jsonld = [{'@id': 'prop'}];
+        utilSvc.getPropertyValue.and.returnValue('0');
         mapperStateSvc.updateAvailableColumns();
         expect(mapperStateSvc.availableColumns).toContain('0');
         expect(mapperStateSvc.availableColumns).toContain('1');
@@ -115,10 +133,19 @@ describe('Mapper State service', function() {
         var classId = 'class';
         var classProps = [{propObj: {'@id': 'prop1'}}, {propObj: {'@id': 'prop2'}}];
         var noDomainProps = [{propObj: {'@id': 'prop3'}}, {propObj: {'@id': 'prop4'}}];
-        mappingManagerSvc.getPropMappingsByClass.and.returnValue([{'hasProperty': [classProps[0].propObj]}, {'hasProperty': [noDomainProps[0].propObj]}]);
+        var propMappings = [{}, {}];
+        propMappings[0][prefixes.delim + 'hasProperty'] = classProps[0].propObj['@id'];
+        propMappings[1][prefixes.delim + 'hasProperty'] = noDomainProps[0].propObj['@id'];
+        mappingManagerSvc.getPropMappingsByClass.and.returnValue(propMappings);
+        utilSvc.getPropertyId.and.callFake(function(obj, prop) {
+            return obj[prop];
+        });
         mappingManagerSvc.getClassIdByMappingId.and.returnValue(classId);
         spyOn(mapperStateSvc, 'getClassProps').and.returnValue(_.union(classProps, noDomainProps));
         mapperStateSvc.setAvailableProps(classMapId);
+        _.forEach(propMappings, function(propMapping) {
+            expect(utilSvc.getPropertyId).toHaveBeenCalledWith(propMapping, prefixes.delim + 'hasProperty');
+        });
         expect(mappingManagerSvc.getPropMappingsByClass).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, classMapId);
         expect(mappingManagerSvc.getClassIdByMappingId).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, classMapId);
         expect(mapperStateSvc.getClassProps).toHaveBeenCalledWith(mapperStateSvc.sourceOntologies, classId);
