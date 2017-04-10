@@ -40,6 +40,9 @@
             controller: function() {
                 var dvm = this;
 
+                dvm.um = userManagerService;
+                dvm.lm = loginManagerService;
+
                 dvm.logout = function() {
                     catalogStateService.reset();
                     ontologyStateService.reset();
@@ -57,4 +60,5 @@
             templateUrl: 'directives/customHeader/customHeader.html'
         }
     }
+
 })();
