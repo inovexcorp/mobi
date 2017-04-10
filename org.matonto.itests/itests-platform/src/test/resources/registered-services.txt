@@ -7,5 +7,4 @@
 (&(objectClass=org.matonto.jaas.rest.GroupRest))
 (&(objectClass=org.matonto.jaas.rest.UserRest))
 (&(objectClass=org.matonto.dataset.api.DatasetManager))
-(&(objectClass=org.matonto.dataset.api.DatasetManager))
 (&(service.pid=org.matonto.jaas.engines.RdfEngine))
