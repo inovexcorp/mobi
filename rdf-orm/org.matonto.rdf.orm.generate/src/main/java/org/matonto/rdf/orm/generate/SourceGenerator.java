@@ -24,7 +24,22 @@ package org.matonto.rdf.orm.generate;
  */
 
 import aQute.bnd.annotation.component.Reference;
-import com.sun.codemodel.*;
+import com.sun.codemodel.ClassType;
+import com.sun.codemodel.JBlock;
+import com.sun.codemodel.JClass;
+import com.sun.codemodel.JClassAlreadyExistsException;
+import com.sun.codemodel.JCodeModel;
+import com.sun.codemodel.JConditional;
+import com.sun.codemodel.JDefinedClass;
+import com.sun.codemodel.JDocComment;
+import com.sun.codemodel.JExpr;
+import com.sun.codemodel.JExpression;
+import com.sun.codemodel.JFieldVar;
+import com.sun.codemodel.JMethod;
+import com.sun.codemodel.JMod;
+import com.sun.codemodel.JOp;
+import com.sun.codemodel.JType;
+import com.sun.codemodel.JVar;
 import org.apache.commons.lang3.StringUtils;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Value;
@@ -51,7 +66,15 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -287,7 +310,7 @@ public class SourceGenerator {
                         valueConverterRegistryParam);
 
             } catch (final Exception e) {
-                e.printStackTrace();
+                LOG.error("Issue generating factory class: " + factoryName + ": " + e.getMessage(), e);
                 issues.add("Issue generating factory class: " + factoryName + ": " + e.getMessage());
             }
         });
@@ -345,7 +368,7 @@ public class SourceGenerator {
                             codeModel.ref(Class.class).narrow(interfaceClass.wildcard()), DEFAULT_IMPL_FIELD,
                             impl.dotclass()).javadoc().add("The default implementation for this interface");
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    LOG.error("Issue generating implementation for '" + classIri.stringValue() + "': " + e.getMessage(), e);
                     issues.add("Issue generating implementation for '" + classIri.stringValue() + "': " + e.getMessage());
                 }
             }
@@ -614,7 +637,7 @@ public class SourceGenerator {
                                             try {
                                                 refOnt.generateSource(referenceOntologies);
                                             } catch (Exception e) {
-                                                e.printStackTrace();
+                                                LOG.error("Problem generating referenced data: " + e.getMessage(), e);
                                                 issues.add("Problem generating referenced data: " + e.getMessage());
                                             }
                                         }
@@ -680,7 +703,6 @@ public class SourceGenerator {
             interfaces.put(null, ontologyThing);
             return ontologyThing;
         } catch (JClassAlreadyExistsException e) {
-            e.printStackTrace();
             throw new OntologyToJavaException("Ontology Super Thing class already exists, or conflicts with an existing class...", e);
         }
     }
@@ -746,7 +768,7 @@ public class SourceGenerator {
                 interfaceFieldRangeMap.put(clazz, rangeMap);
                 interfaces.put(classIri, clazz);
             } catch (Exception e) {
-                e.printStackTrace();
+                LOG.error("Issue generating interface for '" + classIri.stringValue() + "': " + e.getMessage(), e);
                 issues.add("Issue generating interface for '" + classIri.stringValue() + "': " + e.getMessage());
             }
         });
