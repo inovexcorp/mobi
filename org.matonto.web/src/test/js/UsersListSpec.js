@@ -22,6 +22,8 @@
  */
 describe('Users List directive', function() {
     var $compile,
+        $filter,
+        usernameSearchFilter,
         scope,
         userManagerSvc,
         userStateSvc,
@@ -36,11 +38,13 @@ describe('Users List directive', function() {
         mockLoginManager();
         injectUsernameSearchFilter();
 
-        inject(function(_userManagerService_, _userStateService_, _loginManagerService_, _$compile_, _$rootScope_) {
+        inject(function(_userManagerService_, _userStateService_, _loginManagerService_, _usernameSearchFilter_, _$compile_, _$filter_, _$rootScope_) {
             userManagerSvc = _userManagerService_;
             userStateSvc = _userStateService_;
             loginManagerSvc = _loginManagerService_;
+            usernameSearchFilter = _usernameSearchFilter_;
             $compile = _$compile_;
+            $filter = _$filter_;
             scope = _$rootScope_;
         });
     });
@@ -65,58 +69,61 @@ describe('Users List directive', function() {
         it('for wrapping containers', function() {
             expect(this.element.hasClass('users-list')).toBe(true);
         });
-//        it('depending on how many users there are', function() {
-//            expect(this.element.find('li').length).toBe(0);
-//
-//            userManagerSvc.users = [{username: ''}];
-//            controller = this.element.controller('usersList');
-//            scope.$digest();
-//            expect(this.element.find('li').length).toBe(userManagerSvc.users.length);
-//        });
-//        it('depending on which user is selected', function() {
-//            var user = {username: 'user'};
-//            userManagerSvc.users = [user];
-//            scope.$digest();
-//            var userLink = angular.element(this.element.querySelectorAll('li a')[0]);
-//            expect(userLink.hasClass('active')).toBe(false);
-//
-//            userStateSvc.selectedUser = user;
-//            scope.$digest();
-//            expect(userLink.hasClass('active')).toBe(true);
-//        });
-//        it('depending on whether the user in the list is an admin', function() {
-//            controller = this.element.controller('usersList');
-//            userManagerSvc.users = [{username: ''}];
-//            userManagerSvc.isAdmin.and.returnValue(false);
-//            scope.$digest();
-//            expect(this.element.querySelectorAll('li .admin').length).toBe(0);
-//
-//            userManagerSvc.isAdmin.and.returnValue(true);
-//            scope.$digest();
-//            expect(this.element.querySelectorAll('li .admin').length).toBe(1);
-//        });
-//        it('depending on the user search string', function() {
-//            var user = {username: 'user'};
-//            userManagerSvc.users = [user];
-//            userStateSvc.userSearchString = user.username;
-//            scope.$digest();
-//            expect(this.element.find('li').length).toBe(1);
-//
-//            userStateSvc.userSearchString = 'abc';
-//            scope.$digest();
-//            expect(this.element.find('li').length).toBe(0);
-//        });
+        it('depending on how many users there are', function() {
+            expect(this.element.find('li').length).toBe(0);
+
+            userManagerSvc.users = [{username: ''}];
+            controller = this.element.controller('usersList');
+            scope.$digest();
+            expect(this.element.find('li').length).toBe(userManagerSvc.users.length);
+        });
+        it('depending on which user is selected', function() {
+            var user = {username: 'user'};
+            userManagerSvc.users = [user];
+            scope.$digest();
+            var userLink = angular.element(this.element.querySelectorAll('li a')[0]);
+            expect(userLink.hasClass('active')).toBe(false);
+
+            userStateSvc.selectedUser = user;
+            scope.$digest();
+            expect(userLink.hasClass('active')).toBe(true);
+        });
+        it('depending on whether the user in the list is an admin', function() {
+            controller = this.element.controller('usersList');
+            userManagerSvc.users = [{username: ''}];
+            userManagerSvc.isAdmin.and.returnValue(false);
+            scope.$digest();
+            expect(this.element.querySelectorAll('li .admin').length).toBe(0);
+
+            userManagerSvc.isAdmin.and.returnValue(true);
+            scope.$digest();
+            expect(this.element.querySelectorAll('li .admin').length).toBe(1);
+        });
+        it('depending on the user search string', function() {
+            var user = {username: 'user'};
+            userManagerSvc.users = [user];
+            userStateSvc.userSearchString = user.username;
+            scope.$digest();
+            expect(usernameSearchFilter).toHaveBeenCalledWith([user], user.username);
+            expect(this.element.find('li').length).toBe(1);
+
+            usernameSearchFilter.and.returnValue([]);
+            userStateSvc.userSearchString = 'abc';
+            scope.$digest();
+            expect(usernameSearchFilter).toHaveBeenCalledWith([user], 'abc');
+            expect(this.element.find('li').length).toBe(0);
+        });
     });
-//    it('should call onClick when a group is clicked', function() {
-//        var user = {username: 'user'};
-//        userManagerSvc.users = [user];
-//        var element = $compile(angular.element('<users-list></users-list>'))(scope);
-//        scope.$digest();
-//        controller = element.controller('usersList');
-//        spyOn(controller, 'onClick');
-//
-//        var userLink = angular.element(element.querySelectorAll('li a')[0]);
-//        userLink.triggerHandler('click');
-//        expect(controller.onClick).toHaveBeenCalledWith(user);
-//    });
+    it('should call onClick when a group is clicked', function() {
+        var user = {username: 'user'};
+        userManagerSvc.users = [user];
+        var element = $compile(angular.element('<users-list></users-list>'))(scope);
+        scope.$digest();
+        controller = element.controller('usersList');
+        spyOn(controller, 'onClick');
+
+        var userLink = angular.element(element.querySelectorAll('li a')[0]);
+        userLink.triggerHandler('click');
+        expect(controller.onClick).toHaveBeenCalledWith(user);
+    });
 });
