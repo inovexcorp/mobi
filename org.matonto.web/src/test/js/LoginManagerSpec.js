@@ -21,8 +21,7 @@
  * #L%
  */
 describe('Login Manager service', function() {
-    var $httpBackend, loginManagerSvc, catalogManagerSvc, catalogStateSvc, ontologyManagerSvc, mappingManagerSvc,
-        userManagerSvc, stateManagerSvc, state, timeout, $q, params;
+    var $httpBackend, loginManagerSvc, catalogManagerSvc, catalogStateSvc, ontologyManagerSvc, ontologyStateSvc, mappingManagerSvc, userManagerSvc, stateManagerSvc, state, timeout, $q, params;
 
     beforeEach(function() {
         module('loginManager');
@@ -30,8 +29,10 @@ describe('Login Manager service', function() {
         mockCatalogState();
         mockUserManager();
         mockOntologyManager();
+        mockOntologyState();
         mockMappingManager();
         mockStateManager();
+        mockOntologyState();
 
         module(function($provide) {
             $provide.service('$state', function() {
@@ -39,13 +40,12 @@ describe('Login Manager service', function() {
             });
         });
 
-        inject(function(loginManagerService, _$httpBackend_, _$state_, _$timeout_, _$q_, _catalogManagerService_,
-            _catalogStateService_, _ontologyManagerService_, _mappingManagerService_, _userManagerService_,
-            _stateManagerService_) {
+        inject(function(loginManagerService, _$httpBackend_, _$state_, _$timeout_, _$q_, _catalogManagerService_, _catalogStateService_, _ontologyManagerService_, _ontologyStateService_, _mappingManagerService_, _userManagerService_, _stateManagerService_) {
             loginManagerSvc = loginManagerService;
             catalogStateSvc = _catalogStateService_;
             catalogManagerSvc = _catalogManagerService_;
             ontologyManagerSvc = _ontologyManagerService_;
+            ontologyStateSvc = _ontologyStateService_;
             mappingManagerSvc = _mappingManagerService_;
             userManagerSvc = _userManagerService_;
             stateManagerSvc = _stateManagerService_;
@@ -189,6 +189,7 @@ describe('Login Manager service', function() {
                 expect(catalogManagerSvc.initialize).toHaveBeenCalled();
                 expect(catalogStateSvc.initialize).toHaveBeenCalled();
                 expect(ontologyManagerSvc.initialize).toHaveBeenCalled();
+                expect(ontologyStateSvc.initialize).toHaveBeenCalled();
                 expect(mappingManagerSvc.initialize).toHaveBeenCalled();
                 expect(userManagerSvc.initialize).toHaveBeenCalled();
                 expect(stateManagerSvc.initialize).toHaveBeenCalled();

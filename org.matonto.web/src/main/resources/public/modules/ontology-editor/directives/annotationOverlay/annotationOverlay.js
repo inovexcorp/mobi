@@ -27,9 +27,9 @@
         .module('annotationOverlay', [])
         .directive('annotationOverlay', annotationOverlay);
 
-        annotationOverlay.$inject = ['responseObj', 'ontologyManagerService', 'propertyManagerService', 'ontologyStateService', 'utilService', 'ontologyUtilsManagerService'];
+        annotationOverlay.$inject = ['responseObj', 'propertyManagerService', 'ontologyStateService', 'utilService', 'ontologyUtilsManagerService'];
 
-        function annotationOverlay(responseObj, ontologyManagerService, propertyManagerService, ontologyStateService, utilService, ontologyUtilsManagerService) {
+        function annotationOverlay(responseObj, propertyManagerService, ontologyStateService, utilService, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -40,7 +40,6 @@
                     var dvm = this;
                     dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.pm = propertyManagerService;
-                    dvm.om = ontologyManagerService;
                     dvm.ro = responseObj;
                     dvm.os = ontologyStateService;
                     dvm.util = utilService;
@@ -55,7 +54,7 @@
 
                     dvm.addAnnotation = function() {
                         dvm.pm.add(dvm.os.selected, dvm.ro.getItemIri(dvm.os.annotationSelect), dvm.os.annotationValue, _.get(dvm.os.annotationType, '@id'), dvm.os.annotationLanguage);
-                        dvm.om.addToAdditions(dvm.os.listItem.recordId, createJson(dvm.os.annotationValue, dvm.os.annotationLanguage));
+                        dvm.os.addToAdditions(dvm.os.listItem.recordId, createJson(dvm.os.annotationValue, dvm.os.annotationLanguage));
                         dvm.os.showAnnotationOverlay = false;
                         dvm.ontoUtils.saveCurrentChanges();
                         dvm.ontoUtils.updateLabel();
@@ -64,9 +63,9 @@
                     dvm.editAnnotation = function() {
                         var property = dvm.ro.getItemIri(dvm.os.annotationSelect);
                         var oldObj = _.get(dvm.os.selected, "['" + property + "']['" + dvm.os.annotationIndex + "']");
-                        dvm.om.addToDeletions(dvm.os.listItem.recordId, createJson(_.get(oldObj, '@value'), _.get(oldObj, '@language')));
+                        dvm.os.addToDeletions(dvm.os.listItem.recordId, createJson(_.get(oldObj, '@value'), _.get(oldObj, '@language')));
                         dvm.pm.edit(dvm.os.selected, property, dvm.os.annotationValue, dvm.os.annotationIndex, _.get(dvm.os.annotationType, '@id'), dvm.os.annotationLanguage);
-                        dvm.om.addToAdditions(dvm.os.listItem.recordId, createJson(dvm.os.annotationValue, dvm.os.annotationLanguage));
+                        dvm.os.addToAdditions(dvm.os.listItem.recordId, createJson(dvm.os.annotationValue, dvm.os.annotationLanguage));
                         dvm.os.showAnnotationOverlay = false;
                         dvm.ontoUtils.saveCurrentChanges();
                         dvm.ontoUtils.updateLabel();

@@ -27,9 +27,9 @@
         .module('objectPropertyOverlay', [])
         .directive('objectPropertyOverlay', objectPropertyOverlay);
 
-        objectPropertyOverlay.$inject = ['$filter', 'responseObj', 'ontologyManagerService', 'ontologyStateService', 'utilService', 'ontologyUtilsManagerService'];
+        objectPropertyOverlay.$inject = ['$filter', 'responseObj', 'ontologyStateService', 'utilService', 'ontologyUtilsManagerService'];
 
-        function objectPropertyOverlay($filter, responseObj, ontologyManagerService, ontologyStateService, utilService, ontologyUtilsManagerService) {
+        function objectPropertyOverlay($filter, responseObj, ontologyStateService, utilService, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -39,40 +39,39 @@
                 controller: function() {
                     var dvm = this;
                     dvm.ontoUtils = ontologyUtilsManagerService;
-                    dvm.om = ontologyManagerService;
                     dvm.ro = responseObj;
-                    dvm.sm = ontologyStateService;
+                    dvm.os = ontologyStateService;
                     dvm.util = utilService;
-                    dvm.individuals = $filter('removeIriFromArray')(dvm.sm.listItem.individuals,
-                        dvm.sm.getActiveEntityIRI());
+                    dvm.individuals = $filter('removeIriFromArray')(dvm.os.listItem.individuals,
+                        dvm.os.getActiveEntityIRI());
                     dvm.valueSelect = _.find(dvm.individuals, individual =>
-                        dvm.ro.getItemIri(individual) === dvm.sm.propertyValue);
+                        dvm.ro.getItemIri(individual) === dvm.os.propertyValue);
 
                     dvm.addProperty = function(select, value) {
                         var property = dvm.ro.getItemIri(select);
                         if (property) {
-                            if (_.has(dvm.sm.selected, property)) {
-                                dvm.sm.selected[property].push(value);
+                            if (_.has(dvm.os.selected, property)) {
+                                dvm.os.selected[property].push(value);
                             } else {
-                                dvm.sm.selected[property] = [value];
+                                dvm.os.selected[property] = [value];
                             }
                         }
-                        dvm.om.addToAdditions(dvm.sm.listItem.recordId, dvm.util.createJson(dvm.sm.selected['@id'],
+                        dvm.os.addToAdditions(dvm.os.listItem.recordId, dvm.util.createJson(dvm.os.selected['@id'],
                             property, value));
-                        dvm.sm.showObjectPropertyOverlay = false;
+                        dvm.os.showObjectPropertyOverlay = false;
                         dvm.ontoUtils.saveCurrentChanges();
                     }
 
                     dvm.editProperty = function(select, value) {
                         var property = dvm.ro.getItemIri(select);
                         if (property) {
-                            dvm.om.addToDeletions(dvm.sm.listItem.recordId, dvm.util.createJson(dvm.sm.selected['@id'],
-                                property, dvm.sm.selected[property][dvm.sm.propertyIndex]));
-                            dvm.sm.selected[property][dvm.sm.propertyIndex] = value;
-                            dvm.om.addToAdditions(dvm.sm.listItem.recordId, dvm.util.createJson(dvm.sm.selected['@id'],
+                            dvm.os.addToDeletions(dvm.os.listItem.recordId, dvm.util.createJson(dvm.os.selected['@id'],
+                                property, dvm.os.selected[property][dvm.os.propertyIndex]));
+                            dvm.os.selected[property][dvm.os.propertyIndex] = value;
+                            dvm.os.addToAdditions(dvm.os.listItem.recordId, dvm.util.createJson(dvm.os.selected['@id'],
                                 property, value));
                         }
-                        dvm.sm.showObjectPropertyOverlay = false;
+                        dvm.os.showObjectPropertyOverlay = false;
                         dvm.ontoUtils.saveCurrentChanges();
                     }
                 }

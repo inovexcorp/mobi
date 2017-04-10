@@ -27,9 +27,9 @@
         .module('characteristicsBlock', [])
         .directive('characteristicsBlock', characteristicsBlock);
 
-        characteristicsBlock.$inject = ['prefixes', 'ontologyManagerService', 'ontologyStateService', 'ontologyUtilsManagerService'];
+        characteristicsBlock.$inject = ['prefixes', 'ontologyStateService', 'ontologyUtilsManagerService'];
 
-        function characteristicsBlock(prefixes, ontologyManagerService, ontologyStateService, ontologyUtilsManagerService) {
+        function characteristicsBlock(prefixes, ontologyStateService, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,7 +38,6 @@
                 controllerAs: 'dvm',
                 controller: ['$scope', function($scope) {
                     var dvm = this;
-                    var om = ontologyManagerService;
                     var functionalPropertyIRI = prefixes.owl + 'FunctionalProperty';
                     var ontoUtils = ontologyUtilsManagerService;
                     dvm.os = ontologyStateService;
@@ -47,10 +46,10 @@
                     dvm.onChange = function() {
                         if (dvm.functional) {
                             _.set(dvm.os.selected, '@type', _.concat(_.get(dvm.os.selected, '@type', []), functionalPropertyIRI));
-                            handleCase(dvm.os.listItem.deletions, om.addToAdditions);
+                            handleCase(dvm.os.listItem.deletions, dvm.os.addToAdditions);
                         } else {
                             removeTypeFrom(dvm.os.selected, functionalPropertyIRI);
-                            handleCase(dvm.os.listItem.additions, om.addToDeletions);
+                            handleCase(dvm.os.listItem.additions, dvm.os.addToDeletions);
                         }
                         ontoUtils.saveCurrentChanges();
                     }

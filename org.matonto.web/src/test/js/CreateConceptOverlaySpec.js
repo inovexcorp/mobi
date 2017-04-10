@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Create Concept Overlay directive', function() {
-    var $compile, scope, $q, element, controller,  ontologyManagerSvc, ontologyStateSvc, prefixes, splitIRIFilter, ontoUtils;
+    var $compile, scope, $q, element, controller, ontologyManagerSvc, ontologyStateSvc, prefixes, splitIRIFilter, ontoUtils;
     var iri = 'iri#';
 
     beforeEach(function() {
@@ -155,7 +155,7 @@ describe('Create Concept Overlay directive', function() {
             };
             schemes.scheme1[prefixes.skos + 'hasTopConcept'] = [{'@id': 'test'}];
             controller.schemes = _.values(schemes);
-            ontologyManagerSvc.getEntityByRecordId.and.callFake(function(recordId, schemeId) {
+            ontologyStateSvc.getEntityByRecordId.and.callFake(function(recordId, schemeId) {
                 return _.get(schemes, schemeId);
             });
             ontologyStateSvc.listItem = listItem;
@@ -168,9 +168,9 @@ describe('Create Concept Overlay directive', function() {
             expect(schemes.scheme2.matonto.unsaved).toBe(true);
             expect(controller.concept.matonto.originalIRI).toEqual(controller.concept['@id']);
             expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(controller.concept, controller.language);
-            expect(ontologyManagerSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, controller.concept);
+            expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, controller.concept);
             expect(listItem.conceptHierarchy).toContain({entityIRI: controller.concept['@id']});
-            expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
+            expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                 controller.concept);
             expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(controller.concept['@id']);
             expect(ontologyStateSvc.showCreateConceptOverlay).toBe(false);

@@ -27,9 +27,9 @@
         .module('axiomOverlay', [])
         .directive('axiomOverlay', axiomOverlay);
 
-        axiomOverlay.$inject = ['responseObj', 'ontologyManagerService', 'ontologyStateService', 'utilService', 'ontologyUtilsManagerService'];
+        axiomOverlay.$inject = ['responseObj', 'ontologyStateService', 'utilService', 'ontologyUtilsManagerService'];
 
-        function axiomOverlay(responseObj, ontologyManagerService, ontologyStateService, utilService, ontologyUtilsManagerService) {
+        function axiomOverlay(responseObj, ontologyStateService, utilService, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -42,22 +42,21 @@
                 controller: function() {
                     var dvm = this;
                     dvm.ontoUtils = ontologyUtilsManagerService;
-                    dvm.om = ontologyManagerService;
                     dvm.ro = responseObj;
-                    dvm.sm = ontologyStateService;
+                    dvm.os = ontologyStateService;
                     dvm.util = utilService;
 
                     dvm.addAxiom = function() {
                         var values = [];
                         _.forEach(dvm.values, value => values.push({'@id': dvm.ro.getItemIri(value)}));
                         var axiom = dvm.ro.getItemIri(dvm.axiom);
-                        if (_.has(dvm.sm.selected, axiom)) {
-                            dvm.sm.selected[axiom] = _.union(dvm.sm.selected[axiom], values);
+                        if (_.has(dvm.os.selected, axiom)) {
+                            dvm.os.selected[axiom] = _.union(dvm.os.selected[axiom], values);
                         } else {
-                            dvm.sm.selected[axiom] = values;
+                            dvm.os.selected[axiom] = values;
                         }
-                        dvm.om.addToAdditions(dvm.sm.listItem.recordId, {'@id': dvm.sm.selected['@id'], [axiom]: values});
-                        dvm.sm.showAxiomOverlay = false;
+                        dvm.os.addToAdditions(dvm.os.listItem.recordId, {'@id': dvm.os.selected['@id'], [axiom]: values});
+                        dvm.os.showAxiomOverlay = false;
                         dvm.ontoUtils.saveCurrentChanges();
                     }
                 }

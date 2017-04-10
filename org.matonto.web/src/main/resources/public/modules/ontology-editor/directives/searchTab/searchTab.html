@@ -32,7 +32,7 @@
                     <span class="result-header text-muted" ng-click="isClosed = !isClosed"><strong>{{key | prefixation}}</strong><i class="fa fa-fw pull-right" ng-class="{'fa-chevron-down': isClosed, 'fa-chevron-up': !isClosed}"></i></span>
                     <ul class="tree" ng-if="!isClosed">
                         <tree-item ng-repeat="item in value track by item"
-                                   current-entity="dvm.om.getEntityByRecordId(dvm.os.listItem.recordId, item)"
+                                   current-entity="dvm.os.getEntityByRecordId(dvm.os.listItem.recordId, item)"
                                    is-active="dvm.os.getActiveEntityIRI() === item"
                                    on-click="dvm.os.selectItem(item, false)"
                                    ng-dblclick="dvm.os.goTo(item)"></tree-item>
@@ -47,7 +47,7 @@
             <block-content>
                 <div class="property-values" ng-repeat="(key, value) in dvm.os.state.selected track by key">
                     <h5 ng-click="isClosed = !isClosed" class="clearfix">
-                        <p class="text"><span ng-bind-html="dvm.om.getEntityNameByIndex(key, dvm.os.listItem) | highlight:dvm.os.state.highlightText | trusted"></span> <small>&lt;<span ng-bind-html="key | highlight:dvm.os.state.highlightText | trusted"></span>&gt;</small></p><i class="fa fa-fw" ng-class="{'fa-chevron-down': isClosed, 'fa-chevron-up': !isClosed}"></i>
+                        <p class="text"><span ng-bind-html="dvm.os.getEntityNameByIndex(key, dvm.os.listItem) | highlight:dvm.os.state.highlightText | trusted"></span> <small>&lt;<span ng-bind-html="key | highlight:dvm.os.state.highlightText | trusted"></span>&gt;</small></p><i class="fa fa-fw" ng-class="{'fa-chevron-down': isClosed, 'fa-chevron-up': !isClosed}"></i>
                     </h5>
                     <div class="value-container" ng-repeat="item in value" ng-hide="isClosed">
                         <span ng-if="::dvm.ontoUtils.isLinkable(item['@id'])" class="value-display"><span ng-bind-html="dvm.ontoUtils.getLabelForIRI(item['@id']) | highlight:dvm.os.state.highlightText | trusted"></span> <small><<a ng-click="dvm.os.goTo(item['@id'])" ng-bind-html="item['@id'] | highlight:dvm.os.state.highlightText | trusted"></a>></small></span>

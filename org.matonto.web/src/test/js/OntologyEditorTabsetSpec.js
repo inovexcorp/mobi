@@ -21,11 +21,7 @@
  * #L%
  */
 describe('Ontology Editor Tabset directive', function() {
-    var $compile,
-        scope,
-        element,
-        ontologyManagerSvc,
-        ontologyStateSvc;
+    var $compile, scope, element, ontologyManagerSvc, ontologyStateSvc;
 
     beforeEach(function() {
         module('templates');
@@ -40,7 +36,7 @@ describe('Ontology Editor Tabset directive', function() {
             ontologyStateSvc = _ontologyStateService_;
         });
 
-        ontologyManagerSvc.list = [{recordId: 'A', upToDate: false}, {recordId: 'B', upToDate: true}];
+        ontologyStateSvc.list = [{recordId: 'A', upToDate: false}, {recordId: 'B', upToDate: true}];
         var types = {'A': 'ontology', 'B': 'vocabulary'};
         ontologyStateSvc.getState.and.callFake(function(id) {
             return {type: _.get(types, id)};
@@ -60,7 +56,7 @@ describe('Ontology Editor Tabset directive', function() {
             expect(element.querySelectorAll('tab ontology-default-tab').length).toBe(1);
         });
         it('depending on how many ontologies are open', function() {
-            expect(element.find('tab').length).toBe(ontologyManagerSvc.list.length + 1);
+            expect(element.find('tab').length).toBe(ontologyStateSvc.list.length + 1);
         });
         it('depending on whether a ontology is up to date', function() {
             var tabs = element.find('tab');
@@ -89,7 +85,7 @@ describe('Ontology Editor Tabset directive', function() {
                 expect(ontologyStateSvc.recordIdToClose).toBe('record');
                 expect(ontologyStateSvc.showCloseOverlay).toBe(true);
                 expect(ontologyStateSvc.deleteState).not.toHaveBeenCalled();
-                expect(ontologyManagerSvc.closeOntology).not.toHaveBeenCalled();
+                expect(ontologyStateSvc.closeOntology).not.toHaveBeenCalled();
             });
             it('if it has no changes', function() {
                 ontologyStateSvc.hasChanges.and.returnValue(false);
@@ -97,7 +93,7 @@ describe('Ontology Editor Tabset directive', function() {
                 expect(ontologyStateSvc.recordIdToClose).toBe('');
                 expect(ontologyStateSvc.showCloseOverlay).toBe(false);
                 expect(ontologyStateSvc.deleteState).toHaveBeenCalledWith('record');
-                expect(ontologyManagerSvc.closeOntology).toHaveBeenCalledWith('record');
+                expect(ontologyStateSvc.closeOntology).toHaveBeenCalledWith('record');
             });
         });
     });
