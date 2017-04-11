@@ -15,7 +15,7 @@
 	<parent>
 		<artifactId>itests</artifactId>
 		<groupId>org.matonto</groupId>
-		<version>1.6.13-SNAPSHOT</version>
+		<version>1.6.14-SNAPSHOT</version>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 
@@ -88,11 +88,17 @@
                                     <outputPackage>org.provo</outputPackage>
                                     <ontologyName>ProvO</ontologyName>
                                 </ontology>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/../../org.matonto.rdf.orm.ontologies/src/main/resources/foaf.owl</ontologyFile>
+                                    <outputPackage>org.matonto.foaf</outputPackage>
+                                    <ontologyName>FOAF</ontologyName>
+                                </ontology>
                             </generates>
                             <references>
                                 <ontology>
                                     <ontologyFile>${project.basedir}/../../org.matonto.rdf.orm.ontologies/src/main/resources/foaf.owl</ontologyFile>
-                                    <outputPackage>org.matonto.ontologies.foaf</outputPackage>
+                                    <outputPackage>org.matonto.foaf</outputPackage>
+                                    <ontologyName>FOAF</ontologyName>
                                 </ontology>
                             </references>
                             <outputLocation>${project.basedir}/src/test/java</outputLocation>
