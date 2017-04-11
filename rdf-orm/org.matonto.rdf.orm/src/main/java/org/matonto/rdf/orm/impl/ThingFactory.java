@@ -56,9 +56,9 @@ public class ThingFactory extends AbstractOrmFactory<Thing> {
      * {@inheritDoc}
      */
     @Override
-    public Thing getExisting(Resource resource, Model model, ValueFactory valueFactory,
-                             ValueConverterRegistry valueConverterRegistry) {
-        return new ThingImpl(resource, model, valueFactory, valueConverterRegistry);
+    public Optional<Thing> getExisting(Resource resource, Model model, ValueFactory valueFactory,
+                                       ValueConverterRegistry valueConverterRegistry) {
+        return model.subjects().contains(resource) ? Optional.of(new ThingImpl(resource, model, valueFactory, valueConverterRegistry)) : Optional.empty();
     }
 
     @Override
@@ -85,5 +85,7 @@ public class ThingFactory extends AbstractOrmFactory<Thing> {
     }
 
     @Override
-    public Set<IRI> getParentTypeIRIs(){ return Collections.emptySet(); }
+    public Set<IRI> getParentTypeIRIs() {
+        return Collections.emptySet();
+    }
 }
