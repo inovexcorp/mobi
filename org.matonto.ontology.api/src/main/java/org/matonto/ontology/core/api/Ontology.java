@@ -25,6 +25,7 @@ package org.matonto.ontology.core.api;
 
 import org.matonto.ontology.core.api.axiom.Axiom;
 import org.matonto.ontology.core.api.classexpression.OClass;
+import org.matonto.ontology.core.api.datarange.DataRange;
 import org.matonto.ontology.core.api.datarange.Datatype;
 import org.matonto.ontology.core.api.propertyexpression.AnnotationProperty;
 import org.matonto.ontology.core.api.propertyexpression.DataProperty;
@@ -33,8 +34,10 @@ import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
+import org.matonto.rdf.api.Resource;
 
 import java.io.OutputStream;
+import java.util.Optional;
 import java.util.Set;
 
 public interface Ontology {
@@ -119,9 +122,17 @@ public interface Ontology {
     Set<Datatype> getAllDatatypes();
     
     Set<ObjectProperty> getAllObjectProperties();
-    
+
+    Optional<ObjectProperty> getObjectProperty(IRI iri);
+
+    Set<Resource> getObjectPropertyRange(ObjectProperty objectProperty);
+
     Set<DataProperty> getAllDataProperties();
-    
+
+    Optional<DataProperty> getDataProperty(IRI iri);
+
+    Set<Resource> getDataPropertyRange(DataProperty dataProperty);
+
     Set<Individual> getAllIndividuals();
 
     /**

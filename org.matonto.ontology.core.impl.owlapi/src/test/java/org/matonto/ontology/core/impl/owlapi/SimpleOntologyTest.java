@@ -23,6 +23,17 @@ package org.matonto.ontology.core.impl.owlapi;
  * #L%
  */
 
+import static org.easymock.EasyMock.capture;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.isA;
+import static org.easymock.EasyMock.mock;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
+import static org.powermock.api.easymock.PowerMock.mockStatic;
+import static org.powermock.api.easymock.PowerMock.replay;
+
 import org.easymock.Capture;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -33,28 +44,22 @@ import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyId;
 import org.matonto.ontology.core.api.OntologyManager;
 import org.matonto.ontology.core.api.axiom.Axiom;
-import org.matonto.ontology.core.utils.MatontoOntologyException;
+import org.matonto.ontology.core.api.propertyexpression.DataProperty;
+import org.matonto.ontology.core.api.propertyexpression.ObjectProperty;
 import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.rdf.api.IRI;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLAxiom;
+import org.semanticweb.owlapi.model.OWLDataProperty;
+import org.semanticweb.owlapi.model.OWLObjectProperty;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.InputStream;
-import java.net.URISyntaxException;
 import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.Set;
-
-import static org.easymock.EasyMock.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
-import static org.powermock.api.easymock.PowerMock.mockStatic;
-import static org.powermock.api.easymock.PowerMock.replay;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(SimpleOntologyValues.class)
@@ -252,6 +257,82 @@ public class SimpleOntologyTest {
 
         assertEquals(5, ontology.getUnloadableImportIRIs().size());
     }
+
+    /*@Test
+    public void getObjectPropertyTest() throws Exception {
+        // Behaviors
+        expect(SimpleOntologyValues.matontoObjectProperty(isA(OWLObjectProperty.class))).andReturn(mock(ObjectProperty.class)).anyTimes();
+        IRI objectPropertyIRI = mock(IRI.class);
+        expect(objectPropertyIRI.stringValue()).andReturn("http://test.com/ontology1#testObjectProperty").anyTimes();
+        replay(ontologyManager, SimpleOntologyValues.class, ontologyIdMock, objectPropertyIRI);
+
+        // Setup
+        InputStream stream = this.getClass().getResourceAsStream("/test.owl");
+        Ontology ontology = new SimpleOntology(stream, ontologyManager);
+
+        // Test
+        Optional<ObjectProperty> objectProperty = ontology.getObjectProperty(objectPropertyIRI);
+
+        // Assertions
+        assertTrue(objectProperty.isPresent());
+    }
+
+    @Test
+    public void getMissingObjectPropertyTest() throws Exception {
+        // Behaviors
+        expect(SimpleOntologyValues.matontoObjectProperty(isA(OWLObjectProperty.class))).andReturn(mock(ObjectProperty.class)).anyTimes();
+        IRI objectPropertyIRI = mock(IRI.class);
+        expect(objectPropertyIRI.stringValue()).andReturn("http://test.com/ontology1#missingObjectProperty").anyTimes();
+        replay(ontologyManager, SimpleOntologyValues.class, ontologyIdMock, objectPropertyIRI);
+
+        // Setup
+        InputStream stream = this.getClass().getResourceAsStream("/test.owl");
+        Ontology ontology = new SimpleOntology(stream, ontologyManager);
+
+        // Test
+        Optional<ObjectProperty> objectProperty = ontology.getObjectProperty(objectPropertyIRI);
+
+        // Assertions
+        assertFalse(objectProperty.isPresent());
+    }
+
+    @Test
+    public void getDataPropertyTest() throws Exception {
+        // Behaviors
+        expect(SimpleOntologyValues.matontoDataProperty(isA(OWLDataProperty.class))).andReturn(mock(DataProperty.class)).anyTimes();
+        IRI dataPropertyIRI = mock(IRI.class);
+        expect(dataPropertyIRI.stringValue()).andReturn("http://test.com/ontology1#testDataProperty").anyTimes();
+        replay(ontologyManager, SimpleOntologyValues.class, ontologyIdMock, dataPropertyIRI);
+
+        // Setup
+        InputStream stream = this.getClass().getResourceAsStream("/test.owl");
+        Ontology ontology = new SimpleOntology(stream, ontologyManager);
+
+        // Test
+        Optional<DataProperty> dataProperty = ontology.getDataProperty(dataPropertyIRI);
+
+        // Assertions
+        assertTrue(dataProperty.isPresent());
+    }
+
+    @Test
+    public void getMissingDataPropertyTest() throws Exception {
+        // Behaviors
+        expect(SimpleOntologyValues.matontoDataProperty(isA(OWLDataProperty.class))).andReturn(mock(DataProperty.class)).anyTimes();
+        IRI dataPropertyIRI = mock(IRI.class);
+        expect(dataPropertyIRI.stringValue()).andReturn("http://test.com/ontology1#missingDataProperty").anyTimes();
+        replay(ontologyManager, SimpleOntologyValues.class, ontologyIdMock, dataPropertyIRI);
+
+        // Setup
+        InputStream stream = this.getClass().getResourceAsStream("/test.owl");
+        Ontology ontology = new SimpleOntology(stream, ontologyManager);
+
+        // Test
+        Optional<DataProperty> dataProperty = ontology.getDataProperty(dataPropertyIRI);
+
+        // Assertions
+        assertFalse(dataProperty.isPresent());
+    }*/
 
     // TODO: Test asModel
 
