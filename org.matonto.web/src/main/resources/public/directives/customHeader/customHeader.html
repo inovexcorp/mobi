@@ -31,8 +31,8 @@
             </a>
             <ul uib-dropdown-menu>
                 <li><a ng-class="{'active': $state.is('root.settings')}" ui-sref-active="active" ui-sref="root.settings">My Account</a></li>
-                  <li role="separator" class="divider" ng-if="dvm.um.isAdmin(dvm.lm.currentUser)"></li>
-                  <li><a ng-class="{'active': $state.is('root.user-management')}" ui-sref-active="active" ui-sref="root.user-management" ng-if="dvm.um.isAdmin(dvm.lm.currentUser)">User Management</a></li>
+                <li role="separator" class="divider" ng-if="dvm.um.isAdmin(dvm.lm.currentUser)"></li>
+                <li ng-if="dvm.um.isAdmin(dvm.lm.currentUser)"><a ng-class="{'active': $state.is('root.user-management')}" ui-sref-active="active" ui-sref="root.user-management">User Management</a></li>
             </ul>
         </div>
         <a ng-click="dvm.logout()" title="Logout"><i class="fa fa-sign-out fa-fw"></i></a>

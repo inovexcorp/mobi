@@ -52,13 +52,12 @@
                     mappingManagerService.reset();
                     delimitedManagerService.reset();
                     sparqlManagerService.reset();
-                    loginManagerService.logout();
+                    dvm.lm.logout();
                     userStateService.reset();
-                    userManagerService.reset();
+                    dvm.um.reset();
                 }
             },
             templateUrl: 'directives/customHeader/customHeader.html'
         }
     }
-
 })();
