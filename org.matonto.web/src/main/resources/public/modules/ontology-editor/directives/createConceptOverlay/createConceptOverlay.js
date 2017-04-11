@@ -41,10 +41,10 @@
                     dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.prefixes = prefixes;
                     dvm.om = ontologyManagerService;
-                    dvm.sm = ontologyStateService;
+                    dvm.os = ontologyStateService;
                     dvm.util = utilService;
                     dvm.schemes = [];
-                    dvm.prefix = dvm.sm.getDefaultPrefix();
+                    dvm.prefix = dvm.os.getDefaultPrefix();
                     dvm.concept = {
                         '@id': dvm.prefix,
                         '@type': [prefixes.owl + 'NamedIndividual', prefixes.skos + 'Concept'],
@@ -63,12 +63,12 @@
                     dvm.onEdit = function(iriBegin, iriThen, iriEnd) {
                         dvm.iriHasChanged = true;
                         dvm.concept['@id'] = iriBegin + iriThen + iriEnd;
-                        dvm.sm.setCommonIriParts(iriBegin, iriThen);
+                        dvm.os.setCommonIriParts(iriBegin, iriThen);
                     }
 
                     dvm.create = function() {
                         _.forEach(dvm.schemes, scheme => {
-                            var entity = dvm.om.getEntityByRecordId(dvm.sm.listItem.recordId, scheme['@id']);
+                            var entity = dvm.os.getEntityByRecordId(dvm.os.listItem.recordId, scheme['@id']);
                             if (_.has(entity, prefixes.skos + 'hasTopConcept')) {
                                 entity[prefixes.skos + 'hasTopConcept'].push({'@id': dvm.concept['@id']});
                             } else {
@@ -79,14 +79,14 @@
                         dvm.ontoUtils.addLanguageToNewEntity(dvm.concept, dvm.language);
                         _.set(dvm.concept, 'matonto.originalIRI', dvm.concept['@id']);
                         // add the entity to the ontology
-                        dvm.om.addEntity(dvm.sm.listItem, dvm.concept);
+                        dvm.os.addEntity(dvm.os.listItem, dvm.concept);
                         // update relevant lists
-                        _.get(dvm.sm.listItem, 'conceptHierarchy').push({'entityIRI': dvm.concept['@id']});
-                        dvm.om.addToAdditions(dvm.sm.listItem.recordId, dvm.concept);
+                        _.get(dvm.os.listItem, 'conceptHierarchy').push({'entityIRI': dvm.concept['@id']});
+                        dvm.os.addToAdditions(dvm.os.listItem.recordId, dvm.concept);
                         // select the new class
-                        dvm.sm.selectItem(_.get(dvm.concept, '@id'));
+                        dvm.os.selectItem(_.get(dvm.concept, '@id'));
                         // hide the overlay
-                        dvm.sm.showCreateConceptOverlay = false;
+                        dvm.os.showCreateConceptOverlay = false;
                         dvm.ontoUtils.saveCurrentChanges();
                     }
                 }

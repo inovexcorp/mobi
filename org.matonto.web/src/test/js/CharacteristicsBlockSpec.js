@@ -27,16 +27,14 @@ describe('Characteristics Block directive', function() {
         module('templates');
         module('characteristicsBlock');
         mockPrefixes();
-        mockOntologyManager();
         mockOntologyState();
         mockOntologyUtilsManager();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _prefixes_, _ontologyManagerService_, _ontologyUtilsManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _prefixes_, _ontologyUtilsManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
             prefixes = _prefixes_;
-            ontologyManagerSvc = _ontologyManagerService_;
             ontoUtils = _ontologyUtilsManagerService_;
         });
 
@@ -80,7 +78,7 @@ describe('Characteristics Block directive', function() {
                 controller.functional = true;
                 controller.onChange();
                 expect(_.includes(_.get(ontologyStateSvc.selected, '@type', []), functionalProperty)).toBe(true);
-                expect(ontologyManagerSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, statement);
+                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, statement);
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             });
             it('is checked and the statement is in deletions', function() {
@@ -88,7 +86,7 @@ describe('Characteristics Block directive', function() {
                 controller.functional = true;
                 controller.onChange();
                 expect(_.includes(_.get(ontologyStateSvc.selected, '@type', []), functionalProperty)).toBe(true);
-                expect(ontologyManagerSvc.addToAdditions).not.toHaveBeenCalled();
+                expect(ontologyStateSvc.addToAdditions).not.toHaveBeenCalled();
                 expect(ontologyStateSvc.listItem.deletions.length).toBe(0);
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             });
@@ -99,7 +97,7 @@ describe('Characteristics Block directive', function() {
                 controller.functional = true;
                 controller.onChange();
                 expect(_.includes(_.get(ontologyStateSvc.selected, '@type', []), functionalProperty)).toBe(true);
-                expect(ontologyManagerSvc.addToAdditions).not.toHaveBeenCalled();
+                expect(ontologyStateSvc.addToAdditions).not.toHaveBeenCalled();
                 expect(_.some(ontologyStateSvc.listItem.deletions, {'@id': id, other: 'value'})).toBe(true);
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             });
@@ -108,7 +106,7 @@ describe('Characteristics Block directive', function() {
                 controller.functional = false;
                 controller.onChange();
                 expect(_.includes(_.get(ontologyStateSvc.selected, '@type', []), functionalProperty)).toBe(false);
-                expect(ontologyManagerSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, statement);
+                expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, statement);
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             });
             it('is not checked and the statement is in additions', function() {
@@ -117,7 +115,7 @@ describe('Characteristics Block directive', function() {
                 controller.functional = false;
                 controller.onChange();
                 expect(_.includes(_.get(ontologyStateSvc.selected, '@type', []), functionalProperty)).toBe(false);
-                expect(ontologyManagerSvc.addToDeletions).not.toHaveBeenCalled();
+                expect(ontologyStateSvc.addToDeletions).not.toHaveBeenCalled();
                 expect(ontologyStateSvc.listItem.additions.length).toBe(0);
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             });
@@ -129,7 +127,7 @@ describe('Characteristics Block directive', function() {
                 controller.functional = false;
                 controller.onChange();
                 expect(_.includes(_.get(ontologyStateSvc.selected, '@type', []), functionalProperty)).toBe(false);
-                expect(ontologyManagerSvc.addToDeletions).not.toHaveBeenCalled();
+                expect(ontologyStateSvc.addToDeletions).not.toHaveBeenCalled();
                 expect(_.some(ontologyStateSvc.listItem.additions, {'@id': id, other: 'value'})).toBe(true);
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             });

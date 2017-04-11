@@ -40,6 +40,9 @@
             controller: function() {
                 var dvm = this;
 
+                dvm.um = userManagerService;
+                dvm.lm = loginManagerService;
+
                 dvm.logout = function() {
                     catalogStateService.reset();
                     ontologyStateService.reset();
@@ -49,9 +52,9 @@
                     mappingManagerService.reset();
                     delimitedManagerService.reset();
                     sparqlManagerService.reset();
-                    loginManagerService.logout();
+                    dvm.lm.logout();
                     userStateService.reset();
-                    userManagerService.reset();
+                    dvm.um.reset();
                 }
             },
             templateUrl: 'directives/customHeader/customHeader.html'

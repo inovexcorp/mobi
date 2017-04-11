@@ -35,14 +35,12 @@ describe('Static IRI directive', function() {
         injectSplitIRIFilter();
         injectRegexConstant();
         mockOntologyState();
-        mockOntologyManager();
 
-        inject(function(_$compile_, _$rootScope_, _$filter_, _ontologyStateService_, _ontologyManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _$filter_, _ontologyStateService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $filter = _$filter_;
             ontologyStateSvc = _ontologyStateService_;
-            ontologyManagerSvc = _ontologyManagerService_;
         });
 
         scope.onEdit = jasmine.createSpy('onEdit');
@@ -140,7 +138,6 @@ describe('Static IRI directive', function() {
         beforeEach(function() {
             ontologyStateSvc.listItem.ontology[0].matonto.iriBegin = 'begin';
             ontologyStateSvc.listItem.ontology[0].matonto.iriThen = 'then';
-            ontologyManagerSvc.getListItemByRecordId.and.returnValue(ontologyStateSvc.listItem);
             controller = element.controller('staticIri');
         });
         it('setVariables changes the passed in variable', function() {

@@ -60,7 +60,7 @@
              * @ngdoc property
              * @name dataRows
              * @propertyOf delimitedManager.service:delimitedManagerService
-             * @type {string}
+             * @type {string[]}
              *
              * @description
              * `dataRows` holds an array of a preview of delimited data. Set by the
@@ -122,7 +122,7 @@
              * @ngdoc property
              * @name serializeFormat
              * @propertyOf delimitedManager.service:delimitedManagerService
-             * @type {string/Object}
+             * @type {string}
              *
              * @description
              * `serializeFormat` holds a string containing the format for the preview to be used in the

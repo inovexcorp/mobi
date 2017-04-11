@@ -35,6 +35,13 @@
                     }
                 }
                 &.active {
+                    .list-group-item-text {
+                        color: white;
+
+                        .text-muted {
+                            color: #ddd;
+                        }
+                    }
                     .prop-actions a {
                         color: white;
 

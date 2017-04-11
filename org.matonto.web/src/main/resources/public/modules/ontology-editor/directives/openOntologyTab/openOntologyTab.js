@@ -56,7 +56,7 @@
                     dvm.type = 'ontology';
 
                     dvm.open = function() {
-                        dvm.om.openOntology(dvm.recordId, dvm.type)
+                        dvm.os.openOntology(dvm.recordId, dvm.type)
                             .then(ontologyId => {
                                 dvm.os.addState(dvm.recordId, ontologyId, dvm.type);
                                 dvm.os.setState(dvm.recordId);
@@ -99,7 +99,7 @@
                     }
 
                     $scope.$watch(function() {
-                        return dvm.filterText + dvm.om.list + ontologyRecords;
+                        return dvm.filterText + dvm.os.list + ontologyRecords;
                     }, function handleFilterTextChange(newValue, oldValue) {
                         dvm.filteredList = $filter('filter')(getFilteredRecords(ontologyRecords), dvm.filterText,
                             (actual, expected) => {
@@ -113,7 +113,7 @@
                     dvm.getAllOntologyRecords();
 
                     function getFilteredRecords(records) {
-                        return _.reject(records, record => _.find(dvm.om.list, {recordId: record['@id']}));
+                        return _.reject(records, record => _.find(dvm.os.list, {recordId: record['@id']}));
                     }
                 }]
             }

@@ -23,34 +23,36 @@
 describe('User Management Tabset directive', function() {
     var $compile,
         scope,
-        userStateSvc;
+        element;
 
     beforeEach(function() {
         module('templates');
         module('userManagementTabset');
         mockUserState();
 
-        inject(function(_$compile_, _$rootScope_, _userStateService_) {
+        inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            userStateSvc = _userStateService_;
         });
+
+        element = $compile(angular.element('<user-management-tabset></user-management-tabset>'))(scope);
+        scope.$digest();
     });
 
     describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
-            this.element = $compile(angular.element('<user-management-tabset></user-management-tabset>'))(scope);
-            scope.$digest();
-        });
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('user-management-tabset')).toBe(true);
+            expect(element.hasClass('user-management-tabset')).toBe(true);
         });
-        it('with tabsets', function() {
-            expect(this.element.find('tabset').length).toBe(2);
-            expect(this.element.querySelectorAll('tabset.centered').length).toBe(1);
+        it('with a .blue-bar', function() {
+            expect(element.querySelectorAll('.blue-bar').length).toBe(1);
+        });
+        it('with a tabset', function() {
+            var tabset = element.find('tabset');
+            expect(tabset.length).toBe(1);
+            expect(tabset.hasClass('centered')).toBe(true);
         });
         it('with tabs', function() {
-            expect(this.element.find('tab').length).toBe(2);
+            expect(element.find('tab').length).toBe(2);
         });
     });
 });

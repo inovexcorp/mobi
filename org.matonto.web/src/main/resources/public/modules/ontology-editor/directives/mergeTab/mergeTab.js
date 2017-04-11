@@ -27,10 +27,9 @@
         .module('mergeTab', [])
         .directive('mergeTab', mergeTab);
 
-        mergeTab.$inject = ['$q', 'utilService', 'ontologyStateService', 'catalogManagerService', 'ontologyManagerService',
-            'prefixes'];
+        mergeTab.$inject = ['$q', 'utilService', 'ontologyStateService', 'catalogManagerService', 'prefixes'];
 
-        function mergeTab($q, utilService, ontologyStateService, catalogManagerService, ontologyManagerService, prefixes) {
+        function mergeTab($q, utilService, ontologyStateService, catalogManagerService, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -39,7 +38,6 @@
                 controllerAs: 'dvm',
                 controller: ['$scope', function($scope) {
                     var dvm = this;
-                    var om = ontologyManagerService;
                     var cm = catalogManagerService;
                     var catalogId = _.get(cm.localCatalog, '@id', '');
                     var resolutions = {
@@ -92,12 +90,12 @@
                     dvm.merge = function() {
                         var sourceId = angular.copy(dvm.branch['@id']);
                         cm.mergeBranches(sourceId, dvm.targetId, dvm.os.listItem.recordId, catalogId, resolutions)
-                            .then(commitId => om.updateOntology(dvm.os.listItem.recordId, dvm.targetId, commitId, dvm.os.state.type), $q.reject)
+                            .then(commitId => dvm.os.updateOntology(dvm.os.listItem.recordId, dvm.targetId, commitId, dvm.os.state.type), $q.reject)
                             .then(() => {
                                 if (dvm.checkbox) {
                                     cm.deleteRecordBranch(sourceId, dvm.os.listItem.recordId, catalogId)
                                         .then(() => {
-                                            om.removeBranch(dvm.os.listItem.recordId, sourceId);
+                                            dvm.os.removeBranch(dvm.os.listItem.recordId, sourceId);
                                             onSuccess();
                                         }, onError);
                                 } else {

@@ -42,13 +42,13 @@
                     dvm.os = ontologyStateService;
 
                     dvm.onClose = function(recordId) {
-                        var ontology = dvm.om.getOntologyByRecordId(recordId);
+                        var ontology = dvm.os.getOntologyByRecordId(recordId);
                         if (dvm.os.hasChanges(recordId)) {
                             dvm.os.recordIdToClose = recordId;
                             dvm.os.showCloseOverlay = true;
                         } else {
                             dvm.os.deleteState(recordId);
-                            dvm.om.closeOntology(recordId);
+                            dvm.os.closeOntology(recordId);
                         }
                     }
                 }

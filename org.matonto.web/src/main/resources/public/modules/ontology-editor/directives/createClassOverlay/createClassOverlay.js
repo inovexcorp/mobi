@@ -27,9 +27,9 @@
         .module('createClassOverlay', [])
         .directive('createClassOverlay', createClassOverlay);
 
-        createClassOverlay.$inject = ['$filter', 'REGEX', 'ontologyManagerService', 'ontologyStateService', 'prefixes', 'ontologyUtilsManagerService'];
+        createClassOverlay.$inject = ['$filter', 'REGEX', 'ontologyStateService', 'prefixes', 'ontologyUtilsManagerService'];
 
-        function createClassOverlay($filter, REGEX, ontologyManagerService, ontologyStateService, prefixes, ontologyUtilsManagerService) {
+        function createClassOverlay($filter, REGEX, ontologyStateService, prefixes, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -42,9 +42,8 @@
 
                     dvm.prefixes = prefixes;
                     dvm.iriPattern = REGEX.IRI;
-                    dvm.om = ontologyManagerService;
-                    dvm.sm = ontologyStateService;
-                    dvm.prefix = dvm.sm.getDefaultPrefix();
+                    dvm.os = ontologyStateService;
+                    dvm.prefix = dvm.os.getDefaultPrefix();
                     dvm.clazz = {
                         '@id': dvm.prefix,
                         '@type': [prefixes.owl + 'Class'],
@@ -66,7 +65,7 @@
                     dvm.onEdit = function(iriBegin, iriThen, iriEnd) {
                         dvm.iriHasChanged = true;
                         dvm.clazz['@id'] = iriBegin + iriThen + iriEnd;
-                        dvm.sm.setCommonIriParts(iriBegin, iriThen);
+                        dvm.os.setCommonIriParts(iriBegin, iriThen);
                     }
 
                     dvm.create = function() {
@@ -76,17 +75,17 @@
                         ontoUtils.addLanguageToNewEntity(dvm.clazz, dvm.language);
                         _.set(dvm.clazz, 'matonto.originalIRI', dvm.clazz['@id']);
                         // add the entity to the ontology
-                        dvm.om.addEntity(dvm.sm.listItem, dvm.clazz);
+                        dvm.os.addEntity(dvm.os.listItem, dvm.clazz);
                         // update relevant lists
                         var split = $filter('splitIRI')(dvm.clazz['@id']);
-                        _.get(dvm.sm.listItem, 'subClasses').push({namespace:split.begin + split.then,
+                        _.get(dvm.os.listItem, 'subClasses').push({namespace:split.begin + split.then,
                             localName: split.end});
-                        _.get(dvm.sm.listItem, 'classHierarchy').push({'entityIRI': dvm.clazz['@id']});
-                        dvm.om.addToAdditions(dvm.sm.listItem.recordId, dvm.clazz);
+                        _.get(dvm.os.listItem, 'classHierarchy').push({'entityIRI': dvm.clazz['@id']});
+                        dvm.os.addToAdditions(dvm.os.listItem.recordId, dvm.clazz);
                         // select the new class
-                        dvm.sm.selectItem(_.get(dvm.clazz, '@id'));
+                        dvm.os.selectItem(_.get(dvm.clazz, '@id'));
                         // hide the overlay
-                        dvm.sm.showCreateClassOverlay = false;
+                        dvm.os.showCreateClassOverlay = false;
                         ontoUtils.saveCurrentChanges();
                     }
                 }

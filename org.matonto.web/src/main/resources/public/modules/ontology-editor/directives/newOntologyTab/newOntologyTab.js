@@ -27,9 +27,9 @@
         .module('newOntologyTab', [])
         .directive('newOntologyTab', newOntologyTab);
 
-        newOntologyTab.$inject = ['$filter', 'REGEX', 'ontologyManagerService', 'ontologyStateService', 'prefixes', 'stateManagerService', 'utilService', 'ontologyUtilsManagerService'];
+        newOntologyTab.$inject = ['$filter', 'REGEX', 'ontologyStateService', 'prefixes', 'stateManagerService', 'utilService', 'ontologyUtilsManagerService'];
 
-        function newOntologyTab($filter, REGEX, ontologyManagerService, ontologyStateService, prefixes, stateManagerService, utilService, ontologyUtilsManagerService) {
+        function newOntologyTab($filter, REGEX, ontologyStateService, prefixes, stateManagerService, utilService, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -48,7 +48,6 @@
                     dvm.prefixes = prefixes;
                     dvm.iriPattern = REGEX.IRI;
                     dvm.os = ontologyStateService;
-                    dvm.om = ontologyManagerService;
                     dvm.type = 'ontology';
                     dvm.ontology = {
                         '@id': prefix,
@@ -72,7 +71,7 @@
                                 '@id': angular.copy(prefixes.skos).slice(0, -1)
                             }];
                         }
-                        dvm.om.createOntology(dvm.ontology, dvm.title, dvm.description,
+                        dvm.os.createOntology(dvm.ontology, dvm.title, dvm.description,
                             _.join(_.map(dvm.keywords, _.trim), ','), dvm.type).then(response =>
                                 sm.createOntologyState(response.recordId, response.branchId, response.commitId)
                                     .then(() => {

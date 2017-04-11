@@ -46,12 +46,11 @@ describe('Column Select directive', function() {
         delimitedManagerSvc.dataRows = [[]];
         element = $compile(angular.element('<column-select columns="columns" selected-column="selectedColumn"></column-select>'))(scope);
         scope.$digest();
+        isolatedScope = element.isolateScope();
+        controller = element.controller('columnSelect');
     });
 
     describe('in isolated scope', function() {
-        beforeEach(function() {
-            isolatedScope = element.isolateScope();
-        });
         it('columns should be one way bound', function() {
             isolatedScope.columns = ['test'];
             scope.$digest();
@@ -59,9 +58,6 @@ describe('Column Select directive', function() {
         });
     });
     describe('controller bound variable', function() {
-        beforeEach(function() {
-            controller = element.controller('columnSelect');
-        });
         it('selectedColumn should be two way bound', function() {
             controller.selectedColumn = '0';
             scope.$digest();
@@ -77,6 +73,23 @@ describe('Column Select directive', function() {
         });
         it('with a .help-block', function() {
             expect(element.querySelectorAll('.help-block').length).toBe(1);
+        });
+    });
+    describe('controller methods', function() {
+        it('should test whether the header for a column index matches', function() {
+            delimitedManagerSvc.getHeader.and.returnValue('a');
+            var tests = [{expected: 'a', result: true}, {expected: 'A', result: true}, {expected: 'b', result: false}];
+            _.forEach(tests, function(test) {
+                expect(controller.compare('0', test.expected)).toBe(test.result);
+                expect(delimitedManagerSvc.getHeader).toHaveBeenCalledWith('0');
+            });
+        });
+        it('should get a preview of a column value', function() {
+            delimitedManagerSvc.dataRows = [['first'], ['second']];
+            controller.selectedColumn = '0';
+            expect(controller.getValuePreview()).toBe('second');
+            delimitedManagerSvc.containsHeaders = false;
+            expect(controller.getValuePreview()).toBe('first');
         });
     });
 });

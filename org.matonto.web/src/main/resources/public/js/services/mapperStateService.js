@@ -48,13 +48,14 @@
          */
         .service('mapperStateService', mapperStateService);
 
-        mapperStateService.$inject = ['prefixes', 'mappingManagerService', 'ontologyManagerService', 'delimitedManagerService'];
+        mapperStateService.$inject = ['prefixes', 'mappingManagerService', 'ontologyManagerService', 'delimitedManagerService', 'utilService'];
 
-        function mapperStateService(prefixes, mappingManagerService, ontologyManagerService, delimitedManagerService) {
+        function mapperStateService(prefixes, mappingManagerService, ontologyManagerService, delimitedManagerService, utilService) {
             var self = this;
             var mm = mappingManagerService,
                 om = ontologyManagerService,
-                dm = delimitedManagerService;
+                dm = delimitedManagerService,
+                util = utilService;
 
             // Static step indexes
             self.selectMappingStep = 0;
@@ -462,7 +463,7 @@
             self.setInvalidProps = function() {
                 self.invalidProps = _.chain(mm.getAllDataMappings(self.mapping.jsonld))
                     .map(dataMapping => _.pick(dataMapping, ['@id', prefixes.delim + 'columnIndex']))
-                    .forEach(obj => _.set(obj, 'index', parseInt(obj['@id', prefixes.delim + 'columnIndex'][0]['@value'], 10)))
+                    .forEach(obj => _.set(obj, 'index', parseInt(util.getPropertyValue(obj, prefixes.delim + 'columnIndex'), 10)))
                     .filter(obj => obj.index > dm.dataRows[0].length - 1)
                     .sortBy('index')
                     .value();
@@ -479,7 +480,7 @@
              * @return {string[]} an array of strings of column indexes that haven't been mapped yet
              */
             self.getMappedColumns = function() {
-                return _.map(mm.getAllDataMappings(self.mapping.jsonld), dataMapping => _.get(dataMapping, "['" + prefixes.delim + "columnIndex'][0]['@value']", ''));
+                return _.map(mm.getAllDataMappings(self.mapping.jsonld), dataMapping => util.getPropertyValue(dataMapping, prefixes.delim + 'columnIndex'));
             }
             /**
              * @ngdoc method
@@ -496,7 +497,7 @@
                 var mappedColumns = self.getMappedColumns();
                 if (self.selectedPropMappingId) {
                     var propMapping = _.find(self.mapping.jsonld, {'@id': self.selectedPropMappingId});
-                    var index = _.get(propMapping, "['" + prefixes.delim + "columnIndex'][0]['@value']", '-1');
+                    var index = util.getPropertyValue(propMapping, prefixes.delim + 'columnIndex');
                     _.pull(mappedColumns, index);
                 }
                 self.availableColumns = _.difference(_.map(_.range(0, dm.dataRows[0].length), idx => `${idx}`), mappedColumns);
@@ -544,7 +545,7 @@
              * @param {string} classMappingId The id of the class mapping to set the array of property objects for
              */
             self.setAvailableProps = function(classMappingId) {
-                var mappedProps = _.map(mm.getPropMappingsByClass(self.mapping.jsonld, classMappingId), "['" + prefixes.delim + "hasProperty'][0]['@id']");
+                var mappedProps = _.map(mm.getPropMappingsByClass(self.mapping.jsonld, classMappingId), propMapping => util.getPropertyId(propMapping, prefixes.delim + 'hasProperty'));
                 var classId = mm.getClassIdByMappingId(self.mapping.jsonld, classMappingId);
                 var props = self.getClassProps(self.sourceOntologies, classId);
                 _.set(self.availablePropsByClass, encodeURIComponent(classMappingId), _.filter(props, prop => mappedProps.indexOf(prop.propObj['@id']) < 0));

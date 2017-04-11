@@ -27,9 +27,9 @@
         .module('removePropertyOverlay', [])
         .directive('removePropertyOverlay', removePropertyOverlay);
 
-        removePropertyOverlay.$inject = ['ontologyStateService', 'propertyManagerService', 'ontologyManagerService', 'ontologyUtilsManagerService'];
+        removePropertyOverlay.$inject = ['ontologyStateService', 'propertyManagerService', 'ontologyUtilsManagerService'];
 
-        function removePropertyOverlay(ontologyStateService, propertyManagerService, ontologyManagerService, ontologyUtilsManagerService) {
+        function removePropertyOverlay(ontologyStateService, propertyManagerService, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -44,21 +44,20 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    var om = ontologyManagerService;
                     var ontoUtils = ontologyUtilsManagerService;
-                    dvm.sm = ontologyStateService;
+                    dvm.os = ontologyStateService;
                     dvm.pm = propertyManagerService;
 
                     dvm.removeProperty = function() {
                         if (dvm.onSubmit) {
-                            dvm.onSubmit({axiomObject: dvm.sm.selected[dvm.key][dvm.index]});
+                            dvm.onSubmit({axiomObject: dvm.os.selected[dvm.key][dvm.index]});
                         }
                         var json = {
-                            '@id': dvm.sm.selected['@id'],
-                            [dvm.key]: [angular.copy(dvm.sm.selected[dvm.key][dvm.index])]
+                            '@id': dvm.os.selected['@id'],
+                            [dvm.key]: [angular.copy(dvm.os.selected[dvm.key][dvm.index])]
                         }
-                        om.addToDeletions(dvm.sm.listItem.recordId, json);
-                        dvm.pm.remove(dvm.sm.selected, dvm.key, dvm.index);
+                        dvm.os.addToDeletions(dvm.os.listItem.recordId, json);
+                        dvm.pm.remove(dvm.os.selected, dvm.key, dvm.index);
                         dvm.overlayFlag = false;
                         ontoUtils.saveCurrentChanges();
                         ontoUtils.updateLabel();

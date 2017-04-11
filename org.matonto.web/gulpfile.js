@@ -317,6 +317,10 @@ gulp.task('icons-unminified', function() {
         .pipe(gulp.dest(dest + 'css/fonts'));
 });
 
+gulp.task('clearcache', function() {
+    cache.clearAll();
+});
+
 // Production Task (minified)
 gulp.task('prod', ['test-minified-1', 'test-minified-2', 'test-minified-3', 'test-minified-4', 'minify-scripts', 'minify-css', 'html', 'images', 'inject-minified', 'icons-minified', 'ngdocs-minified']);
 // gulp.task('prod', ['test-minified', 'minify-scripts', 'minify-css', 'html', 'images', 'inject-minified', 'icons-minified', 'ngdocs-minified']);

@@ -36,7 +36,7 @@
                     <ui-select-match placeholder="Select a Class">
                         <span title="{{dvm.getTooltipDisplay($item)}}">{{dvm.ontoUtils.getDropDownText($item)}}</span>
                     </ui-select-match>
-                    <ui-select-choices group-by="dvm.getItemOntologyIri" repeat="dvm.ro.getItemIri(item) as item in dvm.sm.listItem.subClasses | removeIriFromArray:dvm.individual['@type'] | filter:$select.search | orderBy:dvm.ontoUtils.getDropDownText">
+                    <ui-select-choices group-by="dvm.getItemOntologyIri" repeat="dvm.ro.getItemIri(item) as item in dvm.os.listItem.subClasses | removeIriFromArray:dvm.individual['@type'] | filter:$select.search | orderBy:dvm.ontoUtils.getDropDownText">
                         <div title="{{dvm.getItemIri(item)}}" ng-bind-html="dvm.ontoUtils.getDropDownText(item) | highlight:$select.search | trusted"></div>
                     </ui-select-choices>
                 </ui-select>
@@ -44,7 +44,7 @@
             <div class="btn-container clearfix">
                 <button class="btn btn-primary pull-right" ng-disabled="dvm.form.$invalid || !dvm.individual['@type'].length"
                         ng-click="dvm.create()">Create</button>
-                <button class="btn btn-default pull-right" ng-click="dvm.sm.showCreateIndividualOverlay = false">Cancel</button>
+                <button class="btn btn-default pull-right" ng-click="dvm.os.showCreateIndividualOverlay = false">Cancel</button>
             </div>
         </form>
     </div>

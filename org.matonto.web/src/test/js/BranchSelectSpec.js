@@ -21,15 +21,7 @@
  * #L%
  */
 describe('Branch Select directive', function() {
-    var $compile,
-        scope,
-        element,
-        controller,
-        catalogManagerSvc,
-        ontologyStateSvc,
-        stateManagerSvc,
-        $q,
-        catalogId;
+    var $compile, scope, element, controller, catalogManagerSvc, ontologyStateSvc, stateManagerSvc, $q, catalogId;
 
     var branchId = 'branchId';
     var branch = {'@id': branchId};
@@ -47,19 +39,16 @@ describe('Branch Select directive', function() {
         mockOntologyState();
         mockUtil();
         mockStateManager();
-        mockOntologyManager();
         injectTrustedFilter();
         injectHighlightFilter();
 
-        inject(function(_$compile_, _$rootScope_, _catalogManagerService_, _ontologyStateService_, _$q_,
-            _stateManagerService_, _ontologyManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _catalogManagerService_, _ontologyStateService_, _$q_, _stateManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             catalogManagerSvc = _catalogManagerService_;
             ontologyStateSvc = _ontologyStateService_;
             $q = _$q_;
             stateManagerSvc = _stateManagerService_;
-            ontologyManagerSvc = _ontologyManagerService_;
         });
 
         scope.bindModel = {};
@@ -123,7 +112,7 @@ describe('Branch Select directive', function() {
                     updateDeferred = $q.defer();
                     stateManagerSvc.updateOntologyState.and.returnValue(updateDeferred.promise);
                     changeDeferred = $q.defer();
-                    ontologyManagerSvc.updateOntology.and.returnValue(changeDeferred.promise)
+                    ontologyStateSvc.updateOntology.and.returnValue(changeDeferred.promise)
                 });
                 it('when updateOntologyState and updateOntology are resolved', function() {
                     controller.changeBranch(branch);
@@ -134,7 +123,7 @@ describe('Branch Select directive', function() {
                         ontologyStateSvc.listItem.recordId, catalogId);
                     expect(stateManagerSvc.updateOntologyState).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                         branchId, commitId);
-                    expect(ontologyManagerSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
+                    expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                         branchId, commitId);
                     expect(ontologyStateSvc.resetStateTabs).toHaveBeenCalled();
                 });
@@ -169,7 +158,7 @@ describe('Branch Select directive', function() {
                 controller.delete();
                 deferred.resolve();
                 scope.$apply();
-                expect(ontologyManagerSvc.removeBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
+                expect(ontologyStateSvc.removeBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
                     controller.branch['@id']);
                 expect(controller.showDeleteConfirmation).toBe(false);
             });

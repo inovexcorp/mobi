@@ -21,7 +21,7 @@
  * #L%
  */
 describe('New Ontology Tab directive', function() {
-    var $compile, scope, $q, element, controller, ontologyStateSvc, ontologyManagerSvc, utilSvc, stateManagerSvc, prefixes, ontoUtils;
+    var $compile, scope, $q, element, controller, ontologyStateSvc, utilSvc, stateManagerSvc, prefixes, ontoUtils;
 
     beforeEach(function() {
         module('templates');
@@ -29,18 +29,16 @@ describe('New Ontology Tab directive', function() {
         injectRegexConstant();
         injectCamelCaseFilter();
         mockUtil();
-        mockOntologyManager();
         mockOntologyState();
         mockPrefixes();
         mockStateManager();
         mockOntologyUtilsManager();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _ontologyManagerService_, _utilService_, _stateManagerService_, _prefixes_, _ontologyUtilsManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _utilService_, _stateManagerService_, _prefixes_, _ontologyUtilsManagerService_) {
             $q = _$q_;
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
-            ontologyManagerSvc = _ontologyManagerService_;
             utilSvc = _utilService_;
             stateManagerSvc = _stateManagerService_;
             prefixes = _prefixes_;
@@ -132,14 +130,14 @@ describe('New Ontology Tab directive', function() {
                     commitId: 'commit',
                     entityIRI: 'entity'
                 };
-                ontologyManagerSvc.createOntology.and.returnValue($q.when(this.response));
+                ontologyStateSvc.createOntology.and.returnValue($q.when(this.response));
                 this.errorMessage = 'Error message';
             });
             it('unless an error occurs with creating the ontology', function() {
-                ontologyManagerSvc.createOntology.and.returnValue($q.reject(this.errorMessage));
+                ontologyStateSvc.createOntology.and.returnValue($q.reject(this.errorMessage));
                 controller.create();
                 scope.$apply();
-                expect(ontologyManagerSvc.createOntology).toHaveBeenCalledWith(controller.ontology, controller.title, controller.description, 'one,two', controller.type);
+                expect(ontologyStateSvc.createOntology).toHaveBeenCalledWith(controller.ontology, controller.title, controller.description, 'one,two', controller.type);
                 expect(stateManagerSvc.createOntologyState).not.toHaveBeenCalled();
                 expect(controller.error).toBe(this.errorMessage);
             });
@@ -147,7 +145,7 @@ describe('New Ontology Tab directive', function() {
                 stateManagerSvc.createOntologyState.and.returnValue($q.reject(this.errorMessage));
                 controller.create();
                 scope.$apply();
-                expect(ontologyManagerSvc.createOntology).toHaveBeenCalledWith(controller.ontology, controller.title, controller.description, 'one,two', controller.type);
+                expect(ontologyStateSvc.createOntology).toHaveBeenCalledWith(controller.ontology, controller.title, controller.description, 'one,two', controller.type);
                 expect(stateManagerSvc.createOntologyState).toHaveBeenCalledWith(this.response.recordId, this.response.branchId, this.response.commitId);
                 expect(controller.error).toBe(this.errorMessage);
             });
@@ -160,7 +158,7 @@ describe('New Ontology Tab directive', function() {
                     expect(utilSvc.setDctermsValue).toHaveBeenCalledWith(controller.ontology, 'description', controller.description);
                     expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(controller.ontology, controller.language);
                     expect(_.has(controller.ontology, prefixes.owl + 'imports')).toBe(false);
-                    expect(ontologyManagerSvc.createOntology).toHaveBeenCalledWith(controller.ontology, controller.title, controller.description, 'one,two', controller.type);
+                    expect(ontologyStateSvc.createOntology).toHaveBeenCalledWith(controller.ontology, controller.title, controller.description, 'one,two', controller.type);
                     expect(stateManagerSvc.createOntologyState).toHaveBeenCalledWith(this.response.recordId, this.response.branchId, this.response.commitId);
                     expect(ontologyStateSvc.addState).toHaveBeenCalledWith(this.response.recordId, this.response.entityIRI, controller.type);
                     expect(ontologyStateSvc.setState).toHaveBeenCalledWith(this.response.recordId);
@@ -174,7 +172,7 @@ describe('New Ontology Tab directive', function() {
                     expect(utilSvc.setDctermsValue).toHaveBeenCalledWith(controller.ontology, 'title', controller.title);
                     expect(utilSvc.setDctermsValue).toHaveBeenCalledWith(controller.ontology, 'description', controller.description);
                     expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(controller.ontology, controller.language);
-                    expect(ontologyManagerSvc.createOntology).toHaveBeenCalledWith(controller.ontology, controller.title, controller.description, 'one,two', controller.type);
+                    expect(ontologyStateSvc.createOntology).toHaveBeenCalledWith(controller.ontology, controller.title, controller.description, 'one,two', controller.type);
                     expect(stateManagerSvc.createOntologyState).toHaveBeenCalledWith(this.response.recordId, this.response.branchId, this.response.commitId);
                     expect(ontologyStateSvc.addState).toHaveBeenCalledWith(this.response.recordId, this.response.entityIRI, controller.type);
                     expect(ontologyStateSvc.setState).toHaveBeenCalledWith(this.response.recordId);
