@@ -52,6 +52,7 @@ import org.matonto.rdf.orm.conversion.impl.ShortValueConverter;
 import org.matonto.rdf.orm.conversion.impl.StringValueConverter;
 import org.matonto.rdf.orm.conversion.impl.ValueValueConverter;
 import org.matonto.rdf.orm.impl.ThingFactory;
+import org.openrdf.model.vocabulary.RDF;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -153,6 +154,11 @@ public class SourceGeneratorTest {
         factory.setModelFactory(modelFactory);
         factory.setValueConverterRegistry(valueConverterRegistry);
         OnlineChatAccount account = factory.createNew(valueFactory.createIRI("urn://matonto.org/orm/test/testOCA"), model, valueFactory, valueConverterRegistry);
-        account.getModel().filter(account.getResource(), null, null).forEach(stmt -> System.out.println(stmt));
+        Model m = account.getModel().filter(account.getResource(), null, null);
+        assertFalse(m.isEmpty());
+        m.forEach(stmt -> {
+            assertEquals(account.getResource(), stmt.getSubject());
+            assertEquals(RDF.TYPE, stmt.getPredicate());
+        });
     }
 }
