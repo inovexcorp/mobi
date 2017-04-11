@@ -60,7 +60,7 @@
             if (searchTerm) {
                 var searchTermLower = searchTerm.toLowerCase();
 
-                angular.forEach(users, function(userObj) {
+                _.forEach(users, userObj => {
                     var searchFields = [
                         userObj.username.toLowerCase(),
                         userObj.firstName.toLowerCase(),
@@ -69,11 +69,8 @@
                         (userObj.lastName + " " + userObj.firstName).toLowerCase(),
                         (userObj.lastName + ", " + userObj.firstName).toLowerCase()
                     ];
-                    for (var i = 0; i < searchFields.length; i++) {
-                        if (searchFields[i].match(searchTermLower)) {
-                            results.push(userObj);
-                            break;
-                        }
+                    if (_.some(searchFields, searchField => searchField.match(searchTermLower))) {
+                        results.push(userObj);
                     }
                 });
             } else {

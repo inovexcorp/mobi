@@ -22,7 +22,6 @@
  */
 describe('Users List directive', function() {
     var $compile,
-        $filter,
         usernameSearchFilter,
         scope,
         userManagerSvc,
@@ -38,13 +37,12 @@ describe('Users List directive', function() {
         mockLoginManager();
         injectUsernameSearchFilter();
 
-        inject(function(_userManagerService_, _userStateService_, _loginManagerService_, _usernameSearchFilter_, _$compile_, _$filter_, _$rootScope_) {
+        inject(function(_userManagerService_, _userStateService_, _loginManagerService_, _usernameSearchFilter_, _$compile_, _$rootScope_) {
             userManagerSvc = _userManagerService_;
             userStateSvc = _userStateService_;
             loginManagerSvc = _loginManagerService_;
             usernameSearchFilter = _usernameSearchFilter_;
             $compile = _$compile_;
-            $filter = _$filter_;
             scope = _$rootScope_;
         });
     });
