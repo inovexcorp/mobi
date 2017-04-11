@@ -346,7 +346,7 @@
                 if (entityExists(mapping, classMappingId)) {
                     var classMapping = getEntityById(mapping, classMappingId);
                     var splitPrefix = $filter('splitIRI')(util.getPropertyValue(classMapping, prefixes.delim + 'hasPrefix').slice(0, -1));
-                    classMapping[prefixes.delim + 'hasPrefix'] = [{'@value': splitPrefix.begin + splitPrefix.then + prefixEnd}];
+                    classMapping[prefixes.delim + 'hasPrefix'] = [{'@value': prefixEnd}];
                     classMapping[prefixes.delim + 'localName'] = [{'@value': localNamePattern}];
                 }
             }

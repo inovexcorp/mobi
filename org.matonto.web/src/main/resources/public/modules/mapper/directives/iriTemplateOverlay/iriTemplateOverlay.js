@@ -73,7 +73,7 @@
                     var regex = new RegExp(prefixes.data + '(.*?)\/');
                     var prefixEnd = prefix.replace(regex, '');
                     var fullStart = (_.pullAt(prefix.match(regex), 0)[0]);
-                    dvm.beginsWith = (fullStart + prefixEnd.slice(0, -1)).replace(/\s+/g, '');;
+                    dvm.beginsWith = (fullStart + prefixEnd.slice(0, -1)).replace(/\s+/g, '');
                     dvm.then = prefixEnd[prefixEnd.length - 1];
                     dvm.localNameOptions = [{text: 'UUID', value: '${UUID}'}];
                     for (var idx = 0; idx < dvm.dm.dataRows[0].length; idx++) {
@@ -83,7 +83,7 @@
                     dvm.endsWith = selectedIndex > 0 ? dvm.localNameOptions[selectedIndex] : dvm.localNameOptions[_.findIndex(dvm.localNameOptions, {'text': 'UUID'})];
 
                     dvm.set = function() {
-                        dvm.mm.editIriTemplate(dvm.state.mapping.jsonld, dvm.state.selectedClassMappingId, dvm.beginsWith + dvm.then, dvm.endsWith.value);
+                        dvm.mm.editIriTemplate(dvm.state.mapping.jsonld, dvm.state.selectedClassMappingId, dvm.beginsWith.toLowerCase() + dvm.then, dvm.endsWith.value.toLowerCase());
                         dvm.state.changedMapping = true;
                     }
                 },

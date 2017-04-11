@@ -75,7 +75,7 @@
                         var classMapping = _.find(dvm.state.mapping.jsonld, {'@id': dvm.state.selectedClassMappingId});
                         var prefix = dvm.util.getPropertyValue(classMapping, prefixes.delim + 'hasPrefix');
                         var localName = dvm.util.getPropertyValue(classMapping, prefixes.delim + 'localName');
-                        return prefix + localName;
+                        return prefix;
                     }
                     dvm.getPropName = function(propMapping) {
                         return dvm.util.getBeautifulIRI(dvm.mm.getPropIdByMapping(propMapping));
