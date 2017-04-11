@@ -35,6 +35,7 @@ import com.sun.codemodel.JDocComment;
 import com.sun.codemodel.JExpr;
 import com.sun.codemodel.JExpression;
 import com.sun.codemodel.JFieldVar;
+import com.sun.codemodel.JInvocation;
 import com.sun.codemodel.JMethod;
 import com.sun.codemodel.JMod;
 import com.sun.codemodel.JOp;
@@ -254,22 +255,36 @@ public class SourceGenerator {
 
                 final JMethod getExisting = factory.method(JMod.PUBLIC, codeModel.ref(Optional.class).narrow(interfaze), "getExisting");
                 getExisting.annotate(Override.class);
-                getExisting.body()._return(
 
-                        JOp.cond(
-                                JExpr.ref("model").invoke("filter")
-                                        .arg(JExpr.ref("resource"))
-                                        .arg(JExpr.ref("valueFactory").invoke("createIRI")
-                                                .arg(JExpr.ref("RDF_TYPE_IRI")))
-                                        .arg(JExpr._this().invoke("getTypeIRI"))
-                                        .invoke("isEmpty"), codeModel.ref(Optional.class).staticInvoke("empty"),
-                                codeModel.ref(Optional.class).staticInvoke("of")
-                                        .arg(JExpr._new(clazz)
-                                                .arg(getExisting.param(org.matonto.rdf.api.Resource.class, "resource"))
-                                                .arg(getExisting.param(org.matonto.rdf.api.Model.class, "model"))
-                                                .arg(getExisting.param(org.matonto.rdf.api.ValueFactory.class, "valueFactory"))
-                                                .arg(getExisting.param(org.matonto.rdf.orm.conversion.ValueConverterRegistry.class,
-                                                        "valueConverterRegistry")))));
+                /*
+                  * The conditional here is basically going to filter the model for the rdf:type of the
+                  * thing we're looking for, and will return whether or not the resulting submodel is empty.
+                  *
+                 */
+                final JInvocation conditional = JExpr.ref("model").invoke("filter")
+                        .arg(JExpr.ref("resource"))
+                        .arg(JExpr.ref("valueFactory").invoke("createIRI")
+                                .arg(JExpr.ref("RDF_TYPE_IRI")))
+                        .arg(JExpr._this().invoke("getTypeIRI"))
+                        .invoke("isEmpty");
+
+                // If the conditional is true, meaning there is no rdf:type statement.
+                final JInvocation emptyOptional = codeModel.ref(Optional.class).staticInvoke("empty");
+
+                /*
+                  * If the condition is false, meaning there is a matching rdf:type statement.  Then
+                  * we will create an Optional.of a new instance of our target Thing class using the
+                  * model we're referencing.
+                 */
+                final JInvocation realOptional = codeModel.ref(Optional.class).staticInvoke("of")
+                        .arg(JExpr._new(clazz)
+                                .arg(getExisting.param(org.matonto.rdf.api.Resource.class, "resource"))
+                                .arg(getExisting.param(org.matonto.rdf.api.Model.class, "model"))
+                                .arg(getExisting.param(org.matonto.rdf.api.ValueFactory.class, "valueFactory"))
+                                .arg(getExisting.param(org.matonto.rdf.orm.conversion.ValueConverterRegistry.class,
+                                        "valueConverterRegistry")));
+
+                getExisting.body()._return(JOp.cond(conditional, emptyOptional, realOptional));
 
 
                 final JMethod getTypeIri = factory.method(JMod.PUBLIC, org.matonto.rdf.api.IRI.class, "getTypeIRI");
