@@ -31,7 +31,6 @@ import org.matonto.ontology.core.api.OntologyId;
 import org.matonto.ontology.core.api.OntologyManager;
 import org.matonto.ontology.core.api.axiom.Axiom;
 import org.matonto.ontology.core.api.classexpression.OClass;
-import org.matonto.ontology.core.api.datarange.DataRange;
 import org.matonto.ontology.core.api.datarange.Datatype;
 import org.matonto.ontology.core.api.propertyexpression.AnnotationProperty;
 import org.matonto.ontology.core.api.propertyexpression.DataProperty;
@@ -68,10 +67,7 @@ import org.semanticweb.owlapi.model.AsOWLDatatype;
 import org.semanticweb.owlapi.model.HasRange;
 import org.semanticweb.owlapi.model.MissingImportHandlingStrategy;
 import org.semanticweb.owlapi.model.MissingImportListener;
-import org.semanticweb.owlapi.model.OWLDataFactory;
-import org.semanticweb.owlapi.model.OWLDataPropertyRangeAxiom;
 import org.semanticweb.owlapi.model.OWLDocumentFormat;
-import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLObjectSomeValuesFrom;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
@@ -99,7 +95,6 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -351,10 +346,13 @@ public class SimpleOntology implements Ontology {
     public Set<Resource> getObjectPropertyRange(ObjectProperty objectProperty) {
         return owlOntology.objectPropertyRangeAxioms(SimpleOntologyValues.owlapiObjectProperty(objectProperty))
                 .map(HasRange::getRange)
+                // TODO: Return all range values, not just classes
                 .filter(AsOWLClass::isOWLClass)
                 .map(owlClassExpression -> SimpleOntologyValues.matontoIRI(owlClassExpression.asOWLClass().getIRI()))
                 .collect(Collectors.toSet());
     }
+
+    // TODO: Function to get the domain of a object property
 
     @Override
     public Set<DataProperty> getAllDataProperties() {
@@ -376,10 +374,13 @@ public class SimpleOntology implements Ontology {
     public Set<Resource> getDataPropertyRange(DataProperty dataProperty) {
         return owlOntology.dataPropertyRangeAxioms(SimpleOntologyValues.owlapiDataProperty(dataProperty))
                 .map(HasRange::getRange)
+                // TODO: Return all range values, not just datatypes
                 .filter(AsOWLDatatype::isOWLDatatype)
                 .map(owlDataRange -> SimpleOntologyValues.matontoIRI(owlDataRange.asOWLDatatype().getIRI()))
                 .collect(Collectors.toSet());
     }
+
+    // TODO: Function to get the domain of a data property
 
     @Override
     public Set<Individual> getAllIndividuals() {
