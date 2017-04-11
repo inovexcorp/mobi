@@ -131,6 +131,12 @@ function injectInArrayFilter() {
     });
 }
 
+function injectUsernameSearchFilter() {
+    module(function($provide) {
+        $provide.value('usernameSearchFilter', jasmine.createSpy('usernameSearchFilter').and.callFake(_.identity));
+    });
+}
+
 function mockStateManager() {
     module(function($provide) {
         $provide.service('stateManagerService', function($q) {
