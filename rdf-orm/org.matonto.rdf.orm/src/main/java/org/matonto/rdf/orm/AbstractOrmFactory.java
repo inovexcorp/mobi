@@ -1,6 +1,7 @@
 package org.matonto.rdf.orm;
 
 import aQute.bnd.annotation.component.Reference;
+import org.matonto.exception.MatOntoException;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
@@ -202,7 +203,7 @@ public abstract class AbstractOrmFactory<T extends Thing> implements OrmFactory<
             model.add(valueFactory.createStatement(resource, valueFactory.createIRI(OrmFactory.RDF_TYPE_IRI), iri));
         });
         // Will always be present in this condition.
-        return getExisting(resource, model, valueFactory, valueConverterRegistry).orElse(null);
+        return getExisting(resource, model, valueFactory, valueConverterRegistry).orElseThrow(() -> new MatOntoException("Issue creating new OrmThing, expected previously created resource " + resource.stringValue() + "was not found"));
     }
 
     /**
