@@ -170,7 +170,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rdf.orm</artifactId>
-            <version>${project.version}</version>
+            <version>${orm.version}</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>

@@ -31,10 +31,10 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.matonto.ontologies.foaf.Agent;
-import org.matonto.ontologies.foaf.AgentFactory;
-import org.matonto.ontologies.foaf.OnlineChatAccount;
-import org.matonto.ontologies.foaf.OnlineChatAccountFactory;
+import org.matonto.foaf.Agent;
+import org.matonto.foaf.AgentFactory;
+import org.matonto.foaf.OnlineChatAccount;
+import org.matonto.foaf.OnlineChatAccountFactory;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Value;
@@ -52,6 +52,7 @@ import org.matonto.rdf.orm.conversion.impl.ShortValueConverter;
 import org.matonto.rdf.orm.conversion.impl.StringValueConverter;
 import org.matonto.rdf.orm.conversion.impl.ValueValueConverter;
 import org.matonto.rdf.orm.impl.ThingFactory;
+import org.openrdf.model.vocabulary.RDF;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -113,8 +114,12 @@ public class SourceGeneratorTest {
     @Test
     public void testAgent() {
         final AgentFactory factory = new AgentFactory();
+        valueConverterRegistry.registerValueConverter(factory);
+        factory.setValueFactory(valueFactory);
+        factory.setModelFactory(modelFactory);
+        factory.setValueConverterRegistry(valueConverterRegistry);
         final Agent a = factory.getExisting(valueFactory.createIRI("urn://matonto.org/orm/test/testAgent"), model,
-                valueFactory, valueConverterRegistry);
+                valueFactory, valueConverterRegistry).orElseThrow(() -> new RuntimeException("WHAT? No agent returned"));
         assertEquals(valueFactory.createLiteral(100), a.getAge().orElse(null));
         assertEquals(valueFactory.createLiteral("male"), a.getGender().orElse(null));
         final Set<Thing> mboxes = a.getMbox();
@@ -144,8 +149,16 @@ public class SourceGeneratorTest {
     @Test
     public void testMultiType() {
         final OnlineChatAccountFactory factory = new OnlineChatAccountFactory();
+        valueConverterRegistry.registerValueConverter(factory);
         factory.setValueFactory(valueFactory);
+        factory.setModelFactory(modelFactory);
+        factory.setValueConverterRegistry(valueConverterRegistry);
         OnlineChatAccount account = factory.createNew(valueFactory.createIRI("urn://matonto.org/orm/test/testOCA"), model, valueFactory, valueConverterRegistry);
-        account.getModel().filter(account.getResource(), null, null).forEach(stmt -> System.out.println(stmt));
+        Model m = account.getModel().filter(account.getResource(), null, null);
+        assertFalse(m.isEmpty());
+        m.forEach(stmt -> {
+            assertEquals(account.getResource(), stmt.getSubject());
+            assertEquals(RDF.TYPE, stmt.getPredicate());
+        });
     }
 }

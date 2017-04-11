@@ -6,6 +6,7 @@ import org.matonto.rdf.orm.conversion.ValueConverterRegistry;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -99,8 +100,8 @@ public interface OrmFactory<T extends Thing> extends ValueConverter<T> {
      *                               {@link Value} data to objects
      * @return The targeted instance of the {@link Thing} type
      */
-    T getExisting(final Resource resource, final Model model, final ValueFactory valueFactory,
-                  final ValueConverterRegistry valueConverterRegistry);
+    Optional<T> getExisting(final Resource resource, final Model model, final ValueFactory valueFactory,
+                            final ValueConverterRegistry valueConverterRegistry);
 
     /**
      * Get an existing instance of the specified type with the provided params.
@@ -110,7 +111,7 @@ public interface OrmFactory<T extends Thing> extends ValueConverter<T> {
      * @param valueFactory The {@link ValueFactory} to use constructing RDF data
      * @return The targeted instance of the {@link Thing} type
      */
-    T getExisting(final Resource resource, final Model model, final ValueFactory valueFactory);
+    Optional<T> getExisting(final Resource resource, final Model model, final ValueFactory valueFactory);
 
     /**
      * Get an existing instance of the specified type with the provided params.
@@ -119,7 +120,7 @@ public interface OrmFactory<T extends Thing> extends ValueConverter<T> {
      * @param model    The {@link Model} containing the statements backing this type
      * @return The targeted instance of the {@link Thing} type
      */
-    T getExisting(final Resource resource, final Model model);
+    Optional<T> getExisting(final Resource resource, final Model model);
 
     /**
      * Get all existing instances of this type in a specified {@link Model}.
