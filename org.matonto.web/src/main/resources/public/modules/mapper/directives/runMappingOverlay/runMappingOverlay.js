@@ -96,6 +96,7 @@
                     }
                     function runMapping() {
                         if (dvm.runMethod === 'download') {
+                            dvm.state.changedMapping = false;
                             dvm.dm.mapAndDownload(dvm.state.mapping.id, dvm.format, dvm.fileName);
                             reset();
                         } else {
