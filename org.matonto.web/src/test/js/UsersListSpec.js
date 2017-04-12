@@ -22,6 +22,7 @@
  */
 describe('Users List directive', function() {
     var $compile,
+        usernameSearchFilter,
         scope,
         userManagerSvc,
         userStateSvc,
@@ -34,11 +35,13 @@ describe('Users List directive', function() {
         mockUserManager();
         mockUserState();
         mockLoginManager();
+        injectUsernameSearchFilter();
 
-        inject(function(_userManagerService_, _userStateService_, _loginManagerService_, _$compile_, _$rootScope_) {
+        inject(function(_userManagerService_, _userStateService_, _loginManagerService_, _usernameSearchFilter_, _$compile_, _$rootScope_) {
             userManagerSvc = _userManagerService_;
             userStateSvc = _userStateService_;
             loginManagerSvc = _loginManagerService_;
+            usernameSearchFilter = _usernameSearchFilter_;
             $compile = _$compile_;
             scope = _$rootScope_;
         });
@@ -99,10 +102,13 @@ describe('Users List directive', function() {
             userManagerSvc.users = [user];
             userStateSvc.userSearchString = user.username;
             scope.$digest();
+            expect(usernameSearchFilter).toHaveBeenCalledWith([user], user.username);
             expect(this.element.find('li').length).toBe(1);
 
+            usernameSearchFilter.and.returnValue([]);
             userStateSvc.userSearchString = 'abc';
             scope.$digest();
+            expect(usernameSearchFilter).toHaveBeenCalledWith([user], 'abc');
             expect(this.element.find('li').length).toBe(0);
         });
     });
