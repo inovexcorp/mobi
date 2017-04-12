@@ -35,6 +35,8 @@ import org.matonto.foaf.Agent;
 import org.matonto.foaf.AgentFactory;
 import org.matonto.foaf.OnlineChatAccount;
 import org.matonto.foaf.OnlineChatAccountFactory;
+import org.matonto.inherit.Entity;
+import org.matonto.inherit.EntityFactory;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Value;
@@ -54,8 +56,10 @@ import org.matonto.rdf.orm.conversion.impl.ValueValueConverter;
 import org.matonto.rdf.orm.impl.ThingFactory;
 import org.openrdf.model.vocabulary.RDF;
 
+import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 public class SourceGeneratorTest {
@@ -160,5 +164,24 @@ public class SourceGeneratorTest {
             assertEquals(account.getResource(), stmt.getSubject());
             assertEquals(RDF.TYPE, stmt.getPredicate());
         });
+    }
+
+    @Test
+    public void testRangeFromImport() throws Exception {
+        Method m = org.matonto.inherit.Entity.class.getDeclaredMethod("getFriend");
+        assertEquals(Optional.class, m.getReturnType());
+        EntityFactory f = new EntityFactory();
+        f.setModelFactory(modelFactory);
+        f.setValueConverterRegistry(valueConverterRegistry);
+        f.setValueFactory(valueFactory);
+        AgentFactory agentFactory = new AgentFactory();
+        agentFactory.setModelFactory(modelFactory);
+        agentFactory.setValueConverterRegistry(valueConverterRegistry);
+        agentFactory.setValueFactory(valueFactory);
+
+        Entity entity = f.createNew(valueFactory.createIRI("urn://entityTest"), model);
+        entity.setFriend(agentFactory.createNew(valueFactory.createIRI("urn://agentTest"), model));
+        Optional<Agent> agentOptional = entity.getFriend();
+        assertTrue(agentOptional.isPresent());
     }
 }
