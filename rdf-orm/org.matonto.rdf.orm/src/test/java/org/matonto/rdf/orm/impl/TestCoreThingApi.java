@@ -132,7 +132,7 @@ public class TestCoreThingApi {
     }
 
     @Test
-    public void testOptionalEmpty(){
+    public void testOptionalEmpty() {
         Optional<Thing> optional = thingFactory.getExisting(valueFactory.createIRI("urn://doesnotexist.org"), model);
         TestCase.assertFalse(optional.isPresent());
     }

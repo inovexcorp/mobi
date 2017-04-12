@@ -583,10 +583,11 @@ public class SourceGenerator {
         final Set<org.openrdf.model.Value> objects = this.metaModel.filter(property, RDFS.RANGE, null).objects();
         if (objects.size() == 1) {
             final IRI rangeIri = (IRI) objects.iterator().next();
+            //TODO - think about moving the searching through our ontology and references to the end of this logic.
             // Handle our types.
-            final JDefinedClass ourClass = interfaces.get(rangeIri);
-            if (ourClass != null) {
-                return codeModel.ref(ourClass.fullName());
+            final Optional<String> optName = getTargetClassFullName(rangeIri);
+            if (optName.isPresent()) {
+                return codeModel.ref(optName.get());
             } else if (rangeIri.equals(RDFS.LITERAL)) {
                 return codeModel.ref(org.matonto.rdf.api.Literal.class);
             } else if (rangeIri.equals(XMLSchema.ANYURI)) {
@@ -617,15 +618,41 @@ public class SourceGenerator {
                 LOG.warn("ORM does not know what type to make properties of range '" + rangeIri.stringValue()
                         + "' so we'll use Optional<Value> or Set<Value>");
                 // TODO - evaluate for NPE potential.
-                return this.metaModel.filter(property, RDF.TYPE, null).objects().contains(OWL.OBJECTPROPERTY) ? codeModel.ref(Thing.class)
+                return this.metaModel.filter(property, RDF.TYPE, null).objects().contains(OWL.OBJECTPROPERTY)
+                        ? codeModel.ref(Thing.class)
                         : codeModel.ref(Value.class);
             }
         } else {
             // TODO - evaluate for NPE potential.
             LOG.warn("Property '" + property + "' " + (objects.isEmpty() ? "doesn't specify a range." : "Specifies multiple ranges"));
-            return this.metaModel.filter(property, RDF.TYPE, null).objects().contains(OWL.OBJECTPROPERTY) ? codeModel.ref(Thing.class)
+            return this.metaModel.filter(property, RDF.TYPE, null).objects().contains(OWL.OBJECTPROPERTY)
+                    ? codeModel.ref(Thing.class)
                     : codeModel.ref(Value.class);
         }
+    }
+
+    /**
+     * Identify the full class name of a given range that is in either our ontology, or a referenced one.  This
+     * method will return the first match it identifies.
+     *
+     * @param rangeIri The IRI of the property we're identifying
+     * @return The fully qualified class name or an empty {@link Optional} if one doesn't exist in our context
+     */
+    private Optional<String> getTargetClassFullName(final IRI rangeIri) {
+        String fullClassName = null;
+        final JDefinedClass ourClass = interfaces.get(rangeIri);
+        if (ourClass != null) {
+            fullClassName = ourClass.fullName();
+        } else {
+            for (final ReferenceOntology ont : referenceOntologies) {
+                LOG.debug("Looking in ontology " + ont.getPackageName() + " for " + rangeIri.stringValue());
+                if (ont.containsClass(rangeIri)) {
+                    fullClassName = ont.getClassName(rangeIri);
+                    break;
+                }
+            }
+        }
+        return Optional.ofNullable(fullClassName);
     }
 
     /**
@@ -642,7 +669,7 @@ public class SourceGenerator {
                     if (value instanceof IRI) {
                         final IRI extending = (IRI) stmt.getObject();
                         if (!extending.equals(OWL.THING)) {
-                            LOG.debug("Class '" + (iri != null ? iri.stringValue() : getOntologyName(this.packageName, this.ontologyName)) + "' extends '" + extending + "'");
+                            LOG.debug("Class '" + iri.stringValue() + "' extends '" + extending + "'");
                             if (interfaces.containsKey(extending)) {
                                 clazz._implements(interfaces.get(extending));
                             } else {
@@ -664,6 +691,7 @@ public class SourceGenerator {
                         }
                     } else if (value instanceof org.openrdf.model.Resource) {
                         // TODO - handle blank nodes somehow
+                        LOG.warn("Blank nodes remain unhandled");
                     } else {
                         issues.add("Unsupported rdfs:subclassOf property on '" + iri.stringValue()
                                 + "' which tried to extend '" + value.stringValue() + "'");
