@@ -362,6 +362,17 @@ function mockMapperState() {
     });
 }
 
+function mockHttpService() {
+    module(function($provide) {
+        $provide.service('httpService', function() {
+            this.pending = [];
+            this.isPending = jasmine.createSpy('isPending');
+            this.cancel = jasmine.createSpy('cancel');
+            this.get = jasmine.createSpy('get');
+        });
+    });
+}
+
 function mockPrefixes() {
     module(function($provide) {
         $provide.service('prefixes', function() {
