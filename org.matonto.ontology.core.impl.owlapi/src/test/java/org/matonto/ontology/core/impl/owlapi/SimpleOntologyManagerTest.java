@@ -739,7 +739,7 @@ public class SimpleOntologyManagerTest {
     @Test
     public void testGetConceptRelationships() throws Exception {
         Set<String> parents = Stream.of("https://matonto.org/vocabulary#Concept1",
-                "https://matonto.org/vocabulary#Concept2").collect(Collectors.toSet());
+                "https://matonto.org/vocabulary#Concept2","https://matonto.org/vocabulary#Concept3","https://matonto.org/vocabulary#Concept4").collect(Collectors.toSet());
         Map<String, String> children = new HashMap<>();
         children.put("https://matonto.org/vocabulary#Concept1", "https://matonto.org/vocabulary#Concept2");
 
