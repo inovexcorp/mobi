@@ -59,12 +59,12 @@ describe('IRI Template Overlay directive', function() {
         this.localName = '${0}';
         var classMapping = {
             '@id': mapperStateSvc.selectedClassMappingId,
-            'hasPrefix': this.begin + this.then,
+            'prefix': this.begin + this.then,
             'localName': this.localName
         };
         utilSvc.getPropertyValue.and.callFake(function(entity, iri) {
-            if (iri === prefixes.delim + 'hasPrefix') {
-                return classMapping.hasPrefix;
+            if (iri === prefixes.delim + 'prefix') {
+                return classMapping.prefix;
             } else if (iri === prefixes.delim + 'localName') {
                 return classMapping.localName;
             }

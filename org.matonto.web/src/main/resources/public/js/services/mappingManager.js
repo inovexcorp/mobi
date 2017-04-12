@@ -313,13 +313,13 @@
                 if (om.getEntity(ontology, classId)) {
                     // Collect IRI sections for prefix and create class mapping
                     var splitIri = $filter('splitIRI')(classId);
-                    var ontologyDataName = util.getBeautifulIRI(om.getOntologyIRI(ontology)).toLowerCase();
+                    var ontologyDataName = ($filter('splitIRI')(om.getOntologyIRI(ontology))).end;
                     classEntity = {
                         '@id': getMappingEntity(mapping)['@id'] + '/' + uuid.v4(),
                         '@type': [prefixes.delim + 'ClassMapping']
                     };
                     classEntity[prefixes.delim + 'mapsTo'] = [{'@id': classId}];
-                    classEntity[prefixes.delim + 'hasPrefix'] = [{'@value': prefixes.data + ontologyDataName + '/' + splitIri.end.toLowerCase() + '/'}];
+                    classEntity[prefixes.delim + 'prefix'] = [{'@value': prefixes.data + ontologyDataName + '/' + splitIri.end.toLowerCase() + '/'}];
                     classEntity[prefixes.delim + 'localName'] = [{'@value': '${UUID}'}];
                     mapping.push(classEntity);
                 }
@@ -332,7 +332,7 @@
              * @methodOf mappingManager.service:mappingManagerService
              *
              * @description
-             * Edits the IRI template of a class mapping specified by id in a mapping. Sets the `hasPrefix`
+             * Edits the IRI template of a class mapping specified by id in a mapping. Sets the `prefix`
              * and `localName` properties of the class mapping.
              *
              * @param {Object[]} mapping The mapping JSON-LD array
@@ -345,8 +345,8 @@
                 // Check if class mapping exists in mapping
                 if (entityExists(mapping, classMappingId)) {
                     var classMapping = getEntityById(mapping, classMappingId);
-                    var splitPrefix = $filter('splitIRI')(util.getPropertyValue(classMapping, prefixes.delim + 'hasPrefix').slice(0, -1));
-                    classMapping[prefixes.delim + 'hasPrefix'] = [{'@value': prefixEnd}];
+                    var splitPrefix = $filter('splitIRI')(util.getPropertyValue(classMapping, prefixes.delim + 'prefix').slice(0, -1));
+                    classMapping[prefixes.delim + 'prefix'] = [{'@value': prefixEnd}];
                     classMapping[prefixes.delim + 'localName'] = [{'@value': localNamePattern}];
                 }
             }

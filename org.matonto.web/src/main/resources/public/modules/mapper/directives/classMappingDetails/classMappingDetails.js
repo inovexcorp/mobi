@@ -73,9 +73,9 @@
                     }
                     dvm.getIriTemplate = function() {
                         var classMapping = _.find(dvm.state.mapping.jsonld, {'@id': dvm.state.selectedClassMappingId});
-                        var prefix = dvm.util.getPropertyValue(classMapping, prefixes.delim + 'hasPrefix');
+                        var prefix = dvm.util.getPropertyValue(classMapping, prefixes.delim + 'prefix');
                         var localName = dvm.util.getPropertyValue(classMapping, prefixes.delim + 'localName');
-                        return prefix;
+                        return prefix + localName;
                     }
                     dvm.getPropName = function(propMapping) {
                         return dvm.util.getBeautifulIRI(dvm.mm.getPropIdByMapping(propMapping));
