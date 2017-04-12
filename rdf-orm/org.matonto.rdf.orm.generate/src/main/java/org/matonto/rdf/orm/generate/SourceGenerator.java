@@ -573,7 +573,6 @@ public class SourceGenerator {
         return method;
     }
 
-
     /**
      * TODO - make better?
      *

@@ -129,7 +129,6 @@ public class TestCoreThingApi {
 
         final Thing t = thingFactory.getExisting(myIri, model,
                 valueFactory).orElseThrow(() -> new Exception("FAILED TO GET THING THAT WAS JUST CREATED"));
-
     }
 
     @Test
