@@ -59,6 +59,7 @@
                 var dvm = this;
                 dvm.tabs = {
                     profile: true,
+                    group: false,
                     password: false,
                     preferences: false
                 };
