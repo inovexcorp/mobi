@@ -17,10 +17,10 @@
         <rdfs:label>Test Ontology</rdfs:label>
         <owl:versionIRI>http://test.com/ontology1/1.0.0</owl:versionIRI>
     </owl:Ontology>
-    
 
 
-    <!-- 
+
+    <!--
     ///////////////////////////////////////////////////////////////////////////////////////
     //
     // Annotation properties
@@ -28,16 +28,16 @@
     ///////////////////////////////////////////////////////////////////////////////////////
      -->
 
-    
+
 
 
     <!-- http://test.com/ontology1#testAnnotation -->
 
     <owl:AnnotationProperty rdf:about="&ontology1;testAnnotation"/>
-    
 
 
-    <!-- 
+
+    <!--
     ///////////////////////////////////////////////////////////////////////////////////////
     //
     // Object Properties
@@ -45,18 +45,34 @@
     ///////////////////////////////////////////////////////////////////////////////////////
      -->
 
-    
 
 
-    <!-- http://test.com/ontology1#testObjectProperty -->
 
-    <owl:ObjectProperty rdf:about="&ontology1;testObjectProperty">
+    <!-- http://test.com/ontology1#testObjectProperty1 -->
+
+    <owl:ObjectProperty rdf:about="&ontology1;testObjectProperty1">
         <rdfs:range rdf:resource="&ontology1;TestClassA"/>
     </owl:ObjectProperty>
-    
 
 
-    <!-- 
+
+    <!-- http://test.com/ontology1#testObjectProperty2 -->
+
+    <owl:ObjectProperty rdf:about="&ontology1;testObjectProperty2">
+        <rdfs:range>
+            <owl:Class>
+                <owl:unionOf rdf:parseType="Collection">
+                    <owl:Class rdf:about="&ontology1;TestClassA"/>
+                    <owl:Class rdf:about="&ontology1;TestClassB"/>
+                </owl:unionOf>
+            </owl:Class>
+        </rdfs:range>
+        <rdfs:range rdf:resource="&ontology1;TestClassC"/>
+    </owl:ObjectProperty>
+
+
+
+    <!--
     ///////////////////////////////////////////////////////////////////////////////////////
     //
     // Data properties
@@ -64,18 +80,49 @@
     ///////////////////////////////////////////////////////////////////////////////////////
      -->
 
-    
 
 
-    <!-- http://test.com/ontology1#testDataProperty -->
 
-    <owl:DatatypeProperty rdf:about="&ontology1;testDataProperty">
+    <!-- http://test.com/ontology1#testDataProperty1 -->
+
+    <owl:DatatypeProperty rdf:about="&ontology1;testDataProperty1">
         <rdfs:range rdf:resource="&xsd;integer"/>
     </owl:DatatypeProperty>
-    
 
 
-    <!-- 
+
+    <!-- http://test.com/ontology1#testDataProperty2 -->
+
+    <owl:DatatypeProperty rdf:about="&ontology1;testDataProperty2">
+        <rdfs:range>
+            <rdfs:Datatype>
+                <owl:oneOf>
+                    <rdf:Description>
+                        <rdf:type rdf:resource="http://www.w3.org/1999/02/22-rdf-syntax-ns#List"/>
+                        <rdf:first>Accept</rdf:first>
+                        <rdf:rest>
+                            <rdf:Description>
+                                <rdf:type rdf:resource="http://www.w3.org/1999/02/22-rdf-syntax-ns#List"/>
+                                <rdf:first>Decline</rdf:first>
+                                <rdf:rest>
+                                    <rdf:Description>
+                                        <rdf:type rdf:resource="http://www.w3.org/1999/02/22-rdf-syntax-ns#List"/>
+                                        <rdf:first>Provisional</rdf:first>
+                                        <rdf:rest rdf:resource="http://www.w3.org/1999/02/22-rdf-syntax-ns#nil"/>
+                                    </rdf:Description>
+                                </rdf:rest>
+                            </rdf:Description>
+                        </rdf:rest>
+                    </rdf:Description>
+                </owl:oneOf>
+            </rdfs:Datatype>
+        </rdfs:range>
+        <rdfs:range rdf:resource="&xsd;string"/>
+    </owl:DatatypeProperty>
+
+
+
+    <!--
     ///////////////////////////////////////////////////////////////////////////////////////
     //
     // Classes
@@ -83,16 +130,22 @@
     ///////////////////////////////////////////////////////////////////////////////////////
      -->
 
-    
+
 
 
     <!-- http://test.com/ontology1#TestClassA -->
 
     <owl:Class rdf:about="&ontology1;TestClassA"/>
-    
+
 
 
     <!-- http://test.com/ontology1#TestClassB -->
 
     <owl:Class rdf:about="&ontology1;TestClassB"/>
+
+
+
+    <!-- http://test.com/ontology1#TestClassC -->
+
+    <owl:Class rdf:about="&ontology1;TestClassC"/>
 </rdf:RDF>

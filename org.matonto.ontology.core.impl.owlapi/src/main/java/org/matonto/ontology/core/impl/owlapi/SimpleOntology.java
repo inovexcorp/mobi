@@ -67,7 +67,9 @@ import org.semanticweb.owlapi.model.AsOWLDatatype;
 import org.semanticweb.owlapi.model.HasRange;
 import org.semanticweb.owlapi.model.MissingImportHandlingStrategy;
 import org.semanticweb.owlapi.model.MissingImportListener;
+import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLDocumentFormat;
+import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLObjectSomeValuesFrom;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
@@ -335,15 +337,15 @@ public class SimpleOntology implements Ontology {
 
     @Override
     public Optional<ObjectProperty> getObjectProperty(IRI iri) {
-        return owlOntology.objectPropertiesInSignature()
-                .filter(objectProperty -> objectProperty.getIRI().equals(SimpleOntologyValues.owlapiIRI(iri)))
-                .findFirst()
+        return getOwlObjectProperty(iri)
                 .flatMap(owlObjectProperty -> Optional.of(
                         SimpleOntologyValues.matontoObjectProperty(owlObjectProperty)));
     }
 
     @Override
     public Set<Resource> getObjectPropertyRange(ObjectProperty objectProperty) {
+        getOwlObjectProperty(objectProperty.getIRI()).orElseThrow(() ->
+                new IllegalArgumentException("Object property not found in ontology"));
         return owlOntology.objectPropertyRangeAxioms(SimpleOntologyValues.owlapiObjectProperty(objectProperty))
                 .map(HasRange::getRange)
                 // TODO: Return all range values, not just classes
@@ -363,15 +365,15 @@ public class SimpleOntology implements Ontology {
 
     @Override
     public Optional<DataProperty> getDataProperty(IRI iri) {
-        return owlOntology.dataPropertiesInSignature()
-                .filter(dataProperty -> dataProperty.getIRI().equals(SimpleOntologyValues.owlapiIRI(iri)))
-                .findFirst()
+        return getOwlDataProperty(iri)
                 .flatMap(owlDataProperty -> Optional.of(
                         SimpleOntologyValues.matontoDataProperty(owlDataProperty)));
     }
 
     @Override
     public Set<Resource> getDataPropertyRange(DataProperty dataProperty) {
+        getOwlDataProperty(dataProperty.getIRI()).orElseThrow(() ->
+                new IllegalArgumentException("Data property not found in ontology"));
         return owlOntology.dataPropertyRangeAxioms(SimpleOntologyValues.owlapiDataProperty(dataProperty))
                 .map(HasRange::getRange)
                 // TODO: Return all range values, not just datatypes
@@ -542,5 +544,17 @@ public class SimpleOntology implements Ontology {
         annotationProperties = owlOntology.annotationPropertiesInSignature()
                 .map(SimpleOntologyValues::matontoAnnotationProperty)
                 .collect(Collectors.toSet());
+    }
+
+    private Optional<OWLObjectProperty> getOwlObjectProperty(IRI iri) {
+        return owlOntology.objectPropertiesInSignature()
+                .filter(objectProperty -> objectProperty.getIRI().equals(SimpleOntologyValues.owlapiIRI(iri)))
+                .findFirst();
+    }
+
+    private Optional<OWLDataProperty> getOwlDataProperty(IRI iri) {
+        return owlOntology.dataPropertiesInSignature()
+                .filter(dataProperty -> dataProperty.getIRI().equals(SimpleOntologyValues.owlapiIRI(iri)))
+                .findFirst();
     }
 }

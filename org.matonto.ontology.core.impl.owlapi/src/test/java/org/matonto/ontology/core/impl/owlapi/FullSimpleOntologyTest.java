@@ -54,8 +54,10 @@ import java.util.Set;
 public class FullSimpleOntologyTest {
     private ValueFactory vf;
     private IRI classIRI;
-    private IRI dataPropIRI;
-    private IRI objectPropIRI;
+    private IRI dataProp1IRI;
+    private IRI dataProp2IRI;
+    private IRI objectProp1IRI;
+    private IRI objectProp2IRI;
     private IRI errorIRI;
     private Ontology ontology;
 
@@ -71,8 +73,10 @@ public class FullSimpleOntologyTest {
         IRI ontologyIRI = vf.createIRI("http://test.com/ontology1");
         IRI versionIRI = vf.createIRI("http://test.com/ontology1/1.0.0");
         classIRI = vf.createIRI("http://test.com/ontology1#TestClassA");
-        dataPropIRI = vf.createIRI("http://test.com/ontology1#testDataProperty");
-        objectPropIRI = vf.createIRI("http://test.com/ontology1#testObjectProperty");
+        dataProp1IRI = vf.createIRI("http://test.com/ontology1#testDataProperty1");
+        dataProp2IRI = vf.createIRI("http://test.com/ontology1#testDataProperty2");
+        objectProp1IRI = vf.createIRI("http://test.com/ontology1#testObjectProperty1");
+        objectProp2IRI = vf.createIRI("http://test.com/ontology1#testObjectProperty2");
         errorIRI = vf.createIRI("http://test.com/ontology1#error");
         SimpleOntologyValues values = new SimpleOntologyValues();
         values.setValueFactory(vf);
@@ -90,9 +94,9 @@ public class FullSimpleOntologyTest {
 
     @Test
     public void getDataPropertyTest() throws Exception {
-        Optional<DataProperty> optional = ontology.getDataProperty(dataPropIRI);
+        Optional<DataProperty> optional = ontology.getDataProperty(dataProp1IRI);
         assertTrue(optional.isPresent());
-        assertEquals(dataPropIRI, optional.get().getIRI());
+        assertEquals(dataProp1IRI, optional.get().getIRI());
     }
 
     @Test
@@ -104,45 +108,67 @@ public class FullSimpleOntologyTest {
     @Test
     public void getDataPropertyRangeTest() throws Exception {
         // Setup:
-        DataProperty dataProperty = new SimpleDataProperty(dataPropIRI);
+        DataProperty dataProperty = new SimpleDataProperty(dataProp1IRI);
 
         Set<Resource> ranges = ontology.getDataPropertyRange(dataProperty);
         assertEquals(1, ranges.size());
         assertTrue(ranges.contains(vf.createIRI(XSD.INTEGER)));
     }
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void getMissingDataPropertyRangeTest() throws Exception {
         // Setup:
         DataProperty dataProperty = new SimpleDataProperty(errorIRI);
 
         Set<Resource> ranges = ontology.getDataPropertyRange(dataProperty);
-        assertEquals(0, ranges.size());
+    }
+
+    @Test
+    public void getDataPropertyRangeWithNonDatatypeTest() throws Exception {
+        // Setup:
+        DataProperty dataProperty = new SimpleDataProperty(dataProp2IRI);
+
+        Set<Resource> ranges = ontology.getDataPropertyRange(dataProperty);
+        assertEquals(1, ranges.size());
     }
 
     @Test
     public void getObjectPropertyTest() throws Exception {
-        Optional<ObjectProperty> optional = ontology.getObjectProperty(objectPropIRI);
+        Optional<ObjectProperty> optional = ontology.getObjectProperty(objectProp1IRI);
         assertTrue(optional.isPresent());
-        assertEquals(objectPropIRI, optional.get().getIRI());
+        assertEquals(objectProp1IRI, optional.get().getIRI());
+    }
+
+    @Test
+    public void getMissingObjectPropertyTest() throws Exception {
+        Optional<ObjectProperty> optional = ontology.getObjectProperty(errorIRI);
+        assertFalse(optional.isPresent());
     }
 
     @Test
     public void getObjectPropertyRangeTest() throws Exception {
         // Setup:
-        ObjectProperty objectProperty = new SimpleObjectProperty(objectPropIRI);
+        ObjectProperty objectProperty = new SimpleObjectProperty(objectProp1IRI);
 
         Set<Resource> ranges = ontology.getObjectPropertyRange(objectProperty);
         assertEquals(1, ranges.size());
         assertTrue(ranges.contains(classIRI));
     }
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void getMissingObjectPropertyRangeTest() throws Exception {
         // Setup:
         ObjectProperty objectProperty = new SimpleObjectProperty(errorIRI);
 
         Set<Resource> ranges = ontology.getObjectPropertyRange(objectProperty);
-        assertEquals(0, ranges.size());
+    }
+
+    @Test
+    public void getObjectPropertyRangeWithNonClassTest() throws Exception {
+        // Setup:
+        ObjectProperty objectProperty = new SimpleObjectProperty(objectProp2IRI);
+
+        Set<Resource> ranges = ontology.getObjectPropertyRange(objectProperty);
+        assertEquals(1, ranges.size());
     }
 }
