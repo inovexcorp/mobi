@@ -62,6 +62,7 @@
                     }
 
                     dvm.onClear = function() {
+                        httpService.cancel(dvm.id);
                         dvm.os.state.search.errorMessage = '';
                         dvm.os.state.search.highlightText = '';
                         dvm.os.state.search.infoMessage = '';
