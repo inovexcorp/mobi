@@ -75,6 +75,12 @@
                             dvm.os.state.search.selected = _.omit(angular.copy(newValue), '@id', '@type', 'matonto');
                         }
                     });
+
+                    $scope.$watch('dvm.os.listItem.recordId', (newValue, oldValue) => {
+                        if (!_.isEqual(oldValue, newValue)) {
+                            dvm.id = 'search-' + newValue;
+                        }
+                    });
                 }]
             }
         }
