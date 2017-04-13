@@ -345,7 +345,6 @@
                 // Check if class mapping exists in mapping
                 if (entityExists(mapping, classMappingId)) {
                     var classMapping = getEntityById(mapping, classMappingId);
-                    var splitPrefix = $filter('splitIRI')(util.getPropertyValue(classMapping, prefixes.delim + 'prefix').slice(0, -1));
                     classMapping[prefixes.delim + 'prefix'] = [{'@value': prefixEnd}];
                     classMapping[prefixes.delim + 'localName'] = [{'@value': localNamePattern}];
                 }
