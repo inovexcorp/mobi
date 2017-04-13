@@ -45,9 +45,9 @@
          */
         .service('ontologyStateService', ontologyStateService);
 
-        ontologyStateService.$inject = ['$timeout', '$q', '$filter', 'ontologyManagerService', 'updateRefsService', 'stateManagerService', 'utilService', 'catalogManagerService', 'propertyManagerService', 'prefixes', 'manchesterConverterService'];
+        ontologyStateService.$inject = ['$timeout', '$q', '$filter', 'ontologyManagerService', 'updateRefsService', 'stateManagerService', 'utilService', 'catalogManagerService', 'propertyManagerService', 'prefixes', 'manchesterConverterService', 'httpService'];
 
-        function ontologyStateService($timeout, $q, $filter, ontologyManagerService, updateRefsService, stateManagerService, utilService, catalogManagerService, propertyManagerService, prefixes, manchesterConverterService) {
+        function ontologyStateService($timeout, $q, $filter, ontologyManagerService, updateRefsService, stateManagerService, utilService, catalogManagerService, propertyManagerService, prefixes, manchesterConverterService, httpService) {
             var self = this;
             var om = ontologyManagerService;
             var sm = stateManagerService;
@@ -752,7 +752,9 @@
             }
             self.setEntityUsages = function(entityIRI) {
                 var page = self.getActivePage();
-                om.getEntityUsages(self.listItem.recordId, self.listItem.branchId, self.listItem.commitId, entityIRI, 'select', self.getActiveKey())
+                var id = 'usages-' + self.getActiveKey() + '-' + self.listItem.recordId;
+                httpService.cancel(id);
+                om.getEntityUsages(self.listItem.recordId, self.listItem.branchId, self.listItem.commitId, entityIRI, 'select', id)
                     .then(bindings => _.set(page, 'usages', bindings),
                         response => _.set(page, 'usages', []));
             }

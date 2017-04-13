@@ -42,6 +42,8 @@
          * @requires prefixes.service:prefixes
          * @requires catalogManager.service:catalogManagerService
          * @requires util.service:utilService
+         * @requires $httpParamSerializer
+         * @requires httpService
          *
          * @description
          * `ontologyManagerService` is a service that provides access to the MatOnto ontology REST
@@ -50,9 +52,9 @@
          */
         .service('ontologyManagerService', ontologyManagerService);
 
-        ontologyManagerService.$inject = ['$http', '$q', '$window', 'prefixes', 'catalogManagerService', 'utilService', '$httpParamSerializer'];
+        ontologyManagerService.$inject = ['$http', '$q', '$window', 'prefixes', 'catalogManagerService', 'utilService', '$httpParamSerializer', 'httpService'];
 
-        function ontologyManagerService($http, $q, $window, prefixes, catalogManagerService, utilService, $httpParamSerializer) {
+        function ontologyManagerService($http, $q, $window, prefixes, catalogManagerService, utilService, $httpParamSerializer, httpService) {
             var self = this;
             var prefix = '/matontorest/ontologies';
             var cm = catalogManagerService;
@@ -509,22 +511,21 @@
              * @param {string} recordId The record ID of the ontology you want to get from the repository.
              * @param {string} entityIRI The entity IRI of the entity you want the usages for from the repository.
              * @param {string} queryType The type of query you want to perform (either 'select' or 'construct').
+             * @param {string} id The identifier for this
              * @returns {Promise} A promise containing the JSON SPARQL query results bindings.
              */
-            self.getEntityUsages = function(recordId, branchId, commitId, entityIRI, queryType = 'select', tab = '') {
+            self.getEntityUsages = function(recordId, branchId, commitId, entityIRI, queryType = 'select', id = '') {
                 var deferred = $q.defer();
                 var config = {params: {branchId, commitId, queryType}};
-                if (tab) {
-                    config.params.tab = tab;
-                }
-                $http.get(prefix + '/' + encodeURIComponent(recordId) + '/entity-usages/' + encodeURIComponent(entityIRI), config)
-                    .then(response => {
-                        if (queryType === 'construct') {
-                            deferred.resolve(response.data);
-                        } else {
-                            deferred.resolve(response.data.results.bindings);
-                        }
-                    }, response => util.onError(response, deferred));
+                var url = prefix + '/' + encodeURIComponent(recordId) + '/entity-usages/' + encodeURIComponent(entityIRI);
+                var promise = id ? httpService.get(url, config, id) : $http.get(url, config);
+                promise.then(response => {
+                    if (queryType === 'construct') {
+                        deferred.resolve(response.data);
+                    } else {
+                        deferred.resolve(response.data.results.bindings);
+                    }
+                }, response => util.onError(response, deferred));
                 return deferred.promise;
             }
             /**
@@ -536,14 +537,18 @@
              * Gets the search results for literals that contain the requested search text.
              *
              * @param {string} recordId The record ID of the ontology you want to get from the repository.
+             * @param {string} branchId The branch ID of the ontology you want to get from the repository.
+             * @param {string} commitId The commit ID of the ontology you want to get from the repository.
              * @param {string} searchText The text that you are searching for in the ontology entity literal values.
+             * @param {string} id The id to link this REST call to.
              * @returns {Promise} A promise containing the SPARQL query results.
              */
-            self.getSearchResults = function(recordId, branchId, commitId, searchText) {
+            self.getSearchResults = function(recordId, branchId, commitId, searchText, id) {
                 var defaultErrorMessage = 'An error has occurred with your search.';
                 var deferred = $q.defer();
                 var config = {params: {searchText, branchId, commitId}};
-                $http.get(prefix + '/' + encodeURIComponent(recordId) + '/search-results', config)
+
+                httpService.get(prefix + '/' + encodeURIComponent(recordId) + '/search-results', config, id)
                     .then(response => {
                         if(_.get(response, 'status') === 200) {
                             deferred.resolve(response.data);
