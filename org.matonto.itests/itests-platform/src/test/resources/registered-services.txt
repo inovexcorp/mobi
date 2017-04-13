@@ -1,5 +1,5 @@
 (&(objectClass=org.matonto.repository.api.Repository)(component.name=org.matonto.service.repository.native)(id=system))
-(&(objectClass=org.matonto.catalog.api.CatalogFactory))
+(&(objectClass=org.matonto.catalog.api.ontologies.mcat.CatalogFactory))
 (&(objectClass=org.matonto.sparql.rest.SparqlRest))
 (&(objectClass=org.matonto.etl.api.delimited.DelimitedConverter))
 (&(objectClass=org.matonto.rdf.orm.impl.ThingFactory))
@@ -7,3 +7,4 @@
 (&(objectClass=org.matonto.jaas.rest.GroupRest))
 (&(objectClass=org.matonto.jaas.rest.UserRest))
 (&(objectClass=org.matonto.dataset.api.DatasetManager))
+(&(service.pid=org.matonto.jaas.engines.RdfEngine))

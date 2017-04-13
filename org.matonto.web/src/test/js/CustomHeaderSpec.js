@@ -106,5 +106,14 @@ describe('Custom Header directive', function() {
             expect(this.element.hasClass('main-header')).toBe(true);
             expect(this.element.querySelectorAll('.actions').length).toBe(1);
         });
+        it('for user management item', function(){
+            userManagerSvc.isAdmin.and.returnValue(false);
+            scope.$digest();
+            expect(this.element.find('li').length).toBe(1);
+            
+            userManagerSvc.isAdmin.and.returnValue(true);
+            scope.$digest();
+            expect(this.element.find('li').length).toBe(3);
+        });
     });
 });
