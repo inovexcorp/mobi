@@ -27,6 +27,7 @@ import junit.framework.TestCase;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Value;
@@ -35,7 +36,15 @@ import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactoryService;
 import org.matonto.rdf.core.impl.sesame.ValueFactoryService;
 import org.matonto.rdf.orm.Thing;
 import org.matonto.rdf.orm.conversion.ValueConverterRegistry;
-import org.matonto.rdf.orm.conversion.impl.*;
+import org.matonto.rdf.orm.conversion.impl.DefaultValueConverterRegistry;
+import org.matonto.rdf.orm.conversion.impl.DoubleValueConverter;
+import org.matonto.rdf.orm.conversion.impl.FloatValueConverter;
+import org.matonto.rdf.orm.conversion.impl.IntegerValueConverter;
+import org.matonto.rdf.orm.conversion.impl.ShortValueConverter;
+import org.matonto.rdf.orm.conversion.impl.StringValueConverter;
+import org.matonto.rdf.orm.conversion.impl.ValueValueConverter;
+
+import java.util.Optional;
 
 public class TestCoreThingApi {
 
@@ -82,9 +91,9 @@ public class TestCoreThingApi {
     }
 
     @Test
-    public void testBasic() {
+    public void testBasic() throws Exception {
         final Thing t = thingFactory.getExisting(valueFactory.createIRI("urn://matonto.org/orm/test/testAgent"), model,
-                valueFactory);
+                valueFactory).orElseThrow(() -> new Exception("FAILED TO GET THING"));
 
         Value typeValue = t.getProperty(valueFactory.createIRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")).get();
         TestCase.assertEquals(valueFactory.createIRI("http://xmlns.com/foaf/0.1/Agent"), typeValue);
@@ -105,6 +114,27 @@ public class TestCoreThingApi {
         TestCase.assertEquals("John",
                 t.getModel().filter(t.getResource(), valueFactory.createIRI("urn://matonto.org/silly#myNameIs"), null,
                         t.getResource()).iterator().next().getObject().stringValue());
+    }
+
+    @Test
+    public void testCreateNew() throws Exception {
+        final IRI myIri = valueFactory.createIRI("urn://someDumbNewThing.org");
+        final Thing t2 = thingFactory.createNew(myIri, model);
+        IRI pred = valueFactory.createIRI("urn://matonto.org/silly#myNameIs");
+        t2.setProperty(valueFactory.createLiteral("Ben"), pred,
+                (IRI) t2.getResource());
+        Optional<Value> opt = t2.getProperty(pred, (IRI) t2.getResource());
+        TestCase.assertTrue(opt.isPresent());
+        TestCase.assertEquals(valueFactory.createLiteral("Ben"), opt.orElse(null));
+
+        final Thing t = thingFactory.getExisting(myIri, model,
+                valueFactory).orElseThrow(() -> new Exception("FAILED TO GET THING THAT WAS JUST CREATED"));
+    }
+
+    @Test
+    public void testOptionalEmpty() {
+        Optional<Thing> optional = thingFactory.getExisting(valueFactory.createIRI("urn://doesnotexist.org"), model);
+        TestCase.assertFalse(optional.isPresent());
     }
 
 }

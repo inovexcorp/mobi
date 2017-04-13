@@ -38,92 +38,42 @@
          * @name targetedSpinner.directive:targetedSpinner
          * @restrict A
          * @requires $compile
-         * @requires $rootScope
+         * @requires httpService
          *
          * @description
          * `targetedSpinner` is a directive that injects a {@link spinner.directive:spinner spinner} into the
-         * parent element and creates a tracker in the `$rootScope` for HTTP requests that match the passed
-         * configuration if one does not already exist. Each tracker keeps track of which scopes are looking
-         * for the specific configuration. This tracker integrates with the `requestInterceptor` on the `app`
-         * module so that HTTP requests that match the configuration only trigger specific injected spinners
-         * instead of the full screen spinner. Can specify whether a matched in progress HTTP call should be
-         * canceled when the parent scope is destroyed, but this will only occur if all scopes watching for that
-         * request specify it should be canceled. Can specify whether a matched in progress HTTP call should be
-         * canceled when the passed configuration changes, but this will only occur if all scopes watching for
-         * that request specify it should be canceled. Can specify whether a matched in progress HTTP call
-         * should be canceled if another matching call is made, but this will only occur if all scopes watching
-         * for that request specify it should be canceled.
+         * parent element. Can specify whether a matched in progress HTTP call should be
+         * canceled when the parent scope is destroyed.
          *
-         * @param {Object} targetSpinner A configuration for matching HTTP calls
-         * @param {string} targetSpinner.method A string representing an HTTP method that a call must have to
-         * be linked to the parent scope's spinner
-         * @param {string} targetSpinner.url A regular expression or a string that an HTTP call's URL must
-         * match to be linked to the parent scope's spinner; can include query parameters
+         * @param {string} targetSpinner The string identifier used by the {@link httpService.service:httpService httpService}
+         * for the call that this spinner is associated with
          * @param {boolean} cancelOnDestroy Whether or not matched in progress HTTP calls should be canceled
          * when the parent scope is destroyed
-         * @param {boolean} cancelOnChange Whether or not matched in progress HTTP calls should be canceled
-         * when the configuration for matching HTTP calls changes
-         * @param {boolean} cancelOnNew Whether or not matched in progress HTTP calls should be canceled when
-         * a new matching HTTP call is made
          */
         .directive('targetedSpinner', targetedSpinner);
 
-        targetedSpinner.$inject = ['$compile', '$rootScope'];
+        targetedSpinner.$inject = ['$compile', 'httpService'];
 
-        function targetedSpinner($compile, $rootScope) {
+        function targetedSpinner($compile, httpService) {
             return {
                 restrict: 'A',
                 link: function(scope, el, attrs) {
                     scope.cancelOnDestroy = 'cancelOnDestroy' in attrs;
-                    scope.cancelOnChange = 'cancelOnChange' in attrs;
-                    scope.cancelOnNew = 'cancelOnNew' in attrs;
-                    var requestConfig = getConfig(scope.$eval(attrs.targetedSpinner));
+                    scope.httpService = httpService;
+                    scope.id = scope.$eval(attrs.targetedSpinner);
                     el.addClass('spinner-container');
-                    el.append($compile('<spinner ng-show="showSpinner"></spinner>')(scope));
-                    setTracker();
+                    el.append($compile('<spinner ng-show="httpService.isPending(id)"></spinner>')(scope));
 
-                    scope.$watch(attrs.targetedSpinner, function(newValue, oldValue) {
-                        var oldRequestConfig = getConfig(oldValue);
-                        var newRequestConfig = getConfig(newValue);
-                        if (!_.isEqual(newRequestConfig, oldRequestConfig)) {
-                            var oldTracker = _.find($rootScope.trackedHttpRequests, {requestConfig: oldRequestConfig});
-                            if (oldTracker) {
-                                if (_.every(oldTracker.scopes, 'cancelOnChange') && _.has(oldTracker, 'canceller')) {
-                                    oldTracker.canceller.resolve();
-                                }
-                                _.remove(oldTracker.scopes, scope);
-                                if (oldTracker.scopes.length === 0 && !oldTracker.inProgress) {
-                                    _.remove($rootScope.trackedHttpRequests, oldTracker);
-                                }
-                            }
-                            requestConfig = newRequestConfig;
-                            setTracker();
-                        }
-                    }, true);
-                    scope.$on('$destroy', function() {
-                        var tracker = _.find($rootScope.trackedHttpRequests, {requestConfig});
-                        if (_.every(_.get(tracker, 'scopes', []), 'cancelOnDestroy') && _.has(tracker, 'canceller')) {
-                            tracker.canceller.resolve();
-                        }
-                        _.remove(_.get(tracker, 'scopes'), scope);
-                        if (_.get(tracker, 'scopes', []).length === 0 && !_.get(tracker, 'inProgress')) {
-                            _.remove($rootScope.trackedHttpRequests, tracker);
+                    scope.$on('$destroy', () => {
+                        if (scope.cancelOnDestroy) {
+                            httpService.cancel(scope.id);
                         }
                     });
 
-                    function setTracker() {
-                        var tracker = _.find($rootScope.trackedHttpRequests, {requestConfig});
-                        if (!tracker) {
-                            tracker = {requestConfig, inProgress: false, scopes: []};
-                            $rootScope.trackedHttpRequests.push(tracker);
-                        }
-                        tracker.scopes.push(scope);
-                        scope.showSpinner = tracker.inProgress;
-                    }
-                    function getConfig(obj) {
-                        return _.pick(obj, ['method', 'url']);
-                    }
+                    scope.$watch(attrs.targetedSpinner, (newValue, oldValue) => {
+                        scope.id = newValue;
+                    });
                 }
-            };
+            }
         }
 })();

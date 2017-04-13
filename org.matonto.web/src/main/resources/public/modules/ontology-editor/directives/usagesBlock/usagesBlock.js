@@ -39,33 +39,21 @@
                 controller: ['$scope', function($scope) {
                     var dvm = this;
                     dvm.om = ontologyManagerService;
-                    dvm.sm = ontologyStateService;
+                    dvm.os = ontologyStateService;
                     dvm.ontoUtils = ontologyUtilsManagerService;
+                    dvm.id = 'usages-' + dvm.os.getActiveKey() + '-' + dvm.os.listItem.recordId;
 
                     function getResults() {
                         var results = {};
-                        _.forEach(_.get(dvm.sm.getActivePage(), 'usages', []), binding =>
+                        _.forEach(_.get(dvm.os.getActivePage(), 'usages', []), binding =>
                             results[binding.p.value] = _.union(_.get(results, binding.p.value, []), [{subject: binding.s.value, predicate: binding.p.value, object: binding.o.value}]));
                         return results;
                     }
-                    function getWatchURL() {
-                        return '\/matontorest\/ontologies\/' + encodeURIComponent(_.get(dvm.sm.listItem, 'recordId')) + '\/entity-usages\/.*\?.*queryType=select.*tab=' + dvm.sm.getActiveKey();
-                    }
-
-                    $scope.requestConfig = {
-                        method: 'GET',
-                        url: getWatchURL()
-                    };
 
                     dvm.results = getResults();
 
                     $scope.$watch(function() {
-                        return _.get(dvm.sm.listItem, 'recordId');
-                    }, function() {
-                        $scope.requestConfig.url = getWatchURL();
-                    });
-                    $scope.$watch(function() {
-                        return dvm.sm.getActivePage().usages;
+                        return dvm.os.getActivePage().usages;
                     }, function() {
                         dvm.results = getResults();
                     });
