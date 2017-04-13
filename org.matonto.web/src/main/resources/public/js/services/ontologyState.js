@@ -753,7 +753,7 @@
             self.setEntityUsages = function(entityIRI) {
                 var page = self.getActivePage();
                 var id = 'usages-' + self.getActiveKey() + '-' + self.listItem.recordId;
-                httpService.cancel(id, false);
+                httpService.cancel(id);
                 om.getEntityUsages(self.listItem.recordId, self.listItem.branchId, self.listItem.commitId, entityIRI, 'select', id)
                     .then(bindings => _.set(page, 'usages', bindings),
                         response => _.set(page, 'usages', []));

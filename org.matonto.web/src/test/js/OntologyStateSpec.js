@@ -1890,7 +1890,7 @@ describe('Ontology State service', function() {
             getDeferred.resolve(response);
             scope.$apply();
             var httpId = 'usages-' + key + '-' + ontologyStateSvc.listItem.recordId;
-            expect(httpSvc.cancel).toHaveBeenCalledWith(httpId, false);
+            expect(httpSvc.cancel).toHaveBeenCalledWith(httpId);
             expect(ontologyManagerSvc.getEntityUsages).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, ontologyStateSvc.listItem.branchId, ontologyStateSvc.listItem.commitId, id, 'select', httpId);
             expect(activePage.usages).toEqual(response);
         });
@@ -1898,7 +1898,7 @@ describe('Ontology State service', function() {
             getDeferred.reject('error');
             scope.$apply();
             var httpId = 'usages-' + key + '-' + ontologyStateSvc.listItem.recordId;
-            expect(httpSvc.cancel).toHaveBeenCalledWith(httpId, false);
+            expect(httpSvc.cancel).toHaveBeenCalledWith(httpId);
             expect(ontologyManagerSvc.getEntityUsages).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, ontologyStateSvc.listItem.branchId, ontologyStateSvc.listItem.commitId, id, 'select', httpId);
             expect(activePage.usages).toEqual([]);
         });

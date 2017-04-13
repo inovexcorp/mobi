@@ -10,12 +10,12 @@
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -47,16 +47,14 @@
                         if ($event.keyCode === 13) {
                             httpService.cancel(dvm.id);
                             dvm.os.unSelectItem();
-                            var recordId = dvm.os.listItem.recordId;
+                            var state = dvm.os.getState(dvm.os.listItem.recordId);
                             dvm.om.getSearchResults(dvm.os.listItem.recordId, dvm.os.listItem.branchId, dvm.os.listItem.commitId, dvm.os.state.search.searchText, dvm.id)
                                 .then(results => {
-                                    var state = dvm.os.getState(recordId);
                                     state.search.errorMessage = '';
                                     state.search.results = results;
                                     state.search.infoMessage = !_.isEmpty(results) ? '' : 'There were no results for your search text.';
                                     state.search.highlightText = state.search.searchText;
                                 }, errorMessage => {
-                                    var state = dvm.os.getState(recordId);
                                     state.search.errorMessage = errorMessage;
                                     state.search.infoMessage = '';
                                 });
@@ -75,12 +73,6 @@
                     $scope.$watch('dvm.os.selected', (newValue, oldValue) => {
                         if (!_.isEqual(oldValue, newValue)) {
                             dvm.os.state.search.selected = _.omit(angular.copy(newValue), '@id', '@type', 'matonto');
-                        }
-                    });
-
-                    $scope.$watch('dvm.os.listItem.recordId', (newValue, oldValue) => {
-                        if (!_.isEqual(oldValue, newValue)) {
-                            dvm.id = 'search-' + newValue;
                         }
                     });
                 }]

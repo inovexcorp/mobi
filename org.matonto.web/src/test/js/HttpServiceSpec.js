@@ -34,13 +34,13 @@ describe('Http service', function() {
     });
 
     describe('isPending should return', function() {
-        it('true if id exist in pending array', function() {
+        it('true if id exists in pending array', function() {
             httpSvc.pending = [{
                 id: 'id'
             }];
             expect(httpSvc.isPending('id')).toBe(true);
         });
-        it('false if id do not exist in pending array', function() {
+        it('false if id does not exist in pending array', function() {
             expect(httpSvc.isPending('id')).toBe(false);
         });
     });
@@ -80,14 +80,14 @@ describe('Http service', function() {
                     resolve: jasmine.createSpy('resolve')
                 }
             }];
-            httpSvc.get('url', {}, 'id');
-            expect($http.get).toHaveBeenCalledWith('url', jasmine.any(Object));
+            httpSvc.get('url', {prop: 'prop'}, 'id');
+            expect($http.get).toHaveBeenCalledWith('url', jasmine.objectContaining({prop: 'prop'}));
             expect(httpSvc.pending.length).toBe(2);
             expect(httpSvc.pending[1].canceller).toEqual({resolve: 'different'});
         });
         it('does not exist in the pending array', function() {
             httpSvc.get('url', {prop: 'prop'}, 'id');
-            expect($http.get).toHaveBeenCalledWith('url', jasmine.any(Object));
+            expect($http.get).toHaveBeenCalledWith('url', jasmine.objectContaining({prop: 'prop'}));
             expect(httpSvc.pending.length).toBe(1);
             expect(httpSvc.pending[0].canceller).toEqual({resolve: 'different'});
         });
