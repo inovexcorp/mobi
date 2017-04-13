@@ -135,6 +135,7 @@ describe('Search Tab directive', function() {
                     expect(httpSvc).toHaveBeenCalledWith('search-' + ontologyStateSvc.listItem.recordId);
                     expect(ontologyStateSvc.unSelectItem).toHaveBeenCalled();
                     expect(ontologyManagerSvc.getSearchResults).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, ontologyStateSvc.listItem.branchId, ontologyStateSvc.listItem.commitId, ontologyStateSvc.state.search.searchText);
+                    expect(httpSvc.cancel).toHaveBeenCalledWith('search-' + ontologyStateSvc.listItem.recordId);
                 });
                 describe('when resolved', function() {
                     it('it sets the correct variables', function() {
@@ -178,6 +179,7 @@ describe('Search Tab directive', function() {
             expect(ontologyStateSvc.state.search.selected).not.toEqual({});
             expect(ontologyStateSvc.state.search.highlightText).not.toEqual('');
             controller.onClear();
+            expect(httpSvc.cancel).toHaveBeenCalledWith('search-' + ontologyStateSvc.listItem.recordId);
             expect(ontologyStateSvc.state.search.errorMessage).toEqual('');
             expect(ontologyStateSvc.state.search.infoMessage).toEqual('');
             expect(ontologyStateSvc.state.search.results).toEqual({});
