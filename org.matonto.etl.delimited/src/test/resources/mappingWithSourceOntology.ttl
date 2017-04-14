@@ -4,13 +4,20 @@
 @prefix rdfs: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix uhtc: <http://matonto.org/ontologies/uhtc/> .
 
-:newest_mapping a delim:Mapping .
+:newest_mapping a                    delim:Mapping ;
+                delim:sourceRecord   <http://matonto.org/records/A> ;
+                delim:sourceBranch   <http://matonto.org/branches/A> ;
+                delim:sourceCommit   <http://matonto.org/commits/A> .
 
 :Material a                       delim:ClassMapping ;
           delim:mapsTo            uhtc:Material ;
           delim:dataProperty      :DataMapping1 ;
           delim:dataProperty      :DataMapping2 ;
           delim:dataProperty      :DataMapping3 ;
+          delim:dataProperty      :DataMapping4 ;
+          delim:dataProperty      :DataMapping5 ;
+          delim:dataProperty      :DataMapping6 ;
+          delim:dataProperty      :DataMapping7 ;
           delim:objectProperty    :ObjectMapping1 ;
           delim:hasPrefix         "http://matonto.org/data/uhtc/material/" ;
           delim:localName         "${UUID}" .
@@ -31,6 +38,22 @@
 :DataMapping3 a                       delim:DataMapping ;
               delim:columnIndex       "3" ;
               delim:hasProperty       uhtc:latticeParameter .
+
+:DataMapping4 a                       delim:DataMapping ;
+              delim:columnIndex       "0" ;
+              delim:hasProperty       uhtc:source .
+
+:DataMapping5 a                       delim:DataMapping ;
+              delim:columnIndex       "9" ;
+              delim:hasProperty       uhtc:tested .
+
+:DataMapping6 a                       delim:DataMapping ;
+              delim:columnIndex       "10" ;
+              delim:hasProperty       uhtc:count .
+
+:DataMapping7 a                       delim:DataMapping ;
+              delim:columnIndex       "11" ;
+              delim:hasProperty       uhtc:dateRecorded .
 
 :ObjectMapping1 a                       delim:ObjectMapping ;
                 delim:classMapping      :CrystalStructure ;
