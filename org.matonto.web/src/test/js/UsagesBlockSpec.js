@@ -21,14 +21,7 @@
  * #L%
  */
 describe('Usages Block directive', function() {
-    var $compile,
-        scope,
-        element,
-        controller,
-        ontologyStateSvc,
-        ontologyManagerSvc,
-        ontologyUtilsManagerSvc,
-        splitIRIFilter;
+    var $compile, scope, element, controller, ontologyStateSvc, ontologyManagerSvc, ontologyUtilsManagerSvc, splitIRIFilter;
 
     beforeEach(function() {
         module('templates');
@@ -73,14 +66,17 @@ describe('Usages Block directive', function() {
         it('with a block-content', function() {
             expect(element.find('block-content').length).toBe(1);
         });
+        it('with a .text-center', function() {
+            expect(element.querySelectorAll('.text-center').length).toBe(1);
+        });
         it('depending on how many results there are', function() {
-            expect(element.querySelectorAll('block-content div').length).toBe(0);
+            expect(element.querySelectorAll('block-content .property-values').length).toBe(0);
 
             controller.results = {
                 'iri': {}
             };
             scope.$digest();
-            expect(element.querySelectorAll('block-content div').length).toBe(1);
+            expect(element.querySelectorAll('block-content .property-values').length).toBe(1);
             expect(element.querySelectorAll('.property-values').length).toBe(_.keys(controller.results).length);
         });
         it('depending on how many values a result has', function() {
@@ -134,9 +130,52 @@ describe('Usages Block directive', function() {
             A: [{
                 subject: 'B', predicate: 'A', object: 'test'
             }]
-        }
+        };
         ontologyStateSvc.selected = {'@id': 'test'};
         scope.$digest();
         expect(angular.copy(controller.results)).toEqual(expected);
+        expect(controller.total).toBe(ontologyStateSvc.getActivePage().usages.length);
+        expect(controller.shown).toBe(_.min([ontologyStateSvc.getActivePage().usages.length, controller.size]));
+    });
+    describe('controller methods', function() {
+        it('getMoreResults populates variables correctly', function() {
+            ontologyStateSvc.getActivePage.and.returnValue({
+                usages: [{
+                    s: {value: 'A'},
+                    p: {value: 'B'},
+                    o: {value: 'test'}
+                }, {
+                    s: {value: 'B'},
+                    p: {value: 'test'},
+                    o: {value: 'A'}
+                }, {
+                    s: {value: 'B'},
+                    p: {value: 'A'},
+                    o: {value: 'test'}
+                }, {
+                    s: {value: 'B'},
+                    p: {value: 'B'},
+                    o: {value: 'test'}
+                }, {
+                    s: {value: 'B'},
+                    p: {value: 'test'},
+                    o: {value: 'B'}
+                }]
+            });
+            var expected = {
+                B: [{
+                    subject: 'A', predicate: 'B', object: 'test'
+                }],
+                test: [{
+                    subject: 'B', predicate: 'test', object: 'A'
+                }]
+            };
+            controller.index = -1;
+            controller.size = 2;
+            controller.getMoreResults();
+            expect(controller.index).toBe(0);
+            expect(controller.results).toEqual(expected);
+            expect(controller.shown).toBe(controller.size);
+        });
     });
 });
