@@ -1399,18 +1399,9 @@ describe('Ontology State Service', function() {
                 });
             scope.$apply();
         });
-    });
-    describe('createOntologyListItem should have data types for all individuals in ontology', function() {
-        beforeEach(function() {
+        it('createOntologyListItem should have data types for all individuals in ontology', function() {
             individualObj["property1"] = [{'@type':prefixes.xsd + 'int', '@value':4}];
-            individualObj["property2"] = [{'@value':'soem string value'}];
-            ontologyManagerSvc.getClassHierarchies.and.returnValue($q.when(classHierarchiesResponse));
-            ontologyManagerSvc.getClassesWithIndividuals.and.returnValue($q.when(classesWithIndividualsResponse));
-            ontologyManagerSvc.getDataPropertyHierarchies.and.returnValue($q.when(dataPropertyHierarchiesResponse));
-            ontologyManagerSvc.getObjectPropertyHierarchies.and.returnValue($q.when(objectPropertyHierarchiesResponse));
-            catalogManagerSvc.getRecordBranches.and.returnValue($q.when({data: branches}));
-        });
-        it('when all promises resolve', function() {
+            individualObj["property2"] = [{'@value':'some string value'}];
             ontologyManagerSvc.getIris.and.returnValue($q.when(irisResponse));
             ontologyManagerSvc.getImportedIris.and.returnValue($q.when(importedIrisResponse));
             ontologyStateSvc.createOntologyListItem(ontologyId, recordId, branchId, commitId, ontology,

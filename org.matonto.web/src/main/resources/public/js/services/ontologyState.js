@@ -1065,15 +1065,14 @@
                 return listItem;
             }
             function findValuesMissingDatatypes(object) {
-                if (object["@value"]) {
-                    if (!object["@type"]) {
-                        object["@type"] = prefixes.xsd + "string";
+                if (_.has(object, '@value')) {
+                    if (!_.has(object, '@type')) {
+                        object['@type'] = prefixes.xsd + "string";
                     }
-                } 
-                if (object instanceof Object && _.keys(object) && _.keys(object).length > 0) {
-                    _.forEach(_.keys(object), function(key) {
+                } else if (_.isObject(object) && _.keys(object) && _.keys(object).length > 0) {
+                    _.forEach(_.keys(object), key => {
                         findValuesMissingDatatypes(object[key]);
-                    })
+                    });
                 }
             }
             function updateListItem(recordId, newListItem) {
