@@ -66,14 +66,17 @@ describe('Usages Block directive', function() {
         it('with a block-content', function() {
             expect(element.find('block-content').length).toBe(1);
         });
+        it('with a .text-center', function() {
+            expect(element.querySelectorAll('.text-center').length).toBe(1);
+        });
         it('depending on how many results there are', function() {
-            expect(element.querySelectorAll('block-content div').length).toBe(0);
+            expect(element.querySelectorAll('block-content .property-values').length).toBe(0);
 
             controller.results = {
                 'iri': {}
             };
             scope.$digest();
-            expect(element.querySelectorAll('block-content div').length).toBe(1);
+            expect(element.querySelectorAll('block-content .property-values').length).toBe(1);
             expect(element.querySelectorAll('.property-values').length).toBe(_.keys(controller.results).length);
         });
         it('depending on how many values a result has', function() {

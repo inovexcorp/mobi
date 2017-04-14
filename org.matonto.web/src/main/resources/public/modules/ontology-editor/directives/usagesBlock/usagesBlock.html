@@ -22,9 +22,7 @@
   -->
 <div class="usages-block">
     <block>
-        <block-header>
-            <span>Usages</span><a class="pull-right" ng-if="dvm.chunks !== dvm.index" ng-click="dvm.getMoreResults()"><i class="fa fa-plus"></i><span>Load More</span></a>
-        </block-header>
+        <block-header>Usages</block-header>
         <block-content targeted-spinner="dvm.id">
             <div class="property-values" ng-repeat="(key, value) in dvm.results" ng-if="dvm.results">
                 <h5 ng-click="isClosed = !isClosed" class="clearfix">
@@ -41,6 +39,9 @@
                         </span>
                     </span>
                 </div>
+            </div>
+            <div class="text-center">
+                <a ng-if="dvm.chunks !== dvm.index" ng-click="dvm.getMoreResults()"><i class="fa fa-fw fa-plus"></i><span>Load More</span></a>
             </div>
         </block-content>
         <block-footer class="centered">Showing {{dvm.shown | number}} of {{dvm.total | number}}</block-footer>
