@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Ontology Manager service', function() {
-    var $httpBackend, ontologyManagerSvc, catalogManagerSvc, scope, prefixes, $q, windowSvc, util, ontologyObj, paramSerializer, classObj, objectPropertyObj, dataPropertyObj,annotationObj, individualObj, restrictionObj, conceptObj, schemeObj, ontology;
+    var $httpBackend, ontologyManagerSvc, catalogManagerSvc, scope, prefixes, $q, windowSvc, util, ontologyObj, paramSerializer, classObj, objectPropertyObj, dataPropertyObj,annotationObj, individualObj, restrictionObj, conceptObj, schemeObj, ontology, httpSvc;
     var recordId = 'recordId';
     var ontologyId = 'ontologyId';
     var branchId = 'branchId';
@@ -68,6 +68,7 @@ describe('Ontology Manager service', function() {
         mockPrefixes();
         mockCatalogManager();
         mockUtil();
+        mockHttpService();
 
         module(function($provide) {
             $provide.service('$window', function() {
@@ -75,7 +76,7 @@ describe('Ontology Manager service', function() {
             });
         });
 
-        inject(function(ontologyManagerService, _$httpBackend_, _$q_, _$rootScope_, _$window_, _catalogManagerService_, _prefixes_, _utilService_, $httpParamSerializer) {
+        inject(function(ontologyManagerService, _$httpBackend_, _$q_, _$rootScope_, _$window_, _catalogManagerService_, _prefixes_, _utilService_, $httpParamSerializer, _httpService_) {
             ontologyManagerSvc = ontologyManagerService;
             $httpBackend = _$httpBackend_;
             $q = _$q_;
@@ -85,6 +86,7 @@ describe('Ontology Manager service', function() {
             prefixes = _prefixes_;
             util = _utilService_;
             paramSerializer = $httpParamSerializer;
+            httpSvc = _httpService_;
         });
 
         catalogManagerSvc.localCatalog = {'@id': catalogId};
@@ -651,67 +653,122 @@ describe('Ontology Manager service', function() {
         });
     });
     describe('getEntityUsages should call the proper functions', function() {
-        var params;
+        var params, getDeferred, config;
         beforeEach(function() {
             params = paramSerializer({
                 branchId: branchId,
                 commitId: commitId
             });
+            config = {
+                params: {
+                    branchId: branchId,
+                    commitId: commitId,
+                    queryType: 'select'
+                }
+            }
+            getDeferred = $q.defer();
+            httpSvc.get.and.returnValue(getDeferred.promise);
         });
         describe('when get succeeds', function() {
-            it('and queryType is select', function(done) {
-                $httpBackend.expectGET('/matontorest/ontologies/recordId/entity-usages/classId?' + params + '&queryType=select')
-                    .respond(200, usages);
-                ontologyManagerSvc.getEntityUsages(recordId, branchId, commitId, classId, 'select')
-                    .then(function(response) {
-                        expect(response).toEqual(usages.results.bindings);
-                        done();
-                    }, function() {
-                        fail('Promise should have resolved');
-                        done();
-                    });
-                flushAndVerify();
+            describe('with no id set', function() {
+                it('and queryType is select', function(done) {
+                    $httpBackend.expectGET('/matontorest/ontologies/recordId/entity-usages/classId?' + params + '&queryType=select')
+                        .respond(200, usages);
+                    ontologyManagerSvc.getEntityUsages(recordId, branchId, commitId, classId, 'select')
+                        .then(function(response) {
+                            expect(response).toEqual(usages.results.bindings);
+                            done();
+                        }, function() {
+                            fail('Promise should have resolved');
+                            done();
+                        });
+                    flushAndVerify();
+                });
+                it('and queryType is construct', function(done) {
+                    $httpBackend.expectGET('/matontorest/ontologies/recordId/entity-usages/classId?' + params + '&queryType=construct')
+                        .respond(200, usages);
+                    ontologyManagerSvc.getEntityUsages(recordId, branchId, commitId, classId, 'construct')
+                        .then(function(response) {
+                            expect(response).toEqual(usages);
+                            done();
+                        }, function() {
+                            fail('Promise should have resolved');
+                            done();
+                        });
+                    flushAndVerify();
+                });
             });
-            it('and queryType is construct', function(done) {
-                $httpBackend.expectGET('/matontorest/ontologies/recordId/entity-usages/classId?' + params + '&queryType=construct')
-                    .respond(200, usages);
-                ontologyManagerSvc.getEntityUsages(recordId, branchId, commitId, classId, 'construct')
-                    .then(function(response) {
-                        expect(response).toEqual(usages);
-                        done();
-                    }, function() {
-                        fail('Promise should have resolved');
-                        done();
-                    });
-                flushAndVerify();
+            describe('when id is set', function() {
+                beforeEach(function() {
+                    getDeferred.resolve({data: usages});
+                });
+                it('and queryType is select', function(done) {
+                    ontologyManagerSvc.getEntityUsages(recordId, branchId, commitId, classId, 'select', 'usages')
+                        .then(function(response) {
+                            expect(httpSvc.get).toHaveBeenCalledWith('/matontorest/ontologies/' + encodeURIComponent(recordId) + '/entity-usages/' + encodeURIComponent(classId), config, 'usages');
+                            expect(response).toEqual(usages.results.bindings);
+                            done();
+                        }, function() {
+                            fail('Promise should have resolved');
+                            done();
+                        });
+                    scope.$apply();
+                });
+                it('and queryType is construct', function(done) {
+                    config.params.queryType = 'construct';
+                    ontologyManagerSvc.getEntityUsages(recordId, branchId, commitId, classId, 'construct', 'usages')
+                        .then(function(response) {
+                            expect(httpSvc.get).toHaveBeenCalledWith('/matontorest/ontologies/' + encodeURIComponent(recordId) + '/entity-usages/' + encodeURIComponent(classId), config, 'usages');
+                            expect(response).toEqual(usages);
+                            done();
+                        }, function() {
+                            fail('Promise should have resolved');
+                            done();
+                        });
+                    scope.$apply();
+                });
             });
         });
-        it('when get fails', function(done) {
-            $httpBackend.expectGET('/matontorest/ontologies/recordId/entity-usages/classId?' + params + '&queryType=select')
-                .respond(400, null, null, error);
-            ontologyManagerSvc.getEntityUsages(recordId, branchId, commitId, classId)
-                .then(function() {
-                    fail('Promise should have rejected');
-                    done();
-                }, function(response) {
-                    expect(response).toEqual(error);
-                    done();
-                });
-            flushAndVerify();
+        describe('when get fails', function() {
+            it('when id is not set', function(done) {
+                $httpBackend.expectGET('/matontorest/ontologies/recordId/entity-usages/classId?' + params + '&queryType=select')
+                    .respond(400, null, null, error);
+                ontologyManagerSvc.getEntityUsages(recordId, branchId, commitId, classId)
+                    .then(function() {
+                        fail('Promise should have rejected');
+                        done();
+                    }, function(response) {
+                        expect(response).toEqual(error);
+                        done();
+                    });
+                flushAndVerify();
+            });
+            it('when id is set', function() {
+                getDeferred.reject(error);
+                ontologyManagerSvc.getEntityUsages(recordId, branchId, commitId, classId, 'select', 'usages')
+                    .then(function() {
+                        fail('Promise should have rejected');
+                    }, function() {
+                        expect(httpSvc.get).toHaveBeenCalledWith('/matontorest/ontologies/' + encodeURIComponent(recordId) + '/entity-usages/' + encodeURIComponent(classId), config, 'usages');
+                        expect(util.onError).toHaveBeenCalledWith(error, jasmine.any(Object));
+                    });
+                scope.$apply();
+            });
         });
     });
     describe('getSearchResults should call the correct functions', function() {
-        var params;
+        var params, getDeferred;
         beforeEach(function() {
             params = paramSerializer({
                 searchText: searchText,
                 branchId: branchId,
                 commitId: commitId
             });
+            getDeferred = $q.defer();
+            httpSvc.get.and.returnValue(getDeferred.promise);
         });
         it('when get succeeds', function(done) {
-            $httpBackend.expectGET('/matontorest/ontologies/recordId/search-results?' + params)
-                .respond(200, searchResults);
+            getDeferred.resolve({status: 200, data: searchResults});
             ontologyManagerSvc.getSearchResults(recordId, branchId, commitId, searchText)
                 .then(function(response) {
                     expect(response).toEqual(searchResults);
@@ -720,11 +777,10 @@ describe('Ontology Manager service', function() {
                     fail('Promise should have resolved');
                     done();
                 });
-            flushAndVerify();
+            scope.$apply();
         });
         it('when get is empty', function(done) {
-            $httpBackend.expectGET('/matontorest/ontologies/recordId/search-results?' + params)
-                .respond(204);
+            getDeferred.resolve({status: 204});
             ontologyManagerSvc.getSearchResults(recordId, branchId, commitId, searchText)
                 .then(function(response) {
                     expect(response).toEqual([]);
@@ -733,11 +789,10 @@ describe('Ontology Manager service', function() {
                     fail('Promise should have resolved');
                     done();
                 });
-            flushAndVerify();
+            scope.$apply();
         });
         it('when get succeeds with different code', function(done) {
-            $httpBackend.expectGET('/matontorest/ontologies/recordId/search-results?' + params)
-                .respond(201);
+            getDeferred.resolve({status: 201});
             ontologyManagerSvc.getSearchResults(recordId, branchId, commitId, searchText)
                 .then(function() {
                     fail('Promise should have rejected');
@@ -746,20 +801,19 @@ describe('Ontology Manager service', function() {
                     expect(response).toEqual('An error has occurred with your search.');
                     done();
                 });
-            flushAndVerify();
+            scope.$apply();
         });
         it('when get fails', function(done) {
-            $httpBackend.expectGET('/matontorest/ontologies/recordId/search-results?' + params)
-                .respond(400, null, null, error);
+            getDeferred.reject(error);
             ontologyManagerSvc.getSearchResults(recordId, branchId, commitId, searchText)
                 .then(function() {
                     fail('Promise should have rejected');
                     done();
-                }, function(response) {
-                    expect(response).toEqual(error);
+                }, function() {
+                    expect(util.onError).toHaveBeenCalledWith(error, jasmine.any(Object), 'An error has occurred with your search.');
                     done();
                 });
-            flushAndVerify();
+            scope.$apply();
         });
     });
     describe('isOntology should return', function() {

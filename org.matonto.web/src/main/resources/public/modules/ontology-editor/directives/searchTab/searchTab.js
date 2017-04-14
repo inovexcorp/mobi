@@ -27,9 +27,9 @@
         .module('searchTab', [])
         .directive('searchTab', searchTab);
 
-        searchTab.$inject = ['ontologyStateService', 'ontologyUtilsManagerService', 'ontologyManagerService'];
+        searchTab.$inject = ['ontologyStateService', 'ontologyUtilsManagerService', 'ontologyManagerService', 'httpService'];
 
-        function searchTab(ontologyStateService, ontologyUtilsManagerService, ontologyManagerService) {
+        function searchTab(ontologyStateService, ontologyUtilsManagerService, ontologyManagerService, httpService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -41,38 +41,47 @@
                     dvm.os = ontologyStateService;
                     dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.om = ontologyManagerService;
+                    dvm.id = 'search-' + dvm.os.listItem.recordId;
 
                     dvm.onKeyup = function($event) {
                         if ($event.keyCode === 13) {
+                            httpService.cancel(dvm.id);
                             dvm.os.unSelectItem();
-                            dvm.om.getSearchResults(dvm.os.listItem.recordId, dvm.os.listItem.branchId,
-                                dvm.os.listItem.commitId, dvm.os.state.searchText).then(results => {
-                                    dvm.os.state.errorMessage = '';
-                                    dvm.os.state.results = results;
-                                    dvm.os.state.infoMessage = !_.isEmpty(results) ? ''
-                                        : 'There were no results for your search text.';
-                                    dvm.os.state.highlightText = dvm.os.state.searchText;
+                            var state = dvm.os.getState(dvm.os.listItem.recordId);
+                            dvm.om.getSearchResults(dvm.os.listItem.recordId, dvm.os.listItem.branchId, dvm.os.listItem.commitId, dvm.os.state.search.searchText, dvm.id)
+                                .then(results => {
+                                    state.search.errorMessage = '';
+                                    state.search.results = results;
+                                    state.search.infoMessage = !_.isEmpty(results) ? '' : 'There were no results for your search text.';
+                                    state.search.highlightText = state.search.searchText;
                                 }, errorMessage => {
-                                    dvm.os.state.errorMessage = errorMessage;
-                                    dvm.os.state.infoMessage = '';
+                                    state.search.errorMessage = errorMessage;
+                                    state.search.infoMessage = '';
                                 });
                         }
                     }
 
                     dvm.onClear = function() {
-                        dvm.os.state.errorMessage = '';
-                        dvm.os.state.highlightText = '';
-                        dvm.os.state.infoMessage = '';
-                        dvm.os.state.results = {};
-                        dvm.os.state.searchText = '';
-                        dvm.os.state.selected = {};
+                        httpService.cancel(dvm.id);
+                        dvm.os.state.search.errorMessage = '';
+                        dvm.os.state.search.highlightText = '';
+                        dvm.os.state.search.infoMessage = '';
+                        dvm.os.state.search.results = {};
+                        dvm.os.state.search.searchText = '';
+                        dvm.os.state.search.selected = {};
                     }
 
-                    function setSelected() {
-                        dvm.os.state.selected = _.omit(angular.copy(dvm.os.selected), '@id', '@type', 'matonto');
-                    }
+                    $scope.$watch('dvm.os.selected', (newValue, oldValue) => {
+                        if (!_.isEqual(oldValue, newValue)) {
+                            dvm.os.state.search.selected = _.omit(angular.copy(newValue), '@id', '@type', 'matonto');
+                        }
+                    });
 
-                    $scope.$watch('dvm.os.selected', setSelected);
+                    $scope.$watch('dvm.os.listItem.recordId', (newValue, oldValue) => {
+                        if (!_.isEqual(oldValue, newValue)) {
+                            dvm.id = 'search-' + newValue;
+                        }
+                    });
                 }]
             }
         }
