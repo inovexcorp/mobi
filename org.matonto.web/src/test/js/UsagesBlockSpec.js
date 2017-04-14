@@ -21,14 +21,7 @@
  * #L%
  */
 describe('Usages Block directive', function() {
-    var $compile,
-        scope,
-        element,
-        controller,
-        ontologyStateSvc,
-        ontologyManagerSvc,
-        ontologyUtilsManagerSvc,
-        splitIRIFilter;
+    var $compile, scope, element, controller, ontologyStateSvc, ontologyManagerSvc, ontologyUtilsManagerSvc, splitIRIFilter;
 
     beforeEach(function() {
         module('templates');
@@ -134,9 +127,53 @@ describe('Usages Block directive', function() {
             A: [{
                 subject: 'B', predicate: 'A', object: 'test'
             }]
-        }
+        };
         ontologyStateSvc.selected = {'@id': 'test'};
         scope.$digest();
         expect(angular.copy(controller.results)).toEqual(expected);
+        expect(dvm.total).toBe(ontologyStateSvc.getActivePage().length);
+        expect(dvm.shown).toBe(_.min([ontologyStateSvc.getActivePage().length, dvm.size]));
+    });
+    describe('controller methods', function() {
+        it('getMoreResults populates variables correctly', function() {
+            ontologyStateSvc.getActivePage.and.returnValue({
+                usages: [{
+                    s: {value: 'A'},
+                    p: {value: 'B'},
+                    o: {value: 'test'}
+                }, {
+                    s: {value: 'B'},
+                    p: {value: 'test'},
+                    o: {value: 'A'}
+                }, {
+                    s: {value: 'B'},
+                    p: {value: 'A'},
+                    o: {value: 'test'}
+                }, {
+                    s: {value: 'B'},
+                    p: {value: 'B'},
+                    o: {value: 'test'}
+                }, {
+                    s: {value: 'B'},
+                    p: {value: 'test'},
+                    o: {value: 'B'}
+                }]
+            });
+            var expected = {
+                B: [{
+                    subject: 'A', predicate: 'B', object: 'test'
+                }],
+                test: [{
+                    subject: 'B', predicate: 'test', object: 'A'
+                }]
+            };
+            controller.index = -1;
+            controller.size = 2;
+            controller.getMoreResults();
+            expect(controller.index).toBe(0);
+            expect(controller.results).toEqual(expected);
+            expect(dvm.shown).toBe(controller.size);
+            fail('made it here');
+        });
     });
 });
