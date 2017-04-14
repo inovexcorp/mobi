@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Ontology State service', function() {
+describe('Ontology State Service', function() {
     var ontologyStateSvc, $q, scope, util, stateManagerSvc, ontologyManagerSvc, updateRefsSvc, prefixes, catalogManagerSvc, hierarchy, indexObject, expectedPaths, ontologyState, defaultDatatypes, ontologyObj, classObj, dataPropertyObj, individualObj, ontology, getResponse, httpSvc;
     var error = 'error';
     var format = 'jsonld';
@@ -1398,6 +1398,26 @@ describe('Ontology State service', function() {
                     expect(response).toEqual(error);
                 });
             scope.$apply();
+        });
+    });
+    describe('createOntologyListItem should have data types for all individuals in ontology', function() {
+        beforeEach(function() {
+            individualObj["property1"] = [{'@type':prefixes.xsd + 'int', '@value':4}];
+            individualObj["property2"] = [{'@value':'soem string value'}];
+            ontologyManagerSvc.getClassHierarchies.and.returnValue($q.when(classHierarchiesResponse));
+            ontologyManagerSvc.getClassesWithIndividuals.and.returnValue($q.when(classesWithIndividualsResponse));
+            ontologyManagerSvc.getDataPropertyHierarchies.and.returnValue($q.when(dataPropertyHierarchiesResponse));
+            ontologyManagerSvc.getObjectPropertyHierarchies.and.returnValue($q.when(objectPropertyHierarchiesResponse));
+            catalogManagerSvc.getRecordBranches.and.returnValue($q.when({data: branches}));
+        });
+        it('when all promises resolve', function() {
+            ontologyManagerSvc.getIris.and.returnValue($q.when(irisResponse));
+            ontologyManagerSvc.getImportedIris.and.returnValue($q.when(importedIrisResponse));
+            ontologyStateSvc.createOntologyListItem(ontologyId, recordId, branchId, commitId, ontology,
+            inProgressCommit, true).then(function(response) {
+                expect(_.get(response, 'property1')['@type']).toEqual(prefixes.xsd + 'int');
+                expect(_.get(response, 'property2')['@type']).toEqual(prefixes.xsd + 'string');
+            });
         });
     });
     describe('addOntologyToList should call the correct functions', function() {
