@@ -23,6 +23,16 @@ package org.matonto.ontology.core.impl.owlapi;
  * #L%
  */
 
+import static org.easymock.EasyMock.capture;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.isA;
+import static org.easymock.EasyMock.mock;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
+import static org.powermock.api.easymock.PowerMock.mockStatic;
+import static org.powermock.api.easymock.PowerMock.replay;
+
 import org.easymock.Capture;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -33,7 +43,6 @@ import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyId;
 import org.matonto.ontology.core.api.OntologyManager;
 import org.matonto.ontology.core.api.axiom.Axiom;
-import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.rdf.api.IRI;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -42,19 +51,10 @@ import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLAxiom;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.InputStream;
-import java.net.URISyntaxException;
 import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.Set;
-
-import static org.easymock.EasyMock.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
-import static org.powermock.api.easymock.PowerMock.mockStatic;
-import static org.powermock.api.easymock.PowerMock.replay;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(SimpleOntologyValues.class)
