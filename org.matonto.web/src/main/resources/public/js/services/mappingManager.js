@@ -337,16 +337,15 @@
              *
              * @param {Object[]} mapping The mapping JSON-LD array
              * @param {string} classMappingId The id of the class mapping whose IRI template will be edited
-             * @param {string} prefixEnd The new end of the prefix
+             * @param {string} prefix The new end of the prefix
              * @param {string} localNamePattern The new local name pattern. Must be in the following format:
              * `${index/UUID}`
              */
-            self.editIriTemplate = function(mapping, classMappingId, prefixEnd, localNamePattern) {
+            self.editIriTemplate = function(mapping, classMappingId, prefix, localNamePattern) {
                 // Check if class mapping exists in mapping
                 if (entityExists(mapping, classMappingId)) {
                     var classMapping = getEntityById(mapping, classMappingId);
-                    var splitPrefix = $filter('splitIRI')(util.getPropertyValue(classMapping, prefixes.delim + 'hasPrefix').slice(0, -1));
-                    classMapping[prefixes.delim + 'hasPrefix'] = [{'@value': prefixEnd}];
+                    classMapping[prefixes.delim + 'hasPrefix'] = [{'@value': prefix}];
                     classMapping[prefixes.delim + 'localName'] = [{'@value': localNamePattern}];
                 }
             }
