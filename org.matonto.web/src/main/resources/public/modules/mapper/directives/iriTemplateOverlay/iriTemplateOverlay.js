@@ -72,8 +72,7 @@
                     var prefix = dvm.util.getPropertyValue(classMapping, prefixes.delim + 'hasPrefix');
                     var regex = new RegExp(prefixes.data + '(.*?)\/');
                     var pfx = prefix.replace(regex, '');
-                    var fullStart = (_.pullAt(prefix.match(regex), 0)[0]);
-                    dvm.beginsWith = (fullStart + pfx.slice(0, -1));
+                    dvm.beginsWith = prefix.slice(0, -1);
                     dvm.then = prefix[prefix.length - 1];
                     dvm.localNameOptions = [{text: 'UUID', value: '${UUID}'}];
                     for (var idx = 0; idx < dvm.dm.dataRows[0].length; idx++) {
