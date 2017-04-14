@@ -33,8 +33,10 @@ import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
+import org.matonto.rdf.api.Resource;
 
 import java.io.OutputStream;
+import java.util.Optional;
 import java.util.Set;
 
 public interface Ontology {
@@ -119,9 +121,45 @@ public interface Ontology {
     Set<Datatype> getAllDatatypes();
     
     Set<ObjectProperty> getAllObjectProperties();
-    
+
+    /**
+     * Attempts to get a specific object property in the ontology by its IRI.
+     *
+     * @param iri the IRI of an object property
+     * @return an Optional with the object property if found
+     */
+    Optional<ObjectProperty> getObjectProperty(IRI iri);
+
+    /**
+     * Retrieves a Set of Resources corresponding to the range of the passed object property within the ontology.
+     * Set will be empty if the object property cannot be found in the ontology, has no ranges set, or if none of the
+     * ranges can be represented as a Resource.
+     *
+     * @param objectProperty an object property from the ontology
+     * @return a Set of Resources representing all the range values of the object property
+     */
+    Set<Resource> getObjectPropertyRange(ObjectProperty objectProperty);
+
     Set<DataProperty> getAllDataProperties();
-    
+
+    /**
+     * Attempts to get a specific data property in the ontology by its IRI.
+     *
+     * @param iri the IRI of a data property
+     * @return an Optional with the data property if found
+     */
+    Optional<DataProperty> getDataProperty(IRI iri);
+
+    /**
+     * Retrieves a Set of Resources corresponding to the range of the passed data property within the ontology. Set will
+     * be empty if the data property cannot be found in the ontology, has no ranges set, or if none of the ranges can be
+     * represented as a Resource.
+     *
+     * @param dataProperty a data property from the ontology
+     * @return a Set of Resources representing all the range values of the data property
+     */
+    Set<Resource> getDataPropertyRange(DataProperty dataProperty);
+
     Set<Individual> getAllIndividuals();
 
     /**
