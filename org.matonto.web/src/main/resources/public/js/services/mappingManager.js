@@ -319,7 +319,7 @@
                         '@type': [prefixes.delim + 'ClassMapping']
                     };
                     classEntity[prefixes.delim + 'mapsTo'] = [{'@id': classId}];
-                    classEntity[prefixes.delim + 'prefix'] = [{'@value': prefixes.data + ontologyDataName + '/' + splitIri.end.toLowerCase() + '/'}];
+                    classEntity[prefixes.delim + 'hasPrefix'] = [{'@value': prefixes.data + ontologyDataName + '/' + splitIri.end.toLowerCase() + '/'}];
                     classEntity[prefixes.delim + 'localName'] = [{'@value': '${UUID}'}];
                     mapping.push(classEntity);
                 }
@@ -345,7 +345,8 @@
                 // Check if class mapping exists in mapping
                 if (entityExists(mapping, classMappingId)) {
                     var classMapping = getEntityById(mapping, classMappingId);
-                    classMapping[prefixes.delim + 'prefix'] = [{'@value': prefixEnd}];
+                    var splitPrefix = $filter('splitIRI')(util.getPropertyValue(classMapping, prefixes.delim + 'hasPrefix').slice(0, -1));
+                    classMapping[prefixes.delim + 'hasPrefix'] = [{'@value': prefixEnd}];
                     classMapping[prefixes.delim + 'localName'] = [{'@value': localNamePattern}];
                 }
             }

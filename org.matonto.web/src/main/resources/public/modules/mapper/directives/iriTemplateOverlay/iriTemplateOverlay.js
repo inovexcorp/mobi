@@ -69,7 +69,7 @@
                     dvm.util = utilService;
 
                     var classMapping = _.find(dvm.state.mapping.jsonld, {'@id': dvm.state.selectedClassMappingId});
-                    var prefix = dvm.util.getPropertyValue(classMapping, prefixes.delim + 'prefix');
+                    var prefix = dvm.util.getPropertyValue(classMapping, prefixes.delim + 'hasPrefix');
                     var regex = new RegExp(prefixes.data + '(.*?)\/');
                     var prefixEnd = prefix.replace(regex, '');
                     var fullStart = (_.pullAt(prefix.match(regex), 0)[0]);

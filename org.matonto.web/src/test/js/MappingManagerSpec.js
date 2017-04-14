@@ -285,7 +285,7 @@ describe('Mapping Manager service', function() {
             expect(this.mapping).toContain(result);
             expect(uuidSvc.v4).toHaveBeenCalled();
             expect(result['@type']).toContain(prefixes.delim + 'ClassMapping');
-            expect(_.has(result, prefixes.delim + 'prefix')).toBe(true);
+            expect(_.has(result, prefixes.delim + 'hasPrefix')).toBe(true);
             expect(result[prefixes.delim + 'localName']).toEqual([{'@value': '${UUID}'}]);
             expect(result[prefixes.delim + 'mapsTo']).toEqual([{'@id': 'classid'}]);
         });
@@ -304,7 +304,7 @@ describe('Mapping Manager service', function() {
             splitIRIFilter.and.returnValue({begin: 'ontology', then: '/'});
             this.mapping.push(classMapping);
             mappingManagerSvc.editIriTemplate(this.mapping, classMapping['@id'], 'test/', '${0}');
-            expect(classMapping[prefixes.delim + 'prefix']).toEqual([{'@value': 'test/'}]);
+            expect(classMapping[prefixes.delim + 'hasPrefix']).toEqual([{'@value': 'test/'}]);
             expect(classMapping[prefixes.delim + 'localName']).toEqual([{'@value': '${0}'}]);
         });
     });
