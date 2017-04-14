@@ -131,8 +131,8 @@ describe('Usages Block directive', function() {
         ontologyStateSvc.selected = {'@id': 'test'};
         scope.$digest();
         expect(angular.copy(controller.results)).toEqual(expected);
-        expect(dvm.total).toBe(ontologyStateSvc.getActivePage().length);
-        expect(dvm.shown).toBe(_.min([ontologyStateSvc.getActivePage().length, dvm.size]));
+        expect(controller.total).toBe(ontologyStateSvc.getActivePage().usages.length);
+        expect(controller.shown).toBe(_.min([ontologyStateSvc.getActivePage().usages.length, controller.size]));
     });
     describe('controller methods', function() {
         it('getMoreResults populates variables correctly', function() {
@@ -172,8 +172,7 @@ describe('Usages Block directive', function() {
             controller.getMoreResults();
             expect(controller.index).toBe(0);
             expect(controller.results).toEqual(expected);
-            expect(dvm.shown).toBe(controller.size);
-            fail('made it here');
+            expect(controller.shown).toBe(controller.size);
         });
     });
 });
