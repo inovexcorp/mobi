@@ -1049,8 +1049,7 @@
                     } else if (om.isBlankNode(entity)) {
                         let id = _.get(entity, '@id');
                         _.set(blankNodes, id, mc.jsonldToManchester(id, ontology, true));
-                    }
-                    if (om.isIndividual(entity)) {
+                    } else if (om.isIndividual(entity)) {
                         findValuesMissingDatatypes(entity);
                     }
                 });
@@ -1069,7 +1068,7 @@
                     if (!_.has(object, '@type')) {
                         object['@type'] = prefixes.xsd + "string";
                     }
-                } else if (_.isObject(object) && _.keys(object) && _.keys(object).length > 0) {
+                } else if (_.isObject(object)) {
                     _.forEach(_.keys(object), key => {
                         findValuesMissingDatatypes(object[key]);
                     });
