@@ -83,7 +83,7 @@
                     dvm.endsWith = selectedIndex > 0 ? dvm.localNameOptions[selectedIndex] : dvm.localNameOptions[_.findIndex(dvm.localNameOptions, {'text': 'UUID'})];
 
                     dvm.set = function() {
-                        dvm.mm.editIriTemplate(dvm.state.mapping.jsonld, dvm.state.selectedClassMappingId, dvm.beginsWith.toLowerCase() + dvm.then, dvm.endsWith.value.toLowerCase());
+                        dvm.mm.editIriTemplate(dvm.state.mapping.jsonld, dvm.state.selectedClassMappingId, dvm.beginsWith + dvm.then, dvm.endsWith.value);
                         dvm.state.changedMapping = true;
                     }
                 },
