@@ -192,7 +192,7 @@ describe('Tree Item directive', function() {
             });
         });
         describe('isSaved', function() {
-            it('additions', function() {
+            it('check correct value for inProgress.additions is returned', function() {
                 controller.currentEntity = {'@id': 'id'};
                 ontologyStateSvc.listItem.inProgressCommit = {
                     additions: [{'@id': '12345'}]
@@ -203,7 +203,7 @@ describe('Tree Item directive', function() {
                 }
                 expect(controller.isSaved()).toBe(true);
             });
-            it('deletions', function() {
+            it('check correct value for inProgress.deletions is returned', function() {
                 controller.currentEntity = {'@id': 'id'};
                 ontologyStateSvc.listItem.inProgressCommit = {
                     deletions: [{'@id': '12345'}]
@@ -214,7 +214,7 @@ describe('Tree Item directive', function() {
                 }
                 expect(controller.isSaved()).toBe(true);
             });
-            it('both', function() {
+            it('check correct value for inProgress.additions and inProgress deletions is returned', function() {
                 controller.currentEntity = {'@id': 'id'};
                 ontologyStateSvc.listItem.inProgressCommit = {
                     additions: [{'@id': '12345'}],
@@ -223,7 +223,7 @@ describe('Tree Item directive', function() {
                 expect(controller.isSaved()).toBe(false);
             });
         });
-        describe('check to ensure scope.$watch works correctly', function() {
+        describe('scope.$watch', function() {
             it('should call isSaved when additions is changed', function() {
                 spyOn(controller, 'isSaved');
                 scope.currentEntity = {'@id': 'id'};
