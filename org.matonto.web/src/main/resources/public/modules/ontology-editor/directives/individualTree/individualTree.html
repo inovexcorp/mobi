@@ -19,11 +19,12 @@
   You should have received a copy of the GNU Affero General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
+   ng-if="dvm.om.hasClassIndividuals(dvm.os.listItem.ontology, node.entityIRI)"
   -->
 <div class="tree individual-tree">
     <ul class="class" ng-repeat="node in dvm.os.listItem.classesWithIndividuals | orderBy:dvm.ontoUtils.getNameByNode track by node.entityIRI" ng-include="'individual_item'"
         ng-init="node = node; classOpened = dvm.os.getIndividualsOpened(dvm.os.listItem.recordId, node.entityIRI)"
-        ng-if="dvm.om.hasClassIndividuals(dvm.os.listItem.ontology, node.entityIRI)"></ul>
+       ></ul>
     <script type="text/ng-template" id="individual_item">
         <li>
             <a ng-click="classOpened = !classOpened; dvm.os.setIndividualsOpened(dvm.os.listItem.recordId, node.entityIRI, classOpened); $event.stopPropagation()">

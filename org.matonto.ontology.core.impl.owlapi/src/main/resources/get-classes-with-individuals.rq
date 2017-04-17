@@ -2,16 +2,35 @@ prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 prefix owl: <http://www.w3.org/2002/07/owl#>
 prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
- select distinct ?parent ?child
+select distinct ?parent ?child
  where {
     ?parent rdf:type owl:Class .
-    optional {
+     optional {
         ?child rdfs:subClassOf ?parent ;
                rdf:type owl:Class .
     }
-    optional {
-            ?individual rdf:type owl:NamedIndividual ;
-                        rdf:type ?parent .
-            filter (?parent != owl:NamedIndividual)
-    }
+#     filter (?parent != owl:NamedIndividual)
+     filter not exists {
+        ?parent ^rdfs:subClassOf+ ?individual2 .
+        ?individual2 a  owl:NamedIndividual .
+     }
+
+
  }
+
+# select ?parent ?child
+# where {
+#    ?parent rdf:type owl:Class .
+#    optional {
+#        ?child rdfs:subClassOf ?parent ;
+#               rdf:type owl:Class .
+#    }
+#    {
+#        select distinct ?parent
+#        where {
+#            ?individual rdf:type owl:NamedIndividual ;
+#                        rdf:type ?parent .
+#            filter (?parent != owl:NamedIndividual)
+#        }
+#    }
+# }
