@@ -679,8 +679,8 @@
                     }, $q.reject);
             }
             self.clearInProgressCommit = function() {
-                _.set(self.listItem, 'inProgressCommit.additions', []);
-                _.set(self.listItem, 'inProgressCommit.deletions', []);
+                self.listItem.inProgressCommit.additions = [];
+                self.listItem.inProgressCommit.deletions = [];
             }
             self.setOpened = function(pathString, isOpened) {
                 _.set(self.state, getOpenPath(pathString, 'isOpened'), isOpened);

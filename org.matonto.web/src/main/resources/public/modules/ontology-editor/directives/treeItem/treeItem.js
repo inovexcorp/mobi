@@ -69,7 +69,11 @@
                         return _.includes(ids, _.get(dvm.currentEntity, '@id'));
                     }
 
-                    $scope.$watch(() => os.listItem.inProgressCommit, () => {
+                    $scope.$watch(() => os.listItem.inProgressCommit.additions, () => {
+                        dvm.saved = isSaved();
+                    });
+
+                    $scope.$watch(() => os.listItem.inProgressCommit.deletions, () => {
                         dvm.saved = isSaved();
                     });
                 }]
