@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Ontology State service', function() {
-    var ontologyStateSvc, $q, scope, util, stateManagerSvc, ontologyManagerSvc, updateRefsSvc, prefixes, catalogManagerSvc, hierarchy, indexObject, expectedPaths, ontologyState, defaultDatatypes, ontologyObj, classObj, dataPropertyObj, individualObj, ontology, getResponse;
+    var ontologyStateSvc, $q, scope, util, stateManagerSvc, ontologyManagerSvc, updateRefsSvc, prefixes, catalogManagerSvc, hierarchy, indexObject, expectedPaths, ontologyState, defaultDatatypes, ontologyObj, classObj, dataPropertyObj, individualObj, ontology, getResponse, httpSvc;
     var error = 'error';
     var format = 'jsonld';
     var title = 'title';
@@ -130,6 +130,7 @@ describe('Ontology State service', function() {
         injectRemoveMatontoFilter();
         mockPrefixes();
         mockManchesterConverter();
+        mockHttpService();
 
         module(function($provide) {
             $provide.value('jsonFilter', function() {
@@ -137,7 +138,7 @@ describe('Ontology State service', function() {
             });
         });
 
-        inject(function(ontologyStateService, _updateRefsService_, _ontologyManagerService_, _catalogManagerService_, _$q_, _$rootScope_, _utilService_, _stateManagerService_, _prefixes_) {
+        inject(function(ontologyStateService, _updateRefsService_, _ontologyManagerService_, _catalogManagerService_, _$q_, _$rootScope_, _utilService_, _stateManagerService_, _prefixes_, _httpService_) {
             ontologyStateSvc = ontologyStateService;
             updateRefsSvc = _updateRefsService_;
             ontologyManagerSvc = _ontologyManagerService_;
@@ -147,6 +148,7 @@ describe('Ontology State service', function() {
             util = _utilService_;
             stateManagerSvc = _stateManagerService_;
             prefixes = _prefixes_;
+            httpSvc = _httpService_;
         });
 
         catalogManagerSvc.localCatalog = {'@id': catalogId};
@@ -1887,13 +1889,17 @@ describe('Ontology State service', function() {
             var response = [{'@id': 'id'}];
             getDeferred.resolve(response);
             scope.$apply();
-            expect(ontologyManagerSvc.getEntityUsages).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, ontologyStateSvc.listItem.branchId, ontologyStateSvc.listItem.commitId, id, 'select', key);
+            var httpId = 'usages-' + key + '-' + ontologyStateSvc.listItem.recordId;
+            expect(httpSvc.cancel).toHaveBeenCalledWith(httpId);
+            expect(ontologyManagerSvc.getEntityUsages).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, ontologyStateSvc.listItem.branchId, ontologyStateSvc.listItem.commitId, id, 'select', httpId);
             expect(activePage.usages).toEqual(response);
         });
         it('when getEntityUsages rejects', function() {
             getDeferred.reject('error');
             scope.$apply();
-            expect(ontologyManagerSvc.getEntityUsages).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, ontologyStateSvc.listItem.branchId, ontologyStateSvc.listItem.commitId, id, 'select', key);
+            var httpId = 'usages-' + key + '-' + ontologyStateSvc.listItem.recordId;
+            expect(httpSvc.cancel).toHaveBeenCalledWith(httpId);
+            expect(ontologyManagerSvc.getEntityUsages).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, ontologyStateSvc.listItem.branchId, ontologyStateSvc.listItem.commitId, id, 'select', httpId);
             expect(activePage.usages).toEqual([]);
         });
     });

@@ -108,6 +108,7 @@
             'datasetManager',
             'datasetState',
             'delimitedManager',
+            'httpService',
             'loginManager',
             'manchesterConverter',
             'mapperState',
@@ -163,56 +164,21 @@
 
         function requestInterceptor($q, $rootScope, $httpParamSerializer) {
             $rootScope.pendingRequests = 0;
-            $rootScope.trackedHttpRequests = [];
 
-            function findTrackers(config) {
-                return _.filter($rootScope.trackedHttpRequests, tr => {
-                    var urlToMatch = config.url + (config.params ? '?' + $httpParamSerializer(config.params) : '');
-                    return urlToMatch.match(tr.requestConfig.url) && config.method === _.toUpper(tr.requestConfig.method);
-                });
+            function checkConfig(config) {
+                return !_.includes(config.url, '.html') && !_.has(config, 'timeout');
             }
 
             function handleStop(config) {
-                if (!_.includes(config.url, '.html')) {
-                    var trackers = findTrackers(config);
-                    if (trackers.length > 0) {
-                        _.forEach(trackers, tracker => {
-                            if (tracker.scopes.length === 0) {
-                                _.remove($rootScope.trackedHttpRequests, tracker);
-                            } else {
-                                if (!tracker.canceledAndContinue) {
-                                    tracker.inProgress = false;
-                                    _.forEach(tracker.scopes, scope => scope.showSpinner = false);
-                                    _.unset(tracker, 'canceller');
-                                }
-                                tracker.canceledAndContinue = false;
-                            }
-                        });
-                    } else {
-                        $rootScope.pendingRequests--;
-                    }
+                if (checkConfig(config)) {
+                    $rootScope.pendingRequests--;
                 }
             }
 
             return {
                 'request': function (config) {
-                    if (!_.includes(config.url, '.html')) {
-                        var trackers = findTrackers(config);
-                        if (trackers.length > 0) {
-                            var canceller = $q.defer();
-                            _.forEach(trackers, tracker => {
-                                if (tracker.inProgress && _.every(tracker.scopes, 'cancelOnNew') && _.has(tracker, 'canceller')) {
-                                    tracker.canceledAndContinue = true;
-                                    tracker.canceller.resolve();
-                                }
-                                tracker.inProgress = true;
-                                _.forEach(tracker.scopes, scope => scope.showSpinner = true);
-                                tracker.canceller = canceller;
-                            });
-                            config.timeout = canceller.promise;
-                        } else {
-                            $rootScope.pendingRequests++;
-                        }
+                    if (checkConfig(config)) {
+                        $rootScope.pendingRequests++;
                     }
                     return config || $q.when(config);
                 },

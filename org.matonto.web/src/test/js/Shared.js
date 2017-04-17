@@ -131,6 +131,12 @@ function injectInArrayFilter() {
     });
 }
 
+function injectUsernameSearchFilter() {
+    module(function($provide) {
+        $provide.value('usernameSearchFilter', jasmine.createSpy('usernameSearchFilter').and.callFake(_.identity));
+    });
+}
+
 function mockStateManager() {
     module(function($provide) {
         $provide.service('stateManagerService', function($q) {
@@ -358,6 +364,17 @@ function mockMapperState() {
             this.getClassProps = jasmine.createSpy('getClassProps').and.returnValue([]);
             this.getClasses = jasmine.createSpy('getClasses').and.returnValue([]);
             this.getMappedColumns = jasmine.createSpy('getMappedColumns').and.returnValue([]);
+        });
+    });
+}
+
+function mockHttpService() {
+    module(function($provide) {
+        $provide.service('httpService', function() {
+            this.pending = [];
+            this.isPending = jasmine.createSpy('isPending');
+            this.cancel = jasmine.createSpy('cancel');
+            this.get = jasmine.createSpy('get');
         });
     });
 }

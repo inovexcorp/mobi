@@ -38,6 +38,8 @@
             'userManagementOverlays',
             'userManagementTabset',
             'usersList',
-            'usersPage'
+            'usersPage',
+            /* Custom Filters */
+            'usernameSearch'
         ]);
 })();
