@@ -205,7 +205,7 @@ describe('Tree Item directive', function() {
                 spyOn(controller, 'isSaved');
                 scope.currentEntity = {'@id': 'id'};
                 ontologyStateSvc.listItem.inProgressCommit = {
-                    additions: [{'@id': 'id'}]
+                    deletions: [{'@id': 'id'}]
                 }
                 scope.$digest();
                 expect(controller.isSaved).toHaveBeenCalled();
