@@ -38,25 +38,44 @@
                 controllerAs: 'dvm',
                 controller: ['$scope', function($scope) {
                     var dvm = this;
+                    dvm.size = 100;
+                    dvm.index = 0;
                     dvm.om = ontologyManagerService;
                     dvm.os = ontologyStateService;
                     dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.id = 'usages-' + dvm.os.getActiveKey() + '-' + dvm.os.listItem.recordId;
-
-                    function getResults() {
-                        var results = {};
-                        _.forEach(_.get(dvm.os.getActivePage(), 'usages', []), binding =>
-                            results[binding.p.value] = _.union(_.get(results, binding.p.value, []), [{subject: binding.s.value, predicate: binding.p.value, object: binding.o.value}]));
-                        return results;
-                    }
-
                     dvm.results = getResults();
+                    dvm.total = 0;
+                    dvm.shown = 0;
+
+                    dvm.getMoreResults = function() {
+                        dvm.index++;
+                        _.forEach(_.get(_.chunk(_.get(dvm.os.getActivePage(), 'usages', []), dvm.size), dvm.index, []), binding => addToResults(dvm.results, binding));
+                    }
 
                     $scope.$watch(function() {
                         return dvm.os.getActivePage().usages;
                     }, function() {
+                        dvm.size = 100;
+                        dvm.index = 0;
+                        dvm.shown = 0;
                         dvm.results = getResults();
                     });
+
+                    function getResults() {
+                        var results = {};
+                        var usages = _.get(dvm.os.getActivePage(), 'usages', []);
+                        dvm.total = usages.length;
+                        var chunks = _.chunk(usages, dvm.size);
+                        dvm.chunks = chunks.length === 0 ? 0 : chunks.length - 1;
+                        _.forEach(_.get(chunks, dvm.index, []), binding => addToResults(results, binding));
+                        return results;
+                    }
+
+                    function addToResults(results, binding) {
+                        results[binding.p.value] = _.union(_.get(results, binding.p.value, []), [{subject: binding.s.value, predicate: binding.p.value, object: binding.o.value}]);
+                        dvm.shown++;
+                    }
                 }]
             }
         }
