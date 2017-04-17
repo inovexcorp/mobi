@@ -21,7 +21,7 @@
  * #L%
  */
 
-describe('Tree Item directive', function() {
+fdescribe('Tree Item directive', function() {
     var $compile, scope, element, controller, isolatedScope, ontologyStateSvc, settingsManagerSvc;
 
     beforeEach(function() {
@@ -139,7 +139,7 @@ describe('Tree Item directive', function() {
             expect(span.hasClass('bold')).toBe(true);
         });
     });
-    describe('controller methods', function() {
+    fdescribe('controller methods', function() {
         describe('getTreeDisplay', function() {
             it('should return originalIRI when not pretty', function() {
                 scope.currentEntity = {matonto: {originalIRI: 'originalIRI', anonymous: 'anon'}};
@@ -189,6 +189,38 @@ describe('Tree Item directive', function() {
                 var anchor = element.querySelectorAll('a')[0];
                 angular.element(anchor).triggerHandler('dblclick');
                 expect(controller.toggleOpen).toHaveBeenCalled();
+            });
+        });
+        fdescribe('isSaved', function() {
+            it('additions', function() {
+                controller.currentEntity = {'@id': 'id'};
+                ontologyStateSvc.listItem.inProgressCommit = {
+                    additions: [{'@id': '12345'}]
+                }
+                expect(controller.isSaved()).toBe(false);
+                ontologyStateSvc.listItem.inProgressCommit = {
+                    additions: [{'@id': 'id'}]
+                }
+                expect(controller.isSaved()).toBe(true);
+            });
+            it('deletions', function() {
+                controller.currentEntity = {'@id': 'id'};
+                ontologyStateSvc.listItem.inProgressCommit = {
+                    deletions: [{'@id': '12345'}]
+                }
+                expect(controller.isSaved()).toBe(false);
+                ontologyStateSvc.listItem.inProgressCommit = {
+                    deletions: [{'@id': 'id'}]
+                }
+                expect(controller.isSaved()).toBe(true);
+            });
+            it('both', function() {
+                controller.currentEntity = {'@id': 'id'};
+                ontologyStateSvc.listItem.inProgressCommit = {
+                    additions: [{'@id': '12345'}],
+                    deletions: [{'@id': '23456'}]
+                }
+                expect(controller.isSaved()).toBe(false);
             });
         });
         describe('check to ensure scope.$watch works correctly', function() {
