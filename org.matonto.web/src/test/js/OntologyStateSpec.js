@@ -2005,26 +2005,29 @@ describe('Ontology State service', function() {
         });
     });
     describe('resetStateTabs should set the correct variables', function() {
+        var newOntologyIRI = 'newId';
         beforeEach(function() {
             ontologyStateSvc.state = {
                 classes: {entityIRI: 'id', usages: []},
-                project: {entityIRI: 'id'}
+                project: {entityIRI: 'id', preview: 'test'}
             }
+            ontologyManagerSvc.getOntologyIRI.and.returnValue(newOntologyIRI);
+            spyOn(ontologyStateSvc, 'getEntityByRecordId').and.returnValue({'@id': newOntologyIRI});
             ontologyStateSvc.selected = {};
         });
         it('when getActiveKey is not project', function() {
             spyOn(ontologyStateSvc, 'getActiveKey').and.returnValue('other');
             ontologyStateSvc.resetStateTabs();
             expect(ontologyStateSvc.state.classes).toEqual({});
-            expect(ontologyStateSvc.state.project).toEqual({entityIRI: 'id'});
+            expect(ontologyStateSvc.state.project).toEqual({entityIRI: newOntologyIRI, preview: ''});
             expect(ontologyStateSvc.selected).toBeUndefined();
         });
         it('when getActiveKey is project', function() {
             spyOn(ontologyStateSvc, 'getActiveKey').and.returnValue('project');
             ontologyStateSvc.resetStateTabs();
             expect(ontologyStateSvc.state.classes).toEqual({});
-            expect(ontologyStateSvc.state.project).toEqual({entityIRI: 'id'});
-            expect(ontologyStateSvc.selected).toEqual({});
+            expect(ontologyStateSvc.state.project).toEqual({entityIRI: newOntologyIRI, preview: ''});
+            expect(ontologyStateSvc.selected).toEqual({'@id': newOntologyIRI});
         });
     });
     describe('getActiveKey', function() {

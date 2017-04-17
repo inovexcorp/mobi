@@ -830,11 +830,16 @@
                 _.forOwn(self.state, (value, key) => {
                     if (key !== 'project') {
                         _.unset(value, 'entityIRI');
+                    } else {
+                        value.entityIRI = om.getOntologyIRI(self.listItem.ontology);
+                        value.preview = '';
                     }
                     _.unset(value, 'usages');
                 });
                 if (self.getActiveKey() !== 'project') {
                     self.selected = undefined;
+                } else {
+                    self.selected = self.getEntityByRecordId(self.listItem.recordId, self.state.project.entityIRI);
                 }
             }
             self.getActiveKey = function() {
