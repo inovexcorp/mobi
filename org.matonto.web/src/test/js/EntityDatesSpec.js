@@ -23,9 +23,10 @@
 describe('Entity Dates directive', function() {
     var $compile,
         scope,
+        element,
+        controller,
         utilSvc,
-        $filter,
-        controller;
+        $filter;
 
     beforeEach(function() {
         module('templates');
@@ -40,43 +41,34 @@ describe('Entity Dates directive', function() {
         });
 
         scope.entity = {};
-        this.element = $compile(angular.element('<entity-dates entity="entity"></entity-dates>'))(scope);
+        element = $compile(angular.element('<entity-dates entity="entity"></entity-dates>'))(scope);
         scope.$digest();
+        controller = element.controller('entityDates');
     });
 
     describe('in isolated scope', function() {
         it('entity should be one way bound', function() {
-            var isolatedScope = this.element.isolateScope();
+            var isolatedScope = element.isolateScope();
             isolatedScope.entity = {a: 'b'};
             scope.$digest();
             expect(scope.entity).toEqual({});
         });
     });
     describe('controller methods', function() {
-        beforeEach(function() {
-            controller = this.element.controller('entityDates');
-        });
-        describe('should get the specified date of an entity', function() {
-            it('if found', function() {
-                var date = '1/1/2000';
-                utilSvc.getDctermsValue.and.returnValue(date);
-                var result = controller.getDate({}, 'test');
-                expect(utilSvc.getDctermsValue).toHaveBeenCalledWith({}, 'test');
-                expect(result).toBe($filter('date')(new Date(date), 'short'));
-            });
-            it('unless it is not found', function() {
-                var result = controller.getDate({}, 'test');
-                expect(utilSvc.getDctermsValue).toHaveBeenCalledWith({}, 'test');
-                expect(result).toBe('(No Date Specified)');
-            });
+        it('should get the specified date of an entity by calling the proper functions', function() {
+            var date = '1/1/2000';
+            utilSvc.getDctermsValue.and.returnValue(date);
+            var result = controller.getDate({}, 'test');
+            expect(utilSvc.getDctermsValue).toHaveBeenCalledWith({}, 'test');
+            expect(utilSvc.getDate).toHaveBeenCalledWith(date, 'short');
         });
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('entity-dates')).toBe(true);
+            expect(element.hasClass('entity-dates')).toBe(true);
         });
         it('with fields for issued and modified date', function() {
-            var fields = this.element.find('small');
+            var fields = element.querySelectorAll('span.date');
             expect(fields.length).toBe(2);
             _.forEach(fields, function(field) {
                 var f = angular.element(field);

@@ -42,4 +42,11 @@ public interface RepositoryManager {
      * @return The Map of all initialized repository IDs mapped to their Repository objects.
      */
     Map<String, Repository> getAllRepositories();
+
+    /**
+     * Creates and returns a new Repository backed by the default memory store implementation.
+     *
+     * @return a new Repository backed by the default memory store implementation.
+     */
+    Repository createMemoryRepository();
 }

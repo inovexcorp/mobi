@@ -23,11 +23,11 @@
 describe('Edit Group Info Overlay directive', function() {
     var $compile,
         scope,
-        userManagerSvc,
-        userStateSvc,
-        $timeout,
         $q,
-        controller;
+        element,
+        controller,
+        userManagerSvc,
+        userStateSvc;
 
     beforeEach(function() {
         module('templates');
@@ -35,32 +35,30 @@ describe('Edit Group Info Overlay directive', function() {
         mockUserManager();
         mockUserState();
 
-        inject(function(_userManagerService_, _userStateService_, _$timeout_, _$q_, _$compile_, _$rootScope_) {
-            userManagerSvc = _userManagerService_;
-            userStateSvc = _userStateService_;
-            $timeout = _$timeout_;
-            $q = _$q_;
+        inject(function(_$compile_, _$rootScope_, _$q_, _userManagerService_, _userStateService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            $q = _$q_;
+            userManagerSvc = _userManagerService_;
+            userStateSvc = _userStateService_;
         });
+
+        userStateSvc.selectedGroup = {title: 'group'};
+        element = $compile(angular.element('<edit-group-info-overlay></edit-group-info-overlay>'))(scope);
+        scope.$digest();
+        controller = element.controller('editGroupInfoOverlay');
     });
 
     describe('controller methods', function() {
-        beforeEach(function() {
-            userStateSvc.selectedGroup = {title: 'group'};
-            userManagerSvc.groups = [userStateSvc.selectedGroup];
-            this.element = $compile(angular.element('<edit-group-info-overlay></edit-group-info-overlay>'))(scope);
-            scope.$digest();
-            controller = this.element.controller('editGroupInfoOverlay');
-        });
         describe('should save changes to the group information', function() {
             beforeEach(function() {
                 userStateSvc.displayEditGroupInfoOverlay = true;
+                userManagerSvc.groups = [userStateSvc.selectedGroup];
             });
             it('unless an error occurs', function() {
                 userManagerSvc.updateGroup.and.returnValue($q.reject('Error message'));
                 controller.set();
-                $timeout.flush();
+                scope.$apply();
                 expect(userManagerSvc.updateGroup).toHaveBeenCalledWith(userStateSvc.selectedGroup.title, controller.newGroup);
                 expect(controller.errorMessage).toBe('Error message');
                 expect(userStateSvc.displayEditGroupInfoOverlay).toBe(true);
@@ -68,7 +66,7 @@ describe('Edit Group Info Overlay directive', function() {
             it('successfully', function() {
                 var selectedGroup = userStateSvc.selectedGroup;
                 controller.set();
-                $timeout.flush();
+                scope.$apply();
                 expect(userManagerSvc.updateGroup).toHaveBeenCalledWith(selectedGroup.title, controller.newGroup);
                 expect(controller.errorMessage).toBe('');
                 expect(userStateSvc.displayEditGroupInfoOverlay).toBe(false);
@@ -77,55 +75,41 @@ describe('Edit Group Info Overlay directive', function() {
         });
     });
     describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
-            userStateSvc.selectedGroup = {title: 'group', description: ''};
-            this.element = $compile(angular.element('<edit-group-info-overlay></edit-group-info-overlay>'))(scope);
-            scope.$digest();
-        });
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('edit-group-info-overlay')).toBe(true);
-            expect(this.element.querySelectorAll('form.content').length).toBe(1);
+            expect(element.hasClass('edit-group-info-overlay')).toBe(true);
+            expect(element.querySelectorAll('form.content').length).toBe(1);
         });
         it('with a text area', function() {
-            expect(this.element.find('text-area').length).toBe(1);
+            expect(element.find('text-area').length).toBe(1);
         });
         it('depending on the form validity', function() {
-            var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
+            var button = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
             expect(button.attr('disabled')).toBeFalsy();
 
-            controller = this.element.controller('editGroupInfoOverlay');
             controller.form.$invalid = true;
             scope.$digest();
             expect(button.attr('disabled')).toBeTruthy();
         });
         it('depending on whether there is an error', function() {
-            expect(this.element.find('error-display').length).toBe(0);
-            controller = this.element.controller('editGroupInfoOverlay');
+            expect(element.find('error-display').length).toBe(0);
             controller.errorMessage = 'Error message';
             scope.$digest();
-            expect(this.element.find('error-display').length).toBe(1);
+            expect(element.find('error-display').length).toBe(1);
         });
         it('with buttons to cancel and set', function() {
-            var buttons = this.element.querySelectorAll('.btn-container button');
+            var buttons = element.querySelectorAll('.btn-container button');
             expect(buttons.length).toBe(2);
             expect(['Cancel', 'Set']).toContain(angular.element(buttons[0]).text().trim());
             expect(['Cancel', 'Set']).toContain(angular.element(buttons[1]).text().trim());
         });
     });
     it('should set the correct state when the cancel button is clicked', function() {
-        var element = $compile(angular.element('<edit-group-info-overlay></edit-group-info-overlay>'))(scope);
-        scope.$digest();
-
         var cancelButton = angular.element(element.querySelectorAll('.btn-container button.btn-default')[0]);
         cancelButton.triggerHandler('click');
-        expect(userStateSvc.displayChangePasswordOverlay).toBe(false);
+        expect(userStateSvc.displayEditGroupInfoOverlay).toBe(false);
     });
     it('should call set when the button is clicked', function() {
-        var element = $compile(angular.element('<edit-group-info-overlay></edit-group-info-overlay>'))(scope);
-        scope.$digest();
-        controller = element.controller('editGroupInfoOverlay');
         spyOn(controller, 'set');
-
         var setButton = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
         setButton.triggerHandler('click');
         expect(controller.set).toHaveBeenCalled();

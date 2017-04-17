@@ -94,7 +94,7 @@ describe('Catalog State service', function() {
             expect(catalogStateSvc.links.prev).toBe('');
         });
     });
-    it('should retrieve the current catalof state object', function() {
+    it('should retrieve the current catalog state object', function() {
         catalogStateSvc.catalogs.local.show = true;
         expect(catalogStateSvc.getCurrentCatalog()).toBe(catalogStateSvc.catalogs.local);
 

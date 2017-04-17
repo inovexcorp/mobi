@@ -50,7 +50,7 @@
         <h6>Create User</h6>
         <h1>User Permissions</h1>
         <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
-        <user-permissions-input roles="dvm.roles"></user-permissions-input>
+        <permissions-input roles="dvm.roles"></permissions-input>
 
         <step-progress-bar step-number="2" current-step="dvm.step"></step-progress-bar>
         <div class="btn-container clearfix">

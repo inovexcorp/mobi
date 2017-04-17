@@ -32,7 +32,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
-import org.matonto.jaas.engines.RdfEngine;
 import org.matonto.persistence.utils.Bindings;
 import org.matonto.platform.config.api.application.ApplicationManager;
 import org.matonto.platform.config.api.ontologies.platformconfig.Application;
@@ -49,7 +48,6 @@ import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.orm.OrmFactory;
-import org.matonto.rdf.orm.impl.ThingFactory;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.config.RepositoryConsumerConfig;
@@ -64,6 +62,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 
 @Component(
         name = SimpleStateManager.COMPONENT_NAME,
@@ -77,7 +76,6 @@ public class SimpleStateManager implements StateManager {
     private ModelFactory modelFactory;
     private StateFactory stateFactory;
     private ApplicationStateFactory applicationStateFactory;
-    private ThingFactory thingFactory;
     private EngineManager engineManager;
     private ApplicationManager applicationManager;
 
@@ -127,11 +125,6 @@ public class SimpleStateManager implements StateManager {
     }
 
     @Reference
-    protected void setThingFactory(ThingFactory thingFactory) {
-        this.thingFactory = thingFactory;
-    }
-
-    @Reference
     protected void setEngineManager(EngineManager engineManager) {
         this.engineManager = engineManager;
     }
@@ -142,33 +135,44 @@ public class SimpleStateManager implements StateManager {
     }
 
     @Override
-    public boolean stateExists(Resource stateId, String username) throws MatOntoException {
-        User user = engineManager.retrieveUser(RdfEngine.COMPONENT_NAME, username).orElseThrow(() ->
-                new MatOntoException("User not found"));
+    public boolean stateExists(Resource stateId) {
         try (RepositoryConnection conn = repository.getConnection()) {
-            boolean stateExists = conn.getStatements(stateId, factory.createIRI(RDF.TYPE.stringValue()),
-                    factory.createIRI(State.TYPE))
-                    .hasNext();
-            boolean forUser = conn.getStatements(stateId, factory.createIRI(State.forUser_IRI),
-                    user.getResource()).hasNext();
-            return stateExists && forUser;
-        } catch (RepositoryException e) {
-            throw new MatOntoException("Error in repository connection", e);
+            return stateExists(stateId, conn);
         }
     }
 
     @Override
-    public Map<Resource, Model> getStates(String username, String applicationId, Set<Resource> subjects)
-            throws MatOntoException {
-        User user = engineManager.retrieveUser(RdfEngine.COMPONENT_NAME, username).orElseThrow(() ->
-                new MatOntoException("User not found"));
-        Optional<Application> app = applicationManager.getApplication(applicationId);
+    public boolean stateExistsForUser(Resource stateId, String username) {
+        User user = engineManager.retrieveUser(username).orElseThrow(() ->
+                new IllegalArgumentException("User not found"));
+        try (RepositoryConnection conn = repository.getConnection()) {
+            if (!stateExists(stateId, conn)) {
+                throw new IllegalArgumentException("State not found");
+            }
+            return conn.getStatements(stateId, factory.createIRI(State.forUser_IRI),
+                    user.getResource()).hasNext();
+        }
+    }
+
+    @Override
+    public Map<Resource, Model> getStates(@Nullable String username, @Nullable String applicationId,
+                                          Set<Resource> subjects) {
         Map<Resource, Model> states = new HashMap<>();
         try (RepositoryConnection conn = repository.getConnection()) {
-            TupleQuery statesQuery = app.isPresent() ? conn.prepareTupleQuery(GET_APPLICATION_STATES_QUERY)
-                    : conn.prepareTupleQuery(GET_STATES_QUERY);
-            app.ifPresent(application -> statesQuery.setBinding(APPLICATION_BINDING, application.getResource()));
-            statesQuery.setBinding(USER_BINDING, user.getResource());
+            TupleQuery statesQuery;
+            if (applicationId != null && !applicationId.isEmpty()) {
+                Application app = applicationManager.getApplication(applicationId).orElseThrow(() ->
+                        new IllegalArgumentException("Application not found"));
+                statesQuery = conn.prepareTupleQuery(GET_APPLICATION_STATES_QUERY);
+                statesQuery.setBinding(APPLICATION_BINDING, app.getResource());
+            } else {
+                statesQuery = conn.prepareTupleQuery(GET_STATES_QUERY);
+            }
+            if (username != null && !username.isEmpty()) {
+                User user = engineManager.retrieveUser(username).orElseThrow(() ->
+                        new IllegalArgumentException("User not found"));
+                statesQuery.setBinding(USER_BINDING, user.getResource());
+            }
             TupleQueryResult results = statesQuery.evaluate();
 
             BindingSet bindings;
@@ -187,104 +191,95 @@ public class SimpleStateManager implements StateManager {
                     }
                 });
             }
+            return states;
         }
-        return states;
     }
 
     @Override
-    public Resource storeState(Model newState, String username) throws MatOntoException {
+    public Resource storeState(Model newState, String username) {
         State state = createState(newState, username, stateFactory);
-
         try (RepositoryConnection conn = repository.getConnection()) {
             conn.add(state.getModel());
-        } catch (RepositoryException e) {
-            throw new MatOntoException("Error in repository connection", e);
+            return state.getResource();
         }
-        return state.getResource();
     }
 
     @Override
-    public Resource storeState(Model newState, String username, String applicationId) throws MatOntoException {
+    public Resource storeState(Model newState, String username, String applicationId) {
         ApplicationState state = createState(newState, username, applicationStateFactory);
         Application app = applicationManager.getApplication(applicationId).orElseThrow(() ->
-                new MatOntoException("Application not found"));
+                new IllegalArgumentException("Application not found"));
         state.setApplication(app);
-
         try (RepositoryConnection conn = repository.getConnection()) {
             conn.add(state.getModel());
-        } catch (RepositoryException e) {
-            throw new MatOntoException("Error in repository connection", e);
+            return state.getResource();
         }
-        return state.getResource();
     }
 
     @Override
-    public Model getState(Resource stateId, String username) throws MatOntoException {
-        if (!stateExists(stateId, username)) {
-            throw new MatOntoException("State not found");
+    public Model getState(Resource stateId) {
+        if (!stateExists(stateId)) {
+            throw new IllegalArgumentException("State not found");
         }
         Model result = modelFactory.createModel();
+        Model stateModel = modelFactory.createModel();
         try (RepositoryConnection conn = repository.getConnection()) {
-            Model stateModel = modelFactory.createModel();
             conn.getStatements(stateId, null, null).forEach(stateModel::add);
-            stateModel.filter(stateId, factory.createIRI(State.stateResource_IRI), null).objects().forEach(value -> {
-                conn.getStatements((Resource) value, null, null).forEach(result::add);
-            });
-        } catch (RepositoryException e) {
-            throw new MatOntoException("Error in repository connection", e);
+            stateModel.filter(stateId, factory.createIRI(State.stateResource_IRI), null).objects().forEach(value ->
+                    conn.getStatements((Resource) value, null, null).forEach(result::add));
+            return result;
         }
-        return result;
     }
 
     @Override
-    public void updateState(Resource stateId, Model newState, String username) throws MatOntoException {
-        if (!stateExists(stateId, username)) {
-            throw new MatOntoException("State not found");
+    public void updateState(Resource stateId, Model newState) throws MatOntoException {
+        if (!stateExists(stateId)) {
+            throw new IllegalArgumentException("State not found");
         }
         try (RepositoryConnection conn = repository.getConnection()) {
             Model stateModel = modelFactory.createModel(newState);
             conn.getStatements(stateId, null, null).forEach(stateModel::add);
             State state = stateFactory.getExisting(stateId, stateModel);
             removeState(state, conn);
-            state.setStateResource(newState.subjects().stream().map(thingFactory::createNew)
-                    .collect(Collectors.toSet()));
+            state.setStateResource(newState.subjects());
             conn.add(state.getModel());
-        } catch (RepositoryException e) {
-            throw new MatOntoException("Error in repository connection", e);
         }
     }
 
     @Override
-    public void deleteState(Resource stateId, String username) throws MatOntoException {
-        if (!stateExists(stateId, username)) {
-            throw new MatOntoException("State not found");
+    public void deleteState(Resource stateId) {
+        if (!stateExists(stateId)) {
+            throw new IllegalArgumentException("State not found");
         }
         try (RepositoryConnection conn = repository.getConnection()) {
             Model stateModel = modelFactory.createModel();
             conn.getStatements(stateId, null, null).forEach(stateModel::add);
             State state = stateFactory.getExisting(stateId, stateModel);
             removeState(state, conn);
-        } catch (RepositoryException e) {
-            throw new MatOntoException("Error in repository connection", e);
         }
     }
 
     private void removeState(State state, RepositoryConnection conn) {
         conn.remove(state.getResource(), null, null);
         state.getStateResource().stream()
-                .filter(thing -> !conn.getStatements(null, factory.createIRI(State.stateResource_IRI),
-                        thing.getResource()).hasNext())
-                .forEach(thing -> conn.remove(thing.getResource(), null, null));
+                .filter(resource ->
+                        !conn.getStatements(null, factory.createIRI(State.stateResource_IRI), resource).hasNext())
+                .forEach(resource -> conn.remove(resource, null, null));
     }
 
     private <T extends State> T createState(Model newState, String username, OrmFactory<T> ormFactory) {
-        User user = engineManager.retrieveUser(RdfEngine.COMPONENT_NAME, username).orElseThrow(() ->
-                new MatOntoException("User not found"));
+        User user = engineManager.retrieveUser(username).orElseThrow(() ->
+                new IllegalArgumentException("User not found"));
         T stateObj = ormFactory.createNew(factory.createIRI(NAMESPACE + UUID.randomUUID()));
-        stateObj.setStateResource(newState.subjects().stream().map(thingFactory::createNew)
-                .collect(Collectors.toSet()));
+        stateObj.setStateResource(newState.subjects());
         stateObj.setForUser(user);
         stateObj.getModel().addAll(newState);
         return stateObj;
+    }
+
+    private boolean stateExists(Resource stateId, RepositoryConnection conn) {
+        return conn.getStatements(stateId, factory.createIRI(RDF.TYPE.stringValue()),
+                factory.createIRI(State.TYPE))
+                .hasNext();
     }
 }

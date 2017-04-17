@@ -3,18 +3,17 @@ prefix owl: <http://www.w3.org/2002/07/owl#>
 
 select ?parent ?child
 where {
-    graph ?graph {
-        ?parent rdf:type owl:Class .
-        optional {
-            ?child rdfs:subClassOf ?parent .
-        }
-        {
-            select distinct ?parent
-            where {
-                ?individual rdf:type owl:NamedIndividual .
-                ?individual rdf:type ?parent .
-                filter (?parent != owl:NamedIndividual)
-            }
+    ?parent rdf:type owl:Class .
+    optional {
+        ?child rdfs:subClassOf ?parent ;
+               rdf:type owl:Class .
+    }
+    {
+        select distinct ?parent
+        where {
+            ?individual rdf:type owl:NamedIndividual ;
+                        rdf:type ?parent .
+            filter (?parent != owl:NamedIndividual)
         }
     }
 }

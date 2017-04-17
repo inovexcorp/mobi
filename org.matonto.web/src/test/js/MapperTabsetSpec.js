@@ -35,13 +35,12 @@ describe('Mapper Tabset directive', function() {
             scope = _$rootScope_;
             mapperStateSvc = _mapperStateService_;
         });
+
+        this.element = $compile(angular.element('<mapper-tabset></mapper-tabset>'))(scope);
+        scope.$digest();
     });
 
     describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
-            this.element = $compile(angular.element('<mapper-tabset></mapper-tabset>'))(scope);
-            scope.$digest();
-        });
         it('for wrapping containers', function() {
             expect(this.element.hasClass('mapper-tabset')).toBe(true);
         });

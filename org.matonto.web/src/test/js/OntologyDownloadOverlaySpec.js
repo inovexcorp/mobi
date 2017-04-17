@@ -26,7 +26,9 @@ describe('Ontology Download Overlay directive', function() {
         element,
         controller,
         ontologyManagerSvc,
-        ontologyStateSvc;
+        ontologyStateSvc,
+        $q;
+    var error = 'error';
 
     beforeEach(function() {
         module('templates');
@@ -36,62 +38,50 @@ describe('Ontology Download Overlay directive', function() {
         mockOntologyState();
         mockOntologyManager();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_, _$q_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyManagerSvc = _ontologyManagerService_;
             ontologyStateSvc = _ontologyStateService_;
+            $q = _$q_;
         });
-    });
 
-    beforeEach(function() {
         element = $compile(angular.element('<ontology-download-overlay></ontology-download-overlay>'))(scope);
         scope.$digest();
     });
 
     describe('replaces the element with the correct html', function() {
-        it('for a div', function() {
+        it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
+            expect(element.hasClass('ontology-download-overlay')).toBe(true);
+            expect(element.querySelectorAll('.content').length).toBe(1);
         });
-        it('based on .content', function() {
-            var items = element.querySelectorAll('.content');
-            expect(items.length).toBe(1);
+        it('with a h6', function() {
+            expect(element.find('h6').length).toBe(1);
         });
-        it('based on h6', function() {
-            var items = element.find('h6');
-            expect(items.length).toBe(1);
+        it('with a .form-group', function() {
+            expect(element.querySelectorAll('.form-group').length).toBe(1);
         });
-        it('based on .form-group', function() {
-            var items = element.querySelectorAll('.form-group');
-            expect(items.length).toBe(1);
+        it('with a .btn-container', function() {
+            expect(element.querySelectorAll('.btn-container').length).toBe(1);
         });
-        it('based on .btn-container', function() {
-            var items = element.querySelectorAll('.btn-container');
-            expect(items.length).toBe(1);
+        it('with a .error-msg', function() {
+            expect(element.querySelectorAll('.error-msg').length).toBe(1);
         });
-        it('based on .error-msg', function() {
-            var items = element.querySelectorAll('.error-msg');
-            expect(items.length).toBe(1);
-        });
-        describe('and has-error class', function() {
-            it('is not there when variable is undefined', function() {
-                var formGroup = element.querySelectorAll('.form-group');
-                expect(angular.element(formGroup[0]).hasClass('has-error')).toBe(false);
-            });
-            it('is there when variable is true', function() {
-                controller = element.controller('ontologyDownloadOverlay');
-                controller.form = {
-                    fileName: {
-                        '$error': {
-                            pattern: true
-                        }
+        it('depending on whether the fileName is valid', function() {
+            var formGroup = angular.element(element.querySelectorAll('.form-group')[0]);
+            expect(formGroup.hasClass('has-error')).toBe(false);
+
+            controller = element.controller('ontologyDownloadOverlay');
+            controller.form = {
+                fileName: {
+                    '$error': {
+                        pattern: true
                     }
                 }
-                scope.$digest();
-
-                var formGroup = element.querySelectorAll('.form-group');
-                expect(angular.element(formGroup[0]).hasClass('has-error')).toBe(true);
-            });
+            }
+            scope.$digest();
+            expect(formGroup.hasClass('has-error')).toBe(true);
         });
     });
     describe('controller methods', function() {
@@ -101,9 +91,10 @@ describe('Ontology Download Overlay directive', function() {
         it('download calls the correct manager function', function() {
             controller.serialization = 'serialization';
             controller.fileName = 'fileName';
+            ontologyStateSvc.showDownloadOverlay = true;
             controller.download();
-            expect(ontologyManagerSvc.downloadOntologyFile).toHaveBeenCalledWith(ontologyStateSvc.downloadId,
-                'serialization', 'fileName');
+            scope.$apply();
+            expect(ontologyManagerSvc.downloadOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, ontologyStateSvc.listItem.branchId, ontologyStateSvc.listItem.commitId, controller.serialization, controller.fileName);
             expect(ontologyStateSvc.showDownloadOverlay).toBe(false);
         });
     });

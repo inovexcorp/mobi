@@ -27,9 +27,9 @@
         .module('selectedDetails', [])
         .directive('selectedDetails', selectedDetails);
 
-        selectedDetails.$inject = ['ontologyManagerService', 'ontologyStateService'];
+        selectedDetails.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'ontologyUtilsManagerService'];
 
-        function selectedDetails(ontologyManagerService, ontologyStateService) {
+        function selectedDetails($filter, ontologyManagerService, ontologyStateService, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,8 +38,21 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    dvm.sm = ontologyStateService;
+                    var ontoUtils = ontologyUtilsManagerService;
+                    dvm.os = ontologyStateService;
                     dvm.om = ontologyManagerService;
+
+                    dvm.getTypes = function() {
+                        return _.join(_.orderBy(_.map(_.get(dvm.os.selected, '@type', []), $filter('prefixation'))), ', ');
+                    }
+
+                    dvm.onEdit = function(iriBegin, iriThen, iriEnd) {
+                        dvm.os.onEdit(iriBegin, iriThen, iriEnd)
+                            .then(() => {
+                                ontoUtils.saveCurrentChanges();
+                                ontoUtils.updateLabel();
+                            });
+                    }
                 }
             }
         }

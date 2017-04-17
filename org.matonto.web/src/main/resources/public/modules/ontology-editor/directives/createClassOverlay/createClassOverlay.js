@@ -27,9 +27,9 @@
         .module('createClassOverlay', [])
         .directive('createClassOverlay', createClassOverlay);
 
-        createClassOverlay.$inject = ['$filter', 'REGEX', 'ontologyManagerService', 'ontologyStateService', 'prefixes'];
+        createClassOverlay.$inject = ['$filter', 'REGEX', 'ontologyStateService', 'prefixes', 'ontologyUtilsManagerService'];
 
-        function createClassOverlay($filter, REGEX, ontologyManagerService, ontologyStateService, prefixes) {
+        function createClassOverlay($filter, REGEX, ontologyStateService, prefixes, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,16 +38,12 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
+                    var ontoUtils = ontologyUtilsManagerService;
 
                     dvm.prefixes = prefixes;
                     dvm.iriPattern = REGEX.IRI;
-                    dvm.om = ontologyManagerService;
-                    dvm.sm = ontologyStateService;
-
-                    dvm.prefix = _.get(dvm.om.getListItemById(dvm.sm.state.ontologyId), 'iriBegin',
-                        dvm.om.getOntologyIRI(dvm.sm.ontology)) + _.get(dvm.om.getListItemById(dvm.sm.state.ontologyId),
-                        'iriThen', '#');
-
+                    dvm.os = ontologyStateService;
+                    dvm.prefix = dvm.os.getDefaultPrefix();
                     dvm.clazz = {
                         '@id': dvm.prefix,
                         '@type': [prefixes.owl + 'Class'],
@@ -56,10 +52,7 @@
                         }],
                         [prefixes.dcterms + 'description']: [{
                             '@value': ''
-                        }],
-                        matonto: {
-                            created: true
-                        }
+                        }]
                     }
 
                     dvm.nameChanged = function() {
@@ -72,25 +65,28 @@
                     dvm.onEdit = function(iriBegin, iriThen, iriEnd) {
                         dvm.iriHasChanged = true;
                         dvm.clazz['@id'] = iriBegin + iriThen + iriEnd;
+                        dvm.os.setCommonIriParts(iriBegin, iriThen);
                     }
 
                     dvm.create = function() {
                         if (_.isEqual(dvm.clazz[prefixes.dcterms + 'description'][0]['@value'], '')) {
                             _.unset(dvm.clazz, prefixes.dcterms + 'description');
                         }
+                        ontoUtils.addLanguageToNewEntity(dvm.clazz, dvm.language);
                         _.set(dvm.clazz, 'matonto.originalIRI', dvm.clazz['@id']);
                         // add the entity to the ontology
-                        dvm.om.addEntity(dvm.sm.ontology, dvm.clazz);
+                        dvm.os.addEntity(dvm.os.listItem, dvm.clazz);
                         // update relevant lists
                         var split = $filter('splitIRI')(dvm.clazz['@id']);
-                        var listItem = dvm.om.getListItemById(dvm.sm.state.ontologyId);
-                        _.get(listItem, 'subClasses').push({namespace:split.begin + split.then, localName: split.end});
-                        _.get(listItem, 'classHierarchy').push({'entityIRI': dvm.clazz['@id']});
-                        _.set(_.get(listItem, 'index'), dvm.clazz['@id'], dvm.sm.ontology.length - 1);
+                        _.get(dvm.os.listItem, 'subClasses').push({namespace:split.begin + split.then,
+                            localName: split.end});
+                        _.get(dvm.os.listItem, 'classHierarchy').push({'entityIRI': dvm.clazz['@id']});
+                        dvm.os.addToAdditions(dvm.os.listItem.recordId, dvm.clazz);
                         // select the new class
-                        dvm.sm.selectItem(_.get(dvm.clazz, '@id'));
+                        dvm.os.selectItem(_.get(dvm.clazz, '@id'));
                         // hide the overlay
-                        dvm.sm.showCreateClassOverlay = false;
+                        dvm.os.showCreateClassOverlay = false;
+                        ontoUtils.saveCurrentChanges();
                     }
                 }
             }

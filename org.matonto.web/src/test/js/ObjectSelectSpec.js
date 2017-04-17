@@ -21,17 +21,11 @@
  * #L%
  */
 describe('Object Select directive', function() {
-    var $compile,
-        scope,
-        element,
-        prefixes,
-        ontologyStateSvc,
-        responseObj;
+    var $compile, scope, element, isolatedScope, controller, prefixes, ontologyStateSvc, ontologyManagerSvc, responseObj;
 
     beforeEach(function() {
         module('templates');
         module('objectSelect');
-        mockPrefixes();
         injectTrustedFilter();
         injectHighlightFilter();
         injectSplitIRIFilter();
@@ -39,22 +33,19 @@ describe('Object Select directive', function() {
         mockSettingsManager();
         mockOntologyState();
         mockResponseObj();
+        mockPrefixes();
+        mockOntologyUtilsManager();
 
-        inject(function(_ontologyManagerService_, _settingsManagerService_, _responseObj_, _ontologyStateService_, _prefixes_) {
-            ontologyManagerService = _ontologyManagerService_;
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _settingsManagerService_, _responseObj_, _ontologyStateService_, _prefixes_) {
+            $compile = _$compile_;
+            scope = _$rootScope_;
+            ontologyManagerSvc = _ontologyManagerService_;
             settingsManagerService = _settingsManagerService_;
             responseObj = _responseObj_;
             ontologyStateSvc = _ontologyStateService_;
             prefixes = _prefixes_;
         });
 
-        inject(function(_$compile_, _$rootScope_) {
-            $compile = _$compile_;
-            scope = _$rootScope_;
-        });
-    });
-
-    beforeEach(function() {
         scope.displayText = 'test';
         scope.selectList = [];
         scope.mutedText = 'test';
@@ -69,8 +60,6 @@ describe('Object Select directive', function() {
     });
 
     describe('in isolated scope', function() {
-        var isolatedScope;
-
         beforeEach(function() {
             isolatedScope = element.isolateScope();
         });
@@ -109,9 +98,7 @@ describe('Object Select directive', function() {
             expect(scope.onChange).toHaveBeenCalled();
         });
     });
-    describe('controller bound variables', function() {
-        var controller;
-
+    describe('controller bound variable', function() {
         beforeEach(function() {
             controller = element.controller('objectSelect');
         });
@@ -122,52 +109,40 @@ describe('Object Select directive', function() {
         });
     });
     describe('replaces the element with the correct html', function() {
-        it('for a DIV', function() {
+        it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
-        });
-        it('based on overlay form group', function() {
+            expect(element.hasClass('object-select')).toBe(true);
             expect(element.hasClass('form-group')).toBe(true);
         });
-        it('based on custom label tags', function() {
-            var labels = element.querySelectorAll('custom-label');
-            expect(labels.length).toBe(1);
+        it('with custom-labels', function() {
+            expect(element.querySelectorAll('custom-label').length).toBe(1);
         });
-        describe('based on ui select tags', function() {
-            it('if it is a multi select', function() {
-                scope.multiSelect = true;
-                scope.$digest();
-                var selects = element.querySelectorAll('ui-select');
-                expect(selects.length).toBe(1);
-                expect(angular.element(selects[0]).attr('multiple')).toBeDefined();
-            });
-            it('if it is not a multi select', function() {
-                scope.multiSelect = false;
-                scope.$digest();
-                var selects = element.querySelectorAll('ui-select');
-                expect(selects.length).toBe(1);
-                expect(angular.element(selects[0]).attr('multiple')).toBeUndefined();
-            });
+        it('depending on whether it is a multi select', function() {
+            var selects = element.querySelectorAll('ui-select');
+            expect(selects.length).toBe(1);
+            expect(angular.element(selects[0]).attr('multiple')).toBeUndefined();
+
+            scope.multiSelect = true;
+            scope.$digest();
+            selects = element.querySelectorAll('ui-select');
+            expect(selects.length).toBe(1);
+            expect(angular.element(selects[0]).attr('multiple')).toBeDefined();
         });
     });
     describe('controller methods', function() {
-        var controller;
-
         beforeEach(function() {
-            ontologyStateSvc.state = {ontologyId: 'ontologyId'};
+            ontologyStateSvc.listItem.ontologyId = 'ontologyId';
             controller = element.controller('objectSelect');
         });
         describe('getItemOntologyIri', function() {
             it('should return ontologyId if nothing is passed in', function() {
-                var result = controller.getItemOntologyIri();
-                expect(result).toEqual('ontologyId');
+                expect(controller.getItemOntologyIri()).toEqual('ontologyId');
             });
             it('should return item.ontologyIri if provided', function() {
-                var result = controller.getItemOntologyIri({ontologyId: 'new'});
-                expect(result).toEqual('new');
+                expect(controller.getItemOntologyIri({ontologyId: 'new'})).toEqual('new');
             });
             it('should return ontologyId if object does not have ontologyIri property.', function() {
-                var result = controller.getItemOntologyIri({prop: 'new'});
-                expect(result).toEqual('ontologyId');
+                expect(controller.getItemOntologyIri({prop: 'new'})).toEqual('ontologyId');
             });
         });
         describe('getItemIri', function() {
@@ -176,8 +151,7 @@ describe('Object Select directive', function() {
                 expect(responseObj.getItemIri).toHaveBeenCalled();
             });
             it('should return item["@id"] if it has that property', function() {
-                var result = controller.getItemIri({'@id': 'new'});
-                expect(result).toEqual('new');
+                expect(controller.getItemIri({'@id': 'new'})).toEqual('new');
             });
             it('should call responseObj.getItemIri if object does not have @id property.', function() {
                 var result = controller.getItemIri({prop: 'new'});
@@ -186,11 +160,11 @@ describe('Object Select directive', function() {
         });
         describe('getTooltipDisplay', function() {
             beforeEach(function() {
-                ontologyManagerService.getEntityById.and.returnValue({});
+                ontologyStateSvc.getEntityByRecordId.and.returnValue({});
                 spyOn(controller, 'getItemIri').and.returnValue('test');
             });
             it('should return @id when tooltipDisplay is empty', function() {
-                ontologyManagerService.getEntityById.and.returnValue({'@id': 'id'});
+                ontologyStateSvc.getEntityByRecordId.and.returnValue({'@id': 'id'});
                 var result = controller.getTooltipDisplay();
                 expect(result).toBe('id');
             });
@@ -199,15 +173,15 @@ describe('Object Select directive', function() {
                     controller.tooltipDisplay = 'comment';
                 });
                 it('when getEntityDescription is undefined', function() {
-                    ontologyManagerService.getEntityDescription.and.returnValue(undefined);
+                    ontologyManagerSvc.getEntityDescription.and.returnValue(undefined);
                     var result = controller.getTooltipDisplay();
-                    expect(ontologyManagerService.getEntityDescription).toHaveBeenCalledWith({}); // The value of getEntity
+                    expect(ontologyManagerSvc.getEntityDescription).toHaveBeenCalledWith({}); // The value of getEntity
                     expect(result).toEqual('test'); // The value of getItemIri
                 });
                 it('when getEntityDescription is defined', function() {
-                    ontologyManagerService.getEntityDescription.and.returnValue('new');
+                    ontologyManagerSvc.getEntityDescription.and.returnValue('new');
                     var result = controller.getTooltipDisplay();
-                    expect(ontologyManagerService.getEntityDescription).toHaveBeenCalledWith({}); // The value of getEntity
+                    expect(ontologyManagerSvc.getEntityDescription).toHaveBeenCalledWith({}); // The value of getEntity
                     expect(result).toEqual('new'); // The value of getItemIri
                 });
             });
@@ -216,64 +190,16 @@ describe('Object Select directive', function() {
                     controller.tooltipDisplay = 'label';
                 });
                 it('when getEntityName is undefined', function() {
-                    ontologyManagerService.getEntityName.and.returnValue(undefined);
+                    ontologyManagerSvc.getEntityName.and.returnValue(undefined);
                     var result = controller.getTooltipDisplay();
-                    expect(ontologyManagerService.getEntityName).toHaveBeenCalledWith({}, ontologyStateSvc.state.type); // The value of getEntity
+                    expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith({}, ontologyStateSvc.state.type); // The value of getEntity
                     expect(result).toEqual('test'); // The value of getItemIri
                 });
                 it('when getEntityName is defined', function() {
-                    ontologyManagerService.getEntityName.and.returnValue('new');
+                    ontologyManagerSvc.getEntityName.and.returnValue('new');
                     var result = controller.getTooltipDisplay();
-                    expect(ontologyManagerService.getEntityName).toHaveBeenCalledWith({}, ontologyStateSvc.state.type); // The value of getEntity
+                    expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith({}, ontologyStateSvc.state.type); // The value of getEntity
                     expect(result).toEqual('new'); // The value of getItemIri
-                });
-            });
-        });
-        describe('isBlankNode should return', function() {
-            it('false for falsey values', function() {
-                _.forEach([undefined, null, [], true], function(item) {
-                    expect(controller.isBlankNode(item)).toBe(false);
-                });
-            });
-            it('true for strings containing "_:b"', function() {
-                _.forEach(['_:b', '_:b1', 'stuff_:b'], function(item) {
-                    expect(controller.isBlankNode(item)).toBe(true);
-                });
-            });
-        });
-        describe('getBlankNodeValue should return', function() {
-            beforeEach(function() {
-                ontologyStateSvc.listItem.blankNodes = {
-                    '_:b1': 'prop',
-                    '_:b2': 'class',
-                    '_:b3': 'union',
-                    '_:b4': 'intersection'
-                }
-                scope.$digest();
-            });
-            it('undefined if isBlankNode returns false', function() {
-                spyOn(controller, 'isBlankNode').and.returnValue(false);
-                var result = controller.getBlankNodeValue();
-                expect(result).toBe(undefined);
-            });
-            it('id if isBlankNode returns true and id does not match any property', function() {
-                spyOn(controller, 'isBlankNode').and.returnValue(true);
-                _.forEach(['_:b11', '_:b22', 'test', ''], function(item) {
-                    var result = controller.getBlankNodeValue(item);
-                    expect(result).toBe(item);
-                });
-            });
-            it('property name when id does match property', function() {
-                spyOn(controller, 'isBlankNode').and.returnValue(true);
-                var tests = [
-                    {id: '_:b1', result: 'prop'},
-                    {id: '_:b2', result: 'class'},
-                    {id: '_:b3', result: 'union'},
-                    {id: '_:b4', result: 'intersection'}
-                ];
-                _.forEach(tests, function(item) {
-                    var result = controller.getBlankNodeValue(item.id);
-                    expect(result).toBe(item.result);
                 });
             });
         });

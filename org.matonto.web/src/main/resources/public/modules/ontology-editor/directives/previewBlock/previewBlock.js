@@ -27,9 +27,9 @@
         .module('previewBlock', [])
         .directive('previewBlock', previewBlock);
 
-        previewBlock.$inject = ['ontologyStateService', 'ontologyManagerService'];
+        previewBlock.$inject = ['$filter', 'ontologyStateService', 'ontologyManagerService'];
 
-        function previewBlock(ontologyStateService, ontologyManagerService) {
+        function previewBlock($filter, ontologyStateService, ontologyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,9 +38,9 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    dvm.sm = ontologyStateService;
-                    dvm.om = ontologyManagerService;
-                    dvm.activePage = dvm.sm.getActivePage();
+                    var om = ontologyManagerService;
+                    dvm.os = ontologyStateService;
+                    dvm.activePage = dvm.os.getActivePage();
                     dvm.options = {
                         mode: dvm.activePage.mode,
                         lineNumbers: true,
@@ -61,12 +61,9 @@
 
                     dvm.getPreview = function() {
                         setMode(dvm.activePage.serialization);
-                        dvm.om.getPreview(dvm.sm.state.ontologyId, dvm.activePage.serialization)
-                            .then(response => {
-                                dvm.activePage.preview = response;
-                            }, response => {
-                                dvm.activePage.preview = response;
-                            });
+                        om.getOntology(dvm.os.listItem.recordId, dvm.os.listItem.branchId, dvm.os.listItem.commitId, dvm.activePage.serialization)
+                            .then(ontology => dvm.activePage.preview = (dvm.activePage.serialization === 'jsonld' ? $filter('json')(ontology) : ontology),
+                                response => dvm.activePage.preview = response);
                     }
                 }
             }

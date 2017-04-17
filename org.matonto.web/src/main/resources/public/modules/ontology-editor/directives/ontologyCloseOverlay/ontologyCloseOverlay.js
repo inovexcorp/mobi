@@ -27,9 +27,9 @@
         .module('ontologyCloseOverlay', [])
         .directive('ontologyCloseOverlay', ontologyCloseOverlay);
 
-        ontologyCloseOverlay.$inject = ['ontologyManagerService', 'ontologyStateService'];
+        ontologyCloseOverlay.$inject = ['$q', 'ontologyStateService'];
 
-        function ontologyCloseOverlay(ontologyManagerService, ontologyStateService) {
+        function ontologyCloseOverlay($q, ontologyStateService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,26 +38,19 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-
-                    dvm.om = ontologyManagerService;
-                    dvm.sm = ontologyStateService;
+                    dvm.os = ontologyStateService;
+                    dvm.error = '';
 
                     dvm.saveThenClose = function() {
-                        var ontology = dvm.om.getOntologyById(dvm.sm.ontologyIdToClose);
-                        dvm.om.saveChanges(dvm.sm.ontologyIdToClose, dvm.sm.getUnsavedEntities(ontology),
-                            dvm.sm.getCreatedEntities(ontology), dvm.sm.getState(dvm.sm.ontologyIdToClose).deletedEntities)
-                            .then(newId => {
-                                dvm.sm.afterSave(newId);
-                                dvm.close();
-                            }, errorMessage => {
-                                dvm.error = errorMessage;
-                            });
+                        dvm.os.saveChanges(dvm.os.listItem.recordId, {additions: dvm.os.listItem.additions, deletions: dvm.os.listItem.deletions})
+                            .then(() => dvm.os.afterSave(), $q.reject)
+                            .then(() => dvm.close(), errorMessage => dvm.error = errorMessage);
                     }
 
                     dvm.close = function() {
-                        dvm.sm.deleteState(dvm.sm.ontologyIdToClose);
-                        dvm.om.closeOntology(dvm.sm.ontologyIdToClose);
-                        dvm.sm.showCloseOverlay = false;
+                        dvm.os.deleteState(dvm.os.recordIdToClose);
+                        dvm.os.closeOntology(dvm.os.recordIdToClose);
+                        dvm.os.showCloseOverlay = false;
                     }
                 }
             }

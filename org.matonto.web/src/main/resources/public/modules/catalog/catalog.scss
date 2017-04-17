@@ -4,9 +4,6 @@
 .catalog {
     background-color: $gray-lighter;
 
-    .field-name {
-        font-weight: bold;
-    }
     .entity-title {
         text-align: center;
         clear: both;
@@ -25,5 +22,8 @@
                 display: inline-block;
             }
         }
+    }
+    .entity-dates span.date {
+        font-size: 85%;
     }
 }

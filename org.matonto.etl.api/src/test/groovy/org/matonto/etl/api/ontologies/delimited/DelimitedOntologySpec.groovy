@@ -1,10 +1,12 @@
 package org.matonto.etl.api.ontologies.delimited
 
 import org.matonto.rdf.api.Model
+import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory
 import org.matonto.rdf.core.utils.Values
 import org.matonto.rdf.orm.conversion.ValueConverterRegistry
 import org.matonto.rdf.orm.conversion.impl.*
+import org.matonto.rdf.orm.impl.ThingFactory
 import org.openrdf.rio.RDFFormat
 import org.openrdf.rio.Rio
 import org.springframework.core.io.ClassPathResource
@@ -13,9 +15,12 @@ import spock.lang.Specification
 class DelimitedOntologySpec extends Specification {
 
     def vf = SimpleValueFactory.getInstance()
+    def mf = LinkedHashModelFactory.getInstance()
     def classFactory = new ClassMappingFactory()
     def dataMappingFactory = new DataMappingFactory()
-    def propertyFactory = new PropertyFactory()
+    def objectMappingFactory = new ObjectMappingFactory()
+    def propertyMappingFactory = new PropertyMappingFactory()
+    def thingFactory = new ThingFactory()
     def classMapping
 
     ValueConverterRegistry vcr = new DefaultValueConverterRegistry();
@@ -44,15 +49,24 @@ class DelimitedOntologySpec extends Specification {
  */
 
     def setup() {
+        classFactory.setModelFactory(mf)
         classFactory.setValueFactory(vf)
         classFactory.setValueConverterRegistry(vcr)
         dataMappingFactory.setValueFactory(vf)
+        dataMappingFactory.setModelFactory(mf)
         dataMappingFactory.setValueConverterRegistry(vcr)
-        propertyFactory.setValueFactory(vf)
-        propertyFactory.setValueConverterRegistry(vcr)
+        objectMappingFactory.setModelFactory(mf)
+        objectMappingFactory.setValueFactory(vf)
+        objectMappingFactory.setValueConverterRegistry(vcr)
+        propertyMappingFactory.setModelFactory(mf)
+        propertyMappingFactory.setValueFactory(vf)
+        propertyMappingFactory.setValueConverterRegistry(vcr)
 
+        vcr.registerValueConverter(classFactory)
         vcr.registerValueConverter(dataMappingFactory)
-        vcr.registerValueConverter(propertyFactory)
+        vcr.registerValueConverter(objectMappingFactory)
+        vcr.registerValueConverter(propertyMappingFactory)
+        vcr.registerValueConverter(thingFactory)
         vcr.registerValueConverter(new ResourceValueConverter())
         vcr.registerValueConverter(new IRIValueConverter())
         vcr.registerValueConverter(new DoubleValueConverter())
@@ -64,7 +78,7 @@ class DelimitedOntologySpec extends Specification {
 
         InputStream mappingFile = new ClassPathResource("newestMapping.ttl").getInputStream()
         Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE))
-        classMapping = classFactory.getExisting(vf.createIRI("http://matonto.org/data/delimited/Material"), mapping, vf, vcr)
+        classMapping = classFactory.getExisting(vf.createIRI("http://matonto.org/mappings/demo/Material"), mapping, vf, vcr)
     }
 
     def "ClassMapping has the correct prefix"() {
@@ -99,5 +113,15 @@ class DelimitedOntologySpec extends Specification {
                     throw new IllegalStateException()
             }
         }
+    }
+
+    def "ClassMapping has the correct ObjectProperties"() {
+        Set<ObjectMapping> objectProps = classMapping.getObjectProperty()
+
+        expect:
+        objectProps != null
+        objectProps.size() == 1
+        objectProps[0].getHasProperty()[0].getResource().stringValue() == "http://matonto.org/ontologies/uhtc/crystalStructure"
+        objectProps[0].getClassMapping()[0].getResource().stringValue() == "http://matonto.org/mappings/demo/CrystalStructure"
     }
 }

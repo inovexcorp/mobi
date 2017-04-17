@@ -33,7 +33,6 @@ var jsFiles = function(prefix) {
         return [
             prefix + 'js/services/responseObj.js',
             prefix + 'js/services/prefixes.js',
-            prefix + 'js/services/annotationManager.js',
             prefix + 'js/filters/*.js',
             prefix + 'js/services/*.js',
             prefix + 'directives/**/*.js',
@@ -66,7 +65,8 @@ var jsFiles = function(prefix) {
             prefix + 'handsontable/**/handsontable.full.js',
             prefix + 'ng-handsontable/**/ngHandsontable.min.js',
             prefix + 'chroma-js/**/chroma.min.js',
-            prefix + 'angular-toastr/**/angular-toastr.tpls.js'
+            prefix + 'angular-toastr/**/angular-toastr.tpls.js',
+            prefix + 'snapsvg/**/snap.svg-min.js'
         ]
     },
     styleFiles = function(prefix, suffix) {
@@ -85,7 +85,24 @@ var jsFiles = function(prefix) {
             prefix + 'handsontable/**/handsontable.full.css',
             prefix + 'angular-toastr/**/angular-toastr.min.css'
         ]
+    },
+    fontFiles = function(prefix) {
+        return [
+            prefix + 'bootstrap/fonts/**.*',
+            prefix + 'font-awesome/fonts/**.*'
+        ]
     };
+
+// Method to chunk array
+var createGroupedArray = function(arr, chunkSize) {
+    var groups = [], i;
+    for (i = 0; i < arr.length; i += chunkSize) {
+        groups.push(arr.slice(i, i + chunkSize));
+    }
+    return groups;
+}
+
+var tests = createGroupedArray(glob.sync('./src/test/js/*Spec.js'), 50);
 
 //Method to create frontend documentation
 var createDocs = function(scripts) {
@@ -103,12 +120,12 @@ var createDocs = function(scripts) {
 }
 
 //Method to run jasmine tests
-var runKarma = function(vendorFiles, isBuild, done) {
+var runKarma = function(vendorFiles, testFiles, isBuild, done) {
     var configFile = isBuild ? __dirname + '/karma.conf.build.js' : __dirname + '/karma.conf.tdd.js';
     new Karma({
         configFile: configFile,
-        files: vendorFiles.concat(['./target/templates.js', './src/test/js/Shared.js', './src/test/js/*Spec.js'])
-    }, done()).start();
+        files: vendorFiles.concat(['./target/templates.js', './src/test/js/Shared.js']).concat(testFiles)
+    }, done).start();
 }
 
 // Inject method for minified and unminified
@@ -131,17 +148,57 @@ gulp.task('cacheTemplates', function() {
 
 // Run jasmine tests in PhantomJS with minified source files
 gulp.task('test-minified', ['cacheTemplates', 'minify-scripts'], function(done) {
-    return runKarma([dest + '**/*.js'], true, done);
+    return runKarma([dest + '**/*.js'], './src/test/js/*Spec.js', true, done);
+});
+
+gulp.task('test-minified-1', ['cacheTemplates', 'minify-scripts'], function(done) {
+    return runKarma([dest + '**/*.js'], tests[0], true, done);
+});
+
+gulp.task('test-minified-2', ['test-minified-1'], function(done) {
+    return runKarma([dest + '**/*.js'], tests[1], true, done);
+});
+
+gulp.task('test-minified-3', ['test-minified-2'], function(done) {
+    return runKarma([dest + '**/*.js'], tests[2], true, done);
+});
+
+gulp.task('test-minified-4', ['test-minified-3'], function(done) {
+    return runKarma([dest + '**/*.js'], tests[3], true, done);
+});
+
+gulp.task('test-minified-5', ['test-minified-4'], function(done) {
+    return runKarma([dest + '**/*.js'], tests[4], true, done);
 });
 
 // Run jasmine tests in PhantomJS with unminified source files
 gulp.task('test-unminified', ['cacheTemplates', 'move-custom-js'], function(done) {
-    return runKarma(nodeJsFiles(nodeDir).concat(jsFiles(dest)), true, done);
+    return runKarma(nodeJsFiles(nodeDir).concat(jsFiles(dest)), './src/test/js/*Spec.js', true, done);
+});
+
+gulp.task('test-unminified-1', ['cacheTemplates', 'move-custom-js'], function(done) {
+    return runKarma(nodeJsFiles(nodeDir).concat(jsFiles(dest)), tests[0], true, done);
+});
+
+gulp.task('test-unminified-2', ['test-unminified-1'], function(done) {
+    return runKarma(nodeJsFiles(nodeDir).concat(jsFiles(dest)), tests[1], true, done);
+});
+
+gulp.task('test-unminified-3', ['test-unminified-2'], function(done) {
+    return runKarma(nodeJsFiles(nodeDir).concat(jsFiles(dest)), tests[2], true, done);
+});
+
+gulp.task('test-unminified-4', ['test-unminified-3'], function(done) {
+    return runKarma(nodeJsFiles(nodeDir).concat(jsFiles(dest)), tests[3], true, done);
+});
+
+gulp.task('test-unminified-5', ['test-unminified-4'], function(done) {
+    return runKarma(nodeJsFiles(nodeDir).concat(jsFiles(dest)), tests[4], true, done);
 });
 
 // Launch TDD environment for jasmine tests in Chrome
 gulp.task('tdd', ['cacheTemplates'], function(done) {
-    return runKarma(nodeJsFiles(nodeDir).concat(jsFiles(src)), false, done);
+    return runKarma(nodeJsFiles(nodeDir).concat(jsFiles(src)), './src/test/js/*Spec.js', false, done);
 });
 
 // Create ngDocs files for minified build
@@ -248,20 +305,26 @@ gulp.task('inject-unminified', ['move-custom-js', 'html', 'move-node-js', 'move-
     return injectFiles(allFiles);
 });
 
-// Get icons from font-awesome for minified build
+// Get icons from font-awesome and bootstrap for minified build
 gulp.task('icons-minified', function() {
-    return gulp.src(nodeDir + '/font-awesome/fonts/**.*')
+    return gulp.src(fontFiles(nodeDir))
         .pipe(gulp.dest(dest + 'fonts'));
 });
 
-// Get icons from font-awesome for un-minified build
+// Get icons from font-awesome and bootstrap for un-minified build
 gulp.task('icons-unminified', function() {
-    return gulp.src(nodeDir + '/font-awesome/fonts/**.*')
+    return gulp.src(fontFiles(nodeDir))
         .pipe(gulp.dest(dest + 'css/fonts'));
 });
 
+gulp.task('clearcache', function() {
+    cache.clearAll();
+});
+
 // Production Task (minified)
-gulp.task('prod', ['test-minified', 'minify-scripts', 'minify-css', 'html', 'images', 'inject-minified', 'icons-minified', 'ngdocs-minified']);
+gulp.task('prod', ['test-minified-1', 'test-minified-2', 'test-minified-3', 'test-minified-4', 'test-minified-5', 'minify-scripts', 'minify-css', 'html', 'images', 'inject-minified', 'icons-minified', 'ngdocs-minified']);
+// gulp.task('prod', ['test-minified', 'minify-scripts', 'minify-css', 'html', 'images', 'inject-minified', 'icons-minified', 'ngdocs-minified']);
 
 // Default Task (un-minified)
-gulp.task('default', ['test-unminified', 'move-custom-js', 'move-node-js', 'move-node-css', 'images', 'html', 'change-to-css', 'inject-unminified', 'icons-unminified', 'ngdocs-unminified']);
+gulp.task('default', ['test-unminified-1', 'test-unminified-2', 'test-unminified-3', 'test-unminified-4', 'test-unminified-5', 'move-custom-js', 'move-node-js', 'move-node-css', 'images', 'html', 'change-to-css', 'inject-unminified', 'icons-unminified', 'ngdocs-unminified']);
+// gulp.task('default', ['test-unminified', 'move-custom-js', 'move-node-js', 'move-node-css', 'images', 'html', 'change-to-css', 'inject-unminified', 'icons-unminified', 'ngdocs-unminified']);

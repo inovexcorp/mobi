@@ -107,13 +107,6 @@
     rdfs:label "Mapping"@en;
     rdfs:comment "A collection of RDF data that defines a mapping resource."@en.
 
-# DatasetRecord
-
-:DatasetRecord a owl:Class;
-    rdfs:subClassOf :VersionedRDFRecord;
-    rdfs:label "Dataset"@en;
-    rdfs:comment "A collection of RDF data that defines a dataset resource."@en.
-
 # Branch
 
 :Branch a owl:Class;
@@ -188,6 +181,20 @@
     rdfs:subClassOf prov:Activity;
     rdfs:label "Commit"@en;
     rdfs:comment "The provenance describing a commit activity made on a Versioned RDF Record."@en.
+
+:baseCommit a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:subPropertyOf prov:wasInformedBy ;
+    rdfs:label "base commit"@en ;
+    rdfs:comment "The base Commit of the described Commit."@en ;
+    rdfs:domain :Commit ;
+    rdfs:range :Commit .
+
+:auxiliaryCommit a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:subPropertyOf prov:wasInformedBy ;
+    rdfs:label "auxiliary commit"@en ;
+    rdfs:comment "The Commit that was merged into the described Commit."@en ;
+    rdfs:domain :Commit ;
+    rdfs:range :Commit .
 
 # In Progress Commit
 

@@ -27,8 +27,7 @@
         .module('usagesBlock', [])
         .directive('usagesBlock', usagesBlock);
 
-        usagesBlock.$inject = ['$filter', 'ontologyStateService', 'ontologyManagerService',
-            'ontologyUtilsManagerService'];
+        usagesBlock.$inject = ['$filter', 'ontologyStateService', 'ontologyManagerService', 'ontologyUtilsManagerService'];
 
         function usagesBlock($filter, ontologyStateService, ontologyManagerService, ontologyUtilsManagerService) {
             return {
@@ -39,41 +38,44 @@
                 controllerAs: 'dvm',
                 controller: ['$scope', function($scope) {
                     var dvm = this;
+                    dvm.size = 100;
+                    dvm.index = 0;
                     dvm.om = ontologyManagerService;
-                    dvm.sm = ontologyStateService;
-                    dvm.um = ontologyUtilsManagerService;
-
-                    function getResults() {
-                        var deletedIRIs = _.map(dvm.sm.state.deletedEntities, 'matonto.originalIRI');
-                        var filteredBindings = _.reject(dvm.sm.state[dvm.sm.getActiveKey()].usages, usage => {
-                            return _.indexOf(deletedIRIs, _.get(usage, 's.value')) !== -1
-                                || _.indexOf(deletedIRIs, _.get(usage, 'o.value')) !== -1
-                                || _.indexOf(deletedIRIs, _.get(usage, 'p.value')) !== -1;
-                        });
-                        var results = {};
-                        _.forEach(filteredBindings, binding => {
-                            if (_.has(binding, 'p')) {
-                                results[binding.p.value] = _.union(_.get(results, binding.p.value, []),
-                                    [{subject: binding.s.value, predicate: binding.p.value, object: dvm.sm.selected['@id']}]);
-                            } else if (_.has(binding, 'o')) {
-                                results[dvm.sm.selected['@id']] = _.union(_.get(results, dvm.sm.selected['@id'], []),
-                                    [{subject: binding.s.value, predicate: dvm.sm.selected['@id'], object: binding.o.value}]);
-                            }
-                        });
-                        return results;
-                    }
-
+                    dvm.os = ontologyStateService;
+                    dvm.ontoUtils = ontologyUtilsManagerService;
+                    dvm.id = 'usages-' + dvm.os.getActiveKey() + '-' + dvm.os.listItem.recordId;
                     dvm.results = getResults();
+                    dvm.total = 0;
+                    dvm.shown = 0;
 
-                    dvm.getBindingDisplay = function(binding) {
-                        return $filter('splitIRI')(binding).end;
+                    dvm.getMoreResults = function() {
+                        dvm.index++;
+                        _.forEach(_.get(_.chunk(_.get(dvm.os.getActivePage(), 'usages', []), dvm.size), dvm.index, []), binding => addToResults(dvm.results, binding));
                     }
 
                     $scope.$watch(function() {
-                        return dvm.sm.state[dvm.sm.getActiveKey()].usages;
-                    },function() {
+                        return dvm.os.getActivePage().usages;
+                    }, function() {
+                        dvm.size = 100;
+                        dvm.index = 0;
+                        dvm.shown = 0;
                         dvm.results = getResults();
                     });
+
+                    function getResults() {
+                        var results = {};
+                        var usages = _.get(dvm.os.getActivePage(), 'usages', []);
+                        dvm.total = usages.length;
+                        var chunks = _.chunk(usages, dvm.size);
+                        dvm.chunks = chunks.length === 0 ? 0 : chunks.length - 1;
+                        _.forEach(_.get(chunks, dvm.index, []), binding => addToResults(results, binding));
+                        return results;
+                    }
+
+                    function addToResults(results, binding) {
+                        results[binding.p.value] = _.union(_.get(results, binding.p.value, []), [{subject: binding.s.value, predicate: binding.p.value, object: binding.o.value}]);
+                        dvm.shown++;
+                    }
                 }]
             }
         }

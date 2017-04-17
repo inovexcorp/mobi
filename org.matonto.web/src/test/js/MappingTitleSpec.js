@@ -37,34 +37,27 @@ describe('Mapping Title directive', function() {
             scope = _$rootScope_;
             mapperStateSvc = _mapperStateService_;
         });
+
+        mapperStateSvc.newMapping = true;
+        mapperStateSvc.mapping = {id: '', jsonld: []};
+        this.element = $compile(angular.element('<mapping-title></mapping-title>'))(scope);
+        scope.$digest();
     });
 
     describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
-            mapperStateSvc.mapping = {id: '', jsonld: []};
-            this.element = $compile(angular.element('<mapping-title></mapping-title>'))(scope);
-            scope.$digest();
-        });
         it('for wrapping containers', function() {
             expect(this.element.hasClass('mapping-title')).toBe(true);
         });
         it('depending on whether a new mapping is being created', function() {
-            var link = this.element.find('a');
-            expect(link.length).toBe(0);
+            expect(this.element.find('a').length).toBe(1);
 
-            mapperStateSvc.newMapping = true;
+            mapperStateSvc.newMapping = false;
             scope.$digest();
-            link = this.element.find('a');
-            expect(link.length).toBe(1);
+            expect(this.element.find('a').length).toBe(0);
         });
     });
     it('should set the correct state when the edit button is clicked', function() {
-        mapperStateSvc.mapping = {id: '', jsonld: []};
-        mapperStateSvc.newMapping = true;
-        var element = $compile(angular.element('<mapping-title></mapping-title>'))(scope);
-        scope.$digest();
-
-        var link = angular.element(element.find('a')[0]);
+        var link = angular.element(this.element.find('a')[0]);
         angular.element(link).triggerHandler('click');
         expect(mapperStateSvc.editMappingName).toBe(true);
     });

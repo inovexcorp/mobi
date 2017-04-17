@@ -23,6 +23,8 @@ package org.matonto.rest.util;
  * #L%
  */
 
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
@@ -37,13 +39,14 @@ import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.Optional;
+import javax.annotation.Nullable;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Response;
 
 public class RestUtils {
 
     /**
-     * Encodes the passed string for use in a URL.
+     * Encodes the passed string using percent encoding for use in a URL.
      *
      * @param str The string to be encoded.
      * @return The URL encoded version of the passed string.
@@ -51,7 +54,12 @@ public class RestUtils {
     public static String encode(String str) {
         String encoded = null;
         try {
-            encoded = URLEncoder.encode(str, "UTF-8");
+            encoded = URLEncoder.encode(str, "UTF-8").replaceAll("%28", "(")
+                    .replaceAll("%29", ")")
+                    .replaceAll("\\+", "%20")
+                    .replaceAll("%27", "'")
+                    .replaceAll("%21", "!")
+                    .replaceAll("%7E", "~");
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
@@ -191,5 +199,34 @@ public class RestUtils {
         } else {
             return result.toString();
         }
+    }
+
+    /**
+     * Tests for the existence and value of a string, assumed to be from a REST parameter.
+     *
+     * @param param The string parameter to check
+     * @param errorMessage The error message to send if parameter is not set
+     */
+    public static void checkStringParam(@Nullable String param, String errorMessage) {
+        if (param == null || param.isEmpty()) {
+            throw ErrorUtils.sendError(errorMessage, Response.Status.BAD_REQUEST);
+        }
+    }
+
+    /**
+     * Retrieves a single Entity object from a JSON-LD string and returns it as a JSONObject. Looks within the first
+     * context object if present.
+     *
+     * @param json A JSON-LD string
+     * @return The first object representing a single Entity present in the JSON-LD array.
+     */
+    public static JSONObject getObjectFromJsonld(String json) {
+        JSONArray array = JSONArray.fromObject(json);
+        JSONObject firstObject = Optional.ofNullable(array.optJSONObject(0)).orElse(new JSONObject());
+        if (firstObject.containsKey("@graph")) {
+            firstObject = Optional.ofNullable(firstObject.getJSONArray("@graph").optJSONObject(0))
+                    .orElse(new JSONObject());
+        }
+        return firstObject;
     }
 }

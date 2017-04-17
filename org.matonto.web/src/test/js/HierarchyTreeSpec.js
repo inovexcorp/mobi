@@ -23,24 +23,22 @@
 
 
 describe('Hierarchy Tree directive', function() {
-    var $compile,
-        scope,
-        element,
-        isolatedScope,
-        ontologyStateSvc;
+    var $compile, scope, element, isolatedScope, ontologyStateSvc, ontologyUtils;
 
     beforeEach(function() {
         module('templates');
         module('hierarchyTree');
         mockOntologyState();
-        mockOntologyManager();
+        mockOntologyUtilsManager();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyUtilsManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
+            ontologyUtils = _ontologyUtilsManagerService_;
         });
 
+        ontologyStateSvc.getEntityByRecordId.and.returnValue({});
         ontologyStateSvc.getOpened.and.returnValue(true);
         scope.hierarchy = [{
             entityIRI: 'class1',
@@ -73,25 +71,23 @@ describe('Hierarchy Tree directive', function() {
             }]);
         });
     });
-
     describe('replaces the element with the correct html', function() {
-        it('for a DIV', function() {
+        it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
-        });
-        it('based on tree class', function() {
+            expect(element.hasClass('hierarchy-tree')).toBe(true);
             expect(element.hasClass('tree')).toBe(true);
         });
         it('based on container class', function() {
-            var container = element.querySelectorAll('.container');
-            expect(container.length).toBe(1);
+            expect(element.querySelectorAll('.container').length).toBe(1);
         });
         it('based on ul', function() {
-            var uls = element.find('ul');
-            expect(uls.length).toBe(3);
+            expect(element.find('ul').length).toBe(3);
         });
         it('based on container tree-items', function() {
-            var lis = element.querySelectorAll('.container tree-item');
-            expect(lis.length).toBe(1);
+            expect(element.querySelectorAll('.container tree-item').length).toBe(1);
+            ontologyStateSvc.getEntityByRecordId.and.returnValue(undefined);
+            scope.$digest();
+            expect(element.querySelectorAll('.container tree-item').length).toBe(0);
         });
     });
 });

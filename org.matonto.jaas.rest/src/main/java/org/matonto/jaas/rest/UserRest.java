@@ -43,6 +43,7 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.List;
 
 @Path("/users")
 @Api( value = "/users")
@@ -69,9 +70,9 @@ public interface UserRest {
     @POST
     @RolesAllowed("admin")
     @ApiOperation("Create a MatOnto user account")
+    @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.APPLICATION_JSON)
-    Response createUser(User user,
-                        @QueryParam("password") String password);
+    Response createUser(User user, @QueryParam("password") String password);
 
     /**
      * Retrieves the specified user in MatOnto.
@@ -106,7 +107,23 @@ public interface UserRest {
                         User newUser);
 
     /**
-     * Updates the password of the specified user in MatOnto. In order to change the user's password,
+     * Resets the password of the specified user in MatOnto. This action is only allowed by admin users.
+     *
+     * @param context the context of the request
+     * @param username the current username of the user to update
+     * @param newPassword a new password for the user
+     * @return a Response indicating the success or failure of the request
+     */
+    @PUT
+    @Path("{username}/password")
+    @RolesAllowed("admin")
+    @ApiOperation("Resets a MatOnto user's password if user making request is the admin")
+    Response resetPassword(@Context ContainerRequestContext context,
+                           @PathParam("username") String username,
+                           @QueryParam("newPassword") String newPassword);
+
+    /**
+     * Changes the password of the specified user in MatOnto. In order to change the user's password,
      * the current password must be provided.
      *
      * @param context the context of the request
@@ -115,11 +132,11 @@ public interface UserRest {
      * @param newPassword a new password for the user
      * @return a Response indicating the success or failure of the request
      */
-    @PUT
+    @POST
     @Path("{username}/password")
     @RolesAllowed("user")
-    @ApiOperation("Update a MatOnto user's password")
-    Response updatePassword(@Context ContainerRequestContext context,
+    @ApiOperation("Changes a MatOnto user's password if it is the user making the request")
+    Response changePassword(@Context ContainerRequestContext context,
                             @PathParam("username") String username,
                             @QueryParam("currentPassword") String currentPassword,
                             @QueryParam("newPassword") String newPassword);
@@ -157,17 +174,17 @@ public interface UserRest {
                           @DefaultValue("false") @QueryParam("includeGroups") boolean includeGroups);
 
     /**
-     * Adds a role to the specified user in MatOnto.
+     * Adds roles to the specified user in MatOnto.
      *
      * @param username the username of the user to add a role to
-     * @param role the role to add to the specified user
+     * @param roles the names of the roles to add to the specified user
      * @return a Response indicating the success or failure of the request
      */
     @PUT
     @Path("{username}/roles")
     @RolesAllowed("admin")
-    @ApiOperation("Add role to a MatOnto user")
-    Response addUserRole(@PathParam("username") String username, @QueryParam("role") String role);
+    @ApiOperation("Add roles to a MatOnto user")
+    Response addUserRoles(@PathParam("username") String username, @QueryParam("roles") List<String> roles);
 
     /**
      * Removes a role from the specified user in MatOnto.
@@ -233,6 +250,7 @@ public interface UserRest {
     @GET
     @Path("username")
     @RolesAllowed("user")
+    @Produces(MediaType.TEXT_PLAIN)
     @ApiOperation("Retrieve a username based on the passed User IRI")
     Response getUsername(@QueryParam("iri") String userIri);
 }

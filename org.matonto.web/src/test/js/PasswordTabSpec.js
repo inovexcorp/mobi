@@ -23,54 +23,54 @@
 describe('Password Tab directive', function() {
     var $compile,
         scope,
+        $q,
+        element,
+        controller,
         userManagerSvc,
         loginManagerSvc,
-        $q,
-        $timeout,
-        controller;
+        utilSvc;
 
     beforeEach(function() {
         module('templates');
         module('passwordTab');
         mockUserManager();
         mockLoginManager();
+        mockUtil();
 
-        inject(function(_userManagerService_, _loginManagerService_, _$q_, _$timeout_, _$compile_, _$rootScope_) {
-            userManagerSvc = _userManagerService_;
-            loginManagerSvc = _loginManagerService_;
-            $q = _$q_;
-            $timeout = _$timeout_;
+        inject(function(_$compile_, _$rootScope_, _$q_, _userManagerService_, _loginManagerService_, _utilService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            $q = _$q_;
+            userManagerSvc = _userManagerService_;
+            loginManagerSvc = _loginManagerService_;
+            utilSvc = _utilService_;
         });
+
+        loginManagerSvc.currentUser = 'user';
+        element = $compile(angular.element('<password-tab></password-tab>'))(scope);
+        scope.$digest();
+        controller = element.controller('passwordTab');
     });
 
     describe('controller methods', function() {
-        beforeEach(function() {
-            loginManagerSvc.currentUser = 'user';
-            this.element = $compile(angular.element('<password-tab></password-tab>'))(scope);
-            scope.$digest();
-            controller = this.element.controller('passwordTab');
-        });
         describe('should save changes to the user password', function() {
             beforeEach(function() {
                 controller.currentPassword = 'test';
             });
             it('unless an error occurs', function() {
-                userManagerSvc.updatePassword.and.returnValue($q.reject('Error message'));
+                userManagerSvc.changePassword.and.returnValue($q.reject('Error message'));
                 controller.save();
-                $timeout.flush();
-                expect(userManagerSvc.updatePassword).toHaveBeenCalledWith(loginManagerSvc.currentUser, controller.currentPassword, controller.password);
-                expect(controller.success).toBe(false);
+                scope.$apply();
+                expect(userManagerSvc.changePassword).toHaveBeenCalledWith(loginManagerSvc.currentUser, controller.currentPassword, controller.password);
                 expect(controller.errorMessage).toBe('Error message');
             });
             it('successfully', function() {
                 var currentPassword = controller.currentPassword;
                 var password = controller.password;
                 controller.save();
-                $timeout.flush();
-                expect(userManagerSvc.updatePassword).toHaveBeenCalledWith(loginManagerSvc.currentUser, currentPassword, password);
-                expect(controller.success).toBe(true);
+                scope.$apply();
+                expect(userManagerSvc.changePassword).toHaveBeenCalledWith(loginManagerSvc.currentUser, currentPassword, password);
+                expect(utilSvc.createSuccessToast).toHaveBeenCalled();
                 expect(controller.errorMessage).toBe('');
                 expect(controller.currentPassword).toBe('');
                 expect(controller.password).toBe('');
@@ -79,60 +79,43 @@ describe('Password Tab directive', function() {
         });
     });
     describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
-            loginManagerSvc.currentUser = 'user';
-            userManagerSvc.users = [{username: 'user'}];
-            this.element = $compile(angular.element('<password-tab></password-tab>'))(scope);
-            scope.$digest();
-        });
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('password-tab')).toBe(true);
-            expect(this.element.hasClass('row')).toBe(true);
-            expect(this.element.querySelectorAll('.col-xs-6').length).toBe(1);
-            expect(this.element.querySelectorAll('.col-xs-offset-3').length).toBe(1);
+            expect(element.hasClass('password-tab')).toBe(true);
+            expect(element.hasClass('row')).toBe(true);
+            expect(element.querySelectorAll('.col-xs-6').length).toBe(1);
+            expect(element.querySelectorAll('.col-xs-offset-3').length).toBe(1);
         });
         it('with a block', function() {
-            expect(this.element.find('block').length).toBe(1);
+            expect(element.find('block').length).toBe(1);
         });
         it('with a block content', function() {
-            expect(this.element.find('block-content').length).toBe(1);
+            expect(element.find('block-content').length).toBe(1);
         });
         it('with a block footer', function() {
-            expect(this.element.find('block-footer').length).toBe(1);
+            expect(element.find('block-footer').length).toBe(1);
         });
         it('with a password confirm input', function() {
-            expect(this.element.find('password-confirm-input').length).toBe(1);
+            expect(element.find('password-confirm-input').length).toBe(1);
         });
         it('depending on whether an error has occured', function() {
-            expect(this.element.find('error-display').length).toBe(0);
+            expect(element.find('error-display').length).toBe(0);
 
-            controller = this.element.controller('passwordTab');
             controller.errorMessage = 'Test';
             scope.$digest();
-            expect(this.element.find('error-display').length).toBe(1);
-        });
-        it('depending on whether the password was saved successfully', function() {
-            expect(this.element.querySelectorAll('.text-success').length).toBe(0);
-
-            controller = this.element.controller('passwordTab');
-            controller.success = true;
-            scope.$digest();
-            expect(this.element.querySelectorAll('.text-success').length).toBe(1);
+            expect(element.find('error-display').length).toBe(1);
         });
         it('with the correct classes based on the confirm password field validity', function() {
-            var currentPassword = angular.element(this.element.querySelectorAll('.current-password')[0]);
+            var currentPassword = angular.element(element.querySelectorAll('.current-password')[0]);
             expect(currentPassword.hasClass('has-error')).toBe(false);
 
-            controller = this.element.controller('passwordTab');
             controller.form.currentPassword.$setDirty();
             scope.$digest();
             expect(currentPassword.hasClass('has-error')).toBe(true);
         });
         it('depending on the form validity and dirtiness', function() {
-            var button = angular.element(this.element.querySelectorAll('block-footer button')[0]);
+            var button = angular.element(element.querySelectorAll('block-footer button')[0]);
             expect(button.attr('disabled')).toBeTruthy();
 
-            controller = this.element.controller('passwordTab');
             controller.form.$invalid = false;
             scope.$digest();
             expect(button.attr('disabled')).toBeTruthy();
@@ -143,11 +126,7 @@ describe('Password Tab directive', function() {
         });
     });
     it('should save changes when the save button is clicked', function() {
-        var element = $compile(angular.element('<password-tab></password-tab>'))(scope);
-        scope.$digest();
-        controller = element.controller('passwordTab');
         spyOn(controller, 'save');
-
         var button = angular.element(element.querySelectorAll('block-footer button')[0]);
         button.triggerHandler('click');
         expect(controller.save).toHaveBeenCalled();

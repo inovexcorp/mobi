@@ -26,7 +26,6 @@
     angular
         .module('user-management', [
             /* Custom directives */
-            'changePasswordOverlay',
             'createGroupOverlay',
             'createUserOverlays',
             'editGroupInfoOverlay',
@@ -34,10 +33,13 @@
             'groupsList',
             'groupsPage',
             'memberTable',
+            'permissionsInput',
+            'resetPasswordOverlay',
             'userManagementOverlays',
             'userManagementTabset',
-            'userPermissionsInput',
             'usersList',
-            'usersPage'
+            'usersPage',
+            /* Custom Filters */
+            'usernameSearch'
         ]);
 })();

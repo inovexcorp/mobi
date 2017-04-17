@@ -23,129 +23,73 @@
 describe('Edit Mapping Form directive', function() {
     var $compile,
         scope,
-        mappingManagerSvc,
+        element,
+        controller,
         mapperStateSvc,
-        ontologyManagerSvc,
-        controller;
+        utilSvc;
 
     beforeEach(function() {
         module('templates');
         module('editMappingForm');
-        mockMappingManager();
         mockMapperState();
-        mockOntologyManager();
+        mockUtil();
 
-        inject(function(_$compile_, _$rootScope_, _mappingManagerService_, _mapperStateService_, _ontologyManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _mapperStateService_, _utilService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             mapperStateSvc = _mapperStateService_;
-            mappingManagerSvc = _mappingManagerService_;
-            ontologyManagerSvc = _ontologyManagerService_;
+            utilSvc = _utilService_;
         });
+
+        mapperStateSvc.mapping = {name: '', jsonld: []};
+        element = $compile(angular.element('<edit-mapping-form></edit-mapping-form>'))(scope);
+        scope.$digest();
     });
 
-    describe('controller methods', function() {
-        beforeEach(function() {
-            mapperStateSvc.mapping = {name: '', jsonld: []};
-            this.element = $compile(angular.element('<edit-mapping-form></edit-mapping-form>'))(scope);
-            scope.$digest();
-            controller = this.element.controller('editMappingForm');
-        });
-        describe('should get the name of the mapping\'s source ontology', function() {
-            beforeEach(function() {
-                ontologyManagerSvc.getEntityName.calls.reset();
-            });
-            it('if it exists', function() {
-                var result = controller.getSourceOntologyName();
-                expect(mappingManagerSvc.getSourceOntology).toHaveBeenCalled();
-                expect(ontologyManagerSvc.getEntityName).toHaveBeenCalled();
-                expect(typeof result).toBe('string');
-            });
-            it('unless it does not exist', function() {
-                mappingManagerSvc.getSourceOntology.and.returnValue(undefined);
-                var result = controller.getSourceOntologyName();
-                expect(mappingManagerSvc.getSourceOntology).toHaveBeenCalled();
-                expect(ontologyManagerSvc.getEntityName).not.toHaveBeenCalled();
-                expect(result).toBe('');
-            });
-        });
-        it('should get a class mapping name', function() {
-            var result = controller.getClassName({});
-            expect(mappingManagerSvc.getClassIdByMapping).toHaveBeenCalledWith({});
-            expect(mappingManagerSvc.findSourceOntologyWithClass).toHaveBeenCalled();
-            expect(ontologyManagerSvc.getEntity).toHaveBeenCalled();
-            expect(ontologyManagerSvc.getEntityName).toHaveBeenCalled();
-            expect(typeof result).toBe('string');
-        });
-        describe('should get the name of the base class', function() {
-            beforeEach(function() {
-                spyOn(controller, 'getClassName').and.returnValue('');
-            });
-            it('if it exists', function() {
-                var result = controller.getBaseClassName();
-                expect(mappingManagerSvc.getBaseClass).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld);
-                expect(controller.getClassName).toHaveBeenCalled();
-                expect(typeof result).toBe('string');
-            });
-            it('unless it does not exist', function() {
-                mappingManagerSvc.getBaseClass.and.returnValue(undefined);
-                var result = controller.getBaseClassName();
-                expect(mappingManagerSvc.getBaseClass).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld);
-                expect(controller.getClassName).not.toHaveBeenCalled();
-                expect(result).toBe('');
-            });
-        });
-    });
     describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
-            mapperStateSvc.mapping = {name: '', jsonld: []};
-            this.element = $compile(angular.element('<edit-mapping-form></edit-mapping-form>'))(scope);
-            scope.$digest();
-        });
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('edit-mapping-form')).toBe(true);
-            expect(this.element.querySelectorAll('.mapping-config').length).toBe(1);
-            expect(this.element.querySelectorAll('.class-mapping-select-container').length).toBe(1);
+            expect(element.hasClass('edit-mapping-form')).toBe(true);
+            expect(element.querySelectorAll('.mapping-config').length).toBe(1);
+            expect(element.querySelectorAll('.class-mapping-select-container').length).toBe(1);
         });
         it('with a class mapping select', function() {
-            expect(this.element.find('class-mapping-select').length).toBe(1);
+            expect(element.find('class-mapping-select').length).toBe(1);
         });
-        it('depending on whether a class has been selected and if it is the base class', function() {
-            mapperStateSvc.selectedClassMappingId = '';
-            scope.$digest();
-            var deleteClassButton = angular.element(this.element.querySelectorAll('.class-mapping-select-container button')[0]);
-            expect(this.element.find('class-mapping-details').length).toBe(0);
+        it('with a class-mapping-details', function() {
+            expect(element.find('class-mapping-details').length).toBe(1);
+        });
+        it('depending on whether a class has been selected', function() {
+            var deleteClassButton = angular.element(element.querySelectorAll('.class-mapping-select-container button')[0]);
             expect(deleteClassButton.attr('disabled')).toBeTruthy();
 
-            mappingManagerSvc.getBaseClass.and.returnValue({'@id': 'base'});
             mapperStateSvc.selectedClassMappingId = 'class';
             scope.$digest();
-            expect(this.element.find('class-mapping-details').length).toBe(1);
             expect(deleteClassButton.attr('disabled')).toBeFalsy();
+        });
+        it('depending on whether there are available classes', function() {
+            var button = angular.element(element.querySelectorAll('.class-mappings button.add-class-mapping-button')[0]);
+            expect(button.attr('disabled')).toBeTruthy();
 
-            mapperStateSvc.selectedClassMappingId = 'base';
+            mapperStateSvc.availableClasses = [{}];
             scope.$digest();
-            expect(this.element.find('class-mapping-details').length).toBe(1);
-            expect(deleteClassButton.attr('disabled')).toBeTruthy();
+            expect(button.attr('disabled')).toBeFalsy();
         });
     });
+    it('should set the correct state when the add class button is linked', function() {
+        var button = angular.element(element.querySelectorAll('.class-mappings button.add-class-mapping-button')[0]);
+        button.triggerHandler('click');
+        expect(mapperStateSvc.displayClassMappingOverlay).toBe(true);
+    });
     it('should set the correct state when the edit config link is clicked', function() {
-        mapperStateSvc.mapping = {name: '', jsonld: []};
-        var element = $compile(angular.element('<edit-mapping-form></edit-mapping-form>'))(scope);
-        scope.$digest();
-
-        var editConfigLink = angular.element(element.querySelectorAll('.mapping-config custom-label a')[0]);
-        editConfigLink.triggerHandler('click');
+        var button = angular.element(element.querySelectorAll('.mapping-config button')[0]);
+        button.triggerHandler('click');
         expect(mapperStateSvc.displayMappingConfigOverlay).toBe(true);
     });
     it('should set the correct state when delete class button is clicked', function() {
-        mapperStateSvc.mapping = {name: '', jsonld: []};
         mapperStateSvc.selectedClassMappingId = 'class';
-        var element = $compile(angular.element('<edit-mapping-form></edit-mapping-form>'))(scope);
         scope.$digest();
-
-        var deleteClassButton = angular.element(element.querySelectorAll('.class-mapping-select-container button')[0]);
-        deleteClassButton.triggerHandler('click');
+        var button = angular.element(element.querySelectorAll('.class-mapping-select-container button')[0]);
+        button.triggerHandler('click');
         expect(mapperStateSvc.displayDeleteClassConfirm).toBe(true);
     });
 });

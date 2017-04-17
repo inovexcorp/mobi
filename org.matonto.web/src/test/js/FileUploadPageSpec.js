@@ -23,12 +23,12 @@
 describe('File Upload Page directive', function() {
     var $compile,
         scope,
+        element,
+        controller,
         mappingManagerSvc,
         mapperStateSvc,
         delimitedManagerSvc,
-        ontologyManagerSvc,
-        $timeout,
-        controller;
+        utilSvc;
 
     beforeEach(function() {
         module('templates');
@@ -36,35 +36,33 @@ describe('File Upload Page directive', function() {
         mockMappingManager();
         mockMapperState();
         mockDelimitedManager();
-        mockOntologyManager();
+        mockUtil();
 
-        inject(function(_$compile_, _$rootScope_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_, _ontologyManagerService_, _$timeout_) {
+        inject(function(_$compile_, _$rootScope_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_, _utilService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             mapperStateSvc = _mapperStateService_;
             mappingManagerSvc = _mappingManagerService_;
             delimitedManagerSvc = _delimitedManagerService_;
-            ontologyManagerSvc = _ontologyManagerService_;
-            $timeout = _$timeout_;
+            utilSvc = _utilService_;
         });
+
+        mapperStateSvc.mapping = {id: '', jsonld: []};
+        element = $compile(angular.element('<file-upload-page></file-upload-page>'))(scope);
+        scope.$digest();
     });
 
     describe('controller methods', function() {
         beforeEach(function() {
-            mapperStateSvc.mapping = {id: '', jsonld: []};
-            this.element = $compile(angular.element('<file-upload-page></file-upload-page>'))(scope);
-            scope.$digest();
-            controller = this.element.controller('fileUploadPage');
+            controller = element.controller('fileUploadPage');
         });
         it('should get the name of a data mapping', function() {
-            var result = controller.getDataMappingName('');
+            expect(_.isString(controller.getDataMappingName(''))).toBe(true);
             expect(mappingManagerSvc.getPropIdByMappingId).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, '');
-            expect(mappingManagerSvc.findClassWithDataMapping).toHaveBeenCalled();
-            expect(mappingManagerSvc.getClassIdByMapping).toHaveBeenCalled();
-            expect(ontologyManagerSvc.getEntity).toHaveBeenCalled();
-            expect(ontologyManagerSvc.getEntityName).toHaveBeenCalled();
-            expect(mappingManagerSvc.getPropMappingTitle).toHaveBeenCalled();
-            expect(typeof result).toBe('string');
+            expect(mappingManagerSvc.findClassWithDataMapping).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, '');
+            expect(mappingManagerSvc.getClassIdByMapping).toHaveBeenCalledWith(jasmine.any(Object));
+            expect(utilSvc.getBeautifulIRI.calls.count()).toBe(2);
+            expect(mappingManagerSvc.getPropMappingTitle).toHaveBeenCalledWith(jasmine.any(String), jasmine.any(String));
         });
         describe('should set the correct state for continuing to edit a mapping', function() {
             beforeEach(function() {
@@ -80,6 +78,7 @@ describe('File Upload Page directive', function() {
                 expect(mapperStateSvc.setAvailableProps.calls.count()).toBe(this.classMappings.length);
                 expect(mapperStateSvc.step).toBe(mapperStateSvc.editMappingStep);
                 expect(mapperStateSvc.displayMappingConfigOverlay).toBe(true);
+                expect(mapperStateSvc.changedMapping).toBe(true);
             });
             it('if a saved mapping is being edited', function() {
                 mapperStateSvc.newMapping = false;
@@ -88,6 +87,7 @@ describe('File Upload Page directive', function() {
                 expect(mapperStateSvc.setAvailableProps.calls.count()).toBe(this.classMappings.length);
                 expect(mapperStateSvc.step).toBe(mapperStateSvc.editMappingStep);
                 expect(mapperStateSvc.displayMappingConfigOverlay).not.toBe(true);
+                expect(mapperStateSvc.changedMapping).toBe(false);
             });
         });
         it('should set the correct state for canceling', function() {
@@ -96,33 +96,28 @@ describe('File Upload Page directive', function() {
         });
     });
     describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
-            mapperStateSvc.mapping = {id: '', jsonld: []};
-            this.element = $compile(angular.element('<file-upload-page></file-upload-page>'))(scope);
-            scope.$digest();
-        });
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('file-upload-page')).toBe(true);
-            expect(this.element.hasClass('row')).toBe(true);
-            expect(this.element.querySelectorAll('.col-xs-5').length).toBe(1);
-            expect(this.element.querySelectorAll('.col-xs-7').length).toBe(1);
+            expect(element.hasClass('file-upload-page')).toBe(true);
+            expect(element.hasClass('row')).toBe(true);
+            expect(element.querySelectorAll('.col-xs-5').length).toBe(1);
+            expect(element.querySelectorAll('.col-xs-7').length).toBe(1);
         });
         it('with a mapping title', function() {
-            expect(this.element.find('mapping-title').length).toBe(1);
+            expect(element.find('mapping-title').length).toBe(1);
         });
         it('with blocks', function() {
-            expect(this.element.find('block').length).toBe(2);
+            expect(element.find('block').length).toBe(2);
         });
         it('with a file upload form', function() {
-            expect(this.element.find('file-upload-form').length).toBe(1);
+            expect(element.find('file-upload-form').length).toBe(1);
         });
         it('with a button for canceling', function() {
-            var button = angular.element(this.element.querySelectorAll('.col-xs-5 block-footer button.btn-default')[0]);
+            var button = angular.element(element.querySelectorAll('.col-xs-5 block-footer button.btn-default')[0]);
             expect(button.text().trim()).toBe('Cancel');
         });
         it('depending on whether a file has been selected and there are invalid properties', function() {
             scope.$digest();
-            var continueButton = angular.element(this.element.querySelectorAll('.col-xs-5 block-footer button.btn-primary')[0]);
+            var continueButton = angular.element(element.querySelectorAll('.col-xs-5 block-footer button.btn-primary')[0]);
             expect(continueButton.attr('disabled')).toBeTruthy();
 
             delimitedManagerSvc.dataRows = [];
@@ -134,7 +129,7 @@ describe('File Upload Page directive', function() {
             expect(continueButton.attr('disabled')).toBeTruthy();
         });
         it('depending on whether a mapping is being edited', function() {
-            var continueButton = angular.element(this.element.querySelectorAll('.col-xs-5 block-footer button.btn-primary')[0]);
+            var continueButton = angular.element(element.querySelectorAll('.col-xs-5 block-footer button.btn-primary')[0]);
             expect(continueButton.text().trim()).toBe('Run');
 
             mapperStateSvc.editMapping = true;
@@ -145,19 +140,16 @@ describe('File Upload Page directive', function() {
             mapperStateSvc.editMapping = true;
             mapperStateSvc.invalidProps = [];
             scope.$digest();
-            expect(this.element.querySelectorAll('.invalid-props').length).toBe(0);
+            expect(element.querySelectorAll('.invalid-props').length).toBe(0);
 
             mapperStateSvc.invalidProps = [{'@id': 'prop', index: 0}];
             scope.$digest();
-            var invalidProps = angular.element(this.element.querySelectorAll('.invalid-props')[0]);
+            var invalidProps = angular.element(element.querySelectorAll('.invalid-props')[0]);
             expect(invalidProps).toBeTruthy();
             expect(invalidProps.querySelectorAll('ul li').length).toBe(mapperStateSvc.invalidProps.length);
         });
     });
     it('should call cancel when the cancel button is clicked', function() {
-        mapperStateSvc.mapping = {id: '', jsonld: []};
-        var element = $compile(angular.element('<file-upload-page></file-upload-page>'))(scope);
-        scope.$digest();
         controller = element.controller('fileUploadPage');
         spyOn(controller, 'cancel');
 
@@ -167,11 +159,8 @@ describe('File Upload Page directive', function() {
     });
     describe('should call the correct function when clicking the continue button ', function() {
         beforeEach(function() {
-            mapperStateSvc.mapping = {id: '', jsonld: []};
-            this.element = $compile(angular.element('<file-upload-page></file-upload-page>'))(scope);
-            scope.$digest();
-            controller = this.element.controller('fileUploadPage');
-            this.continueButton = angular.element(this.element.querySelectorAll('block-footer button.btn-primary')[0]); 
+            controller = element.controller('fileUploadPage');
+            this.continueButton = angular.element(element.querySelectorAll('block-footer button.btn-primary')[0]); 
         });
         it('if a mapping is being edited', function() {
             spyOn(controller, 'edit');

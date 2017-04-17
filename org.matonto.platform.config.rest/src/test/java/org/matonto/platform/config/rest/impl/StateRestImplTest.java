@@ -23,12 +23,25 @@ package org.matonto.platform.config.rest.impl;
  * #L%
  */
 
+import static org.matonto.rest.util.RestUtils.encode;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anySetOf;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
+
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.junit.Assert;
 import org.matonto.exception.MatOntoException;
 import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.platform.config.api.state.StateManager;
@@ -40,40 +53,24 @@ import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory;
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
 import org.matonto.rdf.core.utils.Values;
 import org.matonto.rest.util.MatontoRestTestNg;
+import org.matonto.rest.util.RestUtils;
 import org.matonto.rest.util.UsernameTestFilter;
 import org.matonto.web.security.util.AuthenticationProps;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.openrdf.model.vocabulary.DCTERMS;
-import org.openrdf.rio.RDFFormat;
-import org.openrdf.rio.Rio;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Application;
-import javax.ws.rs.core.Response;
-import java.io.ByteArrayOutputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.matonto.rest.util.RestUtils.encode;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anySet;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.Application;
+import javax.ws.rs.core.Response;
 
 public class StateRestImplTest extends MatontoRestTestNg {
     private StateRestImpl rest;
@@ -126,9 +123,9 @@ public class StateRestImplTest extends MatontoRestTestNg {
     @BeforeMethod
     public void setupMocks() {
         reset(stateManager);
-        when(stateManager.getStates(anyString(), anyString(), anySet())).thenReturn(results);
-        when(stateManager.stateExists(any(Resource.class), anyString())).thenReturn(true);
-        when(stateManager.getState(any(Resource.class), anyString())).thenReturn(stateModel);
+        when(stateManager.getStates(anyString(), anyString(), anySetOf(Resource.class))).thenReturn(results);
+        when(stateManager.stateExistsForUser(any(Resource.class), anyString())).thenReturn(true);
+        when(stateManager.getState(any(Resource.class))).thenReturn(stateModel);
         when(stateManager.storeState(any(Model.class), anyString())).thenReturn(stateId);
         when(stateManager.storeState(any(Model.class), anyString(), anyString())).thenReturn(stateId);
     }
@@ -136,8 +133,8 @@ public class StateRestImplTest extends MatontoRestTestNg {
     @Test
     public void getStatesWithoutFiltersTest() {
         Response response = target().path("states").request().get();
-        assertEquals(200, response.getStatus());
-        verify(stateManager, times(1)).getStates(anyString(), anyString(), anySet());
+        assertEquals(response.getStatus(), 200);
+        verify(stateManager).getStates(anyString(), anyString(), anySetOf(Resource.class));
         try {
             String str = response.readEntity(String.class);
             JSONArray arr = JSONArray.fromObject(str);
@@ -148,7 +145,7 @@ public class StateRestImplTest extends MatontoRestTestNg {
                 assertTrue(results.keySet().contains(vf.createIRI(object.get("id").toString())));
             }
         } catch (Exception e) {
-            Assert.fail("Expected no exception, but got: " + e.getMessage());
+            fail("Expected no exception, but got: " + e.getMessage());
         }
     }
 
@@ -165,8 +162,8 @@ public class StateRestImplTest extends MatontoRestTestNg {
             webTarget = webTarget.queryParam("subjects", subject.stringValue());
         }
         Response response = webTarget.request().get();
-        assertEquals(200, response.getStatus());
-        verify(stateManager, times(1)).getStates(anyString(), eq("app"), eq(subjects));
+        assertEquals(response.getStatus(), 200);
+        verify(stateManager).getStates(anyString(), eq("app"), eq(subjects));
         try {
             String str = response.readEntity(String.class);
             JSONArray arr = JSONArray.fromObject(str);
@@ -177,7 +174,7 @@ public class StateRestImplTest extends MatontoRestTestNg {
                 assertTrue(results.keySet().contains(vf.createIRI(object.get("id").toString())));
             }
         } catch (Exception e) {
-            Assert.fail("Expected no exception, but got: " + e.getMessage());
+            fail("Expected no exception, but got: " + e.getMessage());
         }
     }
 
@@ -188,13 +185,13 @@ public class StateRestImplTest extends MatontoRestTestNg {
         state.add(vf.createIRI("http://example.com"), vf.createIRI(DCTERMS.TITLE.stringValue()), vf.createLiteral("Title"));
 
         Response response = target().path("states").request().post(Entity.json(modelToJsonld(state)));
-        assertEquals(200, response.getStatus());
-        verify(stateManager, times(1)).storeState(eq(state), anyString());
+        assertEquals(response.getStatus(), 201);
+        verify(stateManager).storeState(eq(state), anyString());
         try {
             String str = response.readEntity(String.class);
-            assertEquals(stateId.stringValue(), str);
+            assertEquals(str, stateId.stringValue());
         } catch (Exception e) {
-            Assert.fail("Expected no exception, but got: " + e.getMessage());
+            fail("Expected no exception, but got: " + e.getMessage());
         }
     }
 
@@ -206,13 +203,13 @@ public class StateRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("states").queryParam("application", "app")
                 .request().post(Entity.json(modelToJsonld(state)));
-        assertEquals(200, response.getStatus());
-        verify(stateManager, times(1)).storeState(eq(state), anyString(), eq("app"));
+        assertEquals(response.getStatus(), 201);
+        verify(stateManager).storeState(eq(state), anyString(), eq("app"));
         try {
             String str = response.readEntity(String.class);
-            assertEquals(stateId.stringValue(), str);
+            assertEquals(str, stateId.stringValue());
         } catch (Exception e) {
-            Assert.fail("Expected no exception, but got: " + e.getMessage());
+            fail("Expected no exception, but got: " + e.getMessage());
         }
     }
 
@@ -224,29 +221,48 @@ public class StateRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("states")
                 .request().post(Entity.json(state.toString()));
-        assertEquals(400, response.getStatus());
+        assertEquals(response.getStatus(), 400);
     }
 
     @Test
     public void getStateTest() {
         Response response = target().path("states/" + encode(stateId.stringValue())).request().get();
-        assertEquals(200, response.getStatus());
-        verify(stateManager, times(1)).getState(eq(stateId), anyString());
+        assertEquals(response.getStatus(), 200);
+        verify(stateManager).stateExistsForUser(eq(stateId), anyString());
+        verify(stateManager).getState(stateId);
         try {
             String str = response.readEntity(String.class);
-            assertEquals(modelToJsonld(stateModel), str);
+            assertEquals(str, modelToJsonld(stateModel));
         } catch (Exception e) {
-            Assert.fail("Expected no exception, but got: " + e.getMessage());
+            fail("Expected no exception, but got: " + e.getMessage());
         }
+    }
+
+    @Test
+    public void getStateThatIsNotYoursTest() {
+        // Setup:
+        when(stateManager.stateExistsForUser(any(Resource.class), anyString())).thenReturn(false);
+
+        Response response = target().path("states/" + encode(stateId.stringValue())).request().get();
+        assertEquals(response.getStatus(), 403);
+    }
+
+    @Test
+    public void getStateThatDoesNotExistTest() {
+        // Setup:
+        when(stateManager.getState(any(Resource.class))).thenThrow(new IllegalArgumentException());
+
+        Response response = target().path("states/" + encode(stateId.stringValue())).request().get();
+        assertEquals(response.getStatus(), 404);
     }
 
     @Test
     public void getStateExceptionThrownTest() {
         // Setup:
-        when(stateManager.getState(any(Resource.class), anyString())).thenThrow(new MatOntoException());
+        when(stateManager.getState(any(Resource.class))).thenThrow(new MatOntoException());
 
         Response response = target().path("states/" + encode(stateId.stringValue())).request().get();
-        assertEquals(403, response.getStatus());
+        assertEquals(response.getStatus(), 500);
     }
 
     @Test
@@ -257,8 +273,9 @@ public class StateRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("states/" + encode(stateId.stringValue()))
                 .request().put(Entity.json(modelToJsonld(state)));
-        assertEquals(200, response.getStatus());
-        verify(stateManager, times(1)).updateState(eq(stateId), eq(state), anyString());
+        assertEquals(response.getStatus(), 200);
+        verify(stateManager).stateExistsForUser(eq(stateId), anyString());
+        verify(stateManager).updateState(eq(stateId), eq(state));
     }
 
     @Test
@@ -269,42 +286,84 @@ public class StateRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("states/" + encode(stateId.stringValue()))
                 .request().put(Entity.json(state.toString()));
-        assertEquals(400, response.getStatus());
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void updateStateThatDoesNotExistTest() {
+        // Setup:
+        Model state = mf.createModel();
+        state.add(vf.createIRI("http://example.com"), vf.createIRI(DCTERMS.TITLE.stringValue()), vf.createLiteral("Title"));
+        doThrow(new IllegalArgumentException()).when(stateManager).updateState(any(Resource.class), any(Model.class));
+
+        Response response = target().path("states/" + encode(stateId.stringValue()))
+                .request().put(Entity.json(modelToJsonld(state)));
+        assertEquals(response.getStatus(), 404);
+    }
+
+    @Test
+    public void updateStateThatIsNotYoursTest() {
+        // Setup:
+        Model state = mf.createModel();
+        state.add(vf.createIRI("http://example.com"), vf.createIRI(DCTERMS.TITLE.stringValue()), vf.createLiteral("Title"));
+        when(stateManager.stateExistsForUser(any(Resource.class), anyString())).thenReturn(false);
+
+        Response response = target().path("states/" + encode(stateId.stringValue()))
+                .request().put(Entity.json(modelToJsonld(state)));
+        assertEquals(response.getStatus(), 403);
     }
 
     @Test
     public void updateStateExceptionThrownTest() {
         // Setup:
-        doThrow(new MatOntoException()).when(stateManager).updateState(any(Resource.class), any(Model.class), anyString());
         Model state = mf.createModel();
         state.add(vf.createIRI("http://example.com"), vf.createIRI(DCTERMS.TITLE.stringValue()), vf.createLiteral("Title"));
+        doThrow(new MatOntoException()).when(stateManager).updateState(any(Resource.class), any(Model.class));
 
         Response response = target().path("states/" + encode(stateId.stringValue()))
                 .request().put(Entity.json(modelToJsonld(state)));
-        assertEquals(403, response.getStatus());
+        assertEquals(response.getStatus(), 500);
     }
 
     @Test
     public void deleteStateTest() {
         Response response = target().path("states/" + encode(stateId.stringValue()))
                 .request().delete();
-        assertEquals(200, response.getStatus());
-        verify(stateManager, times(1)).deleteState(eq(stateId), anyString());
+        assertEquals(response.getStatus(), 200);
+        verify(stateManager).deleteState(eq(stateId));
+    }
+
+    @Test
+    public void deleteStateThatIsNotYoursTest() {
+        // Setup:
+        when(stateManager.stateExistsForUser(any(Resource.class), anyString())).thenReturn(false);
+
+        Response response = target().path("states/" + encode(stateId.stringValue()))
+                .request().delete();
+        assertEquals(response.getStatus(), 403);
+    }
+
+    @Test
+    public void deleteStateThatDoesNotExistTest() {
+        // Setup:
+        doThrow(new IllegalArgumentException()).when(stateManager).deleteState(any(Resource.class));
+
+        Response response = target().path("states/" + encode(stateId.stringValue()))
+                .request().delete();
+        assertEquals(response.getStatus(), 404);
     }
 
     @Test
     public void deleteStateExceptionThrownTest() {
         // Setup:
-        doThrow(new MatOntoException()).when(stateManager).deleteState(any(Resource.class), anyString());
+        doThrow(new MatOntoException()).when(stateManager).deleteState(any(Resource.class));
 
         Response response = target().path("states/" + encode(stateId.stringValue()))
                 .request().delete();
-        assertEquals(403, response.getStatus());
+        assertEquals(response.getStatus(), 500);
     }
 
     private String modelToJsonld(Model model) {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        Rio.write(transformer.sesameModel(model), out, RDFFormat.JSONLD);
-        return out.toString();
+        return RestUtils.modelToJsonld(transformer.sesameModel(model));
     }
 }

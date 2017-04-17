@@ -24,9 +24,17 @@ package org.matonto.platform.config.impl.state;
  */
 
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import org.junit.Before;
 import org.junit.Test;
-import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.jaas.api.ontologies.usermanagement.UserFactory;
@@ -69,15 +77,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import java.util.Set;
 
 public class SimpleStateManagerTest {
     private SimpleStateManager manager;
@@ -92,6 +92,7 @@ public class SimpleStateManagerTest {
     private ApplicationFactory applicationFactory = new ApplicationFactory();
     private User user;
     private Application application;
+    private Set<Resource> stateResource0, stateResource1;
 
     @Mock
     EngineManager engineManager;
@@ -140,7 +141,7 @@ public class SimpleStateManagerTest {
 
         MockitoAnnotations.initMocks(this);
 
-        when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.of(user));
+        when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
         when(applicationManager.getApplication(anyString())).thenReturn(Optional.of(application));
 
         manager = new SimpleStateManager();
@@ -149,9 +150,11 @@ public class SimpleStateManagerTest {
         manager.setValueFactory(vf);
         manager.setStateFactory(stateFactory);
         manager.setApplicationStateFactory(applicationStateFactory);
-        manager.setThingFactory(thingFactory);
         manager.setEngineManager(engineManager);
         manager.setApplicationManager(applicationManager);
+        
+        stateResource0 = Collections.singleton(vf.createIRI("http://example.com/example/0"));
+        stateResource1 = Collections.singleton(vf.createIRI("http://example.com/example/1"));
     }
 
     @Test
@@ -159,35 +162,52 @@ public class SimpleStateManagerTest {
         // Setup:
         RepositoryConnection conn = repo.getConnection();
         conn.add(vf.createIRI("http://matonto.org/states/0"), vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(State.TYPE));
+        conn.add(vf.createIRI("http://matonto.org/states/1"), vf.createIRI(DCTERMS.TITLE.stringValue()), vf.createLiteral("Title"));
+
+
+        assertTrue(manager.stateExists(vf.createIRI("http://matonto.org/states/0")));
+        assertFalse(manager.stateExists(vf.createIRI("http://matonto.org/states/1")));
+        assertFalse(manager.stateExists(vf.createIRI("http://matonto.org/states/2")));
+        conn.close();
+    }
+
+    @Test
+    public void stateExistsForUserTest() throws Exception {
+        // Setup:
+        RepositoryConnection conn = repo.getConnection();
+        conn.add(vf.createIRI("http://matonto.org/states/0"), vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(State.TYPE));
         conn.add(vf.createIRI("http://matonto.org/states/0"), vf.createIRI(State.forUser_IRI), user.getResource());
         conn.add(vf.createIRI("http://matonto.org/states/1"), vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(State.TYPE));
         conn.add(vf.createIRI("http://matonto.org/states/2"), vf.createIRI(DCTERMS.TITLE.stringValue()), vf.createLiteral("Title"));
 
-
-        assertTrue(manager.stateExists(vf.createIRI("http://matonto.org/states/0"), "test"));
-        assertFalse(manager.stateExists(vf.createIRI("http://matonto.org/states/1"), "test"));
-        assertFalse(manager.stateExists(vf.createIRI("http://matonto.org/states/2"), "test"));
-        assertFalse(manager.stateExists(vf.createIRI("http://matonto.org/states/3"), "test"));
+        assertTrue(manager.stateExistsForUser(vf.createIRI("http://matonto.org/states/0"), "test"));
+        assertFalse(manager.stateExistsForUser(vf.createIRI("http://matonto.org/states/1"), "test"));
         conn.close();
     }
 
-    @Test(expected = MatOntoException.class)
-    public void stateExistsWithUserThatDoesNotExistTest() {
-        // Setup:
-        when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.empty());
+    @Test(expected = IllegalArgumentException.class)
+    public void stateThatDoesNotExistExistsForUserTest() {
+        manager.stateExistsForUser(vf.createIRI("http://matonto.org/states/0"), "test");
+    }
 
-        manager.stateExists(vf.createIRI("http://matonto.org/states/0"), "error");
+    @Test(expected = IllegalArgumentException.class)
+    public void stateExistsForUserThatDoesNotExistTest() {
+        // Setup:
+        RepositoryConnection conn = repo.getConnection();
+        conn.add(vf.createIRI("http://matonto.org/states/0"), vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(State.TYPE));
+        when(engineManager.retrieveUser(anyString())).thenReturn(Optional.empty());
+
+        manager.stateExistsForUser(vf.createIRI("http://matonto.org/states/0"), "error");
     }
 
     @Test
     public void getStatesNoFiltersTest() throws Exception {
         // Setup:
-        when(applicationManager.getApplication(anyString())).thenReturn(Optional.empty());
         Model newState = mf.createModel();
         newState.add(vf.createIRI("http://example.com/example"), vf.createIRI(DCTERMS.TITLE.stringValue()), vf.createLiteral("Title"));
         newState.add(vf.createIRI("http://example.com/example"), vf.createIRI(DCTERMS.DESCRIPTION.stringValue()), vf.createLiteral("Description"));
         State state0 = stateFactory.createNew(vf.createIRI("http://matonto.org/states/0"));
-        state0.setStateResource(Collections.singleton(thingFactory.createNew(vf.createIRI("http://example.com/example"))));
+        state0.setStateResource(Collections.singleton(vf.createIRI("http://example.com/example")));
         state0.setForUser(user);
         State state1 = stateFactory.createNew(vf.createIRI("http://matonto.org/states/1"));
         RepositoryConnection conn = repo.getConnection();
@@ -195,7 +215,7 @@ public class SimpleStateManagerTest {
         conn.add(state1.getModel());
         conn.add(newState);
 
-        Map<Resource, Model> result = manager.getStates("test", null, new HashSet<>());
+        Map<Resource, Model> result = manager.getStates(null, null, new HashSet<>());
         assertEquals(1, result.size());
         assertTrue(result.containsKey(state0.getResource()));
         assertTrue(result.get(state0.getResource()).equals(newState));
@@ -208,12 +228,12 @@ public class SimpleStateManagerTest {
         Model state0Model = mf.createModel();
         state0Model.add(vf.createIRI("http://example.com/example/0"), vf.createIRI(DCTERMS.TITLE.stringValue()), vf.createLiteral("Title"));
         State state0 = stateFactory.createNew(vf.createIRI("http://matonto.org/states/0"));
-        state0.setStateResource(Collections.singleton(thingFactory.createNew(vf.createIRI("http://example.com/example/0"))));
+        state0.setStateResource(stateResource0);
         state0.setForUser(user);
         Model state1Model = mf.createModel();
         state1Model.add(vf.createIRI("http://example.com/example/1"), vf.createIRI(DCTERMS.TITLE.stringValue()), vf.createLiteral("Title"));
         ApplicationState state1 = applicationStateFactory.createNew(vf.createIRI("http://matonto.org/states/1"));
-        state1.setStateResource(Collections.singleton(thingFactory.createNew(vf.createIRI("http://example.com/example/1"))));
+        state1.setStateResource(stateResource1);
         state1.setForUser(user);
         state1.setApplication(application);
         RepositoryConnection conn = repo.getConnection();
@@ -222,7 +242,7 @@ public class SimpleStateManagerTest {
         conn.add(state1.getModel());
         conn.add(state1Model);
 
-        Map<Resource, Model> result = manager.getStates("test", "test", new HashSet<>());
+        Map<Resource, Model> result = manager.getStates(null, "test", new HashSet<>());
         assertEquals(1, result.size());
         assertTrue(result.containsKey(state1.getResource()));
         assertTrue(result.get(state1.getResource()).equals(state1Model));
@@ -232,16 +252,15 @@ public class SimpleStateManagerTest {
     @Test
     public void getStatesSubjectsFilterTest() throws Exception {
         // Setup:
-        when(applicationManager.getApplication(anyString())).thenReturn(Optional.empty());
         Model state0Model = mf.createModel();
         state0Model.add(vf.createIRI("http://example.com/example/0"), vf.createIRI(DCTERMS.TITLE.stringValue()), vf.createLiteral("Title"));
         State state0 = stateFactory.createNew(vf.createIRI("http://matonto.org/states/0"));
-        state0.setStateResource(Collections.singleton(thingFactory.createNew(vf.createIRI("http://example.com/example/0"))));
+        state0.setStateResource(stateResource0);
         state0.setForUser(user);
         Model state1Model = mf.createModel();
         state1Model.add(vf.createIRI("http://example.com/example/1"), vf.createIRI(DCTERMS.TITLE.stringValue()), vf.createLiteral("Title"));
         State state1 = stateFactory.createNew(vf.createIRI("http://matonto.org/states/1"));
-        state1.setStateResource(Collections.singleton(thingFactory.createNew(vf.createIRI("http://example.com/example/1"))));
+        state1.setStateResource(stateResource1);
         state1.setForUser(user);
         RepositoryConnection conn = repo.getConnection();
         conn.add(state0.getModel());
@@ -249,7 +268,7 @@ public class SimpleStateManagerTest {
         conn.add(state1.getModel());
         conn.add(state1Model);
 
-        Map<Resource, Model> result = manager.getStates("test", null, Collections.singleton(vf.createIRI("http://example.com/example/1")));
+        Map<Resource, Model> result = manager.getStates(null, null, Collections.singleton(vf.createIRI("http://example.com/example/1")));
         assertEquals(1, result.size());
         assertTrue(result.containsKey(state1.getResource()));
         assertTrue(result.get(state1.getResource()).equals(state1Model));
@@ -258,16 +277,16 @@ public class SimpleStateManagerTest {
 
     @Test
     public void getStatesUserFilterTest() throws Exception {
-        when(applicationManager.getApplication(anyString())).thenReturn(Optional.empty());
+        // Setup:
         Model state0Model = mf.createModel();
         state0Model.add(vf.createIRI("http://example.com/example/0"), vf.createIRI(DCTERMS.TITLE.stringValue()), vf.createLiteral("Title"));
         State state0 = stateFactory.createNew(vf.createIRI("http://matonto.org/states/0"));
-        state0.setStateResource(Collections.singleton(thingFactory.createNew(vf.createIRI("http://example.com/example/0"))));
+        state0.setStateResource(stateResource0);
         state0.setForUser(user);
         Model state1Model = mf.createModel();
         state1Model.add(vf.createIRI("http://example.com/example/1"), vf.createIRI(DCTERMS.TITLE.stringValue()), vf.createLiteral("Title"));
         State state1 = stateFactory.createNew(vf.createIRI("http://matonto.org/states/1"));
-        state1.setStateResource(Collections.singleton(thingFactory.createNew(vf.createIRI("http://example.com/example/1"))));
+        state1.setStateResource(stateResource1);
         state1.setForUser(userFactory.createNew(vf.createIRI("http://matonto.org/users/test1")));
         RepositoryConnection conn = repo.getConnection();
         conn.add(state0.getModel());
@@ -275,7 +294,7 @@ public class SimpleStateManagerTest {
         conn.add(state1.getModel());
         conn.add(state1Model);
 
-        Map<Resource, Model> result = manager.getStates("test", "test", new HashSet<>());
+        Map<Resource, Model> result = manager.getStates("test", null, new HashSet<>());
         assertEquals(1, result.size());
         assertTrue(result.containsKey(state0.getResource()));
         assertTrue(result.get(state0.getResource()).equals(state0Model));
@@ -288,18 +307,18 @@ public class SimpleStateManagerTest {
         Model state0Model = mf.createModel();
         state0Model.add(vf.createIRI("http://example.com/example/0"), vf.createIRI(DCTERMS.TITLE.stringValue()), vf.createLiteral("Title"));
         State state0 = stateFactory.createNew(vf.createIRI("http://matonto.org/states/0"));
-        state0.setStateResource(Collections.singleton(thingFactory.createNew(vf.createIRI("http://example.com/example/0"))));
+        state0.setStateResource(stateResource0);
         state0.setForUser(user);
         Model state1Model = mf.createModel();
         state1Model.add(vf.createIRI("http://example.com/example/1"), vf.createIRI(DCTERMS.TITLE.stringValue()), vf.createLiteral("Title"));
         ApplicationState state1 = applicationStateFactory.createNew(vf.createIRI("http://matonto.org/states/1"));
-        state1.setStateResource(Collections.singleton(thingFactory.createNew(vf.createIRI("http://example.com/example/1"))));
+        state1.setStateResource(stateResource1);
         state1.setForUser(user);
         state1.setApplication(application);
         Model state2Model = mf.createModel();
         state2Model.add(vf.createIRI("http://example.com/example/2"), vf.createIRI(DCTERMS.TITLE.stringValue()), vf.createLiteral("Title"));
         ApplicationState state2 = applicationStateFactory.createNew(vf.createIRI("http://matonto.org/states/2"));
-        state2.setStateResource(Collections.singleton(thingFactory.createNew(vf.createIRI("http://example.com/example/2"))));
+        state2.setStateResource(Collections.singleton(vf.createIRI("http://example.com/example/2")));
         state2.setForUser(user);
         state2.setApplication(application);
         RepositoryConnection conn = repo.getConnection();
@@ -317,12 +336,20 @@ public class SimpleStateManagerTest {
         conn.close();
     }
 
-    @Test(expected = MatOntoException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void getStatesWithUserThatDoesNotExistTest() {
         // Setup:
-        when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.empty());
+        when(engineManager.retrieveUser(anyString())).thenReturn(Optional.empty());
 
         manager.getStates("error", null, new HashSet<>());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void getStatesWithApplicationThatDoesNotExistTest() {
+        // Setup:
+        when(applicationManager.getApplication(anyString())).thenReturn(Optional.empty());
+
+        manager.getStates(null, "error", new HashSet<>());
     }
 
     @Test
@@ -332,7 +359,7 @@ public class SimpleStateManagerTest {
         newState.add(vf.createIRI("http://example.com/example"), vf.createIRI(DCTERMS.TITLE.stringValue()), vf.createLiteral("Title"));
 
         Resource result = manager.storeState(newState, "test");
-        verify(engineManager, times(1)).retrieveUser(anyString(), eq("test"));
+        verify(engineManager, times(1)).retrieveUser(eq("test"));
         RepositoryConnection conn = repo.getConnection();
         Model stateModel = mf.createModel();
         conn.getStatements(result, null, null).forEach(stateModel::add);
@@ -346,10 +373,10 @@ public class SimpleStateManagerTest {
         conn.close();
     }
 
-    @Test(expected = MatOntoException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void storeStateWithUserThatDoesNotExistTest() {
         // Setup:
-        when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.empty());
+        when(engineManager.retrieveUser(anyString())).thenReturn(Optional.empty());
 
         manager.storeState(mf.createModel(), "error");
     }
@@ -361,7 +388,7 @@ public class SimpleStateManagerTest {
         newState.add(vf.createIRI("http://example.com/example"), vf.createIRI(DCTERMS.TITLE.stringValue()), vf.createLiteral("Title"));
 
         Resource result = manager.storeState(newState, "test", "test");
-        verify(engineManager, times(1)).retrieveUser(anyString(), eq("test"));
+        verify(engineManager, times(1)).retrieveUser(eq("test"));
         verify(applicationManager, times(1)).getApplication("test");
         RepositoryConnection conn = repo.getConnection();
         Model stateModel = mf.createModel();
@@ -377,15 +404,15 @@ public class SimpleStateManagerTest {
         conn.close();
     }
 
-    @Test(expected = MatOntoException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void storeApplicationStateWithUserThatDoesNotExistTest() {
         // Setup:
-        when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.empty());
+        when(engineManager.retrieveUser(anyString())).thenReturn(Optional.empty());
 
         manager.storeState(mf.createModel(), "error", "test");
     }
 
-    @Test(expected = MatOntoException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void storeApplicationStateWithApplicationThatDoesNotExistTest() {
         // Setup:
         when(applicationManager.getApplication(anyString())).thenReturn(Optional.empty());
@@ -399,13 +426,12 @@ public class SimpleStateManagerTest {
         Model resources = mf.createModel();
         resources.add(vf.createIRI("http://example.com/example"), vf.createIRI(DCTERMS.TITLE.stringValue()), vf.createLiteral("Title"));
         State state = stateFactory.createNew(vf.createIRI("http://matonto.org/states/0"));
-        state.setForUser(user);
-        state.setStateResource(Collections.singleton(thingFactory.createNew(vf.createIRI("http://example.com/example"))));
+        state.setStateResource(Collections.singleton(vf.createIRI("http://example.com/example")));
         RepositoryConnection conn = repo.getConnection();
         conn.add(state.getModel());
         conn.add(resources);
 
-        Model result = manager.getState(state.getResource(), "test");
+        Model result = manager.getState(state.getResource());
         assertFalse(result.isEmpty());
         assertTrue(result.containsAll(resources));
         conn.close();
@@ -415,18 +441,17 @@ public class SimpleStateManagerTest {
     public void getStateThatIsEmptyTest() throws Exception {
         // Setup:
         State state = stateFactory.createNew(vf.createIRI("http://matonto.org/states/0"));
-        state.setForUser(user);
         RepositoryConnection conn = repo.getConnection();
         conn.add(state.getModel());
 
-        Model result = manager.getState(state.getResource(), "test");
+        Model result = manager.getState(state.getResource());
         assertTrue(result.isEmpty());
         conn.close();
     }
 
-    @Test(expected = MatOntoException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void getStateThatDoesNotExistTest() {
-        manager.getState(vf.createIRI("http://matonto.org/states/error"), "test");
+        manager.getState(vf.createIRI("http://matonto.org/states/error"));
     }
 
     @Test
@@ -437,13 +462,12 @@ public class SimpleStateManagerTest {
         oldModel.add(vf.createIRI("http://example.com/example/0"), vf.createIRI(DCTERMS.TITLE.stringValue()), vf.createLiteral("Title"));
         newModel.add(vf.createIRI("http://example.com/example/1"), vf.createIRI(DCTERMS.TITLE.stringValue()), vf.createLiteral("Title"));
         State state = stateFactory.createNew(vf.createIRI("http://matonto.org/states/0"));
-        state.setForUser(user);
-        state.setStateResource(Collections.singleton(thingFactory.createNew(vf.createIRI("http://example.com/example/0"))));
+        state.setStateResource(stateResource0);
         RepositoryConnection conn = repo.getConnection();
         conn.add(state.getModel());
         conn.add(oldModel);
 
-        manager.updateState(state.getResource(), newModel, "test");
+        manager.updateState(state.getResource(), newModel);
         Model stateModel = mf.createModel();
         conn.getStatements(state.getResource(), null, null).forEach(stateModel::add);
         assertFalse(stateModel.isEmpty());
@@ -467,16 +491,14 @@ public class SimpleStateManagerTest {
         newModel.add(vf.createIRI("http://example.com/example/1"), vf.createIRI(DCTERMS.TITLE.stringValue()), vf.createLiteral("Title"));
         State state0 = stateFactory.createNew(vf.createIRI("http://matonto.org/states/0"));
         State state1 = stateFactory.createNew(vf.createIRI("http://matonto.org/states/1"));
-        state0.setStateResource(Collections.singleton(thingFactory.createNew(vf.createIRI("http://example.com/example/0"))));
-        state0.setForUser(user);
-        state1.setStateResource(Collections.singleton(thingFactory.createNew(vf.createIRI("http://example.com/example/0"))));
-        state1.setForUser(user);
+        state0.setStateResource(stateResource0);
+        state1.setStateResource(stateResource0);
         RepositoryConnection conn = repo.getConnection();
         conn.add(state0.getModel());
         conn.add(state1.getModel());
         conn.add(oldModel);
 
-        manager.updateState(state0.getResource(), newModel, "test");
+        manager.updateState(state0.getResource(), newModel);
         Model stateModel = mf.createModel();
         conn.getStatements(state0.getResource(), null, null).forEach(stateModel::add);
         assertFalse(stateModel.isEmpty());
@@ -497,11 +519,10 @@ public class SimpleStateManagerTest {
         Model newModel = mf.createModel();
         newModel.add(vf.createIRI("http://example.com/example"), vf.createIRI(DCTERMS.TITLE.stringValue()), vf.createLiteral("Title"));
         State state = stateFactory.createNew(vf.createIRI("http://matonto.org/states/0"));
-        state.setForUser(user);
         RepositoryConnection conn = repo.getConnection();
         conn.add(state.getModel());
 
-        manager.updateState(state.getResource(), newModel, "test");
+        manager.updateState(state.getResource(), newModel);
         Model stateModel = mf.createModel();
         conn.getStatements(state.getResource(), null, null).forEach(stateModel::add);
         assertFalse(stateModel.isEmpty());
@@ -512,9 +533,9 @@ public class SimpleStateManagerTest {
         conn.close();
     }
 
-    @Test(expected = MatOntoException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void updateStateThatDoesNotExist() {
-        manager.updateState(vf.createIRI("http://matonto.org/states/error"), mf.createModel(), "test");
+        manager.updateState(vf.createIRI("http://matonto.org/states/error"), mf.createModel());
     }
 
     @Test
@@ -523,19 +544,17 @@ public class SimpleStateManagerTest {
         Model model = mf.createModel();
         model.add(vf.createIRI("http://example.com/example"), vf.createIRI(DCTERMS.TITLE.stringValue()), vf.createLiteral("Title"));
         State state = stateFactory.createNew(vf.createIRI("http://matonto.org/states/0"));
-        state.setForUser(user);
-        state.setStateResource(Collections.singleton(thingFactory.createNew(vf.createIRI("http://example.com/example"))));
+        state.setStateResource(Collections.singleton(vf.createIRI("http://example.com/example")));
         RepositoryConnection conn = repo.getConnection();
         conn.add(state.getModel());
         conn.add(model);
 
-        manager.deleteState(state.getResource(), "test");
+        manager.deleteState(state.getResource());
         Model stateModel = mf.createModel();
         conn.getStatements(state.getResource(), null, null).forEach(stateModel::add);
         assertTrue(stateModel.isEmpty());
-        model.forEach(statement -> {
-            assertFalse(conn.getStatements(statement.getSubject(), statement.getPredicate(), statement.getObject()).hasNext());
-        });
+        model.forEach(statement ->
+                assertFalse(conn.getStatements(statement.getSubject(), statement.getPredicate(), statement.getObject()).hasNext()));
         conn.close();
     }
 
@@ -546,22 +565,19 @@ public class SimpleStateManagerTest {
         model.add(vf.createIRI("http://example.com/example"), vf.createIRI(DCTERMS.TITLE.stringValue()), vf.createLiteral("Title"));
         State state0 = stateFactory.createNew(vf.createIRI("http://matonto.org/states/0"));
         State state1 = stateFactory.createNew(vf.createIRI("http://matonto.org/states/1"));
-        state0.setStateResource(Collections.singleton(thingFactory.createNew(vf.createIRI("http://example.com/example"))));
-        state0.setForUser(user);
-        state1.setStateResource(Collections.singleton(thingFactory.createNew(vf.createIRI("http://example.com/example"))));
-        state1.setForUser(user);
+        state0.setStateResource(Collections.singleton(vf.createIRI("http://example.com/example")));
+        state1.setStateResource(Collections.singleton(vf.createIRI("http://example.com/example")));
         RepositoryConnection conn = repo.getConnection();
         conn.add(state0.getModel());
         conn.add(state1.getModel());
         conn.add(model);
 
-        manager.deleteState(state0.getResource(), "test");
+        manager.deleteState(state0.getResource());
         Model stateModel = mf.createModel();
         conn.getStatements(state0.getResource(), null, null).forEach(stateModel::add);
         assertTrue(stateModel.isEmpty());
-        model.forEach(statement -> {
-            assertTrue(conn.getStatements(statement.getSubject(), statement.getPredicate(), statement.getObject()).hasNext());
-        });
+        model.forEach(statement ->
+                assertTrue(conn.getStatements(statement.getSubject(), statement.getPredicate(), statement.getObject()).hasNext()));
         conn.close();
     }
 
@@ -569,19 +585,18 @@ public class SimpleStateManagerTest {
     public void deleteStateThatWasEmptyTest() throws Exception {
         // Setup:
         State state = stateFactory.createNew(vf.createIRI("http://matonto.org/states/0"));
-        state.setForUser(user);
         RepositoryConnection conn = repo.getConnection();
         conn.add(state.getModel());
 
-        manager.deleteState(state.getResource(), "test");
+        manager.deleteState(state.getResource());
         Model stateModel = mf.createModel();
         conn.getStatements(state.getResource(), null, null).forEach(stateModel::add);
         assertTrue(stateModel.isEmpty());
         conn.close();
     }
 
-    @Test(expected = MatOntoException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void deleteStateThatDoesNotExist() {
-        manager.deleteState(vf.createIRI("http://matonto.org/states/error"), "test");
+        manager.deleteState(vf.createIRI("http://matonto.org/states/error"));
     }
 }

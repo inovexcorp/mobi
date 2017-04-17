@@ -21,104 +21,92 @@
  * #L%
  */
 describe('Ontology Close Overlay directive', function() {
-    var $compile,
-        scope,
-        element,
-        controller,
-        ontologyStateSvc,
-        ontologyManagerSvc,
-        deferred;
+    var $compile, scope, element, controller, ontologyStateSvc, deferred;
 
     beforeEach(function() {
         module('templates');
         module('ontologyCloseOverlay');
-        mockOntologyManager();
         mockOntologyState();
 
-        inject(function(_$q_, _$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_) {
+        inject(function(_$q_, _$compile_, _$rootScope_, _ontologyStateService_) {
             $q = _$q_;
             $compile = _$compile_;
             scope = _$rootScope_;
-            ontologyManagerSvc = _ontologyManagerService_;
             ontologyStateSvc = _ontologyStateService_;
             deferred = _$q_.defer();
         });
 
+        element = $compile(angular.element('<ontology-close-overlay></ontology-close-overlay>'))(scope);
+        scope.$digest();
     });
 
     describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
-            element = $compile(angular.element('<ontology-close-overlay></ontology-close-overlay>'))(scope);
-            scope.$digest();
-        });
-        it('for a DIV', function() {
+        it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
+            expect(element.hasClass('ontology-close-overlay')).toBe(true);
+            expect(element.querySelectorAll('.content').length).toBe(1);
         });
-        it('based on .content', function() {
-            var items = element.querySelectorAll('.content');
-            expect(items.length).toBe(1);
+        it('with a h6', function() {
+            expect(element.find('h6').length).toBe(1);
         });
-        it('based on h6', function() {
-            var items = element.find('h6');
-            expect(items.length).toBe(1);
+        it('with a .main', function() {
+            expect(element.querySelectorAll('.main').length).toBe(1);
         });
-        it('based on .main', function() {
-            var items = element.querySelectorAll('.main');
-            expect(items.length).toBe(1);
+        it('with a .btn-container', function() {
+            expect(element.querySelectorAll('.btn-container').length).toBe(1);
         });
-        it('based on .btn-container', function() {
-            var items = element.querySelectorAll('.btn-container');
-            expect(items.length).toBe(1);
+        it('depending on whether an error occurred', function() {
+            expect(element.find('error-display').length).toBe(0);
+
+            controller = element.controller('ontologyCloseOverlay');
+            controller.error = true;
+            scope.$digest();
+            expect(element.find('error-display').length).toBe(1);
         });
-        describe('and error-display', function() {
-            beforeEach(function() {
-                controller = element.controller('ontologyCloseOverlay');
-            });
-            it('is visible when openError is true', function() {
-                controller.error = true;
-                scope.$digest();
-                var errors = element.find('error-display');
-                expect(errors.length).toBe(1);
-            });
-            it('is not visible when openError is false', function() {
-                controller.error = false;
-                scope.$digest();
-                var errors = element.find('error-display');
-                expect(errors.length).toBe(0);
-            });
+        it('with custom buttons to save and close, close without saving, and cancel', function() {
+            var buttons = element.find('button');
+            expect(buttons.length).toBe(3);
+            expect(['Cancel', 'Close Without Saving', 'Save and Close'].indexOf(angular.element(buttons[0]).text()) >= 0).toBe(true);
+            expect(['Cancel', 'Close Without Saving', 'Save and Close'].indexOf(angular.element(buttons[1]).text()) >= 0).toBe(true);
+            expect(['Cancel', 'Close Without Saving', 'Save and Close'].indexOf(angular.element(buttons[2]).text()) >= 0).toBe(true);
         });
     });
     describe('controller methods', function() {
         beforeEach(function() {
-            element = $compile(angular.element('<ontology-close-overlay></ontology-close-overlay>'))(scope);
-            scope.$digest();
             controller = element.controller('ontologyCloseOverlay');
         });
         describe('saveThenClose', function() {
             beforeEach(function() {
-                ontologyManagerSvc.saveChanges.and.returnValue(deferred.promise);
+                ontologyStateSvc.saveChanges.and.returnValue(deferred.promise);
                 ontologyStateSvc.getState.and.returnValue({deletedEntities: []});
                 controller.saveThenClose();
             });
             it('calls the correct manager functions', function() {
-                ontologyManagerSvc.getOntologyById.and.returnValue([]);
-                expect(ontologyManagerSvc.getOntologyById).toHaveBeenCalledWith(ontologyStateSvc.ontologyIdToClose);
-                expect(ontologyStateSvc.getUnsavedEntities).toHaveBeenCalledWith(ontologyManagerSvc.getOntologyById());
-                expect(ontologyStateSvc.getCreatedEntities).toHaveBeenCalledWith(ontologyManagerSvc.getOntologyById());
-                expect(ontologyStateSvc.getState).toHaveBeenCalledWith(ontologyStateSvc.ontologyIdToClose);
-                expect(ontologyManagerSvc.saveChanges).toHaveBeenCalledWith(
-                    ontologyStateSvc.ontologyIdToClose,
-                    ontologyStateSvc.getUnsavedEntities(ontologyManagerSvc.getOntologyById()),
-                    ontologyStateSvc.getCreatedEntities(ontologyManagerSvc.getOntologyById()),
-                    ontologyStateSvc.getState().deletedEntities
-                );
+                expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
+                    {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});
             });
-            it('when resolved, calls the correct controller function', function() {
-                controller.close = jasmine.createSpy('close');
-                deferred.resolve('id');
-                scope.$apply();
-                expect(controller.close).toHaveBeenCalled();
-                expect(ontologyStateSvc.afterSave).toHaveBeenCalledWith('id');
+            describe('when resolved, calls the correct controller function', function() {
+                var afterDeferred;
+                beforeEach(function() {
+                    controller.close = jasmine.createSpy('close');
+                    deferred.resolve('id');
+                    afterDeferred = $q.defer();
+                    ontologyStateSvc.afterSave.and.returnValue(afterDeferred.promise);
+                });
+                it('when afterSave is resolved', function() {
+                    afterDeferred.resolve();
+                    scope.$apply();
+                    expect(controller.close).toHaveBeenCalled();
+                    expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
+                });
+                it('when afterSave is rejected', function() {
+                    var error = 'error';
+                    afterDeferred.reject(error);
+                    scope.$apply();
+                    expect(controller.close).not.toHaveBeenCalled();
+                    expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
+                    expect(controller.error).toEqual(error);
+                });
             });
             it('when rejected, sets the correct variable', function() {
                 deferred.reject('error');
@@ -128,9 +116,30 @@ describe('Ontology Close Overlay directive', function() {
         });
         it('close calls the correct manager functions and sets the correct manager variable', function() {
             controller.close();
-            expect(ontologyStateSvc.deleteState).toHaveBeenCalledWith(ontologyStateSvc.ontologyIdToClose);
-            expect(ontologyManagerSvc.closeOntology).toHaveBeenCalledWith(ontologyStateSvc.ontologyIdToClose);
+            expect(ontologyStateSvc.deleteState).toHaveBeenCalledWith(ontologyStateSvc.recordIdToClose);
+            expect(ontologyStateSvc.closeOntology).toHaveBeenCalledWith(ontologyStateSvc.recordIdToClose);
             expect(ontologyStateSvc.showCloseOverlay).toBe(false);
         });
+    });
+    it('should call saveThenClose when the button is clicked', function() {
+        controller = element.controller('ontologyCloseOverlay');
+        spyOn(controller, 'saveThenClose');
+
+        var button = angular.element(element.querySelectorAll('.btn-container button.save-close-btn')[0]);
+        button.triggerHandler('click');
+        expect(controller.saveThenClose).toHaveBeenCalled();
+    });
+    it('should call saveThenClose when the button is clicked', function() {
+        controller = element.controller('ontologyCloseOverlay');
+        spyOn(controller, 'close');
+
+        var button = angular.element(element.querySelectorAll('.btn-container button.close-btn')[0]);
+        button.triggerHandler('click');
+        expect(controller.close).toHaveBeenCalled();
+    });
+    it('should set the correct state when the cancel button is clicked', function() {
+        var button = angular.element(element.querySelectorAll('.btn-container button.btn-default')[0]);
+        button.triggerHandler('click');
+        expect(ontologyStateSvc.showCloseOverlay).toBe(false);
     });
 });

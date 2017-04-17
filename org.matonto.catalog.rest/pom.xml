@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.4.17-SNAPSHOT</version>
+        <version>1.6.20-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -40,38 +40,33 @@
     <dependencies>
         <dependency>
             <groupId>org.matonto</groupId>
-            <artifactId>platform.config.api</artifactId>
-            <version>1.4.10</version>
-        </dependency>
-        <dependency>
-            <groupId>org.matonto</groupId>
             <artifactId>rest.util</artifactId>
-            <version>1.4.17-SNAPSHOT</version>
+            <version>1.5.45</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>catalog.api</artifactId>
-            <version>1.4.12</version>
+            <version>1.5.45</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>persistence.utils</artifactId>
-            <version>1.3.11</version>
+            <version>1.5.45</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>web.security</artifactId>
-            <version>1.4.10</version>
+            <version>1.5.45</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.utils</artifactId>
-            <version>1.4.7</version>
+            <version>1.5.45</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>jaas</artifactId>
-            <version>1.4.10</version>
+            <version>1.5.45</version>
         </dependency>
 
         <dependency>
@@ -93,10 +88,6 @@
         <dependency>
             <groupId>org.apache.servicemix.bundles</groupId>
             <artifactId>org.apache.servicemix.bundles.json-lib</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
         </dependency>
         <dependency>
             <groupId>javax.annotation</groupId>
@@ -133,7 +124,7 @@
                         <Bundle-Name>MatOnto Catalog REST Services</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
-                            org.matonto.catalog.rest; provide:=true
+                            org.matonto.catalog.rest
                         </Export-Package>
                         <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>

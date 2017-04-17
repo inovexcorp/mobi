@@ -21,6 +21,7 @@
   #L%
   -->
 <div class="vocabulary-tab ontology-tab">
+    <branch-select ng-model="dvm.sm.listItem.branchId"></branch-select>
     <tabset class="centered">
         <tab heading="'Project'" active="dvm.sm.state.project.active"
              on-click="dvm.sm.setSelected(dvm.sm.state.project.entityIRI)">
@@ -34,8 +35,16 @@
              on-click="dvm.sm.setSelected(dvm.sm.state.search.entityIRI)">
             <search-tab></search-tab>
         </tab>
+        <tab heading="dvm.savedChanges" active="dvm.sm.state.savedChanges.active">
+            <saved-changes-tab></saved-changes-tab>
+        </tab>
+        <tab heading="'Merge'" active="dvm.sm.state.merge.active">
+            <merge-tab></merge-tab>
+        </tab>
+        <tab heading="'Commits'" active="dvm.sm.state.commits.active">
+            <commits-tab></commits-tab>
+        </tab>
     </tabset>
-    <button class="btn btn-primary btn-circle circle-save-button" ng-click="dvm.sm.showSaveOverlay = true" ng-if="dvm.sm.isSavable(dvm.sm.ontology, dvm.sm.state.ontologyId)">
-        <i class="fa fa-floppy-o fa-fw"></i>
-    </button>
+    <span ng-if="dvm.sm.listItem.isSaved" class="saved-text text-muted">Saved</span>
+    <ontology-button-stack></ontology-button-stack>
 </div>

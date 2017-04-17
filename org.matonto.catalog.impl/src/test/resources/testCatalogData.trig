@@ -1,3 +1,4 @@
+@prefix dataset: <http://matonto.org/ontologies/dataset#> .
 @prefix mcat: <http://matonto.org/ontologies/catalog#> .
 @prefix matuser: <http://matonto.org/ontologies/user/management#> .
 @prefix dc: <http://purl.org/dc/terms/> .
@@ -36,7 +37,7 @@ GRAPH <http://matonto.org/test/records#unique>
 
 GRAPH <http://matonto.org/test/records#dataset>
 {
-    <http://matonto.org/test/records#dataset> a mcat:DatasetRecord, mcat:VersionedRDFRecord, mcat:VersionedRecord, mcat:Record ;
+    <http://matonto.org/test/records#dataset> a dataset:DatasetRecord, mcat:VersionedRDFRecord, mcat:VersionedRecord, mcat:Record ;
         mcat:catalog <http://matonto.org/test/catalog-distributed> ;
         dc:title "Dataset" ;
         dc:description "Description" ;
@@ -278,8 +279,8 @@ GRAPH <http://matonto.org/test/commits#test1>
 {
     <http://matonto.org/test/commits#test1> a mcat:Commit ;
         dc:title "Commit" ;
-        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
-        prov:wasInformedBy <http://matonto.org/test/commits#test0> ;
+        prov:atTime "2016-03-01T00:01:00Z"^^xsd:dateTime ;
+        mcat:baseCommit <http://matonto.org/test/commits#test0> ;
         prov:generated <http://matonto.org/test/revisions#revision1> .
 
     <http://matonto.org/test/revisions#revision1> a mcat:Revision ;
@@ -301,8 +302,8 @@ GRAPH <http://matonto.org/test/commits#test2>
 {
     <http://matonto.org/test/commits#test2> a mcat:Commit ;
         dc:title "Commit" ;
-        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
-        prov:wasInformedBy <http://matonto.org/test/commits#test1> ;
+        prov:atTime "2016-03-01T00:02:00Z"^^xsd:dateTime ;
+        mcat:baseCommit <http://matonto.org/test/commits#test1> ;
         prov:generated <http://matonto.org/test/revisions#revision2> .
 
     <http://matonto.org/test/revisions#revision2> a mcat:Revision ;
@@ -324,8 +325,8 @@ GRAPH <http://matonto.org/test/commits#test4a>
 {
     <http://matonto.org/test/commits#test4a> a mcat:Commit ;
         dc:title "Commit" ;
-        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
-        prov:wasInformedBy <http://matonto.org/test/commits#test2> ;
+        prov:atTime "2016-03-01T00:03:00Z"^^xsd:dateTime ;
+        mcat:baseCommit <http://matonto.org/test/commits#test2> ;
         prov:generated <http://matonto.org/test/revisions#revision4a> .
 
     <http://matonto.org/test/revisions#revision4a> a mcat:Revision ;
@@ -347,8 +348,8 @@ GRAPH <http://matonto.org/test/commits#test4b>
 {
     <http://matonto.org/test/commits#test4b> a mcat:Commit ;
         dc:title "Commit" ;
-        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
-        prov:wasInformedBy <http://matonto.org/test/commits#test2> ;
+        prov:atTime "2016-03-01T00:04:00Z"^^xsd:dateTime ;
+        mcat:baseCommit <http://matonto.org/test/commits#test2> ;
         prov:generated <http://matonto.org/test/revisions#revision4b> .
 
     <http://matonto.org/test/revisions#revision4b> a mcat:Revision ;
@@ -370,9 +371,9 @@ GRAPH <http://matonto.org/test/commits#test3>
 {
     <http://matonto.org/test/commits#test3> a mcat:Commit ;
         dc:title "Commit" ;
-        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
-        prov:wasInformedBy <http://matonto.org/test/commits#test4a> ;
-        prov:wasInformedBy <http://matonto.org/test/commits#test4b> ;
+        prov:atTime "2016-03-01T00:05:00Z"^^xsd:dateTime ;
+        mcat:auxiliaryCommit <http://matonto.org/test/commits#test4a> ;
+        mcat:baseCommit <http://matonto.org/test/commits#test4b> ;
         prov:generated <http://matonto.org/test/revisions#revision3> .
 
     <http://matonto.org/test/revisions#revision3> a mcat:Revision ;
@@ -394,8 +395,8 @@ GRAPH <http://matonto.org/test/commits#test5a>
 {
     <http://matonto.org/test/commits#test5a> a mcat:Commit ;
         dc:title "Commit" ;
-        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
-        prov:wasInformedBy <http://matonto.org/test/commits#test3> ;
+        prov:atTime "2016-03-01T00:06:00Z"^^xsd:dateTime ;
+        mcat:baseCommit <http://matonto.org/test/commits#test3> ;
         prov:generated <http://matonto.org/test/revisions#revision5a> .
 
     <http://matonto.org/test/revisions#revision5a> a mcat:Revision ;
@@ -413,8 +414,8 @@ GRAPH <http://matonto.org/test/commits#test6a>
 {
     <http://matonto.org/test/commits#test6a> a mcat:Commit ;
         dc:title "Commit" ;
-        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
-        prov:wasInformedBy <http://matonto.org/test/commits#test5a> ;
+        prov:atTime "2016-03-01T00:07:00Z"^^xsd:dateTime ;
+        mcat:baseCommit <http://matonto.org/test/commits#test5a> ;
         prov:generated <http://matonto.org/test/revisions#revision6a> .
 
     <http://matonto.org/test/revisions#revision6a> a mcat:Revision ;
@@ -438,8 +439,8 @@ GRAPH <http://matonto.org/test/commits#test5b>
 {
     <http://matonto.org/test/commits#test5b> a mcat:Commit ;
         dc:title "Commit" ;
-        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
-        prov:wasInformedBy <http://matonto.org/test/commits#test3> ;
+        prov:atTime "2016-03-01T00:08:00Z"^^xsd:dateTime ;
+        mcat:baseCommit <http://matonto.org/test/commits#test3> ;
         prov:generated <http://matonto.org/test/revisions#revision5b> .
 
     <http://matonto.org/test/revisions#revision5b> a mcat:Revision ;
@@ -483,8 +484,8 @@ GRAPH <http://matonto.org/test/commits#conflict1>
 {
     <http://matonto.org/test/commits#conflict1> a mcat:Commit ;
         dc:title "Commit" ;
-        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
-        prov:wasInformedBy <http://matonto.org/test/commits#conflict0> ;
+        prov:atTime "2016-03-01T00:01:00Z"^^xsd:dateTime ;
+        mcat:baseCommit <http://matonto.org/test/commits#conflict0> ;
         prov:generated <http://matonto.org/test/revisions#conflict1> .
 
     <http://matonto.org/test/revisions#conflict1> a mcat:Revision ;
@@ -501,8 +502,8 @@ GRAPH <http://matonto.org/test/commits#conflict2>
 {
     <http://matonto.org/test/commits#conflict2> a mcat:Commit ;
         dc:title "Commit" ;
-        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
-        prov:wasInformedBy <http://matonto.org/test/commits#conflict0> ;
+        prov:atTime "2016-03-01T00:02:00Z"^^xsd:dateTime ;
+        mcat:baseCommit <http://matonto.org/test/commits#conflict0> ;
         prov:generated <http://matonto.org/test/revisions#conflict2> .
 
     <http://matonto.org/test/revisions#conflict2> a mcat:Revision ;
@@ -542,8 +543,8 @@ GRAPH <http://matonto.org/test/commits#conflict1-2>
 {
     <http://matonto.org/test/commits#conflict1-2> a mcat:Commit ;
         dc:title "Commit" ;
-        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
-        prov:wasInformedBy <http://matonto.org/test/commits#conflict0-2> ;
+        prov:atTime "2016-03-01T00:01:00Z"^^xsd:dateTime ;
+        mcat:baseCommit <http://matonto.org/test/commits#conflict0-2> ;
         prov:generated <http://matonto.org/test/revisions#conflict1-2> .
 
     <http://matonto.org/test/revisions#conflict1-2> a mcat:Revision ;
@@ -565,8 +566,8 @@ GRAPH <http://matonto.org/test/commits#conflict2-2>
 {
     <http://matonto.org/test/commits#conflict2-2> a mcat:Commit ;
         dc:title "Commit" ;
-        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
-        prov:wasInformedBy <http://matonto.org/test/commits#conflict0-2> ;
+        prov:atTime "2016-03-01T00:02:00Z"^^xsd:dateTime ;
+        mcat:baseCommit <http://matonto.org/test/commits#conflict0-2> ;
         prov:generated <http://matonto.org/test/revisions#conflict2-2> .
 
     <http://matonto.org/test/revisions#conflict2-2> a mcat:Revision ;
@@ -610,8 +611,8 @@ GRAPH <http://matonto.org/test/commits#conflict1-3>
 {
     <http://matonto.org/test/commits#conflict1-3> a mcat:Commit ;
         dc:title "Commit" ;
-        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
-        prov:wasInformedBy <http://matonto.org/test/commits#conflict0-3> ;
+        prov:atTime "2016-03-01T00:01:00Z"^^xsd:dateTime ;
+        mcat:baseCommit <http://matonto.org/test/commits#conflict0-3> ;
         prov:generated <http://matonto.org/test/revisions#conflict1-3> .
 
     <http://matonto.org/test/revisions#conflict1-3> a mcat:Revision ;
@@ -628,8 +629,8 @@ GRAPH <http://matonto.org/test/commits#conflict2-3>
 {
     <http://matonto.org/test/commits#conflict2-3> a mcat:Commit ;
         dc:title "Commit" ;
-        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
-        prov:wasInformedBy <http://matonto.org/test/commits#conflict0-3> ;
+        prov:atTime "2016-03-01T00:02:00Z"^^xsd:dateTime ;
+        mcat:baseCommit <http://matonto.org/test/commits#conflict0-3> ;
         prov:generated <http://matonto.org/test/revisions#conflict2-3> .
 
     <http://matonto.org/test/revisions#conflict2-3> a mcat:Revision ;
@@ -646,8 +647,8 @@ GRAPH <http://matonto.org/test/commits#conflict3-3>
 {
     <http://matonto.org/test/commits#conflict3-3> a mcat:Commit ;
         dc:title "Commit" ;
-        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
-        prov:wasInformedBy <http://matonto.org/test/commits#conflict2-3> ;
+        prov:atTime "2016-03-01T00:03:00Z"^^xsd:dateTime ;
+        mcat:baseCommit <http://matonto.org/test/commits#conflict2-3> ;
         prov:generated <http://matonto.org/test/revisions#conflict3-3> .
 
     <http://matonto.org/test/revisions#conflict2-3> a mcat:Revision ;
@@ -685,8 +686,8 @@ GRAPH <http://matonto.org/test/commits#conflict1-4>
 {
     <http://matonto.org/test/commits#conflict1-4> a mcat:Commit ;
         dc:title "Commit" ;
-        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
-        prov:wasInformedBy <http://matonto.org/test/commits#conflict0-4> ;
+        prov:atTime "2016-03-01T00:01:00Z"^^xsd:dateTime ;
+        mcat:baseCommit <http://matonto.org/test/commits#conflict0-4> ;
         prov:generated <http://matonto.org/test/revisions#conflict1-4> .
 
     <http://matonto.org/test/revisions#conflict1-4> a mcat:Revision ;
@@ -703,8 +704,8 @@ GRAPH <http://matonto.org/test/commits#conflict2-4>
 {
     <http://matonto.org/test/commits#conflict2-4> a mcat:Commit ;
         dc:title "Commit" ;
-        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
-        prov:wasInformedBy <http://matonto.org/test/commits#conflict0-4> ;
+        prov:atTime "2016-03-01T00:02:00Z"^^xsd:dateTime ;
+        mcat:baseCommit <http://matonto.org/test/commits#conflict0-4> ;
         prov:generated <http://matonto.org/test/revisions#conflict2-4> .
 
     <http://matonto.org/test/revisions#conflict2-4> a mcat:Revision ;
@@ -748,8 +749,8 @@ GRAPH <http://matonto.org/test/commits#conflict1-5>
 {
     <http://matonto.org/test/commits#conflict1-5> a mcat:Commit ;
         dc:title "Commit" ;
-        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
-        prov:wasInformedBy <http://matonto.org/test/commits#conflict0-5> ;
+        prov:atTime "2016-03-01T00:01:00Z"^^xsd:dateTime ;
+        mcat:baseCommit <http://matonto.org/test/commits#conflict0-5> ;
         prov:generated <http://matonto.org/test/revisions#conflict1-5> .
 
     <http://matonto.org/test/revisions#conflict1-5> a mcat:Revision ;
@@ -766,8 +767,8 @@ GRAPH <http://matonto.org/test/commits#conflict2-5>
 {
     <http://matonto.org/test/commits#conflict2-5> a mcat:Commit ;
         dc:title "Commit" ;
-        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
-        prov:wasInformedBy <http://matonto.org/test/commits#conflict0-5> ;
+        prov:atTime "2016-03-01T00:02:00Z"^^xsd:dateTime ;
+        mcat:baseCommit <http://matonto.org/test/commits#conflict0-5> ;
         prov:generated <http://matonto.org/test/revisions#conflict2-5> .
 
     <http://matonto.org/test/revisions#conflict2-5> a mcat:Revision ;

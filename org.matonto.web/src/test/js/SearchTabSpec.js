@@ -21,27 +21,22 @@
  * #L%
  */
 describe('Search Tab directive', function() {
-    var $compile;
-    var element;
-    var scope;
-    var ontologyStateSvc;
-    var ontologyUtilsManagerSvc;
-    var ontologyManagerSvc;
-    var deferred;
+    var $compile, scope, $q, element, controller, ontologyStateSvc, ontologyUtilsManagerSvc, ontologyManagerSvc, deferred, httpSvc;
 
     beforeEach(function() {
         module('templates');
         module('searchTab');
-        mockOntologyState();
-        mockOntologyManager();
-        mockOntologyUtilsManager();
         injectPrefixationFilter();
         injectTrustedFilter();
         injectHighlightFilter();
         injectBeautifyFilter();
         injectSplitIRIFilter();
+        mockOntologyState();
+        mockOntologyManager();
+        mockOntologyUtilsManager();
+        mockHttpService();
 
-        inject(function(_$q_, _$compile_, _$rootScope_, _ontologyStateService_, _ontologyUtilsManagerService_, _ontologyManagerService_) {
+        inject(function(_$q_, _$compile_, _$rootScope_, _ontologyStateService_, _ontologyUtilsManagerService_, _ontologyManagerService_, _httpService_) {
             $q = _$q_;
             deferred = _$q_.defer();
             $compile = _$compile_;
@@ -49,9 +44,18 @@ describe('Search Tab directive', function() {
             ontologyStateSvc = _ontologyStateService_;
             ontologyUtilsManagerSvc = _ontologyUtilsManagerService_;
             ontologyManagerSvc = _ontologyManagerService_;
+            httpSvc = _httpService_;
         });
 
-        ontologyStateSvc.state = {
+        ontologyStateSvc.selected = {
+            key: [{
+                '@id': 'id'
+            },
+            {
+                '@value': 'value'
+            }]
+        }
+        ontologyStateSvc.state.search = {
             errorMessage: 'error',
             highlightText: 'highlight',
             infoMessage: 'info',
@@ -62,77 +66,57 @@ describe('Search Tab directive', function() {
                     }
                 }]
             },
-            searchText: 'searchText'
-        }
-        ontologyStateSvc.selected = {
-            key: [{
-                '@id': 'id'
-            },
-            {
-                '@value': 'value'
-            }]
+            searchText: 'searchText',
+            selected: ontologyStateSvc.selected
         }
         ontologyUtilsManagerSvc.isLinkable.and.callFake(function(id) {
             return !!id;
         });
+        ontologyStateSvc.getState.and.returnValue(ontologyStateSvc.state);
         element = $compile(angular.element('<search-tab></search-tab>'))(scope);
         scope.$digest();
     });
 
     describe('contains the correct html', function() {
-        it('for a DIV tag', function() {
+        it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
-        });
-        it('based on .search-tab', function() {
             expect(element.hasClass('search-tab')).toBe(true);
         });
-        it('for blocks', function() {
-            var blocks = element.find('block');
-            expect(blocks.length).toBe(2);
+        it('with blocks', function() {
+            expect(element.find('block').length).toBe(2);
         });
-        it('for block-headers', function() {
-            var blockHeaders = element.find('block-header');
-            expect(blockHeaders.length).toBe(2);
+        it('with block-headers', function() {
+            expect(element.find('block-header').length).toBe(2);
         });
-        it('for block-contents', function() {
-            var blockContents = element.find('block-content');
-            expect(blockContents.length).toBe(2);
+        it('with block-contents', function() {
+            expect(element.find('block-content').length).toBe(2);
         });
-        it('for error-display', function() {
-            var errorDisplay = element.find('error-display');
-            expect(errorDisplay.length).toBe(1);
+        it('with a error-display', function() {
+            expect(element.find('error-display').length).toBe(1);
         });
-        it('for info-message', function() {
-            var infoMessage = element.find('info-message');
-            expect(infoMessage.length).toBe(1);
+        it('with a info-message', function() {
+            expect(element.find('info-message').length).toBe(1);
         });
-        it('for .result', function() {
-            var result = element.querySelectorAll('.result');
-            expect(result.length).toBe(1);
+        it('with a .result', function() {
+            expect(element.querySelectorAll('.result').length).toBe(1);
         });
-        it('for tree-item', function() {
-            var treeItem = element.find('tree-item');
-            expect(treeItem.length).toBe(1);
+        it('with a tree-item', function() {
+            expect(element.find('tree-item').length).toBe(1);
         });
-        it('for .property-values', function() {
-            var propertyValues = element.querySelectorAll('.property-values');
-            expect(propertyValues.length).toBe(1);
+        it('with a .property-values', function() {
+            expect(element.querySelectorAll('.property-values').length).toBe(1);
         });
-        it('for .value-container', function() {
-            var valueContainers = element.querySelectorAll('.value-container');
-            expect(valueContainers.length).toBe(2);
+        it('with .value-containers', function() {
+            expect(element.querySelectorAll('.value-container').length).toBe(2);
         });
-        it('for .value-display', function() {
-            var valueDisplays = element.querySelectorAll('.value-display');
-            expect(valueDisplays.length).toBe(2);
+        it('with .value-displays', function() {
+            expect(element.querySelectorAll('.value-display').length).toBe(2);
         });
-        it('for .value-display a', function() {
-            var anchor = element.querySelectorAll('.value-display a');
-            expect(anchor.length).toBe(1);
+        it('with a link in .value-display', function() {
+            expect(element.querySelectorAll('.value-display a').length).toBe(1);
         });
     });
     describe('controller methods', function() {
-        var controller;
         beforeEach(function() {
             controller = element.controller('searchTab');
         });
@@ -150,16 +134,17 @@ describe('Search Tab directive', function() {
                     controller.onKeyup({keyCode: 13});
                 });
                 it('calls the correct manager function', function() {
+                    expect(httpSvc.cancel).toHaveBeenCalledWith('search-' + ontologyStateSvc.listItem.recordId);
                     expect(ontologyStateSvc.unSelectItem).toHaveBeenCalled();
-                    expect(ontologyManagerSvc.getSearchResults).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
-                        ontologyStateSvc.state.searchText);
+                    expect(ontologyManagerSvc.getSearchResults).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, ontologyStateSvc.listItem.branchId, ontologyStateSvc.listItem.commitId, ontologyStateSvc.state.search.searchText, controller.id);
+                    expect(httpSvc.cancel).toHaveBeenCalledWith('search-' + ontologyStateSvc.listItem.recordId);
                 });
                 describe('when resolved', function() {
                     it('it sets the correct variables', function() {
                         deferred.resolve([]);
                         scope.$apply();
-                        expect(ontologyStateSvc.state.errorMessage).toEqual('');
-                        expect(ontologyStateSvc.state.highlightText).toEqual(ontologyStateSvc.state.searchText);
+                        expect(ontologyStateSvc.state.search.errorMessage).toEqual('');
+                        expect(ontologyStateSvc.state.search.highlightText).toEqual(ontologyStateSvc.state.search.searchText);
                     });
                     it('where the response has results, sets the correct variables', function() {
                         var results = {
@@ -170,38 +155,39 @@ describe('Search Tab directive', function() {
                         };
                         deferred.resolve(results);
                         scope.$apply();
-                        expect(ontologyStateSvc.state.results).toEqual(results);
-                        expect(ontologyStateSvc.state.infoMessage).toEqual('');
+                        expect(ontologyStateSvc.state.search.results).toEqual(results);
+                        expect(ontologyStateSvc.state.search.infoMessage).toEqual('');
                     });
                     it('where the response does not have results, sets the correct variables', function() {
                         deferred.resolve({});
                         scope.$apply();
-                        expect(ontologyStateSvc.state.results).toEqual({});
-                        expect(ontologyStateSvc.state.infoMessage).toEqual('There were no results for your search text.')
+                        expect(ontologyStateSvc.state.search.results).toEqual({});
+                        expect(ontologyStateSvc.state.search.infoMessage).toEqual('There were no results for your search text.')
                     });
                 });
                 it('when rejected, it sets the correct variables', function() {
                     deferred.reject('error message');
                     scope.$apply();
-                    expect(ontologyStateSvc.state.errorMessage).toEqual('error message');
-                    expect(ontologyStateSvc.state.infoMessage).toEqual('');
+                    expect(ontologyStateSvc.state.search.errorMessage).toEqual('error message');
+                    expect(ontologyStateSvc.state.search.infoMessage).toEqual('');
                 });
             });
         });
         it('onClear should reset state variables', function() {
-            expect(ontologyStateSvc.state.errorMessage).not.toEqual('');
-            expect(ontologyStateSvc.state.infoMessage).not.toEqual('');
-            expect(ontologyStateSvc.state.results).not.toEqual({});
-            expect(ontologyStateSvc.state.searchText).not.toEqual('');
-            expect(ontologyStateSvc.state.selected).not.toEqual({});
-            expect(ontologyStateSvc.state.highlightText).not.toEqual('');
+            expect(ontologyStateSvc.state.search.errorMessage).not.toEqual('');
+            expect(ontologyStateSvc.state.search.infoMessage).not.toEqual('');
+            expect(ontologyStateSvc.state.search.results).not.toEqual({});
+            expect(ontologyStateSvc.state.search.searchText).not.toEqual('');
+            expect(ontologyStateSvc.state.search.selected).not.toEqual({});
+            expect(ontologyStateSvc.state.search.highlightText).not.toEqual('');
             controller.onClear();
-            expect(ontologyStateSvc.state.errorMessage).toEqual('');
-            expect(ontologyStateSvc.state.infoMessage).toEqual('');
-            expect(ontologyStateSvc.state.results).toEqual({});
-            expect(ontologyStateSvc.state.searchText).toEqual('');
-            expect(ontologyStateSvc.state.selected).toEqual({});
-            expect(ontologyStateSvc.state.highlightText).toEqual('');
+            expect(httpSvc.cancel).toHaveBeenCalledWith('search-' + ontologyStateSvc.listItem.recordId);
+            expect(ontologyStateSvc.state.search.errorMessage).toEqual('');
+            expect(ontologyStateSvc.state.search.infoMessage).toEqual('');
+            expect(ontologyStateSvc.state.search.results).toEqual({});
+            expect(ontologyStateSvc.state.search.searchText).toEqual('');
+            expect(ontologyStateSvc.state.search.selected).toEqual({});
+            expect(ontologyStateSvc.state.search.highlightText).toEqual('');
         });
         it('check $watch', function() {
             ontologyStateSvc.selected = {
@@ -210,7 +196,7 @@ describe('Search Tab directive', function() {
                 'matonto': 'new'
             }
             scope.$digest();
-            expect(ontologyStateSvc.state.selected).toEqual({key: 'new'});
+            expect(ontologyStateSvc.state.search.selected).toEqual({key: 'new'});
         });
     });
 });

@@ -68,7 +68,7 @@
 
                     dvm.onChange = function() {
                         $timeout(function() {
-                            $scope.changeEvent();                            
+                            $scope.changeEvent();
                         });
                     }
                 }],

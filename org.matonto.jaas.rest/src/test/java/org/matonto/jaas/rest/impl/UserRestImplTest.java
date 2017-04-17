@@ -56,6 +56,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static org.mockito.Matchers.any;
@@ -238,7 +239,7 @@ public class UserRestImplTest extends MatontoRestTestNg {
         Response response = target().path("users")
                 .queryParam("password", "123")
                 .request().post(Entity.entity(user.toString(), MediaType.APPLICATION_JSON));
-        assertEquals(response.getStatus(), 200);
+        assertEquals(response.getStatus(), 201);
         verify(engineManager).storeUser(anyString(), any(User.class));
     }
 
@@ -302,7 +303,7 @@ public class UserRestImplTest extends MatontoRestTestNg {
         when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.empty());
 
         Response response = target().path("users/error").request().get();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatus(), 404);
         verify(engineManager).retrieveUser(anyString(), eq("error"));
     }
 
@@ -358,11 +359,11 @@ public class UserRestImplTest extends MatontoRestTestNg {
     }
 
     @Test
-    public void updatePasswordTest() {
+    public void changePasswordTest() {
         Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/password")
                 .queryParam("currentPassword", "ABC")
                 .queryParam("newPassword", "XYZ")
-                .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
+                .request().post(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 200);
         verify(engineManager).checkPassword(anyString(), eq(UsernameTestFilter.USERNAME), eq("ABC"));
         verify(engineManager, atLeastOnce()).retrieveUser(anyString(), eq(UsernameTestFilter.USERNAME));
@@ -370,17 +371,78 @@ public class UserRestImplTest extends MatontoRestTestNg {
     }
 
     @Test
-    public void updatePasswordWithoutCurrentPasswordTest() {
+    public void changePasswordAsDifferentUserTest() {
+        Response response = target().path("users/error/password")
+                .queryParam("currentPassword", "ABC")
+                .queryParam("newPassword", "XYZ")
+                .request().post(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
+        assertEquals(response.getStatus(), 403);
+    }
+
+    @Test
+    public void changePasswordWithoutCurrentPasswordTest() {
         Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/password")
                 .queryParam("newPassword", "XYZ")
+                .request().post(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void changePasswordWithWrongPasswordTest() {
+        // Setup:
+        when(engineManager.checkPassword(anyString(), anyString(), eq("error"))).thenReturn(false);
+
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/password")
+                .queryParam("currentPassword", "error")
+                .queryParam("newPassword", "XYZ")
+                .request().post(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
+        assertEquals(response.getStatus(), 401);
+    }
+
+    @Test
+    public void changePasswordWithoutNewPasswordTest() {
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/password")
+                .queryParam("currentPassword", "ABC")
+                .request().post(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void changePasswordForUserThatDoesNotExistTest() {
+        // Setup:
+        when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.empty());
+
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/password")
+                .queryParam("currentPassword", "ABC")
+                .queryParam("newPassword", "XYZ")
+                .request().post(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void resetPasswordTest() {
+        Response response = target().path("users/username/password")
+                .queryParam("newPassword", "XYZ")
+                .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
+        assertEquals(response.getStatus(), 200);
+        verify(engineManager, atLeastOnce()).retrieveUser(anyString(), eq("username"));
+        verify(engineManager).updateUser(anyString(), any(User.class));
+    }
+
+    @Test
+    public void resetPasswordWithoutNewPasswordTest() {
+        Response response = target().path("users/username/password")
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
 
     @Test
-    public void updatePasswordWithoutNewPasswordTest() {
-        Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/password")
-                .queryParam("currentPassword", "ABC")
+    public void resetPasswordOfUserThatDoesNotExistTest() {
+        // Setup:
+        when(engineManager.retrieveUser(anyString(), eq("error"))).thenReturn(Optional.empty());
+
+        Response response = target().path("users/error/password")
+                .queryParam("newPassword", "XYZ")
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
@@ -437,30 +499,49 @@ public class UserRestImplTest extends MatontoRestTestNg {
     }
 
     @Test
-    public void addUserRoleTest() {
-        Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/roles").queryParam("role", "testRole")
+    public void addUserRolesTest() {
+        // Setup:
+        Map<String, Role> roles = new HashMap<>();
+        IntStream.range(1, 3)
+                .mapToObj(Integer::toString)
+                .forEach(s -> roles.put(s, roleFactory.createNew(vf.createIRI("http://matonto.org/roles/" + s))));
+        User newUser = userFactory.createNew(vf.createIRI("http://matonto.org/users/" + UsernameTestFilter.USERNAME));
+        when(engineManager.getRole(anyString(), anyString())).thenAnswer(i -> Optional.of(roles.get(i.getArgumentAt(1, String.class))));
+        when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.of(newUser));
+
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/roles").queryParam("roles", roles.keySet().toArray())
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 200);
         verify(engineManager).retrieveUser(anyString(), eq(UsernameTestFilter.USERNAME));
+        roles.keySet().forEach(s -> verify(engineManager).getRole(anyString(), eq(s)));
         verify(engineManager).updateUser(anyString(), any(User.class));
     }
 
     @Test
-    public void addRoleToUserThatDoesNotExistTest() {
+    public void addRolesToUserThatDoesNotExistTest() {
         //Setup:
         when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.empty());
+        String[] roles = {"testRole"};
 
-        Response response = target().path("users/error/roles").queryParam("role", "testRole")
+        Response response = target().path("users/error/roles").queryParam("roles", roles)
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
 
     @Test
-    public void addRoleThatDoesNotExistToUserTest() {
+    public void addRolesThatDoNotExistToUserTest() {
         //Setup:
         when(engineManager.getRole(anyString(), anyString())).thenReturn(Optional.empty());
+        String[] roles = {"testRole"};
 
-        Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/roles").queryParam("role", "error")
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/roles").queryParam("roles", roles)
+                .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void addUserRolesWithoutRolesTest() {
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/roles")
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }

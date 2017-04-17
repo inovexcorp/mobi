@@ -5,17 +5,18 @@
 @prefix dct: <http://purl.org/dc/terms/>.
 @prefix foaf: <http://xmlns.com/foaf/0.1/>.
 @prefix matuser: <http://matonto.org/ontologies/user/management#> .
+@prefix matonto: <http://matonto.org/ontologies/matonto#> .
 @prefix : <http://matonto.org/ontologies/platform/config#>.
 @base <http://matonto.org/ontologies/platform/config>.
 
 <http://matonto.org/ontologies/platform/config> a owl:Ontology;
     owl:versionIRI <http://matonto.org/ontologies/platform/config/1.0>;
-    owl:imports <http://matonto.org/ontologies/user/management>;
+    owl:imports <http://matonto.org/ontologies/user/management>, <http://matonto.org/ontologies/matonto> ;
     rdfs:label "The MatOnto platform configuration ontology"@en;
     rdfs:comment "The MatOnto platform configuration ontology describes how user preferences, user state, and applications are expressed within the MatOnto framework."@en;
-    dct:creator [foaf:name "Jordan Lewis"], [foaf:name "Megan Mercer"];
+    dct:creator [foaf:name "Jordan Lewis"], [foaf:name "Megan Mercer"], [foaf:name "Stephen Kahmann"];
     foaf:maker [foaf:name "MatOnto"; foaf:homepage <http://matonto.org>];
-    dct:modified "2016-11-22"^^xsd:date.
+    dct:modified "2017-02-27"^^xsd:date.
 
 # Application
 
@@ -33,7 +34,7 @@
     rdfs:label "state resource"@en;
     rdfs:comment "The subject of one of the resources associated with the described State."@en;
     rdfs:domain :State;
-    rdfs:range rdfs:Resource.
+    rdfs:range matonto:Identifier.
 
 # ApplicationState
 

@@ -20,8 +20,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="radio" ng-class="{'disabled': isDisabledWhen}">
-    <label class="control-label">
+<div class="radio" ng-class="{'disabled': isDisabledWhen, 'wrapper-inline': inline}">
+    <label ng-class="{'radio-inline': inline}">
         <input type="radio" ng-value="value" ng-model="bindModel" ng-change="dvm.onChange()" ng-disabled="isDisabledWhen"/>
         {{displayText}}
     </label>

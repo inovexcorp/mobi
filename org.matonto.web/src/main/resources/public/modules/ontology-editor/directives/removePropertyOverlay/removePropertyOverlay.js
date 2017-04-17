@@ -27,9 +27,9 @@
         .module('removePropertyOverlay', [])
         .directive('removePropertyOverlay', removePropertyOverlay);
 
-        removePropertyOverlay.$inject = ['ontologyStateService', 'propertyManagerService'];
+        removePropertyOverlay.$inject = ['ontologyStateService', 'propertyManagerService', 'ontologyUtilsManagerService'];
 
-        function removePropertyOverlay(ontologyStateService, propertyManagerService) {
+        function removePropertyOverlay(ontologyStateService, propertyManagerService, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -44,16 +44,23 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    dvm.sm = ontologyStateService;
+                    var ontoUtils = ontologyUtilsManagerService;
+                    dvm.os = ontologyStateService;
                     dvm.pm = propertyManagerService;
 
                     dvm.removeProperty = function() {
                         if (dvm.onSubmit) {
-                            dvm.onSubmit({axiomObject: dvm.sm.selected[dvm.key][dvm.index]});
+                            dvm.onSubmit({axiomObject: dvm.os.selected[dvm.key][dvm.index]});
                         }
-                        dvm.pm.remove(dvm.sm.selected, dvm.key, dvm.index);
-                        dvm.sm.setUnsaved(dvm.sm.listItem.ontologyId, dvm.sm.selected.matonto.originalIRI, true);
+                        var json = {
+                            '@id': dvm.os.selected['@id'],
+                            [dvm.key]: [angular.copy(dvm.os.selected[dvm.key][dvm.index])]
+                        }
+                        dvm.os.addToDeletions(dvm.os.listItem.recordId, json);
+                        dvm.pm.remove(dvm.os.selected, dvm.key, dvm.index);
                         dvm.overlayFlag = false;
+                        ontoUtils.saveCurrentChanges();
+                        ontoUtils.updateLabel();
                     }
                 }
             }

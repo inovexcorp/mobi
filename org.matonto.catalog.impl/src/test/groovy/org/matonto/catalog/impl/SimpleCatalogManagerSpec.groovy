@@ -28,7 +28,6 @@ import org.matonto.catalog.api.ontologies.mcat.*
 import org.matonto.jaas.api.ontologies.usermanagement.User
 import org.matonto.jaas.api.ontologies.usermanagement.UserFactory
 import org.matonto.rdf.api.Model
-import org.matonto.rdf.api.Resource
 import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory
 import org.matonto.rdf.orm.conversion.impl.*
@@ -54,7 +53,6 @@ class SimpleCatalogManagerSpec extends Specification {
     def versionedRDFRecordFactory = new VersionedRDFRecordFactory()
     def ontologyRecordFactory = new OntologyRecordFactory()
     def mappingRecordFactory = new MappingRecordFactory()
-    def datasetRecordFactory = new DatasetRecordFactory()
     def distributionFactory = new DistributionFactory()
     def versionFactory = new VersionFactory()
     def branchFactory = new BranchFactory()
@@ -77,19 +75,13 @@ class SimpleCatalogManagerSpec extends Specification {
     def dcModified = dcTerms + "modified"
     def dcPublisher = dcTerms + "publisher"
     def prov = "http://www.w3.org/ns/prov#"
-    def provAtTime = prov + "atTime"
-    def provWasAssociatedWith = prov + "wasAssociatedWith"
-    def provWasInformedBy = prov + "wasInformedBy"
     def provGenerated = prov + "generated"
-    def provWasDerivedFrom = prov + "wasDerivedFrom"
     def accessURL
     def downloadURL
     def format = "format"
     def parents = new HashSet<Commit>()
     def dummyCommit
     def dummyBranchIRI
-    def inProgressNamespace = "https://matonto.org/in-progress-commits#"
-    def revisionNamespace = "https://matonto.org/revisions#"
 
     def setup() {
         catalogFactory.setValueFactory(vf)
@@ -113,9 +105,6 @@ class SimpleCatalogManagerSpec extends Specification {
         mappingRecordFactory.setValueFactory(vf)
         mappingRecordFactory.setModelFactory(mf)
         mappingRecordFactory.setValueConverterRegistry(vcr)
-        datasetRecordFactory.setValueFactory(vf)
-        datasetRecordFactory.setModelFactory(mf)
-        datasetRecordFactory.setValueConverterRegistry(vcr)
         distributionFactory.setValueFactory(vf)
         distributionFactory.setModelFactory(mf)
         distributionFactory.setValueConverterRegistry(vcr)
@@ -158,7 +147,6 @@ class SimpleCatalogManagerSpec extends Specification {
         vcr.registerValueConverter(versionedRDFRecordFactory)
         vcr.registerValueConverter(ontologyRecordFactory)
         vcr.registerValueConverter(mappingRecordFactory)
-        vcr.registerValueConverter(datasetRecordFactory)
         vcr.registerValueConverter(tagFactory)
         vcr.registerValueConverter(inProgressCommitFactory)
         vcr.registerValueConverter(commitFactory)
@@ -199,7 +187,7 @@ class SimpleCatalogManagerSpec extends Specification {
         publishers.add(user)
 
         dummyCommit = commitFactory.createNew(vf.createIRI("https://matonto.org/test/commit"))
-        dummyCommit.setProperty(vf.createIRI("https://matonto.org/revision"), vf.createIRI(provGenerated));
+        dummyCommit.setProperty(vf.createIRI("https://matonto.org/revision"), vf.createIRI(provGenerated))
         parents.add(dummyCommit)
 
         dummyBranchIRI = vf.createIRI("https://matonto.org/test/branch")
@@ -210,10 +198,11 @@ class SimpleCatalogManagerSpec extends Specification {
 
     def "createRecord creates a Record when provided a RecordFactory"() {
         setup:
-        def recordConfig = new RecordConfig.Builder(title, identifier, publishers)
+        def recordConfig = new RecordConfig.Builder(title, publishers)
+                .identifier(identifier)
                 .description(description)
                 .keywords(keywords)
-                .build();
+                .build()
         def record = service.createRecord(recordConfig, recordFactory)
         def publishers = record.getProperties(vf.createIRI(dcPublisher))
 
@@ -230,9 +219,9 @@ class SimpleCatalogManagerSpec extends Specification {
         publishers.contains(user.getResource())
     }
 
-    def "createRecord creates a Record with no description or keywords when provided a RecordFactory"() {
+    def "createRecord creates a Record with no identifier, description or keywords when provided a RecordFactory"() {
         setup:
-        def recordConfig = new RecordConfig.Builder(title, identifier, publishers).build();
+        def recordConfig = new RecordConfig.Builder(title, publishers).build()
         def record = service.createRecord(recordConfig, recordFactory)
         def publishers = record.getProperties(vf.createIRI(dcPublisher))
 
@@ -240,7 +229,6 @@ class SimpleCatalogManagerSpec extends Specification {
         record instanceof Record
         record.getProperty(vf.createIRI(dcTitle)).get().stringValue() == title
         !record.getProperty(vf.createIRI(dcDescription)).isPresent()
-        record.getProperty(vf.createIRI(dcIdentifier)).get().stringValue() == identifier
         record.getProperty(vf.createIRI(dcIssued)).isPresent()
         record.getProperty(vf.createIRI(dcModified)).isPresent()
         record.getKeyword().size() == 0
@@ -249,10 +237,11 @@ class SimpleCatalogManagerSpec extends Specification {
 
     def "createRecord creates an UnversionedRecord when provided an UnversionedRecordFactory"() {
         setup:
-        def recordConfig = new RecordConfig.Builder(title, identifier, publishers)
+        def recordConfig = new RecordConfig.Builder(title, publishers)
+                .identifier(identifier)
                 .description(description)
                 .keywords(keywords)
-                .build();
+                .build()
         def record = service.createRecord(recordConfig, unversionedRecordFactory)
         def publishers = record.getProperties(vf.createIRI(dcPublisher))
 
@@ -271,10 +260,11 @@ class SimpleCatalogManagerSpec extends Specification {
 
     def "createRecord creates a VersionedRecord when provided a VersionedRecordFactory"() {
         setup:
-        def recordConfig = new RecordConfig.Builder(title, identifier, publishers)
+        def recordConfig = new RecordConfig.Builder(title, publishers)
+                .identifier(identifier)
                 .description(description)
                 .keywords(keywords)
-                .build();
+                .build()
         def record = service.createRecord(recordConfig, versionedRecordFactory)
         def publishers = record.getProperties(vf.createIRI(dcPublisher))
 
@@ -293,10 +283,11 @@ class SimpleCatalogManagerSpec extends Specification {
 
     def "createRecord creates a VersionedRDFRecord when provided a VersionedRDFRecordFactory"() {
         setup:
-        def recordConfig = new RecordConfig.Builder(title, identifier, publishers)
+        def recordConfig = new RecordConfig.Builder(title, publishers)
+                .identifier(identifier)
                 .description(description)
                 .keywords(keywords)
-                .build();
+                .build()
         def record = service.createRecord(recordConfig, versionedRDFRecordFactory)
         def publishers = record.getProperties(vf.createIRI(dcPublisher))
 
@@ -315,10 +306,11 @@ class SimpleCatalogManagerSpec extends Specification {
 
     def "createRecord creates an OntologyRecord when provided an OntologyRecordFactory"() {
         setup:
-        def recordConfig = new RecordConfig.Builder(title, identifier, publishers)
+        def recordConfig = new RecordConfig.Builder(title, publishers)
+                .identifier(identifier)
                 .description(description)
                 .keywords(keywords)
-                .build();
+                .build()
         def record = service.createRecord(recordConfig, ontologyRecordFactory)
         def publishers = record.getProperties(vf.createIRI(dcPublisher))
 
@@ -337,37 +329,16 @@ class SimpleCatalogManagerSpec extends Specification {
 
     def "createRecord creates a MappingRecord when provided a MappingRecordFactory"() {
         setup:
-        def recordConfig = new RecordConfig.Builder(title, identifier, publishers)
+        def recordConfig = new RecordConfig.Builder(title, publishers)
+                .identifier(identifier)
                 .description(description)
                 .keywords(keywords)
-                .build();
+                .build()
         def record = service.createRecord(recordConfig, mappingRecordFactory)
         def publishers = record.getProperties(vf.createIRI(dcPublisher))
 
         expect:
         record instanceof MappingRecord
-        def keywords = record.getKeyword()
-        record.getProperty(vf.createIRI(dcTitle)).get().stringValue() == title
-        record.getProperty(vf.createIRI(dcDescription)).get().stringValue() == description
-        record.getProperty(vf.createIRI(dcIdentifier)).get().stringValue() == identifier
-        record.getProperty(vf.createIRI(dcIssued)).isPresent()
-        record.getProperty(vf.createIRI(dcModified)).isPresent()
-        keywords.contains(vf.createLiteral("keyword1"))
-        keywords.contains(vf.createLiteral("keyword2"))
-        publishers.contains(user.getResource())
-    }
-
-    def "createRecord creates a DatasetRecord when provided a DatasetRecordFactory"() {
-        setup:
-        def recordConfig = new RecordConfig.Builder(title, identifier, publishers)
-                .description(description)
-                .keywords(keywords)
-                .build();
-        def record = service.createRecord(recordConfig, datasetRecordFactory)
-        def publishers = record.getProperties(vf.createIRI(dcPublisher))
-
-        expect:
-        record instanceof DatasetRecord
         def keywords = record.getKeyword()
         record.getProperty(vf.createIRI(dcTitle)).get().stringValue() == title
         record.getProperty(vf.createIRI(dcDescription)).get().stringValue() == description
@@ -386,7 +357,7 @@ class SimpleCatalogManagerSpec extends Specification {
                 .format(format)
                 .accessURL(accessURL)
                 .downloadURL(downloadURL)
-                .build();
+                .build()
         def distribution = service.createDistribution(distributionConfig)
 
         expect:
@@ -403,7 +374,7 @@ class SimpleCatalogManagerSpec extends Specification {
     def "createDistribution creates a Distribution with no description, format, accessURL, or downloadURL"() {
         setup:
         def distributionConfig = new DistributionConfig.Builder(title)
-                .build();
+                .build()
         def distribution = service.createDistribution(distributionConfig)
 
         expect:

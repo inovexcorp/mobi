@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.4.17-SNAPSHOT</version>
+        <version>1.6.20-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -80,11 +80,6 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.matonto</groupId>
-            <artifactId>ontology.cli</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -180,7 +175,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rdf.orm</artifactId>
-            <version>${project.version}</version>
+            <version>${orm.version}</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
@@ -205,6 +200,26 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>platform.config.impl</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>dataset.api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>dataset.impl</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>dataset.rest</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>sparql.utils</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>
