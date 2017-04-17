@@ -70,8 +70,6 @@
 
                     var classMapping = _.find(dvm.state.mapping.jsonld, {'@id': dvm.state.selectedClassMappingId});
                     var prefix = dvm.util.getPropertyValue(classMapping, prefixes.delim + 'hasPrefix');
-                    var regex = new RegExp(prefixes.data + '(.*?)\/');
-                    var pfx = prefix.replace(regex, '');
                     dvm.beginsWith = prefix.slice(0, -1);
                     dvm.then = prefix[prefix.length - 1];
                     dvm.localNameOptions = [{text: 'UUID', value: '${UUID}'}];

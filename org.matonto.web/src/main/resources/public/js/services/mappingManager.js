@@ -332,7 +332,7 @@
              * @methodOf mappingManager.service:mappingManagerService
              *
              * @description
-             * Edits the IRI template of a class mapping specified by id in a mapping. Sets the `prefix`
+             * Edits the IRI template of a class mapping specified by id in a mapping. Sets the `hasPrefix`
              * and `localName` properties of the class mapping.
              *
              * @param {Object[]} mapping The mapping JSON-LD array
