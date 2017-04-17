@@ -21,7 +21,7 @@
  * #L%
  */
 
-fdescribe('Tree Item directive', function() {
+describe('Tree Item directive', function() {
     var $compile, scope, element, controller, isolatedScope, ontologyStateSvc, settingsManagerSvc;
 
     beforeEach(function() {
@@ -139,7 +139,7 @@ fdescribe('Tree Item directive', function() {
             expect(span.hasClass('bold')).toBe(true);
         });
     });
-    fdescribe('controller methods', function() {
+    describe('controller methods', function() {
         describe('getTreeDisplay', function() {
             it('should return originalIRI when not pretty', function() {
                 scope.currentEntity = {matonto: {originalIRI: 'originalIRI', anonymous: 'anon'}};
@@ -191,7 +191,7 @@ fdescribe('Tree Item directive', function() {
                 expect(controller.toggleOpen).toHaveBeenCalled();
             });
         });
-        fdescribe('isSaved', function() {
+        describe('isSaved', function() {
             it('additions', function() {
                 controller.currentEntity = {'@id': 'id'};
                 ontologyStateSvc.listItem.inProgressCommit = {
