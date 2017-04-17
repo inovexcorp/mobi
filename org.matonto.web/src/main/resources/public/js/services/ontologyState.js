@@ -59,6 +59,7 @@
             var ontologyListItemTemplate = {
                 ontology: [],
                 ontologyId: '',
+                importedOntologies: [],
                 annotations: angular.copy(propertyManagerService.defaultAnnotations),
                 dataPropertyRange: om.defaultDatatypes,
                 subClasses: [],
@@ -120,6 +121,7 @@
              * {
              *      ontologyId: '',
              *      ontology: [],
+             *      importedOntologies: [],
              *      annotations: [],
              *      subDataProperties: [],
              *      subObjectProperties: [],
@@ -353,7 +355,8 @@
                     om.getClassesWithIndividuals(recordId, branchId, commitId),
                     om.getDataPropertyHierarchies(recordId, branchId, commitId),
                     om.getObjectPropertyHierarchies(recordId, branchId, commitId),
-                    cm.getRecordBranches(recordId, catalogId)
+                    cm.getRecordBranches(recordId, catalogId),
+                    om.getImportedOntologies(recordId, branchId, commitId)
                 ]).then(response => {
                     listItem.annotations = _.unionWith(
                         _.get(response[0], 'annotationProperties'),
@@ -410,6 +413,9 @@
                     listItem.objectPropertyHierarchy = response[5].hierarchy;
                     listItem.objectPropertyIndex = response[5].index;
                     listItem.branches = response[6].data;
+                    _.forEach(response[7], importedOntObj => {
+                        listItem.importedOntologies.push(importedOntObj.ontology)
+                    });
                     listItem.upToDate = upToDate;
                     _.pullAllWith(
                         listItem.annotations,
@@ -427,7 +433,8 @@
                     om.getIris(recordId, branchId, commitId),
                     om.getImportedIris(recordId, branchId, commitId),
                     om.getConceptHierarchies(recordId, branchId, commitId),
-                    cm.getRecordBranches(recordId, catalogId)
+                    cm.getRecordBranches(recordId, catalogId),
+                    om.getImportedOntologies(recordId, branchId, commitId)
                 ]).then(response => {
                     listItem.subDataProperties = _.get(response[0], 'dataProperties');
                     listItem.subObjectProperties = _.get(response[0], 'objectProperties');
@@ -462,6 +469,9 @@
                     listItem.conceptHierarchy = response[2].hierarchy;
                     listItem.conceptIndex = response[2].index;
                     listItem.branches = response[3].data;
+                    _.forEach(response[4], importedOntObj => {
+                        listItem.importedOntologies.push(importedOntObj.ontology)
+                    });
                     listItem.upToDate = upToDate;
                     _.pullAllWith(
                         listItem.annotations,

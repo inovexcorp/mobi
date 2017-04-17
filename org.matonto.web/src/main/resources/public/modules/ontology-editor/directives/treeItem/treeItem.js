@@ -51,6 +51,7 @@
                     var treeDisplay = settingsManagerService.getTreeDisplay();
                     var os = ontologyStateService;
                     dvm.saved = isSaved();
+                    dvm.imported = isImported();
 
                     dvm.getTreeDisplay = function() {
                         if (treeDisplay === 'pretty') {
@@ -67,6 +68,16 @@
                     function isSaved() {
                         var ids = _.unionWith(_.map(os.listItem.inProgressCommit.additions, '@id'), _.map(os.listItem.inProgressCommit.deletions, '@id'), _.isEqual);
                         return _.includes(ids, _.get(dvm.currentEntity, '@id'));
+                    }
+
+                    function isImported() {
+                        var imp = false;
+                        var curEntityId = _.get(dvm.currentEntity, '@id');
+                        var ontId = os.listItem.ontologyId;
+                        if (!_.isMatch(curEntityId,ontId)) {
+                            imp = true;
+                        }
+                        return imp;
                     }
 
                     $scope.$watch(() => os.listItem.inProgressCommit, () => {

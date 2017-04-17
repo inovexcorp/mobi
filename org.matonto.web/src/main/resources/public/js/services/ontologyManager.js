@@ -990,7 +990,14 @@
              * @param {Object[]} ontology The ontology you want to check.
              * @returns {boolean} Returns true if it does have individuals, otherwise returns false.
              */
-            self.hasIndividuals = function(ontology) {
+            self.hasIndividuals = function(ontology, importedOntologies) {
+                if (importedOntologies != null) {
+                    for (var i = 0; i < importedOntologies.length ; i++) {
+                        if (_.some(importedOntologies[i], entity => self.isIndividual(entity))) {
+                            return true;
+                        }
+                    }
+                }
                 return _.some(ontology, entity => self.isIndividual(entity));
             }
             /**
@@ -1004,8 +1011,15 @@
              * @param {Object[]} ontology The ontology you want to check.
              * @returns {Object[]} An array of all owl:NamedIndividual entities within the ontology.
              */
-            self.getIndividuals = function(ontology) {
-                return _.filter(ontology, entity => self.isIndividual(entity));
+            self.getIndividuals = function(ontology, importedOntologies) {
+                var individuals = [];
+                if (importedOntologies != null) {
+                    for (var i = 0; i < importedOntologies.length ; i++) {
+                        individuals.push.apply(individuals, _.filter(importedOntologies[i], entity => self.isIndividual(entity)));
+                    }
+                }
+                individuals.push.apply(individuals, _.filter(ontology, entity => self.isIndividual(entity)));
+                return individuals;
             }
             /**
              * @ngdoc method
@@ -1050,8 +1064,8 @@
              * @param {string} classIRI The class IRI of the class you want to check about.
              * @returns {boolean} Returns true if it does have individuals, otherwise returns false.
              */
-            self.hasClassIndividuals = function(ontology, classIRI) {
-                return _.some(self.getIndividuals(ontology), {'@type': [classIRI]});
+            self.hasClassIndividuals = function(ontology, importedOntologies, classIRI) {
+                return _.some(self.getIndividuals(ontology, importedOntologies), {'@type': [classIRI]});
             }
             /**
              * @ngdoc method
@@ -1066,8 +1080,8 @@
              * @param {string} classIRI The class IRI of the class you want to check about.
              * @returns {Object[]} Returns an array of all the individuals associated with the provided class IRI.
              */
-            self.getClassIndividuals = function(ontology, classIRI) {
-                return _.filter(self.getIndividuals(ontology), {'@type': [classIRI]});
+            self.getClassIndividuals = function(ontology, importedOntologies, classIRI) {
+                return _.filter(self.getIndividuals(ontology, importedOntologies), {'@type': [classIRI]});
             }
             /**
              * @ngdoc method

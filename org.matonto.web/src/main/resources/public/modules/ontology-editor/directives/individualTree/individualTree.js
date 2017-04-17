@@ -42,6 +42,17 @@
                     dvm.os = ontologyStateService;
                     dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.util = utilService;
+                    dvm.imported = isImported();
+
+                    function isImported() {
+                        var imp = false;
+                        var curEntityId = _.get(dvm.os.currentEntity, '@id');
+                        var ontId = dvm.os.listItem.ontologyId;
+                        if (!_.isMatch(curEntityId,ontId)) {
+                            imp = true;
+                        }
+                        return imp;
+                    }
                 }
             }
         }

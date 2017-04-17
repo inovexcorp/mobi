@@ -67,6 +67,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -422,7 +423,9 @@ public class SimpleOntologyManager implements OntologyManager {
         Repository repo = repositoryManager.createMemoryRepository();
         repo.initialize();
         try (RepositoryConnection conn = repo.getConnection()) {
+            Set<Ontology> importedOntologies = ontology.getImportsClosure();
             conn.add(ontology.asModel(modelFactory));
+            importedOntologies.forEach(ont -> conn.add(ont.asModel(modelFactory)));
             TupleQuery query = conn.prepareTupleQuery(queryString);
             if (addBinding != null) {
                 query = addBinding.apply(query);
