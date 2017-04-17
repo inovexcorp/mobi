@@ -1054,6 +1054,8 @@
                     } else if (om.isBlankNode(entity)) {
                         let id = _.get(entity, '@id');
                         _.set(blankNodes, id, mc.jsonldToManchester(id, ontology, true));
+                    } else if (om.isIndividual(entity)) {
+                        findValuesMissingDatatypes(entity);
                     }
                 });
                 listItem.ontologyId = ontologyId;
@@ -1065,6 +1067,17 @@
                 listItem.index = index;
                 listItem.inProgressCommit = inProgressCommit;
                 return listItem;
+            }
+            function findValuesMissingDatatypes(object) {
+                if (_.has(object, '@value')) {
+                    if (!_.has(object, '@type')) {
+                        object['@type'] = prefixes.xsd + "string";
+                    }
+                } else if (_.isObject(object)) {
+                    _.forEach(_.keys(object), key => {
+                        findValuesMissingDatatypes(object[key]);
+                    });
+                }
             }
             function updateListItem(recordId, newListItem) {
                 var oldListItem = self.getListItemByRecordId(recordId);
