@@ -401,10 +401,27 @@
                             compareListItems
                         );
                     });
+
                     listItem.classHierarchy = response[2].hierarchy;
                     listItem.classIndex = response[2].index;
-                    listItem.classesWithIndividuals = response[3].hierarchy;
-                    listItem.classesWithIndividualsIndex = response[3].index;
+
+                    var individualKeys = [];
+                    var reducedPaths = _.uniq(
+                        _.reduce(
+                        _.forOwn(response[3].individuals,
+                            function(value, key) {
+                                individualKeys.push(key);
+                                return self.getPathsTo(listItem.classHierarchy, listItem.classIndex, key);
+                            } ),
+                                function(flattened, other) {
+                                    return flattened.concat(other);
+                                },
+                            []
+                        )
+                    );
+
+                    listItem.classesWithIndividuals = individualKeys;
+                    listItem.IndividualsPath = reducedPaths;
                     listItem.dataPropertyHierarchy = response[4].hierarchy;
                     listItem.dataPropertyIndex = response[4].index;
                     listItem.objectPropertyHierarchy = response[5].hierarchy;
