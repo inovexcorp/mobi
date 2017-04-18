@@ -61,6 +61,6 @@
     "lodash": "^4.6.0",
     "ng-handsontable": "^0.13.0",
     "snapsvg": "^0.5.1",
-    "ui-select": "^0.19.3"
+    "ui-select": "^0.19.8"
   }
 }
