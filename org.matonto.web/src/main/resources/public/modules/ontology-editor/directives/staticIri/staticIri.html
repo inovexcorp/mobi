@@ -21,7 +21,8 @@
   #L%
   -->
 <span class="static-iri">
-    <strong class="text-muted">{{dvm.iri}} <a ng-click="dvm.os.showIriOverlay = true"><i class="fa fa-pencil"></i></a></strong>
+    <strong class="text-muted" uib-tooltip="Click here to copy the IRI" ngclipboard data-clipboard-text="{{dvm.iri}}" ngclipboard-success="dvm.onSuccess()">{{dvm.iri}}</strong>
+    <a ng-click="dvm.os.showIriOverlay = true"><i class="fa fa-pencil"></i></a>
 </span>
 <div ng-if="dvm.os.showIriOverlay" class="overlay">
     <form name="dvm.iriForm" class="content clearfix" novalidate autocomplete="off">
@@ -30,7 +31,7 @@
         <!-- Begins with -->
         <div ng-class="{'has-error': dvm.iriForm.iriBegin.$error.pattern}" class="form-group begin-container">
             <custom-label muted-text="'*Required'">Begins with</custom-label>
-            <input class="form-control" id="iriBegin" name="iriBegin" ng-model="dvm.iriBegin" ng-pattern="dvm.namespacePattern" ng-trim="false" required />
+            <input class="form-control" id="irswiBegin" name="iriBegin" ng-model="dvm.iriBegin" ng-pattern="dvm.namespacePattern" ng-trim="false" required />
             <p ng-messages="dvm.iriForm.iriBegin.$error" class="error-msg">
                 <ng-message when="pattern">Value is not a valid namespace.</ng-message>
             </p>
