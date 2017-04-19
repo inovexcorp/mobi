@@ -58,6 +58,5 @@ describe('Settings Tabset directive', function() {
         it('with a password tab', function() {
             expect(this.element.find('password-tab').length).toBe(1);
         });
-
     });
 });

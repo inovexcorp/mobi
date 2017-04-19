@@ -30,8 +30,8 @@
          *
          * @description
          * The `groupTab` module only provides the `groupTab` directive which creates
-         * an area on the accounts page to display groups that the current user is in,
-         * whether or not the group is an Admin group and how many users are in that group.
+         * a Bootstrap list of groups a user is in
+         * 
          */
         .module('groupTab', [])
         /**
@@ -43,7 +43,7 @@
          * @requires loginManager.service:loginManagerService
          *
          * @description
-         * `groupTab` is a directive 
+         * `groupTab` is a directive which creates a Bootstrap list of groups a user is in
          */
         .directive('groupTab', groupTab);
 
@@ -60,7 +60,7 @@
                     dvm.um = userManagerService;
                     dvm.lm = loginManagerService;
                     dvm.getUserGroups = function() {
-                    return _.filter(dvm.um.groups, group => _.includes(group.members, dvm.lm.currentUser));
+                        return _.filter(dvm.um.groups, group => _.includes(group.members, dvm.lm.currentUser));
                     }
                 },
                 templateUrl: 'modules/settings/directives/groupTab/groupTab.html'
