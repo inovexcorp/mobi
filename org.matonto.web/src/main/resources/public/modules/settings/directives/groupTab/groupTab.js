@@ -26,11 +26,12 @@
     angular
         /**
          * @ngdoc overview
-         * @name passwordTab
+         * @name groupTab
          *
          * @description
          * The `groupTab` module only provides the `groupTab` directive which creates
-         * 
+         * an area on the accounts page to display groups that the current user is in,
+         * whether or not the group is an Admin group and how many users are in that group.
          */
         .module('groupTab', [])
         /**
@@ -46,9 +47,9 @@
          */
         .directive('groupTab', groupTab);
 
-        groupTab.$inject = ['userManagerService', 'loginManagerService', 'utilService'];
+        groupTab.$inject = ['userManagerService', 'loginManagerService'];
 
-        function groupTab(userManagerService, loginManagerService, utilService) {
+        function groupTab(userManagerService, loginManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -56,14 +57,12 @@
                 scope: {},
                 controller: function() {
                     var dvm = this;
-                    var util = utilService;
                     dvm.um = userManagerService;
                     dvm.lm = loginManagerService;
                     dvm.getUserGroups = function() {
                     return _.filter(dvm.um.groups, group => _.includes(group.members, dvm.lm.currentUser));
                     }
                 },
-
                 templateUrl: 'modules/settings/directives/groupTab/groupTab.html'
             }
         }
