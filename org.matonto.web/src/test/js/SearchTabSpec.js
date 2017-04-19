@@ -47,6 +47,14 @@ describe('Search Tab directive', function() {
             httpSvc = _httpService_;
         });
 
+        ontologyStateSvc.selected = {
+            key: [{
+                '@id': 'id'
+            },
+            {
+                '@value': 'value'
+            }]
+        }
         ontologyStateSvc.state.search = {
             errorMessage: 'error',
             highlightText: 'highlight',
@@ -58,19 +66,13 @@ describe('Search Tab directive', function() {
                     }
                 }]
             },
-            searchText: 'searchText'
-        }
-        ontologyStateSvc.selected = {
-            key: [{
-                '@id': 'id'
-            },
-            {
-                '@value': 'value'
-            }]
+            searchText: 'searchText',
+            selected: ontologyStateSvc.selected
         }
         ontologyUtilsManagerSvc.isLinkable.and.callFake(function(id) {
             return !!id;
         });
+        ontologyStateSvc.getState.and.returnValue(ontologyStateSvc.state);
         element = $compile(angular.element('<search-tab></search-tab>'))(scope);
         scope.$digest();
     });
@@ -132,9 +134,10 @@ describe('Search Tab directive', function() {
                     controller.onKeyup({keyCode: 13});
                 });
                 it('calls the correct manager function', function() {
-                    expect(httpSvc).toHaveBeenCalledWith('search-' + ontologyStateSvc.listItem.recordId);
+                    expect(httpSvc.cancel).toHaveBeenCalledWith('search-' + ontologyStateSvc.listItem.recordId);
                     expect(ontologyStateSvc.unSelectItem).toHaveBeenCalled();
-                    expect(ontologyManagerSvc.getSearchResults).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, ontologyStateSvc.listItem.branchId, ontologyStateSvc.listItem.commitId, ontologyStateSvc.state.search.searchText);
+                    expect(ontologyManagerSvc.getSearchResults).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, ontologyStateSvc.listItem.branchId, ontologyStateSvc.listItem.commitId, ontologyStateSvc.state.search.searchText, controller.id);
+                    expect(httpSvc.cancel).toHaveBeenCalledWith('search-' + ontologyStateSvc.listItem.recordId);
                 });
                 describe('when resolved', function() {
                     it('it sets the correct variables', function() {
@@ -178,6 +181,7 @@ describe('Search Tab directive', function() {
             expect(ontologyStateSvc.state.search.selected).not.toEqual({});
             expect(ontologyStateSvc.state.search.highlightText).not.toEqual('');
             controller.onClear();
+            expect(httpSvc.cancel).toHaveBeenCalledWith('search-' + ontologyStateSvc.listItem.recordId);
             expect(ontologyStateSvc.state.search.errorMessage).toEqual('');
             expect(ontologyStateSvc.state.search.infoMessage).toEqual('');
             expect(ontologyStateSvc.state.search.results).toEqual({});

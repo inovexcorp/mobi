@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Targeted Spinner directive', function() {
+describe('Targeted Spinner directive', function() {
     var $compile, scope, element, canceller, httpSvc;
 
     beforeEach(function() {

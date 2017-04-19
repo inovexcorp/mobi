@@ -70,11 +70,8 @@
 
                     var classMapping = _.find(dvm.state.mapping.jsonld, {'@id': dvm.state.selectedClassMappingId});
                     var prefix = dvm.util.getPropertyValue(classMapping, prefixes.delim + 'hasPrefix');
-                    var regex = new RegExp(prefixes.data + '(.*?)\/');
-                    var prefixEnd = prefix.replace(regex, '');
-                    dvm.beginning = _.pullAt(prefix.match(regex), 0)[0];
-                    dvm.beginsWith = prefixEnd.slice(0, -1);
-                    dvm.then = prefixEnd[prefixEnd.length - 1];
+                    dvm.beginsWith = prefix.slice(0, -1);
+                    dvm.then = prefix[prefix.length - 1];
                     dvm.localNameOptions = [{text: 'UUID', value: '${UUID}'}];
                     for (var idx = 0; idx < dvm.dm.dataRows[0].length; idx++) {
                         dvm.localNameOptions.push({text: dvm.dm.getHeader(idx), value: '${' + idx + '}'});

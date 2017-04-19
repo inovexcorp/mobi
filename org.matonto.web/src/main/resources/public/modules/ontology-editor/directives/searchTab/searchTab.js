@@ -62,6 +62,7 @@
                     }
 
                     dvm.onClear = function() {
+                        httpService.cancel(dvm.id);
                         dvm.os.state.search.errorMessage = '';
                         dvm.os.state.search.highlightText = '';
                         dvm.os.state.search.infoMessage = '';
@@ -73,6 +74,12 @@
                     $scope.$watch('dvm.os.selected', (newValue, oldValue) => {
                         if (!_.isEqual(oldValue, newValue)) {
                             dvm.os.state.search.selected = _.omit(angular.copy(newValue), '@id', '@type', 'matonto');
+                        }
+                    });
+
+                    $scope.$watch('dvm.os.listItem.recordId', (newValue, oldValue) => {
+                        if (!_.isEqual(oldValue, newValue)) {
+                            dvm.id = 'search-' + newValue;
                         }
                     });
                 }]

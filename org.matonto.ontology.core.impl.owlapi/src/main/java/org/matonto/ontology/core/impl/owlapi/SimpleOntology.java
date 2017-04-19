@@ -62,9 +62,14 @@ import org.semanticweb.owlapi.io.OWLParser;
 import org.semanticweb.owlapi.io.OWLParserFactory;
 import org.semanticweb.owlapi.io.StringDocumentSource;
 import org.semanticweb.owlapi.model.AddImport;
+import org.semanticweb.owlapi.model.AsOWLClass;
+import org.semanticweb.owlapi.model.AsOWLDatatype;
+import org.semanticweb.owlapi.model.HasRange;
 import org.semanticweb.owlapi.model.MissingImportHandlingStrategy;
 import org.semanticweb.owlapi.model.MissingImportListener;
+import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLDocumentFormat;
+import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLObjectSomeValuesFrom;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
@@ -81,7 +86,6 @@ import org.semanticweb.owlapi.util.OWLOntologyWalkerVisitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -96,6 +100,7 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
 
 
 
@@ -114,7 +119,7 @@ public class SimpleOntology implements Ontology {
     private OWLOntology owlOntology;
     // Instance initialization block sets MissingImportListener for handling missing imports for an ontology.
     private final OWLOntologyLoaderConfiguration config = new OWLOntologyLoaderConfiguration()
-			.setMissingImportHandlingStrategy(MissingImportHandlingStrategy.SILENT);
+            .setMissingImportHandlingStrategy(MissingImportHandlingStrategy.SILENT);
     private final OWLOntologyManager owlManager = OWLManager.createOWLOntologyManager();
 
     {
@@ -329,14 +334,56 @@ public class SimpleOntology implements Ontology {
                 .map(SimpleOntologyValues::matontoObjectProperty)
                 .collect(Collectors.toSet());
     }
-    
+
+    @Override
+    public Optional<ObjectProperty> getObjectProperty(IRI iri) {
+        return getOwlObjectProperty(iri)
+                .flatMap(owlObjectProperty -> Optional.of(
+                        SimpleOntologyValues.matontoObjectProperty(owlObjectProperty)));
+    }
+
+    @Override
+    public Set<Resource> getObjectPropertyRange(ObjectProperty objectProperty) {
+        getOwlObjectProperty(objectProperty.getIRI()).orElseThrow(() ->
+                new IllegalArgumentException("Object property not found in ontology"));
+        return owlOntology.objectPropertyRangeAxioms(SimpleOntologyValues.owlapiObjectProperty(objectProperty))
+                .map(HasRange::getRange)
+                // TODO: Return all range values, not just classes
+                .filter(AsOWLClass::isOWLClass)
+                .map(owlClassExpression -> SimpleOntologyValues.matontoIRI(owlClassExpression.asOWLClass().getIRI()))
+                .collect(Collectors.toSet());
+    }
+
+    // TODO: Function to get the domain of a object property
+
     @Override
     public Set<DataProperty> getAllDataProperties() {
         return owlOntology.dataPropertiesInSignature()
                 .map(SimpleOntologyValues::matontoDataProperty)
                 .collect(Collectors.toSet());
     }
-    
+
+    @Override
+    public Optional<DataProperty> getDataProperty(IRI iri) {
+        return getOwlDataProperty(iri)
+                .flatMap(owlDataProperty -> Optional.of(
+                        SimpleOntologyValues.matontoDataProperty(owlDataProperty)));
+    }
+
+    @Override
+    public Set<Resource> getDataPropertyRange(DataProperty dataProperty) {
+        getOwlDataProperty(dataProperty.getIRI()).orElseThrow(() ->
+                new IllegalArgumentException("Data property not found in ontology"));
+        return owlOntology.dataPropertyRangeAxioms(SimpleOntologyValues.owlapiDataProperty(dataProperty))
+                .map(HasRange::getRange)
+                // TODO: Return all range values, not just datatypes
+                .filter(AsOWLDatatype::isOWLDatatype)
+                .map(owlDataRange -> SimpleOntologyValues.matontoIRI(owlDataRange.asOWLDatatype().getIRI()))
+                .collect(Collectors.toSet());
+    }
+
+    // TODO: Function to get the domain of a data property
+
     @Override
     public Set<Individual> getAllIndividuals() {
         return owlOntology.individualsInSignature()
@@ -345,7 +392,6 @@ public class SimpleOntology implements Ontology {
     }
 
     /**
-     * .
      * @return the unmodifiable sesame model that represents this Ontology.
      */
     protected org.openrdf.model.Model asSesameModel() throws MatontoOntologyException {
@@ -498,5 +544,17 @@ public class SimpleOntology implements Ontology {
         annotationProperties = owlOntology.annotationPropertiesInSignature()
                 .map(SimpleOntologyValues::matontoAnnotationProperty)
                 .collect(Collectors.toSet());
+    }
+
+    private Optional<OWLObjectProperty> getOwlObjectProperty(IRI iri) {
+        return owlOntology.objectPropertiesInSignature()
+                .filter(objectProperty -> objectProperty.getIRI().equals(SimpleOntologyValues.owlapiIRI(iri)))
+                .findFirst();
+    }
+
+    private Optional<OWLDataProperty> getOwlDataProperty(IRI iri) {
+        return owlOntology.dataPropertiesInSignature()
+                .filter(dataProperty -> dataProperty.getIRI().equals(SimpleOntologyValues.owlapiIRI(iri)))
+                .findFirst();
     }
 }
