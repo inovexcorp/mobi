@@ -167,10 +167,10 @@ describe('Mapper State service', function() {
         var classProps = [{'@id': 'prop1'}, {'@id': 'prop2'}];
         var noDomainProps = [{'@id': 'prop3'}, {'@id': 'prop4'}];
         ontologyManagerSvc.getClassProperties.and.callFake(function(entities, classId) {
-            return _.isEqual(entities, ontologies[0].entities) ? [classProps[0]] : [classProps[1]];
+            return _.isEqual(entities, [ontologies[0].entities]) ? [classProps[0]] : [classProps[1]];
         });
         ontologyManagerSvc.getNoDomainProperties.and.callFake(function(entities) {
-            return _.isEqual(entities, ontologies[0].entities) ? noDomainProps : [];
+            return _.isEqual(entities, [ontologies[0].entities]) ? noDomainProps : [];
         });
         var result = mapperStateSvc.getClassProps(ontologies, 'class');
         expect(ontologyManagerSvc.getClassProperties.calls.count()).toBe(ontologies.length);
@@ -185,7 +185,7 @@ describe('Mapper State service', function() {
         var classes1 = [{'@id': 'class1'}];
         var classes2 = [{'@id': 'class2'}];
         ontologyManagerSvc.getClasses.and.callFake(function(entities) {
-            return _.isEqual(entities, ontologies[0].entities) ? classes1 : classes2;
+            return _.isEqual(entities, [ontologies[0].entities]) ? classes1 : classes2;
         });
         var result = mapperStateSvc.getClasses(ontologies);
         expect(result).toContain({ontologyId: ontologies[0].id, classObj: classes1[0]});

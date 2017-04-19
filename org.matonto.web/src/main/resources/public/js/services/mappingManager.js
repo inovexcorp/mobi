@@ -310,7 +310,7 @@
             self.addClass = function(mapping, ontology, classId) {
                 var classEntity = undefined;
                 // Check if class exists in ontology
-                if (om.getEntity(ontology, classId)) {
+                if (om.getEntity([ontology], classId)) {
                     // Collect IRI sections for prefix and create class mapping
                     var splitIri = $filter('splitIRI')(classId);
                     var ontologyDataName = util.getBeautifulIRI(om.getOntologyIRI(ontology)).toLowerCase();
@@ -371,7 +371,7 @@
             self.addDataProp = function(mapping, ontology, classMappingId, propId, columnIndex) {
                 var dataEntity;
                 // Check if class mapping exists and the property exists in the ontology
-                var propObj = om.getEntity(ontology, propId);
+                var propObj = om.getEntity([ontology], propId);
                 if (entityExists(mapping, classMappingId) && propObj && om.isDataTypeProperty(propObj)) {
                     // Add new data mapping id to data properties of class mapping
                     dataEntity = {
@@ -412,7 +412,7 @@
                 var objectEntity;
                 // Check if class mapping exists, range class mapping exists, object property exists in ontology,
                 // and object property range matches the range class mapping
-                var propObj = om.getEntity(ontology, propId);
+                var propObj = om.getEntity([ontology], propId);
                 if (entityExists(mapping, classMappingId) && entityExists(mapping, rangeClassMappingId) && propObj && om.isObjectProperty(propObj)
                         && util.getPropertyId(propObj, prefixes.rdfs + 'range') === getEntityById(mapping, rangeClassMappingId)[prefixes.delim + 'mapsTo'][0]['@id']) {
                     // Add new object mapping id to object properties of class mapping
@@ -600,7 +600,7 @@
              * @return {Object} The ontology with the class with the passed IRI
              */
             self.findSourceOntologyWithClass = function(classIRI, ontologies) {
-                return _.find(ontologies, ontology => _.findIndex(om.getClasses(ontology.entities), {'@id': classIRI}) !== -1);
+                return _.find(ontologies, ontology => _.findIndex(om.getClasses([ontology.entities]), {'@id': classIRI}) !== -1);
             }
             /**
              * @ngdoc method
@@ -617,7 +617,7 @@
              */
             self.findSourceOntologyWithProp = function(propertyIRI, ontologies) {
                 return _.find(ontologies, ontology => {
-                    var properties = _.concat(om.getDataTypeProperties(ontology.entities), om.getObjectProperties(ontology.entities));
+                    var properties = _.concat(om.getDataTypeProperties([ontology.entities]), om.getObjectProperties([ontology.entities]));
                     return _.findIndex(properties, {'@id': propertyIRI}) !== -1;
                 });
             }
@@ -666,7 +666,7 @@
                         if (!ontology) {
                             incompatibleMappings.push(propMapping);
                         } else {
-                            var propObj = om.getEntity(ontology.entities, propId);
+                            var propObj = om.getEntity([ontology.entities], propId);
                             if (om.isObjectProperty(propObj)) {
                                 var rangeClassId = self.getClassIdByMappingId(mapping, util.getPropertyId(propMapping, prefixes.delim + 'classMapping'));
                                 if (self.isDataMapping(propMapping) || util.getPropertyId(propObj, prefixes.rdfs + 'range') !== rangeClassId) {

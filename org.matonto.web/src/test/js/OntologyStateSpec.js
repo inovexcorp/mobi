@@ -1269,7 +1269,7 @@ describe('Ontology State service', function() {
             ontologyManagerSvc.getEntity.and.returnValue(classObj);
             expect(ontologyStateSvc.getEntityByRecordId(recordId, classId)).toEqual(classObj);
             expect(ontologyStateSvc.getListItemByRecordId).toHaveBeenCalledWith(recordId);
-            expect(ontologyManagerSvc.getEntity).toHaveBeenCalledWith(ontology, classId);
+            expect(ontologyManagerSvc.getEntity).toHaveBeenCalledWith([ontology], classId);
         });
         it('undefined when not present', function() {
             spyOn(ontologyStateSvc, 'getListItemByRecordId').and.callThrough();

@@ -48,7 +48,7 @@
                     <hierarchy-tree hierarchy="dvm.os.listItem.objectPropertyHierarchy"></hierarchy-tree>
                 </li>
             </ul>
-            <ul ng-if="dvm.om.hasAnnotations(dvm.os.listItem.ontology)">
+            <ul ng-if="dvm.om.hasAnnotations(dvm.os.getOntologiesArray())">
                 <li>
                     <a ng-click="dvm.os.setAnnotationPropertiesOpened(dvm.os.listItem.recordId, !dvm.os.getAnnotationPropertiesOpened(dvm.os.listItem.recordId)); $event.stopPropagation()">
                         <i class="fa fa-fw"
@@ -57,7 +57,7 @@
                 </li>
                 <li class="container" ng-if="dvm.os.getAnnotationPropertiesOpened(dvm.os.listItem.recordId)">
                     <ul>
-                        <tree-item ng-repeat="annotation in dvm.om.getAnnotations(dvm.os.listItem.ontology) | orderBy:dvm.om.getEntityName" current-entity="annotation" ng-init="path = dvm.os.listItem.recordId + '.' + annotation['@id']"
+                        <tree-item ng-repeat="annotation in dvm.om.getAnnotations(dvm.os.getOntologiesArray()) | orderBy:dvm.om.getEntityName" current-entity="annotation" ng-init="path = dvm.os.listItem.recordId + '.' + annotation['@id']"
                                    path="path" is-active="dvm.os.getActiveEntityIRI() === annotation['@id']"
                                    is-opened="dvm.os.getOpened(path)" on-click="dvm.os.selectItem(annotation['@id'])" data-path-to="{{path}}"></tree-item>
                     </ul>
@@ -65,7 +65,7 @@
             </ul>
         </block-content>
         <block-footer class="centered">
-            <button class="btn btn-link" ng-disabled="!dvm.os.selected" ng-click="dvm.showDeleteConfirmation = true"><i class="fa fa-trash-o"></i><span>Delete Property</span></button>
+            <button class="btn btn-link" ng-disabled="!dvm.os.selected || dvm.os.selected.matonto.imported" ng-click="dvm.showDeleteConfirmation = true"><i class="fa fa-trash-o"></i><span>Delete Property</span></button>
         </block-footer>
     </block>
     <confirmation-overlay ng-if="dvm.showDeleteConfirmation" header-text="'Delete Property'" confirm-click="dvm.deleteProperty()"
