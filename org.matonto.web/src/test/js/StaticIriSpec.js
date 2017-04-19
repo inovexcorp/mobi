@@ -27,7 +27,8 @@ describe('Static IRI directive', function() {
         element,
         controller,
         isolatedScope,
-        ontologyStateSvc;
+        ontologyStateSvc,
+        toastr;
 
     beforeEach(function() {
         module('templates');
@@ -35,12 +36,14 @@ describe('Static IRI directive', function() {
         injectSplitIRIFilter();
         injectRegexConstant();
         mockOntologyState();
+        mockToastr();
 
-        inject(function(_$compile_, _$rootScope_, _$filter_, _ontologyStateService_) {
+        inject(function(_$compile_, _$rootScope_, _$filter_, _ontologyStateService_, _toastr_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $filter = _$filter_;
             ontologyStateSvc = _ontologyStateService_;
+            toastr = _toastr_;
         });
 
         scope.onEdit = jasmine.createSpy('onEdit');
@@ -161,6 +164,10 @@ describe('Static IRI directive', function() {
             expect(controller.iriBegin).toBe('new');
             expect(controller.iriThen).toBe('new');
             expect(controller.iriEnd).toBe('new');
+        });
+        it('onSuccess calls correct toastr method', function() {
+            controller.onSuccess();
+            expect(toastr.success).toHaveBeenCalledWith('', 'Copied', {timeOut: 2000});
         });
         it('check $watch', function() {
             controller.setVariables = jasmine.createSpy('setVariables');

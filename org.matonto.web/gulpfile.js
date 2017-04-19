@@ -61,12 +61,15 @@ var jsFiles = function(prefix) {
             prefix + 'angular-ui-codemirror/**/ui-codemirror.js',
             prefix + 'angular-messages/**/angular-messages.min.js',
             prefix + 'angular-ui-bootstrap/**/ui-bootstrap.js',
+            prefix + 'angular-ui-bootstrap/**/ui-bootstrap-tpls.js',
             prefix + 'ui-select/**/select.min.js',
             prefix + 'handsontable/**/handsontable.full.js',
             prefix + 'ng-handsontable/**/ngHandsontable.min.js',
             prefix + 'chroma-js/**/chroma.min.js',
             prefix + 'angular-toastr/**/angular-toastr.tpls.js',
-            prefix + 'snapsvg/**/snap.svg-min.js'
+            prefix + 'snapsvg/**/snap.svg-min.js',
+            prefix + 'clipboard/**/clipboard.min.js',
+            prefix + 'ngclipboard/**/ngclipboard.min.js'
         ]
     },
     styleFiles = function(prefix, suffix) {
