@@ -27,6 +27,7 @@
         .module('settings', [
             /* Custom directives */
             'customPreference',
+            'groupTab',
             'passwordTab',
             'preferencesContainer',
             'preferencesTab',
