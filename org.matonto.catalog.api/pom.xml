@@ -108,7 +108,7 @@
                             </generates>
                             <references>
                                 <ontology>
-                                    <ontologyFile>${project.basedir}/src/main/resources/prov-o.ttl</ontologyFile>
+                                    <ontologyFile>${project.basedir}/../org.matonto.rdf.orm.ontologies/src/main/resources/prov-o.ttl</ontologyFile>
                                     <outputPackage>org.matonto.ontologies.provo</outputPackage>
                                 </ontology>
                             </references>

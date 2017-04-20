@@ -23,6 +23,19 @@ package org.matonto.catalog.rest.impl;
  * #L%
  */
 
+import static org.matonto.rest.util.RestUtils.encode;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
+
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.glassfish.jersey.client.ClientConfig;
@@ -48,8 +61,6 @@ import org.matonto.catalog.api.ontologies.mcat.InProgressCommit;
 import org.matonto.catalog.api.ontologies.mcat.InProgressCommitFactory;
 import org.matonto.catalog.api.ontologies.mcat.MappingRecord;
 import org.matonto.catalog.api.ontologies.mcat.MappingRecordFactory;
-import org.matonto.catalog.api.ontologies.mcat.OntologyRecord;
-import org.matonto.catalog.api.ontologies.mcat.OntologyRecordFactory;
 import org.matonto.catalog.api.ontologies.mcat.Record;
 import org.matonto.catalog.api.ontologies.mcat.RecordFactory;
 import org.matonto.catalog.api.ontologies.mcat.Tag;
@@ -97,12 +108,6 @@ import org.openrdf.model.vocabulary.DCTERMS;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Application;
-import javax.ws.rs.core.Link;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -111,19 +116,12 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-
-import static org.matonto.rest.util.RestUtils.encode;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.Application;
+import javax.ws.rs.core.Link;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
 
 public class CatalogRestImplTest extends MatontoRestTestNg {
     private CatalogRestImpl rest;
@@ -132,7 +130,6 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     private UnversionedRecordFactory unversionedRecordFactory;
     private VersionedRecordFactory versionedRecordFactory;
     private VersionedRDFRecordFactory versionedRDFRecordFactory;
-    private OntologyRecordFactory ontologyRecordFactory;
     private MappingRecordFactory mappingRecordFactory;
     private DistributionFactory distributionFactory;
     private VersionFactory versionFactory;
@@ -151,7 +148,6 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     private UnversionedRecord testUnversionedRecord;
     private VersionedRecord testVersionedRecord;
     private VersionedRDFRecord testVersionedRDFRecord;
-    private OntologyRecord testOntologyRecord;
     private MappingRecord testMappingRecord;
     private Distribution testDistribution;
     private Version testVersion;
@@ -206,7 +202,6 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         unversionedRecordFactory = new UnversionedRecordFactory();
         versionedRecordFactory = new VersionedRecordFactory();
         versionedRDFRecordFactory = new VersionedRDFRecordFactory();
-        ontologyRecordFactory = new OntologyRecordFactory();
         mappingRecordFactory = new MappingRecordFactory();
         distributionFactory = new DistributionFactory();
         versionFactory = new VersionFactory();
@@ -231,9 +226,6 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         versionedRDFRecordFactory.setModelFactory(mf);
         versionedRDFRecordFactory.setValueFactory(vf);
         versionedRDFRecordFactory.setValueConverterRegistry(vcr);
-        ontologyRecordFactory.setModelFactory(mf);
-        ontologyRecordFactory.setValueFactory(vf);
-        ontologyRecordFactory.setValueConverterRegistry(vcr);
         mappingRecordFactory.setModelFactory(mf);
         mappingRecordFactory.setValueFactory(vf);
         mappingRecordFactory.setValueConverterRegistry(vcr);
@@ -267,7 +259,6 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         vcr.registerValueConverter(unversionedRecordFactory);
         vcr.registerValueConverter(versionedRecordFactory);
         vcr.registerValueConverter(versionedRDFRecordFactory);
-        vcr.registerValueConverter(ontologyRecordFactory);
         vcr.registerValueConverter(mappingRecordFactory);
         vcr.registerValueConverter(distributionFactory);
         vcr.registerValueConverter(versionFactory);
@@ -317,7 +308,6 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         testVersionedRDFRecord = versionedRDFRecordFactory.createNew(vf.createIRI(RECORD_IRI));
         testVersionedRDFRecord.setMasterBranch(testBranch);
         testVersionedRDFRecord.setBranch(Stream.of(testBranch, testUserBranch).collect(Collectors.toSet()));
-        testOntologyRecord = ontologyRecordFactory.createNew(vf.createIRI(RECORD_IRI));
         testMappingRecord = mappingRecordFactory.createNew(vf.createIRI(RECORD_IRI));
         user = userFactory.createNew(vf.createIRI(USER_IRI));
         compiledResource = mf.createModel();
@@ -342,7 +332,6 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         rest.addRecordFactory(unversionedRecordFactory);
         rest.addRecordFactory(versionedRecordFactory);
         rest.addRecordFactory(versionedRDFRecordFactory);
-        rest.addRecordFactory(ontologyRecordFactory);
         rest.addRecordFactory(mappingRecordFactory);
 
         return new ResourceConfig()
@@ -382,8 +371,6 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
                 .thenReturn(Optional.of(testVersionedRecord));
         when(catalogManager.getRecord(any(Resource.class), any(Resource.class), eq(versionedRDFRecordFactory)))
                 .thenReturn(Optional.of(testVersionedRDFRecord));
-        when(catalogManager.getRecord(any(Resource.class), any(Resource.class), eq(ontologyRecordFactory)))
-                .thenReturn(Optional.of(testOntologyRecord));
         when(catalogManager.getRecord(any(Resource.class), any(Resource.class), eq(mappingRecordFactory)))
                 .thenReturn(Optional.of(testMappingRecord));
         when(catalogManager.createRecord(any(RecordConfig.class), eq(recordFactory))).thenReturn(testRecord);
@@ -393,8 +380,6 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
                 .thenReturn(testVersionedRecord);
         when(catalogManager.createRecord(any(RecordConfig.class), eq(versionedRDFRecordFactory)))
                 .thenReturn(testVersionedRDFRecord);
-        when(catalogManager.createRecord(any(RecordConfig.class), eq(ontologyRecordFactory)))
-                .thenReturn(testOntologyRecord);
         when(catalogManager.createRecord(any(RecordConfig.class), eq(mappingRecordFactory)))
                 .thenReturn(testMappingRecord);
         when(catalogManager.getDistribution(any(Resource.class))).thenReturn(Optional.of(testDistribution));
@@ -632,12 +617,6 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     @Test
     public void createVersionedRDFRecordTest() {
         testCreateRecordByType(versionedRDFRecordFactory);
-        verify(catalogManager).addMasterBranch(any(Resource.class));
-    }
-
-    @Test
-    public void createOntologyRecordTest() {
-        testCreateRecordByType(ontologyRecordFactory);
         verify(catalogManager).addMasterBranch(any(Resource.class));
     }
 
@@ -3558,12 +3537,11 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         assertEquals(response.getStatus(), 200);
         try {
             JSONArray array = JSONArray.fromObject(response.readEntity(String.class));
-            assertEquals(array.size(), 6);
+            assertEquals(array.size(), 5);
             assertTrue(array.contains(recordFactory.getTypeIRI().stringValue()));
             assertTrue(array.contains(unversionedRecordFactory.getTypeIRI().stringValue()));
             assertTrue(array.contains(versionedRecordFactory.getTypeIRI().stringValue()));
             assertTrue(array.contains(versionedRDFRecordFactory.getTypeIRI().stringValue()));
-            assertTrue(array.contains(ontologyRecordFactory.getTypeIRI().stringValue()));
             assertTrue(array.contains(mappingRecordFactory.getTypeIRI().stringValue()));
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());

@@ -23,6 +23,8 @@ package org.matonto.ontology.core.api;
  * #L%
  */
 
+import org.matonto.ontology.core.api.builder.OntologyRecordConfig;
+import org.matonto.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import org.matonto.ontology.core.utils.MatontoOntologyCreationException;
 import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.query.TupleQueryResult;
@@ -44,6 +46,14 @@ public interface OntologyManager {
      * @return the SesameTransformer used by the OntologyManager.
      */
     SesameTransformer getTransformer();
+
+    /**
+     * Creates a new OntologyRecord using the provided OntologyRecordConfig.
+     *
+     * @param config the configuration to use when creating the OntologyRecord
+     * @return a OntologyRecord
+     */
+    OntologyRecord createOntologyRecord(OntologyRecordConfig config);
 
     /**
      * Creates a new Ontology Object using the provided OntologyId.

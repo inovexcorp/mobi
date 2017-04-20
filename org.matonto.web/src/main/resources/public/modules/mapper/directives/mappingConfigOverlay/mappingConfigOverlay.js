@@ -78,7 +78,7 @@
                     dvm.recordsConfig = {
                         pageIndex: 0,
                         sortOption: _.find(dvm.cm.sortOptions, {field: prefixes.dcterms + 'title', ascending: true}),
-                        recordType: prefixes.catalog + 'OntologyRecord',
+                        recordType: prefixes.ontologyEditor + 'OntologyRecord',
                         limit: 10,
                         searchText: ''
                     };

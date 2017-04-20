@@ -30,6 +30,20 @@
   },
   "results": {
     "bindings": [
+        {
+          "p": {
+            "type": "uri",
+            "value": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+          },
+          "s": {
+            "type": "uri",
+            "value": "http://matonto.org/ontology#Individual1a"
+          },
+          "o": {
+            "type": "uri",
+            "value": "http://matonto.org/ontology#Class1a"
+          }
+      },
       {
         "p": {
           "type": "uri",
@@ -38,20 +52,6 @@
         "s": {
           "type": "uri",
           "value": "http://matonto.org/ontology#Class1b"
-        },
-        "o": {
-          "type": "uri",
-          "value": "http://matonto.org/ontology#Class1a"
-        }
-      },
-      {
-        "p": {
-          "type": "uri",
-          "value": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
-        },
-        "s": {
-          "type": "uri",
-          "value": "http://matonto.org/ontology#Individual1a"
         },
         "o": {
           "type": "uri",

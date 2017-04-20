@@ -84,7 +84,7 @@ describe('Mapping Config Overlay directive', function() {
             controller = element.controller('mappingConfigOverlay');
             expect(controller.recordsConfig.pageIndex).toBe(0);
             expect(controller.recordsConfig.sortOption).toEqual(sortOption);
-            expect(controller.recordsConfig.recordType).toEqual(prefixes.catalog + 'OntologyRecord');
+            expect(controller.recordsConfig.recordType).toEqual(prefixes.ontologyEditor + 'OntologyRecord');
             expect(controller.recordsConfig.limit).toEqual(10);
             expect(controller.recordsConfig.searchText).toEqual('');
         });

@@ -391,6 +391,7 @@ function mockPrefixes() {
             this.catalog = 'catalog:';
             this.skos = 'skos:';
             this.xsd = 'xsd:';
+            this.ontologyEditor = 'ontEdit:';
         });
     });
 }

@@ -39,11 +39,11 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.Difference;
+import org.matonto.catalog.api.PaginatedSearchResults;
 import org.matonto.catalog.api.builder.RecordConfig;
 import org.matonto.catalog.api.ontologies.mcat.Commit;
 import org.matonto.catalog.api.ontologies.mcat.InProgressCommit;
-import org.matonto.catalog.api.ontologies.mcat.OntologyRecord;
-import org.matonto.catalog.api.ontologies.mcat.OntologyRecordFactory;
+import org.matonto.catalog.api.ontologies.mcat.Record;
 import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
@@ -53,6 +53,11 @@ import org.matonto.ontology.core.api.Entity;
 import org.matonto.ontology.core.api.NamedIndividual;
 import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyManager;
+import org.matonto.ontology.core.api.builder.OntologyRecordConfig;
+import org.matonto.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
+import org.matonto.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
+import org.matonto.ontology.core.api.pagination.OntologyPaginatedSearchParams;
+import org.matonto.ontology.core.api.pagination.OntologyRecordSearchResults;
 import org.matonto.ontology.core.api.propertyexpression.AnnotationProperty;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.ontology.rest.OntologyRest;
@@ -70,11 +75,13 @@ import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rest.util.ErrorUtils;
 import org.matonto.web.security.util.AuthenticationProps;
 import org.openrdf.model.vocabulary.OWL;
+import org.openrdf.model.vocabulary.RDF;
 
 import java.io.BufferedWriter;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -1171,15 +1178,18 @@ public class OntologyRestImpl implements OntologyRest {
     private Response uploadOntology(ContainerRequestContext context, Ontology ontology, String title,
                                     String description, String keywords) throws MatOntoException {
         User user = getUserFromContext(context);
-        RecordConfig.Builder builder = new RecordConfig.Builder(title, Collections.singleton(user));
+        OntologyRecordConfig.OntologyRecordBuilder builder = new OntologyRecordConfig.OntologyRecordBuilder(title,
+                Collections.singleton(user));
+        ontology.getOntologyId().getOntologyIRI().ifPresent(builder::ontologyIRI);
         if (description != null) {
             builder.description(description);
         }
         if (keywords != null) {
             builder.keywords(Arrays.stream(StringUtils.split(keywords, ",")).collect(Collectors.toSet()));
         }
-        Resource catalogId = catalogManager.getLocalCatalog().getResource();
-        OntologyRecord record = catalogManager.createRecord(builder.build(), ontologyRecordFactory);
+        Resource catalogId = catalogManager.getLocalCatalogIRI();
+        OntologyRecord record = ontologyManager.createOntologyRecord(builder.build());
+        record.getOntologyIRI().ifPresent(this::testOntologyIRIUniqueness);
         catalogManager.addRecord(catalogId, record);
         catalogManager.addMasterBranch(record.getResource());
         record = catalogManager.getRecord(catalogId, record.getResource(), ontologyRecordFactory).get();
@@ -1199,5 +1209,19 @@ public class OntologyRestImpl implements OntologyRest {
                 .element("branchId", masterBranchId.stringValue())
                 .element("commitId", commit.getResource().stringValue());
         return Response.status(201).entity(response).build();
+    }
+
+    private void testOntologyIRIUniqueness(IRI ontologyIRI) {
+        OntologyPaginatedSearchParams params = new OntologyPaginatedSearchParams(valueFactory);
+        PaginatedSearchResults<Record> temp = catalogManager.findRecord(catalogManager.getLocalCatalogIRI(),
+                params.build());
+        Optional<OntologyRecord> matchingRecord = new OntologyRecordSearchResults(temp, ontologyRecordFactory)
+                .getPage().stream()
+                .filter(ontologyRecord -> ontologyRecord.getOntologyIRI().isPresent()
+                        && ontologyRecord.getOntologyIRI().get().equals(ontologyIRI))
+                .findFirst();
+        if (matchingRecord.isPresent()) {
+            throw ErrorUtils.sendError("Ontology already exists with that IRI", Response.Status.BAD_REQUEST);
+        }
     }
 }

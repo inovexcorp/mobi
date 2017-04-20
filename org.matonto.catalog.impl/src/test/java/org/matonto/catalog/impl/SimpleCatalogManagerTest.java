@@ -22,6 +22,10 @@ package org.matonto.catalog.impl;
  * #L%
  */
 
+import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.assertFalse;
+import static junit.framework.TestCase.assertTrue;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -43,8 +47,6 @@ import org.matonto.catalog.api.ontologies.mcat.InProgressCommit;
 import org.matonto.catalog.api.ontologies.mcat.InProgressCommitFactory;
 import org.matonto.catalog.api.ontologies.mcat.MappingRecord;
 import org.matonto.catalog.api.ontologies.mcat.MappingRecordFactory;
-import org.matonto.catalog.api.ontologies.mcat.OntologyRecord;
-import org.matonto.catalog.api.ontologies.mcat.OntologyRecordFactory;
 import org.matonto.catalog.api.ontologies.mcat.Record;
 import org.matonto.catalog.api.ontologies.mcat.RecordFactory;
 import org.matonto.catalog.api.ontologies.mcat.Revision;
@@ -105,10 +107,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static junit.framework.TestCase.assertEquals;
-import static junit.framework.TestCase.assertFalse;
-import static junit.framework.TestCase.assertTrue;
-
 public class SimpleCatalogManagerTest {
 
     private Repository repo;
@@ -121,7 +119,6 @@ public class SimpleCatalogManagerTest {
     private UnversionedRecordFactory unversionedRecordFactory = new UnversionedRecordFactory();
     private VersionedRecordFactory versionedRecordFactory = new VersionedRecordFactory();
     private VersionedRDFRecordFactory versionedRDFRecordFactory = new VersionedRDFRecordFactory();
-    private OntologyRecordFactory ontologyRecordFactory = new OntologyRecordFactory();
     private MappingRecordFactory mappingRecordFactory = new MappingRecordFactory();
     private DistributionFactory distributionFactory = new DistributionFactory();
     private BranchFactory branchFactory = new BranchFactory();
@@ -190,10 +187,6 @@ public class SimpleCatalogManagerTest {
         versionedRDFRecordFactory.setValueFactory(vf);
         versionedRDFRecordFactory.setValueConverterRegistry(vcr);
 
-        ontologyRecordFactory.setModelFactory(mf);
-        ontologyRecordFactory.setValueFactory(vf);
-        ontologyRecordFactory.setValueConverterRegistry(vcr);
-
         mappingRecordFactory.setModelFactory(mf);
         mappingRecordFactory.setValueFactory(vf);
         mappingRecordFactory.setValueConverterRegistry(vcr);
@@ -247,7 +240,6 @@ public class SimpleCatalogManagerTest {
         vcr.registerValueConverter(unversionedRecordFactory);
         vcr.registerValueConverter(versionedRecordFactory);
         vcr.registerValueConverter(versionedRDFRecordFactory);
-        vcr.registerValueConverter(ontologyRecordFactory);
         vcr.registerValueConverter(mappingRecordFactory);
         vcr.registerValueConverter(distributionFactory);
         vcr.registerValueConverter(branchFactory);
@@ -453,22 +445,6 @@ public class SimpleCatalogManagerTest {
     }
 
     @Test
-    public void testAddOntologyRecord() throws Exception {
-        Resource recordId = vf.createIRI("https://matonto.org/records#test");
-        OntologyRecord record = ontologyRecordFactory.createNew(recordId);
-        record.addProperty(vf.createLiteral("record"), dcIdentifier);
-
-        RepositoryConnection conn = repo.getConnection();
-        assertFalse(conn.getStatements(recordId, null, null, recordId).hasNext());
-
-        manager.addRecord(distributedCatalogId, record);
-        assertTrue(conn.getStatements(recordId, null, vf.createIRI(OntologyRecord.TYPE), recordId).hasNext());
-        assertTrue(conn.getStatements(recordId, null, null, recordId).hasNext());
-        assertTrue(conn.getStatements(recordId, null, distributedCatalogId, recordId).hasNext());
-        conn.close();
-    }
-
-    @Test
     public void testAddMappingRecord() throws Exception {
         Resource recordId = vf.createIRI("https://matonto.org/records#test");
         MappingRecord record = mappingRecordFactory.createNew(recordId);
@@ -572,27 +548,6 @@ public class SimpleCatalogManagerTest {
         record.setKeyword(Stream.of(vf.createLiteral("keyword1")).collect(Collectors.toSet()));
 
         assertTrue(conn.getStatements(recordId, vf.createIRI(Record.catalog_IRI), distributedCatalogId, recordId).hasNext());
-        assertFalse(conn.getStatements(recordId, vf.createIRI(Record.keyword_IRI), vf.createLiteral("keyword1"),
-                recordId).hasNext());
-
-        manager.updateRecord(distributedCatalogId, record);
-        assertTrue(conn.getStatements(recordId, vf.createIRI(Record.catalog_IRI), distributedCatalogId, recordId).hasNext());
-        assertTrue(conn.getStatements(recordId, vf.createIRI(Record.keyword_IRI), vf.createLiteral("keyword1"),
-                recordId).hasNext());
-        conn.close();
-    }
-
-    @Test
-    public void testUpdateOntologyRecord() throws Exception {
-        Resource recordId = vf.createIRI("http://matonto.org/test/records#update");
-
-        RepositoryConnection conn = repo.getConnection();
-        Model recordModel = mf.createModel();
-        conn.getStatements(recordId, null, null, recordId).forEachRemaining(recordModel::add);
-
-        OntologyRecord record = ontologyRecordFactory.getExisting(recordId, recordModel);
-        record.setKeyword(Stream.of(vf.createLiteral("keyword1")).collect(Collectors.toSet()));
-
         assertFalse(conn.getStatements(recordId, vf.createIRI(Record.keyword_IRI), vf.createLiteral("keyword1"),
                 recordId).hasNext());
 
@@ -801,27 +756,6 @@ public class SimpleCatalogManagerTest {
         VersionedRDFRecord record = result.get();
         assertTrue(record.getProperty(vf.createIRI(DC_TITLE)).isPresent());
         assertEquals("Versioned RDF", record.getProperty(vf.createIRI(DC_TITLE)).get().stringValue());
-        assertTrue(record.getProperty(vf.createIRI(DC_DESCRIPTION)).isPresent());
-        assertEquals("Description", record.getProperty(vf.createIRI(DC_DESCRIPTION)).get().stringValue());
-        assertTrue(record.getProperty(vf.createIRI(DC_IDENTIFIER)).isPresent());
-        assertEquals("Identifier", record.getProperty(vf.createIRI(DC_IDENTIFIER)).get().stringValue());
-        assertTrue(record.getProperty(vf.createIRI(DC_MODIFIED)).isPresent());
-        assertTrue(record.getProperty(vf.createIRI(DC_ISSUED)).isPresent());
-    }
-
-    @Test
-    public void testGetOntologyRecord() throws Exception {
-        Resource recordId = vf.createIRI("http://matonto.org/test/records#update");
-
-        RepositoryConnection conn = repo.getConnection();
-        assertTrue(conn.getStatements(recordId, null, null, recordId).hasNext());
-        conn.close();
-
-        Optional<OntologyRecord> result = manager.getRecord(distributedCatalogId, recordId, ontologyRecordFactory);
-        assertTrue(result.isPresent());
-        OntologyRecord record = result.get();
-        assertTrue(record.getProperty(vf.createIRI(DC_TITLE)).isPresent());
-        assertEquals("Update", record.getProperty(vf.createIRI(DC_TITLE)).get().stringValue());
         assertTrue(record.getProperty(vf.createIRI(DC_DESCRIPTION)).isPresent());
         assertEquals("Description", record.getProperty(vf.createIRI(DC_DESCRIPTION)).get().stringValue());
         assertTrue(record.getProperty(vf.createIRI(DC_IDENTIFIER)).isPresent());

@@ -50,7 +50,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.api</artifactId>
-            <version>1.5.45</version>
+            <version>1.6.25-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
@@ -65,7 +65,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>catalog.api</artifactId>
-            <version>1.5.45</version>
+            <version>1.6.25-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
@@ -116,13 +116,13 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>catalog.impl</artifactId>
-            <version>1.5.45</version>
+            <version>1.6.25-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.core.impl.owlapi</artifactId>
-            <version>1.5.45</version>
+            <version>1.6.25-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
         <dependency>
