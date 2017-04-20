@@ -416,17 +416,7 @@
                     listItem.branches = response[6].data;
                     _.forEach(response[7], importedOntObj => {
                         listItem.importedOntologies.push(importedOntObj.ontology);
-                        _.forEach(listItem.importedOntologies, ont => {
-                            _.forEach(ont, (entity, i) => {
-                                if (_.has(entity, '@id')) {
-                                    _.set(entity, 'matonto.originalIRI', entity['@id']);
-                                }
-                                if (om.isProperty(entity)) {
-                                    _.set(entity, 'matonto.icon', getIcon(entity));
-                                }
-                                _.set(entity, 'matonto.imported', true);
-                            });
-                        });             
+                        addInternalFields(listItem.importedOntologies);
                     });
                     listItem.upToDate = upToDate;
                     _.pullAllWith(
@@ -483,17 +473,7 @@
                     listItem.branches = response[3].data;
                     _.forEach(response[4], importedOntObj => {
                         listItem.importedOntologies.push(importedOntObj.ontology);
-                        _.forEach(listItem.importedOntologies, ont => {
-                            _.forEach(ont, (entity, i) => {
-                                if (_.has(entity, '@id')) {
-                                    _.set(entity, 'matonto.originalIRI', entity['@id']);
-                                }
-                                if (om.isProperty(entity)) {
-                                    _.set(entity, 'matonto.icon', getIcon(entity));
-                                }
-                                _.set(entity, 'matonto.imported', true);
-                            });
-                        });
+                        addInternalFields(listItem.importedOntologies);
                     });
                     listItem.upToDate = upToDate;
                     _.pullAllWith(
@@ -1197,6 +1177,19 @@
             function compareListItems(obj1, obj2) {
                 return _.isEqual(_.get(obj1, 'localName'), _.get(obj2, 'localName'))
                     && _.isEqual(_.get(obj1, 'namespace'), _.get(obj2, 'namespace'));
+            }
+            function addInternalFields(importedOntologies) {
+                _.forEach(importedOntologies, ont => {
+                    _.forEach(ont, (entity, i) => {
+                        if (_.has(entity, '@id')) {
+                            _.set(entity, 'matonto.originalIRI', entity['@id']);
+                        }
+                        if (om.isProperty(entity)) {
+                            _.set(entity, 'matonto.icon', getIcon(entity));
+                        }
+                        _.set(entity, 'matonto.imported', true);
+                    });
+                });
             }
         }
 })();
