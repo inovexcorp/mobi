@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Ontology Manager service', function() {
-    var $httpBackend, ontologyManagerSvc, catalogManagerSvc, scope, prefixes, $q, windowSvc, util, ontologyObj, paramSerializer, classObj, objectPropertyObj, dataPropertyObj,annotationObj, individualObj, restrictionObj, conceptObj, schemeObj, listItemObj, ontology, httpSvc;
+    var $httpBackend, ontologyManagerSvc, catalogManagerSvc, scope, prefixes, $q, windowSvc, util, ontologyObj, paramSerializer, classObj, objectPropertyObj, dataPropertyObj,annotationObj, individualObj, restrictionObj, conceptObj, schemeObj, ontology, httpSvc;
     var recordId = 'recordId';
     var ontologyId = 'ontologyId';
     var branchId = 'branchId';
@@ -156,12 +156,6 @@ describe('Ontology Manager service', function() {
                 originalIRI: schemeId
             }
         }
-        listItemObj = {
-            branchId: branchId,
-            recordId: recordId,
-            commitId: commitId,
-            ontology: ontologyObj
-        };
         ontology = [ontologyObj, classObj, dataPropertyObj];
     });
 
