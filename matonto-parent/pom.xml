@@ -27,7 +27,7 @@
 
     <groupId>org.matonto</groupId>
     <artifactId>matonto-parent</artifactId>
-    <version>1.6.20-SNAPSHOT</version>
+    <version>1.6.25-SNAPSHOT</version>
 
     <packaging>pom</packaging>
 
