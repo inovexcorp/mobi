@@ -645,14 +645,7 @@
              * false.
              */
             self.hasClasses = function(ontologies) {
-                var retValue = false;
-                _.forEach(ontologies, ont => {
-                    if (_.some(ont, entity => self.isClass(entity) && !self.isBlankNode(entity))) {
-                        retValue = true;
-                        return false; //This breaks the loop. It is NOT the entire function's return value!
-                    }
-                });
-                return retValue;
+                return _.some(ontologies, ont => _.some(ont, entity => self.isClass(entity) && !self.isBlankNode(entity)));
             }
             /**
              * @ngdoc method
@@ -703,14 +696,7 @@
              * @returns {boolean} Returns true if it does have properties, otherwise returns false.
              */
             self.hasClassProperties = function(ontologies, classIRI) {
-                var retValue = false;
-                _.forEach(ontologies, ont => {
-                    if (_.some(ont, {[prefixes.rdfs + 'domain']: [{'@id': classIRI}]})) {
-                        retValue = true;
-                        return false; //This breaks the loop. It is NOT the entire function's return value!
-                    }
-                });
-                return retValue;
+                return _.some(ontologies, ont => _.some(ont, {[prefixes.rdfs + 'domain']: [{'@id': classIRI}]}));
             }
             /**
              * @ngdoc method
@@ -776,14 +762,7 @@
              * returns false.
              */
             self.hasObjectProperties = function(ontologies) {
-                var retValue = false;
-                _.forEach(ontologies, ont => {
-                    if (_.some(ont, entity => self.isObjectProperty(entity) && !self.isBlankNode(entity))) {
-                        retValue = true;
-                        return false; //This breaks the loop. It is NOT the entire function's return value!
-                    }
-                });
-                return retValue;
+                return _.some(ontologies, ont => _.some(ont, entity => self.isObjectProperty(entity) && !self.isBlankNode(entity)));
             }
             /**
              * @ngdoc method
@@ -849,14 +828,7 @@
              * otherwise returns false.
              */
             self.hasDataTypeProperties = function(ontologies) {
-                var retValue = false;
-                _.forEach(ontologies, ont => {
-                    if (_.some(ont, entity =>  self.isDataTypeProperty(entity))) {
-                        retValue = true;
-                        return false; //This breaks the loop. It is NOT the entire function's return value!
-                    }
-                });
-                return retValue;
+                return _.some(ontologies, ont => _.some(ont, entity => self.isDataTypeProperty(entity)));
             }
             /**
              * @ngdoc method
@@ -922,14 +894,8 @@
              * false.
              */
             self.hasNoDomainProperties = function(ontologies) {
-                var retValue = false;
-                _.forEach(ontologies, ont => {
-                    if (_.some(ont, entity => self.isProperty(entity) && !_.has(entity, prefixes.rdfs + 'domain'))) {
-                        retValue = true;
-                        return false; //This breaks the loop. It is NOT the entire function's return value!
-                    }
-                });
-                return retValue;
+                return _.some(ontologies, ont =>
+                            _.some(ont, entity => self.isProperty(entity) && !_.has(entity, prefixes.rdfs + 'domain')));
             }
             /**
              * @ngdoc method
@@ -993,14 +959,8 @@
              * otherwise returns false.
              */
             self.hasAnnotations = function(ontologies) {
-                var retValue = false;
-                _.forEach(ontologies, ont => {
-                    if (_.some(ont, entity => self.isAnnotation(entity) && !self.isBlankNode(entity))) {
-                        retValue = true;
-                        return false; //This breaks the loop. It is NOT the entire function's return value!
-                    }
-                });
-                return retValue;
+                return _.some(ontologies, ont =>
+                            _.some(ont, entity => self.isAnnotation(entity) && !self.isBlankNode(entity)));
             }
             /**
              * @ngdoc method
@@ -1063,14 +1023,7 @@
              * @returns {boolean} Returns true if it does have individuals, otherwise returns false.
              */
             self.hasIndividuals = function(ontologies) {
-                var retValue = false;
-                _.forEach(ontologies, ont => {
-                    if (_.some(ont, entity => self.isIndividual(entity))) {
-                        retValue = true;
-                        return false; //This breaks the loop. It is NOT the entire function's return value!
-                    }
-                });
-                return retValue;
+                return _.some(ontologies, ont => _.some(ont, entity => self.isIndividual(entity)));
             }
             /**
              * @ngdoc method
@@ -1103,14 +1056,8 @@
              * @returns {boolean} Returns true if it does have individuals with no other type, otherwise returns false.
              */
             self.hasNoTypeIndividuals = function(ontologies) {
-                var retValue = false;
-                _.forEach(ontologies, ont => {
-                    if (_.some(ont, entity => self.isIndividual(entity) && entity['@type'].length === 1)) {
-                        retValue = true;
-                        return false; //This breaks the loop. It is NOT the entire function's return value!
-                    }
-                });
-                return retValue;
+                return _.some(ontologies, ont =>
+                            _.some(ont, entity => self.isIndividual(entity) && entity['@type'].length === 1));
             }
             /**
              * @ngdoc method
@@ -1339,14 +1286,8 @@
              * returns false.
              */
             self.hasConcepts = function(ontologies) {
-                var retValue = false;
-                _.forEach(ontologies, ont => {
-                    if (_.some(ont, entity => self.isConcept(entity) && !self.isBlankNode(entity))) {
-                        retValue = true;
-                        return false; //This breaks the loop. It is NOT the entire function's return value!
-                    }
-                });
-                return retValue;
+                return _.some(ontologies, ont =>
+                            _.some(ont, entity => self.isConcept(entity) && !self.isBlankNode(entity)));
             }
             /**
              * @ngdoc method
@@ -1410,14 +1351,8 @@
              * returns false.
              */
             self.hasConceptSchemes = function(ontologies) {
-                var retValue = false;
-                _.forEach(ontologies, ont => {
-                    if (_.some(ont, entity => self.isConceptScheme(entity) && !self.isBlankNode(entity))) {
-                        retValue = true;
-                        return false; //This breaks the loop. It is NOT the entire function's return value!
-                    }
-                });
-                return retValue;
+                return _.some(ontologies, ont =>
+                            _.some(ont, entity => self.isConceptScheme(entity) && !self.isBlankNode(entity)));
             }
             /**
              * @ngdoc method
@@ -1436,7 +1371,7 @@
                 _.forEach(ontologies, ont => {
                     conceptSchemes.push.apply(conceptSchemes,
                         _.filter(ont, entity => self.isConceptScheme(entity) && !self.isBlankNode(entity)));
-                })
+                });
                 return conceptSchemes;
             }
             /**
