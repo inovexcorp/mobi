@@ -60,6 +60,7 @@
                 ontology: [],
                 ontologyId: '',
                 importedOntologies: [],
+                importedOntologyIds: [],
                 annotations: angular.copy(propertyManagerService.defaultAnnotations),
                 dataPropertyRange: om.defaultDatatypes,
                 subClasses: [],
@@ -90,6 +91,7 @@
                 ontology: [],
                 ontologyId: '',
                 importedOntologies: [],
+                importedOntologyIds: [],
                 annotations: angular.copy(_.union(propertyManagerService.defaultAnnotations,
                     propertyManagerService.skosAnnotations)),
                 conceptHierarchy: [],
@@ -415,8 +417,7 @@
                     listItem.objectPropertyIndex = response[5].index;
                     listItem.branches = response[6].data;
                     _.forEach(response[7], importedOntObj => {
-                        listItem.importedOntologies.push(importedOntObj.ontology);
-                        addInternalFields(listItem.importedOntologies);
+                        addImportedOntologyToListItem(listItem, importedOntObj.ontology, importedOntObj.id, 'ontology');
                     });
                     listItem.upToDate = upToDate;
                     _.pullAllWith(
@@ -472,8 +473,7 @@
                     listItem.conceptIndex = response[2].index;
                     listItem.branches = response[3].data;
                     _.forEach(response[4], importedOntObj => {
-                        listItem.importedOntologies.push(importedOntObj.ontology);
-                        addInternalFields(listItem.importedOntologies);
+                        addImportedOntologyToListItem(listItem, importedOntObj.ontology, importedOntObj.id, 'vocabulary');
                     });
                     listItem.upToDate = upToDate;
                     _.pullAllWith(
@@ -1063,7 +1063,8 @@
                         _.set(entity, 'matonto.originalIRI', entity['@id']);
                         index[entity['@id']] = {
                             position: i,
-                            label: om.getEntityName(entity, type)
+                            label: om.getEntityName(entity, type),
+                            ontologyIri: ontologyId
                         }
                     } else {
                         _.set(entity, 'matonto.anonymous', ontologyId + ' (Anonymous Ontology)');
@@ -1147,23 +1148,26 @@
                 return icon;
             }
             function getEntityFromListItem(listItem, entityIRI) {
-                var entity;
                 var index = _.get(listItem, 'index');
-                var ontologies = [];
-                ontologies.push(_.get(listItem, 'ontology'));
-                ontologies.push.apply(ontologies, _.get(listItem, 'importedOntologies'));
-                if (_.has(index, entityIRI + '.position')) {
-                    _.forEach(ontologies, ont => {
-                        entity = ont[index[entityIRI].position];
-                        if (entity != null) {
-                            return false; //this breaks the loop.
-                        }
-                    });
+                var ontology = _.get(listItem, 'ontology');
+                var ontologyId = _.get(listItem, 'ontologyId');
+                var importedOntologies = _.get(listItem, 'importedOntologies');
+                var importedOntologyIds = _.get(listItem, 'importedOntologyIds');
+                var entity = _.get(index, entityIRI);
+                if (entity !== null && _.has(entity, 'position') && _.has(entity, 'ontologyIri')) {
+                    if (entity.ontologyIri === ontologyId) {
+                        return ontology[entity.position];
+                    } else {
+                        return importedOntologies[_.indexOf(importedOntologyIds, entity.ontologyIri)][entity.position];
+                    }
                 } else {
-                    entity = om.getEntity(ontologies, entityIRI);
-                }
-                return entity;
+                    var ontologies = [];
+                    ontologies.push(ontology);
+                    ontologies.push.apply(ontologies, importedOntologies);
+                    return om.getEntity(ontologies, entityIRI);
+                } 
             }
+
             function addToInProgress(recordId, json, prop) {
                 var listItem = self.getListItemByRecordId(recordId);
                 var entity = _.find(listItem[prop], {'@id': json['@id']});
@@ -1178,18 +1182,25 @@
                 return _.isEqual(_.get(obj1, 'localName'), _.get(obj2, 'localName'))
                     && _.isEqual(_.get(obj1, 'namespace'), _.get(obj2, 'namespace'));
             }
-            function addInternalFields(importedOntologies) {
-                _.forEach(importedOntologies, ont => {
-                    _.forEach(ont, (entity, i) => {
-                        if (_.has(entity, '@id')) {
-                            _.set(entity, 'matonto.originalIRI', entity['@id']);
+            function addImportedOntologyToListItem(listItem, importedOntology, id, type) {  
+                var index = {};
+                _.forEach(importedOntology, (entity, i) => {
+                    if (_.has(entity, '@id')) {
+                        _.set(entity, 'matonto.originalIRI', entity['@id']);
+                        index[entity['@id']] = {
+                            position: i,
+                            label: om.getEntityName(entity, type),
+                            ontologyIri: id
                         }
-                        if (om.isProperty(entity)) {
-                            _.set(entity, 'matonto.icon', getIcon(entity));
-                        }
-                        _.set(entity, 'matonto.imported', true);
-                    });
+                    }
+                    if (om.isProperty(entity)) {
+                        _.set(entity, 'matonto.icon', getIcon(entity));
+                    }
+                    _.set(entity, 'matonto.imported', true);
                 });
+                _.assign(listItem.index, index);
+                listItem.importedOntologyIds.push(id);
+                listItem.importedOntologies.push(importedOntology);
             }
         }
 })();

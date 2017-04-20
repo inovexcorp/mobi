@@ -57,17 +57,22 @@ describe('Ontology State Service', function() {
     var index = {
         ontologyId: {
             position: 0,
-            label: 'ontology'
+            label: 'ontology',
+            ontologyIri: ontologyId
         },
         classId: {
             position: 1,
-            label: 'class'
+            label: 'class',
+            ontologyIri: ontologyId
         },
         dataPropertyId: {
             position: 2,
-            label: 'data property'
+            label: 'data property',
+            ontologyIri: ontologyId
         }
     };
+    var importedOntologies = [];
+    var importedOntologyIds = [];
     var classId = 'classId';
     var classId2 = 'classId2';
     var objectPropertyId = 'objectPropertyId';
@@ -284,6 +289,8 @@ describe('Ontology State Service', function() {
         listItem = {
             ontology: ontology,
             ontologyId: ontologyId,
+            importedOntologies: importedOntologies,
+            importedOntologyIds: importedOntologyIds,
             recordId: recordId,
             commitId: commitId,
             branchId: branchId,
