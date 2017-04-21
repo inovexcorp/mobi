@@ -148,7 +148,7 @@ public class SimpleApplicationWrapper implements ApplicationWrapper {
         try (RepositoryConnection conn = repository.getConnection()) {
             Model appModel = modelFactory.createModel();
             conn.getStatements(factory.createIRI(NAMESPACE + applicationId), null, null).forEach(appModel::add);
-            app = appFactory.getExisting(factory.createIRI(NAMESPACE + applicationId), appModel);
+            app = appFactory.getExisting(factory.createIRI(NAMESPACE + applicationId), appModel).orElse(null);
         } catch (RepositoryException e) {
             throw new MatOntoException("Error in repository connection", e);
         }

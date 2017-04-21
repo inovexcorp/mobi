@@ -48,12 +48,12 @@
             <dependency>
                 <groupId>org.matonto</groupId>
                 <artifactId>persistence.api</artifactId>
-                <version>1.5.45</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.matonto</groupId>
                 <artifactId>persistence.utils</artifactId>
-                <version>1.5.45</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.matonto</groupId>

@@ -372,9 +372,7 @@ public class CatalogRestImpl implements CatalogRest {
         try {
             validatePaginationParams(sort, offset, limit);
             UnversionedRecord record = getRecord(catalogId, recordId, UnversionedRecord.TYPE);
-            Set<Resource> distributionIRIs = record.getUnversionedDistribution().stream()
-                    .map(Thing::getResource)
-                    .collect(Collectors.toSet());
+            Set<Resource> distributionIRIs = record.getUnversionedDistribution_resource();
             return createPaginatedThingResponse(uriInfo, distributionIRIs, this::getDistribution, sort, offset, limit,
                     asc, null);
         } catch (MatOntoException e) {
@@ -439,9 +437,7 @@ public class CatalogRestImpl implements CatalogRest {
         try {
             validatePaginationParams(sort, offset, limit);
             VersionedRecord record = getRecord(catalogId, recordId, VersionedRecord.TYPE);
-            Set<Resource> versionIRIs = record.getVersion().stream()
-                    .map(Thing::getResource)
-                    .collect(Collectors.toSet());
+            Set<Resource> versionIRIs = record.getVersion_resource();
             return createPaginatedThingResponse(uriInfo, versionIRIs, this::getVersion, sort, offset, limit, asc, null);
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
@@ -474,9 +470,8 @@ public class CatalogRestImpl implements CatalogRest {
     public Response getLatestVersion(String catalogId, String recordId) {
         try {
             VersionedRecord record = getRecord(catalogId, recordId, VersionedRecord.TYPE);
-            Resource versionIRI = record.getLatestVersion().orElseThrow(() ->
-                    ErrorUtils.sendError("Record does not have a latest version", Response.Status.NOT_FOUND))
-                    .getResource();
+            Resource versionIRI = record.getLatestVersion_resource().orElseThrow(() ->
+                    ErrorUtils.sendError("Record does not have a latest version", Response.Status.NOT_FOUND));
             Version version = catalogManager.getVersion(versionIRI, versionFactories.get(Version.TYPE))
                     .orElseThrow(() -> ErrorUtils.sendError("Version not found", Response.Status.NOT_FOUND));
             return Response.ok(thingToJsonObject(version)).build();
@@ -578,9 +573,7 @@ public class CatalogRestImpl implements CatalogRest {
             validatePaginationParams(sort, offset, limit);
             testVersionPath(catalogId, recordId, versionId);
             Version version = getVersion(versionId);
-            Set<Resource> distributionIRIs = version.getVersionedDistribution().stream()
-                    .map(Thing::getResource)
-                    .collect(Collectors.toSet());
+            Set<Resource> distributionIRIs = version.getVersionedDistribution_resource();
             return createPaginatedThingResponse(uriInfo, distributionIRIs, this::getDistribution, sort, offset, limit,
                     asc, null);
         } catch (MatOntoException e) {
@@ -646,8 +639,8 @@ public class CatalogRestImpl implements CatalogRest {
         try {
             testVersionPath(catalogId, recordId, versionId);
             Tag version = getVersion(versionId, Tag.TYPE);
-            Resource commitIRI = version.getCommit().orElseThrow(() ->
-                    ErrorUtils.sendError("Tag does not have a commit set", Response.Status.BAD_GATEWAY)).getResource();
+            Resource commitIRI = version.getCommit_resource().orElseThrow(() ->
+                    ErrorUtils.sendError("Tag does not have a commit set", Response.Status.BAD_GATEWAY));
             Commit commit = catalogManager.getCommit(commitIRI, commitFactory).orElseThrow(() ->
                     ErrorUtils.sendError("Commit not found", Response.Status.NOT_FOUND));
             return createCommitResponse(commit, format);
@@ -662,9 +655,7 @@ public class CatalogRestImpl implements CatalogRest {
         try {
             validatePaginationParams(sort, offset, limit);
             VersionedRDFRecord record = getRecord(catalogId, recordId, VersionedRDFRecord.TYPE);
-            Set<Resource> branchIRIs = record.getBranch().stream()
-                    .map(Thing::getResource)
-                    .collect(Collectors.toSet());
+            Set<Resource> branchIRIs = record.getBranch_resource();
             Function<Branch, Boolean> filterFunction = null;
             if (applyUserFilter) {
                 User activeUser = getActiveUser(context, engineManager);
@@ -710,9 +701,8 @@ public class CatalogRestImpl implements CatalogRest {
     public Response getMasterBranch(String catalogId, String recordId) {
         try {
             VersionedRDFRecord record = getRecord(catalogId, recordId, VersionedRDFRecord.TYPE);
-            Resource branchIRI = record.getMasterBranch().orElseThrow(() ->
-                    ErrorUtils.sendError("Record does not have a master branch set", Response.Status.NOT_FOUND))
-                    .getResource();
+            Resource branchIRI = record.getMasterBranch_resource().orElseThrow(() ->
+                    ErrorUtils.sendError("Record does not have a master branch set", Response.Status.NOT_FOUND));
             Branch masterBranch = catalogManager.getBranch(branchIRI, branchFactories.get(Branch.TYPE))
                     .orElseThrow(() -> ErrorUtils.sendError("Branch not found", Response.Status.NOT_FOUND));
             return Response.ok(thingToJsonObject(masterBranch)).build();
@@ -1246,9 +1236,7 @@ public class CatalogRestImpl implements CatalogRest {
      */
     private void testUnversionedDistributionPath(String catalogId, String recordId, String distributionId) {
         UnversionedRecord record = getRecord(catalogId, recordId, UnversionedRecord.TYPE);
-        Set<Resource> distributionIRIs = record.getUnversionedDistribution().stream()
-                .map(Thing::getResource)
-                .collect(Collectors.toSet());
+        Set<Resource> distributionIRIs = record.getUnversionedDistribution_resource();
         if (!distributionIRIs.contains(factory.createIRI(distributionId))) {
             throw ErrorUtils.sendError("Distribution does not belong to Record " + recordId,
                     Response.Status.BAD_REQUEST);
@@ -1265,9 +1253,7 @@ public class CatalogRestImpl implements CatalogRest {
      */
     private void testVersionPath(String catalogId, String recordId, String versionId) {
         VersionedRecord record = getRecord(catalogId, recordId, VersionedRecord.TYPE);
-        Set<Resource> versionIRIs = record.getVersion().stream()
-                .map(Thing::getResource)
-                .collect(Collectors.toSet());
+        Set<Resource> versionIRIs = record.getVersion_resource();
         if (!versionIRIs.contains(factory.createIRI(versionId))) {
             throw ErrorUtils.sendError("Version does not belong to Record " + recordId, Response.Status.BAD_REQUEST);
         }
@@ -1285,16 +1271,12 @@ public class CatalogRestImpl implements CatalogRest {
     private void testVersionedDistributionPath(String catalogId, String recordId, String versionId,
                                                String distributionId) {
         VersionedRecord record = getRecord(catalogId, recordId, VersionedRecord.TYPE);
-        Set<Resource> versionIRIs = record.getVersion().stream()
-                .map(Thing::getResource)
-                .collect(Collectors.toSet());
+        Set<Resource> versionIRIs = record.getVersion_resource();
         if (!versionIRIs.contains(factory.createIRI(versionId))) {
             throw ErrorUtils.sendError("Version does not belong to Record " + recordId, Response.Status.BAD_REQUEST);
         }
         Version version = getVersion(versionId);
-        Set<Resource> distributionIRIs = version.getVersionedDistribution().stream()
-                .map(Thing::getResource)
-                .collect(Collectors.toSet());
+        Set<Resource> distributionIRIs = version.getVersionedDistribution_resource();
         if (!distributionIRIs.contains(factory.createIRI(distributionId))) {
             throw ErrorUtils.sendError("Distribution does not belong to Version " + recordId,
                     Response.Status.BAD_REQUEST);
@@ -1311,9 +1293,7 @@ public class CatalogRestImpl implements CatalogRest {
      */
     private void testBranchPath(String catalogId, String recordId, String branchId) {
         VersionedRDFRecord record = getRecord(catalogId, recordId, VersionedRDFRecord.TYPE);
-        Set<Resource> branchIRIs = record.getBranch().stream()
-                .map(Thing::getResource)
-                .collect(Collectors.toSet());
+        Set<Resource> branchIRIs = record.getBranch_resource();
         if (!branchIRIs.contains(factory.createIRI(branchId))) {
             throw ErrorUtils.sendError("Branch does not belong to Record " + recordId, Response.Status.BAD_REQUEST);
         }
@@ -1331,12 +1311,7 @@ public class CatalogRestImpl implements CatalogRest {
     private Optional<Resource> optHeadCommitIRI(String catalogId, String recordId, String branchId) {
         testBranchPath(catalogId, recordId, branchId);
         Branch branch = getBranch(branchId);
-        Optional<Commit> optional = branch.getHead();
-        if (optional.isPresent()) {
-            return Optional.of(optional.get().getResource());
-        } else {
-            return Optional.empty();
-        }
+        return branch.getHead_resource();
     }
 
     /**
@@ -1510,12 +1485,12 @@ public class CatalogRestImpl implements CatalogRest {
      */
     private <T extends Thing> T validateNewThing(String newThingJson, Resource thingId, OrmFactory<T> ormFactory) {
         Model newThingModel = convertJsonld(newThingJson);
-        T newThing = ormFactory.getExisting(thingId, newThingModel);
-        if (newThing == null || newThingModel.filter(newThing.getResource(), null, null).isEmpty()) {
+        Optional<T> newThing = ormFactory.getExisting(thingId, newThingModel);
+        if (!newThing.isPresent() || newThingModel.filter(newThing.get().getResource(), null, null).isEmpty()) {
             throw ErrorUtils.sendError(ormFactory.getType().getSimpleName() + " ids must match",
                     Response.Status.BAD_REQUEST);
         }
-        return newThing;
+        return newThing.get();
     }
 
     /**

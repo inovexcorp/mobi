@@ -43,7 +43,7 @@ public class DatasetRecordSearchResults implements PaginatedSearchResults<Datase
         this.totalSize = results.getTotalSize();
         this.pageNumber = results.getPageNumber();
         this.page = results.getPage().stream()
-                .map(record -> factory.getExisting(record.getResource(), record.getModel()))
+                .map(record -> factory.getExisting(record.getResource(), record.getModel()).orElse(null))
                 .collect(Collectors.toList());
     }
 
