@@ -1151,7 +1151,7 @@
                 var index = _.get(listItem, 'index');
                 var ontology = _.get(listItem, 'ontology');
                 var ontologyId = _.get(listItem, 'ontologyId');
-                var importedOntologies = _.get(listItem, 'importedOntologies');
+                var importedOntologies = _.get(listItem, 'importedOntologies', []);
                 var importedOntologyIds = _.get(listItem, 'importedOntologyIds');
                 var entity = _.get(index, entityIRI);
                 if (entity !== null && _.has(entity, 'position') && _.has(entity, 'ontologyIri')) {
@@ -1161,9 +1161,7 @@
                         return importedOntologies[_.indexOf(importedOntologyIds, entity.ontologyIri)][entity.position];
                     }
                 } else {
-                    var ontologies = [];
-                    ontologies.push(ontology);
-                    ontologies.push.apply(ontologies, importedOntologies);
+                    var ontologies = _.concat([ontology], importedOntologies);
                     return om.getEntity(ontologies, entityIRI);
                 } 
             }
