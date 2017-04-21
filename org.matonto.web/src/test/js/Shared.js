@@ -137,6 +137,12 @@ function injectUsernameSearchFilter() {
     });
 }
 
+function injectUniqueIRIFilter() {
+    module(function($provide) {
+        $provide.value('uniqueIRIFilter', jasmine.createSpy('uniqueIRIFilter').and.callFake(_.identity));
+    });
+}
+
 function mockStateManager() {
     module(function($provide) {
         $provide.service('stateManagerService', function($q) {

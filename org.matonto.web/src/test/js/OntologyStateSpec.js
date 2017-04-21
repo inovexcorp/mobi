@@ -1263,7 +1263,9 @@ describe('Ontology State Service', function() {
             expect(ontologyStateSvc.getEntityByRecordId(recordId, classId)).toEqual(classObj);
             expect(ontologyStateSvc.getListItemByRecordId).toHaveBeenCalledWith(recordId);
         });
-        it('object when present not using index', function() {
+        //the operation to retrieve the object if it isn't in the index is too expensive
+        //so we are no longer doing that.
+        it('undefined when present not using index', function() {
             var diffListItem = {
                 ontology: ontology,
                 ontologyId: ontologyId,
@@ -1274,9 +1276,8 @@ describe('Ontology State Service', function() {
             }
             spyOn(ontologyStateSvc, 'getListItemByRecordId').and.returnValue(diffListItem);
             ontologyManagerSvc.getEntity.and.returnValue(classObj);
-            expect(ontologyStateSvc.getEntityByRecordId(recordId, classId)).toEqual(classObj);
+            expect(ontologyStateSvc.getEntityByRecordId(recordId, classId)).toEqual(undefined);
             expect(ontologyStateSvc.getListItemByRecordId).toHaveBeenCalledWith(recordId);
-            expect(ontologyManagerSvc.getEntity).toHaveBeenCalledWith([ontology], classId);
         });
         it('undefined when not present', function() {
             spyOn(ontologyStateSvc, 'getListItemByRecordId').and.callThrough();

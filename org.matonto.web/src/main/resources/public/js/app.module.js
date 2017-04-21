@@ -49,6 +49,7 @@
             'showProperties',
             'splitIRI',
             'trusted',
+            'uniqueIRI',
 
             /* Custom Directives */
             'block',

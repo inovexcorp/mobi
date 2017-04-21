@@ -21,7 +21,7 @@
   #L%
   -->
 <div class="tree hierarchy-tree">
-    <ul ng-repeat="node in hierarchy | orderBy:dvm.ou.getNameByNode track by node.entityIRI"
+    <ul ng-repeat="node in hierarchy | uniqueIRI:'entityIRI' | orderBy:dvm.ou.getNameByNode track by node.entityIRI"
         ng-include="'hierarchy_item'" ng-init="node = node; path = dvm.os.listItem.recordId + '.' + node.entityIRI"></ul>
     <script type="text/ng-template" id="hierarchy_item">
         <tree-item ng-if="dvm.os.getEntityByRecordId(dvm.os.listItem.recordId, node.entityIRI)"
@@ -31,7 +31,7 @@
                    on-click="dvm.os.selectItem(node.entityIRI)" data-path-to="{{path}}"></tree-item>
         <li class="container" ng-if="dvm.os.getOpened(path) && !!node.subEntities && node.subEntities.length"
             ng-init="parentPath = path">
-            <ul ng-repeat="node in node.subEntities | orderBy:dvm.ou.getNameByNode track by node.entityIRI"
+            <ul ng-repeat="node in node.subEntities | uniqueIRI:'entityIRI' | orderBy:dvm.ou.getNameByNode track by node.entityIRI"
                 ng-include="'hierarchy_item'" ng-init="node = node; path = parentPath + '.' + node.entityIRI"></ul>
         </li>
     </script>

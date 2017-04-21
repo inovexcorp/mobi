@@ -587,7 +587,13 @@
              * @returns {string} The beautified IRI string.
              */
             self.getEntityNameByIndex = function(entityIRI, listItem) {
-                return _.get(listItem, "index['" + entityIRI + "'].label", utilService.getBeautifulIRI(entityIRI));
+                var indices = getIndices(listItem);
+                var entity = _.find(indices, entityIRI);
+                if (entity) {
+                    return entity[entityIRI].label;
+                } else {
+                    return utilService.getBeautifulIRI(entityIRI);
+                }
             }
             /**
              * @ngdoc method
@@ -1027,11 +1033,23 @@
             self.getOntologiesArray = function() {
                 var ontologies = [];
                 ontologies.push(self.listItem.ontology);
-                ontologies.push.apply(ontologies, self.listItem.importedOntologies);
+                _.forEach(self.listItem.importedOntologies, importedOnt => {
+                    ontologies.push(importedOnt.ontology);
+                });
                 return ontologies;
             }
 
             /* Private helper functions */
+            function getIndices(listItem) {
+                var indices = [];
+                if (listItem) {
+                    indices.push(_.get(listItem, 'index'));
+                    _.forEach(listItem.importedOntologies, importedOnt => {
+                        indices.push(importedOnt.index);
+                    });
+                }
+                return indices;
+            }
             function getEntities(hierarchy, entityIRI, indexObject) {
                 var results = [];
                 var pathsToEntity = self.getPathsTo(hierarchy, indexObject, entityIRI);
@@ -1148,22 +1166,31 @@
                 return icon;
             }
             function getEntityFromListItem(listItem, entityIRI) {
-                var index = _.get(listItem, 'index');
+                if  (!entityIRI || !listItem) {
+                    return;
+                }
                 var ontology = _.get(listItem, 'ontology');
                 var ontologyId = _.get(listItem, 'ontologyId');
-                var importedOntologies = _.get(listItem, 'importedOntologies', []);
+                var importedOntologyListItems = _.get(listItem, 'importedOntologies', []);
                 var importedOntologyIds = _.get(listItem, 'importedOntologyIds');
-                var entity = _.get(index, entityIRI);
-                if (entity !== null && _.has(entity, 'position') && _.has(entity, 'ontologyIri')) {
-                    if (entity.ontologyIri === ontologyId) {
-                        return ontology[entity.position];
-                    } else {
-                        return importedOntologies[_.indexOf(importedOntologyIds, entity.ontologyIri)][entity.position];
+                var indices = getIndices(listItem);
+                var entities = [];
+                _.forEach(indices, index => {
+                    var entity = _.get(index, entityIRI);
+                    if (entity !== null && _.has(entity, 'position') && _.has(entity, 'ontologyIri')) {
+                        if (entity.ontologyIri === ontologyId) {
+                            entities.push(ontology[entity.position]);
+                        } else {
+                            entities.push(importedOntologyListItems[_.indexOf(importedOntologyIds, entity.ontologyIri)].ontology[entity.position]);
+                        }
                     }
+                });
+                var combinedEntity = _.merge.apply({}, entities);
+                if (_.isEmpty(combinedEntity)) {
+                    return;
                 } else {
-                    var ontologies = _.concat([ontology], importedOntologies);
-                    return om.getEntity(ontologies, entityIRI);
-                } 
+                    return combinedEntity;
+                }
             }
 
             function addToInProgress(recordId, json, prop) {
@@ -1196,9 +1223,13 @@
                     }
                     _.set(entity, 'matonto.imported', true);
                 });
-                _.assign(listItem.index, index);
+                var importedOntologyListItem = {
+                    id: id,
+                    index: index,
+                    ontology: importedOntology
+                };
                 listItem.importedOntologyIds.push(id);
-                listItem.importedOntologies.push(importedOntology);
+                listItem.importedOntologies.push(importedOntologyListItem);
             }
         }
 })();
