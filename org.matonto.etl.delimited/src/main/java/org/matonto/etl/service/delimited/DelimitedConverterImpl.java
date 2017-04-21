@@ -309,7 +309,7 @@ public class DelimitedConverterImpl implements DelimitedConverter {
     Optional<String> generateLocalName(ClassMapping cm, String[] currentLine) {
         Optional<String> nameOptional = cm.getLocalName();
 
-        if (!nameOptional.isPresent() || nameOptional.get().equals("")) {
+        if (!nameOptional.isPresent() || nameOptional.get().trim().isEmpty()) {
             //Only generate UUIDs when necessary. If you really have to waste a UUID go here: http://wasteaguid.info/
             return Optional.of(generateUuid());
         }

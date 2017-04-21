@@ -808,7 +808,7 @@ public class SimpleCatalogManager implements CatalogManager {
 
         Model revisionModel = mf.createModel(inProgressCommit.getModel());
         revisionModel.remove(inProgressCommit.getResource(), null, null);
-        Revision revision = revisionFactory.getExisting(revisionIRI, revisionModel).orElse(null);
+        Optional<Revision> optRevision = revisionFactory.getExisting(revisionIRI, revisionModel);
 
         if (baseCommit != null) {
             commit.setBaseCommit(baseCommit);
@@ -816,9 +816,12 @@ public class SimpleCatalogManager implements CatalogManager {
         if (auxCommit != null) {
             commit.setAuxiliaryCommit(auxCommit);
         }
-        if (generatedParents.size() != 0) {
-            revision.setProperties(generatedParents, vf.createIRI(Entity.wasDerivedFrom_IRI));
-        }
+
+        optRevision.ifPresent(revision -> {
+            if (generatedParents.size() != 0) {
+                revision.setProperties(generatedParents, vf.createIRI(Entity.wasDerivedFrom_IRI));
+            }
+        });
 
         commit.getModel().addAll(revisionModel);
         return commit;

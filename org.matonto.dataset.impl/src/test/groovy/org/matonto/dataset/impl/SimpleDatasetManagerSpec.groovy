@@ -354,7 +354,7 @@ class SimpleDatasetManagerSpec extends Specification {
 
         def modelMock = Mock(Model) {
             isEmpty() >> false
-            filter(_ as org.matonto.rdf.api.Resource, _ as IRI, _ as Value, null) >>> it
+            filter(*_) >> it
         }
 
         def recordMock = Mock(DatasetRecord)
