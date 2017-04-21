@@ -29,6 +29,7 @@
             'angular-uuid',
             'ngAnimate',
             'ngCookies',
+            'ngclipboard',
             'ngHandsontable',
             'ngMessages',
             'toastr',

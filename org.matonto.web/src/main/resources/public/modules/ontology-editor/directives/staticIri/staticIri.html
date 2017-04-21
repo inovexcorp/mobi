@@ -21,7 +21,8 @@
   #L%
   -->
 <span class="static-iri">
-    <strong class="text-muted">{{dvm.iri}} <a ng-click="dvm.os.showIriOverlay = true"><i class="fa fa-pencil"></i></a></strong>
+    <strong class="text-muted" uib-tooltip="Copy to clipboard" ngclipboard data-clipboard-text="{{dvm.iri}}" ngclipboard-success="dvm.onSuccess()">{{dvm.iri}}</strong>
+    <a ng-click="dvm.os.showIriOverlay = true"><i class="fa fa-pencil"></i></a>
 </span>
 <div ng-if="dvm.os.showIriOverlay" class="overlay">
     <form name="dvm.iriForm" class="content clearfix" novalidate autocomplete="off">

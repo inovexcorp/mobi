@@ -47,10 +47,13 @@ describe('Settings Tabset directive', function() {
             expect(this.element.querySelectorAll('tabset.centered').length).toBe(1);
         });
         it('with tabs', function() {
-            expect(this.element.find('tab').length).toBe(2);
+            expect(this.element.find('tab').length).toBe(3);
         });
         it('with a profile tab', function() {
             expect(this.element.find('profile-tab').length).toBe(1);
+        });
+        it('with a group tab', function() {
+            expect(this.element.find('group-tab').length).toBe(1);
         });
         it('with a password tab', function() {
             expect(this.element.find('password-tab').length).toBe(1);
