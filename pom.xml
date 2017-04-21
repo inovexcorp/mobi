@@ -29,7 +29,7 @@
 
     <groupId>org.matonto</groupId>
     <artifactId>root</artifactId>
-    <version>1.6.24</version>
+    <version>1.6.25</version>
 
     <packaging>pom</packaging>
 
