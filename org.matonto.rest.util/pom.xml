@@ -89,6 +89,7 @@
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
                             org.matonto.rest.util,
+                            org.matonto.rest.util.logging,
                             org.matonto.rest.util.jaxb
                         </Export-Package>
                         <Import-Package>

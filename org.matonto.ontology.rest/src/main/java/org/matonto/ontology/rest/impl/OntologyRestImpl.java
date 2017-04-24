@@ -442,9 +442,7 @@ public class OntologyRestImpl implements OntologyRest {
     public Response getIRIsInImportedOntologies(ContainerRequestContext context, String recordIdStr,
                                                 String branchIdStr, String commitIdStr) {
         try {
-            JSONArray result = doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr,
-                    this::getAllIRIs);
-            return Response.ok(result).build();
+            return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr, this::getAllIRIs);
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -468,9 +466,7 @@ public class OntologyRestImpl implements OntologyRest {
     public Response getAnnotationsInImportedOntologies(ContainerRequestContext context, String recordIdStr,
                                                        String branchIdStr, String commitIdStr) {
         try {
-            JSONArray result = doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr,
-                    this::getAnnotationArray);
-            return Response.ok(result).build();
+            return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr, this::getAnnotationArray);
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -480,9 +476,7 @@ public class OntologyRestImpl implements OntologyRest {
     public Response getClassesInImportedOntologies(ContainerRequestContext context, String recordIdStr,
                                                    String branchIdStr, String commitIdStr) {
         try {
-            JSONArray result = doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr,
-                    this::getClassArray);
-            return Response.ok(result).build();
+            return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr, this::getClassArray);
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -492,9 +486,7 @@ public class OntologyRestImpl implements OntologyRest {
     public Response getDatatypesInImportedOntologies(ContainerRequestContext context, String recordIdStr,
                                                      String branchIdStr, String commitIdStr) {
         try {
-            JSONArray result = doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr,
-                    this::getDatatypeArray);
-            return Response.ok(result).build();
+            return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr, this::getDatatypeArray);
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -504,9 +496,8 @@ public class OntologyRestImpl implements OntologyRest {
     public Response getObjectPropertiesInImportedOntologies(ContainerRequestContext context, String recordIdStr,
                                                             String branchIdStr, String commitIdStr) {
         try {
-            JSONArray result = doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr,
+            return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr,
                     this::getObjectPropertyArray);
-            return Response.ok(result).build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -516,9 +507,7 @@ public class OntologyRestImpl implements OntologyRest {
     public Response getDataPropertiesInImportedOntologies(ContainerRequestContext context, String recordIdStr,
                                                           String branchIdStr, String commitIdStr) {
         try {
-            JSONArray result = doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr,
-                    this::getDataPropertyArray);
-            return Response.ok(result).build();
+            return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr, this::getDataPropertyArray);
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -528,9 +517,8 @@ public class OntologyRestImpl implements OntologyRest {
     public Response getNamedIndividualsInImportedOntologies(ContainerRequestContext context, String recordIdStr,
                                                             String branchIdStr, String commitIdStr) {
         try {
-            JSONArray result = doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr,
+            return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr,
                     this::getNamedIndividualArray);
-            return Response.ok(result).build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -856,9 +844,9 @@ public class OntologyRestImpl implements OntologyRest {
      *                    component.
      * @return the JSON list of imported IRI lists determined by the provided Function.
      */
-    private JSONArray doWithImportedOntologies(ContainerRequestContext context, String recordIdStr,
-                                               String branchIdStr, String commitIdStr,
-                                               Function<Ontology, JSONObject> iriFunction) {
+    private Response doWithImportedOntologies(ContainerRequestContext context, String recordIdStr,
+                                              String branchIdStr, String commitIdStr,
+                                              Function<Ontology, JSONObject> iriFunction) {
         Set<Ontology> importedOntologies;
         try {
             importedOntologies = getImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr);
@@ -872,9 +860,9 @@ public class OntologyRestImpl implements OntologyRest {
                 object.put("id", ontology.getOntologyId().getOntologyIdentifier().stringValue());
                 ontoArray.add(object);
             }
-            return ontoArray;
+            return Response.ok(ontoArray).build();
         } else {
-            throw ErrorUtils.sendError("No imported ontologies found.", Response.Status.NO_CONTENT);
+            return Response.noContent().build();
         }
     }
 
