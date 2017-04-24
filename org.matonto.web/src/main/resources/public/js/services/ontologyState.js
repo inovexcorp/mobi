@@ -588,12 +588,17 @@
              */
             self.getEntityNameByIndex = function(entityIRI, listItem) {
                 var indices = getIndices(listItem);
-                var entity = _.find(indices, entityIRI);
-                if (entity) {
-                    return entity[entityIRI].label;
+                var entity = _.result(_.find(indices, index => {
+                    var entity = _.get(index, entityIRI);
+                     return (entity !== null && _.has(entity, 'label'));
+                }), entityIRI);
+
+                if (!entity) {
+                    name = utilService.getBeautifulIRI(entityIRI);
                 } else {
-                    return utilService.getBeautifulIRI(entityIRI);
+                    name = entity.label;
                 }
+                return name;
             }
             /**
              * @ngdoc method

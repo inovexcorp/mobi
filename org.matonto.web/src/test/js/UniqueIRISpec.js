@@ -37,33 +37,27 @@ describe('Unique IRI filter', function() {
     });
 
     it('returns subset of collection when there are duplicates', function() {
-        var result;
-        result = $filter('uniqueIRI')(collection, 'toplevelid');
+        var result = $filter('uniqueIRI')(collection, 'toplevelid');
         expect(result).toEqual([entity1, entity2, entity3]);
     });
     it('returns subset of collection when there are duplicates and the keyfield is not top level', function() {
-        var result;
-        result = $filter('uniqueIRI')(collection, 'entity.orignalIRI');
+        var result = $filter('uniqueIRI')(collection, 'entity.orignalIRI');
         expect(result).toEqual([entity1, entity2, entity4]);
     });
     it('returns all items when all items are unique', function() {
-        var result;
-        result = $filter('uniqueIRI')(collection, 'entity.label');
+        var result = $filter('uniqueIRI')(collection, 'entity.label');
         expect(result).toEqual(collection);
     });
     it('returns all items when keyfield is empty', function() {
-        var result;
-        result = $filter('uniqueIRI')(collection, '');
+        var result = $filter('uniqueIRI')(collection, '');
         expect(result).toEqual(collection);
     });
     it('returns all items when keyfield is undefined', function() {
-        var result;
-        result = $filter('uniqueIRI')(collection);
+        var result = $filter('uniqueIRI')(collection);
         expect(result).toEqual(collection);
     });
     it('returns no items when no items have the keyfield', function() {
-        var result;
-        result = $filter('uniqueIRI')(collection, 'entity.orignalIRI.doesnotexist');
+        var result = $filter('uniqueIRI')(collection, 'entity.orignalIRI.doesnotexist');
         expect(result).toEqual([]);
     });
 });

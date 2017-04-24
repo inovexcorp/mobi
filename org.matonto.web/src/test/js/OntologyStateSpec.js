@@ -1312,6 +1312,73 @@ describe('Ontology State Service', function() {
             };
             expect(ontologyStateSvc.getEntityNameByIndex('iri', listItem)).toBe('name');
         });
+        it('when the entityIRI is in the imported index', function() {
+            var listItem = {
+                index: {
+                    nomatchiri: {
+                        label: 'name'
+                    }
+                },
+                importedOntologies: [{
+                    index: {
+                        iri: {
+                            label: 'importedname'
+                        }
+                    }
+                }]
+            };
+            expect(ontologyStateSvc.getEntityNameByIndex('iri', listItem)).toBe('importedname');
+        });
+        it('when the entityIRI is in multiple indices', function() {
+            var listItem = {
+                index: {
+                    iri: {
+                        label: 'name'
+                    }
+                },
+                importedOntologies: [{
+                    index: {
+                        iri: {
+                            label: 'importedname'
+                        }
+                    }
+                }]
+            };
+            expect(ontologyStateSvc.getEntityNameByIndex('iri', listItem)).toBe('name');
+        });
+        it('when the entityIRI is in multiple indices with only one label', function() {
+            var listItem = {
+                index: {
+                    iri: {
+                    }
+                },
+                importedOntologies: [{
+                    index: {
+                        iri: {
+                            label: 'importedname'
+                        }
+                    }
+                }]
+            };
+            expect(ontologyStateSvc.getEntityNameByIndex('iri', listItem)).toBe('importedname');
+        });
+        it('when the entityIRI is in multiple indices and no labels exist', function() {
+            var listItem = {
+                index: {
+                    iri: {
+                    }
+                },
+                importedOntologies: [{
+                    index: {
+                        iri: {
+                        }
+                    }
+                }]
+            };
+            util.getBeautifulIRI.and.returnValue('entity name');
+            expect(ontologyStateSvc.getEntityNameByIndex('iri', listItem)).toBe('entity name');
+            expect(util.getBeautifulIRI).toHaveBeenCalledWith('iri');
+        });
         it('when the entityIRI is not in the index', function() {
             util.getBeautifulIRI.and.returnValue('entity name');
             expect(ontologyStateSvc.getEntityNameByIndex('iri', {type: 'ontology'})).toBe('entity name');
