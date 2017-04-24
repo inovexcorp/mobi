@@ -109,11 +109,11 @@ describe('Custom Header directive', function() {
         it('for user management item', function(){
             userManagerSvc.isAdmin.and.returnValue(false);
             scope.$digest();
-            expect(this.element.find('li').length).toBe(1);
+            expect(this.element.find('li').length).toBe(4);
             
             userManagerSvc.isAdmin.and.returnValue(true);
             scope.$digest();
-            expect(this.element.find('li').length).toBe(3);
+            expect(this.element.find('li').length).toBe(6);
         });
     });
 });
