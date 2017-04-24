@@ -386,7 +386,7 @@ public class SimpleOntologyManager implements OntologyManager {
 
     private Commit getHeadOfBranch(Branch branch) {
         return branch.getHead().orElseThrow(() ->
-                new IllegalStateException("There is no head commit associated with this branch."));
+                new IllegalStateException("There is no head Commit associated with this Branch."));
     }
 
     private Commit getCommitFromChain(Commit headCommit, Resource commitId) {
@@ -395,7 +395,7 @@ public class SimpleOntologyManager implements OntologyManager {
             return catalogManager.getCommit(commitId, commitFactory).orElseThrow(() ->
                     new IllegalStateException("The identified Commit could not be retrieved."));
         } else {
-            throw new IllegalArgumentException("The identified commit is not in the specified commit chain.");
+            throw new IllegalArgumentException("The identified Commit is not in the specified commit chain.");
         }
     }
 

@@ -862,7 +862,6 @@ public class OntologyRestImpl implements OntologyRest {
             }
             return Response.ok(ontoArray).build();
         } else {
-//            throw ErrorUtils.sendError("No imported ontologies found.", Response.Status.NO_CONTENT);
             return Response.noContent().build();
         }
     }
