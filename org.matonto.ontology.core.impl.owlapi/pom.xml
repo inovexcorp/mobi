@@ -68,6 +68,16 @@
             <groupId>biz.aQute.bnd</groupId>
             <artifactId>biz.aQute.bndlib</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.ehcache</groupId>
+            <artifactId>ehcache</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>cache</artifactId>
+            <version>1.6.28-SNAPSHOT</version>
+        </dependency>
 
         <!-- Openrdf Sesame dependencies -->
         <dependency>

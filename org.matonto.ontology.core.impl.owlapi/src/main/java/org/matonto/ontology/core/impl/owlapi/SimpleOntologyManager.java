@@ -26,6 +26,8 @@ package org.matonto.ontology.core.impl.owlapi;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import org.apache.commons.io.IOUtils;
+import org.ehcache.Cache;
+import org.matonto.cache.api.CacheManager;
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.ontologies.mcat.Branch;
 import org.matonto.catalog.api.ontologies.mcat.BranchFactory;
@@ -60,6 +62,8 @@ import org.semanticweb.owlapi.model.OWLOntologyLoaderConfiguration;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.rio.RioMemoryTripleSource;
 import org.semanticweb.owlapi.rio.RioParserImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -85,6 +89,9 @@ public class SimpleOntologyManager implements OntologyManager {
     private OntologyRecordFactory ontologyRecordFactory;
     private CommitFactory commitFactory;
     private BranchFactory branchFactory;
+    private CacheManager cacheManager;
+
+    private final Logger log = LoggerFactory.getLogger(SimpleOntologyManager.class);
 
     private static final String GET_SUB_CLASSES_OF;
     private static final String GET_SUB_DATATYPE_PROPERTIES_OF;
@@ -206,6 +213,11 @@ public class SimpleOntologyManager implements OntologyManager {
         this.branchFactory = branchFactory;
     }
 
+    @Reference
+    public void setCacheManager(CacheManager cacheManager) {
+        this.cacheManager = cacheManager;
+    }
+
     @Override
     public SesameTransformer getTransformer() {
         return sesameTransformer;
@@ -254,34 +266,92 @@ public class SimpleOntologyManager implements OntologyManager {
 
     @Override
     public Optional<Ontology> retrieveOntology(@Nonnull Resource recordId) {
-        return catalogManager.getRecord(catalogManager.getLocalCatalogIRI(), recordId, ontologyRecordFactory)
-                .flatMap(ontologyRecord -> {
-                    Branch branch = getMasterBranch(ontologyRecord);
-                    Commit headCommit = getHeadOfBranch(branch);
-                    return Optional.of(createOntologyFromCommit(headCommit));
-                });
+        long start = 0L;
+        Optional<Ontology> result;
+        if (log.isTraceEnabled()) {
+            start = System.currentTimeMillis();
+        }
+
+        // Check Cache
+        Cache<String, Ontology> testCache = cacheManager.getCache("testCache", String.class, Ontology.class);
+        if (testCache != null && testCache.containsKey(recordId.stringValue())) {
+            log.trace("cache hit");
+            result = Optional.of(testCache.get(recordId.stringValue()));
+        } else {
+            result = catalogManager.getRecord(catalogManager.getLocalCatalogIRI(), recordId, ontologyRecordFactory)
+                    .flatMap(ontologyRecord -> {
+                        Branch branch = getMasterBranch(ontologyRecord);
+                        Commit headCommit = getHeadOfBranch(branch);
+                        return Optional.of(createOntologyFromCommit(headCommit));
+                    });
+        }
+
+        if (log.isTraceEnabled()) {
+            log.trace(String.format("retrieveOntology(record) complete in %d ms", System.currentTimeMillis() - start));
+        }
+
+        return result;
     }
 
     @Override
     public Optional<Ontology> retrieveOntology(@Nonnull Resource recordId, @Nonnull Resource branchId) {
-        return catalogManager.getRecord(catalogManager.getLocalCatalogIRI(), recordId, ontologyRecordFactory)
-                .flatMap(ontologyRecord -> {
-                    Branch branch = getBranch(ontologyRecord, branchId);
-                    Commit headCommit = getHeadOfBranch(branch);
-                    return Optional.of(createOntologyFromCommit(headCommit));
-                });
+        long start = 0L;
+        Optional<Ontology> result;
+        if (log.isTraceEnabled()) {
+            start = System.currentTimeMillis();
+        }
+
+        // Check Cache
+        Cache<String, Ontology> testCache = cacheManager.getCache("testCache", String.class, Ontology.class);
+        if (testCache != null && testCache.containsKey(recordId.stringValue())) {
+            log.trace("cache hit");
+            result = Optional.of(testCache.get(recordId.stringValue()));
+        } else {
+            result = catalogManager.getRecord(catalogManager.getLocalCatalogIRI(), recordId, ontologyRecordFactory)
+                    .flatMap(ontologyRecord -> {
+                        Branch branch = getBranch(ontologyRecord, branchId);
+                        Commit headCommit = getHeadOfBranch(branch);
+                        return Optional.of(createOntologyFromCommit(headCommit));
+                    });
+        }
+
+        if (log.isTraceEnabled()) {
+            log.trace(String.format("retrieveOntology(record, branch) complete in %d ms", System.currentTimeMillis() - start));
+        }
+
+        return result;
     }
 
     @Override
     public Optional<Ontology> retrieveOntology(@Nonnull Resource recordId, @Nonnull Resource branchId,
                                                @Nonnull Resource commitId) {
-        return catalogManager.getRecord(catalogManager.getLocalCatalogIRI(), recordId, ontologyRecordFactory)
-                .flatMap(ontologyRecord -> {
-                    Branch branch = getBranch(ontologyRecord, branchId);
-                    Commit headCommit = getHeadOfBranch(branch);
-                    Commit commit = getCommitFromChain(headCommit, commitId);
-                    return Optional.of(createOntologyFromCommit(commit));
-                });
+        long start = 0L;
+        Optional<Ontology> result;
+        if (log.isTraceEnabled()) {
+            start = System.currentTimeMillis();
+        }
+
+        // Check Cache
+        Cache<String, Ontology> testCache = cacheManager.getCache("testCache", String.class, Ontology.class);
+        if (testCache != null && testCache.containsKey(recordId.stringValue())) {
+            log.trace("cache hit");
+            result = Optional.of(testCache.get(recordId.stringValue()));
+        } else {
+            log.trace("cache miss: " + recordId.stringValue());
+            result = catalogManager.getRecord(catalogManager.getLocalCatalogIRI(), recordId, ontologyRecordFactory)
+                    .flatMap(ontologyRecord -> {
+                        Branch branch = getBranch(ontologyRecord, branchId);
+                        Commit headCommit = getHeadOfBranch(branch);
+                        Commit commit = getCommitFromChain(headCommit, commitId);
+                        return Optional.of(createOntologyFromCommit(commit));
+                    });
+        }
+
+        if (log.isTraceEnabled()) {
+            log.trace(String.format("retrieveOntology(record, branch, commit) complete in %d ms", System.currentTimeMillis() - start));
+        }
+
+        return result;
     }
 
     @Override

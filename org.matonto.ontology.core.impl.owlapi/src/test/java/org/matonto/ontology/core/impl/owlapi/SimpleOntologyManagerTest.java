@@ -34,6 +34,7 @@ import static org.mockito.Mockito.when;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.matonto.cache.api.CacheManager;
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.ontologies.mcat.Branch;
 import org.matonto.catalog.api.ontologies.mcat.BranchFactory;
@@ -101,6 +102,9 @@ public class SimpleOntologyManagerTest {
 
     @Mock
     private Ontology vocabulary;
+
+    @Mock
+    private CacheManager cacheManager;
 
     private SimpleOntologyManager manager;
     private ValueFactory valueFactory = SimpleValueFactory.getInstance();
@@ -196,6 +200,7 @@ public class SimpleOntologyManagerTest {
         manager.setCommitFactory(commitFactory);
         manager.setBranchFactory(branchFactory);
         manager.setRepositoryManager(repoManager);
+        manager.setCacheManager(cacheManager);
     }
 
     @Test

@@ -28,15 +28,16 @@ import static org.matonto.rest.util.RestUtils.getRDFFormatMimeType;
 import static org.matonto.rest.util.RestUtils.jsonldToModel;
 import static org.matonto.rest.util.RestUtils.modelToJsonld;
 
-import com.google.common.collect.Iterables;
-
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
+import com.google.common.collect.Iterables;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONException;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.ehcache.Cache;
+import org.matonto.cache.api.CacheManager;
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.Difference;
 import org.matonto.catalog.api.builder.RecordConfig;
@@ -70,6 +71,8 @@ import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rest.util.ErrorUtils;
 import org.matonto.web.security.util.AuthenticationProps;
 import org.openrdf.model.vocabulary.OWL;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
 import java.io.InputStream;
@@ -100,6 +103,9 @@ public class OntologyRestImpl implements OntologyRest {
     private OntologyRecordFactory ontologyRecordFactory;
     private EngineManager engineManager;
     private SesameTransformer sesameTransformer;
+    public CacheManager cacheManager;
+
+    private final Logger log = LoggerFactory.getLogger(OntologyRestImpl.class);
 
     @Reference
     public void setModelFactory(ModelFactory modelFactory) {
@@ -134,6 +140,11 @@ public class OntologyRestImpl implements OntologyRest {
     @Reference
     public void setSesameTransformer(SesameTransformer sesameTransformer) {
         this.sesameTransformer = sesameTransformer;
+    }
+
+    @Reference
+    public void setCacheManager(CacheManager cacheManager) {
+        this.cacheManager = cacheManager;
     }
 
     @Override
@@ -1181,6 +1192,14 @@ public class OntologyRestImpl implements OntologyRest {
         catalogManager.addCommitToBranch(commit, masterBranchId);
 
         catalogManager.removeInProgressCommit(inProgressCommit.getResource());
+
+        // Cache
+        Cache<String, Ontology> testCache = cacheManager.getCache("testCache", String.class, Ontology.class);
+        if (testCache != null) {
+            log.trace("caching " + record.getResource().stringValue());
+            testCache.put(record.getResource().stringValue(), ontology);
+        }
+
         JSONObject response = new JSONObject()
                 .element("ontologyId", ontology.getOntologyId().getOntologyIdentifier().stringValue())
                 .element("recordId", record.getResource().stringValue())

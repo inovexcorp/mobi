@@ -45,6 +45,7 @@ import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.matonto.cache.api.CacheManager;
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.Difference;
 import org.matonto.catalog.api.builder.RecordConfig;
@@ -161,6 +162,9 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
 
     @Mock
     private SesameTransformer sesameTransformer;
+
+    @Mock
+    private CacheManager cacheManager;
 
     private ValueConverterRegistry vcr;
     private ModelFactory modelFactory;
@@ -282,6 +286,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         rest.setOntologyRecordFactory(ontologyRecordFactory);
         rest.setEngineManager(engineManager);
         rest.setSesameTransformer(sesameTransformer);
+        rest.setCacheManager(cacheManager);
 
         simpleOntologyManager = new SimpleOntologyManager();
         simpleOntologyManager.setModelFactory(modelFactory);
