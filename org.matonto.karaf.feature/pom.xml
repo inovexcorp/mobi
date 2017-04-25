@@ -217,6 +217,11 @@
             <artifactId>sparql.utils</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>cache</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
