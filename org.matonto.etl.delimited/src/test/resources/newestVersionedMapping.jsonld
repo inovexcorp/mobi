@@ -72,6 +72,11 @@
         "@id": "http://matonto.org/mappings/test",
         "@type": [
             "http://matonto.org/ontologies/delimited#Mapping"
+        ],
+        "http://matonto.org/ontologies/delimited#versionIRI": [
+            {
+                "@id": "http://matonto.org/mappings/test/1.0"
+            }
         ]
     },
     {

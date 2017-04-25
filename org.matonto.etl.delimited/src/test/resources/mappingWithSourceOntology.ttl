@@ -5,6 +5,7 @@
 @prefix uhtc: <http://matonto.org/ontologies/uhtc/> .
 
 :newest_mapping a                    delim:Mapping ;
+                delim:versionIRI    "http://matonto.org/mappings/newest_mapping/1.0" ;
                 delim:sourceRecord   <http://matonto.org/records/A> ;
                 delim:sourceBranch   <http://matonto.org/branches/A> ;
                 delim:sourceCommit   <http://matonto.org/commits/A> .
