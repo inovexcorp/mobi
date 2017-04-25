@@ -1,6 +1,8 @@
+package org.matonto.rest.util.logging;
+
 /*-
  * #%L
- * org.matonto.web
+ * org.matonto.ontology.rest
  * $Id:$
  * $HeadURL:$
  * %%
@@ -20,18 +22,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-(function() {
-    'use strict';
 
-    angular
-        .module('settings', [
-            /* Custom directives */
-            'customPreference',
-            'groupTab',
-            'passwordTab',
-            'preferencesContainer',
-            'preferencesTab',
-            'profileTab',
-            'settingsTabset'
-        ]);
-})();
+public class Filters {
+
+    public static final String REQ_START_TIME = "org.matonto.web.log.start";
+}

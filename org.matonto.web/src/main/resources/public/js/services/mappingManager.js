@@ -313,7 +313,7 @@
                 if (om.getEntity(ontology, classId)) {
                     // Collect IRI sections for prefix and create class mapping
                     var splitIri = $filter('splitIRI')(classId);
-                    var ontologyDataName = util.getBeautifulIRI(om.getOntologyIRI(ontology)).toLowerCase();
+                    var ontologyDataName = ($filter('splitIRI')(om.getOntologyIRI(ontology))).end;
                     classEntity = {
                         '@id': getMappingEntity(mapping)['@id'] + '/' + uuid.v4(),
                         '@type': [prefixes.delim + 'ClassMapping']
@@ -337,16 +337,15 @@
              *
              * @param {Object[]} mapping The mapping JSON-LD array
              * @param {string} classMappingId The id of the class mapping whose IRI template will be edited
-             * @param {string} prefixEnd The new end of the prefix
+             * @param {string} prefix The new end of the prefix
              * @param {string} localNamePattern The new local name pattern. Must be in the following format:
              * `${index/UUID}`
              */
-            self.editIriTemplate = function(mapping, classMappingId, prefixEnd, localNamePattern) {
+            self.editIriTemplate = function(mapping, classMappingId, prefix, localNamePattern) {
                 // Check if class mapping exists in mapping
                 if (entityExists(mapping, classMappingId)) {
                     var classMapping = getEntityById(mapping, classMappingId);
-                    var splitPrefix = $filter('splitIRI')(util.getPropertyValue(classMapping, prefixes.delim + 'hasPrefix').slice(0, -1));
-                    classMapping[prefixes.delim + 'hasPrefix'] = [{'@value': splitPrefix.begin + splitPrefix.then + prefixEnd}];
+                    classMapping[prefixes.delim + 'hasPrefix'] = [{'@value': prefix}];
                     classMapping[prefixes.delim + 'localName'] = [{'@value': localNamePattern}];
                 }
             }
