@@ -40,7 +40,7 @@ public class SimpleCacheManager implements CacheManager {
     @Activate
     public void start() {
         this.cacheManager = CacheManagerBuilder.newCacheManagerBuilder()
-                .withCache("testCache",
+                .withCache("ontologyCache",
                         CacheConfigurationBuilder.newCacheConfigurationBuilder(String.class, Ontology.class, ResourcePoolsBuilder.heap(100))
                                 .build())
                 .build(true);
