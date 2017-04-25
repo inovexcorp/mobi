@@ -1,5 +1,5 @@
 
-Lists of 282 third-party dependencies.
+Lists of 283 third-party dependencies.
      (Public Domain) AOP alliance (aopalliance:aopalliance:1.0 - http://aopalliance.sourceforge.net)
      (The Apache Software License, Version 2.0) avalon-framework (avalon-framework:avalon-framework:4.1.3 - no url defined)
      (The Apache Software License, Version 2.0) bndlib (biz.aQute.bnd:biz.aQute.bndlib:3.1.0 - http://bnd.bndtools.org/)
@@ -138,6 +138,7 @@ Lists of 282 third-party dependencies.
      (The Apache Software License, Version 2.0) Plexus Common Utilities (org.codehaus.plexus:plexus-utils:2.0.4 - http://plexus.codehaus.org/plexus-utils)
      (The Apache Software License, Version 2.0) EasyMock (org.easymock:easymock:3.4 - http://easymock.org/easymock)
      (Eclipse Public License) Tycho org.eclipse.osgi dependency (Incubation) (org.eclipse.tycho:org.eclipse.osgi:3.10.101.v20150820-1432 - http://www.eclipse.org/tycho/)
+     (The Apache Software License, Version 2.0) Ehcache (org.ehcache:ehcache:3.3.1 - http://ehcache.org)
      (Common Development and Distribution License, Version 1.1, and GNU General Public License, Version 2 with Classpath Exception) HK2 API module (org.glassfish.hk2:hk2-api:2.4.0-b31 - https://hk2.java.net/hk2-api)
      (Common Development and Distribution License, Version 1.1, and GNU General Public License, Version 2 with Classpath Exception) ServiceLocator Default Implementation (org.glassfish.hk2:hk2-locator:2.4.0-b31 - https://hk2.java.net/hk2-locator)
      (Common Development and Distribution License, Version 1.1, and GNU General Public License, Version 2 with Classpath Exception) HK2 Implementation Utilities (org.glassfish.hk2:hk2-utils:2.4.0-b31 - https://hk2.java.net/hk2-utils)
@@ -263,8 +264,8 @@ Lists of 282 third-party dependencies.
      (MIT License) SLF4J API Module (org.slf4j:slf4j-api:1.6.6 - http://www.slf4j.org)
      (MIT License) SLF4J API Module (org.slf4j:slf4j-api:1.7.10 - http://www.slf4j.org)
      (MIT License) SLF4J API Module (org.slf4j:slf4j-api:1.7.12 - http://www.slf4j.org)
-     (MIT License) SLF4J API Module (org.slf4j:slf4j-api:1.7.14 - http://www.slf4j.org)
      (MIT License) SLF4J API Module (org.slf4j:slf4j-api:1.7.6 - http://www.slf4j.org)
+     (MIT License) SLF4J API Module (org.slf4j:slf4j-api:1.7.7 - http://www.slf4j.org)
      (The Apache Software License, Version 2.0) Sisu - Guice (org.sonatype.sisu:sisu-guice:2.1.7 - http://forge.sonatype.com/sisu-guice/)
      (The Apache Software License, Version 2.0) Sisu - Inject (JSR330 bean support) (org.sonatype.sisu:sisu-inject-bean:1.4.2 - http://sisu.sonatype.org/sisu-inject/guice-bean/sisu-inject-bean/)
      (The Apache Software License, Version 2.0) Sisu - Inject (Plexus bean support) (org.sonatype.sisu:sisu-inject-plexus:1.4.2 - http://sisu.sonatype.org/sisu-inject/guice-bean/guice-plexus/sisu-inject-plexus/)
