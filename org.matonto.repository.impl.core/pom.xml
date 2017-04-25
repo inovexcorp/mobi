@@ -42,12 +42,12 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>persistence.api</artifactId>
-            <version>1.6.27</version>
+            <version>1.6.28-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>repository.impl.sesame</artifactId>
-            <version>1.6.27</version>
+            <version>1.6.28-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>biz.aQute.bnd</groupId>

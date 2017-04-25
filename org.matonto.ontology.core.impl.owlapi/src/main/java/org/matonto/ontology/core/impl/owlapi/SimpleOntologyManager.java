@@ -254,93 +254,34 @@ public class SimpleOntologyManager implements OntologyManager {
 
     @Override
     public Optional<Ontology> retrieveOntology(@Nonnull Resource recordId) {
-//<<<<<<< HEAD
-//        Optional<Ontology> result = Optional.empty();
-//        Optional<OntologyRecord> record = catalogManager.getRecord(catalogManager.getLocalCatalogIRI(), recordId,
-//                ontologyRecordFactory);
-//        if (record.isPresent()) {
-//            Resource masterBranchUri = record.get().getMasterBranch_resource().orElseThrow(() ->
-//                    new IllegalArgumentException("The master Branch was not set on the OntologyRecord."));
-//            Branch masterBranch = catalogManager.getBranch(masterBranchUri, branchFactory).orElseThrow(() ->
-//                    new IllegalArgumentException("The master Branch could not be retrieved."));
-//            Resource commit = masterBranch.getHead_resource().orElseThrow(() ->
-//                    new IllegalArgumentException("The head Commit was not set on the master Branch."));
-//            return Optional.of(createOntologyFromCommit(commit));
-//        }
-//        return result;
-//=======
         return catalogManager.getRecord(catalogManager.getLocalCatalogIRI(), recordId, ontologyRecordFactory)
                 .flatMap(ontologyRecord -> {
                     Branch branch = getMasterBranch(ontologyRecord);
-                    Commit headCommit = getHeadOfBranch(branch);
+                    Resource headCommit = getHeadOfBranch(branch);
                     return Optional.of(createOntologyFromCommit(headCommit));
                 });
-//>>>>>>> develop
     }
 
     @Override
     public Optional<Ontology> retrieveOntology(@Nonnull Resource recordId, @Nonnull Resource branchId) {
-//<<<<<<< HEAD
-//        Optional<Ontology> result = Optional.empty();
-//        Optional<OntologyRecord> record = catalogManager.getRecord(catalogManager.getLocalCatalogIRI(), recordId,
-//                ontologyRecordFactory);
-//        if (record.isPresent()) {
-//            for (Resource branchUri : record.get().getBranch_resource()) {
-//                if (branchUri.equals(branchId)) {
-//                    Branch branch = catalogManager.getBranch(branchId, branchFactory).orElseThrow(() ->
-//                            new IllegalArgumentException("The identified Branch could not be retrieved."));
-//                    Resource headCommit = branch.getHead_resource().orElseThrow(() ->
-//                            new IllegalArgumentException("The head Commit was not set on the Branch."));
-//                    result = Optional.of(createOntologyFromCommit(headCommit));
-//                    break;
-//                }
-//            }
-//        }
-//        return result;
-//=======
         return catalogManager.getRecord(catalogManager.getLocalCatalogIRI(), recordId, ontologyRecordFactory)
                 .flatMap(ontologyRecord -> {
                     Branch branch = getBranch(ontologyRecord, branchId);
-                    Commit headCommit = getHeadOfBranch(branch);
+                    Resource headCommit = getHeadOfBranch(branch);
                     return Optional.of(createOntologyFromCommit(headCommit));
                 });
-//>>>>>>> develop
     }
 
     @Override
     public Optional<Ontology> retrieveOntology(@Nonnull Resource recordId, @Nonnull Resource branchId,
                                                @Nonnull Resource commitId) {
-//<<<<<<< HEAD
-//        Optional<Ontology> result = Optional.empty();
-//        Optional<OntologyRecord> record = catalogManager.getRecord(catalogManager.getLocalCatalogIRI(), recordId,
-//                ontologyRecordFactory);
-//        if (record.isPresent()) {
-//            for (Resource branchUri : record.get().getBranch_resource()) {
-//                if (branchUri.equals(branchId)) {
-//                    Branch branch = catalogManager.getBranch(branchUri, branchFactory).orElseThrow(() ->
-//                            new IllegalArgumentException("The identified Branch could not be retrieved."));
-//                    Resource headCommitUri = branch.getHead_resource().orElseThrow(() ->
-//                            new IllegalArgumentException("The head Commit was not set on the Branch."));
-//                    List<Resource> commitChain = catalogManager.getCommitChain(headCommitUri);
-//                    if (commitChain.contains(commitId)) {
-//                        Commit commit = catalogManager.getCommit(commitId, commitFactory).orElseThrow(() ->
-//                                new IllegalArgumentException("The identified Commit could not be retrieved."));
-//                        result = Optional.of(createOntologyFromCommit(commit.getResource()));
-//                    }
-//                    break;
-//                }
-//            }
-//        }
-//        return result;
-//=======
         return catalogManager.getRecord(catalogManager.getLocalCatalogIRI(), recordId, ontologyRecordFactory)
                 .flatMap(ontologyRecord -> {
                     Branch branch = getBranch(ontologyRecord, branchId);
-                    Commit headCommit = getHeadOfBranch(branch);
-                    Commit commit = getCommitFromChain(headCommit, commitId);
+                    Resource headCommit = getHeadOfBranch(branch);
+                    Resource commit = getCommitFromChain(headCommit, commitId);
                     return Optional.of(createOntologyFromCommit(commit));
                 });
-//>>>>>>> develop
     }
 
     @Override
@@ -427,32 +368,31 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     private Branch getMasterBranch(OntologyRecord record) {
-        Branch masterBranch = record.getMasterBranch().orElseThrow(() ->
+        Resource masterBranch = record.getMasterBranch_resource().orElseThrow(() ->
                 new IllegalStateException("The Master Branch could not be found on this record."));
-        return catalogManager.getBranch(masterBranch.getResource(), branchFactory).orElseThrow(() ->
+        return catalogManager.getBranch(masterBranch, branchFactory).orElseThrow(() ->
                 new IllegalStateException("The Master Branch could not be retrieved."));
     }
 
     private Branch getBranch(OntologyRecord record, Resource branchId) {
-        for (Branch branch : record.getBranch()) {
-            if (branch.getResource().equals(branchId)) {
-                return catalogManager.getBranch(branch.getResource(), branchFactory).orElseThrow(() ->
+        for (Resource branch : record.getBranch_resource()) {
+            if (branch.equals(branchId)) {
+                return catalogManager.getBranch(branch, branchFactory).orElseThrow(() ->
                         new IllegalStateException("The identified Branch could not be retrieved."));
             }
         }
         throw new IllegalArgumentException("The identified Branch could not be found on this record.");
     }
 
-    private Commit getHeadOfBranch(Branch branch) {
-        return branch.getHead().orElseThrow(() ->
+    private Resource getHeadOfBranch(Branch branch) {
+        return branch.getHead_resource().orElseThrow(() ->
                 new IllegalStateException("There is no head Commit associated with this Branch."));
     }
 
-    private Commit getCommitFromChain(Commit headCommit, Resource commitId) {
-        List<Resource> commitChain = catalogManager.getCommitChain(headCommit.getResource());
+    private Resource getCommitFromChain(Resource headCommit, Resource commitId) {
+        List<Resource> commitChain = catalogManager.getCommitChain(headCommit);
         if (commitChain.contains(commitId)) {
-            return catalogManager.getCommit(commitId, commitFactory).orElseThrow(() ->
-                    new IllegalStateException("The identified Commit could not be retrieved."));
+            return commitId;
         } else {
             throw new IllegalArgumentException("The identified Commit is not in the specified commit chain.");
         }
@@ -464,9 +404,9 @@ public class SimpleOntologyManager implements OntologyManager {
      * @param commit the Commit identifying the version of the Ontology that you want to create.
      * @return an Ontology built at the time identified by the Commit.
      */
-    private Ontology createOntologyFromCommit(Commit commit) {
-        Model ontologyModel = catalogManager.getCompiledResource(commit.getResource()).orElseThrow(() ->
-                new IllegalArgumentException("The compiled resource could not be retrieved."));
+    private Ontology createOntologyFromCommit(Resource commit) {
+        Model ontologyModel = catalogManager.getCompiledResource(commit).orElseThrow(() ->
+                new IllegalStateException("The compiled resource could not be retrieved."));
         return createOntology(ontologyModel);
     }
 

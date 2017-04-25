@@ -105,14 +105,14 @@
             <groupId>org.matonto</groupId>
             <artifactId>karaf.feature</artifactId>
             <classifier>features</classifier>
-            <version>1.6.27</version>
+            <version>1.6.28-SNAPSHOT</version>
             <type>xml</type>
             <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>jaas.proxy</artifactId>
-            <version>1.6.27</version>
+            <version>1.6.28-SNAPSHOT</version>
             <scope>runtime</scope>
         </dependency>
     </dependencies>
