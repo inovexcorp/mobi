@@ -66,7 +66,8 @@ var jsFiles = function(prefix) {
             prefix + 'ng-handsontable/**/ngHandsontable.min.js',
             prefix + 'chroma-js/**/chroma.min.js',
             prefix + 'angular-toastr/**/angular-toastr.tpls.js',
-            prefix + 'snapsvg/**/snap.svg-min.js'
+            prefix + 'snapsvg/**/snap.svg-min.js',
+            prefix + 'angular-vs-repeat/**/angular-vs-repeat.min.js'
         ]
     },
     styleFiles = function(prefix, suffix) {

@@ -124,7 +124,7 @@ describe('Datatype Property Axioms directive', function() {
             it('if the selected key is subPropertyOf', function() {
                 controller.key = prefixes.rdfs + 'subPropertyOf';
                 controller.removeFromHierarchy(this.axiomObject);
-                expect(ontologyStateSvc.deleteEntityFromParentInHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.dataPropertyHierarchy, ontologyStateSvc.selected.matonto.originalIRI, this.axiomObject['@id'], ontologyStateSvc.listItem.dataPropertyIndex);
+                expect(ontologyStateSvc.deleteEntityFromParentInHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.dataPropertyHierarchy, ontologyStateSvc.selected.matonto.originalIRI, this.axiomObject['@id'], ontologyStateSvc.listItem.dataPropertyIndex, ontologyStateSvc.listItem.flatDataPropertyHierarchy);
             });
         });
     });

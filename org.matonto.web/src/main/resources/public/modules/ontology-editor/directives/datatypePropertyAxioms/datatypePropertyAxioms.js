@@ -54,7 +54,7 @@
                             _.forEach(values, value => {
                                 dvm.os.addEntityToHierarchy(dvm.os.listItem.dataPropertyHierarchy,
                                     dvm.os.selected.matonto.originalIRI, dvm.os.listItem.dataPropertyIndex,
-                                    dvm.ro.getItemIri(value));
+                                    dvm.ro.getItemIri(value), dvm.os.listItem.flatDataPropertyHierarchy);
                             });
                         }
                     }
@@ -62,7 +62,7 @@
                     dvm.removeFromHierarchy = function(axiomObject) {
                         if (prefixes.rdfs + 'subPropertyOf' === dvm.key) {
                             dvm.os.deleteEntityFromParentInHierarchy(dvm.os.listItem.dataPropertyHierarchy,
-                                dvm.os.selected.matonto.originalIRI, axiomObject['@id'], dvm.os.listItem.dataPropertyIndex);
+                                dvm.os.selected.matonto.originalIRI, axiomObject['@id'], dvm.os.listItem.dataPropertyIndex, dvm.os.listItem.flatDataPropertyHierarchy);
                         }
                     }
                 }

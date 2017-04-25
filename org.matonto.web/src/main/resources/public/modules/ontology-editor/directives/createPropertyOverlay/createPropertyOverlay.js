@@ -91,11 +91,15 @@
                         var split = $filter('splitIRI')(dvm.property['@id']);
                         if (dvm.om.isObjectProperty(dvm.property)) {
                             _.get(dvm.os.listItem, 'subObjectProperties').push({namespace:split.begin + split.then, localName: split.end});
-                            _.get(dvm.os.listItem, 'objectPropertyHierarchy').push({'entityIRI': dvm.property['@id']});
+                            var hierarchy = _.get(dvm.os.listItem, 'objectPropertyHierarchy');
+                            hierarchy.push({'entityIRI': dvm.property['@id']});
+                            dvm.os.listItem.flatObjectPropertyHierarchy = dvm.os.flattenHierarchy(hierarchy, dvm.os.listItem.recordId);
                             dvm.os.setObjectPropertiesOpened(dvm.os.listItem.recordId, true);
                         } else if (dvm.om.isDataTypeProperty(dvm.property)) {
                             _.get(dvm.os.listItem, 'subDataProperties').push({namespace:split.begin + split.then, localName: split.end});
-                            _.get(dvm.os.listItem, 'dataPropertyHierarchy').push({'entityIRI': dvm.property['@id']});
+                            var hierarchy = _.get(dvm.os.listItem, 'dataPropertyHierarchy');
+                            hierarchy.push({'entityIRI': dvm.property['@id']});
+                            dvm.os.listItem.flatDataPropertyHierarchy = dvm.os.flattenHierarchy(hierarchy, dvm.os.listItem.recordId);
                             dvm.os.setDataPropertiesOpened(dvm.os.listItem.recordId, true);
                         } else if (dvm.om.isAnnotation(dvm.property)) {
                             _.get(dvm.os.listItem, 'annotations').push({namespace:split.begin + split.then, localName: split.end});

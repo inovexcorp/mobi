@@ -42,6 +42,20 @@
                     var dvm = this;
                     dvm.os = ontologyStateService;
                     dvm.ou = ontologyUtilsManagerService;
+                    
+                    dvm.isShown = function(node) {
+                        var pathString = _.first(node.path);
+                        var pathCopy = _.tail(_.initial(node.path));
+                        var allParentsOpen = _.every(pathCopy, pathPart => {
+                            pathString += '.' + pathPart;
+                            return dvm.os.getOpened(pathString);
+                        });
+                        return (node.indent > 0 && allParentsOpen) || (node.indent === 0 && node.path.length === 2);
+                    }
+                    
+                    dvm.joinPath = function(path) {
+                        return _.join(path, '.');
+                    }
                 }
             }
         }

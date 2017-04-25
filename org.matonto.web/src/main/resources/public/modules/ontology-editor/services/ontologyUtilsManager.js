@@ -52,25 +52,25 @@
             self.deleteClass = function() {
                 var entityIRI = os.getActiveEntityIRI();
                 var split = $filter('splitIRI')(entityIRI);
-                _.remove(_.get(os.listItem, 'subClasses'), {namespace:split.begin + split.then, localName: split.end});
-                _.pull(_.get(os.listItem, 'classesWithIndividuals'), entityIRI);
-                os.deleteEntityFromHierarchy(_.get(os.listItem, 'classHierarchy'), entityIRI, _.get(os.listItem, 'classIndex'));
+                _.remove(os.listItem.subClasses, {namespace:split.begin + split.then, localName: split.end});
+                _.pull(os.listItem.classesWithIndividuals, entityIRI);
+                os.deleteEntityFromHierarchy(os.listItem.classHierarchy, entityIRI, os.listItem.classIndex, os.listItem.flatClassHierarchy);
                 self.commonDelete(entityIRI);
             }
 
             self.deleteObjectProperty = function() {
                 var entityIRI = os.getActiveEntityIRI();
                 var split = $filter('splitIRI')(entityIRI);
-                _.remove(_.get(os.listItem, 'subObjectProperties'), {namespace:split.begin + split.then, localName: split.end});
-                os.deleteEntityFromHierarchy(_.get(os.listItem, 'objectPropertyHierarchy'), entityIRI, _.get(os.listItem, 'objectPropertyIndex'));
+                _.remove(os.listItem.subObjectProperties, {namespace:split.begin + split.then, localName: split.end});
+                os.deleteEntityFromHierarchy(os.listItem.objectPropertyHierarchy, entityIRI, os.listItem.objectPropertyIndex, os.listItem.flatObjectPropertyHierarchy);
                 self.commonDelete(entityIRI);
             }
 
             self.deleteDataTypeProperty = function() {
                 var entityIRI = os.getActiveEntityIRI();
                 var split = $filter('splitIRI')(entityIRI);
-                _.remove(_.get(os.listItem, 'subDataProperties'), {namespace:split.begin + split.then, localName: split.end});
-                os.deleteEntityFromHierarchy(_.get(os.listItem, 'dataPropertyHierarchy'), entityIRI, _.get(os.listItem, 'dataPropertyIndex'));
+                _.remove(os.listItem.subDataProperties, {namespace:split.begin + split.then, localName: split.end});
+                os.deleteEntityFromHierarchy(os.listItem.dataPropertyHierarchy, entityIRI, os.listItem.dataPropertyIndex, os.listItem.flatDataPropertyHierarchy);
                 self.commonDelete(entityIRI);
             }
 
@@ -83,15 +83,13 @@
 
             self.deleteIndividual = function() {
                 var entityIRI = os.getActiveEntityIRI();
-                var split = $filter('splitIRI')(entityIRI);
                 _.remove(_.get(os.listItem, 'individuals'), entityIRI);
                 self.commonDelete(entityIRI);
             }
 
             self.deleteConcept = function() {
                 var entityIRI = os.getActiveEntityIRI();
-                var split = $filter('splitIRI')(entityIRI);
-                os.deleteEntityFromHierarchy(_.get(os.listItem, 'conceptHierarchy'), entityIRI, _.get(os.listItem, 'conceptIndex'));
+                os.deleteEntityFromHierarchy(os.listItem.conceptHierarchy, entityIRI, os.listItem.conceptIndex, os.listItem.flatConceptHierarchy);
                 self.commonDelete(entityIRI);
             }
 

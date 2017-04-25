@@ -403,12 +403,16 @@
                     });
                     listItem.classHierarchy = response[2].hierarchy;
                     listItem.classIndex = response[2].index;
+                    listItem.flatClassHierarchy = self.flattenHierarchy(listItem.classHierarchy, recordId);
                     listItem.classesWithIndividuals = response[3].hierarchy;
                     listItem.classesWithIndividualsIndex = response[3].index;
+                    listItem.flatClassesWithIndividuals = self.flattenHierarchy(listItem.classesWithIndividuals, recordId);
                     listItem.dataPropertyHierarchy = response[4].hierarchy;
                     listItem.dataPropertyIndex = response[4].index;
+                    listItem.flatDataPropertyHierarchy = self.flattenHierarchy(listItem.dataPropertyHierarchy, recordId);
                     listItem.objectPropertyHierarchy = response[5].hierarchy;
                     listItem.objectPropertyIndex = response[5].index;
+                    listItem.flatObjectPropertyHierarchy = self.flattenHierarchy(listItem.objectPropertyHierarchy, recordId);
                     listItem.branches = response[6].data;
                     listItem.upToDate = upToDate;
                     _.pullAllWith(
@@ -461,6 +465,7 @@
                     });
                     listItem.conceptHierarchy = response[2].hierarchy;
                     listItem.conceptIndex = response[2].index;
+                    listItem.flatConceptHierarchy = self.flattenHierarchy(listItem.conceptHierarchy, recordId);
                     listItem.branches = response[3].data;
                     listItem.upToDate = upToDate;
                     _.pullAllWith(
@@ -472,6 +477,27 @@
                     deferred.resolve(listItem);
                 }, error => _.has(error, 'statusText') ? util.onError(response, deferred) : deferred.reject(error));
                 return deferred.promise;
+            }
+            /**
+             * @ngdoc method
+             * @name flattenHierarchy
+             * @methodOf ontologyState.service:ontologyStateService
+             *
+             * @description
+             * Flattens the provided hierarchy into an array that represents the hierarchical structure to be used
+             * with an infinite scrolling solution.
+             *
+             * @param {Object} hierarchy The Object set up in a hierarchical structure.
+             * @param {string} recordId The record ID associated with the provided hierarchy.
+             * @returns {Object[]} An array which contains the 
+             */
+            self.flattenHierarchy = function(hierarchy, recordId) {
+                var result = [];
+                var sortedHierarchy = orderHierarchy(hierarchy);
+                _.forEach(sortedHierarchy, node => {
+                    addNodeToResult(node, result, 0, [recordId]);
+                });
+                return result;
             }
             /**
              * @ngdoc method
@@ -875,7 +901,7 @@
                 var listItem = self.getListItemByRecordId(recordId);
                 return !!_.get(listItem, 'inProgressCommit.additions', []).length || !!_.get(listItem, 'inProgressCommit.deletions', []).length;
             }
-            self.addEntityToHierarchy = function(hierarchy, entityIRI, indexObject, parentIRI) {
+            self.addEntityToHierarchy = function(hierarchy, entityIRI, indexObject, parentIRI, flatHierarchy) {
                 var hierarchyItem = {entityIRI};
                 var pathsToEntity = self.getPathsTo(hierarchy, indexObject, entityIRI);
                 if (pathsToEntity.length) {
@@ -896,8 +922,9 @@
                 } else {
                     hierarchy.push(hierarchyItem);
                 }
+                flatHierarchy = self.flattenHierarchy(hierarchy, self.listItem.recordId);
             }
-            self.deleteEntityFromParentInHierarchy = function(hierarchy, entityIRI, parentIRI, indexObject) {
+            self.deleteEntityFromParentInHierarchy = function(hierarchy, entityIRI, parentIRI, indexObject, flatHierarchy) {
                 var deletedEntity;
                 _.forEach(getEntities(hierarchy, parentIRI, indexObject), parent => {
                     if (_.has(parent, 'subEntities')) {
@@ -914,8 +941,9 @@
                         hierarchy.push(deletedEntity);
                     }
                 }
+                flatHierarchy = self.flattenHierarchy(hierarchy, self.listItem.recordId);
             }
-            self.deleteEntityFromHierarchy = function(hierarchy, entityIRI, indexObject) {
+            self.deleteEntityFromHierarchy = function(hierarchy, entityIRI, indexObject, flatHierarchy) {
                 var deletedEntity;
                 var paths = self.getPathsTo(hierarchy, indexObject, entityIRI);
                 _.forEach(paths, path => {
@@ -941,6 +969,7 @@
                         _.unset(indexObject, hierarchyItem.entityIRI);
                     }
                 });
+                flatHierarchy = self.flattenHierarchy(hierarchy, self.listItem.recordId);
             }
             self.getPathsTo = function(hierarchy, indexObject, entityIRI) {
                 var result = [];
@@ -1131,6 +1160,27 @@
             function compareListItems(obj1, obj2) {
                 return _.isEqual(_.get(obj1, 'localName'), _.get(obj2, 'localName'))
                     && _.isEqual(_.get(obj1, 'namespace'), _.get(obj2, 'namespace'));
+            }
+            function orderHierarchy(hierarchy) {
+                return _.sortBy(hierarchy, node => {
+                    if (_.has(node, 'subEntities')) {
+                        node.subEntities = orderHierarchy(node.subEntities);
+                    }
+                    return _.lowerCase(self.getEntityNameByIndex(node.entityIRI, self.listItem));
+                });
+            }
+            function addNodeToResult(node, result, indent, path) {
+                var newPath = _.concat(path, node.entityIRI);
+                var item = {
+                    hasChildren: _.has(node, 'subEntities'),
+                    entityIRI: node.entityIRI,
+                    indent,
+                    path: newPath
+                };
+                result.push(item);
+                _.forEach(_.get(node, 'subEntities', []), subNode => {
+                    addNodeToResult(subNode, result, indent + 1, newPath);
+                });
             }
         }
 })();

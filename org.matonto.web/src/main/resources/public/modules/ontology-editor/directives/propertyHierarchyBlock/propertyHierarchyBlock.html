@@ -25,8 +25,11 @@
         <block-header>
             <span>Property Hierarchies</span><a ng-click="dvm.os.showCreatePropertyOverlay = true" class="pull-right"><i class="fa fa-plus"></i><span>Create Property</span></a>
         </block-header>
-        <block-content class="tree">
-            <ul ng-if="dvm.os.listItem.dataPropertyHierarchy.length" class="data-property-hierarchy">
+        <block-content class="tree" vs-repeat="26" vs-offset-before="10" vs-offset-after="10">
+            <div ng-repeat="node in flatPropertyTree | filter:dvm.isShown" class="tree-item-wrapper">
+                <tree-item
+            </div>
+            <!-- <ul ng-if="dvm.os.listItem.dataPropertyHierarchy.length" class="data-property-hierarchy">
                 <li>
                     <a ng-click="dvm.os.setDataPropertiesOpened(dvm.os.listItem.recordId, !dvm.os.getDataPropertiesOpened(dvm.os.listItem.recordId)); $event.stopPropagation()">
                         <i class="fa fa-fw"
@@ -34,7 +37,7 @@
                     </a>
                 </li>
                 <li class="container" ng-if="dvm.os.getDataPropertiesOpened(dvm.os.listItem.recordId)">
-                    <hierarchy-tree hierarchy="dvm.os.listItem.dataPropertyHierarchy"></hierarchy-tree>
+                    <hierarchy-tree hierarchy="dvm.os.listItem.flatDataPropertyHierarchy"></hierarchy-tree>
                 </li>
             </ul>
             <ul ng-if="dvm.os.listItem.objectPropertyHierarchy.length" class="object-property-hierarchy">
@@ -45,7 +48,7 @@
                     </a>
                 </li>
                 <li class="container" ng-if="dvm.os.getObjectPropertiesOpened(dvm.os.listItem.recordId)">
-                    <hierarchy-tree hierarchy="dvm.os.listItem.objectPropertyHierarchy"></hierarchy-tree>
+                    <hierarchy-tree hierarchy="dvm.os.listItem.flatObjectPropertyHierarchy"></hierarchy-tree>
                 </li>
             </ul>
             <ul ng-if="dvm.om.hasAnnotations(dvm.os.listItem.ontology)">
@@ -62,7 +65,7 @@
                                    is-opened="dvm.os.getOpened(path)" on-click="dvm.os.selectItem(annotation['@id'])" data-path-to="{{path}}"></tree-item>
                     </ul>
                 </li>
-            </ul>
+            </ul> -->
         </block-content>
         <block-footer class="centered">
             <button class="btn btn-link" ng-disabled="!dvm.os.selected" ng-click="dvm.showDeleteConfirmation = true"><i class="fa fa-trash-o"></i><span>Delete Property</span></button>

@@ -52,6 +52,12 @@
                         }
                         dvm.showDeleteConfirmation = false;
                     }
+                    
+                    dvm.flatPropertyTree = constructFlatPropertyTree();
+                    
+                    function constructFlatPropertyTree() {
+                        
+                    }
                 }
             }
         }
