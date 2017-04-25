@@ -9,4 +9,4 @@ where {
         ?s ?entity ?o .
         bind(?entity as ?p)
     }
-}
+} order by ?p ?s ?o

@@ -56,12 +56,14 @@
     "angular-vs-repeat": "^1.1.7",
     "bootstrap": "^3.3.6",
     "chroma-js": "^1.2.1",
+    "clipboard": "^1.6.1",
     "codemirror": "^5.14.2",
     "font-awesome": "^4.5.0",
     "handsontable": "^0.27.0",
     "lodash": "^4.6.0",
     "ng-handsontable": "^0.13.0",
+    "ngclipboard": "^1.1.1",
     "snapsvg": "^0.5.1",
-    "ui-select": "^0.19.3"
+    "ui-select": "^0.19.8"
   }
 }
