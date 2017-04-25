@@ -1,10 +1,8 @@
-@Version("5.3.1.${build}")
-
-package org.matonto.ontology.core.api;
+package org.matonto.rest.util.logging;
 
 /*-
  * #%L
- * org.matonto.ontology.api
+ * org.matonto.ontology.rest
  * $Id:$
  * $HeadURL:$
  * %%
@@ -25,4 +23,7 @@ package org.matonto.ontology.core.api;
  * #L%
  */
 
-import aQute.bnd.annotation.Version;
+public class Filters {
+
+    public static final String REQ_START_TIME = "org.matonto.web.log.start";
+}
