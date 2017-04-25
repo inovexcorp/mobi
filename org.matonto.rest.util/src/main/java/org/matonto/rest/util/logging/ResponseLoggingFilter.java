@@ -1,12 +1,12 @@
-package org.matonto.ontology.rest;
+package org.matonto.rest.util.logging;
 
 /*-
  * #%L
- * org.matonto.ontology.rest
+ * org.matonto.rest.util
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -27,11 +27,13 @@ import aQute.bnd.annotation.component.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerResponseContext;
 import javax.ws.rs.container.ContainerResponseFilter;
+import javax.ws.rs.container.ResourceInfo;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.ext.Provider;
-import java.io.IOException;
 
 @Provider
 @Component(immediate = true)
@@ -39,19 +41,27 @@ public class ResponseLoggingFilter implements ContainerResponseFilter {
 
     private final Logger log = LoggerFactory.getLogger(ResponseLoggingFilter.class);
 
+    @Context
+    private ResourceInfo resourceInfo;
+
     @Override
     public void filter(ContainerRequestContext containerRequestContext, ContainerResponseContext
             containerResponseContext) throws IOException {
-        if (log.isDebugEnabled() && containerRequestContext != null && containerResponseContext != null) {
-            long start = (long) containerRequestContext.getProperty(Filters.REQ_START_TIME);
-            long responseTime = System.currentTimeMillis() - start;
+        if (log.isInfoEnabled() && containerRequestContext != null && containerResponseContext != null) {
+            Class<?> resourceClass = resourceInfo.getResourceClass();
+            Logger resourceLog = LoggerFactory.getLogger(resourceClass);
 
-            String path = containerRequestContext.getUriInfo().getPath();
-            String method = containerRequestContext.getMethod();
-            int statusCode = containerResponseContext.getStatusInfo().getStatusCode();
-            String statusMsg = containerResponseContext.getStatusInfo().getReasonPhrase();
+            if (resourceLog.isInfoEnabled()) {
+                long start = (long) containerRequestContext.getProperty(Filters.REQ_START_TIME);
+                long responseTime = System.currentTimeMillis() - start;
 
-            log.debug(String.format("%s: %s -> %d: %s (%dms)", method, path, statusCode, statusMsg, responseTime));
+                String path = containerRequestContext.getUriInfo().getPath();
+                String method = containerRequestContext.getMethod();
+                int statusCode = containerResponseContext.getStatusInfo().getStatusCode();
+                String statusMsg = containerResponseContext.getStatusInfo().getReasonPhrase();
+
+                resourceLog.info(String.format("%s: %s -> %d: %s (%dms)", method, path, statusCode, statusMsg, responseTime));
+            }
         }
     }
 }

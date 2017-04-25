@@ -218,22 +218,16 @@ public class SimpleOntologyManagerTest {
         assertFalse(result.isPresent());
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = IllegalStateException.class)
     public void testRetrieveOntologyWithMasterBranchNotSet() {
         OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
 
         when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
 
-        try {
-            manager.retrieveOntology(recordIRI);
-        } catch (IllegalArgumentException e) {
-            String expectedMessage = "The master Branch was not set on the OntologyRecord.";
-            assertEquals(expectedMessage, e.getMessage());
-            throw e;
-        }
+        manager.retrieveOntology(recordIRI);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = IllegalStateException.class)
     public void testRetrieveOntologyWithMissingMasterBranch() {
         OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
         record.setMasterBranch(branchFactory.createNew(branchIRI));
@@ -241,16 +235,10 @@ public class SimpleOntologyManagerTest {
         when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
         when(catalogManager.getBranch(branchIRI, branchFactory)).thenReturn(Optional.empty());
 
-        try {
-            manager.retrieveOntology(recordIRI);
-        } catch (IllegalArgumentException e) {
-            String expectedMessage = "The master Branch could not be retrieved.";
-            assertEquals(expectedMessage, e.getMessage());
-            throw e;
-        }
+        manager.retrieveOntology(recordIRI);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = IllegalStateException.class)
     public void testRetrieveOntologyWithHeadCommitNotSet() {
         OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
         record.setMasterBranch(branchFactory.createNew(branchIRI));
@@ -260,16 +248,10 @@ public class SimpleOntologyManagerTest {
         when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
         when(catalogManager.getBranch(branchIRI, branchFactory)).thenReturn(Optional.of(branch));
 
-        try {
-            manager.retrieveOntology(recordIRI);
-        } catch (IllegalArgumentException e) {
-            String expectedMessage = "The head Commit was not set on the master Branch.";
-            assertEquals(expectedMessage, e.getMessage());
-            throw e;
-        }
+        manager.retrieveOntology(recordIRI);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = IllegalStateException.class)
     public void testRetrieveOntologyWhenCompiledResourceCannotBeFound() {
         OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
         record.setMasterBranch(branchFactory.createNew(branchIRI));
@@ -281,13 +263,7 @@ public class SimpleOntologyManagerTest {
         when(catalogManager.getBranch(branchIRI, branchFactory)).thenReturn(Optional.of(branch));
         when(catalogManager.getCompiledResource(commitIRI)).thenReturn(Optional.empty());
 
-        try {
-            manager.retrieveOntology(recordIRI);
-        } catch (IllegalArgumentException e) {
-            String expectedMessage = "The compiled resource could not be retrieved.";
-            assertEquals(expectedMessage, e.getMessage());
-            throw e;
-        }
+        manager.retrieveOntology(recordIRI);
     }
 
     @Test
@@ -317,17 +293,16 @@ public class SimpleOntologyManagerTest {
         assertFalse(result.isPresent());
     }
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void testRetrieveOntologyUsingABranchWithNoBranches() throws Exception {
         OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
 
         when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
 
         Optional<Ontology> optionalOntology = manager.retrieveOntology(recordIRI, missingIRI);
-        assertFalse(optionalOntology.isPresent());
     }
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void testRetrieveOntologyUsingABranchNotForThisRecord() throws Exception {
         OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
         record.setBranch(Stream.of(branchFactory.createNew(branchIRI)).collect(Collectors.toSet()));
@@ -335,10 +310,9 @@ public class SimpleOntologyManagerTest {
         when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
 
         Optional<Ontology> optionalOntology = manager.retrieveOntology(recordIRI, missingIRI);
-        assertFalse(optionalOntology.isPresent());
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = IllegalStateException.class)
     public void testRetrieveOntologyUsingABranchThatCannotBeRetrieved() {
         OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
         record.setBranch(Stream.of(branchFactory.createNew(branchIRI)).collect(Collectors.toSet()));
@@ -346,16 +320,10 @@ public class SimpleOntologyManagerTest {
         when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
         when(catalogManager.getBranch(branchIRI, branchFactory)).thenReturn(Optional.empty());
 
-        try {
-            manager.retrieveOntology(recordIRI, branchIRI);
-        } catch (IllegalArgumentException e) {
-            String expectedMessage = "The identified Branch could not be retrieved.";
-            assertEquals(expectedMessage, e.getMessage());
-            throw e;
-        }
+        manager.retrieveOntology(recordIRI, branchIRI);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = IllegalStateException.class)
     public void testRetrieveOntologyUsingABranchWithHeadCommitNotSet() {
         OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
         record.setBranch(Stream.of(branchFactory.createNew(branchIRI)).collect(Collectors.toSet()));
@@ -365,16 +333,10 @@ public class SimpleOntologyManagerTest {
         when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
         when(catalogManager.getBranch(branchIRI, branchFactory)).thenReturn(Optional.of(branch));
 
-        try {
-            manager.retrieveOntology(recordIRI, branchIRI);
-        } catch (IllegalArgumentException e) {
-            String expectedMessage = "The head Commit was not set on the Branch.";
-            assertEquals(expectedMessage, e.getMessage());
-            throw e;
-        }
+        manager.retrieveOntology(recordIRI, branchIRI);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = IllegalStateException.class)
     public void testRetrieveOntologyUsingABranchWhenCompiledResourceCannotBeFound() {
         OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
         record.setBranch(Stream.of(branchFactory.createNew(branchIRI)).collect(Collectors.toSet()));
@@ -386,13 +348,7 @@ public class SimpleOntologyManagerTest {
         when(catalogManager.getBranch(branchIRI, branchFactory)).thenReturn(Optional.of(branch));
         when(catalogManager.getCompiledResource(commitIRI)).thenReturn(Optional.empty());
 
-        try {
-            manager.retrieveOntology(recordIRI, branchIRI);
-        } catch (IllegalArgumentException e) {
-            String expectedMessage = "The compiled resource could not be retrieved.";
-            assertEquals(expectedMessage, e.getMessage());
-            throw e;
-        }
+        manager.retrieveOntology(recordIRI, branchIRI);
     }
 
     @Test
@@ -422,28 +378,26 @@ public class SimpleOntologyManagerTest {
         assertFalse(result.isPresent());
     }
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void testRetrieveOntologyUsingACommitWithNoBranches() throws Exception {
         OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
 
         when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
 
-        Optional<Ontology> optionalOntology = manager.retrieveOntology(recordIRI, branchIRI, commitIRI);
-        assertFalse(optionalOntology.isPresent());
+        manager.retrieveOntology(recordIRI, branchIRI, commitIRI);
     }
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void testRetrieveOntologyUsingACommitWithABranchNotForThisRecord() throws Exception {
         OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
         record.setBranch(Stream.of(branchFactory.createNew(branchIRI)).collect(Collectors.toSet()));
 
         when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
 
-        Optional<Ontology> optionalOntology = manager.retrieveOntology(recordIRI, missingIRI, commitIRI);
-        assertFalse(optionalOntology.isPresent());
+        manager.retrieveOntology(recordIRI, missingIRI, commitIRI);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = IllegalStateException.class)
     public void testRetrieveOntologyUsingACommitWithABranchThatCannotBeRetrieved() {
         OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
         record.setBranch(Stream.of(branchFactory.createNew(branchIRI)).collect(Collectors.toSet()));
@@ -451,16 +405,10 @@ public class SimpleOntologyManagerTest {
         when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
         when(catalogManager.getBranch(branchIRI, branchFactory)).thenReturn(Optional.empty());
 
-        try {
-            manager.retrieveOntology(recordIRI, branchIRI, commitIRI);
-        } catch (IllegalArgumentException e) {
-            String expectedMessage = "The identified Branch could not be retrieved.";
-            assertEquals(expectedMessage, e.getMessage());
-            throw e;
-        }
+        manager.retrieveOntology(recordIRI, branchIRI, commitIRI);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = IllegalStateException.class)
     public void testRetrieveOntologyUsingACommitWithHeadCommitNotSetOnBranch() {
         OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
         record.setBranch(Stream.of(branchFactory.createNew(branchIRI)).collect(Collectors.toSet()));
@@ -470,16 +418,10 @@ public class SimpleOntologyManagerTest {
         when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
         when(catalogManager.getBranch(branchIRI, branchFactory)).thenReturn(Optional.of(branch));
 
-        try {
-            manager.retrieveOntology(recordIRI, branchIRI, commitIRI);
-        } catch (IllegalArgumentException e) {
-            String expectedMessage = "The head Commit was not set on the Branch.";
-            assertEquals(expectedMessage, e.getMessage());
-            throw e;
-        }
+        manager.retrieveOntology(recordIRI, branchIRI, commitIRI);
     }
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void testRetrieveOntologyUsingACommitNotPartOfTheBranch() throws Exception {
         OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
         record.setBranch(Stream.of(branchFactory.createNew(branchIRI)).collect(Collectors.toSet()));
@@ -492,11 +434,10 @@ public class SimpleOntologyManagerTest {
         when(catalogManager.getCommitChain(commitIRI)).thenReturn(Stream.of(commitIRI).collect(Collectors.toList()));
 
         Optional<Ontology> optionalOntology = manager.retrieveOntology(recordIRI, branchIRI, missingIRI);
-        assertFalse(optionalOntology.isPresent());
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testRetrieveOntologyUsingACommitBotRetrievableButPartOfTheBranch() {
+    @Test(expected = IllegalStateException.class)
+    public void testRetrieveOntologyUsingACommitNotRetrievableButPartOfTheBranch() {
         OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
         record.setBranch(Stream.of(branchFactory.createNew(branchIRI)).collect(Collectors.toSet()));
 
@@ -508,16 +449,10 @@ public class SimpleOntologyManagerTest {
         when(catalogManager.getCommitChain(commitIRI)).thenReturn(Stream.of(commitIRI).collect(Collectors.toList()));
         when(catalogManager.getCommit(commitIRI, commitFactory)).thenReturn(Optional.empty());
 
-        try {
-            manager.retrieveOntology(recordIRI, branchIRI, commitIRI);
-        } catch (IllegalArgumentException e) {
-            String expectedMessage = "The identified Commit could not be retrieved.";
-            assertEquals(expectedMessage, e.getMessage());
-            throw e;
-        }
+        manager.retrieveOntology(recordIRI, branchIRI, commitIRI);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = IllegalStateException.class)
     public void testRetrieveOntologyUsingACommitWhenCompiledResourceCannotBeFound() {
         OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
         record.setBranch(Stream.of(branchFactory.createNew(branchIRI)).collect(Collectors.toSet()));
@@ -533,13 +468,7 @@ public class SimpleOntologyManagerTest {
         when(catalogManager.getCommit(commitIRI, commitFactory)).thenReturn(Optional.of(commit));
         when(catalogManager.getCompiledResource(commitIRI)).thenReturn(Optional.empty());
 
-        try {
-            manager.retrieveOntology(recordIRI, branchIRI, commitIRI);
-        } catch (IllegalArgumentException e) {
-            String expectedMessage = "The compiled resource could not be retrieved.";
-            assertEquals(expectedMessage, e.getMessage());
-            throw e;
-        }
+        manager.retrieveOntology(recordIRI, branchIRI, commitIRI);
     }
 
     @Test
