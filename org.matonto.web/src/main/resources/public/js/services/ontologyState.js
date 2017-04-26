@@ -83,7 +83,13 @@
                 },
                 branches: [],
                 upToDate: true,
-                isSaved: false
+                isSaved: false,
+                flatClassHierarchy: [],
+                flatDataPropertyHierarchy: [],
+                flatObjectPropertyHierarchy: [],
+                annotationPropertyHierarchy: [],
+                annotationPropertyIndex: {},
+                flatAnnotationPropertyHierarchy: []
             };
             var vocabularyListItemTemplate = {
                 ontology: [],
@@ -101,7 +107,8 @@
                 },
                 branches: [],
                 upToDate: true,
-                isSaved: false
+                isSaved: false,
+                flatConceptHierarchy: []
             };
             var emptyInProgressCommit = {
                 additions: [],
@@ -353,7 +360,8 @@
                     om.getClassesWithIndividuals(recordId, branchId, commitId),
                     om.getDataPropertyHierarchies(recordId, branchId, commitId),
                     om.getObjectPropertyHierarchies(recordId, branchId, commitId),
-                    cm.getRecordBranches(recordId, catalogId)
+                    cm.getRecordBranches(recordId, catalogId),
+                    om.getAnnotationPropertyHierarchies(recordId, branchId, commitId)
                 ]).then(response => {
                     listItem.annotations = _.unionWith(
                         _.get(response[0], 'annotationProperties'),
@@ -414,6 +422,9 @@
                     listItem.objectPropertyIndex = response[5].index;
                     listItem.flatObjectPropertyHierarchy = self.flattenHierarchy(listItem.objectPropertyHierarchy, recordId);
                     listItem.branches = response[6].data;
+                    listItem.annotationPropertyIndex = response[7].index;
+                    listItem.annotationPropertyHierarchy = response[7].hierarchy;
+                    listItem.flatAnnotationPropertyHierarchy = self.flattenHierarchy(listItem.annotationPropertyHierarchy, recordId);
                     listItem.upToDate = upToDate;
                     _.pullAllWith(
                         listItem.annotations,
@@ -906,7 +917,7 @@
                 var listItem = self.getListItemByRecordId(recordId);
                 return !!_.get(listItem, 'inProgressCommit.additions', []).length || !!_.get(listItem, 'inProgressCommit.deletions', []).length;
             }
-            self.addEntityToHierarchy = function(hierarchy, entityIRI, indexObject, parentIRI, flatHierarchy) {
+            self.addEntityToHierarchy = function(hierarchy, entityIRI, indexObject, parentIRI) {
                 var hierarchyItem = {entityIRI};
                 var pathsToEntity = self.getPathsTo(hierarchy, indexObject, entityIRI);
                 if (pathsToEntity.length) {
@@ -927,9 +938,8 @@
                 } else {
                     hierarchy.push(hierarchyItem);
                 }
-                flatHierarchy = self.flattenHierarchy(hierarchy, self.listItem.recordId);
             }
-            self.deleteEntityFromParentInHierarchy = function(hierarchy, entityIRI, parentIRI, indexObject, flatHierarchy) {
+            self.deleteEntityFromParentInHierarchy = function(hierarchy, entityIRI, parentIRI, indexObject) {
                 var deletedEntity;
                 _.forEach(getEntities(hierarchy, parentIRI, indexObject), parent => {
                     if (_.has(parent, 'subEntities')) {
@@ -946,9 +956,8 @@
                         hierarchy.push(deletedEntity);
                     }
                 }
-                flatHierarchy = self.flattenHierarchy(hierarchy, self.listItem.recordId);
             }
-            self.deleteEntityFromHierarchy = function(hierarchy, entityIRI, indexObject, flatHierarchy) {
+            self.deleteEntityFromHierarchy = function(hierarchy, entityIRI, indexObject) {
                 var deletedEntity;
                 var paths = self.getPathsTo(hierarchy, indexObject, entityIRI);
                 _.forEach(paths, path => {
@@ -974,7 +983,6 @@
                         _.unset(indexObject, hierarchyItem.entityIRI);
                     }
                 });
-                flatHierarchy = self.flattenHierarchy(hierarchy, self.listItem.recordId);
             }
             self.getPathsTo = function(hierarchy, indexObject, entityIRI) {
                 var result = [];
@@ -990,6 +998,17 @@
                     result.push([entityIRI]);
                 }
                 return result;
+            }
+            self.areParentsOpen = function(node) {
+                var pathString = _.first(node.path);
+                var pathCopy = _.tail(_.initial(node.path));
+                return _.every(pathCopy, pathPart => {
+                    pathString += '.' + pathPart;
+                    return self.getOpened(pathString);
+                });
+            }
+            self.joinPath = function(path) {
+                return _.join(path, '.');
             }
             self.goTo = function(iri) {
                 var entity = self.getEntityByRecordId(self.listItem.recordId, iri);

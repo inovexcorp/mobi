@@ -234,6 +234,7 @@ function mockOntologyManager() {
             this.getConceptSchemes = jasmine.createSpy('getConceptSchemes').and.returnValue([]);
             this.getConceptSchemeIRIs = jasmine.createSpy('getConceptSchemeIRIs').and.returnValue([]);
             this.downloadOntology = jasmine.createSpy('downloadOntology');
+            this.getAnnotationPropertyHierarchies = jasmine.createSpy('getAnnotationPropertyHierarchies');
         });
     });
 }
@@ -492,7 +493,13 @@ function mockOntologyState() {
                         jsAnnotations: [{}]
                     }
                 }],
-                upToDate: true
+                upToDate: true,
+                flatClassHierarchy: [],
+                flatDataPropertyHierarchy: [],
+                flatObjectPropertyHierarchy: [],
+                annotationPropertyHierarchy: [],
+                annotationPropertyIndex: {},
+                flatAnnotationPropertyHierarchy: []
             };
             this.states = {};
             this.list = [];
@@ -557,6 +564,8 @@ function mockOntologyState() {
             this.openAt = jasmine.createSpy('openAt');
             this.getDefaultPrefix = jasmine.createSpy('getDefaultPrefix');
             this.flattenHierarchy = jasmine.createSpy('flattenHierarchy');
+            this.areParentsOpen = jasmine.createSpy('areParentsOpen');
+            this.joinPath = jasmine.createSpy('joinPath');
         });
     });
 }

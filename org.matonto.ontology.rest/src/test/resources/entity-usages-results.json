@@ -33,11 +33,11 @@
       {
         "p": {
           "type": "uri",
-          "value": "http://www.w3.org/2000/01/rdf-schema#subClassOf"
+          "value": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
         },
         "s": {
           "type": "uri",
-          "value": "http://matonto.org/ontology#Class1b"
+          "value": "http://matonto.org/ontology#Individual1a"
         },
         "o": {
           "type": "uri",
@@ -47,11 +47,11 @@
       {
         "p": {
           "type": "uri",
-          "value": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+          "value": "http://www.w3.org/2000/01/rdf-schema#subClassOf"
         },
         "s": {
           "type": "uri",
-          "value": "http://matonto.org/ontology#Individual1a"
+          "value": "http://matonto.org/ontology#Class1b"
         },
         "o": {
           "type": "uri",

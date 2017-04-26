@@ -571,6 +571,32 @@ public class SimpleOntologyManagerTest {
     }
 
     @Test
+    public void testGetSubAnnotationPropertiesOf() throws Exception {
+        Set<String> parents = Stream.of("http://matonto.org/ontology#annotationProperty1b",
+                "http://matonto.org/ontology#annotationProperty1a", "http://purl.org/dc/terms/title")
+                .collect(Collectors.toSet());
+        Map<String, String> children = new HashMap<>();
+        children.put("http://matonto.org/ontology#annotationProperty1a",
+                "http://matonto.org/ontology#annotationProperty1b");
+
+        TupleQueryResult result = manager.getSubAnnotationPropertiesOf(ontology);
+
+        assertTrue(result.hasNext());
+        result.forEach(b -> {
+            String parent = Bindings.requiredResource(b, "parent").stringValue();
+            assertTrue(parents.contains(parent));
+            parents.remove(parent);
+            Optional<Binding> child = b.getBinding("child");
+            if (child.isPresent()) {
+                assertEquals(children.get(parent), child.get().getValue().stringValue());
+                children.remove(parent);
+            }
+        });
+        assertEquals(0, parents.size());
+        assertEquals(0, children.size());
+    }
+
+    @Test
     public void testGetSubObjectPropertiesOf() throws Exception {
         Set<String> parents = Stream.of("http://matonto.org/ontology#objectProperty1b",
                 "http://matonto.org/ontology#objectProperty1a").collect(Collectors.toSet());

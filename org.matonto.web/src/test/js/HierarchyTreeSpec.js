@@ -101,19 +101,17 @@ describe('Hierarchy Tree directive', function() {
     describe('controller methods', function() {
         describe('isShown should return', function() {
             describe('true when', function() {
-                it('indent is greater than 0 and the parent path is opened', function() {
+                it('indent is greater than 0 and areParentsOpen is true', function() {
                     var node = {
                         indent: 1,
                         entityIRI: 'iri',
                         path: ['recordId', 'otherIRI', 'andAnotherIRI', 'iri']
                     };
-                    ontologyStateSvc.getOpened.and.returnValue(true);
+                    ontologyStateSvc.areParentsOpen.and.returnValue(true);
                     expect(controller.isShown(node)).toBe(true);
-                    expect(ontologyStateSvc.getOpened).toHaveBeenCalledWith('recordId.otherIRI');
-                    expect(ontologyStateSvc.getOpened).toHaveBeenCalledWith('recordId.otherIRI.andAnotherIRI');
-                    expect(ontologyStateSvc.getOpened).not.toHaveBeenCalledWith('recordId');
+                    expect(ontologyStateSvc.areParentsOpen).toHaveBeenCalledWith(node);
                 });
-                it('indent is 0 and the parent path is the recordId', function() {
+                it('indent is 0 and the parent path has a length of 2', function() {
                     var node = {
                         indent: 0,
                         entityIRI: 'iri',
@@ -123,18 +121,17 @@ describe('Hierarchy Tree directive', function() {
                 });
             });
             describe('false when', function() {
-                it('indent is greater than 0 and the parent path is not opened', function() {
+                it('indent is greater than 0 and areParentsOpen is false', function() {
                     var node = {
                         indent: 1,
                         entityIRI: 'iri',
                         path: ['recordId', 'otherIRI', 'iri']
                     };
-                    ontologyStateSvc.getOpened.and.returnValue(false);
+                    ontologyStateSvc.areParentsOpen.and.returnValue(false);
                     expect(controller.isShown(node)).toBe(false);
-                    expect(ontologyStateSvc.getOpened).toHaveBeenCalledWith('recordId.otherIRI');
-                    expect(ontologyStateSvc.getOpened).not.toHaveBeenCalledWith('recordId');
+                    expect(ontologyStateSvc.areParentsOpen).toHaveBeenCalledWith(node);
                 });
-                it('indent is 0 and the parent path is not the recordId', function() {
+                it('indent is 0 and the parent path does not have a length of 2', function() {
                     var node = {
                         indent: 0,
                         entityIRI: 'iri',

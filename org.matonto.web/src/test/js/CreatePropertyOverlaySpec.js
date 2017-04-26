@@ -186,7 +186,8 @@ describe('Create Property Overlay directive', function() {
                     subDataProperties: [],
                     dataPropertyHierarchy: [],
                     ontology: [{}],
-                    annotations: []
+                    annotations: [],
+                    annotationPropertyHierarchy: []
                 };
                 this.split = {begin: 'begin', then: 'then', end: 'end'};
                 ontologyStateSvc.listItem = this.listItem;
@@ -264,8 +265,10 @@ describe('Create Property Overlay directive', function() {
                 expect(this.listItem.subDataProperties).toEqual([]);
                 expect(this.listItem.dataPropertyHierarchy).toEqual([]);
                 expect(this.listItem.annotations).toContain({namespace: this.split.begin + this.split.then, localName: this.split.end});
+                expect(this.listItem.annotationPropertyHierarchy).toContain({entityIRI: controller.property['@id']});
                 expect(ontologyStateSvc.setAnnotationPropertiesOpened).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, true);
                 expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, controller.property);
+                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.annotationPropertyHierarchy, ontologyStateSvc.listItem.recordId);
                 expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(controller.property['@id']);
                 expect(ontologyStateSvc.showCreatePropertyOverlay).toBe(false);
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();

@@ -52,17 +52,16 @@
                     dvm.updateHierarchy = function(axiom, values) {
                         if (_.get(axiom, 'localName') === 'subPropertyOf') {
                             _.forEach(values, value => {
-                                dvm.os.addEntityToHierarchy(dvm.os.listItem.dataPropertyHierarchy,
-                                    dvm.os.selected.matonto.originalIRI, dvm.os.listItem.dataPropertyIndex,
-                                    dvm.ro.getItemIri(value), dvm.os.listItem.flatDataPropertyHierarchy);
+                                dvm.os.addEntityToHierarchy(dvm.os.listItem.dataPropertyHierarchy, dvm.os.selected.matonto.originalIRI, dvm.os.listItem.dataPropertyIndex, dvm.ro.getItemIri(value));
                             });
+                            dvm.os.listItem.flatDataPropertyHierarchy = dvm.os.flattenHierarchy(dvm.os.listItem.dataPropertyHierarchy, dvm.os.listItem.recordId);
                         }
                     }
 
                     dvm.removeFromHierarchy = function(axiomObject) {
                         if (prefixes.rdfs + 'subPropertyOf' === dvm.key) {
-                            dvm.os.deleteEntityFromParentInHierarchy(dvm.os.listItem.dataPropertyHierarchy,
-                                dvm.os.selected.matonto.originalIRI, axiomObject['@id'], dvm.os.listItem.dataPropertyIndex, dvm.os.listItem.flatDataPropertyHierarchy);
+                            dvm.os.deleteEntityFromParentInHierarchy(dvm.os.listItem.dataPropertyHierarchy, dvm.os.selected.matonto.originalIRI, axiomObject['@id'], dvm.os.listItem.dataPropertyIndex);
+                            dvm.os.listItem.flatDataPropertyHierarchy = dvm.os.flattenHierarchy(dvm.os.listItem.dataPropertyHierarchy, dvm.os.listItem.recordId);
                         }
                     }
                 }

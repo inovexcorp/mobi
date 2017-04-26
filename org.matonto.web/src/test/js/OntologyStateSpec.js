@@ -117,6 +117,10 @@ describe('Ontology State Service', function() {
         hierarchy: [],
         index: {}
     };
+    var annotationPropertyHierarchiesResponse = {
+        hierarchy: [],
+        index: {}
+    };
     var branches = [branch];
 
     beforeEach(function() {
@@ -1351,6 +1355,7 @@ describe('Ontology State Service', function() {
             ontologyManagerSvc.getClassesWithIndividuals.and.returnValue($q.when(classesWithIndividualsResponse));
             ontologyManagerSvc.getDataPropertyHierarchies.and.returnValue($q.when(dataPropertyHierarchiesResponse));
             ontologyManagerSvc.getObjectPropertyHierarchies.and.returnValue($q.when(objectPropertyHierarchiesResponse));
+            ontologyManagerSvc.getAnnotationPropertyHierarchies.and.returnValue($q.when(annotationPropertyHierarchiesResponse));
             catalogManagerSvc.getRecordBranches.and.returnValue($q.when({data: branches}));
             spyOn(ontologyStateSvc, 'flattenHierarchy');
         });
@@ -1365,6 +1370,7 @@ describe('Ontology State Service', function() {
                     expect(ontologyManagerSvc.getClassesWithIndividuals).toHaveBeenCalledWith(recordId, branchId, commitId);
                     expect(ontologyManagerSvc.getDataPropertyHierarchies).toHaveBeenCalledWith(recordId, branchId, commitId);
                     expect(ontologyManagerSvc.getObjectPropertyHierarchies).toHaveBeenCalledWith(recordId, branchId, commitId);
+                    expect(ontologyManagerSvc.getAnnotationPropertyHierarchies).toHaveBeenCalledWith(recordId, branchId, commitId);
                     expect(catalogManagerSvc.getRecordBranches).toHaveBeenCalledWith(recordId, catalogId);
                     expect(_.get(response, 'annotations')).toEqual([{
                         localName: annotationId2, namespace: annotationId2, ontologyId: ontologyId
@@ -1409,6 +1415,9 @@ describe('Ontology State Service', function() {
                     expect(_.get(response, 'objectPropertyIndex')).toEqual(objectPropertyHierarchiesResponse.index);
                     expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.objectPropertyHierarchy, recordId);
                     expect(_.get(response, 'branches')).toEqual(branches);
+                    expect(_.get(response, 'annotationPropertyHierarchy')).toEqual(annotationPropertyHierarchiesResponse.hierarchy);
+                    expect(_.get(response, 'annotationPropertyIndex')).toEqual(annotationPropertyHierarchiesResponse.index);
+                    expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.annotationPropertyHierarchy, recordId);
                     expect(_.get(response, 'upToDate')).toBe(true);
                 }, function() {
                     fail('Promise should have resolved');
@@ -2194,7 +2203,7 @@ describe('Ontology State Service', function() {
         });
         describe('should add the entity to the single proper location in the tree', function() {
             it('where the parent entity has subEntities', function() {
-                ontologyStateSvc.addEntityToHierarchy(hierarchy, 'new-node', indexObject, 'node1a', {});
+                ontologyStateSvc.addEntityToHierarchy(hierarchy, 'new-node', indexObject, 'node1a');
                 expect(hierarchy).toEqual([{
                     entityIRI: 'node1a',
                     subEntities: [{
@@ -2243,10 +2252,9 @@ describe('Ontology State Service', function() {
                     'node3c': ['node2a'],
                     'new-node': ['node1a']
                 });
-                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(hierarchy, ontologyStateSvc.listItem.recordId);
             });
             it('where the parent does not have subEntities', function() {
-                ontologyStateSvc.addEntityToHierarchy(hierarchy, 'new-node', indexObject, 'node3c', {});
+                ontologyStateSvc.addEntityToHierarchy(hierarchy, 'new-node', indexObject, 'node3c');
                 expect(hierarchy).toEqual([{
                     entityIRI: 'node1a',
                     subEntities: [{
@@ -2295,12 +2303,11 @@ describe('Ontology State Service', function() {
                     'node3c': ['node2a'],
                     'new-node': ['node3c']
                 });
-                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(hierarchy, ontologyStateSvc.listItem.recordId);
             });
         });
         describe('should add the entity to the multiple proper locations in the tree', function() {
             it('where the parent entity has subEntities', function() {
-                ontologyStateSvc.addEntityToHierarchy(hierarchy, 'new-node', indexObject, 'node3b', {});
+                ontologyStateSvc.addEntityToHierarchy(hierarchy, 'new-node', indexObject, 'node3b');
                 expect(hierarchy).toEqual([{
                     entityIRI: 'node1a',
                     subEntities: [{
@@ -2352,10 +2359,9 @@ describe('Ontology State Service', function() {
                     'node3c': ['node2a'],
                     'new-node': ['node3b']
                 });
-                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(hierarchy, ontologyStateSvc.listItem.recordId);
             });
             it('where the parent does not have subEntities', function() {
-                ontologyStateSvc.addEntityToHierarchy(hierarchy, 'new-node', indexObject, 'node3a', {});
+                ontologyStateSvc.addEntityToHierarchy(hierarchy, 'new-node', indexObject, 'node3a');
                 expect(hierarchy).toEqual([{
                     entityIRI: 'node1a',
                     subEntities: [{
@@ -2413,12 +2419,11 @@ describe('Ontology State Service', function() {
                     'node3c': ['node2a'],
                     'new-node': ['node3a']
                 });
-                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(hierarchy, ontologyStateSvc.listItem.recordId);
             });
         });
         describe('should add the same hierarchy structure to the new area', function() {
             it('when not at the root level', function() {
-                ontologyStateSvc.addEntityToHierarchy(hierarchy, 'node2b', indexObject, 'node1b', {});
+                ontologyStateSvc.addEntityToHierarchy(hierarchy, 'node2b', indexObject, 'node1b');
                 expect(hierarchy).toEqual([{
                     entityIRI: 'node1a',
                     subEntities: [{
@@ -2469,10 +2474,9 @@ describe('Ontology State Service', function() {
                     'node3b': ['node2c', 'node1b'],
                     'node3c': ['node2a']
                 });
-                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(hierarchy, ontologyStateSvc.listItem.recordId);
             });
             it('when at the root level', function() {
-                ontologyStateSvc.addEntityToHierarchy(hierarchy, 'node1b', indexObject, 'node1a', {});
+                ontologyStateSvc.addEntityToHierarchy(hierarchy, 'node1b', indexObject, 'node1a');
                 expect(hierarchy).toEqual([{
                     entityIRI: 'node1a',
                     subEntities: [{
@@ -2518,11 +2522,10 @@ describe('Ontology State Service', function() {
                     'node3c': ['node2a'],
                     'node1b': ['node1a']
                 });
-                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(hierarchy, ontologyStateSvc.listItem.recordId);
             });
         });
         it('should add the entity to the end of the hierarchy if the provided parentIRI is not in the hierarchy', function() {
-            ontologyStateSvc.addEntityToHierarchy(hierarchy, 'new-node', indexObject, 'not-there', {});
+            ontologyStateSvc.addEntityToHierarchy(hierarchy, 'new-node', indexObject, 'not-there');
             expect(hierarchy).toEqual([{
                 entityIRI: 'node1a',
                 subEntities: [{
@@ -2570,7 +2573,6 @@ describe('Ontology State Service', function() {
                 'node3b': ['node2c', 'node1b'],
                 'node3c': ['node2a']
             });
-            expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(hierarchy, ontologyStateSvc.listItem.recordId);
         });
     });
     describe('deleteEntityFromParentInHierarchy', function() {
@@ -2578,7 +2580,7 @@ describe('Ontology State Service', function() {
             spyOn(ontologyStateSvc, 'flattenHierarchy');
         });
         it('should remove the provided entityIRI from the parentIRI', function() {
-            ontologyStateSvc.deleteEntityFromParentInHierarchy(hierarchy, 'node3a', 'node3b', indexObject, {});
+            ontologyStateSvc.deleteEntityFromParentInHierarchy(hierarchy, 'node3a', 'node3b', indexObject);
             expect(hierarchy).toEqual([{
                 entityIRI: 'node1a',
                 subEntities: [{
@@ -2617,10 +2619,9 @@ describe('Ontology State Service', function() {
                 'node3b': ['node2c', 'node1b'],
                 'node3c': ['node2a']
             });
-            expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(hierarchy, ontologyStateSvc.listItem.recordId);
         });
         it('should add any subEntities that are unique to this location', function() {
-            ontologyStateSvc.deleteEntityFromParentInHierarchy(hierarchy, 'node2a', 'node1a', indexObject, {});
+            ontologyStateSvc.deleteEntityFromParentInHierarchy(hierarchy, 'node2a', 'node1a', indexObject);
             expect(hierarchy).toEqual([{
                 entityIRI: 'node1a',
                 subEntities: [{
@@ -2664,7 +2665,6 @@ describe('Ontology State Service', function() {
                 'node3b': ['node2c', 'node1b'],
                 'node3c': ['node2a']
             });
-            expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(hierarchy, ontologyStateSvc.listItem.recordId);
         });
     });
     describe('deleteEntityFromHierarchy', function() {
@@ -2672,7 +2672,7 @@ describe('Ontology State Service', function() {
             spyOn(ontologyStateSvc, 'flattenHierarchy');
         });
         it('should delete the entity from the hierarchy tree', function() {
-            ontologyStateSvc.deleteEntityFromHierarchy(hierarchy, 'node3a', indexObject, {});
+            ontologyStateSvc.deleteEntityFromHierarchy(hierarchy, 'node3a', indexObject);
             expect(hierarchy).toEqual([{
                 entityIRI: 'node1a',
                 subEntities: [{
@@ -2704,13 +2704,12 @@ describe('Ontology State Service', function() {
                 'node3b': ['node2c', 'node1b'],
                 'node3c': ['node2a']
             });
-            expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(hierarchy, ontologyStateSvc.listItem.recordId);
         });
         it('should move the subEntities if required', function() {
             updateRefsSvc.remove.and.callFake(function(indexObject, entityIRI) {
                 _.unset(indexObject, 'node3c');
             });
-            ontologyStateSvc.deleteEntityFromHierarchy(hierarchy, 'node2a', indexObject, {});
+            ontologyStateSvc.deleteEntityFromHierarchy(hierarchy, 'node2a', indexObject);
             expect(hierarchy).toEqual([{
                 entityIRI: 'node1a',
                 subEntities: [{
@@ -2748,13 +2747,36 @@ describe('Ontology State Service', function() {
                 'node3a': ['node2a', 'node2b', 'node3b'],
                 'node3b': ['node2c', 'node1b']
             });
-            expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(hierarchy, ontologyStateSvc.listItem.recordId);
         });
     });
     it('getPathsTo should return all paths to provided node', function() {
         var result = ontologyStateSvc.getPathsTo(hierarchy, indexObject, 'node3a');
         expect(result.length).toBe(4);
         expect(_.sortBy(result)).toEqual(_.sortBy(expectedPaths));
+    });
+    describe('areParentsOpen should return', function() {
+        var node = {
+            indent: 1,
+            entityIRI: 'iri',
+            path: ['recordId', 'otherIRI', 'andAnotherIRI', 'iri']
+        };
+        it('true when all parent paths are open', function() {
+            spyOn(ontologyStateSvc, 'getOpened').and.returnValue(true);
+            expect(ontologyStateSvc.areParentsOpen(node)).toBe(true);
+            expect(ontologyStateSvc.getOpened).toHaveBeenCalledWith('recordId.otherIRI');
+            expect(ontologyStateSvc.getOpened).toHaveBeenCalledWith('recordId.otherIRI.andAnotherIRI');
+            expect(ontologyStateSvc.getOpened).not.toHaveBeenCalledWith('recordId');
+        });
+        it('false when all parent paths are not open', function() {
+            spyOn(ontologyStateSvc, 'getOpened').and.returnValue(false);
+            expect(ontologyStateSvc.areParentsOpen(node)).toBe(false);
+            expect(ontologyStateSvc.getOpened).toHaveBeenCalledWith('recordId.otherIRI');
+            expect(ontologyStateSvc.getOpened).not.toHaveBeenCalledWith('recordId.otherIRI.andAnotherIRI');
+            expect(ontologyStateSvc.getOpened).not.toHaveBeenCalledWith('recordId');
+        });
+    });
+    it('joinPath joins the provided array correctly', function() {
+        expect(ontologyStateSvc.joinPath(['a', 'b', 'c'])).toBe('a.b.c');
     });
     describe('goTo calls the proper manager functions with correct parameters', function() {
         beforeEach(function() {

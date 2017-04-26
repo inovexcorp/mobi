@@ -563,6 +563,37 @@ describe('Ontology Manager service', function() {
             flushAndVerify();
         });
     });
+    describe('getAnnotationPropertyHierarchies retrieves all IRIs in an ontology', function() {
+        var params;
+        beforeEach(function() {
+            params = paramSerializer({ branchId: branchId, commitId: commitId });
+        });
+        it('unless an error occurs', function(done) {
+            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/annotation-property-hierarchies?' + params).respond(400, null, null, error);
+            ontologyManagerSvc.getAnnotationPropertyHierarchies(recordId, branchId, commitId)
+                .then(function() {
+                    fail('Promise should have rejected');
+                    done();
+                }, function(response) {
+                    expect(response).toEqual(error);
+                    expect(util.onError).toHaveBeenCalled();
+                    done();
+                });
+            flushAndVerify();
+        });
+        it('successfully', function(done) {
+            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/annotation-property-hierarchies?' + params).respond(200, {});
+            ontologyManagerSvc.getAnnotationPropertyHierarchies(recordId, branchId, commitId)
+                .then(function(response) {
+                    expect(response).toEqual({});
+                    done();
+                }, function() {
+                    fail('Promise should have resolved');
+                    done();
+                });
+            flushAndVerify();
+        });
+    });
     describe('getConceptHierarchies retrieves all IRIs in an ontology', function() {
         var params;
         beforeEach(function() {

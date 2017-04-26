@@ -449,6 +449,29 @@
             }
             /**
              * @ngdoc method
+             * @name getAnnotationPropertyHierarchies
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Calls the GET /matontorest/ontologies/{recordId}/annotation-property-hierarchies endpoint and retrieves an object
+             * with the hierarchy of annotation properties in the ontology organized by the subPropertyOf property and
+             * with an index of each IRI and its parent IRIs.
+             *
+             * @param {string} recordId The id of the Record the Branch should be part of
+             * @param {string} branchId The id of the Branch with the specified Commit
+             * @param {string} commitId The id of the Commit to retrieve the ontology from
+             * @return {Promise} A promise with an object containing the annotation property hierarchy and an index of
+             * IRIs to parent IRIs
+             */
+            self.getAnnotationPropertyHierarchies = function(recordId, branchId, commitId) {
+                var deferred = $q.defer();
+                var config = { params: { branchId, commitId } };
+                $http.get(prefix + '/' + encodeURIComponent(recordId) + '/annotation-property-hierarchies', config)
+                    .then(response => deferred.resolve(response.data), response => util.onError(response, deferred));
+                return deferred.promise;
+            }
+            /**
+             * @ngdoc method
              * @name getObjectPropertyHierarchies
              * @methodOf ontologyManager.service:ontologyManagerService
              *

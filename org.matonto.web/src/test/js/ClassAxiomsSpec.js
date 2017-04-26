@@ -120,11 +120,15 @@ describe('Class Axioms directive', function() {
             it('unless the selected key is not subClassOf', function() {
                 controller.removeFromHierarchy(this.axiomObject);
                 expect(ontologyStateSvc.deleteEntityFromParentInHierarchy).not.toHaveBeenCalled();
+                expect(ontologyStateSvc.flattenHierarchy).not.toHaveBeenCalled();
             });
             it('if the selected key is subClassOf', function() {
                 controller.key = prefixes.rdfs + 'subClassOf';
+                ontologyStateSvc.flattenHierarchy.and.returnValue([{entityIRI: 'new'}]);
                 controller.removeFromHierarchy(this.axiomObject);
-                expect(ontologyStateSvc.deleteEntityFromParentInHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.classHierarchy, ontologyStateSvc.selected.matonto.originalIRI, this.axiomObject['@id'], ontologyStateSvc.listItem.classIndex, ontologyStateSvc.listItem.flatClassHierarchy);
+                expect(ontologyStateSvc.deleteEntityFromParentInHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.classHierarchy, ontologyStateSvc.selected.matonto.originalIRI, this.axiomObject['@id'], ontologyStateSvc.listItem.classIndex);
+                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.classHierarchy, ontologyStateSvc.listItem.recordId);
+                expect(ontologyStateSvc.listItem.flatClassHierarchy).toEqual([{entityIRI: 'new'}]);
             });
         });
     });

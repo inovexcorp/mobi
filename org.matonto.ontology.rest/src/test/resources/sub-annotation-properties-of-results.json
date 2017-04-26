@@ -1,10 +1,6 @@
-@Version("5.2.2.${build}")
-
-package org.matonto.ontology.core.api;
-
 /*-
  * #%L
- * org.matonto.ontology.api
+ * org.matonto.ontology.rest
  * $Id:$
  * $HeadURL:$
  * %%
@@ -24,5 +20,23 @@ package org.matonto.ontology.core.api;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-
-import aQute.bnd.annotation.Version;
+{
+  "hierarchy": [
+    {
+      "entityIRI": "http://matonto.org/ontology#annotationProperty1a",
+      "subEntities": [
+        {
+          "entityIRI": "http://matonto.org/ontology#annotationProperty1b"
+        }
+      ]
+    },
+    {
+      "entityIRI": "http://purl.org/dc/terms/title"
+    }
+  ],
+  "index": {
+    "http://matonto.org/ontology#annotationProperty1b": [
+      "http://matonto.org/ontology#annotationProperty1a"
+    ]
+  }
+}

@@ -21,13 +21,7 @@
  * #L%
  */
 describe('Property Hierarchy Block directive', function() {
-    var $compile,
-        scope,
-        element,
-        controller,
-        ontologyStateSvc,
-        ontologyManagerSvc,
-        ontologyUtilsManagerSvc;
+    var $compile, scope, element, controller, ontologyStateSvc, ontologyManagerSvc, ontologyUtilsManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -44,12 +38,15 @@ describe('Property Hierarchy Block directive', function() {
             ontologyUtilsManagerSvc = _ontologyUtilsManagerService_;
         });
 
-        ontologyStateSvc.listItem = {recordId: 'record', dataPropertyHierarchy: [{}], objectPropertyHierarchy: [{}]};
         element = $compile(angular.element('<property-hierarchy-block></property-hierarchy-block>'))(scope);
         scope.$digest();
+        controller = element.controller('propertyHierarchyBlock');
     });
 
     describe('replaces the element with the correct html', function() {
+        beforeEach(function() {
+            spyOn(controller, 'isShown').and.returnValue(true);
+        });
         it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
             expect(element.hasClass('property-hierarchy-block')).toBe(true);
@@ -87,49 +84,35 @@ describe('Property Hierarchy Block directive', function() {
             scope.$digest();
             expect(button.attr('disabled')).toBeTruthy();
         });
-        it('depending on whether there is a data property hierarchy', function() {
-            expect(element.querySelectorAll('.data-property-hierarchy').length).toBe(1);
-
-            ontologyStateSvc.listItem.dataPropertyHierarchy = [];
+        it('depending on whether there is a flat data property hierarchy', function() {
+            expect(element.querySelectorAll('.tree-item').length).toBe(0);
+            expect(element.find('tree-item').length).toBe(0);
+            
+            ontologyStateSvc.listItem.flatDataPropertyHierarchy = [{entityIRI: 'iri'}];
             scope.$digest();
-            expect(element.querySelectorAll('.data-property-hierarchy').length).toBe(0);
+            expect(element.querySelectorAll('.tree-item').length).toBe(1);
+            expect(element.find('tree-item').length).toBe(1);
         });
-        it('depending on whether there is a object property hierarchy', function() {
-            expect(element.querySelectorAll('.object-property-hierarchy').length).toBe(1);
-
-            ontologyStateSvc.listItem.objectPropertyHierarchy = [];
+        it('depending on whether there is a flat object property hierarchy', function() {
+            expect(element.querySelectorAll('.tree-item').length).toBe(0);
+            expect(element.find('tree-item').length).toBe(0);
+            
+            ontologyStateSvc.listItem.flatObjectPropertyHierarchy = [{entityIRI: 'iri'}];
             scope.$digest();
-            expect(element.querySelectorAll('.object-property-hierarchy').length).toBe(0);
+            expect(element.querySelectorAll('.tree-item').length).toBe(1);
+            expect(element.find('tree-item').length).toBe(1);
         });
-        it('depending on whether the data property hierarchy is opened', function() {
-            var icon = angular.element(element.querySelectorAll('.data-property-hierarchy li a i')[0]);
-            expect(icon.hasClass('fa-folder-o')).toBe(true);
-            expect(icon.hasClass('fa-folder-open-o')).toBe(false);
-            expect(element.querySelectorAll('.data-property-hierarchy hierarchy-tree').length).toBe(0);
-
-            ontologyStateSvc.getDataPropertiesOpened.and.returnValue(true);
+        it('depending on whether there is an annotation in the ontology', function() {
+            expect(element.querySelectorAll('.tree-item').length).toBe(0);
+            expect(element.find('tree-item').length).toBe(0);
+            
+            ontologyStateSvc.listItem.flatAnnotationPropertyHierarchy = [{entityIRI: 'iri'}];
             scope.$digest();
-            expect(icon.hasClass('fa-folder-o')).toBe(false);
-            expect(icon.hasClass('fa-folder-open-o')).toBe(true);
-            expect(element.querySelectorAll('.data-property-hierarchy hierarchy-tree').length).toBe(1);
-        });
-        it('depending on whether the object property hierarchy is opened', function() {
-            var icon = angular.element(element.querySelectorAll('.object-property-hierarchy li a i')[0]);
-            expect(icon.hasClass('fa-folder-o')).toBe(true);
-            expect(icon.hasClass('fa-folder-open-o')).toBe(false);
-            expect(element.querySelectorAll('.object-property-hierarchy hierarchy-tree').length).toBe(0);
-
-            ontologyStateSvc.getObjectPropertiesOpened.and.returnValue(true);
-            scope.$digest();
-            expect(icon.hasClass('fa-folder-o')).toBe(false);
-            expect(icon.hasClass('fa-folder-open-o')).toBe(true);
-            expect(element.querySelectorAll('.object-property-hierarchy hierarchy-tree').length).toBe(1);
+            expect(element.querySelectorAll('.tree-item').length).toBe(1);
+            expect(element.find('tree-item').length).toBe(1);
         });
     });
     describe('controller methods', function() {
-        beforeEach(function() {
-            controller = element.controller('propertyHierarchyBlock');
-        });
         describe('should delete', function() {
             it('an object property', function() {
                 ontologyManagerSvc.isObjectProperty.and.returnValue(true);
@@ -162,6 +145,59 @@ describe('Property Hierarchy Block directive', function() {
                 expect(controller.showDeleteConfirmation).toBe(false);
             });
         });
+        describe('isShown returns', function() {
+            var get, node;
+            beforeEach(function() {
+                get = jasmine.createSpy('get').and.returnValue(true);
+                node = {
+                    indent: 1,
+                    path: ['recordId', 'otherIRI', 'andAnotherIRI', 'iri'],
+                    get: get
+                };
+            });
+            describe('true when', function() {
+                beforeEach(function() {
+                    ontologyStateSvc.areParentsOpen.and.returnValue(true);
+                });
+                it('node does not have an entityIRI property', function() {
+                    expect(controller.isShown(node)).toBe(true);
+                });
+                it('node does have an entityIRI property and areParentsOpen is true and node.get is true', function() {
+                    node.entityIRI = 'iri';
+                    expect(controller.isShown(node)).toBe(true);
+                    expect(get).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId);
+                });
+            });
+            describe('false when node does have an entityIRI and', function() {
+                beforeEach(function() {
+                    node.entityIRI = 'iri';
+                });
+                it('areParentsOpen is false', function() {
+                    ontologyStateSvc.areParentsOpen.and.returnValue(false);
+                    expect(controller.isShown(node)).toBe(false);
+                });
+                it('node.get is false', function() {
+                    ontologyStateSvc.areParentsOpen.and.returnValue(true);
+                    get.and.returnValue(false);
+                    expect(controller.isShown(node)).toBe(false);
+                    expect(get).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId);
+                });
+            });
+            it('make sure flatPropertyTree is populated correctly and $watch is working correctly', function() {
+                expect(controller.flatPropertyTree).toEqual([]);
+                ontologyStateSvc.listItem.flatDataPropertyHierarchy = [{prop: 'data'}];
+                ontologyStateSvc.listItem.flatObjectPropertyHierarchy = [{prop: 'object'}];
+                ontologyStateSvc.listItem.flatAnnotationPropertyHierarchy = [{prop: 'annotation'}];
+                scope.$digest();
+                var copy = angular.copy(controller.flatPropertyTree);
+                expect(copy).toContain({title: 'Data Properties', get: ontologyStateSvc.getDataPropertiesOpened, set: ontologyStateSvc.setDataPropertiesOpened});
+                expect(copy).toContain({title: 'Object Properties', get: ontologyStateSvc.getObjectPropertiesOpened, set: ontologyStateSvc.setObjectPropertiesOpened});
+                expect(copy).toContain({title: 'Annotation Properties', get: ontologyStateSvc.getAnnotationPropertiesOpened, set: ontologyStateSvc.setAnnotationPropertiesOpened});
+                expect(copy).toContain({get: ontologyStateSvc.getDataPropertiesOpened, prop: 'data'});
+                expect(copy).toContain({get: ontologyStateSvc.getObjectPropertiesOpened, prop: 'object'});
+                expect(copy).toContain({get: ontologyStateSvc.getAnnotationPropertiesOpened, prop: 'annotation'});
+            });
+        });
     });
     it('should set the correct state when the create property link is clicked', function() {
         var link = angular.element(element.querySelectorAll('block-header a')[0]);
@@ -173,15 +209,5 @@ describe('Property Hierarchy Block directive', function() {
         var button = angular.element(element.querySelectorAll('block-footer button')[0]);
         button.triggerHandler('click');
         expect(controller.showDeleteConfirmation).toBe(true);
-    });
-    it('should call setDataPropertiesOpened if the data property link is clicked', function() {
-        var link = angular.element(element.querySelectorAll('.data-property-hierarchy li a')[0]);
-        link.triggerHandler('click');
-        expect(ontologyStateSvc.setDataPropertiesOpened).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, jasmine.any(Boolean));
-    });
-    it('should call setObjectPropertiesOpened if the data property link is clicked', function() {
-        var link = angular.element(element.querySelectorAll('.object-property-hierarchy li a')[0]);
-        link.triggerHandler('click');
-        expect(ontologyStateSvc.setObjectPropertiesOpened).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, jasmine.any(Boolean));
     });
 });

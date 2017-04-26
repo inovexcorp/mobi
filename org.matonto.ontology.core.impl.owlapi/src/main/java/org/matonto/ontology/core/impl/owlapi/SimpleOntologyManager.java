@@ -94,6 +94,7 @@ public class SimpleOntologyManager implements OntologyManager {
     private static final String CONSTRUCT_ENTITY_USAGES;
     private static final String GET_CONCEPT_RELATIONSHIPS;
     private static final String GET_SEARCH_RESULTS;
+    private static final String GET_SUB_ANNOTATION_PROPERTIES_OF;
     private static final String ENTITY_BINDING = "entity";
     private static final String SEARCH_TEXT = "searchText";
 
@@ -157,6 +158,14 @@ public class SimpleOntologyManager implements OntologyManager {
         try {
             GET_SEARCH_RESULTS = IOUtils.toString(
                     SimpleOntologyManager.class.getResourceAsStream("/get-search-results.rq"),
+                    "UTF-8"
+            );
+        } catch (IOException e) {
+            throw new MatOntoException(e);
+        }
+        try {
+            GET_SUB_ANNOTATION_PROPERTIES_OF = IOUtils.toString(
+                    SimpleOntologyManager.class.getResourceAsStream("/get-sub-annotation-properties-of.rq"),
                     "UTF-8"
             );
         } catch (IOException e) {
@@ -320,6 +329,11 @@ public class SimpleOntologyManager implements OntologyManager {
     @Override
     public TupleQueryResult getSubDatatypePropertiesOf(Ontology ontology) {
         return runQueryOnOntology(ontology, GET_SUB_DATATYPE_PROPERTIES_OF, null);
+    }
+
+    @Override
+    public TupleQueryResult getSubAnnotationPropertiesOf(Ontology ontology) {
+        return runQueryOnOntology(ontology, GET_SUB_ANNOTATION_PROPERTIES_OF, null);
     }
 
     @Override

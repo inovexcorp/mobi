@@ -103,6 +103,9 @@
                             dvm.os.setDataPropertiesOpened(dvm.os.listItem.recordId, true);
                         } else if (dvm.om.isAnnotation(dvm.property)) {
                             _.get(dvm.os.listItem, 'annotations').push({namespace:split.begin + split.then, localName: split.end});
+                            var hierarchy = _.get(dvm.os.listItem, 'annotationPropertyHierarchy');
+                            hierarchy.push({'entityIRI': dvm.property['@id']});
+                            dvm.os.listItem.flatAnnotationPropertyHierarchy = dvm.os.flattenHierarchy(hierarchy, dvm.os.listItem.recordId);
                             dvm.os.setAnnotationPropertiesOpened(dvm.os.listItem.recordId, true);
                         }
                         dvm.os.addToAdditions(dvm.os.listItem.recordId, dvm.property);
