@@ -90,7 +90,7 @@ public class SimpleOntologyManager implements OntologyManager {
     private CommitFactory commitFactory;
     private BranchFactory branchFactory;
     private CacheManager cacheManager;
-    private Optional<Cache<String, Ontology>> ontologyCache;
+    private Optional<Cache<String, Ontology>> ontologyCache = Optional.empty();
 
     private final Logger log = LoggerFactory.getLogger(SimpleOntologyManager.class);
 
@@ -104,7 +104,7 @@ public class SimpleOntologyManager implements OntologyManager {
     private static final String GET_SEARCH_RESULTS;
     private static final String ENTITY_BINDING = "entity";
     private static final String SEARCH_TEXT = "searchText";
-    private static final String CACHE_NAME = "ontology_cache";
+    private static final String CACHE_NAME = "ontologyCache";
 
     static {
         try {
@@ -218,7 +218,7 @@ public class SimpleOntologyManager implements OntologyManager {
     @Reference
     public void setCacheManager(CacheManager cacheManager) {
         this.cacheManager = cacheManager;
-        this.ontologyCache = Optional.of(cacheManager.getCache(CACHE_NAME, String.class, Ontology.class));
+        this.ontologyCache = Optional.ofNullable(cacheManager.getCache(CACHE_NAME, String.class, Ontology.class));
     }
 
     @Override
