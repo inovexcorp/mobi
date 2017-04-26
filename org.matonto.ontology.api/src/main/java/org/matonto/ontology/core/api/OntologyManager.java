@@ -243,4 +243,8 @@ public interface OntologyManager {
      * @return a Set with the query results.
      */
     TupleQueryResult getSearchResults(Ontology ontology, String searchText);
+
+    static String getOntologyCacheKey(String recordIri, String branchIri, String commitIri) {
+        return String.format("%s&%s&%s", recordIri, branchIri, commitIri);
+    }
 }

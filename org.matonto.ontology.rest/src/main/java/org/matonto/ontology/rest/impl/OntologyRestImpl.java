@@ -103,7 +103,8 @@ public class OntologyRestImpl implements OntologyRest {
     private OntologyRecordFactory ontologyRecordFactory;
     private EngineManager engineManager;
     private SesameTransformer sesameTransformer;
-    public CacheManager cacheManager;
+    private Optional<Cache<String, Ontology>> ontologyCache = Optional.empty();
+
 
     private final Logger log = LoggerFactory.getLogger(OntologyRestImpl.class);
 
@@ -144,7 +145,7 @@ public class OntologyRestImpl implements OntologyRest {
 
     @Reference
     public void setCacheManager(CacheManager cacheManager) {
-        this.cacheManager = cacheManager;
+        this.ontologyCache = Optional.ofNullable(cacheManager.getCache("ontologyCache", String.class, Ontology.class));
     }
 
     @Override
@@ -793,17 +794,28 @@ public class OntologyRestImpl implements OntologyRest {
     private Optional<Ontology> getOntology(ContainerRequestContext context, String recordIdStr, String branchIdStr,
                                            String commitIdStr) {
         throwErrorIfMissingStringParam(recordIdStr, "The recordIdStr is missing.");
-        Resource recordId = valueFactory.createIRI(recordIdStr);
+        Optional<Ontology> optionalOntology = Optional.empty();
 
-        Optional<Ontology> optionalOntology;
-        if (!stringParamIsMissing(commitIdStr)) {
-            throwErrorIfMissingStringParam(branchIdStr, "The branchIdStr is missing.");
-            optionalOntology = ontologyManager.retrieveOntology(recordId, valueFactory.createIRI(branchIdStr),
-                    valueFactory.createIRI(commitIdStr));
-        } else if (!stringParamIsMissing(branchIdStr)) {
-            optionalOntology = ontologyManager.retrieveOntology(recordId, valueFactory.createIRI(branchIdStr));
-        } else {
-            optionalOntology = ontologyManager.retrieveOntology(recordId);
+        if (ontologyCache.isPresent()) {
+            Cache<String, Ontology> cache = ontologyCache.get();
+            String key = OntologyManager.getOntologyCacheKey(recordIdStr, branchIdStr, commitIdStr);
+            if (cache.containsKey(key)) {
+                optionalOntology = Optional.of(cache.get(key));
+            }
+        }
+
+        if (!optionalOntology.isPresent()) {
+            Resource recordId = valueFactory.createIRI(recordIdStr);
+
+            if (!stringParamIsMissing(commitIdStr)) {
+                throwErrorIfMissingStringParam(branchIdStr, "The branchIdStr is missing.");
+                optionalOntology = ontologyManager.retrieveOntology(recordId, valueFactory.createIRI(branchIdStr),
+                        valueFactory.createIRI(commitIdStr));
+            } else if (!stringParamIsMissing(branchIdStr)) {
+                optionalOntology = ontologyManager.retrieveOntology(recordId, valueFactory.createIRI(branchIdStr));
+            } else {
+                optionalOntology = ontologyManager.retrieveOntology(recordId);
+            }
         }
 
         if (optionalOntology.isPresent()) {
@@ -1181,24 +1193,23 @@ public class OntologyRestImpl implements OntologyRest {
         OntologyRecord record = catalogManager.createRecord(builder.build(), ontologyRecordFactory);
         catalogManager.addRecord(catalogId, record);
         catalogManager.addMasterBranch(record.getResource());
-        record = catalogManager.getRecord(catalogId, record.getResource(), ontologyRecordFactory).get();
+        final OntologyRecord finalRecord = catalogManager.getRecord(catalogId, record.getResource(), ontologyRecordFactory).get();
 
-        InProgressCommit inProgressCommit = catalogManager.createInProgressCommit(user, record.getResource());
+        InProgressCommit inProgressCommit = catalogManager.createInProgressCommit(user, finalRecord.getResource());
         catalogManager.addInProgressCommit(inProgressCommit);
         catalogManager.addAdditions(ontology.asModel(modelFactory), inProgressCommit.getResource());
 
         Commit commit = catalogManager.createCommit(inProgressCommit, "The initial commit.", null, null);
-        Resource masterBranchId = record.getMasterBranch().get().getResource();
+        Resource masterBranchId = finalRecord.getMasterBranch().get().getResource();
         catalogManager.addCommitToBranch(commit, masterBranchId);
 
         catalogManager.removeInProgressCommit(inProgressCommit.getResource());
 
         // Cache
-        Cache<String, Ontology> testCache = cacheManager.getCache("testCache", String.class, Ontology.class);
-        if (testCache != null) {
-            log.trace("caching " + record.getResource().stringValue());
-            testCache.put(record.getResource().stringValue(), ontology);
-        }
+        ontologyCache.ifPresent(cache -> {
+            log.trace("caching " + finalRecord.getResource().stringValue());
+            cache.put(finalRecord.getResource().stringValue(), ontology);
+        });
 
         JSONObject response = new JSONObject()
                 .element("ontologyId", ontology.getOntologyId().getOntologyIdentifier().stringValue())
