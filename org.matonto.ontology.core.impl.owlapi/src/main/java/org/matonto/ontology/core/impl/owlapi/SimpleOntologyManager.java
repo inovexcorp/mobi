@@ -270,23 +270,13 @@ public class SimpleOntologyManager implements OntologyManager {
     @Override
     public Optional<Ontology> retrieveOntology(@Nonnull Resource recordId) {
         long start = log.isTraceEnabled() ? System.currentTimeMillis() : 0L;
-        Optional<Ontology> result = Optional.empty();
-
-        // Check Cache
-        if (ontologyCache.isPresent()) {
-            // Check Cache
-            Cache<String, Ontology> cache = ontologyCache.get();
-            if (cache.containsKey(recordId.stringValue())) {
-                log.trace("cache hit");
-                result = Optional.of(cache.get(recordId.stringValue()));
-            }
-        }
+        Optional<Ontology> result = checkCache(recordId);
 
         if (!result.isPresent()) {
             log.trace("cache miss");
             result = catalogManager.getRecord(catalogManager.getLocalCatalogIRI(), recordId, ontologyRecordFactory).flatMap(ontologyRecord -> {
                 Branch branch = getMasterBranch(ontologyRecord);
-                return retrieveOntology(ontologyRecord, branch);
+                return retrieveOntology(ontologyRecord, getHeadOfBranch(branch));
             });
         }
 
@@ -300,22 +290,13 @@ public class SimpleOntologyManager implements OntologyManager {
     @Override
     public Optional<Ontology> retrieveOntology(@Nonnull Resource recordId, @Nonnull Resource branchId) {
         long start = log.isTraceEnabled() ? System.currentTimeMillis() : 0L;
-        Optional<Ontology> result = Optional.empty();
-
-        if (ontologyCache.isPresent()) {
-            // Check Cache
-            Cache<String, Ontology> cache = ontologyCache.get();
-            if (cache.containsKey(recordId.stringValue())) {
-                log.trace("cache hit");
-                result = Optional.of(cache.get(recordId.stringValue()));
-            }
-        }
+        Optional<Ontology> result = checkCache(recordId);
 
         if (!result.isPresent()) {
             log.trace("cache miss");
             result = catalogManager.getRecord(catalogManager.getLocalCatalogIRI(), recordId, ontologyRecordFactory).flatMap(ontologyRecord -> {
                 Branch branch = getBranch(ontologyRecord, branchId);
-                return retrieveOntology(ontologyRecord, branch);
+                return retrieveOntology(ontologyRecord, getHeadOfBranch(branch));
             });
         }
 
@@ -330,16 +311,7 @@ public class SimpleOntologyManager implements OntologyManager {
     public Optional<Ontology> retrieveOntology(@Nonnull Resource recordId, @Nonnull Resource branchId,
                                                @Nonnull Resource commitId) {
         long start = log.isTraceEnabled() ? System.currentTimeMillis() : 0L;
-        Optional<Ontology> result = Optional.empty();
-
-        if (ontologyCache.isPresent()) {
-            // Check Cache
-            Cache<String, Ontology> cache = ontologyCache.get();
-            if (cache.containsKey(recordId.stringValue())) {
-                log.trace("cache hit");
-                result = Optional.of(cache.get(recordId.stringValue()));
-            }
-        }
+        Optional<Ontology> result = checkCache(recordId);
 
         if (!result.isPresent()) {
             result = catalogManager.getRecord(catalogManager.getLocalCatalogIRI(), recordId, ontologyRecordFactory)
@@ -358,9 +330,18 @@ public class SimpleOntologyManager implements OntologyManager {
         return result;
     }
 
-    private Optional<Ontology> retrieveOntology(@Nonnull OntologyRecord record, @Nonnull Branch branch) {
-        Commit headCommit = getHeadOfBranch(branch);
-        return retrieveOntology(record, headCommit);
+    private Optional<Ontology> checkCache(@Nonnull Resource recordId) {
+        Optional<Ontology> result = Optional.empty();
+
+        if (ontologyCache.isPresent()) {
+            // Check Cache
+            Cache<String, Ontology> cache = ontologyCache.get();
+            if (cache.containsKey(recordId.stringValue())) {
+                log.trace("cache hit");
+                result = Optional.of(cache.get(recordId.stringValue()));
+            }
+        }
+        return result;
     }
 
     private Optional<Ontology> retrieveOntology(@Nonnull OntologyRecord record, @Nonnull Commit commit) {
@@ -375,6 +356,7 @@ public class SimpleOntologyManager implements OntologyManager {
                 ontologyRecordFactory).orElseThrow(() ->
                 new IllegalArgumentException("The OntologyRecord could not be retrieved."));
         catalogManager.removeRecord(catalogManager.getLocalCatalog().getResource(), record.getResource());
+        ontologyCache.ifPresent(cache -> cache.remove(record.getResource().stringValue()));
     }
 
     @Override

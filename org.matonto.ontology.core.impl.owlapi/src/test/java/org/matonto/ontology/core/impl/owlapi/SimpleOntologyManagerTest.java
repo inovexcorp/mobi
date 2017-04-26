@@ -31,6 +31,7 @@ import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.ehcache.Cache;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -71,6 +72,7 @@ import org.matonto.rdf.orm.conversion.impl.ValueValueConverter;
 import org.matonto.repository.api.RepositoryManager;
 import org.matonto.repository.impl.core.SimpleRepositoryManager;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.Rio;
@@ -105,6 +107,9 @@ public class SimpleOntologyManagerTest {
 
     @Mock
     private CacheManager cacheManager;
+
+    @Mock
+    private Cache<String, Ontology> mockCache;
 
     private SimpleOntologyManager manager;
     private ValueFactory valueFactory = SimpleValueFactory.getInstance();
@@ -190,6 +195,9 @@ public class SimpleOntologyManagerTest {
         when(SimpleOntologyValues.matontoIRI(owlOntologyIRI)).thenReturn(ontologyIRI);
         when(SimpleOntologyValues.matontoIRI(owlVersionIRI)).thenReturn(versionIRI);
         when(SimpleOntologyValues.matontoOntology(any(OWLOntology.class))).thenReturn(ontology);
+
+        when(cacheManager.getCache(Mockito.anyString(), Mockito.eq(String.class), Mockito.eq(Ontology.class))).thenReturn(mockCache);
+        when(mockCache.containsKey(Mockito.anyString())).thenReturn(false);
 
         manager = new SimpleOntologyManager();
         manager.setValueFactory(valueFactory);
