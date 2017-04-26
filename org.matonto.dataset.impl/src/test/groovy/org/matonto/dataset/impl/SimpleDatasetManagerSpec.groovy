@@ -346,7 +346,7 @@ class SimpleDatasetManagerSpec extends Specification {
         1 * catalogManagerMock.getRecord(*_) >> Optional.empty()
         results == Optional.empty()
     }
-// TODO: Fix
+
     def "getDatasetRecords() returns PaginatedSearchResults with a set of DatasetRecords from the repo"() {
         setup:
         def mockRecords = []
@@ -429,8 +429,7 @@ class SimpleDatasetManagerSpec extends Specification {
         results.getResource() == recordIRI
         results.getDataset_resource() != Optional.empty()
         results.getDataset_resource().get() == datasetIRI
-        // This will not work as things are currently structured in MatOnto
-        // results.getDataset().get().getSystemDefaultNamedGraph() != null
+        results.getDataset().get().getSystemDefaultNamedGraph() != null
     }
 
     def "createDataset adds the Dataset model to the repo"() {

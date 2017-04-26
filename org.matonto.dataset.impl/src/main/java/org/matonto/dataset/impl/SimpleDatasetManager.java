@@ -184,11 +184,11 @@ public class SimpleDatasetManager implements DatasetManager {
                 throw new IllegalStateException("The dataset already exists in the specified repository.");
             }
         }
+        DatasetRecord datasetRecord = catalogManager.createRecord(config, dsRecFactory);
 
-        Dataset dataset = dsFactory.createNew(datasetIRI);
+        Dataset dataset = dsFactory.createNew(datasetIRI, datasetRecord.getModel());
         dataset.setSystemDefaultNamedGraph(sdgIRI);
 
-        DatasetRecord datasetRecord = catalogManager.createRecord(config, dsRecFactory);
         datasetRecord.setDataset(dataset);
         datasetRecord.setRepository(config.getRepositoryId());
 

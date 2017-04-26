@@ -294,8 +294,7 @@ public class RdfEngineTest {
         statements.forEach(userModel::add);
         connection.close();
         assertFalse(userModel.isEmpty());
-        User savedUser = userFactory.getExisting(vf.createIRI(userId), userModel).orElse(null);
-        assertNotNull(savedUser);
+        User savedUser = userFactory.getExisting(vf.createIRI(userId), userModel).get();
         assertTrue(savedUser.getPassword().isPresent() && savedUser.getPassword().get().stringValue().equals("123"));
         assertTrue(savedUser.getUsername().isPresent() && savedUser.getUsername().get().stringValue().equals("user"));
     }
@@ -404,8 +403,7 @@ public class RdfEngineTest {
         statements.forEach(groupModel::add);
         connection.close();
         assertFalse(groupModel.isEmpty());
-        Group savedGroup = groupFactory.getExisting(vf.createIRI(groupId1), groupModel).orElse(null);
-        assertNotNull(savedGroup);
+        Group savedGroup = groupFactory.getExisting(vf.createIRI(groupId1), groupModel).get();
         assertTrue(savedGroup.getMember().isEmpty());
     }
 

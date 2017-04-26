@@ -305,13 +305,15 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public Catalog getDistributedCatalog() throws MatOntoException {
-        return getCatalog(distributedCatalogIRI).orElse(null);
+    public Catalog getDistributedCatalog() throws MatOntoException, IllegalArgumentException {
+        return getCatalog(distributedCatalogIRI).orElseThrow(() ->
+                new IllegalArgumentException("The catalog " + distributedCatalogIRI.stringValue() + " could not be retrieved."));
     }
 
     @Override
-    public Catalog getLocalCatalog() throws MatOntoException {
-        return getCatalog(localCatalogIRI).orElse(null);
+    public Catalog getLocalCatalog() throws MatOntoException, IllegalStateException {
+        return getCatalog(localCatalogIRI).orElseThrow(() ->
+                new IllegalStateException("The catalog " + localCatalogIRI.stringValue() + " could not be retrieved."));
     }
 
     @Override
@@ -416,7 +418,8 @@ public class SimpleCatalogManager implements CatalogManager {
     public <T extends Record> void addRecord(Resource catalogId, T record) throws MatOntoException {
         try (RepositoryConnection conn = repository.getConnection()) {
             if (resourceExists(catalogId, Catalog.TYPE) && !resourceExists(record.getResource())) {
-                record.setCatalog(getCatalog(catalogId).orElse(null));
+                record.setCatalog(getCatalog(catalogId).orElseThrow(() ->
+                        new IllegalArgumentException("The catalog " + catalogId.stringValue() + " could not be retrieved.")));
                 conn.add(record.getModel(), record.getResource());
             } else {
                 throw new MatOntoException("The Record could not be added.");
@@ -806,10 +809,6 @@ public class SimpleCatalogManager implements CatalogManager {
         commit.setProperty(vf.createLiteral(message), vf.createIRI(DCTERMS.TITLE.stringValue()));
         commit.setProperty(user, associatedWith);
 
-        Model revisionModel = mf.createModel(inProgressCommit.getModel());
-        revisionModel.remove(inProgressCommit.getResource(), null, null);
-        Optional<Revision> optRevision = revisionFactory.getExisting(revisionIRI, revisionModel);
-
         if (baseCommit != null) {
             commit.setBaseCommit(baseCommit);
         }
@@ -817,8 +816,10 @@ public class SimpleCatalogManager implements CatalogManager {
             commit.setAuxiliaryCommit(auxCommit);
         }
 
-        optRevision.ifPresent(revision -> {
-            if (generatedParents.size() != 0) {
+        Model revisionModel = mf.createModel(inProgressCommit.getModel());
+        revisionModel.remove(inProgressCommit.getResource(), null, null);
+        revisionFactory.getExisting(revisionIRI, revisionModel).ifPresent(revision -> {
+            if (generatedParents.size() > 0) {
                 revision.setProperties(generatedParents, vf.createIRI(Entity.wasDerivedFrom_IRI));
             }
         });
@@ -964,7 +965,8 @@ public class SimpleCatalogManager implements CatalogManager {
                 new MatOntoException("The Commit could not be retrieved."));
         try (RepositoryConnection conn = repository.getConnection()) {
             Resource revisionIRI = (Resource) commit.getProperty(vf.createIRI(Activity.generated_IRI)).get();
-            Revision revision = revisionFactory.getExisting(revisionIRI, commit.getModel()).orElse(null);
+            Revision revision = revisionFactory.getExisting(revisionIRI, commit.getModel()).orElseThrow(() ->
+                    new IllegalStateException("Revision resource <" + revisionIRI.stringValue() + "> not found for Commit <" + commit.getResource() +">"));
             Resource additionsIRI = (Resource) revision.getAdditions().orElseThrow(() ->
                     new MatOntoException("The additions could not be found."));
             Resource deletionsIRI = (Resource) revision.getDeletions().orElseThrow(() ->
@@ -1481,7 +1483,7 @@ public class SimpleCatalogManager implements CatalogManager {
      */
     private void removeUnversionedRecord(Record record) throws MatOntoException {
         unversionedRecordFactory.getExisting(record.getResource(), record.getModel()).ifPresent(unversionedRecord -> {
-            unversionedRecord.getUnversionedDistribution_resource().forEach(distribution -> remove(distribution));
+            unversionedRecord.getUnversionedDistribution_resource().forEach(this::remove);
             remove(unversionedRecord.getResource());
         });
     }

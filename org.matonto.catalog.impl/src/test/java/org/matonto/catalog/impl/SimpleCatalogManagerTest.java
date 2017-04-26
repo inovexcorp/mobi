@@ -287,9 +287,9 @@ public class SimpleCatalogManagerTest {
 
         InputStream testData = getClass().getResourceAsStream("/testCatalogData.trig");
 
-        RepositoryConnection conn = repo.getConnection();
-        conn.add(Values.matontoModel(Rio.parse(testData, "", RDFFormat.TRIG)));
-        conn.close();
+        try (RepositoryConnection conn = repo.getConnection()) {
+            conn.add(Values.matontoModel(Rio.parse(testData, "", RDFFormat.TRIG)));
+        }
 
         Map<String, Object> props = new HashMap<>();
         props.put("title", "MatOnto Test Catalog");
@@ -376,14 +376,14 @@ public class SimpleCatalogManagerTest {
         Record record = recordFactory.createNew(recordId);
         record.addProperty(vf.createLiteral("record"), dcIdentifier);
 
-        RepositoryConnection conn = repo.getConnection();
-        assertFalse(conn.getStatements(recordId, null, null, recordId).hasNext());
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertFalse(conn.getStatements(recordId, null, null, recordId).hasNext());
 
-        manager.addRecord(distributedCatalogId, record);
-        assertTrue(conn.getStatements(recordId, null, vf.createIRI(Record.TYPE), recordId).hasNext());
-        assertTrue(conn.getStatements(recordId, null, null, recordId).hasNext());
-        assertTrue(conn.getStatements(recordId, null, distributedCatalogId, recordId).hasNext());
-        conn.close();
+            manager.addRecord(distributedCatalogId, record);
+            assertTrue(conn.getStatements(recordId, null, vf.createIRI(Record.TYPE), recordId).hasNext());
+            assertTrue(conn.getStatements(recordId, null, null, recordId).hasNext());
+            assertTrue(conn.getStatements(recordId, null, distributedCatalogId, recordId).hasNext());
+        }
     }
 
     @Test(expected = MatOntoException.class)
@@ -408,14 +408,14 @@ public class SimpleCatalogManagerTest {
         UnversionedRecord record = unversionedRecordFactory.createNew(recordId);
         record.addProperty(vf.createLiteral("record"), dcIdentifier);
 
-        RepositoryConnection conn = repo.getConnection();
-        assertFalse(conn.getStatements(recordId, null, null, recordId).hasNext());
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertFalse(conn.getStatements(recordId, null, null, recordId).hasNext());
 
-        manager.addRecord(distributedCatalogId, record);
-        assertTrue(conn.getStatements(recordId, null, vf.createIRI(UnversionedRecord.TYPE), recordId).hasNext());
-        assertTrue(conn.getStatements(recordId, null, null, recordId).hasNext());
-        assertTrue(conn.getStatements(recordId, null, distributedCatalogId, recordId).hasNext());
-        conn.close();
+            manager.addRecord(distributedCatalogId, record);
+            assertTrue(conn.getStatements(recordId, null, vf.createIRI(UnversionedRecord.TYPE), recordId).hasNext());
+            assertTrue(conn.getStatements(recordId, null, null, recordId).hasNext());
+            assertTrue(conn.getStatements(recordId, null, distributedCatalogId, recordId).hasNext());
+        }
     }
 
     @Test
@@ -424,14 +424,14 @@ public class SimpleCatalogManagerTest {
         VersionedRecord record = versionedRecordFactory.createNew(recordId);
         record.addProperty(vf.createLiteral("record"), dcIdentifier);
 
-        RepositoryConnection conn = repo.getConnection();
-        assertFalse(conn.getStatements(recordId, null, null, recordId).hasNext());
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertFalse(conn.getStatements(recordId, null, null, recordId).hasNext());
 
-        manager.addRecord(distributedCatalogId, record);
-        assertTrue(conn.getStatements(recordId, null, vf.createIRI(VersionedRecord.TYPE), recordId).hasNext());
-        assertTrue(conn.getStatements(recordId, null, null, recordId).hasNext());
-        assertTrue(conn.getStatements(recordId, null, distributedCatalogId, recordId).hasNext());
-        conn.close();
+            manager.addRecord(distributedCatalogId, record);
+            assertTrue(conn.getStatements(recordId, null, vf.createIRI(VersionedRecord.TYPE), recordId).hasNext());
+            assertTrue(conn.getStatements(recordId, null, null, recordId).hasNext());
+            assertTrue(conn.getStatements(recordId, null, distributedCatalogId, recordId).hasNext());
+        }
     }
 
     @Test
@@ -440,14 +440,14 @@ public class SimpleCatalogManagerTest {
         VersionedRDFRecord record = versionedRDFRecordFactory.createNew(recordId);
         record.addProperty(vf.createLiteral("record"), dcIdentifier);
 
-        RepositoryConnection conn = repo.getConnection();
-        assertFalse(conn.getStatements(recordId, null, null, recordId).hasNext());
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertFalse(conn.getStatements(recordId, null, null, recordId).hasNext());
 
-        manager.addRecord(distributedCatalogId, record);
-        assertTrue(conn.getStatements(recordId, null, vf.createIRI(VersionedRDFRecord.TYPE), recordId).hasNext());
-        assertTrue(conn.getStatements(recordId, null, null, recordId).hasNext());
-        assertTrue(conn.getStatements(recordId, null, distributedCatalogId, recordId).hasNext());
-        conn.close();
+            manager.addRecord(distributedCatalogId, record);
+            assertTrue(conn.getStatements(recordId, null, vf.createIRI(VersionedRDFRecord.TYPE), recordId).hasNext());
+            assertTrue(conn.getStatements(recordId, null, null, recordId).hasNext());
+            assertTrue(conn.getStatements(recordId, null, distributedCatalogId, recordId).hasNext());
+        }
     }
 
     @Test
@@ -456,14 +456,14 @@ public class SimpleCatalogManagerTest {
         OntologyRecord record = ontologyRecordFactory.createNew(recordId);
         record.addProperty(vf.createLiteral("record"), dcIdentifier);
 
-        RepositoryConnection conn = repo.getConnection();
-        assertFalse(conn.getStatements(recordId, null, null, recordId).hasNext());
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertFalse(conn.getStatements(recordId, null, null, recordId).hasNext());
 
-        manager.addRecord(distributedCatalogId, record);
-        assertTrue(conn.getStatements(recordId, null, vf.createIRI(OntologyRecord.TYPE), recordId).hasNext());
-        assertTrue(conn.getStatements(recordId, null, null, recordId).hasNext());
-        assertTrue(conn.getStatements(recordId, null, distributedCatalogId, recordId).hasNext());
-        conn.close();
+            manager.addRecord(distributedCatalogId, record);
+            assertTrue(conn.getStatements(recordId, null, vf.createIRI(OntologyRecord.TYPE), recordId).hasNext());
+            assertTrue(conn.getStatements(recordId, null, null, recordId).hasNext());
+            assertTrue(conn.getStatements(recordId, null, distributedCatalogId, recordId).hasNext());
+        }
     }
 
     @Test
@@ -472,14 +472,14 @@ public class SimpleCatalogManagerTest {
         MappingRecord record = mappingRecordFactory.createNew(recordId);
         record.addProperty(vf.createLiteral("record"), dcIdentifier);
 
-        RepositoryConnection conn = repo.getConnection();
-        assertFalse(conn.getStatements(recordId, null, null, recordId).hasNext());
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertFalse(conn.getStatements(recordId, null, null, recordId).hasNext());
 
-        manager.addRecord(distributedCatalogId, record);
-        assertTrue(conn.getStatements(recordId, null, vf.createIRI(MappingRecord.TYPE), recordId).hasNext());
-        assertTrue(conn.getStatements(recordId, null, null, recordId).hasNext());
-        assertTrue(conn.getStatements(recordId, null, distributedCatalogId, recordId).hasNext());
-        conn.close();
+            manager.addRecord(distributedCatalogId, record);
+            assertTrue(conn.getStatements(recordId, null, vf.createIRI(MappingRecord.TYPE), recordId).hasNext());
+            assertTrue(conn.getStatements(recordId, null, null, recordId).hasNext());
+            assertTrue(conn.getStatements(recordId, null, distributedCatalogId, recordId).hasNext());
+        }
     }
 
     @Test
@@ -490,23 +490,17 @@ public class SimpleCatalogManagerTest {
             Model recordModel = mf.createModel();
             conn.getStatements(recordId, null, null, recordId).forEachRemaining(recordModel::add);
 
-            Optional<Record> optRecord = recordFactory.getExisting(recordId, recordModel);
+            Record record = recordFactory.getExisting(recordId, recordModel).get();
 
-            optRecord.ifPresent(record -> {
-                record.setKeyword(Stream.of(vf.createLiteral("keyword1")).collect(Collectors.toSet()));
+            record.setKeyword(Stream.of(vf.createLiteral("keyword1")).collect(Collectors.toSet()));
 
-                assertFalse(conn.getStatements(recordId, vf.createIRI(Record.keyword_IRI), vf.createLiteral("keyword1"),
-                        recordId).hasNext());
+            assertFalse(conn.getStatements(recordId, vf.createIRI(Record.keyword_IRI), vf.createLiteral("keyword1"),
+                    recordId).hasNext());
 
-                manager.updateRecord(distributedCatalogId, record);
-                assertTrue(conn.getStatements(recordId, vf.createIRI(Record.catalog_IRI), distributedCatalogId, recordId).hasNext());
-                assertTrue(conn.getStatements(recordId, vf.createIRI(Record.keyword_IRI), vf.createLiteral("keyword1"),
-                        recordId).hasNext());
-            });
-
-            if (!optRecord.isPresent()) {
-                fail();
-            }
+            manager.updateRecord(distributedCatalogId, record);
+            assertTrue(conn.getStatements(recordId, vf.createIRI(Record.catalog_IRI), distributedCatalogId, recordId).hasNext());
+            assertTrue(conn.getStatements(recordId, vf.createIRI(Record.keyword_IRI), vf.createLiteral("keyword1"),
+                    recordId).hasNext());
         }
     }
 
@@ -531,23 +525,17 @@ public class SimpleCatalogManagerTest {
             Model recordModel = mf.createModel();
             conn.getStatements(recordId, null, null, recordId).forEachRemaining(recordModel::add);
 
-            Optional<UnversionedRecord> optRecord = unversionedRecordFactory.getExisting(recordId, recordModel);
+            UnversionedRecord record = unversionedRecordFactory.getExisting(recordId, recordModel).get();
 
-            optRecord.ifPresent(record -> {
-                record.setKeyword(Stream.of(vf.createLiteral("keyword1")).collect(Collectors.toSet()));
+            record.setKeyword(Stream.of(vf.createLiteral("keyword1")).collect(Collectors.toSet()));
 
-                assertFalse(conn.getStatements(recordId, vf.createIRI(Record.keyword_IRI), vf.createLiteral("keyword1"),
-                        recordId).hasNext());
+            assertFalse(conn.getStatements(recordId, vf.createIRI(Record.keyword_IRI), vf.createLiteral("keyword1"),
+                    recordId).hasNext());
 
-                manager.updateRecord(distributedCatalogId, record);
-                assertTrue(conn.getStatements(recordId, vf.createIRI(Record.catalog_IRI), distributedCatalogId, recordId).hasNext());
-                assertTrue(conn.getStatements(recordId, vf.createIRI(Record.keyword_IRI), vf.createLiteral("keyword1"),
-                        recordId).hasNext());
-            });
-
-            if (!optRecord.isPresent()) {
-                fail();
-            }
+            manager.updateRecord(distributedCatalogId, record);
+            assertTrue(conn.getStatements(recordId, vf.createIRI(Record.catalog_IRI), distributedCatalogId, recordId).hasNext());
+            assertTrue(conn.getStatements(recordId, vf.createIRI(Record.keyword_IRI), vf.createLiteral("keyword1"),
+                    recordId).hasNext());
         }
     }
 
@@ -559,21 +547,16 @@ public class SimpleCatalogManagerTest {
             Model recordModel = mf.createModel();
             conn.getStatements(recordId, null, null, recordId).forEachRemaining(recordModel::add);
 
-            Optional<VersionedRecord> optRecord = versionedRecordFactory.getExisting(recordId, recordModel);
-            optRecord.ifPresent(record -> {
-                record.setKeyword(Stream.of(vf.createLiteral("keyword1")).collect(Collectors.toSet()));
+           VersionedRecord record = versionedRecordFactory.getExisting(recordId, recordModel).get();
+            record.setKeyword(Stream.of(vf.createLiteral("keyword1")).collect(Collectors.toSet()));
 
-                assertFalse(conn.getStatements(recordId, vf.createIRI(Record.keyword_IRI), vf.createLiteral("keyword1"),
-                        recordId).hasNext());
+            assertFalse(conn.getStatements(recordId, vf.createIRI(Record.keyword_IRI), vf.createLiteral("keyword1"),
+                    recordId).hasNext());
 
-                manager.updateRecord(distributedCatalogId, record);
-                assertTrue(conn.getStatements(recordId, vf.createIRI(Record.catalog_IRI), distributedCatalogId, recordId).hasNext());
-                assertTrue(conn.getStatements(recordId, vf.createIRI(Record.keyword_IRI), vf.createLiteral("keyword1"),
-                        recordId).hasNext());
-            });
-            if (!optRecord.isPresent()) {
-                fail();
-            }
+            manager.updateRecord(distributedCatalogId, record);
+            assertTrue(conn.getStatements(recordId, vf.createIRI(Record.catalog_IRI), distributedCatalogId, recordId).hasNext());
+            assertTrue(conn.getStatements(recordId, vf.createIRI(Record.keyword_IRI), vf.createLiteral("keyword1"),
+                    recordId).hasNext());
         }
     }
 
@@ -585,23 +568,17 @@ public class SimpleCatalogManagerTest {
             Model recordModel = mf.createModel();
             conn.getStatements(recordId, null, null, recordId).forEachRemaining(recordModel::add);
 
-            Optional<VersionedRDFRecord> optRecord = versionedRDFRecordFactory.getExisting(recordId, recordModel);
-            optRecord.ifPresent(record -> {
-                record.setKeyword(Stream.of(vf.createLiteral("keyword1")).collect(Collectors.toSet()));
+            VersionedRDFRecord record = versionedRDFRecordFactory.getExisting(recordId, recordModel).get();
+            record.setKeyword(Stream.of(vf.createLiteral("keyword1")).collect(Collectors.toSet()));
 
-                assertTrue(conn.getStatements(recordId, vf.createIRI(Record.catalog_IRI), distributedCatalogId, recordId).hasNext());
-                assertFalse(conn.getStatements(recordId, vf.createIRI(Record.keyword_IRI), vf.createLiteral("keyword1"),
-                        recordId).hasNext());
+            assertTrue(conn.getStatements(recordId, vf.createIRI(Record.catalog_IRI), distributedCatalogId, recordId).hasNext());
+            assertFalse(conn.getStatements(recordId, vf.createIRI(Record.keyword_IRI), vf.createLiteral("keyword1"),
+                    recordId).hasNext());
 
-                manager.updateRecord(distributedCatalogId, record);
-                assertTrue(conn.getStatements(recordId, vf.createIRI(Record.catalog_IRI), distributedCatalogId, recordId).hasNext());
-                assertTrue(conn.getStatements(recordId, vf.createIRI(Record.keyword_IRI), vf.createLiteral("keyword1"),
-                        recordId).hasNext());
-            });
-
-            if (!optRecord.isPresent()) {
-                fail();
-            }
+            manager.updateRecord(distributedCatalogId, record);
+            assertTrue(conn.getStatements(recordId, vf.createIRI(Record.catalog_IRI), distributedCatalogId, recordId).hasNext());
+            assertTrue(conn.getStatements(recordId, vf.createIRI(Record.keyword_IRI), vf.createLiteral("keyword1"),
+                    recordId).hasNext());
         }
     }
 
@@ -613,21 +590,16 @@ public class SimpleCatalogManagerTest {
             Model recordModel = mf.createModel();
             conn.getStatements(recordId, null, null, recordId).forEachRemaining(recordModel::add);
 
-            Optional<OntologyRecord> optRecord = ontologyRecordFactory.getExisting(recordId, recordModel);
-            optRecord.ifPresent(record -> {
-                record.setKeyword(Stream.of(vf.createLiteral("keyword1")).collect(Collectors.toSet()));
+            OntologyRecord record = ontologyRecordFactory.getExisting(recordId, recordModel).get();
+            record.setKeyword(Stream.of(vf.createLiteral("keyword1")).collect(Collectors.toSet()));
 
-                assertFalse(conn.getStatements(recordId, vf.createIRI(Record.keyword_IRI), vf.createLiteral("keyword1"),
-                        recordId).hasNext());
+            assertFalse(conn.getStatements(recordId, vf.createIRI(Record.keyword_IRI), vf.createLiteral("keyword1"),
+                    recordId).hasNext());
 
-                manager.updateRecord(distributedCatalogId, record);
-                assertTrue(conn.getStatements(recordId, vf.createIRI(Record.catalog_IRI), distributedCatalogId, recordId).hasNext());
-                assertTrue(conn.getStatements(recordId, vf.createIRI(Record.keyword_IRI), vf.createLiteral("keyword1"),
-                        recordId).hasNext());
-            });
-            if (!optRecord.isPresent()) {
-                fail();
-            }
+            manager.updateRecord(distributedCatalogId, record);
+            assertTrue(conn.getStatements(recordId, vf.createIRI(Record.catalog_IRI), distributedCatalogId, recordId).hasNext());
+            assertTrue(conn.getStatements(recordId, vf.createIRI(Record.keyword_IRI), vf.createLiteral("keyword1"),
+                    recordId).hasNext());
         }
     }
 
@@ -639,22 +611,17 @@ public class SimpleCatalogManagerTest {
             Model recordModel = mf.createModel();
             conn.getStatements(recordId, null, null, recordId).forEachRemaining(recordModel::add);
 
-            Optional<MappingRecord> optRecord = mappingRecordFactory.getExisting(recordId, recordModel);
-            optRecord.ifPresent(record -> {
-                record.setKeyword(Stream.of(vf.createLiteral("keyword1")).collect(Collectors.toSet()));
+            MappingRecord record = mappingRecordFactory.getExisting(recordId, recordModel).get();
+            record.setKeyword(Stream.of(vf.createLiteral("keyword1")).collect(Collectors.toSet()));
 
-                assertTrue(conn.getStatements(recordId, vf.createIRI(Record.catalog_IRI), distributedCatalogId, recordId).hasNext());
-                assertFalse(conn.getStatements(recordId, vf.createIRI(Record.keyword_IRI), vf.createLiteral("keyword1"),
-                        recordId).hasNext());
+            assertTrue(conn.getStatements(recordId, vf.createIRI(Record.catalog_IRI), distributedCatalogId, recordId).hasNext());
+            assertFalse(conn.getStatements(recordId, vf.createIRI(Record.keyword_IRI), vf.createLiteral("keyword1"),
+                    recordId).hasNext());
 
-                manager.updateRecord(distributedCatalogId, record);
-                assertTrue(conn.getStatements(recordId, vf.createIRI(Record.catalog_IRI), distributedCatalogId, recordId).hasNext());
-                assertTrue(conn.getStatements(recordId, vf.createIRI(Record.keyword_IRI), vf.createLiteral("keyword1"),
-                        recordId).hasNext());
-            });
-            if (!optRecord.isPresent()) {
-                fail();
-            }
+            manager.updateRecord(distributedCatalogId, record);
+            assertTrue(conn.getStatements(recordId, vf.createIRI(Record.catalog_IRI), distributedCatalogId, recordId).hasNext());
+            assertTrue(conn.getStatements(recordId, vf.createIRI(Record.keyword_IRI), vf.createLiteral("keyword1"),
+                    recordId).hasNext());
         }
     }
 
@@ -662,12 +629,12 @@ public class SimpleCatalogManagerTest {
     public void testRemoveRecord() throws Exception {
         Resource recordId = vf.createIRI("http://matonto.org/test/records#just-a-record");
 
-        RepositoryConnection conn = repo.getConnection();
-        assertTrue(conn.getStatements(recordId, null, null, recordId).hasNext());
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertTrue(conn.getStatements(recordId, null, null, recordId).hasNext());
 
-        manager.removeRecord(distributedCatalogId, recordId);
-        assertFalse(conn.getStatements(recordId, null, null, recordId).hasNext());
-        conn.close();
+            manager.removeRecord(distributedCatalogId, recordId);
+            assertFalse(conn.getStatements(recordId, null, null, recordId).hasNext());
+        }
     }
 
     @Test
@@ -675,14 +642,14 @@ public class SimpleCatalogManagerTest {
         Resource recordId = vf.createIRI("http://matonto.org/test/records#unversioned");
         Resource distributionId = vf.createIRI("http://matonto.org/test/distributions#test");
 
-        RepositoryConnection conn = repo.getConnection();
-        assertTrue(conn.getStatements(recordId, null, null, recordId).hasNext());
-        assertTrue(conn.getStatements(distributionId, null, null, distributionId).hasNext());
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertTrue(conn.getStatements(recordId, null, null, recordId).hasNext());
+            assertTrue(conn.getStatements(distributionId, null, null, distributionId).hasNext());
 
-        manager.removeRecord(distributedCatalogId, recordId);
-        assertFalse(conn.getStatements(recordId, null, null, recordId).hasNext());
-        assertFalse(conn.getStatements(distributionId, null, null, distributionId).hasNext());
-        conn.close();
+            manager.removeRecord(distributedCatalogId, recordId);
+            assertFalse(conn.getStatements(recordId, null, null, recordId).hasNext());
+            assertFalse(conn.getStatements(distributionId, null, null, distributionId).hasNext());
+        }
     }
 
     @Test
@@ -693,14 +660,14 @@ public class SimpleCatalogManagerTest {
                 vf.createIRI("http://matonto.org/test/versions#test3"),
                 vf.createIRI("http://matonto.org/test/versions#remove")).collect(Collectors.toSet());
 
-        RepositoryConnection conn = repo.getConnection();
-        assertTrue(conn.getStatements(recordId, null, null, recordId).hasNext());
-        versions.forEach(r -> assertTrue(conn.getStatements(r, null, null, r).hasNext()));
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertTrue(conn.getStatements(recordId, null, null, recordId).hasNext());
+            versions.forEach(r -> assertTrue(conn.getStatements(r, null, null, r).hasNext()));
 
-        manager.removeRecord(distributedCatalogId, recordId);
-        assertFalse(conn.getStatements(recordId, null, null, recordId).hasNext());
-        versions.forEach(r -> assertFalse(conn.getStatements(r, null, null, r).hasNext()));
-        conn.close();
+            manager.removeRecord(distributedCatalogId, recordId);
+            assertFalse(conn.getStatements(recordId, null, null, recordId).hasNext());
+            versions.forEach(r -> assertFalse(conn.getStatements(r, null, null, r).hasNext()));
+        }
     }
 
     @Test
@@ -709,14 +676,14 @@ public class SimpleCatalogManagerTest {
         Set<Resource> branches = Stream.of(vf.createIRI("http://matonto.org/test/branches#test"),
                 vf.createIRI("http://matonto.org/test/branches#master")).collect(Collectors.toSet());
 
-        RepositoryConnection conn = repo.getConnection();
-        assertTrue(conn.getStatements(recordId, null, null, recordId).hasNext());
-        branches.forEach(r -> assertTrue(conn.getStatements(r, null, null, r).hasNext()));
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertTrue(conn.getStatements(recordId, null, null, recordId).hasNext());
+            branches.forEach(r -> assertTrue(conn.getStatements(r, null, null, r).hasNext()));
 
-        manager.removeRecord(distributedCatalogId, recordId);
-        assertFalse(conn.getStatements(recordId, null, null, recordId).hasNext());
-        branches.forEach(r -> assertFalse(conn.getStatements(r, null, null, r).hasNext()));
-        conn.close();
+            manager.removeRecord(distributedCatalogId, recordId);
+            assertFalse(conn.getStatements(recordId, null, null, recordId).hasNext());
+            branches.forEach(r -> assertFalse(conn.getStatements(r, null, null, r).hasNext()));
+        }
     }
 
     @Test(expected = MatOntoException.class)
@@ -741,9 +708,9 @@ public class SimpleCatalogManagerTest {
     public void testGetRecord() throws Exception {
         Resource recordId = vf.createIRI("http://matonto.org/test/records#get");
 
-        RepositoryConnection conn = repo.getConnection();
-        assertTrue(conn.getStatements(recordId, null, null, recordId).hasNext());
-        conn.close();
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertTrue(conn.getStatements(recordId, null, null, recordId).hasNext());
+        }
 
         Optional<Record> result = manager.getRecord(distributedCatalogId, recordId, recordFactory);
         assertTrue(result.isPresent());
@@ -783,9 +750,9 @@ public class SimpleCatalogManagerTest {
     public void testGetUnversionedRecord() throws Exception {
         Resource recordId = vf.createIRI("http://matonto.org/test/records#unversioned");
 
-        RepositoryConnection conn = repo.getConnection();
-        assertTrue(conn.getStatements(recordId, null, null, recordId).hasNext());
-        conn.close();
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertTrue(conn.getStatements(recordId, null, null, recordId).hasNext());
+        }
 
         Optional<UnversionedRecord> result = manager.getRecord(distributedCatalogId, recordId, unversionedRecordFactory);
         assertTrue(result.isPresent());
@@ -804,9 +771,9 @@ public class SimpleCatalogManagerTest {
     public void testGetVersionedRecord() throws Exception {
         Resource recordId = vf.createIRI("http://matonto.org/test/records#get");
 
-        RepositoryConnection conn = repo.getConnection();
-        assertTrue(conn.getStatements(recordId, null, null, recordId).hasNext());
-        conn.close();
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertTrue(conn.getStatements(recordId, null, null, recordId).hasNext());
+        }
 
         Optional<VersionedRecord> result = manager.getRecord(distributedCatalogId, recordId, versionedRecordFactory);
         assertTrue(result.isPresent());
@@ -825,9 +792,9 @@ public class SimpleCatalogManagerTest {
     public void testGetVersionedRDFRecord() throws Exception {
         Resource recordId = vf.createIRI("http://matonto.org/test/records#versionedRDF");
 
-        RepositoryConnection conn = repo.getConnection();
-        assertTrue(conn.getStatements(recordId, null, null, recordId).hasNext());
-        conn.close();
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertTrue(conn.getStatements(recordId, null, null, recordId).hasNext());
+        }
 
         Optional<VersionedRDFRecord> result = manager.getRecord(distributedCatalogId, recordId, versionedRDFRecordFactory);
         assertTrue(result.isPresent());
@@ -846,9 +813,9 @@ public class SimpleCatalogManagerTest {
     public void testGetOntologyRecord() throws Exception {
         Resource recordId = vf.createIRI("http://matonto.org/test/records#update");
 
-        RepositoryConnection conn = repo.getConnection();
-        assertTrue(conn.getStatements(recordId, null, null, recordId).hasNext());
-        conn.close();
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertTrue(conn.getStatements(recordId, null, null, recordId).hasNext());
+        }
 
         Optional<OntologyRecord> result = manager.getRecord(distributedCatalogId, recordId, ontologyRecordFactory);
         assertTrue(result.isPresent());
@@ -867,9 +834,9 @@ public class SimpleCatalogManagerTest {
     public void testGetMappingRecord() throws Exception {
         Resource recordId = vf.createIRI("http://matonto.org/test/records#remove");
 
-        RepositoryConnection conn = repo.getConnection();
-        assertTrue(conn.getStatements(recordId, null, null, recordId).hasNext());
-        conn.close();
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertTrue(conn.getStatements(recordId, null, null, recordId).hasNext());
+        }
 
         Optional<MappingRecord> result = manager.getRecord(distributedCatalogId, recordId, mappingRecordFactory);
         assertTrue(result.isPresent());
@@ -1042,13 +1009,13 @@ public class SimpleCatalogManagerTest {
         Resource unversionedId = vf.createIRI("http://matonto.org/test/records#unversioned");
 
         Distribution distribution = distributionFactory.createNew(distributionId);
-        RepositoryConnection conn = repo.getConnection();
-        assertFalse(conn.getStatements(distributionId, null, null, distributionId).hasNext());
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertFalse(conn.getStatements(distributionId, null, null, distributionId).hasNext());
 
-        manager.addDistributionToUnversionedRecord(distribution, unversionedId);
-        assertTrue(conn.getStatements(distributionId, null, null, distributionId).hasNext());
-        assertTrue(conn.getStatements(unversionedId, distributionIRI, distributionId, unversionedId).hasNext());
-        conn.close();
+            manager.addDistributionToUnversionedRecord(distribution, unversionedId);
+            assertTrue(conn.getStatements(distributionId, null, null, distributionId).hasNext());
+            assertTrue(conn.getStatements(unversionedId, distributionIRI, distributionId, unversionedId).hasNext());
+        }
     }
 
     @Test(expected = MatOntoException.class)
@@ -1073,13 +1040,13 @@ public class SimpleCatalogManagerTest {
         Resource versionId = vf.createIRI("http://matonto.org/test/versions#test");
 
         Distribution distribution = distributionFactory.createNew(distributionId);
-        RepositoryConnection conn = repo.getConnection();
-        assertFalse(conn.getStatements(distributionId, null, null, distributionId).hasNext());
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertFalse(conn.getStatements(distributionId, null, null, distributionId).hasNext());
 
-        manager.addDistributionToVersion(distribution, versionId);
-        assertTrue(conn.getStatements(distributionId, null, null, distributionId).hasNext());
-        assertTrue(conn.getStatements(versionId, distributionIRI, distributionId, versionId).hasNext());
-        conn.close();
+            manager.addDistributionToVersion(distribution, versionId);
+            assertTrue(conn.getStatements(distributionId, null, null, distributionId).hasNext());
+            assertTrue(conn.getStatements(versionId, distributionIRI, distributionId, versionId).hasNext());
+        }
     }
 
     @Test(expected = MatOntoException.class)
@@ -1104,20 +1071,15 @@ public class SimpleCatalogManagerTest {
         try (RepositoryConnection conn = repo.getConnection()) {
             conn.getStatements(distributionId, null, null, distributionId).forEach(distributionModel::add);
 
-            Optional<Distribution> optDistribution = distributionFactory.getExisting(distributionId, distributionModel);
-            optDistribution.ifPresent(distribution -> {
-                distribution.getModel().add(distributionId, vf.createIRI(DC_TITLE), vf.createLiteral("New Title"));
+            Distribution distribution = distributionFactory.getExisting(distributionId, distributionModel).get();
+            distribution.getModel().add(distributionId, vf.createIRI(DC_TITLE), vf.createLiteral("New Title"));
 
-                assertFalse(conn.getStatements(distributionId, vf.createIRI(DC_TITLE), vf.createLiteral("New Title"))
-                        .hasNext());
+            assertFalse(conn.getStatements(distributionId, vf.createIRI(DC_TITLE), vf.createLiteral("New Title"))
+                    .hasNext());
 
-                manager.updateDistribution(distribution);
-                assertTrue(conn.getStatements(distributionId, vf.createIRI(DC_TITLE), vf.createLiteral("New Title"),
-                        distributionId).hasNext());
-            });
-            if (!optDistribution.isPresent()) {
-                fail();
-            }
+            manager.updateDistribution(distribution);
+            assertTrue(conn.getStatements(distributionId, vf.createIRI(DC_TITLE), vf.createLiteral("New Title"),
+                    distributionId).hasNext());
         }
     }
 
@@ -1133,14 +1095,14 @@ public class SimpleCatalogManagerTest {
         Resource unversionedId = vf.createIRI("http://matonto.org/test/records#unversioned");
         IRI distributionIRI = vf.createIRI(UnversionedRecord.unversionedDistribution_IRI);
 
-        RepositoryConnection conn = repo.getConnection();
-        assertTrue(conn.getStatements(distributionId, null, null, distributionId).hasNext());
-        assertTrue(conn.getStatements(unversionedId, distributionIRI, distributionId, unversionedId).hasNext());
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertTrue(conn.getStatements(distributionId, null, null, distributionId).hasNext());
+            assertTrue(conn.getStatements(unversionedId, distributionIRI, distributionId, unversionedId).hasNext());
 
-        manager.removeDistributionFromUnversionedRecord(distributionId, unversionedId);
-        assertFalse(conn.getStatements(distributionId, null, null, distributionId).hasNext());
-        assertFalse(conn.getStatements(unversionedId, distributionIRI, distributionId, unversionedId).hasNext());
-        conn.close();
+            manager.removeDistributionFromUnversionedRecord(distributionId, unversionedId);
+            assertFalse(conn.getStatements(distributionId, null, null, distributionId).hasNext());
+            assertFalse(conn.getStatements(unversionedId, distributionIRI, distributionId, unversionedId).hasNext());
+        }
     }
 
     @Test(expected = MatOntoException.class)
@@ -1168,14 +1130,14 @@ public class SimpleCatalogManagerTest {
         Resource versionId = vf.createIRI("http://matonto.org/test/versions#test");
         IRI distributionIRI = vf.createIRI(Version.versionedDistribution_IRI);
 
-        RepositoryConnection conn = repo.getConnection();
-        assertTrue(conn.getStatements(distributionId, null, null, distributionId).hasNext());
-        assertTrue(conn.getStatements(versionId, distributionIRI, distributionId, versionId).hasNext());
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertTrue(conn.getStatements(distributionId, null, null, distributionId).hasNext());
+            assertTrue(conn.getStatements(versionId, distributionIRI, distributionId, versionId).hasNext());
 
-        manager.removeDistributionFromVersion(distributionId, versionId);
-        assertFalse(conn.getStatements(distributionId, null, null, distributionId).hasNext());
-        assertFalse(conn.getStatements(versionId, distributionIRI, distributionId, versionId).hasNext());
-        conn.close();
+            manager.removeDistributionFromVersion(distributionId, versionId);
+            assertFalse(conn.getStatements(distributionId, null, null, distributionId).hasNext());
+            assertFalse(conn.getStatements(versionId, distributionIRI, distributionId, versionId).hasNext());
+        }
     }
 
     @Test(expected = MatOntoException.class)
@@ -1201,9 +1163,9 @@ public class SimpleCatalogManagerTest {
     public void testGetDistribution() throws Exception {
         Resource distributionId = vf.createIRI("http://matonto.org/test/distributions#test");
 
-        RepositoryConnection conn = repo.getConnection();
-        assertTrue(conn.getStatements(distributionId, null, null, distributionId).hasNext());
-        conn.close();
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertTrue(conn.getStatements(distributionId, null, null, distributionId).hasNext());
+        }
 
         Optional<Distribution> result = manager.getDistribution(distributionId);
         assertTrue(result.isPresent());
@@ -1228,18 +1190,18 @@ public class SimpleCatalogManagerTest {
         Resource versionedRecordId = vf.createIRI("http://matonto.org/test/records#get");
 
         Version version = versionFactory.createNew(versionId);
-        RepositoryConnection conn = repo.getConnection();
-        assertFalse(conn.getStatements(versionId, null, null, versionId).hasNext());
-        assertTrue(conn.getStatements(versionedRecordId, latestVersionIRI, null, versionedRecordId).hasNext());
-        assertFalse(conn.getStatements(versionedRecordId, latestVersionIRI, versionId, versionedRecordId).hasNext());
-        assertTrue(conn.getStatements(versionedRecordId, versionPropIRI, null, versionedRecordId).hasNext());
-        assertFalse(conn.getStatements(versionedRecordId, versionPropIRI, versionId, versionedRecordId).hasNext());
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertFalse(conn.getStatements(versionId, null, null, versionId).hasNext());
+            assertTrue(conn.getStatements(versionedRecordId, latestVersionIRI, null, versionedRecordId).hasNext());
+            assertFalse(conn.getStatements(versionedRecordId, latestVersionIRI, versionId, versionedRecordId).hasNext());
+            assertTrue(conn.getStatements(versionedRecordId, versionPropIRI, null, versionedRecordId).hasNext());
+            assertFalse(conn.getStatements(versionedRecordId, versionPropIRI, versionId, versionedRecordId).hasNext());
 
-        manager.addVersion(version, versionedRecordId);
-        assertTrue(conn.getStatements(versionId, null, null, versionId).hasNext());
-        assertTrue(conn.getStatements(versionedRecordId, latestVersionIRI, versionId, versionedRecordId).hasNext());
-        assertTrue(conn.getStatements(versionedRecordId, versionPropIRI, versionId, versionedRecordId).hasNext());
-        conn.close();
+            manager.addVersion(version, versionedRecordId);
+            assertTrue(conn.getStatements(versionId, null, null, versionId).hasNext());
+            assertTrue(conn.getStatements(versionedRecordId, latestVersionIRI, versionId, versionedRecordId).hasNext());
+            assertTrue(conn.getStatements(versionedRecordId, versionPropIRI, versionId, versionedRecordId).hasNext());
+        }
     }
 
     @Test(expected = MatOntoException.class)
@@ -1264,15 +1226,15 @@ public class SimpleCatalogManagerTest {
         Resource versionedRecordId = vf.createIRI("http://matonto.org/test/records#get");
 
         Tag version = tagFactory.createNew(versionId);
-        RepositoryConnection conn = repo.getConnection();
-        assertFalse(conn.getStatements(versionId, null, null, versionId).hasNext());
-        assertTrue(conn.getStatements(versionedRecordId, latestVersionIRI, null, versionedRecordId).hasNext());
-        assertFalse(conn.getStatements(versionedRecordId, latestVersionIRI, versionId, versionedRecordId).hasNext());
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertFalse(conn.getStatements(versionId, null, null, versionId).hasNext());
+            assertTrue(conn.getStatements(versionedRecordId, latestVersionIRI, null, versionedRecordId).hasNext());
+            assertFalse(conn.getStatements(versionedRecordId, latestVersionIRI, versionId, versionedRecordId).hasNext());
 
-        manager.addVersion(version, versionedRecordId);
-        assertTrue(conn.getStatements(versionId, null, null, versionId).hasNext());
-        assertTrue(conn.getStatements(versionedRecordId, latestVersionIRI, versionId, versionedRecordId).hasNext());
-        conn.close();
+            manager.addVersion(version, versionedRecordId);
+            assertTrue(conn.getStatements(versionId, null, null, versionId).hasNext());
+            assertTrue(conn.getStatements(versionedRecordId, latestVersionIRI, versionId, versionedRecordId).hasNext());
+        }
     }
 
     @Test
@@ -1283,19 +1245,14 @@ public class SimpleCatalogManagerTest {
         try (RepositoryConnection conn = repo.getConnection()) {
             conn.getStatements(versionId, null, null, versionId).forEach(versionModel::add);
 
-            Optional<Version> optVersion = versionFactory.getExisting(versionId, versionModel);
-            optVersion.ifPresent(version -> {
-                version.getModel().add(versionId, vf.createIRI(DC_TITLE), vf.createLiteral("New Title"));
+            Version version = versionFactory.getExisting(versionId, versionModel).get();
+            version.getModel().add(versionId, vf.createIRI(DC_TITLE), vf.createLiteral("New Title"));
 
-                assertFalse(conn.getStatements(versionId, vf.createIRI(DC_TITLE), vf.createLiteral("New Title")).hasNext());
+            assertFalse(conn.getStatements(versionId, vf.createIRI(DC_TITLE), vf.createLiteral("New Title")).hasNext());
 
-                manager.updateVersion(version);
-                assertTrue(conn.getStatements(versionId, vf.createIRI(DC_TITLE), vf.createLiteral("New Title"), versionId)
-                        .hasNext());
-            });
-            if (!optVersion.isPresent()) {
-                fail();
-            }
+            manager.updateVersion(version);
+            assertTrue(conn.getStatements(versionId, vf.createIRI(DC_TITLE), vf.createLiteral("New Title"), versionId)
+                    .hasNext());
         }
     }
 
@@ -1312,18 +1269,13 @@ public class SimpleCatalogManagerTest {
             Model tagModel = mf.createModel();
             conn.getStatements(tagId, null, null, tagId).forEach(tagModel::add);
 
-            Optional<Tag> optTag = tagFactory.getExisting(tagId, tagModel);
-            optTag.ifPresent(tag -> {
-                tag.getModel().add(tagId, vf.createIRI(DC_TITLE), vf.createLiteral("New Title"));
+            Tag tag = tagFactory.getExisting(tagId, tagModel).get();
+            tag.getModel().add(tagId, vf.createIRI(DC_TITLE), vf.createLiteral("New Title"));
 
-                assertFalse(conn.getStatements(tagId, vf.createIRI(DC_TITLE), vf.createLiteral("New Title")).hasNext());
+            assertFalse(conn.getStatements(tagId, vf.createIRI(DC_TITLE), vf.createLiteral("New Title")).hasNext());
 
-                manager.updateVersion(tag);
-                assertTrue(conn.getStatements(tagId, vf.createIRI(DC_TITLE), vf.createLiteral("New Title"), tagId).hasNext());
-            });
-            if (!optTag.isPresent()) {
-                fail();
-            }
+            manager.updateVersion(tag);
+            assertTrue(conn.getStatements(tagId, vf.createIRI(DC_TITLE), vf.createLiteral("New Title"), tagId).hasNext());
         }
     }
 
@@ -1336,16 +1288,16 @@ public class SimpleCatalogManagerTest {
         IRI versionIRI = vf.createIRI(VersionedRecord.version_IRI);
         IRI latestIRI = vf.createIRI(VersionedRecord.latestVersion_IRI);
 
-        RepositoryConnection conn = repo.getConnection();
-        assertTrue(conn.getStatements(recordId, versionIRI, latestVersionId, recordId).hasNext());
-        assertTrue(conn.getStatements(distributionId, null, null, distributionId).hasNext());
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertTrue(conn.getStatements(recordId, versionIRI, latestVersionId, recordId).hasNext());
+            assertTrue(conn.getStatements(distributionId, null, null, distributionId).hasNext());
 
-        manager.removeVersion(versionId, recordId);
-        assertFalse(conn.getStatements(versionId, null, null, versionId).hasNext());
-        assertTrue(conn.getStatements(recordId, latestIRI, latestVersionId, recordId).hasNext());
-        assertFalse(conn.getStatements(recordId, versionIRI, versionId, recordId).hasNext());
-        assertFalse(conn.getStatements(distributionId, null, null, distributionId).hasNext());
-        conn.close();
+            manager.removeVersion(versionId, recordId);
+            assertFalse(conn.getStatements(versionId, null, null, versionId).hasNext());
+            assertTrue(conn.getStatements(recordId, latestIRI, latestVersionId, recordId).hasNext());
+            assertFalse(conn.getStatements(recordId, versionIRI, versionId, recordId).hasNext());
+            assertFalse(conn.getStatements(distributionId, null, null, distributionId).hasNext());
+        }
     }
 
     @Test
@@ -1356,14 +1308,14 @@ public class SimpleCatalogManagerTest {
         IRI versionIRI = vf.createIRI(VersionedRecord.version_IRI);
         IRI latestIRI = vf.createIRI(VersionedRecord.latestVersion_IRI);
 
-        RepositoryConnection conn = repo.getConnection();
-        assertTrue(conn.getStatements(recordId, versionIRI, latestVersionId, recordId).hasNext());
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertTrue(conn.getStatements(recordId, versionIRI, latestVersionId, recordId).hasNext());
 
-        manager.removeVersion(latestVersionId, recordId);
-        assertFalse(conn.getStatements(latestVersionId, null, null, latestVersionId).hasNext());
-        assertTrue(conn.getStatements(recordId, versionIRI, newLatestVersionId, recordId).hasNext());
-        assertTrue(conn.getStatements(recordId, latestIRI, newLatestVersionId, recordId).hasNext());
-        conn.close();
+            manager.removeVersion(latestVersionId, recordId);
+            assertFalse(conn.getStatements(latestVersionId, null, null, latestVersionId).hasNext());
+            assertTrue(conn.getStatements(recordId, versionIRI, newLatestVersionId, recordId).hasNext());
+            assertTrue(conn.getStatements(recordId, latestIRI, newLatestVersionId, recordId).hasNext());
+        }
     }
 
     @Test(expected = MatOntoException.class)
@@ -1389,9 +1341,9 @@ public class SimpleCatalogManagerTest {
     public void testGetVersion() throws Exception {
         Resource versionId = vf.createIRI("http://matonto.org/test/versions#test");
 
-        RepositoryConnection conn = repo.getConnection();
-        assertTrue(conn.getStatements(versionId, null, null, versionId).hasNext());
-        conn.close();
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertTrue(conn.getStatements(versionId, null, null, versionId).hasNext());
+        }
 
         Optional<Version> result = manager.getVersion(versionId, versionFactory);
         assertTrue(result.isPresent());
@@ -1412,9 +1364,9 @@ public class SimpleCatalogManagerTest {
     public void testGetTag() throws Exception {
         Resource versionId = vf.createIRI("http://matonto.org/test/tags#test");
 
-        RepositoryConnection conn = repo.getConnection();
-        assertTrue(conn.getStatements(versionId, null, null, versionId).hasNext());
-        conn.close();
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertTrue(conn.getStatements(versionId, null, null, versionId).hasNext());
+        }
 
         Optional<Tag> result = manager.getVersion(versionId, tagFactory);
         assertTrue(result.isPresent());
@@ -1432,13 +1384,13 @@ public class SimpleCatalogManagerTest {
         Resource branchId = vf.createIRI("http://matonto.org/test/branches#new");
 
         Branch branch = branchFactory.createNew(branchId);
-        RepositoryConnection conn = repo.getConnection();
-        assertFalse(conn.getStatements(branchId, null, null, branchId).hasNext());
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertFalse(conn.getStatements(branchId, null, null, branchId).hasNext());
 
-        manager.addBranch(branch, recordId);
-        assertTrue(conn.getStatements(branchId, null, null, branchId).hasNext());
-        assertTrue(conn.getStatements(recordId, branchIRI, branchId, recordId).hasNext());
-        conn.close();
+            manager.addBranch(branch, recordId);
+            assertTrue(conn.getStatements(branchId, null, null, branchId).hasNext());
+            assertTrue(conn.getStatements(recordId, branchIRI, branchId, recordId).hasNext());
+        }
     }
 
     @Test(expected = MatOntoException.class)
@@ -1462,11 +1414,11 @@ public class SimpleCatalogManagerTest {
         IRI masterBranchIRI = vf.createIRI(VersionedRDFRecord.masterBranch_IRI);
         Resource recordId = vf.createIRI("http://matonto.org/test/records#update");
 
-        RepositoryConnection conn = repo.getConnection();
-        manager.addMasterBranch(recordId);
-        assertTrue(conn.getStatements(recordId, masterBranchIRI, null, recordId).hasNext());
-        assertTrue(conn.getStatements(recordId, branchIRI, null, recordId).hasNext());
-        conn.close();
+        try (RepositoryConnection conn = repo.getConnection()) {
+            manager.addMasterBranch(recordId);
+            assertTrue(conn.getStatements(recordId, masterBranchIRI, null, recordId).hasNext());
+            assertTrue(conn.getStatements(recordId, branchIRI, null, recordId).hasNext());
+        }
     }
 
     @Test(expected = MatOntoException.class)
@@ -1487,20 +1439,15 @@ public class SimpleCatalogManagerTest {
             Model branchModel = mf.createModel();
             conn.getStatements(branchId, null, null, branchId).forEach(branchModel::add);
 
-            Optional<Branch> optBranch = branchFactory.getExisting(branchId, branchModel);
-            optBranch.ifPresent(branch -> {
-                branch.getModel().add(branchId, vf.createIRI(DC_TITLE), vf.createLiteral("New Title"));
+            Branch branch = branchFactory.getExisting(branchId, branchModel).get();
+            branch.getModel().add(branchId, vf.createIRI(DC_TITLE), vf.createLiteral("New Title"));
 
-                assertFalse(conn.getStatements(branchId, vf.createIRI(DC_TITLE), vf.createLiteral("New Title"), branchId)
-                        .hasNext());
+            assertFalse(conn.getStatements(branchId, vf.createIRI(DC_TITLE), vf.createLiteral("New Title"), branchId)
+                    .hasNext());
 
-                manager.updateBranch(branch);
-                assertTrue(conn.getStatements(branchId, vf.createIRI(DC_TITLE), vf.createLiteral("New Title"), branchId)
-                        .hasNext());
-            });
-            if (!optBranch.isPresent()) {
-                fail();
-            }
+            manager.updateBranch(branch);
+            assertTrue(conn.getStatements(branchId, vf.createIRI(DC_TITLE), vf.createLiteral("New Title"), branchId)
+                    .hasNext());
         }
     }
 
@@ -1511,15 +1458,15 @@ public class SimpleCatalogManagerTest {
         Resource branchId = vf.createIRI("http://matonto.org/test/branches#test");
 
         Commit commit = commitFactory.createNew(commitId);
-        RepositoryConnection conn = repo.getConnection();
-        conn.add(commit.getModel(), commitId);
+        try (RepositoryConnection conn = repo.getConnection()) {
+            conn.add(commit.getModel(), commitId);
 
-        assertFalse(conn.getStatements(branchId, headIRI, commitId, branchId).hasNext());
+            assertFalse(conn.getStatements(branchId, headIRI, commitId, branchId).hasNext());
 
-        manager.updateHead(branchId, commitId);
+            manager.updateHead(branchId, commitId);
 
-        assertTrue(conn.getStatements(branchId, headIRI, commitId, branchId).hasNext());
-        conn.close();
+            assertTrue(conn.getStatements(branchId, headIRI, commitId, branchId).hasNext());
+        }
     }
 
     @Test
@@ -1557,20 +1504,15 @@ public class SimpleCatalogManagerTest {
             Model branchModel = mf.createModel();
             conn.getStatements(branchId, null, null, branchId).forEach(branchModel::add);
 
-            Optional<UserBranch> optBranch = userBranchFactory.getExisting(branchId, branchModel);
-            optBranch.ifPresent(branch -> {
-                branch.getModel().add(branchId, vf.createIRI(DC_TITLE), vf.createLiteral("New Title"));
+            UserBranch branch = userBranchFactory.getExisting(branchId, branchModel).get();
+            branch.getModel().add(branchId, vf.createIRI(DC_TITLE), vf.createLiteral("New Title"));
 
-                assertFalse(conn.getStatements(branchId, vf.createIRI(DC_TITLE), vf.createLiteral("New Title"), branchId)
-                        .hasNext());
+            assertFalse(conn.getStatements(branchId, vf.createIRI(DC_TITLE), vf.createLiteral("New Title"), branchId)
+                    .hasNext());
 
-                manager.updateBranch(branch);
-                assertTrue(conn.getStatements(branchId, vf.createIRI(DC_TITLE), vf.createLiteral("New Title"), branchId)
-                        .hasNext());
-            });
-            if (!optBranch.isPresent()) {
-                fail();
-            }
+            manager.updateBranch(branch);
+            assertTrue(conn.getStatements(branchId, vf.createIRI(DC_TITLE), vf.createLiteral("New Title"), branchId)
+                    .hasNext());
         }
     }
 
@@ -1597,20 +1539,20 @@ public class SimpleCatalogManagerTest {
         IRI commitIRI = vf.createIRI(Tag.commit_IRI);
         IRI branchIRI = vf.createIRI(VersionedRDFRecord.branch_IRI);
 
-        RepositoryConnection conn = repo.getConnection();
-        assertTrue(conn.getStatements(branchId, null, null, branchId).hasNext());
-        assertTrue(conn.getStatements(recordId, branchIRI, branchId, recordId).hasNext());
-        assertTrue(conn.getStatements(null, null, null, commitIdToRemove).hasNext());
-        assertTrue(conn.getStatements(null, null, null, commitIdToKeep).hasNext());
-        assertTrue(conn.getStatements(tagId, commitIRI, commitIdToRemove, tagId).hasNext());
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertTrue(conn.getStatements(branchId, null, null, branchId).hasNext());
+            assertTrue(conn.getStatements(recordId, branchIRI, branchId, recordId).hasNext());
+            assertTrue(conn.getStatements(null, null, null, commitIdToRemove).hasNext());
+            assertTrue(conn.getStatements(null, null, null, commitIdToKeep).hasNext());
+            assertTrue(conn.getStatements(tagId, commitIRI, commitIdToRemove, tagId).hasNext());
 
-        manager.removeBranch(branchId, recordId);
-        assertFalse(conn.getStatements(branchId, null, null, branchId).hasNext());
-        assertFalse(conn.getStatements(recordId, branchIRI, branchId, recordId).hasNext());
-        assertFalse(conn.getStatements(null, null, null, commitIdToRemove).hasNext());
-        assertTrue(conn.getStatements(null, null, null, commitIdToKeep).hasNext());
-        assertFalse(conn.getStatements(tagId, commitIRI, commitIdToRemove, tagId).hasNext());
-        conn.close();
+            manager.removeBranch(branchId, recordId);
+            assertFalse(conn.getStatements(branchId, null, null, branchId).hasNext());
+            assertFalse(conn.getStatements(recordId, branchIRI, branchId, recordId).hasNext());
+            assertFalse(conn.getStatements(null, null, null, commitIdToRemove).hasNext());
+            assertTrue(conn.getStatements(null, null, null, commitIdToKeep).hasNext());
+            assertFalse(conn.getStatements(tagId, commitIRI, commitIdToRemove, tagId).hasNext());
+        }
     }
 
     @Test(expected = MatOntoException.class)
@@ -1643,9 +1585,9 @@ public class SimpleCatalogManagerTest {
     public void testGetBranch() throws Exception {
         Resource branchId = vf.createIRI("http://matonto.org/test/branches#test");
 
-        RepositoryConnection conn = repo.getConnection();
-        assertTrue(conn.getStatements(branchId, null, null, branchId).hasNext());
-        conn.close();
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertTrue(conn.getStatements(branchId, null, null, branchId).hasNext());
+        }
 
         Optional<Branch> result = manager.getBranch(branchId, branchFactory);
         assertTrue(result.isPresent());
@@ -1660,9 +1602,9 @@ public class SimpleCatalogManagerTest {
     public void testGetUserBranch() throws Exception {
         Resource branchId = vf.createIRI("http://matonto.org/test/user-branches#test");
 
-        RepositoryConnection conn = repo.getConnection();
-        assertTrue(conn.getStatements(branchId, null, null, branchId).hasNext());
-        conn.close();
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertTrue(conn.getStatements(branchId, null, null, branchId).hasNext());
+        }
 
         Optional<UserBranch> result = manager.getBranch(branchId, userBranchFactory);
         assertTrue(result.isPresent());
@@ -1788,19 +1730,19 @@ public class SimpleCatalogManagerTest {
         expected.add(statement2);
         expected.add(vf.createIRI("http://matonto.org/test/add"), vf.createIRI(DC_TITLE), vf.createLiteral("Add"));
 
-        RepositoryConnection conn = repo.getConnection();
+        try (RepositoryConnection conn = repo.getConnection()) {
 
-        manager.addAdditions(model, commitId);
-        RepositoryResult<Statement> statements = conn.getStatements(null, null, null, additionId);
+            manager.addAdditions(model, commitId);
+            RepositoryResult<Statement> statements = conn.getStatements(null, null, null, additionId);
 
-        while (statements.hasNext()) {
-            statement = statements.next();
-            assertTrue(expected.contains(statement.getSubject(), statement.getPredicate(), statement.getObject()));
+            while (statements.hasNext()) {
+                statement = statements.next();
+                assertTrue(expected.contains(statement.getSubject(), statement.getPredicate(), statement.getObject()));
+            }
+
+            statements = conn.getStatements(null, null, null, deletionId);
+            assertFalse(statements.hasNext());
         }
-
-        statements = conn.getStatements(null, null, null, deletionId);
-        assertFalse(statements.hasNext());
-        conn.close();
     }
 
     @Test(expected = MatOntoException.class)
@@ -1829,18 +1771,18 @@ public class SimpleCatalogManagerTest {
         expected.add(vf.createIRI("http://matonto.org/test/delete"), vf.createIRI(DC_TITLE),
                 vf.createLiteral("Delete"));
 
-        RepositoryConnection conn = repo.getConnection();
-        manager.addDeletions(model, commitId);
-        RepositoryResult<Statement> statements = conn.getStatements(null, null, null, deletionId);
+        try (RepositoryConnection conn = repo.getConnection()) {
+            manager.addDeletions(model, commitId);
+            RepositoryResult<Statement> statements = conn.getStatements(null, null, null, deletionId);
 
-        while (statements.hasNext()) {
-            statement = statements.next();
-            assertTrue(expected.contains(statement.getSubject(), statement.getPredicate(), statement.getObject()));
+            while (statements.hasNext()) {
+                statement = statements.next();
+                assertTrue(expected.contains(statement.getSubject(), statement.getPredicate(), statement.getObject()));
+            }
+
+            statements = conn.getStatements(null, null, null, additionId);
+            assertFalse(statements.hasNext());
         }
-
-        statements = conn.getStatements(null, null, null, additionId);
-        assertFalse(statements.hasNext());
-        conn.close();
     }
 
     @Test(expected = MatOntoException.class)
@@ -1855,13 +1797,13 @@ public class SimpleCatalogManagerTest {
         Resource branchId = vf.createIRI("http://matonto.org/test/branches#test");
 
         Commit commit = commitFactory.createNew(commitId);
-        RepositoryConnection conn = repo.getConnection();
-        assertFalse(conn.getStatements(commitId, null, null, commitId).hasNext());
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertFalse(conn.getStatements(commitId, null, null, commitId).hasNext());
 
-        manager.addCommitToBranch(commit, branchId);
-        assertTrue(conn.getStatements(commitId, null, null, commitId).hasNext());
-        assertTrue(conn.getStatements(branchId, headIRI, commitId, branchId).hasNext());
-        conn.close();
+            manager.addCommitToBranch(commit, branchId);
+            assertTrue(conn.getStatements(commitId, null, null, commitId).hasNext());
+            assertTrue(conn.getStatements(branchId, headIRI, commitId, branchId).hasNext());
+        }
     }
 
     @Test(expected = MatOntoException.class)
@@ -1884,12 +1826,12 @@ public class SimpleCatalogManagerTest {
         Resource inProgressCommitId = vf.createIRI("https://matonto.org/in-progress-commits#test");
 
         InProgressCommit inProgressCommit = inProgressCommitFactory.createNew(inProgressCommitId);
-        RepositoryConnection conn = repo.getConnection();
-        assertFalse(conn.getStatements(inProgressCommitId, null, null, inProgressCommitId).hasNext());
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertFalse(conn.getStatements(inProgressCommitId, null, null, inProgressCommitId).hasNext());
 
-        manager.addInProgressCommit(inProgressCommit);
-        assertTrue(conn.getStatements(inProgressCommitId, null, null, inProgressCommitId).hasNext());
-        conn.close();
+            manager.addInProgressCommit(inProgressCommit);
+            assertTrue(conn.getStatements(inProgressCommitId, null, null, inProgressCommitId).hasNext());
+        }
     }
 
     @Test(expected = MatOntoException.class)
@@ -1904,9 +1846,9 @@ public class SimpleCatalogManagerTest {
         Resource commitId = vf.createIRI("http://matonto.org/test/commits#test");
         String revisionIRI = "http://matonto.org/test/revisions#revision";
 
-        RepositoryConnection conn = repo.getConnection();
-        assertTrue(conn.getStatements(commitId, null, null, commitId).hasNext());
-        conn.close();
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertTrue(conn.getStatements(commitId, null, null, commitId).hasNext());
+        }
 
         Optional<Commit> result = manager.getCommit(commitId, commitFactory);
         assertTrue(result.isPresent());
@@ -1933,9 +1875,9 @@ public class SimpleCatalogManagerTest {
         Resource commitId = vf.createIRI("http://matonto.org/test/in-progress-commits#test");
         String revisionIRI = "http://matonto.org/test/revisions#in-revision";
 
-        RepositoryConnection conn = repo.getConnection();
-        assertTrue(conn.getStatements(commitId, null, null, commitId).hasNext());
-        conn.close();
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertTrue(conn.getStatements(commitId, null, null, commitId).hasNext());
+        }
 
         Optional<InProgressCommit> result = manager.getCommit(commitId, inProgressCommitFactory);
         Commit commit = result.get();
@@ -1983,12 +1925,12 @@ public class SimpleCatalogManagerTest {
     @Test
     public void testRemoveInProgressCommit() throws Exception {
         Resource inProgressCommitId = vf.createIRI("http://matonto.org/test/in-progress-commits#test");
-        RepositoryConnection conn = repo.getConnection();
-        assertTrue(conn.getStatements(inProgressCommitId, null, null, inProgressCommitId).hasNext());
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertTrue(conn.getStatements(inProgressCommitId, null, null, inProgressCommitId).hasNext());
 
-        manager.removeInProgressCommit(inProgressCommitId);
-        assertFalse(conn.getStatements(inProgressCommitId, null, null, inProgressCommitId).hasNext());
-        conn.close();
+            manager.removeInProgressCommit(inProgressCommitId);
+            assertFalse(conn.getStatements(inProgressCommitId, null, null, inProgressCommitId).hasNext());
+        }
     }
 
     @Test(expected = MatOntoException.class)
@@ -2185,71 +2127,69 @@ public class SimpleCatalogManagerTest {
 
     @Test
     public void testGetDiff() throws Exception {
-        RepositoryConnection conn = repo.getConnection();
+        try (RepositoryConnection conn = repo.getConnection()) {
 
-        Model original = mf.createModel();
-        conn.getStatements(null, null, null, vf.createIRI("http://matonto.org/test/diff1")).forEach(original::add);
+            Model original = mf.createModel();
+            conn.getStatements(null, null, null, vf.createIRI("http://matonto.org/test/diff1")).forEach(original::add);
 
-        Model changed = mf.createModel();
-        conn.getStatements(null, null, null, vf.createIRI("http://matonto.org/test/diff2")).forEach(changed::add);
+            Model changed = mf.createModel();
+            conn.getStatements(null, null, null, vf.createIRI("http://matonto.org/test/diff2")).forEach(changed::add);
 
-        Model additions = mf.createModel();
-        conn.getStatements(null, null, null, vf.createIRI("http://matonto.org/test/diff/additions"))
-                .forEach(additions::add);
+            Model additions = mf.createModel();
+            conn.getStatements(null, null, null, vf.createIRI("http://matonto.org/test/diff/additions"))
+                    .forEach(additions::add);
 
-        Model deletions = mf.createModel();
-        conn.getStatements(null, null, null, vf.createIRI("http://matonto.org/test/diff/deletions"))
-                .forEach(deletions::add);
+            Model deletions = mf.createModel();
+            conn.getStatements(null, null, null, vf.createIRI("http://matonto.org/test/diff/deletions"))
+                    .forEach(deletions::add);
 
-        conn.close();
-
-        Difference diff = manager.getDiff(original, changed);
-        assertEquals(additions.size(), diff.getAdditions().size());
-        diff.getAdditions().forEach(s -> assertTrue(additions.contains(s.getSubject(), s.getPredicate(),
-                s.getObject())));
-        assertEquals(deletions.size(), diff.getDeletions().size());
-        diff.getDeletions().forEach(s -> assertTrue(deletions.contains(s.getSubject(), s.getPredicate(),
-                s.getObject())));
+            Difference diff = manager.getDiff(original, changed);
+            assertEquals(additions.size(), diff.getAdditions().size());
+            diff.getAdditions().forEach(s -> assertTrue(additions.contains(s.getSubject(), s.getPredicate(),
+                    s.getObject())));
+            assertEquals(deletions.size(), diff.getDeletions().size());
+            diff.getDeletions().forEach(s -> assertTrue(deletions.contains(s.getSubject(), s.getPredicate(),
+                    s.getObject())));
+        }
     }
 
     @Test
     public void testGetDiffOppositeOfPrevious() throws Exception {
-        RepositoryConnection conn = repo.getConnection();
+        try (RepositoryConnection conn = repo.getConnection()) {
 
-        Model changed = mf.createModel();
-        conn.getStatements(null, null, null, vf.createIRI("http://matonto.org/test/diff1")).forEach(changed::add);
+            Model changed = mf.createModel();
+            conn.getStatements(null, null, null, vf.createIRI("http://matonto.org/test/diff1")).forEach(changed::add);
 
-        Model original = mf.createModel();
-        conn.getStatements(null, null, null, vf.createIRI("http://matonto.org/test/diff2")).forEach(original::add);
+            Model original = mf.createModel();
+            conn.getStatements(null, null, null, vf.createIRI("http://matonto.org/test/diff2")).forEach(original::add);
 
-        Model deletions = mf.createModel();
-        conn.getStatements(null, null, null, vf.createIRI("http://matonto.org/test/diff/additions"))
-                .forEach(deletions::add);
+            Model deletions = mf.createModel();
+            conn.getStatements(null, null, null, vf.createIRI("http://matonto.org/test/diff/additions"))
+                    .forEach(deletions::add);
 
-        Model additions = mf.createModel();
-        conn.getStatements(null, null, null, vf.createIRI("http://matonto.org/test/diff/deletions"))
-                .forEach(additions::add);
+            Model additions = mf.createModel();
+            conn.getStatements(null, null, null, vf.createIRI("http://matonto.org/test/diff/deletions"))
+                    .forEach(additions::add);
 
-        conn.close();
-
-        Difference diff = manager.getDiff(original, changed);
-        assertEquals(deletions.size(), diff.getDeletions().size());
-        diff.getDeletions().forEach(s -> assertTrue(deletions.contains(s.getSubject(), s.getPredicate(),
-                s.getObject())));
-        assertEquals(additions.size(), diff.getAdditions().size());
-        diff.getAdditions().forEach(s -> assertTrue(additions.contains(s.getSubject(), s.getPredicate(),
-                s.getObject())));
+            Difference diff = manager.getDiff(original, changed);
+            assertEquals(deletions.size(), diff.getDeletions().size());
+            diff.getDeletions().forEach(s -> assertTrue(deletions.contains(s.getSubject(), s.getPredicate(),
+                    s.getObject())));
+            assertEquals(additions.size(), diff.getAdditions().size());
+            diff.getAdditions().forEach(s -> assertTrue(additions.contains(s.getSubject(), s.getPredicate(),
+                    s.getObject())));
+        }
     }
 
     @Test
     public void testGetDiffOfSameModel() throws Exception {
-        RepositoryConnection conn = repo.getConnection();
-        Model original = mf.createModel();
-        conn.getStatements(null, null, null, vf.createIRI("http://matonto.org/test/diff2")).forEach(original::add);
-        conn.close();
+        try (RepositoryConnection conn = repo.getConnection()) {
+            Model original = mf.createModel();
+            conn.getStatements(null, null, null, vf.createIRI("http://matonto.org/test/diff2")).forEach(original::add);
 
-        Difference diff = manager.getDiff(original, original);
-        assertEquals(0, diff.getAdditions().size());
-        assertEquals(0, diff.getDeletions().size());
+            Difference diff = manager.getDiff(original, original);
+            assertEquals(0, diff.getAdditions().size());
+            assertEquals(0, diff.getDeletions().size());
+        }
     }
 }

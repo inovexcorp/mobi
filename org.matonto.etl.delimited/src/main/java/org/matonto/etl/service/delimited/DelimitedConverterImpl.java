@@ -351,10 +351,9 @@ public class DelimitedConverterImpl implements DelimitedConverter {
 
         Model classMappingModel = mappingModel.filter(null, valueFactory.createIRI(org.matonto.ontologies.rdfs.Resource.type_IRI),
                 valueFactory.createIRI(ClassMapping.TYPE));
-
-        for (Resource classMappingResource : classMappingModel.subjects()) {
-            classMappingFactory.getExisting(classMappingResource, mappingModel).ifPresent(classMapping -> classMappings.add(classMapping));
-        }
+        classMappingModel.subjects().forEach(cmSubject -> {
+            classMappingFactory.getExisting(cmSubject, mappingModel).ifPresent(classMappings::add);
+        });
 
         return classMappings;
     }

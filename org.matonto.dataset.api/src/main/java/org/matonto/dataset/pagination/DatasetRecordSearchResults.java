@@ -38,12 +38,13 @@ public class DatasetRecordSearchResults implements PaginatedSearchResults<Datase
     private int totalSize;
     private int pageNumber;
 
-    public DatasetRecordSearchResults(PaginatedSearchResults<Record> results, DatasetRecordFactory factory) {
+    public DatasetRecordSearchResults(PaginatedSearchResults<Record> results, DatasetRecordFactory factory) throws IllegalArgumentException {
         this.pageSize = results.getPageSize();
         this.totalSize = results.getTotalSize();
         this.pageNumber = results.getPageNumber();
         this.page = results.getPage().stream()
-                .map(record -> factory.getExisting(record.getResource(), record.getModel()).orElse(null))
+                .map(record -> factory.getExisting(record.getResource(), record.getModel()).orElseThrow(() ->
+                        new IllegalArgumentException("Provided results object did not contain a DatasetRecord")))
                 .collect(Collectors.toList());
     }
 

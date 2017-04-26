@@ -1310,8 +1310,7 @@ public class CatalogRestImpl implements CatalogRest {
      */
     private Optional<Resource> optHeadCommitIRI(String catalogId, String recordId, String branchId) {
         testBranchPath(catalogId, recordId, branchId);
-        Branch branch = getBranch(branchId);
-        return branch.getHead_resource();
+        return getBranch(branchId).getHead_resource();
     }
 
     /**
