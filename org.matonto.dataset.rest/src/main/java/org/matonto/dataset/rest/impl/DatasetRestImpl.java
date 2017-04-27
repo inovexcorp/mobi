@@ -34,9 +34,9 @@ import net.sf.json.JSONArray;
 import org.apache.commons.lang3.StringUtils;
 import org.matonto.catalog.api.PaginatedSearchResults;
 import org.matonto.dataset.api.DatasetManager;
-import org.matonto.dataset.pagination.DatasetPaginatedSearchParams;
 import org.matonto.dataset.api.builder.DatasetRecordConfig;
 import org.matonto.dataset.ontology.dataset.DatasetRecord;
+import org.matonto.dataset.pagination.DatasetPaginatedSearchParams;
 import org.matonto.dataset.rest.DatasetRest;
 import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.engines.EngineManager;
@@ -84,7 +84,8 @@ public class DatasetRestImpl implements DatasetRest {
     }
 
     @Override
-    public Response getDatasetRecords(UriInfo uriInfo, int offset, int limit, String sort, boolean asc, String searchText) {
+    public Response getDatasetRecords(UriInfo uriInfo, int offset, int limit, String sort, boolean asc,
+                                      String searchText) {
         try {
             LinksUtils.validateParams(limit, offset);
             DatasetPaginatedSearchParams params = new DatasetPaginatedSearchParams(vf).setOffset(offset)
@@ -101,7 +102,7 @@ public class DatasetRestImpl implements DatasetRest {
             PaginatedSearchResults<DatasetRecord> results = manager.getDatasetRecords(params);
             JSONArray array = JSONArray.fromObject(results.getPage().stream()
                     .map(datasetRecord -> modelToJsonld(transformer.sesameModel(datasetRecord.getModel())))
-                    .map(RestUtils::getObjectFromJsonld)
+                    .map(json -> RestUtils.getTypedObjectFromJsonld(json, DatasetRecord.TYPE))
                     .collect(Collectors.toList()));
 
             Links links = LinksUtils.buildLinks(uriInfo, array.size(), results.getTotalSize(), limit, offset);
@@ -121,8 +122,8 @@ public class DatasetRestImpl implements DatasetRest {
     }
 
     @Override
-    public Response createDatasetRecord(ContainerRequestContext context, String title, String repositoryId, String datasetIRI,
-                                        String description, String keywords) {
+    public Response createDatasetRecord(ContainerRequestContext context, String title, String repositoryId,
+                                        String datasetIRI, String description, String keywords) {
         checkStringParam(title, "Title is required");
         checkStringParam(repositoryId, "Repository id is required");
         User activeUser = getActiveUser(context, engineManager);
