@@ -351,7 +351,13 @@ public class SimpleOntologyManager implements OntologyManager {
                 ontologyRecordFactory).orElseThrow(() ->
                 new IllegalArgumentException("The OntologyRecord could not be retrieved."));
         catalogManager.removeRecord(catalogManager.getLocalCatalog().getResource(), record.getResource());
-        ontologyCache.ifPresent(cache -> cache.remove(record.getResource().stringValue()));
+        ontologyCache.ifPresent(cache -> {
+            cache.forEach(entry -> {
+                if (entry.getKey().startsWith(recordId.stringValue())) {
+                    cache.remove(entry.getKey());
+                }
+            });
+        });
     }
 
     @Override
