@@ -1322,6 +1322,37 @@ describe('Ontology State Service', function() {
         }];
         expect(ontologyStateSvc.flattenHierarchy(hierarchy, 'recordId')).toEqual(expected);
     });
+    it('createFlatEverythingTree creates the correct array', function() {
+        ontologyManagerSvc.getClasses.and.returnValue([{'@id': 'class1'}]);
+        ontologyManagerSvc.getClassProperties.and.returnValue([{'@id': 'property1'}]);
+        ontologyManagerSvc.getNoDomainProperties.and.returnValue([{'@id': 'property2'}]);
+        var ontology = [{'@id': 'ontologyId'}];
+        var expected = [{
+            '@id': 'class1',
+            hasChildren: true,
+            indent: 0,
+            path: ['recordId', 'class1']
+        }, {
+            '@id': 'property1',
+            hasChildren: false,
+            indent: 1,
+            path: ['recordId', 'class1', 'property1']
+        }, {
+            title: 'Properties',
+            get: ontologyStateSvc.getNoDomainsOpened,
+            set: ontologyStateSvc.setNoDomainsOpened
+        }, {
+            '@id': 'property2',
+            hasChildren: false,
+            indent: 1,
+            get: ontologyStateSvc.getNoDomainsOpened,
+            path: ['recordId', 'property2']
+        }];
+        expect(ontologyStateSvc.createFlatEverythingTree(ontology, 'recordId')).toEqual(expected);
+        expect(ontologyManagerSvc.getClasses).toHaveBeenCalledWith(ontology);
+        expect(ontologyManagerSvc.getClassProperties).toHaveBeenCalledWith(ontology, 'class1');
+        expect(ontologyManagerSvc.getNoDomainProperties).toHaveBeenCalledWith(ontology);
+    });
     it('addEntity adds the entity to the provided ontology and index', function() {
         ontologyManagerSvc.getEntityName.and.returnValue('name');
         ontologyStateSvc.addEntity(listItem, individualObj);
@@ -1358,6 +1389,7 @@ describe('Ontology State Service', function() {
             ontologyManagerSvc.getAnnotationPropertyHierarchies.and.returnValue($q.when(annotationPropertyHierarchiesResponse));
             catalogManagerSvc.getRecordBranches.and.returnValue($q.when({data: branches}));
             spyOn(ontologyStateSvc, 'flattenHierarchy');
+            spyOn(ontologyStateSvc, 'createFlatEverythingTree');
         });
         it('when all promises resolve', function() {
             ontologyManagerSvc.getIris.and.returnValue($q.when(irisResponse));
@@ -1419,6 +1451,7 @@ describe('Ontology State Service', function() {
                     expect(_.get(response, 'annotationPropertyIndex')).toEqual(annotationPropertyHierarchiesResponse.index);
                     expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.annotationPropertyHierarchy, recordId);
                     expect(_.get(response, 'upToDate')).toBe(true);
+                    expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith(ontology, recordId);
                 }, function() {
                     fail('Promise should have resolved');
                 });

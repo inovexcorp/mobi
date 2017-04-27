@@ -37,7 +37,7 @@
                                is-active="dvm.os.getActiveEntityIRI() === node.entityIRI"
                                current-entity="dvm.os.getEntityByRecordId(dvm.os.listItem.recordId, node.entityIRI)"
                                on-click="dvm.os.selectItem(node.entityIRI)" has-children="node.hasChildren"
-                               path="node.path" data-path-to="{{dvm.joinPath(node.path)}}" is-opened="dvm.os.getOpened(dvm.os.joinPath(node.path))"></tree-item>
+                               path="node.path" data-path-to="{{dvm.os.joinPath(node.path)}}" is-opened="dvm.os.getOpened(dvm.os.joinPath(node.path))"></tree-item>
                 </div>
             </div>
         </block-content>

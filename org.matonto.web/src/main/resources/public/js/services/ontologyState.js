@@ -426,6 +426,7 @@
                     listItem.annotationPropertyHierarchy = response[7].hierarchy;
                     listItem.flatAnnotationPropertyHierarchy = self.flattenHierarchy(listItem.annotationPropertyHierarchy, recordId);
                     listItem.upToDate = upToDate;
+                    listItem.flatEverythingTree = self.createFlatEverythingTree(ontology, recordId);
                     _.pullAllWith(
                         listItem.annotations,
                         _.concat(om.ontologyProperties, listItem.subDataProperties, listItem.subObjectProperties),
@@ -496,11 +497,11 @@
              *
              * @description
              * Flattens the provided hierarchy into an array that represents the hierarchical structure to be used
-             * with an infinite scrolling solution.
+             * with a virtual scrolling solution.
              *
              * @param {Object} hierarchy The Object set up in a hierarchical structure.
              * @param {string} recordId The record ID associated with the provided hierarchy.
-             * @returns {Object[]} An array which contains the 
+             * @returns {Object[]} An array which represents the provided hierarchy.
              */
             self.flattenHierarchy = function(hierarchy, recordId) {
                 var result = [];
@@ -508,6 +509,58 @@
                 _.forEach(sortedHierarchy, node => {
                     addNodeToResult(node, result, 0, [recordId]);
                 });
+                return result;
+            }
+            /**
+             * @ngdoc method
+             * @name createFlatEverythingTree
+             * @methodOf ontologyState.service:ontologyStateService
+             *
+             * @description
+             * Creates an array which represents the hierarchical structure of the relationship between classes
+             * and properties to be used with a virtual scrolling solution.
+             *
+             * @param {Object} ontology The ontology to build the hierarchal structure for.
+             * @param {string} recordId The record ID associated with the provided ontology.
+             * @returns {Object[]} An array which contains the class-property replationships.
+             */
+            self.createFlatEverythingTree = function(ontology, recordId) {
+                var result = [];
+                var orderedClasses = sortByName(om.getClasses(ontology));
+                var orderedProperties = [];
+                var path = [];
+                _.forEach(orderedClasses, clazz => {
+                    orderedProperties = sortByName(om.getClassProperties(ontology, clazz['@id']));
+                    path = [recordId, clazz['@id']];
+                    result.push(_.merge({}, clazz, {
+                        indent: 0,
+                        hasChildren: !!orderedProperties.length,
+                        path
+                    }));
+                    _.forEach(orderedProperties, property => {
+                        result.push(_.merge({}, property, {
+                            indent: 1,
+                            hasChildren: false,
+                            path: _.concat(path, property['@id'])
+                        }));
+                    });
+                });
+                var orderedNoDomainProperties = sortByName(om.getNoDomainProperties(ontology));
+                if (!!orderedNoDomainProperties.length) {
+                    result.push({
+                        title: 'Properties',
+                        get: self.getNoDomainsOpened,
+                        set: self.setNoDomainsOpened
+                    });
+                    _.forEach(orderedNoDomainProperties, property => {
+                        result.push(_.merge({}, property, {
+                            indent: 1,
+                            hasChildren: false,
+                            get: self.getNoDomainsOpened,
+                            path: [recordId, property['@id']]
+                        }));
+                    });
+                }
                 return result;
             }
             /**
@@ -1218,6 +1271,9 @@
                 _.forEach(_.get(node, 'subEntities', []), subNode => {
                     addNodeToResult(subNode, result, indent + 1, newPath);
                 });
+            }
+            function sortByName(array) {
+                return _.sortBy(array, entity => _.lowerCase(self.getEntityNameByIndex(entity['@id'], self.listItem)));
             }
         }
 })();

@@ -133,6 +133,7 @@ describe('Create Class Overlay directive', function() {
             expect(ontologyStateSvc.setCommonIriParts).toHaveBeenCalledWith('begin', 'then');
         });
         it('create calls the correct manager functions', function() {
+            ontologyStateSvc.createFlatEverythingTree.and.returnValue([{prop: 'everything'}]);
             controller.language = 'en';
             controller.clazz = {'@id': 'class-iri'};
             controller.clazz[prefixes.dcterms + 'title'] = [{'@value': 'label'}];
@@ -141,6 +142,8 @@ describe('Create Class Overlay directive', function() {
             expect(_.get(controller.clazz, 'matonto.originalIRI')).toEqual(controller.clazz['@id']);
             expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(controller.clazz, controller.language);
             expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, controller.clazz);
+            expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontology, ontologyStateSvc.listItem.recordId);
+            expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([{prop: 'everything'}]);
             expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, controller.clazz);
             expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.classHierarchy, ontologyStateSvc.listItem.recordId);
             expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(controller.clazz['@id']);

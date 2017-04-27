@@ -565,7 +565,7 @@ function mockOntologyState() {
             this.getDefaultPrefix = jasmine.createSpy('getDefaultPrefix');
             this.flattenHierarchy = jasmine.createSpy('flattenHierarchy');
             this.areParentsOpen = jasmine.createSpy('areParentsOpen');
-            this.joinPath = jasmine.createSpy('joinPath');
+            this.createFlatEverythingTree = jasmine.createSpy('createFlatEverythingTree');
         });
     });
 }

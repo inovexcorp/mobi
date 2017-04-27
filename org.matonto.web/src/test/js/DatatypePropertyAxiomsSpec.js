@@ -112,6 +112,13 @@ describe('Datatype Property Axioms directive', function() {
                     expect(resObj.getItemIri).toHaveBeenCalledWith(value);
                 });
             });
+            it('if the axiom is domain', function() {
+                this.axiom.localName = 'domain';
+                ontologyStateSvc.createFlatEverythingTree.and.returnValue([{prop: 'everything'}]);
+                controller.updateHierarchy(this.axiom, this.values);
+                expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontology, ontologyStateSvc.listItem.recordId);
+                expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([{prop: 'everything'}]);
+            });
         });
         describe('should remove a class from the hierarchy', function() {
             beforeEach(function() {

@@ -27,9 +27,9 @@
         .module('removePropertyOverlay', [])
         .directive('removePropertyOverlay', removePropertyOverlay);
 
-        removePropertyOverlay.$inject = ['ontologyStateService', 'propertyManagerService', 'ontologyUtilsManagerService'];
+        removePropertyOverlay.$inject = ['ontologyStateService', 'propertyManagerService', 'ontologyUtilsManagerService', 'prefixes'];
 
-        function removePropertyOverlay(ontologyStateService, propertyManagerService, ontologyUtilsManagerService) {
+        function removePropertyOverlay(ontologyStateService, propertyManagerService, ontologyUtilsManagerService, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -58,6 +58,9 @@
                         }
                         dvm.os.addToDeletions(dvm.os.listItem.recordId, json);
                         dvm.pm.remove(dvm.os.selected, dvm.key, dvm.index);
+                        if (prefixes.rdfs + 'domain' === dvm.key) {
+                            dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.listItem.ontology, dvm.os.listItem.recordId);
+                        }
                         dvm.overlayFlag = false;
                         ontoUtils.saveCurrentChanges();
                         ontoUtils.updateLabel();
