@@ -305,13 +305,13 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public Catalog getDistributedCatalog() throws MatOntoException, IllegalArgumentException {
+    public Catalog getDistributedCatalog() throws MatOntoException {
         return getCatalog(distributedCatalogIRI).orElseThrow(() ->
                 new IllegalArgumentException("The catalog " + distributedCatalogIRI.stringValue() + " could not be retrieved."));
     }
 
     @Override
-    public Catalog getLocalCatalog() throws MatOntoException, IllegalStateException {
+    public Catalog getLocalCatalog() throws MatOntoException {
         return getCatalog(localCatalogIRI).orElseThrow(() ->
                 new IllegalStateException("The catalog " + localCatalogIRI.stringValue() + " could not be retrieved."));
     }
