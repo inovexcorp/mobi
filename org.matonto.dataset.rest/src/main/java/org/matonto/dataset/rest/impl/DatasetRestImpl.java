@@ -26,7 +26,15 @@ package org.matonto.dataset.rest.impl;
 
 import static org.matonto.rest.util.RestUtils.checkStringParam;
 import static org.matonto.rest.util.RestUtils.getActiveUser;
+import static org.matonto.rest.util.RestUtils.getTypedObjectFromJsonld;
 import static org.matonto.rest.util.RestUtils.modelToJsonld;
+
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.stream.Collectors;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
@@ -46,15 +54,7 @@ import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rest.util.ErrorUtils;
 import org.matonto.rest.util.LinksUtils;
-import org.matonto.rest.util.RestUtils;
 import org.matonto.rest.util.jaxb.Links;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.stream.Collectors;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
 
 @Component(immediate = true)
 public class DatasetRestImpl implements DatasetRest {
@@ -102,7 +102,7 @@ public class DatasetRestImpl implements DatasetRest {
             PaginatedSearchResults<DatasetRecord> results = manager.getDatasetRecords(params);
             JSONArray array = JSONArray.fromObject(results.getPage().stream()
                     .map(datasetRecord -> modelToJsonld(transformer.sesameModel(datasetRecord.getModel())))
-                    .map(json -> RestUtils.getTypedObjectFromJsonld(json, DatasetRecord.TYPE))
+                    .map(json -> getTypedObjectFromJsonld(json, DatasetRecord.TYPE))
                     .collect(Collectors.toList()));
 
             Links links = LinksUtils.buildLinks(uriInfo, array.size(), results.getTotalSize(), limit, offset);
