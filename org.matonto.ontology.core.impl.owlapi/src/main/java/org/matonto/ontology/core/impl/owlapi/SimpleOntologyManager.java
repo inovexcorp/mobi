@@ -217,7 +217,7 @@ public class SimpleOntologyManager implements OntologyManager {
 
     @Reference
     public void setCacheManager(CacheManager cacheManager) {
-        this.ontologyCache = Optional.ofNullable(cacheManager.getCache(CACHE_NAME, String.class, Ontology.class));
+        this.ontologyCache = cacheManager.getCache(CACHE_NAME, String.class, Ontology.class);
     }
 
     @Override
