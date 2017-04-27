@@ -23,6 +23,8 @@ package org.matonto.cache.impl;
  * #L%
  */
 
+import java.util.Optional;
+
 import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
 import org.ehcache.Cache;
@@ -47,7 +49,7 @@ public class SimpleCacheManager implements CacheManager {
     }
 
     @Override
-    public <K, V> Cache<K, V> getCache(String cacheName, Class<K> keyType, Class<V> valueType) {
-        return cacheManager.getCache(cacheName, keyType, valueType);
+    public <K, V> Optional<Cache<K, V>> getCache(String cacheName, Class<K> keyType, Class<V> valueType) {
+        return Optional.ofNullable(cacheManager.getCache(cacheName, keyType, valueType));
     }
 }
