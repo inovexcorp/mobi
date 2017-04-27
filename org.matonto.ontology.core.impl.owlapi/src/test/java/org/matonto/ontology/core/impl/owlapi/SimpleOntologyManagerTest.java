@@ -46,6 +46,7 @@ import org.matonto.catalog.api.ontologies.mcat.CommitFactory;
 import org.matonto.catalog.api.ontologies.mcat.OntologyRecord;
 import org.matonto.catalog.api.ontologies.mcat.OntologyRecordFactory;
 import org.matonto.ontology.core.api.Ontology;
+import org.matonto.ontology.core.api.OntologyManager;
 import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.persistence.utils.Bindings;
 import org.matonto.query.TupleQueryResult;
@@ -82,10 +83,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import org.semanticweb.owlapi.model.OWLOntology;
 
 import java.io.InputStream;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -280,7 +278,7 @@ public class SimpleOntologyManagerTest {
     }
 
     @Test
-    public void testRetrieveOntology() {
+    public void testRetrieveOntologyWithCacheMiss() {
         OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
         record.setMasterBranch(branchFactory.createNew(branchIRI));
 
@@ -296,6 +294,33 @@ public class SimpleOntologyManagerTest {
         Optional<Ontology> optionalOntology = manager.retrieveOntology(recordIRI);
         assertTrue(optionalOntology.isPresent());
         assertEquals(ontology, optionalOntology.get());
+        String key = OntologyManager.getOntologyCacheKey(recordIRI.stringValue(), branchIRI.stringValue(), commitIRI.stringValue());
+        Mockito.verify(mockCache, Mockito.times(1)).get(Mockito.matches(key));
+        Mockito.verify(mockCache, Mockito.times(1)).put(Mockito.matches(key), Mockito.eq(optionalOntology.get()));
+    }
+
+    @Test
+    public void testRetrieveOntologyWithCacheHit() {
+        OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
+        record.setMasterBranch(branchFactory.createNew(branchIRI));
+
+        Branch branch = branchFactory.createNew(branchIRI);
+        branch.setHead(commitFactory.createNew(commitIRI));
+
+        Model model = modelFactory.createModel();
+
+        String key = OntologyManager.getOntologyCacheKey(recordIRI.stringValue(), branchIRI.stringValue(), commitIRI.stringValue());
+
+        when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
+        when(catalogManager.getBranch(branchIRI, branchFactory)).thenReturn(Optional.of(branch));
+        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(Optional.of(model));
+        when(mockCache.containsKey(key)).thenReturn(true);
+        when(mockCache.get(key)).thenReturn(ontology);
+
+        Optional<Ontology> optionalOntology = manager.retrieveOntology(recordIRI);
+        assertTrue(optionalOntology.isPresent());
+        Mockito.verify(mockCache, Mockito.times(1)).get(Mockito.matches(key));
+        Mockito.verify(mockCache, Mockito.times(0)).put(Mockito.matches(key), Mockito.eq(optionalOntology.get()));
     }
 
     // Testing retrieveOntology(Resource recordId, Resource branchId)
@@ -303,6 +328,7 @@ public class SimpleOntologyManagerTest {
     @Test
     public void testRetrieveOntologyUsingABranchWithMissingIdentifier() throws Exception {
         Optional<Ontology> result = manager.retrieveOntology(missingIRI, branchIRI);
+        Mockito.verify(mockCache, Mockito.times(0)).put(Mockito.anyString(), Mockito.any(Ontology.class));
         assertFalse(result.isPresent());
     }
 
@@ -313,6 +339,7 @@ public class SimpleOntologyManagerTest {
         when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
 
         Optional<Ontology> optionalOntology = manager.retrieveOntology(recordIRI, missingIRI);
+        Mockito.verify(mockCache, Mockito.times(0)).put(Mockito.anyString(), Mockito.any(Ontology.class));
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -323,6 +350,7 @@ public class SimpleOntologyManagerTest {
         when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
 
         Optional<Ontology> optionalOntology = manager.retrieveOntology(recordIRI, missingIRI);
+        Mockito.verify(mockCache, Mockito.times(0)).put(Mockito.anyString(), Mockito.any(Ontology.class));
     }
 
     @Test(expected = IllegalStateException.class)
@@ -334,6 +362,7 @@ public class SimpleOntologyManagerTest {
         when(catalogManager.getBranch(branchIRI, branchFactory)).thenReturn(Optional.empty());
 
         manager.retrieveOntology(recordIRI, branchIRI);
+        Mockito.verify(mockCache, Mockito.times(0)).put(Mockito.anyString(), Mockito.any(Ontology.class));
     }
 
     @Test(expected = IllegalStateException.class)
@@ -347,6 +376,7 @@ public class SimpleOntologyManagerTest {
         when(catalogManager.getBranch(branchIRI, branchFactory)).thenReturn(Optional.of(branch));
 
         manager.retrieveOntology(recordIRI, branchIRI);
+        Mockito.verify(mockCache, Mockito.times(0)).put(Mockito.anyString(), Mockito.any(Ontology.class));
     }
 
     @Test(expected = IllegalStateException.class)
@@ -362,10 +392,11 @@ public class SimpleOntologyManagerTest {
         when(catalogManager.getCompiledResource(commitIRI)).thenReturn(Optional.empty());
 
         manager.retrieveOntology(recordIRI, branchIRI);
+        Mockito.verify(mockCache, Mockito.times(0)).put(Mockito.anyString(), Mockito.any(Ontology.class));
     }
 
     @Test
-    public void testRetrieveOntologyUsingABranch() {
+    public void testRetrieveOntologyUsingABranchCacheMiss() {
         OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
         record.setBranch(Stream.of(branchFactory.createNew(branchIRI)).collect(Collectors.toSet()));
 
@@ -381,6 +412,33 @@ public class SimpleOntologyManagerTest {
         Optional<Ontology> optionalOntology = manager.retrieveOntology(recordIRI, branchIRI);
         assertTrue(optionalOntology.isPresent());
         assertEquals(ontology, optionalOntology.get());
+        String key = OntologyManager.getOntologyCacheKey(recordIRI.stringValue(), branchIRI.stringValue(), commitIRI.stringValue());
+        Mockito.verify(mockCache, Mockito.times(1)).get(Mockito.matches(key));
+        Mockito.verify(mockCache, Mockito.times(1)).put(Mockito.matches(key), Mockito.eq(optionalOntology.get()));
+    }
+
+    @Test
+    public void testRetrieveOntologyUsingABranchCacheHit() {
+        OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
+        record.setBranch(Stream.of(branchFactory.createNew(branchIRI)).collect(Collectors.toSet()));
+
+        Branch branch = branchFactory.createNew(branchIRI);
+        branch.setHead(commitFactory.createNew(commitIRI));
+
+        Model model = modelFactory.createModel();
+
+        String key = OntologyManager.getOntologyCacheKey(recordIRI.stringValue(), branchIRI.stringValue(), commitIRI.stringValue());
+
+        when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
+        when(catalogManager.getBranch(branchIRI, branchFactory)).thenReturn(Optional.of(branch));
+        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(Optional.of(model));
+        when(mockCache.containsKey(key)).thenReturn(true);
+        when(mockCache.get(key)).thenReturn(ontology);
+
+        Optional<Ontology> optionalOntology = manager.retrieveOntology(recordIRI, branchIRI);
+        assertTrue(optionalOntology.isPresent());
+        Mockito.verify(mockCache, Mockito.times(1)).get(Mockito.matches(key));
+        Mockito.verify(mockCache, Mockito.times(0)).put(Mockito.matches(key), Mockito.eq(optionalOntology.get()));
     }
 
     // Testing retrieveOntology(Resource recordId, Resource branchId, Resource commitId)
@@ -389,6 +447,7 @@ public class SimpleOntologyManagerTest {
     public void testRetrieveOntologyUsingACommitWithMissingIdentifier() throws Exception {
         Optional<Ontology> result = manager.retrieveOntology(missingIRI, branchIRI, commitIRI);
         assertFalse(result.isPresent());
+        Mockito.verify(mockCache, Mockito.times(0)).put(Mockito.anyString(), Mockito.any(Ontology.class));
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -398,6 +457,7 @@ public class SimpleOntologyManagerTest {
         when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
 
         manager.retrieveOntology(recordIRI, branchIRI, commitIRI);
+        Mockito.verify(mockCache, Mockito.times(0)).put(Mockito.anyString(), Mockito.any(Ontology.class));
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -408,6 +468,7 @@ public class SimpleOntologyManagerTest {
         when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
 
         manager.retrieveOntology(recordIRI, missingIRI, commitIRI);
+        Mockito.verify(mockCache, Mockito.times(0)).put(Mockito.anyString(), Mockito.any(Ontology.class));
     }
 
     @Test(expected = IllegalStateException.class)
@@ -419,6 +480,7 @@ public class SimpleOntologyManagerTest {
         when(catalogManager.getBranch(branchIRI, branchFactory)).thenReturn(Optional.empty());
 
         manager.retrieveOntology(recordIRI, branchIRI, commitIRI);
+        Mockito.verify(mockCache, Mockito.times(0)).put(Mockito.anyString(), Mockito.any(Ontology.class));
     }
 
     @Test(expected = IllegalStateException.class)
@@ -432,6 +494,7 @@ public class SimpleOntologyManagerTest {
         when(catalogManager.getBranch(branchIRI, branchFactory)).thenReturn(Optional.of(branch));
 
         manager.retrieveOntology(recordIRI, branchIRI, commitIRI);
+        Mockito.verify(mockCache, Mockito.times(0)).put(Mockito.anyString(), Mockito.any(Ontology.class));
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -447,6 +510,7 @@ public class SimpleOntologyManagerTest {
         when(catalogManager.getCommitChain(commitIRI)).thenReturn(Stream.of(commitIRI).collect(Collectors.toList()));
 
         Optional<Ontology> optionalOntology = manager.retrieveOntology(recordIRI, branchIRI, missingIRI);
+        Mockito.verify(mockCache, Mockito.times(0)).put(Mockito.anyString(), Mockito.any(Ontology.class));
     }
 
     @Test(expected = IllegalStateException.class)
@@ -463,6 +527,7 @@ public class SimpleOntologyManagerTest {
         when(catalogManager.getCommit(commitIRI, commitFactory)).thenReturn(Optional.empty());
 
         manager.retrieveOntology(recordIRI, branchIRI, commitIRI);
+        Mockito.verify(mockCache, Mockito.times(0)).put(Mockito.anyString(), Mockito.any(Ontology.class));
     }
 
     @Test(expected = IllegalStateException.class)
@@ -482,10 +547,11 @@ public class SimpleOntologyManagerTest {
         when(catalogManager.getCompiledResource(commitIRI)).thenReturn(Optional.empty());
 
         manager.retrieveOntology(recordIRI, branchIRI, commitIRI);
+        Mockito.verify(mockCache, Mockito.times(0)).put(Mockito.anyString(), Mockito.any(Ontology.class));
     }
 
     @Test
-    public void testRetrieveOntologyUsingACommit() {
+    public void testRetrieveOntologyUsingACommitCacheMiss() {
         OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
         record.setBranch(Stream.of(branchFactory.createNew(branchIRI)).collect(Collectors.toSet()));
 
@@ -505,6 +571,37 @@ public class SimpleOntologyManagerTest {
         Optional<Ontology> optionalOntology = manager.retrieveOntology(recordIRI, branchIRI, commitIRI);
         assertTrue(optionalOntology.isPresent());
         assertEquals(ontology, optionalOntology.get());
+        String key = OntologyManager.getOntologyCacheKey(recordIRI.stringValue(), branchIRI.stringValue(), commitIRI.stringValue());
+        Mockito.verify(mockCache, Mockito.times(1)).get(Mockito.matches(key));
+        Mockito.verify(mockCache, Mockito.times(1)).put(Mockito.matches(key), Mockito.eq(optionalOntology.get()));
+    }
+
+    @Test
+    public void testRetrieveOntologyUsingACommitCacheHit() {
+        OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
+        record.setBranch(Stream.of(branchFactory.createNew(branchIRI)).collect(Collectors.toSet()));
+
+        Commit commit = commitFactory.createNew(commitIRI);
+
+        Branch branch = branchFactory.createNew(branchIRI);
+        branch.setHead(commit);
+
+        Model model = modelFactory.createModel();
+
+        String key = OntologyManager.getOntologyCacheKey(recordIRI.stringValue(), branchIRI.stringValue(), commitIRI.stringValue());
+
+        when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
+        when(catalogManager.getBranch(branchIRI, branchFactory)).thenReturn(Optional.of(branch));
+        when(catalogManager.getCommitChain(commitIRI)).thenReturn(Stream.of(commitIRI).collect(Collectors.toList()));
+        when(catalogManager.getCommit(commitIRI, commitFactory)).thenReturn(Optional.of(commit));
+        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(Optional.of(model));
+        when(mockCache.containsKey(key)).thenReturn(true);
+        when(mockCache.get(key)).thenReturn(ontology);
+
+        Optional<Ontology> optionalOntology = manager.retrieveOntology(recordIRI, branchIRI, commitIRI);
+        assertTrue(optionalOntology.isPresent());
+        Mockito.verify(mockCache, Mockito.times(1)).get(Mockito.matches(key));
+        Mockito.verify(mockCache, Mockito.times(0)).put(Mockito.matches(key), Mockito.eq(optionalOntology.get()));
     }
 
     // Testing deleteOntology(Resource recordId)
@@ -515,6 +612,9 @@ public class SimpleOntologyManagerTest {
 
         try {
             manager.deleteOntology(recordIRI);
+            Mockito.verify(mockCache, Mockito.times(0)).remove(Mockito.anyString());
+            Mockito.verify(mockCache, Mockito.times(0)).get(Mockito.anyString());
+            Mockito.verify(mockCache, Mockito.times(0)).put(Mockito.anyString(), Mockito.any(Ontology.class));
         } catch (IllegalArgumentException e) {
             String expectedMessage = "The OntologyRecord could not be retrieved.";
             assertEquals(expectedMessage, e.getMessage());
@@ -527,9 +627,12 @@ public class SimpleOntologyManagerTest {
         OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
 
         when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
-
+//        when(mockCache.forEach()).thenReturn(Collections.singletonList(ontology));
         manager.deleteOntology(recordIRI);
         verify(catalogManager, atLeastOnce()).removeRecord(catalogIRI, recordIRI);
+        Mockito.verify(mockCache, Mockito.atLeastOnce()).remove(Mockito.anyString());
+        Mockito.verify(mockCache, Mockito.times(0)).get(Mockito.anyString());
+        Mockito.verify(mockCache, Mockito.times(0)).put(Mockito.anyString(), Mockito.any(Ontology.class));
     }
 
     @Test
