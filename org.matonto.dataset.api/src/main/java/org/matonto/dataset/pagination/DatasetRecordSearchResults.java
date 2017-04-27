@@ -38,7 +38,7 @@ public class DatasetRecordSearchResults implements PaginatedSearchResults<Datase
     private int totalSize;
     private int pageNumber;
 
-    public DatasetRecordSearchResults(PaginatedSearchResults<Record> results, DatasetRecordFactory factory) throws IllegalArgumentException {
+    public DatasetRecordSearchResults(PaginatedSearchResults<Record> results, DatasetRecordFactory factory) {
         this.pageSize = results.getPageSize();
         this.totalSize = results.getTotalSize();
         this.pageNumber = results.getPageNumber();
