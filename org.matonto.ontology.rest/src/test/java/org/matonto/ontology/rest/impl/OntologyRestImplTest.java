@@ -110,6 +110,7 @@ import org.matonto.repository.impl.core.SimpleRepositoryManager;
 import org.matonto.rest.util.MatontoRestTestNg;
 import org.matonto.rest.util.UsernameTestFilter;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.openrdf.model.vocabulary.DCTERMS;
 import org.openrdf.model.vocabulary.OWL;
@@ -227,6 +228,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
     @Override
     protected Application configureApp() throws Exception {
         MockitoAnnotations.initMocks(this);
+        
+        when(cacheManager.getCache(Mockito.anyString(), Mockito.eq(String.class), Mockito.eq(Ontology.class))).thenReturn(Optional.empty());
 
         vcr = new DefaultValueConverterRegistry();
         modelFactory = LinkedHashModelFactory.getInstance();

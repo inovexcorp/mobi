@@ -145,7 +145,7 @@ public class OntologyRestImpl implements OntologyRest {
 
     @Reference
     public void setCacheManager(CacheManager cacheManager) {
-        this.ontologyCache = Optional.ofNullable(cacheManager.getCache("ontologyCache", String.class, Ontology.class));
+        this.ontologyCache = cacheManager.getCache("ontologyCache", String.class, Ontology.class);
     }
 
     @Override
