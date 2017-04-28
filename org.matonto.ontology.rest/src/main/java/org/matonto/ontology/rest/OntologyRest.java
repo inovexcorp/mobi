@@ -122,6 +122,26 @@ public interface OntologyRest {
                          @DefaultValue("jsonld") @QueryParam("rdfFormat") String rdfFormat);
 
     /**
+     * Deletes the ontology associated with the requested record ID in the requested format. Unless a branch is
+     * specified. In which case the branch specified by the branchId query parameter will be removed and nothing else.
+     *
+     * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:".
+     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
+     *                    master Branch.
+     * @return OK.
+     */
+    @DELETE
+    @Path("{recordId}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
+    @RolesAllowed("user")
+    @ApiOperation("Retrieves the ontology in the requested format.")
+    Response deleteOntology(@Context ContainerRequestContext context,
+                         @PathParam("recordId") String recordIdStr,
+                         @QueryParam("branchId") String branchIdStr);
+
+    /**
      * Streams the ontology associated with the requested record ID to an OutputStream.
      *
      * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless

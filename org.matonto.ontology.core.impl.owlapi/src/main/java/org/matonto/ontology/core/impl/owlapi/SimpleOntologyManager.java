@@ -300,14 +300,14 @@ public class SimpleOntologyManager implements OntologyManager {
     public Optional<Ontology> retrieveOntology(@Nonnull Resource recordId, @Nonnull Resource branchId,
                                                @Nonnull Resource commitId) {
         long start = log.isTraceEnabled() ? System.currentTimeMillis() : 0L;
-        Optional<Ontology> result = Optional.empty();
+        Optional<Ontology> result;
+        String key = OntologyManager.getOntologyCacheKey(recordId.stringValue(), branchId.stringValue(), commitId.stringValue());
 
-        if (ontologyCache.isPresent()) {
-            String key = OntologyManager.getOntologyCacheKey(recordId.stringValue(), branchId.stringValue(), commitId.stringValue());
+        if (ontologyCache.isPresent() && ontologyCache.get().containsKey(key)) {
+            log.trace("cache hit");
             result = Optional.ofNullable(ontologyCache.get().get(key));
-        }
-
-        if (!result.isPresent()) {
+        } else {
+            ontologyCache.ifPresent(cache -> log.trace("cache miss"));
             result = catalogManager.getRecord(catalogManager.getLocalCatalogIRI(), recordId, ontologyRecordFactory)
                     .flatMap(ontologyRecord -> {
                         Branch branch = getBranch(ontologyRecord, branchId);
@@ -325,35 +325,43 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     private Optional<Ontology> retrieveOntology(@Nonnull OntologyRecord record, @Nonnull Branch branch, @Nonnull Commit commit) {
-        Optional<Ontology> ont = Optional.empty();
+        Optional<Ontology> ont;
 
-        if (ontologyCache.isPresent()) {
-            String key = OntologyManager.getOntologyCacheKey(record.getResource().stringValue(), branch.getResource().stringValue(), commit.getResource().stringValue());
-            ont = Optional.ofNullable(ontologyCache.get().get(key));
-        }
-        if (!ont.isPresent()) {
-            log.trace("cache miss");
-            final Ontology ontology = createOntologyFromCommit(commit);
-            ont = Optional.of(ontology);
-            ontologyCache.ifPresent(cache -> {
-                String key = OntologyManager.getOntologyCacheKey(record.getResource().stringValue(), branch.getResource().stringValue(), commit.getResource().stringValue());
-                cache.put(key, ontology);
-            });
-        } else {
+        String key = OntologyManager.getOntologyCacheKey(record.getResource().stringValue(), branch.getResource().stringValue(), commit.getResource().stringValue());
+        if (ontologyCache.isPresent() && ontologyCache.get().containsKey(key)) {
             log.trace("cache hit");
+            ont = Optional.of(ontologyCache.get().get(key));
+        } else {
+            ontologyCache.ifPresent(cache -> log.trace("cache miss"));
+            ont = Optional.of(createOntologyFromCommit(commit));
+            ontologyCache.ifPresent(cache -> cache.put(key, ont.get()));
         }
+
         return ont;
     }
 
     @Override
     public void deleteOntology(@Nonnull Resource recordId) {
-        OntologyRecord record = catalogManager.getRecord(catalogManager.getLocalCatalogIRI(), recordId,
-                ontologyRecordFactory).orElseThrow(() ->
-                new IllegalArgumentException("The OntologyRecord could not be retrieved."));
-        catalogManager.removeRecord(catalogManager.getLocalCatalog().getResource(), record.getResource());
+        try {
+            catalogManager.removeRecord(catalogManager.getLocalCatalog().getResource(), recordId);
+        } catch (MatOntoException e) {
+            throw new IllegalArgumentException("The OntologyRecord could not be retrieved.", e);
+        }
+        clearCache(recordId, null);
+
+    }
+
+    @Override
+    public void deleteOntologyBranch(@Nonnull Resource recordId, @Nonnull Resource branchId) {
+        catalogManager.removeBranch(branchId, recordId);
+        clearCache(recordId, branchId);
+    }
+
+    private void clearCache(@Nonnull Resource recordId, Resource branchId) {
         ontologyCache.ifPresent(cache -> {
             cache.forEach(entry -> {
-                if (entry.getKey().startsWith(recordId.stringValue())) {
+                String key = OntologyManager.getOntologyCacheKey(recordId.stringValue(), branchId == null ? null : branchId.stringValue(), null);
+                if (entry.getKey().startsWith(key)) {
                     cache.remove(entry.getKey());
                 }
             });

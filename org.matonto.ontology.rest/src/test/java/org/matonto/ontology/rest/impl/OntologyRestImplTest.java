@@ -383,7 +383,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
     @BeforeMethod
     public void setupMocks() {
         reset(engineManager, ontologyId, ontology, importedOntologyId, importedOntology, catalogManager,
-                ontologyManager, sesameTransformer);
+                ontologyManager, sesameTransformer, cacheManager, mockCache);
         when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.of(user));
         when(ontologyId.getOntologyIdentifier()).thenReturn(ontologyIRI);
         when(ontology.getOntologyId()).thenReturn(ontologyId);
@@ -783,13 +783,13 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         assertEquals(response.readEntity(String.class), ontologyJsonLd.toString());
         verify(mockCache, times(1)).containsKey(Mockito.anyString());
         verify(mockCache, times(1)).get(Mockito.anyString());
-        verify(mockCache, times(0)).put(Mockito.anyString(), Mockito.any(Ontology.class));
     }
 
     @Test
     public void testGetOntologyCacheMiss() {
         when(cacheManager.getCache(Mockito.anyString(), Mockito.eq(String.class), Mockito.eq(Ontology.class))).thenReturn(Optional.of(mockCache));
         when(mockCache.containsKey(Mockito.anyString())).thenReturn(false);
+
         rest.setCacheManager(cacheManager);
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue()))
@@ -801,8 +801,6 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         assertEquals(response.readEntity(String.class), ontologyJsonLd.toString());
         verify(mockCache, times(1)).containsKey(Mockito.anyString());
         verify(mockCache, times(0)).get(Mockito.anyString());
-        // OntologyManger will handle caching the ontology
-        verify(mockCache, times(0)).put(Mockito.anyString(), Mockito.any(Ontology.class));
     }
 
     @Test
@@ -3697,5 +3695,22 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .queryParam("searchText", "class").request().get();
 
         assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void testDeleteOntology() {
+        Response response = target().path("ontologies/" + encode(recordId.stringValue())).request().delete();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).deleteOntology(recordId);
+    }
+
+    @Test
+    public void testDeleteOntologyBranch() {
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()))
+                .queryParam("branchId", branchId.stringValue()).request().delete();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).deleteOntologyBranch(recordId, branchId);
     }
 }

@@ -191,6 +191,21 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
+    public Response deleteOntology(ContainerRequestContext context, String recordIdStr, String branchIdStr) {
+        IRI recordId = valueFactory.createIRI(recordIdStr);
+        try {
+            if (StringUtils.isBlank(branchIdStr)) {
+                ontologyManager.deleteOntology(recordId);
+            } else {
+                ontologyManager.deleteOntologyBranch(recordId, valueFactory.createIRI(branchIdStr));
+            }
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+        return Response.ok().build();
+    }
+
+    @Override
     public Response downloadOntologyFile(ContainerRequestContext context, String recordIdStr, String branchIdStr,
                                          String commitIdStr, String rdfFormat, String fileName) {
         try {
@@ -794,17 +809,12 @@ public class OntologyRestImpl implements OntologyRest {
     private Optional<Ontology> getOntology(ContainerRequestContext context, String recordIdStr, String branchIdStr,
                                            String commitIdStr) {
         throwErrorIfMissingStringParam(recordIdStr, "The recordIdStr is missing.");
-        Optional<Ontology> optionalOntology = Optional.empty();
+        Optional<Ontology> optionalOntology;
+        String key = OntologyManager.getOntologyCacheKey(recordIdStr, branchIdStr, commitIdStr);
 
-        if (ontologyCache.isPresent()) {
-            Cache<String, Ontology> cache = ontologyCache.get();
-            String key = OntologyManager.getOntologyCacheKey(recordIdStr, branchIdStr, commitIdStr);
-            if (cache.containsKey(key)) {
-                optionalOntology = Optional.of(cache.get(key));
-            }
-        }
-
-        if (!optionalOntology.isPresent()) {
+        if (ontologyCache.isPresent() && ontologyCache.get().containsKey(key)) {
+                optionalOntology = Optional.of(ontologyCache.get().get(key));
+        } else {
             Resource recordId = valueFactory.createIRI(recordIdStr);
 
             if (!stringParamIsMissing(commitIdStr)) {
@@ -832,6 +842,7 @@ public class OntologyRestImpl implements OntologyRest {
                 optionalOntology = Optional.of(ontologyManager.createOntology(ontologyModel));
             }
         }
+
         return optionalOntology;
     }
 
