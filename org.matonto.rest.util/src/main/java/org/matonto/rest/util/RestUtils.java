@@ -29,8 +29,6 @@ import javax.ws.rs.core.Response;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 import net.sf.json.JSONArray;
@@ -222,7 +220,6 @@ public class RestUtils {
      * @param json A JSON-LD string
      * @return The first object representing a single Entity present in the JSON-LD array.
      */
-    @Deprecated
     public static JSONObject getObjectFromJsonld(String json) {
         JSONArray array = JSONArray.fromObject(json);
         JSONObject firstObject = Optional.ofNullable(array.optJSONObject(0)).orElse(new JSONObject());
@@ -231,32 +228,5 @@ public class RestUtils {
                     .orElse(new JSONObject());
         }
         return firstObject;
-    }
-
-    /**
-     * Retrieves a single entity object, of the type specified, from a JSON-LD string and returns it as a
-     * {@link JSONObject}.
-     *
-     * @param json A JSON-LD string
-     * @param type The entity type that is required.
-     * @return The first object representing the specified type of entity present in the JSON-LD.
-     */
-    public static JSONObject getTypedObjectFromJsonld(String json, String type) {
-        List<JSONObject> objects = new ArrayList<>();
-        JSONArray array = JSONArray.fromObject(json);
-
-        array.forEach(o -> objects.add(JSONObject.fromObject(o)));
-
-        for (JSONObject o : objects) {
-            if (o.isArray()) {
-                o = getTypedObjectFromJsonld(o.toString(), type);
-            } else if (o.containsKey("@graph")) {
-                o = getTypedObjectFromJsonld(JSONArray.fromObject(o.get("@graph")).toString(), type);
-            }
-            if (o != null && o.containsKey("@type") && JSONArray.fromObject(o.get("@type")).contains(type)) {
-                return o;
-            }
-        }
-        return null;
     }
 }
