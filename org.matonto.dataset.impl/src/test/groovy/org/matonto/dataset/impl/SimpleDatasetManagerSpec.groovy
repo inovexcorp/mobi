@@ -454,10 +454,10 @@ class SimpleDatasetManagerSpec extends Specification {
             assert datasetRecord.getDataset_resource().isPresent()
             assert !datasetRecord.getDataset().isPresent()
         }
-        1 * connMock.add(_ as Model) >> { args ->
+        1 * connMock.add(_ as Model, datasetIRI) >> { args ->
             Model model = args[0]
-            assert model.contains(datasetIRI, vf.createIRI(Resource.TYPE), vf.createIRI(Dataset.TYPE), datasetIRI)
-            assert model.contains(datasetIRI, vf.createIRI(Dataset.systemDefaultNamedGraph_IRI), null, datasetIRI)
+            assert model.contains(datasetIRI, vf.createIRI(Resource.type_IRI), vf.createIRI(Dataset.TYPE))
+            assert model.contains(datasetIRI, vf.createIRI(Dataset.systemDefaultNamedGraph_IRI), null)
         }
     }
 
@@ -489,7 +489,7 @@ class SimpleDatasetManagerSpec extends Specification {
         1 * repoManagerMock.getRepository("test") >> Optional.of(testRepo)
         1 * catalogManagerMock.addRecord(localCatalog, record)
         2 * testRepo.getConnection() >> testConn
-        1 * testConn.add(_ as Model) >> { args ->
+        1 * testConn.add(_ as Model, datasetIRI) >> { args ->
             Model model = args[0]
             model.contains(datasetIRI, vf.createIRI(Resource.TYPE), vf.createIRI(Dataset.TYPE))
             model.contains(datasetIRI, vf.createIRI(Dataset.systemDefaultNamedGraph_IRI), null)
@@ -522,7 +522,7 @@ class SimpleDatasetManagerSpec extends Specification {
 
         then:
         1 * catalogManagerMock.addRecord(localCatalog, record)
-        1 * connMock.add(_ as Model) >> { args ->
+        1 * connMock.add(_ as Model, datasetIRI) >> { args ->
             Model model = args[0]
             model.contains(datasetIRI, vf.createIRI(Resource.TYPE), vf.createIRI(Dataset.TYPE))
             model.contains(datasetIRI, vf.createIRI(Dataset.systemDefaultNamedGraph_IRI), null)

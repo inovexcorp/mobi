@@ -195,7 +195,7 @@ public class SimpleDatasetManager implements DatasetManager {
         catalogManager.addRecord(catalogManager.getLocalCatalogIRI(), datasetRecord);
 
         try (RepositoryConnection conn = dsRepo.getConnection()) {
-            conn.add(dataset.getModel());
+            conn.add(dataset.getModel(), datasetIRI);
         }
 
         return datasetRecord;
