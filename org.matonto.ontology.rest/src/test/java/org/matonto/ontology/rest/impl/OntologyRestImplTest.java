@@ -41,6 +41,7 @@ import static org.testng.Assert.assertTrue;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
+import org.ehcache.Cache;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
@@ -167,6 +168,9 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
     @Mock
     private CacheManager cacheManager;
 
+    @Mock
+    private Cache<String, Ontology> mockCache;
+
     private ValueConverterRegistry vcr;
     private ModelFactory modelFactory;
     private ValueFactory valueFactory;
@@ -228,7 +232,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
     @Override
     protected Application configureApp() throws Exception {
         MockitoAnnotations.initMocks(this);
-        
+
         when(cacheManager.getCache(Mockito.anyString(), Mockito.eq(String.class), Mockito.eq(Ontology.class))).thenReturn(Optional.empty());
 
         vcr = new DefaultValueConverterRegistry();
@@ -577,6 +581,9 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void testUploadFile() {
+        when(cacheManager.getCache(Mockito.anyString(), Mockito.eq(String.class), Mockito.eq(Ontology.class))).thenReturn(Optional.of(mockCache));
+        rest.setCacheManager(cacheManager);
+
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("file", getClass().getResourceAsStream("/test-ontology.ttl"), MediaType.APPLICATION_OCTET_STREAM_TYPE);
         fd.field("title", "title");
@@ -602,6 +609,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         verify(catalogManager).createCommit(eq(inProgressCommit), anyString(), eq(null), eq(null));
         verify(catalogManager).addCommitToBranch(commit, branchId);
         verify(catalogManager).removeInProgressCommit(inProgressCommitId);
+        verify(mockCache, times(1)).put(Mockito.anyString(), Mockito.any(Ontology.class));
     }
 
     @Test
@@ -759,7 +767,13 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
     // Test download ontology file
 
     @Test
-    public void testGetOntology() {
+    public void testGetOntologyCacheHit() {
+        when(cacheManager.getCache(Mockito.anyString(), Mockito.eq(String.class), Mockito.eq(Ontology.class))).thenReturn(Optional.of(mockCache));
+        when(mockCache.containsKey(Mockito.anyString())).thenReturn(true);
+        when(mockCache.get(Mockito.anyString())).thenReturn(ontology);
+
+        rest.setCacheManager(cacheManager);
+
         Response response = target().path("ontologies/" + encode(recordId.stringValue()))
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
                 .request().get();
@@ -767,6 +781,28 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         assertEquals(response.getStatus(), 200);
         assertGetOntology(true);
         assertEquals(response.readEntity(String.class), ontologyJsonLd.toString());
+        verify(mockCache, times(1)).containsKey(Mockito.anyString());
+        verify(mockCache, times(1)).get(Mockito.anyString());
+        verify(mockCache, times(0)).put(Mockito.anyString(), Mockito.any(Ontology.class));
+    }
+
+    @Test
+    public void testGetOntologyCacheMiss() {
+        when(cacheManager.getCache(Mockito.anyString(), Mockito.eq(String.class), Mockito.eq(Ontology.class))).thenReturn(Optional.of(mockCache));
+        when(mockCache.containsKey(Mockito.anyString())).thenReturn(false);
+        rest.setCacheManager(cacheManager);
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()))
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .request().get();
+
+        assertEquals(response.getStatus(), 200);
+        assertGetOntology(true);
+        assertEquals(response.readEntity(String.class), ontologyJsonLd.toString());
+        verify(mockCache, times(1)).containsKey(Mockito.anyString());
+        verify(mockCache, times(0)).get(Mockito.anyString());
+        // OntologyManger will handle caching the ontology
+        verify(mockCache, times(0)).put(Mockito.anyString(), Mockito.any(Ontology.class));
     }
 
     @Test
