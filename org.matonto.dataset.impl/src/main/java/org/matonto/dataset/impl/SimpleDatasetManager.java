@@ -186,7 +186,7 @@ public class SimpleDatasetManager implements DatasetManager {
         }
         DatasetRecord datasetRecord = catalogManager.createRecord(config, dsRecFactory);
 
-        Dataset dataset = dsFactory.createNew(datasetIRI, datasetRecord.getModel());
+        Dataset dataset = dsFactory.createNew(datasetIRI);
         dataset.setSystemDefaultNamedGraph(sdgIRI);
 
         datasetRecord.setDataset(dataset);

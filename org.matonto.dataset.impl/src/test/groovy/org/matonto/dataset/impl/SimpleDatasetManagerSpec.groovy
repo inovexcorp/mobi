@@ -33,7 +33,6 @@ import org.matonto.dataset.pagination.DatasetPaginatedSearchParams
 import org.matonto.ontologies.rdfs.Resource
 import org.matonto.rdf.api.IRI
 import org.matonto.rdf.api.Model
-import org.matonto.rdf.api.Value
 import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory
 import org.matonto.rdf.core.utils.Values
@@ -423,13 +422,13 @@ class SimpleDatasetManagerSpec extends Specification {
         1 * catalogManagerMock.createRecord(config, _ as DatasetRecordFactory) >> record
 
         when:
-        def results = service.createDataset(config)
+        def datasetRecord = service.createDataset(config)
 
         then:
-        results.getResource() == recordIRI
-        results.getDataset_resource() != Optional.empty()
-        results.getDataset_resource().get() == datasetIRI
-        results.getDataset().get().getSystemDefaultNamedGraph() != null
+        datasetRecord.getResource() == recordIRI
+        datasetRecord.getDataset_resource() != Optional.empty()
+        datasetRecord.getDataset_resource().get() == datasetIRI
+        !datasetRecord.getDataset().isPresent()
     }
 
     def "createDataset adds the Dataset model to the repo"() {
@@ -450,11 +449,15 @@ class SimpleDatasetManagerSpec extends Specification {
         service.createDataset(config)
 
         then:
-        1 * catalogManagerMock.addRecord(localCatalog, record)
+        1 * catalogManagerMock.addRecord(localCatalog, record) >> { args ->
+            DatasetRecord datasetRecord = args[1]
+            assert datasetRecord.getDataset_resource().isPresent()
+            assert !datasetRecord.getDataset().isPresent()
+        }
         1 * connMock.add(_ as Model) >> { args ->
             Model model = args[0]
-            model.contains(datasetIRI, vf.createIRI(Resource.TYPE), vf.createIRI(Dataset.TYPE))
-            model.contains(datasetIRI, vf.createIRI(Dataset.systemDefaultNamedGraph_IRI), null)
+            assert model.contains(datasetIRI, vf.createIRI(Resource.TYPE), vf.createIRI(Dataset.TYPE), datasetIRI)
+            assert model.contains(datasetIRI, vf.createIRI(Dataset.systemDefaultNamedGraph_IRI), null, datasetIRI)
         }
     }
 
