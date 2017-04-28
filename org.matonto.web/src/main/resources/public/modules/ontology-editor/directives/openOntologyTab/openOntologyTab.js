@@ -79,7 +79,7 @@
                     }
 
                     dvm.deleteOntology = function() {
-                        cm.deleteRecord(dvm.recordId, catalogId)
+                        dvm.om.deleteOntology(dvm.recordId)
                             .then(response => {
                                 _.remove(ontologyRecords, record => _.get(record, '@id', '') === dvm.recordId);
                                 var state = sm.getOntologyStateByRecordId(dvm.recordId);

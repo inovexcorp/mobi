@@ -290,6 +290,35 @@
             }
             /**
              * @ngdoc method
+             * @name getOntology
+             * @methodOf catalogManager.service:catalogManagerService
+             *
+             * @description
+             * Calls the DELETE /matontorest/ontologies/{recordId} endpoint which deletes the ontology unless the
+             * branchId is provided. In which case just the branch is removed.
+             *
+             * @param {string} recordId The id of the Record to be deleted if no branchId is provided.
+             * @param {string} branchId The id of the Branch that should be removed
+             * @return {Promise} A promise with the ontology at the specified commit in the specified RDF format`
+             */
+            self.deleteOntology = function(recordId, branchId) {
+                var deferred = $q.defer();
+                var config = {
+                    headers: {
+                        'Accept': 'text/plain'
+                    }
+                };
+
+                if (branchId) {
+                    config.params = { branchId };
+                }
+
+                $http.delete(prefix + '/' + encodeURIComponent(recordId), config)
+                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
+                return deferred.promise;
+            }
+            /**
+             * @ngdoc method
              * @name downloadOntology
              * @methodOf ontologyManager.service:ontologyManagerService
              *

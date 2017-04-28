@@ -174,10 +174,10 @@ describe('Open Ontology Tab directive', function() {
                 stateManagerSvc.getOntologyStateByRecordId.and.returnValue({id: 'state'});
             });
             it('unless an error occurs', function() {
-                catalogManagerSvc.deleteRecord.and.returnValue($q.reject('Error message'));
+                ontologyManagerSvc.deleteOntology.and.returnValue($q.reject('Error message'));
                 controller.deleteOntology();
                 scope.$apply();
-                expect(catalogManagerSvc.deleteRecord).toHaveBeenCalledWith(controller.recordId, jasmine.any(String));
+                expect(ontologyManagerSvc.deleteOntology).toHaveBeenCalledWith(controller.recordId);
                 expect(this.records).toContain(jasmine.objectContaining({'@id': 'recordA'}));
                 expect(stateManagerSvc.getOntologyStateByRecordId).not.toHaveBeenCalled();
                 expect(stateManagerSvc.deleteState).not.toHaveBeenCalled();
@@ -187,7 +187,7 @@ describe('Open Ontology Tab directive', function() {
             it('successfully', function() {
                 controller.deleteOntology();
                 scope.$apply();
-                expect(catalogManagerSvc.deleteRecord).toHaveBeenCalledWith(controller.recordId, jasmine.any(String));
+                expect(ontologyManagerSvc.deleteOntology).toHaveBeenCalledWith(controller.recordId);
                 expect(this.records).not.toContain(jasmine.objectContaining({'@id': 'recordA'}));
                 expect(stateManagerSvc.getOntologyStateByRecordId).toHaveBeenCalled();
                 expect(stateManagerSvc.deleteState).toHaveBeenCalledWith('state');
