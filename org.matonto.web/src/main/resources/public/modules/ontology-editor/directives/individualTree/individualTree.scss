@@ -1,0 +1,8 @@
+@import "./src/main/resources/public/css/variables";
+
+.individual-tree {
+    &.imported {
+        font-style: italic;
+        color: gray;
+    }
+}

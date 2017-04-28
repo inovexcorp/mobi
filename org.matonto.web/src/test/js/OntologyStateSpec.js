@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Ontology State Service', function() {
-    var ontologyStateSvc, $q, scope, util, stateManagerSvc, ontologyManagerSvc, updateRefsSvc, prefixes, catalogManagerSvc, hierarchy, indexObject, expectedPaths, ontologyState, defaultDatatypes, ontologyObj, classObj, dataPropertyObj, individualObj, ontology, getResponse, httpSvc;
+    var ontologyStateSvc, $q, scope, util, stateManagerSvc, ontologyManagerSvc, updateRefsSvc, prefixes, catalogManagerSvc, hierarchy, indexObject, expectedPaths, ontologyState, defaultDatatypes, ontologyObj, classObj, dataPropertyObj, individualObj, ontology, getResponse, httpSvc, $document, $timeout;
     var error = 'error';
     var format = 'jsonld';
     var title = 'title';
@@ -57,17 +57,22 @@ describe('Ontology State Service', function() {
     var index = {
         ontologyId: {
             position: 0,
-            label: 'ontology'
+            label: 'ontology',
+            ontologyIri: ontologyId
         },
         classId: {
             position: 1,
-            label: 'class'
+            label: 'class',
+            ontologyIri: ontologyId
         },
         dataPropertyId: {
             position: 2,
-            label: 'data property'
+            label: 'data property',
+            ontologyIri: ontologyId
         }
     };
+    var importedOntologies = [];
+    var importedOntologyIds = [];
     var classId = 'classId';
     var classId2 = 'classId2';
     var objectPropertyId = 'objectPropertyId';
@@ -142,7 +147,13 @@ describe('Ontology State Service', function() {
             });
         });
 
-        inject(function(ontologyStateService, _updateRefsService_, _ontologyManagerService_, _catalogManagerService_, _$q_, _$rootScope_, _utilService_, _stateManagerService_, _prefixes_, _httpService_) {
+        module(function($provide) {
+            $provide.service('$document', function() {
+                this.querySelectorAll = jasmine.createSpy('querySelectorAll');
+            });
+        });
+
+        inject(function(ontologyStateService, _updateRefsService_, _ontologyManagerService_, _catalogManagerService_, _$q_, _$rootScope_, _utilService_, _stateManagerService_, _prefixes_, _httpService_, _$document_, _$timeout_) {
             ontologyStateSvc = ontologyStateService;
             updateRefsSvc = _updateRefsService_;
             ontologyManagerSvc = _ontologyManagerService_;
@@ -153,6 +164,8 @@ describe('Ontology State Service', function() {
             stateManagerSvc = _stateManagerService_;
             prefixes = _prefixes_;
             httpSvc = _httpService_;
+            $document = _$document_;
+            $timeout = _$timeout_;
         });
 
         catalogManagerSvc.localCatalog = {'@id': catalogId};
@@ -288,6 +301,8 @@ describe('Ontology State Service', function() {
         listItem = {
             ontology: ontology,
             ontologyId: ontologyId,
+            importedOntologies: importedOntologies,
+            importedOntologyIds: importedOntologyIds,
             recordId: recordId,
             commitId: commitId,
             branchId: branchId,
@@ -1260,7 +1275,9 @@ describe('Ontology State Service', function() {
             expect(ontologyStateSvc.getEntityByRecordId(recordId, classId)).toEqual(classObj);
             expect(ontologyStateSvc.getListItemByRecordId).toHaveBeenCalledWith(recordId);
         });
-        it('object when present not using index', function() {
+        //the operation to retrieve the object if it isn't in the index is too expensive
+        //so we are no longer doing that.
+        it('undefined when present not using index', function() {
             var diffListItem = {
                 ontology: ontology,
                 ontologyId: ontologyId,
@@ -1271,9 +1288,8 @@ describe('Ontology State Service', function() {
             }
             spyOn(ontologyStateSvc, 'getListItemByRecordId').and.returnValue(diffListItem);
             ontologyManagerSvc.getEntity.and.returnValue(classObj);
-            expect(ontologyStateSvc.getEntityByRecordId(recordId, classId)).toEqual(classObj);
+            expect(ontologyStateSvc.getEntityByRecordId(recordId, classId)).toEqual(undefined);
             expect(ontologyStateSvc.getListItemByRecordId).toHaveBeenCalledWith(recordId);
-            expect(ontologyManagerSvc.getEntity).toHaveBeenCalledWith(ontology, classId);
         });
         it('undefined when not present', function() {
             spyOn(ontologyStateSvc, 'getListItemByRecordId').and.callThrough();
@@ -1373,6 +1389,73 @@ describe('Ontology State Service', function() {
                 }
             };
             expect(ontologyStateSvc.getEntityNameByIndex('iri', listItem)).toBe('name');
+        });
+        it('when the entityIRI is in the imported index', function() {
+            var listItem = {
+                index: {
+                    nomatchiri: {
+                        label: 'name'
+                    }
+                },
+                importedOntologies: [{
+                    index: {
+                        iri: {
+                            label: 'importedname'
+                        }
+                    }
+                }]
+            };
+            expect(ontologyStateSvc.getEntityNameByIndex('iri', listItem)).toBe('importedname');
+        });
+        it('when the entityIRI is in multiple indices', function() {
+            var listItem = {
+                index: {
+                    iri: {
+                        label: 'name'
+                    }
+                },
+                importedOntologies: [{
+                    index: {
+                        iri: {
+                            label: 'importedname'
+                        }
+                    }
+                }]
+            };
+            expect(ontologyStateSvc.getEntityNameByIndex('iri', listItem)).toBe('name');
+        });
+        it('when the entityIRI is in multiple indices with only one label', function() {
+            var listItem = {
+                index: {
+                    iri: {
+                    }
+                },
+                importedOntologies: [{
+                    index: {
+                        iri: {
+                            label: 'importedname'
+                        }
+                    }
+                }]
+            };
+            expect(ontologyStateSvc.getEntityNameByIndex('iri', listItem)).toBe('importedname');
+        });
+        it('when the entityIRI is in multiple indices and no labels exist', function() {
+            var listItem = {
+                index: {
+                    iri: {
+                    }
+                },
+                importedOntologies: [{
+                    index: {
+                        iri: {
+                        }
+                    }
+                }]
+            };
+            util.getBeautifulIRI.and.returnValue('entity name');
+            expect(ontologyStateSvc.getEntityNameByIndex('iri', listItem)).toBe('entity name');
+            expect(util.getBeautifulIRI).toHaveBeenCalledWith('iri');
         });
         it('when the entityIRI is not in the index', function() {
             util.getBeautifulIRI.and.returnValue('entity name');
@@ -2816,13 +2899,13 @@ describe('Ontology State Service', function() {
             spyOn(ontologyStateSvc, 'getActivePage').and.returnValue({entityIRI: ''});
             spyOn(ontologyStateSvc, 'setActivePage');
             spyOn(ontologyStateSvc, 'selectItem');
-            spyOn(ontologyStateSvc, 'getPathsTo');
             spyOn(ontologyStateSvc, 'openAt');
             ontologyStateSvc.listItem = {
-                classIndex: 'classIndex',
-                conceptIndex: 'conceptIndex',
-                dataPropertyIndex: 'dataPropertyIndex',
-                objectPropertyIndex: 'objectPropertyIndex'
+                flatConceptHierarchy: [],
+                flatClassHierarchy: [],
+                flatDataPropertyHierarchy: [],
+                flatObjectPropertyHierarchy: [],
+                flatAnnotationPropertyHierarchy: []
             }
         });
         it('when it is a vocabulary', function() {
@@ -2830,8 +2913,7 @@ describe('Ontology State Service', function() {
             ontologyStateSvc.goTo('iri');
             expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('concepts');
             expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
-            expect(ontologyStateSvc.getPathsTo).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptHierarchy, ontologyStateSvc.listItem.conceptIndex, 'iri');
-            expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.getPathsTo(ontologyStateSvc.listItem.conceptHierarchy, ontologyStateSvc.listItem.conceptIndex, 'iri'));
+            expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.flatConceptHierarchy, 'iri');
         });
         describe('when it is not a vocabulary', function() {
             beforeEach(function() {
@@ -2842,8 +2924,7 @@ describe('Ontology State Service', function() {
                 ontologyStateSvc.goTo('iri');
                 expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('classes');
                 expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
-                expect(ontologyStateSvc.getPathsTo).toHaveBeenCalledWith(ontologyStateSvc.listItem.classHierarchy, ontologyStateSvc.listItem.classIndex, 'iri');
-                expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.getPathsTo(ontologyStateSvc.listItem.classHierarchy, ontologyStateSvc.listItem.classIndex, 'iri'));
+                expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.flatClassHierarchy, 'iri');
             });
             it('and is a datatype property', function() {
                 ontologyManagerSvc.isClass.and.returnValue(false);
@@ -2852,8 +2933,7 @@ describe('Ontology State Service', function() {
                 ontologyStateSvc.goTo('iri');
                 expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('properties');
                 expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
-                expect(ontologyStateSvc.getPathsTo).toHaveBeenCalledWith(ontologyStateSvc.listItem.dataPropertyHierarchy, ontologyStateSvc.listItem.dataPropertyIndex, 'iri');
-                expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.getPathsTo(ontologyStateSvc.listItem.dataPropertyHierarchy, ontologyStateSvc.listItem.dataPropertyIndex, 'iri'));
+                expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.flatDataPropertyHierarchy, 'iri');
                 expect(ontologyStateSvc.setDataPropertiesOpened).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, true);
             });
             it('and is an object property', function() {
@@ -2864,8 +2944,7 @@ describe('Ontology State Service', function() {
                 ontologyStateSvc.goTo('iri');
                 expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('properties');
                 expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
-                expect(ontologyStateSvc.getPathsTo).toHaveBeenCalledWith(ontologyStateSvc.listItem.objectPropertyHierarchy, ontologyStateSvc.listItem.objectPropertyIndex, 'iri');
-                expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.getPathsTo(ontologyStateSvc.listItem.objectPropertyHierarchy, ontologyStateSvc.listItem.objectPropertyIndex, 'iri'));
+                expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.flatObjectPropertyHierarchy, 'iri');
                 expect(ontologyStateSvc.setObjectPropertiesOpened).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, true);
             });
             it('and is an annotation property', function() {
@@ -2877,8 +2956,7 @@ describe('Ontology State Service', function() {
                 ontologyStateSvc.goTo('iri');
                 expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('properties');
                 expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
-                expect(ontologyStateSvc.getPathsTo).not.toHaveBeenCalled();
-                expect(ontologyStateSvc.openAt).not.toHaveBeenCalled();
+                expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.flatAnnotationPropertyHierarchy, 'iri');
                 expect(ontologyStateSvc.setAnnotationPropertiesOpened).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, true);
             });
             it('and is an individual', function() {
@@ -2889,55 +2967,30 @@ describe('Ontology State Service', function() {
                 ontologyStateSvc.goTo('iri');
                 expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('individuals');
                 expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
-                expect(ontologyStateSvc.getPathsTo).not.toHaveBeenCalled();
                 expect(ontologyStateSvc.openAt).not.toHaveBeenCalled();
             });
         });
     });
-    describe('openAt', function() {
-        beforeEach(function() {
-            ontologyStateSvc.listItem = {recordId: 'id'};
-        });
-        it('if already opened, does not set anything', function() {
-            var pathsArray = [['path', 'one', 'here'], ['path', 'two', 'here']];
-            ontologyStateSvc.state[ontologyStateSvc.listItem.recordId] = {
-                isOpened: true,
-                path: {
-                    isOpened: true,
-                    two: {
-                        isOpened: true
-                    }
-                }
-            };
-            ontologyStateSvc.openAt(pathsArray);
-            expect(_.get(ontologyStateSvc.state, encodeURIComponent(ontologyStateSvc.listItem.recordId) + '.'
-                + encodeURIComponent(_.join(_.slice(pathsArray[0], 0, pathsArray[0].length - 1), '.')) + '.isOpened'))
-                .toBeUndefined();
-        });
-        it('if the whole path to it is not opened, sets the first path provided open', function() {
-            var pathsArray = [['path', 'one', 'here'], ['path', 'two', 'here']];
-            ontologyStateSvc.state[ontologyStateSvc.listItem.recordId] = {
-                isOpened: true,
-                path: {
-                    isOpened: false,
-                    two: {
-                        isOpened: true
-                    }
-                }
-            };
-            ontologyStateSvc.openAt(pathsArray);
-            expect(_.get(ontologyStateSvc.state, encodeURIComponent(ontologyStateSvc.listItem.recordId) + '.'
-                + encodeURIComponent(_.join(_.slice(pathsArray[0], 0, pathsArray[0].length - 1), '.')) + '.isOpened'))
-                .toBe(true);
-        });
-        it('if not already opened, sets the first path provided open', function() {
-            var pathsArray = [['path', 'one', 'here'], ['path', 'two', 'here']];
-            delete ontologyStateSvc.state[ontologyStateSvc.listItem.recordId];
-            ontologyStateSvc.openAt(pathsArray);
-            expect(_.get(ontologyStateSvc.state, encodeURIComponent(ontologyStateSvc.listItem.recordId) + '.'
-                + encodeURIComponent(_.join(_.slice(pathsArray[0], 0, pathsArray[0].length - 1), '.')) + '.isOpened'))
-                .toBe(true);
-        });
+    it('openAt sets all parents open', function() {
+        var dummyReturn = [{}];
+        $document.querySelectorAll.and.returnValue(dummyReturn);
+        spyOn(ontologyStateSvc, 'setOpened');
+        var flatHierarchy = [{
+            entityIRI: 'iri-a',
+            path: ['recordId', 'iri-a']
+        }, {
+            entityIRI: 'iri-b',
+            path: ['recordId', 'iri-a', 'iri-b']
+        }, {
+            entityIRI: 'iri-c',
+            path: ['recordId', 'iri-a', 'iri-b', 'iri-c']
+        }];
+        ontologyStateSvc.openAt(flatHierarchy, 'iri-c');
+        $timeout.flush();
+        expect(ontologyStateSvc.setOpened).toHaveBeenCalledWith('recordId.iri-a', true);
+        expect(ontologyStateSvc.setOpened).toHaveBeenCalledWith('recordId.iri-a.iri-b', true);
+        expect($document.querySelectorAll).toHaveBeenCalledWith('[class*=hierarchy-block] .repeater-container');
+        expect(dummyReturn[0].scrollTop).toBe(3 * 26);
     });
     describe('getDefaultPrefix returns the proper value for the prefix associated with ontology', function() {
         it('when there is no iriBegin or iriThen', function() {

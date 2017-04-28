@@ -137,6 +137,12 @@ function injectUsernameSearchFilter() {
     });
 }
 
+function injectUniqueIRIFilter() {
+    module(function($provide) {
+        $provide.value('uniqueIRIFilter', jasmine.createSpy('uniqueIRIFilter').and.callFake(_.identity));
+    });
+}
+
 function mockStateManager() {
     module(function($provide) {
         $provide.service('stateManagerService', function($q) {
@@ -499,7 +505,9 @@ function mockOntologyState() {
                 flatObjectPropertyHierarchy: [],
                 annotationPropertyHierarchy: [],
                 annotationPropertyIndex: {},
-                flatAnnotationPropertyHierarchy: []
+                flatAnnotationPropertyHierarchy: [],
+                importedOntologies: [],
+                upToDate: true
             };
             this.states = {};
             this.list = [];
@@ -566,6 +574,7 @@ function mockOntologyState() {
             this.flattenHierarchy = jasmine.createSpy('flattenHierarchy');
             this.areParentsOpen = jasmine.createSpy('areParentsOpen');
             this.createFlatEverythingTree = jasmine.createSpy('createFlatEverythingTree');
+            this.getOntologiesArray = jasmine.createSpy('getOntologiesArray').and.returnValue(this.listItem.ontology);
         });
     });
 }

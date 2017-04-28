@@ -20,7 +20,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="tree-item" ng-class="{'saved': dvm.saved}">
+<div class="tree-item" ng-class="{'saved': dvm.saved , 'imported': dvm.currentEntity.matonto.imported}">
     <a ng-if="!hasChildren" ng-click="onClick()" ng-class="{'active': isActive}">
         <i class="fa fa-fw {{dvm.currentEntity.matonto.icon || 'fa-square-o'}}"></i>
         <span ng-class="{'bold': isBold}">{{dvm.getTreeDisplay()}}</span>
