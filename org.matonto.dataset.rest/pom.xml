@@ -41,7 +41,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>dataset.api</artifactId>
-            <version>1.5.45</version>
+            <version>1.6.28-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
@@ -57,6 +57,11 @@
             <groupId>org.matonto</groupId>
             <artifactId>ontology.utils</artifactId>
             <version>1.5.45</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>catalog.api</artifactId>
+            <version>1.6.28-SNAPSHOT</version>
         </dependency>
 
         <dependency>

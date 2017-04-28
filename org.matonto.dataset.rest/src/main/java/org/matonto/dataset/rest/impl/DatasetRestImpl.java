@@ -32,11 +32,20 @@ import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import net.sf.json.JSONArray;
 import org.apache.commons.lang3.StringUtils;
+import org.glassfish.jersey.media.multipart.FormDataBodyPart;
+import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.PaginatedSearchResults;
+import org.matonto.catalog.api.ontologies.mcat.Branch;
+import org.matonto.catalog.api.ontologies.mcat.BranchFactory;
+import org.matonto.catalog.api.ontologies.mcat.CommitFactory;
+import org.matonto.catalog.api.ontologies.mcat.OntologyRecord;
+import org.matonto.catalog.api.ontologies.mcat.OntologyRecordFactory;
+import org.matonto.catalog.api.ontologies.mcat.VersionedRDFRecordIdentifier;
+import org.matonto.catalog.api.ontologies.mcat.VersionedRDFRecordIdentifierFactory;
 import org.matonto.dataset.api.DatasetManager;
-import org.matonto.dataset.pagination.DatasetPaginatedSearchParams;
 import org.matonto.dataset.api.builder.DatasetRecordConfig;
 import org.matonto.dataset.ontology.dataset.DatasetRecord;
+import org.matonto.dataset.pagination.DatasetPaginatedSearchParams;
 import org.matonto.dataset.rest.DatasetRest;
 import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.engines.EngineManager;
@@ -51,6 +60,7 @@ import org.matonto.rest.util.jaxb.Links;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Response;
@@ -60,6 +70,11 @@ import javax.ws.rs.core.UriInfo;
 public class DatasetRestImpl implements DatasetRest {
     private DatasetManager manager;
     private EngineManager engineManager;
+    private CatalogManager catalogManager;
+    private OntologyRecordFactory ontologyRecordFactory;
+    private BranchFactory branchFactory;
+    private CommitFactory commitFactory;
+    private VersionedRDFRecordIdentifierFactory versionedRDFRecordIdentifierFactory;
     private SesameTransformer transformer;
     private ValueFactory vf;
 
@@ -74,6 +89,32 @@ public class DatasetRestImpl implements DatasetRest {
     }
 
     @Reference
+    public void setCatalogManager(CatalogManager catalogManager) {
+        this.catalogManager = catalogManager;
+    }
+
+    @Reference
+    public void setOntologyRecordFactory(OntologyRecordFactory ontologyRecordFactory) {
+        this.ontologyRecordFactory = ontologyRecordFactory;
+    }
+
+    @Reference
+    public void setBranchFactory(BranchFactory branchFactory) {
+        this.branchFactory = branchFactory;
+    }
+
+    @Reference
+    public void setCommitFactory(CommitFactory commitFactory) {
+        this.commitFactory = commitFactory;
+    }
+
+    @Reference
+    public void setVersionedRDFRecordIdentifierFactory(VersionedRDFRecordIdentifierFactory
+                                                                   versionedRDFRecordIdentifierFactory) {
+        this.versionedRDFRecordIdentifierFactory = versionedRDFRecordIdentifierFactory;
+    }
+
+    @Reference
     public void setTransformer(SesameTransformer transformer) {
         this.transformer = transformer;
     }
@@ -84,7 +125,8 @@ public class DatasetRestImpl implements DatasetRest {
     }
 
     @Override
-    public Response getDatasetRecords(UriInfo uriInfo, int offset, int limit, String sort, boolean asc, String searchText) {
+    public Response getDatasetRecords(UriInfo uriInfo, int offset, int limit, String sort, boolean asc,
+                                      String searchText) {
         try {
             LinksUtils.validateParams(limit, offset);
             DatasetPaginatedSearchParams params = new DatasetPaginatedSearchParams(vf).setOffset(offset)
@@ -121,8 +163,9 @@ public class DatasetRestImpl implements DatasetRest {
     }
 
     @Override
-    public Response createDatasetRecord(ContainerRequestContext context, String title, String repositoryId, String datasetIRI,
-                                        String description, String keywords) {
+    public Response createDatasetRecord(ContainerRequestContext context, String title, String repositoryId,
+                                        String datasetIRI, String description, String keywords,
+                                        List<FormDataBodyPart> ontologies) {
         checkStringParam(title, "Title is required");
         checkStringParam(repositoryId, "Repository id is required");
         User activeUser = getActiveUser(context, engineManager);
@@ -136,6 +179,10 @@ public class DatasetRestImpl implements DatasetRest {
         }
         if (keywords != null && !keywords.isEmpty()) {
             builder.keywords(Arrays.stream(StringUtils.split(keywords, ",")).collect(Collectors.toSet()));
+        }
+        if (ontologies != null) {
+            ontologies.forEach(formDataBodyPart -> builder.ontology(
+                    getOntologyIdentifer(vf.createIRI(formDataBodyPart.getValue()))));
         }
         try {
             DatasetRecord record = manager.createDataset(builder.build());
@@ -179,5 +226,25 @@ public class DatasetRestImpl implements DatasetRest {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
         return Response.ok().build();
+    }
+
+    private VersionedRDFRecordIdentifier getOntologyIdentifer(Resource recordId) {
+        OntologyRecord record = catalogManager.getRecord(catalogManager.getLocalCatalogIRI(), recordId,
+                ontologyRecordFactory).orElseThrow(() ->
+                ErrorUtils.sendError("OntologyRecord could not be retrieved", Response.Status.BAD_REQUEST));
+        Resource branchId = record.getMasterBranch().orElseThrow(() ->
+                ErrorUtils.sendError("The Master Branch could not be found on this record.",
+                        Response.Status.INTERNAL_SERVER_ERROR)).getResource();
+        Branch masterBranch = catalogManager.getBranch(branchId, branchFactory).orElseThrow(() ->
+                ErrorUtils.sendError("The Master Branch could not be retrieved.",
+                        Response.Status.INTERNAL_SERVER_ERROR));
+        Resource commitId = masterBranch.getHead().orElseThrow(() ->
+                ErrorUtils.sendError("There is no head Commit associated with this Branch.",
+                        Response.Status.INTERNAL_SERVER_ERROR)).getResource();
+        VersionedRDFRecordIdentifier identifier = versionedRDFRecordIdentifierFactory.createNew(vf.createBNode());
+        identifier.setIdentifiedRecord(record);
+        identifier.setIdentifiedBranch(masterBranch);
+        identifier.setIdentifiedCommit(commitFactory.createNew(commitId));
+        return identifier;
     }
 }

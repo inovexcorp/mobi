@@ -18,7 +18,7 @@
     rdfs:comment "The MatOnto dataset ontology describes the structure of dataset objects and how they relate to the MatOnto Catalog."@en;
     dct:creator [foaf:name "Stephen Kahmann"] ;
     foaf:maker [foaf:name "MatOnto" ; foaf:homepage <http://matonto.org>] ;
-    dct:modified "2017-02-20"^^xsd:date .
+    dct:modified "2017-04-28"^^xsd:date .
 
 # Dataset
 
@@ -69,3 +69,7 @@
     rdfs:comment "The repository where the dataset object and its data is stored."@en ;
     rdfs:domain :DatasetRecord ;
     rdfs:range xsd:string .
+
+:ontology a owl:ObjectProperty ;
+    rdfs:domain :DatasetRecord ;
+    rdfs:range matcat:VersionedRDFRecordIdentifier .
