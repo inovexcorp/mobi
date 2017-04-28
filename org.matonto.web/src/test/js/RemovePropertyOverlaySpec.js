@@ -104,8 +104,10 @@ describe('Remove Property Overlay directive', function() {
             controller.key = prefixes.rdfs + 'domain';
             _.set(ontologyStateSvc.selected, controller.key + '[0]', 'value');
             ontologyStateSvc.createFlatEverythingTree.and.returnValue([{prop: 'everything'}]);
+            ontologyStateSvc.getOntologiesArray.and.returnValue([]);
             controller.removeProperty();
-            expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontology, ontologyStateSvc.listItem.recordId);
+            expect(ontologyStateSvc.getOntologiesArray).toHaveBeenCalled();
+            expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith([], ontologyStateSvc.listItem.recordId);
             expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([{prop: 'everything'}]);
         });
     });

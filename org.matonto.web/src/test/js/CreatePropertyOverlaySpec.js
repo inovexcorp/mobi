@@ -198,6 +198,7 @@ describe('Create Property Overlay directive', function() {
                 controller.property[prefixes.rdfs + 'range'] = [];
                 controller.property[prefixes.rdfs + 'domain'] = [];
                 ontologyStateSvc.createFlatEverythingTree.and.returnValue([{prop: 'everything'}]);
+                ontologyStateSvc.getOntologiesArray.and.returnValue([]);
             });
             it('and unsets the correct properties', function() {
                 controller.create();
@@ -220,7 +221,8 @@ describe('Create Property Overlay directive', function() {
                 expect(controller.property.matonto.originalIRI).toEqual(controller.property['@id']);
                 expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(controller.property, controller.language);
                 expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, controller.property);
-                expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontology, ontologyStateSvc.listItem.recordId);
+                expect(ontologyStateSvc.getOntologiesArray).toHaveBeenCalled();
+                expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith([], ontologyStateSvc.listItem.recordId);
                 expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([{prop: 'everything'}]);
                 expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(controller.property);
                 expect(this.listItem.subObjectProperties).toContain({namespace: this.split.begin + this.split.then, localName: this.split.end});
@@ -242,7 +244,8 @@ describe('Create Property Overlay directive', function() {
                 expect(controller.property.matonto.originalIRI).toEqual(controller.property['@id']);
                 expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(controller.property, controller.language);
                 expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, controller.property);
-                expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontology, ontologyStateSvc.listItem.recordId);
+                expect(ontologyStateSvc.getOntologiesArray).toHaveBeenCalled();
+                expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith([], ontologyStateSvc.listItem.recordId);
                 expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([{prop: 'everything'}]);
                 expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(controller.property);
                 expect(this.listItem.subObjectProperties).toEqual([]);

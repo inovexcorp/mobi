@@ -173,12 +173,35 @@ describe('Ontology Utils Manager service', function() {
             expect(ontologyUtilsManagerSvc.getBlankNodeValue('key1')).toEqual(undefined);
         });
     });
-    it('isLinkable returns proper value', function() {
-        ontologyStateSvc.listItem.index = {iri: 0, '_:genid': 1};
-        expect(ontologyUtilsManagerSvc.isLinkable('iri')).toEqual(true);
-        expect(ontologyUtilsManagerSvc.isLinkable('word')).toEqual(false);
-        ontologyManagerSvc.isBlankNodeId.and.returnValue(true);
-        expect(ontologyUtilsManagerSvc.isLinkable('_:genid')).toEqual(false);
+    describe('isLinkable returns proper value', function() {
+        it('when getEntityByRecordId exists and isBlankNodeId is false', function() {
+            ontologyStateSvc.getEntityByRecordId.and.returnValue({});
+            ontologyManagerSvc.isBlankNodeId.and.returnValue(false);
+            expect(ontologyUtilsManagerSvc.isLinkable('iri')).toEqual(true);
+            expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, 'iri');
+            expect(ontologyManagerSvc.isBlankNodeId).toHaveBeenCalledWith('iri');
+        });
+        it('when getEntityByRecordId is undefined and isBlankNodeId is false', function() {
+            ontologyStateSvc.getEntityByRecordId.and.returnValue(undefined);
+            ontologyManagerSvc.isBlankNodeId.and.returnValue(false);
+            expect(ontologyUtilsManagerSvc.isLinkable('iri')).toEqual(false);
+            expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, 'iri');
+            expect(ontologyManagerSvc.isBlankNodeId).not.toHaveBeenCalled();
+        });
+        it('when getEntityByRecordId exists and isBlankNodeId is true', function() {
+            ontologyStateSvc.getEntityByRecordId.and.returnValue({});
+            ontologyManagerSvc.isBlankNodeId.and.returnValue(true);
+            expect(ontologyUtilsManagerSvc.isLinkable('iri')).toEqual(false);
+            expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, 'iri');
+            expect(ontologyManagerSvc.isBlankNodeId).toHaveBeenCalledWith('iri');
+        });
+        it('when getEntityByRecordId is undefined and isBlankNodeId is true', function() {
+            ontologyStateSvc.getEntityByRecordId.and.returnValue(undefined);
+            ontologyManagerSvc.isBlankNodeId.and.returnValue(true);
+            expect(ontologyUtilsManagerSvc.isLinkable('iri')).toEqual(false);
+            expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, 'iri');
+            expect(ontologyManagerSvc.isBlankNodeId).not.toHaveBeenCalled();
+        });
     });
     it('getNameByNode calls the correct method', function() {
         spyOn(ontologyUtilsManagerSvc, 'getLabelForIRI').and.returnValue('result');
@@ -322,6 +345,7 @@ describe('Ontology Utils Manager service', function() {
             ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
             ontologyManagerSvc.isObjectProperty.and.returnValue(false);
             ontologyManagerSvc.isAnnotation.and.returnValue(false);
+            ontologyStateSvc.flattenHierarchy.and.returnValue([{prop: 'new-item'}]);
         });
         describe('when the listItem.index contains the selected @id', function() {
             beforeEach(function() {
@@ -332,30 +356,35 @@ describe('Ontology Utils Manager service', function() {
                 ontologyUtilsManagerSvc.updateLabel();
                 expect(ontologyStateSvc.listItem.index.iri.label).toBe('new-value');
                 expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptHierarchy, ontologyStateSvc.listItem.recordId);
+                expect(ontologyStateSvc.listItem.flatConceptHierarchy).toEqual([{prop: 'new-item'}]);
             });
             it('and isClass is true', function() {
                 ontologyManagerSvc.isClass.and.returnValue(true);
                 ontologyUtilsManagerSvc.updateLabel();
                 expect(ontologyStateSvc.listItem.index.iri.label).toBe('new-value');
                 expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.classHierarchy, ontologyStateSvc.listItem.recordId);
+                expect(ontologyStateSvc.listItem.flatClassHierarchy).toEqual([{prop: 'new-item'}]);
             });
             it('and isDataTypeProperty is true', function() {
                 ontologyManagerSvc.isDataTypeProperty.and.returnValue(true);
                 ontologyUtilsManagerSvc.updateLabel();
                 expect(ontologyStateSvc.listItem.index.iri.label).toBe('new-value');
                 expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.dataPropertyHierarchy, ontologyStateSvc.listItem.recordId);
+                expect(ontologyStateSvc.listItem.flatDataPropertyHierarchy).toEqual([{prop: 'new-item'}]);
             });
             it('and isObjectProperty is true', function() {
                 ontologyManagerSvc.isObjectProperty.and.returnValue(true);
                 ontologyUtilsManagerSvc.updateLabel();
                 expect(ontologyStateSvc.listItem.index.iri.label).toBe('new-value');
                 expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.objectPropertyHierarchy, ontologyStateSvc.listItem.recordId);
+                expect(ontologyStateSvc.listItem.flatObjectPropertyHierarchy).toEqual([{prop: 'new-item'}]);
             });
             it('and isAnnotation is true', function() {
                 ontologyManagerSvc.isAnnotation.and.returnValue(true);
                 ontologyUtilsManagerSvc.updateLabel();
                 expect(ontologyStateSvc.listItem.index.iri.label).toBe('new-value');
                 expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.annotationPropertyHierarchy, ontologyStateSvc.listItem.recordId);
+                expect(ontologyStateSvc.listItem.flatAnnotationPropertyHierarchy).toEqual([{prop: 'new-item'}]);
             });
         });
         it('when the listItem.index does not contain the selected @id', function() {

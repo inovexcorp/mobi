@@ -95,14 +95,14 @@
                             hierarchy.push({'entityIRI': dvm.property['@id']});
                             dvm.os.listItem.flatObjectPropertyHierarchy = dvm.os.flattenHierarchy(hierarchy, dvm.os.listItem.recordId);
                             dvm.os.setObjectPropertiesOpened(dvm.os.listItem.recordId, true);
-                            dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.listItem.ontology, dvm.os.listItem.recordId);
+                            dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.getOntologiesArray(), dvm.os.listItem.recordId);
                         } else if (dvm.om.isDataTypeProperty(dvm.property)) {
                             _.get(dvm.os.listItem, 'subDataProperties').push({namespace:split.begin + split.then, localName: split.end});
                             var hierarchy = _.get(dvm.os.listItem, 'dataPropertyHierarchy');
                             hierarchy.push({'entityIRI': dvm.property['@id']});
                             dvm.os.listItem.flatDataPropertyHierarchy = dvm.os.flattenHierarchy(hierarchy, dvm.os.listItem.recordId);
                             dvm.os.setDataPropertiesOpened(dvm.os.listItem.recordId, true);
-                            dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.listItem.ontology, dvm.os.listItem.recordId);
+                            dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.getOntologiesArray(), dvm.os.listItem.recordId);
                         } else if (dvm.om.isAnnotation(dvm.property)) {
                             _.get(dvm.os.listItem, 'annotations').push({namespace:split.begin + split.then, localName: split.end});
                             var hierarchy = _.get(dvm.os.listItem, 'annotationPropertyHierarchy');

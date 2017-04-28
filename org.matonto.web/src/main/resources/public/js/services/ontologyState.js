@@ -418,25 +418,25 @@
                     });
                     listItem.classHierarchy = response[2].hierarchy;
                     listItem.classIndex = response[2].index;
-                    listItem.flatClassHierarchy = self.flattenHierarchy(listItem.classHierarchy, recordId);
+                    listItem.flatClassHierarchy = self.flattenHierarchy(listItem.classHierarchy, recordId, listItem);
                     listItem.classesWithIndividuals = response[3].hierarchy;
                     listItem.classesWithIndividualsIndex = response[3].index;
-                    listItem.flatClassesWithIndividuals = self.flattenHierarchy(listItem.classesWithIndividuals, recordId);
+                    listItem.flatClassesWithIndividuals = self.flattenHierarchy(listItem.classesWithIndividuals, recordId, listItem);
                     listItem.dataPropertyHierarchy = response[4].hierarchy;
                     listItem.dataPropertyIndex = response[4].index;
-                    listItem.flatDataPropertyHierarchy = self.flattenHierarchy(listItem.dataPropertyHierarchy, recordId);
+                    listItem.flatDataPropertyHierarchy = self.flattenHierarchy(listItem.dataPropertyHierarchy, recordId, listItem);
                     listItem.objectPropertyHierarchy = response[5].hierarchy;
                     listItem.objectPropertyIndex = response[5].index;
-                    listItem.flatObjectPropertyHierarchy = self.flattenHierarchy(listItem.objectPropertyHierarchy, recordId);
+                    listItem.flatObjectPropertyHierarchy = self.flattenHierarchy(listItem.objectPropertyHierarchy, recordId, listItem);
                     listItem.branches = response[6].data;
                     listItem.annotationPropertyIndex = response[7].index;
                     listItem.annotationPropertyHierarchy = response[7].hierarchy;
-                    listItem.flatAnnotationPropertyHierarchy = self.flattenHierarchy(listItem.annotationPropertyHierarchy, recordId);
+                    listItem.flatAnnotationPropertyHierarchy = self.flattenHierarchy(listItem.annotationPropertyHierarchy, recordId, listItem);
                     _.forEach(response[8], importedOntObj => {
                         addImportedOntologyToListItem(listItem, importedOntObj.ontology, importedOntObj.id, 'ontology');
                     });
                     listItem.upToDate = upToDate;
-                    listItem.flatEverythingTree = self.createFlatEverythingTree(ontology, recordId);
+                    listItem.flatEverythingTree = self.createFlatEverythingTree(getOntologiesArrayByListItem(listItem), recordId);
                     _.pullAllWith(
                         listItem.annotations,
                         _.concat(om.ontologyProperties, listItem.subDataProperties, listItem.subObjectProperties),
@@ -517,9 +517,9 @@
              * @param {string} recordId The record ID associated with the provided hierarchy.
              * @returns {Object[]} An array which represents the provided hierarchy.
              */
-            self.flattenHierarchy = function(hierarchy, recordId) {
+            self.flattenHierarchy = function(hierarchy, recordId, listItem = self.listItem) {
                 var result = [];
-                var sortedHierarchy = orderHierarchy(hierarchy);
+                var sortedHierarchy = orderHierarchy(hierarchy, listItem);
                 _.forEach(sortedHierarchy, node => {
                     addNodeToResult(node, result, 0, [recordId]);
                 });
@@ -538,13 +538,13 @@
              * @param {string} recordId The record ID associated with the provided ontology.
              * @returns {Object[]} An array which contains the class-property replationships.
              */
-            self.createFlatEverythingTree = function(ontology, recordId) {
+            self.createFlatEverythingTree = function(ontologies, recordId) {
                 var result = [];
-                var orderedClasses = sortByName(om.getClasses(ontology));
+                var orderedClasses = sortByName(om.getClasses(ontologies));
                 var orderedProperties = [];
                 var path = [];
                 _.forEach(orderedClasses, clazz => {
-                    orderedProperties = sortByName(om.getClassProperties(ontology, clazz['@id']));
+                    orderedProperties = sortByName(om.getClassProperties(ontologies, clazz['@id']));
                     path = [recordId, clazz['@id']];
                     result.push(_.merge({}, clazz, {
                         indent: 0,
@@ -559,7 +559,7 @@
                         }));
                     });
                 });
-                var orderedNoDomainProperties = sortByName(om.getNoDomainProperties(ontology));
+                var orderedNoDomainProperties = sortByName(om.getNoDomainProperties(ontologies));
                 if (!!orderedNoDomainProperties.length) {
                     result.push({
                         title: 'Properties',
@@ -593,7 +593,8 @@
                 listItem.ontology.push(entityJSON);
                 _.get(listItem, 'index', {})[entityJSON['@id']] = {
                     position: listItem.ontology.length - 1,
-                    label: om.getEntityName(entityJSON, listItem.type)
+                    label: om.getEntityName(entityJSON, listItem.type),
+                    ontologyIri: listItem.ontologyId
                 }
             }
             /**
@@ -1095,14 +1096,14 @@
                 } else if (om.isClass(entity)) {
                     commonGoTo('classes', iri, self.listItem.flatClassHierarchy);
                 } else if (om.isDataTypeProperty(entity)) {
-                    commonGoTo('properties', iri, self.listItem.flatDataPropertyHierarchy);
                     self.setDataPropertiesOpened(self.listItem.recordId, true);
+                    commonGoTo('properties', iri, self.listItem.flatDataPropertyHierarchy);
                 } else if (om.isObjectProperty(entity)) {
-                    commonGoTo('properties', iri, self.listItem.flatObjectPropertyHierarchy);
                     self.setObjectPropertiesOpened(self.listItem.recordId, true);
+                    commonGoTo('properties', iri, self.listItem.flatObjectPropertyHierarchy);
                 } else if (om.isAnnotation(entity)) {
-                    commonGoTo('properties', iri, self.listItem.flatAnnotationPropertyHierarchy);
                     self.setAnnotationPropertiesOpened(self.listItem.recordId, true);
+                    commonGoTo('properties', iri, self.listItem.flatAnnotationPropertyHierarchy);
                 } else if (om.isIndividual(entity)) {
                     commonGoTo('individuals', iri);
                 } else if (om.isOntology(entity)) {
@@ -1118,27 +1119,31 @@
                         self.setOpened(pathString, true);
                     });
                 }
-                var index = _.findIndex(flatHierarchy, {entityIRI});
-                $timeout(function() {
-                    var $container = $document.querySelectorAll('[class*=hierarchy-block] .repeater-container');
-                    if (!!$container.length) {
-                        $container[0].scrollTop = index * 26;
-                    }
-                });
+                // var index = _.findIndex(flatHierarchy, {entityIRI});
+                // $timeout(function() {
+                //     var $element = $document.querySelectorAll('[data-path-to="' + _.join(path, '.') + '"]');
+                //     var $container = $document.querySelectorAll('[class*=hierarchy-block] .repeater-container');
+                //     if (!!$container.length && !!$element.length) {
+                //         $container[0].scrollTop = $element[0].offsetTop;
+                //     }
+                // });
             }
             self.getDefaultPrefix = function() {
                 return _.replace(_.get(self.listItem, 'iriBegin', self.listItem.ontologyId), '#', '/') + _.get(self.listItem, 'iriThen', '#');
             }
             self.getOntologiesArray = function() {
+                return getOntologiesArrayByListItem(self.listItem);
+            }
+
+            /* Private helper functions */
+            function getOntologiesArrayByListItem(listItem) {
                 var ontologies = [];
-                ontologies.push(self.listItem.ontology);
-                _.forEach(self.listItem.importedOntologies, importedOnt => {
+                ontologies.push(listItem.ontology);
+                _.forEach(listItem.importedOntologies, importedOnt => {
                     ontologies.push(importedOnt.ontology);
                 });
                 return ontologies;
             }
-
-            /* Private helper functions */
             function getIndices(listItem) {
                 var indices = [];
                 if (listItem) {
@@ -1306,12 +1311,12 @@
                 return _.isEqual(_.get(obj1, 'localName'), _.get(obj2, 'localName'))
                     && _.isEqual(_.get(obj1, 'namespace'), _.get(obj2, 'namespace'));
             }
-            function orderHierarchy(hierarchy) {
+            function orderHierarchy(hierarchy, listItem) {
                 return _.sortBy(hierarchy, node => {
                     if (_.has(node, 'subEntities')) {
-                        node.subEntities = orderHierarchy(node.subEntities);
+                        node.subEntities = orderHierarchy(node.subEntities, listItem);
                     }
-                    return _.lowerCase(self.getEntityNameByIndex(node.entityIRI, self.listItem));
+                    return _.lowerCase(self.getEntityNameByIndex(node.entityIRI, listItem));
                 });
             }
             function addNodeToResult(node, result, indent, path) {

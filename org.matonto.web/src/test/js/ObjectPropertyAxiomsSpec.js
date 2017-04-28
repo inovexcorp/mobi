@@ -115,8 +115,10 @@ describe('Object Property Axioms directive', function() {
             it('if the axiom is domain', function() {
                 this.axiom.localName = 'domain';
                 ontologyStateSvc.createFlatEverythingTree.and.returnValue([{prop: 'everything'}]);
+                ontologyStateSvc.getOntologiesArray.and.returnValue([]);
                 controller.updateHierarchy(this.axiom, this.values);
-                expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontology, ontologyStateSvc.listItem.recordId);
+                expect(ontologyStateSvc.getOntologiesArray).toHaveBeenCalled();
+                expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith([], ontologyStateSvc.listItem.recordId);
                 expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([{prop: 'everything'}]);
             });
         });

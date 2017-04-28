@@ -1364,10 +1364,10 @@ describe('Ontology State Service', function() {
             get: ontologyStateSvc.getNoDomainsOpened,
             path: ['recordId', 'property2']
         }];
-        expect(ontologyStateSvc.createFlatEverythingTree(ontology, 'recordId')).toEqual(expected);
-        expect(ontologyManagerSvc.getClasses).toHaveBeenCalledWith(ontology);
-        expect(ontologyManagerSvc.getClassProperties).toHaveBeenCalledWith(ontology, 'class1');
-        expect(ontologyManagerSvc.getNoDomainProperties).toHaveBeenCalledWith(ontology);
+        expect(ontologyStateSvc.createFlatEverythingTree([ontology], 'recordId')).toEqual(expected);
+        expect(ontologyManagerSvc.getClasses).toHaveBeenCalledWith([ontology]);
+        expect(ontologyManagerSvc.getClassProperties).toHaveBeenCalledWith([ontology], 'class1');
+        expect(ontologyManagerSvc.getNoDomainProperties).toHaveBeenCalledWith([ontology]);
     });
     it('addEntity adds the entity to the provided ontology and index', function() {
         ontologyManagerSvc.getEntityName.and.returnValue('name');
@@ -1378,6 +1378,7 @@ describe('Ontology State Service', function() {
         expect(listItem.index[individualId].position).toEqual(3);
         expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith(individualObj, listItem.type);
         expect(listItem.index[individualId].label).toBe('name');
+        expect(listItem.index[individualId].ontologyIri).toBe('ontologyId');
     });
     describe('getEntityNameByIndex should return the proper value', function() {
         it('when the entityIRI is in the index', function() {
@@ -1470,6 +1471,7 @@ describe('Ontology State Service', function() {
             ontologyManagerSvc.getDataPropertyHierarchies.and.returnValue($q.when(dataPropertyHierarchiesResponse));
             ontologyManagerSvc.getObjectPropertyHierarchies.and.returnValue($q.when(objectPropertyHierarchiesResponse));
             ontologyManagerSvc.getAnnotationPropertyHierarchies.and.returnValue($q.when(annotationPropertyHierarchiesResponse));
+            ontologyManagerSvc.getImportedOntologies.and.returnValue($q.when([{id: 'imported-ontology', ontology: [{'@id': 'ontologyId'}]}]));
             catalogManagerSvc.getRecordBranches.and.returnValue($q.when({data: branches}));
             spyOn(ontologyStateSvc, 'flattenHierarchy');
             spyOn(ontologyStateSvc, 'createFlatEverythingTree');
@@ -1519,22 +1521,29 @@ describe('Ontology State Service', function() {
                     }], ontologyManagerSvc.defaultDatatypes));
                     expect(_.get(response, 'classHierarchy')).toEqual(classHierarchiesResponse.hierarchy);
                     expect(_.get(response, 'classIndex')).toEqual(classHierarchiesResponse.index);
-                    expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.classHierarchy, recordId);
+                    expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.classHierarchy, recordId, response);
                     expect(_.get(response, 'classesWithIndividuals')).toEqual(classesWithIndividualsResponse.hierarchy);
                     expect(_.get(response, 'classesWithIndividualsIndex')).toEqual(classesWithIndividualsResponse.index);
-                    expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.classesWithIndividuals, recordId);
+                    expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.classesWithIndividuals, recordId, response);
                     expect(_.get(response, 'dataPropertyHierarchy')).toEqual(dataPropertyHierarchiesResponse.hierarchy);
                     expect(_.get(response, 'dataPropertyIndex')).toEqual(dataPropertyHierarchiesResponse.index);
-                    expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.dataPropertyHierarchy, recordId);
+                    expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.dataPropertyHierarchy, recordId, response);
                     expect(_.get(response, 'objectPropertyHierarchy')).toEqual(objectPropertyHierarchiesResponse.hierarchy);
                     expect(_.get(response, 'objectPropertyIndex')).toEqual(objectPropertyHierarchiesResponse.index);
-                    expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.objectPropertyHierarchy, recordId);
+                    expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.objectPropertyHierarchy, recordId, response);
                     expect(_.get(response, 'branches')).toEqual(branches);
                     expect(_.get(response, 'annotationPropertyHierarchy')).toEqual(annotationPropertyHierarchiesResponse.hierarchy);
                     expect(_.get(response, 'annotationPropertyIndex')).toEqual(annotationPropertyHierarchiesResponse.index);
-                    expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.annotationPropertyHierarchy, recordId);
+                    expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.annotationPropertyHierarchy, recordId, response);
                     expect(_.get(response, 'upToDate')).toBe(true);
-                    expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith(ontology, recordId);
+                    expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith([ontology, [{
+                        '@id': 'ontologyId',
+                        matonto: {
+                            originalIRI: 'ontologyId',
+                            icon: 'fa-square-o',
+                            imported: true
+                        }
+                    }]], recordId);
                 }, function() {
                     fail('Promise should have resolved');
                 });
@@ -2972,8 +2981,8 @@ describe('Ontology State Service', function() {
         });
     });
     it('openAt sets all parents open', function() {
-        var dummyReturn = [{}];
-        $document.querySelectorAll.and.returnValue(dummyReturn);
+        var item = [{offsetTop: 25}];
+        $document.querySelectorAll.and.returnValue(item);
         spyOn(ontologyStateSvc, 'setOpened');
         var flatHierarchy = [{
             entityIRI: 'iri-a',
@@ -2986,11 +2995,12 @@ describe('Ontology State Service', function() {
             path: ['recordId', 'iri-a', 'iri-b', 'iri-c']
         }];
         ontologyStateSvc.openAt(flatHierarchy, 'iri-c');
-        $timeout.flush();
         expect(ontologyStateSvc.setOpened).toHaveBeenCalledWith('recordId.iri-a', true);
         expect(ontologyStateSvc.setOpened).toHaveBeenCalledWith('recordId.iri-a.iri-b', true);
-        expect($document.querySelectorAll).toHaveBeenCalledWith('[class*=hierarchy-block] .repeater-container');
-        expect(dummyReturn[0].scrollTop).toBe(3 * 26);
+        // $timeout.flush();
+        // expect($document.querySelectorAll).toHaveBeenCalledWith('[class*=hierarchy-block] .repeater-container');
+        // expect($document.querySelectorAll).toHaveBeenCalledWith('[data-path-to="recordId.iri-a.iri-b.iri-c"]');
+        // expect(item[0].scrollTop).toBe(25);
     });
     describe('getDefaultPrefix returns the proper value for the prefix associated with ontology', function() {
         it('when there is no iriBegin or iriThen', function() {

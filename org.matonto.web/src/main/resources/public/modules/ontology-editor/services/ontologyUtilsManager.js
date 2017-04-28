@@ -112,7 +112,7 @@
             }
 
             self.isLinkable = function(id) {
-                return _.has(os.listItem.index, id) && !om.isBlankNodeId(id);
+                return !!os.getEntityByRecordId(os.listItem.recordId, id) && !om.isBlankNodeId(id);
             }
 
             self.getNameByNode = function(node) {
@@ -152,13 +152,13 @@
                     if (os.listItem.type === 'vocabulary') {
                         os.listItem.flatConceptHierarchy = os.flattenHierarchy(os.listItem.conceptHierarchy, os.listItem.recordId);
                     } else if (om.isClass(os.selected)) {
-                        os.listItem.flatConceptHierarchy = os.flattenHierarchy(os.listItem.classHierarchy, os.listItem.recordId);
+                        os.listItem.flatClassHierarchy = os.flattenHierarchy(os.listItem.classHierarchy, os.listItem.recordId);
                     } else if (om.isDataTypeProperty(os.selected)) {
-                        os.listItem.flatConceptHierarchy = os.flattenHierarchy(os.listItem.dataPropertyHierarchy, os.listItem.recordId);
+                        os.listItem.flatDataPropertyHierarchy = os.flattenHierarchy(os.listItem.dataPropertyHierarchy, os.listItem.recordId);
                     } else if (om.isObjectProperty(os.selected)) {
-                        os.listItem.flatConceptHierarchy = os.flattenHierarchy(os.listItem.objectPropertyHierarchy, os.listItem.recordId);
+                        os.listItem.flatObjectPropertyHierarchy = os.flattenHierarchy(os.listItem.objectPropertyHierarchy, os.listItem.recordId);
                     } else if (om.isAnnotation(os.selected)) {
-                        os.listItem.flatConceptHierarchy = os.flattenHierarchy(os.listItem.annotationPropertyHierarchy, os.listItem.recordId);
+                        os.listItem.flatAnnotationPropertyHierarchy = os.flattenHierarchy(os.listItem.annotationPropertyHierarchy, os.listItem.recordId);
                     }
                 }
             }
