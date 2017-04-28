@@ -93,6 +93,10 @@
                                     <outputPackage>org.matonto.foaf</outputPackage>
                                     <ontologyName>FOAF</ontologyName>
                                 </ontology>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/src/test/resources/test-ont.trig</ontologyFile>
+                                    <outputPackage>org.matonto.test</outputPackage>
+                                </ontology>
                             </generates>
                             <references>
                                 <ontology>

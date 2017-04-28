@@ -42,22 +42,22 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>dataset.api</artifactId>
-            <version>1.5.45</version>
+            <version>1.6.28-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>persistence.api</artifactId>
-            <version>1.5.45</version>
+            <version>1.6.28-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>sparql.utils</artifactId>
-            <version>1.5.45</version>
+            <version>1.6.28-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>persistence.utils</artifactId>
-            <version>1.5.45</version>
+            <version>1.6.28-SNAPSHOT</version>
         </dependency>
 
         <!-- Test Dependencies -->
@@ -72,19 +72,19 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rdf.impl.sesame</artifactId>
-            <version>1.5.45</version>
+            <version>1.6.28-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>repository.impl.sesame</artifactId>
-            <version>1.5.45</version>
+            <version>1.6.28-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rdf.orm.ontologies</artifactId>
-            <version>1.5.45</version>
+            <version>1.6.28-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

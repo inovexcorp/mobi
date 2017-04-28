@@ -73,7 +73,7 @@
         <commons-rdf-api.version>0.1.0-incubating</commons-rdf-api.version>
         <powermock.version>1.6.4</powermock.version>
         <hamcrest.version>1.3</hamcrest.version>
-        <orm.version>1.5.9</orm.version>
+        <orm.version>1.6.28-SNAPSHOT</orm.version>
     </properties>
 
     <dependencyManagement>
