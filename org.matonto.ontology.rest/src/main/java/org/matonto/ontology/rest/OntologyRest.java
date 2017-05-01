@@ -925,7 +925,7 @@ public interface OntologyRest {
                                               @QueryParam("commitId") String commitIdStr);
 
     /**
-    * Returns the JSON annotation hierarchy for the ontology identified by the provided IDs.
+    * Returns the JSON annotation property hierarchy for the ontology identified by the provided IDs.
     *
     * @param context the context of the request.
     * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
@@ -937,7 +937,7 @@ public interface OntologyRest {
     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
     *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
     *                    otherwise, nothing will be returned.
-    * @return nested JSON structure that represents the annotation hierarchy for the ontology with requested
+    * @return nested JSON structure that represents the annotation property hierarchy for the ontology with requested
     *         record ID.
     */
     @GET

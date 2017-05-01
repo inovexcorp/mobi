@@ -29,7 +29,7 @@ describe('Everything Tree directive', function() {
         mockOntologyManager();
         mockOntologyState();
         mockOntologyUtilsManager();
-        injectUniqueIRIFilter();
+        injectUniqueKeyFilter();
 
         inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_) {
             $compile = _$compile_;

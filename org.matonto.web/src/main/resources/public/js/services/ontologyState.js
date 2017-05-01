@@ -133,6 +133,7 @@
              *      ontologyId: '',
              *      ontology: [],
              *      importedOntologies: [],
+             *      importedOntologyIds: [],
              *      annotations: [],
              *      subDataProperties: [],
              *      subObjectProperties: [],
@@ -429,11 +430,11 @@
                     listItem.objectPropertyIndex = response[5].index;
                     listItem.flatObjectPropertyHierarchy = self.flattenHierarchy(listItem.objectPropertyHierarchy, recordId, listItem);
                     listItem.branches = response[6].data;
-                    listItem.annotationPropertyIndex = response[7].index;
                     listItem.annotationPropertyHierarchy = response[7].hierarchy;
+                    listItem.annotationPropertyIndex = response[7].index;
                     listItem.flatAnnotationPropertyHierarchy = self.flattenHierarchy(listItem.annotationPropertyHierarchy, recordId, listItem);
                     _.forEach(response[8], importedOntObj => {
-                        addImportedOntologyToListItem(listItem, importedOntObj.ontology, importedOntObj.id, 'ontology');
+                        addImportedOntologyToListItem(listItem, importedOntObj, 'ontology');
                     });
                     listItem.upToDate = upToDate;
                     listItem.flatEverythingTree = self.createFlatEverythingTree(getOntologiesArrayByListItem(listItem), recordId);
@@ -491,7 +492,7 @@
                     listItem.flatConceptHierarchy = self.flattenHierarchy(listItem.conceptHierarchy, recordId);
                     listItem.branches = response[3].data;
                     _.forEach(response[4], importedOntObj => {
-                        addImportedOntologyToListItem(listItem, importedOntObj.ontology, importedOntObj.id, 'vocabulary');
+                        addImportedOntologyToListItem(listItem, importedOntObj, 'vocabulary');
                     });
                     listItem.upToDate = upToDate;
                     _.pullAllWith(
@@ -515,6 +516,7 @@
              *
              * @param {Object} hierarchy The Object set up in a hierarchical structure.
              * @param {string} recordId The record ID associated with the provided hierarchy.
+             * @param {Object} [listItem=self.listItem] The listItem associated with the provided hierarchy.
              * @returns {Object[]} An array which represents the provided hierarchy.
              */
             self.flattenHierarchy = function(hierarchy, recordId, listItem = self.listItem) {
@@ -534,7 +536,7 @@
              * Creates an array which represents the hierarchical structure of the relationship between classes
              * and properties to be used with a virtual scrolling solution.
              *
-             * @param {Object} ontology The ontology to build the hierarchal structure for.
+             * @param {Object[]} ontologies The array of ontologies to build the hierarchal structure for.
              * @param {string} recordId The record ID associated with the provided ontology.
              * @returns {Object[]} An array which contains the class-property replationships.
              */
@@ -546,13 +548,13 @@
                 _.forEach(orderedClasses, clazz => {
                     orderedProperties = sortByName(om.getClassProperties(ontologies, clazz['@id']));
                     path = [recordId, clazz['@id']];
-                    result.push(_.merge({}, clazz, {
+                    result.push(_.merge(clazz, {
                         indent: 0,
                         hasChildren: !!orderedProperties.length,
                         path
                     }));
                     _.forEach(orderedProperties, property => {
-                        result.push(_.merge({}, property, {
+                        result.push(_.merge(property, {
                             indent: 1,
                             hasChildren: false,
                             path: _.concat(path, property['@id'])
@@ -560,7 +562,7 @@
                     });
                 });
                 var orderedNoDomainProperties = sortByName(om.getNoDomainProperties(ontologies));
-                if (!!orderedNoDomainProperties.length) {
+                if (orderedNoDomainProperties.length) {
                     result.push({
                         title: 'Properties',
                         get: self.getNoDomainsOpened,
@@ -684,13 +686,7 @@
                     var entity = _.get(index, entityIRI);
                      return (entity !== null && _.has(entity, 'label'));
                 }), entityIRI);
-
-                if (!entity) {
-                    name = utilService.getBeautifulIRI(entityIRI);
-                } else {
-                    name = entity.label;
-                }
-                return name;
+                return !entity ? utilService.getBeautifulIRI(entityIRI) : entity.label;
             }
             /**
              * @ngdoc method
@@ -1112,7 +1108,7 @@
             }
             self.openAt = function(flatHierarchy, entityIRI) {
                 var path = _.get(_.find(flatHierarchy, {entityIRI}), 'path', []);
-                if (!!path.length) {
+                if (path.length) {
                     var pathString = _.head(path);
                     _.forEach(_.tail(_.initial(path)), pathPart => {
                         pathString += '.' + pathPart;
@@ -1137,22 +1133,10 @@
 
             /* Private helper functions */
             function getOntologiesArrayByListItem(listItem) {
-                var ontologies = [];
-                ontologies.push(listItem.ontology);
-                _.forEach(listItem.importedOntologies, importedOnt => {
-                    ontologies.push(importedOnt.ontology);
-                });
-                return ontologies;
+                return _.concat([listItem.ontology], _.map(listItem.importedOntologies, 'ontology'));
             }
             function getIndices(listItem) {
-                var indices = [];
-                if (listItem) {
-                    indices.push(_.get(listItem, 'index'));
-                    _.forEach(listItem.importedOntologies, importedOnt => {
-                        indices.push(importedOnt.index);
-                    });
-                }
-                return indices;
+                return _.concat([listItem.index], _.map(listItem.importedOntologies, 'index'));
             }
             function getEntities(hierarchy, entityIRI, indexObject) {
                 var results = [];
@@ -1281,7 +1265,7 @@
                 var entities = [];
                 _.forEach(indices, index => {
                     var entity = _.get(index, entityIRI);
-                    if (entity !== null && _.has(entity, 'position') && _.has(entity, 'ontologyIri')) {
+                    if (entity && _.has(entity, 'position') && _.has(entity, 'ontologyIri')) {
                         if (entity.ontologyIri === ontologyId) {
                             entities.push(ontology[entity.position]);
                         } else {
@@ -1335,15 +1319,15 @@
             function sortByName(array) {
                 return _.sortBy(array, entity => _.lowerCase(self.getEntityNameByIndex(entity['@id'], self.listItem)));
             }
-            function addImportedOntologyToListItem(listItem, importedOntology, id, type) {  
+            function addImportedOntologyToListItem(listItem, importedOntObj, type) {  
                 var index = {};
-                _.forEach(importedOntology, (entity, i) => {
+                _.forEach(importedOntObj.ontology, (entity, i) => {
                     if (_.has(entity, '@id')) {
                         _.set(entity, 'matonto.originalIRI', entity['@id']);
                         index[entity['@id']] = {
                             position: i,
                             label: om.getEntityName(entity, type),
-                            ontologyIri: id
+                            ontologyIri: importedOntObj.id
                         }
                     }
                     if (om.isProperty(entity)) {
@@ -1352,11 +1336,11 @@
                     _.set(entity, 'matonto.imported', true);
                 });
                 var importedOntologyListItem = {
-                    id: id,
+                    id: importedOntObj.id,
                     index: index,
-                    ontology: importedOntology
+                    ontology: importedOntObj.ontology
                 };
-                listItem.importedOntologyIds.push(id);
+                listItem.importedOntologyIds.push(importedOntObj.id);
                 listItem.importedOntologies.push(importedOntologyListItem);
             }
         }

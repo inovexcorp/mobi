@@ -60,7 +60,7 @@
                     dvm.flatPropertyTree = constructFlatPropertyTree();
                     
                     function addGetToArrayItems(array, get) {
-                        return _.map(array, item => _.merge({}, item, {get}));
+                        return _.map(array, item => _.merge(item, {get}));
                     }
                     
                     function constructFlatPropertyTree() {

@@ -137,9 +137,9 @@ function injectUsernameSearchFilter() {
     });
 }
 
-function injectUniqueIRIFilter() {
+function injectUniqueKeyFilter() {
     module(function($provide) {
-        $provide.value('uniqueIRIFilter', jasmine.createSpy('uniqueIRIFilter').and.callFake(_.identity));
+        $provide.value('uniqueKeyFilter', jasmine.createSpy('uniqueKeyFilter').and.callFake(_.identity));
     });
 }
 

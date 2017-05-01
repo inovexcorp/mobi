@@ -31,7 +31,7 @@ describe('Individual Tree directive', function() {
         mockOntologyState();
         mockUtil();
         mockOntologyUtilsManager();
-        injectUniqueIRIFilter();
+        injectUniqueKeyFilter();
 
         inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_, _utilService_) {
             $compile = _$compile_;

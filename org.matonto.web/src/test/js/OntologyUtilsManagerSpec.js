@@ -388,7 +388,7 @@ describe('Ontology Utils Manager service', function() {
             });
         });
         it('when the listItem.index does not contain the selected @id', function() {
-            ontologyStateSvc.selected = {};
+            ontologyStateSvc.selected = {'@id': 'other-iri'};
             ontologyUtilsManagerSvc.updateLabel();
             expect(ontologyStateSvc.listItem.index.iri.label).toBe('old-value');
         });

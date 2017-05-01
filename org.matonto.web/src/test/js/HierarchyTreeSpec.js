@@ -30,7 +30,7 @@ describe('Hierarchy Tree directive', function() {
         module('hierarchyTree');
         mockOntologyState();
         mockOntologyUtilsManager();
-        injectUniqueIRIFilter();
+        injectUniqueKeyFilter();
 
         inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyUtilsManagerService_) {
             $compile = _$compile_;

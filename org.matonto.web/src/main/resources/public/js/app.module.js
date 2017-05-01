@@ -50,7 +50,7 @@
             'showProperties',
             'splitIRI',
             'trusted',
-            'uniqueIRI',
+            'uniqueKey',
 
             /* Custom Directives */
             'block',

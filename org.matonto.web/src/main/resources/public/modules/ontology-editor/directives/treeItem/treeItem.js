@@ -40,7 +40,7 @@
                     onClick: '&'
                 },
                 bindToController: {
-                    currentEntity: '=',
+                    currentEntity: '<',
                     isOpened: '=',
                     path: '<'
                 },
