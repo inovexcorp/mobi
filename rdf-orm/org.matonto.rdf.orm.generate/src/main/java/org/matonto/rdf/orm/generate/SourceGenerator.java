@@ -397,8 +397,8 @@ public class SourceGenerator {
     private void generateFieldAccessorsForEachInterfaceMethod(final JDefinedClass impl,
                                                               final JDefinedClass interfaceClass) {
         interfaceClass.methods().forEach(interfaceMethod -> {
-            if(!alreadyHasMethod(impl, interfaceClass, interfaceMethod)){
-            LOG.debug("Adding " + interfaceMethod.name() + " to the implementation class: " + interfaceClass.name());
+            if (!alreadyHasMethod(impl, interfaceClass, interfaceMethod)) {
+                LOG.debug("Adding " + interfaceMethod.name() + " to the implementation class: " + interfaceClass.name());
                 // Generate getter.
                 if (interfaceMethod.name().startsWith("get") || interfaceMethod.name().startsWith("is")) {
                     generateFieldGetterForImpl(impl, interfaceMethod, interfaceClass);
@@ -425,31 +425,33 @@ public class SourceGenerator {
                                      final JMethod interfaceMethod) {
         boolean alreadyHas = false;
         if (impl.getMethod(interfaceMethod.name(), interfaceMethod.listParamTypes()) == null) {
-            for(JMethod method : impl.methods()){
-                if(interfaceMethod.name().equals(method.name())){
-                    boolean overlap = true;
-                    for(JVar implParam : method.params()){
-                        boolean found = false;
-                        for(JVar newParam : interfaceMethod.params()){
-                            if(newParam.type().fullName().equalsIgnoreCase(implParam.type().fullName())){
-                                found= true;
-                                break;
-                            }
-                        }
-                        if(!found){
-                            overlap = false;
-                            break;
-                        }
-                    }
-                    if(overlap){
-                        alreadyHas=true;
-                    }
+            for (JMethod method : impl.methods()) {
+                if (interfaceMethod.name().equals(method.name()) && variablesOverlap(method, interfaceMethod)) {
+                    alreadyHas = true;
                 }
             }
         } else {
-            alreadyHas=true;
+            alreadyHas = true;
         }
         return alreadyHas;
+    }
+
+    private boolean variablesOverlap(JMethod method, JMethod interfaceMethod) {
+        boolean overlap = true;
+        for (JVar implParam : method.params()) {
+            boolean found = false;
+            for (JVar newParam : interfaceMethod.params()) {
+                if (newParam.type().fullName().equalsIgnoreCase(implParam.type().fullName())) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                overlap = false;
+                break;
+            }
+        }
+        return overlap;
     }
 
     private void generateFieldSetterForImpl(final JDefinedClass impl, final JMethod interfaceMethod,

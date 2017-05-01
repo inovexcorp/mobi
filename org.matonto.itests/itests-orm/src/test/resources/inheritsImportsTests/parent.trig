@@ -18,5 +18,5 @@
 
 
 :functionalDatatype a rdf:Property , owl:DatatypeProperty , owl:FunctionalProperty ;
-    rdfs:range foaf:Agent ; rdfs:comment "Functional Datatype property that should be on every class (no domain)." ; rdfs:label "Functional Datatype" .
+    rdfs:range xsd:string ; rdfs:comment "Functional Datatype property that should be on every class (no domain)." ; rdfs:label "Functional Datatype" .
 
