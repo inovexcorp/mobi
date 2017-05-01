@@ -1177,7 +1177,7 @@ public class OntologyRestImpl implements OntologyRest {
         catalogManager.addAdditions(ontology.asModel(modelFactory), inProgressCommit.getResource());
 
         Commit commit = catalogManager.createCommit(inProgressCommit, "The initial commit.", null, null);
-        Resource masterBranchId = record.getMasterBranch().get().getResource();
+        Resource masterBranchId = record.getMasterBranch_resource().get();
         catalogManager.addCommitToBranch(commit, masterBranchId);
 
         catalogManager.removeInProgressCommit(inProgressCommit.getResource());
