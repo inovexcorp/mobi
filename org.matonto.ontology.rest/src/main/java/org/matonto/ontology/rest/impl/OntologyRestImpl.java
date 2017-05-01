@@ -755,7 +755,7 @@ public class OntologyRestImpl implements OntologyRest {
     /**
      * Checks to make sure that the parameter is present. If it is not, it throws an error with the provided String.
      *
-     * @param param the parameter String to check
+     * @param param        the parameter String to check
      * @param errorMessage the message String for the thrown error
      */
     private void throwErrorIfMissingStringParam(String param, String errorMessage) {
@@ -779,7 +779,7 @@ public class OntologyRestImpl implements OntologyRest {
      * Gets the Resource for the InProgressCommit associated with the User from the provided ContainerRequestContext. If
      * that User does not have an InProgressCommit, a new one will be created and that Resource will be returned.
      *
-     * @param context the ContainerRequestContext from which you want to get a User.
+     * @param context     the ContainerRequestContext from which you want to get a User.
      * @param recordIdStr the record ID String to process.
      * @return a Resource which identifies the InProgressCommit associated with the User from the context.
      */
@@ -800,7 +800,7 @@ public class OntologyRestImpl implements OntologyRest {
     /**
      * Optionally gets the Ontology based on the provided IDs.
      *
-     * @param context the context of the request.
+     * @param context     the context of the request.
      * @param recordIdStr the record ID String to process.
      * @param branchIdStr the branch ID String to process.
      * @param commitIdStr the commit ID String to process.
@@ -813,7 +813,7 @@ public class OntologyRestImpl implements OntologyRest {
         String key = OntologyManager.getOntologyCacheKey(recordIdStr, branchIdStr, commitIdStr);
 
         if (ontologyCache.isPresent() && ontologyCache.get().containsKey(key)) {
-                optionalOntology = Optional.of(ontologyCache.get().get(key));
+            optionalOntology = Optional.of(ontologyCache.get().get(key));
         } else {
             Resource recordId = valueFactory.createIRI(recordIdStr);
 
@@ -842,14 +842,13 @@ public class OntologyRestImpl implements OntologyRest {
                 optionalOntology = Optional.of(ontologyManager.createOntology(ontologyModel));
             }
         }
-
         return optionalOntology;
     }
 
     /**
      * Gets the List of entity IRIs identified by a lambda function in an Ontology identified by the provided IDs.
      *
-     * @param context the context of the request.
+     * @param context     the context of the request.
      * @param recordIdStr the record ID String to process.
      * @param branchIdStr the branch ID String to process.
      * @param commitIdStr the commit ID String to process.
@@ -1037,7 +1036,7 @@ public class OntologyRestImpl implements OntologyRest {
     /**
      * Gets the requested serialization of the provided Ontology.
      *
-     * @param ontology the Ontology you want to serialize in a different format.
+     * @param ontology  the Ontology you want to serialize in a different format.
      * @param rdfFormat the format you want.
      * @return A String containing the newly serialized Ontology.
      */
@@ -1057,7 +1056,7 @@ public class OntologyRestImpl implements OntologyRest {
     /**
      * Return a JSONObject with the requested format and the requested ontology in that format.
      *
-     * @param ontology the ontology to format and return
+     * @param ontology  the ontology to format and return
      * @param rdfFormat the format to serialize the ontology in
      * @return a JSONObject with the document format and the ontology in that format
      */
@@ -1110,7 +1109,7 @@ public class OntologyRestImpl implements OntologyRest {
     /**
      * Adds the provided Model to the requester's InProgressCommit additions.
      *
-     * @param context the context of the request.
+     * @param context     the context of the request.
      * @param recordIdStr the record ID String to process.
      * @param entityModel the Model to add to the additions in the InProgressCommit.
      * @return a Response indicating the success or failure of the addition.
@@ -1126,8 +1125,8 @@ public class OntologyRestImpl implements OntologyRest {
      * Adds the Statements associated with the entity identified by the provided ID to the requester's InProgressCommit
      * deletions.
      *
-     * @param context the context of the request.
-     * @param ontology the ontology to process.
+     * @param context     the context of the request.
+     * @param ontology    the ontology to process.
      * @param entityIdStr the ID of the entity to be deleted.
      * @param recordIdStr the ID of the record which contains the entity to be deleted.
      * @return a Response indicating the success or failure of the deletion.
@@ -1152,7 +1151,7 @@ public class OntologyRestImpl implements OntologyRest {
     /**
      * Gets the entity from within the provided Ontology based on the provided entity ID.
      *
-     * @param ontology the Ontology to process.
+     * @param ontology    the Ontology to process.
      * @param entityIdStr the ID of the entity to get.
      * @return a Model representation of the entity with the provided ID.
      */
@@ -1165,7 +1164,7 @@ public class OntologyRestImpl implements OntologyRest {
      * Verifies that the provided JSON-LD contains the proper @type
      *
      * @param jsonldStr the JSON-LD of the entity being verified.
-     * @param type the @type that the entity should be.
+     * @param type      the @type that the entity should be.
      */
     private void verifyJsonldType(String jsonldStr, String type) {
         try {
@@ -1183,11 +1182,11 @@ public class OntologyRestImpl implements OntologyRest {
     /**
      * Uploads the provided Ontology to a data store.
      *
-     * @param context the context of the request.
-     * @param ontology the Ontology to upload.
-     * @param title the title for the OntologyRecord.
+     * @param context     the context of the request.
+     * @param ontology    the Ontology to upload.
+     * @param title       the title for the OntologyRecord.
      * @param description the description for the OntologyRecord.
-     * @param keywords the comma separated list of keywords associated with the OntologyRecord.
+     * @param keywords    the comma separated list of keywords associated with the OntologyRecord.
      * @return a Response indicating the success of the upload.
      */
     private Response uploadOntology(ContainerRequestContext context, Ontology ontology, String title,

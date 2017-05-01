@@ -299,22 +299,18 @@
              *
              * @param {string} recordId The id of the Record to be deleted if no branchId is provided.
              * @param {string} branchId The id of the Branch that should be removed
-             * @return {Promise} A promise with the ontology at the specified commit in the specified RDF format`
+             * @return HTTP OK unless there was an error.
              */
             self.deleteOntology = function(recordId, branchId) {
                 var deferred = $q.defer();
-                var config = {
-                    headers: {
-                        'Accept': 'text/plain'
-                    }
-                };
+                var config = { };
 
                 if (branchId) {
                     config.params = { branchId };
                 }
 
                 $http.delete(prefix + '/' + encodeURIComponent(recordId), config)
-                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
+                    .then(response => deferred.resolve(), error => util.onError(error, deferred));
                 return deferred.promise;
             }
             /**

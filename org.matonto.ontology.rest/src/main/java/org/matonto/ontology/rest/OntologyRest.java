@@ -134,7 +134,6 @@ public interface OntologyRest {
      */
     @DELETE
     @Path("{recordId}")
-    @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
     @RolesAllowed("user")
     @ApiOperation("Retrieves the ontology in the requested format.")
     Response deleteOntology(@Context ContainerRequestContext context,
