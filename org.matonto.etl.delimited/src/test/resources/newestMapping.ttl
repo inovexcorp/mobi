@@ -20,14 +20,18 @@
                   delim:localName     "${2}" .
 
 
-:DataMapping1     delim:columnIndex       "1" ;
+:DataMapping1     rdfs:type               delim:DataMapping ;
+                  delim:columnIndex       "1" ;
                   delim:hasProperty       uhtc:formula .
 
-:DataMapping2     delim:columnIndex       "6" ;
+:DataMapping2     rdfs:type               delim:DataMapping ;
+                  delim:columnIndex       "6" ;
                   delim:hasProperty       uhtc:density .
 
-:DataMapping3     delim:columnIndex       "3" ;
+:DataMapping3     rdfs:type               delim:DataMapping ;
+                  delim:columnIndex       "3" ;
                   delim:hasProperty       uhtc:latticeParameter .
 
-:ObjectMapping1   delim:classMapping      :CrystalStructure ;
+:ObjectMapping1   rdfs:type               delim:ObjectMapping ;
+                  delim:classMapping      :CrystalStructure ;
                   delim:hasProperty       uhtc:crystalStructure .
