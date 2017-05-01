@@ -43,8 +43,7 @@
           "type": "uri",
           "value": "http://matonto.org/ontology#Class1a"
         }
-      },
-      {
+      },{
         "p": {
           "type": "uri",
           "value": "http://www.w3.org/2000/01/rdf-schema#subClassOf"
@@ -54,8 +53,8 @@
           "value": "http://matonto.org/ontology#Class1b"
         },
         "o": {
-          "type": "uri",
-          "value": "http://matonto.org/ontology#Class1a"
+        "type": "uri",
+        "value": "http://matonto.org/ontology#Class1a"
         }
       }
     ]
