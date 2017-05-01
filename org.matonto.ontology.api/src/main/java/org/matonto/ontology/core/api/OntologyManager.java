@@ -263,7 +263,6 @@ public interface OntologyManager {
         if (commitIri != null && !commitIri.trim().isEmpty()) {
             sb.append("&" + commitIri);
         }
-
         return sb.toString();
     }
 }

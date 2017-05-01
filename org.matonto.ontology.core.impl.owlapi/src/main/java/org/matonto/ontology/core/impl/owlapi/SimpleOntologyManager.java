@@ -348,7 +348,6 @@ public class SimpleOntologyManager implements OntologyManager {
             throw new IllegalArgumentException("The OntologyRecord could not be retrieved.", e);
         }
         clearCache(recordId, null);
-
     }
 
     @Override
