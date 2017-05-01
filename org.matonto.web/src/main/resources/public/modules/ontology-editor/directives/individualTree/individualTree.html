@@ -19,12 +19,13 @@
   You should have received a copy of the GNU Affero General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
-   ng-if="dvm.om.hasClassIndividuals(dvm.os.listItem.ontology, node.entityIRI)"
+{{ node.entityIRI | json}}
   -->
 <div class="tree individual-tree">
-    <ul class="class" ng-repeat="node in dvm.os.listItem.classesWithIndividuals | orderBy:dvm.ontoUtils.getNameByNode track by node.entityIRI" ng-include="'individual_item'"
-        ng-init="node = node; classOpened = dvm.os.getIndividualsOpened(dvm.os.listItem.recordId, node.entityIRI)"
-       ></ul>
+    <ul class="class" ng-repeat="node in dvm.os.listItem.classHierarchy | orderBy:dvm.ontoUtils.getNameByNode track by node.entityIRI" ng-include="'individual_item'"
+        ng-init="node = node; classOpened = dvm.os.getIndividualsOpened(dvm.os.listItem.recordId, node.entityIRI)" ng-if="dvm.verifyPathToIndividuals(node.entityIRI)"
+    >
+    </ul>
     <script type="text/ng-template" id="individual_item">
         <li>
             <a ng-click="classOpened = !classOpened; dvm.os.setIndividualsOpened(dvm.os.listItem.recordId, node.entityIRI, classOpened); $event.stopPropagation()">
@@ -34,17 +35,14 @@
         </li>
         <li class="container" ng-if="classOpened">
             <ul ng-repeat="node in node.subEntities | orderBy:dvm.ontoUtils.getNameByNode track by node.entityIRI" ng-include="'individual_item'"
-                ng-init="node = node; classOpened = dvm.os.getIndividualsOpened(dvm.os.listItem.recordId, node.entityIRI)"></ul>
+                ng-init="node = node; classOpened = dvm.os.getIndividualsOpened(dvm.os.listItem.recordId, node.entityIRI)" ng-if="dvm.verifyPathToIndividuals(node.entityIRI)"></ul>
             <ul>
                 <tree-item class="individual" ng-repeat="individual in dvm.om.getClassIndividuals(dvm.os.listItem.ontology, node.entityIRI) | orderBy:dvm.om.getEntityName track by individual.matonto.originalIRI"
                            current-entity="individual"
                            is-active="dvm.os.getActiveEntityIRI() === individual.matonto.originalIRI"
-                           on-click="dvm.os.selectItem(individual.matonto.originalIRI, false)"></tree-item>
+                           on-click="dvm.os.selectItem(individual.matonto.originalIRI, false)" ></tree-item>
             </ul>
-
         </li>
-
-
     </script>
 
 </div>

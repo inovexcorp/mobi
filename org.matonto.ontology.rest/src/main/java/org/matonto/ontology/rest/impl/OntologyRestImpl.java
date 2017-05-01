@@ -1205,11 +1205,12 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     /**
-     * Pending!!
+     * Parse the provided Set to provide a map with all the Individuals using their parent(class) as key
      *
-     * @param
+     * @param tupleQueryResult the TupleQueryResult that contains the parent-individuals relationships for creating the
+     *                         map.
+     * @return a JSONObject containing the map of the individuals provided.
      *
-     * @return
      */
     private JSONObject getClassIndividuals(TupleQueryResult tupleQueryResult) {
         Map<String, Set<String>> classIndividuals = new HashMap<>();

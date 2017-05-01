@@ -69,13 +69,44 @@
                     }
 
                     dvm.create = function() {
-                        _.set(dvm.individual, 'matonto.originalIRI', dvm.individual['@id']);
+                       _.set(dvm.individual, 'matonto.originalIRI', dvm.individual['@id']);
                         // update relevant lists
-                        var split = $filter('splitIRI')(dvm.individual['@id']);
-                        _.get(dvm.os.listItem, 'individuals').push({namespace:split.begin + split.then,
+                       var split = $filter('splitIRI')(dvm.individual['@id']);
+                       _.get(dvm.os.listItem, 'individuals').push({namespace:split.begin + split.then,
                             localName: split.end});
-                        var classesWithIndividuals = _.get(dvm.os.listItem, 'classesWithIndividuals');
-                        _.set(dvm.os.listItem, 'classesWithIndividuals', _.unionWith(classesWithIndividuals, _.map(dvm.individual['@type'], type => ({entityIRI: type})), (obj1, obj2) => _.get(obj1, 'entityIRI') === _.get(obj2, 'entityIRI')));
+
+                       var classesWithIndividuals = _.get(dvm.os.listItem, 'classesWithIndividuals');
+                       var classesAndIndividuals = _.get(dvm.os.listItem, 'classesAndIndividuals');
+                       var individualsParentPath = _.get(dvm.os.listItem, 'individualsParentPath');
+                       var paths = [];
+                       var individuals = [];
+
+                       _.each(dvm.individual['@type'], (type) => {
+                           var individual = [];
+                           var existingInds = _.get(dvm.os.listItem.classesAndIndividuals, type);
+                           var path = dvm.os.getPathsTo(_.get(dvm.os.listItem, 'classHierarchy'), _.get(dvm.os.listItem, 'classIndex'), type);
+
+                           individual.push(dvm.individual['@id']);
+
+                           if(existingInds){
+                               var conItems = _.concat(individual, existingInds);
+                               dvm.os.listItem.classesAndIndividuals[type] = conItems;
+                           }
+                           else{
+                               dvm.os.listItem.classesAndIndividuals[type] = individual;
+                           }
+
+                           individuals.push(type);
+                           paths.push(path);
+                        });
+
+                        var uniqueUris =  _.uniq(_.flattenDeep(paths));//dvm.os.retrieveUniquePaths(paths);
+                        var ipp = _.concat(individualsParentPath,uniqueUris);
+                        var cwi = _.concat(classesWithIndividuals,individuals);
+
+                        _.set(dvm.os.listItem, 'classesWithIndividuals', cwi);
+                        _.set(dvm.os.listItem, 'individualsParentPath', ipp);
+
                         // add the entity to the ontology
                         dvm.individual['@type'].push(prefixes.owl + 'NamedIndividual');
                         dvm.os.addEntity(dvm.os.listItem, dvm.individual);

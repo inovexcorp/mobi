@@ -1400,6 +1400,13 @@ describe('Ontology State service', function() {
             scope.$apply();
         });
     });
+
+     it('retrievePaths should get the paths to any given individual', function() {
+         spyOn(ontologyStateSvc, 'getPathsTo').and.returnValue([['ClassA']]);
+         expect(ontologyStateSvc.retrievePaths({'ClassA': ['IndivA']},[],{})).toEqual([[['ClassA']]]);
+         expect(ontologyStateSvc.getPathsTo).toHaveBeenCalledWith([],{},'ClassA');
+     });
+
     describe('addOntologyToList should call the correct functions', function() {
         var createDeferred;
         beforeEach(function() {

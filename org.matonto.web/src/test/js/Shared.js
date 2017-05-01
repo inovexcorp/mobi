@@ -492,7 +492,9 @@ function mockOntologyState() {
                         jsAnnotations: [{}]
                     }
                 }],
-                upToDate: true
+                upToDate: true,
+                individualsParentPath: [],
+                classesAndIndividuals: []
             };
             this.states = {};
             this.list = [];
@@ -556,6 +558,8 @@ function mockOntologyState() {
             this.goTo = jasmine.createSpy('goTo');
             this.openAt = jasmine.createSpy('openAt');
             this.getDefaultPrefix = jasmine.createSpy('getDefaultPrefix');
+            this.retrieveClassesWithIndividuals = jasmine.createSpy('retrieveClassesWithIndividuals');
+            this.retrievePaths = jasmine.createSpy('retrievePaths');
         });
     });
 }

@@ -404,30 +404,21 @@
 
                     listItem.classHierarchy = response[2].hierarchy;
                     listItem.classIndex = response[2].index;
-
-                    var individualKeys = [];
-                    var reducedPaths = _.uniq(
-                        _.reduce(
-                        _.forOwn(response[3].individuals,
-                            function(value, key) {
-                                individualKeys.push(key);
-                                return self.getPathsTo(listItem.classHierarchy, listItem.classIndex, key);
-                            } ),
-                                function(flattened, other) {
-                                    return flattened.concat(other);
-                                },
-                            []
-                        )
-                    );
-
-                    listItem.classesWithIndividuals = individualKeys;
-                    listItem.IndividualsPath = reducedPaths;
                     listItem.dataPropertyHierarchy = response[4].hierarchy;
                     listItem.dataPropertyIndex = response[4].index;
                     listItem.objectPropertyHierarchy = response[5].hierarchy;
                     listItem.objectPropertyIndex = response[5].index;
                     listItem.branches = response[6].data;
                     listItem.upToDate = upToDate;
+
+                    var clsInd = _.keys(response[3].individuals);
+                    var paths =  self.retrievePaths(response[3].individuals, listItem.classHierarchy, listItem.classIndex);
+                    var unPaths = _.uniq(_.flattenDeep(paths));
+
+                    listItem.classesAndIndividuals = response[3].individuals;
+                    listItem.classesWithIndividuals = clsInd;
+                    listItem.individualsParentPath = unPaths;
+
                     _.pullAllWith(
                         listItem.annotations,
                         _.concat(om.ontologyProperties, listItem.subDataProperties, listItem.subObjectProperties),
@@ -436,6 +427,9 @@
                     deferred.resolve(listItem);
                 }, error => _.has(error, 'statusText') ? util.onError(response, deferred) : deferred.reject(error));
                 return deferred.promise;
+            }
+            self.retrievePaths = function(individuals, classHierarchy, classIndex){
+                return _.map(_.keys(individuals), uri => self.getPathsTo(classHierarchy, classIndex, uri));
             }
             self.createVocabularyListItem = function(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate = true) {
                 var deferred = $q.defer();

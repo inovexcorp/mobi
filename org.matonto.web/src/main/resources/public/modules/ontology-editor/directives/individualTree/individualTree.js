@@ -42,6 +42,9 @@
                     dvm.os = ontologyStateService;
                     dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.util = utilService;
+                    dvm.verifyPathToIndividuals = function(entityIRI){
+                        return _.includes(dvm.os.listItem.individualsParentPath, entityIRI);
+                    };
                 }
             }
         }
