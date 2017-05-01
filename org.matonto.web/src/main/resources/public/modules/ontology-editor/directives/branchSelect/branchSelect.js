@@ -61,7 +61,7 @@
                                 $q.all([
                                     sm.updateOntologyState(dvm.os.listItem.recordId, branchId, commitId),
                                     dvm.os.updateOntology(dvm.os.listItem.recordId, branchId, commitId)
-                                ]).then(dvm.os.resetStateTabs());
+                                ]).then(() => dvm.os.resetStateTabs());
                             });
                     }
 

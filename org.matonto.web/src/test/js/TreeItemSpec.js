@@ -191,5 +191,57 @@ describe('Tree Item directive', function() {
                 expect(controller.toggleOpen).toHaveBeenCalled();
             });
         });
+        describe('isSaved', function() {
+            it('check correct value for inProgress.additions is returned', function() {
+                controller.currentEntity = {'@id': 'id'};
+                ontologyStateSvc.listItem.inProgressCommit = {
+                    additions: [{'@id': '12345'}]
+                }
+                expect(controller.isSaved()).toBe(false);
+                ontologyStateSvc.listItem.inProgressCommit = {
+                    additions: [{'@id': 'id'}]
+                }
+                expect(controller.isSaved()).toBe(true);
+            });
+            it('check correct value for inProgress.deletions is returned', function() {
+                controller.currentEntity = {'@id': 'id'};
+                ontologyStateSvc.listItem.inProgressCommit = {
+                    deletions: [{'@id': '12345'}]
+                }
+                expect(controller.isSaved()).toBe(false);
+                ontologyStateSvc.listItem.inProgressCommit = {
+                    deletions: [{'@id': 'id'}]
+                }
+                expect(controller.isSaved()).toBe(true);
+            });
+            it('check correct value for inProgress.additions and inProgress deletions is returned', function() {
+                controller.currentEntity = {'@id': 'id'};
+                ontologyStateSvc.listItem.inProgressCommit = {
+                    additions: [{'@id': '12345'}],
+                    deletions: [{'@id': '23456'}]
+                }
+                expect(controller.isSaved()).toBe(false);
+            });
+        });
+        describe('scope.$watch', function() {
+            it('should call isSaved when additions is changed', function() {
+                spyOn(controller, 'isSaved');
+                scope.currentEntity = {'@id': 'id'};
+                ontologyStateSvc.listItem.inProgressCommit = {
+                    additions: [{'@id': 'id'}]
+                }
+                scope.$digest();
+                expect(controller.isSaved).toHaveBeenCalled();
+            });
+            it('should call isSaved when deletions is changed', function() {
+                spyOn(controller, 'isSaved');
+                scope.currentEntity = {'@id': 'id'};
+                ontologyStateSvc.listItem.inProgressCommit = {
+                    deletions: [{'@id': 'id'}]
+                }
+                scope.$digest();
+                expect(controller.isSaved).toHaveBeenCalled();
+            });
+        });
     });
 });

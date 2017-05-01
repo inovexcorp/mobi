@@ -304,7 +304,7 @@ describe('Mapping Manager service', function() {
             splitIRIFilter.and.returnValue({begin: 'ontology', then: '/'});
             this.mapping.push(classMapping);
             mappingManagerSvc.editIriTemplate(this.mapping, classMapping['@id'], 'test/', '${0}');
-            expect(classMapping[prefixes.delim + 'hasPrefix']).toEqual([{'@value': 'ontology/test/'}]);
+            expect(classMapping[prefixes.delim + 'hasPrefix']).toEqual([{'@value': 'test/'}]);
             expect(classMapping[prefixes.delim + 'localName']).toEqual([{'@value': '${0}'}]);
         });
     });
