@@ -118,7 +118,7 @@ describe('Datatype Property Axioms directive', function() {
                 ontologyStateSvc.getOntologiesArray.and.returnValue([]);
                 controller.updateHierarchy(this.axiom, this.values);
                 expect(ontologyStateSvc.getOntologiesArray).toHaveBeenCalled();
-                expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith([], ontologyStateSvc.listItem.recordId);
+                expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith([], ontologyStateSvc.listItem);
                 expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([{prop: 'everything'}]);
             });
         });

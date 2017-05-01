@@ -144,7 +144,7 @@ describe('Create Class Overlay directive', function() {
             expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(controller.clazz, controller.language);
             expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, controller.clazz);
             expect(ontologyStateSvc.getOntologiesArray).toHaveBeenCalled();
-            expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith([], ontologyStateSvc.listItem.recordId);
+            expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith([], ontologyStateSvc.listItem);
             expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([{prop: 'everything'}]);
             expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, controller.clazz);
             expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.classHierarchy, ontologyStateSvc.listItem.recordId);

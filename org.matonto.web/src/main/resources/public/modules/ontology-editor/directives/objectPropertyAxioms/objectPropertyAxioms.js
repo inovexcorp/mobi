@@ -57,7 +57,7 @@
                             });
                             dvm.os.listItem.flatObjectPropertyHierarchy = dvm.os.flattenHierarchy(dvm.os.listItem.objectPropertyHierarchy, dvm.os.listItem.recordId);
                         } else if (localName === 'domain') {
-                            dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.getOntologiesArray(), dvm.os.listItem.recordId);
+                            dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.getOntologiesArray(), dvm.os.listItem);
                         }
                     }
 

@@ -437,7 +437,7 @@
                         addImportedOntologyToListItem(listItem, importedOntObj, 'ontology');
                     });
                     listItem.upToDate = upToDate;
-                    listItem.flatEverythingTree = self.createFlatEverythingTree(getOntologiesArrayByListItem(listItem), recordId);
+                    listItem.flatEverythingTree = self.createFlatEverythingTree(getOntologiesArrayByListItem(listItem), listItem);
                     _.pullAllWith(
                         listItem.annotations,
                         _.concat(om.ontologyProperties, listItem.subDataProperties, listItem.subObjectProperties),
@@ -537,17 +537,17 @@
              * and properties to be used with a virtual scrolling solution.
              *
              * @param {Object[]} ontologies The array of ontologies to build the hierarchal structure for.
-             * @param {string} recordId The record ID associated with the provided ontology.
+             * @param {Object[]} listItem The listItem linked to the ontology you want to add the entity to.
              * @returns {Object[]} An array which contains the class-property replationships.
              */
-            self.createFlatEverythingTree = function(ontologies, recordId) {
+            self.createFlatEverythingTree = function(ontologies, listItem) {
                 var result = [];
-                var orderedClasses = sortByName(om.getClasses(ontologies));
+                var orderedClasses = sortByName(om.getClasses(ontologies), listItem);
                 var orderedProperties = [];
                 var path = [];
                 _.forEach(orderedClasses, clazz => {
-                    orderedProperties = sortByName(om.getClassProperties(ontologies, clazz['@id']));
-                    path = [recordId, clazz['@id']];
+                    orderedProperties = sortByName(om.getClassProperties(ontologies, clazz['@id']), listItem);
+                    path = [listItem.recordId, clazz['@id']];
                     result.push(_.merge(clazz, {
                         indent: 0,
                         hasChildren: !!orderedProperties.length,
@@ -561,7 +561,7 @@
                         }));
                     });
                 });
-                var orderedNoDomainProperties = sortByName(om.getNoDomainProperties(ontologies));
+                var orderedNoDomainProperties = sortByName(om.getNoDomainProperties(ontologies), listItem);
                 if (orderedNoDomainProperties.length) {
                     result.push({
                         title: 'Properties',
@@ -569,11 +569,11 @@
                         set: self.setNoDomainsOpened
                     });
                     _.forEach(orderedNoDomainProperties, property => {
-                        result.push(_.merge({}, property, {
+                        result.push(_.merge(property, {
                             indent: 1,
                             hasChildren: false,
                             get: self.getNoDomainsOpened,
-                            path: [recordId, property['@id']]
+                            path: [listItem.recordId, property['@id']]
                         }));
                     });
                 }
@@ -1316,8 +1316,8 @@
                     addNodeToResult(subNode, result, indent + 1, newPath);
                 });
             }
-            function sortByName(array) {
-                return _.sortBy(array, entity => _.lowerCase(self.getEntityNameByIndex(entity['@id'], self.listItem)));
+            function sortByName(array, listItem) {
+                return _.sortBy(array, entity => _.lowerCase(self.getEntityNameByIndex(entity['@id'], listItem)));
             }
             function addImportedOntologyToListItem(listItem, importedOntObj, type) {  
                 var index = {};

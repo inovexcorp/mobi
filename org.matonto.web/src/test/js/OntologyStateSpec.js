@@ -1364,7 +1364,7 @@ describe('Ontology State Service', function() {
             get: ontologyStateSvc.getNoDomainsOpened,
             path: ['recordId', 'property2']
         }];
-        expect(ontologyStateSvc.createFlatEverythingTree([ontology], 'recordId')).toEqual(expected);
+        expect(ontologyStateSvc.createFlatEverythingTree([ontology], ontologyStateSvc.listItem)).toEqual(expected);
         expect(ontologyManagerSvc.getClasses).toHaveBeenCalledWith([ontology]);
         expect(ontologyManagerSvc.getClassProperties).toHaveBeenCalledWith([ontology], 'class1');
         expect(ontologyManagerSvc.getNoDomainProperties).toHaveBeenCalledWith([ontology]);
@@ -1543,7 +1543,7 @@ describe('Ontology State Service', function() {
                             icon: 'fa-square-o',
                             imported: true
                         }
-                    }]], recordId);
+                    }]], response);
                 }, function() {
                     fail('Promise should have resolved');
                 });
