@@ -90,6 +90,7 @@
         <module>org.matonto.dataset.rest</module>
         <module>org.matonto.sparql.utils</module>
         <module>org.matonto.cache</module>
+        <module>org.matonto.cache.impl.ehcache</module>
     </modules>
 
     <properties>
