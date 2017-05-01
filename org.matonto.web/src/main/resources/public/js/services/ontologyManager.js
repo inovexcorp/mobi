@@ -697,7 +697,7 @@
              *
              * @description
              * Gets the list of all owl:Class entity IRIs within the provided ontologies that are not blank nodes.
-             # Returns a string[].
+             * Returns a string[].
              *
              * @param {Object[]} ontologies The array of ontologies you want to check.
              * @returns {string[]} An array of all owl:Class entity IRI strings within the ontologies.

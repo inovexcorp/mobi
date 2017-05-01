@@ -1281,7 +1281,6 @@
                     return combinedEntity;
                 }
             }
-
             function addToInProgress(recordId, json, prop) {
                 var listItem = self.getListItemByRecordId(recordId);
                 var entity = _.find(listItem[prop], {'@id': json['@id']});

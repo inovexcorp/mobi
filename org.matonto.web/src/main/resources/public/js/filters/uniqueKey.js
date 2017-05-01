@@ -41,7 +41,7 @@
          * @description 
          * Takes an array of items and returns an array without duplicates based on a given key
          *
-         * @param {array} collection The array from which to remove duplicates
+         * @param {string[]} collection The array from which to remove duplicates
          * @param {string} keyField The value on which to match
          * @returns {string[]} The original array minus any duplicate entries
          */
