@@ -147,9 +147,7 @@
 
             self.updateLabel = function() {
                 var newLabel = om.getEntityName(os.selected, os.listItem.type);
-                // if (_.get(os.listItem.index, "['" + os.selected['@id'] + "'].label", '') !== newLabel) {
                 if (_.has(os.listItem.index, "['" + os.selected['@id'] + "'].label") && os.listItem.index[os.selected['@id']].label !== newLabel) {
-                    // _.set(os.listItem.index, "['" + os.selected['@id'] + "'].label", newLabel);
                     os.listItem.index[os.selected['@id']].label = newLabel;
                     if (os.listItem.type === 'vocabulary') {
                         os.listItem.flatConceptHierarchy = os.flattenHierarchy(os.listItem.conceptHierarchy, os.listItem.recordId);
