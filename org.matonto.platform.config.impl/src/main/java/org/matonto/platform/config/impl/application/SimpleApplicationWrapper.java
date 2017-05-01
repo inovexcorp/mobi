@@ -148,8 +148,7 @@ public class SimpleApplicationWrapper implements ApplicationWrapper {
         try (RepositoryConnection conn = repository.getConnection()) {
             Model appModel = modelFactory.createModel();
             conn.getStatements(factory.createIRI(NAMESPACE + applicationId), null, null).forEach(appModel::add);
-            app = appFactory.getExisting(factory.createIRI(NAMESPACE + applicationId), appModel).orElseThrow(() ->
-                    new IllegalStateException("Unable to retrieve application: " + NAMESPACE + applicationId));
+            app = appFactory.getExisting(factory.createIRI(NAMESPACE + applicationId), appModel);
         } catch (RepositoryException e) {
             throw new MatOntoException("Error in repository connection", e);
         }

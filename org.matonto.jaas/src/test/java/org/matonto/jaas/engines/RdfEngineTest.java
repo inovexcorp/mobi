@@ -61,8 +61,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.when;
 
@@ -224,9 +224,9 @@ public class RdfEngineTest {
         assertTrue(user.getResource().stringValue().equals(userId));
         assertTrue(user.getUsername().isPresent() && user.getUsername().get().stringValue().equals(username));
         assertTrue(user.getPassword().isPresent() && user.getPassword().get().stringValue().equals(password));
-        assertEquals(user.getHasUserRole_resource().size(), roles.size());
-        assertTrue(!user.getMbox_resource().isEmpty() && user.getMbox_resource().size() == 1);
-        assertTrue(user.getMbox_resource().stream().map(resource -> resource.stringValue()).collect(Collectors.toSet()).contains("mailto:example@example.com"));
+        assertEquals(user.getHasUserRole().size(), roles.size());
+        assertTrue(!user.getMbox().isEmpty() && user.getMbox().size() == 1);
+        assertTrue(user.getMbox().stream().map(thing -> thing.getResource().stringValue()).collect(Collectors.toSet()).contains("mailto:example@example.com"));
         assertTrue(!user.getFirstName().isEmpty() && user.getFirstName().size() == 1);
         assertTrue(user.getFirstName().stream().map(Value::stringValue).collect(Collectors.toSet()).contains("John"));
         assertTrue(!user.getLastName().isEmpty() && user.getLastName().size() == 1);
@@ -296,7 +296,7 @@ public class RdfEngineTest {
         statements.forEach(userModel::add);
         connection.close();
         assertFalse(userModel.isEmpty());
-        User savedUser = userFactory.getExisting(vf.createIRI(userId), userModel).get();
+        User savedUser = userFactory.getExisting(vf.createIRI(userId), userModel);
         assertTrue(savedUser.getPassword().isPresent() && savedUser.getPassword().get().stringValue().equals("123"));
         assertTrue(savedUser.getUsername().isPresent() && savedUser.getUsername().get().stringValue().equals("user"));
     }
@@ -338,8 +338,8 @@ public class RdfEngineTest {
         Group group = engine.createGroup(config);
 
         assertEquals(group.getResource().stringValue(), groupId1);
-        assertEquals(group.getMember_resource().size(), members.size());
-        assertEquals(group.getHasGroupRole_resource().size(), roles.size());
+        assertEquals(group.getMember().size(), members.size());
+        assertEquals(group.getHasGroupRole().size(), roles.size());
         assertTrue(group.getProperty(vf.createIRI(DCTERMS.TITLE.stringValue())).isPresent()
                 && group.getProperty(vf.createIRI(DCTERMS.TITLE.stringValue())).get().stringValue().equals(groupName1));
         assertTrue(group.getProperty(vf.createIRI(DCTERMS.DESCRIPTION.stringValue())).isPresent()
@@ -405,7 +405,7 @@ public class RdfEngineTest {
         statements.forEach(groupModel::add);
         connection.close();
         assertFalse(groupModel.isEmpty());
-        Group savedGroup = groupFactory.getExisting(vf.createIRI(groupId1), groupModel).get();
+        Group savedGroup = groupFactory.getExisting(vf.createIRI(groupId1), groupModel);
         assertTrue(savedGroup.getMember().isEmpty());
     }
 

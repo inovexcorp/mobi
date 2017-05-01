@@ -239,11 +239,10 @@ public class SimpleStateManager implements StateManager {
         try (RepositoryConnection conn = repository.getConnection()) {
             Model stateModel = modelFactory.createModel(newState);
             conn.getStatements(stateId, null, null).forEach(stateModel::add);
-            stateFactory.getExisting(stateId, stateModel).ifPresent(state -> {
-                removeState(state, conn);
-                state.setStateResource(newState.subjects());
-                conn.add(state.getModel());
-            });
+            State state = stateFactory.getExisting(stateId, stateModel);
+            removeState(state, conn);
+            state.setStateResource(newState.subjects());
+            conn.add(state.getModel());
         }
     }
 
@@ -255,7 +254,8 @@ public class SimpleStateManager implements StateManager {
         try (RepositoryConnection conn = repository.getConnection()) {
             Model stateModel = modelFactory.createModel();
             conn.getStatements(stateId, null, null).forEach(stateModel::add);
-            stateFactory.getExisting(stateId, stateModel).ifPresent(state -> removeState(state, conn));
+            State state = stateFactory.getExisting(stateId, stateModel);
+            removeState(state, conn);
         }
     }
 
