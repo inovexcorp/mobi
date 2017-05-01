@@ -23,14 +23,6 @@ package org.matonto.rest.util;
  * #L%
  */
 
-import javax.annotation.Nullable;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.Response;
-import java.io.StringWriter;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.util.Optional;
-
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
@@ -42,6 +34,14 @@ import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.RDFHandler;
 import org.openrdf.rio.Rio;
 import org.openrdf.rio.helpers.BufferedGroupingRDFHandler;
+
+import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.util.Optional;
+import javax.annotation.Nullable;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.Response;
 
 public class RestUtils {
 
@@ -87,7 +87,7 @@ public class RestUtils {
     /**
      * Converts a Sesame Model into a string containing RDF in the specified RDFFormat.
      *
-     * @param model  A Sesame Model of RDF to convert.
+     * @param model A Sesame Model of RDF to convert.
      * @param format The RDFFormat the RDF should be serialized into.
      * @return A String of the serialized RDF from the Model.
      */
@@ -101,7 +101,7 @@ public class RestUtils {
     /**
      * Converts a Sesame Model into a string containing RDF in the format specified by the passed string.
      *
-     * @param model  A Sesame Model of RDF to convert.
+     * @param model A Sesame Model of RDF to convert.
      * @param format The abbreviated name of a RDFFormat.
      * @return A String of the serialized RDF from the Model.
      */
@@ -145,7 +145,7 @@ public class RestUtils {
                 return RDFFormat.TURTLE.getDefaultFileExtension();
             case "rdf/xml":
                 return RDFFormat.RDFXML.getDefaultFileExtension();
-            case "owl/xml":
+            case "owl/xml" :
                 return "owx";
             case "jsonld":
             default:
@@ -165,7 +165,7 @@ public class RestUtils {
                 return RDFFormat.TURTLE.getDefaultMIMEType();
             case "rdf/xml":
                 return RDFFormat.RDFXML.getDefaultMIMEType();
-            case "owl/xml":
+            case "owl/xml" :
                 return "application/owl+xml";
             case "jsonld":
             default:
@@ -177,7 +177,7 @@ public class RestUtils {
      * Retrieves the User associated with a Request using the passed EngineManager. If the User cannot be found,
      * throws a 401 Response.
      *
-     * @param context       The context of a Request.
+     * @param context The context of a Request.
      * @param engineManager The EngineManager to use when attempting to retrieve the User.
      * @return The User who made the Request if found; throws a 401 otherwise.
      */
@@ -204,7 +204,7 @@ public class RestUtils {
     /**
      * Tests for the existence and value of a string, assumed to be from a REST parameter.
      *
-     * @param param        The string parameter to check
+     * @param param The string parameter to check
      * @param errorMessage The error message to send if parameter is not set
      */
     public static void checkStringParam(@Nullable String param, String errorMessage) {

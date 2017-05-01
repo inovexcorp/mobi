@@ -197,7 +197,7 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
 
         when(dataset.getResource()).thenReturn(vf.createIRI(DATASET_IRI));
         when(datasetRecord.getResource()).thenReturn(vf.createIRI(DATASET_RECORD_IRI));
-        when(datasetRecord.getDataset_resource()).thenReturn(Optional.of(vf.createIRI(DATASET_IRI)));
+        when(datasetRecord.getDataset()).thenReturn(Optional.of(dataset));
         when(datasetRecord.getRepository()).thenReturn(Optional.of(REPOSITORY_ID));
         when(converter.convert(any(SVConfig.class))).thenReturn(mf.createModel());
         when(converter.convert(any(ExcelConfig.class))).thenReturn(mf.createModel());
@@ -514,7 +514,7 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
     @Test
     public void mapIntoDatasetThatIsNotSetTest() throws Exception {
         // Setup:
-        when(datasetRecord.getDataset_resource()).thenReturn(Optional.empty());
+        when(datasetRecord.getDataset()).thenReturn(Optional.empty());
         String fileName = UUID.randomUUID().toString() + ".csv";
         copyResourceToTemp("test.csv", fileName);
 
@@ -550,7 +550,7 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
     @Test
     public void mapIntoDatasetWithNoSystemNamedGraphTest() throws Exception {
         // Setup:
-        when(datasetRecord.getDataset_resource()).thenReturn(Optional.of(vf.createIRI(ERROR_IRI)));
+        when(dataset.getResource()).thenReturn(vf.createIRI(ERROR_IRI));
         String fileName = UUID.randomUUID().toString() + ".csv";
         copyResourceToTemp("test.csv", fileName);
 

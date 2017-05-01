@@ -100,7 +100,6 @@ public class SourceGenerator {
     private Map<JDefinedClass, Map<String, IRI>> interfaceFieldRangeMap = new HashMap<>();
     private Map<JDefinedClass, Map<JMethod, JFieldVar>> classMethodIriMap = new HashMap<>();
     private Map<JDefinedClass, JDefinedClass> interfaceImplMap = new HashMap<>();
-    private Map<String, JDefinedClass> nameInterfaceMap = new HashMap<>();
     private final List<ReferenceOntology> referenceOntologies = new ArrayList<>();
 
     public SourceGenerator(final Model ontologyGraph, final String outputPackage, final Collection<ReferenceOntology> referenceOntologies)
@@ -808,7 +807,6 @@ public class SourceGenerator {
                     fieldIriMap.put(fieldName + "_IRI", (IRI) resource);
                     rangeMap.put(fieldName, range);
                 });
-                nameInterfaceMap.put(clazz.fullName(), clazz);
                 interfaceFieldIriMap.put(clazz, fieldIriMap);
                 interfaceFieldRangeMap.put(clazz, rangeMap);
                 interfaces.put(classIri, clazz);
@@ -892,39 +890,22 @@ public class SourceGenerator {
 
         final JVar value = implMethod.body().decl(JMod.FINAL, returnType, "value", callGet);
 
-        JClass returnClass = ((JClass) interfaceMethod.type()).getTypeParameters().get(0);
-
         boolean returnsValue = interfaceMethod.type()
                 .equals(codeModel.ref(Set.class).narrow(org.matonto.rdf.api.Value.class));
-        boolean returnsValueSet = (returnsSet && returnClass.equals(codeModel.ref(org.matonto.rdf.api.Value.class)));
+        boolean returnsValueSet = (returnsSet && ((JClass) interfaceMethod.type()).getTypeParameters().get(0)
+                .equals(codeModel.ref(org.matonto.rdf.api.Value.class)));
 
         if (returnsValue || returnsValueSet) {
             implMethod.body()._return(value);
         } else if (returnsSet) {
-            if (nameInterfaceMap.containsKey(returnClass.fullName())) {
-                implMethod.body().add(JExpr.ref("value").invoke("removeIf").arg(JExpr.direct("value1 -> !getModel().subjects().contains(value1)")));
-            }
             implMethod.body()._return(JExpr.ref("valueConverterRegistry").invoke("convertValues").arg(value)
-                    .arg(JExpr._this()).arg(returnClass.dotclass()));
+                    .arg(JExpr._this()).arg(((JClass) interfaceMethod.type()).getTypeParameters().get(0).dotclass()));
         } else {
             JExpression convertValue = JExpr.ref("valueConverterRegistry").invoke("convertValue")
                     .arg(JExpr.ref("value").invoke("get")).arg(JExpr._this())
-                    .arg(returnClass.dotclass());
+                    .arg((((JClass) interfaceMethod.type()).getTypeParameters().get(0)).dotclass());
 
-            JInvocation valueIsPresent = JExpr.ref("value").invoke("isPresent");
-
-            JConditional conditional;
-            if (nameInterfaceMap.containsKey(returnClass.fullName())) {
-                JInvocation modelContainsResource = JExpr._this()
-                        .invoke("getModel")
-                        .invoke("subjects")
-                        .invoke("contains").arg(JExpr.ref("value").invoke("get"));
-                conditional = implMethod.body()._if(valueIsPresent.cand(modelContainsResource));
-            } else {
-                conditional = implMethod.body()._if(valueIsPresent);
-            }
-
-
+            JConditional conditional = implMethod.body()._if(JExpr.ref("value").invoke("isPresent"));
             conditional._then()._return(codeModel.ref(Optional.class).staticInvoke("of").arg(convertValue));
             conditional._else()._return(codeModel.ref(Optional.class).staticInvoke("empty"));
         }

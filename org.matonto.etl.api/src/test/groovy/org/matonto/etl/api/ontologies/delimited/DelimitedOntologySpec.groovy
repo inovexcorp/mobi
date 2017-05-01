@@ -20,7 +20,6 @@ class DelimitedOntologySpec extends Specification {
     def dataMappingFactory = new DataMappingFactory()
     def objectMappingFactory = new ObjectMappingFactory()
     def propertyMappingFactory = new PropertyMappingFactory()
-    def propertyFactory = new PropertyFactory()
     def thingFactory = new ThingFactory()
     def classMapping
 
@@ -79,7 +78,7 @@ class DelimitedOntologySpec extends Specification {
 
         InputStream mappingFile = new ClassPathResource("newestMapping.ttl").getInputStream()
         Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE))
-        classMapping = classFactory.getExisting(vf.createIRI("http://matonto.org/mappings/demo/Material"), mapping, vf, vcr).get()
+        classMapping = classFactory.getExisting(vf.createIRI("http://matonto.org/mappings/demo/Material"), mapping, vf, vcr)
     }
 
     def "ClassMapping has the correct prefix"() {
@@ -98,20 +97,20 @@ class DelimitedOntologySpec extends Specification {
         dataProps != null
         dataProps.size() == 3
         dataProps.each { dataMapping ->
-            dataMapping.getHasProperty_resource().each { resource ->
-                switch (resource.stringValue()) {
-                    case "http://matonto.org/ontologies/uhtc/formula":
-                        assert dataMapping.getColumnIndex()[0] == 1
-                        break
-                    case "http://matonto.org/ontologies/uhtc/density":
-                        assert dataMapping.getColumnIndex()[0] == 6
-                        break
-                    case "http://matonto.org/ontologies/uhtc/latticeParameter":
-                        assert dataMapping.getColumnIndex()[0] == 3
-                        break
-                    default:
-                        throw new IllegalStateException()
-                }
+            def prop = dataMapping.getHasProperty()[0].getResource().stringValue()
+
+            switch (prop) {
+                case "http://matonto.org/ontologies/uhtc/formula":
+                    assert dataMapping.getColumnIndex()[0] == 1
+                    break
+                case "http://matonto.org/ontologies/uhtc/density":
+                    assert dataMapping.getColumnIndex()[0] == 6
+                    break
+                case "http://matonto.org/ontologies/uhtc/latticeParameter":
+                    assert dataMapping.getColumnIndex()[0] == 3
+                    break
+                default:
+                    throw new IllegalStateException()
             }
         }
     }
@@ -122,7 +121,7 @@ class DelimitedOntologySpec extends Specification {
         expect:
         objectProps != null
         objectProps.size() == 1
-        objectProps[0].getHasProperty_resource().each { resource -> resource.stringValue() == "http://matonto.org/ontologies/uhtc/crystalStructure" }
-        objectProps[0].getClassMapping_resource().each { resource -> resource.stringValue() == "http://matonto.org/mappings/demo/CrystalStructure" }
+        objectProps[0].getHasProperty()[0].getResource().stringValue() == "http://matonto.org/ontologies/uhtc/crystalStructure"
+        objectProps[0].getClassMapping()[0].getResource().stringValue() == "http://matonto.org/mappings/demo/CrystalStructure"
     }
 }

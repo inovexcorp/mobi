@@ -19,18 +19,14 @@ delim-data:CrystalStructure rdfs:type           delim:ClassMapping ;
                             delim:localName     "${2}" .
 
 
-delim-data:DataMapping1     rdfs:type               delim:DataMapping ;
-                            delim:columnIndex       "1" ;
+delim-data:DataMapping1     delim:columnIndex       "1" ;
                             delim:hasProperty       uhtc:formula .
 
-delim-data:DataMapping2     rdfs:type               delim:DataMapping ;
-                            delim:columnIndex       "6" ;
+delim-data:DataMapping2     delim:columnIndex       "6" ;
                             delim:hasProperty       uhtc:density .
 
-delim-data:DataMapping3     rdfs:type               delim:DataMapping ;
-                            delim:columnIndex       "3" ;
+delim-data:DataMapping3     delim:columnIndex       "3" ;
                             delim:hasProperty       uhtc:latticeParameter .
 
-delim-data:ObjectMapping1   rdfs:type               delim:ObjectMapping ;
-                            delim:classMapping      delim-data:CrystalStructure ;
+delim-data:ObjectMapping1   delim:classMapping      delim-data:CrystalStructure ;
                             delim:hasProperty       uhtc:crystalStructure .

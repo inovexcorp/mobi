@@ -188,7 +188,7 @@ public class RdfEngine implements Engine {
             throw new MatOntoException("Error in repository connection", e);
         }
 
-        return roleFactory.getExisting(factory.createIRI(roleNamespace + roleName), roleModel);
+        return Optional.of(roleFactory.getExisting(factory.createIRI(roleNamespace + roleName), roleModel));
     }
 
     @Override
@@ -275,7 +275,7 @@ public class RdfEngine implements Engine {
         } catch (RepositoryException e) {
             throw new MatOntoException("Error in repository connection", e);
         }
-        return userFactory.getExisting(createUserIri(username), userModel);
+        return Optional.of(userFactory.getExisting(createUserIri(username), userModel));
     }
 
     @Override
@@ -393,7 +393,7 @@ public class RdfEngine implements Engine {
         } catch (RepositoryException e) {
             throw new MatOntoException("Error in repository connection", e);
         }
-        return groupFactory.getExisting(createGroupIri(groupTitle), groupModel);
+        return Optional.of(groupFactory.getExisting(createGroupIri(groupTitle), groupModel));
     }
 
     @Override
