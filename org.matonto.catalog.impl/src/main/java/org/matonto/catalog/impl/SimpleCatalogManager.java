@@ -307,7 +307,8 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public Catalog getDistributedCatalog() throws MatOntoException {
         return getCatalog(distributedCatalogIRI).orElseThrow(() ->
-                new IllegalArgumentException("The catalog " + distributedCatalogIRI.stringValue() + " could not be retrieved."));
+                new IllegalArgumentException("The catalog " + distributedCatalogIRI.stringValue()
+                        + " could not be retrieved."));
     }
 
     @Override
@@ -419,7 +420,8 @@ public class SimpleCatalogManager implements CatalogManager {
         try (RepositoryConnection conn = repository.getConnection()) {
             if (resourceExists(catalogId, Catalog.TYPE) && !resourceExists(record.getResource())) {
                 record.setCatalog(getCatalog(catalogId).orElseThrow(() ->
-                        new IllegalArgumentException("The catalog " + catalogId.stringValue() + " could not be retrieved.")));
+                        new IllegalArgumentException("The catalog " + catalogId.stringValue()
+                                + " could not be retrieved.")));
                 conn.add(record.getModel(), record.getResource());
             } else {
                 throw new MatOntoException("The Record could not be added.");
@@ -748,9 +750,6 @@ public class SimpleCatalogManager implements CatalogManager {
                 Optional<Resource> headCommit = branch.getHead_resource();
                 if (headCommit.isPresent()) {
                     List<Resource> chain = getCommitChain(headCommit.get());
-                    IRI headCommitIRI = vf.createIRI(Branch.head_IRI);
-                    IRI baseCommitIRI = vf.createIRI(Commit.baseCommit_IRI);
-                    IRI auxiliaryCommitIRI = vf.createIRI(Commit.auxiliaryCommit_IRI);
                     IRI commitIRI = vf.createIRI(Tag.commit_IRI);
                     IRI generatedIRI = vf.createIRI(Activity.generated_IRI);
                     IRI additionsIRI = vf.createIRI(Revision.additions_IRI);
@@ -758,9 +757,7 @@ public class SimpleCatalogManager implements CatalogManager {
                     Set<Resource> deltaIRIs = new HashSet<>();
                     conn.begin();
                     for (Resource commitId : chain) {
-                        if (!conn.getStatements(null, headCommitIRI, commitId).hasNext()
-                                && !conn.getStatements(null, baseCommitIRI, commitId).hasNext()
-                                && !conn.getStatements(null, auxiliaryCommitIRI, commitId).hasNext()) {
+                        if (!commitIsReferenced(commitId, conn)) {
                             Resource revisionIRI = (Resource) conn.getStatements(commitId, generatedIRI, null)
                                     .next().getObject();
                             deltaIRIs.add((Resource) conn.getStatements(revisionIRI, additionsIRI, null)
@@ -773,9 +770,7 @@ public class SimpleCatalogManager implements CatalogManager {
                             break;
                         }
                     }
-                    for (Resource iri : deltaIRIs) {
-                        conn.remove((Resource) null, null, null, iri);
-                    }
+                    deltaIRIs.forEach(iri -> conn.remove((Resource) null, null, null, iri));
                     conn.commit();
                 } else {
                     log.warn("The HEAD Commit was not set on the Branch.");
@@ -979,7 +974,8 @@ public class SimpleCatalogManager implements CatalogManager {
         try (RepositoryConnection conn = repository.getConnection()) {
             Resource revisionIRI = (Resource) commit.getProperty(vf.createIRI(Activity.generated_IRI)).get();
             Revision revision = revisionFactory.getExisting(revisionIRI, commit.getModel()).orElseThrow(() ->
-                    new IllegalStateException("Revision resource <" + revisionIRI.stringValue() + "> not found for Commit <" + commit.getResource() +">"));
+                    new IllegalStateException("Revision resource <" + revisionIRI.stringValue()
+                            + "> not found for Commit <" + commit.getResource() + ">"));
             Resource additionsIRI = (Resource) revision.getAdditions().orElseThrow(() ->
                     new MatOntoException("The additions could not be found."));
             Resource deletionsIRI = (Resource) revision.getDeletions().orElseThrow(() ->
@@ -1510,7 +1506,8 @@ public class SimpleCatalogManager implements CatalogManager {
      */
     private void removeVersionedRecord(Record record) throws MatOntoException {
         versionedRecordFactory.getExisting(record.getResource(), record.getModel()).ifPresent(versionedRecord -> {
-            versionedRecord.getVersion_resource().forEach(version -> removeVersion(version, versionedRecord.getResource()));
+            versionedRecord.getVersion_resource().forEach(version -> removeVersion(version,
+                    versionedRecord.getResource()));
             remove(versionedRecord.getResource());
         });
     }
@@ -1525,15 +1522,16 @@ public class SimpleCatalogManager implements CatalogManager {
      */
     private void removeVersionedRDFRecord(Record record) throws MatOntoException {
         try (RepositoryConnection conn = repository.getConnection()) {
-            versionedRDFRecordFactory.getExisting(record.getResource(), record.getModel()).ifPresent(versionedRDFRecord -> {
-                versionedRDFRecord.getVersion_resource().forEach(version -> removeVersion(version,
-                        versionedRDFRecord.getResource()));
-                conn.remove(versionedRDFRecord.getResource(), vf.createIRI(VersionedRDFRecord.masterBranch_IRI), null,
-                        versionedRDFRecord.getResource());
-                versionedRDFRecord.getBranch_resource().forEach(branch -> removeBranch(branch,
-                        versionedRDFRecord.getResource()));
-                remove(versionedRDFRecord.getResource());
-            });
+            versionedRDFRecordFactory.getExisting(record.getResource(), record.getModel())
+                    .ifPresent(versionedRDFRecord -> {
+                        versionedRDFRecord.getVersion_resource().forEach(version -> removeVersion(version,
+                                versionedRDFRecord.getResource()));
+                        conn.remove(versionedRDFRecord.getResource(), vf.createIRI(VersionedRDFRecord.masterBranch_IRI),
+                                null, versionedRDFRecord.getResource());
+                        versionedRDFRecord.getBranch_resource().forEach(branch -> removeBranch(branch,
+                                versionedRDFRecord.getResource()));
+                        remove(versionedRDFRecord.getResource());
+                    });
         } catch (RepositoryException e) {
             throw new MatOntoException("Error in repository connection", e);
         }
@@ -1627,5 +1625,14 @@ public class SimpleCatalogManager implements CatalogManager {
         Model model = mf.createModel();
         iterator.forEachRemaining(value -> addRevisionStatementsToModel(model, (Resource)value, conn));
         return model;
+    }
+
+    private boolean commitIsReferenced(Resource commitId, RepositoryConnection conn) {
+        IRI headCommitIRI = vf.createIRI(Branch.head_IRI);
+        IRI baseCommitIRI = vf.createIRI(Commit.baseCommit_IRI);
+        IRI auxiliaryCommitIRI = vf.createIRI(Commit.auxiliaryCommit_IRI);
+        return Stream.of(headCommitIRI, baseCommitIRI, auxiliaryCommitIRI)
+                .map(iri -> conn.getStatements(null, iri, commitId).hasNext())
+                .reduce(false, (iri1, iri2) -> iri1 || iri2);
     }
 }
