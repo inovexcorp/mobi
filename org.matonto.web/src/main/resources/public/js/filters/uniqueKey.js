@@ -41,9 +41,9 @@
          * @description 
          * Takes an array of items and returns an array without duplicates based on a given key
          *
-         * @param {string[]} collection The array from which to remove duplicates
+         * @param {Object[]} collection The array from which to remove duplicates
          * @param {string} keyField The value on which to match
-         * @returns {string[]} The original array minus any duplicate entries
+         * @returns {Object[]} The original array minus any duplicate entries
          */
         .filter('uniqueKey', uniqueKey);
 
