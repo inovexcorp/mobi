@@ -23,9 +23,11 @@ package org.matonto.cache.api;
  * #L%
  */
 
+import java.util.Optional;
+
 import org.ehcache.Cache;
 
 public interface CacheManager {
 
-    <K, V> Cache<K, V> getCache(String cacheName, Class<K> keyType, Class<V> valueType);
+    <K, V> Optional<Cache<K, V>> getCache(String cacheName, Class<K> keyType, Class<V> valueType);
 }
