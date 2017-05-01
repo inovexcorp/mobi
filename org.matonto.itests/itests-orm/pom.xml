@@ -97,8 +97,20 @@
                                     <ontologyFile>${project.basedir}/src/test/resources/test-ont.trig</ontologyFile>
                                     <outputPackage>org.matonto.test</outputPackage>
                                 </ontology>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/src/test/resources/inheritsImportsTests/child.trig</ontologyFile>
+                                    <outputPackage>org.matonto.inherits.child</outputPackage>
+                                </ontology>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/src/test/resources/inheritsImportsTests/parent.trig</ontologyFile>
+                                    <outputPackage>org.matonto.inherits.parent</outputPackage>
+                                </ontology>
                             </generates>
                             <references>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/src/test/resources/inheritsImportsTests/parent.trig</ontologyFile>
+                                    <outputPackage>org.matonto.inherits.parent</outputPackage>
+                                </ontology>
                                 <ontology>
                                     <ontologyFile>${project.basedir}/../../org.matonto.rdf.orm.ontologies/src/main/resources/foaf.owl</ontologyFile>
                                     <outputPackage>org.matonto.foaf</outputPackage>
