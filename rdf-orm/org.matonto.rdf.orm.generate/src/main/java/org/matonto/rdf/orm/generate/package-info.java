@@ -1,4 +1,4 @@
-@Version("0.0.1.${build}")
+@Version("0.0.2.${build}")
 
 package org.matonto.rdf.orm.generate;
 

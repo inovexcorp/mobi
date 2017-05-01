@@ -50,18 +50,18 @@ class ConverterSpec extends Specification {
 
     def c = Spy(DelimitedConverterImpl)
 
-    def out = new ClassPathResource("testOutput.ttl").getFile();
-    def testOutput = new FileReader(out);
+    def out = new ClassPathResource("testOutput.ttl").getFile()
+    def testOutput = new FileReader(out)
 
     def outWithBlanks = new ClassPathResource("testOutputWithBlanks.ttl").getFile();
     def testOutputWithBlanks = new FileReader(outWithBlanks);
 
     def outWithFormattingAndBlanks = new ClassPathResource("testOutputWithFormattingAndBlanks.ttl").getFile();
-    def testOutputWithFormattingAndBlanks = new FileReader(outWithFormattingAndBlanks);
+    def testOutputWithFormattingAndBlanks = new FileReader(outWithFormattingAndBlanks)
 
     def setup() {
-        classMappingFactory.setValueFactory(vf);
-        classMappingFactory.setValueConverterRegistry(vcr);
+        classMappingFactory.setValueFactory(vf)
+        classMappingFactory.setValueConverterRegistry(vcr)
         dataMappingFactory.setValueFactory(vf)
         dataMappingFactory.setValueConverterRegistry(vcr)
         propertyFactory.setValueFactory(vf)
@@ -86,8 +86,8 @@ class ConverterSpec extends Specification {
         vcr.registerValueConverter(new ValueValueConverter())
 
         c.setValueFactory(vf)
-        c.setModelFactory(mf);
-        c.setClassMappingFactory(classMappingFactory);
+        c.setModelFactory(mf)
+        c.setClassMappingFactory(classMappingFactory)
         c.generateUuid() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
     }
 
@@ -98,10 +98,10 @@ class ConverterSpec extends Specification {
         Model m = Values.matontoModel(Rio.parse(testOutput, "", RDFFormat.TURTLE));
         Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE));
         SVConfig config = new SVConfig.SVConfigBuilder(csv, mapping).containsHeaders(true).separator((char) ',').build();
-        Model convertedModel = c.convert(config);
+        Model convertedModel = c.convert(config)
 
         expect:
-        convertedModel == m;
+        convertedModel == m
     }
 
     def "Convert CSV File with Multiple Object per Row and Object and Data Properties with Blank Values"() {
