@@ -24,8 +24,7 @@ package org.matonto.cache.api;
  */
 
 import java.util.Optional;
-
-import org.ehcache.Cache;
+import javax.cache.Cache;
 
 public interface CacheManager {
 
