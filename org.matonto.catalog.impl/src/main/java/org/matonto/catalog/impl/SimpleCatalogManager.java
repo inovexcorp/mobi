@@ -752,18 +752,21 @@ public class SimpleCatalogManager implements CatalogManager {
                     IRI baseCommitIRI = vf.createIRI(Commit.baseCommit_IRI);
                     IRI auxiliaryCommitIRI = vf.createIRI(Commit.auxiliaryCommit_IRI);
                     IRI commitIRI = vf.createIRI(Tag.commit_IRI);
+                    IRI generatedIRI = vf.createIRI(Activity.generated_IRI);
+                    IRI additionsIRI = vf.createIRI(Revision.additions_IRI);
+                    IRI deletionsIRI = vf.createIRI(Revision.deletions_IRI);
                     Set<Resource> deltaIRIs = new HashSet<>();
                     conn.begin();
                     for (Resource commitId : chain) {
                         if (!conn.getStatements(null, headCommitIRI, commitId).hasNext()
                                 && !conn.getStatements(null, baseCommitIRI, commitId).hasNext()
                                 && !conn.getStatements(null, auxiliaryCommitIRI, commitId).hasNext()) {
-                            Resource revisionIRI = (Resource) conn.getStatements(commitId,
-                                    vf.createIRI(Activity.generated_IRI), null).next().getObject();
-                            deltaIRIs.add((Resource) conn.getStatements(revisionIRI,
-                                    vf.createIRI(Revision.additions_IRI), null).next().getObject());
-                            deltaIRIs.add((Resource) conn.getStatements(revisionIRI,
-                                    vf.createIRI(Revision.deletions_IRI), null).next().getObject());
+                            Resource revisionIRI = (Resource) conn.getStatements(commitId, generatedIRI, null)
+                                    .next().getObject();
+                            deltaIRIs.add((Resource) conn.getStatements(revisionIRI, additionsIRI, null)
+                                    .next().getObject());
+                            deltaIRIs.add((Resource) conn.getStatements(revisionIRI, deletionsIRI, null)
+                                    .next().getObject());
                             conn.remove((Resource) null, null, null, commitId);
                             conn.remove((Resource) null, commitIRI, commitId);
                         } else {
