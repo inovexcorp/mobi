@@ -159,9 +159,7 @@ public class SimpleDatasetManager implements DatasetManager {
 
     @Override
     public Optional<DatasetRecord> getDatasetRecord(Resource dataset, String repositoryId) {
-        Optional<Resource> recordResource = getRecordResource(dataset, repositoryId);
-
-        return recordResource.flatMap(this::getDatasetRecord);
+        return getRecordResource(dataset, repositoryId).flatMap(this::getDatasetRecord);
     }
 
     @Override
