@@ -28,7 +28,7 @@
                     <i class="fa fa-fw" ng-class="{'fa-folder-open-o': entity.get(dvm.os.listItem.recordId), 'fa-folder-o': !entity.get(dvm.os.listItem.recordId)}"></i>{{entity.title}}
                 </a>
             </div>
-            <tree-item ng-if="entity['@id']" ng-style="{'padding-left': (1.28571429 * entity.indent) + 'em'}"
+            <tree-item ng-if="entity['@id']" ng-style="{'padding-left': (dvm.indent * entity.indent) + 'em'}"
                        is-active="dvm.os.getActiveEntityIRI() === entity['@id']" current-entity="entity"
                        on-click="dvm.os.selectItem(entity['@id'])" has-children="entity.hasChildren"
                        path="entity.path" is-opened="dvm.os.getOpened(dvm.os.joinPath(entity.path))"></tree-item>

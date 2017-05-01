@@ -31,6 +31,7 @@ describe('Hierarchy Tree directive', function() {
         mockOntologyState();
         mockOntologyUtilsManager();
         injectUniqueKeyFilter();
+        injectIndentConstant();
 
         inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyUtilsManagerService_) {
             $compile = _$compile_;

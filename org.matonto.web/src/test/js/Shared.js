@@ -60,6 +60,12 @@ function injectRegexConstant() {
     });
 }
 
+function injectIndentConstant() {
+    module(function($provide) {
+        $provide.constant('INDENT', 1);
+    });
+}
+
 function injectBeautifyFilter() {
     module(function($provide) {
         $provide.value('beautifyFilter', jasmine.createSpy('beautifyFilter').and.callFake(_.identity));

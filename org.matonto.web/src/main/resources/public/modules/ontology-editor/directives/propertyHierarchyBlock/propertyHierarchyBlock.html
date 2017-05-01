@@ -33,7 +33,7 @@
                             <i class="fa fa-fw" ng-class="{'fa-folder-open-o': node.get(dvm.os.listItem.recordId), 'fa-folder-o': !node.get(dvm.os.listItem.recordId)}"></i>{{node.title}}
                         </a>
                     </div>
-                    <tree-item ng-if="node.entityIRI" ng-style="{'padding-left': (1.28571429 * (node.indent + 1)) + 'em'}"
+                    <tree-item ng-if="node.entityIRI" ng-style="{'padding-left': (dvm.indent * (node.indent + 1)) + 'em'}"
                                is-active="dvm.os.getActiveEntityIRI() === node.entityIRI"
                                current-entity="dvm.os.getEntityByRecordId(dvm.os.listItem.recordId, node.entityIRI)"
                                on-click="dvm.os.selectItem(node.entityIRI)" has-children="node.hasChildren"

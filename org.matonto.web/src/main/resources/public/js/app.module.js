@@ -136,6 +136,7 @@
             'LOCALNAME': /^[a-zA-Z0-9._\-]+$/,
             'FILENAME': /^[\w\-. ]+$/
         })
+        .constant('INDENT', 1.28571429)
         .config(httpInterceptorConfig)
         .factory('requestInterceptor', requestInterceptor)
         .service('beforeUnload', beforeUnload)

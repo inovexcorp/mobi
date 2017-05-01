@@ -537,7 +537,7 @@
              * and properties to be used with a virtual scrolling solution.
              *
              * @param {Object[]} ontologies The array of ontologies to build the hierarchal structure for.
-             * @param {Object[]} listItem The listItem linked to the ontology you want to add the entity to.
+             * @param {Object} listItem The listItem linked to the ontology you want to add the entity to.
              * @returns {Object[]} An array which contains the class-property replationships.
              */
             self.createFlatEverythingTree = function(ontologies, listItem) {
@@ -588,7 +588,7 @@
              * Adds the entity represented by the entityJSON to the ontology with the provided ontology ID in the
              * MatOnto repository. Adds the new entity to the index.
              *
-             * @param {Object[]} listItem The listItem linked to the ontology you want to add the entity to.
+             * @param {Object} listItem The listItem linked to the ontology you want to add the entity to.
              * @param {string} entityJSON The JSON-LD representation for the entity you want to add to the ontology.
              */
             self.addEntity = function(listItem, entityJSON) {
@@ -608,7 +608,7 @@
              * Removes the entity with the provided IRI from the ontology with the provided ontology ID in the MatOnto
              * repository. Removes the entityIRI from the index. Returns the entity Object.
              *
-             * @param {Object[]} listItem The listItem linked to the ontology you want to remove the entity from.
+             * @param {Object} listItem The listItem linked to the ontology you want to remove the entity from.
              * @returns {Object} An Object which represents the requested entity.
              */
             self.removeEntity = function(listItem, entityIRI) {
@@ -1192,6 +1192,7 @@
                 listItem.blankNodes = blankNodes;
                 listItem.index = index;
                 listItem.inProgressCommit = inProgressCommit;
+                listItem.type = type;
                 return listItem;
             }
             function findValuesMissingDatatypes(object) {

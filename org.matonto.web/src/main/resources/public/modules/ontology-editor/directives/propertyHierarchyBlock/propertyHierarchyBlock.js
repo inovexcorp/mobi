@@ -27,9 +27,9 @@
         .module('propertyHierarchyBlock', [])
         .directive('propertyHierarchyBlock', propertyHierarchyBlock);
 
-        propertyHierarchyBlock.$inject = ['ontologyStateService', 'ontologyManagerService', 'ontologyUtilsManagerService'];
+        propertyHierarchyBlock.$inject = ['ontologyStateService', 'ontologyManagerService', 'ontologyUtilsManagerService', 'INDENT'];
 
-        function propertyHierarchyBlock(ontologyStateService, ontologyManagerService, ontologyUtilsManagerService) {
+        function propertyHierarchyBlock(ontologyStateService, ontologyManagerService, ontologyUtilsManagerService, INDENT) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,6 +38,7 @@
                 controllerAs: 'dvm',
                 controller: ['$scope', function($scope) {
                     var dvm = this;
+                    dvm.indent = INDENT;
                     dvm.os = ontologyStateService;
                     dvm.om = ontologyManagerService;
                     dvm.utils = ontologyUtilsManagerService;

@@ -29,6 +29,7 @@ describe('Property Hierarchy Block directive', function() {
         mockOntologyState();
         mockOntologyManager();
         mockOntologyUtilsManager();
+        injectIndentConstant();
 
         inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyManagerService_, _ontologyUtilsManagerService_) {
             $compile = _$compile_;

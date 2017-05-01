@@ -30,6 +30,7 @@ describe('Everything Tree directive', function() {
         mockOntologyState();
         mockOntologyUtilsManager();
         injectUniqueKeyFilter();
+        injectIndentConstant();
 
         inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_) {
             $compile = _$compile_;
