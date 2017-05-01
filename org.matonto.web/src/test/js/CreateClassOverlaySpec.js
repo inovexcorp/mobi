@@ -134,6 +134,7 @@ describe('Create Class Overlay directive', function() {
         });
         it('create calls the correct manager functions', function() {
             ontologyStateSvc.createFlatEverythingTree.and.returnValue([{prop: 'everything'}]);
+            ontologyStateSvc.flattenHierarchy.and.returnValue([{prop: 'entity'}]);
             ontologyStateSvc.getOntologiesArray.and.returnValue([]);
             controller.language = 'en';
             controller.clazz = {'@id': 'class-iri'};
@@ -148,6 +149,7 @@ describe('Create Class Overlay directive', function() {
             expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([{prop: 'everything'}]);
             expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, controller.clazz);
             expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.classHierarchy, ontologyStateSvc.listItem.recordId);
+            expect(ontologyStateSvc.listItem.flatClassHierarchy).toEqual([{prop: 'entity'}]);
             expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(controller.clazz['@id']);
             expect(ontologyStateSvc.showCreateClassOverlay).toBe(false);
             expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();

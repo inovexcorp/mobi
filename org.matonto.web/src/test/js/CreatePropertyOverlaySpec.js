@@ -180,17 +180,8 @@ describe('Create Property Overlay directive', function() {
         });
         describe('create calls the correct manager functions', function() {
             beforeEach(function() {
-                this.listItem = {
-                    subObjectProperties: [],
-                    objectPropertyHierarchy: [],
-                    subDataProperties: [],
-                    dataPropertyHierarchy: [],
-                    ontology: [{}],
-                    annotations: [],
-                    annotationPropertyHierarchy: []
-                };
+                ontologyStateSvc.flattenHierarchy.and.returnValue([{prop: 'entity'}]);
                 this.split = {begin: 'begin', then: 'then', end: 'end'};
-                ontologyStateSvc.listItem = this.listItem;
                 splitIRIFilter.and.returnValue(this.split);
                 controller.property['@id'] = 'property-iri';
                 controller.property['@type'] = [];
@@ -225,14 +216,15 @@ describe('Create Property Overlay directive', function() {
                 expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith([], ontologyStateSvc.listItem);
                 expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([{prop: 'everything'}]);
                 expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(controller.property);
-                expect(this.listItem.subObjectProperties).toContain({namespace: this.split.begin + this.split.then, localName: this.split.end});
-                expect(this.listItem.objectPropertyHierarchy).toContain({entityIRI: controller.property['@id']});
-                expect(this.listItem.subDataProperties).toEqual([]);
-                expect(this.listItem.dataPropertyHierarchy).toEqual([]);
-                expect(this.listItem.annotations).toEqual([]);
+                expect(ontologyStateSvc.listItem.subObjectProperties).toContain({namespace: this.split.begin + this.split.then, localName: this.split.end});
+                expect(ontologyStateSvc.listItem.objectPropertyHierarchy).toContain({entityIRI: controller.property['@id']});
+                expect(ontologyStateSvc.listItem.subDataProperties).toEqual([]);
+                expect(ontologyStateSvc.listItem.dataPropertyHierarchy).toEqual([]);
+                expect(ontologyStateSvc.listItem.annotations).toEqual([]);
                 expect(ontologyStateSvc.setObjectPropertiesOpened).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, true);
                 expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, controller.property);
                 expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.objectPropertyHierarchy, ontologyStateSvc.listItem.recordId);
+                expect(ontologyStateSvc.listItem.flatObjectPropertyHierarchy).toEqual([{prop: 'entity'}]);
                 expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(controller.property['@id']);
                 expect(ontologyStateSvc.showCreatePropertyOverlay).toBe(false);
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
@@ -248,14 +240,15 @@ describe('Create Property Overlay directive', function() {
                 expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith([], ontologyStateSvc.listItem);
                 expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([{prop: 'everything'}]);
                 expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(controller.property);
-                expect(this.listItem.subObjectProperties).toEqual([]);
-                expect(this.listItem.objectPropertyHierarchy).toEqual([]);
-                expect(this.listItem.annotations).toEqual([]);
-                expect(this.listItem.subDataProperties).toContain({namespace: this.split.begin + this.split.then, localName: this.split.end});
-                expect(this.listItem.dataPropertyHierarchy).toContain({entityIRI: controller.property['@id']});
+                expect(ontologyStateSvc.listItem.subObjectProperties).toEqual([]);
+                expect(ontologyStateSvc.listItem.objectPropertyHierarchy).toEqual([]);
+                expect(ontologyStateSvc.listItem.annotations).toEqual([]);
+                expect(ontologyStateSvc.listItem.subDataProperties).toContain({namespace: this.split.begin + this.split.then, localName: this.split.end});
+                expect(ontologyStateSvc.listItem.dataPropertyHierarchy).toContain({entityIRI: controller.property['@id']});
                 expect(ontologyStateSvc.setDataPropertiesOpened).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, true);
                 expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, controller.property);
                 expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.dataPropertyHierarchy, ontologyStateSvc.listItem.recordId);
+                expect(ontologyStateSvc.listItem.flatDataPropertyHierarchy).toEqual([{prop: 'entity'}]);
                 expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(controller.property['@id']);
                 expect(ontologyStateSvc.showCreatePropertyOverlay).toBe(false);
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
@@ -268,15 +261,16 @@ describe('Create Property Overlay directive', function() {
                 expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(controller.property, controller.language);
                 expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, controller.property);
                 expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(controller.property);
-                expect(this.listItem.subObjectProperties).toEqual([]);
-                expect(this.listItem.objectPropertyHierarchy).toEqual([]);
-                expect(this.listItem.subDataProperties).toEqual([]);
-                expect(this.listItem.dataPropertyHierarchy).toEqual([]);
-                expect(this.listItem.annotations).toContain({namespace: this.split.begin + this.split.then, localName: this.split.end});
-                expect(this.listItem.annotationPropertyHierarchy).toContain({entityIRI: controller.property['@id']});
+                expect(ontologyStateSvc.listItem.subObjectProperties).toEqual([]);
+                expect(ontologyStateSvc.listItem.objectPropertyHierarchy).toEqual([]);
+                expect(ontologyStateSvc.listItem.subDataProperties).toEqual([]);
+                expect(ontologyStateSvc.listItem.dataPropertyHierarchy).toEqual([]);
+                expect(ontologyStateSvc.listItem.annotations).toContain({namespace: this.split.begin + this.split.then, localName: this.split.end});
+                expect(ontologyStateSvc.listItem.annotationPropertyHierarchy).toContain({entityIRI: controller.property['@id']});
                 expect(ontologyStateSvc.setAnnotationPropertiesOpened).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, true);
                 expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, controller.property);
                 expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.annotationPropertyHierarchy, ontologyStateSvc.listItem.recordId);
+                expect(ontologyStateSvc.listItem.flatAnnotationPropertyHierarchy).toEqual([{prop: 'entity'}]);
                 expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(controller.property['@id']);
                 expect(ontologyStateSvc.showCreatePropertyOverlay).toBe(false);
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();

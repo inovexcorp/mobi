@@ -151,9 +151,8 @@ describe('Create Concept Scheme Overlay directive', function() {
             expect(ontologyStateSvc.setCommonIriParts).toHaveBeenCalledWith('begin', 'then');
         });
         it('should create a concept', function() {
-            var listItem = {ontology: [{}], conceptHierarchy: []};
+            ontologyStateSvc.flattenHierarchy.and.returnValue([{prop: 'entity'}]);
             controller.concepts = [{}];
-            ontologyStateSvc.listItem = listItem;
             controller.scheme = {'@id': 'scheme'};
 
             controller.create();
@@ -161,9 +160,10 @@ describe('Create Concept Scheme Overlay directive', function() {
             expect(controller.scheme[prefixes.skos + 'hasTopConcept']).toEqual(controller.concepts);
             expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, controller.scheme);
             expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(controller.scheme, controller.language);
-            expect(listItem.conceptHierarchy).toContain({entityIRI: controller.scheme['@id']});
+            expect(ontologyStateSvc.listItem.conceptHierarchy).toContain({entityIRI: controller.scheme['@id']});
             expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, controller.scheme);
             expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptHierarchy, ontologyStateSvc.listItem.recordId);
+            expect(ontologyStateSvc.listItem.flatConceptHierarchy).toEqual([{prop: 'entity'}]);
             expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(controller.scheme['@id']);
             expect(ontologyStateSvc.showCreateConceptSchemeOverlay).toBe(false);
             expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();

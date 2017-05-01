@@ -54,8 +54,8 @@ describe('Everything Tree directive', function() {
             path: ['recordId', 'class1']
         }, {
             title: 'Properties',
-            get: ontologyStateSvc.getNoDomainsOpened,
-            set: ontologyStateSvc.setNoDomainsOpened
+            get: jasmine.createSpy('get').and.returnValue(true),
+            set: jasmine.createSpy('set')
         }, {
             '@id': 'property1',
             hasChildren: false,
@@ -89,6 +89,18 @@ describe('Everything Tree directive', function() {
         it('based on .tree-items', function() {
             expect(element.querySelectorAll('.tree-item').length).toBe(1);
         });
+        it('based on .fa-folder-open-o', function() {
+            expect(element.querySelectorAll('.tree-item .fa-folder-open-o').length).toBe(1);
+            ontologyStateSvc.listItem.flatEverythingTree[2].get.and.returnValue(false);
+            scope.$digest();
+            expect(element.querySelectorAll('.tree-item .fa-folder-open-o').length).toBe(0);
+        });
+        it('based on .fa-folder-o', function() {
+            expect(element.querySelectorAll('.tree-item .fa-folder-o').length).toBe(0);
+            ontologyStateSvc.listItem.flatEverythingTree[2].get.and.returnValue(false);
+            scope.$digest();
+            expect(element.querySelectorAll('.tree-item .fa-folder-o').length).toBe(1);
+        });
     });
     describe('controller methods', function() {
         describe('isShown should return', function() {
@@ -98,13 +110,12 @@ describe('Everything Tree directive', function() {
                     expect(controller.isShown(entity)).toBe(true);
                 });
                 it('entity does have an @id and get returns true', function() {
-                    var get = jasmine.createSpy('get').and.returnValue(true);
                     var entity = {
                         '@id': 'id',
-                        get: get
+                        get: jasmine.createSpy('get').and.returnValue(true)
                     };
                     expect(controller.isShown(entity)).toBe(true);
-                    expect(get).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId);
+                    expect(entity.get).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId);
                 });
                 it('entity does have an @id, does not have a get, indent is greater than 0, and areParentsOpen is true', function() {
                     var entity = {
@@ -131,13 +142,12 @@ describe('Everything Tree directive', function() {
                     expect(controller.isShown(entity)).toBe(false);
                 });
                 it('has a get that returns false', function() {
-                    var get = jasmine.createSpy('get').and.returnValue(false);
                     var entity = {
                         '@id': 'id',
-                        get: get
+                        get: jasmine.createSpy('get').and.returnValue(false)
                     }
                     expect(controller.isShown(entity)).toBe(false);
-                    expect(get).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId);
+                    expect(entity.get).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId);
                 });
                 it('indent is greater than 0 and areParentsOpen is false', function() {
                     var entity = {

@@ -513,7 +513,10 @@ function mockOntologyState() {
                 annotationPropertyIndex: {},
                 flatAnnotationPropertyHierarchy: [],
                 importedOntologies: [],
-                upToDate: true
+                importedOntologyIds: [],
+                upToDate: true,
+                conceptHierarchy: [],
+                flatConceptHierarchy: []
             };
             this.states = {};
             this.list = [];

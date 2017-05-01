@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Ontology State Service', function() {
-    var ontologyStateSvc, $q, scope, util, stateManagerSvc, ontologyManagerSvc, updateRefsSvc, prefixes, catalogManagerSvc, hierarchy, indexObject, expectedPaths, ontologyState, defaultDatatypes, ontologyObj, classObj, dataPropertyObj, individualObj, ontology, getResponse, httpSvc, $document, $timeout;
+    var ontologyStateSvc, $q, scope, util, stateManagerSvc, ontologyManagerSvc, updateRefsSvc, prefixes, catalogManagerSvc, hierarchy, indexObject, expectedPaths, ontologyState, defaultDatatypes, ontologyObj, classObj, dataPropertyObj, individualObj, ontology, getResponse, httpSvc, $document;
     var error = 'error';
     var format = 'jsonld';
     var title = 'title';
@@ -153,7 +153,7 @@ describe('Ontology State Service', function() {
             });
         });
 
-        inject(function(ontologyStateService, _updateRefsService_, _ontologyManagerService_, _catalogManagerService_, _$q_, _$rootScope_, _utilService_, _stateManagerService_, _prefixes_, _httpService_, _$document_, _$timeout_) {
+        inject(function(ontologyStateService, _updateRefsService_, _ontologyManagerService_, _catalogManagerService_, _$q_, _$rootScope_, _utilService_, _stateManagerService_, _prefixes_, _httpService_, _$document_) {
             ontologyStateSvc = ontologyStateService;
             updateRefsSvc = _updateRefsService_;
             ontologyManagerSvc = _ontologyManagerService_;
@@ -165,7 +165,6 @@ describe('Ontology State Service', function() {
             prefixes = _prefixes_;
             httpSvc = _httpService_;
             $document = _$document_;
-            $timeout = _$timeout_;
         });
 
         catalogManagerSvc.localCatalog = {'@id': catalogId};
@@ -1288,7 +1287,7 @@ describe('Ontology State Service', function() {
             }
             spyOn(ontologyStateSvc, 'getListItemByRecordId').and.returnValue(diffListItem);
             ontologyManagerSvc.getEntity.and.returnValue(classObj);
-            expect(ontologyStateSvc.getEntityByRecordId(recordId, classId)).toEqual(undefined);
+            expect(ontologyStateSvc.getEntityByRecordId(recordId, classId)).toBeUndefined();
             expect(ontologyStateSvc.getListItemByRecordId).toHaveBeenCalledWith(recordId);
         });
         it('undefined when not present', function() {
@@ -2997,7 +2996,7 @@ describe('Ontology State Service', function() {
         ontologyStateSvc.openAt(flatHierarchy, 'iri-c');
         expect(ontologyStateSvc.setOpened).toHaveBeenCalledWith('recordId.iri-a', true);
         expect(ontologyStateSvc.setOpened).toHaveBeenCalledWith('recordId.iri-a.iri-b', true);
-        // $timeout.flush();
+        // $scope.apply();
         // expect($document.querySelectorAll).toHaveBeenCalledWith('[class*=hierarchy-block] .repeater-container');
         // expect($document.querySelectorAll).toHaveBeenCalledWith('[data-path-to="recordId.iri-a.iri-b.iri-c"]');
         // expect(item[0].scrollTop).toBe(25);
