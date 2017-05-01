@@ -49,11 +49,16 @@ body.collapsed-nav .main-header {
         }
 
         a {
+            display: inline-block;
             margin-left: 5px;
+            text-decoration: none;
         }
 
         div {
             display: inline-block;
+            &.open a.dropdown-toggle {
+                color: #23527c;
+            }
 
             .dropdown-menu {
                 left: auto;

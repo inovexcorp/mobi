@@ -29,7 +29,6 @@ import com.google.common.base.CharMatcher;
 import com.opencsv.CSVReader;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
-import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -48,7 +47,6 @@ import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
-import org.matonto.rdf.orm.Thing;
 import org.matonto.rest.util.CharsetUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,6 +63,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -241,31 +240,29 @@ public class DelimitedConverterImpl implements DelimitedConverter {
             classInstance = valueFactory.createIRI(DEFAULT_PREFIX + nameOptional.get());
         }
 
-        Resource mapsToResource;
-        Iterator<Thing> mapsTo = cm.getMapsTo().iterator();
-        if (mapsTo.hasNext()) {
-            mapsToResource = mapsTo.next().getResource();
-        } else {
+        Set<Resource> mapsTo = cm.getMapsTo_resource();
+        mapsTo.forEach(resource ->
+                        convertedRDF.add(classInstance, valueFactory.createIRI(org.matonto.ontologies.rdfs.Resource.type_IRI),
+                resource));
+        if (mapsTo.isEmpty()) {
             throw new MatOntoETLException("Invalid mapping configuration. Missing mapsTo property on " +
                     cm.getResource());
         }
 
-        convertedRDF.add(classInstance, valueFactory.createIRI(org.matonto.ontologies.rdfs.Resource.type_IRI),
-                mapsToResource);
         mappedClasses.put(cm.getResource(), classInstance);
 
         cm.getDataProperty().forEach(dataMapping -> {
             int columnIndex = dataMapping.getColumnIndex().iterator().next();
-            Property prop = dataMapping.getHasProperty().iterator().next();
+            Resource prop = dataMapping.getHasProperty_resource().iterator().next();
 
             if (columnIndex < nextLine.length && columnIndex >= 0) {
                 if (!StringUtils.isEmpty(nextLine[columnIndex])) {
-                    convertedRDF.add(classInstance, valueFactory.createIRI(prop.getResource().stringValue()),
+                    convertedRDF.add(classInstance, valueFactory.createIRI(prop.stringValue()),
                             valueFactory.createLiteral(nextLine[columnIndex]));
                 } // else don't create a stmt for blank values
             } else {
                 LOGGER.warn(String.format("Column %d missing for %s: %s",
-                        columnIndex, classInstance.stringValue(), prop.getResource().stringValue()));
+                        columnIndex, classInstance.stringValue(), prop.stringValue()));
             }
         });
 
@@ -279,7 +276,7 @@ public class DelimitedConverterImpl implements DelimitedConverter {
                         objectMapping.getResource());
             }
 
-            Property prop = objectMapping.getHasProperty().iterator().next();
+            Resource prop = objectMapping.getHasProperty_resource().iterator().next();
 
             IRI targetIri;
             if (mappedClasses.containsKey(targetClassMapping.getResource())) {
@@ -295,7 +292,7 @@ public class DelimitedConverterImpl implements DelimitedConverter {
                 }
             }
 
-            convertedRDF.add(classInstance, valueFactory.createIRI(prop.getResource().stringValue()), targetIri);
+            convertedRDF.add(classInstance, valueFactory.createIRI(prop.stringValue()), targetIri);
         });
 
         return convertedRDF;
@@ -312,7 +309,7 @@ public class DelimitedConverterImpl implements DelimitedConverter {
     Optional<String> generateLocalName(ClassMapping cm, String[] currentLine) {
         Optional<String> nameOptional = cm.getLocalName();
 
-        if (!nameOptional.isPresent() || nameOptional.get().equals("")) {
+        if (!nameOptional.isPresent() || nameOptional.get().trim().isEmpty()) {
             //Only generate UUIDs when necessary. If you really have to waste a UUID go here: http://wasteaguid.info/
             return Optional.of(generateUuid());
         }
@@ -354,11 +351,9 @@ public class DelimitedConverterImpl implements DelimitedConverter {
 
         Model classMappingModel = mappingModel.filter(null, valueFactory.createIRI(org.matonto.ontologies.rdfs.Resource.type_IRI),
                 valueFactory.createIRI(ClassMapping.TYPE));
-
-        for (Resource classMappingResource : classMappingModel.subjects()) {
-            ClassMapping classMapping = classMappingFactory.getExisting(classMappingResource, mappingModel);
-            classMappings.add(classMapping);
-        }
+        classMappingModel.subjects().forEach(cmSubject -> {
+            classMappingFactory.getExisting(cmSubject, mappingModel).ifPresent(classMappings::add);
+        });
 
         return classMappings;
     }

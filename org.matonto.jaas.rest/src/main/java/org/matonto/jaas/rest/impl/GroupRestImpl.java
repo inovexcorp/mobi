@@ -207,7 +207,8 @@ public class GroupRestImpl implements GroupRest {
         Group savedGroup = engineManager.retrieveGroup(RdfEngine.COMPONENT_NAME, groupTitle).orElseThrow(() ->
                 ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
         Set<User> members = savedGroup.getMember().stream()
-                .map(agent -> userFactory.getExisting(agent.getResource(), agent.getModel()))
+                .map(agent -> userFactory.getExisting(agent.getResource(), agent.getModel()).orElseThrow(() ->
+                        new IllegalStateException("Unable to get User: " + agent.getResource().stringValue())))
                 .collect(Collectors.toSet());
 
         return Response.status(200).entity(new GenericEntity<Set<User>>(members) {}).build();
