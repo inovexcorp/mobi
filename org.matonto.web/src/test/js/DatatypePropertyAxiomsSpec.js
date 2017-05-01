@@ -112,6 +112,15 @@ describe('Datatype Property Axioms directive', function() {
                     expect(resObj.getItemIri).toHaveBeenCalledWith(value);
                 });
             });
+            it('if the axiom is domain', function() {
+                this.axiom.localName = 'domain';
+                ontologyStateSvc.createFlatEverythingTree.and.returnValue([{prop: 'everything'}]);
+                ontologyStateSvc.getOntologiesArray.and.returnValue([]);
+                controller.updateHierarchy(this.axiom, this.values);
+                expect(ontologyStateSvc.getOntologiesArray).toHaveBeenCalled();
+                expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith([], ontologyStateSvc.listItem);
+                expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([{prop: 'everything'}]);
+            });
         });
         describe('should remove a class from the hierarchy', function() {
             beforeEach(function() {
@@ -123,8 +132,11 @@ describe('Datatype Property Axioms directive', function() {
             });
             it('if the selected key is subPropertyOf', function() {
                 controller.key = prefixes.rdfs + 'subPropertyOf';
+                ontologyStateSvc.flattenHierarchy.and.returnValue([{entityIRI: 'new'}]);
                 controller.removeFromHierarchy(this.axiomObject);
                 expect(ontologyStateSvc.deleteEntityFromParentInHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.dataPropertyHierarchy, ontologyStateSvc.selected.matonto.originalIRI, this.axiomObject['@id'], ontologyStateSvc.listItem.dataPropertyIndex);
+                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.dataPropertyHierarchy, ontologyStateSvc.listItem.recordId);
+                expect(ontologyStateSvc.listItem.flatDataPropertyHierarchy).toEqual([{entityIRI: 'new'}]);
             });
         });
     });

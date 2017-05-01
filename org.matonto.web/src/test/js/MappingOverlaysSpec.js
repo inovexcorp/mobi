@@ -103,7 +103,7 @@ describe('Mapping Overlays directive', function() {
             expect(mapperStateSvc.removeAvailableProps).toHaveBeenCalledWith(classMappingId);
             expect(mappingManagerSvc.getClassIdByMappingId).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, classMappingId);
             expect(mappingManagerSvc.findSourceOntologyWithClass).toHaveBeenCalledWith(classObj['@id'], mapperStateSvc.sourceOntologies);
-            expect(ontologyManagerSvc.getEntity).toHaveBeenCalledWith(classOntology.entities, classObj['@id']);
+            expect(ontologyManagerSvc.getEntity).toHaveBeenCalledWith([classOntology.entities], classObj['@id']);
             expect(mapperStateSvc.availableClasses).toContain({ontologyId: classOntology.id, classObj: classObj});
             expect(mapperStateSvc.invalidProps).not.toContain(dataProps[0]);
             expect(mapperStateSvc.resetEdit).toHaveBeenCalled();

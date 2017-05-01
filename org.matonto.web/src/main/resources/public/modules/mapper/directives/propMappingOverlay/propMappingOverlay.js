@@ -132,7 +132,7 @@
                         var propMapping = _.find(dvm.state.mapping.jsonld, {'@id': dvm.state.selectedPropMappingId});
                         var propId = dvm.mm.getPropIdByMapping(propMapping);
                         var ontology = dvm.mm.findSourceOntologyWithProp(propId, dvm.state.sourceOntologies);
-                        dvm.selectedProp = {propObj: dvm.om.getEntity(ontology.entities, propId), ontologyId: ontology.id};
+                        dvm.selectedProp = {propObj: dvm.om.getEntity([ontology.entities], propId), ontologyId: ontology.id};
                         dvm.selectedColumn = dvm.util.getPropertyValue(propMapping, dvm.prefixes.delim + 'columnIndex');
                         dvm.rangeClassMapping = dvm.getRangeClassMapping(dvm.selectedProp);
                     }

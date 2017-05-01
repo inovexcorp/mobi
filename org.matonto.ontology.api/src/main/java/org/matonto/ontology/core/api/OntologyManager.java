@@ -194,6 +194,14 @@ public interface OntologyManager {
     TupleQueryResult getSubDatatypePropertiesOf(Ontology ontology);
 
     /**
+     * Gets the subPropertyOf relationships for annotation properties in the provided Ontology.
+     *
+     * @param ontology the Ontology you wish to query.
+     * @return a Set with the query results.
+     */
+    TupleQueryResult getSubAnnotationPropertiesOf(Ontology ontology);
+
+    /**
      * Gets the subPropertyOf relationships for object properties in the provided Ontology.
      *
      * @param ontology the Ontology you wish to query.

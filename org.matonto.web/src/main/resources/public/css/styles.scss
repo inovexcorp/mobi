@@ -282,7 +282,8 @@ ul {
     }
 
     /* General styles for the ul elements */
-    ul {
+    ul,
+    .repeater-container {
         /* Padding to match the width of the icons */
         ul,
         .creator {
@@ -291,7 +292,8 @@ ul {
         }
 
         /* The list items which contain an anchor for all of the items in the tree */
-        li {
+        li,
+        .tree-item {
             width: 100%;
 
             &.invalid .fa-check:before {

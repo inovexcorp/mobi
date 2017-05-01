@@ -18,6 +18,16 @@
 ###  http://purl.org/dc/terms/title
 <http://purl.org/dc/terms/title> rdf:type owl:AnnotationProperty .
 
+###  http://matonto.org/ontology#annotationProperty1a
+:annotationProperty1a rdf:type owl:AnnotationProperty ;
+                      <http://purl.org/dc/terms/title> "Annotation Property 1a"^^xsd:string .
+
+
+###  http://matonto.org/ontology#annotationProperty1b
+:annotationProperty1b rdf:type owl:AnnotationProperty ;
+                      rdfs:subPropertyOf :annotationProperty1a ;
+                      <http://purl.org/dc/terms/title> "Annotation Property 1b"^^xsd:string .
+
 
 #################################################################
 #    Datatypes
