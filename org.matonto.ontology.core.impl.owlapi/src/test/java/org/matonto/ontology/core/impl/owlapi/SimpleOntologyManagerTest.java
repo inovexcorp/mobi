@@ -526,7 +526,7 @@ public class SimpleOntologyManagerTest {
         when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
         when(catalogManager.getBranch(branchIRI, branchFactory)).thenReturn(Optional.of(branch));
         when(catalogManager.getCommitChain(commitIRI)).thenReturn(Stream.of(commitIRI).collect(Collectors.toList()));
-        when(catalogManager.getCommit(commitIRI, commitFactory)).thenReturn(Optional.empty());
+        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(Optional.empty());
 
         manager.retrieveOntology(recordIRI, branchIRI, commitIRI);
     }
