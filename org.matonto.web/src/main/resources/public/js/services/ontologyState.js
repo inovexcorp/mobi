@@ -489,7 +489,7 @@
                     });
                     listItem.conceptHierarchy = response[2].hierarchy;
                     listItem.conceptIndex = response[2].index;
-                    listItem.flatConceptHierarchy = self.flattenHierarchy(listItem.conceptHierarchy, recordId);
+                    listItem.flatConceptHierarchy = self.flattenHierarchy(listItem.conceptHierarchy, recordId, listItem);
                     listItem.branches = response[3].data;
                     _.forEach(response[4], importedOntObj => {
                         addImportedOntologyToListItem(listItem, importedOntObj, 'vocabulary');
