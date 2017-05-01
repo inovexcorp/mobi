@@ -56,6 +56,14 @@
                 _.pull(_.get(os.listItem, 'classesWithIndividuals'), entityIRI);
                 os.deleteEntityFromHierarchy(_.get(os.listItem, 'classHierarchy'), entityIRI, _.get(os.listItem, 'classIndex'));
                 self.commonDelete(entityIRI);
+
+                delete os.listItem.classesAndIndividuals[entityIRI];
+                var clsInd = _.keys(os.listItem.classesAndIndividuals);
+                var paths =  os.retrievePaths(os.listItem.classesAndIndividuals, os.listItem.classHierarchy, os.listItem.classIndex);
+                var unPaths = _.uniq(_.flattenDeep(paths));
+
+                os.listItem.classesWithIndividuals = clsInd;
+                os.listItem.individualsParentPath = unPaths;
             }
 
             self.deleteObjectProperty = function() {

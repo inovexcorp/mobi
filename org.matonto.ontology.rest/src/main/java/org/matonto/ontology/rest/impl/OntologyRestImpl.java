@@ -601,7 +601,6 @@ public class OntologyRestImpl implements OntologyRest {
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
             TupleQueryResult results = ontologyManager.getClassesWithIndividuals(ontology);
             JSONObject response = getClassIndividuals(results);
-            //JSONObject response = getHierarchy(results);
             return Response.ok(response).build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -1214,11 +1213,10 @@ public class OntologyRestImpl implements OntologyRest {
      */
     private JSONObject getClassIndividuals(TupleQueryResult tupleQueryResult) {
         Map<String, Set<String>> classIndividuals = new HashMap<>();
-
         tupleQueryResult.forEach(queryResult -> {
             Optional<Value> individual = queryResult.getValue("individual");
             Optional<Value> parent = queryResult.getValue("parent");
-                if (individual.isPresent() && individual.isPresent()) {
+                if (individual.isPresent() && parent.isPresent()) {
                     String individualValue = individual.get().stringValue();
                     String keyString = parent.get().stringValue();
                     if (classIndividuals.containsKey(keyString)) {
@@ -1230,7 +1228,6 @@ public class OntologyRestImpl implements OntologyRest {
                     }
                 }
         });
-
         return new JSONObject().element("individuals", classIndividuals);
     }
 }
