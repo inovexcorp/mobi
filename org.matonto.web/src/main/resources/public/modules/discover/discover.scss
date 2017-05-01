@@ -1,0 +1,31 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.discover {
+    background-color: $gray-lighter;
+
+    .sparql-container {
+        display: flex;
+        flex-direction: column;
+
+        .sparql-page-content {
+            flex: 1;
+            min-height: 0;
+
+            .row {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+
+                .block-container {
+                    flex: 1;
+                    margin-bottom: 15px;
+
+                    &:last-child {
+                        margin-bottom: 0;
+                    }
+                }
+            }
+        }
+    }
+}
