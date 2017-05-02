@@ -212,7 +212,7 @@ public class SimpleDatasetManager implements DatasetManager {
         DatasetRecord datasetRecord = getDatasetRecord(record).orElseThrow(() ->
                 new IllegalArgumentException("Could not find the required DatasetRecord in the Catalog."));
         Resource dataset = datasetRecord.getDataset_resource().orElseThrow(() ->
-                new MatOntoException("Could not retrieve the Dataset IRI from the DatasetRecord."));
+                new IllegalStateException("Could not retrieve the Dataset IRI from the DatasetRecord."));
 
         Repository dsRepo = getDatasetRepo(datasetRecord);
 
@@ -236,7 +236,7 @@ public class SimpleDatasetManager implements DatasetManager {
         DatasetRecord datasetRecord = getDatasetRecord(record).orElseThrow(() ->
                 new IllegalArgumentException("Could not find the required DatasetRecord in the Catalog."));
         Resource dataset = datasetRecord.getDataset_resource().orElseThrow(() ->
-                new MatOntoException("Could not retrieve the Dataset IRI from the DatasetRecord."));
+                new IllegalStateException("Could not retrieve the Dataset IRI from the DatasetRecord."));
 
         Repository dsRepo = getDatasetRepo(datasetRecord);
 
@@ -260,7 +260,7 @@ public class SimpleDatasetManager implements DatasetManager {
         DatasetRecord datasetRecord = getDatasetRecord(record).orElseThrow(() ->
                 new IllegalArgumentException("Could not find the required DatasetRecord in the Catalog."));
         Resource dataset = datasetRecord.getDataset_resource().orElseThrow(() ->
-                new MatOntoException("Could not retrieve the Dataset IRI from the DatasetRecord."));
+                new IllegalStateException("Could not retrieve the Dataset IRI from the DatasetRecord."));
 
         Repository dsRepo = getDatasetRepo(datasetRecord);
 
@@ -282,7 +282,7 @@ public class SimpleDatasetManager implements DatasetManager {
         DatasetRecord datasetRecord = getDatasetRecord(record).orElseThrow(() ->
                 new IllegalArgumentException("Could not find the required DatasetRecord in the Catalog."));
         Resource dataset = datasetRecord.getDataset_resource().orElseThrow(() ->
-                new MatOntoException("Could not retrieve the Dataset IRI from the DatasetRecord."));
+                new IllegalStateException("Could not retrieve the Dataset IRI from the DatasetRecord."));
 
         Repository dsRepo = getDatasetRepo(datasetRecord);
 
@@ -308,9 +308,9 @@ public class SimpleDatasetManager implements DatasetManager {
         DatasetRecord datasetRecord = getDatasetRecord(record).orElseThrow(() ->
                 new IllegalArgumentException("Could not find the required DatasetRecord in the Catalog."));
         Resource dataset = datasetRecord.getDataset_resource().orElseThrow(() ->
-                new MatOntoException("Could not retrieve the Dataset IRI from the DatasetRecord."));
+                new IllegalStateException("Could not retrieve the Dataset IRI from the DatasetRecord."));
         String repositoryId = datasetRecord.getRepository().orElseThrow(() ->
-                new MatOntoException("Could not retrieve the Repository ID from the DatasetRecord."));
+                new IllegalStateException("Could not retrieve the Repository ID from the DatasetRecord."));
 
         Repository dsRepo = getDatasetRepo(datasetRecord);
         return new SimpleDatasetRepositoryConnection(dsRepo.getConnection(), dataset, repositoryId, vf);
@@ -343,7 +343,7 @@ public class SimpleDatasetManager implements DatasetManager {
 
     private Repository getDatasetRepo(DatasetRecord datasetRecord) {
         String dsRepoID = datasetRecord.getRepository().orElseThrow(() ->
-                new MatOntoException("DatasetRecord does not specify a dataset repository."));
+                new IllegalStateException("DatasetRecord does not specify a dataset repository."));
         return getDatasetRepo(dsRepoID);
     }
 

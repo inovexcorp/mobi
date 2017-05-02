@@ -22,8 +22,8 @@
   -->
 <div ng-if="dvm.step === 0" class="new-dataset-info-overlay overlay">
     <form name="dvm.infoForm" class="clearfix content" novalidate autocomplete="off">
-        <h6>Create New Dataset</h6>
-        <h3>Basic Info</h3>
+        <h1>Create New Dataset</h1>
+        <h2>Basic Info</h2>
         <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
         <div class="form-group">
             <custom-label>Title</custom-label>
@@ -46,8 +46,8 @@
 </div>
 <div ng-if="dvm.step === 1" class="new-dataset-ontologies-overlay overlay">
     <form name="dvm.ontologiesForm" class="clearfix content" novalidate autocomplete="off">
-        <h6>Create New Dataset</h6>
-        <h3>Ontologies</h3>
+        <h1>Create New Dataset</h1>
+        <h2>Ontologies</h2>
         <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
         <div class="form-group">
             <div class="input-group ontologies-search-bar">
