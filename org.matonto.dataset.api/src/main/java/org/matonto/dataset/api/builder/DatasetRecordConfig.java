@@ -24,7 +24,6 @@ package org.matonto.dataset.api.builder;
  */
 
 import org.matonto.catalog.api.builder.RecordConfig;
-import org.matonto.catalog.api.ontologies.mcat.VersionedRDFRecordIdentifier;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
 
 import java.util.HashSet;
@@ -35,7 +34,7 @@ public class DatasetRecordConfig extends RecordConfig {
 
     private String dataset;
     private String repositoryId;
-    private Set<VersionedRDFRecordIdentifier> ontologies;
+    private Set<OntologyIdentifier> ontologies;
 
     private DatasetRecordConfig(DatasetRecordBuilder builder) {
         super(builder);
@@ -52,14 +51,14 @@ public class DatasetRecordConfig extends RecordConfig {
         return repositoryId;
     }
 
-    public Set<VersionedRDFRecordIdentifier> getOntologies() {
+    public Set<OntologyIdentifier> getOntologies() {
         return ontologies;
     }
 
     public static class DatasetRecordBuilder extends Builder {
         private String dataset;
         private String repositoryId;
-        private Set<VersionedRDFRecordIdentifier> ontologies = new HashSet<>();
+        private Set<OntologyIdentifier> ontologies = new HashSet<>();
 
         private static final String DEFAULT_DS_NAMESPACE = "http://matonto.org/dataset/";
 
@@ -79,7 +78,7 @@ public class DatasetRecordConfig extends RecordConfig {
             return this;
         }
 
-        public DatasetRecordBuilder ontology(VersionedRDFRecordIdentifier identifier) {
+        public DatasetRecordBuilder ontology(OntologyIdentifier identifier) {
             ontologies.add(identifier);
             return this;
         }

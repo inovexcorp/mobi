@@ -51,7 +51,6 @@ import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.Statement;
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
-import org.matonto.rdf.orm.Thing;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.api.RepositoryManager;
@@ -62,7 +61,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Component(immediate = true)
 public class SimpleDatasetManager implements DatasetManager {
@@ -187,12 +185,16 @@ public class SimpleDatasetManager implements DatasetManager {
 
         datasetRecord.setDataset(dataset);
         datasetRecord.setRepository(config.getRepositoryId());
-        datasetRecord.setOntology(config.getOntologies());
+        Set<Value> ontologies = new HashSet<>();
+        config.getOntologies().forEach(identifier -> {
+            ontologies.add(identifier.getNode());
+            datasetRecord.getModel().addAll(identifier.getStatements());
+        });
+        datasetRecord.setOntology(ontologies);
         catalogManager.addRecord(catalogManager.getLocalCatalogIRI(), datasetRecord);
 
         try (RepositoryConnection conn = dsRepo.getConnection()) {
             conn.add(dataset.getModel(), datasetIRI);
-            config.getOntologies().forEach(thing -> conn.add(thing.getModel(), thing.getResource()));
         }
 
         return datasetRecord;

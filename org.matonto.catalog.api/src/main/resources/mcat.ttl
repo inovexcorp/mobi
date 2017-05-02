@@ -228,22 +228,6 @@
     rdfs:domain :Revision;
     rdfs:range xsd:anyURI.
 
-# VersionedRDFRecordIdentifier
-
-:VersionedRDFRecordIdentifier a owl:Class.
-
-:identifiedRecord a owl:ObjectProperty, owl:FunctionalProperty ;
-    rdfs:domain :VersionedRDFRecordIdentifier ;
-    rdfs:range :VersionedRDFRecord .
-
-:identifiedBranch a owl:ObjectProperty, owl:FunctionalProperty ;
-    rdfs:domain :VersionedRDFRecordIdentifier ;
-    rdfs:range :Branch .
-
-:identifiedCommit a owl:ObjectProperty, owl:FunctionalProperty ;
-    rdfs:domain :VersionedRDFRecordIdentifier ;
-    rdfs:range :Commit .
-
 # Misc.
 
 # Blank node class issue

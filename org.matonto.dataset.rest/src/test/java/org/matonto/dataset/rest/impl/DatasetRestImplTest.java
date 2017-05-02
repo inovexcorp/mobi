@@ -23,6 +23,7 @@ package org.matonto.dataset.rest.impl;
  * #L%
  */
 
+import static org.matonto.rest.util.RestUtils.encode;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
@@ -34,7 +35,6 @@ import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
-import static org.matonto.rest.util.RestUtils.encode;
 
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -50,12 +50,11 @@ import org.matonto.catalog.api.ontologies.mcat.Commit;
 import org.matonto.catalog.api.ontologies.mcat.CommitFactory;
 import org.matonto.catalog.api.ontologies.mcat.OntologyRecord;
 import org.matonto.catalog.api.ontologies.mcat.OntologyRecordFactory;
-import org.matonto.catalog.api.ontologies.mcat.VersionedRDFRecordIdentifierFactory;
 import org.matonto.dataset.api.DatasetManager;
-import org.matonto.dataset.pagination.DatasetPaginatedSearchParams;
 import org.matonto.dataset.api.builder.DatasetRecordConfig;
 import org.matonto.dataset.ontology.dataset.DatasetRecord;
 import org.matonto.dataset.ontology.dataset.DatasetRecordFactory;
+import org.matonto.dataset.pagination.DatasetPaginatedSearchParams;
 import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
@@ -87,7 +86,6 @@ import org.openrdf.model.vocabulary.DCTERMS;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
@@ -110,7 +108,6 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
     private OntologyRecordFactory ontologyRecordFactory;
     private BranchFactory branchFactory;
     private CommitFactory commitFactory;
-    private VersionedRDFRecordIdentifierFactory identifierFactory;
     private DatasetRecord record1;
     private DatasetRecord record2;
     private DatasetRecord record3;
@@ -149,7 +146,6 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
         ontologyRecordFactory = new OntologyRecordFactory();
         branchFactory = new BranchFactory();
         commitFactory = new CommitFactory();
-        identifierFactory = new VersionedRDFRecordIdentifierFactory();
         datasetRecordFactory.setValueFactory(vf);
         datasetRecordFactory.setModelFactory(mf);
         datasetRecordFactory.setValueConverterRegistry(vcr);
@@ -165,17 +161,12 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
         commitFactory.setValueFactory(vf);
         commitFactory.setModelFactory(mf);
         commitFactory.setValueConverterRegistry(vcr);
-        identifierFactory.setValueFactory(vf);
-        identifierFactory.setModelFactory(mf);
-        identifierFactory.setValueConverterRegistry(vcr);
-
 
         vcr.registerValueConverter(datasetRecordFactory);
         vcr.registerValueConverter(userFactory);
         vcr.registerValueConverter(ontologyRecordFactory);
         vcr.registerValueConverter(branchFactory);
         vcr.registerValueConverter(commitFactory);
-        vcr.registerValueConverter(identifierFactory);
         vcr.registerValueConverter(new ResourceValueConverter());
         vcr.registerValueConverter(new IRIValueConverter());
         vcr.registerValueConverter(new DoubleValueConverter());
@@ -208,13 +199,12 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
         rest = new DatasetRestImpl();
         rest.setManager(datasetManager);
         rest.setVf(vf);
+        rest.setMf(mf);
         rest.setTransformer(transformer);
         rest.setEngineManager(engineManager);
         rest.setCatalogManager(catalogManager);
         rest.setOntologyRecordFactory(ontologyRecordFactory);
         rest.setBranchFactory(branchFactory);
-        rest.setCommitFactory(commitFactory);
-        rest.setVersionedRDFRecordIdentifierFactory(identifierFactory);
 
         return new ResourceConfig()
                 .register(rest)
@@ -255,13 +245,6 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
         try {
             JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
             assertEquals(result.size(), 3);
-            for (Object aResult : result) {
-                JSONObject recordObj = JSONObject.fromObject(aResult);
-                assertTrue(recordObj.containsKey("@id"));
-                assertTrue(recordObj.getString("@id").equals(record1.getResource().toString())
-                        || recordObj.getString("@id").equals(record2.getResource().toString())
-                        || recordObj.getString("@id").equals(record3.getResource().toString()));
-            }
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }

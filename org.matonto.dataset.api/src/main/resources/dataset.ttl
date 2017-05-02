@@ -70,6 +70,16 @@
     rdfs:domain :DatasetRecord ;
     rdfs:range xsd:string .
 
-:ontology a owl:ObjectProperty ;
-    rdfs:domain :DatasetRecord ;
-    rdfs:range matcat:VersionedRDFRecordIdentifier .
+:ontology a owl:DatatypeProperty ;
+    rdfs:domain :DatasetRecord .
+
+# Misc.
+
+:linksToRecord a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:range matcat:VersionedRDFRecord .
+
+:linksToBranch a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:range matcat:Branch .
+
+:linksToCommit a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:range matcat:Commit .

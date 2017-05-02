@@ -37,13 +37,11 @@ import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.PaginatedSearchResults;
 import org.matonto.catalog.api.ontologies.mcat.Branch;
 import org.matonto.catalog.api.ontologies.mcat.BranchFactory;
-import org.matonto.catalog.api.ontologies.mcat.CommitFactory;
 import org.matonto.catalog.api.ontologies.mcat.OntologyRecord;
 import org.matonto.catalog.api.ontologies.mcat.OntologyRecordFactory;
-import org.matonto.catalog.api.ontologies.mcat.VersionedRDFRecordIdentifier;
-import org.matonto.catalog.api.ontologies.mcat.VersionedRDFRecordIdentifierFactory;
 import org.matonto.dataset.api.DatasetManager;
 import org.matonto.dataset.api.builder.DatasetRecordConfig;
+import org.matonto.dataset.api.builder.OntologyIdentifier;
 import org.matonto.dataset.ontology.dataset.DatasetRecord;
 import org.matonto.dataset.pagination.DatasetPaginatedSearchParams;
 import org.matonto.dataset.rest.DatasetRest;
@@ -51,11 +49,12 @@ import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.ontology.utils.api.SesameTransformer;
+import org.matonto.rdf.api.Model;
+import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rest.util.ErrorUtils;
 import org.matonto.rest.util.LinksUtils;
-import org.matonto.rest.util.RestUtils;
 import org.matonto.rest.util.jaxb.Links;
 
 import java.util.Arrays;
@@ -73,10 +72,9 @@ public class DatasetRestImpl implements DatasetRest {
     private CatalogManager catalogManager;
     private OntologyRecordFactory ontologyRecordFactory;
     private BranchFactory branchFactory;
-    private CommitFactory commitFactory;
-    private VersionedRDFRecordIdentifierFactory versionedRDFRecordIdentifierFactory;
     private SesameTransformer transformer;
     private ValueFactory vf;
+    private ModelFactory mf;
 
     @Reference
     public void setManager(DatasetManager manager) {
@@ -104,17 +102,6 @@ public class DatasetRestImpl implements DatasetRest {
     }
 
     @Reference
-    public void setCommitFactory(CommitFactory commitFactory) {
-        this.commitFactory = commitFactory;
-    }
-
-    @Reference
-    public void setVersionedRDFRecordIdentifierFactory(VersionedRDFRecordIdentifierFactory
-                                                                   versionedRDFRecordIdentifierFactory) {
-        this.versionedRDFRecordIdentifierFactory = versionedRDFRecordIdentifierFactory;
-    }
-
-    @Reference
     public void setTransformer(SesameTransformer transformer) {
         this.transformer = transformer;
     }
@@ -122,6 +109,11 @@ public class DatasetRestImpl implements DatasetRest {
     @Reference
     public void setVf(ValueFactory vf) {
         this.vf = vf;
+    }
+
+    @Reference
+    public void setMf(ModelFactory mf) {
+        this.mf = mf;
     }
 
     @Override
@@ -142,8 +134,8 @@ public class DatasetRestImpl implements DatasetRest {
             }
             PaginatedSearchResults<DatasetRecord> results = manager.getDatasetRecords(params);
             JSONArray array = JSONArray.fromObject(results.getPage().stream()
-                    .map(datasetRecord -> modelToJsonld(transformer.sesameModel(datasetRecord.getModel())))
-                    .map(RestUtils::getObjectFromJsonld)
+                    .map(datasetRecord -> removeContext(datasetRecord.getModel()))
+                    .map(model -> modelToJsonld(transformer.sesameModel(model)))
                     .collect(Collectors.toList()));
 
             Links links = LinksUtils.buildLinks(uriInfo, array.size(), results.getTotalSize(), limit, offset);
@@ -228,23 +220,25 @@ public class DatasetRestImpl implements DatasetRest {
         return Response.ok().build();
     }
 
-    private VersionedRDFRecordIdentifier getOntologyIdentifer(Resource recordId) {
+    private OntologyIdentifier getOntologyIdentifer(Resource recordId) {
         OntologyRecord record = catalogManager.getRecord(catalogManager.getLocalCatalogIRI(), recordId,
                 ontologyRecordFactory).orElseThrow(() ->
                 ErrorUtils.sendError("OntologyRecord could not be retrieved", Response.Status.BAD_REQUEST));
-        Resource branchId = record.getMasterBranch().orElseThrow(() ->
+        Resource branchId = record.getMasterBranch_resource().orElseThrow(() ->
                 ErrorUtils.sendError("The Master Branch could not be found on this record.",
-                        Response.Status.INTERNAL_SERVER_ERROR)).getResource();
+                        Response.Status.INTERNAL_SERVER_ERROR));
         Branch masterBranch = catalogManager.getBranch(branchId, branchFactory).orElseThrow(() ->
                 ErrorUtils.sendError("The Master Branch could not be retrieved.",
                         Response.Status.INTERNAL_SERVER_ERROR));
-        Resource commitId = masterBranch.getHead().orElseThrow(() ->
+        Resource commitId = masterBranch.getHead_resource().orElseThrow(() ->
                 ErrorUtils.sendError("There is no head Commit associated with this Branch.",
-                        Response.Status.INTERNAL_SERVER_ERROR)).getResource();
-        VersionedRDFRecordIdentifier identifier = versionedRDFRecordIdentifierFactory.createNew(vf.createBNode());
-        identifier.setIdentifiedRecord(record);
-        identifier.setIdentifiedBranch(masterBranch);
-        identifier.setIdentifiedCommit(commitFactory.createNew(commitId));
-        return identifier;
+                        Response.Status.INTERNAL_SERVER_ERROR));
+        return new OntologyIdentifier(recordId, branchId, commitId, vf, mf);
+    }
+
+    private Model removeContext(Model model) {
+        Model result = mf.createModel();
+        model.forEach(statement -> result.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
+        return result;
     }
 }

@@ -24,8 +24,8 @@ package org.matonto.dataset.impl
 
 import org.matonto.catalog.api.CatalogManager
 import org.matonto.catalog.api.PaginatedSearchResults
-import org.matonto.catalog.api.ontologies.mcat.VersionedRDFRecordIdentifierFactory
 import org.matonto.dataset.api.builder.DatasetRecordConfig
+import org.matonto.dataset.api.builder.OntologyIdentifier
 import org.matonto.dataset.ontology.dataset.Dataset
 import org.matonto.dataset.ontology.dataset.DatasetFactory
 import org.matonto.dataset.ontology.dataset.DatasetRecord
@@ -64,7 +64,6 @@ class SimpleDatasetManagerSpec extends Specification {
     def mf = LinkedHashModelFactory.getInstance()
     def dsFactory = new DatasetFactory()
     def dsRecFactory = new DatasetRecordFactory()
-    def identiferFactory = new VersionedRDFRecordIdentifierFactory()
     def thingFactory = new ThingFactory()
     def vcr = new DefaultValueConverterRegistry()
 
@@ -178,16 +177,12 @@ class SimpleDatasetManagerSpec extends Specification {
         dsRecFactory.setValueFactory(vf)
         dsRecFactory.setModelFactory(mf)
         dsRecFactory.setValueConverterRegistry(vcr)
-        identiferFactory.setValueFactory(vf)
-        identiferFactory.setModelFactory(mf)
-        identiferFactory.setValueConverterRegistry(vcr)
         thingFactory.setModelFactory(mf)
         thingFactory.setValueFactory(vf)
         thingFactory.setValueConverterRegistry(vcr)
 
         vcr.registerValueConverter(dsFactory)
         vcr.registerValueConverter(dsRecFactory)
-        vcr.registerValueConverter(identiferFactory)
         vcr.registerValueConverter(thingFactory)
         vcr.registerValueConverter(new ResourceValueConverter())
         vcr.registerValueConverter(new IRIValueConverter())
@@ -420,12 +415,14 @@ class SimpleDatasetManagerSpec extends Specification {
         setup:
         def datasetIRI = vf.createIRI("http://test.com/dataset1")
         def dataset = dsFactory.createNew(datasetIRI)
-        def identifierIRI = vf.createIRI("http://test.com/identifier")
-        def identifier = identiferFactory.createNew(identifierIRI)
+        def ontologyRecordStr = "http://text.com/ontology/record"
+        def ontologyBranchStr = "http://text.com/ontology/branch"
+        def ontologyCommitStr = "http://text.com/ontology/commit"
+        def identifier = new OntologyIdentifier(ontologyRecordStr, ontologyBranchStr, ontologyCommitStr, vf, mf)
         def recordIRI = vf.createIRI("http://test.com/record1")
         def record = dsRecFactory.createNew(recordIRI)
         record.setDataset(dataset)
-        record.setOntology(Collections.singleton(identifier))
+        record.setOntology(Collections.singleton(identifier.getNode()))
 
         def config = new DatasetRecordConfig.DatasetRecordBuilder("Test Dataset", [] as Set, "system")
                 .dataset(datasetIRI.stringValue())
@@ -442,7 +439,7 @@ class SimpleDatasetManagerSpec extends Specification {
         datasetRecord.getDataset_resource() != Optional.empty()
         datasetRecord.getDataset_resource().get() == datasetIRI
         !datasetRecord.getDataset().isPresent()
-        datasetRecord.getOntology_resource().size() == 1
+        datasetRecord.getOntology().size() == 1
     }
 
     def "createDataset adds the Dataset model to the repo"() {
