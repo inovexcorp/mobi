@@ -141,6 +141,11 @@
             <version>1.6.28</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>ontology.utils</artifactId>
+            <version>1.6.29-SNAPSHOT</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

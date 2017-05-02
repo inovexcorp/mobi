@@ -58,6 +58,7 @@ import org.matonto.ontology.core.api.propertyexpression.AnnotationProperty;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.ontology.rest.OntologyRest;
 import org.matonto.ontology.utils.api.SesameTransformer;
+import org.matonto.ontology.utils.cache.OntologyCache;
 import org.matonto.persistence.utils.JSONQueryResults;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.query.api.Binding;
@@ -145,7 +146,7 @@ public class OntologyRestImpl implements OntologyRest {
 
     @Reference
     public void setCacheManager(CacheManager cacheManager) {
-        this.ontologyCache = cacheManager.getCache("ontologyCache", String.class, Ontology.class);
+        this.ontologyCache = cacheManager.getCache(OntologyCache.CACHE_NAME, String.class, Ontology.class);
     }
 
     @Override
@@ -798,7 +799,7 @@ public class OntologyRestImpl implements OntologyRest {
 
         if (ontologyCache.isPresent()) {
             Cache<String, Ontology> cache = ontologyCache.get();
-            String key = OntologyManager.getOntologyCacheKey(recordIdStr, branchIdStr, commitIdStr);
+            String key = OntologyCache.getOntologyCacheKey(recordIdStr, branchIdStr, commitIdStr);
             if (cache.containsKey(key)) {
                 optionalOntology = Optional.of(cache.get(key));
             }
