@@ -1,6 +1,4 @@
-@Version("1.0.0.${build}")
-
-package org.matonto.cache.api;
+package org.matonto.cache.config;
 
 /*-
  * #%L
@@ -25,4 +23,21 @@ package org.matonto.cache.api;
  * #L%
  */
 
-import aQute.bnd.annotation.Version;
+import javax.cache.configuration.Configuration;
+
+public interface CacheConfiguration<K, V> {
+
+    /**
+     * The Cache ID.
+     *
+     * @return The String representing the Cache ID
+     */
+    String getCacheId();
+
+    /**
+     * The JSR-107 Configuration object for this CacheConfiguration.
+     *
+     * @return The JSR-107 Configuration object for this CacheConfiguration.
+     */
+    Configuration<K, V> getCacheConfiguration();
+}

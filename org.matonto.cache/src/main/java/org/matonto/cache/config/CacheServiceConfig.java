@@ -1,6 +1,4 @@
-@Version("1.0.0.${build}")
-
-package org.matonto.cache.api;
+package org.matonto.cache.config;
 
 /*-
  * #%L
@@ -25,4 +23,26 @@ package org.matonto.cache.api;
  * #L%
  */
 
-import aQute.bnd.annotation.Version;
+import aQute.bnd.annotation.metatype.Meta;
+
+/**
+ * Base configuration for Repository Objects.
+ */
+@Meta.OCD
+public interface CacheServiceConfig {
+
+    /**
+     * The Cache ID.
+     *
+     * @return The String the Cache ID.
+     */
+    String id();
+
+    /**
+     * The number of entries to track in the cache. NOTE: This is an optional property.
+     *
+     * @return The String representing the number of entries to track in the cache.
+     */
+    @Meta.AD(required = false)
+    int numEntries();
+}
