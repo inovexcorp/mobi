@@ -336,7 +336,6 @@ public class SimpleOntologyManager implements OntologyManager {
             ont = Optional.of(createOntologyFromCommit(commit));
             ontologyCache.ifPresent(cache -> cache.put(key, ont.get()));
         }
-
         return ont;
     }
 

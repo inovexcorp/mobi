@@ -298,7 +298,7 @@
              * branchId is provided. In which case just the branch is removed.
              *
              * @param {string} recordId The id of the Record to be deleted if no branchId is provided.
-             * @param {string} branchId The id of the Branch that should be removed
+             * @param {string} branchId The id of the Branch that should be removed.
              * @return {Promise} HTTP OK unless there was an error.
              */
             self.deleteOntology = function(recordId, branchId) {
