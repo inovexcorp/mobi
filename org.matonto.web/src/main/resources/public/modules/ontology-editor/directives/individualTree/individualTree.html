@@ -34,7 +34,7 @@
             <ul ng-repeat="node in node.subEntities | orderBy:dvm.ontoUtils.getNameByNode track by node.entityIRI" ng-include="'individual_item'"
                 ng-init="node = node; classOpened = dvm.os.getIndividualsOpened(dvm.os.listItem.recordId, node.entityIRI)" ng-if="dvm.verifyPathToIndividuals(node.entityIRI)"></ul>
             <ul>
-                <tree-item class="individual" ng-repeat="individual in dvm.om.getClassIndividuals(dvm.os.listItem.ontology, node.entityIRI) | orderBy:dvm.om.getEntityName track by individual.matonto.originalIRI"
+                <tree-item class="individual" ng-repeat="individual in dvm.om.getClassIndividuals(dvm.os.getOntologiesArray(), node.entityIRI) | uniqueKey:'matonto.originalIRI' | orderBy:dvm.om.getEntityName track by individual.matonto.originalIRI"
                            current-entity="individual"
                            is-active="dvm.os.getActiveEntityIRI() === individual.matonto.originalIRI"
                            on-click="dvm.os.selectItem(individual.matonto.originalIRI, false)" ></tree-item>

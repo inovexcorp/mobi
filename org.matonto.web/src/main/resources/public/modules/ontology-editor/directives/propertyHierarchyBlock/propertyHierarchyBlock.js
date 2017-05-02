@@ -27,17 +27,18 @@
         .module('propertyHierarchyBlock', [])
         .directive('propertyHierarchyBlock', propertyHierarchyBlock);
 
-        propertyHierarchyBlock.$inject = ['ontologyStateService', 'ontologyManagerService', 'ontologyUtilsManagerService'];
+        propertyHierarchyBlock.$inject = ['ontologyStateService', 'ontologyManagerService', 'ontologyUtilsManagerService', 'INDENT'];
 
-        function propertyHierarchyBlock(ontologyStateService, ontologyManagerService, ontologyUtilsManagerService) {
+        function propertyHierarchyBlock(ontologyStateService, ontologyManagerService, ontologyUtilsManagerService, INDENT) {
             return {
                 restrict: 'E',
                 replace: true,
                 templateUrl: 'modules/ontology-editor/directives/propertyHierarchyBlock/propertyHierarchyBlock.html',
                 scope: {},
                 controllerAs: 'dvm',
-                controller: function() {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
+                    dvm.indent = INDENT;
                     dvm.os = ontologyStateService;
                     dvm.om = ontologyManagerService;
                     dvm.utils = ontologyUtilsManagerService;
@@ -52,7 +53,56 @@
                         }
                         dvm.showDeleteConfirmation = false;
                     }
-                }
+                    
+                    dvm.isShown = function(node) {
+                        return !_.has(node, 'entityIRI') || (dvm.os.areParentsOpen(node) && node.get(dvm.os.listItem.recordId));
+                    }
+                    
+                    dvm.flatPropertyTree = constructFlatPropertyTree();
+                    
+                    function addGetToArrayItems(array, get) {
+                        return _.map(array, item => _.merge(item, {get}));
+                    }
+                    
+                    function constructFlatPropertyTree() {
+                        var result = [];
+                        if (dvm.os.listItem.flatDataPropertyHierarchy.length) {
+                            result.push({
+                                title: 'Data Properties',
+                                get: dvm.os.getDataPropertiesOpened,
+                                set: dvm.os.setDataPropertiesOpened
+                            });
+                            result = _.concat(result, addGetToArrayItems(dvm.os.listItem.flatDataPropertyHierarchy, dvm.os.getDataPropertiesOpened));
+                        }
+                        if (dvm.os.listItem.flatObjectPropertyHierarchy.length) {
+                            result.push({
+                                title: 'Object Properties',
+                                get: dvm.os.getObjectPropertiesOpened,
+                                set: dvm.os.setObjectPropertiesOpened
+                            });
+                            result = _.concat(result, addGetToArrayItems(dvm.os.listItem.flatObjectPropertyHierarchy, dvm.os.getObjectPropertiesOpened));
+                        }
+                        if (dvm.os.listItem.flatAnnotationPropertyHierarchy.length) {
+                            result.push({
+                                title: 'Annotation Properties',
+                                get: dvm.os.getAnnotationPropertiesOpened,
+                                set: dvm.os.setAnnotationPropertiesOpened
+                            });
+                            result = _.concat(result, addGetToArrayItems(dvm.os.listItem.flatAnnotationPropertyHierarchy, dvm.os.getAnnotationPropertiesOpened));
+                        }
+                        return result;
+                    }
+                    
+                    $scope.$watch('dvm.os.listItem.flatDataPropertyHierarchy', () => {
+                        dvm.flatPropertyTree = constructFlatPropertyTree();
+                    });
+                    $scope.$watch('dvm.os.listItem.flatObjectPropertyHierarchy', () => {
+                        dvm.flatPropertyTree = constructFlatPropertyTree();
+                    });
+                    $scope.$watch('dvm.os.listItem.flatAnnotationPropertyHierarchy', () => {
+                        dvm.flatPropertyTree = constructFlatPropertyTree();
+                    });
+                }]
             }
         }
 })();

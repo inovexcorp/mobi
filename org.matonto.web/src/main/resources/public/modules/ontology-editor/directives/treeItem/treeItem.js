@@ -40,9 +40,9 @@
                     onClick: '&'
                 },
                 bindToController: {
-                    currentEntity: '=',
+                    currentEntity: '<',
                     isOpened: '=',
-                    path: '='
+                    path: '<'
                 },
                 templateUrl: 'modules/ontology-editor/directives/treeItem/treeItem.html',
                 controllerAs: 'dvm',
@@ -60,7 +60,7 @@
 
                     dvm.toggleOpen = function() {
                         dvm.isOpened = !dvm.isOpened;
-                        os.setOpened(dvm.path, dvm.isOpened);
+                        os.setOpened(_.join(dvm.path, '.'), dvm.isOpened);
                     }
 
                     dvm.isSaved = function() {
