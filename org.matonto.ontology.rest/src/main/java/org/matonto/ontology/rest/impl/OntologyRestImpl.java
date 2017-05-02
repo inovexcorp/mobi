@@ -1201,7 +1201,7 @@ public class OntologyRestImpl implements OntologyRest {
         catalogManager.addAdditions(ontology.asModel(modelFactory), inProgressCommit.getResource());
 
         Commit commit = catalogManager.createCommit(inProgressCommit, "The initial commit.", null, null);
-        Resource masterBranchId = record.getMasterBranch_resource().get();
+        Resource masterBranchId = finalRecord.getMasterBranch_resource().get();
         catalogManager.addCommitToBranch(commit, masterBranchId);
 
         catalogManager.removeInProgressCommit(inProgressCommit.getResource());
@@ -1214,7 +1214,7 @@ public class OntologyRestImpl implements OntologyRest {
 
         JSONObject response = new JSONObject()
                 .element("ontologyId", ontology.getOntologyId().getOntologyIdentifier().stringValue())
-                .element("recordId", record.getResource().stringValue())
+                .element("recordId", finalRecord.getResource().stringValue())
                 .element("branchId", masterBranchId.stringValue())
                 .element("commitId", commit.getResource().stringValue());
         return Response.status(201).entity(response).build();

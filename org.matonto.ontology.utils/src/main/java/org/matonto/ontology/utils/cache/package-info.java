@@ -1,8 +1,10 @@
-package org.matonto.cache.config;
+@Version("1.0.0.${build}")
+
+package org.matonto.ontology.utils.cache;
 
 /*-
  * #%L
- * org.matonto.cache
+ * org.matonto.ontology.utils
  * $Id:$
  * $HeadURL:$
  * %%
@@ -23,18 +25,4 @@ package org.matonto.cache.config;
  * #L%
  */
 
-import aQute.bnd.annotation.metatype.Meta;
-
-/**
- * Base configuration for Cache Objects.
- */
-@Meta.OCD
-public interface CacheConfig {
-
-    /**
-     * The Cache ID
-     *
-     * @return The String representing the Cache ID
-     */
-    String id();
-}
+import aQute.bnd.annotation.Version;

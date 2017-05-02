@@ -66,7 +66,8 @@
                         <Bundle-Name>MatOnto Ontology Service - Utils</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
-                            org.matonto.ontology.utils.api; provide:=true
+                            org.matonto.ontology.utils.api; provide:=true,
+                            org.matonto.ontology.utils.cache
                         </Export-Package>
                         <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>

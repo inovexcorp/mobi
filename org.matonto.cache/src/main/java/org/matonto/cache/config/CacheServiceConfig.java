@@ -1,14 +1,12 @@
-@Version("1.0.1.${build}")
-
-package org.matonto.rest.util.logging;
+package org.matonto.cache.config;
 
 /*-
  * #%L
- * org.matonto.rest.util
+ * org.matonto.cache
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -25,4 +23,26 @@ package org.matonto.rest.util.logging;
  * #L%
  */
 
-import aQute.bnd.annotation.Version;
+import aQute.bnd.annotation.metatype.Meta;
+
+/**
+ * Base configuration for Repository Objects.
+ */
+@Meta.OCD
+public interface CacheServiceConfig {
+
+    /**
+     * The Cache ID.
+     *
+     * @return The String the Cache ID.
+     */
+    String id();
+
+    /**
+     * The number of entries to track in the cache. NOTE: This is an optional property.
+     *
+     * @return The String representing the number of entries to track in the cache.
+     */
+    @Meta.AD(required = false)
+    int numEntries();
+}

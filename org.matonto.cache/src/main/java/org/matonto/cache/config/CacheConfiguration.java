@@ -1,14 +1,12 @@
-@Version("1.0.1.${build}")
-
-package org.matonto.rest.util.logging;
+package org.matonto.cache.config;
 
 /*-
  * #%L
- * org.matonto.rest.util
+ * org.matonto.cache
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -25,4 +23,21 @@ package org.matonto.rest.util.logging;
  * #L%
  */
 
-import aQute.bnd.annotation.Version;
+import javax.cache.configuration.Configuration;
+
+public interface CacheConfiguration<K, V> {
+
+    /**
+     * The Cache ID.
+     *
+     * @return The String representing the Cache ID
+     */
+    String getCacheId();
+
+    /**
+     * The JSR-107 Configuration object for this CacheConfiguration.
+     *
+     * @return The JSR-107 Configuration object for this CacheConfiguration.
+     */
+    Configuration<K, V> getCacheConfiguration();
+}
