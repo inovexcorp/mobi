@@ -61,9 +61,11 @@
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
                         <Bundle-Name>MatOnto Cache - Ehcache Impl</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
-                        <Export-Package></Export-Package>
+                        <Export-Package>
+                            org.matonto.cache.api; provide:=true
+                        </Export-Package>
                         <Import-Package>
-                            org.ehcache.jsr107.config,
+                            org.ehcache.jsr107,
                             *
                         </Import-Package>
                         <Service-Component>*</Service-Component>

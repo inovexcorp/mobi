@@ -171,7 +171,8 @@
                             org.matonto.ontology.core.api.classexpression; provide:=true,
                             org.matonto.ontology.core.api.datarange; provide:=true,
                             org.matonto.ontology.core.api.propertyexpression; provide:=true,
-                            org.matonto.ontology.core.api.types; provide:=true
+                            org.matonto.ontology.core.api.types; provide:=true,
+                            org.matonto.cache.config; provide:=true
                         </Export-Package>
                         <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>

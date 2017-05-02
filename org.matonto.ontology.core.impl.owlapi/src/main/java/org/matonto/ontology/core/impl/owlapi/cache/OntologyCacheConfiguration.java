@@ -25,6 +25,7 @@ package org.matonto.ontology.core.impl.owlapi.cache;
 
 import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
+import aQute.bnd.annotation.component.Modified;
 import aQute.bnd.annotation.metatype.Configurable;
 import org.ehcache.config.builders.CacheConfigurationBuilder;
 import org.ehcache.config.builders.ResourcePoolsBuilder;
@@ -53,6 +54,11 @@ public class OntologyCacheConfiguration implements CacheConfiguration {
         } else {
             this.numEntries = 10;
         }
+    }
+
+    @Modified
+    public void modified(Map<String, Object> props) {
+        start(props);
     }
 
     @Override

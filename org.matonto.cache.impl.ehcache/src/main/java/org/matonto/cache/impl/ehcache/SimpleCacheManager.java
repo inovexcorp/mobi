@@ -31,6 +31,7 @@ import org.matonto.cache.api.CacheManager;
 import org.matonto.cache.config.CacheConfiguration;
 
 import java.util.Optional;
+import java.util.concurrent.Semaphore;
 import javax.cache.Cache;
 import javax.cache.Caching;
 import javax.cache.spi.CachingProvider;
@@ -40,30 +41,46 @@ public class SimpleCacheManager implements CacheManager {
 
     private CachingProvider provider;
     private javax.cache.CacheManager cacheManager;
+    private final Semaphore mutex = new Semaphore(1);
 
-    @Reference(type = '*', dynamic = true)
-    private <K, V> void addCache(CacheConfiguration<K, V> configuration) {
+    @Reference(type = '*', dynamic = true, optional = true)
+    private <K, V> void addCache(CacheConfiguration<K, V> configuration) throws InterruptedException {
+        checkCacheManager();
         cacheManager.createCache(configuration.getCacheId(), configuration.getCacheConfiguration());
     }
 
     private <K, V> void removeCache(CacheConfiguration<K, V> configuration) {
-        cacheManager.destroyCache(configuration.getCacheId());
+        if (cacheManager != null) {
+            cacheManager.destroyCache(configuration.getCacheId());
+        }
     }
 
     @Activate
-    public void start() {
-        provider = Caching.getCachingProvider("org.ehcache.jsr107.EhcacheCachingProvider", this.getClass().getClassLoader());
-        cacheManager = provider.getCacheManager();
+    public void start() throws InterruptedException {
+        checkCacheManager();
     }
 
     @Deactivate
     public void stop() {
-        cacheManager.close();
-        provider.close();
+        if (cacheManager != null) {
+            cacheManager.close();
+        }
+        if (provider != null) {
+            provider.close();
+        }
     }
 
     @Override
     public <K, V> Optional<Cache<K, V>> getCache(String cacheName, Class<K> keyType, Class<V> valueType) {
         return Optional.ofNullable(cacheManager.getCache(cacheName, keyType, valueType));
+    }
+
+    private void checkCacheManager() throws InterruptedException {
+        mutex.acquire();
+        if (cacheManager == null) {
+            provider = Caching.getCachingProvider("org.ehcache.jsr107.EhcacheCachingProvider", this.getClass().getClassLoader());
+            cacheManager = provider.getCacheManager();
+        }
+        mutex.release();
     }
 }
