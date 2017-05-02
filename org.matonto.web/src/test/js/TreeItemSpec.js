@@ -96,7 +96,7 @@ describe('Tree Item directive', function() {
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('LI');
+            expect(element.prop('tagName')).toBe('DIV');
             expect(element.hasClass('tree-item')).toBe(true);
         });
         it('depending on whether or not the currentEntity is saved', function() {
