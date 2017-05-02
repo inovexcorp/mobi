@@ -36,7 +36,6 @@ import net.sf.json.JSONException;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.ehcache.Cache;
 import org.matonto.cache.api.CacheManager;
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.Difference;
@@ -90,6 +89,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.cache.Cache;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
@@ -799,7 +799,7 @@ public class OntologyRestImpl implements OntologyRest {
 
         if (ontologyCache.isPresent()) {
             Cache<String, Ontology> cache = ontologyCache.get();
-            String key = OntologyCache.getOntologyCacheKey(recordIdStr, branchIdStr, commitIdStr);
+            String key = OntologyCache.generateKey(recordIdStr, branchIdStr, commitIdStr);
             if (cache.containsKey(key)) {
                 optionalOntology = Optional.of(cache.get(key));
             }

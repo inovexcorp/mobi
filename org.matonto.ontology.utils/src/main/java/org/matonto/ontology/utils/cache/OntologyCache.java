@@ -29,7 +29,7 @@ package org.matonto.ontology.utils.cache;
 public class OntologyCache {
     public static final String CACHE_NAME = "ontologyCache";
 
-    public static String getOntologyCacheKey(String recordIri, String branchIri, String commitIri) {
+    public static String generateKey(String recordIri, String branchIri, String commitIri) {
         return String.format("%s&%s&%s", recordIri, branchIri, commitIri);
     }
 }

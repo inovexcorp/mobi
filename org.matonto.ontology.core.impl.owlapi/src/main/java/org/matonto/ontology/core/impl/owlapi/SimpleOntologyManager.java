@@ -26,12 +26,10 @@ package org.matonto.ontology.core.impl.owlapi;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import org.apache.commons.io.IOUtils;
-import org.ehcache.Cache;
 import org.matonto.cache.api.CacheManager;
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.ontologies.mcat.Branch;
 import org.matonto.catalog.api.ontologies.mcat.BranchFactory;
-import org.matonto.catalog.api.ontologies.mcat.Commit;
 import org.matonto.catalog.api.ontologies.mcat.CommitFactory;
 import org.matonto.catalog.api.ontologies.mcat.OntologyRecord;
 import org.matonto.catalog.api.ontologies.mcat.OntologyRecordFactory;
@@ -75,7 +73,7 @@ import java.util.Optional;
 import java.util.function.Function;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.swing.text.html.Option;
+import javax.cache.Cache;
 
 @Component(
         provide = OntologyManager.class,
@@ -305,7 +303,7 @@ public class SimpleOntologyManager implements OntologyManager {
         Optional<Ontology> result = Optional.empty();
 
         if (ontologyCache.isPresent()) {
-            String key = OntologyCache.getOntologyCacheKey(recordId.stringValue(), branchId.stringValue(), commitId.stringValue());
+            String key = OntologyCache.generateKey(recordId.stringValue(), branchId.stringValue(), commitId.stringValue());
             result = Optional.ofNullable(ontologyCache.get().get(key));
         }
 
@@ -330,7 +328,7 @@ public class SimpleOntologyManager implements OntologyManager {
         Optional<Ontology> ont = Optional.empty();
 
         if (ontologyCache.isPresent()) {
-            String key = OntologyCache.getOntologyCacheKey(record.getResource().stringValue(), branch.getResource().stringValue(), commit.stringValue());
+            String key = OntologyCache.generateKey(record.getResource().stringValue(), branch.getResource().stringValue(), commit.stringValue());
             ont = Optional.ofNullable(ontologyCache.get().get(key));
         }
         if (!ont.isPresent()) {
@@ -338,7 +336,7 @@ public class SimpleOntologyManager implements OntologyManager {
             final Ontology ontology = createOntologyFromCommit(commit);
             ont = Optional.of(ontology);
             ontologyCache.ifPresent(cache -> {
-                String key = OntologyCache.getOntologyCacheKey(record.getResource().stringValue(), branch.getResource().stringValue(), commit.stringValue());
+                String key = OntologyCache.generateKey(record.getResource().stringValue(), branch.getResource().stringValue(), commit.stringValue());
                 cache.put(key, ontology);
             });
         } else {
