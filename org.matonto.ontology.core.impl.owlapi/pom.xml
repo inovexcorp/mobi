@@ -41,7 +41,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.api</artifactId>
-            <version>1.6.29-SNAPSHOT</version>
+            <version>1.6.28</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
@@ -63,20 +63,15 @@
             <artifactId>catalog.api</artifactId>
             <version>1.6.28</version>
         </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>cache</artifactId>
+            <version>1.6.29-SNAPSHOT</version>
+        </dependency>
 
         <dependency>
             <groupId>biz.aQute.bnd</groupId>
             <artifactId>biz.aQute.bndlib</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.ehcache</groupId>
-            <artifactId>ehcache</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.matonto</groupId>
-            <artifactId>cache</artifactId>
-            <version>1.6.28-SNAPSHOT</version>
         </dependency>
 
         <!-- Openrdf Sesame dependencies -->
