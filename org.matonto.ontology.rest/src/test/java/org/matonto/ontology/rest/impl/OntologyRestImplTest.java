@@ -3350,7 +3350,6 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
 
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
-        //assertEquals(getResponse(response), subClassesOfResult);
         assertEquals(getResponse(response), individualsOfResult);
 
     }

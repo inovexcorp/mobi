@@ -695,7 +695,6 @@ public class OntologyRestImpl implements OntologyRest {
             JSONObject item = getHierarchyItem(classIRI, results);
             hierarchy.add(item);
         });
-
         return new JSONObject().element("hierarchy", hierarchy).element("index", JSONObject.fromObject(index));
     }
 
@@ -1207,13 +1206,14 @@ public class OntologyRestImpl implements OntologyRest {
                 if (individual.isPresent() && parent.isPresent()) {
                     String individualValue = individual.get().stringValue();
                     String keyString = parent.get().stringValue();
-                    if (classIndividuals.containsKey(keyString)) {
-                        classIndividuals.get(keyString).add(individualValue);
-                    } else {
-                        Set<String> individualsSet = new HashSet<>();
-                        individualsSet.add(individualValue);
-                        classIndividuals.put(keyString, individualsSet);
-                    }
+                        if (classIndividuals.containsKey(keyString)) {
+                            classIndividuals.get(keyString).add(individualValue);
+                        } else {
+                            Set<String> individualsSet = new HashSet<>();
+                            individualsSet.add(individualValue);
+                            classIndividuals.put(keyString, individualsSet);
+                        }
+
                 }
         });
         return new JSONObject().element("individuals", classIndividuals);

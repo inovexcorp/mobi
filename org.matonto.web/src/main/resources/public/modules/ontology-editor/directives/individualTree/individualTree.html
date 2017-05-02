@@ -19,18 +19,15 @@
   You should have received a copy of the GNU Affero General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
-{{ node.entityIRI | json}}
   -->
 <div class="tree individual-tree">
     <ul class="class" ng-repeat="node in dvm.os.listItem.classHierarchy | orderBy:dvm.ontoUtils.getNameByNode track by node.entityIRI" ng-include="'individual_item'"
-        ng-init="node = node; classOpened = dvm.os.getIndividualsOpened(dvm.os.listItem.recordId, node.entityIRI)" ng-if="dvm.verifyPathToIndividuals(node.entityIRI)"
-    >
+        ng-init="node = node; classOpened = dvm.os.getIndividualsOpened(dvm.os.listItem.recordId, node.entityIRI)" ng-if="dvm.verifyPathToIndividuals(node.entityIRI)">
     </ul>
     <script type="text/ng-template" id="individual_item">
         <li>
             <a ng-click="classOpened = !classOpened; dvm.os.setIndividualsOpened(dvm.os.listItem.recordId, node.entityIRI, classOpened); $event.stopPropagation()">
-                <i class="fa fa-fw"
-                   ng-class="{'fa-folder-open-o': classOpened, 'fa-folder-o': !classOpened}"></i>{{dvm.ontoUtils.getLabelForIRI(node.entityIRI)}}
+                <i class="fa fa-fw" ng-class="{'fa-folder-open-o': classOpened, 'fa-folder-o': !classOpened}"></i>{{dvm.ontoUtils.getLabelForIRI(node.entityIRI)}}
             </a>
         </li>
         <li class="container" ng-if="classOpened">
@@ -44,5 +41,4 @@
             </ul>
         </li>
     </script>
-
 </div>

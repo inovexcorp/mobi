@@ -106,8 +106,9 @@ describe('Ontology State Service', function() {
         index: {}
     };
     var classesWithIndividualsResponse = {
-        hierarchy: [],
-        index: {}
+        individuals: {
+            'ClassA' : ['IndivA1','IndivA2']
+        }
     };
     var dataPropertyHierarchiesResponse = {
         hierarchy: [],
@@ -1319,6 +1320,7 @@ describe('Ontology State Service', function() {
             catalogManagerSvc.getRecordBranches.and.returnValue($q.when({data: branches}));
         });
         it('when all promises resolve', function() {
+            spyOn(ontologyStateSvc,'retrievePaths').and.returnValue([['ClassA'],['ClassA'],['ClassB']]);
             ontologyManagerSvc.getIris.and.returnValue($q.when(irisResponse));
             ontologyManagerSvc.getImportedIris.and.returnValue($q.when(importedIrisResponse));
             ontologyStateSvc.createOntologyListItem(ontologyId, recordId, branchId, commitId, ontology,
@@ -1360,11 +1362,12 @@ describe('Ontology State Service', function() {
                     }, {
                         localName: datatypeId, namespace: datatypeId
                     }], ontologyManagerSvc.defaultDatatypes));
+                    expect(ontologyStateSvc.retrievePaths).toHaveBeenCalledWith(classesWithIndividualsResponse.individuals,_.get(response, 'classHierarchy'),_.get(response, 'classIndex'));
                     expect(_.get(response, 'classHierarchy')).toEqual(classHierarchiesResponse.hierarchy);
                     expect(_.get(response, 'classIndex')).toEqual(classHierarchiesResponse.index);
-                    expect(_.get(response, 'classesWithIndividuals')).toEqual(classesWithIndividualsResponse.hierarchy);
-                    expect(_.get(response, 'classesWithIndividualsIndex'))
-                        .toEqual(classesWithIndividualsResponse.index);
+                    expect(_.get(response, 'classesWithIndividuals')).toEqual(['ClassA']);
+                    expect(_.get(response, 'classesAndIndividuals')).toEqual(classesWithIndividualsResponse.individuals);
+                    expect(_.get(response, 'individualsParentPath')).toEqual(['ClassA','ClassB']);
                     expect(_.get(response, 'dataPropertyHierarchy')).toEqual(dataPropertyHierarchiesResponse.hierarchy);
                     expect(_.get(response, 'dataPropertyIndex')).toEqual(dataPropertyHierarchiesResponse.index);
                     expect(_.get(response, 'objectPropertyHierarchy'))
@@ -1411,13 +1414,11 @@ describe('Ontology State Service', function() {
             });
         });
     });
-
-     it('retrievePaths should get the paths to any given individual', function() {
-         spyOn(ontologyStateSvc, 'getPathsTo').and.returnValue([['ClassA']]);
-         expect(ontologyStateSvc.retrievePaths({'ClassA': ['IndivA']},[],{})).toEqual([[['ClassA']]]);
-         expect(ontologyStateSvc.getPathsTo).toHaveBeenCalledWith([],{},'ClassA');
-     });
-
+    it('retrievePaths should get the paths to any given individual', function() {
+        spyOn(ontologyStateSvc, 'getPathsTo').and.returnValue([['ClassA']]);
+        expect(ontologyStateSvc.retrievePaths({'ClassA': ['IndivA']},[],{})).toEqual([[['ClassA']]]);
+        expect(ontologyStateSvc.getPathsTo).toHaveBeenCalledWith([],{},'ClassA');
+    });
     describe('addOntologyToList should call the correct functions', function() {
         var createDeferred;
         beforeEach(function() {

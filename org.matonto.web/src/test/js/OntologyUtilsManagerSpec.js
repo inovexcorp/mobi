@@ -75,16 +75,24 @@ describe('Ontology Utils Manager service', function() {
         });
     });
     it('deleteClass should call the proper methods', function() {
+        ontologyStateSvc.retrievePaths.and.returnValue([['ClassA'],['ClassA'],['ClassB']]);
+        ontologyStateSvc.listItem.classesWithIndividuals = ['ClassA','ClassB'];
+        ontologyStateSvc.listItem.classesAndIndividuals = {
+            'ClassA' : ['IndivA1','IndivA2'],
+            'ClassB' : ['IndivB1']
+        };
+        ontologyStateSvc.getActiveEntityIRI.and.returnValue('ClassB');
         spyOn(ontologyUtilsManagerSvc, 'commonDelete');
-        ontologyStateSvc.getActiveEntityIRI.and.returnValue('begin/end');
         splitIRIFilter.and.returnValue({begin: 'begin', then: '/', end: 'end'});
         ontologyStateSvc.listItem.subClasses = [{namespace: 'begin/', localName: 'end'}];
-        ontologyStateSvc.listItem.classesWithIndividuals = ['begin/end'];
         ontologyUtilsManagerSvc.deleteClass();
         expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
         expect(ontologyStateSvc.listItem.subClasses.length).toBe(0);
-        expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.classHierarchy, 'begin/end', ontologyStateSvc.listItem.classIndex);
-        expect(ontologyUtilsManagerSvc.commonDelete).toHaveBeenCalledWith('begin/end');
+        expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.classHierarchy, 'ClassB', ontologyStateSvc.listItem.classIndex);
+        expect(ontologyUtilsManagerSvc.commonDelete).toHaveBeenCalledWith('ClassB');
+        expect(ontologyStateSvc.retrievePaths).toHaveBeenCalledWith(ontologyStateSvc.listItem.classesAndIndividuals, ontologyStateSvc.listItem.classHierarchy, ontologyStateSvc.listItem.classIndex);
+        expect(ontologyStateSvc.listItem.classesWithIndividuals).toEqual(['ClassA']);
+        expect(ontologyStateSvc.listItem.classesAndIndividuals).toEqual({'ClassA' : ['IndivA1','IndivA2']});
     });
     it('deleteObjectProperty should call the proper methods', function() {
         spyOn(ontologyUtilsManagerSvc, 'commonDelete');
@@ -119,14 +127,22 @@ describe('Ontology Utils Manager service', function() {
         expect(ontologyUtilsManagerSvc.commonDelete).toHaveBeenCalledWith('begin/end');
     });
     it('deleteIndividual should call the proper methods', function() {
+        ontologyStateSvc.retrievePaths.and.returnValue([['ClassA'],['ClassA'],['ClassB']]);
+        ontologyStateSvc.listItem.classesWithIndividuals = ['ClassA','ClassB'];
+        ontologyStateSvc.listItem.classesAndIndividuals = {
+                'ClassA' : ['IndivA1','IndivA2'],
+                'ClassB' : ['IndivB1']
+        };
+        ontologyStateSvc.selected['@type'] = ['ClassB'];
         spyOn(ontologyUtilsManagerSvc, 'commonDelete');
-        ontologyStateSvc.getActiveEntityIRI.and.returnValue('begin/end');
+        ontologyStateSvc.getActiveEntityIRI.and.returnValue('IndivB1');
         splitIRIFilter.and.returnValue({begin: 'begin', then: '/', end: 'end'});
-        ontologyStateSvc.listItem.individuals = ['begin/end'];
         ontologyUtilsManagerSvc.deleteIndividual();
         expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
-        expect(ontologyStateSvc.listItem.subClasses.length).toBe(0);
-        expect(ontologyUtilsManagerSvc.commonDelete).toHaveBeenCalledWith('begin/end');
+        expect(ontologyUtilsManagerSvc.commonDelete).toHaveBeenCalledWith('IndivB1');
+        expect(ontologyStateSvc.retrievePaths).toHaveBeenCalledWith(ontologyStateSvc.listItem.classesAndIndividuals, ontologyStateSvc.listItem.classHierarchy, ontologyStateSvc.listItem.classIndex);
+        expect(ontologyStateSvc.listItem.classesWithIndividuals).toEqual(['ClassA']);
+        expect(ontologyStateSvc.listItem.classesAndIndividuals).toEqual({'ClassA' : ['IndivA1','IndivA2']});
     });
     it('deleteConcept should call the proper methods', function() {
         spyOn(ontologyUtilsManagerSvc, 'commonDelete');

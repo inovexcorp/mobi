@@ -22,7 +22,7 @@
 
 
 describe('Individual Tree directive', function() {
-    var $compile, scope, element, ontologyStateSvc, ontologyManagerSvc, util;
+    var $compile, scope, element, ontologyStateSvc, ontologyManagerSvc, util, controller;
 
     beforeEach(function() {
         module('templates');
@@ -40,23 +40,26 @@ describe('Individual Tree directive', function() {
             util = _utilService_;
         });
 
-        ontologyStateSvc.listItem = {
-            classesWithIndividuals: [{
-                entityIRI: 'class1',
-                subEntities: [{
-                    entityIRI: 'class2'
-                }]
+        ontologyStateSvc.listItem.classHierarchy = [{
+            entityIRI: 'class1',
+            subEntities: [{
+                entityIRI: 'class2'
             }]
-        }
+        }];
+
         ontologyStateSvc.getOpened.and.returnValue(true);
         ontologyStateSvc.getIndividualsOpened.and.returnValue(true);
         ontologyManagerSvc.getClassIndividuals.and.returnValue(['individual1']);
 
         element = $compile(angular.element('<individual-tree></individual-tree>'))(scope);
         scope.$digest();
+        controller = element.controller('individualTree');
     });
 
     describe('replaces the element with the correct html', function() {
+        beforeEach(function() {
+            spyOn(controller, 'verifyPathToIndividuals').and.returnValue(true);
+        });
         it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
             expect(element.hasClass('tree')).toBe(true);
@@ -90,5 +93,4 @@ describe('Individual Tree directive', function() {
         });
     });
 });
-
- */
+*/

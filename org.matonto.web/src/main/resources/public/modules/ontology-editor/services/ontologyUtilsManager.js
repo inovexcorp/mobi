@@ -58,12 +58,10 @@
                 self.commonDelete(entityIRI);
 
                 delete os.listItem.classesAndIndividuals[entityIRI];
-                var clsInd = _.keys(os.listItem.classesAndIndividuals);
                 var paths =  os.retrievePaths(os.listItem.classesAndIndividuals, os.listItem.classHierarchy, os.listItem.classIndex);
-                var unPaths = _.uniq(_.flattenDeep(paths));
 
-                os.listItem.classesWithIndividuals = clsInd;
-                os.listItem.individualsParentPath = unPaths;
+                os.listItem.classesWithIndividuals = _.keys(os.listItem.classesAndIndividuals);
+                os.listItem.individualsParentPath =  _.uniq(_.flattenDeep(paths));
             }
 
             self.deleteObjectProperty = function() {
@@ -94,35 +92,23 @@
                 var split = $filter('splitIRI')(entityIRI);
                 var indivTypes = os.selected['@type'];
                 var indivAndClasses = _.get(os.listItem, 'classesAndIndividuals');
-                var indivWithClasses = _.get(os.listItem, 'classesWithIndividuals');
-                var itemsToBeDeleted = [];
 
                 _.forEach(indivTypes, type => {
-                    if (type != 'http://www.w3.org/2002/07/owl#NamedIndividual'){
-                        _.forOwn(indivAndClasses, (value, key) => {
-                            if(key === type){
-                                _.remove(value, item => item === entityIRI);
-                                if(_.size(value) === 0){
-                                    itemsToBeDeleted.push(key);
-                                }
+                    if (type !== prefixes.owl + 'NamedIndividual') {
+                        var parentAndIndivs = indivAndClasses[type];
+                        if (parentAndIndivs.length) {
+                            _.remove(parentAndIndivs, item => item === entityIRI);
+                            if (!parentAndIndivs.length) {
+                                delete os.listItem.classesAndIndividuals[type];
                             }
-                        });
+                        }
                     }
                 });
 
-                _.forEach(itemsToBeDeleted, key => {
-                    delete os.listItem.classesAndIndividuals[key];
-                });
-
-                _.remove(_.get(os.listItem, 'individuals'), entityIRI);
                 self.commonDelete(entityIRI);
-
-                var clsInd = _.keys(os.listItem.classesAndIndividuals);
                 var paths =  os.retrievePaths(os.listItem.classesAndIndividuals, os.listItem.classHierarchy, os.listItem.classIndex);
-                var unPaths = _.uniq(_.flattenDeep(paths));
-
-                os.listItem.classesWithIndividuals = clsInd;
-                os.listItem.individualsParentPath = unPaths;
+                os.listItem.classesWithIndividuals = _.keys(os.listItem.classesAndIndividuals);
+                os.listItem.individualsParentPath = _.uniq(_.flattenDeep(paths));
             }
 
             self.deleteConcept = function() {

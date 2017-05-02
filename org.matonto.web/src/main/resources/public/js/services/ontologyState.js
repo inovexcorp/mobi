@@ -411,13 +411,11 @@
                     listItem.branches = response[6].data;
                     listItem.upToDate = upToDate;
 
-                    var clsInd = _.keys(response[3].individuals);
                     var paths =  self.retrievePaths(response[3].individuals, listItem.classHierarchy, listItem.classIndex);
-                    var unPaths = _.uniq(_.flattenDeep(paths));
 
                     listItem.classesAndIndividuals = response[3].individuals;
-                    listItem.classesWithIndividuals = clsInd;
-                    listItem.individualsParentPath = unPaths;
+                    listItem.classesWithIndividuals = _.keys(response[3].individuals);
+                    listItem.individualsParentPath = _.uniq(_.flattenDeep(paths));
 
                     _.pullAllWith(
                         listItem.annotations,
