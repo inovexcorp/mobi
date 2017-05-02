@@ -42,8 +42,12 @@ import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.RDFHandler;
 import org.openrdf.rio.Rio;
 import org.openrdf.rio.helpers.BufferedGroupingRDFHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RestUtils {
+
+    private static final Logger LOG = LoggerFactory.getLogger(RestUtils.class);
 
     /**
      * Encodes the passed string using percent encoding for use in a URL.
@@ -93,8 +97,7 @@ public class RestUtils {
      */
     public static String modelToString(Model model, RDFFormat format) {
         StringWriter sw = new StringWriter();
-        RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(format, sw));
-        Rio.write(model, rdfWriter);
+        Rio.write(model, sw, format);
         return sw.toString();
     }
 
