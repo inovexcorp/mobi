@@ -145,7 +145,7 @@ public class RestUtils {
                 return RDFFormat.TURTLE.getDefaultFileExtension();
             case "rdf/xml":
                 return RDFFormat.RDFXML.getDefaultFileExtension();
-            case "owl/xml" :
+            case "owl/xml":
                 return "owx";
             case "jsonld":
             default:
@@ -165,7 +165,7 @@ public class RestUtils {
                 return RDFFormat.TURTLE.getDefaultMIMEType();
             case "rdf/xml":
                 return RDFFormat.RDFXML.getDefaultMIMEType();
-            case "owl/xml" :
+            case "owl/xml":
                 return "application/owl+xml";
             case "jsonld":
             default:

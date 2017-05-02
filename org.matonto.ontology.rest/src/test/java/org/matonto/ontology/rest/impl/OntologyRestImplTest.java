@@ -41,7 +41,6 @@ import static org.testng.Assert.assertTrue;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
-import org.ehcache.Cache;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
@@ -135,6 +134,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.cache.Cache;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.MediaType;
@@ -611,7 +611,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         verify(catalogManager).createCommit(eq(inProgressCommit), anyString(), eq(null), eq(null));
         verify(catalogManager).addCommitToBranch(commit, branchId);
         verify(catalogManager).removeInProgressCommit(inProgressCommitId);
-        verify(mockCache, times(1)).put(Mockito.anyString(), Mockito.any(Ontology.class));
+        verify(mockCache).put(Mockito.anyString(), Mockito.any(Ontology.class));
     }
 
     @Test
@@ -783,8 +783,9 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         assertEquals(response.getStatus(), 200);
         assertGetOntology(true);
         assertEquals(response.readEntity(String.class), ontologyJsonLd.toString());
-        verify(mockCache, times(1)).containsKey(Mockito.anyString());
-        verify(mockCache, times(1)).get(Mockito.anyString());
+        verify(mockCache).containsKey(Mockito.anyString());
+        verify(mockCache).get(Mockito.anyString());
+        verify(mockCache, times(0)).put(Mockito.anyString(), Mockito.any(Ontology.class));
     }
 
     @Test
@@ -801,8 +802,10 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         assertEquals(response.getStatus(), 200);
         assertGetOntology(true);
         assertEquals(response.readEntity(String.class), ontologyJsonLd.toString());
-        verify(mockCache, times(1)).containsKey(Mockito.anyString());
+        verify(mockCache).containsKey(Mockito.anyString());
         verify(mockCache, times(0)).get(Mockito.anyString());
+        // OntologyManger will handle caching the ontology
+        verify(mockCache, times(0)).put(Mockito.anyString(), Mockito.any(Ontology.class));
     }
 
     @Test

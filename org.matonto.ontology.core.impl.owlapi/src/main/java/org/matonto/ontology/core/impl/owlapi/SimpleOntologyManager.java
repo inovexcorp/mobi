@@ -26,12 +26,10 @@ package org.matonto.ontology.core.impl.owlapi;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import org.apache.commons.io.IOUtils;
-import org.ehcache.Cache;
 import org.matonto.cache.api.CacheManager;
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.ontologies.mcat.Branch;
 import org.matonto.catalog.api.ontologies.mcat.BranchFactory;
-import org.matonto.catalog.api.ontologies.mcat.Commit;
 import org.matonto.catalog.api.ontologies.mcat.CommitFactory;
 import org.matonto.catalog.api.ontologies.mcat.OntologyRecord;
 import org.matonto.catalog.api.ontologies.mcat.OntologyRecordFactory;
@@ -41,6 +39,7 @@ import org.matonto.ontology.core.api.OntologyId;
 import org.matonto.ontology.core.api.OntologyManager;
 import org.matonto.ontology.core.utils.MatontoOntologyCreationException;
 import org.matonto.ontology.utils.api.SesameTransformer;
+import org.matonto.ontology.utils.cache.OntologyCache;
 import org.matonto.persistence.utils.QueryResults;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.query.api.GraphQuery;
@@ -74,7 +73,7 @@ import java.util.Optional;
 import java.util.function.Function;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.swing.text.html.Option;
+import javax.cache.Cache;
 
 @Component(
         provide = OntologyManager.class,
@@ -104,7 +103,6 @@ public class SimpleOntologyManager implements OntologyManager {
     private static final String GET_SEARCH_RESULTS;
     private static final String ENTITY_BINDING = "entity";
     private static final String SEARCH_TEXT = "searchText";
-    private static final String CACHE_NAME = "ontologyCache";
 
     static {
         try {
@@ -217,7 +215,7 @@ public class SimpleOntologyManager implements OntologyManager {
 
     @Reference
     public void setCacheManager(CacheManager cacheManager) {
-        this.ontologyCache = cacheManager.getCache(CACHE_NAME, String.class, Ontology.class);
+        this.ontologyCache = cacheManager.getCache(OntologyCache.CACHE_NAME, String.class, Ontology.class);
     }
 
     @Override
@@ -269,10 +267,11 @@ public class SimpleOntologyManager implements OntologyManager {
     @Override
     public Optional<Ontology> retrieveOntology(@Nonnull Resource recordId) {
         long start = log.isTraceEnabled() ? System.currentTimeMillis() : 0L;
-        Optional<Ontology> result = catalogManager.getRecord(catalogManager.getLocalCatalogIRI(), recordId, ontologyRecordFactory).flatMap(ontologyRecord -> {
-                Branch branch = getMasterBranch(ontologyRecord);
-                return retrieveOntology(ontologyRecord, branch, getHeadOfBranch(branch));
-            });
+        Optional<Ontology> result = catalogManager.getRecord(catalogManager.getLocalCatalogIRI(), recordId, ontologyRecordFactory)
+                .flatMap(ontologyRecord -> {
+                    Branch branch = getMasterBranch(ontologyRecord);
+                    return retrieveOntology(ontologyRecord, branch, getHeadOfBranch(branch));
+                });
 
         if (log.isTraceEnabled()) {
             log.trace(String.format("retrieveOntology(record) complete in %d ms", System.currentTimeMillis() - start));
@@ -284,10 +283,11 @@ public class SimpleOntologyManager implements OntologyManager {
     @Override
     public Optional<Ontology> retrieveOntology(@Nonnull Resource recordId, @Nonnull Resource branchId) {
         long start = log.isTraceEnabled() ? System.currentTimeMillis() : 0L;
-        Optional<Ontology> result = catalogManager.getRecord(catalogManager.getLocalCatalogIRI(), recordId, ontologyRecordFactory).flatMap(ontologyRecord -> {
-                Branch branch = getBranch(ontologyRecord, branchId);
-                return retrieveOntology(ontologyRecord, branch, getHeadOfBranch(branch));
-            });
+        Optional<Ontology> result = catalogManager.getRecord(catalogManager.getLocalCatalogIRI(), recordId, ontologyRecordFactory)
+                .flatMap(ontologyRecord -> {
+                    Branch branch = getBranch(ontologyRecord, branchId);
+                    return retrieveOntology(ontologyRecord, branch, getHeadOfBranch(branch));
+                });
 
         if (log.isTraceEnabled()) {
             log.trace(String.format("retrieveOntology(record, branch) complete in %d ms", System.currentTimeMillis() - start));
@@ -301,18 +301,18 @@ public class SimpleOntologyManager implements OntologyManager {
                                                @Nonnull Resource commitId) {
         long start = log.isTraceEnabled() ? System.currentTimeMillis() : 0L;
         Optional<Ontology> result;
-        String key = OntologyManager.getOntologyCacheKey(recordId.stringValue(), branchId.stringValue(), commitId.stringValue());
+        String key = OntologyCache.generateKey(recordId.stringValue(), branchId.stringValue(), commitId.stringValue());
 
         if (ontologyCache.isPresent() && ontologyCache.get().containsKey(key)) {
             log.trace("cache hit");
-            result = Optional.ofNullable(ontologyCache.get().get(key));
+            result = Optional.of(ontologyCache.get().get(key));
         } else {
             ontologyCache.ifPresent(cache -> log.trace("cache miss"));
             result = catalogManager.getRecord(catalogManager.getLocalCatalogIRI(), recordId, ontologyRecordFactory)
                     .flatMap(ontologyRecord -> {
                         Branch branch = getBranch(ontologyRecord, branchId);
-                        Commit headCommit = getHeadOfBranch(branch);
-                        Commit commit = getCommitFromChain(headCommit, commitId);
+                        Resource headCommit = getHeadOfBranch(branch);
+                        Resource commit = getCommitFromChain(headCommit, commitId);
                         return retrieveOntology(ontologyRecord, branch, commit);
                     });
         }
@@ -324,10 +324,10 @@ public class SimpleOntologyManager implements OntologyManager {
         return result;
     }
 
-    private Optional<Ontology> retrieveOntology(@Nonnull OntologyRecord record, @Nonnull Branch branch, @Nonnull Commit commit) {
+    private Optional<Ontology> retrieveOntology(@Nonnull OntologyRecord record, @Nonnull Branch branch, @Nonnull Resource commit) {
         Optional<Ontology> ont;
 
-        String key = OntologyManager.getOntologyCacheKey(record.getResource().stringValue(), branch.getResource().stringValue(), commit.getResource().stringValue());
+        String key = OntologyCache.generateKey(record.getResource().stringValue(), branch.getResource().stringValue(), commit.stringValue());
         if (ontologyCache.isPresent() && ontologyCache.get().containsKey(key)) {
             log.trace("cache hit");
             ont = Optional.of(ontologyCache.get().get(key));
@@ -359,7 +359,7 @@ public class SimpleOntologyManager implements OntologyManager {
     private void clearCache(@Nonnull Resource recordId, Resource branchId) {
         ontologyCache.ifPresent(cache -> {
             cache.forEach(entry -> {
-                String key = OntologyManager.getOntologyCacheKey(recordId.stringValue(), branchId == null ? null : branchId.stringValue(), null);
+                String key = OntologyCache.generateKey(recordId.stringValue(), branchId == null ? null : branchId.stringValue(), null);
                 if (entry.getKey().startsWith(key)) {
                     cache.remove(entry.getKey());
                 }
@@ -443,32 +443,31 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     private Branch getMasterBranch(OntologyRecord record) {
-        Branch masterBranch = record.getMasterBranch().orElseThrow(() ->
+        Resource masterBranch = record.getMasterBranch_resource().orElseThrow(() ->
                 new IllegalStateException("The Master Branch could not be found on this record."));
-        return catalogManager.getBranch(masterBranch.getResource(), branchFactory).orElseThrow(() ->
+        return catalogManager.getBranch(masterBranch, branchFactory).orElseThrow(() ->
                 new IllegalStateException("The Master Branch could not be retrieved."));
     }
 
     private Branch getBranch(OntologyRecord record, Resource branchId) {
-        for (Branch branch : record.getBranch()) {
-            if (branch.getResource().equals(branchId)) {
-                return catalogManager.getBranch(branch.getResource(), branchFactory).orElseThrow(() ->
+        for (Resource branch : record.getBranch_resource()) {
+            if (branch.equals(branchId)) {
+                return catalogManager.getBranch(branch, branchFactory).orElseThrow(() ->
                         new IllegalStateException("The identified Branch could not be retrieved."));
             }
         }
         throw new IllegalArgumentException("The identified Branch could not be found on this record.");
     }
 
-    private Commit getHeadOfBranch(Branch branch) {
-        return branch.getHead().orElseThrow(() ->
+    private Resource getHeadOfBranch(Branch branch) {
+        return branch.getHead_resource().orElseThrow(() ->
                 new IllegalStateException("There is no head Commit associated with this Branch."));
     }
 
-    private Commit getCommitFromChain(Commit headCommit, Resource commitId) {
-        List<Resource> commitChain = catalogManager.getCommitChain(headCommit.getResource());
+    private Resource getCommitFromChain(Resource headCommit, Resource commitId) {
+        List<Resource> commitChain = catalogManager.getCommitChain(headCommit);
         if (commitChain.contains(commitId)) {
-            return catalogManager.getCommit(commitId, commitFactory).orElseThrow(() ->
-                    new IllegalStateException("The identified Commit could not be retrieved."));
+            return commitId;
         } else {
             throw new IllegalArgumentException("The identified Commit is not in the specified commit chain.");
         }
@@ -480,8 +479,8 @@ public class SimpleOntologyManager implements OntologyManager {
      * @param commit the Commit identifying the version of the Ontology that you want to create.
      * @return an Ontology built at the time identified by the Commit.
      */
-    private Ontology createOntologyFromCommit(Commit commit) {
-        Model ontologyModel = catalogManager.getCompiledResource(commit.getResource()).orElseThrow(() ->
+    private Ontology createOntologyFromCommit(Resource commit) {
+        Model ontologyModel = catalogManager.getCompiledResource(commit).orElseThrow(() ->
                 new IllegalStateException("The compiled resource could not be retrieved."));
         return createOntology(ontologyModel);
     }

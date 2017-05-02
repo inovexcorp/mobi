@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.6.28-SNAPSHOT</version>
+        <version>1.6.29-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -41,42 +41,37 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.api</artifactId>
-            <version>1.6.28-SNAPSHOT</version>
+            <version>1.6.29-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.utils</artifactId>
-            <version>1.5.45</version>
+            <version>1.6.29-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>persistence.api</artifactId>
-            <version>1.5.45</version>
+            <version>1.6.28</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>persistence.utils</artifactId>
-            <version>1.5.45</version>
+            <version>1.6.28</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>catalog.api</artifactId>
-            <version>1.5.45</version>
+            <version>1.6.28</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>cache</artifactId>
+            <version>1.6.29-SNAPSHOT</version>
         </dependency>
 
         <dependency>
             <groupId>biz.aQute.bnd</groupId>
             <artifactId>biz.aQute.bndlib</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.ehcache</groupId>
-            <artifactId>ehcache</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.matonto</groupId>
-            <artifactId>cache</artifactId>
-            <version>1.6.28-SNAPSHOT</version>
         </dependency>
 
         <!-- Openrdf Sesame dependencies -->
@@ -111,13 +106,13 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rdf.impl.sesame</artifactId>
-            <version>1.5.45</version>
+            <version>1.6.28</version>
 		    <scope>test</scope>
 	    </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>repository.impl.core</artifactId>
-            <version>1.5.45</version>
+            <version>1.6.28</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -153,8 +148,13 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>catalog.impl</artifactId>
-            <version>1.5.45</version>
+            <version>1.6.28</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>ontology.utils</artifactId>
+            <version>1.6.29-SNAPSHOT</version>
         </dependency>
     </dependencies>
 
@@ -176,7 +176,8 @@
                             org.matonto.ontology.core.api.classexpression; provide:=true,
                             org.matonto.ontology.core.api.datarange; provide:=true,
                             org.matonto.ontology.core.api.propertyexpression; provide:=true,
-                            org.matonto.ontology.core.api.types; provide:=true
+                            org.matonto.ontology.core.api.types; provide:=true,
+                            org.matonto.cache.config; provide:=true
                         </Export-Package>
                         <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>

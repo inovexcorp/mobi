@@ -34,7 +34,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.Optional;
-import java.util.StringJoiner;
 import javax.annotation.Nonnull;
 
 public interface OntologyManager {
@@ -253,16 +252,4 @@ public interface OntologyManager {
      * @return a Set with the query results.
      */
     TupleQueryResult getSearchResults(Ontology ontology, String searchText);
-
-    static String getOntologyCacheKey(String recordIri, String branchIri, String commitIri) {
-        StringBuilder sb = new StringBuilder(recordIri);
-
-        if (branchIri != null && !branchIri.trim().isEmpty()) {
-            sb.append("&" + branchIri);
-        }
-        if (commitIri != null && !commitIri.trim().isEmpty()) {
-            sb.append("&" + commitIri);
-        }
-        return sb.toString();
-    }
 }

@@ -36,7 +36,6 @@ import net.sf.json.JSONException;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.ehcache.Cache;
 import org.matonto.cache.api.CacheManager;
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.Difference;
@@ -58,6 +57,7 @@ import org.matonto.ontology.core.api.propertyexpression.AnnotationProperty;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.ontology.rest.OntologyRest;
 import org.matonto.ontology.utils.api.SesameTransformer;
+import org.matonto.ontology.utils.cache.OntologyCache;
 import org.matonto.persistence.utils.JSONQueryResults;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.query.api.Binding;
@@ -89,6 +89,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.cache.Cache;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
@@ -145,7 +146,7 @@ public class OntologyRestImpl implements OntologyRest {
 
     @Reference
     public void setCacheManager(CacheManager cacheManager) {
-        this.ontologyCache = cacheManager.getCache("ontologyCache", String.class, Ontology.class);
+        this.ontologyCache = cacheManager.getCache(OntologyCache.CACHE_NAME, String.class, Ontology.class);
     }
 
     @Override
@@ -810,7 +811,7 @@ public class OntologyRestImpl implements OntologyRest {
                                            String commitIdStr) {
         throwErrorIfMissingStringParam(recordIdStr, "The recordIdStr is missing.");
         Optional<Ontology> optionalOntology;
-        String key = OntologyManager.getOntologyCacheKey(recordIdStr, branchIdStr, commitIdStr);
+        String key = OntologyCache.generateKey(recordIdStr, branchIdStr, commitIdStr);
 
         if (ontologyCache.isPresent() && ontologyCache.get().containsKey(key)) {
             optionalOntology = Optional.of(ontologyCache.get().get(key));
@@ -1210,7 +1211,7 @@ public class OntologyRestImpl implements OntologyRest {
         catalogManager.addAdditions(ontology.asModel(modelFactory), inProgressCommit.getResource());
 
         Commit commit = catalogManager.createCommit(inProgressCommit, "The initial commit.", null, null);
-        Resource masterBranchId = finalRecord.getMasterBranch().get().getResource();
+        Resource masterBranchId = finalRecord.getMasterBranch_resource().get();
         catalogManager.addCommitToBranch(commit, masterBranchId);
 
         catalogManager.removeInProgressCommit(inProgressCommit.getResource());
@@ -1223,7 +1224,7 @@ public class OntologyRestImpl implements OntologyRest {
 
         JSONObject response = new JSONObject()
                 .element("ontologyId", ontology.getOntologyId().getOntologyIdentifier().stringValue())
-                .element("recordId", record.getResource().stringValue())
+                .element("recordId", finalRecord.getResource().stringValue())
                 .element("branchId", masterBranchId.stringValue())
                 .element("commitId", commit.getResource().stringValue());
         return Response.status(201).entity(response).build();
