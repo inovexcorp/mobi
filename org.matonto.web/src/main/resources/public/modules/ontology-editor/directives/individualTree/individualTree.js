@@ -27,9 +27,9 @@
         .module('individualTree', [])
         .directive('individualTree', individualTree);
 
-        individualTree.$inject = ['ontologyManagerService', 'ontologyStateService', 'utilService', 'ontologyUtilsManagerService'];
+        individualTree.$inject = ['ontologyManagerService', 'ontologyStateService', 'utilService', 'ontologyUtilsManagerService', 'INDENT'];
 
-        function individualTree(ontologyManagerService, ontologyStateService, utilService, ontologyUtilsManagerService) {
+        function individualTree(ontologyManagerService, ontologyStateService, utilService, ontologyUtilsManagerService, INDENT) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,13 +38,19 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
+                    dvm.indent = INDENT;
                     dvm.om = ontologyManagerService;
                     dvm.os = ontologyStateService;
                     dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.util = utilService;
-                    dvm.verifyPathToIndividuals = function(entityIRI) {
-                        return _.includes(dvm.os.listItem.individualsParentPath, entityIRI);
-                    };
+                    
+                    dvm.isShown = function(node) {
+                        return (node.indent > 0 && dvm.os.areParentsOpen(node, dvm.os.getIndividualsOpened)) || (node.indent === 0 && _.get(node, 'path', []).length === 2);
+                    }
+                    
+                    dvm.isImported = function(entityIRI) {
+                        return !_.has(dvm.os.listItem.index, entityIRI);
+                    }
                 }
             }
         }

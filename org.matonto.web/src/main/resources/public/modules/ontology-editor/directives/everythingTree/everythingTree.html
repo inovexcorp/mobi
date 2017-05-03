@@ -25,7 +25,7 @@
         <div ng-repeat="entity in dvm.os.listItem.flatEverythingTree | filter:dvm.isShown" class="tree-item-wrapper">
             <div ng-if="!entity['@id']" class="tree-item">
                 <a ng-click="entity.set(dvm.os.listItem.recordId, !entity.get(dvm.os.listItem.recordId)); $event.stopPropagation()">
-                    <i class="fa fa-fw" ng-class="{'fa-folder-open-o': entity.get(dvm.os.listItem.recordId), 'fa-folder-o': !entity.get(dvm.os.listItem.recordId)}"></i>{{entity.title}}
+                    <i class="fa fa-fw" ng-class="{'fa-folder-open-o': entity.get(dvm.os.listItem.recordId), 'fa-folder-o': !entity.get(dvm.os.listItem.recordId)}"></i><span>{{entity.title}}</span>
                 </a>
             </div>
             <tree-item ng-if="entity['@id']" ng-style="{'padding-left': (dvm.indent * entity.indent) + 'em'}"

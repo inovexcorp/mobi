@@ -165,7 +165,6 @@ describe('Create Individual Overlay directive', function() {
         });
         it('should create an individual', function() {
             var split = {begin: 'begin', then: 'then', end: 'end'};
-
             ontologyStateSvc.listItem = {
                 ontology: [{}],
                 individuals: [],
@@ -175,7 +174,7 @@ describe('Create Individual Overlay directive', function() {
                 classHierarchy: [],
                 classIndex: {}
             };
-
+            ontologyStateSvc.createFlatIndividualTree.and.returnValue([{prop: 'individual'}]);
             ontologyStateSvc.getPathsTo.and.returnValue([['ClassA']]);
             splitIRIFilter.and.returnValue(split);
             controller.individual = {'@id': 'id', '@type': ['ClassA']};
@@ -192,6 +191,8 @@ describe('Create Individual Overlay directive', function() {
             expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(controller.individual['@id'], false);
             expect(ontologyStateSvc.showCreateIndividualOverlay).toBe(false);
             expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
+            expect(ontologyStateSvc.createFlatIndividualTree).toHaveBeenCalledWith(ontologyStateSvc.listItem);
+            expect(ontologyStateSvc.listItem.flatIndividualsHierarchy).toEqual([{prop: 'individual'}]);
         });
     });
     it('should call create when the button is clicked', function() {

@@ -74,8 +74,6 @@
                 dataPropertyIndex: {},
                 objectPropertyHierarchy: [],
                 objectPropertyIndex: {},
-                classesWithIndividuals: [],
-                classesWithIndividualsIndex: {},
                 blankNodes: {},
                 index: {},
                 additions: [],
@@ -92,7 +90,10 @@
                 flatObjectPropertyHierarchy: [],
                 annotationPropertyHierarchy: [],
                 annotationPropertyIndex: {},
-                flatAnnotationPropertyHierarchy: []
+                flatAnnotationPropertyHierarchy: [],
+                classesAndIndividuals: {},
+                classesWithIndividuals: [],
+                individualsParentPath: []
             };
             var vocabularyListItemTemplate = {
                 ontology: [],
@@ -407,7 +408,7 @@
                             compareListItems
                         );
                         listItem.individuals = _.unionWith(
-                            addOntologyIdToArray(iriList.individuals, iriList.id),
+                            addOntologyIdToArray(iriList.namedIndividuals, iriList.id),
                             listItem.individuals,
                             compareListItems
                         );
@@ -441,6 +442,7 @@
                     listItem.classesAndIndividuals = response[3].individuals;
                     listItem.classesWithIndividuals = _.keys(response[3].individuals);
                     listItem.individualsParentPath = _.uniq(_.flattenDeep(paths));
+                    listItem.flatIndividualsHierarchy = self.createFlatIndividualTree(listItem);
                     listItem.flatEverythingTree = self.createFlatEverythingTree(getOntologiesArrayByListItem(listItem), listItem);
                     _.pullAllWith(
                         listItem.annotations,
@@ -555,13 +557,13 @@
                 _.forEach(orderedClasses, clazz => {
                     orderedProperties = sortByName(om.getClassProperties(ontologies, clazz['@id']), listItem);
                     path = [listItem.recordId, clazz['@id']];
-                    result.push(_.merge(clazz, {
+                    result.push(_.merge({}, clazz, {
                         indent: 0,
                         hasChildren: !!orderedProperties.length,
                         path
                     }));
                     _.forEach(orderedProperties, property => {
-                        result.push(_.merge(property, {
+                        result.push(_.merge({}, property, {
                             indent: 1,
                             hasChildren: false,
                             path: _.concat(path, property['@id'])
@@ -576,12 +578,41 @@
                         set: self.setNoDomainsOpened
                     });
                     _.forEach(orderedNoDomainProperties, property => {
-                        result.push(_.merge(property, {
+                        result.push(_.merge({}, property, {
                             indent: 1,
                             hasChildren: false,
                             get: self.getNoDomainsOpened,
                             path: [listItem.recordId, property['@id']]
                         }));
+                    });
+                }
+                return result;
+            }
+            /**
+             * @ngdoc method
+             * @name createFlatIndividualTree
+             * @methodOf ontologyState.service:ontologyStateService
+             *
+             * @description
+             * Creates an array which represents the hierarchical structure of the relationship between classes
+             * and individuals to be used with a virtual scrolling solution.
+             *
+             * @param {Object} listItem The listItem linked to the ontology you want to add the entity to.
+             * @returns {Object[]} An array which contains the class-individuals replationships.
+             */
+            self.createFlatIndividualTree = function(listItem) {
+                var result = [];
+                var neededClasses = _.get(listItem, 'individualsParentPath', []);
+                var classesWithIndividuals = _.get(listItem, 'classesAndIndividuals', {});
+                if (neededClasses.length && !_.isEmpty(classesWithIndividuals)) {
+                    _.forEach(_.get(listItem, 'flatClassHierarchy', []), node => {
+                        if (_.includes(neededClasses, node.entityIRI)) {
+                            result.push(_.merge({}, node, {isClass: true}));
+                            var sortedIndividuals = _.sortBy(_.get(classesWithIndividuals, node.entityIRI), entityIRI => _.lowerCase(self.getEntityNameByIndex(entityIRI, listItem)));
+                            _.forEach(sortedIndividuals, entityIRI => {
+                                addNodeToResult({entityIRI}, result, node.indent + 1, node.path);
+                            });
+                        }
                     });
                 }
                 return result;
@@ -813,11 +844,11 @@
             self.getNoDomainsOpened = function(recordId) {
                 return _.get(self.state, getOpenPath(recordId, 'noDomainsOpened'), false);
             }
-            self.setIndividualsOpened = function(recordId, classIRI, isOpened) {
-                _.set(self.state, getOpenPath(recordId, classIRI, 'individualsOpened'), isOpened);
+            self.setIndividualsOpened = function(pathString, isOpened) {
+                _.set(self.state, getOpenPath(pathString, 'individualsOpened'), isOpened);
             }
-            self.getIndividualsOpened = function(recordId, classIRI) {
-                return _.get(self.state, getOpenPath(recordId, classIRI, 'individualsOpened'), false);
+            self.getIndividualsOpened = function(pathString) {
+                return _.get(self.state, getOpenPath(pathString, 'individualsOpened'), false);
             }
             self.setDataPropertiesOpened = function(recordId, isOpened) {
                 _.set(self.state, getOpenPath(recordId, 'dataPropertiesOpened'), isOpened);
@@ -1081,12 +1112,12 @@
                 }
                 return result;
             }
-            self.areParentsOpen = function(node) {
+            self.areParentsOpen = function(node, get = self.getOpened) {
                 var pathString = _.first(node.path);
                 var pathCopy = _.tail(_.initial(node.path));
                 return _.every(pathCopy, pathPart => {
                     pathString += '.' + pathPart;
-                    return self.getOpened(pathString);
+                    return get(pathString);
                 });
             }
             self.joinPath = function(path) {

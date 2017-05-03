@@ -95,6 +95,7 @@
             self.deleteIndividual = function() {
                 var entityIRI = os.getActiveEntityIRI();
                 var split = $filter('splitIRI')(entityIRI);
+                _.remove(_.get(os.listItem, 'individuals'), {namespace:split.begin + split.then, localName: split.end});
                 var indivTypes = os.selected['@type'];
                 var indivAndClasses = _.get(os.listItem, 'classesAndIndividuals');
 
