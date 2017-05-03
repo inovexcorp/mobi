@@ -28,5 +28,14 @@ import javax.cache.Cache;
 
 public interface CacheManager {
 
+    /**
+     * Retrieves a cache defined by the cacheName, keyType, and valueType.
+     *
+     * @param cacheName The alias for the cache.
+     * @param keyType The Class representing the cache key.
+     * @param valueType The Class representing the cache value.
+     * @return An Optional.of(Cache) if it exists with the provided cacheName, keyType, and valueType; otherwise
+     * Optional.empty().
+     */
     <K, V> Optional<Cache<K, V>> getCache(String cacheName, Class<K> keyType, Class<V> valueType);
 }
