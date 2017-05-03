@@ -20,7 +20,6 @@ class DelimitedOntologySpec extends Specification {
     def dataMappingFactory = new DataMappingFactory()
     def objectMappingFactory = new ObjectMappingFactory()
     def propertyMappingFactory = new PropertyMappingFactory()
-    def propertyFactory = new PropertyFactory()
     def thingFactory = new ThingFactory()
     def classMapping
 
