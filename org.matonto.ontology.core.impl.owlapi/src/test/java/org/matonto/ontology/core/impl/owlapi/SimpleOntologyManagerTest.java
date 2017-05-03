@@ -27,7 +27,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -46,6 +47,7 @@ import org.matonto.catalog.api.ontologies.mcat.Commit;
 import org.matonto.catalog.api.ontologies.mcat.CommitFactory;
 import org.matonto.catalog.api.ontologies.mcat.OntologyRecord;
 import org.matonto.catalog.api.ontologies.mcat.OntologyRecordFactory;
+import org.matonto.exception.MatOntoException;
 import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.ontology.utils.cache.OntologyCache;
@@ -564,7 +566,7 @@ public class SimpleOntologyManagerTest {
         assertTrue(optionalOntology.isPresent());
         assertEquals(ontology, optionalOntology.get());
         String key = OntologyCache.generateKey(recordIRI.stringValue(), branchIRI.stringValue(), commitIRI.stringValue());
-        verify(mockCache, Mockito.times(2)).containsKey(Mockito.matches(key));
+        verify(mockCache, times(2)).containsKey(Mockito.matches(key));
         verify(mockCache).put(Mockito.matches(key), Mockito.eq(optionalOntology.get()));
     }
 
@@ -620,7 +622,21 @@ public class SimpleOntologyManagerTest {
 
         manager.deleteOntology(recordIRI);
 
-        verify(catalogManager, atLeastOnce()).removeRecord(catalogIRI, recordIRI);
+        verify(catalogManager).removeRecord(catalogIRI, recordIRI);
+        verify(mockCache).forEach(Mockito.any());
+    }
+
+    @Test
+    public void testDeleteOntologyBranch() throws Exception {
+        OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
+
+        Mockito.doNothing().when(mockCache).forEach(Mockito.any());
+        when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
+
+        manager.deleteOntologyBranch(recordIRI, branchIRI);
+
+        verify(catalogManager).removeBranch(branchIRI, recordIRI);
+        verify(mockCache).forEach(Mockito.any());
     }
 
     @Test

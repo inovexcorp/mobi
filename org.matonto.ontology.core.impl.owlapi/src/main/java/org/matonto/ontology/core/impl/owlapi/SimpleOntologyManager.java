@@ -304,6 +304,7 @@ public class SimpleOntologyManager implements OntologyManager {
                                                @Nonnull Resource commitId) {
         Optional<Ontology> result;
         long start = log.isTraceEnabled() ? System.currentTimeMillis() : 0L;
+
         Optional<Cache<String, Ontology>> optCache = getOntologyCache();
         String key = OntologyCache.generateKey(recordId.stringValue(), branchId.stringValue(), commitId.stringValue());
 
@@ -352,12 +353,22 @@ public class SimpleOntologyManager implements OntologyManager {
                 ontologyRecordFactory).orElseThrow(() ->
                 new IllegalArgumentException("The OntologyRecord could not be retrieved."));
         catalogManager.removeRecord(catalogManager.getLocalCatalog().getResource(), record.getResource());
+        clearCache(recordId, null);
+    }
+
+    @Override
+    public void deleteOntologyBranch(@Nonnull Resource recordId, @Nonnull Resource branchId) {
+        catalogManager.removeBranch(branchId, recordId);
+        clearCache(recordId, branchId);
+    }
+
+    private void clearCache(@Nonnull Resource recordId, Resource branchId) {
+        String key = OntologyCache.generateKey(recordId.stringValue(), branchId == null ? null : branchId.stringValue(), null);
         getOntologyCache().ifPresent(cache -> cache.forEach(entry -> {
-                if (entry.getKey().startsWith(recordId.stringValue())) {
-                    cache.remove(entry.getKey());
-                }
-            })
-        );
+            if (entry.getKey().startsWith(key)) {
+                cache.remove(entry.getKey());
+            }
+        }));
     }
 
     @Override

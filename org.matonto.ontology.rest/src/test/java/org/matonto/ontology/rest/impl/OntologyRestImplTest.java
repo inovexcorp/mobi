@@ -60,6 +60,7 @@ import org.matonto.catalog.api.ontologies.mcat.InProgressCommitFactory;
 import org.matonto.catalog.api.ontologies.mcat.OntologyRecord;
 import org.matonto.catalog.api.ontologies.mcat.OntologyRecordFactory;
 import org.matonto.catalog.impl.SimpleDifference;
+import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.jaas.api.ontologies.usermanagement.UserFactory;
@@ -120,6 +121,7 @@ import org.openrdf.rio.WriterConfig;
 import org.openrdf.rio.helpers.JSONLDMode;
 import org.openrdf.rio.helpers.JSONLDSettings;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.ExpectedExceptions;
 import org.testng.annotations.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -793,6 +795,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
     public void testGetOntologyCacheMiss() {
         when(cacheManager.getCache(Mockito.anyString(), Mockito.eq(String.class), Mockito.eq(Ontology.class))).thenReturn(Optional.of(mockCache));
         when(mockCache.containsKey(Mockito.anyString())).thenReturn(false);
+
         rest.setCacheManager(cacheManager);
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue()))
@@ -3770,5 +3773,43 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .queryParam("searchText", "class").request().get();
 
         assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void testDeleteOntology() {
+        Response response = target().path("ontologies/" + encode(recordId.stringValue())).request().delete();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).deleteOntology(recordId);
+    }
+
+    @Test
+    public void testDeleteOntologyError() {
+        Mockito.doThrow(new MatOntoException("I'm an exception!")).when(ontologyManager).deleteOntology(Mockito.eq(recordId));
+        Response response = target().path("ontologies/" + encode(recordId.stringValue())).request().delete();
+
+        assertEquals(response.getStatus(), 500);
+        verify(ontologyManager, times(0)).deleteOntologyBranch(Mockito.any(), Mockito.any());
+        verify(catalogManager, times(0)).removeRecord(Mockito.any(), Mockito.any());
+    }
+
+    @Test
+    public void testDeleteOntologyBranch() {
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()))
+                .queryParam("branchId", branchId.stringValue()).request().delete();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).deleteOntologyBranch(recordId, branchId);
+    }
+
+    @Test
+    public void testDeleteOntologyBranchError() {
+        Mockito.doThrow(new MatOntoException("I'm an exception!")).when(ontologyManager).deleteOntologyBranch(Mockito.eq(recordId), Mockito.eq(branchId));
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()))
+                .queryParam("branchId", branchId.stringValue()).request().delete();
+
+        assertEquals(response.getStatus(), 500);
+        verify(ontologyManager, times(0)).deleteOntology(Mockito.any());
+        verify(catalogManager, times(0)).removeBranch(Mockito.any(), Mockito.any());
     }
 }

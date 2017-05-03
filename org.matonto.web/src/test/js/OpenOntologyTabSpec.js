@@ -21,28 +21,25 @@
  * #L%
  */
 describe('Open Ontology Tab directive', function() {
-    var $compile, scope, $q, element, controller, ontologyStateSvc, ontologyManagerSvc, catalogManagerSvc,
-        stateManagerSvc, prefixes, util;
+    var $compile, scope, $q, element, controller, ontologyStateSvc, ontologyManagerSvc, stateManagerSvc, prefixes, util;
 
     beforeEach(function() {
         module('templates');
         module('openOntologyTab');
         injectHighlightFilter();
         injectTrustedFilter();
-        mockCatalogManager();
         mockOntologyManager();
         mockOntologyState();
         mockPrefixes();
         mockStateManager();
         mockUtil();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _ontologyManagerService_, _catalogManagerService_, _stateManagerService_, _prefixes_, _utilService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _ontologyManagerService_, _stateManagerService_, _prefixes_, _utilService_) {
             $q = _$q_;
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
             ontologyManagerSvc = _ontologyManagerService_;
-            catalogManagerSvc = _catalogManagerService_;
             stateManagerSvc = _stateManagerService_;
             prefixes = _prefixes_;
             util = _utilService_;
@@ -174,10 +171,10 @@ describe('Open Ontology Tab directive', function() {
                 stateManagerSvc.getOntologyStateByRecordId.and.returnValue({id: 'state'});
             });
             it('unless an error occurs', function() {
-                catalogManagerSvc.deleteRecord.and.returnValue($q.reject('Error message'));
+                ontologyManagerSvc.deleteOntology.and.returnValue($q.reject('Error message'));
                 controller.deleteOntology();
                 scope.$apply();
-                expect(catalogManagerSvc.deleteRecord).toHaveBeenCalledWith(controller.recordId, jasmine.any(String));
+                expect(ontologyManagerSvc.deleteOntology).toHaveBeenCalledWith(controller.recordId);
                 expect(this.records).toContain(jasmine.objectContaining({'@id': 'recordA'}));
                 expect(stateManagerSvc.getOntologyStateByRecordId).not.toHaveBeenCalled();
                 expect(stateManagerSvc.deleteState).not.toHaveBeenCalled();
@@ -187,7 +184,7 @@ describe('Open Ontology Tab directive', function() {
             it('successfully', function() {
                 controller.deleteOntology();
                 scope.$apply();
-                expect(catalogManagerSvc.deleteRecord).toHaveBeenCalledWith(controller.recordId, jasmine.any(String));
+                expect(ontologyManagerSvc.deleteOntology).toHaveBeenCalledWith(controller.recordId);
                 expect(this.records).not.toContain(jasmine.objectContaining({'@id': 'recordA'}));
                 expect(stateManagerSvc.getOntologyStateByRecordId).toHaveBeenCalled();
                 expect(stateManagerSvc.deleteState).toHaveBeenCalledWith('state');
