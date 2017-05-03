@@ -428,6 +428,7 @@ public class SourceGenerator {
             for (JMethod method : impl.methods()) {
                 if (interfaceMethod.name().equals(method.name()) && variablesOverlap(method, interfaceMethod)) {
                     alreadyHas = true;
+                    break;
                 }
             }
         } else {
