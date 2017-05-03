@@ -93,13 +93,13 @@
             /* Custom Modules */
             'catalog',
             'datasets',
+            'discover',
             'home',
             'login',
             'mapper',
             'nav',
             'ontology-editor',
             'settings',
-            'sparql',
             'user-management',
             'webtop',
 

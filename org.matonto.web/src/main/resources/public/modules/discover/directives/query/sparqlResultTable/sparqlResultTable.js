@@ -55,7 +55,7 @@
         function sparqlResultTable(sparqlManagerService) {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/sparql/directives/sparqlResultTable/sparqlResultTable.html',
+                templateUrl: 'modules/discover/directives/query/sparqlResultTable/sparqlResultTable.html',
                 replace: true,
                 scope: {},
                 controllerAs: 'dvm',

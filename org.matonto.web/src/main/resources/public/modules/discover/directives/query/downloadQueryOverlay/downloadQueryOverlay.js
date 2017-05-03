@@ -70,7 +70,7 @@
                         sparql.displayDownloadOverlay = false;
                     }
                 },
-                templateUrl: 'modules/sparql/directives/downloadQueryOverlay/downloadQueryOverlay.html'
+                templateUrl: 'modules/discover/directives/query/downloadQueryOverlay/downloadQueryOverlay.html'
             }
         }
 })();

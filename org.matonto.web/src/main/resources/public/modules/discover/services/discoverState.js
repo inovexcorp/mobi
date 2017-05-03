@@ -4,7 +4,7 @@
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -24,22 +24,26 @@
     'use strict';
 
     angular
-        .module('discover', [
-            /* Services */
-            'discoverState',
-            
-            /* Common */
-            'datasetSelect',
-            'discoverTabset',
-            
-            /* Explore tab */
-            'exploreTab',
-            'exploreTabHeader',
-            
-            /* Query tab */
-            'downloadQueryOverlay',
-            'queryTab',
-            'sparqlEditor',
-            'sparqlResultTable'
-        ]);
+        .module('discoverState', [])
+        .service('discoverStateService', discoverStateService);
+    
+    discoverStateService.$inject = ['datasetManagerService'];
+    
+    function discoverStateService(datasetManagerService) {
+        var self = this;
+        var dam = datasetManagerService;
+        
+        self.explore = {
+            active: true
+        };
+        
+        self.query = {
+            active: false
+        };
+        
+        self.datasetRecords = [];
+        
+        dam.getDatasetRecords()
+            .then(response => self.datasetRecords = response.data, () => self.util.createErrorToast('Error retrieving datasets'));
+    }
 })();

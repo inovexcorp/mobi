@@ -4,11 +4,11 @@
 .discover {
     background-color: $gray-lighter;
 
-    .sparql-container {
+    .discover-container {
         display: flex;
         flex-direction: column;
 
-        .sparql-page-content {
+        .discover-page-content {
             flex: 1;
             min-height: 0;
 

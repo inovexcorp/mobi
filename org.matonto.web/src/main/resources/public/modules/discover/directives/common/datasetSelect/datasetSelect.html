@@ -4,7 +4,7 @@
   $Id:$
   $HeadURL:$
   %%
-  Copyright (C) 2016 iNovex Information Systems, Inc.
+  Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
   %%
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU Affero General Public License as published by
@@ -20,9 +20,13 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="discover clearfix full-height">
-    <div class="discover-container full-height">
-        <div class="blue-bar"></div>
-        <discover-tabset class="discover-page-content"></discover-tabset>
-    </div>
+<div class="dataset-select">
+    <ui-select ng-model="dvm.bindModel" ng-disabled="dvm.ds.datasetRecords.length === 0">
+        <ui-select-match placeholder="Select a dataset">
+            <span title="{{$select.selected['@id']}}">{{dvm.util.getDctermsValue($select.selected, 'title')}}</span>
+        </ui-select-match>
+        <ui-select-choices repeat="record['@id'] as record in dvm.ds.datasetRecords | filter:$select.search">
+            <div title="{{record['@id']}}" ng-bind-html="dvm.util.getDctermsValue(record, 'title') | highlight:$select.search | trusted"></div>
+        </ui-select-choices>
+    </ui-select>
 </div>

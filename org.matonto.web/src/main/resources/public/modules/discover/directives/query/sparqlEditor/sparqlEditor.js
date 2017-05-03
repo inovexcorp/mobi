@@ -55,7 +55,7 @@
         function sparqlEditor(sparqlManagerService, prefixes, datasetManagerService, utilService) {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/sparql/directives/sparqlEditor/sparqlEditor.html',
+                templateUrl: 'modules/discover/directives/query/sparqlEditor/sparqlEditor.html',
                 replace: true,
                 scope: {},
                 controllerAs: 'dvm',
@@ -64,11 +64,8 @@
                     var dam = datasetManagerService;
                     dvm.util = utilService;
                     dvm.sparql = sparqlManagerService;
-                    dvm.datasetRecords = [];
-
-                    dam.getDatasetRecords()
-                        .then(response => dvm.datasetRecords = response.data, () => dvm.util.createErrorToast('Error retrieving datasets'));
-                    dvm.prefixList = _.map(prefixes, (value, key) => key + ': <' + value + '>');
+                    
+                    dvm.prefixList = _.sortBy(_.map(prefixes, (value, key) => key + ': <' + value + '>'));
                     dvm.editorOptions = {
                         mode: 'application/sparql-query',
                         indentUnit: 4,
