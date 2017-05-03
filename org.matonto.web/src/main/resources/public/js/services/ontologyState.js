@@ -236,10 +236,10 @@
                 return cm.getRecordMasterBranch(recordId, catalogId)
                     .then(masterBranch => {
                         branchId = _.get(masterBranch, '@id', '');
-                        return cm.getBranchHeadCommit(branchId, recordId, catalogId);
+                        return cm.getRecordBranch(branchId, recordId, catalogId);
                     }, $q.reject)
-                    .then(headCommit => {
-                        commitId = _.get(headCommit, "commit['@id']", '');
+                    .then(branch => {
+                        commitId = _.get(branch, "['" + prefixes.catalog + "head'][0]['@id']", '');
                         return sm.createOntologyState(recordId, branchId, commitId);
                     }, $q.reject)
                     .then(() => om.getOntology(recordId, branchId, commitId, rdfFormat), $q.reject)
@@ -740,10 +740,10 @@
                         commitId = response.commitId;
                         ontology = response.ontology;
                         inProgressCommit = response.inProgressCommit;
-                        return cm.getBranchHeadCommit(branchId, recordId, catalogId);
+                        return cm.getRecordBranch(branchId, recordId, catalogId);
                     }, $q.reject)
-                    .then(headCommit => {
-                        var headId = _.get(headCommit, "commit['@id']", '');
+                    .then(branch => {
+                        var headId = _.get(branch, "['" + prefixes.catalog + "head'][0]['@id']", '');
                         var upToDate = headId === commitId;
                         ontologyId = om.getOntologyIRI(ontology);
                         if (type === 'ontology') {

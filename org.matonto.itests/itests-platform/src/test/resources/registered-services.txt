@@ -8,3 +8,4 @@
 (&(objectClass=org.matonto.jaas.rest.UserRest))
 (&(objectClass=org.matonto.dataset.api.DatasetManager))
 (&(service.pid=org.matonto.jaas.engines.RdfEngine))
+(&(objectClass=org.matonto.cache.config.CacheConfiguration)(id=ontologyCache))
