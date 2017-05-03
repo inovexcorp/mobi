@@ -146,6 +146,15 @@ public interface OntologyManager {
     void deleteOntology(@Nonnull Resource recordId);
 
     /**
+     * Deletes a branch associated with an OntologyRecord.
+     *
+     * @param recordId The record id for the OntologyRecord which contains the Branch you want to delete.
+     * @param branchId The branch id of the ontology branch you want to delete.
+     * @throws IllegalArgumentException - the OntologyRecord can't be retrieved.
+     */
+    void deleteOntologyBranch(@Nonnull Resource recordId, @Nonnull Resource branchId);
+
+    /**
      * Creates a new OntologyId with a generated identifier.
      *
      * @return an OntologyId with a generated identifier.

@@ -40,7 +40,6 @@ import org.matonto.etl.api.delimited.DelimitedConverter;
 import org.matonto.etl.api.exception.MatOntoETLException;
 import org.matonto.etl.api.ontologies.delimited.ClassMapping;
 import org.matonto.etl.api.ontologies.delimited.ClassMappingFactory;
-import org.matonto.etl.api.ontologies.delimited.Property;
 import org.matonto.exception.MatOntoException;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
@@ -170,7 +169,7 @@ public class DelimitedConverterImpl implements DelimitedConverter {
                 //getLastCellNumber instead of getPhysicalNumberOfCells so that blank values don't cause cells to shift
                 nextRow = new String[row.getLastCellNum()];
                 boolean rowContainsValues = false;
-                for (int i = 0; i < row.getLastCellNum(); i++ ) {
+                for (int i = 0; i < row.getLastCellNum(); i++) {
                     nextRow[i] = df.formatCellValue(row.getCell(i));
                     if (!rowContainsValues && !nextRow[i].isEmpty()) {
                         rowContainsValues = true;
@@ -190,12 +189,12 @@ public class DelimitedConverterImpl implements DelimitedConverter {
 
         return convertedRDF;
     }
-    
+
     /**
      * Processes a row of data into RDF using class mappings and adds it to the given Model.
      *
-     * @param convertedRDF the model to hold the converted data
-     * @param line the data to convert
+     * @param convertedRDF  the model to hold the converted data
+     * @param line          the data to convert
      * @param classMappings the classMappings to use when converting the data
      */
     private void writeClassMappingsToModel(Model convertedRDF, String[] line, List<ClassMapping> classMappings) {
@@ -218,8 +217,8 @@ public class DelimitedConverterImpl implements DelimitedConverter {
     /**
      * Creates a Model of RDF statements based on a class mapping and a line of data from CSV.
      *
-     * @param cm       The ClassMapping object to guide the RDF creation
-     * @param nextLine The line of CSV to be mapped
+     * @param cm            The ClassMapping object to guide the RDF creation
+     * @param nextLine      The line of CSV to be mapped
      * @param mappedClasses The Map holding previously processed ClassMappings and their associated instance IRIs.
      *                      Modified by this method.
      * @return A Model of RDF based on the line of CSV data
@@ -302,7 +301,7 @@ public class DelimitedConverterImpl implements DelimitedConverter {
      * Generates a local name for RDF Instances. If no local name is configured in the ClassMapping, a random UUID
      * is generated.
      *
-     * @param cm That ClassMapping from which to retrieve the local name template if it exists
+     * @param cm          That ClassMapping from which to retrieve the local name template if it exists
      * @param currentLine The current line in the CSV file in case data is used in the Local Name
      * @return The local name portion of a IRI used in RDF data
      */

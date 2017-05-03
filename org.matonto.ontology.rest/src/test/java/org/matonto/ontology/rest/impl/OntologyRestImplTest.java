@@ -45,6 +45,7 @@ import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.matonto.cache.api.CacheManager;
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.Difference;
 import org.matonto.catalog.api.builder.RecordConfig;
@@ -59,6 +60,7 @@ import org.matonto.catalog.api.ontologies.mcat.InProgressCommitFactory;
 import org.matonto.catalog.api.ontologies.mcat.OntologyRecord;
 import org.matonto.catalog.api.ontologies.mcat.OntologyRecordFactory;
 import org.matonto.catalog.impl.SimpleDifference;
+import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.jaas.api.ontologies.usermanagement.UserFactory;
@@ -109,6 +111,7 @@ import org.matonto.repository.impl.core.SimpleRepositoryManager;
 import org.matonto.rest.util.MatontoRestTestNg;
 import org.matonto.rest.util.UsernameTestFilter;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.openrdf.model.vocabulary.DCTERMS;
 import org.openrdf.model.vocabulary.OWL;
@@ -118,6 +121,7 @@ import org.openrdf.rio.WriterConfig;
 import org.openrdf.rio.helpers.JSONLDMode;
 import org.openrdf.rio.helpers.JSONLDSettings;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.ExpectedExceptions;
 import org.testng.annotations.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -130,6 +134,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.cache.Cache;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.MediaType;
@@ -161,6 +166,12 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
 
     @Mock
     private SesameTransformer sesameTransformer;
+
+    @Mock
+    private CacheManager cacheManager;
+
+    @Mock
+    private Cache<String, Ontology> mockCache;
 
     private ValueConverterRegistry vcr;
     private ModelFactory modelFactory;
@@ -225,6 +236,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
     protected Application configureApp() throws Exception {
         MockitoAnnotations.initMocks(this);
 
+        when(cacheManager.getCache(Mockito.anyString(), Mockito.eq(String.class), Mockito.eq(Ontology.class))).thenReturn(Optional.empty());
+
         vcr = new DefaultValueConverterRegistry();
         modelFactory = LinkedHashModelFactory.getInstance();
         valueFactory = SimpleValueFactory.getInstance();
@@ -283,6 +296,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         rest.setOntologyRecordFactory(ontologyRecordFactory);
         rest.setEngineManager(engineManager);
         rest.setSesameTransformer(sesameTransformer);
+        rest.setCacheManager(cacheManager);
 
         simpleOntologyManager = new SimpleOntologyManager();
         simpleOntologyManager.setModelFactory(modelFactory);
@@ -373,7 +387,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
     @BeforeMethod
     public void setupMocks() {
         reset(engineManager, ontologyId, ontology, importedOntologyId, importedOntology, catalogManager,
-                ontologyManager, sesameTransformer);
+                ontologyManager, sesameTransformer, cacheManager, mockCache);
         when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.of(user));
         when(ontologyId.getOntologyIdentifier()).thenReturn(ontologyIRI);
         when(ontology.getOntologyId()).thenReturn(ontologyId);
@@ -447,6 +461,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         when(sesameTransformer.sesameModel(any(Model.class))).thenAnswer(invocationOnMock ->
                 Values.sesameModel(invocationOnMock.getArgumentAt(0, Model.class)));
         entityUsagesConstruct = modelToJsonld(sesameTransformer.sesameModel(constructs));
+        when(cacheManager.getCache(Mockito.anyString(), Mockito.eq(String.class), Mockito.eq(Ontology.class))).thenReturn(Optional.of(mockCache));
+        rest.setCacheManager(cacheManager);
     }
 
     private JSONObject getResource(String path) throws Exception {
@@ -598,6 +614,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         verify(catalogManager).createCommit(eq(inProgressCommit), anyString(), eq(null), eq(null));
         verify(catalogManager).addCommitToBranch(commit, branchId);
         verify(catalogManager).removeInProgressCommit(inProgressCommitId);
+        verify(mockCache).put(Mockito.anyString(), Mockito.any(Ontology.class));
     }
 
     @Test
@@ -755,7 +772,13 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
     // Test download ontology file
 
     @Test
-    public void testGetOntology() {
+    public void testGetOntologyCacheHit() {
+        when(cacheManager.getCache(Mockito.anyString(), Mockito.eq(String.class), Mockito.eq(Ontology.class))).thenReturn(Optional.of(mockCache));
+        when(mockCache.containsKey(Mockito.anyString())).thenReturn(true);
+        when(mockCache.get(Mockito.anyString())).thenReturn(ontology);
+
+        rest.setCacheManager(cacheManager);
+
         Response response = target().path("ontologies/" + encode(recordId.stringValue()))
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
                 .request().get();
@@ -763,6 +786,29 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         assertEquals(response.getStatus(), 200);
         assertGetOntology(true);
         assertEquals(response.readEntity(String.class), ontologyJsonLd.toString());
+        verify(mockCache).containsKey(Mockito.anyString());
+        verify(mockCache).get(Mockito.anyString());
+        verify(mockCache, times(0)).put(Mockito.anyString(), Mockito.any(Ontology.class));
+    }
+
+    @Test
+    public void testGetOntologyCacheMiss() {
+        when(cacheManager.getCache(Mockito.anyString(), Mockito.eq(String.class), Mockito.eq(Ontology.class))).thenReturn(Optional.of(mockCache));
+        when(mockCache.containsKey(Mockito.anyString())).thenReturn(false);
+
+        rest.setCacheManager(cacheManager);
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()))
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .request().get();
+
+        assertEquals(response.getStatus(), 200);
+        assertGetOntology(true);
+        assertEquals(response.readEntity(String.class), ontologyJsonLd.toString());
+        verify(mockCache).containsKey(Mockito.anyString());
+        verify(mockCache, times(0)).get(Mockito.anyString());
+        // OntologyManger will handle caching the ontology
+        verify(mockCache, times(0)).put(Mockito.anyString(), Mockito.any(Ontology.class));
     }
 
     @Test
@@ -3727,5 +3773,43 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .queryParam("searchText", "class").request().get();
 
         assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void testDeleteOntology() {
+        Response response = target().path("ontologies/" + encode(recordId.stringValue())).request().delete();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).deleteOntology(recordId);
+    }
+
+    @Test
+    public void testDeleteOntologyError() {
+        Mockito.doThrow(new MatOntoException("I'm an exception!")).when(ontologyManager).deleteOntology(Mockito.eq(recordId));
+        Response response = target().path("ontologies/" + encode(recordId.stringValue())).request().delete();
+
+        assertEquals(response.getStatus(), 500);
+        verify(ontologyManager, times(0)).deleteOntologyBranch(Mockito.any(), Mockito.any());
+        verify(catalogManager, times(0)).removeRecord(Mockito.any(), Mockito.any());
+    }
+
+    @Test
+    public void testDeleteOntologyBranch() {
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()))
+                .queryParam("branchId", branchId.stringValue()).request().delete();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).deleteOntologyBranch(recordId, branchId);
+    }
+
+    @Test
+    public void testDeleteOntologyBranchError() {
+        Mockito.doThrow(new MatOntoException("I'm an exception!")).when(ontologyManager).deleteOntologyBranch(Mockito.eq(recordId), Mockito.eq(branchId));
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()))
+                .queryParam("branchId", branchId.stringValue()).request().delete();
+
+        assertEquals(response.getStatus(), 500);
+        verify(ontologyManager, times(0)).deleteOntology(Mockito.any());
+        verify(catalogManager, times(0)).removeBranch(Mockito.any(), Mockito.any());
     }
 }

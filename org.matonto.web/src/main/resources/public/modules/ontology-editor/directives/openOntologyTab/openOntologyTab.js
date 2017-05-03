@@ -28,10 +28,10 @@
         .directive('openOntologyTab', openOntologyTab);
 
         openOntologyTab.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'prefixes',
-            'catalogManagerService', 'stateManagerService', 'utilService'];
+            'stateManagerService', 'utilService'];
 
         function openOntologyTab($filter, ontologyManagerService, ontologyStateService, prefixes,
-            catalogManagerService, stateManagerService, utilService) {
+            stateManagerService, utilService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -42,9 +42,7 @@
                 controllerAs: 'dvm',
                 controller: ['$scope', function($scope) {
                     var dvm = this;
-                    var cm = catalogManagerService;
                     var sm = stateManagerService;
-                    var catalogId = _.get(cm.localCatalog, '@id', '');
                     var ontologyRecords = [];
 
                     dvm.om = ontologyManagerService;
@@ -79,7 +77,7 @@
                     }
 
                     dvm.deleteOntology = function() {
-                        cm.deleteRecord(dvm.recordId, catalogId)
+                        dvm.om.deleteOntology(dvm.recordId)
                             .then(response => {
                                 _.remove(ontologyRecords, record => _.get(record, '@id', '') === dvm.recordId);
                                 var state = sm.getOntologyStateByRecordId(dvm.recordId);

@@ -183,7 +183,7 @@ public class SimpleOntologyValuesTest {
         OWLAnnotation owlAnno1 = mock(OWLAnnotation.class);
         Set<OWLAnnotation> mockAnnoSet = new HashSet<>();
           
-        expect(owlAnno.getAnnotations()).andReturn(mockAnnoSet).anyTimes();
+        expect(owlAnno.annotations()).andReturn(mockAnnoSet.stream()).anyTimes();
           
         OWLAnnotationProperty owlProperty = mock(OWLAnnotationProperty.class);
         AnnotationProperty property = mock(AnnotationProperty.class);
@@ -256,7 +256,7 @@ public class SimpleOntologyValuesTest {
         
         replay(anno, property, owlProperty, value,owlIRI, SimpleOntologyValues.class);
         
-        assertEquals(0, SimpleOntologyValues.owlapiAnnotation(anno).getAnnotations().size());      
+        assertEquals(0, SimpleOntologyValues.owlapiAnnotation(anno).annotations().count());
     }
     
 //    @Test
