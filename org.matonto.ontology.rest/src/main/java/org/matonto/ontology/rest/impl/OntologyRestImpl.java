@@ -104,8 +104,7 @@ public class OntologyRestImpl implements OntologyRest {
     private OntologyRecordFactory ontologyRecordFactory;
     private EngineManager engineManager;
     private SesameTransformer sesameTransformer;
-    private Optional<Cache<String, Ontology>> ontologyCache = Optional.empty();
-
+    private Cache<String, Ontology> ontologyCache;
 
     private final Logger log = LoggerFactory.getLogger(OntologyRestImpl.class);
 
@@ -146,7 +145,7 @@ public class OntologyRestImpl implements OntologyRest {
 
     @Reference
     public void setCacheManager(CacheManager cacheManager) {
-        this.ontologyCache = cacheManager.getCache(OntologyCache.CACHE_NAME, String.class, Ontology.class);
+        this.ontologyCache = cacheManager.getCache(OntologyCache.CACHE_NAME, String.class, Ontology.class).orElse(null);
     }
 
     @Override
@@ -813,8 +812,8 @@ public class OntologyRestImpl implements OntologyRest {
         Optional<Ontology> optionalOntology;
         String key = OntologyCache.generateKey(recordIdStr, branchIdStr, commitIdStr);
 
-        if (ontologyCache.isPresent() && ontologyCache.get().containsKey(key)) {
-            optionalOntology = Optional.of(ontologyCache.get().get(key));
+        if (ontologyCache != null && ontologyCache.containsKey(key)) {
+            optionalOntology = Optional.of(ontologyCache.get(key));
         } else {
             Resource recordId = valueFactory.createIRI(recordIdStr);
 
@@ -1217,10 +1216,13 @@ public class OntologyRestImpl implements OntologyRest {
         catalogManager.removeInProgressCommit(inProgressCommit.getResource());
 
         // Cache
-        ontologyCache.ifPresent(cache -> {
+        if (ontologyCache != null) {
+            String recordId = finalRecord.getResource().stringValue();
+            String branchId = masterBranchId.stringValue();
+            String commitId = commit.getResource().stringValue();
             log.trace("caching " + finalRecord.getResource().stringValue());
-            cache.put(finalRecord.getResource().stringValue(), ontology);
-        });
+            ontologyCache.put(OntologyCache.generateKey(recordId, branchId, commitId), ontology);
+        }
 
         JSONObject response = new JSONObject()
                 .element("ontologyId", ontology.getOntologyId().getOntologyIdentifier().stringValue())
