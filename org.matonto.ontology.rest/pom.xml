@@ -50,7 +50,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.api</artifactId>
-            <version>1.6.33-SNAPSHOT</version>
+            <version>1.6.34-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
@@ -80,7 +80,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>cache</artifactId>
-            <version>1.6.33-SNAPSHOT</version>
+            <version>1.6.34-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.apache.servicemix.bundles</groupId>
@@ -115,7 +115,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.core.impl.owlapi</artifactId>
-            <version>1.6.33-SNAPSHOT</version>
+            <version>1.6.34-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -127,7 +127,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.utils</artifactId>
-            <version>1.6.33-SNAPSHOT</version>
+            <version>1.6.34-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.glassfish.jersey.test-framework.providers</groupId>
