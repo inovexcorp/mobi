@@ -1536,7 +1536,9 @@ public class SimpleCatalogManagerTest {
         Resource branchId = vf.createIRI("http://matonto.org/test/branches#test");
         Resource recordId = vf.createIRI("http://matonto.org/test/records#versionedRDF");
         Resource commitIdToRemove = vf.createIRI("http://matonto.org/test/commits#conflict2");
+        Resource additionsToRemove = vf.createIRI("http://matonto.org/test/additions#conflict2");
         Resource commitIdToKeep = vf.createIRI("http://matonto.org/test/commits#conflict0");
+        Resource additionsToKeep = vf.createIRI("http://matonto.org/test/additions#conflict0");
         Resource tagId = vf.createIRI("http://matonto.org/test/tags#test");
         IRI commitIRI = vf.createIRI(Tag.commit_IRI);
         IRI branchIRI = vf.createIRI(VersionedRDFRecord.branch_IRI);
@@ -1546,6 +1548,8 @@ public class SimpleCatalogManagerTest {
             assertTrue(conn.getStatements(recordId, branchIRI, branchId, recordId).hasNext());
             assertTrue(conn.getStatements(null, null, null, commitIdToRemove).hasNext());
             assertTrue(conn.getStatements(null, null, null, commitIdToKeep).hasNext());
+            assertTrue(conn.getStatements(null, null, null, additionsToRemove).hasNext());
+            assertTrue(conn.getStatements(null, null, null, additionsToKeep).hasNext());
             assertTrue(conn.getStatements(tagId, commitIRI, commitIdToRemove, tagId).hasNext());
 
             manager.removeBranch(branchId, recordId);
@@ -1553,6 +1557,8 @@ public class SimpleCatalogManagerTest {
             assertFalse(conn.getStatements(recordId, branchIRI, branchId, recordId).hasNext());
             assertFalse(conn.getStatements(null, null, null, commitIdToRemove).hasNext());
             assertTrue(conn.getStatements(null, null, null, commitIdToKeep).hasNext());
+            assertFalse(conn.getStatements(null, null, null, additionsToRemove).hasNext());
+            assertTrue(conn.getStatements(null, null, null, additionsToKeep).hasNext());
             assertFalse(conn.getStatements(tagId, commitIRI, commitIdToRemove, tagId).hasNext());
         }
     }

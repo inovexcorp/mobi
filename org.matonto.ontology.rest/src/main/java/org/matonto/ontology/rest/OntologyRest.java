@@ -944,6 +944,32 @@ public interface OntologyRest {
                                               @QueryParam("commitId") String commitIdStr);
 
     /**
+    * Returns the JSON annotation property hierarchy for the ontology identified by the provided IDs.
+    *
+    * @param context the context of the request.
+    * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+    *                    String begins with "_:".
+    * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+    *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
+    *                    master Branch.
+    * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+    *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
+    *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
+    *                    otherwise, nothing will be returned.
+    * @return nested JSON structure that represents the annotation property hierarchy for the ontology with requested
+    *         record ID.
+    */
+    @GET
+    @Path("{recordId}/annotation-property-hierarchies")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Gets the data property hierarchies for the identified ontology.")
+    Response getOntologyAnnotationPropertyHierarchy(@Context ContainerRequestContext context,
+                                                    @PathParam("recordId") String recordIdStr,
+                                                    @QueryParam("branchId") String branchIdStr,
+                                                    @QueryParam("commitId") String commitIdStr);
+
+    /**
      * Returns the JSON SKOS concept hierarchy for the ontology identified by the provided IDs.
      *
      * @param context the context of the request.

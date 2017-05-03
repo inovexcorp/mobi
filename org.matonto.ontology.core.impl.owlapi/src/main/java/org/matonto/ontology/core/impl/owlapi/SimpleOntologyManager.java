@@ -30,7 +30,6 @@ import org.matonto.cache.api.CacheManager;
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.ontologies.mcat.Branch;
 import org.matonto.catalog.api.ontologies.mcat.BranchFactory;
-import org.matonto.catalog.api.ontologies.mcat.CommitFactory;
 import org.matonto.catalog.api.ontologies.mcat.OntologyRecord;
 import org.matonto.catalog.api.ontologies.mcat.OntologyRecordFactory;
 import org.matonto.exception.MatOntoException;
@@ -70,6 +69,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -88,7 +88,7 @@ public class SimpleOntologyManager implements OntologyManager {
     private RepositoryManager repositoryManager;
     private OntologyRecordFactory ontologyRecordFactory;
     private BranchFactory branchFactory;
-    private Cache<String, Ontology> ontologyCache;
+    private CacheManager cacheManager;
 
     private final Logger log = LoggerFactory.getLogger(SimpleOntologyManager.class);
 
@@ -100,6 +100,7 @@ public class SimpleOntologyManager implements OntologyManager {
     private static final String CONSTRUCT_ENTITY_USAGES;
     private static final String GET_CONCEPT_RELATIONSHIPS;
     private static final String GET_SEARCH_RESULTS;
+    private static final String GET_SUB_ANNOTATION_PROPERTIES_OF;
     private static final String ENTITY_BINDING = "entity";
     private static final String SEARCH_TEXT = "searchText";
 
@@ -168,6 +169,14 @@ public class SimpleOntologyManager implements OntologyManager {
         } catch (IOException e) {
             throw new MatOntoException(e);
         }
+        try {
+            GET_SUB_ANNOTATION_PROPERTIES_OF = IOUtils.toString(
+                    SimpleOntologyManager.class.getResourceAsStream("/get-sub-annotation-properties-of.rq"),
+                    "UTF-8"
+            );
+        } catch (IOException e) {
+            throw new MatOntoException(e);
+        }
     }
 
     public SimpleOntologyManager() {}
@@ -209,7 +218,7 @@ public class SimpleOntologyManager implements OntologyManager {
 
     @Reference
     public void setCacheManager(CacheManager cacheManager) {
-        this.ontologyCache = cacheManager.getCache(OntologyCache.CACHE_NAME, String.class, Ontology.class).orElse(null);
+        this.cacheManager = cacheManager;
     }
 
     @Override
@@ -293,17 +302,16 @@ public class SimpleOntologyManager implements OntologyManager {
     @Override
     public Optional<Ontology> retrieveOntology(@Nonnull Resource recordId, @Nonnull Resource branchId,
                                                @Nonnull Resource commitId) {
-        long start = log.isTraceEnabled() ? System.currentTimeMillis() : 0L;
         Optional<Ontology> result;
+        long start = log.isTraceEnabled() ? System.currentTimeMillis() : 0L;
+
+        Optional<Cache<String, Ontology>> optCache = getOntologyCache();
         String key = OntologyCache.generateKey(recordId.stringValue(), branchId.stringValue(), commitId.stringValue());
 
-        if (ontologyCache != null && ontologyCache.containsKey(key)) {
+        if (optCache.isPresent() && optCache.get().containsKey(key)) {
             log.trace("cache hit");
-            result = Optional.of(ontologyCache.get(key));
+            result = Optional.ofNullable(optCache.get().get(key));
         } else {
-            if (ontologyCache != null) {
-                log.trace("cache miss");
-            }
             result = catalogManager.getRecord(catalogManager.getLocalCatalogIRI(), recordId, ontologyRecordFactory)
                     .flatMap(ontologyRecord -> {
                         Branch branch = getBranch(ontologyRecord, branchId);
@@ -320,30 +328,31 @@ public class SimpleOntologyManager implements OntologyManager {
         return result;
     }
 
-    private Optional<Ontology> retrieveOntology(@Nonnull OntologyRecord record, @Nonnull Branch branch, @Nonnull Resource commit) {
-        Optional<Ontology> ont;
+    private Optional<Ontology> retrieveOntology(@Nonnull OntologyRecord record, @Nonnull Branch branch, @Nonnull Resource commitId) {
+        Optional<Ontology> result;
+        Optional<Cache<String, Ontology>> optCache = getOntologyCache();
+        String key = OntologyCache.generateKey(record.getResource().stringValue(), branch.getResource().stringValue(), commitId.stringValue());
 
-        String key = OntologyCache.generateKey(record.getResource().stringValue(), branch.getResource().stringValue(), commit.stringValue());
-        if (ontologyCache != null && ontologyCache.containsKey(key)) {
+        if (optCache.isPresent() && optCache.get().containsKey(key)) {
             log.trace("cache hit");
-            ont = Optional.of(ontologyCache.get(key));
+            result = Optional.ofNullable(optCache.get().get(key));
         } else {
-            ont = Optional.of(createOntologyFromCommit(commit));
-            if (ontologyCache != null) {
-                log.trace("cache miss");
-                ontologyCache.put(key, ont.get());
-            }
+            log.trace("cache miss");
+            final Ontology ontology = createOntologyFromCommit(commitId);
+            result = Optional.of(ontology);
+            getOntologyCache().ifPresent(cache -> {
+                cache.put(key, ontology);
+            });
         }
-        return ont;
+        return result;
     }
 
     @Override
     public void deleteOntology(@Nonnull Resource recordId) {
-        try {
-            catalogManager.removeRecord(catalogManager.getLocalCatalog().getResource(), recordId);
-        } catch (MatOntoException e) {
-            throw new IllegalArgumentException("The OntologyRecord could not be retrieved.", e);
-        }
+        OntologyRecord record = catalogManager.getRecord(catalogManager.getLocalCatalogIRI(), recordId,
+                ontologyRecordFactory).orElseThrow(() ->
+                new IllegalArgumentException("The OntologyRecord could not be retrieved."));
+        catalogManager.removeRecord(catalogManager.getLocalCatalog().getResource(), record.getResource());
         clearCache(recordId, null);
     }
 
@@ -354,14 +363,13 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     private void clearCache(@Nonnull Resource recordId, Resource branchId) {
-        if (ontologyCache != null) {
-            ontologyCache.forEach(entry -> {
-                String key = OntologyCache.generateKey(recordId.stringValue(), branchId == null ? null : branchId.stringValue(), null);
-                if (entry.getKey().startsWith(key)) {
-                    ontologyCache.remove(entry.getKey());
-                }
-            });
-        }
+        String key = OntologyCache.generateKey(recordId.stringValue(), branchId == null ? null : branchId.stringValue(), null);
+        getOntologyCache().ifPresent(cache -> cache.forEach(entry -> {
+            if (entry.getKey().startsWith(key)) {
+                cache.remove(entry.getKey());
+            }
+                })
+        );
     }
 
     @Override
@@ -392,6 +400,11 @@ public class SimpleOntologyManager implements OntologyManager {
     @Override
     public TupleQueryResult getSubDatatypePropertiesOf(Ontology ontology) {
         return runQueryOnOntology(ontology, GET_SUB_DATATYPE_PROPERTIES_OF, null);
+    }
+
+    @Override
+    public TupleQueryResult getSubAnnotationPropertiesOf(Ontology ontology) {
+        return runQueryOnOntology(ontology, GET_SUB_ANNOTATION_PROPERTIES_OF, null);
     }
 
     @Override
@@ -494,7 +507,11 @@ public class SimpleOntologyManager implements OntologyManager {
         Repository repo = repositoryManager.createMemoryRepository();
         repo.initialize();
         try (RepositoryConnection conn = repo.getConnection()) {
+            Set<Ontology> importedOntologies = ontology.getImportsClosure();
+            conn.begin();
             conn.add(ontology.asModel(modelFactory));
+            importedOntologies.forEach(ont -> conn.add(ont.asModel(modelFactory)));
+            conn.commit();
             TupleQuery query = conn.prepareTupleQuery(queryString);
             if (addBinding != null) {
                 query = addBinding.apply(query);
@@ -503,5 +520,13 @@ public class SimpleOntologyManager implements OntologyManager {
         } finally {
             repo.shutDown();
         }
+    }
+
+    private Optional<javax.cache.Cache<String, Ontology>> getOntologyCache() {
+        Optional<Cache<String, Ontology>> cache = Optional.empty();
+        if (cacheManager != null) {
+            cache = cacheManager.getCache(OntologyCache.CACHE_NAME, String.class, Ontology.class);
+        }
+        return cache;
     }
 }

@@ -325,6 +325,7 @@ public class SimpleOntologyManagerTest {
 
         Optional<Ontology> optionalOntology = manager.retrieveOntology(recordIRI);
         assertTrue(optionalOntology.isPresent());
+        verify(mockCache).containsKey(Mockito.matches(key));
         verify(mockCache).get(Mockito.matches(key));
         verify(mockCache, Mockito.times(0)).put(Mockito.matches(key), Mockito.eq(optionalOntology.get()));
     }
@@ -437,6 +438,7 @@ public class SimpleOntologyManagerTest {
 
         Optional<Ontology> optionalOntology = manager.retrieveOntology(recordIRI, branchIRI);
         assertTrue(optionalOntology.isPresent());
+        verify(mockCache).containsKey(Mockito.matches(key));
         verify(mockCache).get(Mockito.matches(key));
         verify(mockCache, Mockito.times(0)).put(Mockito.matches(key), Mockito.eq(optionalOntology.get()));
     }
@@ -600,7 +602,7 @@ public class SimpleOntologyManagerTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testDeleteMissingOntologyRecord() {
-        doThrow(new MatOntoException("remove failed")).when(catalogManager).removeRecord(catalogIRI, recordIRI);
+        when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.empty());
 
         try {
             manager.deleteOntology(recordIRI);
@@ -672,6 +674,32 @@ public class SimpleOntologyManagerTest {
         children.put("http://matonto.org/ontology#dataProperty1a", "http://matonto.org/ontology#dataProperty1b");
 
         TupleQueryResult result = manager.getSubDatatypePropertiesOf(ontology);
+
+        assertTrue(result.hasNext());
+        result.forEach(b -> {
+            String parent = Bindings.requiredResource(b, "parent").stringValue();
+            assertTrue(parents.contains(parent));
+            parents.remove(parent);
+            Optional<Binding> child = b.getBinding("child");
+            if (child.isPresent()) {
+                assertEquals(children.get(parent), child.get().getValue().stringValue());
+                children.remove(parent);
+            }
+        });
+        assertEquals(0, parents.size());
+        assertEquals(0, children.size());
+    }
+
+    @Test
+    public void testGetSubAnnotationPropertiesOf() throws Exception {
+        Set<String> parents = Stream.of("http://matonto.org/ontology#annotationProperty1b",
+                "http://matonto.org/ontology#annotationProperty1a", "http://purl.org/dc/terms/title")
+                .collect(Collectors.toSet());
+        Map<String, String> children = new HashMap<>();
+        children.put("http://matonto.org/ontology#annotationProperty1a",
+                "http://matonto.org/ontology#annotationProperty1b");
+
+        TupleQueryResult result = manager.getSubAnnotationPropertiesOf(ontology);
 
         assertTrue(result.hasNext());
         result.forEach(b -> {

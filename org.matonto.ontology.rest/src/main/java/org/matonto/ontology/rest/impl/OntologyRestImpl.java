@@ -104,7 +104,7 @@ public class OntologyRestImpl implements OntologyRest {
     private OntologyRecordFactory ontologyRecordFactory;
     private EngineManager engineManager;
     private SesameTransformer sesameTransformer;
-    private Cache<String, Ontology> ontologyCache;
+    private CacheManager cacheManager;
 
     private final Logger log = LoggerFactory.getLogger(OntologyRestImpl.class);
 
@@ -145,7 +145,7 @@ public class OntologyRestImpl implements OntologyRest {
 
     @Reference
     public void setCacheManager(CacheManager cacheManager) {
-        this.ontologyCache = cacheManager.getCache(OntologyCache.CACHE_NAME, String.class, Ontology.class).orElse(null);
+        this.cacheManager = cacheManager;
     }
 
     @Override
@@ -558,8 +558,7 @@ public class OntologyRestImpl implements OntologyRest {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
             TupleQueryResult results = ontologyManager.getSubClassesOf(ontology);
-            JSONObject response = getHierarchy(results);
-            return Response.ok(response).build();
+            return Response.ok(getHierarchy(results)).build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -572,8 +571,7 @@ public class OntologyRestImpl implements OntologyRest {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
             TupleQueryResult results = ontologyManager.getSubObjectPropertiesOf(ontology);
-            JSONObject response = getHierarchy(results);
-            return Response.ok(response).build();
+            return Response.ok(getHierarchy(results)).build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -586,8 +584,20 @@ public class OntologyRestImpl implements OntologyRest {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
             TupleQueryResult results = ontologyManager.getSubDatatypePropertiesOf(ontology);
-            JSONObject response = getHierarchy(results);
-            return Response.ok(response).build();
+            return Response.ok(getHierarchy(results)).build();
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Override
+    public Response getOntologyAnnotationPropertyHierarchy(ContainerRequestContext context, String recordIdStr,
+                                                     String branchIdStr, String commitIdStr) {
+        try {
+            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr).orElseThrow(() ->
+                    ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
+            TupleQueryResult results = ontologyManager.getSubAnnotationPropertiesOf(ontology);
+            return Response.ok(getHierarchy(results)).build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -810,10 +820,12 @@ public class OntologyRestImpl implements OntologyRest {
                                            String commitIdStr) {
         throwErrorIfMissingStringParam(recordIdStr, "The recordIdStr is missing.");
         Optional<Ontology> optionalOntology;
+        Optional<Cache<String, Ontology>> cache = getOntologyCache();
         String key = OntologyCache.generateKey(recordIdStr, branchIdStr, commitIdStr);
 
-        if (ontologyCache != null && ontologyCache.containsKey(key)) {
-            optionalOntology = Optional.of(ontologyCache.get(key));
+        if (cache.isPresent() && cache.get().containsKey(key)) {
+            log.trace("cache hit");
+            optionalOntology = Optional.of(cache.get().get(key));
         } else {
             Resource recordId = valueFactory.createIRI(recordIdStr);
 
@@ -1216,13 +1228,11 @@ public class OntologyRestImpl implements OntologyRest {
         catalogManager.removeInProgressCommit(inProgressCommit.getResource());
 
         // Cache
-        if (ontologyCache != null) {
-            String recordId = finalRecord.getResource().stringValue();
-            String branchId = masterBranchId.stringValue();
-            String commitId = commit.getResource().stringValue();
-            log.trace("caching " + finalRecord.getResource().stringValue());
-            ontologyCache.put(OntologyCache.generateKey(recordId, branchId, commitId), ontology);
-        }
+        getOntologyCache().ifPresent(cache -> {
+            String key = OntologyCache.generateKey(finalRecord.getResource().stringValue(), masterBranchId.stringValue(), commit.getResource().stringValue());
+            log.trace("caching " + key);
+            cache.put(key, ontology);
+        });
 
         JSONObject response = new JSONObject()
                 .element("ontologyId", ontology.getOntologyId().getOntologyIdentifier().stringValue())
@@ -1230,5 +1240,13 @@ public class OntologyRestImpl implements OntologyRest {
                 .element("branchId", masterBranchId.stringValue())
                 .element("commitId", commit.getResource().stringValue());
         return Response.status(201).entity(response).build();
+    }
+
+    private Optional<Cache<String, Ontology>> getOntologyCache() {
+        Optional<Cache<String, Ontology>> cache = Optional.empty();
+        if (cacheManager != null) {
+            cache = cacheManager.getCache(OntologyCache.CACHE_NAME, String.class, Ontology.class);
+        }
+        return cache;
     }
 }

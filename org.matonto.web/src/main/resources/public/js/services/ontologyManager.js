@@ -474,6 +474,29 @@
             }
             /**
              * @ngdoc method
+             * @name getAnnotationPropertyHierarchies
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Calls the GET /matontorest/ontologies/{recordId}/annotation-property-hierarchies endpoint and retrieves an object
+             * with the hierarchy of annotation properties in the ontology organized by the subPropertyOf property and
+             * with an index of each IRI and its parent IRIs.
+             *
+             * @param {string} recordId The id of the Record the Branch should be part of
+             * @param {string} branchId The id of the Branch with the specified Commit
+             * @param {string} commitId The id of the Commit to retrieve the ontology from
+             * @return {Promise} A promise with an object containing the annotation property hierarchy and an index of
+             * IRIs to parent IRIs
+             */
+            self.getAnnotationPropertyHierarchies = function(recordId, branchId, commitId) {
+                var deferred = $q.defer();
+                var config = { params: { branchId, commitId } };
+                $http.get(prefix + '/' + encodeURIComponent(recordId) + '/annotation-property-hierarchies', config)
+                    .then(response => deferred.resolve(response.data), response => util.onError(response, deferred));
+                return deferred.promise;
+            }
+            /**
+             * @ngdoc method
              * @name getObjectPropertyHierarchies
              * @methodOf ontologyManager.service:ontologyManagerService
              *
@@ -663,14 +686,14 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Checks if the provided ontology contains any owl:Class entities. Returns a boolean.
+             * Checks if the provided ontologies contain any owl:Class entities. Returns a boolean.
              *
-             * @param {Object[]} ontology The ontology you want to check.
-             * @returns {boolean} Returns true if there are any owl:Class entities in the ontology, otherwise returns
+             * @param {Object[]} ontologies The array of ontologies you want to check.
+             * @returns {boolean} Returns true if there are any owl:Class entities in the ontologies, otherwise returns
              * false.
              */
-            self.hasClasses = function(ontology) {
-                return _.some(ontology, entity => self.isClass(entity) && !self.isBlankNode(entity));
+            self.hasClasses = function(ontologies) {
+                return _.some(ontologies, ont => _.some(ont, entity => self.isClass(entity) && !self.isBlankNode(entity)));
             }
             /**
              * @ngdoc method
@@ -678,14 +701,19 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Gets the list of all owl:Class entities within the provided ontology that are not blank nodes. Returns
+             * Gets the list of all owl:Class entities within the provided ontologies that are not blank nodes. Returns
              * an Object[].
              *
-             * @param {Object[]} ontology The ontology you want to check.
-             * @returns {Object[]} An array of all owl:Class entities within the ontology.
+             * @param {Object[]} ontologies The array of ontologies you want to check.
+             * @returns {Object[]} An array of all owl:Class entities within the ontologies.
              */
-            self.getClasses = function(ontology) {
-                return _.filter(ontology, entity => self.isClass(entity) && !self.isBlankNode(entity));
+            self.getClasses = function(ontologies) {
+                var classes = [];
+                _.forEach(ontologies, ont => {
+                    classes.push.apply(classes,
+                        _.filter(ont, entity => self.isClass(entity) && !self.isBlankNode(entity)));
+                });
+                return classes;
             }
             /**
              * @ngdoc method
@@ -693,14 +721,14 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Gets the list of all owl:Class entity IRIs within the provided ontology that are not blank nodes. Returns
-             * an string[].
+             * Gets the list of all owl:Class entity IRIs within the provided ontologies that are not blank nodes.
+             * Returns a string[].
              *
-             * @param {Object[]} ontology The ontology you want to check.
-             * @returns {string[]} An array of all owl:Class entity IRI strings within the ontology.
+             * @param {Object[]} ontologies The array of ontologies you want to check.
+             * @returns {string[]} An array of all owl:Class entity IRI strings within the ontologies.
              */
-            self.getClassIRIs = function(ontology) {
-                return _.map(self.getClasses(ontology), 'matonto.originalIRI');
+            self.getClassIRIs = function(ontologies) {
+                return _.map(self.getClasses(ontologies), 'matonto.originalIRI');
             }
             /**
              * @ngdoc method
@@ -708,15 +736,15 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Checks to see if the class within the provided ontology has an properties associated it via the
+             * Checks to see if the class within the provided ontologies has any properties associated it via the
              * rdfs:domain axiom. Returns a boolean indicating the existence of those properties.
              *
-             * @param {Object[]} ontology The ontology you want to check.
+             * @param {Object[]} ontologies The array of ontologies you want to check.
              * @param {string} classIRI The class IRI of the class you want to check about.
              * @returns {boolean} Returns true if it does have properties, otherwise returns false.
              */
-            self.hasClassProperties = function(ontology, classIRI) {
-                return _.some(ontology, {[prefixes.rdfs + 'domain']: [{'@id': classIRI}]});
+            self.hasClassProperties = function(ontologies, classIRI) {
+                return _.some(ontologies, ont => _.some(ont, {[prefixes.rdfs + 'domain']: [{'@id': classIRI}]}));
             }
             /**
              * @ngdoc method
@@ -724,15 +752,20 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Gets the properties associated with the class within the provided ontology by the rdfs:domain axiom.
+             * Gets the properties associated with the class within the provided ontologies by the rdfs:domain axiom.
              * Returns an array of all the properties associated with the provided class IRI.
              *
-             * @param {Object[]} ontology The ontology you want to check.
+             * @param {Object[]} ontologies The array of ontologies you want to check.
              * @param {string} classIRI The class IRI of the class you want to check about.
              * @returns {Object[]} Returns an array of all the properties associated with the provided class IRI.
              */
-            self.getClassProperties = function(ontology, classIRI) {
-                return _.filter(ontology, {[prefixes.rdfs + 'domain']: [{'@id': classIRI}]});
+            self.getClassProperties = function(ontologies, classIRI) {
+                var classProperties = [];
+                _.forEach(ontologies, ont => {
+                    classProperties.push.apply(classProperties,
+                        _.filter(ont, {[prefixes.rdfs + 'domain']: [{'@id': classIRI}]}));
+                });
+                return classProperties;
             }
             /**
              * @ngdoc method
@@ -740,15 +773,15 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Gets the property IRIs associated with the class within the provided ontology by the rdfs:domain axiom.
+             * Gets the property IRIs associated with the class within the provided ontologies by the rdfs:domain axiom.
              * Returns an array of all the property IRIs associated with the provided class IRI.
              *
-             * @param {Object[]} ontology The ontology you want to check.
+             * @param {Object[]} ontologies The array of ontologies you want to check.
              * @param {string} classIRI The class IRI of the class you want to check about.
              * @returns {string[]} Returns an array of all the property IRIs associated with the provided class IRI.
              */
-            self.getClassPropertyIRIs = function(ontology, classIRI) {
-                return _.map(self.getClassProperties(ontology, classIRI), 'matonto.originalIRI');
+            self.getClassPropertyIRIs = function(ontologies, classIRI) {
+                return _.map(self.getClassProperties(ontologies, classIRI), 'matonto.originalIRI');
             }
             /**
              * @ngdoc method
@@ -770,14 +803,14 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Checks if the provided ontology contains any owl:ObjectProperty entities. Returns a boolean.
+             * Checks if the provided ontologies contain any owl:ObjectProperty entities. Returns a boolean.
              *
-             * @param {Object[]} ontology The ontology you want to check.
-             * @returns {boolean} Returns true if there are any owl:ObjectProperty entities in the ontology, otherwise
+             * @param {Object[]} ontologies The array of ontologies you want to check.
+             * @returns {boolean} Returns true if there are any owl:ObjectProperty entities in the ontologies, otherwise
              * returns false.
              */
-            self.hasObjectProperties = function(ontology) {
-                return _.some(ontology, entity => self.isObjectProperty(entity) && !self.isBlankNode(entity));
+            self.hasObjectProperties = function(ontologies) {
+                return _.some(ontologies, ont => _.some(ont, entity => self.isObjectProperty(entity) && !self.isBlankNode(entity)));
             }
             /**
              * @ngdoc method
@@ -785,14 +818,19 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Gets the list of all owl:ObjectProperty entities within the provided ontology that are not blank nodes.
+             * Gets the list of all owl:ObjectProperty entities within the provided ontologies that are not blank nodes.
              * Returns an Object[].
              *
-             * @param {Object[]} ontology The ontology you want to check.
-             * @returns {Object[]} An array of all owl:ObjectProperty entities within the ontology.
+             * @param {Object[]} ontologies The array of ontologies you want to check.
+             * @returns {Object[]} An array of all owl:ObjectProperty entities within the ontologies.
              */
-            self.getObjectProperties = function(ontology) {
-                return _.filter(ontology, entity => self.isObjectProperty(entity) && !self.isBlankNode(entity));
+            self.getObjectProperties = function(ontologies) {
+                var objectProperties = [];
+                _.forEach(ontologies, ont => {
+                    objectProperties.push.apply(objectProperties,
+                        _.filter(ont, entity => self.isObjectProperty(entity) && !self.isBlankNode(entity)));
+                });
+                return objectProperties;
             }
             /**
              * @ngdoc method
@@ -800,14 +838,14 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Gets the list of all owl:ObjectProperty entity IRIs within the provided ontology that are not blank
+             * Gets the list of all owl:ObjectProperty entity IRIs within the provided ontologies that are not blank
              * nodes. Returns an string[].
              *
-             * @param {Object[]} ontology The ontology you want to check.
-             * @returns {string[]} An array of all owl:ObjectProperty entity IRI strings within the ontology.
+             * @param {Object[]} ontologies The array of ontologies you want to check.
+             * @returns {string[]} An array of all owl:ObjectProperty entity IRI strings within the ontologies.
              */
-            self.getObjectPropertyIRIs = function(ontology) {
-                return _.map(self.getObjectProperties(ontology), 'matonto.originalIRI');
+            self.getObjectPropertyIRIs = function(ontologies) {
+                return _.map(self.getObjectProperties(ontologies), 'matonto.originalIRI');
             }
             /**
              * @ngdoc method
@@ -831,14 +869,14 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Checks if the provided ontology contains any owl:DatatypeProperty entities. Returns a boolean.
+             * Checks if the provided ontologies contain any owl:DatatypeProperty entities. Returns a boolean.
              *
-             * @param {Object[]} ontology The ontology you want to check.
-             * @returns {boolean} Returns true if there are any owl:DatatypeProperty entities in the ontology, otherwise
-             * returns false.
+             * @param {Object[]} ontologies The array of ontologies you want to check.
+             * @returns {boolean} Returns true if there are any owl:DatatypeProperty entities in the ontologies,
+             * otherwise returns false.
              */
-            self.hasDataTypeProperties = function(ontology) {
-                return _.some(ontology, entity =>  self.isDataTypeProperty(entity));
+            self.hasDataTypeProperties = function(ontologies) {
+                return _.some(ontologies, ont => _.some(ont, entity => self.isDataTypeProperty(entity)));
             }
             /**
              * @ngdoc method
@@ -846,14 +884,19 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Gets the list of all owl:DatatypeProperty entities within the provided ontology that are not blank nodes.
-             * Returns an Object[].
+             * Gets the list of all owl:DatatypeProperty entities within the provided ontologies that are not blank
+             * nodes. Returns an Object[].
              *
-             * @param {Object[]} ontology The ontology you want to check.
-             * @returns {Object[]} An array of all owl:DatatypeProperty entities within the ontology.
+             * @param {Object[]} ontologies The array of ontologies you want to check.
+             * @returns {Object[]} An array of all owl:DatatypeProperty entities within the ontologies.
              */
-            self.getDataTypeProperties = function(ontology) {
-                return _.filter(ontology, entity => self.isDataTypeProperty(entity) && !self.isBlankNode(entity));
+            self.getDataTypeProperties = function(ontologies) {
+                var dataTypeProperties = [];
+                _.forEach(ontologies, ont => {
+                    dataTypeProperties.push.apply(dataTypeProperties,
+                        _.filter(ont, entity => self.isDataTypeProperty(entity) && !self.isBlankNode(entity)));
+                });
+                return dataTypeProperties;
             }
             /**
              * @ngdoc method
@@ -861,14 +904,14 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Gets the list of all owl:DatatypeProperty entity IRIs within the provided ontology that are not blank
+             * Gets the list of all owl:DatatypeProperty entity IRIs within the provided ontologies that are not blank
              * nodes. Returns an string[].
              *
-             * @param {Object[]} ontology The ontology you want to check.
-             * @returns {string[]} An array of all owl:DatatypeProperty entity IRI strings within the ontology.
+             * @param {Object[]} ontologies The array of ontologies you want to check.
+             * @returns {string[]} An array of all owl:DatatypeProperty entity IRI strings within the ontologies.
              */
-            self.getDataTypePropertyIRIs = function(ontology) {
-                return _.map(self.getDataTypeProperties(ontology), 'matonto.originalIRI');
+            self.getDataTypePropertyIRIs = function(ontologies) {
+                return _.map(self.getDataTypeProperties(ontologies), 'matonto.originalIRI');
             }
             /**
              * @ngdoc method
@@ -891,15 +934,16 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Checks if the provided ontology has any property that is not associated with a class by the rdfs:domain
-             * axiom. Return a boolean indicating if any such properties exist.
+             * Checks if the provided ontologies have any properties that are not associated with a class by the
+             * rdfs:domain axiom. Return a boolean indicating if any such properties exist.
              *
-             * @param {Object[]} ontology The ontology you want to check.
+             * @param {Object[]} ontologies The array of ontologies you want to check.
              * @returns {boolean} Returns true if it contains properties without an rdfs:domain set, otherwise returns
              * false.
              */
-            self.hasNoDomainProperties = function(ontology) {
-                return _.some(ontology, entity => self.isProperty(entity) && !_.has(entity, prefixes.rdfs + 'domain'));
+            self.hasNoDomainProperties = function(ontologies) {
+                return _.some(ontologies, ont =>
+                            _.some(ont, entity => self.isProperty(entity) && !_.has(entity, prefixes.rdfs + 'domain')));
             }
             /**
              * @ngdoc method
@@ -910,11 +954,16 @@
              * Gets the list of properties that are not associated with a class by the rdfs:domain axiom. Returns an
              * array of the properties not associated with a class.
              *
-             * @param {Object[]} ontology The ontology you want to check.
+             * @param {Object[]} ontologies The array of ontologies you want to check.
              * @returns {Object[]} Returns an array of properties not associated with a class.
              */
-            self.getNoDomainProperties = function(ontology) {
-                return _.filter(ontology, entity => self.isProperty(entity) && !_.has(entity, prefixes.rdfs + 'domain'));
+            self.getNoDomainProperties = function(ontologies) {
+                var noDomainProperties = [];
+                _.forEach(ontologies, ont => {
+                    noDomainProperties.push.apply(noDomainProperties,
+                        _.filter(ont, entity => self.isProperty(entity) && !_.has(entity, prefixes.rdfs + 'domain')));
+                });
+                return noDomainProperties;
             }
             /**
              * @ngdoc method
@@ -925,11 +974,11 @@
              * Gets the list of property IRIs that are not associated with a class by the rdfs:domain axiom. Returns an
              * array of the property IRIs not associated with a class.
              *
-             * @param {Object[]} ontology The ontology you want to check.
+             * @param {Object[]} ontologies The array of ontologies you want to check.
              * @returns {string[]} Returns an array of property IRIs not associated with a class.
              */
-            self.getNoDomainPropertyIRIs = function(ontology) {
-                return _.map(self.getNoDomainProperties(ontology), 'matonto.originalIRI');
+            self.getNoDomainPropertyIRIs = function(ontologies) {
+                return _.map(self.getNoDomainProperties(ontologies), 'matonto.originalIRI');
             }
             /**
              * @ngdoc method
@@ -951,14 +1000,15 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Checks if the provided ontology contains any owl:AnnotationProperty entities. Returns a boolean.
+             * Checks if the provided ontologies contain any owl:AnnotationProperty entities. Returns a boolean.
              *
-             * @param {Object[]} ontology The ontology you want to check.
-             * @returns {boolean} Returns true if there are any owl:AnnotationProperty entities in the ontology,
+             * @param {Object[]} ontologies The array of ontologies you want to check.
+             * @returns {boolean} Returns true if there are any owl:AnnotationProperty entities in the ontologies,
              * otherwise returns false.
              */
-            self.hasAnnotations = function(ontology) {
-                return _.some(ontology, entity => self.isAnnotation(entity) && !self.isBlankNode(entity));
+            self.hasAnnotations = function(ontologies) {
+                return _.some(ontologies, ont =>
+                            _.some(ont, entity => self.isAnnotation(entity) && !self.isBlankNode(entity)));
             }
             /**
              * @ngdoc method
@@ -966,13 +1016,18 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Gets the list of all owl:AnnotationProperty entities within the provided ontology. Returns an Object[].
+             * Gets the list of all owl:AnnotationProperty entities within the provided ontologies. Returns an Object[].
              *
-             * @param {Object[]} ontology The ontology you want to check.
-             * @returns {Object[]} An array of all owl:AnnotationProperty entities within the ontology.
+             * @param {Object[]} ontologies The array of ontologies you want to check.
+             * @returns {Object[]} An array of all owl:AnnotationProperty entities within the ontologies.
              */
-            self.getAnnotations = function(ontology) {
-                return _.filter(ontology, entity => self.isAnnotation(entity) && !self.isBlankNode(entity));
+            self.getAnnotations = function(ontologies) {
+                var annotations = [];
+                _.forEach(ontologies, ont => {
+                    annotations.push.apply(annotations,
+                        _.filter(ont, entity => self.isAnnotation(entity) && !self.isBlankNode(entity)));
+                });
+                return annotations;
             }
             /**
              * @ngdoc method
@@ -980,14 +1035,14 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Gets the list of all owl:AnnotationProperty entity IRIs within the provided ontology that are not blank
+             * Gets the list of all owl:AnnotationProperty entity IRIs within the provided ontologies that are not blank
              * nodes. Returns an string[].
              *
-             * @param {Object[]} ontology The ontology you want to check.
-             * @returns {string[]} An array of all owl:AnnotationProperty entity IRI strings within the ontology.
+             * @param {Object[]} ontologies The array of ontologies you want to check.
+             * @returns {string[]} An array of all owl:AnnotationProperty entity IRI strings within the ontologies.
              */
-            self.getAnnotationIRIs = function(ontology) {
-                return _.map(self.getAnnotations(ontology), 'matonto.originalIRI');
+            self.getAnnotationIRIs = function(ontologies) {
+                return _.map(self.getAnnotations(ontologies), 'matonto.originalIRI');
             }
             /**
              * @ngdoc method
@@ -1009,14 +1064,14 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Checks to see if the ontology has individuals. Returns a boolean indicating the existence of those
+             * Checks to see if the ontologies have individuals. Returns a boolean indicating the existence of those
              * individuals.
              *
-             * @param {Object[]} ontology The ontology you want to check.
+             * @param {Object[]} ontologies The array of ontologies you want to check.
              * @returns {boolean} Returns true if it does have individuals, otherwise returns false.
              */
-            self.hasIndividuals = function(ontology) {
-                return _.some(ontology, entity => self.isIndividual(entity));
+            self.hasIndividuals = function(ontologies) {
+                return _.some(ontologies, ont => _.some(ont, entity => self.isIndividual(entity)));
             }
             /**
              * @ngdoc method
@@ -1024,13 +1079,17 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Gets the list of all owl:NamedIndividual entities within the provided ontology. Returns an Object[].
+             * Gets the list of all owl:NamedIndividual entities within the provided ontologies. Returns an Object[].
              *
-             * @param {Object[]} ontology The ontology you want to check.
-             * @returns {Object[]} An array of all owl:NamedIndividual entities within the ontology.
+             * @param {Object[]} ontologies The array of ontologies you want to check.
+             * @returns {Object[]} An array of all owl:NamedIndividual entities within the ontologies.
              */
-            self.getIndividuals = function(ontology) {
-                return _.filter(ontology, entity => self.isIndividual(entity));
+            self.getIndividuals = function(ontologies) {
+                var individuals = [];
+                _.forEach(ontologies, ont => {
+                    individuals.push.apply(individuals, _.filter(ont, entity => self.isIndividual(entity)));
+                });
+                return individuals;
             }
             /**
              * @ngdoc method
@@ -1038,14 +1097,15 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Checks to see if the ontology has individuals with no other type. Returns a boolean indicating the
+             * Checks to see if the ontologies have individuals with no other type. Returns a boolean indicating the
              * existence of those individuals.
              *
-             * @param {Object[]} ontology The ontology you want to check.
+             * @param {Object[]} ontologies The array of ontologies you want to check.
              * @returns {boolean} Returns true if it does have individuals with no other type, otherwise returns false.
              */
-            self.hasNoTypeIndividuals = function(ontology) {
-                return _.some(ontology, entity => self.isIndividual(entity) && entity['@type'].length === 1);
+            self.hasNoTypeIndividuals = function(ontologies) {
+                return _.some(ontologies, ont =>
+                            _.some(ont, entity => self.isIndividual(entity) && entity['@type'].length === 1));
             }
             /**
              * @ngdoc method
@@ -1053,14 +1113,19 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Gets the list of all owl:NamedIndividual entities within the provided ontology that have no other type.
+             * Gets the list of all owl:NamedIndividual entities within the provided ontologies that have no other type.
              * Returns an Object[].
              *
-             * @param {Object[]} ontology The ontology you want to check.
-             * @returns {Object[]} An array of all owl:NamedIndividual entities with no other type within the ontology.
+             * @param {Object[]} ontologies The array of ontologies you want to check.
+             * @returns {Object[]} An array of all owl:NamedIndividual entities with no other type within the ontologies.
              */
-            self.getNoTypeIndividuals = function(ontology) {
-                return _.filter(ontology, entity => self.isIndividual(entity) && entity['@type'].length === 1);
+            self.getNoTypeIndividuals = function(ontologies) {
+                var individuals = [];
+                _.forEach(ontologies, ont => {
+                    individuals.push.apply(individuals,
+                        _.filter(ont, entity => self.isIndividual(entity) && entity['@type'].length === 1));
+                });
+                return individuals;
             }
             /**
              * @ngdoc method
@@ -1068,15 +1133,15 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Checks to see if the class within the provided ontology has individuals with that type. Returns a
+             * Checks to see if the class within the provided ontologies have individuals with that type. Returns a
              * boolean indicating the existence of those individuals.
              *
-             * @param {Object[]} ontology The ontology you want to check.
+             * @param {Object[]} ontologies The array of ontologies you want to check.
              * @param {string} classIRI The class IRI of the class you want to check about.
              * @returns {boolean} Returns true if it does have individuals, otherwise returns false.
              */
-            self.hasClassIndividuals = function(ontology, classIRI) {
-                return _.some(self.getIndividuals(ontology), {'@type': [classIRI]});
+            self.hasClassIndividuals = function(ontologies, classIRI) {
+                return _.some(self.getIndividuals(ontologies), {'@type': [classIRI]});
             }
             /**
              * @ngdoc method
@@ -1084,15 +1149,15 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Gets the individuals associated with the class within the provided ontology by the type. Returns an
+             * Gets the individuals associated with the class within the provided ontologies by the type. Returns an
              * array of all the properties associated with the provided class IRI.
              *
-             * @param {Object[]} ontology The ontology you want to check.
+             * @param {Object[]} ontologies The array of ontologies you want to check.
              * @param {string} classIRI The class IRI of the class you want to check about.
              * @returns {Object[]} Returns an array of all the individuals associated with the provided class IRI.
              */
-            self.getClassIndividuals = function(ontology, classIRI) {
-                return _.filter(self.getIndividuals(ontology), {'@type': [classIRI]});
+            self.getClassIndividuals = function(ontologies, classIRI) {
+                return _.filter(self.getIndividuals(ontologies), {'@type': [classIRI]});
             }
             /**
              * @ngdoc method
@@ -1114,13 +1179,17 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Gets the list of all owl:Restriction entities within the provided ontology. Returns an Object[].
+             * Gets the list of all owl:Restriction entities within the provided ontologies. Returns an Object[].
              *
-             * @param {Object[]} ontology The ontology you want to check.
-             * @returns {Object[]} An array of all owl:Restriction entities within the ontology.
+             * @param {Object[]} ontologies The array of ontologies you want to check.
+             * @returns {Object[]} An array of all owl:Restriction entities within the ontologies.
              */
-            self.getRestrictions = function(ontology) {
-                return _.filter(ontology, entity => self.isRestriction(entity));
+            self.getRestrictions = function(ontologies) {
+                var restrictions = [];
+                _.forEach(ontologies, ont => {
+                    restrictions.push.apply(restrictions, _.filter(ont, entity => self.isRestriction(entity)));
+                });
+                return restrictions;
             }
             /**
              * @ngdoc method
@@ -1156,13 +1225,17 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Gets the list of all entities within the provided ontology that are blank nodes. Returns an Object[].
+             * Gets the list of all entities within the provided ontologies that are blank nodes. Returns an Object[].
              *
-             * @param {Object[]} ontology The ontology you want to check.
-             * @returns {Object[]} An array of all owl:Restriction entities within the ontology.
+             * @param {Object[]} ontologies The array of ontologies you want to check.
+             * @returns {Object[]} An array of all owl:Restriction entities within the ontologies.
              */
-            self.getBlankNodes = function(ontology) {
-                return _.filter(ontology, entity => self.isBlankNode(entity));
+            self.getBlankNodes = function(ontologies) {
+                var blankNodes = [];
+                _.forEach(ontologies, ont => {
+                    blankNodes.push.apply(blankNodes, _.filter(ont, entity => self.isBlankNode(entity)));
+                });
+                return blankNodes;
             }
             /**
              * @ngdoc method
@@ -1170,15 +1243,22 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Gets entity with the provided IRI from the provided ontology in the MatOnto repository. Returns the
+             * Gets entity with the provided IRI from the provided ontologies in the MatOnto repository. Returns the
              * entity Object.
              *
-             * @param {Object[]} ontology The ontology you want to check.
+             * @param {Object[]} ontologies The array of ontologies you want to check.
              * @param {string} entityIRI The IRI of the entity that you want.
              * @returns {Object} An Object which represents the requested entity.
              */
-            self.getEntity = function(ontology, entityIRI) {
-                return _.find(ontology, {matonto:{originalIRI: entityIRI}}) || _.find(ontology, {'@id': entityIRI});
+            self.getEntity = function(ontologies, entityIRI) {
+                var retValue;
+                _.forEach(ontologies, ont => {
+                    retValue = _.find(ont, {matonto:{originalIRI: entityIRI}}) || _.find(ont, {'@id': entityIRI});
+                    if (retValue != null) {
+                        return false; //This breaks the loop. It is NOT the entire function's return value!
+                    }
+                });
+                return retValue;
             }
             /**
              * @ngdoc method
@@ -1247,14 +1327,15 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Checks if the provided ontology contains any skos:Concept entities. Returns a boolean.
+             * Checks if the provided ontologies contain any skos:Concept entities. Returns a boolean.
              *
-             * @param {Object[]} ontology The ontology you want to check.
-             * @returns {boolean} Returns true if there are any skos:Concept entities in the ontology, otherwise returns
-             * false.
+             * @param {Object[]} ontologies The array of ontologies you want to check.
+             * @returns {boolean} Returns true if there are any skos:Concept entities in the ontologies, otherwise
+             * returns false.
              */
-            self.hasConcepts = function(ontology) {
-                return _.some(ontology, entity => self.isConcept(entity) && !self.isBlankNode(entity));
+            self.hasConcepts = function(ontologies) {
+                return _.some(ontologies, ont =>
+                            _.some(ont, entity => self.isConcept(entity) && !self.isBlankNode(entity)));
             }
             /**
              * @ngdoc method
@@ -1262,14 +1343,19 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Gets the list of all skos:Concept entities within the provided ontology that are not blank nodes. Returns
-             * an Object[].
+             * Gets the list of all skos:Concept entities within the provided ontologies that are not blank nodes.
+             * Returns an Object[].
              *
-             * @param {Object[]} ontology The ontology you want to check.
-             * @returns {Object[]} An array of all skos:Concept entities within the ontology.
+             * @param {Object[]} ontologies The array of ontologies you want to check.
+             * @returns {Object[]} An array of all skos:Concept entities within the ontologies.
              */
-            self.getConcepts = function(ontology) {
-                return _.filter(ontology, entity => self.isConcept(entity) && !self.isBlankNode(entity));
+            self.getConcepts = function(ontologies) {
+                var concepts = [];
+                _.forEach(ontologies, ont => {
+                    concepts.push.apply(concepts,
+                        _.filter(ont, entity => self.isConcept(entity) && !self.isBlankNode(entity)));
+                });
+                return concepts;
             }
             /**
              * @ngdoc method
@@ -1277,14 +1363,14 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Gets the list of all skos:Concept entity IRIs within the provided ontology that are not blank nodes.
+             * Gets the list of all skos:Concept entity IRIs within the provided ontologies that are not blank nodes.
              * Returns an string[].
              *
-             * @param {Object[]} ontology The ontology you want to check.
-             * @returns {string[]} An array of all skos:Concept entity IRI strings within the ontology.
+             * @param {Object[]} ontologies The array of ontologies you want to check.
+             * @returns {string[]} An array of all skos:Concept entity IRI strings within the ontologies.
              */
-            self.getConceptIRIs = function(ontology) {
-                return _.map(self.getConcepts(ontology), 'matonto.originalIRI');
+            self.getConceptIRIs = function(ontologies) {
+                return _.map(self.getConcepts(ontologies), 'matonto.originalIRI');
             }
             /**
              * @ngdoc method
@@ -1306,14 +1392,15 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Checks if the provided ontology contains any skos:ConceptScheme entities. Returns a boolean.
+             * Checks if the provided ontologies contain any skos:ConceptScheme entities. Returns a boolean.
              *
-             * @param {Object[]} ontology The ontology you want to check.
-             * @returns {boolean} Returns true if there are any skos:ConceptScheme entities in the ontology, otherwise
+             * @param {Object[]} ontologies The array of ontologies you want to check.
+             * @returns {boolean} Returns true if there are any skos:ConceptScheme entities in the ontologies, otherwise
              * returns false.
              */
-            self.hasConceptSchemes = function(ontology) {
-                return _.some(ontology, entity => self.isConceptScheme(entity) && !self.isBlankNode(entity));
+            self.hasConceptSchemes = function(ontologies) {
+                return _.some(ontologies, ont =>
+                            _.some(ont, entity => self.isConceptScheme(entity) && !self.isBlankNode(entity)));
             }
             /**
              * @ngdoc method
@@ -1321,14 +1408,19 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Gets the list of all skos:ConceptScheme entities within the provided ontology that are not blank nodes.
+             * Gets the list of all skos:ConceptScheme entities within the provided ontologies that are not blank nodes.
              * Returns an Object[].
              *
-             * @param {Object[]} ontology The ontology you want to check.
-             * @returns {Object[]} An array of all skos:ConceptScheme entities within the ontology.
+             * @param {Object[]} ontologies The array of ontologies you want to check.
+             * @returns {Object[]} An array of all skos:ConceptScheme entities within the ontologies.
              */
-            self.getConceptSchemes = function(ontology) {
-                return _.filter(ontology, entity => self.isConceptScheme(entity) && !self.isBlankNode(entity));
+            self.getConceptSchemes = function(ontologies) {
+                var conceptSchemes = [];
+                _.forEach(ontologies, ont => {
+                    conceptSchemes.push.apply(conceptSchemes,
+                        _.filter(ont, entity => self.isConceptScheme(entity) && !self.isBlankNode(entity)));
+                });
+                return conceptSchemes;
             }
             /**
              * @ngdoc method
@@ -1336,14 +1428,14 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Gets the list of all skos:ConceptScheme entity IRIs within the provided ontology that are not blank nodes.
-             * Returns an string[].
+             * Gets the list of all skos:ConceptScheme entity IRIs within the provided ontologies that are not blank
+             * nodes. Returns a string[].
              *
-             * @param {Object[]} ontology The ontology you want to check.
+             * @param {Object[]} ontologies The array of ontologies you want to check.
              * @returns {string[]} An array of all skos:ConceptScheme entity IRI strings within the ontology.
              */
-            self.getConceptSchemeIRIs = function(ontology) {
-                return _.map(self.getConceptSchemes(ontology), 'matonto.originalIRI');
+            self.getConceptSchemeIRIs = function(ontologies) {
+                return _.map(self.getConceptSchemes(ontologies), 'matonto.originalIRI');
             }
             /* Private helper functions */
             function getAllRecords(sortingOption = _.find(cm.sortOptions, {label: 'Title (desc)'})) {

@@ -22,8 +22,8 @@
   -->
 <div ng-if="dvm.step === 0" class="create-user-info-overlay overlay">
     <form class="content" name="dvm.infoForm">
-        <h6>Create User</h6>
-        <h1>User Info</h1>
+        <h1>Create User</h1>
+        <h2>User Info</h2>
         <div class="form-group username" ng-class="{'has-error': dvm.infoForm.username.$dirty && dvm.infoForm.username.$invalid}">
             <custom-label muted-text="'*'">Username</custom-label>
             <input class="form-control" type="text" name="username" ng-model="dvm.newUser.username" unique-value="dvm.getUsernames()" ng-pattern="dvm.usernamePattern" ng-trim="false" required/>
@@ -47,8 +47,8 @@
 
 <div ng-if="dvm.step === 1" class="create-user-perms-overlay overlay">
     <form class="content" name="dvm.permissionForm">
-        <h6>Create User</h6>
-        <h1>User Permissions</h1>
+        <h1>Create User</h1>
+        <h2>User Permissions</h2>
         <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
         <permissions-input roles="dvm.roles"></permissions-input>
 

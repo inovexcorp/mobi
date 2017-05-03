@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Ontology Manager service', function() {
-    var $httpBackend, ontologyManagerSvc, catalogManagerSvc, scope, prefixes, $q, windowSvc, util, ontologyObj, paramSerializer, classObj, objectPropertyObj, dataPropertyObj,annotationObj, individualObj, restrictionObj, conceptObj, schemeObj, ontology, httpSvc;
+    var $httpBackend, ontologyManagerSvc, catalogManagerSvc, scope, prefixes, $q, windowSvc, util, ontologyObj, paramSerializer, classObj, objectPropertyObj, dataPropertyObj,annotationObj, individualObj, restrictionObj, conceptObj, schemeObj, ontology, importedClassObj, importedDataPropertyObj, importedObjectPropertyObj, importedAnnotationObj, importedIndividualObj, importedRestrictionObj, importedConceptObj, importedSchemeObj, importedOntObj, importedOntology, ontologies, httpSvc;
     var recordId = 'recordId';
     var ontologyId = 'ontologyId';
     var branchId = 'branchId';
@@ -62,6 +62,15 @@ describe('Ontology Manager service', function() {
     var schemeId = 'schemeId';
     var searchResults = [];
     var searchText = 'searchText';
+    var importedClassId = 'importedClassId';
+    var importedDataPropertyId = 'importedDataPropertyId';
+    var importedObjectPropertyId = 'importedObjectPropertyId';
+    var importedAnnotationId = 'importedAnnotationId';
+    var importedIndividualId = 'importedIndividualId';
+    var importedRestrictionId = 'importedRestrictionId';
+    var importedConceptId = 'importedConceptId';
+    var importedSchemeId = 'importedSchemeId';
+    var importedOntologyId = 'importedOntologyId';
 
     beforeEach(function() {
         module('ontologyManager');
@@ -157,6 +166,87 @@ describe('Ontology Manager service', function() {
             }
         }
         ontology = [ontologyObj, classObj, dataPropertyObj];
+
+        importedOntObj = {
+            '@id': importedOntologyId,
+            '@type': [prefixes.owl + 'Ontology'],
+            matonto: {
+              originalIRI: originalIRI,
+              anonymous: anonymous,
+              imported: true
+            }
+        }
+
+        importedClassObj = {
+            '@id': importedClassId,
+            '@type': [prefixes.owl + 'Class'],
+            matonto: {
+              originalIRI: importedClassId,
+              imported: true
+            }
+        }
+
+        importedDataPropertyObj = {
+            '@id': importedDataPropertyId,
+            '@type': [prefixes.owl + 'DatatypeProperty'],
+            matonto: {
+                originalIRI: importedDataPropertyId,
+                imported: true
+            }
+        };
+
+        importedObjectPropertyObj = {
+            '@id': importedObjectPropertyId,
+            '@type': [prefixes.owl + 'ObjectProperty'],
+            matonto: {
+                originalIRI: importedObjectPropertyId
+            }
+        }
+        importedObjectPropertyObj[prefixes.rdfs + 'domain'] = [{'@id': importedClassId}];
+
+        importedAnnotationObj = {
+            '@id': importedAnnotationId,
+            '@type': [prefixes.owl + 'AnnotationProperty'],
+            matonto: {
+                originalIRI: importedAnnotationId
+            }
+        };
+        importedIndividualObj = {
+            '@id': importedIndividualId,
+            '@type': [prefixes.owl + 'NamedIndividual', importedClassId],
+            matonto: {
+                originalIRI: importedIndividualId
+            }
+        };
+        importedRestrictionObj = {
+            '@id': importedRestrictionId,
+            '@type': [prefixes.owl + 'Restriction'],
+            matonto: {
+                originalIRI: importedRestrictionId
+            }
+        }
+        importedConceptObj = {
+            '@id': importedConceptId,
+            '@type': [prefixes.skos + 'Concept'],
+            matonto: {
+                originalIRI: importedConceptId
+            }
+        }
+        importedSchemeObj = {
+            '@id': importedSchemeId,
+            '@type': [prefixes.skos + 'ConceptScheme'],
+            matonto: {
+                originalIRI: importedSchemeId
+            }
+        }
+
+        importedOntology = [importedOntObj, importedClassObj, importedDataPropertyObj];
+
+        ontologies = [];
+        ontologies.push(ontology);
+        ontologies.push(importedOntology);
+
+
     });
 
     function flushAndVerify() {
@@ -563,6 +653,37 @@ describe('Ontology Manager service', function() {
             flushAndVerify();
         });
     });
+    describe('getAnnotationPropertyHierarchies retrieves all IRIs in an ontology', function() {
+        var params;
+        beforeEach(function() {
+            params = paramSerializer({ branchId: branchId, commitId: commitId });
+        });
+        it('unless an error occurs', function(done) {
+            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/annotation-property-hierarchies?' + params).respond(400, null, null, error);
+            ontologyManagerSvc.getAnnotationPropertyHierarchies(recordId, branchId, commitId)
+                .then(function() {
+                    fail('Promise should have rejected');
+                    done();
+                }, function(response) {
+                    expect(response).toEqual(error);
+                    expect(util.onError).toHaveBeenCalled();
+                    done();
+                });
+            flushAndVerify();
+        });
+        it('successfully', function(done) {
+            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/annotation-property-hierarchies?' + params).respond(200, {});
+            ontologyManagerSvc.getAnnotationPropertyHierarchies(recordId, branchId, commitId)
+                .then(function(response) {
+                    expect(response).toEqual({});
+                    done();
+                }, function() {
+                    fail('Promise should have resolved');
+                    done();
+                });
+            flushAndVerify();
+        });
+    });
     describe('getConceptHierarchies retrieves all IRIs in an ontology', function() {
         var params;
         beforeEach(function() {
@@ -877,53 +998,105 @@ describe('Ontology Manager service', function() {
     });
     describe('hasClasses should return', function() {
         it('true if there are any class entities in the ontology', function() {
-            expect(ontologyManagerSvc.hasClasses([classObj, ontologyObj])).toBe(true);
+            expect(ontologyManagerSvc
+                .hasClasses([[classObj, ontologyObj], [importedClassObj, importedOntObj]])).toBe(true);
+        });
+        it('true if there are class entities only in the ontology', function() {
+            expect(ontologyManagerSvc.hasClasses([[classObj, ontologyObj], [importedOntObj]])).toBe(true);
+        });
+        it('true if there are class entities only in the imported ontology', function() {
+            expect(ontologyManagerSvc.hasClasses([[ontologyObj], [importedClassObj, importedOntObj]])).toBe(true);
         });
         it('false if there are not any class entities in the ontology', function() {
-            expect(ontologyManagerSvc.hasClasses([ontologyObj])).toBe(false);
+            expect(ontologyManagerSvc.hasClasses([[ontologyObj], [importedOntObj]])).toBe(false);
         });
     });
     describe('getClasses should return', function() {
         it('correct class objects if there are any in the ontology', function() {
-            expect(ontologyManagerSvc.getClasses([classObj, ontologyObj])).toEqual([classObj]);
+            expect(ontologyManagerSvc
+                .getClasses([[classObj, ontologyObj],[importedClassObj, importedOntObj]]))
+                .toEqual([classObj, importedClassObj]);
+        });
+        it('correct class objects if there are any only in the ontology', function() {
+            expect(ontologyManagerSvc.getClasses([[classObj, ontologyObj], [importedOntObj]])).toEqual([classObj]);
+        });
+        it('correct class objects if there are any only in the imported ontology', function() {
+            expect(ontologyManagerSvc
+                .getClasses([[ontologyObj], [importedClassObj, importedOntObj]])).toEqual([importedClassObj]);
         });
         it('undefined if there are no classes in the ontology', function() {
-            expect(ontologyManagerSvc.getClasses([ontologyObj])).toEqual([]);
+            expect(ontologyManagerSvc.getClasses([[ontologyObj],[importedOntObj]])).toEqual([]);
         });
     });
     describe('getClassIRIs should return', function() {
         it('classId if there are classes in the ontology', function() {
-            expect(ontologyManagerSvc.getClassIRIs([ontologyObj, classObj])).toEqual([classId]);
+            expect(ontologyManagerSvc
+                .getClassIRIs([[ontologyObj, classObj],[importedOntObj, importedClassObj]]))
+                .toEqual([classId, importedClassId]);
+        });
+        it('classId if there are classes only in the ontology', function() {
+            expect(ontologyManagerSvc.getClassIRIs([[ontologyObj, classObj],[importedOntObj]])).toEqual([classId]);
+        });
+        it('classId if there are classes only in the imported ontology', function() {
+            expect(ontologyManagerSvc
+                .getClassIRIs([[ontologyObj],[importedOntObj, importedClassObj]])).toEqual([importedClassId]);
         });
         it('[] if there are no classes in the ontology', function() {
-            expect(ontologyManagerSvc.getClassIRIs([ontologyObj])).toEqual([]);
+            expect(ontologyManagerSvc.getClassIRIs([[ontologyObj],[importedOntObj]])).toEqual([]);
         });
     });
     describe('hasClassProperties should return', function() {
         it('true if there are any entities with a domain of the provided class in the ontology', function() {
-            expect(ontologyManagerSvc.hasClassProperties([classObj, ontologyObj, objectPropertyObj], classId))
-                .toBe(true);
+            expect(ontologyManagerSvc
+                .hasClassProperties([[classObj, ontologyObj, objectPropertyObj],
+                    [importedClassObj, importedOntObj, importedObjectPropertyObj]], classId)).toBe(true);
+        });
+        it('true if there are any entities with a domain of the provided class in the imported ontology', function() {
+            expect(ontologyManagerSvc
+                .hasClassProperties([[classObj, ontologyObj],
+                    [importedClassObj, importedOntObj, importedObjectPropertyObj]], importedClassId)).toBe(true);
         });
         it('false if there is not an ontology entity in the ontology', function() {
-            expect(ontologyManagerSvc.hasClassProperties([classObj, ontologyObj], classId)).toBe(false);
+            expect(ontologyManagerSvc
+                .hasClassProperties([[classObj, ontologyObj],[importedClassObj, importedOntObj]], classId)).toBe(false);
         });
     });
     describe('getClassProperties should return', function() {
         it('correct objects if there are any entities with a domain of the provided class in the ontology', function() {
-            expect(ontologyManagerSvc.getClassProperties([classObj, ontologyObj, objectPropertyObj], classId))
+            expect(ontologyManagerSvc
+                .getClassProperties([[classObj, ontologyObj, objectPropertyObj],
+                    [importedClassObj, importedOntObj, importedObjectPropertyObj]], classId))
                 .toEqual([objectPropertyObj]);
         });
+        it('correct objects if there are any entities with a domain of the provided class in the imported ontology', function() {
+            expect(ontologyManagerSvc
+                .getClassProperties([[classObj, ontologyObj, objectPropertyObj],
+                    [importedClassObj, importedOntObj, importedObjectPropertyObj]], importedClassId))
+                .toEqual([importedObjectPropertyObj]);
+        });
         it('[] if there are no entities with a domain of the provided class in the ontology', function() {
-            expect(ontologyManagerSvc.getClassProperties([classObj, ontologyObj], classId)).toEqual([]);
+            expect(ontologyManagerSvc
+                .getClassProperties([[classObj, ontologyObj], [importedClassObj, importedOntObj]], classId))
+                .toEqual([]);
         });
     });
     describe('getClassPropertyIRIs should return', function() {
         it('correct IRIs if there are any entities with a domain of the provided class in the ontology', function() {
-            expect(ontologyManagerSvc.getClassPropertyIRIs([classObj, ontologyObj, objectPropertyObj], classId))
+            expect(ontologyManagerSvc
+                .getClassPropertyIRIs([[classObj, ontologyObj, objectPropertyObj],
+                    [importedClassObj, importedOntObj, importedObjectPropertyObj]], classId))
                 .toEqual([objectPropertyId]);
         });
+        it('correct IRIs if there are any entities with a domain of the provided class in the imported ontology', function() {
+            expect(ontologyManagerSvc
+                .getClassPropertyIRIs([[classObj, ontologyObj, objectPropertyObj],
+                    [importedClassObj, importedOntObj, importedObjectPropertyObj]], importedClassId))
+                .toEqual([importedObjectPropertyId]);
+        });
         it('[] if there are not any entities with a domain of the provided class in the ontology', function() {
-            expect(ontologyManagerSvc.getClassPropertyIRIs([classObj, ontologyObj], classId)).toEqual([]);
+            expect(ontologyManagerSvc
+                .getClassPropertyIRIs([[classObj, ontologyObj], [importedClassObj, importedOntObj]], classId))
+                .toEqual([]);
         });
     });
     describe('isObjectProperty should return', function() {
@@ -955,88 +1128,193 @@ describe('Ontology Manager service', function() {
     });
     describe('hasNoDomainProperties should return', function() {
         it('true if the ontology contains a property without the rdfs:domain set', function() {
-            expect(ontologyManagerSvc.hasNoDomainProperties([ontologyObj, dataPropertyObj])).toBe(true);
+            expect(ontologyManagerSvc
+                .hasNoDomainProperties([[ontologyObj, dataPropertyObj], [importedOntObj, importedDataPropertyObj]]))
+                .toBe(true);
+        });
+        it('true if only the ontology contains a property without the rdfs:domain set', function() {
+            expect(ontologyManagerSvc
+                .hasNoDomainProperties([[ontologyObj, dataPropertyObj], [importedOntObj, importedObjectPropertyObj]]))
+                .toBe(true);
+        });
+        it('true if only the imported ontology contains a property without the rdfs:domain set', function() {
+            expect(ontologyManagerSvc
+                .hasNoDomainProperties([[ontologyObj, objectPropertyObj], [importedOntObj, importedDataPropertyObj]]))
+                .toBe(true);
         });
         it('false if the ontology does not contain any properties', function() {
-            expect(ontologyManagerSvc.hasNoDomainProperties([ontologyObj])).toBe(false);
+            expect(ontologyManagerSvc.hasNoDomainProperties([[ontologyObj], [importedOntObj]])).toBe(false);
         });
         it('false if the ontology does not contain any properties without rdfs:domains', function() {
-            expect(ontologyManagerSvc.hasNoDomainProperties([ontologyObj, objectPropertyObj])).toBe(false);
+            expect(ontologyManagerSvc
+                .hasNoDomainProperties([[ontologyObj, objectPropertyObj], [importedOntObj, importedObjectPropertyObj]]))
+                .toBe(false);
         });
     });
     describe('getNoDomainProperties should return', function() {
         it('correct object if the ontology contains a property without the rdfs:domain set', function() {
-            expect(ontologyManagerSvc.getNoDomainProperties([ontologyObj, dataPropertyObj])).toEqual([dataPropertyObj]);
+            expect(ontologyManagerSvc
+                .getNoDomainProperties([[ontologyObj, dataPropertyObj], [importedOntObj, importedDataPropertyObj]]))
+                .toEqual([dataPropertyObj, importedDataPropertyObj]);
+        });
+        it('correct object if the ontology contains a property without the rdfs:domain set', function() {
+            expect(ontologyManagerSvc
+                .getNoDomainProperties([[ontologyObj, dataPropertyObj], [importedOntObj]])).toEqual([dataPropertyObj]);
+        });
+        it('correct object if the imported ontology contains a property without the rdfs:domain set', function() {
+            expect(ontologyManagerSvc
+                .getNoDomainProperties([[ontologyObj], [importedOntObj, importedDataPropertyObj]]))
+                .toEqual([importedDataPropertyObj]);
         });
         it('[] if the ontology does not contain any properties', function() {
-            expect(ontologyManagerSvc.getNoDomainProperties([ontologyObj])).toEqual([]);
+            expect(ontologyManagerSvc.getNoDomainProperties([[ontologyObj], [importedOntObj]])).toEqual([]);
         });
         it('[] if the ontology does not contain any properties without rdfs:domains', function() {
-            expect(ontologyManagerSvc.getNoDomainProperties([ontologyObj, objectPropertyObj])).toEqual([]);
+            expect(ontologyManagerSvc
+                .getNoDomainProperties([[ontologyObj, objectPropertyObj], [importedOntObj, importedObjectPropertyObj]]))
+                .toEqual([]);
         });
     });
     describe('getNoDomainPropertyIRIs should return', function() {
         it('correct IRI if the ontology contains a property without the rdfs:domain set', function() {
-            expect(ontologyManagerSvc.getNoDomainPropertyIRIs([ontologyObj, dataPropertyObj]))
+            expect(ontologyManagerSvc
+                .getNoDomainPropertyIRIs([[ontologyObj, dataPropertyObj], [importedOntObj, importedDataPropertyObj]]))
+                .toEqual([dataPropertyId, importedDataPropertyId]);
+        });
+        it('correct IRI if only the ontology contains a property without the rdfs:domain set', function() {
+            expect(ontologyManagerSvc
+                .getNoDomainPropertyIRIs([[ontologyObj, dataPropertyObj], [importedOntObj, importedObjectPropertyObj]]))
                 .toEqual([dataPropertyId]);
         });
+        it('correct IRI if only the imported ontology contains a property without the rdfs:domain set', function() {
+            expect(ontologyManagerSvc
+                .getNoDomainPropertyIRIs([[ontologyObj, objectPropertyObj], [importedOntObj, importedDataPropertyObj]]))
+                .toEqual([importedDataPropertyId]);
+        });
         it('[] if the ontology does not contain any properties', function() {
-            expect(ontologyManagerSvc.getNoDomainPropertyIRIs([ontologyObj])).toEqual([]);
+            expect(ontologyManagerSvc.getNoDomainPropertyIRIs([[ontologyObj], [importedOntObj]])).toEqual([]);
         });
         it('[] if the ontology does not contain any properties without rdfs:domains', function() {
-            expect(ontologyManagerSvc.getNoDomainPropertyIRIs([ontologyObj, objectPropertyObj])).toEqual([]);
+            expect(ontologyManagerSvc
+                .getNoDomainPropertyIRIs([[ontologyObj, objectPropertyObj],
+                    [importedOntObj, importedObjectPropertyObj]])).toEqual([]);
         });
     });
     describe('hasObjectProperties should return', function() {
         it('true if there are any object property entities in the ontology', function() {
-            expect(ontologyManagerSvc.hasObjectProperties([objectPropertyObj, ontologyObj])).toBe(true);
+            expect(ontologyManagerSvc
+                .hasObjectProperties([[objectPropertyObj, ontologyObj], [importedObjectPropertyObj, importedOntObj]]))
+                .toBe(true);
+        });
+        it('true if there are any object property entities only in the ontology', function() {
+            expect(ontologyManagerSvc
+                .hasObjectProperties([[objectPropertyObj, ontologyObj], [importedOntObj]]))
+                .toBe(true);
+        });
+        it('true if there are any object property entities only in the imported ontology', function() {
+            expect(ontologyManagerSvc
+                .hasObjectProperties([[ontologyObj], [importedObjectPropertyObj, importedOntObj]]))
+                .toBe(true);
         });
         it('false if there are not any object property entities in the ontology', function() {
-            expect(ontologyManagerSvc.hasObjectProperties([ontologyObj])).toBe(false);
+            expect(ontologyManagerSvc.hasObjectProperties([[ontologyObj], [importedOntObj]])).toBe(false);
         });
     });
     describe('getObjectProperties should return', function() {
         it('correct object property objects if there are any in the ontology', function() {
-            expect(ontologyManagerSvc.getObjectProperties([objectPropertyObj, ontologyObj]))
+            expect(ontologyManagerSvc
+                .getObjectProperties([[objectPropertyObj, ontologyObj], [importedObjectPropertyObj, importedOntObj]]))
+                .toEqual([objectPropertyObj, importedObjectPropertyObj]);
+        });
+        it('correct object property objects if there are any only in the ontology', function() {
+            expect(ontologyManagerSvc
+                .getObjectProperties([[objectPropertyObj, ontologyObj], [importedOntObj]]))
                 .toEqual([objectPropertyObj]);
         });
+        it('correct object property objects if there are any only in the imported ontology', function() {
+            expect(ontologyManagerSvc
+                .getObjectProperties([[ontologyObj], [importedObjectPropertyObj, importedOntObj]]))
+                .toEqual([importedObjectPropertyObj]);
+        });
         it('undefined if there are no object properties in the ontology', function() {
-            expect(ontologyManagerSvc.getObjectProperties([ontologyObj])).toEqual([]);
+            expect(ontologyManagerSvc.getObjectProperties([[ontologyObj],[importedOntObj]])).toEqual([]);
         });
     });
     describe('getObjectPropertyIRIs should return', function() {
         it('objectPropertyId if there are object properties in the ontology', function() {
-            expect(ontologyManagerSvc.getObjectPropertyIRIs([ontologyObj, objectPropertyObj]))
+            expect(ontologyManagerSvc
+                .getObjectPropertyIRIs([[ontologyObj, objectPropertyObj], [importedObjectPropertyObj, importedOntObj]]))
+                .toEqual([objectPropertyId, importedObjectPropertyId]);
+        });
+        it('objectPropertyId if there are object properties only in the ontology', function() {
+            expect(ontologyManagerSvc
+                .getObjectPropertyIRIs([[ontologyObj, objectPropertyObj], [importedOntObj]]))
                 .toEqual([objectPropertyId]);
         });
+        it('objectPropertyId if there are object properties only in the imported ontology', function() {
+            expect(ontologyManagerSvc
+                .getObjectPropertyIRIs([[ontologyObj], [importedObjectPropertyObj, importedOntObj]]))
+                .toEqual([importedObjectPropertyId]);
+        });
         it('[] if there are no object properties in the ontology', function() {
-            expect(ontologyManagerSvc.getObjectPropertyIRIs([ontologyObj])).toEqual([]);
+            expect(ontologyManagerSvc.getObjectPropertyIRIs([[ontologyObj], [importedOntObj]])).toEqual([]);
         });
     });
     describe('hasDataTypeProperties should return', function() {
         it('true if there are any data property entities in the ontology', function() {
-            expect(ontologyManagerSvc.hasDataTypeProperties([dataPropertyObj, ontologyObj])).toBe(true);
+            expect(ontologyManagerSvc
+                .hasDataTypeProperties([[dataPropertyObj, ontologyObj], [importedDataPropertyObj, importedOntObj]]))
+                .toBe(true);
+        });
+        it('true if there are any data property entities only in the ontology', function() {
+            expect(ontologyManagerSvc
+                .hasDataTypeProperties([[dataPropertyObj, ontologyObj], [importedOntObj]])).toBe(true);
+        });
+        it('true if there are any data property entities only in the imported ontology', function() {
+            expect(ontologyManagerSvc
+                .hasDataTypeProperties([[ontologyObj], [importedDataPropertyObj, importedOntObj]])).toBe(true);
         });
         it('false if there are not any data property entities in the ontology', function() {
-            expect(ontologyManagerSvc.hasDataTypeProperties([ontologyObj])).toBe(false);
+            expect(ontologyManagerSvc.hasDataTypeProperties([[ontologyObj], [importedOntObj]])).toBe(false);
         });
     });
     describe('getDataTypeProperties should return', function() {
         it('correct data property objects if there are any in the ontology', function() {
-            expect(ontologyManagerSvc.getDataTypeProperties([dataPropertyObj, ontologyObj]))
+            expect(ontologyManagerSvc
+                .getDataTypeProperties([[dataPropertyObj, ontologyObj], [importedDataPropertyObj, importedOntObj]]))
+                .toEqual([dataPropertyObj, importedDataPropertyObj]);
+        });
+        it('correct data property objects if there are any only in the ontology', function() {
+            expect(ontologyManagerSvc
+                .getDataTypeProperties([[dataPropertyObj, ontologyObj], [importedOntObj]]))
                 .toEqual([dataPropertyObj]);
         });
+        it('correct data property objects if there are any only in the imported ontology', function() {
+            expect(ontologyManagerSvc
+                .getDataTypeProperties([[ontologyObj], [importedDataPropertyObj, importedOntObj]]))
+                .toEqual([importedDataPropertyObj]);
+        });
         it('undefined if there are no data properties in the ontology', function() {
-            expect(ontologyManagerSvc.getDataTypeProperties([ontologyObj])).toEqual([]);
+            expect(ontologyManagerSvc.getDataTypeProperties([[ontologyObj], [importedOntObj]])).toEqual([]);
         });
     });
     describe('getDataTypePropertyIRIs should return', function() {
         it('dataPropertyId if there are data properties in the ontology', function() {
-            expect(ontologyManagerSvc.getDataTypePropertyIRIs([ontologyObj, dataPropertyObj]))
+            expect(ontologyManagerSvc
+                .getDataTypePropertyIRIs([[ontologyObj, dataPropertyObj], [importedDataPropertyObj, importedOntObj]]))
+                .toEqual([dataPropertyId, importedDataPropertyId]);
+        });
+        it('dataPropertyId if there are data properties in only the ontology', function() {
+            expect(ontologyManagerSvc.getDataTypePropertyIRIs([[ontologyObj, dataPropertyObj], [importedOntObj]]))
                 .toEqual([dataPropertyId]);
         });
+        it('dataPropertyId if there are data properties in only the imported ontology', function() {
+            expect(ontologyManagerSvc
+                .getDataTypePropertyIRIs([[ontologyObj], [importedDataPropertyObj, importedOntObj]]))
+                .toEqual([importedDataPropertyId]);
+        });
         it('[] if there are no data properties in the ontology', function() {
-            expect(ontologyManagerSvc.getDataTypePropertyIRIs([ontologyObj])).toEqual([]);
+            expect(ontologyManagerSvc.getDataTypePropertyIRIs([[ontologyObj], [importedOntObj]])).toEqual([]);
         });
     });
     describe('isAnnotation should return', function() {
@@ -1049,26 +1327,57 @@ describe('Ontology Manager service', function() {
     });
     describe('hasAnnotations should return', function() {
         it('true if there are any annotation entities in the ontology', function() {
-            expect(ontologyManagerSvc.hasAnnotations([annotationObj, ontologyObj])).toBe(true);
+            expect(ontologyManagerSvc
+                .hasAnnotations([[annotationObj, ontologyObj], [importedAnnotationObj, importedOntObj]])).toBe(true);
+        });
+        it('true if there are any annotation entities in only the ontology', function() {
+            expect(ontologyManagerSvc.hasAnnotations([[annotationObj, ontologyObj], [importedOntObj]])).toBe(true);
+        });
+        it('true if there are any annotation entities in only the imported ontology', function() {
+            expect(ontologyManagerSvc
+                .hasAnnotations([[ontologyObj], [importedAnnotationObj, importedOntObj]])).toBe(true);
         });
         it('false if there are not any annotation entities in the ontology', function() {
-            expect(ontologyManagerSvc.hasAnnotations([ontologyObj])).toBe(false);
+            expect(ontologyManagerSvc.hasAnnotations([[ontologyObj], [importedOntObj]])).toBe(false);
         });
     });
     describe('getAnnotations should return', function() {
         it('correct annotation objects if there are any in the ontology', function() {
-            expect(ontologyManagerSvc.getAnnotations([annotationObj, ontologyObj])).toEqual([annotationObj]);
+            expect(ontologyManagerSvc
+                .getAnnotations([[annotationObj, ontologyObj], [importedAnnotationObj, importedOntObj]]))
+                .toEqual([annotationObj, importedAnnotationObj]);
+        });
+        it('correct annotation objects if there are any in only the ontology', function() {
+            expect(ontologyManagerSvc
+                .getAnnotations([[annotationObj, ontologyObj], [importedOntObj]])).toEqual([annotationObj]);
+        });
+        it('correct annotation objects if there are any in only the imported ontology', function() {
+            expect(ontologyManagerSvc
+                .getAnnotations([[ontologyObj], [importedAnnotationObj, importedOntObj]]))
+                .toEqual([importedAnnotationObj]);
         });
         it('undefined if there are no annotations in the ontology', function() {
-            expect(ontologyManagerSvc.getAnnotations([ontologyObj])).toEqual([]);
+            expect(ontologyManagerSvc.getAnnotations([[ontologyObj], [importedOntObj]])).toEqual([]);
         });
     });
     describe('getAnnotationIRIs should return', function() {
         it('annotationId if there are annotations in the ontology', function() {
-            expect(ontologyManagerSvc.getAnnotationIRIs([ontologyObj, annotationObj])).toEqual([annotationId]);
+            expect(ontologyManagerSvc
+                .getAnnotationIRIs([[ontologyObj, annotationObj], [importedAnnotationObj, importedOntObj]]))
+                .toEqual([annotationId, importedAnnotationId]);
+        });
+        it('annotationId if there are annotations in only the ontology', function() {
+            expect(ontologyManagerSvc
+                .getAnnotationIRIs([[ontologyObj, annotationObj], [importedOntObj]]))
+                .toEqual([annotationId]);
+        });
+        it('annotationId if there are annotations in only the imported ontology', function() {
+            expect(ontologyManagerSvc
+                .getAnnotationIRIs([[ontologyObj], [importedAnnotationObj, importedOntObj]]))
+                .toEqual([importedAnnotationId]);
         });
         it('[] if there are no annotations in the ontology', function() {
-            expect(ontologyManagerSvc.getAnnotationIRIs([ontologyObj])).toEqual([]);
+            expect(ontologyManagerSvc.getAnnotationIRIs([[ontologyObj], [importedOntObj]])).toEqual([]);
         });
     });
     describe('isIndividual should return', function() {
@@ -1081,18 +1390,39 @@ describe('Ontology Manager service', function() {
     });
     describe('hasIndividuals should return', function() {
         it('true if there are any individual entities in the ontology', function() {
-            expect(ontologyManagerSvc.hasIndividuals([individualObj, ontologyObj])).toBe(true);
+            expect(ontologyManagerSvc
+                .hasIndividuals([[individualObj, ontologyObj], [importedIndividualObj, importedOntObj]])).toBe(true);
+        });
+        it('true if there are any individual entities in only the ontology', function() {
+            expect(ontologyManagerSvc
+                .hasIndividuals([[individualObj, ontologyObj], [importedOntObj]])).toBe(true);
+        });
+        it('true if there are any individual entities in only the imported ontology', function() {
+            expect(ontologyManagerSvc
+                .hasIndividuals([[ontologyObj], [importedIndividualObj, importedOntObj]])).toBe(true);
         });
         it('false if there are not any individual entities in the ontology', function() {
-            expect(ontologyManagerSvc.hasIndividuals([ontologyObj])).toBe(false);
+            expect(ontologyManagerSvc.hasIndividuals([[ontologyObj], [importedOntObj]])).toBe(false);
         });
     });
     describe('getIndividuals should return', function() {
         it('correct individual objects if there are any in the ontology', function() {
-            expect(ontologyManagerSvc.getIndividuals([individualObj, ontologyObj])).toEqual([individualObj]);
+            expect(ontologyManagerSvc
+                .getIndividuals([[individualObj, ontologyObj], [importedIndividualObj, importedOntObj]]))
+                .toEqual([individualObj, importedIndividualObj]);
+        });
+        it('correct individual objects if there are any in only the ontology', function() {
+            expect(ontologyManagerSvc
+                .getIndividuals([[individualObj, ontologyObj], [importedOntObj]]))
+                .toEqual([individualObj]);
+        });
+        it('correct individual objects if there are any in only the imported ontology', function() {
+            expect(ontologyManagerSvc
+                .getIndividuals([[ontologyObj], [importedIndividualObj, importedOntObj]]))
+                .toEqual([importedIndividualObj]);
         });
         it('undefined if there are no individuals in the ontology', function() {
-            expect(ontologyManagerSvc.getIndividuals([ontologyObj])).toEqual([]);
+            expect(ontologyManagerSvc.getIndividuals([[ontologyObj], [importedOntObj]])).toEqual([]);
         });
     });
     describe('hasNoTypeIndividuals should return', function() {
@@ -1104,13 +1434,13 @@ describe('Ontology Manager service', function() {
                     originalIRI: originalIRI
                 }
             }
-            expect(ontologyManagerSvc.hasNoTypeIndividuals([diffIndividualObj, ontologyObj])).toBe(true);
+            expect(ontologyManagerSvc.hasNoTypeIndividuals([[diffIndividualObj, ontologyObj]])).toBe(true);
         });
         it('false if there are no individuals in the ontology with no other @type', function() {
-            expect(ontologyManagerSvc.hasNoTypeIndividuals([ontologyObj, individualObj])).toBe(false);
+            expect(ontologyManagerSvc.hasNoTypeIndividuals([[ontologyObj, individualObj]])).toBe(false);
         });
         it('false if there are no individuals in the ontology', function() {
-            expect(ontologyManagerSvc.hasNoTypeIndividuals([ontologyObj])).toBe(false);
+            expect(ontologyManagerSvc.hasNoTypeIndividuals([[ontologyObj]])).toBe(false);
         });
     });
     describe('getNoTypeIndividuals should return', function() {
@@ -1122,32 +1452,52 @@ describe('Ontology Manager service', function() {
                     originalIRI: originalIRI
                 }
             }
-            expect(ontologyManagerSvc.getNoTypeIndividuals([diffIndividualObj, ontologyObj]))
+            expect(ontologyManagerSvc.getNoTypeIndividuals([[diffIndividualObj, ontologyObj]]))
                 .toEqual([diffIndividualObj]);
         });
         it('undefined if there are no individuals in the ontology with no other @type', function() {
-            expect(ontologyManagerSvc.getNoTypeIndividuals([ontologyObj, individualObj])).toEqual([]);
+            expect(ontologyManagerSvc.getNoTypeIndividuals([[ontologyObj, individualObj]])).toEqual([]);
         });
         it('undefined if there are no individuals in the ontology', function() {
-            expect(ontologyManagerSvc.getNoTypeIndividuals([ontologyObj])).toEqual([]);
+            expect(ontologyManagerSvc.getNoTypeIndividuals([[ontologyObj]])).toEqual([]);
         });
     });
     describe('hasClassIndividuals should return', function() {
         it('true if there are any entities with a type of the provided class in the ontology', function() {
-            expect(ontologyManagerSvc.hasClassIndividuals([individualObj, ontologyObj, objectPropertyObj], classId))
+            expect(ontologyManagerSvc
+                .hasClassIndividuals([[individualObj, ontologyObj, objectPropertyObj], 
+                    [importedIndividualObj, importedOntObj, importedObjectPropertyObj]], classId))
+                .toBe(true);
+        });
+        it('true if there are any entities with a type of the provided class in the imported ontology', function() {
+            expect(ontologyManagerSvc
+                .hasClassIndividuals([[individualObj, ontologyObj, objectPropertyObj], 
+                    [importedIndividualObj, importedOntObj, importedObjectPropertyObj]], importedClassId))
                 .toBe(true);
         });
         it('false if there are no entities with a type of the provided class in the ontology', function() {
-            expect(ontologyManagerSvc.hasClassIndividuals([classObj, ontologyObj], classId)).toBe(false);
+            expect(ontologyManagerSvc
+                .hasClassIndividuals([[classObj, ontologyObj], [importedClassObj, importedOntObj]], classId))
+                .toBe(false);
         });
     });
     describe('getClassIndividuals should return', function() {
         it('correct object if there are any entities with a type of the provided class in the ontology', function() {
-            expect(ontologyManagerSvc.getClassIndividuals([individualObj, ontologyObj, objectPropertyObj], classId))
+            expect(ontologyManagerSvc
+                .getClassIndividuals([[individualObj, ontologyObj, objectPropertyObj], 
+                    [importedIndividualObj, importedOntObj, importedObjectPropertyObj]], classId))
                 .toEqual([individualObj]);
         });
+        it('correct object if there are any entities with a type of the provided class in the imported ontology', function() {
+            expect(ontologyManagerSvc
+                .getClassIndividuals([[individualObj, ontologyObj, objectPropertyObj], 
+                    [importedIndividualObj, importedOntObj, importedObjectPropertyObj]], importedClassId))
+                .toEqual([importedIndividualObj]);
+        });
         it('[] if there are no entities with a type of the provided class in the ontology', function() {
-            expect(ontologyManagerSvc.getClassIndividuals([classObj, ontologyObj], classId)).toEqual([]);
+            expect(ontologyManagerSvc
+                .getClassIndividuals([[classObj, ontologyObj], [importedClassObj, importedOntObj]], classId))
+                .toEqual([]);
         });
     });
     describe('isRestriction should return', function() {
@@ -1160,10 +1510,22 @@ describe('Ontology Manager service', function() {
     });
     describe('getRestrictions should return', function() {
         it('correct restriction objects if there are any in the ontology', function() {
-            expect(ontologyManagerSvc.getRestrictions([restrictionObj, ontologyObj])).toEqual([restrictionObj]);
+            expect(ontologyManagerSvc
+                .getRestrictions([[restrictionObj, ontologyObj], [importedRestrictionObj, importedOntObj]]))
+                .toEqual([restrictionObj, importedRestrictionObj]);
+        });
+        it('correct restriction objects if there are any in only the ontology', function() {
+            expect(ontologyManagerSvc
+                .getRestrictions([[restrictionObj, ontologyObj], [importedOntObj]]))
+                .toEqual([restrictionObj]);
+        });
+        it('correct restriction objects if there are any in only the imported ontology', function() {
+            expect(ontologyManagerSvc
+                .getRestrictions([[ontologyObj], [importedRestrictionObj, importedOntObj]]))
+                .toEqual([importedRestrictionObj]);
         });
         it('undefined if there are no restrictions in the ontology', function() {
-            expect(ontologyManagerSvc.getRestrictions([ontologyObj])).toEqual([]);
+            expect(ontologyManagerSvc.getRestrictions([[ontologyObj], [importedOntObj]])).toEqual([]);
         });
     });
     describe('isBlankNode should return', function() {
@@ -1187,15 +1549,15 @@ describe('Ontology Manager service', function() {
     });
     describe('getBlankNodes should return', function() {
         it('correct blank node objects if there are any in the ontology', function() {
-            expect(ontologyManagerSvc.getBlankNodes([blankNodeObj, ontologyObj])).toEqual([blankNodeObj]);
+            expect(ontologyManagerSvc.getBlankNodes([[blankNodeObj, ontologyObj]])).toEqual([blankNodeObj]);
         });
         it('undefined if there are no blank nodes in the ontology', function() {
-            expect(ontologyManagerSvc.getBlankNodes([ontologyObj])).toEqual([]);
+            expect(ontologyManagerSvc.getBlankNodes([[ontologyObj]])).toEqual([]);
         });
     });
     describe('getEntity returns', function() {
         it('object when present', function() {
-            expect(ontologyManagerSvc.getEntity([classObj, ontologyObj], classId)).toEqual(classObj);
+            expect(ontologyManagerSvc.getEntity([[classObj, ontologyObj]], classId)).toEqual(classObj);
         });
         it('undefined when not present', function() {
             expect(ontologyManagerSvc.getEntity([], classId)).toBe(undefined);
@@ -1327,26 +1689,59 @@ describe('Ontology Manager service', function() {
     });
     describe('hasConcepts should return', function() {
         it('true if there are any concept entities in the ontology', function() {
-            expect(ontologyManagerSvc.hasConcepts([conceptObj, ontologyObj])).toBe(true);
+            expect(ontologyManagerSvc
+                .hasConcepts([[conceptObj, ontologyObj], [importedConceptObj, importedOntObj]])).toBe(true);
+        });
+        it('true if there are any concept entities in only the ontology', function() {
+            expect(ontologyManagerSvc
+                .hasConcepts([[conceptObj, ontologyObj], [importedOntObj]])).toBe(true);
+        });
+        it('true if there are any concept entities in only the imported ontology', function() {
+            expect(ontologyManagerSvc
+                .hasConcepts([[ontologyObj], [importedConceptObj, importedOntObj]])).toBe(true);
         });
         it('false if there are not any concept entities in the ontology', function() {
-            expect(ontologyManagerSvc.hasConcepts([ontologyObj])).toBe(false);
+            expect(ontologyManagerSvc.hasConcepts([[ontologyObj], [importedOntObj]])).toBe(false);
         });
     });
     describe('getConcepts should return', function() {
         it('correct concept objects if there are any in the ontology', function() {
-            expect(ontologyManagerSvc.getConcepts([conceptObj, ontologyObj])).toEqual([conceptObj]);
+            expect(ontologyManagerSvc
+                .getConcepts([[conceptObj, ontologyObj], [importedConceptObj, importedOntObj]]))
+                .toEqual([conceptObj, importedConceptObj]);
+        });
+        it('correct concept objects if there are any in only the ontology', function() {
+            expect(ontologyManagerSvc
+                .getConcepts([[conceptObj, ontologyObj], [importedOntObj]]))
+                .toEqual([conceptObj]);
+        });
+        it('correct concept objects if there are any in only the imported ontology', function() {
+            expect(ontologyManagerSvc
+                .getConcepts([[ontologyObj], [importedConceptObj, importedOntObj]]))
+                .toEqual([importedConceptObj]);
         });
         it('undefined if there are no concepts in the ontology', function() {
-            expect(ontologyManagerSvc.getConcepts([ontologyObj])).toEqual([]);
+            expect(ontologyManagerSvc.getConcepts([[ontologyObj], [importedOntObj]])).toEqual([]);
         });
     });
     describe('getConceptIRIs should return', function() {
         it('conceptId if there are concepts in the ontology', function() {
-            expect(ontologyManagerSvc.getConceptIRIs([ontologyObj, conceptObj])).toEqual([conceptId]);
+            expect(ontologyManagerSvc
+                .getConceptIRIs([[ontologyObj, conceptObj], [importedOntObj, importedConceptObj]]))
+                .toEqual([conceptId, importedConceptId]);
+        });
+        it('conceptId if there are concepts in only the ontology', function() {
+            expect(ontologyManagerSvc
+                .getConceptIRIs([[ontologyObj, conceptObj], [importedOntObj]]))
+                .toEqual([conceptId]);
+        });
+        it('conceptId if there are concepts in only the imported ontology', function() {
+            expect(ontologyManagerSvc
+                .getConceptIRIs([[ontologyObj], [importedOntObj, importedConceptObj]]))
+                .toEqual([importedConceptId]);
         });
         it('[] if there are no concepts in the ontology', function() {
-            expect(ontologyManagerSvc.getConceptIRIs([ontologyObj])).toEqual([]);
+            expect(ontologyManagerSvc.getConceptIRIs([[ontologyObj], [importedOntObj]])).toEqual([]);
         });
     });
     describe('isConceptScheme should return', function() {
@@ -1359,26 +1754,59 @@ describe('Ontology Manager service', function() {
     });
     describe('hasConceptSchemes should return', function() {
         it('true if there are any concept scheme entities in the ontology', function() {
-            expect(ontologyManagerSvc.hasConceptSchemes([schemeObj, ontologyObj])).toBe(true);
+            expect(ontologyManagerSvc
+                .hasConceptSchemes([[schemeObj, ontologyObj], [importedSchemeObj, importedOntObj]])).toBe(true);
+        });
+        it('true if there are any concept scheme entities in only the ontology', function() {
+            expect(ontologyManagerSvc
+                .hasConceptSchemes([[schemeObj, ontologyObj], [importedOntObj]])).toBe(true);
+        });
+        it('true if there are any concept scheme entities in only the imported ontology', function() {
+            expect(ontologyManagerSvc
+                .hasConceptSchemes([[ontologyObj], [importedSchemeObj, importedOntObj]])).toBe(true);
         });
         it('false if there are not any concept scheme entities in the ontology', function() {
-            expect(ontologyManagerSvc.hasConceptSchemes([ontologyObj])).toBe(false);
+            expect(ontologyManagerSvc.hasConceptSchemes([[ontologyObj], [importedOntObj]])).toBe(false);
         });
     });
     describe('getConceptSchemes should return', function() {
         it('correct concept scheme objects if there are any in the ontology', function() {
-            expect(ontologyManagerSvc.getConceptSchemes([schemeObj, ontologyObj])).toEqual([schemeObj]);
+            expect(ontologyManagerSvc
+                .getConceptSchemes([[schemeObj, ontologyObj], [importedSchemeObj, importedOntObj]]))
+                .toEqual([schemeObj, importedSchemeObj]);
+        });
+        it('correct concept scheme objects if there are any in only the ontology', function() {
+            expect(ontologyManagerSvc
+                .getConceptSchemes([[schemeObj, ontologyObj], [importedOntObj]]))
+                .toEqual([schemeObj]);
+        });
+        it('correct concept scheme objects if there are any in only the imported ontology', function() {
+            expect(ontologyManagerSvc
+                .getConceptSchemes([[ontologyObj], [importedSchemeObj, importedOntObj]]))
+                .toEqual([importedSchemeObj]);
         });
         it('undefined if there are no concept schemes in the ontology', function() {
-            expect(ontologyManagerSvc.getConceptSchemes([ontologyObj])).toEqual([]);
+            expect(ontologyManagerSvc.getConceptSchemes([[ontologyObj], [importedOntObj]])).toEqual([]);
         });
     });
     describe('getConceptSchemeIRIs should return', function() {
         it('schemeId if there are concept schemes in the ontology', function() {
-            expect(ontologyManagerSvc.getConceptSchemeIRIs([ontologyObj, schemeObj])).toEqual([schemeId]);
+            expect(ontologyManagerSvc
+                .getConceptSchemeIRIs([[ontologyObj, schemeObj], [importedOntObj, importedSchemeObj]]))
+                .toEqual([schemeId, importedSchemeId]);
+        });
+        it('schemeId if there are concept schemes in only the ontology', function() {
+            expect(ontologyManagerSvc
+                .getConceptSchemeIRIs([[ontologyObj, schemeObj], [importedOntObj]]))
+                .toEqual([schemeId]);
+        });
+        it('schemeId if there are concept schemes in only the imported ontology', function() {
+            expect(ontologyManagerSvc
+                .getConceptSchemeIRIs([[ontologyObj], [importedOntObj, importedSchemeObj]]))
+                .toEqual([importedSchemeId]);
         });
         it('[] if there are no concept schemes in the ontology', function() {
-            expect(ontologyManagerSvc.getConceptSchemeIRIs([ontologyObj])).toEqual([]);
+            expect(ontologyManagerSvc.getConceptSchemeIRIs([[ontologyObj], [importedOntObj]])).toEqual([]);
         });
     });
 });

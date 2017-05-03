@@ -24,6 +24,18 @@
         .record-keywords {
             margin-bottom: 0;
         }
+        .ontologies {
+            li {
+                display: inline;
+
+                &:after {
+                    content: ', ';
+                }
+                &.last:after {
+                    content: '';
+                }
+            }
+        }
         .header {
             margin-bottom: 0;
 
