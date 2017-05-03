@@ -79,7 +79,7 @@ public interface DatasetManager {
      *
      * @param config The DatasetRecordConfig describing the details of the dataset to create.
      * @return The DatasetRecord that has been created in the local catalog. DatasetRecord includes empty Dataset
-     * object.
+     *      object.
      * @throws IllegalArgumentException if the target dataset repository does not exist.
      * @throws IllegalStateException if the target dataset already exists in the target repository.
      */
@@ -101,6 +101,7 @@ public interface DatasetManager {
      *
      * @param record The Resource of the DatasetRecord to be removed along with associated Dataset and data.
      * @throws IllegalArgumentException if the DatasetRecord could not be found in the catalog.
+     * @throws IllegalStateException if the DatasetRecord does not point to a Dataset or a repository
      */
     void deleteDataset(Resource record);
 
@@ -120,6 +121,7 @@ public interface DatasetManager {
      *
      * @param record The Resource of DatasetRecord to be removed along with associated Dataset and data.
      * @throws IllegalArgumentException if the DatasetRecord could not be found in the catalog.
+     * @throws IllegalStateException if the DatasetRecord does not point to a Dataset or a repository
      */
     void safeDeleteDataset(Resource record);
 
@@ -139,6 +141,7 @@ public interface DatasetManager {
      *
      * @param record The Resource of the DatasetRecord to be cleared.
      * @throws IllegalArgumentException if the DatasetRecord could not be found in the catalog.
+     * @throws IllegalStateException if the DatasetRecord does not point to a Dataset or a repository
      */
     void clearDataset(Resource record);
 
@@ -160,6 +163,7 @@ public interface DatasetManager {
      *
      * @param record The Resource of the DatasetRecord to be cleared.
      * @throws IllegalArgumentException if the DatasetRecord could not be found in the catalog.
+     * @throws IllegalStateException if the DatasetRecord does not point to a Dataset or a repository
      */
     void safeClearDataset(Resource record);
 
@@ -170,7 +174,8 @@ public interface DatasetManager {
      * @param repositoryId The ID of the Repository where the Dataset is stored.
      * @return A DatasetConnection for the specified Dataset.
      * @throws IllegalArgumentException if the DatasetRecord could not be found in the catalog with this
-     * Dataset/Repository combination.
+     *      Dataset/Repository combination.
+     * @throws IllegalStateException if the DatasetRecord does not point to a Dataset or a repository
      */
     DatasetConnection getConnection(Resource dataset, String repositoryId);
 
