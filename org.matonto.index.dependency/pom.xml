@@ -252,6 +252,16 @@
             <artifactId>antlr4-runtime</artifactId>
             <version>4.6</version>
         </dependency>
+        <dependency>
+            <groupId>org.ehcache</groupId>
+            <artifactId>ehcache</artifactId>
+            <version>${ehcache.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.servicemix.bundles</groupId>
+            <artifactId>org.apache.servicemix.bundles.javax-cache-api</artifactId>
+            <version>1.0.0_1</version>
+        </dependency>
     </dependencies>
 
     <build>

@@ -47,8 +47,10 @@ public class ResponseLoggingFilter implements ContainerResponseFilter {
     @Override
     public void filter(ContainerRequestContext containerRequestContext, ContainerResponseContext
             containerResponseContext) throws IOException {
-        if (log.isInfoEnabled() && containerRequestContext != null && containerResponseContext != null) {
-            Class<?> resourceClass = resourceInfo.getResourceClass();
+        Class<?> resourceClass = resourceInfo.getResourceClass();
+
+        if (log.isInfoEnabled() && containerRequestContext != null && containerResponseContext != null
+                && resourceClass != null) {
             Logger resourceLog = LoggerFactory.getLogger(resourceClass);
 
             if (resourceLog.isInfoEnabled()) {
@@ -60,7 +62,8 @@ public class ResponseLoggingFilter implements ContainerResponseFilter {
                 int statusCode = containerResponseContext.getStatusInfo().getStatusCode();
                 String statusMsg = containerResponseContext.getStatusInfo().getReasonPhrase();
 
-                resourceLog.info(String.format("%s: %s -> %d: %s (%dms)", method, path, statusCode, statusMsg, responseTime));
+                resourceLog.info(
+                        String.format("%s: %s -> %d: %s (%dms)", method, path, statusCode, statusMsg, responseTime));
             }
         }
     }
