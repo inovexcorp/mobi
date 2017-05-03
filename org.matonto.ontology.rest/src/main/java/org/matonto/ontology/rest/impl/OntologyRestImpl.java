@@ -104,8 +104,7 @@ public class OntologyRestImpl implements OntologyRest {
     private OntologyRecordFactory ontologyRecordFactory;
     private EngineManager engineManager;
     private SesameTransformer sesameTransformer;
-    private Optional<Cache<String, Ontology>> ontologyCache = Optional.empty();
-
+    private CacheManager cacheManager;
 
     private final Logger log = LoggerFactory.getLogger(OntologyRestImpl.class);
 
@@ -146,7 +145,7 @@ public class OntologyRestImpl implements OntologyRest {
 
     @Reference
     public void setCacheManager(CacheManager cacheManager) {
-        this.ontologyCache = cacheManager.getCache(OntologyCache.CACHE_NAME, String.class, Ontology.class);
+        this.cacheManager = cacheManager;
     }
 
     @Override
@@ -805,17 +804,14 @@ public class OntologyRestImpl implements OntologyRest {
     private Optional<Ontology> getOntology(ContainerRequestContext context, String recordIdStr, String branchIdStr,
                                            String commitIdStr) {
         throwErrorIfMissingStringParam(recordIdStr, "The recordIdStr is missing.");
-        Optional<Ontology> optionalOntology = Optional.empty();
+        Optional<Ontology> optionalOntology;
+        Optional<Cache<String, Ontology>> cache = getOntologyCache();
+        String key = OntologyCache.generateKey(recordIdStr, branchIdStr, commitIdStr);
 
-        if (ontologyCache.isPresent()) {
-            Cache<String, Ontology> cache = ontologyCache.get();
-            String key = OntologyCache.generateKey(recordIdStr, branchIdStr, commitIdStr);
-            if (cache.containsKey(key)) {
-                optionalOntology = Optional.of(cache.get(key));
-            }
-        }
-
-        if (!optionalOntology.isPresent()) {
+        if (cache.isPresent() && cache.get().containsKey(key)) {
+            log.trace("cache hit");
+            optionalOntology = Optional.of(cache.get().get(key));
+        } else {
             Resource recordId = valueFactory.createIRI(recordIdStr);
 
             if (!stringParamIsMissing(commitIdStr)) {
@@ -1217,9 +1213,10 @@ public class OntologyRestImpl implements OntologyRest {
         catalogManager.removeInProgressCommit(inProgressCommit.getResource());
 
         // Cache
-        ontologyCache.ifPresent(cache -> {
-            log.trace("caching " + finalRecord.getResource().stringValue());
-            cache.put(finalRecord.getResource().stringValue(), ontology);
+        getOntologyCache().ifPresent(cache -> {
+            String key = OntologyCache.generateKey(finalRecord.getResource().stringValue(), masterBranchId.stringValue(), commit.getResource().stringValue());
+            log.trace("caching " + key);
+            cache.put(key, ontology);
         });
 
         JSONObject response = new JSONObject()
@@ -1228,5 +1225,13 @@ public class OntologyRestImpl implements OntologyRest {
                 .element("branchId", masterBranchId.stringValue())
                 .element("commitId", commit.getResource().stringValue());
         return Response.status(201).entity(response).build();
+    }
+
+    private Optional<javax.cache.Cache<String, Ontology>> getOntologyCache() {
+        Optional<Cache<String, Ontology>> cache = Optional.empty();
+        if (cacheManager != null) {
+            cache = cacheManager.getCache(OntologyCache.CACHE_NAME, String.class, Ontology.class);
+        }
+        return cache;
     }
 }

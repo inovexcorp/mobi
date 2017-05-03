@@ -459,6 +459,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         when(sesameTransformer.sesameModel(any(Model.class))).thenAnswer(invocationOnMock ->
                 Values.sesameModel(invocationOnMock.getArgumentAt(0, Model.class)));
         entityUsagesConstruct = modelToJsonld(sesameTransformer.sesameModel(constructs));
+        when(cacheManager.getCache(Mockito.anyString(), Mockito.eq(String.class), Mockito.eq(Ontology.class))).thenReturn(Optional.of(mockCache));
+        rest.setCacheManager(cacheManager);
     }
 
     private JSONObject getResource(String path) throws Exception {
@@ -585,9 +587,6 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void testUploadFile() {
-        when(cacheManager.getCache(Mockito.anyString(), Mockito.eq(String.class), Mockito.eq(Ontology.class))).thenReturn(Optional.of(mockCache));
-        rest.setCacheManager(cacheManager);
-
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("file", getClass().getResourceAsStream("/test-ontology.ttl"), MediaType.APPLICATION_OCTET_STREAM_TYPE);
         fd.field("title", "title");

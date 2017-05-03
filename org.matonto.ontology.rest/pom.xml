@@ -80,7 +80,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>cache</artifactId>
-            <version>1.6.29-SNAPSHOT</version>
+            <version>1.6.33-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.apache.servicemix.bundles</groupId>
@@ -127,7 +127,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.utils</artifactId>
-            <version>1.6.29-SNAPSHOT</version>
+            <version>1.6.33-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.glassfish.jersey.test-framework.providers</groupId>
