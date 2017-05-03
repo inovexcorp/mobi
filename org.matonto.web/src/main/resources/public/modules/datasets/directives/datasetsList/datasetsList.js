@@ -53,9 +53,9 @@
          */
         .directive('datasetsList', datasetsList);
 
-        datasetsList.$inject = ['datasetManagerService', 'datasetStateService', 'utilService', 'prefixes'];
+        datasetsList.$inject = ['datasetManagerService', 'datasetStateService', 'catalogManagerService', 'utilService', 'prefixes', '$q'];
 
-        function datasetsList(datasetManagerService, datasetStateService, utilService, prefixes) {
+        function datasetsList(datasetManagerService, datasetStateService, catalogManagerService, utilService, prefixes, $q) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -65,6 +65,9 @@
                 controller: function() {
                     var dvm = this;
                     var dm = datasetManagerService;
+                    var cm = catalogManagerService;
+                    var cachedOntologyRecords = [];
+                    var catalogId = _.get(cm.localCatalog, '@id', '');
                     dvm.state = datasetStateService;
                     dvm.util = utilService;
                     dvm.prefixes = prefixes;
@@ -73,14 +76,27 @@
                     dvm.openedDatasetId = '';
                     dvm.showDeleteConfirm = false;
                     dvm.showClearConfirm = false;
+                    dvm.cachedOntologyIds = [];
 
+                    dvm.getIdentifiedOntologyIds = function(dataset) {
+                        return _.map(dataset.identifiers, identifier => identifier[prefixes.dataset + 'linksToRecord'][0]['@id']);
+                    }
+                    dvm.getOntologyTitle = function(id) {
+                        return dvm.util.getDctermsValue(_.find(cachedOntologyRecords, {'@id': id}), 'title');
+                    }
                     dvm.clickDataset = function(dataset) {
-                        if (dvm.openedDatasetId === dataset['@id']) {
+                        if (dvm.openedDatasetId === dataset.record['@id']) {
                             dvm.selectedDataset = undefined;
                             dvm.openedDatasetId = '';
                         } else {
                             dvm.selectedDataset = dataset;
-                            dvm.openedDatasetId = dataset['@id'];
+                            dvm.openedDatasetId = dataset.record['@id'];
+                            var toRetrieve = _.filter(dvm.getIdentifiedOntologyIds(dataset), id => !_.includes(dvm.cachedOntologyIds, id));
+                            $q.all(_.map(toRetrieve, id => cm.getRecord(id, catalogId)))
+                                .then(responses => {
+                                    dvm.cachedOntologyIds = _.concat(dvm.cachedOntologyIds, _.map(responses, '@id'));
+                                    cachedOntologyRecords = _.concat(cachedOntologyRecords, responses);
+                                }, () => dvm.errorMessage = 'Unable to load all Dataset details.');
                         }
                     }
                     dvm.getPage = function(direction) {
@@ -93,7 +109,7 @@
                         }
                     }
                     dvm.delete = function() {
-                        dm.deleteDatasetRecord(dvm.selectedDataset['@id'])
+                        dm.deleteDatasetRecord(dvm.selectedDataset.record['@id'])
                             .then(() => {
                                 dvm.util.createSuccessToast('Dataset successfully deleted');
                                 dvm.showDeleteConfirm = false;
@@ -106,7 +122,7 @@
                             }, onError);
                     }
                     dvm.clear = function() {
-                        dm.clearDatasetRecord(dvm.selectedDataset['@id'])
+                        dm.clearDatasetRecord(dvm.selectedDataset.record['@id'])
                             .then(() => {
                                 dvm.util.createSuccessToast('Dataset successfully cleared');
                                 dvm.showClearConfirm = false;

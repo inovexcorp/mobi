@@ -133,6 +133,9 @@ describe('Create Class Overlay directive', function() {
             expect(ontologyStateSvc.setCommonIriParts).toHaveBeenCalledWith('begin', 'then');
         });
         it('create calls the correct manager functions', function() {
+            ontologyStateSvc.createFlatEverythingTree.and.returnValue([{prop: 'everything'}]);
+            ontologyStateSvc.flattenHierarchy.and.returnValue([{prop: 'entity'}]);
+            ontologyStateSvc.getOntologiesArray.and.returnValue([]);
             controller.language = 'en';
             controller.clazz = {'@id': 'class-iri'};
             controller.clazz[prefixes.dcterms + 'title'] = [{'@value': 'label'}];
@@ -140,10 +143,13 @@ describe('Create Class Overlay directive', function() {
             controller.create();
             expect(_.get(controller.clazz, 'matonto.originalIRI')).toEqual(controller.clazz['@id']);
             expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(controller.clazz, controller.language);
-            expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem,
-                controller.clazz);
-            expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
-                controller.clazz);
+            expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, controller.clazz);
+            expect(ontologyStateSvc.getOntologiesArray).toHaveBeenCalled();
+            expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith([], ontologyStateSvc.listItem);
+            expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([{prop: 'everything'}]);
+            expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, controller.clazz);
+            expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.classHierarchy, ontologyStateSvc.listItem.recordId);
+            expect(ontologyStateSvc.listItem.flatClassHierarchy).toEqual([{prop: 'entity'}]);
             expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(controller.clazz['@id']);
             expect(ontologyStateSvc.showCreateClassOverlay).toBe(false);
             expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();

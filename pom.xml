@@ -29,7 +29,7 @@
 
     <groupId>org.matonto</groupId>
     <artifactId>root</artifactId>
-    <version>1.6.29-SNAPSHOT</version>
+    <version>1.6.33-SNAPSHOT</version>
 
     <packaging>pom</packaging>
 
@@ -89,6 +89,8 @@
         <module>org.matonto.dataset.impl</module>
         <module>org.matonto.dataset.rest</module>
         <module>org.matonto.sparql.utils</module>
+        <module>org.matonto.cache</module>
+        <module>org.matonto.cache.impl.ehcache</module>
     </modules>
 
     <properties>

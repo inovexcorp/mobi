@@ -25,9 +25,12 @@ package org.matonto.dataset.rest;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
+import java.util.List;
 import javax.annotation.security.RolesAllowed;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -81,6 +84,7 @@ public interface DatasetRest {
      * @return A Response with the IRI string of the created DatasetRecord
      */
     @POST
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.TEXT_PLAIN)
     @RolesAllowed("user")
     @ApiOperation("Creates a new DatasetRecord in the local Catalog and Dataset in the specified repository")
@@ -89,7 +93,8 @@ public interface DatasetRest {
                                  @FormDataParam("repositoryId") String repositoryId,
                                  @FormDataParam("datasetIRI") String datasetIRI,
                                  @FormDataParam("description") String description,
-                                 @FormDataParam("keywords") String keywords);
+                                 @FormDataParam("keywords") String keywords,
+                                 @FormDataParam("ontologies") List<FormDataBodyPart> ontologies);
 
     /**
      * Deletes a specific DatasetRecord and its Dataset from the local Catalog. By default only removes named graphs

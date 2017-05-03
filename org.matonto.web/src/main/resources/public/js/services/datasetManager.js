@@ -101,6 +101,8 @@
              * @param {string} recordConfig.datasetIRI The optional IRI for the new Dataset
              * @param {string} recordConfig.description The optional description of the new Record
              * @param {string[]} recordConfig.keywords The optional keywords to associate with the new Record.
+             * @param {string[]} recordConfig.ontologies The optional OntologyRecord ids to associate with the new
+             * Record.
              * @return {Promise} A Promise that resolves to the IRI of the new DatasetRecord or is rejected with an
              * error message
              */
@@ -124,6 +126,7 @@
                 if (_.get(recordConfig, 'keywords', []).length > 0) {
                     fd.append('keywords', _.join(recordConfig.keywords, ','));
                 }
+                _.forEach(_.get(recordConfig, 'ontologies', []), id => fd.append('ontologies', id));
                 $http.post(prefix, fd, config)
                     .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
                 return deferred.promise;

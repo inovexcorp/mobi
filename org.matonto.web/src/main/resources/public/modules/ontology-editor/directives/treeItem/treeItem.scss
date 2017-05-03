@@ -13,4 +13,9 @@
     .bold {
         font-weight: bold;
     }
+
+    &.imported {
+        font-style: italic;
+        color: gray;
+    }
 }

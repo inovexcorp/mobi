@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Remove Property Overlay directive', function() {
-    var $compile, scope, $q, element, controller, ontologyStateSvc, propertyManagerSvc, ontoUtils;
+    var $compile, scope, $q, element, controller, ontologyStateSvc, propertyManagerSvc, ontoUtils, prefixes;
 
     beforeEach(function() {
         module('templates');
@@ -29,14 +29,16 @@ describe('Remove Property Overlay directive', function() {
         mockOntologyState();
         mockPropertyManager();
         mockOntologyUtilsManager();
+        mockPrefixes();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _propertyManagerService_, _ontologyUtilsManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _propertyManagerService_, _ontologyUtilsManagerService_, _prefixes_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
             ontologyStateSvc = _ontologyStateService_;
             propertyManagerSvc = _propertyManagerService_;
             ontoUtils = _ontologyUtilsManagerService_;
+            prefixes = _prefixes_;
         });
 
         scope.index = 0;
@@ -97,6 +99,16 @@ describe('Remove Property Overlay directive', function() {
             expect(controller.overlayFlag).toBe(false);
             expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             expect(ontoUtils.updateLabel).toHaveBeenCalled();
+        });
+        it('if the selected key is domain', function() {
+            controller.key = prefixes.rdfs + 'domain';
+            _.set(ontologyStateSvc.selected, controller.key + '[0]', 'value');
+            ontologyStateSvc.createFlatEverythingTree.and.returnValue([{prop: 'everything'}]);
+            ontologyStateSvc.getOntologiesArray.and.returnValue([]);
+            controller.removeProperty();
+            expect(ontologyStateSvc.getOntologiesArray).toHaveBeenCalled();
+            expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith([], ontologyStateSvc.listItem);
+            expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([{prop: 'everything'}]);
         });
     });
     it('calls removeProperty when the button is clicked', function() {
