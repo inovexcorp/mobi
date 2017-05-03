@@ -21,15 +21,8 @@
  * #L%
  */
 describe('Run Mapping Overlay directive', function() {
-    var $compile,
-        scope,
-        $q,
-        element,
-        controller,
-        mappingManagerSvc,
-        mapperStateSvc,
-        delimitedManagerSvc,
-        datasetManagerSvc;
+    var $compile, scope, $q, element, controller, mappingManagerSvc, mapperStateSvc, delimitedManagerSvc, datasetManagerSvc, splitIRI, prefixes;
+    var datasetRecord;
 
     beforeEach(function() {
         module('templates');
@@ -42,8 +35,9 @@ describe('Run Mapping Overlay directive', function() {
         mockDelimitedManager();
         mockDatasetManager();
         mockUtil();
+        mockPrefixes();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_, _datasetManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_, _datasetManagerService_, _splitIRIFilter_, _prefixes_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
@@ -51,14 +45,28 @@ describe('Run Mapping Overlay directive', function() {
             mappingManagerSvc = _mappingManagerService_;
             delimitedManagerSvc = _delimitedManagerService_;
             datasetManagerSvc = _datasetManagerService_;
+            splitIRI = _splitIRIFilter_;
+            prefixes = _prefixes_;
         });
 
+        datasetRecord = {'@type': [prefixes.dataset + 'DatasetRecord']};
+        datasetManagerSvc.getDatasetRecords.and.returnValue($q.when({data: [[datasetRecord]]}));
+        splitIRI.and.returnValue({end: 'end'});
         mapperStateSvc.mapping = {id: '', jsonld: []};
         element = $compile(angular.element('<run-mapping-overlay></run-mapping-overlay>'))(scope);
         scope.$digest();
         controller = element.controller('runMappingOverlay');
     });
 
+    describe('should initialize with the correct values for', function() {
+        it('fileName', function() {
+            expect(controller.fileName).toBe('end');
+        });
+        it('datasetRecords', function() {
+            scope.$apply();
+            expect(controller.datasetRecords).toEqual([datasetRecord]);
+        });
+    });
     describe('controller methods', function() {
         describe('should set the correct state for running mapping', function() {
             beforeEach(function() {
@@ -235,12 +243,12 @@ describe('Run Mapping Overlay directive', function() {
         });
         it('depending on the validity of the form', function() {
             var button = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
-            expect(button.attr('disabled')).toBeTruthy();
+            expect(button.attr('disabled')).toBeFalsy();
 
-            controller.form.$setValidity('required', true);
+            controller.form.$setValidity('required', false);
             controller.fileName = 'test';
             scope.$digest();
-            expect(button.attr('disabled')).toBeFalsy();
+            expect(button.attr('disabled')).toBeTruthy();
         });
     });
     it('should call cancel when the cancel button is clicked', function() {
