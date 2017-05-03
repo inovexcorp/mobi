@@ -368,8 +368,7 @@ public class SimpleOntologyManager implements OntologyManager {
             if (entry.getKey().startsWith(key)) {
                 cache.remove(entry.getKey());
             }
-                })
-        );
+        }));
     }
 
     @Override

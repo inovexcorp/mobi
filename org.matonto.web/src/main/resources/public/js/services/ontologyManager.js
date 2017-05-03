@@ -303,7 +303,7 @@
              */
             self.deleteOntology = function(recordId, branchId) {
                 var deferred = $q.defer();
-                var config = { };
+                var config = {};
 
                 if (branchId) {
                     config.params = { branchId };
