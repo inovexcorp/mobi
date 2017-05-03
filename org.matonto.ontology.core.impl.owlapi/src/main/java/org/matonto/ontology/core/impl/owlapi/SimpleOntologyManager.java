@@ -70,6 +70,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -101,6 +102,7 @@ public class SimpleOntologyManager implements OntologyManager {
     private static final String CONSTRUCT_ENTITY_USAGES;
     private static final String GET_CONCEPT_RELATIONSHIPS;
     private static final String GET_SEARCH_RESULTS;
+    private static final String GET_SUB_ANNOTATION_PROPERTIES_OF;
     private static final String ENTITY_BINDING = "entity";
     private static final String SEARCH_TEXT = "searchText";
 
@@ -164,6 +166,14 @@ public class SimpleOntologyManager implements OntologyManager {
         try {
             GET_SEARCH_RESULTS = IOUtils.toString(
                     SimpleOntologyManager.class.getResourceAsStream("/get-search-results.rq"),
+                    "UTF-8"
+            );
+        } catch (IOException e) {
+            throw new MatOntoException(e);
+        }
+        try {
+            GET_SUB_ANNOTATION_PROPERTIES_OF = IOUtils.toString(
+                    SimpleOntologyManager.class.getResourceAsStream("/get-sub-annotation-properties-of.rq"),
                     "UTF-8"
             );
         } catch (IOException e) {
@@ -391,6 +401,11 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Override
+    public TupleQueryResult getSubAnnotationPropertiesOf(Ontology ontology) {
+        return runQueryOnOntology(ontology, GET_SUB_ANNOTATION_PROPERTIES_OF, null);
+    }
+
+    @Override
     public TupleQueryResult getSubObjectPropertiesOf(Ontology ontology) {
         return runQueryOnOntology(ontology, GET_SUB_OBJECT_PROPERTIES_OF, null);
     }
@@ -490,7 +505,11 @@ public class SimpleOntologyManager implements OntologyManager {
         Repository repo = repositoryManager.createMemoryRepository();
         repo.initialize();
         try (RepositoryConnection conn = repo.getConnection()) {
+            Set<Ontology> importedOntologies = ontology.getImportsClosure();
+            conn.begin();
             conn.add(ontology.asModel(modelFactory));
+            importedOntologies.forEach(ont -> conn.add(ont.asModel(modelFactory)));
+            conn.commit();
             TupleQuery query = conn.prepareTupleQuery(queryString);
             if (addBinding != null) {
                 query = addBinding.apply(query);

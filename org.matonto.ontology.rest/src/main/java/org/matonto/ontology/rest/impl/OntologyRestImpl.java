@@ -544,8 +544,7 @@ public class OntologyRestImpl implements OntologyRest {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
             TupleQueryResult results = ontologyManager.getSubClassesOf(ontology);
-            JSONObject response = getHierarchy(results);
-            return Response.ok(response).build();
+            return Response.ok(getHierarchy(results)).build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -558,8 +557,7 @@ public class OntologyRestImpl implements OntologyRest {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
             TupleQueryResult results = ontologyManager.getSubObjectPropertiesOf(ontology);
-            JSONObject response = getHierarchy(results);
-            return Response.ok(response).build();
+            return Response.ok(getHierarchy(results)).build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -572,8 +570,20 @@ public class OntologyRestImpl implements OntologyRest {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
             TupleQueryResult results = ontologyManager.getSubDatatypePropertiesOf(ontology);
-            JSONObject response = getHierarchy(results);
-            return Response.ok(response).build();
+            return Response.ok(getHierarchy(results)).build();
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Override
+    public Response getOntologyAnnotationPropertyHierarchy(ContainerRequestContext context, String recordIdStr,
+                                                     String branchIdStr, String commitIdStr) {
+        try {
+            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr).orElseThrow(() ->
+                    ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
+            TupleQueryResult results = ontologyManager.getSubAnnotationPropertiesOf(ontology);
+            return Response.ok(getHierarchy(results)).build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
