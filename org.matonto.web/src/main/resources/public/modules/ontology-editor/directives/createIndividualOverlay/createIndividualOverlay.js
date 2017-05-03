@@ -72,10 +72,10 @@
                         _.set(dvm.individual, 'matonto.originalIRI', dvm.individual['@id']);
                         // update relevant lists
                         var split = $filter('splitIRI')(dvm.individual['@id']);
-                        _.get(dvm.os.listItem, 'individuals').push({namespace:split.begin + split.then,
-                            localName: split.end});
+                        _.get(dvm.os.listItem, 'individuals').push({namespace:split.begin + split.then, localName: split.end});
                         var classesWithIndividuals = _.get(dvm.os.listItem, 'classesWithIndividuals');
                         _.set(dvm.os.listItem, 'classesWithIndividuals', _.unionWith(classesWithIndividuals, _.map(dvm.individual['@type'], type => ({entityIRI: type})), (obj1, obj2) => _.get(obj1, 'entityIRI') === _.get(obj2, 'entityIRI')));
+                        dvm.os.listItem.flatClassesWithIndividuals = dvm.os.flattenHierarchy(classesWithIndividuals, dvm.os.listItem.recordId);
                         // add the entity to the ontology
                         dvm.individual['@type'].push(prefixes.owl + 'NamedIndividual');
                         dvm.os.addEntity(dvm.os.listItem, dvm.individual);

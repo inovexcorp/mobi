@@ -210,6 +210,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
     private JSONObject subClassesOfResult;
     private JSONObject subObjectPropertiesOfResult;
     private JSONObject subDatatypePropertiesOfResult;
+    private JSONObject subAnnotationPropertiesOfResult;
     private JSONObject conceptHierarchyResult;
     private JSONObject searchResults;
     private SimpleOntologyManager simpleOntologyManager;
@@ -345,6 +346,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         subClassesOfResult = getResource("/sub-classes-of-results.json");
         subObjectPropertiesOfResult = getResource("/sub-object-properties-of-results.json");
         subDatatypePropertiesOfResult = getResource("/sub-datatype-properties-of-results.json");
+        subAnnotationPropertiesOfResult = getResource("/sub-annotation-properties-of-results.json");
         conceptHierarchyResult = getResource("/concept-hierarchy-results.json");
         searchResults = getResource("/search-results.json");
         importedOntologyResults = getResourceArray("/imported-ontology-results.json");
@@ -428,6 +430,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         when(ontologyManager.getSubObjectPropertiesOf(ontology)).thenReturn(subObjectPropertiesOf);
         TupleQueryResult subDatatypePropertiesOf = simpleOntologyManager.getSubDatatypePropertiesOf(ontology);
         when(ontologyManager.getSubDatatypePropertiesOf(ontology)).thenReturn(subDatatypePropertiesOf);
+        TupleQueryResult subAnnotationPropertiesOf = simpleOntologyManager.getSubAnnotationPropertiesOf(ontology);
+        when(ontologyManager.getSubAnnotationPropertiesOf(ontology)).thenReturn(subAnnotationPropertiesOf);
         TupleQueryResult classesWithIndividuals = simpleOntologyManager.getClassesWithIndividuals(ontology);
         when(ontologyManager.getClassesWithIndividuals(ontology)).thenReturn(classesWithIndividuals);
         TupleQueryResult conceptRelationships = simpleOntologyManager.getConceptRelationships(importedOntology);
@@ -3257,6 +3261,76 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue())
                 + "/data-property-hierarchies").queryParam("branchId", branchId.stringValue()).queryParam("commitId",
+                commitId.stringValue()).request().get();
+
+        assertEquals(response.getStatus(), 400);
+    }
+
+    // Test get ontology annotation property hierarchy
+
+    @Test
+    public void testGetOntologyAnnotationPropertyHierarchy() {
+        Response response = target().path("ontologies/" + encode(recordId.stringValue())
+                + "/data-property-hierarchies").queryParam("branchId", branchId.stringValue()).queryParam("commitId",
+                commitId.stringValue()).request().get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
+        assertGetOntology(true);
+        assertEquals(getResponse(response), subDatatypePropertiesOfResult);
+    }
+
+    @Test
+    public void testGetOntologyAnnotationPropertyHierarchyWhenNoInProgressCommit() {
+        setNoInProgressCommit();
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue())
+                + "/annotation-property-hierarchies").queryParam("branchId", branchId.stringValue()).queryParam("commitId",
+                commitId.stringValue()).request().get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
+        assertGetOntology(false);
+        assertEquals(getResponse(response), subAnnotationPropertiesOfResult);
+    }
+
+    @Test
+    public void testGetOntologyAnnotationPropertyHierarchyWithCommitIdAndMissingBranchId() {
+        Response response = target().path("ontologies/" + encode(recordId.stringValue())
+                + "/annotation-property-hierarchies").queryParam("commitId", commitId.stringValue()).request().get();
+
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void testGetOntologyAnnotationPropertyHierarchyMissingCommitId() {
+        Response response = target().path("ontologies/" + encode(recordId.stringValue())
+                + "/annotation-property-hierarchies").queryParam("branchId", branchId.stringValue()).request().get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).retrieveOntology(recordId, branchId);
+        assertGetOntology(true);
+        assertEquals(getResponse(response), subAnnotationPropertiesOfResult);
+    }
+
+    @Test
+    public void testGetOntologyAnnotationPropertyHierarchyMissingBranchIdAndCommitId() {
+        Response response = target().path("ontologies/" + encode(recordId.stringValue())
+                + "/annotation-property-hierarchies").request().get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).retrieveOntology(recordId);
+        assertGetOntology(true);
+        assertEquals(getResponse(response), subAnnotationPropertiesOfResult);
+    }
+
+    @Test
+    public void testGetOntologyAnnotationPropertyHierarchyWhenRetrieveOntologyIsEmpty() {
+        when(ontologyManager.retrieveOntology(any(Resource.class), any(Resource.class), any(Resource.class)))
+                .thenReturn(Optional.empty());
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue())
+                + "/annotation-property-hierarchies").queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                 commitId.stringValue()).request().get();
 
         assertEquals(response.getStatus(), 400);

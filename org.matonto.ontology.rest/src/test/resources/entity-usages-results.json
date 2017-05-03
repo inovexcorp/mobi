@@ -45,12 +45,12 @@
         }
       },{
         "p": {
-        "type": "uri",
-        "value": "http://www.w3.org/2000/01/rdf-schema#subClassOf"
+          "type": "uri",
+          "value": "http://www.w3.org/2000/01/rdf-schema#subClassOf"
         },
         "s": {
-        "type": "uri",
-        "value": "http://matonto.org/ontology#Class1b"
+          "type": "uri",
+          "value": "http://matonto.org/ontology#Class1b"
         },
         "o": {
         "type": "uri",
