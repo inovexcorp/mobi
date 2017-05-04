@@ -61,12 +61,16 @@ var jsFiles = function(prefix) {
             prefix + 'angular-ui-codemirror/**/ui-codemirror.js',
             prefix + 'angular-messages/**/angular-messages.min.js',
             prefix + 'angular-ui-bootstrap/**/ui-bootstrap.js',
+            prefix + 'angular-ui-bootstrap/**/ui-bootstrap-tpls.js',
             prefix + 'ui-select/**/select.min.js',
             prefix + 'handsontable/**/handsontable.full.js',
             prefix + 'ng-handsontable/**/ngHandsontable.min.js',
             prefix + 'chroma-js/**/chroma.min.js',
             prefix + 'angular-toastr/**/angular-toastr.tpls.js',
-            prefix + 'snapsvg/**/snap.svg-min.js'
+            prefix + 'snapsvg/**/snap.svg-min.js',
+            prefix + 'angular-vs-repeat/**/angular-vs-repeat.min.js',
+            prefix + 'clipboard/**/clipboard.min.js',
+            prefix + 'ngclipboard/**/ngclipboard.min.js'
         ]
     },
     styleFiles = function(prefix, suffix) {
@@ -322,9 +326,9 @@ gulp.task('clearcache', function() {
 });
 
 // Production Task (minified)
-gulp.task('prod', ['test-minified-1', 'test-minified-2', 'test-minified-3', 'test-minified-4', 'minify-scripts', 'minify-css', 'html', 'images', 'inject-minified', 'icons-minified', 'ngdocs-minified']);
+gulp.task('prod', ['test-minified-1', 'test-minified-2', 'test-minified-3', 'test-minified-4', 'test-minified-5', 'minify-scripts', 'minify-css', 'html', 'images', 'inject-minified', 'icons-minified', 'ngdocs-minified']);
 // gulp.task('prod', ['test-minified', 'minify-scripts', 'minify-css', 'html', 'images', 'inject-minified', 'icons-minified', 'ngdocs-minified']);
 
 // Default Task (un-minified)
-gulp.task('default', ['test-unminified-1', 'test-unminified-2', 'test-unminified-3', 'test-unminified-4', 'move-custom-js', 'move-node-js', 'move-node-css', 'images', 'html', 'change-to-css', 'inject-unminified', 'icons-unminified', 'ngdocs-unminified']);
+gulp.task('default', ['test-unminified-1', 'test-unminified-2', 'test-unminified-3', 'test-unminified-4', 'test-unminified-5', 'move-custom-js', 'move-node-js', 'move-node-css', 'images', 'html', 'change-to-css', 'inject-unminified', 'icons-unminified', 'ngdocs-unminified']);
 // gulp.task('default', ['test-unminified', 'move-custom-js', 'move-node-js', 'move-node-css', 'images', 'html', 'change-to-css', 'inject-unminified', 'icons-unminified', 'ngdocs-unminified']);

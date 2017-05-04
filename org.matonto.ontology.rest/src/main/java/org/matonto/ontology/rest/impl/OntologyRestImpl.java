@@ -28,15 +28,15 @@ import static org.matonto.rest.util.RestUtils.getRDFFormatMimeType;
 import static org.matonto.rest.util.RestUtils.jsonldToModel;
 import static org.matonto.rest.util.RestUtils.modelToJsonld;
 
-import com.google.common.collect.Iterables;
-
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
+import com.google.common.collect.Iterables;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONException;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.matonto.cache.api.CacheManager;
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.Difference;
 import org.matonto.catalog.api.builder.RecordConfig;
@@ -57,6 +57,7 @@ import org.matonto.ontology.core.api.propertyexpression.AnnotationProperty;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.ontology.rest.OntologyRest;
 import org.matonto.ontology.utils.api.SesameTransformer;
+import org.matonto.ontology.utils.cache.OntologyCache;
 import org.matonto.persistence.utils.JSONQueryResults;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.query.api.Binding;
@@ -70,6 +71,8 @@ import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rest.util.ErrorUtils;
 import org.matonto.web.security.util.AuthenticationProps;
 import org.openrdf.model.vocabulary.OWL;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
 import java.io.InputStream;
@@ -86,6 +89,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.cache.Cache;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
@@ -100,6 +104,9 @@ public class OntologyRestImpl implements OntologyRest {
     private OntologyRecordFactory ontologyRecordFactory;
     private EngineManager engineManager;
     private SesameTransformer sesameTransformer;
+    private CacheManager cacheManager;
+
+    private final Logger log = LoggerFactory.getLogger(OntologyRestImpl.class);
 
     @Reference
     public void setModelFactory(ModelFactory modelFactory) {
@@ -134,6 +141,11 @@ public class OntologyRestImpl implements OntologyRest {
     @Reference
     public void setSesameTransformer(SesameTransformer sesameTransformer) {
         this.sesameTransformer = sesameTransformer;
+    }
+
+    @Reference
+    public void setCacheManager(CacheManager cacheManager) {
+        this.cacheManager = cacheManager;
     }
 
     @Override
@@ -176,6 +188,21 @@ public class OntologyRestImpl implements OntologyRest {
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @Override
+    public Response deleteOntology(ContainerRequestContext context, String recordIdStr, String branchIdStr) {
+        IRI recordId = valueFactory.createIRI(recordIdStr);
+        try {
+            if (StringUtils.isBlank(branchIdStr)) {
+                ontologyManager.deleteOntology(recordId);
+            } else {
+                ontologyManager.deleteOntologyBranch(recordId, valueFactory.createIRI(branchIdStr));
+            }
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+        return Response.ok().build();
     }
 
     @Override
@@ -442,9 +469,7 @@ public class OntologyRestImpl implements OntologyRest {
     public Response getIRIsInImportedOntologies(ContainerRequestContext context, String recordIdStr,
                                                 String branchIdStr, String commitIdStr) {
         try {
-            JSONArray result = doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr,
-                    this::getAllIRIs);
-            return Response.ok(result).build();
+            return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr, this::getAllIRIs);
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -468,9 +493,7 @@ public class OntologyRestImpl implements OntologyRest {
     public Response getAnnotationsInImportedOntologies(ContainerRequestContext context, String recordIdStr,
                                                        String branchIdStr, String commitIdStr) {
         try {
-            JSONArray result = doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr,
-                    this::getAnnotationArray);
-            return Response.ok(result).build();
+            return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr, this::getAnnotationArray);
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -480,9 +503,7 @@ public class OntologyRestImpl implements OntologyRest {
     public Response getClassesInImportedOntologies(ContainerRequestContext context, String recordIdStr,
                                                    String branchIdStr, String commitIdStr) {
         try {
-            JSONArray result = doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr,
-                    this::getClassArray);
-            return Response.ok(result).build();
+            return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr, this::getClassArray);
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -492,9 +513,7 @@ public class OntologyRestImpl implements OntologyRest {
     public Response getDatatypesInImportedOntologies(ContainerRequestContext context, String recordIdStr,
                                                      String branchIdStr, String commitIdStr) {
         try {
-            JSONArray result = doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr,
-                    this::getDatatypeArray);
-            return Response.ok(result).build();
+            return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr, this::getDatatypeArray);
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -504,9 +523,8 @@ public class OntologyRestImpl implements OntologyRest {
     public Response getObjectPropertiesInImportedOntologies(ContainerRequestContext context, String recordIdStr,
                                                             String branchIdStr, String commitIdStr) {
         try {
-            JSONArray result = doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr,
+            return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr,
                     this::getObjectPropertyArray);
-            return Response.ok(result).build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -516,9 +534,7 @@ public class OntologyRestImpl implements OntologyRest {
     public Response getDataPropertiesInImportedOntologies(ContainerRequestContext context, String recordIdStr,
                                                           String branchIdStr, String commitIdStr) {
         try {
-            JSONArray result = doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr,
-                    this::getDataPropertyArray);
-            return Response.ok(result).build();
+            return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr, this::getDataPropertyArray);
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -528,9 +544,8 @@ public class OntologyRestImpl implements OntologyRest {
     public Response getNamedIndividualsInImportedOntologies(ContainerRequestContext context, String recordIdStr,
                                                             String branchIdStr, String commitIdStr) {
         try {
-            JSONArray result = doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr,
+            return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr,
                     this::getNamedIndividualArray);
-            return Response.ok(result).build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -543,8 +558,7 @@ public class OntologyRestImpl implements OntologyRest {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
             TupleQueryResult results = ontologyManager.getSubClassesOf(ontology);
-            JSONObject response = getHierarchy(results);
-            return Response.ok(response).build();
+            return Response.ok(getHierarchy(results)).build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -557,8 +571,7 @@ public class OntologyRestImpl implements OntologyRest {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
             TupleQueryResult results = ontologyManager.getSubObjectPropertiesOf(ontology);
-            JSONObject response = getHierarchy(results);
-            return Response.ok(response).build();
+            return Response.ok(getHierarchy(results)).build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -571,8 +584,20 @@ public class OntologyRestImpl implements OntologyRest {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
             TupleQueryResult results = ontologyManager.getSubDatatypePropertiesOf(ontology);
-            JSONObject response = getHierarchy(results);
-            return Response.ok(response).build();
+            return Response.ok(getHierarchy(results)).build();
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Override
+    public Response getOntologyAnnotationPropertyHierarchy(ContainerRequestContext context, String recordIdStr,
+                                                     String branchIdStr, String commitIdStr) {
+        try {
+            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr).orElseThrow(() ->
+                    ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
+            TupleQueryResult results = ontologyManager.getSubAnnotationPropertiesOf(ontology);
+            return Response.ok(getHierarchy(results)).build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -740,7 +765,7 @@ public class OntologyRestImpl implements OntologyRest {
     /**
      * Checks to make sure that the parameter is present. If it is not, it throws an error with the provided String.
      *
-     * @param param the parameter String to check
+     * @param param        the parameter String to check
      * @param errorMessage the message String for the thrown error
      */
     private void throwErrorIfMissingStringParam(String param, String errorMessage) {
@@ -764,7 +789,7 @@ public class OntologyRestImpl implements OntologyRest {
      * Gets the Resource for the InProgressCommit associated with the User from the provided ContainerRequestContext. If
      * that User does not have an InProgressCommit, a new one will be created and that Resource will be returned.
      *
-     * @param context the ContainerRequestContext from which you want to get a User.
+     * @param context     the ContainerRequestContext from which you want to get a User.
      * @param recordIdStr the record ID String to process.
      * @return a Resource which identifies the InProgressCommit associated with the User from the context.
      */
@@ -785,7 +810,7 @@ public class OntologyRestImpl implements OntologyRest {
     /**
      * Optionally gets the Ontology based on the provided IDs.
      *
-     * @param context the context of the request.
+     * @param context     the context of the request.
      * @param recordIdStr the record ID String to process.
      * @param branchIdStr the branch ID String to process.
      * @param commitIdStr the commit ID String to process.
@@ -794,17 +819,25 @@ public class OntologyRestImpl implements OntologyRest {
     private Optional<Ontology> getOntology(ContainerRequestContext context, String recordIdStr, String branchIdStr,
                                            String commitIdStr) {
         throwErrorIfMissingStringParam(recordIdStr, "The recordIdStr is missing.");
-        Resource recordId = valueFactory.createIRI(recordIdStr);
-
         Optional<Ontology> optionalOntology;
-        if (!stringParamIsMissing(commitIdStr)) {
-            throwErrorIfMissingStringParam(branchIdStr, "The branchIdStr is missing.");
-            optionalOntology = ontologyManager.retrieveOntology(recordId, valueFactory.createIRI(branchIdStr),
-                    valueFactory.createIRI(commitIdStr));
-        } else if (!stringParamIsMissing(branchIdStr)) {
-            optionalOntology = ontologyManager.retrieveOntology(recordId, valueFactory.createIRI(branchIdStr));
+        Optional<Cache<String, Ontology>> cache = getOntologyCache();
+        String key = OntologyCache.generateKey(recordIdStr, branchIdStr, commitIdStr);
+
+        if (cache.isPresent() && cache.get().containsKey(key)) {
+            log.trace("cache hit");
+            optionalOntology = Optional.of(cache.get().get(key));
         } else {
-            optionalOntology = ontologyManager.retrieveOntology(recordId);
+            Resource recordId = valueFactory.createIRI(recordIdStr);
+
+            if (!stringParamIsMissing(commitIdStr)) {
+                throwErrorIfMissingStringParam(branchIdStr, "The branchIdStr is missing.");
+                optionalOntology = ontologyManager.retrieveOntology(recordId, valueFactory.createIRI(branchIdStr),
+                        valueFactory.createIRI(commitIdStr));
+            } else if (!stringParamIsMissing(branchIdStr)) {
+                optionalOntology = ontologyManager.retrieveOntology(recordId, valueFactory.createIRI(branchIdStr));
+            } else {
+                optionalOntology = ontologyManager.retrieveOntology(recordId);
+            }
         }
 
         if (optionalOntology.isPresent()) {
@@ -827,7 +860,7 @@ public class OntologyRestImpl implements OntologyRest {
     /**
      * Gets the List of entity IRIs identified by a lambda function in an Ontology identified by the provided IDs.
      *
-     * @param context the context of the request.
+     * @param context     the context of the request.
      * @param recordIdStr the record ID String to process.
      * @param branchIdStr the branch ID String to process.
      * @param commitIdStr the commit ID String to process.
@@ -856,9 +889,9 @@ public class OntologyRestImpl implements OntologyRest {
      *                    component.
      * @return the JSON list of imported IRI lists determined by the provided Function.
      */
-    private JSONArray doWithImportedOntologies(ContainerRequestContext context, String recordIdStr,
-                                               String branchIdStr, String commitIdStr,
-                                               Function<Ontology, JSONObject> iriFunction) {
+    private Response doWithImportedOntologies(ContainerRequestContext context, String recordIdStr,
+                                              String branchIdStr, String commitIdStr,
+                                              Function<Ontology, JSONObject> iriFunction) {
         Set<Ontology> importedOntologies;
         try {
             importedOntologies = getImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr);
@@ -872,9 +905,9 @@ public class OntologyRestImpl implements OntologyRest {
                 object.put("id", ontology.getOntologyId().getOntologyIdentifier().stringValue());
                 ontoArray.add(object);
             }
-            return ontoArray;
+            return Response.ok(ontoArray).build();
         } else {
-            throw ErrorUtils.sendError("No imported ontologies found.", Response.Status.NO_CONTENT);
+            return Response.noContent().build();
         }
     }
 
@@ -1015,7 +1048,7 @@ public class OntologyRestImpl implements OntologyRest {
     /**
      * Gets the requested serialization of the provided Ontology.
      *
-     * @param ontology the Ontology you want to serialize in a different format.
+     * @param ontology  the Ontology you want to serialize in a different format.
      * @param rdfFormat the format you want.
      * @return A String containing the newly serialized Ontology.
      */
@@ -1035,7 +1068,7 @@ public class OntologyRestImpl implements OntologyRest {
     /**
      * Return a JSONObject with the requested format and the requested ontology in that format.
      *
-     * @param ontology the ontology to format and return
+     * @param ontology  the ontology to format and return
      * @param rdfFormat the format to serialize the ontology in
      * @return a JSONObject with the document format and the ontology in that format
      */
@@ -1088,7 +1121,7 @@ public class OntologyRestImpl implements OntologyRest {
     /**
      * Adds the provided Model to the requester's InProgressCommit additions.
      *
-     * @param context the context of the request.
+     * @param context     the context of the request.
      * @param recordIdStr the record ID String to process.
      * @param entityModel the Model to add to the additions in the InProgressCommit.
      * @return a Response indicating the success or failure of the addition.
@@ -1104,8 +1137,8 @@ public class OntologyRestImpl implements OntologyRest {
      * Adds the Statements associated with the entity identified by the provided ID to the requester's InProgressCommit
      * deletions.
      *
-     * @param context the context of the request.
-     * @param ontology the ontology to process.
+     * @param context     the context of the request.
+     * @param ontology    the ontology to process.
      * @param entityIdStr the ID of the entity to be deleted.
      * @param recordIdStr the ID of the record which contains the entity to be deleted.
      * @return a Response indicating the success or failure of the deletion.
@@ -1130,7 +1163,7 @@ public class OntologyRestImpl implements OntologyRest {
     /**
      * Gets the entity from within the provided Ontology based on the provided entity ID.
      *
-     * @param ontology the Ontology to process.
+     * @param ontology    the Ontology to process.
      * @param entityIdStr the ID of the entity to get.
      * @return a Model representation of the entity with the provided ID.
      */
@@ -1143,7 +1176,7 @@ public class OntologyRestImpl implements OntologyRest {
      * Verifies that the provided JSON-LD contains the proper @type
      *
      * @param jsonldStr the JSON-LD of the entity being verified.
-     * @param type the @type that the entity should be.
+     * @param type      the @type that the entity should be.
      */
     private void verifyJsonldType(String jsonldStr, String type) {
         try {
@@ -1161,11 +1194,11 @@ public class OntologyRestImpl implements OntologyRest {
     /**
      * Uploads the provided Ontology to a data store.
      *
-     * @param context the context of the request.
-     * @param ontology the Ontology to upload.
-     * @param title the title for the OntologyRecord.
+     * @param context     the context of the request.
+     * @param ontology    the Ontology to upload.
+     * @param title       the title for the OntologyRecord.
      * @param description the description for the OntologyRecord.
-     * @param keywords the comma separated list of keywords associated with the OntologyRecord.
+     * @param keywords    the comma separated list of keywords associated with the OntologyRecord.
      * @return a Response indicating the success of the upload.
      */
     private Response uploadOntology(ContainerRequestContext context, Ontology ontology, String title,
@@ -1182,22 +1215,38 @@ public class OntologyRestImpl implements OntologyRest {
         OntologyRecord record = catalogManager.createRecord(builder.build(), ontologyRecordFactory);
         catalogManager.addRecord(catalogId, record);
         catalogManager.addMasterBranch(record.getResource());
-        record = catalogManager.getRecord(catalogId, record.getResource(), ontologyRecordFactory).get();
+        final OntologyRecord finalRecord = catalogManager.getRecord(catalogId, record.getResource(), ontologyRecordFactory).get();
 
-        InProgressCommit inProgressCommit = catalogManager.createInProgressCommit(user, record.getResource());
+        InProgressCommit inProgressCommit = catalogManager.createInProgressCommit(user, finalRecord.getResource());
         catalogManager.addInProgressCommit(inProgressCommit);
         catalogManager.addAdditions(ontology.asModel(modelFactory), inProgressCommit.getResource());
 
         Commit commit = catalogManager.createCommit(inProgressCommit, "The initial commit.", null, null);
-        Resource masterBranchId = record.getMasterBranch().get().getResource();
+        Resource masterBranchId = finalRecord.getMasterBranch_resource().get();
         catalogManager.addCommitToBranch(commit, masterBranchId);
 
         catalogManager.removeInProgressCommit(inProgressCommit.getResource());
+
+        // Cache
+        getOntologyCache().ifPresent(cache -> {
+            String key = OntologyCache.generateKey(finalRecord.getResource().stringValue(), masterBranchId.stringValue(), commit.getResource().stringValue());
+            log.trace("caching " + key);
+            cache.put(key, ontology);
+        });
+
         JSONObject response = new JSONObject()
                 .element("ontologyId", ontology.getOntologyId().getOntologyIdentifier().stringValue())
-                .element("recordId", record.getResource().stringValue())
+                .element("recordId", finalRecord.getResource().stringValue())
                 .element("branchId", masterBranchId.stringValue())
                 .element("commitId", commit.getResource().stringValue());
         return Response.status(201).entity(response).build();
+    }
+
+    private Optional<Cache<String, Ontology>> getOntologyCache() {
+        Optional<Cache<String, Ontology>> cache = Optional.empty();
+        if (cacheManager != null) {
+            cache = cacheManager.getCache(OntologyCache.CACHE_NAME, String.class, Ontology.class);
+        }
+        return cache;
     }
 }

@@ -101,44 +101,37 @@ public interface OntologyManager {
     Ontology createOntology(Model model);
 
     /**
-     * Retrieves an Ontology using a record id and the head commit of its MASTER branch. Returns an Optional with
-     * Ontology object or an empty Optional instance if the record id is not found or any owlapi exception or sesame
-     * exception is caught.
+     * Retrieves an Ontology using a record id and the head commit of its MASTER branch. Returns an Optional of the
+     * Ontology if found, otherwise Optional.empty().
      *
      * @param recordId the record id for the OntologyRecord you want to retrieve.
-     * @return an Optional with Ontology if record id is found, or an empty Optional instance if not found.
+     * @return Returns an Optional of the Ontology if found, otherwise Optional.empty().
      * @throws MatontoOntologyCreationException - the ontology can't be created.
-     * @throws IllegalArgumentException - the ontology's master branch, head commit, or compiled resource can't be
-     *                                    retrieved.
      */
     Optional<Ontology> retrieveOntology(@Nonnull Resource recordId);
 
     /**
-     * Retrieves an Ontology using a record id and the head commit of a Branch identified by the provided branch id.
-     * Returns an Optional with Ontology object or an empty Optional instance if the record id is not found or any
-     * owlapi exception or sesame exception is caught.
+     * Retrieves an Ontology using a record id and the head commit of the specified branch. Returns an Optional of the
+     * Ontology if found, otherwise Optional.empty().
      *
      * @param recordId the record id for the OntologyRecord you want to retrieve.
      * @param branchId the branch id for the Branch you want to retrieve.
-     * @return an Optional with Ontology if record id is found, or an empty Optional instance if not found.
+     * @return an Optional of the Ontology if found, otherwise Optional.empty().
      * @throws MatontoOntologyCreationException - the ontology can't be created.
-     * @throws IllegalArgumentException - the ontology's identified branch, head commit, or compiled resource can't be
-     *                                    retrieved.
+     * @throws IllegalArgumentException if the branch cannot be found.
      */
     Optional<Ontology> retrieveOntology(@Nonnull Resource recordId, @Nonnull Resource branchId);
 
     /**
-     * Retrieves an Ontology using an record id, a branch id, and the id of a commit on that branch from the
-     * repository. Returns an Optional with Ontology object or an empty Optional instance if the record id is not
-     * found or any owlapi exception or sesame exception is caught.
+     * Retrieves an Ontology using a record id, branch id, and the id of a commit on that branch. Returns an Optional
+     * of the Ontology if found, otherwise Optional.empty().
      *
      * @param recordId the record id for the OntologyRecord you want to retrieve.
      * @param branchId the branch id for the Branch you want to retrieve.
      * @param commitId the commit id for the Commit you want to retrieve.
-     * @return an Optional with Ontology if record id is found, or an empty Optional instance if not found.
+     * @return an Optional of the Ontology if found, otherwise Optional.empty().
      * @throws MatontoOntologyCreationException - the ontology can't be created.
-     * @throws IllegalArgumentException - the ontology's identified branch, identified commit, or compiled resource
-     *                                    can't be retrieved.
+     * @throws IllegalArgumentException if the branch or commit cannot be found.
      */
     Optional<Ontology> retrieveOntology(@Nonnull Resource recordId, @Nonnull Resource branchId,
                                         @Nonnull Resource commitId);
@@ -151,6 +144,15 @@ public interface OntologyManager {
      * @throws IllegalArgumentException - the OntologyRecord can't be retrieved.
      */
     void deleteOntology(@Nonnull Resource recordId);
+
+    /**
+     * Deletes a branch associated with an OntologyRecord.
+     *
+     * @param recordId The record id for the OntologyRecord which contains the Branch you want to delete.
+     * @param branchId The branch id of the ontology branch you want to delete.
+     * @throws IllegalArgumentException - the OntologyRecord can't be retrieved.
+     */
+    void deleteOntologyBranch(@Nonnull Resource recordId, @Nonnull Resource branchId);
 
     /**
      * Creates a new OntologyId with a generated identifier.
@@ -199,6 +201,14 @@ public interface OntologyManager {
      * @return a Set with the query results.
      */
     TupleQueryResult getSubDatatypePropertiesOf(Ontology ontology);
+
+    /**
+     * Gets the subPropertyOf relationships for annotation properties in the provided Ontology.
+     *
+     * @param ontology the Ontology you wish to query.
+     * @return a Set with the query results.
+     */
+    TupleQueryResult getSubAnnotationPropertiesOf(Ontology ontology);
 
     /**
      * Gets the subPropertyOf relationships for object properties in the provided Ontology.

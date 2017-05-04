@@ -40,9 +40,9 @@
                     onClick: '&'
                 },
                 bindToController: {
-                    currentEntity: '=',
+                    currentEntity: '<',
                     isOpened: '=',
-                    path: '='
+                    path: '<'
                 },
                 templateUrl: 'modules/ontology-editor/directives/treeItem/treeItem.html',
                 controllerAs: 'dvm',
@@ -50,7 +50,6 @@
                     var dvm = this;
                     var treeDisplay = settingsManagerService.getTreeDisplay();
                     var os = ontologyStateService;
-                    dvm.saved = isSaved();
 
                     dvm.getTreeDisplay = function() {
                         if (treeDisplay === 'pretty') {
@@ -61,17 +60,17 @@
 
                     dvm.toggleOpen = function() {
                         dvm.isOpened = !dvm.isOpened;
-                        os.setOpened(dvm.path, dvm.isOpened);
+                        os.setOpened(_.join(dvm.path, '.'), dvm.isOpened);
                     }
 
-                    function isSaved() {
+                    dvm.isSaved = function() {
                         var ids = _.unionWith(_.map(os.listItem.inProgressCommit.additions, '@id'), _.map(os.listItem.inProgressCommit.deletions, '@id'), _.isEqual);
                         return _.includes(ids, _.get(dvm.currentEntity, '@id'));
                     }
 
-                    $scope.$watch(() => os.listItem.inProgressCommit, () => {
-                        dvm.saved = isSaved();
-                    });
+                    dvm.saved = dvm.isSaved();
+                    
+                    $scope.$watch(() => os.listItem.inProgressCommit.additions + os.listItem.inProgressCommit.deletions, () => dvm.saved = dvm.isSaved() );
                 }]
             }
         }

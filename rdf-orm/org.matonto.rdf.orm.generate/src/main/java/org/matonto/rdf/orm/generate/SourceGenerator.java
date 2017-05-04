@@ -100,6 +100,7 @@ public class SourceGenerator {
     private Map<JDefinedClass, Map<String, IRI>> interfaceFieldRangeMap = new HashMap<>();
     private Map<JDefinedClass, Map<JMethod, JFieldVar>> classMethodIriMap = new HashMap<>();
     private Map<JDefinedClass, JDefinedClass> interfaceImplMap = new HashMap<>();
+    private Map<String, JDefinedClass> nameInterfaceMap = new HashMap<>();
     private final List<ReferenceOntology> referenceOntologies = new ArrayList<>();
 
     public SourceGenerator(final Model ontologyGraph, final String outputPackage, final Collection<ReferenceOntology> referenceOntologies)
@@ -116,12 +117,11 @@ public class SourceGenerator {
         this.model = ontologyGraph;
         this.metaModel = new LinkedHashModel(model);
         this.packageName = outputPackage;
-        // LOG if we're not referencing an imported ontology.
-        checkImports(this.model, this.referenceOntologies);
         this.referenceOntologies.forEach(ont -> {
-            checkImports(ont.getOntologyModel(), this.referenceOntologies);
             this.metaModel.addAll(ont.getOntologyModel());
         });
+        // LOG if we're not referencing an imported ontology.
+        checkImports(this.model, this.referenceOntologies);
         // Built interfaces...
         generateIndividualInterfaces();
         // Link the interfaces inheritence-wise.
@@ -397,26 +397,62 @@ public class SourceGenerator {
     private void generateFieldAccessorsForEachInterfaceMethod(final JDefinedClass impl,
                                                               final JDefinedClass interfaceClass) {
         interfaceClass.methods().forEach(interfaceMethod -> {
-            LOG.debug("Adding " + interfaceMethod.name() + " to the implementation class: " + interfaceClass.name());
-            // Generate getter.
-            if (interfaceMethod.name().startsWith("get") || interfaceMethod.name().startsWith("is")) {
-                generateFieldGetterForImpl(impl, interfaceMethod, interfaceClass);
-            }
-            // Generate setter.
-            else if (interfaceMethod.name().startsWith("set")) {
-                generateFieldSetterForImpl(impl, interfaceMethod, interfaceClass);
-            }
-            // Else it's a property IRI getter.
-            else if (interfaceMethod.name().startsWith(PROPERTY_IRI_GETTER_PREFIX)) {
-                if (impl.methods().stream().noneMatch(method -> method.name().equals(interfaceMethod.name()))) {
-                    final JMethod method = impl.method(JMod.PUBLIC, codeModel._ref(org.matonto.rdf.api.IRI.class), interfaceMethod.name());
-                    method.annotate(Override.class);
-                    method.body()._return(
-                            JExpr._this().ref("valueFactory").invoke("createIRI")
-                                    .arg(interfaceClass.staticRef(interfaceMethod.name().replace(PROPERTY_IRI_GETTER_PREFIX, "") + "_IRI")));
+            if (!alreadyHasMethod(impl, interfaceClass, interfaceMethod)) {
+                LOG.debug("Adding " + interfaceMethod.name() + " to the implementation class: " + interfaceClass.name());
+                // Generate getter.
+                if (interfaceMethod.name().startsWith("get") || interfaceMethod.name().startsWith("is")) {
+                    generateFieldGetterForImpl(impl, interfaceMethod, interfaceClass);
+                }
+                // Generate setter.
+                else if (interfaceMethod.name().startsWith("set")) {
+                    generateFieldSetterForImpl(impl, interfaceMethod, interfaceClass);
+                }
+                // Else it's a property IRI getter.
+                else if (interfaceMethod.name().startsWith(PROPERTY_IRI_GETTER_PREFIX)) {
+                    if (impl.methods().stream().noneMatch(method -> method.name().equals(interfaceMethod.name()))) {
+                        final JMethod method = impl.method(JMod.PUBLIC, codeModel._ref(org.matonto.rdf.api.IRI.class), interfaceMethod.name());
+                        method.annotate(Override.class);
+                        method.body()._return(
+                                JExpr._this().ref("valueFactory").invoke("createIRI")
+                                        .arg(interfaceClass.staticRef(interfaceMethod.name().replace(PROPERTY_IRI_GETTER_PREFIX, "") + "_IRI")));
+                    }
                 }
             }
         });
+    }
+
+    private boolean alreadyHasMethod(final JDefinedClass impl, final JDefinedClass interfaceClass,
+                                     final JMethod interfaceMethod) {
+        boolean alreadyHas = false;
+        if (impl.getMethod(interfaceMethod.name(), interfaceMethod.listParamTypes()) == null) {
+            for (JMethod method : impl.methods()) {
+                if (interfaceMethod.name().equals(method.name()) && variablesOverlap(method, interfaceMethod)) {
+                    alreadyHas = true;
+                    break;
+                }
+            }
+        } else {
+            alreadyHas = true;
+        }
+        return alreadyHas;
+    }
+
+    private boolean variablesOverlap(JMethod method, JMethod interfaceMethod) {
+        boolean overlap = true;
+        for (JVar implParam : method.params()) {
+            boolean found = false;
+            for (JVar newParam : interfaceMethod.params()) {
+                if (newParam.type().fullName().equalsIgnoreCase(implParam.type().fullName())) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                overlap = false;
+                break;
+            }
+        }
+        return overlap;
     }
 
     private void generateFieldSetterForImpl(final JDefinedClass impl, final JMethod interfaceMethod,
@@ -674,7 +710,7 @@ public class SourceGenerator {
                                 clazz._implements(interfaces.get(extending));
                             } else {
                                 referenceOntologies.forEach(refOnt -> {
-                                    if (refOnt.containsClass(extending)) {
+                                    if (refOnt.containsClass(extending) && metaModel.subjects().contains(extending)) {
                                         if (refOnt.getSourceGenerator() == null) {
                                             try {
                                                 refOnt.generateSource(referenceOntologies);
@@ -807,6 +843,7 @@ public class SourceGenerator {
                     fieldIriMap.put(fieldName + "_IRI", (IRI) resource);
                     rangeMap.put(fieldName, range);
                 });
+                nameInterfaceMap.put(clazz.fullName(), clazz);
                 interfaceFieldIriMap.put(clazz, fieldIriMap);
                 interfaceFieldRangeMap.put(clazz, rangeMap);
                 interfaces.put(classIri, clazz);
@@ -830,7 +867,7 @@ public class SourceGenerator {
      * @return The IRI representing the range of the property
      */
     private IRI getRangeOfProperty(final IRI propertyIri) {
-        final Model submodel = this.model.filter(propertyIri, RDFS.RANGE, null);
+        final Model submodel = this.metaModel.filter(propertyIri, RDFS.RANGE, null);
         if (!submodel.isEmpty()) {
             return (IRI) submodel.iterator().next().getObject();
         } else {
@@ -846,7 +883,7 @@ public class SourceGenerator {
      * saying it is a owl:FunctionalProperty.
      */
     private boolean isPropertyFunctional(final IRI propertyIri) {
-        return !this.model.filter(propertyIri, RDF.TYPE, OWL.FUNCTIONALPROPERTY).isEmpty();
+        return !this.metaModel.filter(propertyIri, RDF.TYPE, OWL.FUNCTIONALPROPERTY).isEmpty();
     }
 
     /**
@@ -890,22 +927,39 @@ public class SourceGenerator {
 
         final JVar value = implMethod.body().decl(JMod.FINAL, returnType, "value", callGet);
 
+        JClass returnClass = ((JClass) interfaceMethod.type()).getTypeParameters().get(0);
+
         boolean returnsValue = interfaceMethod.type()
                 .equals(codeModel.ref(Set.class).narrow(org.matonto.rdf.api.Value.class));
-        boolean returnsValueSet = (returnsSet && ((JClass) interfaceMethod.type()).getTypeParameters().get(0)
-                .equals(codeModel.ref(org.matonto.rdf.api.Value.class)));
+        boolean returnsValueSet = (returnsSet && returnClass.equals(codeModel.ref(org.matonto.rdf.api.Value.class)));
 
         if (returnsValue || returnsValueSet) {
             implMethod.body()._return(value);
         } else if (returnsSet) {
+            if (nameInterfaceMap.containsKey(returnClass.fullName())) {
+                implMethod.body().add(JExpr.ref("value").invoke("removeIf").arg(JExpr.direct("value1 -> !getModel().subjects().contains(value1)")));
+            }
             implMethod.body()._return(JExpr.ref("valueConverterRegistry").invoke("convertValues").arg(value)
-                    .arg(JExpr._this()).arg(((JClass) interfaceMethod.type()).getTypeParameters().get(0).dotclass()));
+                    .arg(JExpr._this()).arg(returnClass.dotclass()));
         } else {
             JExpression convertValue = JExpr.ref("valueConverterRegistry").invoke("convertValue")
                     .arg(JExpr.ref("value").invoke("get")).arg(JExpr._this())
-                    .arg((((JClass) interfaceMethod.type()).getTypeParameters().get(0)).dotclass());
+                    .arg(returnClass.dotclass());
 
-            JConditional conditional = implMethod.body()._if(JExpr.ref("value").invoke("isPresent"));
+            JInvocation valueIsPresent = JExpr.ref("value").invoke("isPresent");
+
+            JConditional conditional;
+            if (nameInterfaceMap.containsKey(returnClass.fullName())) {
+                JInvocation modelContainsResource = JExpr._this()
+                        .invoke("getModel")
+                        .invoke("subjects")
+                        .invoke("contains").arg(JExpr.ref("value").invoke("get"));
+                conditional = implMethod.body()._if(valueIsPresent.cand(modelContainsResource));
+            } else {
+                conditional = implMethod.body()._if(valueIsPresent);
+            }
+
+
             conditional._then()._return(codeModel.ref(Optional.class).staticInvoke("of").arg(convertValue));
             conditional._else()._return(codeModel.ref(Optional.class).staticInvoke("empty"));
         }

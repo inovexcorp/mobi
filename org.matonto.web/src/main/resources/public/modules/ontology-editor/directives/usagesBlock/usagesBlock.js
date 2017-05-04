@@ -38,37 +38,44 @@
                 controllerAs: 'dvm',
                 controller: ['$scope', function($scope) {
                     var dvm = this;
+                    dvm.size = 100;
+                    dvm.index = 0;
                     dvm.om = ontologyManagerService;
-                    dvm.sm = ontologyStateService;
+                    dvm.os = ontologyStateService;
                     dvm.ontoUtils = ontologyUtilsManagerService;
+                    dvm.id = 'usages-' + dvm.os.getActiveKey() + '-' + dvm.os.listItem.recordId;
+                    dvm.results = getResults();
+                    dvm.total = 0;
+                    dvm.shown = 0;
+
+                    dvm.getMoreResults = function() {
+                        dvm.index++;
+                        _.forEach(_.get(_.chunk(_.get(dvm.os.getActivePage(), 'usages', []), dvm.size), dvm.index, []), binding => addToResults(dvm.results, binding));
+                    }
+
+                    $scope.$watch(function() {
+                        return dvm.os.getActivePage().usages;
+                    }, function() {
+                        dvm.size = 100;
+                        dvm.index = 0;
+                        dvm.shown = 0;
+                        dvm.results = getResults();
+                    });
 
                     function getResults() {
                         var results = {};
-                        _.forEach(_.get(dvm.sm.getActivePage(), 'usages', []), binding =>
-                            results[binding.p.value] = _.union(_.get(results, binding.p.value, []), [{subject: binding.s.value, predicate: binding.p.value, object: binding.o.value}]));
+                        var usages = _.get(dvm.os.getActivePage(), 'usages', []);
+                        dvm.total = usages.length;
+                        var chunks = _.chunk(usages, dvm.size);
+                        dvm.chunks = chunks.length === 0 ? 0 : chunks.length - 1;
+                        _.forEach(_.get(chunks, dvm.index, []), binding => addToResults(results, binding));
                         return results;
                     }
-                    function getWatchURL() {
-                        return '\/matontorest\/ontologies\/' + encodeURIComponent(_.get(dvm.sm.listItem, 'recordId')) + '\/entity-usages\/.*\?.*queryType=select.*tab=' + dvm.sm.getActiveKey();
+
+                    function addToResults(results, binding) {
+                        results[binding.p.value] = _.union(_.get(results, binding.p.value, []), [{subject: binding.s.value, predicate: binding.p.value, object: binding.o.value}]);
+                        dvm.shown++;
                     }
-
-                    $scope.requestConfig = {
-                        method: 'GET',
-                        url: getWatchURL()
-                    };
-
-                    dvm.results = getResults();
-
-                    $scope.$watch(function() {
-                        return _.get(dvm.sm.listItem, 'recordId');
-                    }, function() {
-                        $scope.requestConfig.url = getWatchURL();
-                    });
-                    $scope.$watch(function() {
-                        return dvm.sm.getActivePage().usages;
-                    }, function() {
-                        dvm.results = getResults();
-                    });
                 }]
             }
         }

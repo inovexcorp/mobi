@@ -94,7 +94,8 @@ describe('Dataset Manager service', function() {
                 repositoryId: 'repo',
                 datasetIRI: 'dataset',
                 description: 'Description',
-                keywords: ['keyword0', 'keyword1']
+                keywords: ['keyword0', 'keyword1'],
+                ontologies: ['ontology1', 'ontology2']
             };
         });
         it('unless an error occurs', function(done) {
@@ -111,7 +112,7 @@ describe('Dataset Manager service', function() {
             });
             $httpBackend.flush();
         });
-        it('with a datasetIRI, description, and keywords', function(done) {
+        it('with a datasetIRI, description, keywords, and ontologies', function(done) {
             $httpBackend.expectPOST('/matontorest/datasets',
                 function(data) {
                     return data instanceof FormData;
@@ -125,10 +126,11 @@ describe('Dataset Manager service', function() {
             });
             $httpBackend.flush();
         });
-        it('without a datasetIRI, description, or keywords', function(done) {
+        it('without a datasetIRI, description, keywords, or ontologies', function(done) {
             delete this.recordConfig.datasetIRI;
             delete this.recordConfig.description;
             delete this.recordConfig.keywords;
+            delete this.recordConfig.ontologies;
             $httpBackend.expectPOST('/matontorest/datasets',
                 function(data) {
                     return data instanceof FormData;

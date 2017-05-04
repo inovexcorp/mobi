@@ -1,12 +1,12 @@
-package org.matonto.ontology.rest;
+package org.matonto.rest.util.logging;
 
 /*-
  * #%L
- * org.matonto.ontology.rest
+ * org.matonto.rest.util
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -27,10 +27,12 @@ import aQute.bnd.annotation.component.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
+import javax.ws.rs.container.ResourceInfo;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.ext.Provider;
-import java.io.IOException;
 
 @Provider
 @Component(immediate = true)
@@ -38,14 +40,23 @@ public class RequestLoggingFilter implements ContainerRequestFilter {
 
     private final Logger log = LoggerFactory.getLogger(RequestLoggingFilter.class);
 
+    @Context
+    private ResourceInfo resourceInfo;
+
     @Override
     public void filter(ContainerRequestContext containerRequestContext) throws IOException {
-        if (log.isDebugEnabled() && containerRequestContext != null) {
-            containerRequestContext.setProperty(Filters.REQ_START_TIME, System.currentTimeMillis());
+        Class<?> resourceClass = resourceInfo.getResourceClass();
 
-            String path = containerRequestContext.getUriInfo().getPath();
-            String method = containerRequestContext.getMethod();
-            log.debug(String.format("%s: %s", method, path));
+        if (log.isInfoEnabled() && containerRequestContext != null && resourceClass != null) {
+            Logger resourceLog = LoggerFactory.getLogger(resourceClass);
+
+            if (resourceLog.isInfoEnabled()) {
+                containerRequestContext.setProperty(Filters.REQ_START_TIME, System.currentTimeMillis());
+
+                String path = containerRequestContext.getUriInfo().getPath();
+                String method = containerRequestContext.getMethod();
+                resourceLog.debug(String.format("%s: %s", method, path));
+            }
         }
     }
 }

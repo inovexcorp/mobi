@@ -1,12 +1,14 @@
-package org.matonto.ontology.rest;
+@Version("1.0.0.${build}")
+
+package org.matonto.ontology.utils.cache;
 
 /*-
  * #%L
- * org.matonto.ontology.rest
+ * org.matonto.ontology.utils
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -23,7 +25,4 @@ package org.matonto.ontology.rest;
  * #L%
  */
 
-public class Filters {
-
-    public static final String REQ_START_TIME = "org.matonto.web.log.start";
-}
+import aQute.bnd.annotation.Version;

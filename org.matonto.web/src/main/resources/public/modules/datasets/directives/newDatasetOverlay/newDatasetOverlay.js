@@ -30,7 +30,7 @@
          *
          * @description
          * The `newDatasetOverlay` module only provides the `newDatasetOverlay` directive which creates
-         * an overlay with a form to create a Dataset Record.
+         * creates overlays with forms to create a Dataset Record.
          */
         .module('newDatasetOverlay', [])
         /**
@@ -40,25 +40,26 @@
          * @restrict E
          * @requires datasetManager.service:datasetManagerService
          * @requires datasetState.service:datasetStateService
+         * @requires catalogManager.service:catalogManagerService
          * @requires util.service:utilService
+         * @requires prefixes.service:prefixes
          *
          * @description
-         * `newDatasetOverlay` is a directive that creates an overlay with a form containing fields for creating
-         * a new Dataset Record. These field include the title, repository id, dataset IRI, description, and
-         * {@link keywordSelect.directive:keywordSelect keywords}. The repository id is a static field for now.
-         * The close functionality of the overlay is controlled by a passed function. The directive is replaced
-         * by the contents of its template.
+         * `newDatasetOverlay` is a directive that creates overlays with form containing fields for creating
+         * a new Dataset Record. The first overlay contains fields for the title, repository id, dataset IRI,
+         * description, and {@link keywordSelect.directive:keywordSelect keywords}. The repository id is a static
+         * field for now. The close functionality of the first overlay is controlled by a passed function. The second
+         * overlay contains a searchable list of Ontology Records that can be linked to the new Dataset Record.
          *
          * @param {Function} onClose The method to be called when closing the overlay
          */
         .directive('newDatasetOverlay', newDatasetOverlay);
 
-        newDatasetOverlay.$inject = ['datasetManagerService', 'datasetStateService', 'utilService'];
+        newDatasetOverlay.$inject = ['datasetManagerService', 'datasetStateService', 'catalogManagerService', 'utilService', 'prefixes'];
 
-        function newDatasetOverlay(datasetManagerService, datasetStateService, utilService) {
+        function newDatasetOverlay(datasetManagerService, datasetStateService, catalogManagerService, utilService, prefixes) {
             return {
                 restrict: 'E',
-                replace: true,
                 templateUrl: 'modules/datasets/directives/newDatasetOverlay/newDatasetOverlay.html',
                 scope: {},
                 bindToController: {
@@ -69,7 +70,8 @@
                     var dvm = this;
                     var state = datasetStateService;
                     var dm = datasetManagerService;
-                    var util = utilService;
+                    var cm = catalogManagerService;
+                    dvm.util = utilService;
                     dvm.error = '';
                     dvm.recordConfig = {
                         title: '',
@@ -78,15 +80,67 @@
                         description: ''
                     };
                     dvm.keywords = [];
+                    dvm.ontologySearchConfig = {
+                        pageIndex: 0,
+                        sortOption: _.find(cm.sortOptions, {field: prefixes.dcterms + 'title', ascending: true}),
+                        recordType: prefixes.catalog + 'OntologyRecord',
+                        limit: 10,
+                        searchText: ''
+                    };
+                    dvm.totalSize = 0;
+                    dvm.links = {
+                        next: '',
+                        prev: ''
+                    };
+                    dvm.ontologies = [];
+                    dvm.selectedOntologies = [];
+                    dvm.step = 0;
 
+                    dvm.getOntologies = function() {
+                        dvm.ontologySearchConfig.pageIndex = 0;
+                        cm.getRecords(cm.localCatalog['@id'], dvm.ontologySearchConfig).then(parseOntologyResults, errorMessage => {
+                            dvm.ontologies = [];
+                            dvm.links = {
+                                next: '',
+                                prev: ''
+                            };
+                            dvm.totalSize = 0;
+                            onError(errorMessage);
+                        });
+                    }
                     dvm.create = function() {
                         dvm.recordConfig.keywords = _.map(dvm.keywords, _.trim);
+                        dvm.recordConfig.ontologies = _.map(dvm.selectedOntologies, '@id');
                         dm.createDatasetRecord(dvm.recordConfig)
                             .then(() => {
-                                util.createSuccessToast('Dataset successfully created');
+                                dvm.util.createSuccessToast('Dataset successfully created');
                                 state.setResults();
                                 dvm.onClose();
-                            }, errorMessage => dvm.error = errorMessage);
+                            }, onError);
+                    }
+                    dvm.isSelected = function(ontologyId) {
+                        return _.some(dvm.selectedOntologies, {'@id': ontologyId});
+                    }
+                    dvm.selectOntology = function(ontology) {
+                        if (!dvm.isSelected(ontology['@id'])) {
+                            dvm.selectedOntologies.push(ontology);
+                        }
+                    }
+                    dvm.unselectOntology = function(ontologyId) {
+                        _.remove(dvm.selectedOntologies, {'@id': ontologyId});
+                    }
+
+                    function onError(errorMessage) {
+                        dvm.error = errorMessage;
+                    }
+                    function parseOntologyResults(response) {
+                        dvm.ontologies = response.data;
+                        var headers = response.headers();
+                        dvm.totalSize = _.get(headers, 'x-total-count', 0);
+                        var links = dvm.util.parseLinks(_.get(headers, 'link', ''));
+                        dvm.links.prev = _.get(links, 'prev', '');
+                        dvm.links.next = _.get(links, 'next', '');
+                        dvm.error = '';
                     }
                 }
             }

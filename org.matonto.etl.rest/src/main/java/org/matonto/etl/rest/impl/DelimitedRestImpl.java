@@ -37,7 +37,6 @@ import com.opencsv.CSVReader;
 import net.sf.json.JSONArray;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
-import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -47,7 +46,6 @@ import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.matonto.dataset.api.DatasetManager;
 import org.matonto.dataset.ontology.dataset.Dataset;
 import org.matonto.dataset.ontology.dataset.DatasetRecord;
-import org.matonto.etl.api.config.DelimitedConfig;
 import org.matonto.etl.api.config.ExcelConfig;
 import org.matonto.etl.api.config.SVConfig;
 import org.matonto.etl.api.delimited.DelimitedConverter;
@@ -242,12 +240,12 @@ public class DelimitedRestImpl implements DelimitedRest {
         // Add data to the dataset
         String repositoryId = record.getRepository().orElseThrow(() ->
                 ErrorUtils.sendError("Record has no repository set", Response.Status.INTERNAL_SERVER_ERROR));
-        Dataset dataset = record.getDataset().orElseThrow(() ->
+        Resource datasetIri = record.getDataset_resource().orElseThrow(() ->
                 ErrorUtils.sendError("Record has no Dataset set", Response.Status.INTERNAL_SERVER_ERROR));
         Repository repository = repositoryManager.getRepository(repositoryId)
                 .orElseThrow(() -> ErrorUtils.sendError("Repository is not available.", Response.Status.BAD_REQUEST));
         try (RepositoryConnection conn = repository.getConnection()) {
-            RepositoryResult<Statement> statements = conn.getStatements(dataset.getResource(),
+            RepositoryResult<Statement> statements = conn.getStatements(datasetIri,
                     factory.createIRI(Dataset.systemDefaultNamedGraph_IRI), null);
             if (statements.hasNext()) {
                 Resource context = (Resource) statements.next().getObject();
