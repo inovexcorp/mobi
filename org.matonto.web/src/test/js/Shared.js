@@ -591,6 +591,7 @@ function mockOntologyState() {
             this.createFlatEverythingTree = jasmine.createSpy('createFlatEverythingTree');
             this.getOntologiesArray = jasmine.createSpy('getOntologiesArray').and.returnValue(this.listItem.ontology);
             this.createFlatIndividualTree = jasmine.createSpy('createFlatIndividualTree');
+            this.updatePropertyIcon = jasmine.createSpy('updatePropertyIcon');
         });
     });
 }
