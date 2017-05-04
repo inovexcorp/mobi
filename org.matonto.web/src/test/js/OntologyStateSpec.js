@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Ontology State Service', function() {
+describe('Ontology State Service', function() {
     var ontologyStateSvc, $q, scope, util, stateManagerSvc, ontologyManagerSvc, updateRefsSvc, prefixes, catalogManagerSvc, hierarchy, indexObject, expectedPaths, ontologyState, defaultDatatypes, ontologyObj, classObj, dataPropertyObj, individualObj, ontology, getResponse, httpSvc, $document;
     var error = 'error';
     var format = 'jsonld';
@@ -99,7 +99,7 @@ fdescribe('Ontology State Service', function() {
         classes: [{localName: classId2, namespace: classId2}],
         dataProperties: [{localName: dataPropertyId2, namespace: dataPropertyId2}],
         objectProperties: [{localName: objectPropertyId2, namespace: objectPropertyId2}],
-        individuals: [{localName: individualId2, namespace: individualId2}],
+        namedIndividuals: [{localName: individualId2, namespace: individualId2}],
         datatypes: [{localName: datatypeId2, namespace: datatypeId2}]
     }];
     var classHierarchiesResponse = {
@@ -111,8 +111,10 @@ fdescribe('Ontology State Service', function() {
         index: {}
     };
     var classesWithIndividualsResponse = {
-        hierarchy: [],
-        index: {}
+        individuals: {
+            'ClassA': ['IndivA1', 'IndivA2']
+        },
+        individualsParentPath: ['ClassA']
     };
     var dataPropertyHierarchiesResponse = {
         hierarchy: [],
@@ -1369,6 +1371,72 @@ fdescribe('Ontology State Service', function() {
         expect(ontologyManagerSvc.getClassProperties).toHaveBeenCalledWith([ontology], 'class1');
         expect(ontologyManagerSvc.getNoDomainProperties).toHaveBeenCalledWith([ontology]);
     });
+    it('createFlatIndividualTree creates the correct array', function() {
+        var listItem = {
+            individualsParentPath: ['Class A', 'Class B', 'Class B1'],
+            classesAndIndividuals: {
+                'Class A': ['Individual A2', 'Individual A1'],
+                'Class B1': ['Individual B1']
+            },
+            flatClassHierarchy: [{
+                entityIRI: 'Class A',
+                hasChildren: false,
+                path: ['recordId', 'Class A'],
+                indent: 0
+            }, {
+                entityIRI: 'Class B',
+                hasChildren: true,
+                path: ['recordId', 'Class B'],
+                indent: 0
+            }, {
+                entityIRI: 'Class B1',
+                hasChildren: false,
+                path: ['recordId', 'Class B', 'Class B1'],
+                indent: 1
+            }, {
+                entityIRI: 'Class B2',
+                hasChildren: false,
+                path: ['recordId', 'Class B', 'Class B2'],
+                indent: 1
+            }]
+        };
+        var expected = [{
+            entityIRI: 'Class A',
+            hasChildren: false,
+            path: ['recordId', 'Class A'],
+            indent: 0,
+            isClass: true
+        }, {
+            entityIRI: 'Individual A1',
+            hasChildren: false,
+            path: ['recordId', 'Class A', 'Individual A1'],
+            indent: 1
+        }, {
+            entityIRI: 'Individual A2',
+            hasChildren: false,
+            path: ['recordId', 'Class A', 'Individual A2'],
+            indent: 1
+        }, {
+            entityIRI: 'Class B',
+            hasChildren: true,
+            path: ['recordId', 'Class B'],
+            indent: 0,
+            isClass: true
+        }, {
+            entityIRI: 'Class B1',
+            hasChildren: false,
+            path: ['recordId', 'Class B', 'Class B1'],
+            indent: 1,
+            isClass: true
+        }, {
+            entityIRI: 'Individual B1',
+            hasChildren: false,
+            path: ['recordId', 'Class B', 'Class B1', 'Individual B1'],
+            indent: 2
+        }];
+        expect(ontologyStateSvc.createFlatIndividualTree(listItem)).toEqual(expected);
+        expect(ontologyStateSvc.createFlatIndividualTree({})).toEqual([]);
+    });
     it('addEntity adds the entity to the provided ontology and index', function() {
         ontologyManagerSvc.getEntityName.and.returnValue('name');
         ontologyStateSvc.addEntity(listItem, individualObj);
@@ -1473,8 +1541,9 @@ fdescribe('Ontology State Service', function() {
             ontologyManagerSvc.getAnnotationPropertyHierarchies.and.returnValue($q.when(annotationPropertyHierarchiesResponse));
             ontologyManagerSvc.getImportedOntologies.and.returnValue($q.when([{id: 'imported-ontology', ontology: [{'@id': 'ontologyId'}]}]));
             catalogManagerSvc.getRecordBranches.and.returnValue($q.when({data: branches}));
-            spyOn(ontologyStateSvc, 'flattenHierarchy');
-            spyOn(ontologyStateSvc, 'createFlatEverythingTree');
+            spyOn(ontologyStateSvc, 'flattenHierarchy').and.returnValue([{prop: 'flatten'}]);
+            spyOn(ontologyStateSvc, 'createFlatEverythingTree').and.returnValue([{prop: 'everything'}]);
+            spyOn(ontologyStateSvc, 'createFlatIndividualTree').and.returnValue([{prop: 'individual'}]);
         });
         it('when all promises resolve', function() {
             ontologyManagerSvc.getIris.and.returnValue($q.when(irisResponse));
@@ -1521,20 +1590,24 @@ fdescribe('Ontology State Service', function() {
                     }], ontologyManagerSvc.defaultDatatypes));
                     expect(_.get(response, 'classHierarchy')).toEqual(classHierarchiesResponse.hierarchy);
                     expect(_.get(response, 'classIndex')).toEqual(classHierarchiesResponse.index);
-                    expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.classHierarchy, recordId, response);
-                    expect(_.get(response, 'classesWithIndividuals')).toEqual(classesWithIndividualsResponse.hierarchy);
-                    expect(_.get(response, 'classesWithIndividualsIndex')).toEqual(classesWithIndividualsResponse.index);
-                    expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.classesWithIndividuals, recordId, response);
+                    expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.dataPropertyHierarchy, recordId, response);
+                    expect(_.get(response, 'flatClassHierarchy')).toEqual([{prop: 'flatten'}]);
+                    expect(_.get(response, 'classesWithIndividuals')).toEqual(['ClassA']);
+                    expect(_.get(response, 'classesAndIndividuals')).toEqual(classesWithIndividualsResponse.individuals);
+                    expect(_.get(response, 'individualsParentPath')).toEqual(classesWithIndividualsResponse.individualsParentPath);
                     expect(_.get(response, 'dataPropertyHierarchy')).toEqual(dataPropertyHierarchiesResponse.hierarchy);
                     expect(_.get(response, 'dataPropertyIndex')).toEqual(dataPropertyHierarchiesResponse.index);
                     expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.dataPropertyHierarchy, recordId, response);
+                    expect(_.get(response, 'flatDataPropertyHierarchy')).toEqual([{prop: 'flatten'}]);
                     expect(_.get(response, 'objectPropertyHierarchy')).toEqual(objectPropertyHierarchiesResponse.hierarchy);
                     expect(_.get(response, 'objectPropertyIndex')).toEqual(objectPropertyHierarchiesResponse.index);
                     expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.objectPropertyHierarchy, recordId, response);
+                    expect(_.get(response, 'flatObjectPropertyHierarchy')).toEqual([{prop: 'flatten'}]);
                     expect(_.get(response, 'branches')).toEqual(branches);
                     expect(_.get(response, 'annotationPropertyHierarchy')).toEqual(annotationPropertyHierarchiesResponse.hierarchy);
                     expect(_.get(response, 'annotationPropertyIndex')).toEqual(annotationPropertyHierarchiesResponse.index);
                     expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.annotationPropertyHierarchy, recordId, response);
+                    expect(_.get(response, 'flatAnnotationPropertyHierarchy')).toEqual([{prop: 'flatten'}]);
                     expect(_.get(response, 'upToDate')).toBe(true);
                     expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith([ontology, [{
                         '@id': 'ontologyId',
@@ -1544,6 +1617,9 @@ fdescribe('Ontology State Service', function() {
                             imported: true
                         }
                     }]], response);
+                    expect(_.get(response, 'flatEverythingTree')).toEqual([{prop: 'everything'}]);
+                    expect(ontologyStateSvc.createFlatIndividualTree).toHaveBeenCalledWith(response);
+                    expect(_.get(response, 'flatIndividualsHierarchy')).toEqual([{prop: 'individual'}]);
                 }, function() {
                     fail('Promise should have resolved');
                 });
@@ -1582,6 +1658,20 @@ fdescribe('Ontology State Service', function() {
                 expect(_.get(response, 'property2')['@type']).toEqual(prefixes.xsd + 'string');
             });
         });
+    });
+    it('getIndividualsParentPath should return the list of unique classes', function() {
+        var listItem = {
+            classesAndIndividuals: {
+                classA: ['ind1', 'ind2'],
+                classB: ['ind3', 'ind4']
+            },
+            classIndex: {
+                classB: ['classA'],
+                classZ: ['classY']
+            }
+        }
+        var expected = ['classA', 'classB'];
+        expect(ontologyStateSvc.getIndividualsParentPath(listItem)).toEqual(expected);
     });
     describe('addOntologyToList should call the correct functions', function() {
         var createDeferred;
@@ -1867,25 +1957,22 @@ fdescribe('Ontology State Service', function() {
         });
     });
     it('setIndividualsOpened sets the correct property on the state object', function() {
-        var path = 'this.is.the';
-        var path2 = 'path';
+        var path = 'this.is.the.path';
         _.forEach([true, false], function(value) {
-            ontologyStateSvc.setIndividualsOpened(path, path2, value);
-            expect(_.get(ontologyStateSvc.state, encodeURIComponent(path) + '.' + encodeURIComponent(path2) + '.individualsOpened')).toBe(value);
+            ontologyStateSvc.setIndividualsOpened(path, value);
+            expect(_.get(ontologyStateSvc.state, encodeURIComponent(path) + '.individualsOpened')).toBe(value);
         });
     });
     describe('getIndividualsOpened gets the correct property value on the state object', function() {
         it('when path is not found, returns false', function() {
-            var path = 'this.is.the';
-            var path2 = 'path';
-            expect(ontologyStateSvc.getIndividualsOpened(path, path2)).toBe(false);
+            var path = 'this.is.the.path';
+            expect(ontologyStateSvc.getIndividualsOpened(path)).toBe(false);
         });
         it('when path is found', function() {
-            var path = 'this.is.the';
-            var path2 = 'path';
+            var path = 'this.is.the.path';
             _.forEach([true, false], function(value) {
-                _.set(ontologyStateSvc.state, encodeURIComponent(path) + '.' + encodeURIComponent(path2) + '.individualsOpened', value);
-                expect(ontologyStateSvc.getIndividualsOpened(path, path2)).toBe(value);
+                _.set(ontologyStateSvc.state, encodeURIComponent(path) + '.individualsOpened', value);
+                expect(ontologyStateSvc.getIndividualsOpened(path)).toBe(value);
             });
         });
     });
