@@ -28,15 +28,15 @@ import static org.matonto.rest.util.RestUtils.getRDFFormatMimeType;
 import static org.matonto.rest.util.RestUtils.jsonldToModel;
 import static org.matonto.rest.util.RestUtils.modelToJsonld;
 
-import com.google.common.collect.Iterables;
-
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
+import com.google.common.collect.Iterables;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONException;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.matonto.cache.api.CacheManager;
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.Difference;
 import org.matonto.catalog.api.builder.RecordConfig;
@@ -57,6 +57,7 @@ import org.matonto.ontology.core.api.propertyexpression.AnnotationProperty;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.ontology.rest.OntologyRest;
 import org.matonto.ontology.utils.api.SesameTransformer;
+import org.matonto.ontology.utils.cache.OntologyCache;
 import org.matonto.persistence.utils.JSONQueryResults;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.query.api.Binding;
@@ -71,6 +72,8 @@ import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rest.util.ErrorUtils;
 import org.matonto.web.security.util.AuthenticationProps;
 import org.openrdf.model.vocabulary.OWL;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
 import java.io.InputStream;
@@ -87,6 +90,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.cache.Cache;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
@@ -101,6 +105,9 @@ public class OntologyRestImpl implements OntologyRest {
     private OntologyRecordFactory ontologyRecordFactory;
     private EngineManager engineManager;
     private SesameTransformer sesameTransformer;
+    private CacheManager cacheManager;
+
+    private final Logger log = LoggerFactory.getLogger(OntologyRestImpl.class);
 
     @Reference
     public void setModelFactory(ModelFactory modelFactory) {
@@ -135,6 +142,11 @@ public class OntologyRestImpl implements OntologyRest {
     @Reference
     public void setSesameTransformer(SesameTransformer sesameTransformer) {
         this.sesameTransformer = sesameTransformer;
+    }
+
+    @Reference
+    public void setCacheManager(CacheManager cacheManager) {
+        this.cacheManager = cacheManager;
     }
 
     @Override
@@ -177,6 +189,21 @@ public class OntologyRestImpl implements OntologyRest {
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @Override
+    public Response deleteOntology(ContainerRequestContext context, String recordIdStr, String branchIdStr) {
+        IRI recordId = valueFactory.createIRI(recordIdStr);
+        try {
+            if (StringUtils.isBlank(branchIdStr)) {
+                ontologyManager.deleteOntology(recordId);
+            } else {
+                ontologyManager.deleteOntologyBranch(recordId, valueFactory.createIRI(branchIdStr));
+            }
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+        return Response.ok().build();
     }
 
     @Override
@@ -793,17 +820,25 @@ public class OntologyRestImpl implements OntologyRest {
     private Optional<Ontology> getOntology(ContainerRequestContext context, String recordIdStr, String branchIdStr,
                                            String commitIdStr) {
         throwErrorIfMissingStringParam(recordIdStr, "The recordIdStr is missing.");
-        Resource recordId = valueFactory.createIRI(recordIdStr);
-
         Optional<Ontology> optionalOntology;
-        if (!stringParamIsMissing(commitIdStr)) {
-            throwErrorIfMissingStringParam(branchIdStr, "The branchIdStr is missing.");
-            optionalOntology = ontologyManager.retrieveOntology(recordId, valueFactory.createIRI(branchIdStr),
-                    valueFactory.createIRI(commitIdStr));
-        } else if (!stringParamIsMissing(branchIdStr)) {
-            optionalOntology = ontologyManager.retrieveOntology(recordId, valueFactory.createIRI(branchIdStr));
+        Optional<Cache<String, Ontology>> cache = getOntologyCache();
+        String key = OntologyCache.generateKey(recordIdStr, branchIdStr, commitIdStr);
+
+        if (cache.isPresent() && cache.get().containsKey(key)) {
+            log.trace("cache hit");
+            optionalOntology = Optional.of(cache.get().get(key));
         } else {
-            optionalOntology = ontologyManager.retrieveOntology(recordId);
+            Resource recordId = valueFactory.createIRI(recordIdStr);
+
+            if (!stringParamIsMissing(commitIdStr)) {
+                throwErrorIfMissingStringParam(branchIdStr, "The branchIdStr is missing.");
+                optionalOntology = ontologyManager.retrieveOntology(recordId, valueFactory.createIRI(branchIdStr),
+                        valueFactory.createIRI(commitIdStr));
+            } else if (!stringParamIsMissing(branchIdStr)) {
+                optionalOntology = ontologyManager.retrieveOntology(recordId, valueFactory.createIRI(branchIdStr));
+            } else {
+                optionalOntology = ontologyManager.retrieveOntology(recordId);
+            }
         }
 
         if (optionalOntology.isPresent()) {
@@ -1181,20 +1216,28 @@ public class OntologyRestImpl implements OntologyRest {
         OntologyRecord record = catalogManager.createRecord(builder.build(), ontologyRecordFactory);
         catalogManager.addRecord(catalogId, record);
         catalogManager.addMasterBranch(record.getResource());
-        record = catalogManager.getRecord(catalogId, record.getResource(), ontologyRecordFactory).get();
+        final OntologyRecord finalRecord = catalogManager.getRecord(catalogId, record.getResource(), ontologyRecordFactory).get();
 
-        InProgressCommit inProgressCommit = catalogManager.createInProgressCommit(user, record.getResource());
+        InProgressCommit inProgressCommit = catalogManager.createInProgressCommit(user, finalRecord.getResource());
         catalogManager.addInProgressCommit(inProgressCommit);
         catalogManager.addAdditions(ontology.asModel(modelFactory), inProgressCommit.getResource());
 
         Commit commit = catalogManager.createCommit(inProgressCommit, "The initial commit.", null, null);
-        Resource masterBranchId = record.getMasterBranch_resource().get();
+        Resource masterBranchId = finalRecord.getMasterBranch_resource().get();
         catalogManager.addCommitToBranch(commit, masterBranchId);
 
         catalogManager.removeInProgressCommit(inProgressCommit.getResource());
+
+        // Cache
+        getOntologyCache().ifPresent(cache -> {
+            String key = OntologyCache.generateKey(finalRecord.getResource().stringValue(), masterBranchId.stringValue(), commit.getResource().stringValue());
+            log.trace("caching " + key);
+            cache.put(key, ontology);
+        });
+
         JSONObject response = new JSONObject()
                 .element("ontologyId", ontology.getOntologyId().getOntologyIdentifier().stringValue())
-                .element("recordId", record.getResource().stringValue())
+                .element("recordId", finalRecord.getResource().stringValue())
                 .element("branchId", masterBranchId.stringValue())
                 .element("commitId", commit.getResource().stringValue());
         return Response.status(201).entity(response).build();
@@ -1213,19 +1256,26 @@ public class OntologyRestImpl implements OntologyRest {
         tupleQueryResult.forEach(queryResult -> {
             Optional<Value> individual = queryResult.getValue("individual");
             Optional<Value> parent = queryResult.getValue("parent");
-                if (individual.isPresent() && parent.isPresent()) {
-                    String individualValue = individual.get().stringValue();
-                    String keyString = parent.get().stringValue();
-                        if (classIndividuals.containsKey(keyString)) {
-                            classIndividuals.get(keyString).add(individualValue);
-                        } else {
-                            Set<String> individualsSet = new HashSet<>();
-                            individualsSet.add(individualValue);
-                            classIndividuals.put(keyString, individualsSet);
-                        }
-
+            if (individual.isPresent() && parent.isPresent()) {
+                String individualValue = individual.get().stringValue();
+                String keyString = parent.get().stringValue();
+                if (classIndividuals.containsKey(keyString)) {
+                    classIndividuals.get(keyString).add(individualValue);
+                } else {
+                    Set<String> individualsSet = new HashSet<>();
+                    individualsSet.add(individualValue);
+                    classIndividuals.put(keyString, individualsSet);
                 }
+            }
         });
         return new JSONObject().element("individuals", classIndividuals);
+    }
+
+    private Optional<Cache<String, Ontology>> getOntologyCache() {
+        Optional<Cache<String, Ontology>> cache = Optional.empty();
+        if (cacheManager != null) {
+            cache = cacheManager.getCache(OntologyCache.CACHE_NAME, String.class, Ontology.class);
+        }
+        return cache;
     }
 }

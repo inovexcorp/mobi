@@ -70,6 +70,10 @@
                     dvm.mm = mappingManagerService;
                     dvm.dm = delimitedManagerService;
                     dvm.errorMessage = '';
+                    dvm.tabs = {
+                        edit: true,
+                        preview: false
+                    };
 
                     dvm.configNotSet = function() {
                         return _.isEmpty(dvm.mm.getSourceOntologyInfo(dvm.state.mapping.jsonld));
