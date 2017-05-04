@@ -77,13 +77,14 @@ describe('Ontology Utils Manager service', function() {
         });
     });
     it('deleteClass should call the proper methods', function() {
-        ontologyStateSvc.retrievePaths.and.returnValue([['ClassA'],['ClassA'],['ClassB']]);
-        ontologyStateSvc.listItem.classesWithIndividuals = ['ClassA','ClassB'];
+        ontologyStateSvc.retrievePaths.and.returnValue([['ClassA'], ['ClassA'], ['ClassB']]);
+        ontologyStateSvc.listItem.classesWithIndividuals = ['ClassA', 'ClassB'];
         ontologyStateSvc.listItem.classesAndIndividuals = {
-            'ClassA' : ['IndivA1','IndivA2'],
-            'ClassB' : ['IndivB1']
+            'ClassA': ['IndivA1', 'IndivA2'],
+            'ClassB': ['IndivB1']
         };
         ontologyStateSvc.getActiveEntityIRI.and.returnValue('ClassB');
+        ontologyStateSvc.createFlatIndividualTree.and.returnValue([{prop: 'individual'}]);
         spyOn(ontologyUtilsManagerSvc, 'commonDelete');
         splitIRIFilter.and.returnValue({begin: 'begin', then: '/', end: 'end'});
         ontologyStateSvc.listItem.subClasses = [{namespace: 'begin/', localName: 'end'}];
@@ -94,7 +95,9 @@ describe('Ontology Utils Manager service', function() {
         expect(ontologyUtilsManagerSvc.commonDelete).toHaveBeenCalledWith('ClassB');
         expect(ontologyStateSvc.retrievePaths).toHaveBeenCalledWith(ontologyStateSvc.listItem.classesAndIndividuals, ontologyStateSvc.listItem.classHierarchy, ontologyStateSvc.listItem.classIndex);
         expect(ontologyStateSvc.listItem.classesWithIndividuals).toEqual(['ClassA']);
-        expect(ontologyStateSvc.listItem.classesAndIndividuals).toEqual({'ClassA' : ['IndivA1','IndivA2']});
+        expect(ontologyStateSvc.listItem.classesAndIndividuals).toEqual({'ClassA': ['IndivA1', 'IndivA2']});
+        expect(ontologyStateSvc.createFlatIndividualTree).toHaveBeenCalledWith(ontologyStateSvc.listItem);
+        expect(ontologyStateSvc.listItem.flatIndividualsHierarchy).toEqual([{prop: 'individual'}]);
     });
     it('deleteObjectProperty should call the proper methods', function() {
         spyOn(ontologyUtilsManagerSvc, 'commonDelete');
@@ -136,13 +139,14 @@ describe('Ontology Utils Manager service', function() {
         expect(ontologyUtilsManagerSvc.commonDelete).toHaveBeenCalledWith('begin/end');
     });
     it('deleteIndividual should call the proper methods', function() {
-        ontologyStateSvc.retrievePaths.and.returnValue([['ClassA'],['ClassA'],['ClassB']]);
-        ontologyStateSvc.listItem.classesWithIndividuals = ['ClassA','ClassB'];
+        ontologyStateSvc.retrievePaths.and.returnValue([['ClassA'], ['ClassA'], ['ClassB']]);
+        ontologyStateSvc.listItem.classesWithIndividuals = ['ClassA', 'ClassB'];
         ontologyStateSvc.listItem.classesAndIndividuals = {
-                'ClassA' : ['IndivA1','IndivA2'],
-                'ClassB' : ['IndivB1']
+            'ClassA': ['IndivA1', 'IndivA2'],
+            'ClassB': ['IndivB1']
         };
         ontologyStateSvc.selected['@type'] = ['ClassB'];
+        ontologyStateSvc.createFlatIndividualTree.and.returnValue([{prop: 'individual'}]);
         spyOn(ontologyUtilsManagerSvc, 'commonDelete');
         ontologyStateSvc.getActiveEntityIRI.and.returnValue('IndivB1');
         splitIRIFilter.and.returnValue({begin: 'begin', then: '/', end: 'end'});
@@ -151,7 +155,9 @@ describe('Ontology Utils Manager service', function() {
         expect(ontologyUtilsManagerSvc.commonDelete).toHaveBeenCalledWith('IndivB1');
         expect(ontologyStateSvc.retrievePaths).toHaveBeenCalledWith(ontologyStateSvc.listItem.classesAndIndividuals, ontologyStateSvc.listItem.classHierarchy, ontologyStateSvc.listItem.classIndex);
         expect(ontologyStateSvc.listItem.classesWithIndividuals).toEqual(['ClassA']);
-        expect(ontologyStateSvc.listItem.classesAndIndividuals).toEqual({'ClassA' : ['IndivA1','IndivA2']});
+        expect(ontologyStateSvc.listItem.classesAndIndividuals).toEqual({'ClassA': ['IndivA1', 'IndivA2']});
+        expect(ontologyStateSvc.createFlatIndividualTree).toHaveBeenCalledWith(ontologyStateSvc.listItem);
+        expect(ontologyStateSvc.listItem.flatIndividualsHierarchy).toEqual([{prop: 'individual'}]);
     });
     it('deleteConcept should call the proper methods', function() {
         spyOn(ontologyUtilsManagerSvc, 'commonDelete');

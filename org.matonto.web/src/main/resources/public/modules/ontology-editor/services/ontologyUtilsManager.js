@@ -56,13 +56,12 @@
                 _.pull(os.listItem.classesWithIndividuals, entityIRI);
                 os.deleteEntityFromHierarchy(os.listItem.classHierarchy, entityIRI, os.listItem.classIndex);
                 os.listItem.flatClassHierarchy = os.flattenHierarchy(os.listItem.classHierarchy, os.listItem.recordId);
-                self.commonDelete(entityIRI);
-
                 delete os.listItem.classesAndIndividuals[entityIRI];
                 var paths =  os.retrievePaths(os.listItem.classesAndIndividuals, os.listItem.classHierarchy, os.listItem.classIndex);
-
                 os.listItem.classesWithIndividuals = _.keys(os.listItem.classesAndIndividuals);
                 os.listItem.individualsParentPath =  _.uniq(_.flattenDeep(paths));
+                os.listItem.flatIndividualsHierarchy = os.createFlatIndividualTree(os.listItem);
+                self.commonDelete(entityIRI);
             }
 
             self.deleteObjectProperty = function() {
@@ -110,11 +109,12 @@
                         }
                     }
                 });
-
-                self.commonDelete(entityIRI);
+                
                 var paths =  os.retrievePaths(os.listItem.classesAndIndividuals, os.listItem.classHierarchy, os.listItem.classIndex);
                 os.listItem.classesWithIndividuals = _.keys(os.listItem.classesAndIndividuals);
                 os.listItem.individualsParentPath = _.uniq(_.flattenDeep(paths));
+                os.listItem.flatIndividualsHierarchy = os.createFlatIndividualTree(os.listItem);
+                self.commonDelete(entityIRI);
             }
 
             self.deleteConcept = function() {
