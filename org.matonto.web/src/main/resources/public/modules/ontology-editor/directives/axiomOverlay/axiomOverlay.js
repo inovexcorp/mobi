@@ -27,9 +27,9 @@
         .module('axiomOverlay', [])
         .directive('axiomOverlay', axiomOverlay);
 
-        axiomOverlay.$inject = ['responseObj', 'ontologyStateService', 'utilService', 'ontologyUtilsManagerService'];
+        axiomOverlay.$inject = ['responseObj', 'ontologyStateService', 'utilService', 'ontologyUtilsManagerService', 'prefixes'];
 
-        function axiomOverlay(responseObj, ontologyStateService, utilService, ontologyUtilsManagerService) {
+        function axiomOverlay(responseObj, ontologyStateService, utilService, ontologyUtilsManagerService, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -54,6 +54,9 @@
                             dvm.os.selected[axiom] = _.union(dvm.os.selected[axiom], values);
                         } else {
                             dvm.os.selected[axiom] = values;
+                        }
+                        if (axiom === prefixes.rdfs + 'range') {
+                            dvm.os.updatePropertyIcon(dvm.os.selected);
                         }
                         dvm.os.addToAdditions(dvm.os.listItem.recordId, {'@id': dvm.os.selected['@id'], [axiom]: values});
                         dvm.os.showAxiomOverlay = false;
