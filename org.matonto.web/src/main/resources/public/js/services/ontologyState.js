@@ -612,7 +612,7 @@
              * @returns {Object} An Object which represents the requested entity.
              */
             self.removeEntity = function(listItem, entityIRI) {
-                var entityPosition = _.get(listItem.index, entityIRI + '.position');
+                var entityPosition = _.get(listItem.index, "['" + entityIRI + "'].position");
                 _.unset(listItem.index, entityIRI);
                 _.forOwn(listItem.index, (value, key) => {
                     if (value.position > entityPosition) {
