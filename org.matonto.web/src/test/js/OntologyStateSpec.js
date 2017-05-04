@@ -60,7 +60,7 @@ describe('Ontology State Service', function() {
             label: 'ontology',
             ontologyIri: ontologyId
         },
-        classId: {
+        'https://classId.com': {
             position: 1,
             label: 'class',
             ontologyIri: ontologyId
@@ -73,7 +73,7 @@ describe('Ontology State Service', function() {
     };
     var importedOntologies = [];
     var importedOntologyIds = [];
-    var classId = 'classId';
+    var classId = 'https://classId.com';
     var classId2 = 'classId2';
     var objectPropertyId = 'objectPropertyId';
     var objectPropertyId2 = 'objectProperty2';
