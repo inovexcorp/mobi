@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Ontology State Service', function() {
+describe('Ontology State Service', function() {
     var ontologyStateSvc, $q, scope, util, stateManagerSvc, ontologyManagerSvc, updateRefsSvc, prefixes, catalogManagerSvc, hierarchy, indexObject, expectedPaths, ontologyState, defaultDatatypes, ontologyObj, classObj, dataPropertyObj, individualObj, ontology, getResponse, httpSvc, $document;
     var error = 'error';
     var format = 'jsonld';
@@ -112,8 +112,9 @@ fdescribe('Ontology State Service', function() {
     };
     var classesWithIndividualsResponse = {
         individuals: {
-            'ClassA' : ['IndivA1','IndivA2']
-        }
+            'ClassA': ['IndivA1', 'IndivA2']
+        },
+        individualsParentPath: ['ClassA']
     };
     var dataPropertyHierarchiesResponse = {
         hierarchy: [],
@@ -1545,7 +1546,6 @@ fdescribe('Ontology State Service', function() {
             spyOn(ontologyStateSvc, 'createFlatIndividualTree').and.returnValue([{prop: 'individual'}]);
         });
         it('when all promises resolve', function() {
-            spyOn(ontologyStateSvc,'retrievePaths').and.returnValue([['ClassA'],['ClassA'],['ClassB']]);
             ontologyManagerSvc.getIris.and.returnValue($q.when(irisResponse));
             ontologyManagerSvc.getImportedIris.and.returnValue($q.when(importedIrisResponse));
             ontologyStateSvc.createOntologyListItem(ontologyId, recordId, branchId, commitId, ontology,
@@ -1588,14 +1588,13 @@ fdescribe('Ontology State Service', function() {
                     }, {
                         localName: datatypeId, namespace: datatypeId
                     }], ontologyManagerSvc.defaultDatatypes));
-                    expect(ontologyStateSvc.retrievePaths).toHaveBeenCalledWith(classesWithIndividualsResponse.individuals,_.get(response, 'classHierarchy'),_.get(response, 'classIndex'));
                     expect(_.get(response, 'classHierarchy')).toEqual(classHierarchiesResponse.hierarchy);
                     expect(_.get(response, 'classIndex')).toEqual(classHierarchiesResponse.index);
                     expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.dataPropertyHierarchy, recordId, response);
                     expect(_.get(response, 'flatClassHierarchy')).toEqual([{prop: 'flatten'}]);
                     expect(_.get(response, 'classesWithIndividuals')).toEqual(['ClassA']);
                     expect(_.get(response, 'classesAndIndividuals')).toEqual(classesWithIndividualsResponse.individuals);
-                    expect(_.get(response, 'individualsParentPath')).toEqual(['ClassA','ClassB']);
+                    expect(_.get(response, 'individualsParentPath')).toEqual(classesWithIndividualsResponse.individualsParentPath);
                     expect(_.get(response, 'dataPropertyHierarchy')).toEqual(dataPropertyHierarchiesResponse.hierarchy);
                     expect(_.get(response, 'dataPropertyIndex')).toEqual(dataPropertyHierarchiesResponse.index);
                     expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.dataPropertyHierarchy, recordId, response);
@@ -1660,10 +1659,19 @@ fdescribe('Ontology State Service', function() {
             });
         });
     });
-    it('retrievePaths should get the paths to any given individual', function() {
-        spyOn(ontologyStateSvc, 'getPathsTo').and.returnValue([['ClassA']]);
-        expect(ontologyStateSvc.retrievePaths({'ClassA': ['IndivA']},[],{})).toEqual([[['ClassA']]]);
-        expect(ontologyStateSvc.getPathsTo).toHaveBeenCalledWith([],{},'ClassA');
+    it('getIndividualsParentPath should return the list of unique classes', function() {
+        var listItem = {
+            classesAndIndividuals: {
+                classA: ['ind1', 'ind2'],
+                classB: ['ind3', 'ind4']
+            },
+            classIndex: {
+                classB: ['classA'],
+                classZ: ['classY']
+            }
+        }
+        var expected = ['classA', 'classB'];
+        expect(ontologyStateSvc.getIndividualsParentPath(listItem)).toEqual(expected);
     });
     describe('addOntologyToList should call the correct functions', function() {
         var createDeferred;

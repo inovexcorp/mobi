@@ -585,7 +585,7 @@ function mockOntologyState() {
             this.openAt = jasmine.createSpy('openAt');
             this.getDefaultPrefix = jasmine.createSpy('getDefaultPrefix');
             this.retrieveClassesWithIndividuals = jasmine.createSpy('retrieveClassesWithIndividuals');
-            this.retrievePaths = jasmine.createSpy('retrievePaths');
+            this.getIndividualsParentPath = jasmine.createSpy('getIndividualsParentPath');
             this.flattenHierarchy = jasmine.createSpy('flattenHierarchy');
             this.areParentsOpen = jasmine.createSpy('areParentsOpen');
             this.createFlatEverythingTree = jasmine.createSpy('createFlatEverythingTree');

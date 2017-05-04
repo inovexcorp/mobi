@@ -436,12 +436,9 @@
                         addImportedOntologyToListItem(listItem, importedOntObj, 'ontology');
                     });
                     listItem.upToDate = upToDate;
-
-                    var paths =  self.retrievePaths(response[3].individuals, listItem.classHierarchy, listItem.classIndex);
-
                     listItem.classesAndIndividuals = response[3].individuals;
                     listItem.classesWithIndividuals = _.keys(response[3].individuals);
-                    listItem.individualsParentPath = _.uniq(_.flattenDeep(paths));
+                    listItem.individualsParentPath = self.getIndividualsParentPath(listItem);
                     listItem.flatIndividualsHierarchy = self.createFlatIndividualTree(listItem);
                     listItem.flatEverythingTree = self.createFlatEverythingTree(getOntologiesArrayByListItem(listItem), listItem);
                     _.pullAllWith(
@@ -453,8 +450,12 @@
                 }, error => _.has(error, 'statusText') ? util.onError(response, deferred) : deferred.reject(error));
                 return deferred.promise;
             }
-            self.retrievePaths = function(individuals, classHierarchy, classIndex){
-                return _.map(_.keys(individuals), uri => self.getPathsTo(classHierarchy, classIndex, uri));
+            self.getIndividualsParentPath = function(listItem) {
+                var result = [];
+                _.forEach(_.keys(listItem.classesAndIndividuals), classIRI => {
+                    result = _.concat(result, getClassesForIndividuals(listItem.classIndex, classIRI));
+                });
+                return _.uniq(result);
             }
             self.createVocabularyListItem = function(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate = true) {
                 var deferred = $q.defer();
@@ -1391,5 +1392,17 @@
                 listItem.importedOntologyIds.push(importedOntObj.id);
                 listItem.importedOntologies.push(importedOntologyListItem);
             }
+        }
+        function getClassesForIndividuals(index, iri) {
+            var result = [iri];
+            if (_.has(index, iri)) {
+                var indexCopy = angular.copy(index);
+                var parentIRIs = _.get(indexCopy, iri);
+                _.unset(indexCopy, iri);
+                _.forEach(parentIRIs, parentIRI => {
+                    result = _.concat(result, getClassesForIndividuals(indexCopy, parentIRI));
+                });
+            }
+            return result;
         }
 })();

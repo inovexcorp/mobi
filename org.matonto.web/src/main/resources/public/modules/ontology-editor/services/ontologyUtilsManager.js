@@ -37,7 +37,7 @@
             var util = utilService;
             var ro = responseObj;
 
-            self.commonDelete = function(entityIRI) {
+            self.commonDelete = function(entityIRI, updateEverythingTree = false) {
                 om.getEntityUsages(os.listItem.recordId, os.listItem.branchId, os.listItem.commitId, entityIRI, 'construct')
                     .then(statements => {
                         os.addToDeletions(os.listItem.recordId, os.selected);
@@ -46,6 +46,9 @@
                         ur.remove(os.listItem.ontology, entityIRI);
                         os.unSelectItem();
                         self.saveCurrentChanges();
+                        if (updateEverythingTree) {
+                            os.listItem.flatEverythingTree = os.createFlatEverythingTree(os.getOntologiesArray(), os.listItem);
+                        }
                     }, util.createErrorToast);
             }
 
@@ -57,11 +60,10 @@
                 os.deleteEntityFromHierarchy(os.listItem.classHierarchy, entityIRI, os.listItem.classIndex);
                 os.listItem.flatClassHierarchy = os.flattenHierarchy(os.listItem.classHierarchy, os.listItem.recordId);
                 delete os.listItem.classesAndIndividuals[entityIRI];
-                var paths =  os.retrievePaths(os.listItem.classesAndIndividuals, os.listItem.classHierarchy, os.listItem.classIndex);
                 os.listItem.classesWithIndividuals = _.keys(os.listItem.classesAndIndividuals);
-                os.listItem.individualsParentPath =  _.uniq(_.flattenDeep(paths));
+                os.listItem.individualsParentPath = os.getIndividualsParentPath(os.listItem);
                 os.listItem.flatIndividualsHierarchy = os.createFlatIndividualTree(os.listItem);
-                self.commonDelete(entityIRI);
+                self.commonDelete(entityIRI, true);
             }
 
             self.deleteObjectProperty = function() {
@@ -70,7 +72,7 @@
                 _.remove(os.listItem.subObjectProperties, {namespace:split.begin + split.then, localName: split.end});
                 os.deleteEntityFromHierarchy(os.listItem.objectPropertyHierarchy, entityIRI, os.listItem.objectPropertyIndex);
                 os.listItem.flatObjectPropertyHierarchy = os.flattenHierarchy(os.listItem.objectPropertyHierarchy, os.listItem.recordId);
-                self.commonDelete(entityIRI);
+                self.commonDelete(entityIRI, true);
             }
 
             self.deleteDataTypeProperty = function() {
@@ -110,9 +112,8 @@
                     }
                 });
                 
-                var paths =  os.retrievePaths(os.listItem.classesAndIndividuals, os.listItem.classHierarchy, os.listItem.classIndex);
                 os.listItem.classesWithIndividuals = _.keys(os.listItem.classesAndIndividuals);
-                os.listItem.individualsParentPath = _.uniq(_.flattenDeep(paths));
+                os.listItem.individualsParentPath = os.getIndividualsParentPath(os.listItem);
                 os.listItem.flatIndividualsHierarchy = os.createFlatIndividualTree(os.listItem);
                 self.commonDelete(entityIRI);
             }
