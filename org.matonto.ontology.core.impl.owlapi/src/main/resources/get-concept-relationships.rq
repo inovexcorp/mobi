@@ -32,7 +32,7 @@ where {
     }
     union
     {
-        ?parent rdf:type skos:ConceptScheme .
+        ?parent rdf:type/rdfs:subClassOf* skos:ConceptScheme .
         optional {
             ?child ^skos:hasTopConcept ?parent ;
                    rdf:type/rdfs:subClassOf* skos:Concept .

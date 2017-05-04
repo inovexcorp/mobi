@@ -12,6 +12,20 @@
                                   <http://purl.org/dc/terms/title> "Vocabulary"^^xsd:string ;
                                   <http://purl.org/dc/terms/description> "This is a test vocabulary."^^xsd:string .
 
+:SubOfConceptScheme
+  rdf:type owl:Class ;
+  rdfs:label "subclass of concept scheme"@en-US ;
+  rdfs:subClassOf skos:ConceptScheme ;
+  skos:prefLabel "subclass of concept scheme"@en-US ;
+.
+
+:SubOfSubOfConceptScheme
+  rdf:type owl:Class ;
+  rdfs:label "subclass of subclass of concept scheme"@en-US ;
+  rdfs:subClassOf :SubOfConceptScheme ;
+  skos:prefLabel "subclass of subclass of concept scheme"@en-US ;
+.
+
 :SubOfConcept
   rdf:type owl:Class ;
   rdfs:label "subclass of concept"@en-US ;
@@ -58,4 +72,14 @@
 :Concept5 rdf:type owl:NamedIndividual , :NotASubclass ;
         skos:prefLabel "Concept 5"^^xsd:string .
 
+###  https://matonto.org/vocabulary#ConceptScheme1
+:ConceptScheme1 rdf:type owl:NamedIndividual , skos:ConceptScheme ;
+        skos:prefLabel "Concept Scheme 1"^^xsd:string .
 
+###  https://matonto.org/vocabulary#ConceptScheme2
+:ConceptScheme2 rdf:type owl:NamedIndividual , :SubOfConceptScheme ;
+        skos:prefLabel "Concept Scheme 2"^^xsd:string .
+
+###  https://matonto.org/vocabulary#ConceptScheme3
+:ConceptScheme3 rdf:type owl:NamedIndividual , :SubOfSubOfConceptScheme ;
+        skos:prefLabel "Concept Scheme 3"^^xsd:string .
