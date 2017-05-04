@@ -612,7 +612,7 @@
              * @returns {Object} An Object which represents the requested entity.
              */
             self.removeEntity = function(listItem, entityIRI) {
-                var entityPosition = _.get(listItem.index, entityIRI + '.position');
+                var entityPosition = _.get(listItem.index, "['" + entityIRI + "'].position");
                 _.unset(listItem.index, entityIRI);
                 _.forOwn(listItem.index, (value, key) => {
                     if (value.position > entityPosition) {
@@ -1130,6 +1130,11 @@
             self.getOntologiesArray = function() {
                 return getOntologiesArrayByListItem(self.listItem);
             }
+            self.updatePropertyIcon = function(entity) {
+                if (om.isProperty(entity)) {
+                    setPropertyIcon(entity);
+                }
+            }
 
             /* Private helper functions */
             function getOntologiesArrayByListItem(listItem) {
@@ -1176,7 +1181,7 @@
                         _.set(entity, 'matonto.anonymous', ontologyId + ' (Anonymous Ontology)');
                     }
                     if (om.isProperty(entity)) {
-                        _.set(entity, 'matonto.icon', getIcon(entity));
+                        setPropertyIcon(entity);
                     } else if (om.isBlankNode(entity)) {
                         let id = _.get(entity, '@id');
                         _.set(blankNodes, id, mc.jsonldToManchester(id, ontology, true));
@@ -1213,6 +1218,9 @@
             function addOntologyIdToArray(arr, ontologyId) {
                 return _.forEach(arr, item => _.set(item, 'ontologyId', ontologyId));
             }
+            function setPropertyIcon(entity) {
+                _.set(entity, 'matonto.icon', getIcon(entity));
+            }
             function getIcon(property) {
                 var range = _.get(property, prefixes.rdfs + 'range');
                 var icon = 'fa-square-o';
@@ -1220,6 +1228,7 @@
                     if (range.length === 1) {
                         switch(range[0]['@id']) {
                             case prefixes.xsd + 'string':
+                            case prefixes.rdf + 'langString':
                                 icon = 'fa-font';
                                 break;
                             case prefixes.xsd + 'decimal':
@@ -1243,6 +1252,9 @@
                             case prefixes.xsd + 'boolean':
                             case prefixes.xsd + 'byte':
                                 icon = 'fa-signal';
+                                break;
+                            case prefixes.rdfs + 'Literal':
+                                icon = 'fa-cube';
                                 break;
                             default:
                                 icon = 'fa-link';
@@ -1319,7 +1331,7 @@
             function sortByName(array, listItem) {
                 return _.sortBy(array, entity => _.lowerCase(self.getEntityNameByIndex(entity['@id'], listItem)));
             }
-            function addImportedOntologyToListItem(listItem, importedOntObj, type) {  
+            function addImportedOntologyToListItem(listItem, importedOntObj, type) {
                 var index = {};
                 _.forEach(importedOntObj.ontology, (entity, i) => {
                     if (_.has(entity, '@id')) {
@@ -1330,9 +1342,7 @@
                             ontologyIri: importedOntObj.id
                         }
                     }
-                    if (om.isProperty(entity)) {
-                        _.set(entity, 'matonto.icon', getIcon(entity));
-                    }
+                    self.updatePropertyIcon(entity);
                     _.set(entity, 'matonto.imported', true);
                 });
                 var importedOntologyListItem = {
