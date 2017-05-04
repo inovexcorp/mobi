@@ -624,14 +624,48 @@ public class OntologyRestImpl implements OntologyRest {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
+           // TupleQueryResult results = ontologyManager.getClassesWithIndividuals(ontology);
             TupleQueryResult results = ontologyManager.getClassesWithIndividuals(ontology);
-            JSONObject response = getClassIndividuals(results);
+           // getClassIndividuals(results); // do not erase
+
+            Map<String, Set<String>> classIndividuals = getClassIndividuals(results);
+
+            TupleQueryResult results22 = ontologyManager.getSubClassesOf(ontology);
+            JSONObject t = getHierarchy(results22);
+
+            JSONArray hierarchy = t.getJSONArray("hierarchy");
+            JSONObject index = t.getJSONObject("index");
+
+            Set<String> individualsParentPath = new HashSet<>();
+            for (String key : classIndividuals.keySet()) {
+                Set<String>  result = getPathOfEntity(hierarchy, index, key);
+                individualsParentPath.addAll(result);
+            }
+            JSONObject response = new JSONObject().element("individuals", classIndividuals).element("individualsParentPath", individualsParentPath);
+
             return Response.ok(response).build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
+    public Set<String> getPathOfEntity(JSONArray hierarchy, JSONObject index, String entityURI)
+    {
+        Set<String> result = new HashSet<>();
+        if(index.containsKey(entityURI))
+        {
+            JSONArray ar = index.getJSONArray(entityURI);
+            ar.forEach(k ->{
+                String ss = (String)k;
+                Set<String> resultLow = getPathOfEntity(hierarchy, index, ss);
+                resultLow.forEach(low ->{
+                    result.add(low);
+                });
+            });
+        }
 
+        result.add(entityURI);
+        return result;
+    }
     @Override
     public Response getEntityUsages(ContainerRequestContext context, String recordIdStr, String entityIRIStr,
                                     String branchIdStr, String commitIdStr, String queryType) {
@@ -1251,7 +1285,7 @@ public class OntologyRestImpl implements OntologyRest {
      * @return a JSONObject containing the map of the individuals provided.
      *
      */
-    private JSONObject getClassIndividuals(TupleQueryResult tupleQueryResult) {
+    private Map<String, Set<String>> getClassIndividuals(TupleQueryResult tupleQueryResult) {
         Map<String, Set<String>> classIndividuals = new HashMap<>();
         tupleQueryResult.forEach(queryResult -> {
             Optional<Value> individual = queryResult.getValue("individual");
@@ -1268,9 +1302,9 @@ public class OntologyRestImpl implements OntologyRest {
                 }
             }
         });
-        return new JSONObject().element("individuals", classIndividuals);
+        return classIndividuals;
     }
-
+    
     private Optional<Cache<String, Ontology>> getOntologyCache() {
         Optional<Cache<String, Ontology>> cache = Optional.empty();
         if (cacheManager != null) {
@@ -1279,3 +1313,5 @@ public class OntologyRestImpl implements OntologyRest {
         return cache;
     }
 }
+
+
