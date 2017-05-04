@@ -45,8 +45,9 @@ public class RequestLoggingFilter implements ContainerRequestFilter {
 
     @Override
     public void filter(ContainerRequestContext containerRequestContext) throws IOException {
-        if (log.isInfoEnabled() && containerRequestContext != null) {
-            Class<?> resourceClass = resourceInfo.getResourceClass();
+        Class<?> resourceClass = resourceInfo.getResourceClass();
+
+        if (log.isInfoEnabled() && containerRequestContext != null && resourceClass != null) {
             Logger resourceLog = LoggerFactory.getLogger(resourceClass);
 
             if (resourceLog.isInfoEnabled()) {

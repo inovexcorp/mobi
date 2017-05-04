@@ -64,7 +64,6 @@
                     var dam = datasetManagerService;
                     dvm.util = utilService;
                     dvm.sparql = sparqlManagerService;
-                    
                     dvm.prefixList = _.sortBy(_.map(prefixes, (value, key) => key + ': <' + value + '>'));
                     dvm.editorOptions = {
                         mode: 'application/sparql-query',

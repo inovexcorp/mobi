@@ -50,19 +50,21 @@
                     }
 
                     dvm.updateHierarchy = function(axiom, values) {
-                        if (_.get(axiom, 'localName') === 'subPropertyOf') {
+                        var localName = _.get(axiom, 'localName');
+                        if (localName === 'subPropertyOf') {
                             _.forEach(values, value => {
-                                dvm.os.addEntityToHierarchy(dvm.os.listItem.dataPropertyHierarchy,
-                                    dvm.os.selected.matonto.originalIRI, dvm.os.listItem.dataPropertyIndex,
-                                    dvm.ro.getItemIri(value));
+                                dvm.os.addEntityToHierarchy(dvm.os.listItem.dataPropertyHierarchy, dvm.os.selected.matonto.originalIRI, dvm.os.listItem.dataPropertyIndex, dvm.ro.getItemIri(value));
                             });
+                            dvm.os.listItem.flatDataPropertyHierarchy = dvm.os.flattenHierarchy(dvm.os.listItem.dataPropertyHierarchy, dvm.os.listItem.recordId);
+                        } else if (localName === 'domain') {
+                            dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.getOntologiesArray(), dvm.os.listItem);
                         }
                     }
 
                     dvm.removeFromHierarchy = function(axiomObject) {
                         if (prefixes.rdfs + 'subPropertyOf' === dvm.key) {
-                            dvm.os.deleteEntityFromParentInHierarchy(dvm.os.listItem.dataPropertyHierarchy,
-                                dvm.os.selected.matonto.originalIRI, axiomObject['@id'], dvm.os.listItem.dataPropertyIndex);
+                            dvm.os.deleteEntityFromParentInHierarchy(dvm.os.listItem.dataPropertyHierarchy, dvm.os.selected.matonto.originalIRI, axiomObject['@id'], dvm.os.listItem.dataPropertyIndex);
+                            dvm.os.listItem.flatDataPropertyHierarchy = dvm.os.flattenHierarchy(dvm.os.listItem.dataPropertyHierarchy, dvm.os.listItem.recordId);
                         }
                     }
                 }

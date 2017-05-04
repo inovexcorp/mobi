@@ -44,6 +44,8 @@
         self.datasetRecords = [];
         
         dam.getDatasetRecords()
-            .then(response => self.datasetRecords = response.data, () => self.util.createErrorToast('Error retrieving datasets'));
+            .then(response => {
+                self.datasetRecords = _.map(response.data, arr => _.find(arr, obj => _.includes(obj['@type'], prefixes.dataset + 'DatasetRecord')));
+            }, () => self.util.createErrorToast('Error retrieving datasets'));
     }
 })();

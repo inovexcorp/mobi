@@ -157,13 +157,7 @@ public class SimpleDatasetManager implements DatasetManager {
 
     @Override
     public Optional<DatasetRecord> getDatasetRecord(Resource dataset, String repositoryId) {
-        Optional<Resource> recordResource = getRecordResource(dataset, repositoryId);
-
-        if (!recordResource.isPresent()) {
-            return Optional.empty();
-        }
-
-        return getDatasetRecord(recordResource.get());
+        return getRecordResource(dataset, repositoryId).flatMap(this::getDatasetRecord);
     }
 
     @Override
@@ -191,7 +185,12 @@ public class SimpleDatasetManager implements DatasetManager {
 
         datasetRecord.setDataset(dataset);
         datasetRecord.setRepository(config.getRepositoryId());
-
+        Set<Value> ontologies = new HashSet<>();
+        config.getOntologies().forEach(identifier -> {
+            ontologies.add(identifier.getNode());
+            datasetRecord.getModel().addAll(identifier.getStatements());
+        });
+        datasetRecord.setOntology(ontologies);
         catalogManager.addRecord(catalogManager.getLocalCatalogIRI(), datasetRecord);
 
         try (RepositoryConnection conn = dsRepo.getConnection()) {
@@ -203,17 +202,17 @@ public class SimpleDatasetManager implements DatasetManager {
 
     @Override
     public void deleteDataset(Resource dataset, String repositoryId) {
-        Resource record = getRecordResource(dataset, repositoryId)
-                .orElseThrow(() -> new IllegalArgumentException("Could not find the required DatasetRecord in the Catalog."));
+        Resource record = getRecordResource(dataset, repositoryId).orElseThrow(() ->
+                new IllegalArgumentException("Could not find the required DatasetRecord in the Catalog."));
         deleteDataset(record);
     }
 
     @Override
     public void deleteDataset(Resource record) {
-        DatasetRecord datasetRecord = getDatasetRecord(record)
-                .orElseThrow(() -> new IllegalArgumentException("Could not find the required DatasetRecord in the Catalog."));
-        Resource dataset = datasetRecord.getDataset_resource()
-                .orElseThrow(() -> new MatOntoException("Could not retrieve the Dataset IRI from the DatasetRecord."));
+        DatasetRecord datasetRecord = getDatasetRecord(record).orElseThrow(() ->
+                new IllegalArgumentException("Could not find the required DatasetRecord in the Catalog."));
+        Resource dataset = datasetRecord.getDataset_resource().orElseThrow(() ->
+                new IllegalStateException("Could not retrieve the Dataset IRI from the DatasetRecord."));
 
         Repository dsRepo = getDatasetRepo(datasetRecord);
 
@@ -227,17 +226,17 @@ public class SimpleDatasetManager implements DatasetManager {
 
     @Override
     public void safeDeleteDataset(Resource dataset, String repositoryId) {
-        Resource record = getRecordResource(dataset, repositoryId)
-                .orElseThrow(() -> new IllegalArgumentException("Could not find the required DatasetRecord in the Catalog."));
+        Resource record = getRecordResource(dataset, repositoryId).orElseThrow(() ->
+                new IllegalArgumentException("Could not find the required DatasetRecord in the Catalog."));
         safeDeleteDataset(record);
     }
 
     @Override
     public void safeDeleteDataset(Resource record) {
-        DatasetRecord datasetRecord = getDatasetRecord(record)
-                .orElseThrow(() -> new IllegalArgumentException("Could not find the required DatasetRecord in the Catalog."));
-        Resource dataset = datasetRecord.getDataset_resource()
-                .orElseThrow(() -> new MatOntoException("Could not retrieve the Dataset IRI from the DatasetRecord."));
+        DatasetRecord datasetRecord = getDatasetRecord(record).orElseThrow(() ->
+                new IllegalArgumentException("Could not find the required DatasetRecord in the Catalog."));
+        Resource dataset = datasetRecord.getDataset_resource().orElseThrow(() ->
+                new IllegalStateException("Could not retrieve the Dataset IRI from the DatasetRecord."));
 
         Repository dsRepo = getDatasetRepo(datasetRecord);
 
@@ -251,17 +250,17 @@ public class SimpleDatasetManager implements DatasetManager {
 
     @Override
     public void clearDataset(Resource dataset, String repositoryId) {
-        Resource record = getRecordResource(dataset, repositoryId)
-                .orElseThrow(() -> new IllegalArgumentException("Could not find the required DatasetRecord in the Catalog."));
+        Resource record = getRecordResource(dataset, repositoryId).orElseThrow(() ->
+                new IllegalArgumentException("Could not find the required DatasetRecord in the Catalog."));
         clearDataset(record);
     }
 
     @Override
     public void clearDataset(Resource record) {
-        DatasetRecord datasetRecord = getDatasetRecord(record)
-                .orElseThrow(() -> new IllegalArgumentException("Could not find the required DatasetRecord in the Catalog."));
-        Resource dataset = datasetRecord.getDataset_resource()
-                .orElseThrow(() -> new MatOntoException("Could not retrieve the Dataset IRI from the DatasetRecord."));
+        DatasetRecord datasetRecord = getDatasetRecord(record).orElseThrow(() ->
+                new IllegalArgumentException("Could not find the required DatasetRecord in the Catalog."));
+        Resource dataset = datasetRecord.getDataset_resource().orElseThrow(() ->
+                new IllegalStateException("Could not retrieve the Dataset IRI from the DatasetRecord."));
 
         Repository dsRepo = getDatasetRepo(datasetRecord);
 
@@ -273,17 +272,17 @@ public class SimpleDatasetManager implements DatasetManager {
 
     @Override
     public void safeClearDataset(Resource dataset, String repositoryId) {
-        Resource record = getRecordResource(dataset, repositoryId)
-                .orElseThrow(() -> new IllegalArgumentException("Could not find the required DatasetRecord in the Catalog."));
+        Resource record = getRecordResource(dataset, repositoryId).orElseThrow(() ->
+                new IllegalArgumentException("Could not find the required DatasetRecord in the Catalog."));
         safeClearDataset(record);
     }
 
     @Override
     public void safeClearDataset(Resource record) {
-        DatasetRecord datasetRecord = getDatasetRecord(record)
-                .orElseThrow(() -> new IllegalArgumentException("Could not find the required DatasetRecord in the Catalog."));
-        Resource dataset = datasetRecord.getDataset_resource()
-                .orElseThrow(() -> new MatOntoException("Could not retrieve the Dataset IRI from the DatasetRecord."));
+        DatasetRecord datasetRecord = getDatasetRecord(record).orElseThrow(() ->
+                new IllegalArgumentException("Could not find the required DatasetRecord in the Catalog."));
+        Resource dataset = datasetRecord.getDataset_resource().orElseThrow(() ->
+                new IllegalStateException("Could not retrieve the Dataset IRI from the DatasetRecord."));
 
         Repository dsRepo = getDatasetRepo(datasetRecord);
 
@@ -296,8 +295,8 @@ public class SimpleDatasetManager implements DatasetManager {
     @Override
     public DatasetConnection getConnection(Resource dataset, String repositoryId) {
         if (!getRecordResource(dataset, repositoryId).isPresent()) {
-            throw new IllegalArgumentException("Could not find the required DatasetRecord in the Catalog with this " +
-                    "dataset/repository combination.");
+            throw new IllegalArgumentException("Could not find the required DatasetRecord in the Catalog with this "
+                    + "dataset/repository combination.");
         }
         Repository dsRepo = getDatasetRepo(repositoryId);
 
@@ -306,12 +305,12 @@ public class SimpleDatasetManager implements DatasetManager {
 
     @Override
     public DatasetConnection getConnection(Resource record) {
-        DatasetRecord datasetRecord = getDatasetRecord(record)
-                .orElseThrow(() -> new IllegalArgumentException("Could not find the required DatasetRecord in the Catalog."));
-        Resource dataset = datasetRecord.getDataset_resource()
-                .orElseThrow(() -> new MatOntoException("Could not retrieve the Dataset IRI from the DatasetRecord."));
-        String repositoryId = datasetRecord.getRepository()
-                .orElseThrow(() -> new MatOntoException("Could not retrieve the Repository ID from the DatasetRecord."));
+        DatasetRecord datasetRecord = getDatasetRecord(record).orElseThrow(() ->
+                new IllegalArgumentException("Could not find the required DatasetRecord in the Catalog."));
+        Resource dataset = datasetRecord.getDataset_resource().orElseThrow(() ->
+                new IllegalStateException("Could not retrieve the Dataset IRI from the DatasetRecord."));
+        String repositoryId = datasetRecord.getRepository().orElseThrow(() ->
+                new IllegalStateException("Could not retrieve the Repository ID from the DatasetRecord."));
 
         Repository dsRepo = getDatasetRepo(datasetRecord);
         return new SimpleDatasetRepositoryConnection(dsRepo.getConnection(), dataset, repositoryId, vf);
@@ -323,7 +322,7 @@ public class SimpleDatasetManager implements DatasetManager {
      * @param dataset The Dataset to search for
      * @param repositoryId The Repository in which to search
      * @return Optional of the DatasetRecord Resource if it exists, links to the specified dataset, and is associated
-     * with the correct dataset repository; otherwise, Optional.empty().
+     *      with the correct dataset repository; otherwise, Optional.empty().
      */
     private Optional<Resource> getRecordResource(Resource dataset, String repositoryId) {
         try (RepositoryConnection conn = systemRepository.getConnection()) {
@@ -343,14 +342,14 @@ public class SimpleDatasetManager implements DatasetManager {
     }
 
     private Repository getDatasetRepo(DatasetRecord datasetRecord) {
-        String dsRepoID = datasetRecord.getRepository()
-                .orElseThrow(() -> new MatOntoException("DatasetRecord does not specify a dataset repository."));
+        String dsRepoID = datasetRecord.getRepository().orElseThrow(() ->
+                new IllegalStateException("DatasetRecord does not specify a dataset repository."));
         return getDatasetRepo(dsRepoID);
     }
 
     private Repository getDatasetRepo(String repositoryId) {
-        return repoManager.getRepository(repositoryId)
-                .orElseThrow(() -> new MatOntoException("Dataset target repository does not exist."));
+        return repoManager.getRepository(repositoryId).orElseThrow(() ->
+                new MatOntoException("Dataset target repository does not exist."));
     }
 
     private void deleteGraphs(RepositoryConnection conn, Resource dataset) {

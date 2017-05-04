@@ -1,0 +1,22 @@
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xml: <http://www.w3.org/XML/1998/namespace> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+@prefix : <http://matonto.org/test/ontologies/parent#> .
+
+
+<http://matonto.org/test/ontologies/parent> a owl:Ontology .
+
+:basicParentEntity a rdfs:Class, owl:Class ;
+    rdfs:label "Basic Parent Entity" ;
+    rdfs:comment "Simple entity in the PARENT ontology that should inherit some parent stuff..." .
+
+:functionalObject a rdf:Property , owl:ObjectProperty , owl:FunctionalProperty ;
+    rdfs:range :basicParentEntity ; rdfs:comment "Functional object type property that should be on every class (no domain)." ; rdfs:label "Functional Object" .
+
+
+:functionalDatatype a rdf:Property , owl:DatatypeProperty , owl:FunctionalProperty ;
+    rdfs:range xsd:string ; rdfs:comment "Functional Datatype property that should be on every class (no domain)." ; rdfs:label "Functional Datatype" .
+

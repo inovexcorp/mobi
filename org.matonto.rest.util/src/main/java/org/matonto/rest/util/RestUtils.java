@@ -29,6 +29,8 @@ import javax.ws.rs.core.Response;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import net.sf.json.JSONArray;
@@ -87,7 +89,7 @@ public class RestUtils {
     /**
      * Converts a Sesame Model into a string containing RDF in the specified RDFFormat.
      *
-     * @param model  A Sesame Model of RDF to convert.
+     * @param model A Sesame Model of RDF to convert.
      * @param format The RDFFormat the RDF should be serialized into.
      * @return A String of the serialized RDF from the Model.
      */
@@ -101,7 +103,7 @@ public class RestUtils {
     /**
      * Converts a Sesame Model into a string containing RDF in the format specified by the passed string.
      *
-     * @param model  A Sesame Model of RDF to convert.
+     * @param model A Sesame Model of RDF to convert.
      * @param format The abbreviated name of a RDFFormat.
      * @return A String of the serialized RDF from the Model.
      */
@@ -177,7 +179,7 @@ public class RestUtils {
      * Retrieves the User associated with a Request using the passed EngineManager. If the User cannot be found,
      * throws a 401 Response.
      *
-     * @param context       The context of a Request.
+     * @param context The context of a Request.
      * @param engineManager The EngineManager to use when attempting to retrieve the User.
      * @return The User who made the Request if found; throws a 401 otherwise.
      */
@@ -204,7 +206,7 @@ public class RestUtils {
     /**
      * Tests for the existence and value of a string, assumed to be from a REST parameter.
      *
-     * @param param        The string parameter to check
+     * @param param The string parameter to check
      * @param errorMessage The error message to send if parameter is not set
      */
     public static void checkStringParam(@Nullable String param, String errorMessage) {
@@ -228,5 +230,32 @@ public class RestUtils {
                     .orElse(new JSONObject());
         }
         return firstObject;
+    }
+
+    /**
+     * Retrieves a single entity object, of the type specified, from a JSON-LD string and returns it as a
+     * {@link JSONObject}.
+     *
+     * @param json A JSON-LD string
+     * @param type The entity type that is required.
+     * @return The first object representing the specified type of entity present in the JSON-LD.
+     */
+    public static JSONObject getTypedObjectFromJsonld(String json, String type) {
+        List<JSONObject> objects = new ArrayList<>();
+        JSONArray array = JSONArray.fromObject(json);
+
+        array.forEach(o -> objects.add(JSONObject.fromObject(o)));
+
+        for (JSONObject o : objects) {
+            if (o.isArray()) {
+                o = getTypedObjectFromJsonld(o.toString(), type);
+            } else if (o.containsKey("@graph")) {
+                o = getTypedObjectFromJsonld(JSONArray.fromObject(o.get("@graph")).toString(), type);
+            }
+            if (o != null && o.containsKey("@type") && JSONArray.fromObject(o.get("@type")).contains(type)) {
+                return o;
+            }
+        }
+        return null;
     }
 }

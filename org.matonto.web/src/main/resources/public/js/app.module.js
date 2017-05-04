@@ -37,6 +37,7 @@
             'ui.codemirror',
             'ui.router',
             'ui.select',
+            'vs-repeat',
 
             /* Custom Filters */
             'beautify',
@@ -49,6 +50,7 @@
             'showProperties',
             'splitIRI',
             'trusted',
+            'uniqueKey',
 
             /* Custom Directives */
             'block',
@@ -134,6 +136,7 @@
             'LOCALNAME': /^[a-zA-Z0-9._\-]+$/,
             'FILENAME': /^[\w\-. ]+$/
         })
+        .constant('INDENT', 1.28571429)
         .config(httpInterceptorConfig)
         .factory('requestInterceptor', requestInterceptor)
         .service('beforeUnload', beforeUnload)
