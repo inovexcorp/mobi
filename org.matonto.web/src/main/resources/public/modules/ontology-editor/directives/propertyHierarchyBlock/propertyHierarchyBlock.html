@@ -30,7 +30,7 @@
                 <div ng-repeat="node in dvm.flatPropertyTree | filter:dvm.isShown" class="tree-item-wrapper">
                     <div ng-if="!node.entityIRI" class="tree-item">
                         <a ng-click="node.set(dvm.os.listItem.recordId, !node.get(dvm.os.listItem.recordId)); $event.stopPropagation()">
-                            <i class="fa fa-fw" ng-class="{'fa-folder-open-o': node.get(dvm.os.listItem.recordId), 'fa-folder-o': !node.get(dvm.os.listItem.recordId)}"></i>{{node.title}}
+                            <i class="fa fa-fw" ng-class="{'fa-folder-open-o': node.get(dvm.os.listItem.recordId), 'fa-folder-o': !node.get(dvm.os.listItem.recordId)}"></i><span>{{node.title}}</span>
                         </a>
                     </div>
                     <tree-item ng-if="node.entityIRI" ng-style="{'padding-left': (dvm.indent * (node.indent + 1)) + 'em'}"

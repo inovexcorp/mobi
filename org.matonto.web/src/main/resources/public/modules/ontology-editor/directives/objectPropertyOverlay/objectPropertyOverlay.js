@@ -42,10 +42,8 @@
                     dvm.ro = responseObj;
                     dvm.os = ontologyStateService;
                     dvm.util = utilService;
-                    dvm.individuals = $filter('removeIriFromArray')(dvm.os.listItem.individuals,
-                        dvm.os.getActiveEntityIRI());
-                    dvm.valueSelect = _.find(dvm.individuals, individual =>
-                        dvm.ro.getItemIri(individual) === dvm.os.propertyValue);
+                    dvm.individuals = $filter('removeIriFromArray')(dvm.os.listItem.individuals, dvm.os.getActiveEntityIRI());
+                    dvm.valueSelect = _.find(dvm.individuals, individual => dvm.ro.getItemIri(individual) === dvm.os.propertyValue);
 
                     dvm.addProperty = function(select, value) {
                         var property = dvm.ro.getItemIri(select);
@@ -56,8 +54,7 @@
                                 dvm.os.selected[property] = [value];
                             }
                         }
-                        dvm.os.addToAdditions(dvm.os.listItem.recordId, dvm.util.createJson(dvm.os.selected['@id'],
-                            property, value));
+                        dvm.os.addToAdditions(dvm.os.listItem.recordId, dvm.util.createJson(dvm.os.selected['@id'], property, value));
                         dvm.os.showObjectPropertyOverlay = false;
                         dvm.ontoUtils.saveCurrentChanges();
                     }
@@ -65,11 +62,9 @@
                     dvm.editProperty = function(select, value) {
                         var property = dvm.ro.getItemIri(select);
                         if (property) {
-                            dvm.os.addToDeletions(dvm.os.listItem.recordId, dvm.util.createJson(dvm.os.selected['@id'],
-                                property, dvm.os.selected[property][dvm.os.propertyIndex]));
+                            dvm.os.addToDeletions(dvm.os.listItem.recordId, dvm.util.createJson(dvm.os.selected['@id'], property, dvm.os.selected[property][dvm.os.propertyIndex]));
                             dvm.os.selected[property][dvm.os.propertyIndex] = value;
-                            dvm.os.addToAdditions(dvm.os.listItem.recordId, dvm.util.createJson(dvm.os.selected['@id'],
-                                property, value));
+                            dvm.os.addToAdditions(dvm.os.listItem.recordId, dvm.util.createJson(dvm.os.selected['@id'], property, value));
                         }
                         dvm.os.showObjectPropertyOverlay = false;
                         dvm.ontoUtils.saveCurrentChanges();
