@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.6.34-SNAPSHOT</version>
+        <version>1.6.37-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -50,7 +50,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.api</artifactId>
-            <version>1.6.30</version>
+            <version>1.6.34</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
@@ -73,6 +73,16 @@
             <version>1.6.28</version>
         </dependency>
         <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>jaas</artifactId>
+            <version>1.6.28</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>cache</artifactId>
+            <version>1.6.34</version>
+        </dependency>
+        <dependency>
             <groupId>org.apache.servicemix.bundles</groupId>
             <artifactId>org.apache.servicemix.bundles.json-lib</artifactId>
         </dependency>
@@ -88,11 +98,6 @@
             <groupId>io.swagger</groupId>
             <artifactId>swagger-annotations</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.matonto</groupId>
-            <artifactId>jaas</artifactId>
-            <version>1.6.28</version>
-        </dependency>
 
         <!-- Test dependencies -->
         <dependency>
@@ -100,6 +105,29 @@
             <artifactId>rdf.impl.sesame</artifactId>
             <version>1.6.28</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>catalog.impl</artifactId>
+            <version>1.6.28</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>ontology.core.impl.owlapi</artifactId>
+            <version>1.6.34</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>repository.impl.core</artifactId>
+            <version>1.6.28</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>ontology.utils</artifactId>
+            <version>1.6.34</version>
         </dependency>
         <dependency>
             <groupId>org.glassfish.jersey.test-framework.providers</groupId>
@@ -112,24 +140,6 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.matonto</groupId>
-            <artifactId>catalog.impl</artifactId>
-            <version>1.6.28</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.matonto</groupId>
-            <artifactId>ontology.core.impl.owlapi</artifactId>
-            <version>1.6.30</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.matonto</groupId>
-            <artifactId>repository.impl.core</artifactId>
-            <version>1.6.28</version>
-            <scope>test</scope>
         </dependency>
     </dependencies>
     <build>

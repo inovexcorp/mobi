@@ -246,6 +246,7 @@ function mockOntologyManager() {
             this.getConceptSchemes = jasmine.createSpy('getConceptSchemes').and.returnValue([]);
             this.getConceptSchemeIRIs = jasmine.createSpy('getConceptSchemeIRIs').and.returnValue([]);
             this.downloadOntology = jasmine.createSpy('downloadOntology');
+            this.deleteOntology = jasmine.createSpy('deleteOntology').and.returnValue($q.when());
             this.getAnnotationPropertyHierarchies = jasmine.createSpy('getAnnotationPropertyHierarchies');
         });
     });
