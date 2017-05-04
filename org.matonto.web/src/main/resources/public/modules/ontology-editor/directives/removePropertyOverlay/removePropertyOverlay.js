@@ -60,6 +60,8 @@
                         dvm.pm.remove(dvm.os.selected, dvm.key, dvm.index);
                         if (prefixes.rdfs + 'domain' === dvm.key) {
                             dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.getOntologiesArray(), dvm.os.listItem);
+                        } else if (prefixes.rdfs + 'range' === dvm.key) {
+                            dvm.os.updatePropertyIcon(dvm.os.selected);
                         }
                         dvm.overlayFlag = false;
                         ontoUtils.saveCurrentChanges();

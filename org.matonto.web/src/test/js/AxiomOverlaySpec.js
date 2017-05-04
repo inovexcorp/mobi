@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Axiom Overlay directive', function() {
-    var $compile, scope, element, controller, ontologyStateSvc, propertyManagerSvc, ontologyManagerSvc, ontoUtils;
+    var $compile, scope, element, controller, ontologyStateSvc, propertyManagerSvc, ontologyManagerSvc, ontoUtils, prefixes;
 
     beforeEach(function() {
         module('templates');
@@ -29,17 +29,19 @@ describe('Axiom Overlay directive', function() {
         mockResponseObj();
         mockOntologyState();
         mockUtil();
+        mockPrefixes();
         injectRegexConstant();
         injectHighlightFilter();
         injectTrustedFilter();
         mockOntologyUtilsManager();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _responseObj_, _ontologyUtilsManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _responseObj_, _ontologyUtilsManagerService_, _prefixes_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
             resObj = _responseObj_;
             ontoUtils = _ontologyUtilsManagerService_;
+            prefixes = _prefixes_;
         });
 
         scope.axiomList = [];
@@ -126,30 +128,58 @@ describe('Axiom Overlay directive', function() {
     });
     describe('controller methods', function() {
         describe('should call add an axiom', function() {
+            var axiom;
             beforeEach(function() {
+                axiom = 'axiom';
                 controller.values = [{}];
                 controller.axiom = {};
                 resObj.getItemIri.and.callFake(function(obj) {
-                    return obj === controller.axiom ? 'axiom' : 'value';
+                    return obj === controller.axiom ? axiom : 'value';
                 });
                 ontologyStateSvc.showAxiomOverlay = true;
             });
-            it('if the selected entity already has the axiom', function() {
+            describe('if the selected entity already has the axiom', function() {
                 var previousValue = {'@id': 'prev'};
-                ontologyStateSvc.selected = {axiom: [previousValue]};
-                controller.addAxiom();
-                expect(ontologyStateSvc.selected.axiom.length).toBe(controller.values.length + 1);
-                expect(ontologyStateSvc.selected.axiom).toContain(previousValue);
-                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, jasmine.any(Object));
-                expect(ontologyStateSvc.showAxiomOverlay).toBe(false);
-                expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
+                it('and the axiom is rdfs:range', function() {
+                    axiom = prefixes.rdfs + 'range';
+                    ontologyStateSvc.selected = _.set({}, axiom, [previousValue]);
+                    controller.addAxiom();
+                    expect(ontologyStateSvc.selected[axiom].length).toBe(controller.values.length + 1);
+                    expect(ontologyStateSvc.selected[axiom]).toContain(previousValue);
+                    expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, jasmine.any(Object));
+                    expect(ontologyStateSvc.updatePropertyIcon).toHaveBeenCalledWith(ontologyStateSvc.selected);
+                    expect(ontologyStateSvc.showAxiomOverlay).toBe(false);
+                    expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
+                });
+                it('and the axiom is not rdfs:range', function() {
+                    ontologyStateSvc.selected = _.set({}, axiom, [previousValue]);
+                    controller.addAxiom();
+                    expect(ontologyStateSvc.selected[axiom].length).toBe(controller.values.length + 1);
+                    expect(ontologyStateSvc.selected[axiom]).toContain(previousValue);
+                    expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, jasmine.any(Object));
+                    expect(ontologyStateSvc.updatePropertyIcon).not.toHaveBeenCalled();
+                    expect(ontologyStateSvc.showAxiomOverlay).toBe(false);
+                    expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
+                });
             });
-            it('if the selected entity does not have the axiom', function() {
-                controller.addAxiom();
-                expect(ontologyStateSvc.selected.axiom.length).toBe(controller.values.length);
-                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, jasmine.any(Object));
-                expect(ontologyStateSvc.showAxiomOverlay).toBe(false);
-                expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
+            describe('if the selected entity does not have the axiom', function() {
+                it('and the axiom is rdfs:range', function() {
+                    axiom = prefixes.rdfs + 'range';
+                    controller.addAxiom();
+                    expect(ontologyStateSvc.selected[axiom].length).toBe(controller.values.length);
+                    expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, jasmine.any(Object));
+                    expect(ontologyStateSvc.updatePropertyIcon).toHaveBeenCalledWith(ontologyStateSvc.selected);
+                    expect(ontologyStateSvc.showAxiomOverlay).toBe(false);
+                    expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
+                });
+                it('and the axiom is not rdfs:range', function() {
+                    controller.addAxiom();
+                    expect(ontologyStateSvc.selected[axiom].length).toBe(controller.values.length);
+                    expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, jasmine.any(Object));
+                    expect(ontologyStateSvc.updatePropertyIcon).not.toHaveBeenCalled();
+                    expect(ontologyStateSvc.showAxiomOverlay).toBe(false);
+                    expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
+                });
             });
         });
     });
