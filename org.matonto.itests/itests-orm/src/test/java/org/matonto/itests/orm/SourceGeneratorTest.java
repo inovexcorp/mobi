@@ -75,7 +75,7 @@ public class SourceGeneratorTest {
 
     private Model model;
     private Model personModel;
-    
+
     private static IRI TEST_AGENT;
     private static IRI TEST_ACCOUNT;
     private static IRI TEST_PERSON;

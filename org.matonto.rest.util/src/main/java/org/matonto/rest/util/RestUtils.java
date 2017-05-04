@@ -93,7 +93,7 @@ public class RestUtils {
     /**
      * Converts a Sesame Model into a string containing RDF in the specified RDFFormat.
      *
-     * @param model  A Sesame Model of RDF to convert.
+     * @param model A Sesame Model of RDF to convert.
      * @param format The RDFFormat the RDF should be serialized into.
      * @return A String of the serialized RDF from the Model.
      */
@@ -106,7 +106,7 @@ public class RestUtils {
     /**
      * Converts a Sesame Model into a string containing RDF in the format specified by the passed string.
      *
-     * @param model  A Sesame Model of RDF to convert.
+     * @param model A Sesame Model of RDF to convert.
      * @param format The abbreviated name of a RDFFormat.
      * @return A String of the serialized RDF from the Model.
      */
@@ -182,7 +182,7 @@ public class RestUtils {
      * Retrieves the User associated with a Request using the passed EngineManager. If the User cannot be found,
      * throws a 401 Response.
      *
-     * @param context       The context of a Request.
+     * @param context The context of a Request.
      * @param engineManager The EngineManager to use when attempting to retrieve the User.
      * @return The User who made the Request if found; throws a 401 otherwise.
      */
@@ -209,7 +209,7 @@ public class RestUtils {
     /**
      * Tests for the existence and value of a string, assumed to be from a REST parameter.
      *
-     * @param param        The string parameter to check
+     * @param param The string parameter to check
      * @param errorMessage The error message to send if parameter is not set
      */
     public static void checkStringParam(@Nullable String param, String errorMessage) {
