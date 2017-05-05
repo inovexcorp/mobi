@@ -101,19 +101,31 @@ describe('Statement Display directive', function() {
         });
     });
     describe('check controller.o value', function() {
-        it('when @id is present', function() {
-            splitIRI.and.returnValue({end: 'id'});
-            scope.object = {'@id': 'full/id'};
-            var parent = $compile('<div></div>')(scope);
-            parent.data('$statementContainerController', {});
-            element = angular.element('<statement-display predicate="predicate" object="object" deletion></statement-display>');
-            parent.append(element);
-            element = $compile(element)(scope);
-            scope.$digest();
-            var controller = element.controller('statementDisplay');
-            expect(splitIRI).toHaveBeenCalledWith('full/id');
-            expect(controller.o).toBe('id');
-            expect(controller.fullObject).toBe('full/id');
+        describe('when @id is present', function() {
+            beforeEach(function() {
+                scope.object = {'@id': 'full/id'};
+                var parent = $compile('<div></div>')(scope);
+                parent.data('$statementContainerController', {});
+                element = angular.element('<statement-display predicate="predicate" object="object" deletion></statement-display>');
+                parent.append(element);
+                element = $compile(element)(scope);
+            });
+            it('and split.end is present', function() {
+                splitIRI.and.returnValue({end: 'id'});
+                scope.$digest();
+                var controller = element.controller('statementDisplay');
+                expect(splitIRI).toHaveBeenCalledWith('full/id');
+                expect(controller.o).toBe('id');
+                expect(controller.fullObject).toBe('full/id');
+            });
+            it('and split.end is empty', function() {
+                splitIRI.and.returnValue({end: ''});
+                scope.$digest();
+                var controller = element.controller('statementDisplay');
+                expect(splitIRI).toHaveBeenCalledWith('full/id');
+                expect(controller.o).toBe('full/id');
+                expect(controller.fullObject).toBe('full/id');
+            });
         });
         it('when @value is present', function() {
             scope.object = {'@value': 'value'};
