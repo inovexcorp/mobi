@@ -658,7 +658,7 @@
                         listItem.index[key].position = value.position - 1;
                     }
                 });
-                return _.remove(listItem.ontology, {matonto:{originalIRI: entityIRI}})[0];
+                return _.remove(listItem.ontology, {'@id': entityIRI})[0];
             }
             /**
              * @ngdoc method
