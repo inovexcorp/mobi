@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Statement Display directive', function() {
-    var $compile, scope, element, isolatedScope, splitIRI, prefixation;
+    var $compile, scope, element, isolatedScope, splitIRI;
 
     beforeEach(function() {
         module('templates');
