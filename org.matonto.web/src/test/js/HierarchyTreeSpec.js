@@ -39,7 +39,6 @@ describe('Hierarchy Tree directive', function() {
             ontologyStateSvc = _ontologyStateService_;
             ontologyUtils = _ontologyUtilsManagerService_;
         });
-
         scope.hierarchy = [{
             entityIRI: 'class1',
             indent: 0,
@@ -83,7 +82,7 @@ describe('Hierarchy Tree directive', function() {
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
             spyOn(controller, 'isShown').and.returnValue(true);
-            scope.$digest();
+            scope.$apply();
         });
         it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');

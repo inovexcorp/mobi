@@ -61,6 +61,7 @@ import org.matonto.ontology.utils.cache.OntologyCache;
 import org.matonto.persistence.utils.JSONQueryResults;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.query.api.Binding;
+import org.matonto.query.api.BindingSet;
 import org.matonto.rdf.api.BNode;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
@@ -89,6 +90,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.cache.Cache;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Response;
@@ -624,7 +626,8 @@ public class OntologyRestImpl implements OntologyRest {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
             TupleQueryResult results = ontologyManager.getClassesWithIndividuals(ontology);
-            JSONObject response = getHierarchy(results);
+            Map<String, Set<String>> classIndividuals = getClassIndividuals(results);
+            JSONObject response = new JSONObject().element("individuals", classIndividuals);
             return Response.ok(response).build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -1242,6 +1245,34 @@ public class OntologyRestImpl implements OntologyRest {
         return Response.status(201).entity(response).build();
     }
 
+    /**
+     * Parse the provided Set to provide a map with all the Individuals using their parent(class) as key
+     *
+     * @param tupleQueryResult the TupleQueryResult that contains the parent-individuals relationships for creating the
+     *                         map.
+     * @return a JSONObject containing the map of the individuals provided.
+     *
+     */
+    private Map<String, Set<String>> getClassIndividuals(TupleQueryResult tupleQueryResult) {
+        Map<String, Set<String>> classIndividuals = new HashMap<>();
+        tupleQueryResult.forEach(queryResult -> {
+            Optional<Value> individual = queryResult.getValue("individual");
+            Optional<Value> parent = queryResult.getValue("parent");
+            if (individual.isPresent() && parent.isPresent()) {
+                String individualValue = individual.get().stringValue();
+                String keyString = parent.get().stringValue();
+                if (classIndividuals.containsKey(keyString)) {
+                    classIndividuals.get(keyString).add(individualValue);
+                } else {
+                    Set<String> individualsSet = new HashSet<>();
+                    individualsSet.add(individualValue);
+                    classIndividuals.put(keyString, individualsSet);
+                }
+            }
+        });
+        return classIndividuals;
+    }
+    
     private Optional<Cache<String, Ontology>> getOntologyCache() {
         Optional<Cache<String, Ontology>> cache = Optional.empty();
         if (cacheManager != null) {

@@ -37,7 +37,7 @@
             var util = utilService;
             var ro = responseObj;
 
-            self.commonDelete = function(entityIRI) {
+            self.commonDelete = function(entityIRI, updateEverythingTree = false) {
                 om.getEntityUsages(os.listItem.recordId, os.listItem.branchId, os.listItem.commitId, entityIRI, 'construct')
                     .then(statements => {
                         os.addToDeletions(os.listItem.recordId, os.selected);
@@ -46,6 +46,9 @@
                         ur.remove(os.listItem.ontology, entityIRI);
                         os.unSelectItem();
                         self.saveCurrentChanges();
+                        if (updateEverythingTree) {
+                            os.listItem.flatEverythingTree = os.createFlatEverythingTree(os.getOntologiesArray(), os.listItem);
+                        }
                     }, util.createErrorToast);
             }
 
@@ -56,7 +59,11 @@
                 _.pull(os.listItem.classesWithIndividuals, entityIRI);
                 os.deleteEntityFromHierarchy(os.listItem.classHierarchy, entityIRI, os.listItem.classIndex);
                 os.listItem.flatClassHierarchy = os.flattenHierarchy(os.listItem.classHierarchy, os.listItem.recordId);
-                self.commonDelete(entityIRI);
+                delete os.listItem.classesAndIndividuals[entityIRI];
+                os.listItem.classesWithIndividuals = _.keys(os.listItem.classesAndIndividuals);
+                os.listItem.individualsParentPath = os.getIndividualsParentPath(os.listItem);
+                os.listItem.flatIndividualsHierarchy = os.createFlatIndividualTree(os.listItem);
+                self.commonDelete(entityIRI, true);
             }
 
             self.deleteObjectProperty = function() {
@@ -65,7 +72,7 @@
                 _.remove(os.listItem.subObjectProperties, {namespace:split.begin + split.then, localName: split.end});
                 os.deleteEntityFromHierarchy(os.listItem.objectPropertyHierarchy, entityIRI, os.listItem.objectPropertyIndex);
                 os.listItem.flatObjectPropertyHierarchy = os.flattenHierarchy(os.listItem.objectPropertyHierarchy, os.listItem.recordId);
-                self.commonDelete(entityIRI);
+                self.commonDelete(entityIRI, true);
             }
 
             self.deleteDataTypeProperty = function() {
@@ -88,7 +95,26 @@
 
             self.deleteIndividual = function() {
                 var entityIRI = os.getActiveEntityIRI();
-                _.remove(_.get(os.listItem, 'individuals'), entityIRI);
+                var split = $filter('splitIRI')(entityIRI);
+                _.remove(_.get(os.listItem, 'individuals'), {namespace:split.begin + split.then, localName: split.end});
+                var indivTypes = os.selected['@type'];
+                var indivAndClasses = _.get(os.listItem, 'classesAndIndividuals');
+
+                _.forEach(indivTypes, type => {
+                    if (type !== prefixes.owl + 'NamedIndividual') {
+                        var parentAndIndivs = indivAndClasses[type];
+                        if (parentAndIndivs.length) {
+                            _.remove(parentAndIndivs, item => item === entityIRI);
+                            if (!parentAndIndivs.length) {
+                                delete os.listItem.classesAndIndividuals[type];
+                            }
+                        }
+                    }
+                });
+                
+                os.listItem.classesWithIndividuals = _.keys(os.listItem.classesAndIndividuals);
+                os.listItem.individualsParentPath = os.getIndividualsParentPath(os.listItem);
+                os.listItem.flatIndividualsHierarchy = os.createFlatIndividualTree(os.listItem);
                 self.commonDelete(entityIRI);
             }
 

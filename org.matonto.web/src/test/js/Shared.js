@@ -508,6 +508,8 @@ function mockOntologyState() {
                     }
                 }],
                 upToDate: true,
+                individualsParentPath: [],
+                classesAndIndividuals: [],
                 flatClassHierarchy: [],
                 flatDataPropertyHierarchy: [],
                 flatObjectPropertyHierarchy: [],
@@ -582,10 +584,14 @@ function mockOntologyState() {
             this.goTo = jasmine.createSpy('goTo');
             this.openAt = jasmine.createSpy('openAt');
             this.getDefaultPrefix = jasmine.createSpy('getDefaultPrefix');
+            this.retrieveClassesWithIndividuals = jasmine.createSpy('retrieveClassesWithIndividuals');
+            this.getIndividualsParentPath = jasmine.createSpy('getIndividualsParentPath');
             this.flattenHierarchy = jasmine.createSpy('flattenHierarchy');
             this.areParentsOpen = jasmine.createSpy('areParentsOpen');
             this.createFlatEverythingTree = jasmine.createSpy('createFlatEverythingTree');
             this.getOntologiesArray = jasmine.createSpy('getOntologiesArray').and.returnValue(this.listItem.ontology);
+            this.createFlatIndividualTree = jasmine.createSpy('createFlatIndividualTree');
+            this.updatePropertyIcon = jasmine.createSpy('updatePropertyIcon');
         });
     });
 }

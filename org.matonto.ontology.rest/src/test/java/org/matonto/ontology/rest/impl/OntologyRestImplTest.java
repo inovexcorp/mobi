@@ -219,6 +219,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
     private IRI importedOntologyIRI;
     private JSONObject entityUsagesResult;
     private JSONObject subClassesOfResult;
+    private JSONObject individualsOfResult;
     private JSONObject subObjectPropertiesOfResult;
     private JSONObject subDatatypePropertiesOfResult;
     private JSONObject subAnnotationPropertiesOfResult;
@@ -358,6 +359,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         importedOntologyIRI = valueFactory.createIRI("http://matonto.org/imported-ontology-id");
         entityUsagesResult = getResource("/entity-usages-results.json");
         subClassesOfResult = getResource("/sub-classes-of-results.json");
+        individualsOfResult = getResource("/individuals-of-results.json");
         subObjectPropertiesOfResult = getResource("/sub-object-properties-of-results.json");
         subDatatypePropertiesOfResult = getResource("/sub-datatype-properties-of-results.json");
         subAnnotationPropertiesOfResult = getResource("/sub-annotation-properties-of-results.json");
@@ -440,6 +442,10 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         simpleOntologyManager.setRepositoryManager(repoManager);
         TupleQueryResult subClassesOf = simpleOntologyManager.getSubClassesOf(ontology);
         when(ontologyManager.getSubClassesOf(ontology)).thenReturn(subClassesOf);
+
+        TupleQueryResult individualsOf = simpleOntologyManager.getClassesWithIndividuals(ontology);
+        when(ontologyManager.getClassesWithIndividuals(ontology)).thenReturn(individualsOf);
+
         TupleQueryResult subObjectPropertiesOf = simpleOntologyManager.getSubObjectPropertiesOf(ontology);
         when(ontologyManager.getSubObjectPropertiesOf(ontology)).thenReturn(subObjectPropertiesOf);
         TupleQueryResult subDatatypePropertiesOf = simpleOntologyManager.getSubDatatypePropertiesOf(ontology);
@@ -3463,7 +3469,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         assertEquals(response.getStatus(), 200);
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
-        assertEquals(getResponse(response), subClassesOfResult);
+        assertEquals(getResponse(response), individualsOfResult);
     }
 
     @Test
@@ -3477,7 +3483,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         assertEquals(response.getStatus(), 200);
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(false);
-        assertEquals(getResponse(response), subClassesOfResult);
+        assertEquals(getResponse(response), individualsOfResult);
     }
 
     @Test
@@ -3492,11 +3498,10 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
     public void testGetClassesWithIndividualsMissingCommitId() {
         Response response = target().path("ontologies/" + encode(recordId.stringValue())
                 + "/classes-with-individuals").queryParam("branchId", branchId.stringValue()).request().get();
-
         assertEquals(response.getStatus(), 200);
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         assertGetOntology(true);
-        assertEquals(getResponse(response), subClassesOfResult);
+        assertEquals(getResponse(response), individualsOfResult);
     }
 
     @Test
@@ -3507,7 +3512,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         assertEquals(response.getStatus(), 200);
         verify(ontologyManager).retrieveOntology(recordId);
         assertGetOntology(true);
-        assertEquals(getResponse(response), subClassesOfResult);
+        assertEquals(getResponse(response), individualsOfResult);
     }
 
     @Test

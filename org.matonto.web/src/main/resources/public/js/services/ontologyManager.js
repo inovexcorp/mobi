@@ -1276,11 +1276,9 @@
             self.getEntityName = function(entity, type = 'ontology') {
                 var result = utilService.getPropertyValue(entity, prefixes.rdfs + 'label')
                     || utilService.getDctermsValue(entity, 'title')
-                    || utilService.getPropertyValue(entity, prefixes.dc + 'title');
-                if (type === 'vocabulary') {
-                    result = utilService.getPropertyValue(entity, prefixes.skos + 'prefLabel')
-                        || utilService.getPropertyValue(entity, prefixes.skos + 'altLabel') || result;
-                }
+                    || utilService.getPropertyValue(entity, prefixes.dc + 'title')
+                    || utilService.getPropertyValue(entity, prefixes.skos + 'prefLabel')
+                    || utilService.getPropertyValue(entity, prefixes.skos + 'altLabel');
                 if (!result) {
                     if (_.has(entity, '@id')) {
                         result = utilService.getBeautifulIRI(entity['@id']);
