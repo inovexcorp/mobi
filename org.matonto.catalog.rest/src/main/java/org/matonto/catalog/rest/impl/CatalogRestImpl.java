@@ -74,11 +74,15 @@ import org.matonto.rdf.orm.OrmFactory;
 import org.matonto.rdf.orm.Thing;
 import org.matonto.rest.util.ErrorUtils;
 import org.matonto.rest.util.LinksUtils;
+import org.matonto.rest.util.RestUtils;
 import org.matonto.rest.util.jaxb.Links;
 import org.openrdf.model.vocabulary.DCTERMS;
 import org.openrdf.model.vocabulary.RDF;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.Arrays;
@@ -111,6 +115,12 @@ public class CatalogRestImpl implements CatalogRest {
     protected DistributionFactory distributionFactory;
     protected CommitFactory commitFactory;
     protected InProgressCommitFactory inProgressCommitFactory;
+    private static final Logger LOG = LoggerFactory.getLogger(CatalogRestImpl.class);
+    /**
+     * fields for partial element extraction on JSON strings
+     */
+    private int elementCount, bracketCount, maxElements = 500;
+    public static final String ELEMENT_PATTERN = "],";
 
     private static final Set<String> SORT_RESOURCES;
 
@@ -1225,9 +1235,67 @@ public class CatalogRestImpl implements CatalogRest {
      *      statements.
      */
     private JSONObject getDifferenceJson(Difference difference, String format) {
-        return new JSONObject().element("additions", getModelInFormat(difference.getAdditions(), format))
-                .element("deletions", getModelInFormat(difference.getDeletions(), format));
+        return new JSONObject().element("additions", getPartialJSON(getModelInFormat(difference.getAdditions(), format)))
+                .element("deletions", getPartialJSON(getModelInFormat(difference.getDeletions(), format)));
     }
+
+
+    /**
+     * return the first N elements of a JSON string if the length exceeds N elements
+     * @param fullJSON
+     * @return
+     */
+    private String getPartialJSON(String fullJSON) {
+        String[] partial = fullJSON.split(ELEMENT_PATTERN);
+        if (partial.length > maxElements) {
+            String out = getElementSet(fullJSON);
+            return out + ",{\"@id\" : \"ZZZ_MORE\", \"@value\" : \"More Elements Exist - click here to view all\"}]";
+        } else {
+            return fullJSON;
+        }
+    }
+
+
+    /**
+     * Identify the first N elements of a JSON string
+     * @param json
+     * @return
+     */
+    private String getElementSet(String json) {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        this.elementCount = 0;
+        this.bracketCount = 0;
+        for (byte b : json.getBytes()) {
+            out.write(b);
+            if (b == ('{') || b == ('}')) {
+                if (bracketMatch(b) == 0) {
+                    break;
+                }
+            }
+        }
+        return out.toString();
+    }
+
+    /**
+     * Increment and decrement bracket counters for JSON parsing
+     * @param c
+     * @return
+     */
+    private int bracketMatch(byte c) {
+        if (c == '{') {
+            this.bracketCount++;
+        } else if (c == '}') {
+            this.bracketCount--;
+            if (this.bracketCount == 0) {
+                this.elementCount++;
+                if (this.elementCount >= this.maxElements)
+                    return 0;
+            }
+        }
+        return 1;
+    }
+
+
 
     /**
      * Attempts to retrieve a unversioned Distribution following the path of provided IDs for the Catalog, Record, and
