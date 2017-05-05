@@ -45,16 +45,15 @@
                     dvm.showNewOverlay = false;
                     dvm.showRemoveOverlay = false;
 
-                    dvm.setupRemove = function(url, index) {
+                    dvm.setupRemove = function(url) {
                         dvm.url = url;
-                        dvm.index = index;
                         dvm.showRemoveOverlay = true;
                     }
 
                     dvm.remove = function() {
                         var importsIRI = dvm.prefixes.owl + 'imports';
                         dvm.os.addToDeletions(dvm.os.listItem.recordId, util.createJson(dvm.os.selected['@id'], importsIRI, {'@id': dvm.url}));
-                        pm.remove(dvm.os.selected, importsIRI, dvm.index);
+                        pm.remove(dvm.os.selected, importsIRI, _.findIndex(dvm.os.selected[importsIRI], {'@id': dvm.url}));
                         dvm.os.saveChanges(dvm.os.listItem.recordId, {additions: dvm.os.listItem.additions, deletions: dvm.os.listItem.deletions})
                             .then(() => dvm.os.afterSave(), $q.reject)
                             .then(() => dvm.os.updateOntology(dvm.os.listItem.recordId, dvm.os.listItem.branchId, dvm.os.listItem.commitId, dvm.os.listItem.type, dvm.os.listItem.upToDate, dvm.os.listItem.inProgressCommit), $q.reject)
