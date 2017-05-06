@@ -98,6 +98,22 @@ public class QueryTest {
     }
 
     @Test
+    public void multipleSelectVars() throws Exception {
+        String queryString = "select ?s ?p where { ?s ?p ?o }";
+        Sparql11Parser parser = Query.getParser(queryString);
+        TokenStream tokens = parser.getTokenStream();
+        parser.addErrorListener(new BaseErrorListener() {
+            @Override
+            public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
+                throw new IllegalStateException("failed to parse at line " + line + " due to " + msg, e);
+            }
+        });
+
+        parser.query();
+        assertEquals(queryString, tokens.getText());
+    }
+
+    @Test
     public void insensitiveToCaseBuiltInCall() throws Exception {
         String queryString = "select * WHERE { ?s ?P ?o FILTeR (sameTeRm(?s, ?o))}";
         Sparql11Parser parser = Query.getParser(queryString);
@@ -112,6 +128,40 @@ public class QueryTest {
         parser.query();
         assertEquals(queryString, tokens.getText());
     }
+
+    // TODO: Fix
+//    @Test
+//    public void usingAAsVar() throws Exception {
+//        String queryString = "select * WHERE { ?A ?b ?c }";
+//        Sparql11Parser parser = Query.getParser(queryString);
+//        TokenStream tokens = parser.getTokenStream();
+//        parser.addErrorListener(new BaseErrorListener() {
+//            @Override
+//            public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
+//                throw new IllegalStateException("failed to parse at line " + line + " due to " + msg, e);
+//            }
+//        });
+//
+//        parser.query();
+//        assertEquals(queryString, tokens.getText());
+//    }
+
+    // TODO: fix
+//    @Test
+//    public void commentsWork() throws Exception {
+//        String queryString = "select * where { ?s ?p ?o }#?s ?p ?o }";
+//        Sparql11Parser parser = Query.getParser(queryString);
+//        TokenStream tokens = parser.getTokenStream();
+//        parser.addErrorListener(new BaseErrorListener() {
+//            @Override
+//            public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
+//                throw new IllegalStateException("failed to parse at line " + line + " due to " + msg, e);
+//            }
+//        });
+//
+//        parser.query();
+//        assertEquals(queryString, tokens.getText());
+//    }
 
     private String streamToString(InputStream inputStream) throws IOException {
         return IOUtils.toString(inputStream, "UTF-8");
