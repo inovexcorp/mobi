@@ -86,8 +86,8 @@ selectClause
       var
       | (
         OPEN_BRACE expression 'as' var CLOSE_BRACE
-      )+
-    )
+      )
+    )+
     | ASTERISK
   )
   ;
