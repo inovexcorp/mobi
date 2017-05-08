@@ -26,6 +26,7 @@ package org.matonto.catalog.rest.impl;
 import static org.matonto.rest.util.RestUtils.getActiveUser;
 import static org.matonto.rest.util.RestUtils.getRDFFormatFileExtension;
 import static org.matonto.rest.util.RestUtils.getRDFFormatMimeType;
+import static org.matonto.rest.util.RestUtils.getTypedObjectFromJsonld;
 import static org.matonto.rest.util.RestUtils.jsonldToModel;
 import static org.matonto.rest.util.RestUtils.modelToString;
 
@@ -204,7 +205,8 @@ public class CatalogRestImpl implements CatalogRest {
                 catalogs.add(distributedCatalog);
             }
 
-            JSONArray array = JSONArray.fromObject(catalogs.stream().map(this::thingToJsonObject)
+            JSONArray array = JSONArray.fromObject(catalogs.stream()
+                    .map(catalog -> thingToJsonObject(catalog, Catalog.TYPE))
                     .collect(Collectors.toList()));
             return Response.ok(array).build();
         } catch (MatOntoException ex) {
@@ -219,9 +221,9 @@ public class CatalogRestImpl implements CatalogRest {
             Catalog distributedCatalog = catalogManager.getDistributedCatalog();
             Resource catalogIri = factory.createIRI(catalogId);
             if (catalogIri.equals(localCatalog.getResource())) {
-                return Response.ok(thingToJsonObject(localCatalog)).build();
+                return Response.ok(thingToJsonObject(localCatalog, Catalog.TYPE)).build();
             } else if (catalogIri.equals(distributedCatalog.getResource())) {
-                return Response.ok(thingToJsonObject(distributedCatalog)).build();
+                return Response.ok(thingToJsonObject(distributedCatalog, Catalog.TYPE)).build();
             } else {
                 throw ErrorUtils.sendError("Catalog does not exist with id " + catalogId, Response.Status.NOT_FOUND);
             }
@@ -250,7 +252,8 @@ public class CatalogRestImpl implements CatalogRest {
             }
             PaginatedSearchResults<Record> records = catalogManager.findRecord(factory.createIRI(catalogId),
                     builder.build());
-            return createPaginatedResponse(uriInfo, records.getPage(), records.getTotalSize(), limit, offset);
+            return createPaginatedResponse(uriInfo, records.getPage(), records.getTotalSize(), limit, offset,
+                    Record.TYPE);
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MatOntoException ex) {
@@ -296,7 +299,7 @@ public class CatalogRestImpl implements CatalogRest {
     public Response getRecord(String catalogId, String recordId) {
         try {
             Record record = getRecord(factory.createIRI(catalogId), factory.createIRI(recordId));
-            return Response.ok(thingToJsonObject(record)).build();
+            return Response.ok(thingToJsonObject(record, Record.TYPE)).build();
         } catch (MatOntoException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         }
@@ -374,7 +377,7 @@ public class CatalogRestImpl implements CatalogRest {
             UnversionedRecord record = getRecord(catalogId, recordId, UnversionedRecord.TYPE);
             Set<Resource> distributionIRIs = record.getUnversionedDistribution_resource();
             return createPaginatedThingResponse(uriInfo, distributionIRIs, this::getDistribution, sort, offset, limit,
-                    asc, null);
+                    asc, null, Distribution.TYPE);
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
         }
@@ -401,7 +404,7 @@ public class CatalogRestImpl implements CatalogRest {
             testUnversionedDistributionPath(catalogId, recordId, distributionId);
             Distribution distribution = catalogManager.getDistribution(factory.createIRI(distributionId))
                     .orElseThrow(() -> ErrorUtils.sendError("Distribution not found", Response.Status.NOT_FOUND));
-            return Response.ok(thingToJsonObject(distribution)).build();
+            return Response.ok(thingToJsonObject(distribution, Distribution.TYPE)).build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
         }
@@ -438,7 +441,8 @@ public class CatalogRestImpl implements CatalogRest {
             validatePaginationParams(sort, offset, limit);
             VersionedRecord record = getRecord(catalogId, recordId, VersionedRecord.TYPE);
             Set<Resource> versionIRIs = record.getVersion_resource();
-            return createPaginatedThingResponse(uriInfo, versionIRIs, this::getVersion, sort, offset, limit, asc, null);
+            return createPaginatedThingResponse(uriInfo, versionIRIs, this::getVersion, sort, offset, limit, asc, null,
+                    Version.TYPE);
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
         }
@@ -474,7 +478,7 @@ public class CatalogRestImpl implements CatalogRest {
                     ErrorUtils.sendError("Record does not have a latest version", Response.Status.NOT_FOUND));
             Version version = catalogManager.getVersion(versionIRI, versionFactories.get(Version.TYPE))
                     .orElseThrow(() -> ErrorUtils.sendError("Version not found", Response.Status.NOT_FOUND));
-            return Response.ok(thingToJsonObject(version)).build();
+            return Response.ok(thingToJsonObject(version, Version.TYPE)).build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
         }
@@ -487,7 +491,7 @@ public class CatalogRestImpl implements CatalogRest {
             Version version = catalogManager.getVersion(factory.createIRI(versionId),
                     versionFactories.get(Version.TYPE)).orElseThrow(() ->
                     ErrorUtils.sendError("Version not found", Response.Status.NOT_FOUND));
-            return Response.ok(thingToJsonObject(version)).build();
+            return Response.ok(thingToJsonObject(version, Version.TYPE)).build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
         }
@@ -575,7 +579,7 @@ public class CatalogRestImpl implements CatalogRest {
             Version version = getVersion(versionId);
             Set<Resource> distributionIRIs = version.getVersionedDistribution_resource();
             return createPaginatedThingResponse(uriInfo, distributionIRIs, this::getDistribution, sort, offset, limit,
-                    asc, null);
+                    asc, null, Distribution.TYPE);
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
         }
@@ -603,7 +607,7 @@ public class CatalogRestImpl implements CatalogRest {
             testVersionedDistributionPath(catalogId, recordId, versionId, distributionId);
             Distribution distribution = catalogManager.getDistribution(factory.createIRI(distributionId))
                     .orElseThrow(() -> ErrorUtils.sendError("Distribution not found", Response.Status.NOT_FOUND));
-            return Response.ok(thingToJsonObject(distribution)).build();
+            return Response.ok(thingToJsonObject(distribution, Distribution.TYPE)).build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
         }
@@ -669,7 +673,7 @@ public class CatalogRestImpl implements CatalogRest {
                 };
             }
             return createPaginatedThingResponse(uriInfo, branchIRIs, this::getBranch, sort, offset, limit, asc,
-                    filterFunction);
+                    filterFunction, Branch.TYPE);
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
         }
@@ -705,7 +709,7 @@ public class CatalogRestImpl implements CatalogRest {
                     ErrorUtils.sendError("Record does not have a master branch set", Response.Status.NOT_FOUND));
             Branch masterBranch = catalogManager.getBranch(branchIRI, branchFactories.get(Branch.TYPE))
                     .orElseThrow(() -> ErrorUtils.sendError("Branch not found", Response.Status.NOT_FOUND));
-            return Response.ok(thingToJsonObject(masterBranch)).build();
+            return Response.ok(thingToJsonObject(masterBranch, Branch.TYPE)).build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
         }
@@ -717,7 +721,7 @@ public class CatalogRestImpl implements CatalogRest {
             testBranchPath(catalogId, recordId, branchId);
             Branch branch = catalogManager.getBranch(factory.createIRI(branchId), branchFactories.get(Branch.TYPE))
                     .orElseThrow(() -> ErrorUtils.sendError("Branch not found", Response.Status.NOT_FOUND));
-            return Response.ok(thingToJsonObject(branch)).build();
+            return Response.ok(thingToJsonObject(branch, Branch.TYPE)).build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
         }
@@ -1121,9 +1125,9 @@ public class CatalogRestImpl implements CatalogRest {
      *      pages if present.
      */
     private <T extends Thing> Response createPaginatedResponse(UriInfo uriInfo, Collection<T> items, int totalSize,
-                                                               int limit, int offset) {
+                                                               int limit, int offset, String type) {
         JSONArray results = JSONArray.fromObject(items.stream()
-                .map(this::thingToJsonObject)
+                .map(thing -> thingToJsonObject(thing, type))
                 .collect(Collectors.toList()));
         return createPaginatedResponseWithJson(uriInfo, results, totalSize, limit, offset);
     }
@@ -1159,7 +1163,7 @@ public class CatalogRestImpl implements CatalogRest {
     private <T extends Thing> Response createPaginatedThingResponse(UriInfo uriInfo, Set<Resource> iris,
                                                                     Function<Resource, T> thingFunction, String sortBy,
                                                                     int offset, int limit, boolean asc,
-                                                                    Function<T, Boolean> filterFunction) {
+                                                                    Function<T, Boolean> filterFunction, String type) {
         if (offset > iris.size()) {
             throw ErrorUtils.sendError("Offset exceeds total size", Response.Status.BAD_REQUEST);
         }
@@ -1179,7 +1183,7 @@ public class CatalogRestImpl implements CatalogRest {
                 .skip(offset)
                 .limit(limit)
                 .collect(Collectors.toList());
-        return createPaginatedResponse(uriInfo, things, filteredThings.size(), limit, offset);
+        return createPaginatedResponse(uriInfo, things, filteredThings.size(), limit, offset, type);
     }
 
     /**
@@ -1193,8 +1197,7 @@ public class CatalogRestImpl implements CatalogRest {
      */
     private Response createCommitResponse(Commit commit, String format) {
         JSONObject object = getCommitDifferenceObject(commit.getResource(), format);
-        Model commitModel = commit.getModel().filter(commit.getResource(), null, null);
-        object.put("commit", getObjectFromJsonld(modelToJsonld(commitModel)));
+        object.put("commit", thingToJsonObject(commit, Commit.TYPE));
         return Response.ok(object).build();
     }
 
@@ -1565,30 +1568,15 @@ public class CatalogRestImpl implements CatalogRest {
         return transformer.matontoModel(jsonldToModel(jsonld));
     }
 
-    /**
-     * Grabs a single Entity object from a JSON-LD string and returns it as a JSONObject. Looks within the first
-     * context object if present.
-     *
-     * @param json A JSON-LD string.
-     * @return The first object representing a single Entity present in the JSON-LD array.
-     */
-    private JSONObject getObjectFromJsonld(String json) {
-        JSONArray array = JSONArray.fromObject(json);
-        JSONObject firstObject = array.getJSONObject(0);
-        if (firstObject.containsKey("@graph")) {
-            firstObject = Optional.ofNullable(firstObject.getJSONArray("@graph").optJSONObject(0))
-                    .orElse(new JSONObject());
-        }
-        return firstObject;
-    }
 
     /**
-     * Converts a Thing into a JSONObject by the first object in the JSON-LD serialization of the Thing's Model.
+     * Converts a Thing into a JSONObject by the first object of a specific type in the JSON-LD serialization of the
+     * Thing's Model.
      *
      * @param thing The Thing to convert into a JSONObject.
      * @return The JSONObject with the JSON-LD of the Thing entity from its Model.
      */
-    private JSONObject thingToJsonObject(Thing thing) {
-        return getObjectFromJsonld(thingToJsonld(thing));
+    private JSONObject thingToJsonObject(Thing thing, String type) {
+        return getTypedObjectFromJsonld(thingToJsonld(thing), type);
     }
 }

@@ -746,10 +746,11 @@ public class SimpleOntologyManagerTest {
                 "http://matonto.org/ontology#Class1b", "http://matonto.org/ontology#Class1c",
                 "http://matonto.org/ontology#Class1a").collect(Collectors.toSet());
         Map<String, String> children = new HashMap<>();
-        children.put("http://matonto.org/ontology#Class1b", "http://matonto.org/ontology#Class1c");
-        children.put("http://matonto.org/ontology#Class1a", "http://matonto.org/ontology#Class1b");
-        children.put("http://matonto.org/ontology#Class2a", "http://matonto.org/ontology#Class2b");
-
+        children.put("http://matonto.org/ontology#Class1a", "http://matonto.org/ontology#Individual1a");
+        children.put("http://matonto.org/ontology#Class1b", "http://matonto.org/ontology#Individual1b");
+        children.put("http://matonto.org/ontology#Class1c", "http://matonto.org/ontology#Individual1c");
+        children.put("http://matonto.org/ontology#Class2a", "http://matonto.org/ontology#Individual2a");
+        children.put("http://matonto.org/ontology#Class2b", "http://matonto.org/ontology#Individual2b");
         TupleQueryResult result = manager.getClassesWithIndividuals(ontology);
 
         assertTrue(result.hasNext());
@@ -757,10 +758,12 @@ public class SimpleOntologyManagerTest {
             String parent = Bindings.requiredResource(b, "parent").stringValue();
             assertTrue(parents.contains(parent));
             parents.remove(parent);
-            Optional<Binding> child = b.getBinding("child");
+            Optional<Binding> child = b.getBinding("individual");
             if (child.isPresent()) {
-                assertEquals(children.get(parent), child.get().getValue().stringValue());
-                children.remove(parent);
+                String lclChild = children.get(parent);
+                String individual = child.get().getValue().stringValue();
+                  assertEquals(lclChild, individual);
+                  children.remove(parent);
             }
         });
         assertEquals(0, parents.size());
@@ -814,7 +817,10 @@ public class SimpleOntologyManagerTest {
     @Test
     public void testGetConceptRelationships() throws Exception {
         Set<String> parents = Stream.of("https://matonto.org/vocabulary#Concept1",
-                "https://matonto.org/vocabulary#Concept2").collect(Collectors.toSet());
+                "https://matonto.org/vocabulary#Concept2","https://matonto.org/vocabulary#Concept3",
+                "https://matonto.org/vocabulary#Concept4","https://matonto.org/vocabulary#ConceptScheme1",
+                "https://matonto.org/vocabulary#ConceptScheme2","https://matonto.org/vocabulary#ConceptScheme3")
+                .collect(Collectors.toSet());
         Map<String, String> children = new HashMap<>();
         children.put("https://matonto.org/vocabulary#Concept1", "https://matonto.org/vocabulary#Concept2");
 

@@ -45,7 +45,7 @@
                     dvm.ou = ontologyUtilsManagerService;
                     
                     dvm.isShown = function(node) {
-                        return (node.indent > 0 && dvm.os.areParentsOpen(node)) || (node.indent === 0 && node.path.length === 2);
+                        return (node.indent > 0 && dvm.os.areParentsOpen(node)) || (node.indent === 0 && _.get(node, 'path', []).length === 2);
                     }
                 }
             }

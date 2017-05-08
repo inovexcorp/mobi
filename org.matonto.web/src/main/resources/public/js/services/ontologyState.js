@@ -74,8 +74,6 @@
                 dataPropertyIndex: {},
                 objectPropertyHierarchy: [],
                 objectPropertyIndex: {},
-                classesWithIndividuals: [],
-                classesWithIndividualsIndex: {},
                 blankNodes: {},
                 index: {},
                 additions: [],
@@ -92,7 +90,10 @@
                 flatObjectPropertyHierarchy: [],
                 annotationPropertyHierarchy: [],
                 annotationPropertyIndex: {},
-                flatAnnotationPropertyHierarchy: []
+                flatAnnotationPropertyHierarchy: [],
+                classesAndIndividuals: {},
+                classesWithIndividuals: [],
+                individualsParentPath: []
             };
             var vocabularyListItemTemplate = {
                 ontology: [],
@@ -407,7 +408,7 @@
                             compareListItems
                         );
                         listItem.individuals = _.unionWith(
-                            addOntologyIdToArray(iriList.individuals, iriList.id),
+                            addOntologyIdToArray(iriList.namedIndividuals, iriList.id),
                             listItem.individuals,
                             compareListItems
                         );
@@ -417,12 +418,10 @@
                             compareListItems
                         );
                     });
+
                     listItem.classHierarchy = response[2].hierarchy;
                     listItem.classIndex = response[2].index;
                     listItem.flatClassHierarchy = self.flattenHierarchy(listItem.classHierarchy, recordId, listItem);
-                    listItem.classesWithIndividuals = response[3].hierarchy;
-                    listItem.classesWithIndividualsIndex = response[3].index;
-                    listItem.flatClassesWithIndividuals = self.flattenHierarchy(listItem.classesWithIndividuals, recordId, listItem);
                     listItem.dataPropertyHierarchy = response[4].hierarchy;
                     listItem.dataPropertyIndex = response[4].index;
                     listItem.flatDataPropertyHierarchy = self.flattenHierarchy(listItem.dataPropertyHierarchy, recordId, listItem);
@@ -437,6 +436,10 @@
                         addImportedOntologyToListItem(listItem, importedOntObj, 'ontology');
                     });
                     listItem.upToDate = upToDate;
+                    listItem.classesAndIndividuals = response[3].individuals;
+                    listItem.classesWithIndividuals = _.keys(response[3].individuals);
+                    listItem.individualsParentPath = self.getIndividualsParentPath(listItem);
+                    listItem.flatIndividualsHierarchy = self.createFlatIndividualTree(listItem);
                     listItem.flatEverythingTree = self.createFlatEverythingTree(getOntologiesArrayByListItem(listItem), listItem);
                     _.pullAllWith(
                         listItem.annotations,
@@ -446,6 +449,13 @@
                     deferred.resolve(listItem);
                 }, error => _.has(error, 'statusText') ? util.onError(response, deferred) : deferred.reject(error));
                 return deferred.promise;
+            }
+            self.getIndividualsParentPath = function(listItem) {
+                var result = [];
+                _.forEach(_.keys(listItem.classesAndIndividuals), classIRI => {
+                    result = _.concat(result, getClassesForIndividuals(listItem.classIndex, classIRI));
+                });
+                return _.uniq(result);
             }
             self.createVocabularyListItem = function(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate = true) {
                 var deferred = $q.defer();
@@ -548,13 +558,13 @@
                 _.forEach(orderedClasses, clazz => {
                     orderedProperties = sortByName(om.getClassProperties(ontologies, clazz['@id']), listItem);
                     path = [listItem.recordId, clazz['@id']];
-                    result.push(_.merge(clazz, {
+                    result.push(_.merge({}, clazz, {
                         indent: 0,
                         hasChildren: !!orderedProperties.length,
                         path
                     }));
                     _.forEach(orderedProperties, property => {
-                        result.push(_.merge(property, {
+                        result.push(_.merge({}, property, {
                             indent: 1,
                             hasChildren: false,
                             path: _.concat(path, property['@id'])
@@ -569,12 +579,41 @@
                         set: self.setNoDomainsOpened
                     });
                     _.forEach(orderedNoDomainProperties, property => {
-                        result.push(_.merge(property, {
+                        result.push(_.merge({}, property, {
                             indent: 1,
                             hasChildren: false,
                             get: self.getNoDomainsOpened,
                             path: [listItem.recordId, property['@id']]
                         }));
+                    });
+                }
+                return result;
+            }
+            /**
+             * @ngdoc method
+             * @name createFlatIndividualTree
+             * @methodOf ontologyState.service:ontologyStateService
+             *
+             * @description
+             * Creates an array which represents the hierarchical structure of the relationship between classes
+             * and individuals to be used with a virtual scrolling solution.
+             *
+             * @param {Object} listItem The listItem linked to the ontology you want to add the entity to.
+             * @returns {Object[]} An array which contains the class-individuals replationships.
+             */
+            self.createFlatIndividualTree = function(listItem) {
+                var result = [];
+                var neededClasses = _.get(listItem, 'individualsParentPath', []);
+                var classesWithIndividuals = _.get(listItem, 'classesAndIndividuals', {});
+                if (neededClasses.length && !_.isEmpty(classesWithIndividuals)) {
+                    _.forEach(_.get(listItem, 'flatClassHierarchy', []), node => {
+                        if (_.includes(neededClasses, node.entityIRI)) {
+                            result.push(_.merge({}, node, {isClass: true}));
+                            var sortedIndividuals = _.sortBy(_.get(classesWithIndividuals, node.entityIRI), entityIRI => _.lowerCase(self.getEntityNameByIndex(entityIRI, listItem)));
+                            _.forEach(sortedIndividuals, entityIRI => {
+                                addNodeToResult({entityIRI}, result, node.indent + 1, node.path);
+                            });
+                        }
                     });
                 }
                 return result;
@@ -612,14 +651,14 @@
              * @returns {Object} An Object which represents the requested entity.
              */
             self.removeEntity = function(listItem, entityIRI) {
-                var entityPosition = _.get(listItem.index, entityIRI + '.position');
+                var entityPosition = _.get(listItem.index, "['" + entityIRI + "'].position");
                 _.unset(listItem.index, entityIRI);
                 _.forOwn(listItem.index, (value, key) => {
                     if (value.position > entityPosition) {
                         listItem.index[key].position = value.position - 1;
                     }
                 });
-                return _.remove(listItem.ontology, {matonto:{originalIRI: entityIRI}})[0];
+                return _.remove(listItem.ontology, {'@id': entityIRI})[0];
             }
             /**
              * @ngdoc method
@@ -806,11 +845,11 @@
             self.getNoDomainsOpened = function(recordId) {
                 return _.get(self.state, getOpenPath(recordId, 'noDomainsOpened'), false);
             }
-            self.setIndividualsOpened = function(recordId, classIRI, isOpened) {
-                _.set(self.state, getOpenPath(recordId, classIRI, 'individualsOpened'), isOpened);
+            self.setIndividualsOpened = function(pathString, isOpened) {
+                _.set(self.state, getOpenPath(pathString, 'individualsOpened'), isOpened);
             }
-            self.getIndividualsOpened = function(recordId, classIRI) {
-                return _.get(self.state, getOpenPath(recordId, classIRI, 'individualsOpened'), false);
+            self.getIndividualsOpened = function(pathString) {
+                return _.get(self.state, getOpenPath(pathString, 'individualsOpened'), false);
             }
             self.setDataPropertiesOpened = function(recordId, isOpened) {
                 _.set(self.state, getOpenPath(recordId, 'dataPropertiesOpened'), isOpened);
@@ -1074,12 +1113,12 @@
                 }
                 return result;
             }
-            self.areParentsOpen = function(node) {
+            self.areParentsOpen = function(node, get = self.getOpened) {
                 var pathString = _.first(node.path);
                 var pathCopy = _.tail(_.initial(node.path));
                 return _.every(pathCopy, pathPart => {
                     pathString += '.' + pathPart;
-                    return self.getOpened(pathString);
+                    return get(pathString);
                 });
             }
             self.joinPath = function(path) {
@@ -1130,6 +1169,11 @@
             self.getOntologiesArray = function() {
                 return getOntologiesArrayByListItem(self.listItem);
             }
+            self.updatePropertyIcon = function(entity) {
+                if (om.isProperty(entity)) {
+                    setPropertyIcon(entity);
+                }
+            }
 
             /* Private helper functions */
             function getOntologiesArrayByListItem(listItem) {
@@ -1176,7 +1220,7 @@
                         _.set(entity, 'matonto.anonymous', ontologyId + ' (Anonymous Ontology)');
                     }
                     if (om.isProperty(entity)) {
-                        _.set(entity, 'matonto.icon', getIcon(entity));
+                        setPropertyIcon(entity);
                     } else if (om.isBlankNode(entity)) {
                         let id = _.get(entity, '@id');
                         _.set(blankNodes, id, mc.jsonldToManchester(id, ontology, true));
@@ -1213,6 +1257,9 @@
             function addOntologyIdToArray(arr, ontologyId) {
                 return _.forEach(arr, item => _.set(item, 'ontologyId', ontologyId));
             }
+            function setPropertyIcon(entity) {
+                _.set(entity, 'matonto.icon', getIcon(entity));
+            }
             function getIcon(property) {
                 var range = _.get(property, prefixes.rdfs + 'range');
                 var icon = 'fa-square-o';
@@ -1220,6 +1267,7 @@
                     if (range.length === 1) {
                         switch(range[0]['@id']) {
                             case prefixes.xsd + 'string':
+                            case prefixes.rdf + 'langString':
                                 icon = 'fa-font';
                                 break;
                             case prefixes.xsd + 'decimal':
@@ -1243,6 +1291,9 @@
                             case prefixes.xsd + 'boolean':
                             case prefixes.xsd + 'byte':
                                 icon = 'fa-signal';
+                                break;
+                            case prefixes.rdfs + 'Literal':
+                                icon = 'fa-cube';
                                 break;
                             default:
                                 icon = 'fa-link';
@@ -1319,7 +1370,7 @@
             function sortByName(array, listItem) {
                 return _.sortBy(array, entity => _.lowerCase(self.getEntityNameByIndex(entity['@id'], listItem)));
             }
-            function addImportedOntologyToListItem(listItem, importedOntObj, type) {  
+            function addImportedOntologyToListItem(listItem, importedOntObj, type) {
                 var index = {};
                 _.forEach(importedOntObj.ontology, (entity, i) => {
                     if (_.has(entity, '@id')) {
@@ -1330,9 +1381,7 @@
                             ontologyIri: importedOntObj.id
                         }
                     }
-                    if (om.isProperty(entity)) {
-                        _.set(entity, 'matonto.icon', getIcon(entity));
-                    }
+                    self.updatePropertyIcon(entity);
                     _.set(entity, 'matonto.imported', true);
                 });
                 var importedOntologyListItem = {
@@ -1343,5 +1392,17 @@
                 listItem.importedOntologyIds.push(importedOntObj.id);
                 listItem.importedOntologies.push(importedOntologyListItem);
             }
+        }
+        function getClassesForIndividuals(index, iri) {
+            var result = [iri];
+            if (_.has(index, iri)) {
+                var indexCopy = angular.copy(index);
+                var parentIRIs = _.get(indexCopy, iri);
+                _.unset(indexCopy, iri);
+                _.forEach(parentIRIs, parentIRI => {
+                    result = _.concat(result, getClassesForIndividuals(indexCopy, parentIRI));
+                });
+            }
+            return result;
         }
 })();
