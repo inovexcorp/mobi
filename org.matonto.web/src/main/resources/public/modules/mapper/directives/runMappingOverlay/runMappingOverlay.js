@@ -53,9 +53,9 @@
          */
         .directive('runMappingOverlay', runMappingOverlay);
 
-        runMappingOverlay.$inject = ['$filter', 'mapperStateService', 'mappingManagerService', 'delimitedManagerService', 'datasetManagerService', 'utilService'];
+        runMappingOverlay.$inject = ['$filter', 'mapperStateService', 'mappingManagerService', 'delimitedManagerService', 'datasetManagerService', 'utilService', 'prefixes'];
 
-        function runMappingOverlay($filter, mapperStateService, mappingManagerService, delimitedManagerService, datasetManagerService, utilService) {
+        function runMappingOverlay($filter, mapperStateService, mappingManagerService, delimitedManagerService, datasetManagerService, utilService, prefixes) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -74,7 +74,9 @@
                     dvm.runMethod = 'download';
                     dvm.datasetRecords = [];
 
-                    dvm.dam.getDatasetRecords().then(response => dvm.datasetRecords = response.data, onError);
+                    dvm.dam.getDatasetRecords().then(response => {
+                        dvm.datasetRecords =_.map(response.data, arr => _.find(arr, obj => _.includes(obj['@type'], prefixes.dataset + 'DatasetRecord')));
+                    }, onError);
 
                     dvm.run = function() {
                         if (dvm.state.editMapping) {

@@ -15,7 +15,7 @@
     rdfs:comment "The MatOnto catalog ontology is designed to facilitate interoperability between MatOnto catalogs published on the Web. By using the MatOnto catalog to describe resources, publishers increase discoverability and enable easy consumption of metadata from multiple catalogs. It further enables decentralized publishing of catalogs and facilitates federated resource search across sites. Aggregated MatOnto catalog metadata can serve as a manifest file to facilitate digital preservation."@en;
     dct:creator [foaf:name "Jordan Lewis"], [foaf:name "Megan Mercer"];
     foaf:maker [foaf:name "MatOnto"; foaf:homepage <http://matonto.org>];
-    dct:modified "2016-10-17"^^xsd:date.
+    dct:modified "2017-05-02"^^xsd:date.
 
 # Catalog
 

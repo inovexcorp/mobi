@@ -25,47 +25,24 @@
         <block-header>
             <span>Property Hierarchies</span><a ng-click="dvm.os.showCreatePropertyOverlay = true" class="pull-right"><i class="fa fa-plus"></i><span>Create Property</span></a>
         </block-header>
-        <block-content class="tree">
-            <ul ng-if="dvm.os.listItem.dataPropertyHierarchy.length" class="data-property-hierarchy">
-                <li>
-                    <a ng-click="dvm.os.setDataPropertiesOpened(dvm.os.listItem.recordId, !dvm.os.getDataPropertiesOpened(dvm.os.listItem.recordId)); $event.stopPropagation()">
-                        <i class="fa fa-fw"
-                           ng-class="{'fa-folder-open-o': dvm.os.getDataPropertiesOpened(dvm.os.listItem.recordId), 'fa-folder-o': !dvm.os.getDataPropertiesOpened(dvm.os.listItem.recordId)}"></i>Data Properties
-                    </a>
-                </li>
-                <li class="container" ng-if="dvm.os.getDataPropertiesOpened(dvm.os.listItem.recordId)">
-                    <hierarchy-tree hierarchy="dvm.os.listItem.dataPropertyHierarchy"></hierarchy-tree>
-                </li>
-            </ul>
-            <ul ng-if="dvm.os.listItem.objectPropertyHierarchy.length" class="object-property-hierarchy">
-                <li>
-                    <a ng-click="dvm.os.setObjectPropertiesOpened(dvm.os.listItem.recordId, !dvm.os.getObjectPropertiesOpened(dvm.os.listItem.recordId)); $event.stopPropagation()">
-                        <i class="fa fa-fw"
-                           ng-class="{'fa-folder-open-o': dvm.os.getObjectPropertiesOpened(dvm.os.listItem.recordId), 'fa-folder-o': !dvm.os.getObjectPropertiesOpened(dvm.os.listItem.recordId)}"></i>Object Properties
-                    </a>
-                </li>
-                <li class="container" ng-if="dvm.os.getObjectPropertiesOpened(dvm.os.listItem.recordId)">
-                    <hierarchy-tree hierarchy="dvm.os.listItem.objectPropertyHierarchy"></hierarchy-tree>
-                </li>
-            </ul>
-            <ul ng-if="dvm.om.hasAnnotations(dvm.os.listItem.ontology)">
-                <li>
-                    <a ng-click="dvm.os.setAnnotationPropertiesOpened(dvm.os.listItem.recordId, !dvm.os.getAnnotationPropertiesOpened(dvm.os.listItem.recordId)); $event.stopPropagation()">
-                        <i class="fa fa-fw"
-                           ng-class="{'fa-folder-open-o': dvm.os.getAnnotationPropertiesOpened(dvm.os.listItem.recordId), 'fa-folder-o': !dvm.os.getAnnotationPropertiesOpened(dvm.os.listItem.recordId)}"></i>Annotation Properties
-                    </a>
-                </li>
-                <li class="container" ng-if="dvm.os.getAnnotationPropertiesOpened(dvm.os.listItem.recordId)">
-                    <ul>
-                        <tree-item ng-repeat="annotation in dvm.om.getAnnotations(dvm.os.listItem.ontology) | orderBy:dvm.om.getEntityName" current-entity="annotation" ng-init="path = dvm.os.listItem.recordId + '.' + annotation['@id']"
-                                   path="path" is-active="dvm.os.getActiveEntityIRI() === annotation['@id']"
-                                   is-opened="dvm.os.getOpened(path)" on-click="dvm.os.selectItem(annotation['@id'])" data-path-to="{{path}}"></tree-item>
-                    </ul>
-                </li>
-            </ul>
+        <block-content class="tree hierarchy-tree">
+            <div class="full-height repeater-container" vs-repeat="26" vs-offset-before="10" vs-offset-after="10">
+                <div ng-repeat="node in dvm.flatPropertyTree | filter:dvm.isShown" class="tree-item-wrapper">
+                    <div ng-if="!node.entityIRI" class="tree-item">
+                        <a ng-click="node.set(dvm.os.listItem.recordId, !node.get(dvm.os.listItem.recordId)); $event.stopPropagation()">
+                            <i class="fa fa-fw" ng-class="{'fa-folder-open-o': node.get(dvm.os.listItem.recordId), 'fa-folder-o': !node.get(dvm.os.listItem.recordId)}"></i><span>{{node.title}}</span>
+                        </a>
+                    </div>
+                    <tree-item ng-if="node.entityIRI" ng-style="{'padding-left': (dvm.indent * (node.indent + 1)) + 'em'}"
+                               is-active="dvm.os.getActiveEntityIRI() === node.entityIRI"
+                               current-entity="dvm.os.getEntityByRecordId(dvm.os.listItem.recordId, node.entityIRI)"
+                               on-click="dvm.os.selectItem(node.entityIRI)" has-children="node.hasChildren"
+                               path="node.path" data-path-to="{{dvm.os.joinPath(node.path)}}" is-opened="dvm.os.getOpened(dvm.os.joinPath(node.path))"></tree-item>
+                </div>
+            </div>
         </block-content>
         <block-footer class="centered">
-            <button class="btn btn-link" ng-disabled="!dvm.os.selected" ng-click="dvm.showDeleteConfirmation = true"><i class="fa fa-trash-o"></i><span>Delete Property</span></button>
+            <button class="btn btn-link" ng-disabled="!dvm.os.selected || dvm.os.selected.matonto.imported" ng-click="dvm.showDeleteConfirmation = true"><i class="fa fa-trash-o"></i><span>Delete Property</span></button>
         </block-footer>
     </block>
     <confirmation-overlay ng-if="dvm.showDeleteConfirmation" header-text="'Delete Property'" confirm-click="dvm.deleteProperty()"

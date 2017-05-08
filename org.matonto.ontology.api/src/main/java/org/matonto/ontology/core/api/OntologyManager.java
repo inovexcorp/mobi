@@ -146,6 +146,15 @@ public interface OntologyManager {
     void deleteOntology(@Nonnull Resource recordId);
 
     /**
+     * Deletes a branch associated with an OntologyRecord.
+     *
+     * @param recordId The record id for the OntologyRecord which contains the Branch you want to delete.
+     * @param branchId The branch id of the ontology branch you want to delete.
+     * @throws IllegalArgumentException - the OntologyRecord can't be retrieved.
+     */
+    void deleteOntologyBranch(@Nonnull Resource recordId, @Nonnull Resource branchId);
+
+    /**
      * Creates a new OntologyId with a generated identifier.
      *
      * @return an OntologyId with a generated identifier.
@@ -192,6 +201,14 @@ public interface OntologyManager {
      * @return a Set with the query results.
      */
     TupleQueryResult getSubDatatypePropertiesOf(Ontology ontology);
+
+    /**
+     * Gets the subPropertyOf relationships for annotation properties in the provided Ontology.
+     *
+     * @param ontology the Ontology you wish to query.
+     * @return a Set with the query results.
+     */
+    TupleQueryResult getSubAnnotationPropertiesOf(Ontology ontology);
 
     /**
      * Gets the subPropertyOf relationships for object properties in the provided Ontology.

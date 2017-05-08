@@ -164,21 +164,35 @@ describe('Create Individual Overlay directive', function() {
             });
         });
         it('should create an individual', function() {
-            var listItem = {ontology: [{}], individuals: [], classesWithIndividuals: []};
             var split = {begin: 'begin', then: 'then', end: 'end'};
-            ontologyStateSvc.listItem = listItem;
+            ontologyStateSvc.listItem = {
+                ontology: [{}],
+                individuals: [],
+                classesWithIndividuals: [],
+                individualsParentPath: [],
+                classesAndIndividuals: {},
+                classHierarchy: [],
+                classIndex: {}
+            };
+            ontologyStateSvc.createFlatIndividualTree.and.returnValue([{prop: 'individual'}]);
+            ontologyStateSvc.getPathsTo.and.returnValue([['ClassA']]);
             splitIRIFilter.and.returnValue(split);
             controller.individual = {'@id': 'id', '@type': ['ClassA']};
             controller.create();
             expect(controller.individual.matonto.originalIRI).toBe(controller.individual['@id']);
-            expect(listItem.individuals).toContain({namespace: split.begin + split.then, localName: split.end});
-            expect(listItem.classesWithIndividuals).toContain({entityIRI: 'ClassA'});
+            expect(ontologyStateSvc.listItem.individuals).toContain({namespace: split.begin + split.then, localName: split.end});
+            expect(ontologyStateSvc.listItem.classesWithIndividuals).toEqual(['ClassA']);
+            expect(ontologyStateSvc.listItem.classesAndIndividuals).toEqual({'ClassA': ['id']});
+            expect(ontologyStateSvc.listItem.individualsParentPath).toEqual(['ClassA']);
+            expect(ontologyStateSvc.getPathsTo).toHaveBeenCalledWith([],{},'ClassA');
             expect(controller.individual['@type']).toContain(prefixes.owl + 'NamedIndividual');
             expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, controller.individual);
             expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, controller.individual);
             expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(controller.individual['@id'], false);
             expect(ontologyStateSvc.showCreateIndividualOverlay).toBe(false);
             expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
+            expect(ontologyStateSvc.createFlatIndividualTree).toHaveBeenCalledWith(ontologyStateSvc.listItem);
+            expect(ontologyStateSvc.listItem.flatIndividualsHierarchy).toEqual([{prop: 'individual'}]);
         });
     });
     it('should call create when the button is clicked', function() {

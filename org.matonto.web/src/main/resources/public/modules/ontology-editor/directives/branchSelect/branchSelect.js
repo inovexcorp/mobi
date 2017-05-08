@@ -28,9 +28,9 @@
         .directive('branchSelect', branchSelect);
 
         branchSelect.$inject = ['$q', 'catalogManagerService', 'ontologyStateService',
-            'utilService', 'stateManagerService'];
+            'ontologyManagerService', 'utilService', 'stateManagerService'];
 
-        function branchSelect($q, catalogManagerService, ontologyStateService, utilService,
+        function branchSelect($q, catalogManagerService, ontologyStateService, ontologyManagerService, utilService,
             stateManagerService) {
             return {
                 restrict: 'E',
@@ -45,6 +45,7 @@
                     var dvm = this;
                     var cm = catalogManagerService;
                     var sm = stateManagerService;
+                    var om = ontologyManagerService;
                     var catalogId = _.get(cm.localCatalog, '@id', '');
 
                     dvm.os = ontologyStateService;
@@ -78,7 +79,7 @@
                     }
 
                     dvm.delete = function() {
-                        cm.deleteRecordBranch(dvm.branch['@id'], dvm.os.listItem.recordId, catalogId)
+                        om.deleteOntology(dvm.os.listItem.recordId, dvm.branch['@id'])
                             .then(() => {
                                 dvm.os.removeBranch(dvm.os.listItem.recordId, dvm.branch['@id']);
                                 dvm.showDeleteConfirmation = false;
