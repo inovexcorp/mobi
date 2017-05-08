@@ -429,9 +429,9 @@ public class DelimitedConverterImpl implements DelimitedConverter {
     }
 
     private Set<Ontology> getSourceOntologies(Mapping mapping) {
-        Optional<Resource> recordIRI = mapping.getSourceRecord().flatMap(thing -> Optional.of(thing.getResource()));
-        Optional<Resource> branchIRI = mapping.getSourceBranch().flatMap(thing -> Optional.of(thing.getResource()));
-        Optional<Resource> commitIRI = mapping.getSourceCommit().flatMap(thing -> Optional.of(thing.getResource()));
+        Optional<Resource> recordIRI = mapping.getSourceRecord_resource();
+        Optional<Resource> branchIRI = mapping.getSourceBranch_resource();
+        Optional<Resource> commitIRI = mapping.getSourceCommit_resource();
         if (recordIRI.isPresent() && branchIRI.isPresent() && commitIRI.isPresent()) {
             Optional<Ontology> ontology = ontologyManager.retrieveOntology(recordIRI.get(), branchIRI.get(),
                     commitIRI.get());
