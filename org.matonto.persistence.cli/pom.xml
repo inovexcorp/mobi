@@ -43,7 +43,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>persistence.api</artifactId>
-            <version>1.6.28</version>
+            <version>1.6.43</version>
         </dependency>
         <dependency>
             <groupId>org.apache.karaf.shell</groupId>

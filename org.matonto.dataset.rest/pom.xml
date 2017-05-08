@@ -41,27 +41,27 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>dataset.api</artifactId>
-            <version>1.6.31</version>
+            <version>1.6.43</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rest.util</artifactId>
-            <version>1.6.31</version>
+            <version>1.6.43</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>web.security</artifactId>
-            <version>1.6.28</version>
+            <version>1.6.43</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.utils</artifactId>
-            <version>1.6.34</version>
+            <version>1.6.43</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>catalog.api</artifactId>
-            <version>1.6.31</version>
+            <version>1.6.43</version>
         </dependency>
 
         <dependency>

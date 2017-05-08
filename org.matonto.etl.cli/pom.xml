@@ -47,12 +47,12 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>etl.api</artifactId>
-            <version>1.6.28</version>
+            <version>1.6.43</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.utils</artifactId>
-            <version>1.6.28</version>
+            <version>1.6.43</version>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
