@@ -88,7 +88,7 @@
                             var propId = dvm.mm.getPropIdByMapping(prop);
                             var ontology = dvm.mm.findSourceOntologyWithProp(propId, dvm.state.sourceOntologies);
                             var classMapping = dvm.mm.findClassWithObjectMapping(dvm.state.mapping.jsonld, prop['@id']);
-                            var propObj = dvm.om.getEntity(ontology.entities, propId);
+                            var propObj = dvm.om.getEntity([ontology.entities], propId);
                             return {
                                 ontologyId: ontology.id,
                                 classMappingId: classMapping['@id'],
@@ -97,7 +97,7 @@
                         });
                         var classId = dvm.mm.getClassIdByMappingId(dvm.state.mapping.jsonld, dvm.state.selectedClassMappingId);
                         var classOntology = dvm.mm.findSourceOntologyWithClass(classId, dvm.state.sourceOntologies);
-                        var classObj = dvm.om.getEntity(classOntology.entities, classId);
+                        var classObj = dvm.om.getEntity([classOntology.entities], classId);
                         var dataPropMappings = _.filter(dvm.mm.getPropMappingsByClass(dvm.state.mapping.jsonld, dvm.state.selectedClassMappingId), propMapping => dvm.mm.isDataMapping(propMapping));
                         dvm.mm.removeClass(dvm.state.mapping.jsonld, dvm.state.selectedClassMappingId);
                         _.forEach(dataPropMappings, propMapping => _.remove(dvm.state.invalidProps, {'@id': propMapping['@id']}));
@@ -112,7 +112,7 @@
                         var propId = dvm.mm.getPropIdByMappingId(dvm.state.mapping.jsonld, dvm.state.selectedPropMappingId);
                         var ontology = dvm.mm.findSourceOntologyWithProp(propId, dvm.state.sourceOntologies);
                         var classMapping = _.find(dvm.state.mapping.jsonld, {'@id': dvm.state.selectedClassMappingId});
-                        var propObj = dvm.om.getEntity(ontology.entities, propId);
+                        var propObj = dvm.om.getEntity([ontology.entities], propId);
                         dvm.state.getAvailableProps(classMapping['@id']).push({propObj, ontologyId: ontology.id});
                         dvm.mm.removeProp(dvm.state.mapping.jsonld, classMapping['@id'], dvm.state.selectedPropMappingId);
                         _.remove(dvm.state.invalidProps, {'@id': dvm.state.selectedPropMappingId});

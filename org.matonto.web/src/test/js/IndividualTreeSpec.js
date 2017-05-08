@@ -22,7 +22,7 @@
  */
 
 describe('Individual Tree directive', function() {
-    var $compile, scope, element, ontologyStateSvc, ontologyManagerSvc, util;
+    var $compile, scope, element, ontologyStateSvc, ontologyManagerSvc, util, controller;
 
     beforeEach(function() {
         module('templates');
@@ -31,6 +31,8 @@ describe('Individual Tree directive', function() {
         mockOntologyState();
         mockUtil();
         mockOntologyUtilsManager();
+        injectUniqueKeyFilter();
+        injectIndentConstant();
 
         inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_, _utilService_) {
             $compile = _$compile_;
@@ -40,53 +42,120 @@ describe('Individual Tree directive', function() {
             util = _utilService_;
         });
 
-        ontologyStateSvc.listItem = {
-            classesWithIndividuals: [{
-                entityIRI: 'class1',
-                subEntities: [{
-                    entityIRI: 'class2'
-                }]
-            }]
-        }
-        ontologyStateSvc.getOpened.and.returnValue(true);
+        ontologyStateSvc.listItem.flatIndividualsHierarchy = [{
+            entityIRI: 'Class A',
+            hasChildren: false,
+            path: ['recordId', 'Class A'],
+            indent: 0,
+            isClass: true
+        }, {
+            entityIRI: 'Individual A1',
+            hasChildren: false,
+            path: ['recordId', 'Class A', 'Individual A1'],
+            indent: 1
+        }, {
+            entityIRI: 'Individual A2',
+            hasChildren: false,
+            path: ['recordId', 'Class A', 'Individual A2'],
+            indent: 1
+        }, {
+            entityIRI: 'Class B',
+            hasChildren: true,
+            path: ['recordId', 'Class B'],
+            indent: 0,
+            isClass: true
+        }, {
+            entityIRI: 'Class B1',
+            hasChildren: false,
+            path: ['recordId', 'Class B', 'Class B1'],
+            indent: 1,
+            isClass: true
+        }, {
+            entityIRI: 'Individual B1',
+            hasChildren: false,
+            path: ['recordId', 'Class B', 'Class B1', 'Individual B1'],
+            indent: 2
+        }];
         ontologyStateSvc.getIndividualsOpened.and.returnValue(true);
-        ontologyManagerSvc.getClassIndividuals.and.returnValue(['individual1']);
 
         element = $compile(angular.element('<individual-tree></individual-tree>'))(scope);
         scope.$digest();
+        controller = element.controller('individualTree');
     });
 
     describe('replaces the element with the correct html', function() {
+        beforeEach(function() {
+            spyOn(controller, 'isShown').and.returnValue(true);
+            scope.$apply();
+        });
         it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
             expect(element.hasClass('tree')).toBe(true);
+            expect(element.hasClass('individual-tree')).toBe(true);
         });
-        it('depending on the number of classes', function() {
-            var classes = element.querySelectorAll('ul.class');
-            var links = element.querySelectorAll('ul.class > li a');
-            expect(classes.length).toBe(ontologyStateSvc.listItem.classesWithIndividuals.length);
-            expect(links.length).toBe(ontologyStateSvc.listItem.classesWithIndividuals.length*2);
+        it('based on .repeater-container', function() {
+            expect(element.querySelectorAll('.repeater-container').length).toBe(1);
         });
-        it('depending on the number of individuals', function() {
-            var individuals = element.querySelectorAll('.individual');
-            expect(individuals.length).toBe(ontologyManagerSvc.getClassIndividuals().length*2);
+        it('based on tree-items', function() {
+            expect(element.find('tree-item').length).toBe(3);
         });
-        it('depending on whether the individuals of a class are open', function() {
-            ontologyStateSvc.getIndividualsOpened.and.returnValue(false);
-            element = $compile(angular.element('<individual-tree></individual-tree>'))(scope);
+        it('based on .tree-item-wrapper', function() {
+            expect(element.querySelectorAll('.tree-item-wrapper').length).toBe(6);
+        });
+        it('based on .imported', function() {
+            expect(element.querySelectorAll('.imported').length).toBe(3);
+            spyOn(controller, 'isImported').and.returnValue(false);
             scope.$digest();
-            var container = angular.element(element.querySelectorAll('ul.class > .container'));
-            var icon = angular.element(element.querySelectorAll('ul.class > li a i')[0]);
-            expect(container.length).toBe(0);
-            expect(icon.hasClass('fa-folder-o')).toBe(true);
-
-            ontologyStateSvc.getIndividualsOpened.and.returnValue(true);
-            element = $compile(angular.element('<individual-tree></individual-tree>'))(scope);
-            scope.$digest();
-            container = angular.element(element.querySelectorAll('ul.class > .container'));
-            icon = angular.element(element.querySelectorAll('ul.class > li a i')[0]);
-            expect(container.length).toBe(1);
-            expect(icon.hasClass('fa-folder-open-o')).toBe(true);
+            expect(element.querySelectorAll('.imported').length).toBe(0);
+        });
+    });
+    describe('controller methods', function() {
+        it('isImported returns the correct value', function() {
+            ontologyStateSvc.listItem.index = {iri: {}};
+            expect(controller.isImported('iri')).toBe(false);
+            expect(controller.isImported('other')).toBe(true);
+        });
+        describe('isShown should return', function() {
+            describe('true when', function() {
+                it('indent is greater than 0 and areParentsOpen is true', function() {
+                    var node = {
+                        indent: 1,
+                        entityIRI: 'iri',
+                        path: ['recordId', 'otherIRI', 'andAnotherIRI', 'iri']
+                    };
+                    ontologyStateSvc.areParentsOpen.and.returnValue(true);
+                    expect(controller.isShown(node)).toBe(true);
+                    expect(ontologyStateSvc.areParentsOpen).toHaveBeenCalledWith(node, ontologyStateSvc.getIndividualsOpened);
+                });
+                it('indent is 0 and the parent path has a length of 2', function() {
+                    var node = {
+                        indent: 0,
+                        entityIRI: 'iri',
+                        path: ['recordId', 'iri']
+                    };
+                    expect(controller.isShown(node)).toBe(true);
+                });
+            });
+            describe('false when', function() {
+                it('indent is greater than 0 and areParentsOpen is false', function() {
+                    var node = {
+                        indent: 1,
+                        entityIRI: 'iri',
+                        path: ['recordId', 'otherIRI', 'iri']
+                    };
+                    ontologyStateSvc.areParentsOpen.and.returnValue(false);
+                    expect(controller.isShown(node)).toBe(false);
+                    expect(ontologyStateSvc.areParentsOpen).toHaveBeenCalledWith(node, ontologyStateSvc.getIndividualsOpened);
+                });
+                it('indent is 0 and the parent path does not have a length of 2', function() {
+                    var node = {
+                        indent: 0,
+                        entityIRI: 'iri',
+                        path: ['recordId', 'otherIRI', 'iri']
+                    };
+                    expect(controller.isShown(node)).toBe(false);
+                });
+            });
         });
     });
 });

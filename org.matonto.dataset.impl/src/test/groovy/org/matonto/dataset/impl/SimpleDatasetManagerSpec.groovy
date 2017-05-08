@@ -25,6 +25,7 @@ package org.matonto.dataset.impl
 import org.matonto.catalog.api.CatalogManager
 import org.matonto.catalog.api.PaginatedSearchResults
 import org.matonto.dataset.api.builder.DatasetRecordConfig
+import org.matonto.dataset.api.builder.OntologyIdentifier
 import org.matonto.dataset.ontology.dataset.Dataset
 import org.matonto.dataset.ontology.dataset.DatasetFactory
 import org.matonto.dataset.ontology.dataset.DatasetRecord
@@ -49,6 +50,9 @@ import org.openrdf.rio.Rio
 import org.openrdf.sail.memory.MemoryStore
 import spock.lang.Shared
 import spock.lang.Specification
+
+import java.util.stream.Collectors
+import java.util.stream.Stream
 
 class SimpleDatasetManagerSpec extends Specification {
 
@@ -411,12 +415,18 @@ class SimpleDatasetManagerSpec extends Specification {
         setup:
         def datasetIRI = vf.createIRI("http://test.com/dataset1")
         def dataset = dsFactory.createNew(datasetIRI)
+        def ontologyRecordStr = "http://text.com/ontology/record"
+        def ontologyBranchStr = "http://text.com/ontology/branch"
+        def ontologyCommitStr = "http://text.com/ontology/commit"
+        def identifier = new OntologyIdentifier(ontologyRecordStr, ontologyBranchStr, ontologyCommitStr, vf, mf)
         def recordIRI = vf.createIRI("http://test.com/record1")
         def record = dsRecFactory.createNew(recordIRI)
         record.setDataset(dataset)
+        record.setOntology(Collections.singleton(identifier.getNode()))
 
         def config = new DatasetRecordConfig.DatasetRecordBuilder("Test Dataset", [] as Set, "system")
                 .dataset(datasetIRI.stringValue())
+                .ontology(identifier)
                 .build()
 
         1 * catalogManagerMock.createRecord(config, _ as DatasetRecordFactory) >> record
@@ -429,6 +439,7 @@ class SimpleDatasetManagerSpec extends Specification {
         datasetRecord.getDataset_resource() != Optional.empty()
         datasetRecord.getDataset_resource().get() == datasetIRI
         !datasetRecord.getDataset().isPresent()
+        datasetRecord.getOntology().size() == 1
     }
 
     def "createDataset adds the Dataset model to the repo"() {

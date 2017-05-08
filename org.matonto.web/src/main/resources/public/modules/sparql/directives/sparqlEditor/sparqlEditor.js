@@ -67,7 +67,9 @@
                     dvm.datasetRecords = [];
 
                     dam.getDatasetRecords()
-                        .then(response => dvm.datasetRecords = response.data, () => dvm.util.createErrorToast('Error retrieving datasets'));
+                        .then(response => {
+                            dvm.datasetRecords =_.map(response.data, arr => _.find(arr, obj => _.includes(obj['@type'], prefixes.dataset + 'DatasetRecord')));
+                        }, () => dvm.util.createErrorToast('Error retrieving datasets'));
                     dvm.prefixList = _.map(prefixes, (value, key) => key + ': <' + value + '>');
                     dvm.editorOptions = {
                         mode: 'application/sparql-query',

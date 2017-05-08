@@ -148,7 +148,7 @@ describe('Create Concept Overlay directive', function() {
             expect(ontologyStateSvc.setCommonIriParts).toHaveBeenCalledWith('begin', 'then');
         });
         it('should create a concept', function() {
-            var listItem = {ontology: [{}], conceptHierarchy: []};
+            ontologyStateSvc.flattenHierarchy.and.returnValue([{prop: 'entity'}]);
             var schemes = {
                 'scheme1': {'@id': 'scheme1', matonto: {}},
                 'scheme2': {'@id': 'scheme2', matonto: {}}
@@ -158,7 +158,6 @@ describe('Create Concept Overlay directive', function() {
             ontologyStateSvc.getEntityByRecordId.and.callFake(function(recordId, schemeId) {
                 return _.get(schemes, schemeId);
             });
-            ontologyStateSvc.listItem = listItem;
             controller.concept = {'@id': 'concept'};
 
             controller.create();
@@ -169,9 +168,10 @@ describe('Create Concept Overlay directive', function() {
             expect(controller.concept.matonto.originalIRI).toEqual(controller.concept['@id']);
             expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(controller.concept, controller.language);
             expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, controller.concept);
-            expect(listItem.conceptHierarchy).toContain({entityIRI: controller.concept['@id']});
-            expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
-                controller.concept);
+            expect(ontologyStateSvc.listItem.conceptHierarchy).toContain({entityIRI: controller.concept['@id']});
+            expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptHierarchy, ontologyStateSvc.listItem.recordId);
+            expect(ontologyStateSvc.listItem.flatConceptHierarchy).toEqual([{prop: 'entity'}]);
+            expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, controller.concept);
             expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(controller.concept['@id']);
             expect(ontologyStateSvc.showCreateConceptOverlay).toBe(false);
             expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();

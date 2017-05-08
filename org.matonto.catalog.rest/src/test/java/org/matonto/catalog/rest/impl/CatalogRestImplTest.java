@@ -726,6 +726,21 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         assertEquals(response.getStatus(), 400);
     }
 
+    @Test
+    public void getRecordWithMoreThanOneObject() {
+        // Setup:
+        String newIRI = "http://test.com/record";
+        Record recordWithAnotherObject = recordFactory.createNew(vf.createIRI(newIRI));
+        recordWithAnotherObject.getModel().add(vf.createIRI("http://test.com/subject"), vf.createIRI("http://test.com/subject"), vf.createLiteral("test"));
+        when(catalogManager.getRecord(any(Resource.class), any(Resource.class), any(OrmFactory.class))).thenReturn(Optional.of(recordWithAnotherObject));
+
+        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(newIRI))
+                .request().get();
+        assertEquals(response.getStatus(), 200);
+        verify(catalogManager).getRecord(vf.createIRI(LOCAL_IRI), vf.createIRI(newIRI), recordFactory);
+        assertResponseIsObjectWithId(response, newIRI);
+    }
+
     // DELETE catalogs/{catalogId}/records/{recordId}
 
     @Test

@@ -27,9 +27,9 @@
         .module('hierarchyTree', [])
         .directive('hierarchyTree', hierarchyTree);
 
-        hierarchyTree.$inject = ['ontologyStateService', 'ontologyUtilsManagerService'];
+        hierarchyTree.$inject = ['ontologyStateService', 'ontologyUtilsManagerService', 'INDENT'];
 
-        function hierarchyTree(ontologyStateService, ontologyUtilsManagerService) {
+        function hierarchyTree(ontologyStateService, ontologyUtilsManagerService, INDENT) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -40,8 +40,13 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
+                    dvm.indent = INDENT;
                     dvm.os = ontologyStateService;
                     dvm.ou = ontologyUtilsManagerService;
+                    
+                    dvm.isShown = function(node) {
+                        return (node.indent > 0 && dvm.os.areParentsOpen(node)) || (node.indent === 0 && _.get(node, 'path', []).length === 2);
+                    }
                 }
             }
         }
