@@ -583,7 +583,7 @@
             self.getClassProps = function(ontologies, classId) {
                 var props = [];
                 _.forEach(ontologies, ontology => {
-                    var classProps = _.filter(_.union(om.getClassProperties(ontology.entities, classId), om.getNoDomainProperties(ontology.entities)), prop => !(om.isObjectProperty(prop) && om.isDataTypeProperty(prop)));
+                    var classProps = _.filter(_.union(om.getClassProperties([ontology.entities], classId), om.getNoDomainProperties([ontology.entities])), prop => !(om.isObjectProperty(prop) && om.isDataTypeProperty(prop)));
                     props = _.union(props, _.map(classProps, prop => {
                         return {ontologyId: ontology.id, propObj: prop};
                     }));
@@ -605,7 +605,7 @@
             self.getClasses = function(ontologies) {
                 var classes = [];
                 _.forEach(ontologies, ontology => {
-                    classes = _.concat(classes, _.map(om.getClasses(ontology.entities), classObj => {
+                    classes = _.concat(classes, _.map(om.getClasses([ontology.entities]), classObj => {
                         return {ontologyId: ontology.id, classObj};
                     }));
                 });

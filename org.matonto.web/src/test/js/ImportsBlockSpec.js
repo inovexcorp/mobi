@@ -96,6 +96,7 @@ describe('Imports Block directive', function() {
             var saveDeferred;
             beforeEach(function() {
                 controller.url = 'url';
+                ontologyStateSvc.selected[prefixes.owl + 'imports'] = [{'@id': 'url'}];
                 saveDeferred = $q.defer();
                 ontologyStateSvc.saveChanges.and.returnValue(saveDeferred.promise);
                 controller.remove();
@@ -120,7 +121,7 @@ describe('Imports Block directive', function() {
                         scope.$apply();
                         expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.selected['@id'], prefixes.owl + 'imports', {'@id': controller.url});
                         expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, jasmine.any(Object));
-                        expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.selected, prefixes.owl + 'imports', controller.index);
+                        expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.selected, prefixes.owl + 'imports', 0);
                         expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});
                         expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
                         expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, ontologyStateSvc.listItem.branchId, ontologyStateSvc.listItem.commitId, ontologyStateSvc.listItem.type, ontologyStateSvc.listItem.upToDate, ontologyStateSvc.listItem.inProgressCommit);
@@ -133,7 +134,7 @@ describe('Imports Block directive', function() {
                         scope.$apply();
                         expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.selected['@id'], prefixes.owl + 'imports', {'@id': controller.url});
                         expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, jasmine.any(Object));
-                        expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.selected, prefixes.owl + 'imports', controller.index);
+                        expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.selected, prefixes.owl + 'imports', 0);
                         expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});
                         expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
                         expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, ontologyStateSvc.listItem.branchId, ontologyStateSvc.listItem.commitId, ontologyStateSvc.listItem.type, ontologyStateSvc.listItem.upToDate, ontologyStateSvc.listItem.inProgressCommit);
@@ -145,7 +146,7 @@ describe('Imports Block directive', function() {
                     scope.$apply();
                     expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.selected['@id'], prefixes.owl + 'imports', {'@id': controller.url});
                     expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, jasmine.any(Object));
-                    expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.selected, prefixes.owl + 'imports', controller.index);
+                    expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.selected, prefixes.owl + 'imports', 0);
                     expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});
                     expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
                     expect(controller.error).toBe('error');
@@ -156,7 +157,7 @@ describe('Imports Block directive', function() {
                 scope.$apply();
                 expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.selected['@id'], prefixes.owl + 'imports', {'@id': controller.url});
                 expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, jasmine.any(Object));
-                expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.selected, prefixes.owl + 'imports', controller.index);
+                expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.selected, prefixes.owl + 'imports', 0);
                 expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});
                 expect(controller.error).toBe('error');
             });

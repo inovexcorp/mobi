@@ -85,7 +85,7 @@
                             var rangeClassId = util.getPropertyId(newValue, prefixes.rdfs + 'range');
                             if (rangeClassId !== _.get(dvm.rangeClass, '@id')) {
                                 var availableClass = _.find(dvm.state.availableClasses, {classObj: {'@id': rangeClassId}});
-                                dvm.rangeClass = availableClass ? availableClass.classObj : dvm.om.getEntity(dvm.mm.findSourceOntologyWithClass(rangeClassId, dvm.ontologies).entities, rangeClassId);
+                                dvm.rangeClass = availableClass ? availableClass.classObj : dvm.om.getEntity([dvm.mm.findSourceOntologyWithClass(rangeClassId, dvm.ontologies).entities], rangeClassId);
                             }
                         } else {
                             dvm.rangeClass = undefined;

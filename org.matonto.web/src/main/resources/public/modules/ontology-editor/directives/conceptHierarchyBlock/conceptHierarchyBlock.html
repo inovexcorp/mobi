@@ -26,10 +26,10 @@
             <span>Concepts</span><a class="pull-right" ng-click="dvm.sm.showCreateConceptOverlay = true"><i class="fa fa-plus"></i><span>Concept</span></a><a class="pull-right" ng-click="dvm.sm.showCreateConceptSchemeOverlay = true"><i class="fa fa-plus"></i><span>Scheme</span></a>
         </block-header>
         <block-content>
-            <hierarchy-tree hierarchy="dvm.sm.listItem.conceptHierarchy"></hierarchy-tree>
+            <hierarchy-tree hierarchy="dvm.sm.listItem.flatConceptHierarchy"></hierarchy-tree>
         </block-content>
         <block-footer class="centered">
-            <button class="btn btn-link" ng-disabled="!dvm.sm.selected" ng-click="dvm.showDeleteConfirmation = true"><i class="fa fa-trash-o"></i><span>Delete Entity</span></button>
+            <button class="btn btn-link" ng-disabled="!dvm.sm.selected || dvm.sm.selected.matonto.imported" ng-click="dvm.showDeleteConfirmation = true"><i class="fa fa-trash-o"></i><span>Delete Entity</span></button>
         </block-footer>
     </block>
     <confirmation-overlay ng-if="dvm.showDeleteConfirmation" header-text="'Delete Entity'" confirm-click="dvm.deleteEntity()"

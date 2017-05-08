@@ -37,7 +37,7 @@
             var util = utilService;
             var ro = responseObj;
 
-            self.commonDelete = function(entityIRI) {
+            self.commonDelete = function(entityIRI, updateEverythingTree = false) {
                 om.getEntityUsages(os.listItem.recordId, os.listItem.branchId, os.listItem.commitId, entityIRI, 'construct')
                     .then(statements => {
                         os.addToDeletions(os.listItem.recordId, os.selected);
@@ -46,31 +46,41 @@
                         ur.remove(os.listItem.ontology, entityIRI);
                         os.unSelectItem();
                         self.saveCurrentChanges();
+                        if (updateEverythingTree) {
+                            os.listItem.flatEverythingTree = os.createFlatEverythingTree(os.getOntologiesArray(), os.listItem);
+                        }
                     }, util.createErrorToast);
             }
 
             self.deleteClass = function() {
                 var entityIRI = os.getActiveEntityIRI();
                 var split = $filter('splitIRI')(entityIRI);
-                _.remove(_.get(os.listItem, 'subClasses'), {namespace:split.begin + split.then, localName: split.end});
-                _.pull(_.get(os.listItem, 'classesWithIndividuals'), entityIRI);
-                os.deleteEntityFromHierarchy(_.get(os.listItem, 'classHierarchy'), entityIRI, _.get(os.listItem, 'classIndex'));
-                self.commonDelete(entityIRI);
+                _.remove(os.listItem.subClasses, {namespace:split.begin + split.then, localName: split.end});
+                _.pull(os.listItem.classesWithIndividuals, entityIRI);
+                os.deleteEntityFromHierarchy(os.listItem.classHierarchy, entityIRI, os.listItem.classIndex);
+                os.listItem.flatClassHierarchy = os.flattenHierarchy(os.listItem.classHierarchy, os.listItem.recordId);
+                delete os.listItem.classesAndIndividuals[entityIRI];
+                os.listItem.classesWithIndividuals = _.keys(os.listItem.classesAndIndividuals);
+                os.listItem.individualsParentPath = os.getIndividualsParentPath(os.listItem);
+                os.listItem.flatIndividualsHierarchy = os.createFlatIndividualTree(os.listItem);
+                self.commonDelete(entityIRI, true);
             }
 
             self.deleteObjectProperty = function() {
                 var entityIRI = os.getActiveEntityIRI();
                 var split = $filter('splitIRI')(entityIRI);
-                _.remove(_.get(os.listItem, 'subObjectProperties'), {namespace:split.begin + split.then, localName: split.end});
-                os.deleteEntityFromHierarchy(_.get(os.listItem, 'objectPropertyHierarchy'), entityIRI, _.get(os.listItem, 'objectPropertyIndex'));
-                self.commonDelete(entityIRI);
+                _.remove(os.listItem.subObjectProperties, {namespace:split.begin + split.then, localName: split.end});
+                os.deleteEntityFromHierarchy(os.listItem.objectPropertyHierarchy, entityIRI, os.listItem.objectPropertyIndex);
+                os.listItem.flatObjectPropertyHierarchy = os.flattenHierarchy(os.listItem.objectPropertyHierarchy, os.listItem.recordId);
+                self.commonDelete(entityIRI, true);
             }
 
             self.deleteDataTypeProperty = function() {
                 var entityIRI = os.getActiveEntityIRI();
                 var split = $filter('splitIRI')(entityIRI);
-                _.remove(_.get(os.listItem, 'subDataProperties'), {namespace:split.begin + split.then, localName: split.end});
-                os.deleteEntityFromHierarchy(_.get(os.listItem, 'dataPropertyHierarchy'), entityIRI, _.get(os.listItem, 'dataPropertyIndex'));
+                _.remove(os.listItem.subDataProperties, {namespace:split.begin + split.then, localName: split.end});
+                os.deleteEntityFromHierarchy(os.listItem.dataPropertyHierarchy, entityIRI, os.listItem.dataPropertyIndex);
+                os.listItem.flatDataPropertyHierarchy = os.flattenHierarchy(os.listItem.dataPropertyHierarchy, os.listItem.recordId);
                 self.commonDelete(entityIRI);
             }
 
@@ -78,20 +88,40 @@
                 var entityIRI = os.getActiveEntityIRI();
                 var split = $filter('splitIRI')(entityIRI);
                 _.remove(_.get(os.listItem, 'annotations'), {namespace:split.begin + split.then, localName: split.end});
+                os.deleteEntityFromHierarchy(os.listItem.annotationPropertyHierarchy, entityIRI, os.listItem.annotationPropertyIndex);
+                os.listItem.flatAnnotationPropertyHierarchy = os.flattenHierarchy(os.listItem.annotationPropertyHierarchy, os.listItem.recordId);
                 self.commonDelete(entityIRI);
             }
 
             self.deleteIndividual = function() {
                 var entityIRI = os.getActiveEntityIRI();
                 var split = $filter('splitIRI')(entityIRI);
-                _.remove(_.get(os.listItem, 'individuals'), entityIRI);
+                _.remove(_.get(os.listItem, 'individuals'), {namespace:split.begin + split.then, localName: split.end});
+                var indivTypes = os.selected['@type'];
+                var indivAndClasses = _.get(os.listItem, 'classesAndIndividuals');
+
+                _.forEach(indivTypes, type => {
+                    if (type !== prefixes.owl + 'NamedIndividual') {
+                        var parentAndIndivs = indivAndClasses[type];
+                        if (parentAndIndivs.length) {
+                            _.remove(parentAndIndivs, item => item === entityIRI);
+                            if (!parentAndIndivs.length) {
+                                delete os.listItem.classesAndIndividuals[type];
+                            }
+                        }
+                    }
+                });
+                
+                os.listItem.classesWithIndividuals = _.keys(os.listItem.classesAndIndividuals);
+                os.listItem.individualsParentPath = os.getIndividualsParentPath(os.listItem);
+                os.listItem.flatIndividualsHierarchy = os.createFlatIndividualTree(os.listItem);
                 self.commonDelete(entityIRI);
             }
 
             self.deleteConcept = function() {
                 var entityIRI = os.getActiveEntityIRI();
-                var split = $filter('splitIRI')(entityIRI);
-                os.deleteEntityFromHierarchy(_.get(os.listItem, 'conceptHierarchy'), entityIRI, _.get(os.listItem, 'conceptIndex'));
+                os.deleteEntityFromHierarchy(os.listItem.conceptHierarchy, entityIRI, os.listItem.conceptIndex);
+                os.listItem.flatConceptHierarchy = os.flattenHierarchy(os.listItem.conceptHierarchy, os.listItem.recordId);
                 self.commonDelete(entityIRI);
             }
 
@@ -108,7 +138,7 @@
             }
 
             self.isLinkable = function(id) {
-                return _.has(os.listItem.index, id) && !om.isBlankNodeId(id);
+                return !!os.getEntityByRecordId(os.listItem.recordId, id) && !om.isBlankNodeId(id);
             }
 
             self.getNameByNode = function(node) {
@@ -142,8 +172,23 @@
             }
 
             self.updateLabel = function() {
-                if (_.has(os.listItem.index, os.selected['@id'])) {
-                    os.listItem.index[os.selected['@id']].label = om.getEntityName(os.selected, os.listItem.type);
+                var newLabel = om.getEntityName(os.selected, os.listItem.type);
+                if (_.has(os.listItem.index, "['" + os.selected['@id'] + "'].label") && os.listItem.index[os.selected['@id']].label !== newLabel) {
+                    os.listItem.index[os.selected['@id']].label = newLabel;
+                    if (os.listItem.type === 'vocabulary') {
+                        os.listItem.flatConceptHierarchy = os.flattenHierarchy(os.listItem.conceptHierarchy, os.listItem.recordId);
+                    } else if (om.isClass(os.selected)) {
+                        os.listItem.flatClassHierarchy = os.flattenHierarchy(os.listItem.classHierarchy, os.listItem.recordId);
+                        os.listItem.flatEverythingTree = os.createFlatEverythingTree(os.getOntologiesArray(), os.listItem);
+                    } else if (om.isDataTypeProperty(os.selected)) {
+                        os.listItem.flatDataPropertyHierarchy = os.flattenHierarchy(os.listItem.dataPropertyHierarchy, os.listItem.recordId);
+                        os.listItem.flatEverythingTree = os.createFlatEverythingTree(os.getOntologiesArray(), os.listItem);
+                    } else if (om.isObjectProperty(os.selected)) {
+                        os.listItem.flatObjectPropertyHierarchy = os.flattenHierarchy(os.listItem.objectPropertyHierarchy, os.listItem.recordId);
+                        os.listItem.flatEverythingTree = os.createFlatEverythingTree(os.getOntologiesArray(), os.listItem);
+                    } else if (om.isAnnotation(os.selected)) {
+                        os.listItem.flatAnnotationPropertyHierarchy = os.flattenHierarchy(os.listItem.annotationPropertyHierarchy, os.listItem.recordId);
+                    }
                 }
             }
 

@@ -238,7 +238,7 @@ public class SimpleOntologyValues {
         if (owlAnno == null) {
             return null;
         }
-        Set<OWLAnnotation> owlAnnos = owlAnno.getAnnotations();
+        Set<OWLAnnotation> owlAnnos = owlAnno.annotations().collect(Collectors.toSet());
         if (owlAnnos.isEmpty()) {
             AnnotationProperty property = matontoAnnotationProperty(owlAnno.getProperty());
             OWLAnnotationValue value = owlAnno.getValue();
@@ -618,7 +618,7 @@ public class SimpleOntologyValues {
         if (dataOneOf == null) {
             return null;
         }
-        Set<OWLLiteral> values = dataOneOf.getValues();
+        Set<OWLLiteral> values = dataOneOf.values().collect(Collectors.toSet());
         Set<Literal> matontoValues = new HashSet<>();
         for (OWLLiteral value : values) {
             matontoValues.add(matontoLiteral(value));
@@ -750,7 +750,7 @@ public class SimpleOntologyValues {
                 return null;
         }
 
-        Set<Annotation> matontoAnnotations = owlapiAxiom.getAnnotations().stream()
+        Set<Annotation> matontoAnnotations = owlapiAxiom.annotations()
                 .map(SimpleOntologyValues::matontoAnnotation)
                 .collect(Collectors.toSet());
 

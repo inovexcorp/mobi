@@ -23,6 +23,16 @@ package org.matonto.rest.util;
  * #L%
  */
 
+import javax.annotation.Nullable;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.Response;
+import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
@@ -34,14 +44,6 @@ import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.RDFHandler;
 import org.openrdf.rio.Rio;
 import org.openrdf.rio.helpers.BufferedGroupingRDFHandler;
-
-import java.io.StringWriter;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.util.Optional;
-import javax.annotation.Nullable;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.Response;
 
 public class RestUtils {
 
@@ -145,7 +147,7 @@ public class RestUtils {
                 return RDFFormat.TURTLE.getDefaultFileExtension();
             case "rdf/xml":
                 return RDFFormat.RDFXML.getDefaultFileExtension();
-            case "owl/xml" :
+            case "owl/xml":
                 return "owx";
             case "jsonld":
             default:
@@ -165,7 +167,7 @@ public class RestUtils {
                 return RDFFormat.TURTLE.getDefaultMIMEType();
             case "rdf/xml":
                 return RDFFormat.RDFXML.getDefaultMIMEType();
-            case "owl/xml" :
+            case "owl/xml":
                 return "application/owl+xml";
             case "jsonld":
             default:
@@ -228,5 +230,32 @@ public class RestUtils {
                     .orElse(new JSONObject());
         }
         return firstObject;
+    }
+
+    /**
+     * Retrieves a single entity object, of the type specified, from a JSON-LD string and returns it as a
+     * {@link JSONObject}.
+     *
+     * @param json A JSON-LD string
+     * @param type The entity type that is required.
+     * @return The first object representing the specified type of entity present in the JSON-LD.
+     */
+    public static JSONObject getTypedObjectFromJsonld(String json, String type) {
+        List<JSONObject> objects = new ArrayList<>();
+        JSONArray array = JSONArray.fromObject(json);
+
+        array.forEach(o -> objects.add(JSONObject.fromObject(o)));
+
+        for (JSONObject o : objects) {
+            if (o.isArray()) {
+                o = getTypedObjectFromJsonld(o.toString(), type);
+            } else if (o.containsKey("@graph")) {
+                o = getTypedObjectFromJsonld(JSONArray.fromObject(o.get("@graph")).toString(), type);
+            }
+            if (o != null && o.containsKey("@type") && JSONArray.fromObject(o.get("@type")).contains(type)) {
+                return o;
+            }
+        }
+        return null;
     }
 }

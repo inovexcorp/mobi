@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Everything Tree directive', function() {
-    var $compile, scope, element, ontologyStateSvc, ontologyManagerSvc, controller, ontologyUtils;
+    var $compile, scope, element, ontologyStateSvc, ontologyManagerSvc, controller;
 
     beforeEach(function() {
         module('templates');
@@ -29,21 +29,39 @@ describe('Everything Tree directive', function() {
         mockOntologyManager();
         mockOntologyState();
         mockOntologyUtilsManager();
+        injectUniqueKeyFilter();
+        injectIndentConstant();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_, _ontologyUtilsManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyManagerSvc = _ontologyManagerService_;
             ontologyStateSvc = _ontologyStateService_;
-            ontologyUtils = _ontologyUtilsManagerService_;
         });
-
-        ontologyManagerSvc.getClasses.and.returnValue([{matonto: {originalIRI: 'class1'}}]);
-        ontologyManagerSvc.getClassProperties.and.returnValue([{matonto: {originalIRI: 'property1'}}]);
-        ontologyManagerSvc.getNoDomainProperties.and.returnValue([{matonto: {originalIRI: 'property1'}}]);
+        
         ontologyManagerSvc.hasNoDomainProperties.and.returnValue(true);
         ontologyStateSvc.getOpened.and.returnValue(true);
         ontologyStateSvc.getNoDomainsOpened.and.returnValue(true);
+        ontologyStateSvc.listItem.flatEverythingTree = [{
+            '@id': 'class1',
+            hasChildren: true,
+            indent: 0,
+            path: ['recordId']
+        }, {
+            '@id': 'property1',
+            hasChildren: false,
+            indent: 1,
+            path: ['recordId', 'class1']
+        }, {
+            title: 'Properties',
+            get: jasmine.createSpy('get').and.returnValue(true),
+            set: jasmine.createSpy('set')
+        }, {
+            '@id': 'property1',
+            hasChildren: false,
+            indent: 1,
+            get: ontologyStateSvc.getNoDomainsOpened
+        }];
 
         element = $compile(angular.element('<everything-tree></everything-tree>'))(scope);
         scope.$digest();
@@ -51,53 +69,104 @@ describe('Everything Tree directive', function() {
     });
 
     describe('replaces the element with the correct html', function() {
+        beforeEach(function() {
+            spyOn(controller, 'isShown').and.returnValue(true);
+            scope.$digest();
+        });
         it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
             expect(element.hasClass('tree')).toBe(true);
             expect(element.hasClass('everything-tree')).toBe(true);
+            expect(element.hasClass('hierarchy-tree')).toBe(true);
+            expect(element.hasClass('full-height')).toBe(true);
         });
-        it('based on container class', function() {
-            expect(element.querySelectorAll('.container').length).toBe(2);
+        it('based on .repeater-container', function() {
+            expect(element.querySelectorAll('.repeater-container').length).toBe(1);
         });
-        it('based on <ul>s', function() {
-            expect(element.find('ul').length).toBe(4);
+        it('based on tree-items', function() {
+            expect(element.find('tree-item').length).toBe(3);
         });
-        it('based on container tree-items', function() {
-            expect(element.querySelectorAll('.container tree-item').length).toBe(2);
+        it('based on .tree-items', function() {
+            expect(element.querySelectorAll('.tree-item').length).toBe(1);
         });
-        describe('based on tree-item length', function() {
-            it('when noDomainProperties is empty', function() {
-                ontologyManagerSvc.getNoDomainProperties.and.returnValue([]);
-                element = $compile(angular.element('<everything-tree></everything-tree>'))(scope);
-                scope.$digest();
-
-                expect(element.querySelectorAll('.container tree-item').length).toBe(1);
-            });
-            it('when getClassProperties returns an empty array', function() {
-                ontologyManagerSvc.getClassProperties.and.returnValue([]);
-                element = $compile(angular.element('<everything-tree></everything-tree>'))(scope);
-                scope.$digest();
-
-                expect(element.querySelectorAll('.container tree-item').length).toBe(1);
-            });
-            it('when getClasses is empty', function() {
-                ontologyManagerSvc.getClasses.and.returnValue([]);
-                element = $compile(angular.element('<everything-tree></everything-tree>'))(scope);
-                scope.$digest();
-
-                expect(element.querySelectorAll('.container tree-item').length).toBe(1);
-            });
+        it('based on .fa-folder-open-o', function() {
+            expect(element.querySelectorAll('.tree-item .fa-folder-open-o').length).toBe(1);
+            ontologyStateSvc.listItem.flatEverythingTree[2].get.and.returnValue(false);
+            scope.$digest();
+            expect(element.querySelectorAll('.tree-item .fa-folder-open-o').length).toBe(0);
+        });
+        it('based on .fa-folder-o', function() {
+            expect(element.querySelectorAll('.tree-item .fa-folder-o').length).toBe(0);
+            ontologyStateSvc.listItem.flatEverythingTree[2].get.and.returnValue(false);
+            scope.$digest();
+            expect(element.querySelectorAll('.tree-item .fa-folder-o').length).toBe(1);
         });
     });
     describe('controller methods', function() {
-        describe('getName calls the correct method', function() {
-            it('when @id exists', function() {
-                controller.getName({'@id': 'iri'});
-                expect(ontologyUtils.getLabelForIRI).toHaveBeenCalledWith('iri');
+        describe('isShown should return', function() {
+            describe('true when', function() {
+                it('entity does not have an @id', function() {
+                    var entity = {};
+                    expect(controller.isShown(entity)).toBe(true);
+                });
+                it('entity does have an @id and get returns true', function() {
+                    var entity = {
+                        '@id': 'id',
+                        get: jasmine.createSpy('get').and.returnValue(true)
+                    };
+                    expect(controller.isShown(entity)).toBe(true);
+                    expect(entity.get).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId);
+                });
+                it('entity does have an @id, does not have a get, indent is greater than 0, and areParentsOpen is true', function() {
+                    var entity = {
+                        '@id': 'id',
+                        indent: 1,
+                        path: ['recordId', 'otherIRI', 'andAnotherIRI', 'iri']
+                    };
+                    ontologyStateSvc.areParentsOpen.and.returnValue(true);
+                    expect(controller.isShown(entity)).toBe(true);
+                    expect(ontologyStateSvc.areParentsOpen).toHaveBeenCalledWith(entity);
+                });
+                it('entity does have an @id, does not have a get, indent is 0, and the parent path has a length of 2', function() {
+                    var entity = {
+                        '@id': 'id',
+                        indent: 0,
+                        path: ['recordId', 'iri']
+                    };
+                    expect(controller.isShown(entity)).toBe(true);
+                });
             });
-            it('when @id does not exist', function() {
-                controller.getName({matonto: {originalIRI: 'iri'}});
-                expect(ontologyUtils.getLabelForIRI).toHaveBeenCalledWith('iri');
+            describe('false when', function() {
+                it('has an @id', function() {
+                    var entity = {'@id': 'id'};
+                    expect(controller.isShown(entity)).toBe(false);
+                });
+                it('has a get that returns false', function() {
+                    var entity = {
+                        '@id': 'id',
+                        get: jasmine.createSpy('get').and.returnValue(false)
+                    }
+                    expect(controller.isShown(entity)).toBe(false);
+                    expect(entity.get).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId);
+                });
+                it('indent is greater than 0 and areParentsOpen is false', function() {
+                    var entity = {
+                        '@id': 'id',
+                        indent: 1,
+                        path: ['recordId', 'otherIRI', 'iri']
+                    };
+                    ontologyStateSvc.areParentsOpen.and.returnValue(false);
+                    expect(controller.isShown(entity)).toBe(false);
+                    expect(ontologyStateSvc.areParentsOpen).toHaveBeenCalledWith(entity);
+                });
+                it('indent is 0 and the parent path does not have a length of 2', function() {
+                    var entity = {
+                        '@id': 'id',
+                        indent: 0,
+                        path: ['recordId', 'otherIRI', 'iri']
+                    };
+                    expect(controller.isShown(entity)).toBe(false);
+                });
             });
         });
     });

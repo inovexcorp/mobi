@@ -35,6 +35,7 @@
          * @requires $timeout
          * @requires $q
          * @requires $filter
+         * @requires $document
          * @requires ontologyManager.service:ontologyManagerService
          * @requires updateRefs.service:updateRefsService
          * @requires stateManager.service:stateManagerService
@@ -45,9 +46,9 @@
          */
         .service('ontologyStateService', ontologyStateService);
 
-        ontologyStateService.$inject = ['$timeout', '$q', '$filter', 'ontologyManagerService', 'updateRefsService', 'stateManagerService', 'utilService', 'catalogManagerService', 'propertyManagerService', 'prefixes', 'manchesterConverterService', 'httpService'];
+        ontologyStateService.$inject = ['$timeout', '$q', '$filter', '$document', 'ontologyManagerService', 'updateRefsService', 'stateManagerService', 'utilService', 'catalogManagerService', 'propertyManagerService', 'prefixes', 'manchesterConverterService', 'httpService'];
 
-        function ontologyStateService($timeout, $q, $filter, ontologyManagerService, updateRefsService, stateManagerService, utilService, catalogManagerService, propertyManagerService, prefixes, manchesterConverterService, httpService) {
+        function ontologyStateService($timeout, $q, $filter, $document, ontologyManagerService, updateRefsService, stateManagerService, utilService, catalogManagerService, propertyManagerService, prefixes, manchesterConverterService, httpService) {
             var self = this;
             var om = ontologyManagerService;
             var sm = stateManagerService;
@@ -59,6 +60,8 @@
             var ontologyListItemTemplate = {
                 ontology: [],
                 ontologyId: '',
+                importedOntologies: [],
+                importedOntologyIds: [],
                 annotations: angular.copy(propertyManagerService.defaultAnnotations),
                 dataPropertyRange: om.defaultDatatypes,
                 subClasses: [],
@@ -71,8 +74,6 @@
                 dataPropertyIndex: {},
                 objectPropertyHierarchy: [],
                 objectPropertyIndex: {},
-                classesWithIndividuals: [],
-                classesWithIndividualsIndex: {},
                 blankNodes: {},
                 index: {},
                 additions: [],
@@ -83,11 +84,22 @@
                 },
                 branches: [],
                 upToDate: true,
-                isSaved: false
+                isSaved: false,
+                flatClassHierarchy: [],
+                flatDataPropertyHierarchy: [],
+                flatObjectPropertyHierarchy: [],
+                annotationPropertyHierarchy: [],
+                annotationPropertyIndex: {},
+                flatAnnotationPropertyHierarchy: [],
+                classesAndIndividuals: {},
+                classesWithIndividuals: [],
+                individualsParentPath: []
             };
             var vocabularyListItemTemplate = {
                 ontology: [],
                 ontologyId: '',
+                importedOntologies: [],
+                importedOntologyIds: [],
                 annotations: angular.copy(_.union(propertyManagerService.defaultAnnotations,
                     propertyManagerService.skosAnnotations)),
                 conceptHierarchy: [],
@@ -101,7 +113,8 @@
                 },
                 branches: [],
                 upToDate: true,
-                isSaved: false
+                isSaved: false,
+                flatConceptHierarchy: []
             };
             var emptyInProgressCommit = {
                 additions: [],
@@ -120,6 +133,8 @@
              * {
              *      ontologyId: '',
              *      ontology: [],
+             *      importedOntologies: [],
+             *      importedOntologyIds: [],
              *      annotations: [],
              *      subDataProperties: [],
              *      subObjectProperties: [],
@@ -222,10 +237,10 @@
                 return cm.getRecordMasterBranch(recordId, catalogId)
                     .then(masterBranch => {
                         branchId = _.get(masterBranch, '@id', '');
-                        return cm.getBranchHeadCommit(branchId, recordId, catalogId);
+                        return cm.getRecordBranch(branchId, recordId, catalogId);
                     }, $q.reject)
-                    .then(headCommit => {
-                        commitId = _.get(headCommit, "commit['@id']", '');
+                    .then(branch => {
+                        commitId = _.get(branch, "['" + prefixes.catalog + "head'][0]['@id']", '');
                         return sm.createOntologyState(recordId, branchId, commitId);
                     }, $q.reject)
                     .then(() => om.getOntology(recordId, branchId, commitId, rdfFormat), $q.reject)
@@ -353,7 +368,9 @@
                     om.getClassesWithIndividuals(recordId, branchId, commitId),
                     om.getDataPropertyHierarchies(recordId, branchId, commitId),
                     om.getObjectPropertyHierarchies(recordId, branchId, commitId),
-                    cm.getRecordBranches(recordId, catalogId)
+                    cm.getRecordBranches(recordId, catalogId),
+                    om.getAnnotationPropertyHierarchies(recordId, branchId, commitId),
+                    om.getImportedOntologies(recordId, branchId, commitId)
                 ]).then(response => {
                     listItem.annotations = _.unionWith(
                         _.get(response[0], 'annotationProperties'),
@@ -391,7 +408,7 @@
                             compareListItems
                         );
                         listItem.individuals = _.unionWith(
-                            addOntologyIdToArray(iriList.individuals, iriList.id),
+                            addOntologyIdToArray(iriList.namedIndividuals, iriList.id),
                             listItem.individuals,
                             compareListItems
                         );
@@ -401,16 +418,29 @@
                             compareListItems
                         );
                     });
+
                     listItem.classHierarchy = response[2].hierarchy;
                     listItem.classIndex = response[2].index;
-                    listItem.classesWithIndividuals = response[3].hierarchy;
-                    listItem.classesWithIndividualsIndex = response[3].index;
+                    listItem.flatClassHierarchy = self.flattenHierarchy(listItem.classHierarchy, recordId, listItem);
                     listItem.dataPropertyHierarchy = response[4].hierarchy;
                     listItem.dataPropertyIndex = response[4].index;
+                    listItem.flatDataPropertyHierarchy = self.flattenHierarchy(listItem.dataPropertyHierarchy, recordId, listItem);
                     listItem.objectPropertyHierarchy = response[5].hierarchy;
                     listItem.objectPropertyIndex = response[5].index;
+                    listItem.flatObjectPropertyHierarchy = self.flattenHierarchy(listItem.objectPropertyHierarchy, recordId, listItem);
                     listItem.branches = response[6].data;
+                    listItem.annotationPropertyHierarchy = response[7].hierarchy;
+                    listItem.annotationPropertyIndex = response[7].index;
+                    listItem.flatAnnotationPropertyHierarchy = self.flattenHierarchy(listItem.annotationPropertyHierarchy, recordId, listItem);
+                    _.forEach(response[8], importedOntObj => {
+                        addImportedOntologyToListItem(listItem, importedOntObj, 'ontology');
+                    });
                     listItem.upToDate = upToDate;
+                    listItem.classesAndIndividuals = response[3].individuals;
+                    listItem.classesWithIndividuals = _.keys(response[3].individuals);
+                    listItem.individualsParentPath = self.getIndividualsParentPath(listItem);
+                    listItem.flatIndividualsHierarchy = self.createFlatIndividualTree(listItem);
+                    listItem.flatEverythingTree = self.createFlatEverythingTree(getOntologiesArrayByListItem(listItem), listItem);
                     _.pullAllWith(
                         listItem.annotations,
                         _.concat(om.ontologyProperties, listItem.subDataProperties, listItem.subObjectProperties),
@@ -420,6 +450,13 @@
                 }, error => _.has(error, 'statusText') ? util.onError(response, deferred) : deferred.reject(error));
                 return deferred.promise;
             }
+            self.getIndividualsParentPath = function(listItem) {
+                var result = [];
+                _.forEach(_.keys(listItem.classesAndIndividuals), classIRI => {
+                    result = _.concat(result, getClassesForIndividuals(listItem.classIndex, classIRI));
+                });
+                return _.uniq(result);
+            }
             self.createVocabularyListItem = function(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate = true) {
                 var deferred = $q.defer();
                 var listItem = setupListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, 'vocabulary');
@@ -427,7 +464,8 @@
                     om.getIris(recordId, branchId, commitId),
                     om.getImportedIris(recordId, branchId, commitId),
                     om.getConceptHierarchies(recordId, branchId, commitId),
-                    cm.getRecordBranches(recordId, catalogId)
+                    cm.getRecordBranches(recordId, catalogId),
+                    om.getImportedOntologies(recordId, branchId, commitId)
                 ]).then(response => {
                     listItem.subDataProperties = _.get(response[0], 'dataProperties');
                     listItem.subObjectProperties = _.get(response[0], 'objectProperties');
@@ -461,7 +499,11 @@
                     });
                     listItem.conceptHierarchy = response[2].hierarchy;
                     listItem.conceptIndex = response[2].index;
+                    listItem.flatConceptHierarchy = self.flattenHierarchy(listItem.conceptHierarchy, recordId, listItem);
                     listItem.branches = response[3].data;
+                    _.forEach(response[4], importedOntObj => {
+                        addImportedOntologyToListItem(listItem, importedOntObj, 'vocabulary');
+                    });
                     listItem.upToDate = upToDate;
                     _.pullAllWith(
                         listItem.annotations,
@@ -475,6 +517,109 @@
             }
             /**
              * @ngdoc method
+             * @name flattenHierarchy
+             * @methodOf ontologyState.service:ontologyStateService
+             *
+             * @description
+             * Flattens the provided hierarchy into an array that represents the hierarchical structure to be used
+             * with a virtual scrolling solution.
+             *
+             * @param {Object} hierarchy The Object set up in a hierarchical structure.
+             * @param {string} recordId The record ID associated with the provided hierarchy.
+             * @param {Object} [listItem=self.listItem] The listItem associated with the provided hierarchy.
+             * @returns {Object[]} An array which represents the provided hierarchy.
+             */
+            self.flattenHierarchy = function(hierarchy, recordId, listItem = self.listItem) {
+                var result = [];
+                var sortedHierarchy = orderHierarchy(hierarchy, listItem);
+                _.forEach(sortedHierarchy, node => {
+                    addNodeToResult(node, result, 0, [recordId]);
+                });
+                return result;
+            }
+            /**
+             * @ngdoc method
+             * @name createFlatEverythingTree
+             * @methodOf ontologyState.service:ontologyStateService
+             *
+             * @description
+             * Creates an array which represents the hierarchical structure of the relationship between classes
+             * and properties to be used with a virtual scrolling solution.
+             *
+             * @param {Object[]} ontologies The array of ontologies to build the hierarchal structure for.
+             * @param {Object} listItem The listItem linked to the ontology you want to add the entity to.
+             * @returns {Object[]} An array which contains the class-property replationships.
+             */
+            self.createFlatEverythingTree = function(ontologies, listItem) {
+                var result = [];
+                var orderedClasses = sortByName(om.getClasses(ontologies), listItem);
+                var orderedProperties = [];
+                var path = [];
+                _.forEach(orderedClasses, clazz => {
+                    orderedProperties = sortByName(om.getClassProperties(ontologies, clazz['@id']), listItem);
+                    path = [listItem.recordId, clazz['@id']];
+                    result.push(_.merge({}, clazz, {
+                        indent: 0,
+                        hasChildren: !!orderedProperties.length,
+                        path
+                    }));
+                    _.forEach(orderedProperties, property => {
+                        result.push(_.merge({}, property, {
+                            indent: 1,
+                            hasChildren: false,
+                            path: _.concat(path, property['@id'])
+                        }));
+                    });
+                });
+                var orderedNoDomainProperties = sortByName(om.getNoDomainProperties(ontologies), listItem);
+                if (orderedNoDomainProperties.length) {
+                    result.push({
+                        title: 'Properties',
+                        get: self.getNoDomainsOpened,
+                        set: self.setNoDomainsOpened
+                    });
+                    _.forEach(orderedNoDomainProperties, property => {
+                        result.push(_.merge({}, property, {
+                            indent: 1,
+                            hasChildren: false,
+                            get: self.getNoDomainsOpened,
+                            path: [listItem.recordId, property['@id']]
+                        }));
+                    });
+                }
+                return result;
+            }
+            /**
+             * @ngdoc method
+             * @name createFlatIndividualTree
+             * @methodOf ontologyState.service:ontologyStateService
+             *
+             * @description
+             * Creates an array which represents the hierarchical structure of the relationship between classes
+             * and individuals to be used with a virtual scrolling solution.
+             *
+             * @param {Object} listItem The listItem linked to the ontology you want to add the entity to.
+             * @returns {Object[]} An array which contains the class-individuals replationships.
+             */
+            self.createFlatIndividualTree = function(listItem) {
+                var result = [];
+                var neededClasses = _.get(listItem, 'individualsParentPath', []);
+                var classesWithIndividuals = _.get(listItem, 'classesAndIndividuals', {});
+                if (neededClasses.length && !_.isEmpty(classesWithIndividuals)) {
+                    _.forEach(_.get(listItem, 'flatClassHierarchy', []), node => {
+                        if (_.includes(neededClasses, node.entityIRI)) {
+                            result.push(_.merge({}, node, {isClass: true}));
+                            var sortedIndividuals = _.sortBy(_.get(classesWithIndividuals, node.entityIRI), entityIRI => _.lowerCase(self.getEntityNameByIndex(entityIRI, listItem)));
+                            _.forEach(sortedIndividuals, entityIRI => {
+                                addNodeToResult({entityIRI}, result, node.indent + 1, node.path);
+                            });
+                        }
+                    });
+                }
+                return result;
+            }
+            /**
+             * @ngdoc method
              * @name addEntity
              * @methodOf ontologyState.service:ontologyStateService
              *
@@ -482,14 +627,15 @@
              * Adds the entity represented by the entityJSON to the ontology with the provided ontology ID in the
              * MatOnto repository. Adds the new entity to the index.
              *
-             * @param {Object[]} listItem The listItem linked to the ontology you want to add the entity to.
+             * @param {Object} listItem The listItem linked to the ontology you want to add the entity to.
              * @param {string} entityJSON The JSON-LD representation for the entity you want to add to the ontology.
              */
             self.addEntity = function(listItem, entityJSON) {
                 listItem.ontology.push(entityJSON);
                 _.get(listItem, 'index', {})[entityJSON['@id']] = {
                     position: listItem.ontology.length - 1,
-                    label: om.getEntityName(entityJSON, listItem.type)
+                    label: om.getEntityName(entityJSON, listItem.type),
+                    ontologyIri: listItem.ontologyId
                 }
             }
             /**
@@ -501,18 +647,18 @@
              * Removes the entity with the provided IRI from the ontology with the provided ontology ID in the MatOnto
              * repository. Removes the entityIRI from the index. Returns the entity Object.
              *
-             * @param {Object[]} listItem The listItem linked to the ontology you want to remove the entity from.
+             * @param {Object} listItem The listItem linked to the ontology you want to remove the entity from.
              * @returns {Object} An Object which represents the requested entity.
              */
             self.removeEntity = function(listItem, entityIRI) {
-                var entityPosition = _.get(listItem.index, entityIRI + '.position');
+                var entityPosition = _.get(listItem.index, "['" + entityIRI + "'].position");
                 _.unset(listItem.index, entityIRI);
                 _.forOwn(listItem.index, (value, key) => {
                     if (value.position > entityPosition) {
                         listItem.index[key].position = value.position - 1;
                     }
                 });
-                return _.remove(listItem.ontology, {matonto:{originalIRI: entityIRI}})[0];
+                return _.remove(listItem.ontology, {'@id': entityIRI})[0];
             }
             /**
              * @ngdoc method
@@ -574,7 +720,12 @@
              * @returns {string} The beautified IRI string.
              */
             self.getEntityNameByIndex = function(entityIRI, listItem) {
-                return _.get(listItem, "index['" + entityIRI + "'].label", utilService.getBeautifulIRI(entityIRI));
+                var indices = getIndices(listItem);
+                var entity = _.result(_.find(indices, index => {
+                    var entity = _.get(index, entityIRI);
+                     return (entity !== null && _.has(entity, 'label'));
+                }), entityIRI);
+                return !entity ? utilService.getBeautifulIRI(entityIRI) : entity.label;
             }
             /**
              * @ngdoc method
@@ -628,10 +779,10 @@
                         commitId = response.commitId;
                         ontology = response.ontology;
                         inProgressCommit = response.inProgressCommit;
-                        return cm.getBranchHeadCommit(branchId, recordId, catalogId);
+                        return cm.getRecordBranch(branchId, recordId, catalogId);
                     }, $q.reject)
-                    .then(headCommit => {
-                        var headId = _.get(headCommit, "commit['@id']", '');
+                    .then(branch => {
+                        var headId = _.get(branch, "['" + prefixes.catalog + "head'][0]['@id']", '');
                         var upToDate = headId === commitId;
                         ontologyId = om.getOntologyIRI(ontology);
                         if (type === 'ontology') {
@@ -694,11 +845,11 @@
             self.getNoDomainsOpened = function(recordId) {
                 return _.get(self.state, getOpenPath(recordId, 'noDomainsOpened'), false);
             }
-            self.setIndividualsOpened = function(recordId, classIRI, isOpened) {
-                _.set(self.state, getOpenPath(recordId, classIRI, 'individualsOpened'), isOpened);
+            self.setIndividualsOpened = function(pathString, isOpened) {
+                _.set(self.state, getOpenPath(pathString, 'individualsOpened'), isOpened);
             }
-            self.getIndividualsOpened = function(recordId, classIRI) {
-                return _.get(self.state, getOpenPath(recordId, classIRI, 'individualsOpened'), false);
+            self.getIndividualsOpened = function(pathString) {
+                return _.get(self.state, getOpenPath(pathString, 'individualsOpened'), false);
             }
             self.setDataPropertiesOpened = function(recordId, isOpened) {
                 _.set(self.state, getOpenPath(recordId, 'dataPropertiesOpened'), isOpened);
@@ -830,11 +981,16 @@
                 _.forOwn(self.state, (value, key) => {
                     if (key !== 'project') {
                         _.unset(value, 'entityIRI');
+                    } else {
+                        value.entityIRI = om.getOntologyIRI(self.listItem.ontology);
+                        value.preview = '';
                     }
                     _.unset(value, 'usages');
                 });
                 if (self.getActiveKey() !== 'project') {
                     self.selected = undefined;
+                } else {
+                    self.selected = self.getEntityByRecordId(self.listItem.recordId, self.state.project.entityIRI);
                 }
             }
             self.getActiveKey = function() {
@@ -957,57 +1113,75 @@
                 }
                 return result;
             }
+            self.areParentsOpen = function(node, get = self.getOpened) {
+                var pathString = _.first(node.path);
+                var pathCopy = _.tail(_.initial(node.path));
+                return _.every(pathCopy, pathPart => {
+                    pathString += '.' + pathPart;
+                    return get(pathString);
+                });
+            }
+            self.joinPath = function(path) {
+                return _.join(path, '.');
+            }
             self.goTo = function(iri) {
                 var entity = self.getEntityByRecordId(self.listItem.recordId, iri);
                 if (self.state.type === 'vocabulary') {
-                    commonGoTo('concepts', iri, 'conceptIndex', 'conceptHierarchy');
+                    commonGoTo('concepts', iri, self.listItem.flatConceptHierarchy);
                 } else if (om.isClass(entity)) {
-                    commonGoTo('classes', iri, 'classIndex', 'classHierarchy');
+                    commonGoTo('classes', iri, self.listItem.flatClassHierarchy);
                 } else if (om.isDataTypeProperty(entity)) {
-                    commonGoTo('properties', iri, 'dataPropertyIndex', 'dataPropertyHierarchy');
                     self.setDataPropertiesOpened(self.listItem.recordId, true);
+                    commonGoTo('properties', iri, self.listItem.flatDataPropertyHierarchy);
                 } else if (om.isObjectProperty(entity)) {
-                    commonGoTo('properties', iri, 'objectPropertyIndex', 'objectPropertyHierarchy');
                     self.setObjectPropertiesOpened(self.listItem.recordId, true);
+                    commonGoTo('properties', iri, self.listItem.flatObjectPropertyHierarchy);
                 } else if (om.isAnnotation(entity)) {
-                    commonGoTo('properties', iri);
                     self.setAnnotationPropertiesOpened(self.listItem.recordId, true);
+                    commonGoTo('properties', iri, self.listItem.flatAnnotationPropertyHierarchy);
                 } else if (om.isIndividual(entity)) {
                     commonGoTo('individuals', iri);
                 } else if (om.isOntology(entity)) {
                     commonGoTo('project', iri);
                 }
             }
-            self.openAt = function(pathsArray) {
-                var selectedPath = _.find(pathsArray, path => {
-                    var pathString = self.listItem.recordId;
-                    return _.every(_.initial(path), pathPart => {
-                        pathString += '.' + pathPart;
-                        return self.getOpened(pathString);
-                    });
-                });
-                if (!selectedPath) {
-                    selectedPath = _.head(pathsArray);
-                    var pathString = self.listItem.recordId;
-                    _.forEach(_.initial(selectedPath), pathPart => {
+            self.openAt = function(flatHierarchy, entityIRI) {
+                var path = _.get(_.find(flatHierarchy, {entityIRI}), 'path', []);
+                if (path.length) {
+                    var pathString = _.head(path);
+                    _.forEach(_.tail(_.initial(path)), pathPart => {
                         pathString += '.' + pathPart;
                         self.setOpened(pathString, true);
                     });
                 }
-                $timeout(function() {
-                    var $element = document.querySelectorAll('[data-path-to="' + self.listItem.recordId + '.'
-                        + _.join(selectedPath, '.') + '"]');
-                    var $hierarchyBlock = document.querySelectorAll('[class*=hierarchy-block] .block-content');
-                    if ($element.length && $hierarchyBlock.length) {
-                        $hierarchyBlock[0].scrollTop = $element[0].offsetTop;
-                    }
-                });
+                // var index = _.findIndex(flatHierarchy, {entityIRI});
+                // $timeout(function() {
+                //     var $element = $document.querySelectorAll('[data-path-to="' + _.join(path, '.') + '"]');
+                //     var $container = $document.querySelectorAll('[class*=hierarchy-block] .repeater-container');
+                //     if (!!$container.length && !!$element.length) {
+                //         $container[0].scrollTop = $element[0].offsetTop;
+                //     }
+                // });
             }
             self.getDefaultPrefix = function() {
                 return _.replace(_.get(self.listItem, 'iriBegin', self.listItem.ontologyId), '#', '/') + _.get(self.listItem, 'iriThen', '#');
             }
+            self.getOntologiesArray = function() {
+                return getOntologiesArrayByListItem(self.listItem);
+            }
+            self.updatePropertyIcon = function(entity) {
+                if (om.isProperty(entity)) {
+                    setPropertyIcon(entity);
+                }
+            }
 
             /* Private helper functions */
+            function getOntologiesArrayByListItem(listItem) {
+                return _.concat([listItem.ontology], _.map(listItem.importedOntologies, 'ontology'));
+            }
+            function getIndices(listItem) {
+                return _.concat([listItem.index], _.map(listItem.importedOntologies, 'index'));
+            }
             function getEntities(hierarchy, entityIRI, indexObject) {
                 var results = [];
                 var pathsToEntity = self.getPathsTo(hierarchy, indexObject, entityIRI);
@@ -1020,11 +1194,11 @@
                 });
                 return results;
             }
-            function commonGoTo(key, iri, index, hierarchy) {
+            function commonGoTo(key, iri, flatHierarchy) {
                 self.setActivePage(key);
                 self.selectItem(iri);
-                if (index) {
-                    self.openAt(self.getPathsTo(self.listItem[hierarchy], self.listItem[index], iri));
+                if (flatHierarchy) {
+                    self.openAt(flatHierarchy, iri);
                 }
             }
             function getOpenPath() {
@@ -1039,16 +1213,19 @@
                         _.set(entity, 'matonto.originalIRI', entity['@id']);
                         index[entity['@id']] = {
                             position: i,
-                            label: om.getEntityName(entity, type)
+                            label: om.getEntityName(entity, type),
+                            ontologyIri: ontologyId
                         }
                     } else {
                         _.set(entity, 'matonto.anonymous', ontologyId + ' (Anonymous Ontology)');
                     }
                     if (om.isProperty(entity)) {
-                        _.set(entity, 'matonto.icon', getIcon(entity));
+                        setPropertyIcon(entity);
                     } else if (om.isBlankNode(entity)) {
                         let id = _.get(entity, '@id');
                         _.set(blankNodes, id, mc.jsonldToManchester(id, ontology, true));
+                    } else if (om.isIndividual(entity)) {
+                        findValuesMissingDatatypes(entity);
                     }
                 });
                 listItem.ontologyId = ontologyId;
@@ -1059,7 +1236,19 @@
                 listItem.blankNodes = blankNodes;
                 listItem.index = index;
                 listItem.inProgressCommit = inProgressCommit;
+                listItem.type = type;
                 return listItem;
+            }
+            function findValuesMissingDatatypes(object) {
+                if (_.has(object, '@value')) {
+                    if (!_.has(object, '@type')) {
+                        object['@type'] = prefixes.xsd + "string";
+                    }
+                } else if (_.isObject(object)) {
+                    _.forEach(_.keys(object), key => {
+                        findValuesMissingDatatypes(object[key]);
+                    });
+                }
             }
             function updateListItem(recordId, newListItem) {
                 var oldListItem = self.getListItemByRecordId(recordId);
@@ -1068,6 +1257,9 @@
             function addOntologyIdToArray(arr, ontologyId) {
                 return _.forEach(arr, item => _.set(item, 'ontologyId', ontologyId));
             }
+            function setPropertyIcon(entity) {
+                _.set(entity, 'matonto.icon', getIcon(entity));
+            }
             function getIcon(property) {
                 var range = _.get(property, prefixes.rdfs + 'range');
                 var icon = 'fa-square-o';
@@ -1075,6 +1267,7 @@
                     if (range.length === 1) {
                         switch(range[0]['@id']) {
                             case prefixes.xsd + 'string':
+                            case prefixes.rdf + 'langString':
                                 icon = 'fa-font';
                                 break;
                             case prefixes.xsd + 'decimal':
@@ -1099,6 +1292,9 @@
                             case prefixes.xsd + 'byte':
                                 icon = 'fa-signal';
                                 break;
+                            case prefixes.rdfs + 'Literal':
+                                icon = 'fa-cube';
+                                break;
                             default:
                                 icon = 'fa-link';
                                 break;
@@ -1110,12 +1306,30 @@
                 return icon;
             }
             function getEntityFromListItem(listItem, entityIRI) {
-                var index = _.get(listItem, 'index');
+                if  (!entityIRI || !listItem) {
+                    return;
+                }
                 var ontology = _.get(listItem, 'ontology');
-                if (_.has(index, entityIRI + '.position')) {
-                    return ontology[index[entityIRI].position];
+                var ontologyId = _.get(listItem, 'ontologyId');
+                var importedOntologyListItems = _.get(listItem, 'importedOntologies', []);
+                var importedOntologyIds = _.get(listItem, 'importedOntologyIds');
+                var indices = getIndices(listItem);
+                var entities = [];
+                _.forEach(indices, index => {
+                    var entity = _.get(index, entityIRI);
+                    if (entity && _.has(entity, 'position') && _.has(entity, 'ontologyIri')) {
+                        if (entity.ontologyIri === ontologyId) {
+                            entities.push(ontology[entity.position]);
+                        } else {
+                            entities.push(importedOntologyListItems[_.indexOf(importedOntologyIds, entity.ontologyIri)].ontology[entity.position]);
+                        }
+                    }
+                });
+                var combinedEntity = _.merge.apply({}, entities);
+                if (_.isEmpty(combinedEntity)) {
+                    return;
                 } else {
-                    return om.getEntity(ontology, entityIRI);
+                    return combinedEntity;
                 }
             }
             function addToInProgress(recordId, json, prop) {
@@ -1132,5 +1346,63 @@
                 return _.isEqual(_.get(obj1, 'localName'), _.get(obj2, 'localName'))
                     && _.isEqual(_.get(obj1, 'namespace'), _.get(obj2, 'namespace'));
             }
+            function orderHierarchy(hierarchy, listItem) {
+                return _.sortBy(hierarchy, node => {
+                    if (_.has(node, 'subEntities')) {
+                        node.subEntities = orderHierarchy(node.subEntities, listItem);
+                    }
+                    return _.lowerCase(self.getEntityNameByIndex(node.entityIRI, listItem));
+                });
+            }
+            function addNodeToResult(node, result, indent, path) {
+                var newPath = _.concat(path, node.entityIRI);
+                var item = {
+                    hasChildren: _.has(node, 'subEntities'),
+                    entityIRI: node.entityIRI,
+                    indent,
+                    path: newPath
+                };
+                result.push(item);
+                _.forEach(_.get(node, 'subEntities', []), subNode => {
+                    addNodeToResult(subNode, result, indent + 1, newPath);
+                });
+            }
+            function sortByName(array, listItem) {
+                return _.sortBy(array, entity => _.lowerCase(self.getEntityNameByIndex(entity['@id'], listItem)));
+            }
+            function addImportedOntologyToListItem(listItem, importedOntObj, type) {
+                var index = {};
+                _.forEach(importedOntObj.ontology, (entity, i) => {
+                    if (_.has(entity, '@id')) {
+                        _.set(entity, 'matonto.originalIRI', entity['@id']);
+                        index[entity['@id']] = {
+                            position: i,
+                            label: om.getEntityName(entity, type),
+                            ontologyIri: importedOntObj.id
+                        }
+                    }
+                    self.updatePropertyIcon(entity);
+                    _.set(entity, 'matonto.imported', true);
+                });
+                var importedOntologyListItem = {
+                    id: importedOntObj.id,
+                    index: index,
+                    ontology: importedOntObj.ontology
+                };
+                listItem.importedOntologyIds.push(importedOntObj.id);
+                listItem.importedOntologies.push(importedOntologyListItem);
+            }
+        }
+        function getClassesForIndividuals(index, iri) {
+            var result = [iri];
+            if (_.has(index, iri)) {
+                var indexCopy = angular.copy(index);
+                var parentIRIs = _.get(indexCopy, iri);
+                _.unset(indexCopy, iri);
+                _.forEach(parentIRIs, parentIRI => {
+                    result = _.concat(result, getClassesForIndividuals(indexCopy, parentIRI));
+                });
+            }
+            return result;
         }
 })();

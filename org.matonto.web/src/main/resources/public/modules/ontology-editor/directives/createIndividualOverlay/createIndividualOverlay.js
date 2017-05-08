@@ -70,18 +70,40 @@
 
                     dvm.create = function() {
                         _.set(dvm.individual, 'matonto.originalIRI', dvm.individual['@id']);
+                        
                         // update relevant lists
                         var split = $filter('splitIRI')(dvm.individual['@id']);
-                        _.get(dvm.os.listItem, 'individuals').push({namespace:split.begin + split.then,
-                            localName: split.end});
+                        _.get(dvm.os.listItem, 'individuals').push({namespace:split.begin + split.then, localName: split.end});
                         var classesWithIndividuals = _.get(dvm.os.listItem, 'classesWithIndividuals');
-                        _.set(dvm.os.listItem, 'classesWithIndividuals', _.unionWith(classesWithIndividuals, _.map(dvm.individual['@type'], type => ({entityIRI: type})), (obj1, obj2) => _.get(obj1, 'entityIRI') === _.get(obj2, 'entityIRI')));
+                        var classesAndIndividuals = _.get(dvm.os.listItem, 'classesAndIndividuals');
+                        var individualsParentPath = _.get(dvm.os.listItem, 'individualsParentPath');
+                        var paths = [];
+                        var individuals = [];
+
+                        _.forEach(dvm.individual['@type'], (type) => {
+                            var individual = [];
+                            var existingInds = _.get(dvm.os.listItem.classesAndIndividuals, type);
+                            var path = dvm.os.getPathsTo(_.get(dvm.os.listItem, 'classHierarchy'), _.get(dvm.os.listItem, 'classIndex'), type);
+
+                            individual.push(dvm.individual['@id']);
+                            dvm.os.listItem.classesAndIndividuals[type] = existingInds ? _.concat(individual, existingInds) : individual;
+                            individuals.push(type);
+                            paths.push(path);
+                        });
+
+                        var uniqueUris =  _.uniq(_.flattenDeep(paths));
+                        _.set(dvm.os.listItem, 'classesWithIndividuals', _.concat(classesWithIndividuals, individuals));
+                        _.set(dvm.os.listItem, 'individualsParentPath', _.concat(individualsParentPath, uniqueUris));
+                        
                         // add the entity to the ontology
                         dvm.individual['@type'].push(prefixes.owl + 'NamedIndividual');
                         dvm.os.addEntity(dvm.os.listItem, dvm.individual);
                         dvm.os.addToAdditions(dvm.os.listItem.recordId, dvm.individual);
+                        dvm.os.listItem.flatIndividualsHierarchy = dvm.os.createFlatIndividualTree(dvm.os.listItem);
+                        
                         // select the new individual
                         dvm.os.selectItem(dvm.individual['@id'], false);
+                        
                         // hide the overlay
                         dvm.os.showCreateIndividualOverlay = false;
                         dvm.ontoUtils.saveCurrentChanges();
