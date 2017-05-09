@@ -100,16 +100,15 @@
                         var versionObj = {};
                         dvm.cm.getRecordMasterBranch(dvm.selectedRecord['@id'], dvm.cm.localCatalog['@id']).then(branch => {
                             stateObj.branchId = branch['@id'];
-                            return dvm.cm.getBranchHeadCommit(branch['@id'], dvm.selectedRecord['@id'], dvm.cm.localCatalog['@id']);
-                        }, $q.reject).then(commit => {
-                            versionObj.commitId = commit.commit['@id'];
                             versionObj.ontologies = dvm.state.sourceOntologies;
                             versionObj.classes = dvm.state.getClasses(versionObj.ontologies);
                             dvm.classes = versionObj.classes;
-                            if (_.get(dvm.mm.getSourceOntologyInfo(dvm.state.mapping.jsonld), 'commitId') === versionObj.commitId) {
-                                stateObj.latest = versionObj;
+                            var latestCommitId = dvm.util.getPropertyId(branch, prefixes.catalog + 'head');
+                            var savedCommitId = _.get(dvm.mm.getSourceOntologyInfo(dvm.state.mapping.jsonld), 'commitId');
+                            if (savedCommitId === latestCommitId) {
+                                stateObj.latest = _.set(versionObj, 'commitId', latestCommitId);
                             } else {
-                                stateObj.saved = versionObj;
+                                stateObj.saved = _.set(versionObj, 'commitId', savedCommitId);
                                 dvm.selectedVersion = 'saved';
                             }
                             dvm.ontologyStates.push(stateObj);
@@ -137,21 +136,19 @@
                     dvm.selectOntology = function(record) {
                         dvm.selectedRecord = record;
                         var ontologyState = _.find(dvm.ontologyStates, {recordId: dvm.selectedRecord['@id']});
-                        if (ontologyState) {
+                        if (ontologyState && !_.isEqual(ontologyState, dvm.selectedOntologyState)) {
                             dvm.selectedOntologyState = ontologyState;
                             dvm.selectedVersion = 'latest';
                             dvm.classes = dvm.selectedOntologyState.latest.classes;
                             dvm.errorMessage = '';
-                        } else {
+                        } else if (!ontologyState) {
                             ontologyState = {
                                 recordId: dvm.selectedRecord['@id']
                             };
                             var versionObj = {};
                             dvm.cm.getRecordMasterBranch(dvm.selectedRecord['@id'], dvm.cm.localCatalog['@id']).then(branch => {
                                 ontologyState.branchId = branch['@id'];
-                                return dvm.cm.getBranchHeadCommit(branch['@id'], dvm.selectedRecord['@id'], dvm.cm.localCatalog['@id']);
-                            }, $q.reject).then(commit => {
-                                versionObj.commitId = commit.commit['@id'];
+                                versionObj.commitId = dvm.util.getPropertyId(branch, prefixes.catalog + 'head');
                                 var ontologyInfo = {
                                     recordId: dvm.selectedRecord['@id'],
                                     branchId: ontologyState.branchId,
@@ -183,8 +180,8 @@
                             } else {
                                 var versionObj = {};
                                 if (dvm.selectedVersion === 'latest') {
-                                    dvm.cm.getBranchHeadCommit(dvm.selectedOntologyState.branchId, dvm.selectedOntologyState.recordId, dvm.cm.localCatalog['@id']).then(commit => {
-                                        versionObj.commitId = commit.commit['@id'];
+                                    dvm.cm.getRecordBranch(dvm.selectedOntologyState.branchId, dvm.selectedOntologyState.recordId, dvm.cm.localCatalog['@id']).then(branch => {
+                                        versionObj.commitId = dvm.util.getPropertyId(branch, prefixes.catalog + 'head');
                                         var ontologyInfo = {
                                             recordId: dvm.selectedOntologyState.recordId,
                                             branchId: dvm.selectedOntologyState.branchId,
