@@ -134,10 +134,10 @@ describe('Mapping Config Overlay directive', function() {
                     classes: [{ontologyId: '', classObj: this.classObj}]
                 };
                 utilSvc.getDctermsValue.and.returnValue('');
+                utilSvc.getPropertyId.and.returnValue(this.expectedVersion.commitId);
                 mapperStateSvc.getClasses.and.returnValue(this.expectedVersion.classes);
                 mappingManagerSvc.getClassIdByMapping.and.returnValue(this.classObj['@id']);
                 catalogManagerSvc.getRecordMasterBranch.and.returnValue($q.when({'@id': this.expectedState.branchId}));
-                catalogManagerSvc.getBranchHeadCommit.and.returnValue($q.when({commit: {'@id': this.expectedVersion.commitId}}));
             });
             it('and no changes have been commited to the record since it was set', function() {
                 mappingManagerSvc.getSourceOntologyInfo.and.returnValue({commitId: this.expectedVersion.commitId});
@@ -145,6 +145,9 @@ describe('Mapping Config Overlay directive', function() {
                 element = $compile(angular.element('<mapping-config-overlay></mapping-config-overlay>'))(scope);
                 scope.$digest();
                 controller = element.controller('mappingConfigOverlay');
+                expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(this.record['@id'], catalogManagerSvc.localCatalog['@id']);
+                expect(utilSvc.getPropertyId).toHaveBeenCalledWith(jasmine.any(Object), prefixes.catalog + 'head');
+                expect(mappingManagerSvc.getSourceOntologyInfo).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld);
                 expect(controller.selectedRecord).toEqual(this.record);
                 expect(controller.ontologyStates).toContain(this.expectedState);
                 expect(controller.selectedOntologyState).toEqual(this.expectedState);
@@ -153,7 +156,7 @@ describe('Mapping Config Overlay directive', function() {
             });
             it('and changes have been commited to the record since it was set', function() {
                 mappingManagerSvc.getSourceOntologyInfo.and.returnValue({commitId: 'different'});
-                this.expectedState.saved = this.expectedVersion;
+                this.expectedState.saved = _.set(angular.copy(this.expectedVersion), 'commitId', 'different');
                 element = $compile(angular.element('<mapping-config-overlay></mapping-config-overlay>'))(scope);
                 scope.$digest();
                 controller = element.controller('mappingConfigOverlay');
@@ -273,16 +276,16 @@ describe('Mapping Config Overlay directive', function() {
                             classes: [{ontologyId: 'original', classObj: originalClassObj}, {ontologyId: 'imported', classObj: importedClassObj}]
                         }
                     };
+                    utilSvc.getPropertyId.and.returnValue(expectedState.latest.commitId);
                     mappingManagerSvc.getOntology.and.returnValue($q.when(originalOntology));
                     mapperStateSvc.getClasses.and.returnValue(expectedState.latest.classes);
                     ontologyManagerSvc.getImportedOntologies.and.returnValue($q.when([importedOntology]));
                     catalogManagerSvc.getRecordMasterBranch.and.returnValue($q.when({'@id': expectedState.branchId}));
-                    catalogManagerSvc.getBranchHeadCommit.and.returnValue($q.when({commit: {'@id': expectedState.latest.commitId}}));
                     controller.selectOntology(this.record);
                     scope.$apply();
                     expect(controller.selectedRecord).toBe(this.record);
                     expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(this.record['@id'], catalogManagerSvc.localCatalog['@id']);
-                    expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(expectedState.branchId, this.record['@id'], catalogManagerSvc.localCatalog['@id']);
+                    expect(utilSvc.getPropertyId).toHaveBeenCalledWith(jasmine.any(Object), prefixes.catalog + 'head');
                     expect(mappingManagerSvc.getOntology).toHaveBeenCalled();
                     expect(ontologyManagerSvc.getImportedOntologies).toHaveBeenCalledWith(expectedState.recordId, expectedState.branchId, expectedState.latest.commitId);
                     expect(controller.ontologyStates).toContain(expectedState);
@@ -326,10 +329,10 @@ describe('Mapping Config Overlay directive', function() {
                             controller.selectedVersion = 'latest';
                         });
                         it('unless an error occurs', function() {
-                            catalogManagerSvc.getBranchHeadCommit.and.returnValue($q.reject('Error message'));
+                            catalogManagerSvc.getRecordBranch.and.returnValue($q.reject('Error message'));
                             controller.selectVersion();
                             scope.$apply();
-                            expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(controller.selectedOntologyState.branchId, controller.selectedOntologyState.recordId, catalogManagerSvc.localCatalog['@id']);
+                            expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(controller.selectedOntologyState.branchId, controller.selectedOntologyState.recordId, catalogManagerSvc.localCatalog['@id']);
                             expect(controller.errorMessage).toBe('Error message');
                         });
                         it('successfully', function() {
@@ -338,10 +341,12 @@ describe('Mapping Config Overlay directive', function() {
                                 ontologies: [originalOntology, {id: importedOntology.id, entities: importedOntology.ontology}],
                                 classes: [{ontologyId: 'original', classObj: originalClassObj}, {ontologyId: 'imported', classObj: importedClassObj}]
                             };
-                            catalogManagerSvc.getBranchHeadCommit.and.returnValue($q.when({commit: {'@id': expectedVersion.commitId}}));
+                            catalogManagerSvc.getRecordBranch.and.returnValue($q.when({}));
+                            utilSvc.getPropertyId.and.returnValue(expectedVersion.commitId);
                             controller.selectVersion();
                             scope.$apply();
-                            expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(controller.selectedOntologyState.branchId, controller.selectedOntologyState.recordId, catalogManagerSvc.localCatalog['@id']);
+                            expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(controller.selectedOntologyState.branchId, controller.selectedOntologyState.recordId, catalogManagerSvc.localCatalog['@id']);
+                            expect(utilSvc.getPropertyId).toHaveBeenCalledWith({}, prefixes.catalog + 'head');
                             expect(mappingManagerSvc.getOntology).toHaveBeenCalled();
                             expect(ontologyManagerSvc.getImportedOntologies).toHaveBeenCalledWith(controller.selectedOntologyState.recordId, controller.selectedOntologyState.branchId, expectedVersion.commitId);
                             expect(controller.classes).toEqual(expectedVersion.classes);
