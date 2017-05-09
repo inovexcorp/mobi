@@ -45,12 +45,10 @@ describe('Class Preview directive', function() {
         scope.ontologies = [];
         element = $compile(angular.element('<class-preview class-obj="classObj" ontologies="ontologies"></class-preview>'))(scope);
         scope.$digest();
+        controller = element.controller('classPreview');
     });
 
     describe('controller bound variable', function() {
-        beforeEach(function() {
-            controller = element.controller('classPreview');
-        });
         it('classObj should be one way bound', function() {
             controller.classObj = {'@id': ''};
             scope.$digest();
@@ -63,8 +61,7 @@ describe('Class Preview directive', function() {
         });
     });
     it('should set the property list when the classObj changes', function() {
-        controller = element.controller('classPreview');
-        var props = [{}];
+        var props = [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}];
         mapperStateSvc.getClassProps.and.returnValue(props);
         scope.classObj = {'@id': ''};
         scope.$digest();
@@ -76,8 +73,6 @@ describe('Class Preview directive', function() {
             expect(element.hasClass('class-preview')).toBe(true);
         });
         it('depending on whether classObj has any properties', function() {
-            controller = element.controller('classPreview');
-            scope.$digest();
             var propList = angular.element(element.querySelectorAll('ul')[0]);
             expect(propList.html()).toContain('None');
 
@@ -85,6 +80,19 @@ describe('Class Preview directive', function() {
             scope.$digest();
             expect(propList.html()).not.toContain('None');
             expect(propList.children().length).toBe(controller.props.length);
+        });
+        it('depending on whether classObj has more than 10 properties', function() {
+            controller.props = [{}];
+            scope.$digest();
+            console.log(element.querySelectorAll('ul'));
+            var lastItem = angular.element(_.last(element.querySelectorAll('ul li')));
+            expect(lastItem.hasClass('last')).toBe(true);
+
+            controller.props = [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}];
+            scope.$digest();
+            console.log(element.querySelectorAll('ul'));
+            lastItem = angular.element(_.last(element.querySelectorAll('ul li')));
+            expect(lastItem.hasClass('last')).toBe(true);
         });
     });
 });
