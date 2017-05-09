@@ -79,20 +79,23 @@ describe('Class Preview directive', function() {
             controller.props = [{}];
             scope.$digest();
             expect(propList.html()).not.toContain('None');
-            expect(propList.children().length).toBe(controller.props.length);
         });
         it('depending on whether classObj has more than 10 properties', function() {
             controller.props = [{}];
             scope.$digest();
-            console.log(element.querySelectorAll('ul'));
-            var lastItem = angular.element(_.last(element.querySelectorAll('ul li')));
+            var items = element.querySelectorAll('ul li');
+            var lastItem = angular.element(_.last(items));
+            expect(items.length).toBe(controller.props.length);
             expect(lastItem.hasClass('last')).toBe(true);
+            expect(lastItem.hasClass('limited')).toBe(false);
 
             controller.props = [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}];
             scope.$digest();
-            console.log(element.querySelectorAll('ul'));
-            lastItem = angular.element(_.last(element.querySelectorAll('ul li')));
+            items = element.querySelectorAll('ul li');
+            lastItem = angular.element(_.last(items));
+            expect(items.length).toBe(10);
             expect(lastItem.hasClass('last')).toBe(true);
+            expect(lastItem.hasClass('limited')).toBe(true);
         });
     });
 });
