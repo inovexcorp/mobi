@@ -1,0 +1,17 @@
+.explore-tab {
+    .content-container {
+        display: flex;
+        flex-direction: row;
+        
+        .details {
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .cards {
+            flex: 1;
+            padding-left: 15px;
+        }
+    }
+}

@@ -1,12 +1,17 @@
 /* Core variables */
 @import "./src/main/resources/public/css/variables";
 
-.discover {
+.query-tab {
     background-color: $gray-lighter;
     display: flex;
     flex-direction: column;
-    
-    .discover-page-content {
+
+    .block-container {
         flex: 1;
+        padding-bottom: 15px;
+
+        &:last-child {
+            padding-bottom: 0;
+        }
     }
 }

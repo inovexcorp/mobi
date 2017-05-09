@@ -35,6 +35,8 @@
             /* Explore tab */
             'exploreTab',
             'exploreTabHeader',
+            'instanceCards',
+            'instanceDetails',
             
             /* Query tab */
             'downloadQueryOverlay',

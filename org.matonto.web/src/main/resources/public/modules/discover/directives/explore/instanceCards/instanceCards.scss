@@ -1,0 +1,46 @@
+.instance-cards {
+    .row {
+        margin: 0;
+        
+        .card-container {
+            height: auto;
+            padding: 15px 15px 15px 0;
+            
+            .card {
+                height: auto;
+                margin: 0;
+                
+                .card-header {
+                    display: flex;
+                    
+                    .text {
+                        flex: 1;
+                        text-overflow: ellipsis;
+                        white-space: nowrap;
+                    }
+                    
+                    .badge {
+                        border-radius: 15px;
+                        font-size: 16px;
+                        line-height: inherit;
+                        min-width: 30px;
+                    }
+                }
+                
+                .instance-overview {
+                    display: -webkit-box;
+                    line-height: 20px;
+                    max-height: 60px;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    -webkit-box-orient: vertical;
+                    -webkit-line-clamp: 3;
+                }
+                
+                p {
+                    margin-bottom: 5px;
+                }
+            }
+        }
+    }
+}

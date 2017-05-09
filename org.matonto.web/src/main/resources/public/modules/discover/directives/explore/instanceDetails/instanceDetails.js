@@ -24,25 +24,28 @@
     'use strict';
 
     angular
-        .module('datasetSelect', [])
-        .directive('datasetSelect', datasetSelect);
-        
-        datasetSelect.$inject = ['utilService', 'discoverStateService'];
+        .module('instanceDetails', [])
+        .directive('instanceDetails', instanceDetails);
 
-        function datasetSelect(utilService, discoverStateService) {
+        function instanceDetails() {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/discover/directives/common/datasetSelect/datasetSelect.html',
+                templateUrl: 'modules/discover/directives/explore/instanceDetails/instanceDetails.html',
                 replace: true,
                 scope: {},
-                bindToController: {
-                    bindModel: '=ngModel'
-                },
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    dvm.ds = discoverStateService;
-                    dvm.util = utilService;
+                    dvm.list = [{
+                        label: 'Material',
+                        count: 13
+                    }, {
+                        label: 'Crystal Structure',
+                        count: 4
+                    }, {
+                        label: 'Element',
+                        count: 22
+                    }];
                 }
             }
         }

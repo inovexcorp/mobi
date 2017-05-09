@@ -56,10 +56,6 @@ describe('SPARQL Editor directive', function() {
         it('for prefixes', function() {
             expect(controller.prefixList.length).toBe(_.keys(prefixes).length);
         });
-        it('for a dataset record list', function() {
-            scope.$apply();
-            expect(controller.datasetRecords).toEqual([datasetRecord]);
-        });
     });
     describe('replaces the element with the correct html', function() {
         it('for a form', function() {

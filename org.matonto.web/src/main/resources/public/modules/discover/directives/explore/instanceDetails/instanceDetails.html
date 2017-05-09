@@ -20,16 +20,10 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="explore-tab row">
-    <div class="col-xs-12">
-        <block>
-            <block-header>
-                <explore-tab-header></explore-tab-header>
-            </block-header>
-            <block-content class="content-container">
-                <instance-details class="details"></instance-details>
-                <instance-cards class="cards"></instancce-cards>
-            </block-content>
-        </block>
+<div class="instance-details">
+    <div class="list-wrapper">
+        <md-list-item ng-repeat="item in dvm.list | orderBy:'-count'">
+            <p class="md-title">{{item.label}} ({{item.count}})</p>
+        </md-list-item>
     </div>
 </div>
