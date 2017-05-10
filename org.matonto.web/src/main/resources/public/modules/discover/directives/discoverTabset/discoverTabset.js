@@ -4,7 +4,7 @@
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -22,27 +22,24 @@
  */
 (function() {
     'use strict';
-
+    
     angular
-        .module('discover', [
-            /* Services */
-            'discoverState',
-            'explore',
-            
-            /* Common */
-            'datasetSelect',
-            'discoverTabset',
-            
-            /* Explore tab */
-            'exploreTab',
-            'exploreTabHeader',
-            'instanceCards',
-            'instanceDetails',
-            
-            /* Query tab */
-            'downloadQueryOverlay',
-            'queryTab',
-            'sparqlEditor',
-            'sparqlResultTable'
-        ]);
+        .module('discoverTabset', [])
+        .directive('discoverTabset', discoverTabset);
+        
+    discoverTabset.$inject = ['discoverStateService'];
+        
+    function discoverTabset(discoverStateService) {
+        return {
+            restrict: 'E',
+            templateUrl: 'modules/discover/directives/discoverTabset/discoverTabset.html',
+            replace: true,
+            scope: {},
+            controllerAs: 'dvm',
+            controller: function() {
+                var dvm = this;
+                dvm.ds = discoverStateService;
+            }
+        }
+    }
 })();

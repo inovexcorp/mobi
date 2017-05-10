@@ -1,0 +1,17 @@
+.explore-tab-header {
+    .form-group {
+        display: flex;
+        margin: 0;
+        width: 400px;
+        
+        .control-label {
+            line-height: 33px;
+            margin: 0;
+            padding-right: 15px;
+        }
+        
+        .dataset-select {
+            flex: 1;
+        }
+    }
+}

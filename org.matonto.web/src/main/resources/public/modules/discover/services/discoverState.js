@@ -27,14 +27,17 @@
         .module('discoverState', [])
         .service('discoverStateService', discoverStateService);
     
-    discoverStateService.$inject = ['datasetManagerService', 'prefixes'];
+    discoverStateService.$inject = ['datasetManagerService', 'prefixes', 'utilService'];
     
-    function discoverStateService(datasetManagerService, prefixes) {
+    function discoverStateService(datasetManagerService, prefixes, utilService) {
         var self = this;
         var dam = datasetManagerService;
+        var util = utilService;
         
         self.explore = {
-            active: true
+            active: true,
+            instanceDetails: [],
+            recordId: ''
         };
         
         self.query = {
@@ -43,9 +46,13 @@
         
         self.datasetRecords = [];
         
-        dam.getDatasetRecords()
-            .then(response => {
-                self.datasetRecords = _.map(response.data, arr => _.find(arr, obj => _.includes(obj['@type'], prefixes.dataset + 'DatasetRecord')));
-            }, () => self.util.createErrorToast('Error retrieving datasets'));
+        self.setDatasetRecords = function() {
+            dam.getDatasetRecords()
+                .then(response => {
+                    self.datasetRecords = _.map(response.data, arr => _.find(arr, obj => _.includes(obj['@type'], prefixes.dataset + 'DatasetRecord')));
+                }, util.createErrorToast);
+        }
+        
+        self.setDatasetRecords();
     }
 })();

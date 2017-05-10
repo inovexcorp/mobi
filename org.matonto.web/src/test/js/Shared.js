@@ -907,3 +907,28 @@ function mockToastr() {
         });
     });
 }
+
+function mockDiscoverState() {
+    module(function($provide) {
+        $provide.service('discoverStateService', function() {
+            this.explore = {
+                active: true,
+                instanceDetails: [],
+                recordId: ''
+            }
+            this.query = {
+                active: false
+            }
+            this.datasetRecords = [];
+            this.setDatasetRecords = jasmine.createSpy('setDatasetRecords');
+        });
+    });
+}
+
+function mockExplore() {
+    module(function($provide) {
+        $provide.service('exploreService', function($q) {
+            this.getInstanceDetails = jasmine.createSpy('getInstanceDetails').and.returnValue($q.when([]));
+        });
+    });
+}
