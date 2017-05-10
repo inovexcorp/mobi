@@ -1,46 +1,52 @@
 .instance-cards {
-    .row {
-        margin: 0;
+    .rows-container {
+        overflow-y: auto;
         
-        .card-container {
-            height: auto;
-            padding: 15px 15px 15px 0;
+        .row {
+            margin: 0;
+            padding-left: 7.5px;
+            padding-right: 7.5px;
             
-            .card {
+            .card-container {
                 height: auto;
-                margin: 0;
+                padding: 15px 7.5px;
                 
-                .card-header {
-                    display: flex;
+                .card {
+                    height: auto;
+                    margin: 0;
                     
-                    .text {
-                        flex: 1;
+                    .card-header {
+                        display: flex;
+                        
+                        .text {
+                            flex: 1;
+                            overflow: hidden;
+                            text-overflow: ellipsis;
+                            white-space: nowrap;
+                            width: 0;
+                        }
+                        
+                        .badge {
+                            border-radius: 15px;
+                            font-size: 16px;
+                            line-height: inherit;
+                            min-width: 30px;
+                        }
+                    }
+                    
+                    .instance-overview {
+                        display: -webkit-box;
+                        height: 60px;
+                        line-height: 20px;
                         overflow: hidden;
                         text-overflow: ellipsis;
-                        white-space: nowrap;
-                        width: 0;
+                        -webkit-box-orient: vertical;
+                        -webkit-line-clamp: 3;
                     }
                     
-                    .badge {
-                        border-radius: 15px;
-                        font-size: 16px;
-                        line-height: inherit;
-                        min-width: 30px;
+                    p {
+                        margin-bottom: 5px;
                     }
-                }
-                
-                .instance-overview {
-                    display: -webkit-box;
-                    height: 60px;
-                    line-height: 20px;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                    -webkit-box-orient: vertical;
-                    -webkit-line-clamp: 3;
-                }
-                
-                p {
-                    margin-bottom: 5px;
                 }
             }
         }

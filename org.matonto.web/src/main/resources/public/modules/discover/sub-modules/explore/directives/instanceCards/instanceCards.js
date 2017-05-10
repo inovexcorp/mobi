@@ -38,7 +38,8 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    dvm.ds = discoverStateService;
+                    var ds = discoverStateService;
+                    dvm.chunks = _.chunk(_.orderBy(ds.explore.instanceDetails, ['count', 'label'], ['desc', 'asc']), 3);
                 }
             }
         }

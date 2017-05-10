@@ -50,8 +50,11 @@ describe('Instance Details directive', function() {
             expect(element.prop('tagName')).toBe('DIV');
             expect(element.hasClass('instance-details')).toBe(true);
         });
-        it('with a .list-wrapper', function() {
-            expect(element.querySelectorAll('.list-wrapper').length).toBe(1);
+        it('with a .list-wrapper.full-height', function() {
+            expect(element.querySelectorAll('.list-wrapper.full-height').length).toBe(1);
+        });
+        it('with a .list-item-wrapper', function() {
+            expect(element.querySelectorAll('.list-item-wrapper').length).toBe(1);
         });
         it('with a md-list-item', function() {
             expect(element.find('md-list-item').length).toBe(1);

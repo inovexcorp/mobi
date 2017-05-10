@@ -20,24 +20,26 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="instance-cards">
-    <div class="row">
-        <div ng-repeat="item in dvm.ds.explore.instanceDetails | orderBy:'-count'" class="card-container col-xs-4">
-            <md-card class="card">
-                <md-card-title>
-                    <md-card-title-text>
-                        <span class="card-header">
-                            <span class="md-headline text">{{item.label}}</span>
-                            <span class="badge">{{item.count | number}}</span>
-                        </span>
-                    </md-card-title-text>
-                </md-card-title>
-                <md-card-content>
-                    <p class="instance-overview">{{item.overview}}</p>
-                    <p class="text-muted">Defined in {{item.ontologyId}}</p>
-                    <em class="text-muted">Examples: <span ng-repeat="example in item.examples">{{example}}<span ng-if="!$last">, </span></em>
-                </md-card-content>
-            </md-card>
+<div class="instance-cards full-height">
+    <div vs-repeat="228" class="rows-container full-height">
+        <div ng-repeat="chunk in dvm.chunks" class="row">
+            <div ng-repeat="item in chunk" class="card-container col-xs-4">
+                <md-card class="card">
+                    <md-card-title>
+                        <md-card-title-text>
+                            <span class="card-header">
+                                <span class="md-headline text">{{item.label}}</span>
+                                <span class="badge">{{item.count | number}}</span>
+                            </span>
+                        </md-card-title-text>
+                    </md-card-title>
+                    <md-card-content>
+                        <p class="instance-overview">{{item.overview}}</p>
+                        <p class="text-muted">Defined in {{item.ontologyId}}</p>
+                        <em class="text-muted">Examples: <span ng-repeat="example in item.examples">{{example}}<span ng-if="!$last">, </span></em>
+                    </md-card-content>
+                </md-card>
+            </div>
         </div>
     </div>
 </div>

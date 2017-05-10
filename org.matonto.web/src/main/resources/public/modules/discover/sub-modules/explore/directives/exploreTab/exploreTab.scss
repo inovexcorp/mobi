@@ -4,14 +4,13 @@
         flex-direction: row;
         
         .details {
-            max-width: 300px;
             overflow: hidden;
             text-overflow: ellipsis;
+            width: 250px;
         }
         
         .cards {
             flex: 1;
-            padding-left: 15px;
         }
     }
 }

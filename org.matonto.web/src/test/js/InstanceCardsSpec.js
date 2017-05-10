@@ -35,11 +35,17 @@ describe('Instance Cards directive', function() {
         });
 
         discoverStateSvc.explore.instanceDetails = [{
-            label: 'label',
             count: 1,
-            examples: ['example1', 'example2'],
-            overview: 'overview',
-            ontologyId: 'ontologyId'
+            label: 'z'
+        }, {
+            count: 2,
+            label: 'z'
+        }, {
+            count: 2,
+            label: 'a'
+        }, {
+            count: 1,
+            label: 'a'
         }];
         element = $compile(angular.element('<instance-cards></instance-cards>'))(scope);
         scope.$digest();
@@ -49,39 +55,59 @@ describe('Instance Cards directive', function() {
         it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
             expect(element.hasClass('instance-cards')).toBe(true);
+            expect(element.hasClass('full-height')).toBe(true);
+        });
+        it('with a .rows-container.full-height', function() {
+            expect(element.querySelectorAll('.rows-container.full-height').length).toBe(1);
         });
         it('with a .row', function() {
-            expect(element.querySelectorAll('.row').length).toBe(1);
+            expect(element.querySelectorAll('.row').length).toBe(2);
         });
-        it('with a .col-xs-4', function() {
-            expect(element.querySelectorAll('.col-xs-4').length).toBe(1);
+        it('with a .col-xs-4.card-container', function() {
+            expect(element.querySelectorAll('.col-xs-4.card-container').length).toBe(4);
         });
         it('with a md-card', function() {
-            expect(element.find('md-card').length).toBe(1);
+            expect(element.find('md-card').length).toBe(4);
         });
         it('with a md-card-title', function() {
-            expect(element.find('md-card-title').length).toBe(1);
+            expect(element.find('md-card-title').length).toBe(4);
         });
         it('with a md-card-title-text', function() {
-            expect(element.find('md-card-title-text').length).toBe(1);
+            expect(element.find('md-card-title-text').length).toBe(4);
         });
         it('with a .card-header', function() {
-            expect(element.querySelectorAll('.card-header').length).toBe(1);
+            expect(element.querySelectorAll('.card-header').length).toBe(4);
         });
         it('with a .md-headline.text', function() {
-            expect(element.querySelectorAll('.md-headline.text').length).toBe(1);
+            expect(element.querySelectorAll('.md-headline.text').length).toBe(4);
         });
         it('with a .badge', function() {
-            expect(element.querySelectorAll('.badge').length).toBe(1);
+            expect(element.querySelectorAll('.badge').length).toBe(4);
         });
         it('with a md-card-content', function() {
-            expect(element.find('md-card-content').length).toBe(1);
+            expect(element.find('md-card-content').length).toBe(4);
         });
         it('with a .instance-overview', function() {
-            expect(element.querySelectorAll('.instance-overview').length).toBe(1);
+            expect(element.querySelectorAll('.instance-overview').length).toBe(4);
         });
         it('with a .text-muted', function() {
-            expect(element.querySelectorAll('.text-muted').length).toBe(2);
+            expect(element.querySelectorAll('.text-muted').length).toBe(8);
         });
+    });
+    it('properly defines controller.chunks on load', function() {
+        var expected = [[{
+            count: 2,
+            label: 'a'
+        }, {
+            count: 2,
+            label: 'z'
+        }, {
+            count: 1,
+            label: 'a'
+        }], [{
+            count: 1,
+            label: 'z'
+        }]];
+        expect(angular.copy(element.controller('instanceCards').chunks)).toEqual(expected);
     });
 });
