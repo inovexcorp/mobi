@@ -24,11 +24,20 @@ package org.matonto.ontology.core.utils;
  */
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import javax.annotation.Nonnull;
 
 public class MatOntoStringUtils {
@@ -59,30 +68,22 @@ public class MatOntoStringUtils {
      * Converts InputStream to String.
      */
     public static String inputStreamToText(@Nonnull InputStream inputStream) {
-        BufferedReader br = null;
-        StringBuilder sb = new StringBuilder();
-
-        String line;
+        ByteArrayOutputStream result = new ByteArrayOutputStream();
+        byte[] buffer = new byte[1024];
+        int length;
         try {
-            br = new BufferedReader(new InputStreamReader(inputStream));
-            while ((line = br.readLine()) != null) {
-                sb.append(line + "\n");
+            while ((length = inputStream.read(buffer)) != -1) {
+                result.write(buffer, 0, length);
             }
         } catch (IOException e) {
             e.printStackTrace();
-        } finally {
-            if (br != null) {
-                try {
-                    br.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            IOUtils.closeQuietly(inputStream);
         }
-
-        return sb.toString();
+        try {
+            return result.toString(StandardCharsets.UTF_8.name());
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        return result.toString();
     }
 
 
@@ -105,8 +106,7 @@ public class MatOntoStringUtils {
         InputStream result = null;
         String toReplace = "rdf:datatype=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#langString\"";
         String replaceWith = "xml:lang=\"" + languageSuffix + "\"";
-        String content = inputStreamToText(inputStream);
-        content = content.replaceAll(toReplace, replaceWith);
+        String content = StringUtils.replace(inputStreamToText(inputStream), toReplace, replaceWith);
         result = new ByteArrayInputStream(content.getBytes( ));
         return result;
     }
@@ -123,11 +123,9 @@ public class MatOntoStringUtils {
         OutputStream result = new ByteArrayOutputStream();
         String toReplace = "rdf:datatype=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#langString\"";
         String replaceWith = "xml:lang=\"" + languageSuffix + "\"";
-        String content = outputStream.toString();
-        content = content.replaceAll(toReplace, replaceWith);
+        String content = StringUtils.replace(outputStream.toString(), toReplace, replaceWith);
         try {
             result.write(content.getBytes(Charset.forName("UTF-8")));
-
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
@@ -144,12 +142,10 @@ public class MatOntoStringUtils {
     public static OutputStream removeOWLGeneratorSignature(@Nonnull OutputStream outputStream) {
         OutputStream result = new ByteArrayOutputStream();
         String signature = "<\\!--.*?OWL API.*?-->|#\\##.*?OWL API.*";
-        String content = outputStream.toString();
-        content = content.replaceAll(signature, "");
+        String content = StringUtils.replace(outputStream.toString(), signature,"");
 
         try {
             result.write(content.getBytes(Charset.forName("UTF-8")));
-
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
