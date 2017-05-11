@@ -62,7 +62,7 @@ prefixDecl
 
 comment
   :
-  '#' string EOL
+  '#'(~(CARRIAGE_RETURN | LINE_FEED))*
   ;
 
 /* sparql 1.1 r7 */
@@ -1511,9 +1511,10 @@ WS
   | '\r')+ ->channel(HIDDEN)
   ;
 
+fragment
 EOL
   :
-  CARRIAGE_RETURN?LINE_FEED
+  (CARRIAGE_RETURN?LINE_FEED)
   ;
 
 OPEN_BRACE: '(';
@@ -1570,6 +1571,6 @@ REFERENCE: '^^';
 
 COLON: ':';
 
-LINE_FEED: '\u000A';
+LINE_FEED: '\n';
 
-CARRIAGE_RETURN: '\u000D';
+CARRIAGE_RETURN: '\r';
