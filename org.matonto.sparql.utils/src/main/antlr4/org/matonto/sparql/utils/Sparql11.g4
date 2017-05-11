@@ -36,11 +36,11 @@ updateUnit
   ;
 
 /* sparql 1.1 r4 */
-
+/* modified to handle comments */
 prologue
   :
   (
-    baseDecl | prefixDecl
+    baseDecl | prefixDecl | comment
   )*
   ;
 
@@ -56,6 +56,13 @@ baseDecl
 prefixDecl
   :
   'prefix' PNAME_NS IRI_REF
+  ;
+
+/* new rule */
+
+comment
+  :
+  '#' string EOL
   ;
 
 /* sparql 1.1 r7 */
@@ -1504,6 +1511,11 @@ WS
   | '\r')+ ->channel(HIDDEN)
   ;
 
+EOL
+  :
+  CARRIAGE_RETURN?LINE_FEED
+  ;
+
 OPEN_BRACE: '(';
 
 CLOSE_BRACE: ')';
@@ -1557,3 +1569,7 @@ GREATER_EQUAL: '>=';
 REFERENCE: '^^';
 
 COLON: ':';
+
+LINE_FEED: '\u000A';
+
+CARRIAGE_RETURN: '\u000D';
