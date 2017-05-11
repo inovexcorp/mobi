@@ -60,23 +60,23 @@ describe('Explore Tab directive', function() {
             expect(element.querySelectorAll('.padding').length).toBe(1);
             expect(element.find('info-message').length).toBe(1);
             
-            discoverStateSvc.explore.instanceDetails = [{}];
+            discoverStateSvc.explore.classDetails = [{}];
             scope.$digest();
             
             expect(element.querySelectorAll('.padding').length).toBe(0);
             expect(element.find('info-message').length).toBe(0);
         });
-        it('with a .content-container.full-height, instance-details, and instance-cards', function() {
+        it('with a .content-container.full-height, class-details, and class-cards', function() {
             expect(element.querySelectorAll('.content-container.full-height').length).toBe(0);
-            expect(element.find('instance-details').length).toBe(0);
-            expect(element.find('instance-cards').length).toBe(0);
+            expect(element.find('class-details').length).toBe(0);
+            expect(element.find('class-cards').length).toBe(0);
             
-            discoverStateSvc.explore.instanceDetails = [{}];
+            discoverStateSvc.explore.classDetails = [{}];
             scope.$digest();
             
             expect(element.querySelectorAll('.content-container.full-height').length).toBe(1);
-            expect(element.find('instance-details').length).toBe(1);
-            expect(element.find('instance-cards').length).toBe(1);
+            expect(element.find('class-details').length).toBe(1);
+            expect(element.find('class-cards').length).toBe(1);
         });
     });
 });

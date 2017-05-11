@@ -33,7 +33,7 @@
         var self = this;
         var prefix = 'exploration-datasets/';
         
-        self.getInstanceDetails = function(recordId) {
+        self.getClassDetails = function(recordId) {
             // return $http.get(prefix + encodeURIComponent(id))
             //     .then(response => $q.when(response.data), response => $q.reject(response.data));
             return $q.when([{

@@ -930,7 +930,7 @@ function mockDiscoverState() {
 function mockExplore() {
     module(function($provide) {
         $provide.service('exploreService', function($q) {
-            this.getInstanceDetails = jasmine.createSpy('getInstanceDetails').and.returnValue($q.when([]));
+            this.getClassDetails = jasmine.createSpy('getClassDetails').and.returnValue($q.when([]));
         });
     });
 }

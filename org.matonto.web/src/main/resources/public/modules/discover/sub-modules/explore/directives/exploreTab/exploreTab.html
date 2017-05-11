@@ -27,11 +27,11 @@
                 <explore-tab-header></explore-tab-header>
             </block-header>
             <block-content>
-                <div ng-if="dvm.ds.explore.instanceDetails.length" class="content-container full-height">
-                    <instance-details class="details"></instance-details>
-                    <instance-cards class="cards"></instancce-cards>
+                <div ng-if="dvm.ds.explore.classDetails.length" class="content-container full-height">
+                    <class-details class="details"></class-details>
+                    <class-cards class="cards"></class-cards>
                 </div>
-                <div ng-if="!dvm.ds.explore.instanceDetails.length" class="padding">
+                <div ng-if="!dvm.ds.explore.classDetails.length" class="padding">
                     <info-message>Please select a dataset to get started.</info-message>
                 </div>
             </block-content>

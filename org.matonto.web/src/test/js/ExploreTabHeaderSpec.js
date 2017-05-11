@@ -62,22 +62,22 @@ describe('Explore Tab Header directive', function() {
     
     describe('controller methods', function() {
         describe('onSelect calls the proper methods', function() {
-            it('when getInstanceDetails resolves', function() {
+            it('when getClassDetails resolves', function() {
                 discoverStateSvc.explore.recordId = 'recordId';
-                exploreSvc.getInstanceDetails.and.returnValue($q.when([{prop: 'details'}]));
+                exploreSvc.getClassDetails.and.returnValue($q.when([{prop: 'details'}]));
                 controller.onSelect();
                 scope.$apply();
-                expect(exploreSvc.getInstanceDetails).toHaveBeenCalledWith('recordId');
-                expect(discoverStateSvc.explore.instanceDetails).toEqual([{prop: 'details'}]);
+                expect(exploreSvc.getClassDetails).toHaveBeenCalledWith('recordId');
+                expect(discoverStateSvc.explore.classDetails).toEqual([{prop: 'details'}]);
             });
-            it('when getInstanceDetails rejects', function() {
+            it('when getClassDetails rejects', function() {
                 discoverStateSvc.explore.recordId = 'recordId';
-                discoverStateSvc.explore.instanceDetails = [{}];
-                exploreSvc.getInstanceDetails.and.returnValue($q.reject('error'));
+                discoverStateSvc.explore.classDetails = [{}];
+                exploreSvc.getClassDetails.and.returnValue($q.reject('error'));
                 controller.onSelect();
                 scope.$apply();
-                expect(exploreSvc.getInstanceDetails).toHaveBeenCalledWith('recordId');
-                expect(discoverStateSvc.explore.instanceDetails).toEqual([]);
+                expect(exploreSvc.getClassDetails).toHaveBeenCalledWith('recordId');
+                expect(discoverStateSvc.explore.classDetails).toEqual([]);
                 expect(util.createErrorToast).toHaveBeenCalledWith('error');
             });
         });

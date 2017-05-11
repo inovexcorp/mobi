@@ -33,7 +33,7 @@ describe('Explore Service', function() {
         });
     });
     
-    // describe('getInstanceDetails calls the correct functions when get exploration-datasets/{id}', function() {
+    // describe('getClassDetails calls the correct functions when get exploration-datasets/{id}', function() {
     //     it('is resolved', function() {
     //         var data = [{
     //             label: 'label',
@@ -43,7 +43,7 @@ describe('Explore Service', function() {
     //             ontologyId: 'ontologyId'
     //         }];
     //         $httpBackend.expectGET('/exploration-dataset/recordId').respond(200, data);
-    //         exploreSvc.getInstanceDetails('recordId')
+    //         exploreSvc.getClassDetails('recordId')
     //             .then(function(response) {
     //                 expect(response).toEqual(data);
     //             }, function() {
@@ -52,7 +52,7 @@ describe('Explore Service', function() {
     //     });
     //     it('is rejected', function() {
     //         $httpBackend.expectGET('/exploration-dataset/recordId').respond(400, null, null, 'error');
-    //         exploreSvc.getInstanceDetails('recordId')
+    //         exploreSvc.getClassDetails('recordId')
     //             .then(function() {
     //                 fail('Should have been rejected.');
     //             }, function(response) {

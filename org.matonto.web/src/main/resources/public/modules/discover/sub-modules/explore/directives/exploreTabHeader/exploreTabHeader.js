@@ -59,11 +59,11 @@
                     dvm.ds = discoverStateService;
                     
                     dvm.onSelect = function() {
-                        es.getInstanceDetails(dvm.ds.explore.recordId)
+                        es.getClassDetails(dvm.ds.explore.recordId)
                             .then(details => {
-                                dvm.ds.explore.instanceDetails = details;
+                                dvm.ds.explore.classDetails = details;
                             }, errorMessage => {
-                                dvm.ds.explore.instanceDetails = [];
+                                dvm.ds.explore.classDetails = [];
                                 utilService.createErrorToast(errorMessage);
                             });
                     }

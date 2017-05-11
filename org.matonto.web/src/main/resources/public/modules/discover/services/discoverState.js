@@ -36,7 +36,7 @@
         
         self.explore = {
             active: true,
-            instanceDetails: [],
+            classDetails: [],
             recordId: ''
         };
         

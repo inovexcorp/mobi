@@ -34,10 +34,10 @@
             'discoverTabset',
             
             /* Explore tab */
+            'classCards',
+            'classDetails',
             'exploreTab',
             'exploreTabHeader',
-            'instanceCards',
-            'instanceDetails',
             
             /* Query tab */
             'downloadQueryOverlay',
