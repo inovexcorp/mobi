@@ -45,12 +45,14 @@
          */
         .service('datasetManagerService', datasetManagerService);
 
-        datasetManagerService.$inject = ['$http', '$q', 'utilService'];
+        datasetManagerService.$inject = ['$http', '$q', 'utilService', 'prefixes'];
 
-        function datasetManagerService($http, $q, utilService) {
+        function datasetManagerService($http, $q, utilService, prefixes) {
             var self = this,
                 util = utilService,
                 prefix = '/matontorest/datasets';
+
+            self.datasetRecords = [];
 
             /**
              * @ngdoc method
@@ -128,7 +130,14 @@
                 }
                 _.forEach(_.get(recordConfig, 'ontologies', []), id => fd.append('ontologies', id));
                 $http.post(prefix, fd, config)
-                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
+                    .then(response => {
+                        self.datasetRecords.push({
+                            '@id': response.data,
+                            [prefixes.dcterms + 'title']: [{'@value': recordConfig.title}]
+                        });
+                        self.datasetRecords = _.orderBy(self.datasetRecords, record => util.getDctermsValue(record, 'title'));
+                        deferred.resolve(response.data);
+                    }, error => util.onError(error, deferred));
                 return deferred.promise;
             }
 
@@ -151,7 +160,10 @@
                 var deferred = $q.defer(),
                     config = {params: {force}};
                 $http.delete(prefix + '/' + encodeURIComponent(datasetRecordIRI), config)
-                    .then(response => deferred.resolve(), error => util.onError(error, deferred));
+                    .then(response => {
+                        _.remove(self.datasetRecords, {'@id': datasetRecordIRI});
+                        deferred.resolve();
+                    }, error => util.onError(error, deferred));
                 return deferred.promise;
             }
 
@@ -176,6 +188,18 @@
                 $http.delete(prefix + '/' + encodeURIComponent(datasetRecordIRI) + '/data', config)
                     .then(response => deferred.resolve(), error => util.onError(error, deferred));
                 return deferred.promise;
+            }
+
+            self.initialize = function() {
+                var paginatedConfig = {
+                    sortOption: {
+                        field: prefixes.dcterms + 'title'
+                    }
+                }
+                self.getDatasetRecords(paginatedConfig)
+                    .then(response => {
+                        self.datasetRecords = _.map(response.data, arr => _.find(arr, obj => _.includes(obj['@type'], prefixes.dataset + 'DatasetRecord')));
+                    }, util.createErrorToast);
             }
         }
 })();

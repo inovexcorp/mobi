@@ -29,7 +29,7 @@ describe('Data Select directive', function() {
         injectTrustedFilter();
         injectHighlightFilter();
         mockUtil();
-        mockDiscoverState();
+        mockDatasetManager();
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;

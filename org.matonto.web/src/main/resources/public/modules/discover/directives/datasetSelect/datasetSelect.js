@@ -27,9 +27,9 @@
         .module('datasetSelect', [])
         .directive('datasetSelect', datasetSelect);
         
-        datasetSelect.$inject = ['utilService', 'discoverStateService'];
+        datasetSelect.$inject = ['utilService', 'datasetManagerService'];
 
-        function datasetSelect(utilService, discoverStateService) {
+        function datasetSelect(utilService, datasetManagerService) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/discover/directives/datasetSelect/datasetSelect.html',
@@ -43,8 +43,12 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    dvm.ds = discoverStateService;
+                    dvm.dm = datasetManagerService;
                     dvm.util = utilService;
+
+                    if (!_.includes(dvm.dm.datasetRecords, dvm.bindModel)) {
+                        dvm.bindModel = '';
+                    }
                 }
             }
         }

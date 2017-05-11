@@ -858,11 +858,13 @@ function mockUtil() {
 function mockDatasetManager() {
     module(function($provide) {
         $provide.service('datasetManagerService', function($q) {
+            this.datasetRecords = [];
             this.getResultsPage = jasmine.createSpy('getResultsPage').and.returnValue($q.when({}));
             this.getDatasetRecords = jasmine.createSpy('getDatasetRecords').and.returnValue($q.when({}));
             this.createDatasetRecord = jasmine.createSpy('createDatasetRecord').and.returnValue($q.when(''));
             this.deleteDatasetRecord = jasmine.createSpy('deleteDatasetRecord').and.returnValue($q.when());
             this.clearDatasetRecord = jasmine.createSpy('clearDatasetRecord').and.returnValue($q.when());
+            this.initialize = jasmine.createSpy('initialize');
         });
     });
 }
