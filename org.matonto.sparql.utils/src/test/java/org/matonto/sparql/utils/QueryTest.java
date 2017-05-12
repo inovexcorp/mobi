@@ -147,21 +147,21 @@ public class QueryTest {
 //    }
 
     // TODO: fix
-//    @Test
-//    public void commentsWork() throws Exception {
-//        String queryString = "select * where { ?s ?p ?o }#?s ?p ?o }";
-//        Sparql11Parser parser = Query.getParser(queryString);
-//        TokenStream tokens = parser.getTokenStream();
-//        parser.addErrorListener(new BaseErrorListener() {
-//            @Override
-//            public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
-//                throw new IllegalStateException("failed to parse at line " + line + " due to " + msg, e);
-//            }
-//        });
-//
-//        parser.query();
-//        assertEquals(queryString, tokens.getText());
-//    }
+    @Test
+    public void commentsWork() throws Exception {
+        String queryString = "select * where { ?s ?p ?o }#?s ?p ?o }";
+        Sparql11Parser parser = Query.getParser(queryString);
+        TokenStream tokens = parser.getTokenStream();
+        parser.addErrorListener(new BaseErrorListener() {
+            @Override
+            public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
+                throw new IllegalStateException("failed to parse at line " + line + " due to " + msg, e);
+            }
+        });
+
+        parser.query();
+        assertEquals(queryString, tokens.getText());
+    }
 
     private String streamToString(InputStream inputStream) throws IOException {
         return IOUtils.toString(inputStream, "UTF-8");

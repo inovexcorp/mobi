@@ -666,7 +666,7 @@ propertyList
 
 propertyListNotEmpty
   :
-  verb objectList (SEMICOLON (verb objectList)?)*
+  verb objectList ((SEMICOLON)comment?(verb objectList)?)*
   ;
 
 /* sparql 1.1 r78 */
@@ -681,7 +681,7 @@ verb
 
 objectList
   :
-  object (COMMA object)*
+  object ((COMMA)comment?object)*
   ;
 
 /* sparql 1.1 r80 */
