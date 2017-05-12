@@ -97,6 +97,7 @@ selectClause
     )+
     | ASTERISK
   )
+  comment?
   ;
 
 /* sparql 1.1 r10 */
@@ -138,6 +139,7 @@ datasetClause
     defaultGraphClause
     | namedGraphClause
   )
+  comment?
   ;
 
 /* sparql 1.1 r14 */
@@ -145,13 +147,14 @@ datasetClause
 defaultGraphClause
   :
   sourceSelector
+  comment?
   ;
 
 /* sparql 1.1 r15 */
 
 namedGraphClause
   :
-  'named' sourceSelector
+  'named' sourceSelector comment?
   ;
 
 /* sparql 1.1 r16 */
@@ -165,7 +168,7 @@ sourceSelector
 
 whereClause
   :
-  'where'? groupGraphPattern
+  'where'? groupGraphPattern comment?
   ;
 
 /* sparql 1.1 r18 */
@@ -179,7 +182,7 @@ solutionModifier
 
 groupClause
   :
-  'group' 'by' groupCondition+
+  'group' 'by' groupCondition+ comment?
   ;
 
 /* sparql 1.1 r20 */
@@ -210,7 +213,7 @@ havingCondition
 
 orderClause
   :
-  'order' 'by' orderCondition+
+  'order' 'by' orderCondition+ comment?
   ;
 
 /* sparql 1.1 r24 */
@@ -235,22 +238,23 @@ orderCondition
 
 limitOffsetClauses
   :
-  limitClause offsetClause?
-  | offsetClause limitClause?
+  (limitClause offsetClause?
+  | offsetClause limitClause?)
+  comment?
   ;
 
 /* sparql 1.1 r26 */
 
 limitClause
   :
-  'limit' INTEGER
+  'limit' INTEGER comment?
   ;
 
 /* sparql 1.1 r27 */
 
 offsetClause
   :
-  'offset' INTEGER
+  'offset' INTEGER comment?
   ;
 
 /* sparql 1.1 r28 */
@@ -258,7 +262,7 @@ offsetClause
 valuesClause
   :
   (
-    'values' dataBlock
+    'values' dataBlock comment?
   )?
   ;
 
@@ -378,14 +382,14 @@ modify
 
 deleteClause
   :
-  'delete' quadPattern
+  'delete' quadPattern comment?
   ;
 
 /* sparql 1.1 r43 */
 
 insertClause
   :
-  'insert' quadPattern
+  'insert' quadPattern comment?
   ;
 
 /* sparql 1.1 r44 */
@@ -396,7 +400,7 @@ usingClause
   (
     iriRef
     | 'named' iriRef
-  )
+  ) comment?
   ;
 
 /* sparql 1.1 r45 */
@@ -464,11 +468,13 @@ triplesTemplate
 groupGraphPattern
   :
   OPEN_CURLY_BRACE
+  comment?
   (
     subSelect
     | groupGraphPatternSub
   )
-  groupGraphPatternSub
+  comment?
+  groupGraphPatternSub comment?
   CLOSE_CURLY_BRACE
   ;
 
@@ -476,7 +482,7 @@ groupGraphPattern
 
 groupGraphPatternSub
   :
-  triplesBlock? (graphPatternNotTriples DOT? triplesBlock?)*
+  triplesBlock? (graphPatternNotTriples DOT? triplesBlock?)* comment?
   ;
 
 /* sparql 1.1 r55 */
