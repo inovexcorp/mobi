@@ -146,10 +146,48 @@ public class QueryTest {
 //        assertEquals(queryString, tokens.getText());
 //    }
 
-    // TODO: fix
     @Test
-    public void commentsWork() throws Exception {
+    public void simpleCommentsWork() throws Exception {
         String queryString = "select * where { ?s ?p ?o }#?s ?p ?o }";
+        Sparql11Parser parser = Query.getParser(queryString);
+        TokenStream tokens = parser.getTokenStream();
+        parser.addErrorListener(new BaseErrorListener() {
+            @Override
+            public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
+                throw new IllegalStateException("failed to parse at line " + line + " due to " + msg, e);
+            }
+        });
+
+        parser.query();
+        assertEquals(queryString, tokens.getText());
+    }
+
+    @Test
+    public void complexCommentsWork() throws Exception {
+        String queryString = "########################\n" +
+                "### Find all the things\n" +
+                "########################\n" +
+                "\n" +
+                "prefix uhtc: <http://matonto.org/ontologies/uhtc#> # This is a comment\n" +
+                "\n" +
+                "select\n" +
+                "\t?formula\n" +
+                "\t?density\n" +
+                "\t?meltingPointCelsius\n" +
+                "\t(group_concat(distinct ?elementName;separator=',') as ?elements)\n" +
+                "where { # This is a comment\n" +
+                "    ?material a uhtc:Material ; # This is a comment\n" +
+                "                uhtc:chemicalFormula ?formula ; # This is a comment\n" +
+                "                uhtc:density ?density ;\n" +
+                "                uhtc:meltingPoint ?meltingPointCelsius ;\n" +
+                "                uhtc:element ?element . # This is a comment\n" +
+                "    \n" +
+                "    ?element a uhtc:Element ; # This is a comment\n" +
+                "               uhtc:elementName ?elementName ;\n" +
+                "               uhtc:symbol ?symbol .\n" +
+                "}\n# This is a comment" +
+                "GROUP BY ?formula ?density ?meltingPointCelsius" +
+                "# This is a comment";
         Sparql11Parser parser = Query.getParser(queryString);
         TokenStream tokens = parser.getTokenStream();
         parser.addErrorListener(new BaseErrorListener() {
