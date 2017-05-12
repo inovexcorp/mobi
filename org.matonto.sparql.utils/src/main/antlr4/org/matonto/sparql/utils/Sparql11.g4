@@ -58,13 +58,6 @@ prefixDecl
   'prefix' PNAME_NS IRI_REF
   ;
 
-/* new rule */
-
-comment
-  :
-  '#'(~(CARRIAGE_RETURN | LINE_FEED))*
-  ;
-
 /* sparql 1.1 r7 */
 
 selectQuery
@@ -80,6 +73,7 @@ subSelect
   ;
 
 /* sparql 1.1 r9 */
+/* modified to handle comments */
 
 selectClause
   :
@@ -131,6 +125,7 @@ askQuery
   ;
 
 /* sparql 1.1 r13 */
+/* modified to handle comments */
 
 datasetClause
   :
@@ -143,6 +138,7 @@ datasetClause
   ;
 
 /* sparql 1.1 r14 */
+/* modified to handle comments */
 
 defaultGraphClause
   :
@@ -151,6 +147,7 @@ defaultGraphClause
   ;
 
 /* sparql 1.1 r15 */
+/* modified to handle comments */
 
 namedGraphClause
   :
@@ -165,6 +162,7 @@ sourceSelector
   ;
 
 /* sparql 1.1 r17 */
+/* modified to handle comments */
 
 whereClause
   :
@@ -179,6 +177,7 @@ solutionModifier
   ;
 
 /* sparql 1.1 r19 */
+/* modified to handle comments */
 
 groupClause
   :
@@ -210,6 +209,7 @@ havingCondition
   ;
 
 /* sparql 1.1 r23 */
+/* modified to handle comments */
 
 orderClause
   :
@@ -235,6 +235,7 @@ orderCondition
   ;
 
 /* sparql 1.1 r25 */
+/* modified to handle comments */
 
 limitOffsetClauses
   :
@@ -244,6 +245,7 @@ limitOffsetClauses
   ;
 
 /* sparql 1.1 r26 */
+/* modified to handle comments */
 
 limitClause
   :
@@ -251,6 +253,7 @@ limitClause
   ;
 
 /* sparql 1.1 r27 */
+/* modified to handle comments */
 
 offsetClause
   :
@@ -258,6 +261,7 @@ offsetClause
   ;
 
 /* sparql 1.1 r28 */
+/* modified to handle comments */
 
 valuesClause
   :
@@ -379,6 +383,7 @@ modify
   ;
 
 /* sparql 1.1 r42 */
+/* modified to handle comments */
 
 deleteClause
   :
@@ -386,6 +391,7 @@ deleteClause
   ;
 
 /* sparql 1.1 r43 */
+/* modified to handle comments */
 
 insertClause
   :
@@ -393,6 +399,7 @@ insertClause
   ;
 
 /* sparql 1.1 r44 */
+/* modified to handle comments */
 
 usingClause
   :
@@ -464,6 +471,7 @@ triplesTemplate
   ;
 
 /* sparql 1.1 r53 */
+/* modified to handle comments */
 
 groupGraphPattern
   :
@@ -479,6 +487,7 @@ groupGraphPattern
   ;
 
 /* sparql 1.1 r54 */
+/* modified to handle comments */
 
 groupGraphPatternSub
   :
@@ -663,6 +672,7 @@ propertyList
   ;
 
 /* sparql 1.1 r77 */
+/* modified to handle comments */
 
 propertyListNotEmpty
   :
@@ -678,6 +688,7 @@ verb
   ;
 
 /* sparql 1.1 r79 */
+/* modified to handle comments */
 
 objectList
   :
@@ -1515,6 +1526,13 @@ WS
   | '\t'
   | '\n'
   | '\r')+ ->channel(HIDDEN)
+  ;
+
+/* new rule to define a comment */
+
+comment
+  :
+  '#'(~(CARRIAGE_RETURN | LINE_FEED))*
   ;
 
 fragment
