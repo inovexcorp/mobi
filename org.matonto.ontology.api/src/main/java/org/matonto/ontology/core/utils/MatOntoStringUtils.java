@@ -75,15 +75,10 @@ public class MatOntoStringUtils {
             while ((length = inputStream.read(buffer)) != -1) {
                 result.write(buffer, 0, length);
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        try {
             return result.toString(StandardCharsets.UTF_8.name());
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
+        } catch (IOException e) {
+            throw new MatontoOntologyException("Error converting input stream to string!", e);
         }
-        return result.toString();
     }
 
 
@@ -127,7 +122,7 @@ public class MatOntoStringUtils {
         try {
             result.write(content.getBytes(Charset.forName("UTF-8")));
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new MatontoOntologyException("Error replacing language tag in output stream!", e);
         } finally {
             IOUtils.closeQuietly(outputStream);
         }
@@ -147,7 +142,7 @@ public class MatOntoStringUtils {
         try {
             result.write(content.getBytes(Charset.forName("UTF-8")));
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new MatontoOntologyException("Error removing owl generator signature!", e);
         } finally {
             IOUtils.closeQuietly(outputStream);
         }
