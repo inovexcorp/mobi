@@ -78,6 +78,8 @@ public class MatOntoStringUtils {
             return result.toString(StandardCharsets.UTF_8.name());
         } catch (IOException e) {
             throw new MatontoOntologyException("Error converting input stream to string!", e);
+        } finally {
+            IOUtils.closeQuietly(inputStream);
         }
     }
 
