@@ -24,25 +24,41 @@
     'use strict';
 
     angular
-        .module('classCards', [])
-        .directive('classCards', classCards);
+        /**
+         * @ngdoc overview
+         * @name instanceBlockHeader
+         *
+         * @description
+         * The `instanceBlockHeader` module only provides the `instanceBlockHeader` directive which creates
+         * the explore tab.
+         */
+        .module('instanceBlockHeader', [])
+        /**
+         * @ngdoc directive
+         * @name sparqlResultTable.directive:instanceBlockHeader
+         * @scope
+         * @restrict E
+         *
+         * @description
+         * HTML contents in the explore tab.
+         */
+        .directive('instanceBlockHeader', instanceBlockHeader);
+        
+        instanceBlockHeader.$inject = ['discoverStateService'];
 
-        classCards.$inject = ['discoverStateService'];
-
-        function classCards(discoverStateService) {
+        function instanceBlockHeader(discoverStateService) {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/discover/sub-modules/explore/directives/classCards/classCards.html',
+                templateUrl: 'modules/discover/sub-modules/explore/directives/instanceBlockHeader/instanceBlockHeader.html',
                 replace: true,
                 scope: {},
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    var ds = discoverStateService;
-                    dvm.chunks = _.chunk(_.orderBy(ds.explore.classDetails, ['count', 'label'], ['desc', 'asc']), 3);
+                    dvm.ds = discoverStateService;
                     
-                    dvm.exploreData = function(item) {
-                        ds.explore.breadcrumbs.push(item.label);
+                    dvm.clickCrumb = function(index) {
+                        dvm.ds.explore.breadcrumbs = _.take(dvm.ds.explore.breadcrumbs, index + 1);
                     }
                 }
             }

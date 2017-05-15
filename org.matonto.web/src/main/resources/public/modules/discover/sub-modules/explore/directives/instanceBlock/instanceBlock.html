@@ -20,7 +20,14 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="explore-tab row">
-    <class-block ng-if="dvm.ds.explore.breadcrumbs.length === 1" class="col-xs-12"></class-block>
-    <instance-block ng-if="dvm.ds.explore.breadcrumbs.length === 2" class="col-xs-12"></instance-block>
+<div class="instance-block class-block full-height">
+    <block>
+        <block-header>
+            <instance-block-header></instance-block-header>
+        </block-header>
+        <block-content class="content-container">
+            <instance-details class="details"></instance-details>
+            <instance-cards class="cards"></instance-cards>
+        </block-content>
+    </block>
 </div>

@@ -20,12 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Explore Tab directive', function() {
+describe('Instance Details directive', function() {
     var $compile, scope, element, discoverStateSvc;
 
     beforeEach(function() {
         module('templates');
-        module('exploreTab');
+        module('instanceDetails');
         mockDiscoverState();
 
         inject(function(_$compile_, _$rootScope_, _discoverStateService_) {
@@ -33,32 +33,35 @@ describe('Explore Tab directive', function() {
             scope = _$rootScope_;
             discoverStateSvc = _discoverStateService_;
         });
-        
-        element = $compile(angular.element('<explore-tab></explore-tab>'))(scope);
+
+        discoverStateSvc.explore.instanceDetails = [{
+            label: 'label',
+            count: 1,
+            examples: ['example1', 'example2'],
+            overview: 'overview',
+            ontologyId: 'ontologyId'
+        }];
+        element = $compile(angular.element('<instance-details></instance-details>'))(scope);
         scope.$digest();
     });
 
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('explore-tab')).toBe(true);
-            expect(element.hasClass('row')).toBe(true);
+            expect(element.hasClass('instance-details')).toBe(true);
+            expect(element.hasClass('class-details')).toBe(true);
         });
-        it('with a class-block.col-xs-12', function() {
-            expect(element.querySelectorAll('class-block.col-xs-12').length).toBe(1);
-            
-            discoverStateSvc.explore.breadcrumbs = ['', ''];
-            scope.$apply();
-            
-            expect(element.querySelectorAll('class-block.col-xs-12').length).toBe(0);
+        it('with a .list-wrapper.full-height', function() {
+            expect(element.querySelectorAll('.list-wrapper.full-height').length).toBe(1);
         });
-        it('with a instance-block.col-xs-12', function() {
-            expect(element.querySelectorAll('instance-block.col-xs-12').length).toBe(0);
-            
-            discoverStateSvc.explore.breadcrumbs = ['', ''];
-            scope.$apply();
-            
-            expect(element.querySelectorAll('instance-block.col-xs-12').length).toBe(1);
+        it('with a .list-item-wrapper', function() {
+            expect(element.querySelectorAll('.list-item-wrapper').length).toBe(1);
+        });
+        it('with a md-list-item', function() {
+            expect(element.find('md-list-item').length).toBe(1);
+        });
+        it('with a .md-title', function() {
+            expect(element.querySelectorAll('.md-title').length).toBe(1);
         });
     });
 });

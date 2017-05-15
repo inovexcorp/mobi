@@ -24,26 +24,22 @@
     'use strict';
 
     angular
-        .module('classCards', [])
-        .directive('classCards', classCards);
+        .module('instanceCards', [])
+        .directive('instanceCards', instanceCards);
 
-        classCards.$inject = ['discoverStateService'];
+        instanceCards.$inject = ['discoverStateService']
 
-        function classCards(discoverStateService) {
+        function instanceCards(discoverStateService) {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/discover/sub-modules/explore/directives/classCards/classCards.html',
+                templateUrl: 'modules/discover/sub-modules/explore/directives/instanceCards/instanceCards.html',
                 replace: true,
                 scope: {},
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
                     var ds = discoverStateService;
-                    dvm.chunks = _.chunk(_.orderBy(ds.explore.classDetails, ['count', 'label'], ['desc', 'asc']), 3);
-                    
-                    dvm.exploreData = function(item) {
-                        ds.explore.breadcrumbs.push(item.label);
-                    }
+                    dvm.chunks = _.chunk(_.orderBy(ds.explore.instanceDetails, ['count', 'label'], ['desc', 'asc']), 3);
                 }
             }
         }

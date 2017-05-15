@@ -915,6 +915,8 @@ function mockDiscoverState() {
         $provide.service('discoverStateService', function() {
             this.explore = {
                 active: true,
+                breadcrumbs: [''],
+                classDetails: [],
                 instanceDetails: [],
                 recordId: ''
             }

@@ -4,7 +4,7 @@
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -24,30 +24,22 @@
     'use strict';
 
     angular
-        .module('discover', [
-            /* Services */
-            'discoverState',
-            'explore',
-            
-            /* Common */
-            'datasetSelect',
-            'discoverTabset',
-            
-            /* Explore tab */
-            'classBlock',
-            'classBlockHeader',
-            'classCards',
-            'classDetails',
-            'exploreTab',
-            'instanceBlock',
-            'instanceBlockHeader',
-            'instanceCards',
-            'instanceDetails',
-            
-            /* Query tab */
-            'downloadQueryOverlay',
-            'queryTab',
-            'sparqlEditor',
-            'sparqlResultTable'
-        ]);
+        .module('instanceDetails', [])
+        .directive('instanceDetails', instanceDetails);
+
+        instanceDetails.$inject = ['discoverStateService'];
+
+        function instanceDetails(discoverStateService) {
+            return {
+                restrict: 'E',
+                templateUrl: 'modules/discover/sub-modules/explore/directives/instanceDetails/instanceDetails.html',
+                replace: true,
+                scope: {},
+                controllerAs: 'dvm',
+                controller: function() {
+                    var dvm = this;
+                    dvm.ds = discoverStateService;
+                }
+            }
+        }
 })();

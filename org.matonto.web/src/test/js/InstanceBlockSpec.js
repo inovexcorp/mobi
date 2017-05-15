@@ -20,12 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Explore Tab directive', function() {
+describe('Instance Block directive', function() {
     var $compile, scope, element, discoverStateSvc;
 
     beforeEach(function() {
         module('templates');
-        module('exploreTab');
+        module('instanceBlock');
         mockDiscoverState();
 
         inject(function(_$compile_, _$rootScope_, _discoverStateService_) {
@@ -34,31 +34,34 @@ describe('Explore Tab directive', function() {
             discoverStateSvc = _discoverStateService_;
         });
         
-        element = $compile(angular.element('<explore-tab></explore-tab>'))(scope);
+        element = $compile(angular.element('<instance-block></instance-block>'))(scope);
         scope.$digest();
     });
 
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('explore-tab')).toBe(true);
-            expect(element.hasClass('row')).toBe(true);
+            expect(element.hasClass('instance-block')).toBe(true);
+            expect(element.hasClass('class-block')).toBe(true);
+            expect(element.hasClass('full-height')).toBe(true);
         });
-        it('with a class-block.col-xs-12', function() {
-            expect(element.querySelectorAll('class-block.col-xs-12').length).toBe(1);
-            
-            discoverStateSvc.explore.breadcrumbs = ['', ''];
-            scope.$apply();
-            
-            expect(element.querySelectorAll('class-block.col-xs-12').length).toBe(0);
+        it('with a block', function() {
+            expect(element.find('block').length).toBe(1);
         });
-        it('with a instance-block.col-xs-12', function() {
-            expect(element.querySelectorAll('instance-block.col-xs-12').length).toBe(0);
-            
-            discoverStateSvc.explore.breadcrumbs = ['', ''];
-            scope.$apply();
-            
-            expect(element.querySelectorAll('instance-block.col-xs-12').length).toBe(1);
+        it('with a block-header', function() {
+            expect(element.find('block-header').length).toBe(1);
+        });
+        it('with a instance-tab-header', function() {
+            expect(element.find('instance-block-header').length).toBe(1);
+        });
+        it('with a block-content.content-container', function() {
+            expect(element.querySelectorAll('block-content.content-container').length).toBe(1);
+        });
+        it('with a instance-details.details', function() {
+            expect(element.querySelectorAll('instance-details.details').length).toBe(1);
+        });
+        it('with a instance-cards.cards', function() {
+            expect(element.querySelectorAll('instance-cards.cards').length).toBe(1);
         });
     });
 });

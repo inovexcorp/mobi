@@ -36,8 +36,11 @@
         
         self.explore = {
             active: true,
+            breadcrumbs: ['Classes'],
             classDetails: [],
-            recordId: ''
+            instanceDetails: [],
+            recordId: '',
+            step: 0
         };
         
         self.query = {

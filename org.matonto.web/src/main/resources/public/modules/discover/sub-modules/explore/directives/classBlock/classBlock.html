@@ -20,7 +20,19 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="explore-tab row">
-    <class-block ng-if="dvm.ds.explore.breadcrumbs.length === 1" class="col-xs-12"></class-block>
-    <instance-block ng-if="dvm.ds.explore.breadcrumbs.length === 2" class="col-xs-12"></instance-block>
+<div class="class-block full-height">
+    <block>
+        <block-header>
+            <class-block-header></class-block-header>
+        </block-header>
+        <block-content>
+            <div ng-if="!dvm.ds.explore.classDetails.length" class="padding">
+                <info-message>Please select a dataset to get started.</info-message>
+            </div>
+            <div ng-if="dvm.ds.explore.classDetails.length" class="content-container full-height">
+                <class-details class="details"></class-details>
+                <class-cards class="cards"></class-cards>
+            </div>
+        </block-content>
+    </block>
 </div>

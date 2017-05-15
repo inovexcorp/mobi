@@ -20,12 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Explore Tab Header directive', function() {
+describe('Class Block Header directive', function() {
     var $compile, scope, element, exploreSvc, discoverStateSvc, $q, controller, util;
 
     beforeEach(function() {
         module('templates');
-        module('exploreTabHeader');
+        module('classBlockHeader');
         mockDiscoverState();
         mockExplore();
         mockUtil();
@@ -39,15 +39,15 @@ describe('Explore Tab Header directive', function() {
             util = _utilService_;
         });
 
-        element = $compile(angular.element('<explore-tab-header></explore-tab-header>'))(scope);
+        element = $compile(angular.element('<class-block-header></class-block-header>'))(scope);
         scope.$digest();
-        controller = element.controller('exploreTabHeader');
+        controller = element.controller('classBlockHeader');
     });
 
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('FORM');
-            expect(element.hasClass('explore-tab-header')).toBe(true);
+            expect(element.hasClass('class-block-header')).toBe(true);
         });
         it('with a .form-group', function() {
             expect(element.querySelectorAll('.form-group').length).toBe(1);

@@ -20,12 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Class Cards directive', function() {
+describe('Instance Cards directive', function() {
     var $compile, scope, element, discoverStateSvc;
 
     beforeEach(function() {
         module('templates');
-        module('classCards');
+        module('instanceCards');
         mockDiscoverState();
 
         inject(function(_$compile_, _$rootScope_, _discoverStateService_) {
@@ -34,7 +34,7 @@ describe('Class Cards directive', function() {
             discoverStateSvc = _discoverStateService_;
         });
 
-        discoverStateSvc.explore.classDetails = [{
+        discoverStateSvc.explore.instanceDetails = [{
             count: 1,
             label: 'z'
         }, {
@@ -47,13 +47,14 @@ describe('Class Cards directive', function() {
             count: 1,
             label: 'a'
         }];
-        element = $compile(angular.element('<class-cards></class-cards>'))(scope);
+        element = $compile(angular.element('<instance-cards></instance-cards>'))(scope);
         scope.$digest();
     });
 
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
+            expect(element.hasClass('instance-cards')).toBe(true);
             expect(element.hasClass('class-cards')).toBe(true);
             expect(element.hasClass('full-height')).toBe(true);
         });
@@ -91,7 +92,7 @@ describe('Class Cards directive', function() {
             expect(element.querySelectorAll('.class-overview').length).toBe(4);
         });
         it('with a .text-muted', function() {
-            expect(element.querySelectorAll('.text-muted').length).toBe(8);
+            expect(element.querySelectorAll('.text-muted').length).toBe(4);
         });
     });
     it('properly defines controller.chunks on load', function() {
@@ -108,16 +109,6 @@ describe('Class Cards directive', function() {
             count: 1,
             label: 'z'
         }]];
-        expect(angular.copy(element.controller('classCards').chunks)).toEqual(expected);
-    });
-    describe('controller methods', function() {
-        beforeEach(function() {
-            controller = element.controller('classCards');
-        });
-        it('exploreData should set the correct variables', function() {
-            discoverStateSvc.explore.breadcrumbs = [''];
-            controller.exploreData({label: 'new'});
-            expect(discoverStateSvc.explore.breadcrumbs).toEqual(['', 'new']);
-        });
+        expect(angular.copy(element.controller('instanceCards').chunks)).toEqual(expected);
     });
 });

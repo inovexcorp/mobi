@@ -20,7 +20,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="explore-tab row">
-    <class-block ng-if="dvm.ds.explore.breadcrumbs.length === 1" class="col-xs-12"></class-block>
-    <instance-block ng-if="dvm.ds.explore.breadcrumbs.length === 2" class="col-xs-12"></instance-block>
-</div>
+<form class="class-block-header">
+    <div class="form-group">
+        <custom-label>Dataset:</custom-label>
+        <dataset-select ng-model="dvm.ds.explore.recordId" on-select="dvm.onSelect()"></dataset-select>
+    </div>
+</form>
