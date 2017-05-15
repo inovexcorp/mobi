@@ -37,7 +37,6 @@
             'classBlock',
             'classBlockHeader',
             'classCards',
-            'classDetails',
             'exploreTab',
             'instanceBlock',
             'instanceBlockHeader',
