@@ -36,11 +36,10 @@ updateUnit
   ;
 
 /* sparql 1.1 r4 */
-/* modified to handle comments */
 prologue
   :
   (
-    baseDecl | prefixDecl | comment
+    baseDecl | prefixDecl
   )*
   ;
 
@@ -73,7 +72,6 @@ subSelect
   ;
 
 /* sparql 1.1 r9 */
-/* modified to handle comments */
 
 selectClause
   :
@@ -91,7 +89,6 @@ selectClause
     )+
     | ASTERISK
   )
-  comment?
   ;
 
 /* sparql 1.1 r10 */
@@ -125,7 +122,6 @@ askQuery
   ;
 
 /* sparql 1.1 r13 */
-/* modified to handle comments */
 
 datasetClause
   :
@@ -134,24 +130,20 @@ datasetClause
     defaultGraphClause
     | namedGraphClause
   )
-  comment?
   ;
 
 /* sparql 1.1 r14 */
-/* modified to handle comments */
 
 defaultGraphClause
   :
   sourceSelector
-  comment?
   ;
 
 /* sparql 1.1 r15 */
-/* modified to handle comments */
 
 namedGraphClause
   :
-  'named' sourceSelector comment?
+  'named' sourceSelector
   ;
 
 /* sparql 1.1 r16 */
@@ -162,11 +154,10 @@ sourceSelector
   ;
 
 /* sparql 1.1 r17 */
-/* modified to handle comments */
 
 whereClause
   :
-  'where'? groupGraphPattern comment?
+  'where'? groupGraphPattern
   ;
 
 /* sparql 1.1 r18 */
@@ -177,11 +168,10 @@ solutionModifier
   ;
 
 /* sparql 1.1 r19 */
-/* modified to handle comments */
 
 groupClause
   :
-  'group' 'by' groupCondition+ comment?
+  'group' 'by' groupCondition+
   ;
 
 /* sparql 1.1 r20 */
@@ -209,11 +199,10 @@ havingCondition
   ;
 
 /* sparql 1.1 r23 */
-/* modified to handle comments */
 
 orderClause
   :
-  'order' 'by' orderCondition+ comment?
+  'order' 'by' orderCondition+
   ;
 
 /* sparql 1.1 r24 */
@@ -235,38 +224,33 @@ orderCondition
   ;
 
 /* sparql 1.1 r25 */
-/* modified to handle comments */
 
 limitOffsetClauses
   :
   (limitClause offsetClause?
   | offsetClause limitClause?)
-  comment?
   ;
 
 /* sparql 1.1 r26 */
-/* modified to handle comments */
 
 limitClause
   :
-  'limit' INTEGER comment?
+  'limit' INTEGER
   ;
 
 /* sparql 1.1 r27 */
-/* modified to handle comments */
 
 offsetClause
   :
-  'offset' INTEGER comment?
+  'offset' INTEGER
   ;
 
 /* sparql 1.1 r28 */
-/* modified to handle comments */
 
 valuesClause
   :
   (
-    'values' dataBlock comment?
+    'values' dataBlock
   )?
   ;
 
@@ -383,23 +367,20 @@ modify
   ;
 
 /* sparql 1.1 r42 */
-/* modified to handle comments */
 
 deleteClause
   :
-  'delete' quadPattern comment?
+  'delete' quadPattern
   ;
 
 /* sparql 1.1 r43 */
-/* modified to handle comments */
 
 insertClause
   :
-  'insert' quadPattern comment?
+  'insert' quadPattern
   ;
 
 /* sparql 1.1 r44 */
-/* modified to handle comments */
 
 usingClause
   :
@@ -407,7 +388,7 @@ usingClause
   (
     iriRef
     | 'named' iriRef
-  ) comment?
+  )
   ;
 
 /* sparql 1.1 r45 */
@@ -471,27 +452,23 @@ triplesTemplate
   ;
 
 /* sparql 1.1 r53 */
-/* modified to handle comments */
 
 groupGraphPattern
   :
   OPEN_CURLY_BRACE
-  comment?
   (
     subSelect
     | groupGraphPatternSub
   )
-  comment?
-  groupGraphPatternSub comment?
+  groupGraphPatternSub
   CLOSE_CURLY_BRACE
   ;
 
 /* sparql 1.1 r54 */
-/* modified to handle comments */
 
 groupGraphPatternSub
   :
-  triplesBlock? (graphPatternNotTriples DOT? triplesBlock?)* comment?
+  triplesBlock? (graphPatternNotTriples DOT? triplesBlock?)*
   ;
 
 /* sparql 1.1 r55 */
@@ -672,11 +649,10 @@ propertyList
   ;
 
 /* sparql 1.1 r77 */
-/* modified to handle comments */
 
 propertyListNotEmpty
   :
-  verb objectList ((SEMICOLON)comment?(verb objectList)?)*
+  verb objectList ((SEMICOLON)(verb objectList)?)*
   ;
 
 /* sparql 1.1 r78 */
@@ -688,11 +664,10 @@ verb
   ;
 
 /* sparql 1.1 r79 */
-/* modified to handle comments */
 
 objectList
   :
-  object ((COMMA)comment?object)*
+  object ((COMMA)object)*
   ;
 
 /* sparql 1.1 r80 */
@@ -1528,19 +1503,6 @@ WS
   | '\r')+ ->channel(HIDDEN)
   ;
 
-/* new rule to define a comment */
-
-comment
-  :
-  '#'(~(CARRIAGE_RETURN | LINE_FEED))*
-  ;
-
-fragment
-EOL
-  :
-  (CARRIAGE_RETURN?LINE_FEED)
-  ;
-
 OPEN_BRACE: '(';
 
 CLOSE_BRACE: ')';
@@ -1598,3 +1560,5 @@ COLON: ':';
 LINE_FEED: '\n';
 
 CARRIAGE_RETURN: '\r';
+
+EOL_COMMENT: '#'.*?(CARRIAGE_RETURN?LINE_FEED) -> skip;

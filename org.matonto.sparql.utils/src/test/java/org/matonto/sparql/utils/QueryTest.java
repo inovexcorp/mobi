@@ -23,6 +23,7 @@ package org.matonto.sparql.utils;
  * #L%
  */
 
+import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
 
 import org.antlr.v4.runtime.BaseErrorListener;
@@ -149,6 +150,7 @@ public class QueryTest {
     @Test
     public void simpleCommentsWork() throws Exception {
         String queryString = "select * where { ?s ?p ?o }#?s ?p ?o }";
+        String expectedQuery = "select * where { ?s ?p ?o }";
         Sparql11Parser parser = Query.getParser(queryString);
         TokenStream tokens = parser.getTokenStream();
         parser.addErrorListener(new BaseErrorListener() {
@@ -159,7 +161,7 @@ public class QueryTest {
         });
 
         parser.query();
-        assertEquals(queryString, tokens.getText());
+        assertEquals(expectedQuery, tokens.getText());
     }
 
     @Test
@@ -172,7 +174,7 @@ public class QueryTest {
                 "\n" +
                 "select\n" +
                 "\t?formula\n" +
-                "\t?density\n" +
+                "\t?density # This is a comment\n" +
                 "\t?meltingPointCelsius\n" +
                 "\t(group_concat(distinct ?elementName;separator=',') as ?elements)\n" +
                 "where { # This is a comment\n" +
@@ -185,9 +187,28 @@ public class QueryTest {
                 "    ?element a uhtc:Element ; # This is a comment\n" +
                 "               uhtc:elementName ?elementName ;\n" +
                 "               uhtc:symbol ?symbol .\n" +
-                "}\n# This is a comment" +
+                "} # This is a comment\n" +
                 "GROUP BY ?formula ?density ?meltingPointCelsius" +
                 "# This is a comment";
+        String expectedQuery = "\nprefix uhtc: <http://matonto.org/ontologies/uhtc#> " +
+                "\n" +
+                "select\n" +
+                "\t?formula\n" +
+                "\t?density " +
+                "\t?meltingPointCelsius\n" +
+                "\t(group_concat(distinct ?elementName;separator=',') as ?elements)\n" +
+                "where { " +
+                "    ?material a uhtc:Material ; " +
+                "                uhtc:chemicalFormula ?formula ; " +
+                "                uhtc:density ?density ;\n" +
+                "                uhtc:meltingPoint ?meltingPointCelsius ;\n" +
+                "                uhtc:element ?element . " +
+                "    \n" +
+                "    ?element a uhtc:Element ; " +
+                "               uhtc:elementName ?elementName ;\n" +
+                "               uhtc:symbol ?symbol .\n" +
+                "} " +
+                "GROUP BY ?formula ?density ?meltingPointCelsius";
         Sparql11Parser parser = Query.getParser(queryString);
         TokenStream tokens = parser.getTokenStream();
         parser.addErrorListener(new BaseErrorListener() {
@@ -198,7 +219,7 @@ public class QueryTest {
         });
 
         parser.query();
-        assertEquals(queryString, tokens.getText());
+        assertEquals(expectedQuery, tokens.getText());
     }
 
     private String streamToString(InputStream inputStream) throws IOException {
