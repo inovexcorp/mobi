@@ -35,7 +35,6 @@
             
             /* Explore tab */
             'classCards',
-            'classDetails',
             'exploreTab',
             'exploreTabHeader',
             

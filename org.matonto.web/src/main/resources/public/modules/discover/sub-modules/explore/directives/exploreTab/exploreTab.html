@@ -27,9 +27,8 @@
                 <explore-tab-header></explore-tab-header>
             </block-header>
             <block-content>
-                <div ng-if="dvm.ds.explore.classDetails.length" class="content-container full-height">
-                    <class-details class="details"></class-details>
-                    <class-cards class="cards"></class-cards>
+                <div ng-if="dvm.ds.explore.classDetails.length" class="full-height">
+                    <class-cards></class-cards>
                 </div>
                 <div ng-if="!dvm.ds.explore.classDetails.length" class="padding">
                     <info-message>Please select a dataset to get started.</info-message>

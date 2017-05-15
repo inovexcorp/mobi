@@ -66,16 +66,14 @@ describe('Explore Tab directive', function() {
             expect(element.querySelectorAll('.padding').length).toBe(0);
             expect(element.find('info-message').length).toBe(0);
         });
-        it('with a .content-container.full-height, class-details, and class-cards', function() {
-            expect(element.querySelectorAll('.content-container.full-height').length).toBe(0);
-            expect(element.find('class-details').length).toBe(0);
+        it('with a .full-height and class-cards', function() {
+            expect(element.querySelectorAll('.full-height').length).toBe(0);
             expect(element.find('class-cards').length).toBe(0);
             
             discoverStateSvc.explore.classDetails = [{}];
             scope.$digest();
             
-            expect(element.querySelectorAll('.content-container.full-height').length).toBe(1);
-            expect(element.find('class-details').length).toBe(1);
+            expect(element.querySelectorAll('.full-height').length).toBe(1);
             expect(element.find('class-cards').length).toBe(1);
         });
     });
