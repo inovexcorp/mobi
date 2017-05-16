@@ -192,11 +192,6 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
                                 mapToJson.put("classTitle", findLabelToDisplay(classModel, factory.createIRI(classRsrc.stringValue())));
                                 mapToJson.put("classDescription", findDescriptionToDisplay(classModel, factory.createIRI(entry.getValue().toString())));
                                 mapToJson.put("instancesCount", Integer.parseInt(classesFromQuery.get(entry.getValue().toString()).get("instancesCount").toString()));
-                                mapToJson.put("branchIRI", branchStmt.get().getObject().stringValue());
-                                mapToJson.put("branchIRI", branchStmt.get().getObject().stringValue());
-                                mapToJson.put("commitIRI", commitStmt.get().getObject().stringValue());
-                                mapToJson.put("ontologyRecordIRI", ontologyRecordStmt.get().getObject().stringValue());
-                                mapToJson.put("dataset", datasetRecordRsr.stringValue());
                                 mapToJson.put("classExamples", classesFromQuery.get(entry.getValue().toString()).get("classExamples"));
 
                                 listToJson.add(mapToJson);
