@@ -43,16 +43,5 @@
         self.query = {
             active: false
         };
-        
-        self.datasetRecords = [];
-        
-        self.setDatasetRecords = function() {
-            dam.getDatasetRecords()
-                .then(response => {
-                    self.datasetRecords = _.map(response.data, arr => _.find(arr, obj => _.includes(obj['@type'], prefixes.dataset + 'DatasetRecord')));
-                }, util.createErrorToast);
-        }
-        
-        self.setDatasetRecords();
     }
 })();
