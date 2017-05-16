@@ -25,9 +25,6 @@ describe('Discover State Service', function() {
 
     beforeEach(function() {
         module('discoverState');
-        mockDatasetManager();
-        mockPrefixes();
-        mockUtil();
 
         inject(function(discoverStateService, _datasetManagerService_, _prefixes_, _$q_, _utilService_, _$rootScope_) {
             discoverStateSvc = discoverStateService;
@@ -36,24 +33,6 @@ describe('Discover State Service', function() {
             $q = _$q_;
             util = _utilService_;
             scope = _$rootScope_;
-        });
-    });
-    
-    describe('setDatasetRecords calls the correct functions', function() {
-        it('when getDatasetRecords is resolved', function() {
-            var datasetRecord = {'@type': [prefixes.dataset + 'DatasetRecord']};
-            datasetManagerSvc.getDatasetRecords.and.returnValue($q.when({data: [[datasetRecord]]}));
-            discoverStateSvc.setDatasetRecords();
-            scope.$apply();
-            expect(datasetManagerSvc.getDatasetRecords).toHaveBeenCalled();
-            expect(discoverStateSvc.datasetRecords).toEqual([datasetRecord]);
-        });
-        it('when getDatasetRecords is rejected', function() {
-            datasetManagerSvc.getDatasetRecords.and.returnValue($q.reject('error'));
-            discoverStateSvc.setDatasetRecords();
-            scope.$apply();
-            expect(datasetManagerSvc.getDatasetRecords).toHaveBeenCalled();
-            expect(util.createErrorToast).toHaveBeenCalledWith('error');
         });
     });
 });

@@ -27,12 +27,8 @@
         .module('discoverState', [])
         .service('discoverStateService', discoverStateService);
     
-    discoverStateService.$inject = ['datasetManagerService', 'prefixes', 'utilService'];
-    
-    function discoverStateService(datasetManagerService, prefixes, utilService) {
+    function discoverStateService() {
         var self = this;
-        var dam = datasetManagerService;
-        var util = utilService;
         
         self.explore = {
             active: true,

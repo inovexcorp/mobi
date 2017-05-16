@@ -921,8 +921,6 @@ function mockDiscoverState() {
             this.query = {
                 active: false
             }
-            this.datasetRecords = [];
-            this.setDatasetRecords = jasmine.createSpy('setDatasetRecords');
         });
     });
 }

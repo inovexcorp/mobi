@@ -35,17 +35,17 @@ describe('Class Cards directive', function() {
         });
 
         discoverStateSvc.explore.classDetails = [{
-            count: 1,
-            label: 'z'
+            instancesCount: 1,
+            classTitle: 'z'
         }, {
-            count: 2,
-            label: 'z'
+            instancesCount: 2,
+            classTitle: 'z'
         }, {
-            count: 2,
-            label: 'a'
+            instancesCount: 2,
+            classTitle: 'a'
         }, {
-            count: 1,
-            label: 'a'
+            instancesCount: 1,
+            classTitle: 'a'
         }];
         element = $compile(angular.element('<class-cards></class-cards>'))(scope);
         scope.$digest();
@@ -96,17 +96,17 @@ describe('Class Cards directive', function() {
     });
     it('properly defines controller.chunks on load', function() {
         var expected = [[{
-            count: 2,
-            label: 'a'
+            instancesCount: 2,
+            classTitle: 'a'
         }, {
-            count: 2,
-            label: 'z'
+            instancesCount: 2,
+            classTitle: 'z'
         }, {
-            count: 1,
-            label: 'a'
+            instancesCount: 1,
+            classTitle: 'a'
         }], [{
-            count: 1,
-            label: 'z'
+            instancesCount: 1,
+            classTitle: 'z'
         }]];
         expect(angular.copy(element.controller('classCards').chunks)).toEqual(expected);
     });

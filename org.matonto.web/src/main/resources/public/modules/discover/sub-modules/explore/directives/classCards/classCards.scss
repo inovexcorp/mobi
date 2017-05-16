@@ -1,3 +1,6 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
 .class-cards {
     .rows-container {
         overflow-y: auto;
@@ -27,6 +30,7 @@
                         }
                         
                         .badge {
+                            background-color: $brand-primary;
                             border-radius: 15px;
                             font-size: 16px;
                             line-height: inherit;
@@ -46,6 +50,12 @@
                     
                     p {
                         margin-bottom: 5px;
+                    }
+                    
+                    .text-muted {
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        white-space: nowrap;
                     }
                 }
             }
