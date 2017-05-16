@@ -296,7 +296,7 @@ public class OntologyRestImpl implements OntologyRest {
 
     @Override
     public Response getClassesInOntology(ContainerRequestContext context, String recordIdStr, String branchIdStr,
-                                         String commitIdStr) {
+                                         String commitIdStr, String filterStr) {
         try {
             JSONObject result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr, this::getClassArray);
             return Response.ok(result).build();

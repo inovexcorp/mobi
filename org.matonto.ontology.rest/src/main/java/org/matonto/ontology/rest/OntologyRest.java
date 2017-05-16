@@ -310,6 +310,9 @@ public interface OntologyRest {
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
+     * @param filter      the {@link String} representing the class id(s) which should be returned. NOTE: Assumes id
+     *                    represents an IRI unless String begins with "_:". NOTE: Optional param - if nothing is
+     *                    specified, it will return everything.
      * @return classes in the ontology identified by the provided IDs.
      */
     @GET
@@ -320,7 +323,8 @@ public interface OntologyRest {
     Response getClassesInOntology(@Context ContainerRequestContext context,
                                   @PathParam("recordId") String recordIdStr,
                                   @QueryParam("branchId") String branchIdStr,
-                                  @QueryParam("commitId") String commitIdStr);
+                                  @QueryParam("commitId") String commitIdStr,
+                                  @QueryParam("filter") String filter);
 
     /**
      * Add a new class to ontology identified by the provided IDs from the server associated with the requester's
