@@ -35,7 +35,7 @@
         .module('exploreTabHeader', [])
         /**
          * @ngdoc directive
-         * @name sparqlResultTable.directive:exploreTabHeader
+         * @name exploreTabHeader.directive:exploreTabHeader
          * @scope
          * @restrict E
          * @requires discoverState.service:discoverStateService
