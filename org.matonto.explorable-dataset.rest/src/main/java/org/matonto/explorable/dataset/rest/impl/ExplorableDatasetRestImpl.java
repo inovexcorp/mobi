@@ -109,7 +109,7 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
     }
 
     @Override
-    public Response getClassDetaills(UriInfo uriInfo, String recordIRI, int offset, int limit, String sort, boolean asc, String filter) {
+    public Response getClassDetails(UriInfo uriInfo, String recordIRI, int offset, int limit, String sort, boolean asc, String filter) {
 
         Resource datasetRecordRsr = factory.createIRI(recordIRI);
         Map<String, Map<String, Object>> classesFromQuery = new HashMap<>();

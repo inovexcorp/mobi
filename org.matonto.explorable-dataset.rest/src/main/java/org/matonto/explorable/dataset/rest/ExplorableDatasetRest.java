@@ -114,7 +114,7 @@ public interface ExplorableDatasetRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @ApiOperation("Retrieves all the data associated with ontology objects, from a Dataset in the local Catalog")
-    Response getClassDetaills(@Context UriInfo uriInfo,
+    Response getClassDetails(@Context UriInfo uriInfo,
                                      @PathParam("recordIRI") String recordIRI,
                                      @QueryParam("offset") int offset,
                                      @QueryParam("limit") int limit,
