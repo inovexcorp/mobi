@@ -26,67 +26,62 @@ package org.matonto.explorable.dataset.rest.impl;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.io.IOUtils;
 import org.matonto.catalog.api.CatalogManager;
-import org.matonto.catalog.api.PaginatedSearchResults;
-import org.matonto.catalog.api.ontologies.mcat.BranchFactory;
-import org.matonto.catalog.api.ontologies.mcat.OntologyRecord;
-import org.matonto.catalog.api.ontologies.mcat.OntologyRecordFactory;
-import org.matonto.catalog.api.ontologies.mcat.VersionedRDFRecord;
+
 import org.matonto.dataset.api.DatasetConnection;
 import org.matonto.dataset.api.DatasetManager;
-import org.matonto.dataset.ontology.dataset.Dataset;
 import org.matonto.dataset.ontology.dataset.DatasetRecord;
-import org.matonto.dataset.ontology.dataset.DatasetRecordFactory;
-import org.matonto.dataset.pagination.DatasetPaginatedSearchParams;
 import org.matonto.exception.MatOntoException;
 import org.matonto.explorable.dataset.rest.ExplorableDatasetRest;
-import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.ontologies.dcterms._Thing;
-import org.matonto.ontology.core.api.Ontology;
-import org.matonto.ontology.core.api.OntologyManager;
-import org.matonto.ontology.core.api.classexpression.OClass;
-import org.matonto.ontology.utils.api.SesameTransformer;
-import org.matonto.persistence.utils.Bindings;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.query.api.BindingSet;
 import org.matonto.rdf.api.*;
 
+import java.io.IOException;
 import java.util.*;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import org.matonto.rdf.api.Model;
-import org.matonto.rdf.api.ModelFactory;
+import org.matonto.rest.util.ErrorUtils;
 import org.openrdf.model.vocabulary.RDFS;
-import org.openrdf.query.Operation;
 import org.matonto.query.api.TupleQuery;
 
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-
-import static org.matonto.rest.util.RestUtils.modelToJsonld;
 
 /**
- * Created by normanvargas on 5/8/17.
+ * Created by Norman Vargas on 5/8/17.
  */
 @Component(immediate = true)
 public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
 
 
     private DatasetManager datasetManager;
-    private EngineManager engineManager;
     private CatalogManager catalogManager;
-    private OntologyRecordFactory ontologyRecordFactory;
     private ValueFactory factory;
-    private ModelFactory mf;
-    private SesameTransformer transformer;
-    private BranchFactory branchFactory;
-    private OntologyManager ontologyMngr;
 
+    private static final String GET_CLASSES_TYPES;
+    private static final String GET_CLASSES_DETAILS;
 
-    private DatasetRecordFactory datasetRecordFactory;
+    static {
+        try {
+            GET_CLASSES_TYPES = IOUtils.toString(
+                    ExplorableDatasetRestImpl.class.getResourceAsStream("/get-classes-types.rq"),
+                    "UTF-8"
+            );
+        } catch (IOException e) {
+            throw new MatOntoException(e);
+        }
+        try {
+            GET_CLASSES_DETAILS = IOUtils.toString(
+                    ExplorableDatasetRestImpl.class.getResourceAsStream("/get-classes-details.rq"),
+                    "UTF-8"
+            );
+        } catch (IOException e) {
+            throw new MatOntoException(e);
+        }
+    }
 
     @Reference
     public void setDatasetManager(DatasetManager datasetManager) {
@@ -98,50 +93,9 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
         this.factory = factory;
     }
 
-
-    @Reference
-    public void setEngineManager(EngineManager engineManager) {
-        this.engineManager = engineManager;
-    }
-
     @Reference
     public void setCatalogManager(CatalogManager catalogManager) {
         this.catalogManager = catalogManager;
-    }
-
-    @Reference
-    public void setOntologyRecordFactory(OntologyRecordFactory ontologyRecordFactory) {
-        this.ontologyRecordFactory = ontologyRecordFactory;
-    }
-
-    @Reference
-    public void setDatasetRecordFactory(DatasetRecordFactory datasetRecordFactory) {
-        this.datasetRecordFactory = datasetRecordFactory;
-    }
-
-    @Reference
-    public void setBranchFactory(BranchFactory branchFactory) {
-        this.branchFactory = branchFactory;
-    }
-
-    @Reference
-    public void setTransformer(SesameTransformer transformer) {
-        this.transformer = transformer;
-    }
-
-    @Reference
-    public void setVf(ValueFactory vf) {
-        this.factory = factory;
-    }
-
-    @Reference
-    public void setMf(ModelFactory mf) {
-        this.mf = mf;
-    }
-
-    @Reference
-    public void setOntologyMngr(OntologyManager ontologyMngr) {
-        this.ontologyMngr = ontologyMngr;
     }
 
     @Override
@@ -155,92 +109,108 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
     }
 
     @Override
-    public Response getDatasetDataInstances(UriInfo uriInfo, String datasetRecordId, int offset, int limit, String sort, boolean asc, String filter) {
+    public Response getClassDetaills(UriInfo uriInfo, String recordIRI, int offset, int limit, String sort, boolean asc, String filter) {
 
-        Resource datasetRecordRsr = factory.createIRI(datasetRecordId);
-        Map<String,Map<String,Object>> classesFromQuery = new HashMap<>();
-        Map<String,String> classesFromQueryList = new HashMap<>();
+        Resource datasetRecordRsr = factory.createIRI(recordIRI);
+        Map<String, Map<String, Object>> classesFromQuery = new HashMap<>();
+        Map<String, String> classesFromQueryList = new HashMap<>();
 
         List<Resource> classesList = new ArrayList<>();
-        List<Map<String,Object>> listToJson = new ArrayList<>();
+        List<Map<String, Object>> listToJson = new ArrayList<>();
         DatasetConnection dsConn = datasetManager.getConnection(datasetRecordRsr);
 
-        String instanceQry = " PREFIX dcterms: <http://purl:org/dc/terms/>" +
-                             " SELECT ?type ?title  (COUNT(distinct ?thing) as ?c) " +
-                             "     WHERE {" +
-                             "         ?thing a ?type. " +
-                             "     OPTIONAL { ?type <http://purl.org/dc/terms/title> ?title. } " +
-                             "     { " +
-                             "          select ?type" +
-                             "              where { " +
-                             "                  ?thing a ?type. " +
-                             "              } " +
-                             "      } " +
-                             "  } GROUP BY ?type ?title ";
-        TupleQuery tq = dsConn.prepareTupleQuery(instanceQry);
-        TupleQueryResult results = tq.evaluate();
+        try {
+            TupleQuery tq = dsConn.prepareTupleQuery(GET_CLASSES_TYPES);
+            TupleQueryResult results = tq.evaluate();
 
-        Optional<DatasetRecord> datasetRecordOpt = datasetManager.getDatasetRecord(datasetRecordRsr);
-        Model result = datasetRecordOpt.get().getModel();
+            Optional<DatasetRecord> datasetRecordOpt = datasetManager.getDatasetRecord(datasetRecordRsr);
+            Model result = datasetRecordOpt.get().getModel();
 
-        while (results.hasNext()) {
-            Map<String,Object> classMap = new HashMap<>();
-            BindingSet bindingSet = results.next();
-            Optional<Value> classType = bindingSet.getValue("type");
-            Optional<Value> classCount = bindingSet.getValue("c");
-            Optional<Value> thing = bindingSet.getValue("thing");
-            classMap.put("classType",classType.get().stringValue());
-            classMap.put("InstancesCount",classCount.get().stringValue());
+            while (results.hasNext()) {
 
-            classesList.add(factory.createIRI(classType.get().stringValue()));
-            classesFromQuery.put(classType.get().stringValue(),classMap);
-            classesFromQueryList.put(classType.get().stringValue(),classType.get().stringValue());
-        }
+                Map<String, Object> classMap = new HashMap<>();
+                BindingSet bindingSet = results.next();
 
-        Set<Value> ontologies = datasetRecordOpt.get().getOntology();
+                Optional<Value> classType = bindingSet.getValue("type");
+                Optional<Value> classCount = bindingSet.getValue("c");
 
-        ontologies.forEach(ontBlkNode -> {
+                classMap.put("classType", classType.get().stringValue());
+                classMap.put("instancesCount", classCount.get().stringValue());
 
-            Optional<Statement> branchStmt = result.filter(factory.createBNode(ontBlkNode.stringValue()), factory.createIRI(DatasetRecord.linksToBranch_IRI), null).stream().findFirst();
-            Optional<Statement> commitStmt = result.filter(factory.createBNode(ontBlkNode.stringValue()), factory.createIRI(DatasetRecord.linksToCommit_IRI), null).stream().findFirst();
-            Optional<Statement> ontologyRecordStmt = result.filter(factory.createBNode(ontBlkNode.stringValue()), factory.createIRI(DatasetRecord.linksToRecord_IRI), null).stream().findFirst();
+                Value classIRI = classType.get();
 
-            Optional<Model> compiledResource = catalogManager.getCompiledResource(factory.createIRI(commitStmt.get().getObject().stringValue()));
-            if (compiledResource.isPresent()) {
-                for (Iterator<Map.Entry<String, String>> it = classesFromQueryList.entrySet().iterator(); it.hasNext(); ) {
-                    Map.Entry<String, String> entry = it.next();
-                    Map<String, Object> mapToJson = new HashMap<>();
-                    Resource classRsrc = factory.createIRI(entry.getValue().toString());
-                    Model classModel = compiledResource.get().filter(classRsrc, null, null);
-                    if (classModel.size() > 0) {
-                        it.remove();
+                TupleQuery tqEx = dsConn.prepareTupleQuery(GET_CLASSES_DETAILS);
+                tqEx.setBinding("classIRI", classIRI);
+                TupleQueryResult examplesResults = tqEx.evaluate();
+                List<String> exList = new ArrayList<>();
+                while (examplesResults.hasNext()) {
+                    BindingSet bindingSetEx = examplesResults.next();
 
-                        Optional<Statement> classDesc = classModel.filter(classRsrc, factory.createIRI(_Thing.description_IRI), null).stream().findFirst();
+                    String lblStr = (bindingSetEx.getValue("label").isPresent() ? bindingSetEx.getValue("label").get().stringValue() : "");
+                    String titleStr = (bindingSetEx.getValue("title").isPresent() ? bindingSetEx.getValue("title").get().stringValue() : "");
 
-                        mapToJson.put("ontologyRecordTitle",findLabelToDisplay(compiledResource.get(), factory.createIRI(ontologyRecordStmt.get().getObject().stringValue())));
-                        mapToJson.put("classIRI", entry.getValue().toString());
-                        mapToJson.put("classTitle", findLabelToDisplay(classModel, factory.createIRI(classRsrc.stringValue())));
-                        mapToJson.put("classDescription", (classDesc.isPresent()) ? classDesc.get().getObject().stringValue() : "");
-                        mapToJson.put("instancesCount", Integer.parseInt(classesFromQuery.get(entry.getValue().toString()).get("InstancesCount").toString()));
-                        mapToJson.put("branchIRI", branchStmt.get().getObject().stringValue());
-                        mapToJson.put("branchIRI", branchStmt.get().getObject().stringValue());
-                        mapToJson.put("commitIRI", commitStmt.get().getObject().stringValue());
-                        mapToJson.put("ontologyRecordIRI", ontologyRecordStmt.get().getObject().stringValue());
-                        mapToJson.put("dataset", datasetRecordRsr.stringValue());
-
-                        listToJson.add(mapToJson);
+                    if (!lblStr.isEmpty()) {
+                        exList.add(lblStr);
+                    } else {
+                        if (!titleStr.isEmpty()) {
+                            exList.add(titleStr);
+                        } else {
+                            IRI exampleIRI = factory.createIRI(bindingSetEx.getValue("example").get().stringValue());
+                            exList.add(splitCamelCase(exampleIRI.getLocalName()));
+                        }
                     }
                 }
-            }
-        });
+                classMap.put("classExamples", exList);
 
+                classesList.add(factory.createIRI(classType.get().stringValue()));
+                classesFromQuery.put(classType.get().stringValue(), classMap);
+                classesFromQueryList.put(classType.get().stringValue(), classType.get().stringValue());
+            }
+
+            Set<Value> ontologies = datasetRecordOpt.get().getOntology();
+            ontologies.forEach(ontBlkNode -> {
+
+                Optional<Statement> branchStmt = result.filter(factory.createBNode(ontBlkNode.stringValue()), factory.createIRI(DatasetRecord.linksToBranch_IRI), null).stream().findFirst();
+                Optional<Statement> commitStmt = result.filter(factory.createBNode(ontBlkNode.stringValue()), factory.createIRI(DatasetRecord.linksToCommit_IRI), null).stream().findFirst();
+                Optional<Statement> ontologyRecordStmt = result.filter(factory.createBNode(ontBlkNode.stringValue()), factory.createIRI(DatasetRecord.linksToRecord_IRI), null).stream().findFirst();
+                Optional<Model> compiledResource = catalogManager.getCompiledResource(factory.createIRI(commitStmt.get().getObject().stringValue()));
+
+                if (compiledResource.isPresent()) {
+                    for (Iterator<Map.Entry<String, String>> it = classesFromQueryList.entrySet().iterator(); it.hasNext(); ) {
+                        Map.Entry<String, String> entry = it.next();
+                        Map<String, Object> mapToJson = new HashMap<>();
+                        Resource classRsrc = factory.createIRI(entry.getValue().toString());
+                        Model classModel = compiledResource.get().filter(classRsrc, null, null);
+                        if (classModel.size() > 0) {
+                            it.remove();
+
+                            mapToJson.put("ontologyRecordTitle", findLabelToDisplay(compiledResource.get(), factory.createIRI(ontologyRecordStmt.get().getObject().stringValue())));
+                            mapToJson.put("classIRI", entry.getValue().toString());
+                            mapToJson.put("classTitle", findLabelToDisplay(classModel, factory.createIRI(classRsrc.stringValue())));
+                            mapToJson.put("classDescription", findDescriptionToDisplay(classModel, factory.createIRI(entry.getValue().toString())));
+                            mapToJson.put("instancesCount", Integer.parseInt(classesFromQuery.get(entry.getValue().toString()).get("instancesCount").toString()));
+                            mapToJson.put("branchIRI", branchStmt.get().getObject().stringValue());
+                            mapToJson.put("branchIRI", branchStmt.get().getObject().stringValue());
+                            mapToJson.put("commitIRI", commitStmt.get().getObject().stringValue());
+                            mapToJson.put("ontologyRecordIRI", ontologyRecordStmt.get().getObject().stringValue());
+                            mapToJson.put("dataset", datasetRecordRsr.stringValue());
+                            mapToJson.put("classExamples", classesFromQuery.get(entry.getValue().toString()).get("classExamples"));
+
+                            listToJson.add(mapToJson);
+                        }
+                    }
+                }
+            });
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
         JSONArray array = JSONArray.fromObject(listToJson);
         Response.ResponseBuilder response = Response.ok(array).header("X-Total-Count", listToJson.size());
         return response.build();
     }
 
     @Override
-    public Response getDatasetDataInstancesSummary(UriInfo uriInfo, String datasetRecordId, int offset, int limit, String sort, boolean asc, int numExamples) {
+    public Response getIntanceDetails(UriInfo uriInfo, String recordIRI, String classIRI, int offset, int limit, String sort, boolean asc, int numExamples) {
         return null;
     }
 
@@ -275,49 +245,50 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
      * @return entity label
      */
     public String findLabelToDisplay(Model m, IRI i) {
-        Optional<Statement> rdfsLabel = m.filter(null, factory.createIRI(RDFS.LABEL.stringValue()), null).stream().findFirst();
 
-        if (rdfsLabel.isPresent()) {
-             return rdfsLabel.get().getObject().stringValue();
-        } else {
-            Optional<Statement> dcTitle = m.filter(null, factory.createIRI(_Thing.title_IRI), null).stream().findFirst();
-            if (dcTitle.isPresent()) {
-                 return dcTitle.get().getObject().stringValue();
+        if (m.size() > 0) {
+            Optional<Statement> rdfsLabel = m.filter(null, factory.createIRI(RDFS.LABEL.stringValue()), null).stream().findFirst();
+
+            if (rdfsLabel.isPresent()) {
+                return rdfsLabel.get().getObject().stringValue();
             } else {
-                   return splitCamelCase(i.stringValue());
+                Optional<Statement> dcTitle = m.filter(null, factory.createIRI(_Thing.title_IRI), null).stream().findFirst();
+                if (dcTitle.isPresent()) {
+                    return dcTitle.get().getObject().stringValue();
+                } else {
+                    return splitCamelCase(i.stringValue());
+                }
             }
+        } else {
+            return "";
+        }
+    }
+
+    /**
+     * Retrieve entity description inside a given model in the following order
+     * rdfs:comments, dcterms:description or default empty string
+     *
+     * @param m Model with pertinent data
+     * @param i Entity to find label/title of
+     * @return entity label
+     */
+    public String findDescriptionToDisplay(Model m, IRI i) {
+
+        if (m.size() > 0) {
+            Optional<Statement> rdfsLabel = m.filter(null, factory.createIRI(RDFS.COMMENT.stringValue()), null).stream().findFirst();
+
+            if (rdfsLabel.isPresent()) {
+                return rdfsLabel.get().getObject().stringValue();
+            } else {
+                Optional<Statement> dcTitle = m.filter(null, factory.createIRI(_Thing.description_IRI), null).stream().findFirst();
+                if (dcTitle.isPresent()) {
+                    return dcTitle.get().getObject().stringValue();
+                } else {
+                    return splitCamelCase(i.stringValue());
+                }
+            }
+        } else {
+            return "";
         }
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

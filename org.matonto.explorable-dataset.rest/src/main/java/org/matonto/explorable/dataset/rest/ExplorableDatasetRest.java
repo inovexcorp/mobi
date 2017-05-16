@@ -100,7 +100,7 @@ public interface ExplorableDatasetRest {
      * limit and offset. Can optionally be sorted by property value if passed a sort IRI.
      *
      * @param uriInfo   The URI information of the request to be used in creating links to other pages of data
-     * @param datasetRecordId The id of the {@link org.matonto.dataset.ontology.dataset.DatasetRecord} for the
+     * @param recordIRI The id of the {@link org.matonto.dataset.ontology.dataset.DatasetRecord} for the
      *                  {@link org.matonto.dataset.ontology.dataset.Dataset} from which to retrieve the data.
      * @param offset    The offset for a page of ontology objects.
      * @param limit     The number of ontology objects to return in one page
@@ -110,12 +110,12 @@ public interface ExplorableDatasetRest {
      * @return A {@link Response} with a JSON array of ontology objects.
      */
     @GET
-    @Path("{datasetRecordId}/instances")
+    @Path("{recordIRI}/class-details")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @ApiOperation("Retrieves all the data associated with ontology objects, from a Dataset in the local Catalog")
-    Response getDatasetDataInstances(@Context UriInfo uriInfo,
-                                     @PathParam("datasetRecordId") String datasetRecordId,
+    Response getClassDetaills(@Context UriInfo uriInfo,
+                                     @PathParam("recordIRI") String recordIRI,
                                      @QueryParam("offset") int offset,
                                      @QueryParam("limit") int limit,
                                      @QueryParam("sort") String sort,
@@ -128,7 +128,7 @@ public interface ExplorableDatasetRest {
      * {@link org.matonto.catalog.api.ontologies.mcat.Catalog}, grouped by their ontology, as a JSON object.
      *
      * @param uriInfo     The URI information of the request to be used in creating links to other pages of data
-     * @param datasetRecordId   The id of the {@link org.matonto.dataset.ontology.dataset.DatasetRecord} for the
+     * @param recordIRI   The id of the {@link org.matonto.dataset.ontology.dataset.DatasetRecord} for the
      *                    {@link org.matonto.dataset.ontology.dataset.Dataset} to summarize.
      * @param offset      The offset for a page of Dataset data
      * @param limit       The number of data to return in one page
@@ -138,12 +138,13 @@ public interface ExplorableDatasetRest {
      * @return A {@link Response} with a JSON object.
      */
     @GET
-    @Path("{datasetRecordId}/instances-summary")
+    @Path("{recordIRI}/classes/{classIRI}/instance-details")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @ApiOperation("Retrieves an aggregated summary of all ontology objects from a Dataset in the local Catalog")
-    Response getDatasetDataInstancesSummary(@Context UriInfo uriInfo,
-                                            @PathParam("datasetRecordId") String datasetRecordId,
+    Response getIntanceDetails(@Context UriInfo uriInfo,
+                                            @PathParam("recordIRI") String recordIRI,
+                                            @PathParam("classIRI") String classIRI,
                                             @QueryParam("offset") int offset,
                                             @QueryParam("limit") int limit,
                                             @QueryParam("sort") String sort,
