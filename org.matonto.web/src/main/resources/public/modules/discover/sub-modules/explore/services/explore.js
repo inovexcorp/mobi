@@ -24,7 +24,24 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name explore
+         *
+         * @description
+         * The `explore` module only provides the `exploreService` service which provides access
+         * to the MatOnto explorable-datasets REST endpoints.
+         */
         .module('explore', [])
+        /**
+         * @ngdoc service
+         * @name explore.service:exploreService
+         * @requires $q
+         *
+         * @description
+         * `exploreService` is a service that provides access to the MatOnto explorable-datasets REST
+         * endpoints.
+         */
         .service('exploreService', exploreService);
     
     exploreService.$inject = ['$http', '$q', '$httpParamSerializer', 'utilService'];
@@ -34,6 +51,17 @@
         var prefix = 'explorable-datasets/';
         var util = utilService;
         
+        /**
+         * @ngdoc method
+         * @name getClassDetails
+         * @methodOf explore.service:exploreService
+         *
+         * @description
+         * Calls the GET /matontorest/explorable-datasets/{recordId}/class-details endpoint and returns the
+         * array of class details.
+         *
+         * @returns {Promise} A promise that resolves to an array of the class details for the identified dataset record.
+         */
         self.getClassDetails = function(recordId) {
             // return $http.get(prefix + encodeURIComponent(recordId) + '/instances-details')
             //     .then(response => $q.when(response.data), response => $q.reject(response.statusText));

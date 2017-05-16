@@ -26,16 +26,16 @@
     angular
         /**
          * @ngdoc overview
-         * @name classBlockHeader
+         * @name exploreTabHeader
          *
          * @description
          * The `exploreTabHeader` module only provides the `exploreTabHeader` directive which creates
          * the explore tab header.
          */
-        .module('classBlockHeader', [])
+        .module('exploreTabHeader', [])
         /**
          * @ngdoc directive
-         * @name sparqlResultTable.directive:classBlockHeader
+         * @name sparqlResultTable.directive:exploreTabHeader
          * @scope
          * @restrict E
          * @requires discoverState.service:discoverStateService
@@ -45,14 +45,14 @@
          * @description
          * HTML contents in the explore tab header.
          */
-        .directive('classBlockHeader', classBlockHeader);
+        .directive('exploreTabHeader', exploreTabHeader);
         
-        classBlockHeader.$inject = ['exploreService', 'discoverStateService', 'utilService'];
+        exploreTabHeader.$inject = ['exploreService', 'discoverStateService', 'utilService'];
 
-        function classBlockHeader(exploreService, discoverStateService, utilService) {
+        function exploreTabHeader(exploreService, discoverStateService, utilService) {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/discover/sub-modules/explore/directives/classBlockHeader/classBlockHeader.html',
+                templateUrl: 'modules/discover/sub-modules/explore/directives/exploreTabHeader/exploreTabHeader.html',
                 replace: true,
                 scope: {},
                 controllerAs: 'dvm',

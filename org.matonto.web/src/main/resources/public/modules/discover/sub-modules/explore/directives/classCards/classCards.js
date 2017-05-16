@@ -24,7 +24,26 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name classCards
+         *
+         * @description
+         * The `classCards` module only provides the `classCards` directive which creates a grid of cards
+         * with all of the class details about a dataset record.
+         */
         .module('classCards', [])
+        /**
+         * @ngdoc directive
+         * @name classCards.directive:classCards
+         * @scope
+         * @restrict E
+         * @requires discoverState.service:discoverStateService
+         *
+         * @description
+         * `classCards` is a directive that creates a div which contains a 3 column grid used to display the
+         * class details associated with a dataset record. The directive is replaced by the contents of its template.
+         */
         .directive('classCards', classCards);
 
         classCards.$inject = ['discoverStateService', 'exploreService', 'utilService'];
