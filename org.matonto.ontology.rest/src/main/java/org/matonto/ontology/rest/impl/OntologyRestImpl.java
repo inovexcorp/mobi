@@ -826,37 +826,44 @@ public class OntologyRestImpl implements OntologyRest {
         Optional<Cache<String, Ontology>> cache = getOntologyCache();
         String key = OntologyCache.generateKey(recordIdStr, branchIdStr, commitIdStr);
 
-        if (cache.isPresent() && cache.get().containsKey(key)) {
-            log.trace("cache hit");
-            optionalOntology = Optional.of(cache.get().get(key));
-        } else {
-            Resource recordId = valueFactory.createIRI(recordIdStr);
-
-            if (!stringParamIsMissing(commitIdStr)) {
-                throwErrorIfMissingStringParam(branchIdStr, "The branchIdStr is missing.");
-                optionalOntology = ontologyManager.retrieveOntology(recordId, valueFactory.createIRI(branchIdStr),
-                        valueFactory.createIRI(commitIdStr));
-            } else if (!stringParamIsMissing(branchIdStr)) {
-                optionalOntology = ontologyManager.retrieveOntology(recordId, valueFactory.createIRI(branchIdStr));
+        try {
+            if (cache.isPresent() && cache.get().containsKey(key)) {
+                log.trace("cache hit");
+                optionalOntology = Optional.of(cache.get().get(key));
             } else {
-                optionalOntology = ontologyManager.retrieveOntology(recordId);
+                Resource recordId = valueFactory.createIRI(recordIdStr);
+
+                if (!stringParamIsMissing(commitIdStr)) {
+                    throwErrorIfMissingStringParam(branchIdStr, "The branchIdStr is missing.");
+                    optionalOntology = ontologyManager.retrieveOntology(recordId, valueFactory.createIRI(branchIdStr),
+                            valueFactory.createIRI(commitIdStr));
+                } else if (!stringParamIsMissing(branchIdStr)) {
+                    optionalOntology = ontologyManager.retrieveOntology(recordId, valueFactory.createIRI(branchIdStr));
+                } else {
+                    optionalOntology = ontologyManager.retrieveOntology(recordId);
+                }
             }
+
+            if (optionalOntology.isPresent()) {
+                User user = getUserFromContext(context);
+                OntologyRecord record = catalogManager.getRecord(catalogManager.getLocalCatalogIRI(),
+                        valueFactory.createIRI(recordIdStr), ontologyRecordFactory).orElseThrow(() ->
+                        ErrorUtils.sendError("OntologyRecord could not be found.", Response.Status.BAD_REQUEST));
+                Optional<Resource> optionalInProgressCommitIRI = catalogManager.getInProgressCommitIRI(user
+                        .getResource(), record.getResource());
+
+                if (optionalInProgressCommitIRI.isPresent()) {
+                    Model ontologyModel = catalogManager.applyInProgressCommit(optionalInProgressCommitIRI.get(),
+                            optionalOntology.get().asModel(modelFactory));
+                    optionalOntology = Optional.of(ontologyManager.createOntology(ontologyModel));
+                }
+            }
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+        } catch (IllegalStateException | MatOntoException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
 
-        if (optionalOntology.isPresent()) {
-            User user = getUserFromContext(context);
-            OntologyRecord record = catalogManager.getRecord(catalogManager.getLocalCatalogIRI(),
-                    valueFactory.createIRI(recordIdStr), ontologyRecordFactory).orElseThrow(() ->
-                    ErrorUtils.sendError("OntologyRecord could not be found.", Response.Status.BAD_REQUEST));
-            Optional<Resource> optionalInProgressCommitIRI = catalogManager.getInProgressCommitIRI(user
-                    .getResource(), record.getResource());
-
-            if (optionalInProgressCommitIRI.isPresent()) {
-                Model ontologyModel = catalogManager.applyInProgressCommit(optionalInProgressCommitIRI.get(),
-                        optionalOntology.get().asModel(modelFactory));
-                optionalOntology = Optional.of(ontologyManager.createOntology(ontologyModel));
-            }
-        }
         return optionalOntology;
     }
 

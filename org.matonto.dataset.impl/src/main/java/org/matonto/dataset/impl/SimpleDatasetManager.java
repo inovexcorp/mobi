@@ -175,7 +175,7 @@ public class SimpleDatasetManager implements DatasetManager {
 
         try (RepositoryConnection conn = dsRepo.getConnection()) {
             if (conn.getStatements(datasetIRI, null, null).hasNext()) {
-                throw new IllegalStateException("The dataset already exists in the specified repository.");
+                throw new IllegalArgumentException("The dataset already exists in the specified repository.");
             }
         }
         DatasetRecord datasetRecord = catalogManager.createRecord(config, dsRecFactory);
