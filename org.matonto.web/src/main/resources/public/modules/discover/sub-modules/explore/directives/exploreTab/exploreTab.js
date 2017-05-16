@@ -38,6 +38,7 @@
          * @name sparqlResultTable.directive:exploreTab
          * @scope
          * @restrict E
+         * @requires discoverState.service:discoverStateService
          *
          * @description
          * HTML contents in the explore tab.

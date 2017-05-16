@@ -52,6 +52,16 @@
                 util = utilService,
                 prefix = '/matontorest/datasets';
 
+            /**
+             * @ngdoc property
+             * @name datasetRecords
+             * @propertyOf datasetManager.service:datasetManagerService
+             * @type {Object[]}
+             * 
+             * @description
+             * 'datasetRecords' holds an array of dataset record objects which contain properties for the metadata
+             * associated with that record.
+             */
             self.datasetRecords = [];
 
             /**
@@ -190,6 +200,16 @@
                 return deferred.promise;
             }
 
+            
+            /**
+             * @ngdoc method
+             * @name initialize
+             * @methodOf datasetManager.service:datasetManagerService
+             *
+             * @description
+             * Populates the 'datasetRecords' with results from the 'getDatasetRecords' method. If that method results in an error,
+             * an error toast will be displayed.
+             */
             self.initialize = function() {
                 var paginatedConfig = {
                     sortOption: {

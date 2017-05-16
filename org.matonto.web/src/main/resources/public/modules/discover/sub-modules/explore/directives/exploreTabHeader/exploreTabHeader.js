@@ -30,7 +30,7 @@
          *
          * @description
          * The `exploreTabHeader` module only provides the `exploreTabHeader` directive which creates
-         * the explore tab.
+         * the explore tab header.
          */
         .module('exploreTabHeader', [])
         /**
@@ -38,9 +38,12 @@
          * @name sparqlResultTable.directive:exploreTabHeader
          * @scope
          * @restrict E
+         * @requires discoverState.service:discoverStateService
+         * @requires explore.service:exploreService
+         * @requires util.service:utilService
          *
          * @description
-         * HTML contents in the explore tab.
+         * HTML contents in the explore tab header.
          */
         .directive('exploreTabHeader', exploreTabHeader);
         
