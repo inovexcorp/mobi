@@ -30,7 +30,7 @@
          *
          * @description
          * The `instanceBlockHeader` module only provides the `instanceBlockHeader` directive which creates
-         * the explore tab.
+         * the instance block header.
          */
         .module('instanceBlockHeader', [])
         /**
@@ -38,9 +38,10 @@
          * @name sparqlResultTable.directive:instanceBlockHeader
          * @scope
          * @restrict E
+         * @requires discoverState.service:discoverStateService
          *
          * @description
-         * HTML contents in the explore tab.
+         * HTML contents in the instance block header.
          */
         .directive('instanceBlockHeader', instanceBlockHeader);
         

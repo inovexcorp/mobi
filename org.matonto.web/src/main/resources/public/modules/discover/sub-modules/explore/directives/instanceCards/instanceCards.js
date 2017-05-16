@@ -24,7 +24,27 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name instanceCards
+         *
+         * @description
+         * The `instanceCards` module only provides the `instanceCards` directive which creates a grid of cards
+         * with all of the instance details about a class associated with a dataset record.
+         */
         .module('instanceCards', [])
+        /**
+         * @ngdoc directive
+         * @name instanceCards.directive:instanceCards
+         * @scope
+         * @restrict E
+         * @requires discoverState.service:discoverStateService
+         *
+         * @description
+         * `instanceCards` is a directive that creates a div which contains a 3 column grid used to display the
+         * instance details for a class associated with a dataset record. The directive is replaced by the
+         * contents of its template.
+         */
         .directive('instanceCards', instanceCards);
 
         instanceCards.$inject = ['discoverStateService']

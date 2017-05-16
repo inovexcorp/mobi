@@ -215,6 +215,18 @@
             }]);
         }
         
+        /**
+         * @ngdoc method
+         * @name getClassInstanceDetails
+         * @methodOf explore.service:exploreService
+         *
+         * @description
+         * Calls the GET /matontorest/explorable-datasets/{recordId}/classes/{classId}/instance-details endpoint and returns the
+         * array of instance details.
+         *
+         * @returns {Promise} A promise that resolves to an array of the instance details for the identified class of the
+         * identified dataset record.
+         */
         self.getClassInstanceDetails = function(recordId, classId) {
             // var params = $httpParamSerializer({classId});
             // return $http.get(prefix + encodeURIComponent(recordId) + '/instances?' + params)
@@ -329,6 +341,17 @@
             });
         }
         
+        /**
+         * @ngdoc method
+         * @name createPagedResultsObject
+         * @methodOf explore.service:exploreService
+         *
+         * @description
+         * Creates an object which contains all of the paginated details from the provided response in the expected format.
+         *
+         * @param {Object} response The response of an $http call which should contain paginated details in the header.
+         * @returns {Object} An object which contains all of the paginated details in the expected format.
+         */
         self.createPagedResultsObject = function(response) {
             var object = {};
             _.set(object, 'data', response.data);

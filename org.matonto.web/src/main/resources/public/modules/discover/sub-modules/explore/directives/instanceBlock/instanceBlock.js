@@ -24,7 +24,28 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name instanceBlock
+         *
+         * @description
+         * The `instanceBlock` module only provides the `instanceBlock` directive which creates
+         * the instance block.
+         */
         .module('instanceBlock', [])
+        /**
+         * @ngdoc directive
+         * @name instanceBlock.directive:instanceBlock
+         * @scope
+         * @restrict E
+         * @requires $http
+         * @requires discoverState.service:discoverStateService
+         * @requires explore.service:exploreService
+         * @requires util.service:utilService
+         *
+         * @description
+         * HTML contents in the instance block.
+         */
         .directive('instanceBlock', instanceBlock);
         
         instanceBlock.$inject = ['$http', 'discoverStateService', 'exploreService', 'utilService'];

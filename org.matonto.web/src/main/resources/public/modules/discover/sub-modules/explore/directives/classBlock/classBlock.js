@@ -24,7 +24,25 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name classBlock
+         *
+         * @description
+         * The `classBlock` module only provides the `classBlock` directive which creates
+         * the class block.
+         */
         .module('classBlock', [])
+        /**
+         * @ngdoc directive
+         * @name classBlock.directive:classBlock
+         * @scope
+         * @restrict E
+         * @requires discoverState.service:discoverStateService
+         *
+         * @description
+         * HTML contents in the class block.
+         */
         .directive('classBlock', classBlock);
         
         classBlock.$inject = ['discoverStateService'];
