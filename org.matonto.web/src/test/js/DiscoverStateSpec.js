@@ -21,39 +21,33 @@
  * #L%
  */
 describe('Discover State Service', function() {
-    var discoverStateSvc, datasetManagerSvc, prefixes, $q, util, scope;
+    var discoverStateSvc;
 
     beforeEach(function() {
         module('discoverState');
-        mockDatasetManager();
-        mockPrefixes();
-        mockUtil();
 
-        inject(function(discoverStateService, _datasetManagerService_, _prefixes_, _$q_, _utilService_, _$rootScope_) {
+        inject(function(discoverStateService) {
             discoverStateSvc = discoverStateService;
-            datasetManagerSvc = _datasetManagerService_;
-            prefixes = _prefixes_;
-            $q = _$q_;
-            util = _utilService_;
-            scope = _$rootScope_;
         });
     });
     
-    describe('setDatasetRecords calls the correct functions', function() {
-        it('when getDatasetRecords is resolved', function() {
-            var datasetRecord = {'@type': [prefixes.dataset + 'DatasetRecord']};
-            datasetManagerSvc.getDatasetRecords.and.returnValue($q.when({data: [[datasetRecord]]}));
-            discoverStateSvc.setDatasetRecords();
-            scope.$apply();
-            expect(datasetManagerSvc.getDatasetRecords).toHaveBeenCalled();
-            expect(discoverStateSvc.datasetRecords).toEqual([datasetRecord]);
+    it('default variables should be set properly', function() {
+        expect(discoverStateSvc.explore).toEqual({
+            active: true,
+            breadcrumbs: ['Classes'],
+            classDetails: [],
+            instanceDetails: {
+                currentPage: 0,
+                data: [],
+                limit: 99,
+                links: {
+                    next: '',
+                    prev: ''
+                },
+                total: 0
+            },
+            recordId: ''
         });
-        it('when getDatasetRecords is rejected', function() {
-            datasetManagerSvc.getDatasetRecords.and.returnValue($q.reject('error'));
-            discoverStateSvc.setDatasetRecords();
-            scope.$apply();
-            expect(datasetManagerSvc.getDatasetRecords).toHaveBeenCalled();
-            expect(util.createErrorToast).toHaveBeenCalledWith('error');
-        });
+        expect(discoverStateSvc.query).toEqual({active: false});
     });
 });

@@ -21,19 +21,25 @@
  * #L%
  */
 describe('Class Cards directive', function() {
-    var $compile, scope, element, discoverStateSvc;
+    var $compile, scope, element, discoverStateSvc, exploreSvc, utilSvc, $q;
 
     beforeEach(function() {
         module('templates');
         module('classCards');
         mockDiscoverState();
+        mockUtil();
+        mockExplore();
 
-        inject(function(_$compile_, _$rootScope_, _discoverStateService_) {
+        inject(function(_$compile_, _$rootScope_, _discoverStateService_, _exploreService_, _utilService_, _$q_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             discoverStateSvc = _discoverStateService_;
+            exploreSvc = _exploreService_;
+            utilSvc = _utilService_;
+            $q = _$q_;
         });
 
+        discoverStateSvc.explore.recordId = 'recordId';
         discoverStateSvc.explore.classDetails = [{
             count: 1,
             label: 'z'
@@ -87,8 +93,8 @@ describe('Class Cards directive', function() {
         it('with a md-card-content', function() {
             expect(element.find('md-card-content').length).toBe(4);
         });
-        it('with a .class-overview', function() {
-            expect(element.querySelectorAll('.class-overview').length).toBe(4);
+        it('with a .overview', function() {
+            expect(element.querySelectorAll('.overview').length).toBe(4);
         });
         it('with a .text-muted', function() {
             expect(element.querySelectorAll('.text-muted').length).toBe(8);
@@ -114,10 +120,33 @@ describe('Class Cards directive', function() {
         beforeEach(function() {
             controller = element.controller('classCards');
         });
-        it('exploreData should set the correct variables', function() {
-            discoverStateSvc.explore.breadcrumbs = [''];
-            controller.exploreData({label: 'new'});
-            expect(discoverStateSvc.explore.breadcrumbs).toEqual(['', 'new']);
+        describe('exploreData should set the correct variables when getClassInstances is', function() {
+            it('resolved', function() {
+                var data = [{prop: 'data'}];
+                var nextLink = 'http://example.com/next';
+                var prevLink = 'http://example.com/prev';
+                var headers = jasmine.createSpy('headers').and.returnValue({
+                    'x-total-count': 10,
+                    link: 'link'
+                });
+                utilSvc.parseLinks.and.returnValue({next: nextLink, prev: prevLink});
+                discoverStateSvc.explore.breadcrumbs = [''];
+                exploreSvc.getClassInstanceDetails.and.returnValue($q.when({data: data, headers: headers}));
+                exploreSvc.createPagedResultsObject.and.returnValue({prop: 'paged'});
+                controller.exploreData({label: 'new', classId: 'classId'});
+                scope.$apply();
+                expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith('recordId', 'classId');
+                expect(exploreSvc.createPagedResultsObject).toHaveBeenCalledWith({data: data, headers: headers});
+                expect(discoverStateSvc.explore.instanceDetails).toEqual(jasmine.objectContaining({prop: 'paged'}));
+                expect(discoverStateSvc.explore.breadcrumbs).toEqual(['', 'new']);
+            });
+            it('rejected', function() {
+                exploreSvc.getClassInstanceDetails.and.returnValue($q.reject('error'));
+                controller.exploreData({label: 'new', classId: 'classId'});
+                scope.$apply();
+                expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith('recordId', 'classId');
+                expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');
+            });
         });
     });
 });

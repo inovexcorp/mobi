@@ -27,35 +27,28 @@
         .module('discoverState', [])
         .service('discoverStateService', discoverStateService);
     
-    discoverStateService.$inject = ['datasetManagerService', 'prefixes', 'utilService'];
-    
-    function discoverStateService(datasetManagerService, prefixes, utilService) {
+    function discoverStateService() {
         var self = this;
-        var dam = datasetManagerService;
-        var util = utilService;
         
         self.explore = {
             active: true,
             breadcrumbs: ['Classes'],
             classDetails: [],
-            instanceDetails: [],
-            recordId: '',
-            step: 0
+            instanceDetails: {
+                currentPage: 0,
+                data: [],
+                limit: 99,
+                links: {
+                    next: '',
+                    prev: ''
+                },
+                total: 0
+            },
+            recordId: ''
         };
         
         self.query = {
             active: false
         };
-        
-        self.datasetRecords = [];
-        
-        self.setDatasetRecords = function() {
-            dam.getDatasetRecords()
-                .then(response => {
-                    self.datasetRecords = _.map(response.data, arr => _.find(arr, obj => _.includes(obj['@type'], prefixes.dataset + 'DatasetRecord')));
-                }, util.createErrorToast);
-        }
-        
-        self.setDatasetRecords();
     }
 })();

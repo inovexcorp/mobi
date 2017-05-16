@@ -21,7 +21,7 @@
   #L%
   -->
 <div class="class-cards full-height">
-    <div vs-repeat="280" class="rows-container full-height">
+    <div vs-repeat="183" class="rows-container full-height">
         <div ng-repeat="chunk in dvm.chunks" class="row">
             <div ng-repeat="item in chunk" class="card-container col-xs-4">
                 <md-card class="card">
@@ -34,7 +34,7 @@
                         </md-card-title-text>
                     </md-card-title>
                     <md-card-content>
-                        <p class="class-overview">{{item.overview}}</p>
+                        <p class="overview">{{item.overview}}</p>
                         <p class="text-muted">Defined in {{item.ontologyId}}</p>
                         <em class="text-muted">Examples: <span ng-repeat="example in item.examples">{{example}}<span ng-if="!$last">, </span></em>
                     </md-card-content>

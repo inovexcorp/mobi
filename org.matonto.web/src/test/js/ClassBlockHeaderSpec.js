@@ -62,7 +62,7 @@ describe('Class Block Header directive', function() {
     
     describe('controller methods', function() {
         describe('onSelect calls the proper methods', function() {
-            it('when getClassDetails resolves', function() {
+            it('when getInstancesDetails resolves', function() {
                 discoverStateSvc.explore.recordId = 'recordId';
                 exploreSvc.getClassDetails.and.returnValue($q.when([{prop: 'details'}]));
                 controller.onSelect();
@@ -70,7 +70,7 @@ describe('Class Block Header directive', function() {
                 expect(exploreSvc.getClassDetails).toHaveBeenCalledWith('recordId');
                 expect(discoverStateSvc.explore.classDetails).toEqual([{prop: 'details'}]);
             });
-            it('when getClassDetails rejects', function() {
+            it('when getInstancesDetails rejects', function() {
                 discoverStateSvc.explore.recordId = 'recordId';
                 discoverStateSvc.explore.classDetails = [{}];
                 exploreSvc.getClassDetails.and.returnValue($q.reject('error'));

@@ -915,16 +915,24 @@ function mockDiscoverState() {
         $provide.service('discoverStateService', function() {
             this.explore = {
                 active: true,
-                breadcrumbs: [''],
+                breadcrumbs: ['Classes'],
                 classDetails: [],
-                instanceDetails: [],
+                instanceDetails: {
+                    currentPage: 0,
+                    data: [],
+                    limit: 99,
+                    links: {
+                        next: '',
+                        prev: ''
+                    },
+                    total: 0
+                },
                 recordId: ''
-            }
+            };
+            
             this.query = {
                 active: false
-            }
-            this.datasetRecords = [];
-            this.setDatasetRecords = jasmine.createSpy('setDatasetRecords');
+            };
         });
     });
 }
@@ -933,6 +941,8 @@ function mockExplore() {
     module(function($provide) {
         $provide.service('exploreService', function($q) {
             this.getClassDetails = jasmine.createSpy('getClassDetails').and.returnValue($q.when([]));
+            this.getClassInstanceDetails = jasmine.createSpy('getClassInstanceDetails').and.returnValue($q.when([]));
+            this.createPagedResultsObject = jasmine.createSpy('createPagedResultsObject').and.returnValue({});
         });
     });
 }

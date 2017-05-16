@@ -21,19 +21,27 @@
  * #L%
  */
 describe('Explore Service', function() {
-    var discoverStateSvc, datasetManagerSvc, prefixes, $q, util, scope;
+    var exploreSvc, $q, $httpBackend, utilSvc;
 
     beforeEach(function() {
         module('explore');
+        mockUtil();
 
-        inject(function(exploreService, _$q_, _$httpBackend_) {
+        inject(function(exploreService, _$q_, _$httpBackend_, _utilService_) {
             exploreSvc = exploreService;
             $q = _$q_;
             $httpBackend = _$httpBackend_;
+            utilSvc = _utilService_;
         });
     });
+
+    // function flushAndVerify() {
+    //     $httpBackend.flush();
+    //     $httpBackend.verifyNoOutstandingExpectation();
+    //     $httpBackend.verifyNoOutstandingRequest();
+    // }
     
-    // describe('getClassDetails calls the correct functions when get exploration-datasets/{id}', function() {
+    // describe('getInstancesDetails calls the correct functions when get exploration-datasets/{recordId}/instances-details', function() {
     //     it('is resolved', function() {
     //         var data = [{
     //             label: 'label',
@@ -42,22 +50,70 @@ describe('Explore Service', function() {
     //             overview: 'overview',
     //             ontologyId: 'ontologyId'
     //         }];
-    //         $httpBackend.expectGET('/exploration-dataset/recordId').respond(200, data);
-    //         exploreSvc.getClassDetails('recordId')
+    //         $httpBackend.expectGET('/exploration-dataset/recordId/instances-details').respond(200, data);
+    //         exploreSvc.getInstancesDetails('recordId')
     //             .then(function(response) {
     //                 expect(response).toEqual(data);
     //             }, function() {
     //                 fail('Should have been resolved.');
     //             });
+    //          flushAndVerify();
     //     });
     //     it('is rejected', function() {
-    //         $httpBackend.expectGET('/exploration-dataset/recordId').respond(400, null, null, 'error');
-    //         exploreSvc.getClassDetails('recordId')
+    //         $httpBackend.expectGET('/exploration-dataset/recordId/instances-details').respond(400, null, null, 'error');
+    //         exploreSvc.getInstancesDetails('recordId')
     //             .then(function() {
     //                 fail('Should have been rejected.');
     //             }, function(response) {
     //                 expect(response).toBe('error');
     //             });
+    //          flushAndVerify();
     //     });
     // });
+    
+    // describe('getInstances calls the correct functions when get exploration-datasets/{id}/instances?classId={classId}', function() {
+    //     it('is resolved', function() {
+    //         var data = [{}];
+    //         var headers = {};
+    //         $httpBackend.expectGET('/exploration-dataset/recordId/instances?classId=classId').respond(200, data, headers);
+    //         exploreSvc.getClassInstances('recordId', 'classId')
+    //             .then(function(response) {
+    //                 TODO: update this expectation
+    //                 expect(response).toEqual(data);
+    //             }, function() {
+    //                 fail('Should have been resolved.');
+    //             });
+    //          flushAndVerify();
+    //     });
+    //     it('is rejected', function() {
+    //         $httpBackend.expectGET('/exploration-dataset/recordId/instances?classId=classId').respond(400, null, null, 'error');
+    //         exploreSvc.getClassInstances('recordId', 'classId')
+    //             .then(function() {
+    //                 fail('Should have been rejected.');
+    //             }, function(response) {
+    //                 expect(response).toBe('error');
+    //             });
+    //          flushAndVerify();
+    //     });
+    // });
+    
+    it('createPagedResultsObject should return the correct paged object', function() {
+        var response = {
+            data: ['data'],
+            headers: jasmine.createSpy('headers').and.returnValue({
+                'x-total-count': 10,
+                link: 'link'
+            })
+        };
+        var nextLink = 'http://example.com/next';
+        var prevLink = 'http://example.com/prev';
+        utilSvc.parseLinks.and.returnValue({next: nextLink, prev: prevLink});
+        var result = exploreSvc.createPagedResultsObject(response);
+        expect(result.data).toEqual(['data']);
+        expect(response.headers).toHaveBeenCalled();
+        expect(result.total).toBe(10);
+        expect(utilSvc.parseLinks).toHaveBeenCalledWith('link');
+        expect(result.links.next).toBe(nextLink);
+        expect(result.links.prev).toBe(prevLink);
+    });
 });

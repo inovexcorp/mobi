@@ -27,9 +27,9 @@
         .module('classCards', [])
         .directive('classCards', classCards);
 
-        classCards.$inject = ['discoverStateService'];
+        classCards.$inject = ['discoverStateService', 'exploreService', 'utilService'];
 
-        function classCards(discoverStateService) {
+        function classCards(discoverStateService, exploreService, utilService) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/discover/sub-modules/explore/directives/classCards/classCards.html',
@@ -39,10 +39,16 @@
                 controller: function() {
                     var dvm = this;
                     var ds = discoverStateService;
+                    var es = exploreService;
+                    var util = utilService;
                     dvm.chunks = _.chunk(_.orderBy(ds.explore.classDetails, ['count', 'label'], ['desc', 'asc']), 3);
                     
                     dvm.exploreData = function(item) {
-                        ds.explore.breadcrumbs.push(item.label);
+                        es.getClassInstanceDetails(ds.explore.recordId, item.classId)
+                            .then(response => {
+                                _.merge(ds.explore.instanceDetails, es.createPagedResultsObject(response));
+                                ds.explore.breadcrumbs.push(item.label);
+                            }, util.createErrorToast);
                     }
                 }
             }

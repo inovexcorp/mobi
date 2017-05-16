@@ -46,7 +46,7 @@
                     dvm.dm = datasetManagerService;
                     dvm.util = utilService;
 
-                    if (!_.includes(dvm.dm.datasetRecords, dvm.bindModel)) {
+                    if (!_.some(dvm.dm.datasetRecords, {'@id': dvm.bindModel})) {
                         dvm.bindModel = '';
                     }
                 }

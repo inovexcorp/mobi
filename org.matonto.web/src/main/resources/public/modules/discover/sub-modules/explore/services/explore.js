@@ -27,286 +27,289 @@
         .module('explore', [])
         .service('exploreService', exploreService);
     
-    exploreService.$inject = ['$q'];
+    exploreService.$inject = ['$http', '$q', '$httpParamSerializer', 'utilService'];
     
-    function exploreService($q) {
+    function exploreService($http, $q, $httpParamSerializer, utilService) {
         var self = this;
-        var prefix = 'exploration-datasets/';
+        var prefix = 'explorable-datasets/';
+        var util = utilService;
         
         self.getClassDetails = function(recordId) {
-            // return $http.get(prefix + encodeURIComponent(id))
-            //     .then(response => $q.when(response.data), response => $q.reject(response.data));
+            // return $http.get(prefix + encodeURIComponent(recordId) + '/instances-details')
+            //     .then(response => $q.when(response.data), response => $q.reject(response.statusText));
             return $q.when([{
                 label: 'Material',
                 count: 13,
                 examples: ['Stuff', 'Other Stuff'],
                 overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc'
+                ontologyId: 'https://matonto.org/uhtc',
+                classId: 'https://matonto.org/uhtc#material'
             }, {
                 label: 'Crystal Structure',
                 count: 4,
                 examples: ['FCC', 'Hexagonal'],
                 overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc'
+                ontologyId: 'https://matonto.org/uhtc',
+                classId: 'https://matonto.org/uhtc#crystalStructure'
             }, {
                 label: 'Element',
                 count: 22,
                 examples: ['Carbon', 'Silicon', 'Titanium'],
                 overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc'
+                ontologyId: 'https://matonto.org/uhtc',
+                classId: 'https://matonto.org/uhtc#element'
             }, {
                 label: 'Material',
                 count: 13,
                 examples: ['Stuff', 'Other Stuff'],
                 overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc'
+                ontologyId: 'https://matonto.org/uhtc',
+                classId: 'https://matonto.org/uhtc#material'
             }, {
                 label: 'Crystal Structure',
                 count: 4,
                 examples: ['FCC', 'Hexagonal'],
                 overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc'
+                ontologyId: 'https://matonto.org/uhtc',
+                classId: 'https://matonto.org/uhtc#crystalStructure'
             }, {
                 label: 'Element',
                 count: 22,
                 examples: ['Carbon', 'Silicon', 'Titanium'],
                 overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc'
+                ontologyId: 'https://matonto.org/uhtc',
+                classId: 'https://matonto.org/uhtc#element'
             }, {
                 label: 'Material',
                 count: 13,
                 examples: ['Stuff', 'Other Stuff'],
                 overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc'
+                ontologyId: 'https://matonto.org/uhtc',
+                classId: 'https://matonto.org/uhtc#material'
             }, {
                 label: 'Crystal Structure',
                 count: 4,
                 examples: ['FCC', 'Hexagonal'],
                 overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc'
+                ontologyId: 'https://matonto.org/uhtc',
+                classId: 'https://matonto.org/uhtc#crystalStructure'
             }, {
                 label: 'Element',
                 count: 22,
                 examples: ['Carbon', 'Silicon', 'Titanium'],
                 overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc'
+                ontologyId: 'https://matonto.org/uhtc',
+                classId: 'https://matonto.org/uhtc#element'
             }, {
                 label: 'Material',
                 count: 13,
                 examples: ['Stuff', 'Other Stuff'],
                 overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc'
+                ontologyId: 'https://matonto.org/uhtc',
+                classId: 'https://matonto.org/uhtc#material'
             }, {
                 label: 'Crystal Structure',
                 count: 4,
                 examples: ['FCC', 'Hexagonal'],
                 overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc'
+                ontologyId: 'https://matonto.org/uhtc',
+                classId: 'https://matonto.org/uhtc#crystalStructure'
             }, {
                 label: 'Element',
                 count: 22,
                 examples: ['Carbon', 'Silicon', 'Titanium'],
                 overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc'
+                ontologyId: 'https://matonto.org/uhtc',
+                classId: 'https://matonto.org/uhtc#element'
             }, {
                 label: 'Material',
                 count: 13,
                 examples: ['Stuff', 'Other Stuff'],
                 overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc'
+                ontologyId: 'https://matonto.org/uhtc',
+                classId: 'https://matonto.org/uhtc#material'
             }, {
                 label: 'Crystal Structure',
                 count: 4,
                 examples: ['FCC', 'Hexagonal'],
                 overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc'
+                ontologyId: 'https://matonto.org/uhtc',
+                classId: 'https://matonto.org/uhtc#crystalStructure'
             }, {
                 label: 'Element',
                 count: 22,
                 examples: ['Carbon', 'Silicon', 'Titanium'],
                 overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc'
+                ontologyId: 'https://matonto.org/uhtc',
+                classId: 'https://matonto.org/uhtc#element'
             }, {
                 label: 'Material',
                 count: 13,
                 examples: ['Stuff', 'Other Stuff'],
                 overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc'
+                ontologyId: 'https://matonto.org/uhtc',
+                classId: 'https://matonto.org/uhtc#material'
             }, {
                 label: 'Crystal Structure',
                 count: 4,
                 examples: ['FCC', 'Hexagonal'],
                 overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc'
+                ontologyId: 'https://matonto.org/uhtc',
+                classId: 'https://matonto.org/uhtc#crystalStructure'
             }, {
                 label: 'Element',
                 count: 22,
                 examples: ['Carbon', 'Silicon', 'Titanium'],
                 overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc'
+                ontologyId: 'https://matonto.org/uhtc',
+                classId: 'https://matonto.org/uhtc#element'
             }, {
                 label: 'Material',
                 count: 13,
                 examples: ['Stuff', 'Other Stuff'],
                 overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc'
+                ontologyId: 'https://matonto.org/uhtc',
+                classId: 'https://matonto.org/uhtc#material'
             }, {
                 label: 'Crystal Structure',
                 count: 4,
                 examples: ['FCC', 'Hexagonal'],
                 overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc'
+                ontologyId: 'https://matonto.org/uhtc',
+                classId: 'https://matonto.org/uhtc#crystalStructure'
             }, {
                 label: 'Element',
                 count: 22,
                 examples: ['Carbon', 'Silicon', 'Titanium'],
                 overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc'
-            }, {
-                label: 'Material',
-                count: 13,
-                examples: ['Stuff', 'Other Stuff'],
-                overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc'
-            }, {
-                label: 'Crystal Structure',
-                count: 4,
-                examples: ['FCC', 'Hexagonal'],
-                overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc'
-            }, {
-                label: 'Element',
-                count: 22,
-                examples: ['Carbon', 'Silicon', 'Titanium'],
-                overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc'
-            }, {
-                label: 'Material',
-                count: 13,
-                examples: ['Stuff', 'Other Stuff'],
-                overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc'
-            }, {
-                label: 'Crystal Structure',
-                count: 4,
-                examples: ['FCC', 'Hexagonal'],
-                overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc'
-            }, {
-                label: 'Element',
-                count: 22,
-                examples: ['Carbon', 'Silicon', 'Titanium'],
-                overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc'
-            }, {
-                label: 'Material',
-                count: 13,
-                examples: ['Stuff', 'Other Stuff'],
-                overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc'
-            }, {
-                label: 'Crystal Structure',
-                count: 4,
-                examples: ['FCC', 'Hexagonal'],
-                overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc'
-            }, {
-                label: 'Element',
-                count: 22,
-                examples: ['Carbon', 'Silicon', 'Titanium'],
-                overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc'
-            }, {
-                label: 'Material',
-                count: 13,
-                examples: ['Stuff', 'Other Stuff'],
-                overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc'
-            }, {
-                label: 'Crystal Structure',
-                count: 4,
-                examples: ['FCC', 'Hexagonal'],
-                overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc'
-            }, {
-                label: 'Element',
-                count: 22,
-                examples: ['Carbon', 'Silicon', 'Titanium'],
-                overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc'
-            }, {
-                label: 'Material',
-                count: 13,
-                examples: ['Stuff', 'Other Stuff'],
-                overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc'
-            }, {
-                label: 'Crystal Structure',
-                count: 4,
-                examples: ['FCC', 'Hexagonal'],
-                overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc'
-            }, {
-                label: 'Element',
-                count: 22,
-                examples: ['Carbon', 'Silicon', 'Titanium'],
-                overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc'
-            }, {
-                label: 'Material',
-                count: 13,
-                examples: ['Stuff', 'Other Stuff'],
-                overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc'
-            }, {
-                label: 'Crystal Structure',
-                count: 4,
-                examples: ['FCC', 'Hexagonal'],
-                overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc'
-            }, {
-                label: 'Element',
-                count: 22,
-                examples: ['Carbon', 'Silicon', 'Titanium'],
-                overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc'
-            }, {
-                label: 'Material',
-                count: 13,
-                examples: ['Stuff', 'Other Stuff'],
-                overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc'
-            }, {
-                label: 'Crystal Structure',
-                count: 4,
-                examples: ['FCC', 'Hexagonal'],
-                overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc'
-            }, {
-                label: 'Element',
-                count: 22,
-                examples: ['Carbon', 'Silicon', 'Titanium'],
-                overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc'
-            }, {
-                label: 'Material',
-                count: 13,
-                examples: ['Stuff', 'Other Stuff'],
-                overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc'
-            }, {
-                label: 'Crystal Structure',
-                count: 4,
-                examples: ['FCC', 'Hexagonal'],
-                overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc'
-            }, {
-                label: 'Element',
-                count: 22,
-                examples: ['Carbon', 'Silicon', 'Titanium'],
-                overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc'
+                ontologyId: 'https://matonto.org/uhtc',
+                classId: 'https://matonto.org/uhtc#element'
             }]);
+        }
+        
+        self.getClassInstanceDetails = function(recordId, classId) {
+            // var params = $httpParamSerializer({classId});
+            // return $http.get(prefix + encodeURIComponent(recordId) + '/instances?' + params)
+            //     .then($q.when, response => $q.reject(response.statusText));
+            return $q.when({
+                data: [{
+                        label: 'Silicon Carbide',
+                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
+                    }, {
+                        label: 'Sodium Chloride',
+                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
+                    }, {
+                        label: 'Hydrogen Peroxide',
+                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
+                    }, {
+                        label: 'Silicon Carbide',
+                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
+                    }, {
+                        label: 'Sodium Chloride',
+                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
+                    }, {
+                        label: 'Hydrogen Peroxide',
+                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
+                    }, {
+                        label: 'Silicon Carbide',
+                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
+                    }, {
+                        label: 'Sodium Chloride',
+                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
+                    }, {
+                        label: 'Hydrogen Peroxide',
+                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
+                    }, {
+                        label: 'Silicon Carbide',
+                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
+                    }, {
+                        label: 'Sodium Chloride',
+                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
+                    }, {
+                        label: 'Silicon Carbide',
+                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
+                    }, {
+                        label: 'Sodium Chloride',
+                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
+                    }, {
+                        label: 'Hydrogen Peroxide',
+                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
+                    }, {
+                        label: 'Silicon Carbide',
+                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
+                    }, {
+                        label: 'Sodium Chloride',
+                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
+                    }, {
+                        label: 'Hydrogen Peroxide',
+                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
+                    }, {
+                        label: 'Silicon Carbide',
+                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
+                    }, {
+                        label: 'Sodium Chloride',
+                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
+                    }, {
+                        label: 'Hydrogen Peroxide',
+                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
+                    }, {
+                        label: 'Silicon Carbide',
+                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
+                    }, {
+                        label: 'Sodium Chloride',
+                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
+                    }, {
+                        label: 'Silicon Carbide',
+                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
+                    }, {
+                        label: 'Sodium Chloride',
+                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
+                    }, {
+                        label: 'Hydrogen Peroxide',
+                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
+                    }, {
+                        label: 'Silicon Carbide',
+                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
+                    }, {
+                        label: 'Sodium Chloride',
+                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
+                    }, {
+                        label: 'Hydrogen Peroxide',
+                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
+                    }, {
+                        label: 'Silicon Carbide',
+                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
+                    }, {
+                        label: 'Sodium Chloride',
+                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
+                    }, {
+                        label: 'Hydrogen Peroxide',
+                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
+                    }, {
+                        label: 'Silicon Carbide',
+                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
+                    }, {
+                        label: 'Sodium Chloride',
+                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
+                    }],
+                headers: () => {
+                    return {
+                        'x-total-count': 5000,
+                        link: '<http://matonto.org/next>; rel="next"'
+                    }
+                }
+            });
+        }
+        
+        self.createPagedResultsObject = function(response) {
+            var object = {};
+            _.set(object, 'data', response.data);
+            var headers = response.headers();
+            _.set(object, 'total', _.get(headers, 'x-total-count', 0));
+            var links = util.parseLinks(_.get(headers, 'link', {}));
+            _.set(object, 'links.next', _.get(links, 'next', ''));
+            _.set(object, 'links.prev', _.get(links, 'prev', ''));
+            return object;
         }
     }
 })();

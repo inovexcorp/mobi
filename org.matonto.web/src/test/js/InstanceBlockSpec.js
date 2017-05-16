@@ -21,28 +21,39 @@
  * #L%
  */
 describe('Instance Block directive', function() {
-    var $compile, scope, element, discoverStateSvc;
+    var $compile, scope, element, discoverStateSvc, $httpBackend, exploreSvc, controller, utilSvc;
 
     beforeEach(function() {
         module('templates');
         module('instanceBlock');
         mockDiscoverState();
+        mockExplore();
+        mockUtil();
 
-        inject(function(_$compile_, _$rootScope_, _discoverStateService_) {
+        inject(function(_$compile_, _$rootScope_, _discoverStateService_, _$httpBackend_, _exploreService_, _utilService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             discoverStateSvc = _discoverStateService_;
+            $httpBackend = _$httpBackend_;
+            exploreSvc = _exploreService_;
+            utilSvc = _utilService_;
         });
         
         element = $compile(angular.element('<instance-block></instance-block>'))(scope);
         scope.$digest();
+        controller = element.controller('instanceBlock');
     });
+
+    function flushAndVerify() {
+        $httpBackend.flush();
+        $httpBackend.verifyNoOutstandingExpectation();
+        $httpBackend.verifyNoOutstandingRequest();
+    }
 
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
             expect(element.hasClass('instance-block')).toBe(true);
-            expect(element.hasClass('class-block')).toBe(true);
             expect(element.hasClass('full-height')).toBe(true);
         });
         it('with a block', function() {
@@ -54,14 +65,64 @@ describe('Instance Block directive', function() {
         it('with a instance-tab-header', function() {
             expect(element.find('instance-block-header').length).toBe(1);
         });
-        it('with a block-content.content-container', function() {
-            expect(element.querySelectorAll('block-content.content-container').length).toBe(1);
+        it('with a block-content', function() {
+            expect(element.querySelectorAll('block-content').length).toBe(1);
         });
-        it('with a instance-details.details', function() {
-            expect(element.querySelectorAll('instance-details.details').length).toBe(1);
+        it('with a instance-cards', function() {
+            expect(element.find('instance-cards').length).toBe(1);
         });
-        it('with a instance-cards.cards', function() {
-            expect(element.querySelectorAll('instance-cards.cards').length).toBe(1);
+        it('with a block-footer', function() {
+            expect(element.find('block-footer').length).toBe(1);
+        });
+        it('with a paging-details.pull-left', function() {
+            expect(element.querySelectorAll('paging-details.pull-left').length).toBe(1);
+        });
+        it('with a pagination.pull-right', function() {
+            expect(element.querySelectorAll('pagination.pull-right').length).toBe(1);
+        });
+    });
+    
+    describe('controller methods', function() {
+        describe('getPage should hit the correct endpoint when direction is', function() {
+            var nextLink = 'http://matonto.org/next';
+            var prevLink = 'http://matonto.org/prev';
+            beforeEach(function() {
+                discoverStateSvc.explore.instanceDetails.links = {
+                    next: nextLink,
+                    prev: prevLink
+                }
+                exploreSvc.createPagedResultsObject.and.returnValue({prop: 'paged', currentPage: 0});
+            });
+            describe('next and get', function() {
+                it('succeeds', function() {
+                    $httpBackend.expectGET(nextLink).respond(200, [{}]);
+                    controller.getPage('next');
+                    flushAndVerify();
+                    expect(exploreSvc.createPagedResultsObject).toHaveBeenCalledWith(jasmine.objectContaining({status: 200, data: [{}]}));
+                    expect(discoverStateSvc.explore.instanceDetails).toEqual(jasmine.objectContaining({prop: 'paged', currentPage: 1}));
+                });
+                it('fails', function() {
+                    $httpBackend.expectGET(nextLink).respond(400, null, null, 'error');
+                    controller.getPage('next');
+                    flushAndVerify();
+                    expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');
+                });
+            });
+            describe('prev and get', function() {
+                it('succeeds', function() {
+                    $httpBackend.expectGET(prevLink).respond(200, [{}]);
+                    controller.getPage('prev');
+                    flushAndVerify();
+                    expect(exploreSvc.createPagedResultsObject).toHaveBeenCalledWith(jasmine.objectContaining({status: 200, data: [{}]}));
+                    expect(discoverStateSvc.explore.instanceDetails).toEqual(jasmine.objectContaining({prop: 'paged', currentPage: -1}));
+                });
+                it('fails', function() {
+                    $httpBackend.expectGET(prevLink).respond(400, null, null, 'error');
+                    controller.getPage('prev');
+                    flushAndVerify();
+                    expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');
+                });
+            });
         });
     });
 });

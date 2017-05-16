@@ -27,9 +27,9 @@
         .module('instanceBlock', [])
         .directive('instanceBlock', instanceBlock);
         
-        instanceBlock.$inject = ['discoverStateService'];
+        instanceBlock.$inject = ['$http', 'discoverStateService', 'exploreService', 'utilService'];
 
-        function instanceBlock(discoverStateService) {
+        function instanceBlock($http, discoverStateService, exploreService, utilService) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/discover/sub-modules/explore/directives/instanceBlock/instanceBlock.html',
@@ -37,7 +37,25 @@
                 scope: {},
                 controllerAs: 'dvm',
                 controller: function() {
-                    this.ds = discoverStateService;
+                    var dvm = this;
+                    var es = exploreService;
+                    var util = utilService;
+                    dvm.ds = discoverStateService;
+                    
+                    dvm.getPage = function(direction) {
+                        var url = (direction === 'next') ? dvm.ds.explore.instanceDetails.links.next : dvm.ds.explore.instanceDetails.links.prev;
+                        $http.get(url)
+                            .then(response => {
+                                _.merge(dvm.ds.explore.instanceDetails, es.createPagedResultsObject(response));
+                                if (direction === 'next') {
+                                    dvm.ds.explore.instanceDetails.currentPage += 1;
+                                } else {
+                                    dvm.ds.explore.instanceDetails.currentPage -= 1;
+                                }
+                            }, response => {
+                                util.createErrorToast(response.statusText);
+                            });
+                    }
                 }
             }
         }

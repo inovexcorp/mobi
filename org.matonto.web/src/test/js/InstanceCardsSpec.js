@@ -34,17 +34,13 @@ describe('Instance Cards directive', function() {
             discoverStateSvc = _discoverStateService_;
         });
 
-        discoverStateSvc.explore.instanceDetails = [{
-            count: 1,
+        discoverStateSvc.explore.instanceDetails.data = [{
+            label: 'y'
+        }, {
             label: 'z'
         }, {
-            count: 2,
-            label: 'z'
+            label: 'b'
         }, {
-            count: 2,
-            label: 'a'
-        }, {
-            count: 1,
             label: 'a'
         }];
         element = $compile(angular.element('<instance-cards></instance-cards>'))(scope);
@@ -82,31 +78,21 @@ describe('Instance Cards directive', function() {
         it('with a .md-headline.text', function() {
             expect(element.querySelectorAll('.md-headline.text').length).toBe(4);
         });
-        it('with a .badge', function() {
-            expect(element.querySelectorAll('.badge').length).toBe(4);
-        });
         it('with a md-card-content', function() {
             expect(element.find('md-card-content').length).toBe(4);
         });
-        it('with a .class-overview', function() {
-            expect(element.querySelectorAll('.class-overview').length).toBe(4);
-        });
-        it('with a .text-muted', function() {
-            expect(element.querySelectorAll('.text-muted').length).toBe(4);
+        it('with a .overview', function() {
+            expect(element.querySelectorAll('.overview').length).toBe(4);
         });
     });
     it('properly defines controller.chunks on load', function() {
         var expected = [[{
-            count: 2,
             label: 'a'
         }, {
-            count: 2,
-            label: 'z'
+            label: 'b'
         }, {
-            count: 1,
-            label: 'a'
+            label: 'y'
         }], [{
-            count: 1,
             label: 'z'
         }]];
         expect(angular.copy(element.controller('instanceCards').chunks)).toEqual(expected);
