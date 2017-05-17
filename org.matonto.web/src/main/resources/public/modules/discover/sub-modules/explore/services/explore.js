@@ -36,7 +36,10 @@
         /**
          * @ngdoc service
          * @name explore.service:exploreService
+         * @requires $http
          * @requires $q
+         * @requires $httpParamSerializer
+         * @requires util.service:utilService
          *
          * @description
          * `exploreService` is a service that provides access to the MatOnto explorable-datasets REST
@@ -48,7 +51,7 @@
     
     function exploreService($http, $q, $httpParamSerializer, utilService) {
         var self = this;
-        var prefix = 'explorable-datasets/';
+        var prefix = '/matontorest/explorable-datasets/';
         var util = utilService;
         
         /**
@@ -63,156 +66,8 @@
          * @returns {Promise} A promise that resolves to an array of the class details for the identified dataset record.
          */
         self.getClassDetails = function(recordId) {
-            // return $http.get(prefix + encodeURIComponent(recordId) + '/instances-details')
-            //     .then(response => $q.when(response.data), response => $q.reject(response.statusText));
-            return $q.when([{
-                label: 'Material',
-                count: 13,
-                examples: ['Stuff', 'Other Stuff'],
-                overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc',
-                classId: 'https://matonto.org/uhtc#material'
-            }, {
-                label: 'Crystal Structure',
-                count: 4,
-                examples: ['FCC', 'Hexagonal'],
-                overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc',
-                classId: 'https://matonto.org/uhtc#crystalStructure'
-            }, {
-                label: 'Element',
-                count: 22,
-                examples: ['Carbon', 'Silicon', 'Titanium'],
-                overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc',
-                classId: 'https://matonto.org/uhtc#element'
-            }, {
-                label: 'Material',
-                count: 13,
-                examples: ['Stuff', 'Other Stuff'],
-                overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc',
-                classId: 'https://matonto.org/uhtc#material'
-            }, {
-                label: 'Crystal Structure',
-                count: 4,
-                examples: ['FCC', 'Hexagonal'],
-                overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc',
-                classId: 'https://matonto.org/uhtc#crystalStructure'
-            }, {
-                label: 'Element',
-                count: 22,
-                examples: ['Carbon', 'Silicon', 'Titanium'],
-                overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc',
-                classId: 'https://matonto.org/uhtc#element'
-            }, {
-                label: 'Material',
-                count: 13,
-                examples: ['Stuff', 'Other Stuff'],
-                overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc',
-                classId: 'https://matonto.org/uhtc#material'
-            }, {
-                label: 'Crystal Structure',
-                count: 4,
-                examples: ['FCC', 'Hexagonal'],
-                overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc',
-                classId: 'https://matonto.org/uhtc#crystalStructure'
-            }, {
-                label: 'Element',
-                count: 22,
-                examples: ['Carbon', 'Silicon', 'Titanium'],
-                overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc',
-                classId: 'https://matonto.org/uhtc#element'
-            }, {
-                label: 'Material',
-                count: 13,
-                examples: ['Stuff', 'Other Stuff'],
-                overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc',
-                classId: 'https://matonto.org/uhtc#material'
-            }, {
-                label: 'Crystal Structure',
-                count: 4,
-                examples: ['FCC', 'Hexagonal'],
-                overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc',
-                classId: 'https://matonto.org/uhtc#crystalStructure'
-            }, {
-                label: 'Element',
-                count: 22,
-                examples: ['Carbon', 'Silicon', 'Titanium'],
-                overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc',
-                classId: 'https://matonto.org/uhtc#element'
-            }, {
-                label: 'Material',
-                count: 13,
-                examples: ['Stuff', 'Other Stuff'],
-                overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc',
-                classId: 'https://matonto.org/uhtc#material'
-            }, {
-                label: 'Crystal Structure',
-                count: 4,
-                examples: ['FCC', 'Hexagonal'],
-                overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc',
-                classId: 'https://matonto.org/uhtc#crystalStructure'
-            }, {
-                label: 'Element',
-                count: 22,
-                examples: ['Carbon', 'Silicon', 'Titanium'],
-                overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc',
-                classId: 'https://matonto.org/uhtc#element'
-            }, {
-                label: 'Material',
-                count: 13,
-                examples: ['Stuff', 'Other Stuff'],
-                overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc',
-                classId: 'https://matonto.org/uhtc#material'
-            }, {
-                label: 'Crystal Structure',
-                count: 4,
-                examples: ['FCC', 'Hexagonal'],
-                overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc',
-                classId: 'https://matonto.org/uhtc#crystalStructure'
-            }, {
-                label: 'Element',
-                count: 22,
-                examples: ['Carbon', 'Silicon', 'Titanium'],
-                overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc',
-                classId: 'https://matonto.org/uhtc#element'
-            }, {
-                label: 'Material',
-                count: 13,
-                examples: ['Stuff', 'Other Stuff'],
-                overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc',
-                classId: 'https://matonto.org/uhtc#material'
-            }, {
-                label: 'Crystal Structure',
-                count: 4,
-                examples: ['FCC', 'Hexagonal'],
-                overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc',
-                classId: 'https://matonto.org/uhtc#crystalStructure'
-            }, {
-                label: 'Element',
-                count: 22,
-                examples: ['Carbon', 'Silicon', 'Titanium'],
-                overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.',
-                ontologyId: 'https://matonto.org/uhtc',
-                classId: 'https://matonto.org/uhtc#element'
-            }]);
+            return $http.get(prefix + encodeURIComponent(recordId) + '/class-details')
+                .then(response => $q.when(response.data), response => $q.reject(response.statusText));
         }
         
         /**

@@ -35,41 +35,35 @@ describe('Explore Service', function() {
         });
     });
 
-    // function flushAndVerify() {
-    //     $httpBackend.flush();
-    //     $httpBackend.verifyNoOutstandingExpectation();
-    //     $httpBackend.verifyNoOutstandingRequest();
-    // }
+    function flushAndVerify() {
+        $httpBackend.flush();
+        $httpBackend.verifyNoOutstandingExpectation();
+        $httpBackend.verifyNoOutstandingRequest();
+    }
     
-    // describe('getInstancesDetails calls the correct functions when get exploration-datasets/{recordId}/instances-details', function() {
-    //     it('is resolved', function() {
-    //         var data = [{
-    //             label: 'label',
-    //             count: 1,
-    //             examples: ['example1', 'example2'],
-    //             overview: 'overview',
-    //             ontologyId: 'ontologyId'
-    //         }];
-    //         $httpBackend.expectGET('/exploration-dataset/recordId/instances-details').respond(200, data);
-    //         exploreSvc.getInstancesDetails('recordId')
-    //             .then(function(response) {
-    //                 expect(response).toEqual(data);
-    //             }, function() {
-    //                 fail('Should have been resolved.');
-    //             });
-    //          flushAndVerify();
-    //     });
-    //     it('is rejected', function() {
-    //         $httpBackend.expectGET('/exploration-dataset/recordId/instances-details').respond(400, null, null, 'error');
-    //         exploreSvc.getInstancesDetails('recordId')
-    //             .then(function() {
-    //                 fail('Should have been rejected.');
-    //             }, function(response) {
-    //                 expect(response).toBe('error');
-    //             });
-    //          flushAndVerify();
-    //     });
-    // });
+    describe('getClassDetails calls the correct functions when GET /matontorest/explorable-datasets/{recordId}/class-details', function() {
+        it('succeeds', function() {
+            var data = [{prop: 'data'}];
+            $httpBackend.expectGET('/matontorest/explorable-datasets/recordId/class-details').respond(200, data);
+            exploreSvc.getClassDetails('recordId')
+                .then(function(response) {
+                    expect(response).toEqual(data);
+                }, function() {
+                    fail('Should have been resolved.');
+                });
+            flushAndVerify();
+        });
+        it('fails', function() {
+            $httpBackend.expectGET('/matontorest/explorable-datasets/recordId/class-details').respond(400, null, null, 'error');
+            exploreSvc.getClassDetails('recordId')
+                .then(function() {
+                    fail('Should have been rejected.');
+                }, function(response) {
+                    expect(response).toBe('error');
+                });
+            flushAndVerify();
+        });
+    });
     
     // describe('getInstances calls the correct functions when get exploration-datasets/{id}/instances?classId={classId}', function() {
     //     it('is resolved', function() {
@@ -78,7 +72,6 @@ describe('Explore Service', function() {
     //         $httpBackend.expectGET('/exploration-dataset/recordId/instances?classId=classId').respond(200, data, headers);
     //         exploreSvc.getClassInstances('recordId', 'classId')
     //             .then(function(response) {
-    //                 TODO: update this expectation
     //                 expect(response).toEqual(data);
     //             }, function() {
     //                 fail('Should have been resolved.');

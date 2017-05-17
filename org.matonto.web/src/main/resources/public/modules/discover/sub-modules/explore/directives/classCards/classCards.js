@@ -60,13 +60,13 @@
                     var ds = discoverStateService;
                     var es = exploreService;
                     var util = utilService;
-                    dvm.chunks = _.chunk(_.orderBy(ds.explore.classDetails, ['count', 'label'], ['desc', 'asc']), 3);
+                    dvm.chunks = _.chunk(_.orderBy(ds.explore.classDetails, ['instancesCount', 'classTitle'], ['desc', 'asc']), 3);
                     
                     dvm.exploreData = function(item) {
-                        es.getClassInstanceDetails(ds.explore.recordId, item.classId)
+                        es.getClassInstanceDetails(ds.explore.recordId, item.classIRI)
                             .then(response => {
                                 _.merge(ds.explore.instanceDetails, es.createPagedResultsObject(response));
-                                ds.explore.breadcrumbs.push(item.label);
+                                ds.explore.breadcrumbs.push(item.classTitle);
                             }, util.createErrorToast);
                     }
                 }

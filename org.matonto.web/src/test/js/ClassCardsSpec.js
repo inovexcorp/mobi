@@ -41,17 +41,17 @@ describe('Class Cards directive', function() {
 
         discoverStateSvc.explore.recordId = 'recordId';
         discoverStateSvc.explore.classDetails = [{
-            count: 1,
-            label: 'z'
+            instancesCount: 1,
+            classTitle: 'z'
         }, {
-            count: 2,
-            label: 'z'
+            instancesCount: 2,
+            classTitle: 'z'
         }, {
-            count: 2,
-            label: 'a'
+            instancesCount: 2,
+            classTitle: 'a'
         }, {
-            count: 1,
-            label: 'a'
+            instancesCount: 1,
+            classTitle: 'a'
         }];
         element = $compile(angular.element('<class-cards></class-cards>'))(scope);
         scope.$digest();
@@ -102,17 +102,17 @@ describe('Class Cards directive', function() {
     });
     it('properly defines controller.chunks on load', function() {
         var expected = [[{
-            count: 2,
-            label: 'a'
+            instancesCount: 2,
+            classTitle: 'a'
         }, {
-            count: 2,
-            label: 'z'
+            instancesCount: 2,
+            classTitle: 'z'
         }, {
-            count: 1,
-            label: 'a'
+            instancesCount: 1,
+            classTitle: 'a'
         }], [{
-            count: 1,
-            label: 'z'
+            instancesCount: 1,
+            classTitle: 'z'
         }]];
         expect(angular.copy(element.controller('classCards').chunks)).toEqual(expected);
     });
@@ -133,7 +133,7 @@ describe('Class Cards directive', function() {
                 discoverStateSvc.explore.breadcrumbs = [''];
                 exploreSvc.getClassInstanceDetails.and.returnValue($q.when({data: data, headers: headers}));
                 exploreSvc.createPagedResultsObject.and.returnValue({prop: 'paged'});
-                controller.exploreData({label: 'new', classId: 'classId'});
+                controller.exploreData({classTitle: 'new', classIRI: 'classId'});
                 scope.$apply();
                 expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith('recordId', 'classId');
                 expect(exploreSvc.createPagedResultsObject).toHaveBeenCalledWith({data: data, headers: headers});
@@ -142,7 +142,7 @@ describe('Class Cards directive', function() {
             });
             it('rejected', function() {
                 exploreSvc.getClassInstanceDetails.and.returnValue($q.reject('error'));
-                controller.exploreData({label: 'new', classId: 'classId'});
+                controller.exploreData({classTitle: 'new', classIRI: 'classId'});
                 scope.$apply();
                 expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith('recordId', 'classId');
                 expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');

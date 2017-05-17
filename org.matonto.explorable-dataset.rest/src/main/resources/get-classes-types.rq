@@ -1,0 +1,13 @@
+SELECT ?type ?title  (COUNT(distinct ?thing) as ?c)
+     WHERE {
+         ?thing a ?type.
+         OPTIONAL {
+             ?type <http://purl.org/dc/terms/title> ?title.
+         }
+         {
+             SELECT ?type
+                 WHERE {
+                     ?thing a ?type.
+                 }
+         }
+} GROUP BY ?type ?title

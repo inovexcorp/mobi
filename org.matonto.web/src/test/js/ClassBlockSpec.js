@@ -66,6 +66,17 @@ describe('Class Block directive', function() {
             expect(element.querySelectorAll('.padding').length).toBe(0);
             expect(element.find('info-message').length).toBe(0);
         });
+        it('with a .text-warning and .fa-exclamation-circle', function() {
+            expect(element.querySelectorAll('.text-warning').length).toBe(0);
+            expect(element.querySelectorAll('.fa-exclamation-circle').length).toBe(0);
+            
+            discoverStateSvc.explore.recordId = 'recordId';
+            scope.$digest();
+            
+            expect(element.querySelectorAll('.text-warning').length).toBe(1);
+            expect(element.querySelectorAll('.fa-exclamation-circle').length).toBe(1);
+            
+        });
         it('with a .full-height and class-cards', function() {
             expect(element.querySelectorAll('.full-height').length).toBe(0);
             expect(element.find('class-cards').length).toBe(0);

@@ -1,0 +1,8 @@
+SELECT ?inst ?title ?description ?label ?comment
+    WHERE {
+              ?inst a ?classIRI.
+              OPTIONAL { ?inst <http://purl.org/dc/terms/title> ?title . }
+              OPTIONAL { ?inst <http://purl.org/dc/terms/description> ?description . }
+              OPTIONAL { ?inst <http://www.w3.org/2000/01/rdf-schema#label> ?label. }
+              OPTIONAL { ?inst <http://www.w3.org/2000/01/rdf-schema#comment> ?comment. }
+    }

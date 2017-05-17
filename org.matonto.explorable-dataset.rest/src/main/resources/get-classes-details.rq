@@ -1,0 +1,6 @@
+SELECT ?example ?title ?label
+    WHERE {
+              ?example a ?classIRI.
+              OPTIONAL { ?example <http://purl.org/dc/terms/title> ?title . }
+              OPTIONAL { ?example <http://www.w3.org/2000/01/rdf-schema#label> ?label. }
+    } LIMIT 3

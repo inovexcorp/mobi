@@ -58,6 +58,12 @@ describe('Class Block Header directive', function() {
         it('with a dataset-select', function() {
             expect(element.find('dataset-select').length).toBe(1);
         });
+        it('with a .btn.btn-primary', function() {
+            expect(element.querySelectorAll('.btn.btn-primary').length).toBe(1);
+        });
+        it('with a .fa.fa-refresh', function() {
+            expect(element.querySelectorAll('.fa.fa-refresh').length).toBe(1);
+        });
     });
     
     describe('controller methods', function() {
