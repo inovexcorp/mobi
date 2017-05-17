@@ -28,6 +28,7 @@ import org.matonto.ontology.core.api.Ontology;
 import org.matonto.rdf.api.Model;
 
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 
@@ -56,8 +57,8 @@ public class DelimitedConfig {
         return mapping;
     }
 
-    public Optional<Set<Ontology>> getOntologies() {
-        return Optional.ofNullable(ontologies);
+    public Set<Ontology> getOntologies() {
+        return ontologies;
     }
 
     public boolean getContainsHeaders() {
@@ -75,7 +76,7 @@ public class DelimitedConfig {
     public static class Builder<T extends Builder> {
         private final InputStream data;
         private final Model mapping;
-        private Set<Ontology> ontologies;
+        private Set<Ontology> ontologies = Collections.emptySet();
         private boolean containsHeaders = true;
         private Long limit;
         private long offset = 0;

@@ -23,9 +23,10 @@ package org.matonto.etl.service.delimited;
  * #L%
  */
 
+import com.google.common.base.CharMatcher;
+
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
-import com.google.common.base.CharMatcher;
 import com.opencsv.CSVReader;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
@@ -116,8 +117,8 @@ public class DelimitedConverterImpl implements DelimitedConverter {
     public Model convert(SVConfig config) throws IOException, MatOntoException {
         Mapping mapping = mappingFactory.getAllExisting(config.getMapping()).stream().findFirst().orElseThrow(() ->
                 new IllegalArgumentException("Missing mapping object"));
-        Set<Ontology> sourceOntologies = config.getOntologies().isPresent() ? config.getOntologies().get()
-                : getSourceOntologies(mapping);
+        Set<Ontology> sourceOntologies = config.getOntologies().isEmpty() ? getSourceOntologies(mapping) :
+                config.getOntologies();
         byte[] data = toByteArrayOutputStream(config.getData()).toByteArray();
         Charset charset = CharsetUtils.getEncoding(new ByteArrayInputStream(data)).orElseThrow(() ->
                 new MatOntoException("Unsupported character set"));
@@ -166,8 +167,8 @@ public class DelimitedConverterImpl implements DelimitedConverter {
     public Model convert(ExcelConfig config) throws IOException, MatOntoException {
         Mapping mapping = mappingFactory.getAllExisting(config.getMapping()).stream().findFirst().orElseThrow(() ->
                 new IllegalArgumentException("Missing mapping object"));
-        Set<Ontology> sourceOntologies = config.getOntologies().isPresent() ? config.getOntologies().get()
-                : getSourceOntologies(mapping);
+        Set<Ontology> sourceOntologies = config.getOntologies().isEmpty() ? getSourceOntologies(mapping) :
+                config.getOntologies();
         String[] nextRow;
         Model convertedRDF = modelFactory.createModel();
         ArrayList<ClassMapping> classMappings = parseClassMappings(config.getMapping());
