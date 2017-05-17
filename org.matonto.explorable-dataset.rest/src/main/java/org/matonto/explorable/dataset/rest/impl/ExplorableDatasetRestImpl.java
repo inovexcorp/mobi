@@ -35,28 +35,14 @@ import org.matonto.exception.MatOntoException;
 import org.matonto.explorable.dataset.rest.ExplorableDatasetRest;
 import org.matonto.ontologies.dcterms._Thing;
 import org.matonto.query.TupleQueryResult;
-import org.matonto.query.api.BindingSet;
 import org.matonto.query.api.TupleQuery;
-import org.matonto.rdf.api.BNode;
-import org.matonto.rdf.api.IRI;
-import org.matonto.rdf.api.Model;
-import org.matonto.rdf.api.Resource;
-import org.matonto.rdf.api.Statement;
-import org.matonto.rdf.api.Value;
-import org.matonto.rdf.api.ValueFactory;
+import org.matonto.rdf.api.*;
 import org.matonto.rest.util.ErrorUtils;
 import org.openrdf.model.vocabulary.RDFS;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
+import java.io.IOException;
+import java.util.*;
 
 @Component(immediate = true)
 public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
@@ -111,7 +97,6 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
     public void setCatalogManager(CatalogManager catalogManager) {
         this.catalogManager = catalogManager;
     }
-
 
 
     @Override
@@ -176,7 +161,7 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
             DatasetConnection dsConn = datasetManager.getConnection(datasetRecordRsr);
 
             try {
-                TupleQueryResult results = getQueryResults(datasetRecordRsr,  GET_CLASSES_INSTANCES,
+                TupleQueryResult results = getQueryResults(datasetRecordRsr, GET_CLASSES_INSTANCES,
                         "classIRI", factory.createIRI(classIRI));
                 results.forEach(instance -> {
 
@@ -290,10 +275,9 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
      * Parse query results
      *
      * @param datasetRecordRsr dataset record resource
-     * @param query query result object with instances examples
-     * @param bindingStr name of the variable that should be bound
-     * @param bindingVal value for the specified variable
-     *
+     * @param query            query result object with instances examples
+     * @param bindingStr       name of the variable that should be bound
+     * @param bindingVal       value for the specified variable
      * @return variable-binding query result
      */
     private TupleQueryResult getQueryResults(Resource datasetRecordRsr, String query, String bindingStr, Value bindingVal) {
@@ -342,11 +326,10 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
     /**
      * Prepare list of instances to provide
      *
-     * @param ontologies ontologies attached to the dataset record
-     * @param result dataset record model
-     * @param clsFromQry changeable instances list
+     * @param ontologies     ontologies attached to the dataset record
+     * @param result         dataset record model
+     * @param clsFromQry     changeable instances list
      * @param clsFromQryList instances list to provide
-     *
      * @return variable-binding query result
      */
     private List<Map<String, Object>> setJsonItems(Set<Value> ontologies, Model result, Map<String,
