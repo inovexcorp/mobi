@@ -28,7 +28,6 @@ import aQute.bnd.annotation.component.Reference;
 import net.sf.json.JSONArray;
 import org.apache.commons.io.IOUtils;
 import org.matonto.catalog.api.CatalogManager;
-
 import org.matonto.dataset.api.DatasetConnection;
 import org.matonto.dataset.api.DatasetManager;
 import org.matonto.dataset.ontology.dataset.DatasetRecord;
@@ -36,18 +35,26 @@ import org.matonto.exception.MatOntoException;
 import org.matonto.explorable.dataset.rest.ExplorableDatasetRest;
 import org.matonto.ontologies.dcterms._Thing;
 import org.matonto.query.TupleQueryResult;
-import org.matonto.query.api.BindingSet;
-import org.matonto.rdf.api.*;
-
-import java.io.IOException;
-import java.util.*;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
-
+import org.matonto.query.api.TupleQuery;
+import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
+import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.Statement;
+import org.matonto.rdf.api.Value;
+import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rest.util.ErrorUtils;
 import org.openrdf.model.vocabulary.RDFS;
-import org.matonto.query.api.TupleQuery;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 
 /**
@@ -63,6 +70,7 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
 
     private static final String GET_CLASSES_TYPES;
     private static final String GET_CLASSES_DETAILS;
+    private static final String GET_CLASSES_INSTANCES;
 
     static {
         try {
@@ -76,6 +84,14 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
         try {
             GET_CLASSES_DETAILS = IOUtils.toString(
                     ExplorableDatasetRestImpl.class.getResourceAsStream("/get-classes-details.rq"),
+                    "UTF-8"
+            );
+        } catch (IOException e) {
+            throw new MatOntoException(e);
+        }
+        try {
+            GET_CLASSES_INSTANCES = IOUtils.toString(
+                    ExplorableDatasetRestImpl.class.getResourceAsStream("/get-classes-instances.rq"),
                     "UTF-8"
             );
         } catch (IOException e) {
@@ -111,65 +127,67 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
     @Override
     public Response getClassDetails(UriInfo uriInfo, String recordIRI, int offset, int limit, String sort, boolean asc, String filter) {
 
-        Resource datasetRecordRsr = factory.createIRI(recordIRI);
+        List<Map<String, Object>> listToJson = new ArrayList<>();
         Map<String, Map<String, Object>> classesFromQuery = new HashMap<>();
         Map<String, String> classesFromQueryList = new HashMap<>();
 
-        List<Resource> classesList = new ArrayList<>();
-        List<Map<String, Object>> listToJson = new ArrayList<>();
-        DatasetConnection dsConn = datasetManager.getConnection(datasetRecordRsr);
+        if (!recordIRI.isEmpty()) {
 
-        try {
-            TupleQuery tq = dsConn.prepareTupleQuery(GET_CLASSES_TYPES);
-            TupleQueryResult results = tq.evaluate();
+            Resource datasetRecordRsr = factory.createIRI(recordIRI);
+            List<Resource> classesList = new ArrayList<>();
+            DatasetConnection dsConn = datasetManager.getConnection(datasetRecordRsr);
 
-            Optional<DatasetRecord> datasetRecordOpt = datasetManager.getDatasetRecord(datasetRecordRsr);
-            Model result = datasetRecordOpt.get().getModel();
+            try {
+                TupleQuery tq = dsConn.prepareTupleQuery(GET_CLASSES_TYPES);
+                TupleQueryResult results = tq.evaluate();
 
-            while (results.hasNext()) {
+                Optional<DatasetRecord> datasetRecordOpt = datasetManager.getDatasetRecord(datasetRecordRsr);
+                Model result = datasetRecordOpt.get().getModel();
 
-                Map<String, Object> classMap = new HashMap<>();
-                BindingSet bindingSet = results.next();
+                results.forEach(bindingSet -> {
 
-                Optional<Value> classType = bindingSet.getValue("type");
-                Optional<Value> classCount = bindingSet.getValue("c");
+                    Map<String, Object> classMap = new HashMap<>();
+                    Optional<Value> classType = bindingSet.getValue("type");
+                    Optional<Value> classCount = bindingSet.getValue("c");
 
-                if(classType.isPresent()) {
+                    if (classType.isPresent()) {
 
-                    classMap.put("classType", classType.get().stringValue());
-                    classMap.put("instancesCount", classCount.get().stringValue());
+                        classMap.put("classType", classType.get().stringValue());
+                        classMap.put("instancesCount", classCount.get().stringValue());
 
-                    Value classIRI = classType.get();
+                        Value classIRI = classType.get();
 
-                    TupleQuery tqEx = dsConn.prepareTupleQuery(GET_CLASSES_DETAILS);
-                    tqEx.setBinding("classIRI", classIRI);
-                    TupleQueryResult examplesResults = tqEx.evaluate();
-                    List<String> exList = new ArrayList<>();
-                    while (examplesResults.hasNext()) {
-                        BindingSet bindingSetEx = examplesResults.next();
+                        TupleQuery tqEx = dsConn.prepareTupleQuery(GET_CLASSES_DETAILS);
+                        tqEx.setBinding("classIRI", classIRI);
+                        TupleQueryResult examplesResults = tqEx.evaluate();
+                        List<String> exList = new ArrayList<>();
 
-                        String lblStr = (bindingSetEx.getValue("label").isPresent() ? bindingSetEx.getValue("label").get().stringValue() : "");
-                        String titleStr = (bindingSetEx.getValue("title").isPresent() ? bindingSetEx.getValue("title").get().stringValue() : "");
+                        examplesResults.forEach(bindingSetEx -> {
 
-                        if (!lblStr.isEmpty()) {
-                            exList.add(lblStr);
-                        } else {
-                            if (!titleStr.isEmpty()) {
-                                exList.add(titleStr);
+                            String lblStr = (bindingSetEx.getValue("label").isPresent() ? bindingSetEx.getValue("label").get().stringValue() : "");
+                            String titleStr = (bindingSetEx.getValue("title").isPresent() ? bindingSetEx.getValue("title").get().stringValue() : "");
+
+                            if (!lblStr.isEmpty()) {
+                                exList.add(lblStr);
                             } else {
-                                IRI exampleIRI = factory.createIRI(bindingSetEx.getValue("example").get().stringValue());
-                                exList.add(splitCamelCase(exampleIRI.getLocalName()));
+                                if (!titleStr.isEmpty()) {
+                                    exList.add(titleStr);
+                                } else {
+                                    IRI exampleIRI = factory.createIRI(bindingSetEx.getValue("example").get().stringValue());
+                                    exList.add(splitCamelCase(exampleIRI.getLocalName()));
+                                }
                             }
-                        }
-                    }
-                    classMap.put("classExamples", exList);
 
-                    classesList.add(factory.createIRI(classType.get().stringValue()));
-                    classesFromQuery.put(classType.get().stringValue(), classMap);
-                    classesFromQueryList.put(classType.get().stringValue(), classType.get().stringValue());
-                }
-            }
-            if(datasetRecordOpt.isPresent()) {
+                        });
+                        classMap.put("classExamples", exList);
+
+
+                        classesList.add(factory.createIRI(classType.get().stringValue()));
+                        classesFromQuery.put(classType.get().stringValue(), classMap);
+                        classesFromQueryList.put(classType.get().stringValue(), classType.get().stringValue());
+                    }
+                });
+
                 Set<Value> ontologies = datasetRecordOpt.get().getOntology();
                 ontologies.forEach(ontBlkNode -> {
 
@@ -199,9 +217,9 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
                         }
                     }
                 });
+            } catch (MatOntoException e) {
+                throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
             }
-        } catch (MatOntoException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
         JSONArray array = JSONArray.fromObject(listToJson);
         Response.ResponseBuilder response = Response.ok(array).header("X-Total-Count", listToJson.size());
@@ -210,7 +228,63 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
 
     @Override
     public Response getIntanceDetails(UriInfo uriInfo, String recordIRI, String classIRI, int offset, int limit, String sort, boolean asc, int numExamples) {
-        return null;
+
+        List<Map<String, Object>> listToJson = new ArrayList<>();
+
+        if (!recordIRI.isEmpty() && !classIRI.isEmpty()) {
+
+            Resource datasetRecordRsr = factory.createIRI(recordIRI);
+            DatasetConnection dsConn = datasetManager.getConnection(datasetRecordRsr);
+
+            try {
+                TupleQuery tqEx = dsConn.prepareTupleQuery(GET_CLASSES_INSTANCES);
+                Value classIRIVal = factory.createIRI(classIRI);
+                tqEx.setBinding("classIRI", classIRIVal);
+                TupleQueryResult results = tqEx.evaluate();
+                results.forEach(instance -> {
+
+                    Map<String, Object> mapToJson = new HashMap<>();
+
+                    String instanceIRI = (instance.getValue("inst").isPresent() ? instance.getValue("inst").get().stringValue() : "");
+                    String title = (instance.getValue("title").isPresent() ? instance.getValue("title").get().stringValue() : "");
+                    String label = (instance.getValue("label").isPresent() ? instance.getValue("label").get().stringValue() : "");
+                    String comment = (instance.getValue("comment").isPresent() ? instance.getValue("comment").get().stringValue() : "");
+                    String description = (instance.getValue("description").isPresent() ? instance.getValue("description").get().stringValue() : "");
+
+                    String desc;
+                    // Instance description will be returned using rdfs:comment or dc:title or empty string
+                    if (!comment.isEmpty()) {
+                        desc = comment;
+                    } else {
+                        desc = description;
+                    }
+
+                    String lbl;
+                    // Instance title will be returned using rdfs:label or dc:title or human readable version of uri local name
+                    if (!label.isEmpty()) {
+                        lbl = label;
+                    } else {
+                        if (!title.isEmpty()) {
+                            lbl = title;
+                        } else {
+                            IRI instIRI = factory.createIRI(instanceIRI);
+                            lbl = splitCamelCase(instIRI.getLocalName());
+                        }
+                    }
+
+                    mapToJson.put("instanceIRI", instanceIRI);
+                    mapToJson.put("title", lbl);
+                    mapToJson.put("description", desc);
+
+                    listToJson.add(mapToJson);
+                });
+            } catch (MatOntoException e) {
+                throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            }
+        }
+        JSONArray array = JSONArray.fromObject(listToJson);
+        Response.ResponseBuilder response = Response.ok(array).header("X-Total-Count", listToJson.size());
+        return response.build();
     }
 
     @Override
