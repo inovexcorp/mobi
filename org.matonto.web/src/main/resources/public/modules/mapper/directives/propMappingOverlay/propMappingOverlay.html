@@ -37,7 +37,7 @@
         </div>
         <div class="column-select-container form-group" ng-if="dvm.selectedProp && !dvm.om.isObjectProperty(dvm.selectedProp.propObj)">
             <custom-label>Column</custom-label>
-            <column-select columns="dvm.state.availableColumns" selected-column="dvm.selectedColumn"></column-select>
+            <column-select selected-column="dvm.selectedColumn"></column-select>
         </div>
         <div class="btn-container clearfix">
             <button class="btn btn-primary pull-right" ng-click="dvm.set()" ng-disabled="(dvm.state.newProp && !dvm.selectedProp) || (dvm.om.isDataTypeProperty(dvm.selectedProp.propObj) && !dvm.selectedColumn) || (!dvm.state.newProp && dvm.om.isObjectProperty(dvm.selectedProp.propObj))">Set</button>

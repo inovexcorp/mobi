@@ -22,10 +22,10 @@
   -->
 <div class="column-select">
     <ui-select ng-model="dvm.selectedColumn">
-        <ui-select-match placeholder="{{columns.length ? 'Select a column' : 'No Available Columns'}}">
+        <ui-select-match placeholder="Select a column">
             {{dvm.dm.getHeader($select.selected)}}
         </ui-select-match>
-        <ui-select-choices repeat="column in columns | filter:$select.search:dvm.compare">
+        <ui-select-choices repeat="column in dvm.columns | filter:$select.search:dvm.compare">
             <div ng-bind-html="dvm.dm.getHeader(column) | highlight:$select.search | trusted"></div>
         </ui-select-choices>
     </ui-select>

@@ -56,15 +56,14 @@
                 restrict: 'E',
                 controllerAs: 'dvm',
                 replace: true,
-                scope: {
-                    columns: '<'
-                },
+                scope: {},
                 bindToController: {
                     selectedColumn: '='
                 },
                 controller: function() {
                     var dvm = this;
                     dvm.dm = delimitedManagerService;
+                    dvm.columns = _.range(0, dvm.dm.dataRows[0].length);
 
                     dvm.compare = function(idx, expected) {
                         return _.includes(_.toUpper(dvm.dm.getHeader(idx)), _.toUpper(expected));

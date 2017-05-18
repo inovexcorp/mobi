@@ -349,7 +349,6 @@ function mockMapperState() {
             this.step = 0;
             this.invalidProps = [];
             this.availableClasses = [];
-            this.availableColumns = [];
             this.invalidOntology = false;
             this.editMappingName = false;
             this.displayCancelConfirm = false;
@@ -371,7 +370,6 @@ function mockMapperState() {
             this.resetEdit = jasmine.createSpy('resetEdit');
             this.createMapping = jasmine.createSpy('createMapping');
             this.setInvalidProps = jasmine.createSpy('setInvalidProps');
-            this.updateAvailableColumns = jasmine.createSpy('updateAvailableColumns');
             this.getAvailableProps = jasmine.createSpy('getAvailableProps').and.returnValue([]);
             this.setAvailableProps = jasmine.createSpy('setAvailableProps');
             this.hasAvailableProps = jasmine.createSpy('hasAvailableProps');
