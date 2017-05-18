@@ -1,11 +1,11 @@
 Source,Material,Crystal structure,Lattice parameters a(Å),b(Å),c(Å),Density(g/mL),Melting point (°C),Melting point (°F),Tested?,Count,Date Recorded
-http://en.wikipedia.org/wiki/Ultra-high-temperature_ceramics,HfB2,Hexagonal,3.142,3.321,3.476,11.19,3380,6116,true,1,2017-01-01T00:00:00Z
-http://en.wikipedia.org/wiki/Ultra-high-temperature_ceramics,HfC,FCC,4.638,4.638,4.638,12.76,3900,7052,true,2,2017-01-01T00:00:00Z
-http://en.wikipedia.org/wiki/Ultra-high-temperature_ceramics,HfN,FCC,4.525,4.525,4.525,13.9,3385,6125,true,3,2017-01-01T00:00:00Z
-http://en.wikipedia.org/wiki/Ultra-high-temperature_ceramics,ZrB2,Hexagonal,3.169,3.333,3.53,6.1,3245,5873,true,4,2017-01-01T00:00:00Z
-http://en.wikipedia.org/wiki/Ultra-high-temperature_ceramics,ZrC,FCC,4.693,4.693,4.693,6.56,3400,6152,true,5,2017-01-01T00:00:00Z
-http://en.wikipedia.org/wiki/Ultra-high-temperature_ceramics,ZrN,FCC,4.578,4.578,4.578,7.29,2950,5342,false,6,2017-01-01T00:00:00Z
-http://en.wikipedia.org/wiki/Ultra-high-temperature_ceramics,TiB2,Hexagonal,3.03,3.12,3.23,4.52,3225,5837,false,7,2017-01-01T00:00:00Z
+http://en.wikipedia.org/wiki/Ultra-high-temperature_ceramics,HfB2,Hexagonal,3.142,3.321,3.476,true,3380,6116,true,1,2017-01-01T00:00:00Z
+http://en.wikipedia.org/wiki/Ultra-high-temperature_ceramics,HfC,FCC,4.638,4.638,4.638,_____{},3900,7052,true,2,2017-01-01T00:00:00Z
+http://en.wikipedia.org/wiki/Ultra-high-temperature_ceramics,HfN,FCC,ERROR,4.525,4.525,13.9,3385,6125,true,3,2017-01-01T00:00:00Z
+asdf,ZrB2,Hexagonal,3.169,3.333,3.53,6.1,3245,5873,true,4,2017-01-01T00:00:00Z
+http://en.wikipedia.org/wiki/Ultra-high-temperature_ceramics,ZrC,FCC,4.693,4.693,4.693,6.56,3400,6152,asdf,5,2017-01-01T00:00:00Z
+http://en.wikipedia.org/wiki/Ultra-high-temperature_ceramics,ZrN,FCC,4.578,4.578,4.578,7.29,2950,5342,false,6,asdf
+http://en.wikipedia.org/wiki/Ultra-high-temperature_ceramics,TiB2,Hexagonal,3.03,3.12,3.23,4.52,3225,5837,false,asdf,2017-01-01T00:00:00Z
 http://en.wikipedia.org/wiki/Ultra-high-temperature_ceramics,TiC,Cubic,4.327,4.327,4.327,4.94,3100,5612,false,8,2017-01-01T00:00:00Z
 http://en.wikipedia.org/wiki/Ultra-high-temperature_ceramics,TiN,FCC,4.242,4.242,4.242,5.39,2950,5342,false,9,2017-01-01T00:00:00Z
 http://en.wikipedia.org/wiki/Ultra-high-temperature_ceramics,TaB2,Hexagonal,3.098,3.142,3.227,12.54,3040,5504,false,10,2017-01-01T00:00:00Z
