@@ -77,7 +77,11 @@
                     dvm.rangeClass = undefined;
 
                     dvm.getPropRangeName = function() {
-                        return dvm.om.isObjectProperty(dvm.propObj) ? dvm.om.getEntityName(dvm.rangeClass) : $filter('splitIRI')(util.getPropertyId(dvm.propObj, prefixes.rdfs + 'range')).end;
+                        if (dvm.om.isObjectProperty(dvm.propObj)) {
+                            return dvm.om.getEntityName(dvm.rangeClass);
+                        } else {
+                            return $filter('splitIRI')(util.getPropertyId(dvm.propObj, prefixes.rdfs + 'range')).end || 'string';
+                        }
                     }
 
                     $scope.$watch('dvm.propObj', function(newValue, oldValue) {

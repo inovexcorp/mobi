@@ -52,15 +52,25 @@
          */
         .service('mappingManagerService', mappingManagerService);
 
-        mappingManagerService.$inject = ['$window', '$filter', '$http', '$q', 'utilService', 'ontologyManagerService', 'catalogManagerService', 'prefixes', 'uuid'];
+        mappingManagerService.$inject = ['$window', '$filter', '$http', '$q', 'utilService', 'ontologyManagerService', 'prefixes', 'uuid'];
 
-        function mappingManagerService($window, $filter, $http, $q, utilService, ontologyManagerService, catalogManagerService, prefixes, uuid) {
+        function mappingManagerService($window, $filter, $http, $q, utilService, ontologyManagerService, prefixes, uuid) {
             var self = this,
                 om = ontologyManagerService,
-                cm = catalogManagerService,
                 util = utilService,
                 prefix = '/matontorest/mappings';
 
+            /**
+             * @ngdoc property
+             * @name annotationProperties
+             * @propertyOf mappingManager.service:mappingManagerService
+             * @type {string[]}
+             *
+             * @description
+             * `annotationProperties` holds an array of annotation IRIs that are supported by
+             * the Mapping Tool.
+             */
+            self.annotationProperties = [prefixes.rdfs + 'label', prefixes.rdfs + 'comment', prefixes.dcterms + 'title', prefixes.dcterms + 'description'];
             /**
              * @ngdoc property
              * @name mappingIds
@@ -369,9 +379,10 @@
              */
             self.addDataProp = function(mapping, ontology, classMappingId, propId, columnIndex) {
                 var dataEntity;
-                // Check if class mapping exists and the property exists in the ontology
+                // Check if class mapping exists and the property exists in the ontology or the property is one of the
+                // supported annotations
                 var propObj = om.getEntity([ontology], propId);
-                if (entityExists(mapping, classMappingId) && propObj && om.isDataTypeProperty(propObj)) {
+                if (entityExists(mapping, classMappingId) && ((propObj && om.isDataTypeProperty(propObj)) || _.includes(self.annotationProperties, propId))) {
                     // Add new data mapping id to data properties of class mapping
                     dataEntity = {
                         '@id': getMappingEntity(mapping)['@id'] + '/' + uuid.v4()
@@ -522,10 +533,8 @@
                 if (!validateOntologyInfo(ontologyInfo)) {
                     return $q.reject('Missing identification information');
                 }
-                var deferred = $q.defer();
-                cm.getResource(ontologyInfo.commitId, ontologyInfo.branchId, ontologyInfo.recordId, cm.localCatalog['@id'], false)
-                    .then(response => deferred.resolve({id: om.getOntologyIRI(response), entities: response, recordId: ontologyInfo.recordId}), deferred.reject);
-                return deferred.promise;
+                return om.getOntology(ontologyInfo.recordId, ontologyInfo.branchId, ontologyInfo.commitId)
+                    .then(ontology => {return {id: om.getOntologyIRI(ontology), entities: ontology, recordId: ontologyInfo.recordId}}, $q.reject);
             }
             /**
              * @ngdoc method
