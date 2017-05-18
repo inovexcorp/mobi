@@ -25,6 +25,9 @@ package org.matonto.sparql.utils;
 
 import static org.junit.Assert.assertEquals;
 
+import java.io.IOException;
+import java.io.InputStream;
+
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Recognizer;
@@ -33,9 +36,6 @@ import org.antlr.v4.runtime.TokenStreamRewriter;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.apache.commons.io.IOUtils;
 import org.junit.Test;
-
-import java.io.IOException;
-import java.io.InputStream;
 
 public class QueryTest {
 
@@ -146,22 +146,80 @@ public class QueryTest {
 //        assertEquals(queryString, tokens.getText());
 //    }
 
-    // TODO: fix
-//    @Test
-//    public void commentsWork() throws Exception {
-//        String queryString = "select * where { ?s ?p ?o }#?s ?p ?o }";
-//        Sparql11Parser parser = Query.getParser(queryString);
-//        TokenStream tokens = parser.getTokenStream();
-//        parser.addErrorListener(new BaseErrorListener() {
-//            @Override
-//            public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
-//                throw new IllegalStateException("failed to parse at line " + line + " due to " + msg, e);
-//            }
-//        });
-//
-//        parser.query();
-//        assertEquals(queryString, tokens.getText());
-//    }
+    @Test
+    public void simpleCommentsWork() throws Exception {
+        String queryString = "select * where { ?s ?p ?o }#?s ?p ?o }";
+        String expectedQuery = "select * where { ?s ?p ?o }";
+        Sparql11Parser parser = Query.getParser(queryString);
+        TokenStream tokens = parser.getTokenStream();
+        parser.addErrorListener(new BaseErrorListener() {
+            @Override
+            public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
+                throw new IllegalStateException("failed to parse at line " + line + " due to " + msg, e);
+            }
+        });
+
+        parser.query();
+        assertEquals(expectedQuery, tokens.getText());
+    }
+
+    @Test
+    public void complexCommentsWork() throws Exception {
+        String queryString = "########################\n" +
+                "### Find all the things\n" +
+                "########################\n" +
+                "\n" +
+                "prefix uhtc: <http://matonto.org/ontologies/uhtc#> # This is a comment\n" +
+                "\n" +
+                "select\n" +
+                "\t?formula\n" +
+                "\t?density # This is a comment\n" +
+                "\t?meltingPointCelsius\n" +
+                "\t(group_concat(distinct ?elementName;separator=',') as ?elements)\n" +
+                "where { # This is a comment\n" +
+                "    ?material a uhtc:Material ; # This is a comment\n" +
+                "                uhtc:chemicalFormula ?formula ; # This is a comment\n" +
+                "                uhtc:density ?density ;\n" +
+                "                uhtc:meltingPoint ?meltingPointCelsius ;\n" +
+                "                uhtc:element ?element . # This is a comment\n" +
+                "    \n" +
+                "    ?element a uhtc:Element ; # This is a comment\n" +
+                "               uhtc:elementName ?elementName ;\n" +
+                "               uhtc:symbol ?symbol .\n" +
+                "} # This is a comment\n" +
+                "GROUP BY ?formula ?density ?meltingPointCelsius" +
+                "# This is a comment";
+        String expectedQuery = "\nprefix uhtc: <http://matonto.org/ontologies/uhtc#> " +
+                "\n" +
+                "select\n" +
+                "\t?formula\n" +
+                "\t?density " +
+                "\t?meltingPointCelsius\n" +
+                "\t(group_concat(distinct ?elementName;separator=',') as ?elements)\n" +
+                "where { " +
+                "    ?material a uhtc:Material ; " +
+                "                uhtc:chemicalFormula ?formula ; " +
+                "                uhtc:density ?density ;\n" +
+                "                uhtc:meltingPoint ?meltingPointCelsius ;\n" +
+                "                uhtc:element ?element . " +
+                "    \n" +
+                "    ?element a uhtc:Element ; " +
+                "               uhtc:elementName ?elementName ;\n" +
+                "               uhtc:symbol ?symbol .\n" +
+                "} " +
+                "GROUP BY ?formula ?density ?meltingPointCelsius";
+        Sparql11Parser parser = Query.getParser(queryString);
+        TokenStream tokens = parser.getTokenStream();
+        parser.addErrorListener(new BaseErrorListener() {
+            @Override
+            public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
+                throw new IllegalStateException("failed to parse at line " + line + " due to " + msg, e);
+            }
+        });
+
+        parser.query();
+        assertEquals(expectedQuery, tokens.getText());
+    }
 
     private String streamToString(InputStream inputStream) throws IOException {
         return IOUtils.toString(inputStream, "UTF-8");
