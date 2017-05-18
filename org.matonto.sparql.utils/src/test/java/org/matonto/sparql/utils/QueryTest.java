@@ -23,8 +23,10 @@ package org.matonto.sparql.utils;
  * #L%
  */
 
-import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
+
+import java.io.IOException;
+import java.io.InputStream;
 
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.RecognitionException;
@@ -34,9 +36,6 @@ import org.antlr.v4.runtime.TokenStreamRewriter;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.apache.commons.io.IOUtils;
 import org.junit.Test;
-
-import java.io.IOException;
-import java.io.InputStream;
 
 public class QueryTest {
 
