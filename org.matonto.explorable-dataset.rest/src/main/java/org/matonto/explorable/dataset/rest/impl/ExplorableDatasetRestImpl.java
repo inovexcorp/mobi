@@ -35,28 +35,14 @@ import org.matonto.exception.MatOntoException;
 import org.matonto.explorable.dataset.rest.ExplorableDatasetRest;
 import org.matonto.ontologies.dcterms._Thing;
 import org.matonto.query.TupleQueryResult;
-import org.matonto.query.api.BindingSet;
 import org.matonto.query.api.TupleQuery;
-import org.matonto.rdf.api.BNode;
-import org.matonto.rdf.api.IRI;
-import org.matonto.rdf.api.Model;
-import org.matonto.rdf.api.Resource;
-import org.matonto.rdf.api.Statement;
-import org.matonto.rdf.api.Value;
-import org.matonto.rdf.api.ValueFactory;
+import org.matonto.rdf.api.*;
 import org.matonto.rest.util.ErrorUtils;
 import org.openrdf.model.vocabulary.RDFS;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
+import java.io.IOException;
+import java.util.*;
 
 @Component(immediate = true)
 public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
@@ -112,103 +98,48 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
         this.catalogManager = catalogManager;
     }
 
+
     @Override
     public Response getClassDetails(String recordIRI, int offset, int limit, String sort, boolean asc, String filter) {
         Resource datasetRecordRsr = factory.createIRI(recordIRI);
         DatasetRecord record = datasetManager.getDatasetRecord(datasetRecordRsr).orElseThrow(() ->
                 ErrorUtils.sendError("The dataset record could not be found.", Response.Status.BAD_REQUEST));
+
+        Map<String, Map<String, Object>> clsFromQry = new HashMap<>();
+        Map<String, String> clsFromQryList = new HashMap<>();
         List<Map<String, Object>> listToJson = new ArrayList<>();
-        Map<String, Map<String, Object>> classesFromQuery = new HashMap<>();
-        Map<String, String> classesFromQueryList = new HashMap<>();
 
         if (!recordIRI.isEmpty()) {
-
             List<Resource> classesList = new ArrayList<>();
-            DatasetConnection dsConn = datasetManager.getConnection(datasetRecordRsr);
 
             try {
-                TupleQuery tq = dsConn.prepareTupleQuery(GET_CLASSES_TYPES);
-                TupleQueryResult results = tq.evaluate();
+                TupleQueryResult results = getQueryResults(datasetRecordRsr, GET_CLASSES_TYPES, "",
+                        null);
 
                 Optional<DatasetRecord> datasetRecordOpt = datasetManager.getDatasetRecord(datasetRecordRsr);
                 Model result = datasetRecordOpt.get().getModel();
 
                 results.forEach(bindingSet -> {
                     Map<String, Object> classMap = new HashMap<>();
-                    Optional<Value> classType = bindingSet.getValue("type");
-                    Optional<Value> classCount = bindingSet.getValue("c");
 
-                    if (classType.isPresent()) {
-                        classMap.put("classType", classType.get().stringValue());
-                        classMap.put("instancesCount", classCount.get().stringValue());
+                    if (bindingSet.getValue("type").isPresent() && bindingSet.getValue("c").isPresent()) {
+                        classMap.put("classType", (bindingSet.getValue("type").get().stringValue()));
+                        classMap.put("instancesCount", bindingSet.getValue("c").get().stringValue());
 
-                        Value classIRI = classType.get();
+                        TupleQueryResult examplesResults = getQueryResults(datasetRecordRsr, GET_CLASSES_DETAILS,
+                                "classIRI", bindingSet.getValue("type").get());
+                        classMap.put("classExamples", parseInstanceExamples(examplesResults));
 
-                        TupleQuery tqEx = dsConn.prepareTupleQuery(GET_CLASSES_DETAILS);
-                        tqEx.setBinding("classIRI", classIRI);
-                        TupleQueryResult examplesResults = tqEx.evaluate();
-                        List<String> exList = new ArrayList<>();
-
-                        examplesResults.forEach(bindingSetEx -> {
-                            String lblStr = (bindingSetEx.getValue("label").isPresent() ? bindingSetEx.getValue("label").get().stringValue() : "");
-                            String titleStr = (bindingSetEx.getValue("title").isPresent() ? bindingSetEx.getValue("title").get().stringValue() : "");
-
-                            if (!lblStr.isEmpty()) {
-                                exList.add(lblStr);
-                            } else {
-                                if (!titleStr.isEmpty()) {
-                                    exList.add(titleStr);
-                                } else {
-                                    IRI exampleIRI = factory.createIRI(bindingSetEx.getValue("example").get().stringValue());
-                                    exList.add(splitCamelCase(exampleIRI.getLocalName()));
-                                }
-                            }
-
-                        });
-                        classMap.put("classExamples", exList);
-
-                        classesList.add(factory.createIRI(classType.get().stringValue()));
-                        classesFromQuery.put(classType.get().stringValue(), classMap);
-                        classesFromQueryList.put(classType.get().stringValue(), classType.get().stringValue());
+                        classesList.add(factory.createIRI(bindingSet.getValue("type").get().stringValue()));
+                        clsFromQry.put(bindingSet.getValue("type").get().stringValue(), classMap);
+                        clsFromQryList.put(bindingSet.getValue("type").get().stringValue(),
+                                bindingSet.getValue("type").get().stringValue());
                     }
                 });
 
                 Set<Value> ontologies = record.getOntology();
-                ontologies.forEach(ontBlkNode -> {
-                    BNode blankNode = factory.createBNode(ontBlkNode.stringValue());
-                    Optional<Statement> commitStmt = result.filter(blankNode,
-                            factory.createIRI(DatasetRecord.linksToCommit_IRI), null).stream().findFirst();
-                    Optional<Statement> ontologyRecordStmt = result.filter(blankNode,
-                            factory.createIRI(DatasetRecord.linksToRecord_IRI), null).stream().findFirst();
-                    Optional<Model> compiledResource = catalogManager.getCompiledResource(factory.createIRI(commitStmt
-                            .get().getObject().stringValue()));
+                listToJson = setJsonItems(ontologies, result, clsFromQry, clsFromQryList);
 
-                    if (compiledResource.isPresent()) {
-                        for (Iterator<Map.Entry<String, String>> it = classesFromQueryList.entrySet().iterator(); it.hasNext();) {
-                            Map.Entry<String, String> entry = it.next();
-                            Map<String, Object> mapToJson = new HashMap<>();
-                            Resource classRsrc = factory.createIRI(entry.getValue());
-                            Model classModel = compiledResource.get().filter(classRsrc, null, null);
-                            if (classModel.size() > 0) {
-                                it.remove();
-
-                                mapToJson.put("ontologyRecordTitle", findLabelToDisplay(compiledResource.get(),
-                                        factory.createIRI(ontologyRecordStmt.get().getObject().stringValue())));
-                                mapToJson.put("classIRI", entry.getValue());
-                                mapToJson.put("classTitle", findLabelToDisplay(classModel,
-                                        factory.createIRI(classRsrc.stringValue())));
-                                mapToJson.put("classDescription", findDescriptionToDisplay(classModel,
-                                        factory.createIRI(entry.getValue())));
-                                mapToJson.put("instancesCount", Integer.parseInt(classesFromQuery.get(entry.getValue())
-                                        .get("instancesCount").toString()));
-                                mapToJson.put("classExamples", classesFromQuery.get(entry.getValue())
-                                        .get("classExamples"));
-
-                                listToJson.add(mapToJson);
-                            }
-                        }
-                    }
-                });
             } catch (MatOntoException e) {
                 throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
             }
@@ -219,7 +150,8 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
     }
 
     @Override
-    public Response getInstanceDetails(String recordIRI, String classIRI, int offset, int limit, String sort, boolean asc, int numExamples) {
+    public Response getInstanceDetails(String recordIRI, String classIRI, int offset, int limit, String sort,
+                                       boolean asc, int numExamples) {
 
         List<Map<String, Object>> listToJson = new ArrayList<>();
 
@@ -229,19 +161,22 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
             DatasetConnection dsConn = datasetManager.getConnection(datasetRecordRsr);
 
             try {
-                TupleQuery tqEx = dsConn.prepareTupleQuery(GET_CLASSES_INSTANCES);
-                Value classIRIVal = factory.createIRI(classIRI);
-                tqEx.setBinding("classIRI", classIRIVal);
-                TupleQueryResult results = tqEx.evaluate();
+                TupleQueryResult results = getQueryResults(datasetRecordRsr, GET_CLASSES_INSTANCES,
+                        "classIRI", factory.createIRI(classIRI));
                 results.forEach(instance -> {
 
                     Map<String, Object> mapToJson = new HashMap<>();
 
-                    String instanceIRI = (instance.getValue("inst").isPresent() ? instance.getValue("inst").get().stringValue() : "");
-                    String title = (instance.getValue("title").isPresent() ? instance.getValue("title").get().stringValue() : "");
-                    String label = (instance.getValue("label").isPresent() ? instance.getValue("label").get().stringValue() : "");
-                    String comment = (instance.getValue("comment").isPresent() ? instance.getValue("comment").get().stringValue() : "");
-                    String description = (instance.getValue("description").isPresent() ? instance.getValue("description").get().stringValue() : "");
+                    String instanceIRI = (instance.getValue("inst").isPresent() ?
+                            instance.getValue("inst").get().stringValue() : "");
+                    String title = (instance.getValue("title").isPresent() ?
+                            instance.getValue("title").get().stringValue() : "");
+                    String label = (instance.getValue("label").isPresent() ?
+                            instance.getValue("label").get().stringValue() : "");
+                    String comment = (instance.getValue("comment").isPresent() ?
+                            instance.getValue("comment").get().stringValue() : "");
+                    String description = (instance.getValue("description").isPresent() ?
+                            instance.getValue("description").get().stringValue() : "");
 
                     String desc;
                     // Instance description will be returned using rdfs:comment or dc:title or empty string
@@ -252,7 +187,7 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
                     }
 
                     String lbl;
-                    // Instance title will be returned using rdfs:label or dc:title or human readable version of uri local name
+                    // Title will be returned using rdfs:label or dc:title or human readable version of uri local name
                     if (!label.isEmpty()) {
                         lbl = label;
                     } else {
@@ -288,7 +223,7 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
      */
     private String splitCamelCase(String string) {
         return string.replaceAll(String.format("%s|%s|%s", "(?<=[A-Z])(?=[A-Z][a-z])", "(?<=[^A-Z])(?=[A-Z])",
-                "(?<=[A-Za-z])(?=[^A-Za-z])"), " " );
+                "(?<=[A-Za-z])(?=[^A-Za-z])"), " ");
     }
 
     /**
@@ -296,7 +231,7 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
      * rdfs:label, dcterms:title, or beautified version of local name.
      *
      * @param model Model with pertinent data
-     * @param iri Entity to find label/title of
+     * @param iri   Entity to find label/title of
      * @return entity label
      */
     private String findLabelToDisplay(Model model, IRI iri) {
@@ -308,7 +243,7 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
      * rdfs:comment, dcterms:description, or default empty string.
      *
      * @param model Model with pertinent data
-     * @param iri Entity to find label/title of
+     * @param iri   Entity to find label/title of
      * @return entity label
      */
     private String findDescriptionToDisplay(Model model, IRI iri) {
@@ -317,12 +252,14 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
 
     private String findPropertyToDisplay(Model model, IRI iri, String rdfsProp, String dcProp) {
         if (model.size() > 0) {
-            Optional<Statement> rdfs = model.filter(null, factory.createIRI(rdfsProp), null).stream().findFirst();
+            Optional<Statement> rdfs = model.filter(null, factory.createIRI(rdfsProp),
+                    null).stream().findFirst();
 
             if (rdfs.isPresent()) {
                 return rdfs.get().getObject().stringValue();
             } else {
-                Optional<Statement> dcterm = model.filter(null, factory.createIRI(dcProp), null).stream().findFirst();
+                Optional<Statement> dcterm = model.filter(null, factory.createIRI(dcProp),
+                        null).stream().findFirst();
                 if (dcterm.isPresent()) {
                     return dcterm.get().getObject().stringValue();
                 } else {
@@ -332,5 +269,109 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
         } else {
             return "";
         }
+    }
+
+    /**
+     * Parse query results
+     *
+     * @param datasetRecordRsr dataset record resource
+     * @param query            query result object with instances examples
+     * @param bindingStr       name of the variable that should be bound
+     * @param bindingVal       value for the specified variable
+     * @return variable-binding query result
+     */
+    private TupleQueryResult getQueryResults(Resource datasetRecordRsr, String query, String bindingStr, Value bindingVal) {
+        DatasetConnection dsConn = datasetManager.getConnection(datasetRecordRsr);
+        TupleQuery tq = dsConn.prepareTupleQuery(query);
+        if (!bindingStr.isEmpty() && !bindingVal.stringValue().isEmpty()) {
+            tq.setBinding(bindingStr, bindingVal);
+        }
+        TupleQueryResult results = tq.evaluate();
+
+        return results;
+    }
+
+    /**
+     * Retrieve instances examples from query result object
+     * rdfs:comment, dcterms:description, or default empty string.
+     *
+     * @param examplesResults query result object with instances examples
+     * @return examples list
+     */
+    private List<String> parseInstanceExamples(TupleQueryResult examplesResults) {
+        List<String> exList = new ArrayList<>();
+
+        examplesResults.forEach(bindingSetEx -> {
+            String lblStr = (bindingSetEx.getValue("label").isPresent() ?
+                    bindingSetEx.getValue("label").get().stringValue() : "");
+            String titleStr = (bindingSetEx.getValue("title").isPresent() ?
+                    bindingSetEx.getValue("title").get().stringValue() : "");
+
+            if (!lblStr.isEmpty()) {
+                exList.add(lblStr);
+            } else {
+                if (!titleStr.isEmpty()) {
+                    exList.add(titleStr);
+                } else {
+                    IRI exampleIRI = factory.createIRI(bindingSetEx.getValue("example").get().
+                            stringValue());
+                    exList.add(splitCamelCase(exampleIRI.getLocalName()));
+                }
+            }
+
+        });
+        return exList;
+    }
+
+    /**
+     * Prepare list of instances to provide
+     *
+     * @param ontologies     ontologies attached to the dataset record
+     * @param result         dataset record model
+     * @param clsFromQry     changeable instances list
+     * @param clsFromQryList instances list to provide
+     * @return variable-binding query result
+     */
+    private List<Map<String, Object>> setJsonItems(Set<Value> ontologies, Model result, Map<String,
+            Map<String, Object>> clsFromQry, Map<String, String> clsFromQryList) {
+
+        List<Map<String, Object>> listToJson = new ArrayList<>();
+        ontologies.forEach(ontBlkNode -> {
+            BNode blankNode = factory.createBNode(ontBlkNode.stringValue());
+            Optional<Statement> commitStmt = result.filter(blankNode,
+                    factory.createIRI(DatasetRecord.linksToCommit_IRI), null).stream().findFirst();
+            Optional<Statement> ontologyRecordStmt = result.filter(blankNode,
+                    factory.createIRI(DatasetRecord.linksToRecord_IRI), null).stream().findFirst();
+            Optional<Model> compiledResource = catalogManager.getCompiledResource(factory.createIRI(commitStmt
+                    .get().getObject().stringValue()));
+
+            if (compiledResource.isPresent()) {
+                for (Iterator<Map.Entry<String, String>> it = clsFromQryList.entrySet().iterator();
+                     it.hasNext(); ) {
+                    Map.Entry<String, String> entry = it.next();
+                    Map<String, Object> mapToJson = new HashMap<>();
+                    Resource classRsrc = factory.createIRI(entry.getValue());
+                    Model classModel = compiledResource.get().filter(classRsrc, null, null);
+                    if (classModel.size() > 0) {
+                        it.remove();
+
+                        mapToJson.put("ontologyRecordTitle", findLabelToDisplay(compiledResource.get(),
+                                factory.createIRI(ontologyRecordStmt.get().getObject().stringValue())));
+                        mapToJson.put("classIRI", entry.getValue());
+                        mapToJson.put("classTitle", findLabelToDisplay(classModel,
+                                factory.createIRI(classRsrc.stringValue())));
+                        mapToJson.put("classDescription", findDescriptionToDisplay(classModel,
+                                factory.createIRI(entry.getValue())));
+                        mapToJson.put("instancesCount", Integer.parseInt(clsFromQry.get(entry.getValue())
+                                .get("instancesCount").toString()));
+                        mapToJson.put("classExamples", clsFromQry.get(entry.getValue())
+                                .get("classExamples"));
+
+                        listToJson.add(mapToJson);
+                    }
+                }
+            }
+        });
+        return listToJson;
     }
 }
