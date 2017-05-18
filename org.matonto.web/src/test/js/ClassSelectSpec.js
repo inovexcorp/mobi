@@ -21,12 +21,7 @@
  * #L%
  */
 describe('Class Select directive', function() {
-    var $compile,
-        scope,
-        element,
-        isolatedScope,
-        controller,
-        ontologyManagerSvc;
+    var $compile, scope, element, isolatedScope, controller, ontologyManagerSvc, splitIRI;
 
     beforeEach(function() {
         module('templates');
@@ -34,11 +29,13 @@ describe('Class Select directive', function() {
         mockOntologyManager();
         injectHighlightFilter();
         injectTrustedFilter();
+        injectSplitIRIFilter();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _splitIRIFilter_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyManagerSvc = _ontologyManagerService_;
+            splitIRI = _splitIRIFilter_;
         });
 
         scope.classes = [];
@@ -47,11 +44,10 @@ describe('Class Select directive', function() {
         scope.onChange = jasmine.createSpy('onChange');
         element = $compile(angular.element('<class-select classes="classes" selected-class="selectedClass" on-change="onChange()" is-disabled-when="isDisabledWhen"></class-select>'))(scope);
         scope.$digest();
+        controller = element.controller('classSelect');
+        isolatedScope = element.isolateScope();
     });
     describe('in isolated scope', function() {
-        beforeEach(function() {
-            isolatedScope = element.isolateScope();
-        });
         it('classes should be one way bound', function() {
             isolatedScope.classes = [{}];
             scope.$digest();
@@ -68,13 +64,20 @@ describe('Class Select directive', function() {
         });
     });
     describe('controller bound variable', function() {
-        beforeEach(function() {
-            controller = element.controller('classSelect');
-        });
         it('selectedClass should be two way bound', function() {
             controller.selectedClass = {};
             scope.$digest();
             expect(scope.selectedClass).toEqual({});
+        });
+    });
+    describe('controller methods', function() {
+        it('should get the ontology id of a prop', function() {
+            expect(controller.getOntologyId({ontologyId: 'test'})).toBe('test');
+            expect(splitIRI).not.toHaveBeenCalled();
+
+            splitIRI.and.returnValue({begin: 'test'});
+            expect(controller.getOntologyId({classObj: {'@id': ''}})).toBe('test');
+            expect(splitIRI).toHaveBeenCalledWith('');
         });
     });
     describe('replaces the element with the correct html', function() {
