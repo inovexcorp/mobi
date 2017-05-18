@@ -53,7 +53,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>etl.api</artifactId>
-            <version>1.7.3-SNAPSHOT</version>
+            <version>1.7.4-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
@@ -78,12 +78,12 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.api</artifactId>
-            <version>1.7.3-SNAPSHOT</version>
+            <version>1.7.4-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.utils</artifactId>
-            <version>1.7.3-SNAPSHOT</version>
+            <version>1.7.4-SNAPSHOT</version>
         </dependency>
 
         <dependency>
