@@ -127,6 +127,7 @@ public class SimpleOntology implements Ontology {
             missingImports.add(SimpleOntologyValues.matontoIRI(arg0.getImportedOntologyURI()));
             LOG.warn("Missing import {} ", arg0.getImportedOntologyURI());
         });
+        owlManager.setOntologyLoaderConfiguration(config);
     }
 
     /**
@@ -163,9 +164,7 @@ public class SimpleOntology implements Ontology {
         this.ontologyManager = ontologyManager;
 
         try {
-            OWLOntologyDocumentSource documentSource = new StringDocumentSource(MatOntoStringUtils
-                    .inputStreamToText(inputStream));
-            owlOntology = owlManager.loadOntologyFromOntologyDocument(documentSource, config);
+            owlOntology = owlManager.loadOntologyFromOntologyDocument(inputStream);
             createOntologyId(null);
         } catch (OWLOntologyCreationException e) {
             throw new MatontoOntologyException("Error in ontology creation", e);
@@ -396,28 +395,9 @@ public class SimpleOntology implements Ontology {
      */
     protected org.openrdf.model.Model asSesameModel() throws MatontoOntologyException {
         org.openrdf.model.Model sesameModel = new org.openrdf.model.impl.LinkedHashModel();
-        ByteArrayOutputStream bos = null;
-        ByteArrayInputStream is = null;
-
-        try {
-            bos = (ByteArrayOutputStream) this.asRdfXml();
-            is = new ByteArrayInputStream(bos.toByteArray());
-            OWLOntologyManager tempManager = OWLManager.createOWLOntologyManager();
-            OWLOntologyDocumentSource documentSource = new StringDocumentSource(MatOntoStringUtils
-                    .inputStreamToText(is));
-            OWLOntology tempOntology = tempManager.loadOntologyFromOntologyDocument(documentSource, config);
-            OWLDocumentFormat parsedFormat = tempManager.getOntologyFormat(tempOntology);
-            RDFHandler rdfHandler = new StatementCollector(sesameModel);
-            RioRenderer renderer = new RioRenderer(tempOntology, rdfHandler, parsedFormat);
-
-            renderer.render();
-        } catch (OWLOntologyCreationException e) {
-            throw new MatontoOntologyException("Error in loading ontology document", e);
-        } finally {
-            IOUtils.closeQuietly(bos);
-            IOUtils.closeQuietly(is);
-        }
-
+        RDFHandler rdfHandler = new StatementCollector(sesameModel);
+        RioRenderer renderer = new RioRenderer(this.owlOntology, rdfHandler, this.owlOntology.getFormat());
+        renderer.render();
         return sesameModel.unmodifiable();
     }
 
