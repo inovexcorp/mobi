@@ -256,6 +256,7 @@ function mockMappingManager() {
     module(function($provide) {
         $provide.service('mappingManagerService', function($q) {
             this.mappingIds = [];
+            this.annotationProperties = [];
 
             this.reset = jasmine.createSpy('reset');
             this.initialize = jasmine.createSpy('initialize');
