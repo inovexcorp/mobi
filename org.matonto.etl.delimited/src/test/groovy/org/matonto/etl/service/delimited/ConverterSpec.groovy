@@ -65,17 +65,18 @@ class ConverterSpec extends Specification {
     def countProperty = Mock(DataProperty)
     def dateRecordedProperty = Mock(DataProperty)
 
-    def out = new ClassPathResource("testOutput.ttl").getFile()
-    def testOutput = new FileReader(out)
-
-    def outWithDatatypes = new ClassPathResource("testOutputWithDatatypes.ttl").getFile()
-    def testOutputWithDatatypes = new FileReader(outWithDatatypes)
-
-    def outWithBlanks = new ClassPathResource("testOutputWithBlanks.ttl").getFile()
-    def testOutputWithBlanks = new FileReader(outWithBlanks)
-
-    def outWithFormattingAndBlanks = new ClassPathResource("testOutputWithFormattingAndBlanks.ttl").getFile()
-    def testOutputWithFormattingAndBlanks = new FileReader(outWithFormattingAndBlanks)
+    /* Test Output Models */
+    def testOutput = loadModel("testOutput.ttl")
+    def testOutputWithDatatypes = loadModel("testOutputWithDatatypes.ttl")
+    def testOutputWithBlanks = loadModel("testOutputWithBlanks.ttl")
+    def testOutputWithFormattingAndBlanks = loadModel("testOutputWithFormattingAndBlanks.ttl")
+    def testOutputWithDatatypesAndInvalidValues = loadModel("testOutputWithDatatypesAndInvalidValues.ttl")
+    def testOutputLimitNoOffset = loadModel("testLimitNoOffsetOutput.ttl")
+    def testOutputLimitWithOffset = loadModel("testLimitWithOffsetOutput.ttl")
+    def testOutputOffset = loadModel("testOffsetOutput.ttl")
+    def testOutputOffsetWithBlankRows = loadModel("testOffsetOutputWithBlankRows.ttl")
+    def testOutputPropertiesMissing = loadModel("testPropertiesMissingOut.ttl")
+    def testOutputNoPrefix = loadModel("output_no-prefix.ttl")
 
     def setup() {
         mappingFactory.setValueFactory(vf)
@@ -131,240 +132,212 @@ class ConverterSpec extends Specification {
 
     def "Convert CSV File with Multiple Object per Row and Object and Data Properties"() {
         setup:
-        InputStream csv = new ClassPathResource("testFile.csv").getInputStream()
-        InputStream mappingFile = new ClassPathResource("newestMapping.ttl").getInputStream()
-        Model m = Values.matontoModel(Rio.parse(testOutput, "", RDFFormat.TURTLE))
-        Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE))
-        SVConfig config = new SVConfig.SVConfigBuilder(csv, mapping).containsHeaders(true).separator((char) ',').build()
+        SVConfig config = getSVConfigBuilder("testFile.csv", "newestMapping.ttl")
+                .containsHeaders(true)
+                .separator((char) ',')
+                .build()
         Model convertedModel = c.convert(config)
 
         expect:
-        convertedModel == m
+        convertedModel == testOutput
     }
 
     def "Convert CSV File with Multiple Object per Row and Object and Data Properties with Blank Values"() {
         setup:
-        InputStream csv = new ClassPathResource("testFileWithBlanks.csv").getInputStream()
-        InputStream mappingFile = new ClassPathResource("newestMapping.ttl").getInputStream()
-        Model m = Values.matontoModel(Rio.parse(testOutputWithBlanks, "", RDFFormat.TURTLE))
-        Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE))
-        SVConfig config = new SVConfig.SVConfigBuilder(csv, mapping).containsHeaders(true).separator((char) ',').build()
+        SVConfig config = getSVConfigBuilder("testFileWithBlanks.csv", "newestMapping.ttl")
+                .containsHeaders(true)
+                .separator((char) ',')
+                .build()
         Model convertedModel = c.convert(config)
 
         expect:
-        convertedModel == m
+        convertedModel == testOutputWithBlanks
     }
 
     def "Convert CSV File with Multiple Object per Row and Object and Data Properties in Passed Ontologies"() {
         setup:
-        InputStream csv = new ClassPathResource("testFile.csv").getInputStream()
-        InputStream mappingFile = new ClassPathResource("mappingAllDatatypes.ttl").getInputStream()
-        Model m = Values.matontoModel(Rio.parse(testOutputWithDatatypes, "", RDFFormat.TURTLE))
-        Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE))
-        SVConfig config = new SVConfig.SVConfigBuilder(csv, mapping).containsHeaders(true).ontologies(Collections.singleton(ontology)).separator((char) ',').build()
+        SVConfig config = getSVConfigBuilder("testFile.csv", "mappingAllDatatypes.ttl")
+                .containsHeaders(true)
+                .ontologies(Collections.singleton(ontology))
+                .separator((char) ',')
+                .build()
         Model convertedModel = c.convert(config)
 
         expect:
-        convertedModel == m
+        convertedModel == testOutputWithDatatypes
     }
 
     def "Convert CSV File with Multiple Object per Row and Object and Data Properties in Source Ontologies"() {
         setup:
         om.retrieveOntology(*_) >> Optional.of(ontology)
-        InputStream csv = new ClassPathResource("testFile.csv").getInputStream()
-        InputStream mappingFile = new ClassPathResource("mappingWithSourceOntology.ttl").getInputStream()
-        Model m = Values.matontoModel(Rio.parse(testOutputWithDatatypes, "", RDFFormat.TURTLE))
-        Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE))
-        SVConfig config = new SVConfig.SVConfigBuilder(csv, mapping).containsHeaders(true).separator((char) ',').build()
+        SVConfig config = getSVConfigBuilder("testFile.csv", "mappingWithSourceOntology.ttl")
+                .containsHeaders(true)
+                .separator((char) ',')
+                .build()
         Model convertedModel = c.convert(config)
 
         expect:
-        convertedModel == m
+        convertedModel == testOutputWithDatatypes
     }
 
     def "Convert CSV File with Source Ontologies and Invalid Values for Range Datatypes"() {
         setup:
         om.retrieveOntology(*_) >> Optional.of(ontology)
-        InputStream csv = new ClassPathResource("testFileWithInvalidValues.csv").getInputStream()
-        InputStream mappingFile = new ClassPathResource("mappingWithSourceOntology.ttl").getInputStream()
-        def outWithDatatypes = new ClassPathResource("testOutputWithDatatypesAndInvalidValues.ttl").getFile()
-        def testOutputWithDatatypesAndInvalidValues = new FileReader(outWithDatatypes)
-        Model m = Values.matontoModel(Rio.parse(testOutputWithDatatypesAndInvalidValues, "", RDFFormat.TURTLE))
-        Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE))
-        SVConfig config = new SVConfig.SVConfigBuilder(csv, mapping).containsHeaders(true).separator((char) ',').build()
+        SVConfig config = getSVConfigBuilder("testFileWithInvalidValues.csv", "mappingWithSourceOntology.ttl")
+                .containsHeaders(true)
+                .separator((char) ',')
+                .build()
         Model convertedModel = c.convert(config)
 
         expect:
-        convertedModel == m
+        convertedModel == testOutputWithDatatypesAndInvalidValues
     }
 
     def "Test non-comma separator"() {
         setup:
-        InputStream csv = new ClassPathResource("semicolonFile.csv").getInputStream()
-        InputStream mappingFile = new ClassPathResource("newestMapping.ttl").getInputStream()
-        Model m = Values.matontoModel(Rio.parse(testOutput, "", RDFFormat.TURTLE))
-        Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE))
-        SVConfig config = new SVConfig.SVConfigBuilder(csv, mapping).containsHeaders(true).separator((char) ';').build()
+        SVConfig config = getSVConfigBuilder("semicolonFile.csv", "newestMapping.ttl")
+                .containsHeaders(true)
+                .separator((char) ';')
+                .build()
         Model convertedModel = c.convert(config)
 
         expect:
-        convertedModel == m
+        convertedModel == testOutput
     }
 
     def "Tab Separated"() {
         setup:
-        InputStream csv = new ClassPathResource("tabFile.csv").getInputStream()
-        InputStream mappingFile = new ClassPathResource("newestMapping.ttl").getInputStream()
-        Model m = Values.matontoModel(Rio.parse(testOutput, "", RDFFormat.TURTLE))
-        Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE))
-        SVConfig config = new SVConfig.SVConfigBuilder(csv, mapping).containsHeaders(true).separator((char) '\t').build()
+        SVConfig config = getSVConfigBuilder("tabFile.csv", "newestMapping.ttl")
+                .containsHeaders(true)
+                .separator((char) '\t')
+                .build()
         Model convertedModel = c.convert(config)
 
         expect:
-        convertedModel == m
+        convertedModel == testOutput
     }
 
     def "Tab Separated with Blanks"() {
         setup:
-        InputStream csv = new ClassPathResource("tabFileWithBlanks.csv").getInputStream()
-        InputStream mappingFile = new ClassPathResource("newestMapping.ttl").getInputStream()
-        Model m = Values.matontoModel(Rio.parse(testOutputWithBlanks, "", RDFFormat.TURTLE))
-        Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE))
-        SVConfig config = new SVConfig.SVConfigBuilder(csv, mapping).containsHeaders(true).separator((char) '\t').build()
+        SVConfig config = getSVConfigBuilder("tabFileWithBlanks.csv", "newestMapping.ttl")
+                .containsHeaders(true)
+                .separator((char) '\t')
+                .build()
         Model convertedModel = c.convert(config)
 
         expect:
-        convertedModel == m
+        convertedModel == testOutputWithBlanks
     }
 
     def "Mapping with default Local Name"() {
         setup:
-        InputStream csv = new ClassPathResource("testFile.csv").getInputStream()
-        InputStream mappingFile = new ClassPathResource("mappingNoLocalName.ttl").getInputStream()
-        Model m = Values.matontoModel(Rio.parse(testOutput, "", RDFFormat.TURTLE))
-        Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE))
-        SVConfig config = new SVConfig.SVConfigBuilder(csv, mapping).containsHeaders(true).separator((char) ',').build()
+        SVConfig config = getSVConfigBuilder("testFile.csv", "mappingNoLocalName.ttl")
+                .containsHeaders(true)
+                .separator((char) ',')
+                .build()
         Model convertedModel = c.convert(config)
 
         expect:
-        convertedModel == m
+        convertedModel == testOutput
     }
 
     def "Without headers"() {
         setup:
-        InputStream csv = new ClassPathResource("testFileNoHeaders.csv").getInputStream()
-        InputStream mappingFile = new ClassPathResource("newestMapping.ttl").getInputStream()
-        Model m = Values.matontoModel(Rio.parse(testOutput, "", RDFFormat.TURTLE))
-        Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE))
-        SVConfig config = new SVConfig.SVConfigBuilder(csv, mapping).containsHeaders(false).separator((char) ',').build()
+        SVConfig config = getSVConfigBuilder("testFileNoHeaders.csv", "newestMapping.ttl")
+                .containsHeaders(false)
+                .separator((char) ',')
+                .build()
         Model convertedModel = c.convert(config)
 
         expect:
-        convertedModel == m
+        convertedModel == testOutput
     }
 
     def "Convert Excel 97-2003 File with Multiple Object per Row and Object and Data Properties"() {
         setup:
-        InputStream xls = new ClassPathResource("testFile.xls").getInputStream()
-        InputStream mappingFile = new ClassPathResource("newestMapping.ttl").getInputStream()
-        Model m = Values.matontoModel(Rio.parse(testOutput, "", RDFFormat.TURTLE))
-        Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE))
-        ExcelConfig config = new ExcelConfig.ExcelConfigBuilder(xls, mapping).containsHeaders(true).build()
+        ExcelConfig config = getExcelConfigBuilder("testFile.xls", "newestMapping.ttl")
+                .containsHeaders(true)
+                .build()
         Model convertedModel = c.convert(config)
 
         expect:
-        convertedModel == m
+        convertedModel == testOutput
     }
 
     def "Convert Excel 97-2003 File with Multiple Object per Row and Object and Data Properties with Blank Values"() {
         setup:
-        InputStream xls = new ClassPathResource("testFileWithBlanks.xls").getInputStream()
-        InputStream mappingFile = new ClassPathResource("newestMapping.ttl").getInputStream()
-        Model m = Values.matontoModel(Rio.parse(testOutputWithBlanks, "", RDFFormat.TURTLE))
-        Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE))
-        ExcelConfig config = new ExcelConfig.ExcelConfigBuilder(xls, mapping).containsHeaders(true).build()
+        ExcelConfig config = getExcelConfigBuilder("testFileWithBlanks.xls", "newestMapping.ttl")
+                .containsHeaders(true)
+                .build()
         Model convertedModel = c.convert(config)
 
         expect:
-        convertedModel == m
+        convertedModel == testOutputWithBlanks
     }
 
     def "Convert Excel 97-2003 File with Multiple Object per Row and Object and Data Properties in Passed Ontologies"() {
         setup:
-        InputStream xls = new ClassPathResource("testFile.xls").getInputStream()
-        InputStream mappingFile = new ClassPathResource("mappingAllDatatypes.ttl").getInputStream()
-        Model m = Values.matontoModel(Rio.parse(testOutputWithDatatypes, "", RDFFormat.TURTLE))
-        Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE))
-        ExcelConfig config = new ExcelConfig.ExcelConfigBuilder(xls, mapping).containsHeaders(true).ontologies(Collections.singleton(ontology)).build()
+        ExcelConfig config = getExcelConfigBuilder("testFile.xls", "mappingAllDatatypes.ttl")
+                .containsHeaders(true)
+                .ontologies(Collections.singleton(ontology))
+                .build()
         Model convertedModel = c.convert(config)
 
         expect:
-        convertedModel == m
+        convertedModel == testOutputWithDatatypes
     }
 
     def "Convert Excel 97-2003 File with Multiple Object per Row and Object and Data Properties in Source Ontologies"() {
         setup:
         om.retrieveOntology(*_) >> Optional.of(ontology)
-        InputStream xls = new ClassPathResource("testFile.xls").getInputStream()
-        InputStream mappingFile = new ClassPathResource("mappingWithSourceOntology.ttl").getInputStream()
-        Model m = Values.matontoModel(Rio.parse(testOutputWithDatatypes, "", RDFFormat.TURTLE))
-        Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE))
-        ExcelConfig config = new ExcelConfig.ExcelConfigBuilder(xls, mapping).containsHeaders(true).build()
+        ExcelConfig config = getExcelConfigBuilder("testFile.xls", "mappingWithSourceOntology.ttl")
+                .containsHeaders(true)
+                .build()
         Model convertedModel = c.convert(config)
 
         expect:
-        convertedModel == m
+        convertedModel == testOutputWithDatatypes
     }
 
     def "Convert Excel 97-2003 File with Source Ontologies and Invalid Values for Range Datatypes"() {
         setup:
         om.retrieveOntology(*_) >> Optional.of(ontology)
-        InputStream xls = new ClassPathResource("testFileWithInvalidValues.xls").getInputStream()
-        InputStream mappingFile = new ClassPathResource("mappingWithSourceOntology.ttl").getInputStream()
-        def outWithDatatypesAndInvalidValues = new ClassPathResource("testOutputWithDatatypesAndInvalidValues.ttl").getFile()
-        def testOutputWithDatatypesAndInvalidValues = new FileReader(outWithDatatypesAndInvalidValues)
-        Model m = Values.matontoModel(Rio.parse(testOutputWithDatatypesAndInvalidValues, "", RDFFormat.TURTLE))
-        Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE))
-        ExcelConfig config = new ExcelConfig.ExcelConfigBuilder(xls, mapping).containsHeaders(true).build()
+        ExcelConfig config = getExcelConfigBuilder("testFileWithInvalidValues.xls", "mappingWithSourceOntology.ttl")
+                .containsHeaders(true)
+                .build()
         Model convertedModel = c.convert(config)
 
         expect:
-        convertedModel == m
+        convertedModel == testOutputWithDatatypesAndInvalidValues
     }
 
     def "Convert Excel 2007 File with Multiple Object per Row and Object and Data Properties"() {
         setup:
-        InputStream xls = new ClassPathResource("testFile.xlsx").getInputStream()
-        InputStream mappingFile = new ClassPathResource("newestMapping.ttl").getInputStream()
-        Model m = Values.matontoModel(Rio.parse(testOutput, "", RDFFormat.TURTLE))
-        Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE))
-        ExcelConfig config = new ExcelConfig.ExcelConfigBuilder(xls, mapping).containsHeaders(true).build()
+        ExcelConfig config = getExcelConfigBuilder("testFile.xlsx", "newestMapping.ttl")
+                .containsHeaders(true)
+                .build()
         Model convertedModel = c.convert(config)
 
         expect:
-        convertedModel == m
+        convertedModel == testOutput
     }
 
     def "Convert Excel 2007 File with Multiple Object per Row and Object and Data Properties with Blank Values and Blank Rows"() {
         setup:
-        InputStream xls = new ClassPathResource("testFileWithBlanks.xlsx").getInputStream()
-        InputStream mappingFile = new ClassPathResource("newestMapping.ttl").getInputStream()
-        Model m = Values.matontoModel(Rio.parse(testOutputWithBlanks, "", RDFFormat.TURTLE))
-        Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE))
-        ExcelConfig config = new ExcelConfig.ExcelConfigBuilder(xls, mapping).containsHeaders(true).build()
+        ExcelConfig config = getExcelConfigBuilder("testFileWithBlanks.xlsx", "newestMapping.ttl")
+                .containsHeaders(true)
+                .build()
         Model convertedModel = c.convert(config)
 
         expect:
-        convertedModel == m
+        convertedModel == testOutputWithBlanks
     }
 
     def "Convert Excel 2007 File with Formatting and Blank Values and Blank Rows"() {
         setup:
-        InputStream xls = new ClassPathResource("testFileWithFormattingAndBlanks.xlsx").getInputStream()
-        InputStream mappingFile = new ClassPathResource("formattedExcelMapping.ttl").getInputStream()
-        Model m = Values.matontoModel(Rio.parse(testOutputWithFormattingAndBlanks, "", RDFFormat.TURTLE))
-        Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE))
-        ExcelConfig config = new ExcelConfig.ExcelConfigBuilder(xls, mapping).containsHeaders(true).build()
+        ExcelConfig config = getExcelConfigBuilder("testFileWithFormattingAndBlanks.xlsx", "formattedExcelMapping.ttl")
+                .containsHeaders(true)
+                .build()
 
         when:
         Model convertedModel = c.convert(config)
@@ -375,50 +348,43 @@ class ConverterSpec extends Specification {
                               "543" , "432" , "321"]
 
         expect:
-        convertedModel == m
+        convertedModel == testOutputWithFormattingAndBlanks
     }
 
     def "Convert Excel 2007 File with Multiple Object per Row and Object and Data Properties in Passed Ontologies"() {
         setup:
-        InputStream xls = new ClassPathResource("testFile.xlsx").getInputStream()
-        InputStream mappingFile = new ClassPathResource("mappingAllDatatypes.ttl").getInputStream()
-        Model m = Values.matontoModel(Rio.parse(testOutputWithDatatypes, "", RDFFormat.TURTLE))
-        Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE))
-        ExcelConfig config = new ExcelConfig.ExcelConfigBuilder(xls, mapping).containsHeaders(true).ontologies(Collections.singleton(ontology)).build()
+        ExcelConfig config = getExcelConfigBuilder("testFile.xlsx", "mappingAllDatatypes.ttl")
+                .containsHeaders(true)
+                .ontologies(Collections.singleton(ontology))
+                .build()
         Model convertedModel = c.convert(config)
 
         expect:
-        convertedModel == m
+        convertedModel == testOutputWithDatatypes
     }
 
     def "Convert Excel 2007 File with Multiple Object per Row and Object and Data Properties in Source Ontologies"() {
         setup:
         om.retrieveOntology(*_) >> Optional.of(ontology)
-        InputStream xls = new ClassPathResource("testFile.xlsx").getInputStream()
-        InputStream mappingFile = new ClassPathResource("mappingWithSourceOntology.ttl").getInputStream()
-        Model m = Values.matontoModel(Rio.parse(testOutputWithDatatypes, "", RDFFormat.TURTLE))
-        Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE))
-        ExcelConfig config = new ExcelConfig.ExcelConfigBuilder(xls, mapping).containsHeaders(true).build()
+        ExcelConfig config = getExcelConfigBuilder("testFile.xlsx", "mappingWithSourceOntology.ttl")
+                .containsHeaders(true)
+                .build()
         Model convertedModel = c.convert(config)
 
         expect:
-        convertedModel == m
+        convertedModel == testOutputWithDatatypes
     }
 
     def "Convert Excel 2007 File with Source Ontologies and Invalid Values for Range Datatypes"() {
         setup:
         om.retrieveOntology(*_) >> Optional.of(ontology)
-        InputStream xlsx = new ClassPathResource("testFileWithInvalidValues.xlsx").getInputStream()
-        InputStream mappingFile = new ClassPathResource("mappingWithSourceOntology.ttl").getInputStream()
-        def outWithDatatypesAndInvalidValues = new ClassPathResource("testOutputWithDatatypesAndInvalidValues.ttl").getFile()
-        def testOutputWithDatatypesAndInvalidValues = new FileReader(outWithDatatypesAndInvalidValues)
-        Model m = Values.matontoModel(Rio.parse(testOutputWithDatatypesAndInvalidValues, "", RDFFormat.TURTLE))
-        Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE))
-        ExcelConfig config = new ExcelConfig.ExcelConfigBuilder(xlsx, mapping).containsHeaders(true).build()
+        ExcelConfig config = getExcelConfigBuilder("testFileWithInvalidValues.xlsx", "mappingWithSourceOntology.ttl")
+                .containsHeaders(true)
+                .build()
         Model convertedModel = c.convert(config)
 
         expect:
-        convertedModel == m
+        convertedModel == testOutputWithDatatypesAndInvalidValues
     }
 
     def "Test Generation of Local Name #localName Results in #result"() {
@@ -487,143 +453,117 @@ class ConverterSpec extends Specification {
 
     def "With a limit set with no offset"() {
         setup:
-        InputStream csv = new ClassPathResource("testFile.csv").getInputStream()
-        InputStream mappingFile = new ClassPathResource("newestMapping.ttl").getInputStream()
-        out = new ClassPathResource("testLimitNoOffsetOutput.ttl").getFile()
-        testOutput = new FileReader(out)
-        Model m = Values.matontoModel(Rio.parse(testOutput, "", RDFFormat.TURTLE))
-        Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE))
-        SVConfig config = new SVConfig.SVConfigBuilder(csv, mapping).containsHeaders(true).separator((char) ',')
-                .limit(2).build()
+        SVConfig config = getSVConfigBuilder("testFile.csv", "newestMapping.ttl")
+                .containsHeaders(true)
+                .separator((char) ',')
+                .limit(2)
+                .build()
         Model convertedModel = c.convert(config)
 
         expect:
-        convertedModel == m
+        convertedModel == testOutputLimitNoOffset
     }
 
     def "With a limit set with an offset"() {
         setup:
-        InputStream csv = new ClassPathResource("testFile.csv").getInputStream()
-        InputStream mappingFile = new ClassPathResource("newestMapping.ttl").getInputStream()
-        out = new ClassPathResource("testLimitWithOffsetOutput.ttl").getFile()
-        testOutput = new FileReader(out)
-        Model m = Values.matontoModel(Rio.parse(testOutput, "", RDFFormat.TURTLE))
-        Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE))
-        SVConfig config = new SVConfig.SVConfigBuilder(csv, mapping).containsHeaders(true).separator((char) ',')
-                .limit(2).offset(1).build()
+        SVConfig config = getSVConfigBuilder("testFile.csv", "newestMapping.ttl")
+                .containsHeaders(true)
+                .separator((char) ',')
+                .limit(2)
+                .offset(1)
+                .build()
         Model convertedModel = c.convert(config)
 
         expect:
-        convertedModel == m
+        convertedModel == testOutputLimitWithOffset
     }
 
     def "With an offset and headers"() {
         setup:
-        InputStream csv = new ClassPathResource("testFile.csv").getInputStream()
-        InputStream mappingFile = new ClassPathResource("newestMapping.ttl").getInputStream()
-        out = new ClassPathResource("testOffsetOutput.ttl").getFile()
-        testOutput = new FileReader(out)
-        Model m = Values.matontoModel(Rio.parse(testOutput, "", RDFFormat.TURTLE))
-        Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE))
-        SVConfig config = new SVConfig.SVConfigBuilder(csv, mapping).containsHeaders(true).separator((char) ',')
-                .offset(1).build()
+        SVConfig config = getSVConfigBuilder("testFile.csv", "newestMapping.ttl")
+                .containsHeaders(true)
+                .separator((char) ',')
+                .offset(1)
+                .build()
         Model convertedModel = c.convert(config)
 
         expect:
-        convertedModel == m
+        convertedModel == testOutputOffset
     }
 
     def "Convert CSV File with an offset and headers and blank rows"() {
         setup:
-        InputStream csv = new ClassPathResource("testFileWithBlanks.csv").getInputStream()
-        InputStream mappingFile = new ClassPathResource("newestMapping.ttl").getInputStream()
-        out = new ClassPathResource("testOffsetOutputWithBlankRows.ttl").getFile()
-        testOutput = new FileReader(out)
-        Model m = Values.matontoModel(Rio.parse(testOutput, "", RDFFormat.TURTLE))
-        Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE))
-        SVConfig config = new SVConfig.SVConfigBuilder(csv, mapping).containsHeaders(true).separator((char) ',')
-                .offset(2).build()
+        SVConfig config = getSVConfigBuilder("testFileWithBlanks.csv", "newestMapping.ttl")
+                .containsHeaders(true)
+                .separator((char) ',')
+                .offset(2)
+                .build()
         Model convertedModel = c.convert(config)
 
         expect:
-        convertedModel == m
+        convertedModel == testOutputOffsetWithBlankRows
     }
 
     def "Convert Excel 97-2003 File with an offset and headers and blank rows"() {
         setup:
-        InputStream xls = new ClassPathResource("testFileWithBlanks.xls").getInputStream()
-        InputStream mappingFile = new ClassPathResource("newestMapping.ttl").getInputStream()
-        out = new ClassPathResource("testOffsetOutputWithBlankRows.ttl").getFile()
-        testOutput = new FileReader(out)
-        Model m = Values.matontoModel(Rio.parse(testOutput, "", RDFFormat.TURTLE))
-        Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE))
-        ExcelConfig config = new ExcelConfig.ExcelConfigBuilder(xls, mapping).containsHeaders(true).offset(2).build()
+        ExcelConfig config = getExcelConfigBuilder("testFileWithBlanks.xls", "newestMapping.ttl")
+                .containsHeaders(true)
+                .offset(2)
+                .build()
         Model convertedModel = c.convert(config)
 
         expect:
-        convertedModel == m
+        convertedModel == testOutputOffsetWithBlankRows
     }
 
     def "Convert Excel 2007 File with an offset and headers and blank rows"() {
         setup:
-        InputStream xls = new ClassPathResource("testFileWithBlanks.xlsx").getInputStream()
-        InputStream mappingFile = new ClassPathResource("newestMapping.ttl").getInputStream()
-        out = new ClassPathResource("testOffsetOutputWithBlankRows.ttl").getFile()
-        testOutput = new FileReader(out)
-        Model m = Values.matontoModel(Rio.parse(testOutput, "", RDFFormat.TURTLE))
-        Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE))
-        ExcelConfig config = new ExcelConfig.ExcelConfigBuilder(xls, mapping).containsHeaders(true).offset(2).build()
+        ExcelConfig config = getExcelConfigBuilder("testFileWithBlanks.xlsx", "newestMapping.ttl")
+                .containsHeaders(true)
+                .offset(2)
+                .build()
         Model convertedModel = c.convert(config)
 
         expect:
-        convertedModel == m
+        convertedModel == testOutputOffsetWithBlankRows
     }
 
     def "With an offset and no headers"() {
         setup:
-        InputStream csv = new ClassPathResource("testFileNoHeaders.csv").getInputStream()
-        InputStream mappingFile = new ClassPathResource("newestMapping.ttl").getInputStream()
-        out = new ClassPathResource("testOffsetOutput.ttl").getFile()
-        testOutput = new FileReader(out)
-        Model m = Values.matontoModel(Rio.parse(testOutput, "", RDFFormat.TURTLE))
-        Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE))
-        SVConfig config = new SVConfig.SVConfigBuilder(csv, mapping).containsHeaders(false).separator((char) ',')
-                .offset(1).build()
+        SVConfig config = getSVConfigBuilder("testFileNoHeaders.csv", "newestMapping.ttl")
+                .containsHeaders(false)
+                .separator((char) ',')
+                .offset(1)
+                .build()
         Model convertedModel = c.convert(config)
 
         expect:
-        convertedModel == m
+        convertedModel == testOutputOffset
     }
 
     def "Convert File with Missing Properties Ignored"() {
         setup:
-        InputStream csv = new ClassPathResource("testPropertiesMissing.csv").getInputStream()
-        InputStream mappingFile = new ClassPathResource("newestMapping.ttl").getInputStream()
-        out = new ClassPathResource("testPropertiesMissingOut.ttl").getFile()
-        testOutput = new FileReader(out)
-        Model m = Values.matontoModel(Rio.parse(testOutput, "", RDFFormat.TURTLE))
-        Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE))
-        SVConfig config = new SVConfig.SVConfigBuilder(csv, mapping).containsHeaders(true).separator((char) ',').build()
+        SVConfig config = getSVConfigBuilder("testPropertiesMissing.csv", "newestMapping.ttl")
+                .containsHeaders(true)
+                .separator((char) ',')
+                .build()
         Model convertedModel = c.convert(config)
 
         expect:
-        m as Set == convertedModel as Set
+        convertedModel == testOutputPropertiesMissing
     }
 
     def "Missing prefix uses default prefix"() {
         setup:
-        def config = new SVConfig.SVConfigBuilder(getInputStream("testFile.csv"), loadModel("mapping_no-prefix.ttl"))
+        c.generateUuid() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
+        SVConfig config = getSVConfigBuilder("testFile.csv", "mapping_no-prefix.ttl")
                 .containsHeaders(true)
                 .separator((char) ',')
                 .build()
-        def expected = loadModel("output_no-prefix.ttl")
+        Model convertedModel = c.convert(config)
 
-        when:
-        def actual = c.convert(config)
-
-        then:
-        c.generateUuid() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
-        expected == actual
+        expect:
+        convertedModel == testOutputNoPrefix
     }
 
     def "Missing mapsTo throws an exception"() {
@@ -663,10 +603,22 @@ class ConverterSpec extends Specification {
     }
 
     private def getInputStream(String filename) {
-        getClass().getClassLoader().getResourceAsStream(filename)
+        new ClassPathResource(filename).getInputStream()
     }
 
     private def loadModel(String filename) {
-        Values.matontoModel(Rio.parse(getInputStream(filename), "", RDFFormat.TURTLE))
+        loadModel(getInputStream(filename))
+    }
+
+    private def loadModel(InputStream stream) {
+        Values.matontoModel(Rio.parse(stream, "", RDFFormat.TURTLE))
+    }
+
+    private def getSVConfigBuilder(String inputFilename, String mappingFilename) {
+        new SVConfig.SVConfigBuilder(getInputStream(inputFilename), loadModel(mappingFilename))
+    }
+
+    private def getExcelConfigBuilder(String inputFilename, String mappingFilename) {
+        new ExcelConfig.ExcelConfigBuilder(getInputStream(inputFilename), loadModel(mappingFilename))
     }
 }
