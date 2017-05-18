@@ -78,7 +78,7 @@ describe('Prop Preview directive', function() {
                 utilSvc.getPropertyId.calls.reset();
                 ontologyManagerSvc.getEntityName.calls.reset();
                 splitIRIFilter.calls.reset();
-            })
+            });
             it('if it is a object property', function() {
                 ontologyManagerSvc.isObjectProperty.and.returnValue(true);
                 expect(_.isString(controller.getPropRangeName())).toBe(true);
@@ -87,13 +87,25 @@ describe('Prop Preview directive', function() {
                 expect(utilSvc.getPropertyId).not.toHaveBeenCalled();
                 expect(splitIRIFilter).not.toHaveBeenCalled();
             });
-            it('if it is a data property', function() {
-                ontologyManagerSvc.isObjectProperty.and.returnValue(false);
-                expect(_.isString(controller.getPropRangeName())).toBe(true);
-                expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(scope.propObj);
-                expect(ontologyManagerSvc.getEntityName).not.toHaveBeenCalled();
-                expect(utilSvc.getPropertyId).toHaveBeenCalledWith(scope.propObj, prefixes.rdfs + 'range');
-                expect(splitIRIFilter).toHaveBeenCalledWith(jasmine.any(String));
+            describe('if it is a data property', function() {
+                beforeEach(function() {
+                    ontologyManagerSvc.isObjectProperty.and.returnValue(false);
+                });
+                it('and it has a range', function() {
+                    splitIRIFilter.and.returnValue({end: 'double'});
+                    expect(controller.getPropRangeName()).toBe('double');
+                    expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(scope.propObj);
+                    expect(ontologyManagerSvc.getEntityName).not.toHaveBeenCalled();
+                    expect(utilSvc.getPropertyId).toHaveBeenCalledWith(scope.propObj, prefixes.rdfs + 'range');
+                    expect(splitIRIFilter).toHaveBeenCalledWith(jasmine.any(String));
+                });
+                it('and it does not have a range', function() {
+                    expect(controller.getPropRangeName()).toBe('string');
+                    expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(scope.propObj);
+                    expect(ontologyManagerSvc.getEntityName).not.toHaveBeenCalled();
+                    expect(utilSvc.getPropertyId).toHaveBeenCalledWith(scope.propObj, prefixes.rdfs + 'range');
+                    expect(splitIRIFilter).toHaveBeenCalledWith(jasmine.any(String));
+                });
             });
         });
     });

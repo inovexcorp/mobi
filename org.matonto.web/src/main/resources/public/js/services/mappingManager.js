@@ -63,6 +63,17 @@
 
             /**
              * @ngdoc property
+             * @name annotationProperties
+             * @propertyOf mappingManager.service:mappingManagerService
+             * @type {string[]}
+             *
+             * @description
+             * `annotationProperties` holds an array of annotation IRIs that are supported by
+             * the Mapping Tool.
+             */
+            self.annotationProperties = [prefixes.rdfs + 'label', prefixes.rdfs + 'comment', prefixes.dcterms + 'title', prefixes.dcterms + 'description'];
+            /**
+             * @ngdoc property
              * @name mappingIds
              * @propertyOf mappingManager.service:mappingManagerService
              * @type {string[]}
@@ -369,9 +380,10 @@
              */
             self.addDataProp = function(mapping, ontology, classMappingId, propId, columnIndex) {
                 var dataEntity;
-                // Check if class mapping exists and the property exists in the ontology
+                // Check if class mapping exists and the property exists in the ontology or the property is one of the
+                // supported annotations
                 var propObj = om.getEntity([ontology], propId);
-                if (entityExists(mapping, classMappingId) && propObj && om.isDataTypeProperty(propObj)) {
+                if (entityExists(mapping, classMappingId) && ((propObj && om.isDataTypeProperty(propObj)) || _.includes(self.annotationProperties, propId))) {
                     // Add new data mapping id to data properties of class mapping
                     dataEntity = {
                         '@id': getMappingEntity(mapping)['@id'] + '/' + uuid.v4()
