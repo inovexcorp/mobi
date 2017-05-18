@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.7.3</version>
+        <version>1.7.4</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -53,6 +53,16 @@
             <groupId>org.matonto</groupId>
             <artifactId>persistence.api</artifactId>
             <version>1.6.43</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>catalog.api</artifactId>
+            <version>1.7.4</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>ontology.api</artifactId>
+            <version>1.7.4</version>
         </dependency>
         <dependency>
             <groupId>biz.aQute.bnd</groupId>
@@ -112,6 +122,17 @@
                                     <ontologyName>Delimited</ontologyName>
                                 </ontology>
                             </generates>
+                            <references>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/../org.matonto.catalog.api/src/main/resources/mcat.ttl</ontologyFile>
+                                    <outputPackage>org.matonto.catalog.api.ontologies.mcat</outputPackage>
+                                    <ontologyName>MCAT</ontologyName>
+                                </ontology>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/../org.matonto.rdf.orm.ontologies/src/main/resources/prov-o.ttl</ontologyFile>
+                                    <outputPackage>org.matonto.ontologies.provo</outputPackage>
+                                </ontology>
+                            </references>
                             <outputLocation>${project.basedir}/src/main/java</outputLocation>
                         </configuration>
                     </execution>
