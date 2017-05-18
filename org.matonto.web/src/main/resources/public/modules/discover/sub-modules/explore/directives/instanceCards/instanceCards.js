@@ -59,7 +59,7 @@
                 controller: function() {
                     var dvm = this;
                     var ds = discoverStateService;
-                    dvm.chunks = _.chunk(_.orderBy(ds.explore.instanceDetails.data, ['label']), 3);
+                    dvm.chunks = _.chunk(_.orderBy(ds.explore.instanceDetails.data, ['title']), 3);
                 }
             }
         }

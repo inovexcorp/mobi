@@ -929,10 +929,10 @@ function mockDiscoverState() {
                 },
                 recordId: ''
             };
-            
             this.query = {
                 active: false
             };
+            this.resetPagedInstanceDetails = jasmine.createSpy('resetPagedInstanceDetails');
         });
     });
 }

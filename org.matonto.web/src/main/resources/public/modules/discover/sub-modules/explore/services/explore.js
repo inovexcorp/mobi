@@ -38,7 +38,6 @@
          * @name explore.service:exploreService
          * @requires $http
          * @requires $q
-         * @requires $httpParamSerializer
          * @requires util.service:utilService
          *
          * @description
@@ -47,9 +46,9 @@
          */
         .service('exploreService', exploreService);
     
-    exploreService.$inject = ['$http', '$q', '$httpParamSerializer', 'utilService'];
+    exploreService.$inject = ['$http', '$q', 'utilService'];
     
-    function exploreService($http, $q, $httpParamSerializer, utilService) {
+    function exploreService($http, $q, utilService) {
         var self = this;
         var prefix = '/matontorest/explorable-datasets/';
         var util = utilService;
@@ -83,117 +82,8 @@
          * identified dataset record.
          */
         self.getClassInstanceDetails = function(recordId, classId) {
-            // var params = $httpParamSerializer({classId});
-            // return $http.get(prefix + encodeURIComponent(recordId) + '/instances?' + params)
-            //     .then($q.when, response => $q.reject(response.statusText));
-            return $q.when({
-                data: [{
-                        label: 'Silicon Carbide',
-                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
-                    }, {
-                        label: 'Sodium Chloride',
-                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
-                    }, {
-                        label: 'Hydrogen Peroxide',
-                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
-                    }, {
-                        label: 'Silicon Carbide',
-                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
-                    }, {
-                        label: 'Sodium Chloride',
-                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
-                    }, {
-                        label: 'Hydrogen Peroxide',
-                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
-                    }, {
-                        label: 'Silicon Carbide',
-                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
-                    }, {
-                        label: 'Sodium Chloride',
-                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
-                    }, {
-                        label: 'Hydrogen Peroxide',
-                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
-                    }, {
-                        label: 'Silicon Carbide',
-                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
-                    }, {
-                        label: 'Sodium Chloride',
-                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
-                    }, {
-                        label: 'Silicon Carbide',
-                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
-                    }, {
-                        label: 'Sodium Chloride',
-                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
-                    }, {
-                        label: 'Hydrogen Peroxide',
-                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
-                    }, {
-                        label: 'Silicon Carbide',
-                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
-                    }, {
-                        label: 'Sodium Chloride',
-                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
-                    }, {
-                        label: 'Hydrogen Peroxide',
-                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
-                    }, {
-                        label: 'Silicon Carbide',
-                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
-                    }, {
-                        label: 'Sodium Chloride',
-                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
-                    }, {
-                        label: 'Hydrogen Peroxide',
-                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
-                    }, {
-                        label: 'Silicon Carbide',
-                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
-                    }, {
-                        label: 'Sodium Chloride',
-                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
-                    }, {
-                        label: 'Silicon Carbide',
-                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
-                    }, {
-                        label: 'Sodium Chloride',
-                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
-                    }, {
-                        label: 'Hydrogen Peroxide',
-                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
-                    }, {
-                        label: 'Silicon Carbide',
-                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
-                    }, {
-                        label: 'Sodium Chloride',
-                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
-                    }, {
-                        label: 'Hydrogen Peroxide',
-                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
-                    }, {
-                        label: 'Silicon Carbide',
-                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
-                    }, {
-                        label: 'Sodium Chloride',
-                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
-                    }, {
-                        label: 'Hydrogen Peroxide',
-                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
-                    }, {
-                        label: 'Silicon Carbide',
-                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
-                    }, {
-                        label: 'Sodium Chloride',
-                        overview: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas mollis purus quis dui varius, sed malesuada est auctor. Vestibulum vitae maximus metus. Curabitur magna nibh, fermentum vitae tincidunt in, luctus ut augue.'
-                    }],
-                headers: () => {
-                    return {
-                        'x-total-count': 5000,
-                        link: '<http://matonto.org/next>; rel="next"'
-                    }
-                }
-            });
+            return $http.get(prefix + encodeURIComponent(recordId) + '/classes/' + encodeURIComponent(classId) + '/instance-details')
+                .then($q.when, response => $q.reject(response.statusText));
         }
         
         /**
@@ -212,9 +102,11 @@
             _.set(object, 'data', response.data);
             var headers = response.headers();
             _.set(object, 'total', _.get(headers, 'x-total-count', 0));
-            var links = util.parseLinks(_.get(headers, 'link', {}));
-            _.set(object, 'links.next', _.get(links, 'next', ''));
-            _.set(object, 'links.prev', _.get(links, 'prev', ''));
+            if (_.has(headers, 'link')) {
+                var links = util.parseLinks(_.get(headers, 'link', {}));
+                _.set(object, 'links.next', _.get(links, 'next', ''));
+                _.set(object, 'links.prev', _.get(links, 'prev', ''));
+            }
             return object;
         }
     }

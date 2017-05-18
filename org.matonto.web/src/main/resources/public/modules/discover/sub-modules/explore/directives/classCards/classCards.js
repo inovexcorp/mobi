@@ -65,6 +65,7 @@
                     dvm.exploreData = function(item) {
                         es.getClassInstanceDetails(ds.explore.recordId, item.classIRI)
                             .then(response => {
+                                ds.resetPagedInstanceDetails();
                                 _.merge(ds.explore.instanceDetails, es.createPagedResultsObject(response));
                                 ds.explore.breadcrumbs.push(item.classTitle);
                             }, util.createErrorToast);

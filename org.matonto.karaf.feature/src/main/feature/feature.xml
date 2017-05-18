@@ -128,5 +128,6 @@
         <bundle start-level="80">mvn:org.matonto/platform.config.rest/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/dataset.rest/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/web.security/${project.version}</bundle>
+        <bundle start-level="80">mvn:org.matonto/explorable-dataset/${project.version}</bundle>
     </feature>
 </features>

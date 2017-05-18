@@ -35,13 +35,13 @@ describe('Instance Cards directive', function() {
         });
 
         discoverStateSvc.explore.instanceDetails.data = [{
-            label: 'y'
+            title: 'y'
         }, {
-            label: 'z'
+            title: 'z'
         }, {
-            label: 'b'
+            title: 'b'
         }, {
-            label: 'a'
+            title: 'a'
         }];
         element = $compile(angular.element('<instance-cards></instance-cards>'))(scope);
         scope.$digest();
@@ -87,13 +87,13 @@ describe('Instance Cards directive', function() {
     });
     it('properly defines controller.chunks on load', function() {
         var expected = [[{
-            label: 'a'
+            title: 'a'
         }, {
-            label: 'b'
+            title: 'b'
         }, {
-            label: 'y'
+            title: 'y'
         }], [{
-            label: 'z'
+            title: 'z'
         }]];
         expect(angular.copy(element.controller('instanceCards').chunks)).toEqual(expected);
     });

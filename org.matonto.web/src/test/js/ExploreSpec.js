@@ -65,48 +65,67 @@ describe('Explore Service', function() {
         });
     });
     
-    // describe('getInstances calls the correct functions when get exploration-datasets/{id}/instances?classId={classId}', function() {
-    //     it('is resolved', function() {
-    //         var data = [{}];
-    //         var headers = {};
-    //         $httpBackend.expectGET('/exploration-dataset/recordId/instances?classId=classId').respond(200, data, headers);
-    //         exploreSvc.getClassInstances('recordId', 'classId')
-    //             .then(function(response) {
-    //                 expect(response).toEqual(data);
-    //             }, function() {
-    //                 fail('Should have been resolved.');
-    //             });
-    //          flushAndVerify();
-    //     });
-    //     it('is rejected', function() {
-    //         $httpBackend.expectGET('/exploration-dataset/recordId/instances?classId=classId').respond(400, null, null, 'error');
-    //         exploreSvc.getClassInstances('recordId', 'classId')
-    //             .then(function() {
-    //                 fail('Should have been rejected.');
-    //             }, function(response) {
-    //                 expect(response).toBe('error');
-    //             });
-    //          flushAndVerify();
-    //     });
-    // });
+    describe('getClassInstanceDetails calls the correct functions when GET /matontorest/explorable-datasets/{recordId}/classes/{classId}/instance-details', function() {
+        it('succeeds', function() {
+            var data = [{}];
+            var headers = {};
+            $httpBackend.expectGET('/matontorest/explorable-datasets/recordId/classes/classId/instance-details').respond(200, data, headers);
+            exploreSvc.getClassInstanceDetails('recordId', 'classId')
+                .then(function(response) {
+                    expect(response).toEqual(jasmine.objectContaining({
+                        data: data,
+                        status: 200
+                    }));
+                }, function() {
+                    fail('Should have been resolved.');
+                });
+             flushAndVerify();
+        });
+        it('fails', function() {
+            $httpBackend.expectGET('/matontorest/explorable-datasets/recordId/classes/classId/instance-details').respond(400, null, null, 'error');
+            exploreSvc.getClassInstanceDetails('recordId', 'classId')
+                .then(function() {
+                    fail('Should have been rejected.');
+                }, function(response) {
+                    expect(response).toBe('error');
+                });
+             flushAndVerify();
+        });
+    });
     
-    it('createPagedResultsObject should return the correct paged object', function() {
-        var response = {
-            data: ['data'],
-            headers: jasmine.createSpy('headers').and.returnValue({
-                'x-total-count': 10,
-                link: 'link'
-            })
-        };
+    describe('createPagedResultsObject should return the correct paged object when the headers of the response', function() {
+        var response;
         var nextLink = 'http://example.com/next';
         var prevLink = 'http://example.com/prev';
-        utilSvc.parseLinks.and.returnValue({next: nextLink, prev: prevLink});
-        var result = exploreSvc.createPagedResultsObject(response);
-        expect(result.data).toEqual(['data']);
-        expect(response.headers).toHaveBeenCalled();
-        expect(result.total).toBe(10);
-        expect(utilSvc.parseLinks).toHaveBeenCalledWith('link');
-        expect(result.links.next).toBe(nextLink);
-        expect(result.links.prev).toBe(prevLink);
+        beforeEach(function() {
+            response = {
+                data: ['data'],
+                headers: jasmine.createSpy('headers').and.returnValue({
+                    'x-total-count': 10,
+                    link: 'link'
+                })
+            };
+            utilSvc.parseLinks.and.returnValue({next: nextLink, prev: prevLink});
+        });
+        it('has link', function() {
+            var result = exploreSvc.createPagedResultsObject(response);
+            expect(result.data).toEqual(['data']);
+            expect(response.headers).toHaveBeenCalled();
+            expect(result.total).toBe(10);
+            expect(utilSvc.parseLinks).toHaveBeenCalledWith('link');
+            expect(result.links.next).toBe(nextLink);
+            expect(result.links.prev).toBe(prevLink);
+        });
+        it('does not have link', function() {
+            response.headers = jasmine.createSpy('headers').and.returnValue({
+                'x-total-count': 10
+            });
+            var result = exploreSvc.createPagedResultsObject(response);
+            expect(result.data).toEqual(['data']);
+            expect(response.headers).toHaveBeenCalled();
+            expect(result.total).toBe(10);
+            expect(utilSvc.parseLinks).not.toHaveBeenCalled();
+            expect(_.has(result, 'links')).toBe(false);
+        });
     });
 });

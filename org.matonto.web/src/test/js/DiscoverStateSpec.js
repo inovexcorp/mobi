@@ -50,4 +50,28 @@ describe('Discover State Service', function() {
         });
         expect(discoverStateSvc.query).toEqual({active: false});
     });
+    
+    it('resetPagedInstanceDetails should reset the proper variables', function() {
+        discoverStateSvc.explore.instanceDetails = {
+            currentPage: 1,
+            data: [{prop: 'stuff'}],
+            limit: 100,
+            links: {
+                next: 'next',
+                prev: 'prev'
+            },
+            total: 1
+        }
+        discoverStateSvc.resetPagedInstanceDetails();
+        expect(discoverStateSvc.explore.instanceDetails).toEqual({
+            currentPage: 0,
+            data: [],
+            limit: 99,
+            links: {
+                next: '',
+                prev: ''
+            },
+            total: 0
+        });
+    });
 });

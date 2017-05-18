@@ -131,13 +131,18 @@ describe('Class Cards directive', function() {
                 });
                 utilSvc.parseLinks.and.returnValue({next: nextLink, prev: prevLink});
                 discoverStateSvc.explore.breadcrumbs = [''];
+                discoverStateSvc.explore.instanceDetails.data = [{prop: 'old'}];
                 exploreSvc.getClassInstanceDetails.and.returnValue($q.when({data: data, headers: headers}));
-                exploreSvc.createPagedResultsObject.and.returnValue({prop: 'paged'});
+                exploreSvc.createPagedResultsObject.and.returnValue({prop: 'paged', data: [{prop: 'new'}]});
                 controller.exploreData({classTitle: 'new', classIRI: 'classId'});
                 scope.$apply();
                 expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith('recordId', 'classId');
+                expect(discoverStateSvc.resetPagedInstanceDetails).toHaveBeenCalled();
                 expect(exploreSvc.createPagedResultsObject).toHaveBeenCalledWith({data: data, headers: headers});
-                expect(discoverStateSvc.explore.instanceDetails).toEqual(jasmine.objectContaining({prop: 'paged'}));
+                expect(discoverStateSvc.explore.instanceDetails).toEqual(jasmine.objectContaining({
+                    prop: 'paged',
+                    data: [{prop: 'new'}]
+                }));
                 expect(discoverStateSvc.explore.breadcrumbs).toEqual(['', 'new']);
             });
             it('rejected', function() {
