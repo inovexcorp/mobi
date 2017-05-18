@@ -24,7 +24,6 @@ describe('Mapping Manager service', function() {
     var $httpBackend,
         mappingManagerSvc,
         ontologyManagerSvc,
-        catalogManagerSvc,
         utilSvc,
         uuidSvc,
         windowSvc,
@@ -38,7 +37,6 @@ describe('Mapping Manager service', function() {
         mockPrefixes();
         injectSplitIRIFilter();
         mockOntologyManager();
-        mockCatalogManager();
         mockUtil();
 
         module(function($provide) {
@@ -50,10 +48,9 @@ describe('Mapping Manager service', function() {
             });
         });
 
-        inject(function(mappingManagerService, _ontologyManagerService_, _catalogManagerService_, _utilService_, _uuid_, _$httpBackend_, _$window_, _prefixes_, _splitIRIFilter_, _$q_, _$timeout_) {
+        inject(function(mappingManagerService, _ontologyManagerService_, _utilService_, _uuid_, _$httpBackend_, _$window_, _prefixes_, _splitIRIFilter_, _$q_, _$timeout_) {
             mappingManagerSvc = mappingManagerService;
             ontologyManagerSvc = _ontologyManagerService_;
-            catalogManagerSvc = _catalogManagerService_;
             utilSvc = _utilService_;
             uuidSvc = _uuid_;
             $httpBackend = _$httpBackend_;
@@ -509,7 +506,6 @@ describe('Mapping Manager service', function() {
     describe('should get an ontology in the correct structure', function() {
         beforeEach(function() {
             this.ontologyInfo = {recordId: '', branchId: '', commitId: ''};
-            catalogManagerSvc.localCatalog = {'@id': ''};
         });
         it('unless the parameter object is missing information', function(done) {
             mappingManagerSvc.getOntology({}).then(function() {
@@ -522,7 +518,7 @@ describe('Mapping Manager service', function() {
             $timeout.flush();
         });
         it('unless an error occurs', function(done) {
-            catalogManagerSvc.getResource.and.returnValue($q.reject('Error message'));
+            ontologyManagerSvc.getOntology.and.returnValue($q.reject('Error message'));
             mappingManagerSvc.getOntology(this.ontologyInfo).then(function() {
                 fail('Promise should have rejected');
                 done();
@@ -534,7 +530,7 @@ describe('Mapping Manager service', function() {
         });
         it('successfully', function(done) {
             var test = this;
-            catalogManagerSvc.getResource.and.returnValue($q.when([]));
+            ontologyManagerSvc.getOntology.and.returnValue($q.when([]));
             ontologyManagerSvc.getOntologyIRI.and.returnValue('ontology');
             mappingManagerSvc.getOntology(test.ontologyInfo).then(function(response) {
                 expect(typeof response).toBe('object');
