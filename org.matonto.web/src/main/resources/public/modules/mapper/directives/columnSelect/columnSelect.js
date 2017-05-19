@@ -62,6 +62,7 @@
                 },
                 controller: function() {
                     var dvm = this;
+                    dvm.isNumber = angular.isNumber;
                     dvm.dm = delimitedManagerService;
                     dvm.columns = _.range(0, dvm.dm.dataRows[0].length);
 
