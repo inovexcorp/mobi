@@ -24,10 +24,7 @@
 	<http://matonto.org/ontologies/delimited#hasProperty> <https://matonto.org/ontologies/3/2017/CrackGrowth#hasDataPair> ;
 	<http://matonto.org/ontologies/delimited#classMapping> <http://matonto.org/mappings/crawkgrowth/c890469a-95f0-4cdb-8da9-5b740e6e8eee> .
 
-<http://matonto.org/mappings/crawkgrowth> a <http://matonto.org/ontologies/delimited#Mapping> ;
-	<http://matonto.org/ontologies/delimited#sourceBranch> <https://matonto.org/branches#55fd09c2-22aa-4cad-a6f5-7437ba4a37f7> ;
-	<http://matonto.org/ontologies/delimited#sourceRecord> <https://matonto.org/records#bb3289be-8982-4b21-945c-0645eaa1a59c> ;
-	<http://matonto.org/ontologies/delimited#sourceCommit> <https://matonto.org/commits#9a774548294d10d3409d001f85afd21b12db41d4> .
+<http://matonto.org/mappings/crawkgrowth> a <http://matonto.org/ontologies/delimited#Mapping> .
 
 <http://matonto.org/mappings/crawkgrowth/90341b90-dab0-4ac3-b1fd-62ebc3eed2e3> a <http://matonto.org/ontologies/delimited#DataMapping> , <http://matonto.org/ontologies/delimited#PropertyMapping> ;
 	<http://matonto.org/ontologies/delimited#columnIndex> "3" ;

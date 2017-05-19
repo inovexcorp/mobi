@@ -36,7 +36,6 @@ updateUnit
   ;
 
 /* sparql 1.1 r4 */
-
 prologue
   :
   (
@@ -228,8 +227,8 @@ orderCondition
 
 limitOffsetClauses
   :
-  limitClause offsetClause?
-  | offsetClause limitClause?
+  (limitClause offsetClause?
+  | offsetClause limitClause?)
   ;
 
 /* sparql 1.1 r26 */
@@ -653,7 +652,7 @@ propertyList
 
 propertyListNotEmpty
   :
-  verb objectList (SEMICOLON (verb objectList)?)*
+  verb objectList ((SEMICOLON)(verb objectList)?)*
   ;
 
 /* sparql 1.1 r78 */
@@ -668,7 +667,7 @@ verb
 
 objectList
   :
-  object (COMMA object)*
+  object ((COMMA)object)*
   ;
 
 /* sparql 1.1 r80 */
@@ -1557,3 +1556,9 @@ GREATER_EQUAL: '>=';
 REFERENCE: '^^';
 
 COLON: ':';
+
+LINE_FEED: '\n';
+
+CARRIAGE_RETURN: '\r';
+
+EOL_COMMENT: '#'.*?(CARRIAGE_RETURN?LINE_FEED) -> skip;

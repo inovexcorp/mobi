@@ -547,7 +547,9 @@
             self.setAvailableProps = function(classMappingId) {
                 var mappedProps = _.map(mm.getPropMappingsByClass(self.mapping.jsonld, classMappingId), propMapping => util.getPropertyId(propMapping, prefixes.delim + 'hasProperty'));
                 var classId = mm.getClassIdByMappingId(self.mapping.jsonld, classMappingId);
-                var props = self.getClassProps(self.sourceOntologies, classId);
+                var props = _.concat(self.getClassProps(self.sourceOntologies, classId), _.map(mm.annotationProperties, id => {
+                    return { ontologyId: '', propObj: {'@id': id} };
+                }));
                 _.set(self.availablePropsByClass, encodeURIComponent(classMappingId), _.filter(props, prop => mappedProps.indexOf(prop.propObj['@id']) < 0));
             }
             /**
