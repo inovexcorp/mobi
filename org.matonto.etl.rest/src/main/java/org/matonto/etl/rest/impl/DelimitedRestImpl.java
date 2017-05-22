@@ -292,14 +292,18 @@ public class DelimitedRestImpl implements DelimitedRest {
         // Run the mapping against the delimited data
         org.matonto.rdf.api.Model result = null;
         try (InputStream data = getDocumentInputStream(delimitedFile)) {
+            org.matonto.rdf.api.Model matModel = transformer.matontoModel(mappingModel);
             if (extension.equals("xls") || extension.equals("xlsx")) {
-                ExcelConfig.ExcelConfigBuilder config = new ExcelConfig.ExcelConfigBuilder(data, transformer.matontoModel(mappingModel)).containsHeaders(containsHeaders);
+                ExcelConfig.ExcelConfigBuilder config = new ExcelConfig.ExcelConfigBuilder(data, matModel)
+                        .containsHeaders(containsHeaders);
                 if (limit) {
                     config.limit(NUM_LINE_PREVIEW);
                 }
                 result = etlFile(() -> converter.convert(config.build()));
             } else {
-                SVConfig.SVConfigBuilder config = new SVConfig.SVConfigBuilder(data, transformer.matontoModel(mappingModel)).separator(separator.charAt(0)).containsHeaders(containsHeaders);
+                SVConfig.SVConfigBuilder config = new SVConfig.SVConfigBuilder(data, matModel)
+                        .separator(separator.charAt(0))
+                        .containsHeaders(containsHeaders);
                 if (limit) {
                     config.limit(NUM_LINE_PREVIEW);
                 }
@@ -398,7 +402,8 @@ public class DelimitedRestImpl implements DelimitedRest {
      */
     private String convertCSVRows(File input, int numRows, char separator) throws IOException {
         Charset charset = getCharset(Files.readAllBytes(input.toPath()));
-        try (CSVReader reader = new CSVReader(new InputStreamReader(new FileInputStream(input), charset.name()), separator)) {
+        try (CSVReader reader = new CSVReader(new InputStreamReader(new FileInputStream(input), charset.name()),
+                separator)) {
             List<String[]> csvRows = reader.readAll();
             JSONArray returnRows = new JSONArray();
             for (int i = 0; i <= numRows && i < csvRows.size(); i++) {

@@ -109,11 +109,11 @@
                         dvm.state.changedMapping = true;
                     }
                     dvm.deleteProp = function() {
+                        var classMapping = _.find(dvm.state.mapping.jsonld, {'@id': dvm.state.selectedClassMappingId});
                         var propId = dvm.mm.getPropIdByMappingId(dvm.state.mapping.jsonld, dvm.state.selectedPropMappingId);
                         var ontology = dvm.mm.findSourceOntologyWithProp(propId, dvm.state.sourceOntologies);
-                        var classMapping = _.find(dvm.state.mapping.jsonld, {'@id': dvm.state.selectedClassMappingId});
-                        var propObj = dvm.om.getEntity([ontology.entities], propId);
-                        dvm.state.getAvailableProps(classMapping['@id']).push({propObj, ontologyId: ontology.id});
+                        var propObj = _.includes(dvm.mm.annotationProperties, propId) ? {'@id': propId} : dvm.om.getEntity([_.get(ontology, 'entities')], propId);
+                        dvm.state.getAvailableProps(classMapping['@id']).push({propObj, ontologyId: _.get(ontology, 'id', '')});
                         dvm.mm.removeProp(dvm.state.mapping.jsonld, classMapping['@id'], dvm.state.selectedPropMappingId);
                         _.remove(dvm.state.invalidProps, {'@id': dvm.state.selectedPropMappingId});
                         dvm.state.resetEdit();

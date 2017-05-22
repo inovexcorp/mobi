@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Prop Mapping Overlay directive', function() {
+fdescribe('Prop Mapping Overlay directive', function() {
     var $compile,
         scope,
         element,
@@ -54,40 +54,52 @@ describe('Prop Mapping Overlay directive', function() {
         mapperStateSvc.newProp = true;
         element = $compile(angular.element('<prop-mapping-overlay></prop-mapping-overlay>'))(scope);
         scope.$digest();
+            controller = element.controller('propMappingOverlay');
     });
 
     describe('should initialize with the correct values', function() {
         it('if a new property mapping is being created', function() {
-            controller = element.controller('propMappingOverlay');
             expect(controller.selectedProp).toBeUndefined();
             expect(controller.selectedColumn).toBe('');
             expect(controller.rangeClassMapping).toBeUndefined();
         });
-        it('if a property mapping is being edited', function() {
-            mapperStateSvc.newProp = false;
-            var prop = {};
-            var columnIndex = '0';
-            var propMapping = {'@id': 'propMap'};
-            utilSvc.getPropertyValue.and.returnValue(columnIndex);
-            mapperStateSvc.mapping.jsonld.push(propMapping);
-            mapperStateSvc.selectedPropMappingId = propMapping['@id'];
-            mappingManagerSvc.getPropIdByMapping.and.returnValue('prop');
-            ontologyManagerSvc.getEntity.and.returnValue(prop);
-            mappingManagerSvc.findSourceOntologyWithProp.and.returnValue({id: 'propOntology', entities: []})
-            mappingManagerSvc.getClassMappingsByClassId.and.returnValue([{}]);
-            element = $compile(angular.element('<prop-mapping-overlay></prop-mapping-overlay>'))(scope);
-            scope.$digest();
-            controller = element.controller('propMappingOverlay');
-            expect(controller.selectedProp).toEqual({ontologyId: 'propOntology', propObj: prop});
-            expect(controller.selectedColumn).toBe(columnIndex);
-            expect(controller.rangeClassMapping).not.toBeUndefined();
-            expect(controller.rangeClassMapping).not.toBeUndefined();
+        describe('if a property mapping is being edited', function() {
+            var prop, columnIndex = '0', propId = 'prop';
+            beforeEach(function() {
+                mapperStateSvc.newProp = false;
+                prop = {};
+                var propMapping = {'@id': 'propMap'};
+                utilSvc.getPropertyValue.and.returnValue(columnIndex);
+                mapperStateSvc.mapping.jsonld.push(propMapping);
+                mapperStateSvc.selectedPropMappingId = propMapping['@id'];
+                mappingManagerSvc.getPropIdByMapping.and.returnValue(propId);
+                ontologyManagerSvc.getEntity.and.returnValue(prop);
+                mappingManagerSvc.findSourceOntologyWithProp.and.returnValue({id: 'propOntology', entities: []})
+                mappingManagerSvc.getClassMappingsByClassId.and.returnValue([{}]);
+            });
+            it('and it is an annotation property', function() {
+                var annotationProp = {propObj: {'@id': propId}, ontologyId: ''};
+                mappingManagerSvc.annotationProperties = [propId];
+                element = $compile(angular.element('<prop-mapping-overlay></prop-mapping-overlay>'))(scope);
+                scope.$digest();
+                controller = element.controller('propMappingOverlay');
+                expect(controller.selectedProp).toEqual(annotationProp);
+                expect(controller.selectedColumn).toBe(columnIndex);
+                expect(ontologyManagerSvc.getEntity).not.toHaveBeenCalled();
+                expect(controller.rangeClassMapping).not.toBeUndefined();
+            });
+            it('and it is not an annotation property', function() {
+                element = $compile(angular.element('<prop-mapping-overlay></prop-mapping-overlay>'))(scope);
+                scope.$digest();
+                controller = element.controller('propMappingOverlay');
+                expect(controller.selectedProp).toEqual({ontologyId: 'propOntology', propObj: prop});
+                expect(controller.selectedColumn).toBe(columnIndex);
+                expect(ontologyManagerSvc.getEntity).toHaveBeenCalled();
+                expect(controller.rangeClassMapping).not.toBeUndefined();
+            });
         });
     });
     describe('controller methods', function() {
-        beforeEach(function() {
-            controller = element.controller('propMappingOverlay');
-        });
         it('should find the range class mapping of an object property mapping', function() {
             this.classMapping = {'@id': 'class'};
             mappingManagerSvc.getClassMappingsByClassId.and.returnValue([this.classMapping]);
@@ -228,11 +240,10 @@ describe('Prop Mapping Overlay directive', function() {
         });
         describe('depending on whether the selected property is', function() {
             beforeEach(function() {
-                controller = element.controller('propMappingOverlay');
                 controller.selectedProp = {propObj: {}};
             });
             it('a data property', function() {
-                ontologyManagerSvc.isDataTypeProperty.and.returnValue(true);
+                ontologyManagerSvc.isObjectProperty.and.returnValue(false);
                 scope.$digest();
                 expect(element.querySelectorAll('.column-select-container').length).toBe(1);
                 expect(element.find('column-select').length).toBe(1);
@@ -244,12 +255,9 @@ describe('Prop Mapping Overlay directive', function() {
             });
         });
         it('depending on the validity of the form', function() {
-            ontologyManagerSvc.isDataTypeProperty.and.returnValue(true);
-            scope.$digest();
             var button = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
             expect(button.attr('disabled')).toBeTruthy();
 
-            ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
             ontologyManagerSvc.isObjectProperty.and.returnValue(true);
             scope.$digest();
             expect(button.attr('disabled')).toBeTruthy();
@@ -259,8 +267,8 @@ describe('Prop Mapping Overlay directive', function() {
             scope.$digest();
             expect(button.attr('disabled')).toBeTruthy();
 
-            controller = element.controller('propMappingOverlay');
             controller.selectedProp = {};
+            controller.selectedColumn = 0;
             scope.$digest();
             expect(button.attr('disabled')).toBeFalsy();
         });
