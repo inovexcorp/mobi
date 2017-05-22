@@ -23,16 +23,7 @@ package org.matonto.ontology.utils.cache;
  * #L%
  */
 
-import javax.cache.Cache;
 
-import java.util.Optional;
-
-import org.matonto.cache.api.CacheManager;
-import org.matonto.ontology.core.api.Ontology;
-
-/**
- * Created by seansmitz on 5/2/17.
- */
 public class OntologyCache {
     public static final String CACHE_NAME = "ontologyCache";
 

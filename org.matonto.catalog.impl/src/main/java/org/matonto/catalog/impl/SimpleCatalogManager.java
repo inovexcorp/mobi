@@ -419,7 +419,7 @@ public class SimpleCatalogManager implements CatalogManager {
                     addObject(record, conn);
                 }
             } else {
-                throw new IllegalArgumentException("Record " + record.getResource().stringValue() + " already exists.");
+                throw throwAlreadyExists(record.getResource(), recordFactory);
             }
         }
     }
@@ -519,8 +519,7 @@ public class SimpleCatalogManager implements CatalogManager {
                 addObject(distribution, conn);
                 conn.commit();
             } else {
-                throw new IllegalArgumentException("Distribution " + distribution.getResource().stringValue()
-                        + " already exists.");
+                throw throwAlreadyExists(distribution.getResource(), distributionFactory);
             }
         }
     }
@@ -554,7 +553,7 @@ public class SimpleCatalogManager implements CatalogManager {
                 return Optional.empty();
             }
             return Optional.of(optObject(distributionId, distributionFactory, conn).orElseThrow(() ->
-                    new IllegalStateException("Distribution " + distributionId.stringValue() + " could not be found")));
+                    throwThingNotFound(distributionId, distributionFactory)));
         }
     }
 
@@ -606,8 +605,7 @@ public class SimpleCatalogManager implements CatalogManager {
                 addObject(version, conn);
                 conn.commit();
             } else {
-                throw new IllegalArgumentException("Version " + version.getResource().stringValue()
-                        + " already exists.");
+                throw throwAlreadyExists(version.getResource(), versionFactory);
             }
         }
     }
@@ -653,16 +651,15 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public <T extends Version> Optional<T> getVersion(Resource catalogId, Resource versionedRecordId, Resource versionId,
-                                            OrmFactory<T> factory) {
+    public <T extends Version> Optional<T> getVersion(Resource catalogId, Resource versionedRecordId,
+                                                      Resource versionId, OrmFactory<T> factory) {
         try (RepositoryConnection conn = repository.getConnection()) {
             VersionedRecord record = getRecord(catalogId, versionedRecordId, versionedRecordFactory, conn);
             if (!record.getVersion_resource().contains(versionId)) {
                 return Optional.empty();
             }
             return Optional.of(optObject(versionId, factory, conn).orElseThrow(() ->
-                    new IllegalStateException(factory.getTypeIRI().getLocalName() + " " + versionId.stringValue()
-                            + " could not be found")));
+                    throwThingNotFound(versionId, factory)));
         }
     }
 
@@ -675,7 +672,7 @@ public class SimpleCatalogManager implements CatalogManager {
     private Version getVersion(Resource catalogId, Resource recordId, Resource versionId, RepositoryConnection conn) {
         testVersionPath(catalogId, recordId, versionId, conn);
         return optObject(versionId, versionFactory, conn).orElseThrow(() ->
-                new IllegalStateException("Version " + versionId.stringValue() + " could not be found"));
+                throwThingNotFound(versionId, versionFactory));
     }
 
     @Override
@@ -683,11 +680,8 @@ public class SimpleCatalogManager implements CatalogManager {
                                                   OrmFactory<T> factory) {
         try (RepositoryConnection conn = repository.getConnection()) {
             VersionedRecord record = getRecord(catalogId, versionedRecordId, versionedRecordFactory, conn);
-            return record.getLatestVersion_resource().flatMap(resource -> {
-                return Optional.of(optObject(resource, factory, conn).orElseThrow(() ->
-                        new IllegalStateException(factory.getTypeIRI().getLocalName() + " " + resource.stringValue()
-                                + " could not be found")));
-            });
+            return record.getLatestVersion_resource().flatMap(resource -> Optional.of(optObject(resource, factory, conn)
+                    .orElseThrow(() -> throwThingNotFound(resource, factory))));
         }
     }
 
@@ -696,11 +690,11 @@ public class SimpleCatalogManager implements CatalogManager {
         try (RepositoryConnection conn = repository.getConnection()) {
             testVersionPath(catalogId, versionedRecordId, versionId, conn);
             Tag tag = optObject(versionId, tagFactory, conn).orElseThrow(() ->
-                    new IllegalStateException("Tag " + versionId.stringValue() + " could not be found"));
+                    throwThingNotFound(versionId, tagFactory));
             Resource commitId = tag.getCommit_resource().orElseThrow(() ->
                     new IllegalStateException("Tag " + versionId.stringValue() + " does not have a Commit set"));
             return optObject(commitId, commitFactory, conn).orElseThrow(() ->
-                    new IllegalStateException("Commit " + commitId.stringValue() + " could not be found"));
+                    throwThingNotFound(commitId, commitFactory));
         }
     }
 
@@ -736,7 +730,7 @@ public class SimpleCatalogManager implements CatalogManager {
                 return Optional.empty();
             }
             return Optional.of(optObject(distributionId, distributionFactory, conn).orElseThrow(() ->
-                    new IllegalStateException("Distribution " + distributionId.stringValue() + " could not be found")));
+                    throwThingNotFound(distributionId, distributionFactory)));
         }
     }
 
@@ -763,8 +757,7 @@ public class SimpleCatalogManager implements CatalogManager {
                 addObject(distribution, conn);
                 conn.commit();
             } else {
-                throw new IllegalArgumentException("Distribution " + distribution.getResource().stringValue()
-                        + " already exists.");
+                throw throwAlreadyExists(distribution.getResource(), distributionFactory);
             }
         }
     }
@@ -819,8 +812,7 @@ public class SimpleCatalogManager implements CatalogManager {
                 addObject(branch, conn);
                 conn.commit();
             } else {
-                throw new IllegalArgumentException("Branch " + branch.getResource().stringValue()
-                        + " already exists.");
+                throw throwAlreadyExists(branch.getResource(), branchFactory);
             }
         }
     }
@@ -944,8 +936,7 @@ public class SimpleCatalogManager implements CatalogManager {
                 return Optional.empty();
             }
             return Optional.of(optObject(branchId, factory, conn).orElseThrow(() ->
-                    new IllegalStateException(factory.getTypeIRI().getLocalName() + " " + branchId.stringValue()
-                            + " could not be found")));
+                    throwThingNotFound(branchId, factory)));
         }
     }
 
@@ -963,7 +954,7 @@ public class SimpleCatalogManager implements CatalogManager {
                     new IllegalStateException("Record " + versionedRDFRecordId.stringValue()
                             + " does not have a master Branch set."));
             return optObject(branchId, branchFactory, conn).orElseThrow(() ->
-                    new IllegalStateException("Branch " + branchId.stringValue() + " could not be found"));
+                    throwThingNotFound(branchId, branchFactory));
         }
     }
 
@@ -1112,8 +1103,7 @@ public class SimpleCatalogManager implements CatalogManager {
                 inProgressCommit.setOnVersionedRDFRecord(record);
                 addObject(inProgressCommit, conn);
             } else {
-                throw new IllegalArgumentException("InProgressCommit " + inProgressCommit.getResource().stringValue()
-                        + " already exists.");
+                throw throwAlreadyExists(inProgressCommit.getResource(), inProgressCommitFactory);
             }
         }
     }
@@ -1123,11 +1113,11 @@ public class SimpleCatalogManager implements CatalogManager {
         try (RepositoryConnection conn = repository.getConnection()) {
             testBranchPath(catalogId, versionedRDFRecordId, branchId, conn);
             Branch branch = optObject(branchId, branchFactory, conn).orElseThrow(() ->
-                    new IllegalStateException("Branch " + branchId.stringValue() + " could not be found"));
+                    throwThingNotFound(branchId, branchFactory));
             Resource head = getHeadCommitIRI(branch);
             if (head.equals(commitId) || getCommitChain(head, conn).contains(commitId)) {
                 return Optional.of(optObject(commitId, commitFactory, conn).orElseThrow(() ->
-                        new IllegalStateException("Commit " + commitId.stringValue() + " could not be found")));
+                        throwThingNotFound(commitId, commitFactory)));
             } else {
                 return Optional.empty();
             }
@@ -1139,26 +1129,19 @@ public class SimpleCatalogManager implements CatalogManager {
         try (RepositoryConnection conn = repository.getConnection()) {
             testBranchPath(catalogId, versionedRDFRecordId, branchId, conn);
             Branch branch = optObject(branchId, branchFactory, conn).orElseThrow(() ->
-                    new IllegalStateException("Branch " + branchId.stringValue() + " could not be found"));
+                    throwThingNotFound(branchId, branchFactory));
             Resource head = getHeadCommitIRI(branch);
-            return optObject(head, commitFactory, conn).orElseThrow(() ->
-                    new IllegalStateException("Commit " + head.stringValue() + " could not be found"));
+            return optObject(head, commitFactory, conn).orElseThrow(() -> throwThingNotFound(head, commitFactory));
         }
-    }
-
-    private Commit getHeadCommit(Resource catalogId, Resource recordId, Resource branchId, RepositoryConnection conn) {
-        Resource head = getHeadCommitIRI(catalogId, recordId, branchId, conn);
-        return getObject(head, commitFactory, conn);
     }
 
     @Override
     public Optional<InProgressCommit> getInProgressCommit(Resource catalogId, Resource versionedRDFRecordId, User user) {
         try (RepositoryConnection conn = repository.getConnection()) {
             testRecordPath(catalogId, versionedRDFRecordId, versionedRDFRecordFactory.getTypeIRI(), conn);
-            return getInProgressCommitIRI(versionedRDFRecordId, user.getResource(), conn).flatMap(resource -> {
-               return Optional.of(optObject(resource, inProgressCommitFactory, conn).orElseThrow(() ->
-                    new IllegalStateException("InProgressCommit " + resource.stringValue() + " could not be found")));
-            });
+            return getInProgressCommitIRI(versionedRDFRecordId, user.getResource(), conn).flatMap(resource ->
+                    Optional.of(optObject(resource, inProgressCommitFactory, conn).orElseThrow(() ->
+                 throwThingNotFound(resource, inProgressCommitFactory))));
         }
     }
 
@@ -1327,8 +1310,7 @@ public class SimpleCatalogManager implements CatalogManager {
 
             Set<Conflict> result = new HashSet<>();
 
-            Model original = getCompiledResource((Resource)originalEnd, conn);
-//            Model original = getCompiledResource((Resource)originalEnd, conn).get();
+            Model original = getCompiledResource((Resource) originalEnd, conn);
             IRI rdfType = vf.createIRI(RDF.TYPE.stringValue());
 
             leftDeletions.forEach(statement -> {
@@ -1848,8 +1830,7 @@ public class SimpleCatalogManager implements CatalogManager {
         testObjectId(catalogId, vf.createIRI(Catalog.TYPE), conn);
         testObjectId(recordId, recordType, conn);
         if (!conn.getStatements(recordId, vf.createIRI(Record.catalog_IRI), catalogId).hasNext()) {
-            throw new IllegalArgumentException("Record " + recordId.stringValue() + " does not belong to Catalog "
-                    + catalogId.stringValue());
+            throw throwDoesNotBelong(recordId, recordFactory, catalogId, catalogFactory);
         }
     }
 
@@ -1858,8 +1839,7 @@ public class SimpleCatalogManager implements CatalogManager {
         UnversionedRecord record = getRecord(catalogId, recordId, unversionedRecordFactory, conn);
         Set<Resource> distributionIRIs = record.getUnversionedDistribution_resource();
         if (!distributionIRIs.contains(distributionId)) {
-            throw new IllegalArgumentException("Distribution " + distributionId.stringValue()
-                    + " does not belong to record " + recordId.stringValue());
+            throw throwDoesNotBelong(distributionId, distributionFactory, recordId, recordFactory);
         }
     }
 
@@ -1867,8 +1847,7 @@ public class SimpleCatalogManager implements CatalogManager {
         VersionedRecord record = getRecord(catalogId, recordId, versionedRecordFactory, conn);
         Set<Resource> versionIRIs = record.getVersion_resource();
         if (!versionIRIs.contains(versionId)) {
-            throw new IllegalArgumentException("Version " + versionId.stringValue() + " does not belong to Record "
-                    + recordId.stringValue());
+            throw throwDoesNotBelong(versionId, versionFactory, recordId, recordFactory);
         }
     }
 
@@ -1876,8 +1855,7 @@ public class SimpleCatalogManager implements CatalogManager {
                                                Resource distributionId, RepositoryConnection conn) {
         Version version = getVersion(catalogId, recordId, versionId, versionFactory, conn);
         if (!version.getVersionedDistribution_resource().contains(distributionId)) {
-            throw new IllegalArgumentException("Distribution " + distributionId.stringValue()
-                    + " does not belong to Version " + versionId.stringValue());
+            throw throwDoesNotBelong(distributionId, distributionFactory, versionId, versionFactory);
         }
     }
 
@@ -1885,8 +1863,7 @@ public class SimpleCatalogManager implements CatalogManager {
         VersionedRDFRecord record = getRecord(catalogId, recordId, versionedRDFRecordFactory, conn);
         Set<Resource> branchIRIs = record.getBranch_resource();
         if (!branchIRIs.contains(branchId)) {
-            throw new IllegalArgumentException("Branch " + branchId.stringValue() + " does not belong to Record "
-                    + recordId.stringValue());
+            throw throwDoesNotBelong(branchId, branchFactory, recordId, recordFactory);
         }
     }
 
@@ -1897,8 +1874,7 @@ public class SimpleCatalogManager implements CatalogManager {
         Resource onRecord = commit.getOnVersionedRDFRecord_resource().orElseThrow(() ->
                 new IllegalStateException("Record was not set on InProgressCommit " + commitId.stringValue()));
         if (!onRecord.equals(recordId)) {
-            throw new IllegalArgumentException("InProgressCommit " + commitId.stringValue()
-                    + " does not belong to Record " + recordId.stringValue());
+            throw throwDoesNotBelong(commitId, commitFactory, recordId, recordFactory);
         }
     }
 
@@ -1924,5 +1900,24 @@ public class SimpleCatalogManager implements CatalogManager {
         String sourceName = sourceBranch.getProperty(titleIRI).orElse(sourceBranch.getResource()).stringValue();
         String targetName = targetBranch.getProperty(titleIRI).orElse(targetBranch.getResource()).stringValue();
         return "Merge of " + sourceName + " into " + targetName;
+    }
+
+    private <T extends Thing> IllegalArgumentException throwAlreadyExists(Resource id, OrmFactory<T> factory) {
+        return new IllegalArgumentException(factory.getTypeIRI().getLocalName() + " " + id.stringValue()
+                + " already exists");
+    }
+
+    private <T extends Thing> IllegalStateException throwThingNotFound(Resource id, OrmFactory<T> factory) {
+        return new IllegalStateException(factory.getTypeIRI().getLocalName() + " " + id.stringValue()
+                + " could not be found");
+    }
+
+    private <T extends Thing, S extends Thing> IllegalArgumentException throwDoesNotBelong(Resource child,
+                                                                                           OrmFactory<T> childFactory,
+                                                                                           Resource parent,
+                                                                                           OrmFactory<S> parentFactory)
+    {
+        return new IllegalArgumentException(childFactory.getTypeIRI().getLocalName() + " " + child.stringValue()
+                + " does not belong to " + parentFactory.getTypeIRI().getLocalName() + " " + parent.stringValue());
     }
 }
