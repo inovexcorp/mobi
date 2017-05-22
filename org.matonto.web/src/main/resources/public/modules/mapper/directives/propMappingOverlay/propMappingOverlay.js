@@ -66,6 +66,7 @@
                 scope: {},
                 controller: function() {
                     var dvm = this;
+                    dvm.isNumber = angular.isNumber;
                     dvm.prefixes = prefixes;
                     dvm.state = mapperStateService;
                     dvm.mm = mappingManagerService;

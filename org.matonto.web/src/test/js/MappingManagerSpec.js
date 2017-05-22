@@ -667,31 +667,37 @@ describe('Mapping Manager service', function() {
     it('should collect incompatible entities within a mapping based on its source ontologies', function() {
         var mapping = {jsonld: []};
         var sourceOntologies = [{}];
-        spyOn(mappingManagerSvc, 'getAllClassMappings').and.returnValue([{id: 'class'}]);
-        spyOn(mappingManagerSvc, 'getClassIdByMapping').and.returnValue('');
+        var classMapping = {id: 'class'};
+        var propMapping = {id: 'prop'};
+        spyOn(mappingManagerSvc, 'getAllClassMappings').and.returnValue([classMapping]);
+        spyOn(mappingManagerSvc, 'getClassIdByMapping').and.returnValue(classMapping.id);
         spyOn(mappingManagerSvc, 'findSourceOntologyWithClass').and.returnValue(undefined);
-        expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([{id: 'class'}]);
+        expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([classMapping]);
 
         mappingManagerSvc.findSourceOntologyWithClass.and.returnValue({});
-        spyOn(mappingManagerSvc, 'getPropMappingsByClass').and.returnValue([{id: 'prop'}]);
-        spyOn(mappingManagerSvc, 'getPropIdByMapping').and.returnValue('');
+        spyOn(mappingManagerSvc, 'getPropMappingsByClass').and.returnValue([propMapping]);
+        spyOn(mappingManagerSvc, 'getPropIdByMapping').and.returnValue(propMapping.id);
         spyOn(mappingManagerSvc, 'findSourceOntologyWithProp').and.returnValue(undefined);
-        expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([{id: 'prop'}]);
+        expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([propMapping]);
 
+        mappingManagerSvc.annotationProperties = [propMapping.id];
+        expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([]);
+
+        mappingManagerSvc.annotationProperties = [];
         mappingManagerSvc.findSourceOntologyWithProp.and.returnValue({});
         ontologyManagerSvc.isObjectProperty.and.returnValue(true);
         spyOn(mappingManagerSvc, 'isDataMapping').and.returnValue(true);
-        expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([{id: 'prop'}]);
+        expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([propMapping]);
 
         mappingManagerSvc.isDataMapping.and.returnValue(false);
         spyOn(mappingManagerSvc, 'getClassIdByMappingId').and.returnValue('test');
-        expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([{id: 'prop'}]);
+        expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([propMapping]);
 
         mappingManagerSvc.getClassIdByMappingId.and.returnValue('');
         ontologyManagerSvc.isObjectProperty.and.returnValue(false);
         ontologyManagerSvc.isDataTypeProperty.and.returnValue(true);
         spyOn(mappingManagerSvc, 'isObjectMapping').and.returnValue(true);
-        expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([{id: 'prop'}]);
+        expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([propMapping]);
 
         ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
         expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([]);

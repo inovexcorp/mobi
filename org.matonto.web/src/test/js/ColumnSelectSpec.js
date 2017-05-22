@@ -50,13 +50,6 @@ describe('Column Select directive', function() {
         controller = element.controller('columnSelect');
     });
 
-    describe('in isolated scope', function() {
-        it('columns should be one way bound', function() {
-            isolatedScope.columns = ['test'];
-            scope.$digest();
-            expect(scope.columns).toEqual([]);
-        });
-    });
     describe('controller bound variable', function() {
         it('selectedColumn should be two way bound', function() {
             controller.selectedColumn = '0';
