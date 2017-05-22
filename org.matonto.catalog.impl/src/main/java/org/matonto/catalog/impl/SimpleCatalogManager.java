@@ -1065,7 +1065,8 @@ public class SimpleCatalogManager implements CatalogManager {
                               String message) {
         try (RepositoryConnection conn = repository.getConnection()) {
             Branch branch = getBranch(catalogId, versionedRDFRecordId, branchId, branchFactory, conn);
-            Commit baseCommit = getObject(getHeadCommitIRI(branch), commitFactory, conn);
+            Commit baseCommit = branch.getHead_resource().map(resource -> getObject(resource, commitFactory, conn))
+                    .orElse(null);
             InProgressCommit inProgressCommit = getInProgressCommit(versionedRDFRecordId, user.getResource(), conn);
             Commit newCommit = createCommit(inProgressCommit, message, baseCommit, null);
             addCommit(branch, newCommit, conn);

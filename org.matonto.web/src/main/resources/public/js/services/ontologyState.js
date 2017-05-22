@@ -202,7 +202,7 @@
                             inProgressCommit = response;
                             return om.getOntology(recordId, branchId, commitId, rdfFormat);
                         }, errorMessage => {
-                            if (errorMessage === 'User has no InProgressCommit') {
+                            if (errorMessage === 'InProgressCommit could not be found') {
                                 return om.getOntology(recordId, branchId, commitId, rdfFormat);
                             }
                             return $q.reject();
@@ -744,7 +744,7 @@
             self.saveChanges = function(recordId, differenceObj) {
                 return cm.getInProgressCommit(recordId, catalogId)
                     .then($q.when, errorMessage => {
-                        if (errorMessage === 'User has no InProgressCommit') {
+                        if (errorMessage === 'InProgressCommit could not be found') {
                             return cm.createInProgressCommit(recordId, catalogId);
                         } else {
                             return $q.reject(errorMessage);

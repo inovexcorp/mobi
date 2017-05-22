@@ -3179,14 +3179,22 @@ public class SimpleCatalogManagerTest {
         manager.addCommit(distributedCatalogId, recordId, notPresentId, user, "Message");
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testAddCommitWithUserToBranchWithNoHeadSet() {
         // Setup:
+        IRI headIRI = vf.createIRI(Branch.head_IRI);
         Resource recordId = vf.createIRI("http://matonto.org/test/records#versionedRDF");
         Resource branchId = vf.createIRI("http://matonto.org/test/branches#test2");
+        Resource inProgressCommitId = vf.createIRI("http://matonto.org/test/in-progress-commits#test");
         User user = userFactory.createNew(vf.createIRI("http://matonto.org/test/user/taken"));
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertTrue(conn.getStatements(inProgressCommitId, null, null, inProgressCommitId).hasNext());
+            assertFalse(conn.getStatements(branchId, headIRI, null, branchId).hasNext());
 
-        manager.addCommit(distributedCatalogId, recordId, branchId, user, "Message");
+            manager.addCommit(distributedCatalogId, recordId, branchId, user, "Message");
+            assertFalse(conn.getStatements(inProgressCommitId, null, null, inProgressCommitId).hasNext());
+            assertTrue(conn.getStatements(branchId, headIRI, null, branchId).hasNext());
+        }
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -3571,15 +3579,6 @@ public class SimpleCatalogManagerTest {
         Optional<InProgressCommit> result = manager.getInProgressCommit(distributedCatalogId, versionedRDFRecordId, user);
         assertFalse(result.isPresent());
     }
-
-    /*@Test(expected = IllegalStateException.class)
-    public void testGetMissingInProgressCommitWithUser() {
-        // Setup:
-        User user = userFactory.createNew(vf.createIRI("http://matonto.org/test/user"));
-        Resource versionedRDFRecordId = vf.createIRI("http://matonto.org/test/records#versionedRDF");
-
-        manager.getInProgressCommit(differentId, versionedRDFRecordId, user);
-    }*/
 
     /* getInProgressCommit(Resource, Resource, Resource) */
 
