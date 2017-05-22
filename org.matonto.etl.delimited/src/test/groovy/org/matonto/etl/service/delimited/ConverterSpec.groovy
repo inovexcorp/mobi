@@ -69,6 +69,7 @@ class ConverterSpec extends Specification {
     def testOutput = loadModel("testOutput.ttl")
     def testOutputWithDatatypes = loadModel("testOutputWithDatatypes.ttl")
     def testOutputWithBlanks = loadModel("testOutputWithBlanks.ttl")
+    def testOutputWithMultiIndexUsages = loadModel("testOutputWithMultiIndexUsages.ttl")
     def testOutputWithFormattingAndBlanks = loadModel("testOutputWithFormattingAndBlanks.ttl")
     def testOutputWithDatatypesAndInvalidValues = loadModel("testOutputWithDatatypesAndInvalidValues.ttl")
     def testOutputLimitNoOffset = loadModel("testLimitNoOffsetOutput.ttl")
@@ -152,6 +153,18 @@ class ConverterSpec extends Specification {
 
         expect:
         convertedModel == testOutputWithBlanks
+    }
+
+    def "Convert CSV File with Multiple Object per Row and Object and Data Properties with Multiple Index Usages"() {
+        setup:
+        SVConfig config = getSVConfigBuilder("testFile.csv", "mapping_multi-props-same-index.ttl")
+                .containsHeaders(true)
+                .separator((char) ',')
+                .build()
+        Model convertedModel = c.convert(config)
+
+        expect:
+        convertedModel == testOutputWithMultiIndexUsages
     }
 
     def "Convert CSV File with Multiple Object per Row and Object and Data Properties in Passed Ontologies"() {
