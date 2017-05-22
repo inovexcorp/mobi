@@ -409,7 +409,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         when(catalogManager.getLatestVersion(any(Resource.class), any(Resource.class), eq(versionFactory))).thenReturn(Optional.of(testVersion));
         when(catalogManager.createVersion(anyString(), anyString(), eq(versionFactory))).thenReturn(testVersion);
         when(catalogManager.createVersion(anyString(), anyString(), eq(tagFactory))).thenReturn(testTag);
-        when(catalogManager.getVersionCommit(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(testCommits.get(0));
+        when(catalogManager.getTaggedCommit(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(testCommits.get(0));
         when(catalogManager.getVersionedDistributions(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(Collections.singleton(testDistribution));
         when(catalogManager.getVersionedDistribution(any(Resource.class), any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(Optional.of(testDistribution));
         when(catalogManager.getBranches(any(Resource.class), any(Resource.class))).thenReturn(Stream.of(testBranch, testUserBranch).collect(Collectors.toSet()));
@@ -1836,7 +1836,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
                 + "/versions/" + encode(VERSION_IRI) + "/commit")
                 .request().get();
         assertEquals(response.getStatus(), 200);
-        verify(catalogManager).getVersionCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(VERSION_IRI));
+        verify(catalogManager).getTaggedCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(VERSION_IRI));
         try {
             JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
             assertTrue(result.containsKey("commit"));
@@ -1853,7 +1853,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     @Test
     public void getVersionCommitWithIncorrectPathTest() {
         // Setup:
-        doThrow(new IllegalArgumentException()).when(catalogManager).getVersionCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(ERROR_IRI));
+        doThrow(new IllegalArgumentException()).when(catalogManager).getTaggedCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(ERROR_IRI));
 
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(ERROR_IRI) + "/commit")
@@ -1864,14 +1864,14 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     @Test
     public void getVersionCommitWithErrorTest() {
         // Setup:
-        doThrow(new MatOntoException()).when(catalogManager).getVersionCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(VERSION_IRI));
+        doThrow(new MatOntoException()).when(catalogManager).getTaggedCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(VERSION_IRI));
 
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI) + "/commit")
                 .request().get();
         assertEquals(response.getStatus(), 500);
 
-        doThrow(new IllegalStateException()).when(catalogManager).getVersionCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(VERSION_IRI));
+        doThrow(new IllegalStateException()).when(catalogManager).getTaggedCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(VERSION_IRI));
         response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI) + "/commit")
                 .request().get();

@@ -576,7 +576,7 @@ public class CatalogRestImpl implements CatalogRest {
     @Override
     public Response getVersionCommit(String catalogId, String recordId, String versionId, String format) {
         try {
-            Commit commit = catalogManager.getVersionCommit(vf.createIRI(catalogId), vf.createIRI(recordId),
+            Commit commit = catalogManager.getTaggedCommit(vf.createIRI(catalogId), vf.createIRI(recordId),
                     vf.createIRI(versionId));
             return createCommitResponse(commit, format);
         } catch (IllegalArgumentException ex) {

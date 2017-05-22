@@ -1774,94 +1774,94 @@ public class SimpleCatalogManagerTest {
         manager.getLatestVersion(distributedCatalogId, recordId, versionFactory);
     }
 
-    /* getVersionCommit */
+    /* getTaggedCommit */
 
     @Test
-    public void testGetVersionCommit() throws Exception {
+    public void testGetTaggedCommit() throws Exception {
         // Setup:
         Resource recordId = vf.createIRI("http://matonto.org/test/records#versionedRDF");
         Resource versionId = vf.createIRI("http://matonto.org/test/tags#test");
 
-        Commit commit = manager.getVersionCommit(distributedCatalogId, recordId, versionId);
+        Commit commit = manager.getTaggedCommit(distributedCatalogId, recordId, versionId);
         assertEquals(vf.createIRI("http://matonto.org/test/commits#conflict2"), commit.getResource());
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void testGetVersionCommitOfRecordInMissingCatalog() {
+    public void testGetTaggedCommitOfRecordInMissingCatalog() {
         // Setup:
         Resource recordId = vf.createIRI("http://matonto.org/test/records#versionedRDF");
         Resource versionId = vf.createIRI("http://matonto.org/test/tags#test");
 
-        manager.getVersionCommit(differentId, recordId, versionId);
+        manager.getTaggedCommit(differentId, recordId, versionId);
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void testGetVersionCommitOfMissingRecord() {
+    public void testGetTaggedCommitOfMissingRecord() {
         // Setup:
         Resource versionId = vf.createIRI("http://matonto.org/test/tags#test");
 
-        manager.getVersionCommit(distributedCatalogId, notPresentId, versionId);
+        manager.getTaggedCommit(distributedCatalogId, notPresentId, versionId);
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void testGetVersionCommitOfWrongTypeOfRecord() {
+    public void testGetTaggedCommitOfWrongTypeOfRecord() {
         // Setup:
         Resource recordId = vf.createIRI("http://matonto.org/test/records#unversioned");
         Resource versionId = vf.createIRI("http://matonto.org/test/tags#test");
 
-        manager.getVersionCommit(distributedCatalogId, recordId, versionId);
+        manager.getTaggedCommit(distributedCatalogId, recordId, versionId);
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void testGetVersionCommitOfRecordInWrongCatalog() {
+    public void testGetTaggedCommitOfRecordInWrongCatalog() {
         // Setup:
         Resource recordId = vf.createIRI("http://matonto.org/test/records#versionedRDF");
         Resource versionId = vf.createIRI("http://matonto.org/test/tags#test");
 
-        manager.getVersionCommit(localCatalogId, recordId, versionId);
+        manager.getTaggedCommit(localCatalogId, recordId, versionId);
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void testGetVersionCommitOfVersionOfWrongRecord() {
+    public void testGetTaggedCommitOfTaggedOfWrongRecord() {
         // Setup:
         Resource recordId = vf.createIRI("http://matonto.org/test/records#versionedRDF");
 
-        manager.getVersionCommit(distributedCatalogId, recordId, notPresentId);
+        manager.getTaggedCommit(distributedCatalogId, recordId, notPresentId);
     }
 
     @Test(expected = IllegalStateException.class)
-    public void testGetVersionCommitOfMissingVersion() {
+    public void testGetTaggedCommitOfMissingTag() {
         // Setup:
         Resource recordId = vf.createIRI("http://matonto.org/test/records#update-missing");
 
-        manager.getVersionCommit(distributedCatalogId, recordId, notPresentId);
+        manager.getTaggedCommit(distributedCatalogId, recordId, notPresentId);
     }
 
     @Test(expected = IllegalStateException.class)
-    public void testGetWrongTypeOfVersionCommitSet() {
+    public void testGetTaggedCommitOfWrongTypeOfVersion() {
         // Setup:
         Resource recordId = vf.createIRI("http://matonto.org/test/records#versionedRDF");
         Resource versionId = vf.createIRI("http://matonto.org/test/versions#test");
 
-        manager.getVersionCommit(distributedCatalogId, recordId, versionId);
+        manager.getTaggedCommit(distributedCatalogId, recordId, versionId);
     }
 
     @Test(expected = IllegalStateException.class)
-    public void testGetVersionWithoutCommitSet() {
+    public void testGetTaggedCommitWithoutCommitSet() {
         // Setup:
         Resource recordId = vf.createIRI("http://matonto.org/test/records#versionedRDF");
         Resource versionId = vf.createIRI("http://matonto.org/test/tags#noCommit");
 
-        manager.getVersionCommit(distributedCatalogId, recordId, versionId);
+        manager.getTaggedCommit(distributedCatalogId, recordId, versionId);
     }
 
     @Test(expected = IllegalStateException.class)
-    public void testGetVersionMissingCommit() {
+    public void testGetTaggedMissingCommit() {
         // Setup:
         Resource recordId = vf.createIRI("http://matonto.org/test/records#remove");
         Resource versionId = vf.createIRI("http://matonto.org/test/tags#test-missing");
 
-        manager.getVersionCommit(distributedCatalogId, recordId, versionId);
+        manager.getTaggedCommit(distributedCatalogId, recordId, versionId);
     }
 
     /* getVersionedDistributions */
@@ -3851,14 +3851,16 @@ public class SimpleCatalogManagerTest {
                 vf.createIRI("http://matonto.org/test/commits#test1"),
                 vf.createIRI("http://matonto.org/test/commits#test0")).collect(Collectors.toList());
         Resource commitId = vf.createIRI("http://matonto.org/test/commits#test3");
-        List<Resource> result = manager.getCommitChain(commitId);
+        List<Commit> result = manager.getCommitChain(commitId);
         assertEquals(expect.size(), result.size());
-        assertEquals(expect, result);
+        for (int i = 0; i < result.size(); i++) {
+            assertEquals(expect.get(i), result.get(i).getResource());
+        }
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testGetCommitChainWithoutPathOfMissingCommit() {
-        List<Resource> result = manager.getCommitChain(notPresentId);
+        List<Commit> result = manager.getCommitChain(notPresentId);
         assertEquals(0, result.size());
     }
 

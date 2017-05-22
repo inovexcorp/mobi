@@ -686,7 +686,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public Commit getVersionCommit(Resource catalogId, Resource versionedRecordId, Resource versionId) {
+    public Commit getTaggedCommit(Resource catalogId, Resource versionedRecordId, Resource versionId) {
         try (RepositoryConnection conn = repository.getConnection()) {
             testVersionPath(catalogId, versionedRecordId, versionId, conn);
             Tag tag = optObject(versionId, tagFactory, conn).orElseThrow(() ->
@@ -1223,10 +1223,12 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public List<Resource> getCommitChain(Resource commitId) {
+    public List<Commit> getCommitChain(Resource commitId) {
         try (RepositoryConnection conn = repository.getConnection()) {
             testObjectId(commitId, commitFactory.getTypeIRI(), conn);
-            return getCommitChain(commitId, conn);
+            return getCommitChain(commitId, conn).stream()
+                    .map(resource -> getObject(resource, commitFactory, conn))
+                    .collect(Collectors.toList());
         }
     }
 

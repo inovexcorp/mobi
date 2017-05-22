@@ -320,15 +320,15 @@ public interface CatalogManager {
      * Gets the Commit of the Tag identified by the provided Resources.
      *
      * @param catalogId The Resource identifying the Catalog which contains the Record.
-     * @param versionedRecordId The Resource identified the VersionedRecord which has the Version.
-     * @param versionId The Resource identifying the Version which has the Commit.
+     * @param versionedRecordId The Resource identified the VersionedRecord which has the Tag.
+     * @param tagId The Resource identifying the Tag which has the Commit.
      * @return The Commit of the Tag if it exists.
      * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
-     *      Record does not belong to the Catalog, or the Version does not belong to the Record.
-     * @throws IllegalStateException Thrown if the Version could not be found, the Version does not have a Commit,
+     *      Record does not belong to the Catalog, or the Tag does not belong to the Record.
+     * @throws IllegalStateException Thrown if the Version could not be found, the Tag does not have a Commit,
      *      or the Commit could not be found.
      */
-    Commit getVersionCommit(Resource catalogId, Resource versionedRecordId, Resource versionId);
+    Commit getTaggedCommit(Resource catalogId, Resource versionedRecordId, Resource tagId);
 
     /**
      * Gets the Set of Distributions for the Version identified by the provided Resources.
@@ -728,17 +728,16 @@ public interface CatalogManager {
     Model applyInProgressCommit(Resource inProgressCommitId, Model entity);
 
     /**
-     * Gets a List of Resources which all identify different Commits ordered by date descending within the repository.
-     * The Commit identified by the provided Resource is the first item in the List and it was informed by the previous
-     * Commit in the List. This association is repeated until you get to the beginning of the List. The resulting List
-     * can then be thought about the chain of Commits on a Branch starting with the Commit identified by the provided
-     * Resource.
+     * Gets a List of Commits ordered by date descending within the repository. The Commit identified by the provided
+     * Resource is the first item in the List and it was informed by the previous Commit in the List. This association
+     * is repeated until you get to the beginning of the List. The resulting List can then be thought about the chain
+     * of Commits on a Branch starting with the Commit identified by the provided Resource.
      *
      * @param commitId The Resource identifying the Commit for the desired chain.
-     * @return List of Resources identifying the Commits which make up the commit chain for the provided Commit.
+     * @return List of Commits which make up the commit chain for the provided Commit.
      * @throws IllegalArgumentException Thrown if any of the Commits could not be found.
      */
-    List<Resource> getCommitChain(Resource commitId);
+    List<Commit> getCommitChain(Resource commitId);
 
     /**
      * Gets a List of Commits ordered by date descending within the repository starting with the head Commit of the
