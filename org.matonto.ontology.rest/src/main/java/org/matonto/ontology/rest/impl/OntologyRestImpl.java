@@ -1223,8 +1223,6 @@ public class OntologyRestImpl implements OntologyRest {
         Resource catalogId = catalogManager.getLocalCatalogIRI();
         OntologyRecord record = catalogManager.createRecord(builder.build(), ontologyRecordFactory);
         catalogManager.addRecord(catalogId, record);
-        final OntologyRecord finalRecord = catalogManager.getRecord(catalogId, record.getResource(),
-                ontologyRecordFactory).get();
         Resource masterBranchId = record.getMasterBranch_resource().get();
 
         InProgressCommit inProgressCommit = catalogManager.createInProgressCommit(user);
@@ -1237,7 +1235,7 @@ public class OntologyRestImpl implements OntologyRest {
 
         // Cache
         getOntologyCache().ifPresent(cache -> {
-            String key = OntologyCache.generateKey(finalRecord.getResource().stringValue(),
+            String key = OntologyCache.generateKey(record.getResource().stringValue(),
                     masterBranchId.stringValue(), commitId.stringValue());
             log.trace("caching " + key);
             cache.put(key, ontology);
@@ -1245,9 +1243,8 @@ public class OntologyRestImpl implements OntologyRest {
 
         JSONObject response = new JSONObject()
                 .element("ontologyId", ontology.getOntologyId().getOntologyIdentifier().stringValue())
-                .element("recordId", finalRecord.getResource().stringValue())
+                .element("recordId", record.getResource().stringValue())
                 .element("branchId", masterBranchId.stringValue())
-                /*.element("commitId", commit.getResource().stringValue());*/
                 .element("commitId", commitId.stringValue());
         return Response.status(201).entity(response).build();
     }
