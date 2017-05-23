@@ -84,7 +84,6 @@ public class SimpleOntologyManager implements OntologyManager {
     private ModelFactory modelFactory;
     private CatalogManager catalogManager;
     private RepositoryManager repositoryManager;
-    private OntologyRecordFactory ontologyRecordFactory;
     private BranchFactory branchFactory;
     private CacheManager cacheManager;
 
@@ -205,11 +204,6 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Reference
-    public void setOntologyRecordFactory(OntologyRecordFactory ontologyRecordFactory) {
-        this.ontologyRecordFactory = ontologyRecordFactory;
-    }
-
-    @Reference
     public void setBranchFactory(BranchFactory branchFactory) {
         this.branchFactory = branchFactory;
     }
@@ -220,33 +214,28 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Override
-    public SesameTransformer getTransformer() {
-        return sesameTransformer;
-    }
-
-    @Override
     public Ontology createOntology(OntologyId ontologyId) {
-        return new SimpleOntology(ontologyId, this);
+        return new SimpleOntology(ontologyId, this, sesameTransformer);
     }
 
     @Override
     public Ontology createOntology(File file) throws FileNotFoundException {
-        return new SimpleOntology(file, this);
+        return new SimpleOntology(file, this, sesameTransformer);
     }
 
     @Override
     public Ontology createOntology(IRI iri) {
-        return new SimpleOntology(iri, this);
+        return new SimpleOntology(iri, this, sesameTransformer);
     }
 
     @Override
     public Ontology createOntology(InputStream inputStream) {
-        return new SimpleOntology(inputStream, this);
+        return new SimpleOntology(inputStream, this, sesameTransformer);
     }
 
     @Override
     public Ontology createOntology(String json) {
-        return new SimpleOntology(json, this);
+        return new SimpleOntology(json, this, sesameTransformer);
     }
 
     @Override

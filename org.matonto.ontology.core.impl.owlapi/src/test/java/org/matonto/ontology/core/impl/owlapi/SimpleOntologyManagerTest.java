@@ -208,16 +208,9 @@ public class SimpleOntologyManagerTest {
         manager.setModelFactory(modelFactory);
         manager.setSesameTransformer(sesameTransformer);
         manager.setCatalogManager(catalogManager);
-        manager.setOntologyRecordFactory(ontologyRecordFactory);
         manager.setBranchFactory(branchFactory);
         manager.setRepositoryManager(repoManager);
         manager.setCacheManager(cacheManager);
-    }
-
-    @Test
-    public void testGetTransformer() throws Exception {
-        SesameTransformer result = manager.getTransformer();
-        assertEquals(sesameTransformer, result);
     }
 
     @Test

@@ -39,13 +39,6 @@ import javax.annotation.Nonnull;
 public interface OntologyManager {
 
     /**
-     * Returns the SesameTransformer used by the OntologyManager.
-     *
-     * @return the SesameTransformer used by the OntologyManager.
-     */
-    SesameTransformer getTransformer();
-
-    /**
      * Creates a new Ontology Object using the provided OntologyId.
      *
      * @param ontologyId the ontology id for the Ontology you want to create.
