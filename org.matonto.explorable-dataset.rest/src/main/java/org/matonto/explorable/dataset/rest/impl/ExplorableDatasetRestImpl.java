@@ -119,9 +119,9 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
     public Response getClassDetails(String recordIRI, int offset, int limit, String sort, boolean asc, String filter) {
         checkStringParam(recordIRI, "The Dataset Record IRI is required.");
         Resource datasetRecordRsr = factory.createIRI(recordIRI);
-        DatasetRecord record = datasetManager.getDatasetRecord(datasetRecordRsr).orElseThrow(() ->
-                ErrorUtils.sendError("The Dataset Record could not be found.", Response.Status.BAD_REQUEST));
         try {
+            DatasetRecord record = datasetManager.getDatasetRecord(datasetRecordRsr).orElseThrow(() ->
+                    ErrorUtils.sendError("The Dataset Record could not be found.", Response.Status.BAD_REQUEST));
             TupleQueryResult results = getQueryResults(datasetRecordRsr, GET_CLASSES_TYPES, "", null);
             List<ClassDetails> classes = getClassDetailsFromQueryResults(results, datasetRecordRsr);
             classes = addOntologyDetailsToClasses(classes, record.getOntology(), record.getModel());
