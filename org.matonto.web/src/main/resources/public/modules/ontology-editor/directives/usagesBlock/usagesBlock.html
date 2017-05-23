@@ -26,7 +26,10 @@
         <block-content targeted-spinner="dvm.id">
             <div class="property-values" ng-repeat="(key, value) in dvm.results" ng-if="dvm.results">
                 <h5 ng-click="isClosed = !isClosed" class="clearfix">
-                    <p class="text">{{dvm.ontoUtils.getLabelForIRI(key)}} <small>&lt;{{key}}&gt;</small></p><i class="fa fa-fw" ng-class="{'fa-chevron-down': isClosed, 'fa-chevron-up': !isClosed}"></i>
+                    <p class="text">{{dvm.ontoUtils.getLabelForIRI(key)}}
+                        <small>&lt;{{key}}&gt;</small>
+                    </p>
+                    <i class="fa fa-fw" ng-class="{'fa-chevron-down': isClosed, 'fa-chevron-up': !isClosed}"></i>
                 </h5>
                 <div class="value-container" ng-repeat="statement in value" ng-hide="isClosed">
                     <span class="value-display">
@@ -41,7 +44,8 @@
                 </div>
             </div>
             <div class="text-center">
-                <a ng-if="dvm.chunks !== dvm.index" ng-click="dvm.getMoreResults()"><i class="fa fa-fw fa-plus"></i><span>Load More</span></a>
+                <a ng-if="dvm.chunks !== dvm.index" ng-click="dvm.getMoreResults()"><i
+                        class="fa fa-fw fa-plus"></i><span>Load More</span></a>
             </div>
         </block-content>
         <block-footer class="centered">Showing {{dvm.shown | number}} of {{dvm.total | number}}</block-footer>

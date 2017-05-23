@@ -23,6 +23,26 @@ package org.matonto.catalog.impl;
  * #L%
  */
 
+import javax.annotation.Nonnull;
+import java.io.IOException;
+import java.security.InvalidParameterException;
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.ConfigurationPolicy;
@@ -92,26 +112,6 @@ import org.openrdf.model.vocabulary.RDF;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.security.InvalidParameterException;
-import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import javax.annotation.Nonnull;
-
 @Component(
         configurationPolicy = ConfigurationPolicy.require,
         designateFactory = CatalogConfig.class,
@@ -140,7 +140,8 @@ public class SimpleCatalogManager implements CatalogManager {
     private Resource localCatalogIRI;
     private Map<Resource, String> sortingOptions = new HashMap<>();
 
-    public SimpleCatalogManager() {}
+    public SimpleCatalogManager() {
+    }
 
     @Reference(name = "repository")
     protected void setRepository(Repository repository) {
@@ -720,8 +721,8 @@ public class SimpleCatalogManager implements CatalogManager {
      *
      * @param branch The branch whose head to update.
      * @param commit The new head commit of the specified branch.
-     * @param conn The RepositoryConnection to use.
-     * @throws MatOntoException If the Branch or Commit do not exist.
+     * @param conn   The RepositoryConnection to use.
+     * @throws MatOntoException    If the Branch or Commit do not exist.
      * @throws RepositoryException If there is a problem communicating with the Repository.
      */
     private void updateHead(Resource branch, Resource commit, RepositoryConnection conn) throws MatOntoException {
@@ -943,7 +944,12 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public <T extends Commit> Optional<T> getCommit(Resource commitId, OrmFactory<T> factory) throws MatOntoException {
-        return getObject(resourceExists(commitId, factory.getTypeIRI().stringValue()), commitId, factory);
+        long start = System.currentTimeMillis();
+        try {
+            return getObject(resourceExists(commitId, factory.getTypeIRI().stringValue()), commitId, factory);
+        } finally {
+            log.trace("getCommit took {}ms", System.currentTimeMillis() - start);
+        }
     }
 
     @Override
@@ -969,6 +975,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     private <T extends Commit> Difference getCommitDifference(Resource commitId, OrmFactory<T> commitFactory) {
+        long start = System.currentTimeMillis();
         T commit = getCommit(commitId, commitFactory).orElseThrow(() ->
                 new MatOntoException("The Commit could not be retrieved."));
         try (RepositoryConnection conn = repository.getConnection()) {
@@ -976,9 +983,9 @@ public class SimpleCatalogManager implements CatalogManager {
             Revision revision = revisionFactory.getExisting(revisionIRI, commit.getModel()).orElseThrow(() ->
                     new IllegalStateException("Revision resource <" + revisionIRI.stringValue()
                             + "> not found for Commit <" + commit.getResource() + ">"));
-            Resource additionsIRI = (Resource) revision.getAdditions().orElseThrow(() ->
+            Resource additionsIRI = revision.getAdditions().orElseThrow(() ->
                     new MatOntoException("The additions could not be found."));
-            Resource deletionsIRI = (Resource) revision.getDeletions().orElseThrow(() ->
+            Resource deletionsIRI = revision.getDeletions().orElseThrow(() ->
                     new MatOntoException("The deletions could not be found."));
             Model addModel = mf.createModel();
             Model deleteModel = mf.createModel();
@@ -992,6 +999,8 @@ public class SimpleCatalogManager implements CatalogManager {
                     .build();
         } catch (RepositoryException e) {
             throw new MatOntoException("Error in repository connection", e);
+        } finally {
+            log.trace("getCommitDifference took {}ms", System.currentTimeMillis() - start);
         }
     }
 
@@ -1091,7 +1100,7 @@ public class SimpleCatalogManager implements CatalogManager {
 
                 Set<Conflict> result = new HashSet<>();
 
-                Model original = getCompiledResource((Resource)originalEnd).get();
+                Model original = getCompiledResource((Resource) originalEnd).get();
                 IRI rdfType = vf.createIRI(RDF.TYPE.stringValue());
 
                 leftDeletions.forEach(statement -> {
@@ -1158,12 +1167,12 @@ public class SimpleCatalogManager implements CatalogManager {
     /**
      * Creates a conflict using the provided parameters as the data to construct it.
      *
-     * @param subject The Resource identifying the conflicted statement's subject.
-     * @param predicate The IRI identifying the conflicted statement's predicate.
-     * @param original The Model of the original item.
-     * @param left The Model of the left item being compared.
-     * @param leftDeletions The Model of the deleted statements from the left Model.
-     * @param right The Model of the right item being compared.
+     * @param subject        The Resource identifying the conflicted statement's subject.
+     * @param predicate      The IRI identifying the conflicted statement's predicate.
+     * @param original       The Model of the original item.
+     * @param left           The Model of the left item being compared.
+     * @param leftDeletions  The Model of the deleted statements from the left Model.
+     * @param right          The Model of the right item being compared.
      * @param rightDeletions The Model of the deleted statements from the right Model.
      * @return A Conflict created using all of the provided data.
      */
@@ -1190,8 +1199,8 @@ public class SimpleCatalogManager implements CatalogManager {
      * Gets the Object identified by the provided factory if it is available and satisfies the provided condition.
      *
      * @param condition The boolean identifying if the resource is correct.
-     * @param id The Resource identifying which Object you are trying to get.
-     * @param factory The OrmFactory which will create the desired Object.
+     * @param id        The Resource identifying which Object you are trying to get.
+     * @param factory   The OrmFactory which will create the desired Object.
      * @return An Optional containing the Object identified, if available.
      */
     private <T extends Thing> Optional<T> getObject(boolean condition, Resource id, OrmFactory<T> factory) throws
@@ -1215,8 +1224,8 @@ public class SimpleCatalogManager implements CatalogManager {
      * Adds the model for a Catalog to the repository which contains the provided metadata using the provided Resource
      * as the context.
      *
-     * @param catalogId The Resource identifying the Catalog you wish you create.
-     * @param title The title text.
+     * @param catalogId   The Resource identifying the Catalog you wish you create.
+     * @param title       The title text.
      * @param description The description text.
      */
     private void addCatalogToRepo(Resource catalogId, String title, String description) {
@@ -1274,7 +1283,7 @@ public class SimpleCatalogManager implements CatalogManager {
      * Checks to see if the provided Resource exists as a context in the Repository.
      *
      * @param resourceIRI The Resource context to look for in the Repository.
-     * @param conn The RepositoryConnection to use for lookup.
+     * @param conn        The RepositoryConnection to use for lookup.
      * @return True if the Resource is in the Repository as a context for statements; otherwise, false.
      * @throws RepositoryException If there is a problem communicating with the Repository.
      */
@@ -1286,7 +1295,7 @@ public class SimpleCatalogManager implements CatalogManager {
      * Checks to see if the provided Resource exists in the Repository and is of the provided type.
      *
      * @param resourceIRI The Resource to look for in the Repository
-     * @param type The String of the IRI identifying the type of entity in the Repository.
+     * @param type        The String of the IRI identifying the type of entity in the Repository.
      * @return True if the Resource is in the Repository; otherwise, false.
      */
     private boolean resourceExists(Resource resourceIRI, String type) throws MatOntoException {
@@ -1301,8 +1310,8 @@ public class SimpleCatalogManager implements CatalogManager {
      * Checks to see if the provided Resource exists in the Repository and is of the provided type.
      *
      * @param resourceIRI The Resource to look for in the Repository.
-     * @param type The String of the IRI identifying the type of entity in the Repository.
-     * @param conn The RepositoryConnection to use for lookup.
+     * @param type        The String of the IRI identifying the type of entity in the Repository.
+     * @param conn        The RepositoryConnection to use for lookup.
      * @return True if the Resource is in the Repository; otherwise, false.
      * @throws RepositoryException If there is a problem communicating with the Repository.
      */
@@ -1324,11 +1333,11 @@ public class SimpleCatalogManager implements CatalogManager {
     /**
      * Adds the properties provided by the parameters to the provided Record.
      *
-     * @param record The Record to add the properties to.
-     * @param config The RecordConfig which contains the properties to set.
-     * @param issued The OffsetDateTime of when the Record was issued.
+     * @param record   The Record to add the properties to.
+     * @param config   The RecordConfig which contains the properties to set.
+     * @param issued   The OffsetDateTime of when the Record was issued.
      * @param modified The OffsetDateTime of when the Record was modified.
-     * @param <T> An Object which extends the Record class.
+     * @param <T>      An Object which extends the Record class.
      * @return T which contains all of the properties provided by the parameters.
      */
     private <T extends Record> T addPropertiesToRecord(T record, RecordConfig config, OffsetDateTime issued,
@@ -1357,7 +1366,7 @@ public class SimpleCatalogManager implements CatalogManager {
      * RepositoryConnection if necessary.
      *
      * @param bindingSet The BindingSet which contains the information about the Record.
-     * @param resource The Resource which identifies the created Record.
+     * @param resource   The Resource which identifies the created Record.
      * @return A Record created from the provided information.
      */
     private Record processRecordBindingSet(BindingSet bindingSet, Resource resource) {
@@ -1403,8 +1412,8 @@ public class SimpleCatalogManager implements CatalogManager {
      * Adds the provided Distribution to the identified Resource adding a triple based on the provided predicate.
      *
      * @param distribution The Distribution to add to the Repository.
-     * @param resourceId The Resource identified to get the Distribution added to it.
-     * @param predicate The String containing the predicate for the new statement.
+     * @param resourceId   The Resource identified to get the Distribution added to it.
+     * @param predicate    The String containing the predicate for the new statement.
      * @return True if the Distribution was successfully added; otherwise, false.
      */
     private boolean addDistribution(Distribution distribution, Resource resourceId, String predicate) throws
@@ -1428,9 +1437,9 @@ public class SimpleCatalogManager implements CatalogManager {
      * Removes the Object identified by the Resource from the Resource identified to be removed from and removes
      * the Object statement using the provided String predicate.
      *
-     * @param objectId The Resource identifying the Object to remove.
+     * @param objectId     The Resource identifying the Object to remove.
      * @param removeFromId The Resource identifying which Object to remove the Distribution from.
-     * @param predicate The String identifying the predicate for the statement that needs to be removed.
+     * @param predicate    The String identifying the predicate for the statement that needs to be removed.
      * @return True if the Distribution was successfully removed; otherwise, false.
      */
     private boolean removeObjectWithRelationship(Resource objectId, Resource removeFromId, String predicate) throws
@@ -1457,7 +1466,7 @@ public class SimpleCatalogManager implements CatalogManager {
      * Updates the Resource which is identified using the provided Model.
      *
      * @param resourceId The Resource identifying the Object that you wish to update.
-     * @param model The Model containing the underlying information about the Object you are updating.
+     * @param model      The Model containing the underlying information about the Object you are updating.
      */
     private void update(Resource resourceId, Model model) throws MatOntoException {
         try (RepositoryConnection conn = repository.getConnection()) {
@@ -1541,11 +1550,11 @@ public class SimpleCatalogManager implements CatalogManager {
      * Gets the Resource identifying the graph that contain the additions statements.
      *
      * @param commitId The Resource identifying the Commit that have the additions.
-     * @param conn The RepositoryConnection to be used to get the Resource from.
+     * @param conn     The RepositoryConnection to be used to get the Resource from.
      * @return The Resource for the additions graph.
      */
     private Resource getAdditionsResource(Resource commitId, RepositoryConnection conn) {
-        return (Resource)conn.getStatements(null, vf.createIRI(Revision.additions_IRI), null, commitId).next()
+        return (Resource) conn.getStatements(null, vf.createIRI(Revision.additions_IRI), null, commitId).next()
                 .getObject();
     }
 
@@ -1553,11 +1562,11 @@ public class SimpleCatalogManager implements CatalogManager {
      * Gets the Resource identifying the graph that contain the deletions statements.
      *
      * @param commitId The Resource identifying the Commit that have the deletions.
-     * @param conn The RepositoryConnection to be used to get the Resource from.
+     * @param conn     The RepositoryConnection to be used to get the Resource from.
      * @return The Resource for the deletions graph.
      */
     private Resource getDeletionsResource(Resource commitId, RepositoryConnection conn) {
-        return (Resource)conn.getStatements(null, vf.createIRI(Revision.deletions_IRI), null, commitId).next()
+        return (Resource) conn.getStatements(null, vf.createIRI(Revision.deletions_IRI), null, commitId).next()
                 .getObject();
     }
 
@@ -1565,9 +1574,9 @@ public class SimpleCatalogManager implements CatalogManager {
      * Adds the statements from the Revision associated with the Commit identified by the provided Resource to the
      * provided Model using the RepositoryConnection to get the statements from the repository.
      *
-     * @param model The Model to update.
+     * @param model    The Model to update.
      * @param commitId The Resource identifying the Commit.
-     * @param conn The RepositoryConnection to query the repository.
+     * @param conn     The RepositoryConnection to query the repository.
      * @return A Model with the proper statements added.
      */
     private Model addRevisionStatementsToModel(Model model, Resource commitId, RepositoryConnection conn) {
@@ -1599,8 +1608,8 @@ public class SimpleCatalogManager implements CatalogManager {
      * descending by date. If descending, the provided Resource identifying a commit will be first.
      *
      * @param commitId The Resource identifying the commit that you want to get the chain for.
-     * @param conn The RepositoryConnection which will be queried for the Commits.
-     * @param asc Whether or not the iterator should be ascending by date
+     * @param conn     The RepositoryConnection which will be queried for the Commits.
+     * @param asc      Whether or not the iterator should be ascending by date
      * @return Iterator of Values containing the requested commits.
      */
     private Iterator<Value> getCommitChainIterator(Resource commitId, RepositoryConnection conn, boolean asc) {
@@ -1618,12 +1627,12 @@ public class SimpleCatalogManager implements CatalogManager {
      * Builds the Model based on the provided Iterator and Resource.
      *
      * @param iterator The Iterator of commits which are supposed to be contained in the Model in ascending order.
-     * @param conn The RepositoryConnection which contains the requested Commits.
+     * @param conn     The RepositoryConnection which contains the requested Commits.
      * @return The Model containing the summation of all the Commits statements.
      */
     private Model createModelFromIterator(Iterator<Value> iterator, RepositoryConnection conn) {
         Model model = mf.createModel();
-        iterator.forEachRemaining(value -> addRevisionStatementsToModel(model, (Resource)value, conn));
+        iterator.forEachRemaining(value -> addRevisionStatementsToModel(model, (Resource) value, conn));
         return model;
     }
 

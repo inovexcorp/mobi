@@ -30,6 +30,29 @@ import static org.matonto.rest.util.RestUtils.getTypedObjectFromJsonld;
 import static org.matonto.rest.util.RestUtils.jsonldToModel;
 import static org.matonto.rest.util.RestUtils.modelToString;
 
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
+import javax.ws.rs.core.UriInfo;
+import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import net.sf.json.JSONArray;
@@ -74,34 +97,11 @@ import org.matonto.rdf.orm.OrmFactory;
 import org.matonto.rdf.orm.Thing;
 import org.matonto.rest.util.ErrorUtils;
 import org.matonto.rest.util.LinksUtils;
-import org.matonto.rest.util.RestUtils;
 import org.matonto.rest.util.jaxb.Links;
 import org.openrdf.model.vocabulary.DCTERMS;
 import org.openrdf.model.vocabulary.RDF;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.BufferedWriter;
-import java.io.ByteArrayOutputStream;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
-import javax.ws.rs.core.UriInfo;
 
 @Component(immediate = true)
 public class CatalogRestImpl implements CatalogRest {
@@ -319,10 +319,10 @@ public class CatalogRestImpl implements CatalogRest {
      * Retrieves a Record or subclass of Record based on the passed type IRI identified by the passed ID strings.
      * Throws a 400 Response if it could not be found.
      *
-     * @param catalogId The ID string of the Catalog to retrieve the Record from.
-     * @param recordId The ID string of the Record to retrieve.
+     * @param catalogId  The ID string of the Catalog to retrieve the Record from.
+     * @param recordId   The ID string of the Record to retrieve.
      * @param recordType The IRI string of the Record class or subclass.
-     * @param <T> A class that extends Record.
+     * @param <T>        A class that extends Record.
      * @return The Record or subclass of a Record identified by the passed ID strings.
      */
     private <T extends Record> T getRecord(String catalogId, String recordId, String recordType) {
@@ -333,10 +333,10 @@ public class CatalogRestImpl implements CatalogRest {
      * Retrieves a Record or subclass of Record based on the passed type IRI identified by the passed ID Resources.
      * Throws a 400 Response if it could not be found.
      *
-     * @param catalogId The ID Resource of the Catalog to retrieve the Record from.
-     * @param recordId The ID Resource of the Record to retrieve.
+     * @param catalogId  The ID Resource of the Catalog to retrieve the Record from.
+     * @param recordId   The ID Resource of the Record to retrieve.
      * @param recordType The IRI string of the Record class or subclass.
-     * @param <T> A class that extends Record.
+     * @param <T>        A class that extends Record.
      * @return The Record or subclass of a Record identified by the passed ID Resources.
      */
     private <T extends Record> T getRecord(Resource catalogId, Resource recordId, String recordType) {
@@ -349,7 +349,7 @@ public class CatalogRestImpl implements CatalogRest {
      * Retrieves a Record identified by the passed ID Resources. Throws a 400 Response if it could not be found.
      *
      * @param catalogId The ID Resource of the Catalog to retrieve the Record from.
-     * @param recordId The ID Resource of the Record to retrieve.
+     * @param recordId  The ID Resource of the Record to retrieve.
      * @return The Record identified by the passed ID Resources.
      */
     private Record getRecord(Resource catalogId, Resource recordId) {
@@ -433,7 +433,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
-    public Response updateUnversionedDistribution(String catalogId, String recordId, String distributionId, 
+    public Response updateUnversionedDistribution(String catalogId, String recordId, String distributionId,
                                                   String newDistributionJson) {
         try {
             testUnversionedDistributionPath(catalogId, recordId, distributionId);
@@ -511,9 +511,9 @@ public class CatalogRestImpl implements CatalogRest {
      * Retrieves a Version or subclass of Version based on the passed type IRI identified by the passed ID string.
      * Throws a 400 Response if it could not be found.
      *
-     * @param versionId The ID string of the Version to retrieve.
+     * @param versionId   The ID string of the Version to retrieve.
      * @param versionType The IRI string of the Version class or subclass.
-     * @param <T> A class that extends Version.
+     * @param <T>         A class that extends Version.
      * @return The Version or subclass of a Version identified by the passed ID string.
      */
     private <T extends Version> T getVersion(String versionId, String versionType) {
@@ -524,15 +524,20 @@ public class CatalogRestImpl implements CatalogRest {
      * Retrieves a Version or subclass of Version based on the passed type IRI identified by the passed ID Resource.
      * Throws a 400 Response if it could not be found.
      *
-     * @param versionId The ID Resource of the Version to retrieve.
+     * @param versionId   The ID Resource of the Version to retrieve.
      * @param versionType The IRI string of the Version class or subclass.
-     * @param <T> A class that extends Version.
+     * @param <T>         A class that extends Version.
      * @return The Version or subclass of a Version identified by the passed ID Resource.
      */
     private <T extends Version> T getVersion(Resource versionId, String versionType) {
-        OrmFactory<T> versionFactory = (OrmFactory<T>) versionFactories.get(versionType);
-        return catalogManager.getVersion(versionId, versionFactory).orElseThrow(() ->
-                ErrorUtils.sendError("Version not found", Response.Status.BAD_REQUEST));
+        long start = System.currentTimeMillis();
+        try {
+            OrmFactory<T> versionFactory = (OrmFactory<T>) versionFactories.get(versionType);
+            return catalogManager.getVersion(versionId, versionFactory).orElseThrow(() ->
+                    ErrorUtils.sendError("Version not found", Response.Status.BAD_REQUEST));
+        } finally {
+            LOG.trace("getVersion took {}ms", System.currentTimeMillis() - start);
+        }
     }
 
     /**
@@ -611,7 +616,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
-    public Response getVersionedDistribution(String catalogId, String recordId, String versionId, 
+    public Response getVersionedDistribution(String catalogId, String recordId, String versionId,
                                              String distributionId) {
         try {
             testVersionedDistributionPath(catalogId, recordId, versionId, distributionId);
@@ -624,7 +629,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
-    public Response deleteVersionedDistribution(String catalogId, String recordId, String versionId, 
+    public Response deleteVersionedDistribution(String catalogId, String recordId, String versionId,
                                                 String distributionId) {
         try {
             testVersionPath(catalogId, recordId, versionId);
@@ -637,7 +642,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
-    public Response updateVersionedDistribution(String catalogId, String recordId, String versionId, 
+    public Response updateVersionedDistribution(String catalogId, String recordId, String versionId,
                                                 String distributionId, String newDistributionJson) {
         try {
             testVersionedDistributionPath(catalogId, recordId, versionId, distributionId);
@@ -650,6 +655,7 @@ public class CatalogRestImpl implements CatalogRest {
 
     @Override
     public Response getVersionCommit(String catalogId, String recordId, String versionId, String format) {
+        long start = System.currentTimeMillis();
         try {
             testVersionPath(catalogId, recordId, versionId);
             Tag version = getVersion(versionId, Tag.TYPE);
@@ -660,6 +666,8 @@ public class CatalogRestImpl implements CatalogRest {
             return createCommitResponse(commit, format);
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
+        } finally {
+            LOG.trace("getVersionCommit took {}ms", System.currentTimeMillis() - start);
         }
     }
 
@@ -741,9 +749,9 @@ public class CatalogRestImpl implements CatalogRest {
      * Retrieves a Branch or subclass of Branch based on the passed type IRI identified by the passed ID string.
      * Throws a 400 Response if it could not be found.
      *
-     * @param branchId The ID string of the Branch to retrieve.
+     * @param branchId   The ID string of the Branch to retrieve.
      * @param branchType The IRI string of the Branch class or subclass.
-     * @param <T> A class that extends Branch
+     * @param <T>        A class that extends Branch
      * @return The Branch or subclass of a Branch identified by the passed ID string.
      */
     private <T extends Branch> T getBranch(String branchId, String branchType) {
@@ -754,9 +762,9 @@ public class CatalogRestImpl implements CatalogRest {
      * Retrieves a Branch or subclass of Branch based on the passed type IRI identified by the passed ID Resource.
      * Throws a 400 Response if it could not be found.
      *
-     * @param branchId The ID Resource of the Branch to retrieve.
+     * @param branchId   The ID Resource of the Branch to retrieve.
      * @param branchType The IRI string of the Branch class or subclass.
-     * @param <T> A class that extends Branch
+     * @param <T>        A class that extends Branch
      * @return The Branch or subclass of a Branch identified by the passed ID Resource.
      */
     private <T extends Branch> T getBranch(Resource branchId, String branchType) {
@@ -864,18 +872,22 @@ public class CatalogRestImpl implements CatalogRest {
 
     @Override
     public Response getHead(String catalogId, String recordId, String branchId, String format) {
+        long start = System.currentTimeMillis();
         try {
             Commit headCommit = optHeadCommit(catalogId, recordId, branchId).orElseThrow(() ->
                     ErrorUtils.sendError("Commit not found", Response.Status.NOT_FOUND));
             return createCommitResponse(headCommit, format);
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
+        } finally {
+            LOG.trace("getHead took {}ms", System.currentTimeMillis() - start);
         }
     }
 
     @Override
     public Response getBranchCommit(String catalogId, String recordId, String branchId, String commitId,
                                     String format) {
+        long start = System.currentTimeMillis();
         try {
             commitInBranch(catalogId, recordId, branchId, commitId);
             Commit commit = catalogManager.getCommit(factory.createIRI(commitId), commitFactory).orElseThrow(() ->
@@ -883,6 +895,8 @@ public class CatalogRestImpl implements CatalogRest {
             return createCommitResponse(commit, format);
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
+        } finally {
+            LOG.trace("getBranchCommit took {}ms", System.currentTimeMillis() - start);
         }
     }
 
@@ -942,7 +956,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
-    public Response getCompiledResource(ContainerRequestContext context, String catalogId, String recordId, 
+    public Response getCompiledResource(ContainerRequestContext context, String catalogId, String recordId,
                                         String branchId, String commitId, String rdfFormat, boolean apply) {
         try {
             commitInBranch(catalogId, recordId, branchId, commitId);
@@ -962,7 +976,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
-    public Response downloadCompiledResource(ContainerRequestContext context, String catalogId, String recordId, 
+    public Response downloadCompiledResource(ContainerRequestContext context, String catalogId, String recordId,
                                              String branchId, String commitId, String rdfFormat, boolean apply,
                                              String fileName) {
         try {
@@ -1020,8 +1034,7 @@ public class CatalogRestImpl implements CatalogRest {
             Resource inProgressCommitIRI = catalogManager.getInProgressCommitIRI(activeUser.getResource(),
                     factory.createIRI(recordId)).orElseThrow(() ->
                     ErrorUtils.sendError("User has no InProgressCommit", Response.Status.NOT_FOUND));
-            JSONObject object = getCommitDifferenceObject(inProgressCommitIRI, format);
-            return Response.ok(object).build();
+            return Response.ok(getCommitDifferenceObject(inProgressCommitIRI, format), MediaType.APPLICATION_JSON).build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
         }
@@ -1043,7 +1056,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
-    public Response updateInProgressCommit(ContainerRequestContext context, String catalogId, String recordId, 
+    public Response updateInProgressCommit(ContainerRequestContext context, String catalogId, String recordId,
                                            String additionsJson, String deletionsJson) {
         try {
             recordInCatalog(catalogId, recordId);
@@ -1125,14 +1138,14 @@ public class CatalogRestImpl implements CatalogRest {
      * number of Things, the limit for each page, and the offset for the current page. Sets the "X-Total-Count" header
      * to the total size and the "Links" header to the next and prev URLs if present.
      *
-     * @param uriInfo The URI information of the request.
-     * @param items The limited and sorted Collection of items for the current page
+     * @param uriInfo   The URI information of the request.
+     * @param items     The limited and sorted Collection of items for the current page
      * @param totalSize The total number of items.
-     * @param limit The limit for each page.
-     * @param offset The offset for the current page.
-     * @param <T> A class that extends Thing
+     * @param limit     The limit for each page.
+     * @param offset    The offset for the current page.
+     * @param <T>       A class that extends Thing
      * @return A Response with the current page of Things and headers for the total size and links to the next and prev
-     *      pages if present.
+     * pages if present.
      */
     private <T extends Thing> Response createPaginatedResponse(UriInfo uriInfo, Collection<T> items, int totalSize,
                                                                int limit, int offset, String type) {
@@ -1158,17 +1171,17 @@ public class CatalogRestImpl implements CatalogRest {
      * Creates a Response for a page of a sorted limited offset Set of Things based on the return type of the passed
      * function using the passed full Set of Resources.
      *
-     * @param uriInfo The URI information of the request.
-     * @param iris The Set of Resource for all of the Things.
-     * @param thingFunction A Function to retrieve Things based on their Resource IDs.
-     * @param sortBy The property IRI string to sort the Set of Things by.
-     * @param offset The number of Things to skip.
-     * @param limit The size of the page of Things to the return.
-     * @param asc Whether the sorting should be ascending or descending.
+     * @param uriInfo        The URI information of the request.
+     * @param iris           The Set of Resource for all of the Things.
+     * @param thingFunction  A Function to retrieve Things based on their Resource IDs.
+     * @param sortBy         The property IRI string to sort the Set of Things by.
+     * @param offset         The number of Things to skip.
+     * @param limit          The size of the page of Things to the return.
+     * @param asc            Whether the sorting should be ascending or descending.
      * @param filterFunction A Function to filter the set of Things.
-     * @param <T> A class that extends Things.
+     * @param <T>            A class that extends Things.
      * @return A Response with a page of Things that has been filtered, sorted, and limited and headers for the total
-     *      size and links to the next and prev pages if present.
+     * size and links to the next and prev pages if present.
      */
     private <T extends Thing> Response createPaginatedThingResponse(UriInfo uriInfo, Set<Resource> iris,
                                                                     Function<Resource, T> thingFunction, String sortBy,
@@ -1206,9 +1219,17 @@ public class CatalogRestImpl implements CatalogRest {
      * @return A Response containing a JSONObject with the Commit JSON-LD and its addition and deletion statements
      */
     private Response createCommitResponse(Commit commit, String format) {
-        JSONObject object = getCommitDifferenceObject(commit.getResource(), format);
-        object.put("commit", thingToJsonObject(commit, Commit.TYPE));
-        return Response.ok(object).build();
+        long start = System.currentTimeMillis();
+        try {
+//            JSONObject object = getCommitDifferenceObject(commit.getResource(), format);
+//            object.put("commit", thingToJsonObject(commit, Commit.TYPE));
+//            return Response.ok(object).build();
+            String differences = getCommitDifferenceJsonString(commit.getResource(), format);
+            String response = differences.subSequence(0, differences.length() - 1) + ", \"commit\": " + thingToJsonObject(commit, Commit.TYPE).toString() + "}";
+            return Response.ok(response, MediaType.APPLICATION_JSON).build();
+        } finally {
+            LOG.trace("createCommitResponse took {}ms", System.currentTimeMillis() - start);
+        }
     }
 
     /**
@@ -1217,12 +1238,26 @@ public class CatalogRestImpl implements CatalogRest {
      * deletion statements.
      *
      * @param commitId The id of the Commit to retrieve the Difference of.
-     * @param format A string representing the RDF format to return the statements in.
+     * @param format   A string representing the RDF format to return the statements in.
      * @return A JSONObject with a key for the Commit's addition statements and a key for the Commit's deletion
-     *      statements.
+     * statements.
      */
     private JSONObject getCommitDifferenceObject(Resource commitId, String format) {
-        return getDifferenceJson(catalogManager.getCommitDifference(commitId), format);
+        long start = System.currentTimeMillis();
+        try {
+            return getDifferenceJson(catalogManager.getCommitDifference(commitId), format);
+        } finally {
+            LOG.trace("getCommitDifferenceObject took {}ms", System.currentTimeMillis() - start);
+        }
+    }
+
+    private String getCommitDifferenceJsonString(Resource commitId, String format) {
+        long start = System.currentTimeMillis();
+        try {
+            return getDifferenceJsonString(catalogManager.getCommitDifference(commitId), format);
+        } finally {
+            LOG.trace("getCommitDifferenceJsonString took {}ms", System.currentTimeMillis() - start);
+        }
     }
 
     /**
@@ -1230,79 +1265,109 @@ public class CatalogRestImpl implements CatalogRest {
      * Difference's addition statements and key "deletions" has value of the Difference's deletion statements.
      *
      * @param difference The Difference to convert into a JSONObject.
-     * @param format A String representing the RDF format to return the statements in.
+     * @param format     A String representing the RDF format to return the statements in.
      * @return A JSONObject with a key for the Difference's addition statements and a key for the Difference's deletion
-     *      statements.
+     * statements.
      */
     private JSONObject getDifferenceJson(Difference difference, String format) {
-        return new JSONObject().element("additions", getPartialJSON(getModelInFormat(difference.getAdditions(), format)))
-                .element("deletions", getPartialJSON(getModelInFormat(difference.getDeletions(), format)));
+        long start = System.currentTimeMillis();
+        try {
+            return new JSONObject().element("additions", getPartialJSON(getModelInFormat(difference.getAdditions(), format)))
+                    .element("deletions", getPartialJSON(getModelInFormat(difference.getDeletions(), format)));
+        } finally {
+            LOG.trace("getDifferenceJson took {}ms", System.currentTimeMillis() - start);
+        }
     }
 
+    private String getDifferenceJsonString(Difference difference, String format) {
+        long start = System.currentTimeMillis();
+        try {
+            return "{ \"additions\": " + getModelInFormat(difference.getAdditions(), format) + ", \"deletions\": " + getModelInFormat(difference.getDeletions(), format) + "}";
+        } finally {
+            LOG.trace("getDifferenceJsonString took {}ms", System.currentTimeMillis() - start);
+        }
+    }
 
     /**
      * return the first N elements of a JSON string if the length exceeds N elements
+     *
      * @param fullJSON
      * @return
      */
     private String getPartialJSON(String fullJSON) {
-        String[] partial = fullJSON.split(ELEMENT_PATTERN);
-        if (partial.length > maxElements) {
-            String out = getElementSet(fullJSON);
-            return out + ",{\"@id\" : \"ZZZ_MORE\", \"@value\" : \"More Elements Exist - click here to view all\"}]";
-        } else {
-            return fullJSON;
+        long start = System.currentTimeMillis();
+        try {
+            String[] partial = fullJSON.split(ELEMENT_PATTERN);
+            if (partial.length > maxElements) {
+                String out = getElementSet(fullJSON);
+                return out + ",{\"@id\" : \"ZZZ_MORE\", \"@value\" : \"More Elements Exist - click here to view all\"}]";
+            } else {
+                return fullJSON;
+            }
+        } finally {
+            LOG.trace("getCommitDifference took {}ms", System.currentTimeMillis() - start);
         }
     }
 
 
     /**
      * Identify the first N elements of a JSON string
+     *
      * @param json
      * @return
      */
     private String getElementSet(String json) {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        this.elementCount = 0;
-        this.bracketCount = 0;
-        for (byte b : json.getBytes()) {
-            out.write(b);
-            if (b == ('{') || b == ('}')) {
-                if (bracketMatch(b) == 0) {
-                    break;
+        long start = System.currentTimeMillis();
+        try {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            this.elementCount = 0;
+            this.bracketCount = 0;
+            for (byte b : json.getBytes()) {
+                out.write(b);
+                if (b == ('{') || b == ('}')) {
+                    if (bracketMatch(b) == 0) {
+                        break;
+                    }
                 }
             }
+            return out.toString();
+        } finally {
+            LOG.trace("getCommitDifference took {}ms", System.currentTimeMillis() - start);
         }
-        return out.toString();
     }
 
     /**
      * Increment and decrement bracket counters for JSON parsing
+     *
      * @param c
      * @return
      */
     private int bracketMatch(byte c) {
-        if (c == '{') {
-            this.bracketCount++;
-        } else if (c == '}') {
-            this.bracketCount--;
-            if (this.bracketCount == 0) {
-                this.elementCount++;
-                if (this.elementCount >= this.maxElements)
-                    return 0;
+        long start = System.currentTimeMillis();
+        try {
+            if (c == '{') {
+                this.bracketCount++;
+            } else if (c == '}') {
+                this.bracketCount--;
+                if (this.bracketCount == 0) {
+                    this.elementCount++;
+                    if (this.elementCount >= this.maxElements)
+                        return 0;
+                }
             }
+            return 1;
+        } finally {
+            LOG.trace("getCommitDifference took {}ms", System.currentTimeMillis() - start);
         }
-        return 1;
     }
-
 
 
     /**
      * Attempts to retrieve a unversioned Distribution following the path of provided IDs for the Catalog, Record, and
      * Distribution. Throws a 400 Response if a part of the path is incorrect.
      *
-     * @param catalogId The ID of the Catalog the Distribution should be part of.
-     * @param recordId The ID of the Record the Distribution should be part of.
+     * @param catalogId      The ID of the Catalog the Distribution should be part of.
+     * @param recordId       The ID of the Record the Distribution should be part of.
      * @param distributionId The ID of the Distribution to retrieve.
      */
     private void testUnversionedDistributionPath(String catalogId, String recordId, String distributionId) {
@@ -1319,14 +1384,19 @@ public class CatalogRestImpl implements CatalogRest {
      * a 400 Response if a part of the path is incorrect.
      *
      * @param catalogId The ID of the Catalog the Version should be part of.
-     * @param recordId The ID of the Record the Version should be part of.
+     * @param recordId  The ID of the Record the Version should be part of.
      * @param versionId The ID of the Version to retrieve.
      */
     private void testVersionPath(String catalogId, String recordId, String versionId) {
-        VersionedRecord record = getRecord(catalogId, recordId, VersionedRecord.TYPE);
-        Set<Resource> versionIRIs = record.getVersion_resource();
-        if (!versionIRIs.contains(factory.createIRI(versionId))) {
-            throw ErrorUtils.sendError("Version does not belong to Record " + recordId, Response.Status.BAD_REQUEST);
+        long start = System.currentTimeMillis();
+        try {
+            VersionedRecord record = getRecord(catalogId, recordId, VersionedRecord.TYPE);
+            Set<Resource> versionIRIs = record.getVersion_resource();
+            if (!versionIRIs.contains(factory.createIRI(versionId))) {
+                throw ErrorUtils.sendError("Version does not belong to Record " + recordId, Response.Status.BAD_REQUEST);
+            }
+        } finally {
+            LOG.trace("testVersionPath took {}ms", System.currentTimeMillis() - start);
         }
     }
 
@@ -1334,9 +1404,9 @@ public class CatalogRestImpl implements CatalogRest {
      * Attempts to retrieve a versioned Distribution following the path of provided IDs for the Catalog, Record,
      * Version, and Distribution. Throws a 400 Response if a part of the path is incorrect.
      *
-     * @param catalogId The ID of the Catalog the Distribution should be part of.
-     * @param recordId The ID of the Record the Distribution should be part of.
-     * @param versionId The ID of the Version the Distribution should be part of.
+     * @param catalogId      The ID of the Catalog the Distribution should be part of.
+     * @param recordId       The ID of the Record the Distribution should be part of.
+     * @param versionId      The ID of the Version the Distribution should be part of.
      * @param distributionId The ID of the Distribution to retrieve.
      */
     private void testVersionedDistributionPath(String catalogId, String recordId, String versionId,
@@ -1359,8 +1429,8 @@ public class CatalogRestImpl implements CatalogRest {
      * 400 Response if a part of the path is incorrect.
      *
      * @param catalogId The ID of the Catalog the Branch should be part of.
-     * @param recordId The ID of the Record the Branch should be part of.
-     * @param branchId The ID of the Branch to retrieve.
+     * @param recordId  The ID of the Record the Branch should be part of.
+     * @param branchId  The ID of the Branch to retrieve.
      */
     private void testBranchPath(String catalogId, String recordId, String branchId) {
         VersionedRDFRecord record = getRecord(catalogId, recordId, VersionedRDFRecord.TYPE);
@@ -1375,8 +1445,8 @@ public class CatalogRestImpl implements CatalogRest {
      * Commit Resource could not be found, returns an empty Optional.
      *
      * @param catalogId The ID of the Catalog the Branch should be part of.
-     * @param recordId The ID of the Record the Branch should be part of
-     * @param branchId The ID of the Branch to retrieve the head Commit Resource of.
+     * @param recordId  The ID of the Record the Branch should be part of
+     * @param branchId  The ID of the Branch to retrieve the head Commit Resource of.
      * @return The Resource of the head Commit if found; empty otherwise.
      */
     private Optional<Resource> optHeadCommitIRI(String catalogId, String recordId, String branchId) {
@@ -1389,8 +1459,8 @@ public class CatalogRestImpl implements CatalogRest {
      * Commit Resource could not be found, throws a 400 Response.
      *
      * @param catalogId The ID of the Catalog the Branch should be part of.
-     * @param recordId The ID of the Record the Branch should be part of
-     * @param branchId The ID of the Branch to retrieve the head Commit Resource of.
+     * @param recordId  The ID of the Record the Branch should be part of
+     * @param branchId  The ID of the Branch to retrieve the head Commit Resource of.
      * @return The Resource of the head Commit if found; throws a 400 otherwise
      */
     private Resource getHeadCommitIRI(String catalogId, String recordId, String branchId) {
@@ -1403,16 +1473,21 @@ public class CatalogRestImpl implements CatalogRest {
      * found, returns an empty Optional.
      *
      * @param catalogId The ID of the Catalog the Branch should be part of.
-     * @param recordId The ID of the Record the Branch should be part of
-     * @param branchId The ID of the Branch to retrieve the head Commit of.
+     * @param recordId  The ID of the Record the Branch should be part of
+     * @param branchId  The ID of the Branch to retrieve the head Commit of.
      * @return The head Commit if found; empty otherwise.
      */
     private Optional<Commit> optHeadCommit(String catalogId, String recordId, String branchId) {
-        Optional<Resource> iri = optHeadCommitIRI(catalogId, recordId, branchId);
-        if (iri.isPresent()) {
-            return catalogManager.getCommit(iri.get(), commitFactory);
-        } else {
-            return Optional.empty();
+        long start = System.currentTimeMillis();
+        try {
+            Optional<Resource> iri = optHeadCommitIRI(catalogId, recordId, branchId);
+            if (iri.isPresent()) {
+                return catalogManager.getCommit(iri.get(), commitFactory);
+            } else {
+                return Optional.empty();
+            }
+        } finally {
+            LOG.trace("optHeadCommit took {}ms", System.currentTimeMillis() - start);
         }
     }
 
@@ -1421,8 +1496,8 @@ public class CatalogRestImpl implements CatalogRest {
      * found, throws a 400 Response.
      *
      * @param catalogId The ID of the Catalog the Branch should be part of.
-     * @param recordId The ID of the Record the Branch should be part of
-     * @param branchId The ID of the Branch to retrieve the head Commit of.
+     * @param recordId  The ID of the Record the Branch should be part of
+     * @param branchId  The ID of the Branch to retrieve the head Commit of.
      * @return The head Commit if found; throws a 400 otherwise.
      */
     private Commit getHeadCommit(String catalogId, String recordId, String branchId) {
@@ -1435,14 +1510,19 @@ public class CatalogRestImpl implements CatalogRest {
      * Catalog, Record, and Branch IDs. If not, throws a 400 Response.
      *
      * @param catalogId The ID of the Catalog the Branch should be part of.
-     * @param recordId The ID of the Record the Branch should be part of.
-     * @param branchId The ID of the Branch.
-     * @param commitId The ID of the Commit to test.
+     * @param recordId  The ID of the Record the Branch should be part of.
+     * @param branchId  The ID of the Branch.
+     * @param commitId  The ID of the Commit to test.
      */
     private void commitInBranch(String catalogId, String recordId, String branchId, String commitId) {
-        Resource headIRI = getHeadCommitIRI(catalogId, recordId, branchId);
-        if (!catalogManager.getCommitChain(headIRI).contains(factory.createIRI(commitId))) {
-            throw ErrorUtils.sendError("Commit does not belong to Branch " + branchId, Response.Status.BAD_REQUEST);
+        long start = System.currentTimeMillis();
+        try {
+            Resource headIRI = getHeadCommitIRI(catalogId, recordId, branchId);
+            if (!catalogManager.getCommitChain(headIRI).contains(factory.createIRI(commitId))) {
+                throw ErrorUtils.sendError("Commit does not belong to Branch " + branchId, Response.Status.BAD_REQUEST);
+            }
+        } finally {
+            LOG.trace("commitInBranch took {}ms", System.currentTimeMillis() - start);
         }
     }
 
@@ -1451,7 +1531,7 @@ public class CatalogRestImpl implements CatalogRest {
      * throws a 400 Response.
      *
      * @param catalogId The ID of the Catalog the Record should be part of.
-     * @param recordId The ID of the Record.
+     * @param recordId  The ID of the Record.
      */
     private void recordInCatalog(String catalogId, String recordId) {
         if (!catalogManager.getRecordIds(factory.createIRI(catalogId)).contains(factory.createIRI(recordId))) {
@@ -1465,8 +1545,8 @@ public class CatalogRestImpl implements CatalogRest {
      * invalid, throws a 400 Response.
      *
      * @param sortIRI The sort property string to test.
-     * @param offset The offset for the paginated response.
-     * @param limit The limit of the paginated response.
+     * @param offset  The offset for the paginated response.
+     * @param limit   The limit of the paginated response.
      */
     private void validatePaginationParams(String sortIRI, int offset, int limit) {
         if (!SORT_RESOURCES.contains(sortIRI)) {
@@ -1478,10 +1558,10 @@ public class CatalogRestImpl implements CatalogRest {
     /**
      * Creates a Distribution object using the provided metadata strings. If the title is null, throws a 400 Response.
      *
-     * @param title The required title for the new Distribution.
+     * @param title       The required title for the new Distribution.
      * @param description The optional description for the new Distribution.
-     * @param format The optional format string for the new Distribution.
-     * @param accessURL The optional access URL for the new Distribution.
+     * @param format      The optional format string for the new Distribution.
+     * @param accessURL   The optional access URL for the new Distribution.
      * @param downloadURL The optional download URL for the Distribution.
      * @return The new Distribution if passed a title.
      */
@@ -1534,7 +1614,7 @@ public class CatalogRestImpl implements CatalogRest {
      * Updates the Distribution identified with the passed ID string with the new passed JSON-LD string.
      *
      * @param newDistributionJson The JSON-LD of the new Distribution.
-     * @param distributionId The ID string of the Distribution to update.
+     * @param distributionId      The ID string of the Distribution to update.
      */
     private void updateDistribution(String newDistributionJson, String distributionId) {
         Distribution newDistribution = validateNewThing(newDistributionJson, factory.createIRI(distributionId),
@@ -1548,9 +1628,9 @@ public class CatalogRestImpl implements CatalogRest {
      * a 400 Response.
      *
      * @param newThingJson The JSON-LD of the new Thing.
-     * @param thingId The ID Resource to confirm.
-     * @param ormFactory The OrmFactory to use when creating the new Thing.
-     * @param <T> A class that extends Thing.
+     * @param thingId      The ID Resource to confirm.
+     * @param ormFactory   The OrmFactory to use when creating the new Thing.
+     * @param <T>          A class that extends Thing.
      * @return The new Thing if the JSON-LD contains the correct ID Resource; throws a 400 otherwise.
      */
     private <T extends Thing> T validateNewThing(String newThingJson, Resource thingId, OrmFactory<T> ormFactory) {
@@ -1581,10 +1661,10 @@ public class CatalogRestImpl implements CatalogRest {
      * Creates a JSONObject representing the provided Conflict in the provided RDF format. Key "original" has value of
      * the serialized original Model of a conflict, key "left" has a value of an object with the additions and
      *
-     * @param conflict The Conflict to turn into a JSONObject
+     * @param conflict  The Conflict to turn into a JSONObject
      * @param rdfFormat A string representing the RDF format to return the statements in.
      * @return A JSONObject with a key for the Conflict's original Model, a key for the Conflict's left Difference,
-     *      and a key for the Conflict's right Difference.
+     * and a key for the Conflict's right Difference.
      */
     private JSONObject conflictToJson(Conflict conflict, String rdfFormat) {
         JSONObject object = new JSONObject();
@@ -1618,7 +1698,7 @@ public class CatalogRestImpl implements CatalogRest {
     /**
      * Converts a Model into a string of the provided RDF format, grouping statements by subject and predicate.
      *
-     * @param model The Model to convert.
+     * @param model  The Model to convert.
      * @param format A string representing the RDF format to return the Model in.
      * @return A String of the converted Model in the requested RDF format.
      */
@@ -1645,6 +1725,11 @@ public class CatalogRestImpl implements CatalogRest {
      * @return The JSONObject with the JSON-LD of the Thing entity from its Model.
      */
     private JSONObject thingToJsonObject(Thing thing, String type) {
-        return getTypedObjectFromJsonld(thingToJsonld(thing), type);
+        long start = System.currentTimeMillis();
+        try {
+            return getTypedObjectFromJsonld(thingToJsonld(thing), type);
+        } finally {
+            LOG.trace("thingToJsonObject took {}ms", System.currentTimeMillis() - start);
+        }
     }
 }

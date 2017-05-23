@@ -21,18 +21,34 @@
   #L%
   -->
 <div class="commit-changes-display">
-    <div class="property-values" ng-repeat="id in dvm.list | orderBy:dvm.util.getBeautifulIRI">
-        <h5 ng-click="isClosed = !isClosed" class="clearfix">
-            <p class="text">{{dvm.util.getBeautifulIRI(id)}} <small class="text-muted">{{id}}</small></p>
-            <i class="fa fa-fw" ng-class="{'fa-chevron-down': isClosed, 'fa-chevron-up': !isClosed}"></i>
-        </h5>
-        <div class="value-container" ng-hide="isClosed">
-            <statement-container ng-if="dvm.results[id].additions.length" additions>
-                <statement-display ng-repeat="addition in dvm.results[id].additions | orderBy:dvm.util.getPredicateLocalName" predicate="addition.p" object="addition.o" addition></statement-display>
-            </statement-container>
-            <statement-container ng-if="dvm.results[id].deletions.length" deletions>
-                <statement-display ng-repeat="deletion in dvm.results[id].deletions | orderBy:dvm.util.getPredicateLocalName" predicate="deletion.p" object="deletion.o" deletion></statement-display>
-            </statement-container>
-        </div>
-    </div>
+    <block>
+        <block-content targeted-spinner="dvm.id">
+            <div class="property-values" ng-repeat="id in dvm.list | orderBy:dvm.util.getBeautifulIRI">
+                <h5 ng-click="isClosed = !isClosed" class="clearfix">
+                    <p class="text">{{dvm.util.getBeautifulIRI(id)}}
+                        <small class="text-muted">{{id}}</small>
+                    </p>
+                    <i class="fa fa-fw" ng-class="{'fa-chevron-down': isClosed, 'fa-chevron-up': !isClosed}"></i>
+                </h5>
+                <div class="value-container" ng-hide="isClosed">
+                    <statement-container ng-if="dvm.results[id].additions.length" additions>
+                        <statement-display
+                                ng-repeat="addition in dvm.results[id].additions | orderBy:dvm.util.getPredicateLocalName"
+                                predicate="addition.p" object="addition.o" addition></statement-display>
+                    </statement-container>
+                    <statement-container ng-if="dvm.results[id].deletions.length" deletions>
+                        <statement-display
+                                ng-repeat="deletion in dvm.results[id].deletions | orderBy:dvm.util.getPredicateLocalName"
+                                predicate="deletion.p" object="deletion.o" deletion></statement-display>
+                    </statement-container>
+                </div>
+            </div>
+            <div class="text-center">
+                <a ng-if="dvm.chunks !== dvm.index" ng-click="dvm.getMoreResults()">
+                    <i class="fa fa-fw fa-plus"></i><span>Load More</span>
+                </a>
+            </div>
+        </block-content>
+        <block-footer class="centered">Showing {{dvm.shown | number}} of {{dvm.total | number}}</block-footer>
+    </block>
 </div>
