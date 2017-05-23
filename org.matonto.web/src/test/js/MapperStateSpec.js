@@ -55,7 +55,6 @@ describe('Mapper State service', function() {
         expect(mapperStateSvc.newMapping).toBe(false);
         expect(mapperStateSvc.step).toBe(0);
         expect(mapperStateSvc.invalidProps).toEqual([]);
-        expect(mapperStateSvc.availableColumns).toEqual([]);
         expect(mapperStateSvc.availablePropsByClass).toEqual({});
         expect(mapperStateSvc.mapping).toBeUndefined();
         expect(mapperStateSvc.sourceOntologies).toEqual([]);
@@ -100,20 +99,6 @@ describe('Mapper State service', function() {
             expect(utilSvc.getPropertyValue).toHaveBeenCalledWith(dataMappings[idx], prefixes.delim + 'columnIndex');
             expect(result).toBe('0');
         });
-    });
-    it('should update availableColumns depending on whether a property mapping has been selected', function() {
-        spyOn(mapperStateSvc, 'getMappedColumns').and.returnValue(['0'])
-        delimitedManagerSvc.dataRows = [['', '']];
-        mapperStateSvc.updateAvailableColumns();
-        expect(mapperStateSvc.availableColumns).not.toContain('0');
-        expect(mapperStateSvc.availableColumns).toContain('1');
-
-        mapperStateSvc.selectedPropMappingId = 'prop';
-        mapperStateSvc.mapping.jsonld = [{'@id': 'prop'}];
-        utilSvc.getPropertyValue.and.returnValue('0');
-        mapperStateSvc.updateAvailableColumns();
-        expect(mapperStateSvc.availableColumns).toContain('0');
-        expect(mapperStateSvc.availableColumns).toContain('1');
     });
     it('should check whether a class mapping has available properties', function() {
         mapperStateSvc.availablePropsByClass = {'class': [{}]};

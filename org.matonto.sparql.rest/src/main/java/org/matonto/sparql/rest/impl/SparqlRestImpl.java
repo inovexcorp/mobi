@@ -149,7 +149,7 @@ public class SparqlRestImpl implements SparqlRest {
         //        }, QUERY_TIME_OUT_SECONDS * 1000);
 
         TupleQueryResult queryResults;
-        if (!StringUtils.isEmpty(datasetRecordId)) {
+        if (!StringUtils.isBlank(datasetRecordId)) {
             Resource recordId = valueFactory.createIRI(datasetRecordId);
             queryResults = getDatasetQueryResults(queryString, recordId);
         } else {
@@ -174,7 +174,7 @@ public class SparqlRestImpl implements SparqlRest {
             throw ErrorUtils.sendError("Parameter 'queryString' must be set.", Response.Status.BAD_REQUEST);
         }
         TupleQueryResult queryResults;
-        if (!StringUtils.isEmpty(datasetRecordId)) {
+        if (!StringUtils.isBlank(datasetRecordId)) {
             Resource recordId = valueFactory.createIRI(datasetRecordId);
             queryResults = getDatasetQueryResults(queryString, recordId);
         } else {
@@ -211,7 +211,7 @@ public class SparqlRestImpl implements SparqlRest {
                                     int offset) {
         LinksUtils.validateParams(limit, offset);
         TupleQueryResult queryResults;
-        if (!StringUtils.isEmpty(datasetRecordId)) {
+        if (!StringUtils.isBlank(datasetRecordId)) {
             Resource recordId = valueFactory.createIRI(datasetRecordId);
             queryResults = getDatasetQueryResults(queryString, recordId);
         } else {

@@ -28,12 +28,12 @@ import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Resource;
 import org.openrdf.rio.RDFFormat;
 
-import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
 import java.util.Set;
+import javax.annotation.Nonnull;
 
 public interface MappingManager {
 
