@@ -52,11 +52,6 @@
             <artifactId>persistence.api</artifactId>
             <version>1.6.43</version>
         </dependency>
-        <dependency>
-            <groupId>org.matonto</groupId>
-            <artifactId>ontology.utils</artifactId>
-            <version>1.6.43</version>
-        </dependency>
 
         <dependency>
             <groupId>commons-io</groupId>
