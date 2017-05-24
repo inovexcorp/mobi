@@ -36,7 +36,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 import java.io.BufferedWriter;
-import java.io.ByteArrayOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.Arrays;
@@ -105,24 +104,20 @@ import org.slf4j.LoggerFactory;
 
 @Component(immediate = true)
 public class CatalogRestImpl implements CatalogRest {
-    protected EngineManager engineManager;
+    private static final Logger LOG = LoggerFactory.getLogger(CatalogRestImpl.class);
+    private static final Set<String> SORT_RESOURCES;
+
     private SesameTransformer transformer;
     private CatalogManager catalogManager;
     private ValueFactory factory;
+
+    protected EngineManager engineManager;
     protected Map<String, OrmFactory<? extends Record>> recordFactories = new HashMap<>();
     protected Map<String, OrmFactory<? extends Version>> versionFactories = new HashMap<>();
     protected Map<String, OrmFactory<? extends Branch>> branchFactories = new HashMap<>();
     protected DistributionFactory distributionFactory;
     protected CommitFactory commitFactory;
     protected InProgressCommitFactory inProgressCommitFactory;
-    private static final Logger LOG = LoggerFactory.getLogger(CatalogRestImpl.class);
-    /**
-     * fields for partial element extraction on JSON strings
-     */
-    private int elementCount, bracketCount, maxElements = 500;
-    public static final String ELEMENT_PATTERN = "],";
-
-    private static final Set<String> SORT_RESOURCES;
 
     static {
         Set<String> sortResources = new HashSet<>();
@@ -1221,9 +1216,6 @@ public class CatalogRestImpl implements CatalogRest {
     private Response createCommitResponse(Commit commit, String format) {
         long start = System.currentTimeMillis();
         try {
-//            JSONObject object = getCommitDifferenceObject(commit.getResource(), format);
-//            object.put("commit", thingToJsonObject(commit, Commit.TYPE));
-//            return Response.ok(object).build();
             String differences = getCommitDifferenceJsonString(commit.getResource(), format);
             String response = differences.subSequence(0, differences.length() - 1) + ", \"commit\": " + thingToJsonObject(commit, Commit.TYPE).toString() + "}";
             return Response.ok(response, MediaType.APPLICATION_JSON).build();
@@ -1272,8 +1264,8 @@ public class CatalogRestImpl implements CatalogRest {
     private JSONObject getDifferenceJson(Difference difference, String format) {
         long start = System.currentTimeMillis();
         try {
-            return new JSONObject().element("additions", getPartialJSON(getModelInFormat(difference.getAdditions(), format)))
-                    .element("deletions", getPartialJSON(getModelInFormat(difference.getDeletions(), format)));
+            return new JSONObject().element("additions", getModelInFormat(difference.getAdditions(), format))
+                    .element("deletions", getModelInFormat(difference.getDeletions(), format));
         } finally {
             LOG.trace("getDifferenceJson took {}ms", System.currentTimeMillis() - start);
         }
@@ -1287,80 +1279,6 @@ public class CatalogRestImpl implements CatalogRest {
             LOG.trace("getDifferenceJsonString took {}ms", System.currentTimeMillis() - start);
         }
     }
-
-    /**
-     * return the first N elements of a JSON string if the length exceeds N elements
-     *
-     * @param fullJSON
-     * @return
-     */
-    private String getPartialJSON(String fullJSON) {
-        long start = System.currentTimeMillis();
-        try {
-            String[] partial = fullJSON.split(ELEMENT_PATTERN);
-            if (partial.length > maxElements) {
-                String out = getElementSet(fullJSON);
-                return out + ",{\"@id\" : \"ZZZ_MORE\", \"@value\" : \"More Elements Exist - click here to view all\"}]";
-            } else {
-                return fullJSON;
-            }
-        } finally {
-            LOG.trace("getCommitDifference took {}ms", System.currentTimeMillis() - start);
-        }
-    }
-
-
-    /**
-     * Identify the first N elements of a JSON string
-     *
-     * @param json
-     * @return
-     */
-    private String getElementSet(String json) {
-        long start = System.currentTimeMillis();
-        try {
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            this.elementCount = 0;
-            this.bracketCount = 0;
-            for (byte b : json.getBytes()) {
-                out.write(b);
-                if (b == ('{') || b == ('}')) {
-                    if (bracketMatch(b) == 0) {
-                        break;
-                    }
-                }
-            }
-            return out.toString();
-        } finally {
-            LOG.trace("getCommitDifference took {}ms", System.currentTimeMillis() - start);
-        }
-    }
-
-    /**
-     * Increment and decrement bracket counters for JSON parsing
-     *
-     * @param c
-     * @return
-     */
-    private int bracketMatch(byte c) {
-        long start = System.currentTimeMillis();
-        try {
-            if (c == '{') {
-                this.bracketCount++;
-            } else if (c == '}') {
-                this.bracketCount--;
-                if (this.bracketCount == 0) {
-                    this.elementCount++;
-                    if (this.elementCount >= this.maxElements)
-                        return 0;
-                }
-            }
-            return 1;
-        } finally {
-            LOG.trace("getCommitDifference took {}ms", System.currentTimeMillis() - start);
-        }
-    }
-
 
     /**
      * Attempts to retrieve a unversioned Distribution following the path of provided IDs for the Catalog, Record, and
