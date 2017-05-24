@@ -22,23 +22,24 @@
   -->
 <div class="commit-changes-display">
     <block>
-        <block-content targeted-spinner="dvm.id">
-            <div class="property-values" ng-repeat="id in dvm.list | orderBy:dvm.util.getBeautifulIRI">
+        <block-content>
+            <div class="property-values" ng-repeat="(key, value) in dvm.results" ng-if="dvm.results">
+                <!-- | orderBy:dvm.util.getBeautifulIRI" -->
                 <h5 ng-click="isClosed = !isClosed" class="clearfix">
-                    <p class="text">{{dvm.util.getBeautifulIRI(id)}}
-                        <small class="text-muted">{{id}}</small>
+                    <p class="text">{{dvm.ontoUtils.getLabelForIRI(key)}}
+                        <small class="text-muted">&lt;{{key}}&gt;</small>
                     </p>
                     <i class="fa fa-fw" ng-class="{'fa-chevron-down': isClosed, 'fa-chevron-up': !isClosed}"></i>
                 </h5>
                 <div class="value-container" ng-hide="isClosed">
-                    <statement-container ng-if="dvm.results[id].additions.length" additions>
+                    <statement-container ng-if="value.additions.length" additions>
                         <statement-display
-                                ng-repeat="addition in dvm.results[id].additions | orderBy:dvm.util.getPredicateLocalName"
+                                ng-repeat="addition in value.additions | orderBy:dvm.util.getPredicateLocalName"
                                 predicate="addition.p" object="addition.o" addition></statement-display>
                     </statement-container>
-                    <statement-container ng-if="dvm.results[id].deletions.length" deletions>
+                    <statement-container ng-if="value.deletions.length" deletions>
                         <statement-display
-                                ng-repeat="deletion in dvm.results[id].deletions | orderBy:dvm.util.getPredicateLocalName"
+                                ng-repeat="deletion in value.deletions | orderBy:dvm.util.getPredicateLocalName"
                                 predicate="deletion.p" object="deletion.o" deletion></statement-display>
                     </statement-container>
                 </div>
@@ -49,6 +50,5 @@
                 </a>
             </div>
         </block-content>
-        <block-footer class="centered">Showing {{dvm.shown | number}} of {{dvm.total | number}}</block-footer>
     </block>
 </div>
