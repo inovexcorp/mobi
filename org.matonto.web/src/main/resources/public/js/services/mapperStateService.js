@@ -164,18 +164,6 @@
             self.availableClasses = [];
             /**
              * @ngdoc property
-             * @name availableColumns
-             * @propertyOf mapperState.service:mapperStateService
-             * @type {string[]}
-             *
-             * @description
-             * `availableColumns` holds an array of the header strings for all the columns
-             * that haven't been mapped yet in the currently selected
-             * {@link mapperState.service:mapperStateService#mapping mapping}.
-             */
-            self.availableColumns = [];
-            /**
-             * @ngdoc property
              * @name availablePropsByClass
              * @propertyOf mapperState.service:mapperStateService
              * @type {Object}
@@ -406,7 +394,6 @@
                 self.newMapping = false;
                 self.step = 0;
                 self.invalidProps = [];
-                self.availableColumns = [];
                 self.availablePropsByClass = {};
                 self.availableClasses = [];
                 self.mapping = undefined;
@@ -480,27 +467,7 @@
              * @return {string[]} an array of strings of column indexes that haven't been mapped yet
              */
             self.getMappedColumns = function() {
-                return _.map(mm.getAllDataMappings(self.mapping.jsonld), dataMapping => util.getPropertyValue(dataMapping, prefixes.delim + 'columnIndex'));
-            }
-            /**
-             * @ngdoc method
-             * @name updateAvailableColumns
-             * @methodOf mapperState.service:mapperStateService
-             *
-             * @description
-             * Updates the list of {@link mapperState.service:mapperStateService#availableColumns available columns}
-             * for the currently selected {@link mapperState.service:mapperStateService#mapping mapping}
-             * and saved {@link delimitedManager.service:delimitedManagerService#dataRows delimited data}. If a data
-             * property mapping has been selected, adds the mapped column index back to the available columns.
-             */
-            self.updateAvailableColumns = function() {
-                var mappedColumns = self.getMappedColumns();
-                if (self.selectedPropMappingId) {
-                    var propMapping = _.find(self.mapping.jsonld, {'@id': self.selectedPropMappingId});
-                    var index = util.getPropertyValue(propMapping, prefixes.delim + 'columnIndex');
-                    _.pull(mappedColumns, index);
-                }
-                self.availableColumns = _.difference(_.map(_.range(0, dm.dataRows[0].length), idx => `${idx}`), mappedColumns);
+                return _.uniq(_.map(mm.getAllDataMappings(self.mapping.jsonld), dataMapping => util.getPropertyValue(dataMapping, prefixes.delim + 'columnIndex')));
             }
             /**
              * @ngdoc method
