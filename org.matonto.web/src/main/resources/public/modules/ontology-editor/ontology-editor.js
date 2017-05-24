@@ -91,6 +91,7 @@
             'selectedDetails',
             'serializationSelect',
             'staticIri',
+            'superClassSelect',
             'treeItem',
             'uploadOntologyTab',
             'usagesBlock',

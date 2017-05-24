@@ -34,6 +34,7 @@
             <text-area ng-model="dvm.clazz[dvm.prefixes.dcterms + 'description'][0]['@value']"
                        display-text="'Description'" muted-text="'(Optional)'"></text-area>
             <advanced-language-select ng-model="dvm.language"></advanced-language-select>
+            <super-class-select values="dvm.values"></super-class-select>
             <div class="btn-container clearfix">
                 <button class="btn btn-primary pull-right" ng-disabled="dvm.form.$invalid" ng-click="dvm.create()">Create</button>
                 <button class="btn btn-default pull-right" ng-click="dvm.os.showCreateClassOverlay = false">Cancel</button>

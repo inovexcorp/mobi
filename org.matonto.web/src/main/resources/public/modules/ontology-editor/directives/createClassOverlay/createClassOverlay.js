@@ -44,6 +44,7 @@
                     dvm.iriPattern = REGEX.IRI;
                     dvm.os = ontologyStateService;
                     dvm.prefix = dvm.os.getDefaultPrefix();
+                    //dvm.ro = responseObj;
                     dvm.clazz = {
                         '@id': dvm.prefix,
                         '@type': [prefixes.owl + 'Class'],
@@ -72,6 +73,14 @@
                         if (_.isEqual(dvm.clazz[prefixes.dcterms + 'description'][0]['@value'], '')) {
                             _.unset(dvm.clazz, prefixes.dcterms + 'description');
                         }
+
+                        var values = [];
+                        _.forEach(dvm.values, value => values.push({'@id': value}));
+
+                        if (_.size(dvm.values) > 0){
+                          dvm.clazz['http://www.w3.org/2000/01/rdf-schema#subClassOf'] = dvm.values;
+                        }
+
                         ontoUtils.addLanguageToNewEntity(dvm.clazz, dvm.language);
                         _.set(dvm.clazz, 'matonto.originalIRI', dvm.clazz['@id']);
                         // add the entity to the ontology
@@ -84,6 +93,8 @@
                         hierarchy.push({'entityIRI': dvm.clazz['@id']});
                         dvm.os.listItem.flatClassHierarchy = dvm.os.flattenHierarchy(hierarchy, dvm.os.listItem.recordId);
                         dvm.os.addToAdditions(dvm.os.listItem.recordId, dvm.clazz);
+
+
                         // select the new class
                         dvm.os.selectItem(_.get(dvm.clazz, '@id'));
                         // hide the overlay
