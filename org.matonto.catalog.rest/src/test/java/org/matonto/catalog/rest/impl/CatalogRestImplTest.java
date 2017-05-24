@@ -432,8 +432,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         when(catalogManager.getInProgressCommit(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(Optional.of(testInProgressCommit));
         when(catalogManager.getInProgressCommit(any(Resource.class), any(Resource.class), any(User.class))).thenReturn(Optional.of(testInProgressCommit));
         when(catalogManager.getConflicts(any(Resource.class), any(Resource.class))).thenReturn(Collections.singleton(conflict));
-        when(catalogManager.getCommitChain(any(Resource.class)))
-                .thenReturn(Arrays.stream(COMMIT_IRIS).map(vf::createIRI).collect(Collectors.toList()));
+        when(catalogManager.getCommitChain(any(Resource.class))).thenReturn(testCommits);
         when(catalogManager.getCommitChain(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(testCommits);
         when(catalogManager.createCommit(any(InProgressCommit.class), anyString(), any(Commit.class), any(Commit.class))).thenReturn(testCommits.get(0));
         when(catalogManager.addCommit(any(Resource.class), any(Resource.class), any(Resource.class), any(User.class), anyString())).thenReturn(vf.createIRI(COMMIT_IRIS[0]));
