@@ -1,6 +1,10 @@
+@Version("1.0.0.${build}")
+
+package org.matonto.explorable.dataset.rest;
+
 /*-
  * #%L
- * org.matonto.web
+ * org.matonto.ontology.rest
  * $Id:$
  * $HeadURL:$
  * %%
@@ -20,31 +24,5 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-(function() {
-    'use strict';
 
-    angular
-        .module('discover', [
-            /* Services */
-            'explore',
-            
-            /* Common */
-            'datasetSelect',
-            'discoverTabset',
-            
-            /* Explore tab */
-            'classBlock',
-            'classBlockHeader',
-            'classCards',
-            'exploreTab',
-            'instanceBlock',
-            'instanceBlockHeader',
-            'instanceCards',
-            
-            /* Query tab */
-            'downloadQueryOverlay',
-            'queryTab',
-            'sparqlEditor',
-            'sparqlResultTable'
-        ]);
-})();
+import aQute.bnd.annotation.Version;

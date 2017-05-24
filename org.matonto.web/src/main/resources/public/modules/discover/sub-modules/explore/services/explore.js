@@ -39,6 +39,7 @@
          * @requires $http
          * @requires $q
          * @requires util.service:utilService
+         * @requires discoverState.service:discoverStateService
          *
          * @description
          * `exploreService` is a service that provides access to the MatOnto explorable-datasets REST
@@ -46,12 +47,13 @@
          */
         .service('exploreService', exploreService);
     
-    exploreService.$inject = ['$http', '$q', 'utilService'];
+    exploreService.$inject = ['$http', '$q', 'utilService', 'discoverStateService'];
     
-    function exploreService($http, $q, utilService) {
+    function exploreService($http, $q, utilService, discoverStateService) {
         var self = this;
         var prefix = '/matontorest/explorable-datasets/';
         var util = utilService;
+        var ds = discoverStateService;
         
         /**
          * @ngdoc method
@@ -66,7 +68,7 @@
          */
         self.getClassDetails = function(recordId) {
             return $http.get(prefix + encodeURIComponent(recordId) + '/class-details')
-                .then(response => $q.when(response.data), response => $q.reject(response.statusText));
+                .then(response => response.data, response => $q.reject(response.statusText));
         }
         
         /**
@@ -82,8 +84,8 @@
          * identified dataset record.
          */
         self.getClassInstanceDetails = function(recordId, classId) {
-            return $http.get(prefix + encodeURIComponent(recordId) + '/classes/' + encodeURIComponent(classId) + '/instance-details?limit=99&offset=0')
-                .then($q.when, response => $q.reject(response.statusText));
+            return $http.get(prefix + encodeURIComponent(recordId) + '/classes/' + encodeURIComponent(classId) + '/instance-details?limit=' + ds.explore.instanceDetails.limit + '&offset=0')
+                .then(response => response, response => $q.reject(response.statusText));
         }
         
         /**

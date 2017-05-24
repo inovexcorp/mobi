@@ -112,6 +112,7 @@
             'datasetManager',
             'datasetState',
             'delimitedManager',
+            'discoverState',
             'httpService',
             'loginManager',
             'manchesterConverter',

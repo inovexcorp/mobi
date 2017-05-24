@@ -40,13 +40,23 @@
          *
          * @description
          * `discoverStateService` is a service which contains various variables to hold the
-         * state of the discover module along with some utility functions for thos variables.
+         * state of the discover module along with some utility functions for those variables.
          */
         .service('discoverStateService', discoverStateService);
     
     function discoverStateService() {
         var self = this;
         
+        /**
+         * @ngdoc property
+         * @name explore
+         * @propertyOf discoverState.service:discoverStateService
+         * @type {Object}
+         *
+         * @description
+         * 'explore' is an object which holds properties associated with the explore tab in the
+         * discover section of the application.
+         */
         self.explore = {
             active: true,
             breadcrumbs: ['Classes'],
@@ -64,6 +74,16 @@
             recordId: ''
         };
         
+        /**
+         * @ngdoc property
+         * @name query
+         * @propertyOf discoverState.service:discoverStateService
+         * @type {Object}
+         *
+         * @description
+         * 'query' is an object which holds properties associated with the query tab in the
+         * discover section of the application.
+         */
         self.query = {
             active: false
         };

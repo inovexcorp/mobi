@@ -54,6 +54,15 @@
                     
                     em {
                         display: block;
+                        
+                        .example {
+                            &:after {
+                                content: ', ';
+                            }
+                            &.last:after {
+                                content: '';
+                            }
+                        }
                     }
                     
                     .text-muted {

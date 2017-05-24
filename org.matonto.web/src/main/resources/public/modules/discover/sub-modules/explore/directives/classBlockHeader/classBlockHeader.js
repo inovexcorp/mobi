@@ -30,7 +30,7 @@
          *
          * @description
          * The `classBlockHeader` module only provides the `classBlockHeader` directive which creates
-         * the class block header.
+         * the dataset selector to determine what class details are to be shown on the page.
          */
         .module('classBlockHeader', [])
         /**
@@ -59,6 +59,7 @@
                 controller: function() {
                     var dvm = this;
                     var es = exploreService;
+                    var util = utilService;
                     dvm.ds = discoverStateService;
                     
                     dvm.onSelect = function() {
@@ -67,7 +68,7 @@
                                 dvm.ds.explore.classDetails = details;
                             }, errorMessage => {
                                 dvm.ds.explore.classDetails = [];
-                                utilService.createErrorToast(errorMessage);
+                                util.createErrorToast(errorMessage);
                             });
                     }
                 }

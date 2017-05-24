@@ -42,10 +42,9 @@ import javax.ws.rs.core.UriInfo;
 @Api(value = "/explorable-datasets")
 public interface ExplorableDatasetRest {
     /**
-     * Retrieves all the data associated with ontology objects, from a
+     * Retrieves all the class details associated with ontologies linked to a
      * {@link org.matonto.dataset.ontology.dataset.Dataset} in the local
-     * {@link org.matonto.catalog.api.ontologies.mcat.Catalog} in a JSON array. Can optionally be paged if passed a
-     * limit and offset. Can optionally be sorted by property value if passed a sort IRI.
+     * {@link org.matonto.catalog.api.ontologies.mcat.Catalog} in a JSON array.
      *
      * @param recordIRI The id of the {@link org.matonto.dataset.ontology.dataset.DatasetRecord} for the
      *                  {@link org.matonto.dataset.ontology.dataset.Dataset} from which to retrieve the data.
@@ -60,9 +59,10 @@ public interface ExplorableDatasetRest {
                              @PathParam("recordIRI") String recordIRI);
 
     /**
-     * Retrieves an aggregated summary of all ontology objects from a
+     * Retrieves all the instance details associated with classes found in ontologies linked to a
      * {@link org.matonto.dataset.ontology.dataset.Dataset} in the local
-     * {@link org.matonto.catalog.api.ontologies.mcat.Catalog}, grouped by their ontology, as a JSON object.
+     * {@link org.matonto.catalog.api.ontologies.mcat.Catalog} in a JSON array. Can optionally be paged if passed limit
+     * and offset. Can optionally be sorted in ascending or descending order based on the instance details title.
      *
      * @param recordIRI   The id of the {@link org.matonto.dataset.ontology.dataset.DatasetRecord} for the
      *                    {@link org.matonto.dataset.ontology.dataset.Dataset} to summarize.

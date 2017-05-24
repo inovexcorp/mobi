@@ -27,10 +27,7 @@ import static org.matonto.rest.util.RestUtils.checkStringParam;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.dataset.api.DatasetConnection;
 import org.matonto.dataset.api.DatasetManager;
@@ -46,6 +43,7 @@ import org.matonto.query.api.BindingSet;
 import org.matonto.query.api.TupleQuery;
 import org.matonto.rdf.api.BNode;
 import org.matonto.rdf.api.IRI;
+import org.matonto.rdf.api.Literal;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.Statement;
@@ -67,7 +65,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import javax.xml.bind.JAXB;
 
 @Component(immediate = true)
 public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
@@ -79,6 +76,15 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
     private static final String GET_CLASSES_TYPES;
     private static final String GET_CLASSES_DETAILS;
     private static final String GET_CLASSES_INSTANCES;
+    private static final String COUNT_BINDING = "c";
+    private static final String TYPE_BINDING = "type";
+    private static final String INSTANCE_BINDING = "inst";
+    private static final String LABEL_BINDING = "label";
+    private static final String COMMENT_BINDING = "comment";
+    private static final String TITLE_BINDING = "title";
+    private static final String DESCRIPTION_BINDING = "description";
+    private static final String CLASS_BINDING = "classIRI";
+    private static final String EXAMPLE_BINDING = "example";
 
     static {
         try {
@@ -144,9 +150,9 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
                                        boolean asc) {
         checkStringParam(recordIRI, "The Dataset Record IRI is required.");
         checkStringParam(classIRI, "The Class IRI is required.");
+        Resource datasetRecordRsr = factory.createIRI(recordIRI);
         try {
-            Resource datasetRecordRsr = factory.createIRI(recordIRI);
-            TupleQueryResult results = getQueryResults(datasetRecordRsr, GET_CLASSES_INSTANCES, "classIRI",
+            TupleQueryResult results = getQueryResults(datasetRecordRsr, GET_CLASSES_INSTANCES, CLASS_BINDING,
                     factory.createIRI(classIRI));
             List<InstanceDetails> instances = getInstanceDetailsFromQueryResults(results);
             Comparator<InstanceDetails> comparator = Comparator.comparing(InstanceDetails::getTitle);
@@ -218,8 +224,7 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
      * @return human readable string
      */
     private String splitCamelCase(String string) {
-        return string.replaceAll(String.format("%s|%s|%s", "(?<=[A-Z])(?=[A-Z][a-z])", "(?<=[^A-Z])(?=[A-Z])",
-                "(?<=[A-Za-z])(?=[^A-Za-z])"), " ");
+        return string.replaceAll("(?<=[A-Z])(?=[A-Z][a-z])|(?<=[^A-Z])(?=[A-Z])|(?<=[A-Za-z])(?=[^A-Za-z])", " ");
     }
 
     /**
@@ -262,18 +267,15 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
                 return rdfs.get().getObject().stringValue();
             } else {
                 Optional<Statement> dcterm = model.filter(null, factory.createIRI(dcProp), null).stream().findFirst();
-                if (dcterm.isPresent()) {
-                    return dcterm.get().getObject().stringValue();
-                } else {
-                    return splitCamelCase(iri.stringValue());
-                }
+                return dcterm.map(statement -> statement.getObject().stringValue()).orElseGet(() -> splitCamelCase(iri
+                        .stringValue()));
             }
         }
         return "";
     }
 
     /**
-     * Parse query results.
+     * Get query results.
      *
      * @param datasetRecordRsr dataset record resource
      * @param query            query result object with instances examples
@@ -289,12 +291,16 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
                 tq.setBinding(bindingStr, bindingVal);
             }
             return tq.evaluateAndReturn();
+        } catch (IllegalArgumentException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+        } catch (IllegalStateException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
 
     /**
-     * Retrieve instances examples from query result object
-     * rdfs:comment, dcterms:description, or default empty string.
+     * Retrieve instance examples from the query results searching for associated the rdfs:label, dcterms:title, or
+     * beautified version of local name.
      *
      * @param examplesResults query result object with instances examples
      * @return examples list
@@ -302,9 +308,9 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
     private List<String> parseInstanceExamples(TupleQueryResult examplesResults) {
         List<String> exList = new ArrayList<>();
         examplesResults.forEach(bindingSetEx -> {
-            IRI exampleIRI = factory.createIRI(Bindings.requiredResource(bindingSetEx, "example").stringValue());
+            IRI exampleIRI = factory.createIRI(Bindings.requiredResource(bindingSetEx, EXAMPLE_BINDING).stringValue());
             String fallback = splitCamelCase(exampleIRI.getLocalName());
-            exList.add(getValueFromBindingSet(bindingSetEx, "label", "title", fallback));
+            exList.add(getValueFromBindingSet(bindingSetEx, LABEL_BINDING, TITLE_BINDING, fallback));
         });
         return exList;
     }
@@ -319,10 +325,8 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
      * @return the binding value that is found
      */
     private String getValueFromBindingSet(BindingSet bindingSet, String first, String second, String fallback) {
-        String firstStr = (bindingSet.getValue(first).isPresent() ? bindingSet.getValue(first).get().stringValue()
-                : "");
-        String secondStr = (bindingSet.getValue(second).isPresent() ? bindingSet.getValue(second).get().stringValue()
-                : fallback);
+        String firstStr = bindingSet.getValue(first).orElse(factory.createLiteral("")).stringValue();
+        String secondStr = bindingSet.getValue(second).orElse(factory.createLiteral(fallback)).stringValue();
         return !firstStr.isEmpty() ? firstStr : secondStr;
     }
 
@@ -381,12 +385,13 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
     private List<ClassDetails> getClassDetailsFromQueryResults(TupleQueryResult results, Resource recordResource) {
         List<ClassDetails> classes = new ArrayList<>();
         results.forEach(bindingSet -> {
-            if (bindingSet.getValue("type").isPresent() && bindingSet.getValue("c").isPresent()) {
-                TupleQueryResult examplesResults = getQueryResults(recordResource, GET_CLASSES_DETAILS, "classIRI",
-                        bindingSet.getValue("type").get());
+            if (bindingSet.getValue(TYPE_BINDING).isPresent() && bindingSet.getValue(COUNT_BINDING).isPresent()) {
+                TupleQueryResult examplesResults = getQueryResults(recordResource, GET_CLASSES_DETAILS, CLASS_BINDING,
+                        bindingSet.getValue(TYPE_BINDING).get());
                 ClassDetails classDetails = new ClassDetails();
-                classDetails.setInstancesCount(Integer.parseInt(bindingSet.getValue("c").get().stringValue()));
-                classDetails.setClassIRI(bindingSet.getValue("type").get().stringValue());
+                classDetails.setInstancesCount(Integer.parseInt(bindingSet.getValue(COUNT_BINDING).get()
+                        .stringValue()));
+                classDetails.setClassIRI(bindingSet.getValue(TYPE_BINDING).get().stringValue());
                 classDetails.setClassExamples(parseInstanceExamples(examplesResults));
                 classes.add(classDetails);
             }
@@ -404,12 +409,12 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
         List<InstanceDetails> instances = new ArrayList<>();
         results.forEach(instance -> {
             InstanceDetails instanceDetails = new InstanceDetails();
-            String instanceIRI = (instance.getValue("inst").isPresent() ? instance.getValue("inst").get()
-                    .stringValue() : "");
+            String instanceIRI = (instance.getValue(INSTANCE_BINDING).isPresent() ? instance.getValue(INSTANCE_BINDING)
+                    .get().stringValue() : "");
             instanceDetails.setInstanceIRI(instanceIRI);
-            instanceDetails.setTitle(getValueFromBindingSet(instance, "label", "title",
+            instanceDetails.setTitle(getValueFromBindingSet(instance, LABEL_BINDING, TITLE_BINDING,
                     splitCamelCase(factory.createIRI(instanceIRI).getLocalName())));
-            instanceDetails.setDescription(getValueFromBindingSet(instance, "comment", "description", ""));
+            instanceDetails.setDescription(getValueFromBindingSet(instance, COMMENT_BINDING, DESCRIPTION_BINDING, ""));
             instances.add(instanceDetails);
         });
         return instances;

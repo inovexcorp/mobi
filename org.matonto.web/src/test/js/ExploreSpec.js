@@ -26,6 +26,7 @@ describe('Explore Service', function() {
     beforeEach(function() {
         module('explore');
         mockUtil();
+        mockDiscoverState();
 
         inject(function(exploreService, _$q_, _$httpBackend_, _utilService_) {
             exploreSvc = exploreService;

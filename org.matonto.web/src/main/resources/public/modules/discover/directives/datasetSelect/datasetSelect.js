@@ -24,7 +24,26 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name datasetSelect
+         *
+         * @description
+         * The `datasetSelect` module only provides the `datasetSelect` directive which creates
+         * the dataset select.
+         */
         .module('datasetSelect', [])
+        /**
+         * @ngdoc directive
+         * @name datasetSelect.directive:datasetSelect
+         * @scope
+         * @restrict E
+         * @requires util.service:utilService
+         * @requires datasetManager.service:datasetManagerService
+         *
+         * @description
+         * HTML contents in the dataset select which provides a list of all datasets.
+         */
         .directive('datasetSelect', datasetSelect);
         
         datasetSelect.$inject = ['utilService', 'datasetManagerService'];

@@ -30,7 +30,7 @@
          *
          * @description
          * The `exploreTab` module only provides the `exploreTab` directive which creates
-         * the explore tab.
+         * the tab containing the explore page for viewing dataset details.
          */
         .module('exploreTab', [])
         /**

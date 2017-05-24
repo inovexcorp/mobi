@@ -30,7 +30,7 @@
          *
          * @description
          * The `classBlock` module only provides the `classBlock` directive which creates
-         * the class block.
+         * the display for the class details associated with a selected dataset.
          */
         .module('classBlock', [])
         /**
