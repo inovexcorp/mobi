@@ -56,11 +56,19 @@
                 replace: true,
                 scope: {},
                 controllerAs: 'dvm',
-                controller: function() {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
                     var ds = discoverStateService;
-                    dvm.chunks = _.chunk(_.orderBy(ds.explore.instanceDetails.data, ['title']), 3);
-                }
+                    dvm.chunks = getChunks(ds.explore.instanceDetails.data);
+                    
+                    $scope.$watch(() => ds.explore.instanceDetails.data, newValue => {
+                        dvm.chunks = getChunks(newValue);
+                    });
+                    
+                    function getChunks(data) {
+                        return _.chunk(_.orderBy(data, ['title']), 3);
+                    }
+                }]
             }
         }
 })();

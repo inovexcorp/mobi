@@ -33,8 +33,10 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 @Path("/explorable-datasets")
 @Api(value = "/explorable-datasets")
@@ -47,11 +49,6 @@ public interface ExplorableDatasetRest {
      *
      * @param recordIRI The id of the {@link org.matonto.dataset.ontology.dataset.DatasetRecord} for the
      *                  {@link org.matonto.dataset.ontology.dataset.Dataset} from which to retrieve the data.
-     * @param offset    The offset for a page of ontology objects.
-     * @param limit     The number of ontology objects to return in one page
-     * @param sort      The IRI of the property to sort by
-     * @param asc       Whether or not the list should be sorted ascending or descending. Default is ascending
-     * @param filter    The optional array of ontology object ids to filter by.
      * @return A {@link Response} with a JSON array of ontology objects.
      */
     @GET
@@ -59,12 +56,8 @@ public interface ExplorableDatasetRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @ApiOperation("Retrieves all the data associated with ontology objects, from a Dataset in the local Catalog")
-    Response getClassDetails(@PathParam("recordIRI") String recordIRI,
-                             @QueryParam("offset") int offset,
-                             @QueryParam("limit") int limit,
-                             @QueryParam("sort") String sort,
-                             @DefaultValue("true") @QueryParam("ascending") boolean asc,
-                             @QueryParam("filter") String filter);
+    Response getClassDetails(@Context UriInfo uriInfo,
+                             @PathParam("recordIRI") String recordIRI);
 
     /**
      * Retrieves an aggregated summary of all ontology objects from a
@@ -73,11 +66,10 @@ public interface ExplorableDatasetRest {
      *
      * @param recordIRI   The id of the {@link org.matonto.dataset.ontology.dataset.DatasetRecord} for the
      *                    {@link org.matonto.dataset.ontology.dataset.Dataset} to summarize.
+     * @param classIRI    The IRI of the class type to get
      * @param offset      The offset for a page of Dataset data
      * @param limit       The number of data to return in one page
-     * @param sort        The IRI of the property to sort by
-     * @param asc         Whether or not the list should be sorted ascending or descending. Default is ascending
-     * @param numExamples the maximum number of examples to be provided for each ontology object.
+     * @param asc         Whether or not the list should be sorted ascending or descending. Default is ascending.
      * @return A {@link Response} with a JSON object.
      */
     @GET
@@ -85,11 +77,10 @@ public interface ExplorableDatasetRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @ApiOperation("Retrieves an aggregated summary of all ontology objects from a Dataset in the local Catalog")
-    Response getInstanceDetails(@PathParam("recordIRI") String recordIRI,
+    Response getInstanceDetails(@Context UriInfo uriInfo,
+                                @PathParam("recordIRI") String recordIRI,
                                 @PathParam("classIRI") String classIRI,
                                 @QueryParam("offset") int offset,
                                 @QueryParam("limit") int limit,
-                                @QueryParam("sort") String sort,
-                                @DefaultValue("true") @QueryParam("ascending") boolean asc,
-                                @QueryParam("numExamples") int numExamples);
+                                @DefaultValue("true") @QueryParam("ascending") boolean asc);
 }

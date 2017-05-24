@@ -69,7 +69,7 @@ describe('Explore Service', function() {
         it('succeeds', function() {
             var data = [{}];
             var headers = {};
-            $httpBackend.expectGET('/matontorest/explorable-datasets/recordId/classes/classId/instance-details').respond(200, data, headers);
+            $httpBackend.expectGET('/matontorest/explorable-datasets/recordId/classes/classId/instance-details?limit=99&offset=0').respond(200, data, headers);
             exploreSvc.getClassInstanceDetails('recordId', 'classId')
                 .then(function(response) {
                     expect(response).toEqual(jasmine.objectContaining({
@@ -82,7 +82,7 @@ describe('Explore Service', function() {
              flushAndVerify();
         });
         it('fails', function() {
-            $httpBackend.expectGET('/matontorest/explorable-datasets/recordId/classes/classId/instance-details').respond(400, null, null, 'error');
+            $httpBackend.expectGET('/matontorest/explorable-datasets/recordId/classes/classId/instance-details?limit=99&offset=0').respond(400, null, null, 'error');
             exploreSvc.getClassInstanceDetails('recordId', 'classId')
                 .then(function() {
                     fail('Should have been rejected.');

@@ -1,10 +1,4 @@
 SELECT ?type (COUNT(distinct ?thing) as ?c)
 WHERE {
     ?thing a ?type .
-    {
-        SELECT ?type
-            WHERE {
-                ?thing a ?type .
-            }
-    }
 } GROUP BY ?type

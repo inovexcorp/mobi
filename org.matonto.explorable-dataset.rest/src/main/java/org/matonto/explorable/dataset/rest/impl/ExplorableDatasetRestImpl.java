@@ -30,6 +30,7 @@ import aQute.bnd.annotation.component.Reference;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.dataset.api.DatasetConnection;
 import org.matonto.dataset.api.DatasetManager;
@@ -51,15 +52,22 @@ import org.matonto.rdf.api.Statement;
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rest.util.ErrorUtils;
+import org.matonto.rest.util.LinksUtils;
+import org.matonto.rest.util.jaxb.Links;
 import org.openrdf.model.vocabulary.RDFS;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+import javax.xml.bind.JAXB;
 
 @Component(immediate = true)
 public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
@@ -116,7 +124,7 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
 
 
     @Override
-    public Response getClassDetails(String recordIRI, int offset, int limit, String sort, boolean asc, String filter) {
+    public Response getClassDetails(UriInfo uriInfo, String recordIRI) {
         checkStringParam(recordIRI, "The Dataset Record IRI is required.");
         Resource datasetRecordRsr = factory.createIRI(recordIRI);
         try {
@@ -125,15 +133,15 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
             TupleQueryResult results = getQueryResults(datasetRecordRsr, GET_CLASSES_TYPES, "", null);
             List<ClassDetails> classes = getClassDetailsFromQueryResults(results, datasetRecordRsr);
             classes = addOntologyDetailsToClasses(classes, record.getOntology(), record.getModel());
-            return Response.ok(classes).header("X-Total-Count", classes.size()).build();
+            return Response.ok(classes).build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
 
     @Override
-    public Response getInstanceDetails(String recordIRI, String classIRI, int offset, int limit, String sort,
-                                       boolean asc, int numExamples) {
+    public Response getInstanceDetails(UriInfo uriInfo, String recordIRI, String classIRI, int offset, int limit,
+                                       boolean asc) {
         checkStringParam(recordIRI, "The Dataset Record IRI is required.");
         checkStringParam(classIRI, "The Class IRI is required.");
         try {
@@ -141,9 +149,64 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
             TupleQueryResult results = getQueryResults(datasetRecordRsr, GET_CLASSES_INSTANCES, "classIRI",
                     factory.createIRI(classIRI));
             List<InstanceDetails> instances = getInstanceDetailsFromQueryResults(results);
-            return Response.ok(instances).header("X-Total-Count", instances.size()).build();
+            Comparator<InstanceDetails> comparator = Comparator.comparing(InstanceDetails::getTitle);
+            return createPagedResponse(uriInfo, instances, comparator, asc, limit, offset);
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Creates a Response which contains the proper paged details.
+     *
+     * @param uriInfo    The URI information of the request.
+     * @param items      The total list of items that need to be sorted, limited, and offset.
+     * @param comparator The Comparator which will be used to sort the items.
+     * @param asc        Whether the sorting should be ascending or descending.
+     * @param limit      The size of the page of items to return.
+     * @param offset     The number of items to skip.
+     * @param <T>        A class that extends Object.
+     * @return A Response with a page of items that has been filtered, sorted, and limited and headers for the total
+     *         size and links to the next and previous pages if present.
+     */
+    private <T> Response createPagedResponse(UriInfo uriInfo, List<T> items, Comparator<T> comparator, boolean asc,
+                                             int limit, int offset) {
+        validatePaginationParams(limit, offset, items.size());
+        Stream<T> stream = items.stream();
+        if (!asc) {
+            stream = stream.sorted(comparator.reversed());
+        } else {
+            stream = stream.sorted(comparator);
+        }
+        if (offset > 0) {
+            stream = stream.skip(offset);
+        }
+        if (limit > 0) {
+            stream = stream.limit(limit);
+        }
+        List<T> pagedItems = stream.collect(Collectors.toList());
+        Response.ResponseBuilder builder = Response.ok(pagedItems).header("X-Total-Count", items.size());
+        Links links = LinksUtils.buildLinks(uriInfo, pagedItems.size(), items.size(), limit, offset);
+        if (links.getNext() != null) {
+            builder = builder.link(links.getBase() + links.getNext(), "next");
+        }
+        if (links.getPrev() != null) {
+            builder = builder.link(links.getBase() + links.getPrev(), "prev");
+        }
+        return builder.build();
+    }
+
+    /**
+     * Validates the limit and offset parameters for pagination. If either parameter is invalid, throws a 400 Response.
+     *
+     * @param limit  The limit of the paginated response.
+     * @param offset The offset for the paginated response.
+     * @param total  The total number of results.
+     */
+    private void validatePaginationParams(int limit, int offset, int total) {
+        LinksUtils.validateParams(limit, offset);
+        if (offset > total) {
+            throw ErrorUtils.sendError("Offset exceeds total size", Response.Status.BAD_REQUEST);
         }
     }
 

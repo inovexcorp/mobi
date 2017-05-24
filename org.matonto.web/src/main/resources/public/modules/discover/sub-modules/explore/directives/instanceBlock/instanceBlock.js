@@ -67,6 +67,7 @@
                         var url = (direction === 'next') ? dvm.ds.explore.instanceDetails.links.next : dvm.ds.explore.instanceDetails.links.prev;
                         $http.get(url)
                             .then(response => {
+                                dvm.ds.explore.instanceDetails.data = [];
                                 _.merge(dvm.ds.explore.instanceDetails, es.createPagedResultsObject(response));
                                 if (direction === 'next') {
                                     dvm.ds.explore.instanceDetails.currentPage += 1;

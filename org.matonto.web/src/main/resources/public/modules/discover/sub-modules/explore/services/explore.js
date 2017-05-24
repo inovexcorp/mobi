@@ -82,7 +82,7 @@
          * identified dataset record.
          */
         self.getClassInstanceDetails = function(recordId, classId) {
-            return $http.get(prefix + encodeURIComponent(recordId) + '/classes/' + encodeURIComponent(classId) + '/instance-details')
+            return $http.get(prefix + encodeURIComponent(recordId) + '/classes/' + encodeURIComponent(classId) + '/instance-details?limit=99&offset=0')
                 .then($q.when, response => $q.reject(response.statusText));
         }
         
