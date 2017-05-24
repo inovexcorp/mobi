@@ -24,11 +24,11 @@ package org.matonto.ontology.core.impl.owlapi;
  */
 
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
-import static org.junit.Assert.assertEquals;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -39,6 +39,7 @@ import org.matonto.ontology.core.api.propertyexpression.DataProperty;
 import org.matonto.ontology.core.api.propertyexpression.ObjectProperty;
 import org.matonto.ontology.core.impl.owlapi.propertyExpression.SimpleDataProperty;
 import org.matonto.ontology.core.impl.owlapi.propertyExpression.SimpleObjectProperty;
+import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
@@ -67,6 +68,9 @@ public class FullSimpleOntologyTest {
     @Mock
     private OntologyId ontologyId;
 
+    @Mock
+    SesameTransformer transformer;
+
     @Before
     public void setUp() {
         vf = SimpleValueFactory.getInstance();
@@ -89,7 +93,7 @@ public class FullSimpleOntologyTest {
         when(ontologyManager.createOntologyId(any(IRI.class))).thenReturn(ontologyId);
 
         InputStream stream = this.getClass().getResourceAsStream("/test.owl");
-        ontology = new SimpleOntology(stream, ontologyManager);
+        ontology = new SimpleOntology(stream, ontologyManager, transformer);
     }
 
     @Test

@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.7.6</version>
+        <version>1.7.7</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -51,16 +51,6 @@
         <dependency>
             <groupId>org.openrdf.sesame</groupId>
             <artifactId>sesame-model</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.matonto</groupId>
-            <artifactId>ontology.api</artifactId>
-            <version>1.7.2</version>
-        </dependency>
-        <dependency>
-            <groupId>org.matonto</groupId>
-            <artifactId>cache</artifactId>
-            <version>1.6.43</version>
         </dependency>
         <dependency>
             <groupId>javax.cache</groupId>

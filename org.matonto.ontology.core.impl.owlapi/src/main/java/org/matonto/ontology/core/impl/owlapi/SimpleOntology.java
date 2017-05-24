@@ -37,6 +37,7 @@ import org.matonto.ontology.core.api.propertyexpression.DataProperty;
 import org.matonto.ontology.core.api.propertyexpression.ObjectProperty;
 import org.matonto.ontology.core.utils.MatOntoStringUtils;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
+import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
@@ -60,7 +61,6 @@ import org.semanticweb.owlapi.io.IRIDocumentSource;
 import org.semanticweb.owlapi.io.OWLOntologyDocumentSource;
 import org.semanticweb.owlapi.io.OWLParser;
 import org.semanticweb.owlapi.io.OWLParserFactory;
-import org.semanticweb.owlapi.io.StringDocumentSource;
 import org.semanticweb.owlapi.model.AddImport;
 import org.semanticweb.owlapi.model.AsOWLClass;
 import org.semanticweb.owlapi.model.AsOWLDatatype;
@@ -110,6 +110,7 @@ public class SimpleOntology implements Ontology {
     
     private OntologyId ontologyId;
     private OntologyManager ontologyManager;
+    private SesameTransformer transformer;
     private Set<Annotation> ontoAnnotations;
     private Set<Annotation> annotations;
     private Set<AnnotationProperty> annotationProperties;
@@ -133,9 +134,11 @@ public class SimpleOntology implements Ontology {
     /**
      * .
      */
-    public SimpleOntology(OntologyId ontologyId, OntologyManager ontologyManager) throws MatontoOntologyException {
+    public SimpleOntology(OntologyId ontologyId, OntologyManager ontologyManager, SesameTransformer transformer)
+            throws MatontoOntologyException {
         this.ontologyManager = ontologyManager;
         this.ontologyId = ontologyId;
+        this.transformer = transformer;
 
         try {
             Optional<org.semanticweb.owlapi.model.IRI> owlOntIRI = Optional.empty();
@@ -160,8 +163,10 @@ public class SimpleOntology implements Ontology {
     /**
      * .
      */
-    public SimpleOntology(InputStream inputStream, OntologyManager ontologyManager) throws MatontoOntologyException {
+    public SimpleOntology(InputStream inputStream, OntologyManager ontologyManager, SesameTransformer transformer)
+            throws MatontoOntologyException {
         this.ontologyManager = ontologyManager;
+        this.transformer = transformer;
 
         try {
             owlOntology = owlManager.loadOntologyFromOntologyDocument(inputStream);
@@ -176,16 +181,19 @@ public class SimpleOntology implements Ontology {
     /**
      * .
      */
-    public SimpleOntology(File file, OntologyManager ontologyManager) throws MatontoOntologyException,
+    public SimpleOntology(File file, OntologyManager ontologyManager, SesameTransformer transformer)
+            throws MatontoOntologyException,
             FileNotFoundException {
-        this(new FileInputStream(file), ontologyManager);
+        this(new FileInputStream(file), ontologyManager, transformer);
     }
 
     /**
      * .
      */
-    public SimpleOntology(IRI iri, SimpleOntologyManager ontologyManager) throws MatontoOntologyException {
+    public SimpleOntology(IRI iri, SimpleOntologyManager ontologyManager, SesameTransformer transformer)
+            throws MatontoOntologyException {
         this.ontologyManager = ontologyManager;
+        this.transformer = transformer;
 
         try {
             OWLOntologyDocumentSource documentSource = new IRIDocumentSource(SimpleOntologyValues.owlapiIRI(iri));
@@ -199,8 +207,10 @@ public class SimpleOntology implements Ontology {
     /**
      * .
      */
-    public SimpleOntology(String json, OntologyManager ontologyManager) throws MatontoOntologyException {
+    public SimpleOntology(String json, OntologyManager ontologyManager, SesameTransformer transformer)
+            throws MatontoOntologyException {
         this.ontologyManager = ontologyManager;
+        this.transformer = transformer;
 
         OWLParserFactory factory = new RioJsonLDParserFactory();
         OWLParser parser = factory.createParser();
@@ -217,8 +227,10 @@ public class SimpleOntology implements Ontology {
 
     }
 
-    protected SimpleOntology(OWLOntology ontology, Resource resource, OntologyManager ontologyManager) {
+    protected SimpleOntology(OWLOntology ontology, Resource resource, OntologyManager ontologyManager,
+                             SesameTransformer transformer) {
         this.ontologyManager = ontologyManager;
+        this.transformer = transformer;
 
         try {
             owlOntology = owlManager.copyOntology(ontology, OntologyCopy.DEEP);
@@ -405,7 +417,7 @@ public class SimpleOntology implements Ontology {
     public Model asModel(ModelFactory factory) throws MatontoOntologyException {
         Model matontoModel = factory.createModel();
 
-        asSesameModel().forEach(stmt -> matontoModel.add(ontologyManager.getTransformer().matontoStatement(stmt)));
+        asSesameModel().forEach(stmt -> matontoModel.add(transformer.matontoStatement(stmt)));
 
         return matontoModel;
     }
