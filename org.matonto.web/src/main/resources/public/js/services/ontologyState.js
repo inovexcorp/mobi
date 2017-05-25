@@ -1210,7 +1210,6 @@
                 var index = {};
                 _.forEach(ontology, (entity, i) => {
                     if (_.has(entity, '@id')) {
-                        _.set(entity, 'matonto.originalIRI', entity['@id']);
                         index[entity['@id']] = {
                             position: i,
                             label: om.getEntityName(entity, type),
@@ -1374,7 +1373,6 @@
                 var index = {};
                 _.forEach(importedOntObj.ontology, (entity, i) => {
                     if (_.has(entity, '@id')) {
-                        _.set(entity, 'matonto.originalIRI', entity['@id']);
                         index[entity['@id']] = {
                             position: i,
                             label: om.getEntityName(entity, type),
