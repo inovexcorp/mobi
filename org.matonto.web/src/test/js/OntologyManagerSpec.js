@@ -108,52 +108,36 @@ describe('Ontology Manager service', function() {
         }
         classObj = {
             '@id': classId,
-            '@type': [prefixes.owl + 'Class'],
-            matonto: {
-            }
+            '@type': [prefixes.owl + 'Class']
         }
         objectPropertyObj = {
             '@id': objectPropertyId,
-            '@type': [prefixes.owl + 'ObjectProperty'],
-            matonto: {
-            }
+            '@type': [prefixes.owl + 'ObjectProperty']
         }
         objectPropertyObj[prefixes.rdfs + 'domain'] = [{'@id': classId}];
         dataPropertyObj = {
             '@id': dataPropertyId,
-            '@type': [prefixes.owl + 'DatatypeProperty'],
-            matonto: {
-            }
+            '@type': [prefixes.owl + 'DatatypeProperty']
         };
         annotationObj = {
             '@id': annotationId,
-            '@type': [prefixes.owl + 'AnnotationProperty'],
-            matonto: {
-            }
+            '@type': [prefixes.owl + 'AnnotationProperty']
         };
         individualObj = {
             '@id': individualId,
-            '@type': [prefixes.owl + 'NamedIndividual', classId],
-            matonto: {
-            }
+            '@type': [prefixes.owl + 'NamedIndividual', classId]
         };
         restrictionObj = {
             '@id': restrictionId,
-            '@type': [prefixes.owl + 'Restriction'],
-            matonto: {
-            }
+            '@type': [prefixes.owl + 'Restriction']
         }
         conceptObj = {
             '@id': conceptId,
-            '@type': [prefixes.skos + 'Concept'],
-            matonto: {
-            }
+            '@type': [prefixes.skos + 'Concept']
         }
         schemeObj = {
             '@id': schemeId,
-            '@type': [prefixes.skos + 'ConceptScheme'],
-            matonto: {
-            }
+            '@type': [prefixes.skos + 'ConceptScheme']
         }
         ontology = [ontologyObj, classObj, dataPropertyObj];
 
@@ -184,41 +168,29 @@ describe('Ontology Manager service', function() {
 
         importedObjectPropertyObj = {
             '@id': importedObjectPropertyId,
-            '@type': [prefixes.owl + 'ObjectProperty'],
-            matonto: {
-            }
+            '@type': [prefixes.owl + 'ObjectProperty']
         }
         importedObjectPropertyObj[prefixes.rdfs + 'domain'] = [{'@id': importedClassId}];
 
         importedAnnotationObj = {
             '@id': importedAnnotationId,
-            '@type': [prefixes.owl + 'AnnotationProperty'],
-            matonto: {
-            }
+            '@type': [prefixes.owl + 'AnnotationProperty']
         };
         importedIndividualObj = {
             '@id': importedIndividualId,
-            '@type': [prefixes.owl + 'NamedIndividual', importedClassId],
-            matonto: {
-            }
+            '@type': [prefixes.owl + 'NamedIndividual', importedClassId]
         };
         importedRestrictionObj = {
             '@id': importedRestrictionId,
-            '@type': [prefixes.owl + 'Restriction'],
-            matonto: {
-            }
+            '@type': [prefixes.owl + 'Restriction']
         }
         importedConceptObj = {
             '@id': importedConceptId,
-            '@type': [prefixes.skos + 'Concept'],
-            matonto: {
-            }
+            '@type': [prefixes.skos + 'Concept']
         }
         importedSchemeObj = {
             '@id': importedSchemeId,
-            '@type': [prefixes.skos + 'ConceptScheme'],
-            matonto: {
-            }
+            '@type': [prefixes.skos + 'ConceptScheme']
         }
 
         importedOntology = [importedOntObj, importedClassObj, importedDataPropertyObj];
@@ -1400,9 +1372,7 @@ describe('Ontology Manager service', function() {
         it('true if there are any in the ontology with no other @type', function() {
             var diffIndividualObj = {
                 '@id': individualId,
-                '@type': [prefixes.owl + 'NamedIndividual'],
-                matonto: {
-                }
+                '@type': [prefixes.owl + 'NamedIndividual']
             }
             expect(ontologyManagerSvc.hasNoTypeIndividuals([[diffIndividualObj, ontologyObj]])).toBe(true);
         });
@@ -1417,9 +1387,7 @@ describe('Ontology Manager service', function() {
         it('correct individual objects if there are any in the ontology with no other @type', function() {
             var diffIndividualObj = {
                 '@id': individualId,
-                '@type': [prefixes.owl + 'NamedIndividual'],
-                matonto: {
-                }
+                '@type': [prefixes.owl + 'NamedIndividual']
             }
             expect(ontologyManagerSvc.getNoTypeIndividuals([[diffIndividualObj, ontologyObj]]))
                 .toEqual([diffIndividualObj]);

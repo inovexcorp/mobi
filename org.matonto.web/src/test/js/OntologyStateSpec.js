@@ -277,21 +277,15 @@ describe('Ontology State Service', function() {
         };
         classObj = {
             '@id': classId,
-            '@type': [prefixes.owl + 'Class'],
-            matonto: {
-            }
+            '@type': [prefixes.owl + 'Class']
         };
         dataPropertyObj = {
             '@id': dataPropertyId,
-            '@type': [prefixes.owl + 'DatatypeProperty'],
-            matonto: {
-            }
+            '@type': [prefixes.owl + 'DatatypeProperty']
         };
         individualObj = {
             '@id': individualId,
-            '@type': [prefixes.owl + 'NamedIndividual', classId],
-            matonto: {
-            }
+            '@type': [prefixes.owl + 'NamedIndividual', classId]
         };
         ontology = [ontologyObj, classObj, dataPropertyObj];
         listItem = {
