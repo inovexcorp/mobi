@@ -60,6 +60,7 @@ describe('Class Block directive', function() {
             expect(element.querySelectorAll('.padding').length).toBe(1);
             expect(element.find('info-message').length).toBe(1);
             
+            discoverStateSvc.explore.recordId = 'recordId';
             discoverStateSvc.explore.classDetails = [{}];
             scope.$digest();
             
@@ -81,6 +82,7 @@ describe('Class Block directive', function() {
             expect(element.querySelectorAll('.full-height').length).toBe(0);
             expect(element.find('class-cards').length).toBe(0);
             
+            discoverStateSvc.explore.recordId = 'recordId';
             discoverStateSvc.explore.classDetails = [{}];
             scope.$digest();
             

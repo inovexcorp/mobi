@@ -26,13 +26,13 @@
             <class-block-header></class-block-header>
         </block-header>
         <block-content>
-            <div ng-if="!dvm.ds.explore.classDetails.length" class="padding">
+            <div ng-if="!dvm.ds.explore.classDetails.length || !dvm.ds.explore.recordId" class="padding">
                 <info-message ng-if="!dvm.ds.explore.recordId">Please select a dataset to get started.</info-message>
                 <p ng-if="dvm.ds.explore.recordId" class="text-warning">
                     <i class="fa fa-exclamation-circle fa-fw"></i><strong>The selected dataset does not have any data.</strong>
                 </p>
             </div>
-            <div ng-if="dvm.ds.explore.classDetails.length" class="full-height">
+            <div ng-if="dvm.ds.explore.classDetails.length && dvm.ds.explore.recordId" class="full-height">
                 <class-cards></class-cards>
             </div>
         </block-content>
