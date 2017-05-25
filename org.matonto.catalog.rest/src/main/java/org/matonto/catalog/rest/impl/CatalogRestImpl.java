@@ -1029,16 +1029,6 @@ public class CatalogRestImpl implements CatalogRest {
      * Creates a Response for a page of a sorted limited offset Set of Things based on the return type of the passed
      * function using the passed full Set of Resources.
      * <p>
-     * <<<<<<< HEAD
-     *
-     * @param uriInfo        The URI information of the request.
-     * @param sortBy         The property IRI string to sort the Set of Things by.
-     * @param offset         The number of Things to skip.
-     * @param limit          The size of the page of Things to the return.
-     * @param asc            Whether the sorting should be ascending or descending.
-     * @param filterFunction A Function to filter the set of Things.
-     * @param <T>            A class that extends Things.
-     *                       =======
      * @param uriInfo        The URI information of the request.
      * @param things         The Set of Things.
      * @param sortBy         The property IRI string to sort the Set of Things by.
@@ -1047,7 +1037,6 @@ public class CatalogRestImpl implements CatalogRest {
      * @param asc            Whether the sorting should be ascending or descending.
      * @param filterFunction A Function to filter the set of Things.
      * @param <T>            A class that extends Thing.
-     *                       >>>>>>> develop
      * @return A Response with a page of Things that has been filtered, sorted, and limited and headers for the total
      * size and links to the next and prev pages if present.
      */
@@ -1209,7 +1198,6 @@ public class CatalogRestImpl implements CatalogRest {
      * @param thingId      The ID Resource to confirm.
      * @param factory      The OrmFactory to use when creating the new Thing.
      * @param <T>          A class that extends Thing.
-     *                     >>>>>>> develop
      * @return The new Thing if the JSON-LD contains the correct ID Resource; throws a 400 otherwise.
      */
     private <T extends Thing> T getNewThing(String newThingJson, Resource thingId, OrmFactory<T> factory) {

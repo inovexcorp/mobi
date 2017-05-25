@@ -68,8 +68,6 @@
                     var dvm = this;
                     dvm.size = 100;
                     dvm.index = 0;
-                    dvm.total = 0;
-                    dvm.shown = 0;
                     dvm.util = utilService;
                     dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.list = [];
@@ -87,13 +85,11 @@
                          dvm.list = _.unionWith(_.map(dvm.additions, '@id'), _.map(dvm.deletions, '@id'), _.isEqual);
                          dvm.size = 100;
                          dvm.index = 0;
-                         dvm.shown = 0;
                          dvm.results = getResults();
                     });
 
                     function getResults() {
                         var results = {};
-                        dvm.total = dvm.list.length;
                         dvm.chunkList = _.chunk(dvm.list, dvm.size);
                         dvm.chunks = dvm.chunkList.length === 0 ? 0 : dvm.chunkList.length - 1;
                         _.forEach(_.get(dvm.chunkList, dvm.index, dvm.list), id => {
@@ -104,7 +100,6 @@
 
                     function addToResults(additions, deletions, id, results) {
                         results[id] = { additions: additions, deletions: deletions };
-                        dvm.shown++;
                     }
                 }],
                 templateUrl: 'directives/commitChangesDisplay/commitChangesDisplay.html'
