@@ -52,7 +52,7 @@
                     dvm.updateHierarchy = function(axiom, values) {
                         if (_.get(axiom, 'localName') === 'subClassOf') {
                             _.forEach(values, value => {
-                                dvm.os.addEntityToHierarchy(dvm.os.listItem.classHierarchy, dvm.os.selected.matonto.originalIRI, dvm.os.listItem.classIndex, dvm.ro.getItemIri(value));
+                                dvm.os.addEntityToHierarchy(dvm.os.listItem.classHierarchy, dvm.os.selected['@id'], dvm.os.listItem.classIndex, dvm.ro.getItemIri(value));
                             });
                             dvm.os.listItem.flatClassHierarchy = dvm.os.flattenHierarchy(dvm.os.listItem.classHierarchy, dvm.os.listItem.recordId);
                         }
@@ -60,7 +60,7 @@
 
                     dvm.removeFromHierarchy = function(axiomObject) {
                         if (prefixes.rdfs + 'subClassOf' === dvm.key) {
-                            dvm.os.deleteEntityFromParentInHierarchy(dvm.os.listItem.classHierarchy, dvm.os.selected.matonto.originalIRI, axiomObject['@id'], dvm.os.listItem.classIndex);
+                            dvm.os.deleteEntityFromParentInHierarchy(dvm.os.listItem.classHierarchy, dvm.os.selected['@id'], axiomObject['@id'], dvm.os.listItem.classIndex);
                             dvm.os.listItem.flatClassHierarchy = dvm.os.flattenHierarchy(dvm.os.listItem.classHierarchy, dvm.os.listItem.recordId);
                         }
                     }

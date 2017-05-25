@@ -67,7 +67,6 @@
                     }
 
                     dvm.create = function() {
-                        _.set(dvm.scheme, 'matonto.originalIRI', dvm.scheme['@id']);
                         if (dvm.concepts.length) {
                             dvm.scheme[prefixes.skos + 'hasTopConcept'] = dvm.concepts;
                         }

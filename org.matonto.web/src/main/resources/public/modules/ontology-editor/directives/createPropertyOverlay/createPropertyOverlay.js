@@ -83,7 +83,6 @@
                                 _.unset(dvm.property, prefixes.rdfs + axiom);
                             }
                         });
-                        _.set(dvm.property, 'matonto.originalIRI', dvm.property['@id']);
                         ontoUtils.addLanguageToNewEntity(dvm.property, dvm.language);
                         dvm.os.updatePropertyIcon(dvm.property);
                         // add the entity to the ontology

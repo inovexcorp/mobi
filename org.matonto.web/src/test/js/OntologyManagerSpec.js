@@ -965,17 +965,7 @@ describe('Ontology Manager service', function() {
         it('@id if there is an ontology entity in the ontology with @id', function() {
             expect(ontologyManagerSvc.getOntologyIRI([ontologyObj])).toBe(ontologyId);
         });
-        it('matonto.originalIRI if there is an ontology entity without @id', function() {
-            var obj = {
-                '@type': prefixes.owl + 'Ontology',
-                matonto: {
-                    originalIRI: originalIRI,
-                    anonymous: anonymous
-                }
-            }
-            expect(ontologyManagerSvc.getOntologyIRI([obj])).toBe(originalIRI);
-        });
-        it('matonto.anonymous if there is an ontology entity without @id and matonto.originalIRI', function() {
+        it('matonto.anonymous if there is an ontology entity without @id', function() {
             var obj = {
                 '@type': prefixes.owl + 'Ontology',
                 matonto: {
