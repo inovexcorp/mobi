@@ -165,7 +165,7 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
         when(datasetManager.getDatasetRecord(recordId)).thenReturn(Optional.of(record));
         when(datasetManager.getConnection(recordId)).thenReturn(datasetConnection);
         when(datasetConnection.prepareTupleQuery(any(String.class))).thenAnswer(i -> conn.prepareTupleQuery(i.getArgumentAt(0, String.class)));
-        when(catalogManager.getCompiledResource(vf.createIRI(commitId))).thenReturn(Optional.of(compiledModel));
+        when(catalogManager.getCompiledResource(vf.createIRI(commitId))).thenReturn(compiledModel);
     }
 
     @AfterTest
@@ -184,7 +184,7 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void getClassDetailsWhenClassesNotFound() {
-        when(catalogManager.getCompiledResource(vf.createIRI(commitId))).thenReturn(Optional.empty());
+        when(catalogManager.getCompiledResource(vf.createIRI(commitId))).thenReturn(mf.createModel());
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/class-details").request()
                 .get();
         assertEquals(response.getStatus(), 200);
@@ -196,7 +196,7 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
     public void getClassDetailsWhenPartialClassesFound() throws Exception {
         InputStream partialData = getClass().getResourceAsStream("/partial-compiled-resource.trig");
         Model partialModel = Values.matontoModel(Rio.parse(partialData, "", RDFFormat.TRIG));
-        when(catalogManager.getCompiledResource(vf.createIRI(commitId))).thenReturn(Optional.of(partialModel));
+        when(catalogManager.getCompiledResource(vf.createIRI(commitId))).thenReturn(partialModel);
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/class-details").request()
                 .get();
         assertEquals(response.getStatus(), 200);

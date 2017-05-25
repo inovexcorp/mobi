@@ -352,8 +352,8 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
             Optional<Model> compiledResourceOpt = recordModel.filter(blankNode, factory.createIRI(DatasetRecord
                     .linksToCommit_IRI), null).stream()
                     .findFirst()
-                    .flatMap(statement -> catalogManager.getCompiledResource(factory.createIRI(statement.getObject()
-                            .stringValue())));
+                    .flatMap(statement -> Optional.of(catalogManager.getCompiledResource(factory.createIRI(statement
+                            .getObject().stringValue()))));
             if (ontologyRecordIRIOpt.isPresent() && compiledResourceOpt.isPresent()) {
                 Model compiledResource = compiledResourceOpt.get();
                 IRI ontologyRecordIRI = ontologyRecordIRIOpt.get();
