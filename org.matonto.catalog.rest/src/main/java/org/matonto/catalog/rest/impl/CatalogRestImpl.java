@@ -30,6 +30,28 @@ import static org.matonto.rest.util.RestUtils.getTypedObjectFromJsonld;
 import static org.matonto.rest.util.RestUtils.jsonldToModel;
 import static org.matonto.rest.util.RestUtils.modelToString;
 
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
+import javax.ws.rs.core.UriInfo;
+import java.io.BufferedWriter;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import net.sf.json.JSONArray;
@@ -73,42 +95,25 @@ import org.matonto.rest.util.LinksUtils;
 import org.matonto.rest.util.jaxb.Links;
 import org.openrdf.model.vocabulary.DCTERMS;
 import org.openrdf.model.vocabulary.RDF;
-
-import java.io.BufferedWriter;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
-import javax.ws.rs.core.UriInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Component(immediate = true)
 public class CatalogRestImpl implements CatalogRest {
-    protected EngineManager engineManager;
+    private static final Logger LOG = LoggerFactory.getLogger(CatalogRestImpl.class);
+    private static final Set<String> SORT_RESOURCES;
+
     private SesameTransformer transformer;
     private CatalogManager catalogManager;
     private ValueFactory vf;
+
+    protected EngineManager engineManager;
     protected Map<String, OrmFactory<? extends Record>> recordFactories = new HashMap<>();
     protected Map<String, OrmFactory<? extends Version>> versionFactories = new HashMap<>();
     protected Map<String, OrmFactory<? extends Branch>> branchFactories = new HashMap<>();
     protected DistributionFactory distributionFactory;
     protected CommitFactory commitFactory;
     protected InProgressCommitFactory inProgressCommitFactory;
-
-    private static final Set<String> SORT_RESOURCES;
 
     static {
         Set<String> sortResources = new HashSet<>();
@@ -365,7 +370,7 @@ public class CatalogRestImpl implements CatalogRest {
             Distribution distribution = catalogManager.getUnversionedDistribution(vf.createIRI(catalogId),
                     vf.createIRI(recordId), vf.createIRI(distributionId)).orElseThrow(() ->
                     ErrorUtils.sendError("Distribution " + distributionId + " could not be found",
-                        Response.Status.NOT_FOUND));
+                            Response.Status.NOT_FOUND));
             return Response.ok(thingToJsonObject(distribution, Distribution.TYPE)).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -388,7 +393,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
-    public Response updateUnversionedDistribution(String catalogId, String recordId, String distributionId, 
+    public Response updateUnversionedDistribution(String catalogId, String recordId, String distributionId,
                                                   String newDistributionJson) {
         try {
             Distribution newDistribution = getNewThing(newDistributionJson, vf.createIRI(distributionId),
@@ -528,7 +533,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
-    public Response getVersionedDistribution(String catalogId, String recordId, String versionId, 
+    public Response getVersionedDistribution(String catalogId, String recordId, String versionId,
                                              String distributionId) {
         try {
             Distribution distribution = catalogManager.getVersionedDistribution(vf.createIRI(catalogId),
@@ -544,7 +549,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
-    public Response deleteVersionedDistribution(String catalogId, String recordId, String versionId, 
+    public Response deleteVersionedDistribution(String catalogId, String recordId, String versionId,
                                                 String distributionId) {
         try {
             catalogManager.removeVersionedDistribution(vf.createIRI(catalogId), vf.createIRI(recordId),
@@ -558,7 +563,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
-    public Response updateVersionedDistribution(String catalogId, String recordId, String versionId, 
+    public Response updateVersionedDistribution(String catalogId, String recordId, String versionId,
                                                 String distributionId, String newDistributionJson) {
         try {
             Distribution newDistribution = getNewThing(newDistributionJson, vf.createIRI(distributionId),
@@ -575,6 +580,7 @@ public class CatalogRestImpl implements CatalogRest {
 
     @Override
     public Response getVersionCommit(String catalogId, String recordId, String versionId, String format) {
+        long start = System.currentTimeMillis();
         try {
             Commit commit = catalogManager.getTaggedCommit(vf.createIRI(catalogId), vf.createIRI(recordId),
                     vf.createIRI(versionId));
@@ -583,11 +589,14 @@ public class CatalogRestImpl implements CatalogRest {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException | MatOntoException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            LOG.trace("getVersionCommit took {}ms", System.currentTimeMillis() - start);
         }
     }
 
     @Override
-    public Response getBranches(ContainerRequestContext context, UriInfo uriInfo, String catalogId, String recordId,
+    public Response getBranches(ContainerRequestContext context, UriInfo uriInfo, String catalogId, String
+            recordId,
                                 String sort, int offset, int limit, boolean asc, boolean applyUserFilter) {
         try {
             Set<Branch> branches = catalogManager.getBranches(vf.createIRI(catalogId), vf.createIRI(recordId));
@@ -613,8 +622,8 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
-    public Response createBranch(ContainerRequestContext context, String catalogId, String recordId, String typeIRI,
-                                 String title, String description) {
+    public Response createBranch(ContainerRequestContext context, String catalogId, String recordId,
+                                 String typeIRI, String title, String description) {
         try {
             if (typeIRI == null || !branchFactories.keySet().contains(typeIRI)) {
                 throw ErrorUtils.sendError("Invalid Branch type", Response.Status.BAD_REQUEST);
@@ -733,6 +742,7 @@ public class CatalogRestImpl implements CatalogRest {
 
     @Override
     public Response getHead(String catalogId, String recordId, String branchId, String format) {
+        long start = System.currentTimeMillis();
         try {
             Commit headCommit = catalogManager.getHeadCommit(vf.createIRI(catalogId), vf.createIRI(recordId),
                     vf.createIRI(branchId));
@@ -741,12 +751,15 @@ public class CatalogRestImpl implements CatalogRest {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException | MatOntoException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            LOG.trace("getHead took {}ms", System.currentTimeMillis() - start);
         }
     }
 
     @Override
     public Response getBranchCommit(String catalogId, String recordId, String branchId, String commitId,
                                     String format) {
+        long start = System.currentTimeMillis();
         try {
             Commit commit = catalogManager.getCommit(vf.createIRI(catalogId), vf.createIRI(recordId),
                     vf.createIRI(branchId), vf.createIRI(commitId)).orElseThrow(() ->
@@ -756,6 +769,8 @@ public class CatalogRestImpl implements CatalogRest {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException | MatOntoException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            LOG.trace("getBranchCommit took {}ms", System.currentTimeMillis() - start);
         }
     }
 
@@ -798,7 +813,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
-    public Response getCompiledResource(ContainerRequestContext context, String catalogId, String recordId, 
+    public Response getCompiledResource(ContainerRequestContext context, String catalogId, String recordId,
                                         String branchId, String commitId, String rdfFormat, boolean apply) {
         try {
             Resource catalogIRI = vf.createIRI(catalogId);
@@ -823,7 +838,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
-    public Response downloadCompiledResource(ContainerRequestContext context, String catalogId, String recordId, 
+    public Response downloadCompiledResource(ContainerRequestContext context, String catalogId, String recordId,
                                              String branchId, String commitId, String rdfFormat, boolean apply,
                                              String fileName) {
         try {
@@ -881,8 +896,7 @@ public class CatalogRestImpl implements CatalogRest {
             InProgressCommit inProgressCommit = catalogManager.getInProgressCommit(vf.createIRI(catalogId),
                     vf.createIRI(recordId), activeUser).orElseThrow(() ->
                     ErrorUtils.sendError("InProgressCommit could not be found", Response.Status.NOT_FOUND));
-            JSONObject object = getCommitDifferenceObject(inProgressCommit.getResource(), format);
-            return Response.ok(object).build();
+            return Response.ok(getCommitDifferenceObject(inProgressCommit.getResource(), format), MediaType.APPLICATION_JSON).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException | MatOntoException ex) {
@@ -904,7 +918,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
-    public Response updateInProgressCommit(ContainerRequestContext context, String catalogId, String recordId, 
+    public Response updateInProgressCommit(ContainerRequestContext context, String catalogId, String recordId,
                                            String additionsJson, String deletionsJson) {
         try {
             User activeUser = getActiveUser(context, engineManager);
@@ -982,14 +996,14 @@ public class CatalogRestImpl implements CatalogRest {
      * number of Things, the limit for each page, and the offset for the current page. Sets the "X-Total-Count" header
      * to the total size and the "Links" header to the next and prev URLs if present.
      *
-     * @param uriInfo The URI information of the request.
-     * @param items The limited and sorted Collection of items for the current page
+     * @param uriInfo   The URI information of the request.
+     * @param items     The limited and sorted Collection of items for the current page
      * @param totalSize The total number of items.
-     * @param limit The limit for each page.
-     * @param offset The offset for the current page.
-     * @param <T> A class that extends Thing
+     * @param limit     The limit for each page.
+     * @param offset    The offset for the current page.
+     * @param <T>       A class that extends Thing
      * @return A Response with the current page of Things and headers for the total size and links to the next and prev
-     *      pages if present.
+     * pages if present.
      */
     private <T extends Thing> Response createPaginatedResponse(UriInfo uriInfo, Collection<T> items, int totalSize,
                                                                int limit, int offset, String type) {
@@ -1014,17 +1028,17 @@ public class CatalogRestImpl implements CatalogRest {
     /**
      * Creates a Response for a page of a sorted limited offset Set of Things based on the return type of the passed
      * function using the passed full Set of Resources.
-     *
-     * @param uriInfo The URI information of the request.
-     * @param things The Set of Things.
-     * @param sortBy The property IRI string to sort the Set of Things by.
-     * @param offset The number of Things to skip.
-     * @param limit The size of the page of Things to the return.
-     * @param asc Whether the sorting should be ascending or descending.
+     * <p>
+     * @param uriInfo        The URI information of the request.
+     * @param things         The Set of Things.
+     * @param sortBy         The property IRI string to sort the Set of Things by.
+     * @param offset         The number of Things to skip.
+     * @param limit          The size of the page of Things to the return.
+     * @param asc            Whether the sorting should be ascending or descending.
      * @param filterFunction A Function to filter the set of Things.
-     * @param <T> A class that extends Thing.
+     * @param <T>            A class that extends Thing.
      * @return A Response with a page of Things that has been filtered, sorted, and limited and headers for the total
-     *      size and links to the next and prev pages if present.
+     * size and links to the next and prev pages if present.
      */
     private <T extends Thing> Response createPaginatedThingResponse(UriInfo uriInfo, Set<T> things, String sortBy,
                                                                     int offset, int limit, boolean asc,
@@ -1060,9 +1074,14 @@ public class CatalogRestImpl implements CatalogRest {
      * @return A Response containing a JSONObject with the Commit JSON-LD and its addition and deletion statements
      */
     private Response createCommitResponse(Commit commit, String format) {
-        JSONObject object = getCommitDifferenceObject(commit.getResource(), format);
-        object.put("commit", thingToJsonObject(commit, Commit.TYPE));
-        return Response.ok(object).build();
+        long start = System.currentTimeMillis();
+        try {
+            String differences = getCommitDifferenceJsonString(commit.getResource(), format);
+            String response = differences.subSequence(0, differences.length() - 1) + ", \"commit\": " + thingToJsonObject(commit, Commit.TYPE).toString() + "}";
+            return Response.ok(response, MediaType.APPLICATION_JSON).build();
+        } finally {
+            LOG.trace("createCommitResponse took {}ms", System.currentTimeMillis() - start);
+        }
     }
 
     /**
@@ -1071,12 +1090,26 @@ public class CatalogRestImpl implements CatalogRest {
      * deletion statements.
      *
      * @param commitId The id of the Commit to retrieve the Difference of.
-     * @param format A string representing the RDF format to return the statements in.
+     * @param format   A string representing the RDF format to return the statements in.
      * @return A JSONObject with a key for the Commit's addition statements and a key for the Commit's deletion
-     *      statements.
+     * statements.
      */
     private JSONObject getCommitDifferenceObject(Resource commitId, String format) {
-        return getDifferenceJson(catalogManager.getCommitDifference(commitId), format);
+        long start = System.currentTimeMillis();
+        try {
+            return getDifferenceJson(catalogManager.getCommitDifference(commitId), format);
+        } finally {
+            LOG.trace("getCommitDifferenceObject took {}ms", System.currentTimeMillis() - start);
+        }
+    }
+
+    private String getCommitDifferenceJsonString(Resource commitId, String format) {
+        long start = System.currentTimeMillis();
+        try {
+            return getDifferenceJsonString(catalogManager.getCommitDifference(commitId), format);
+        } finally {
+            LOG.trace("getCommitDifferenceJsonString took {}ms", System.currentTimeMillis() - start);
+        }
     }
 
     /**
@@ -1084,13 +1117,27 @@ public class CatalogRestImpl implements CatalogRest {
      * Difference's addition statements and key "deletions" has value of the Difference's deletion statements.
      *
      * @param difference The Difference to convert into a JSONObject.
-     * @param format A String representing the RDF format to return the statements in.
+     * @param format     A String representing the RDF format to return the statements in.
      * @return A JSONObject with a key for the Difference's addition statements and a key for the Difference's deletion
-     *      statements.
+     * statements.
      */
     private JSONObject getDifferenceJson(Difference difference, String format) {
-        return new JSONObject().element("additions", getModelInFormat(difference.getAdditions(), format))
-                .element("deletions", getModelInFormat(difference.getDeletions(), format));
+        long start = System.currentTimeMillis();
+        try {
+            return new JSONObject().element("additions", getModelInFormat(difference.getAdditions(), format))
+                    .element("deletions", getModelInFormat(difference.getDeletions(), format));
+        } finally {
+            LOG.trace("getDifferenceJson took {}ms", System.currentTimeMillis() - start);
+        }
+    }
+
+    private String getDifferenceJsonString(Difference difference, String format) {
+        long start = System.currentTimeMillis();
+        try {
+            return "{ \"additions\": " + getModelInFormat(difference.getAdditions(), format) + ", \"deletions\": " + getModelInFormat(difference.getDeletions(), format) + "}";
+        } finally {
+            LOG.trace("getDifferenceJsonString took {}ms", System.currentTimeMillis() - start);
+        }
     }
 
     /**
@@ -1099,8 +1146,8 @@ public class CatalogRestImpl implements CatalogRest {
      * invalid, throws a 400 Response.
      *
      * @param sortIRI The sort property string to test.
-     * @param offset The offset for the paginated response.
-     * @param limit The limit of the paginated response.
+     * @param offset  The offset for the paginated response.
+     * @param limit   The limit of the paginated response.
      */
     private void validatePaginationParams(String sortIRI, int offset, int limit) {
         if (!SORT_RESOURCES.contains(sortIRI)) {
@@ -1112,10 +1159,10 @@ public class CatalogRestImpl implements CatalogRest {
     /**
      * Creates a Distribution object using the provided metadata strings. If the title is null, throws a 400 Response.
      *
-     * @param title The required title for the new Distribution.
+     * @param title       The required title for the new Distribution.
      * @param description The optional description for the new Distribution.
-     * @param format The optional format string for the new Distribution.
-     * @param accessURL The optional access URL for the new Distribution.
+     * @param format      The optional format string for the new Distribution.
+     * @param accessURL   The optional access URL for the new Distribution.
      * @param downloadURL The optional download URL for the Distribution.
      * @return The new Distribution if passed a title.
      */
@@ -1148,25 +1195,25 @@ public class CatalogRestImpl implements CatalogRest {
      * the passed JSON-LD does not contain the passed ID Resource defined as the correct type, throws a 400 Response.
      *
      * @param newThingJson The JSON-LD of the new Thing.
-     * @param thingId The ID Resource to confirm.
-     * @param factory The OrmFactory to use when creating the new Thing.
-     * @param <T> A class that extends Thing.
+     * @param thingId      The ID Resource to confirm.
+     * @param factory      The OrmFactory to use when creating the new Thing.
+     * @param <T>          A class that extends Thing.
      * @return The new Thing if the JSON-LD contains the correct ID Resource; throws a 400 otherwise.
      */
     private <T extends Thing> T getNewThing(String newThingJson, Resource thingId, OrmFactory<T> factory) {
         Model newThingModel = convertJsonld(newThingJson);
         return factory.getExisting(thingId, newThingModel).orElseThrow(() ->
-            ErrorUtils.sendError(factory.getTypeIRI().getLocalName() + " IDs must match", Response.Status.BAD_REQUEST));
+                ErrorUtils.sendError(factory.getTypeIRI().getLocalName() + " IDs must match", Response.Status.BAD_REQUEST));
     }
 
     /**
      * Creates a JSONObject representing the provided Conflict in the provided RDF format. Key "original" has value of
      * the serialized original Model of a conflict, key "left" has a value of an object with the additions and
      *
-     * @param conflict The Conflict to turn into a JSONObject
+     * @param conflict  The Conflict to turn into a JSONObject
      * @param rdfFormat A string representing the RDF format to return the statements in.
      * @return A JSONObject with a key for the Conflict's original Model, a key for the Conflict's left Difference,
-     *      and a key for the Conflict's right Difference.
+     * and a key for the Conflict's right Difference.
      */
     private JSONObject conflictToJson(Conflict conflict, String rdfFormat) {
         JSONObject object = new JSONObject();
@@ -1200,7 +1247,7 @@ public class CatalogRestImpl implements CatalogRest {
     /**
      * Converts a Model into a string of the provided RDF format, grouping statements by subject and predicate.
      *
-     * @param model The Model to convert.
+     * @param model  The Model to convert.
      * @param format A string representing the RDF format to return the Model in.
      * @return A String of the converted Model in the requested RDF format.
      */
@@ -1227,6 +1274,11 @@ public class CatalogRestImpl implements CatalogRest {
      * @return The JSONObject with the JSON-LD of the Thing entity from its Model.
      */
     private JSONObject thingToJsonObject(Thing thing, String type) {
-        return getTypedObjectFromJsonld(thingToJsonld(thing), type);
+        long start = System.currentTimeMillis();
+        try {
+            return getTypedObjectFromJsonld(thingToJsonld(thing), type);
+        } finally {
+            LOG.trace("thingToJsonObject took {}ms", System.currentTimeMillis() - start);
+        }
     }
 }
