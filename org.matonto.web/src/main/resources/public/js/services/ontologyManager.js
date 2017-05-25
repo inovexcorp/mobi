@@ -728,7 +728,7 @@
              * @returns {string[]} An array of all owl:Class entity IRI strings within the ontologies.
              */
             self.getClassIRIs = function(ontologies) {
-                return self.getClasses(ontologies);
+                return _.map(self.getClasses(ontologies), '@id');
             }
             /**
              * @ngdoc method
@@ -781,7 +781,7 @@
              * @returns {string[]} Returns an array of all the property IRIs associated with the provided class IRI.
              */
             self.getClassPropertyIRIs = function(ontologies, classIRI) {
-                return self.getClassProperties(ontologies, classIRI);
+                return _.map(self.getClassProperties(ontologies, classIRI), '@id');
             }
             /**
              * @ngdoc method
@@ -845,7 +845,7 @@
              * @returns {string[]} An array of all owl:ObjectProperty entity IRI strings within the ontologies.
              */
             self.getObjectPropertyIRIs = function(ontologies) {
-                return self.getObjectProperties(ontologies);
+                return _.map(self.getObjectProperties(ontologies), '@id');
             }
             /**
              * @ngdoc method
@@ -911,7 +911,7 @@
              * @returns {string[]} An array of all owl:DatatypeProperty entity IRI strings within the ontologies.
              */
             self.getDataTypePropertyIRIs = function(ontologies) {
-                return self.getDataTypeProperties(ontologies);
+                return _.map(self.getDataTypeProperties(ontologies),'@id');
             }
             /**
              * @ngdoc method
@@ -978,7 +978,7 @@
              * @returns {string[]} Returns an array of property IRIs not associated with a class.
              */
             self.getNoDomainPropertyIRIs = function(ontologies) {
-                return self.getNoDomainProperties(ontologies);
+                return _.map(self.getNoDomainProperties(ontologies), '@id');
             }
             /**
              * @ngdoc method
@@ -1042,7 +1042,7 @@
              * @returns {string[]} An array of all owl:AnnotationProperty entity IRI strings within the ontologies.
              */
             self.getAnnotationIRIs = function(ontologies) {
-                return self.getAnnotations(ontologies)
+                return _.map(self.getAnnotations(ontologies), '@id');
             }
             /**
              * @ngdoc method
@@ -1368,7 +1368,7 @@
              * @returns {string[]} An array of all skos:Concept entity IRI strings within the ontologies.
              */
             self.getConceptIRIs = function(ontologies) {
-                return self.getConcepts(ontologies);
+                return _.map(self.getConcepts(ontologies), '@id');
             }
             /**
              * @ngdoc method
@@ -1433,7 +1433,7 @@
              * @returns {string[]} An array of all skos:ConceptScheme entity IRI strings within the ontology.
              */
             self.getConceptSchemeIRIs = function(ontologies) {
-                return self.getConceptSchemes(ontologies);
+                return _.map(self.getConceptSchemes(ontologies), '@id');
             }
             /* Private helper functions */
             function getAllRecords(sortingOption = _.find(cm.sortOptions, {label: 'Title (desc)'})) {

@@ -467,7 +467,6 @@ function mockOntologyState() {
             this.selected = {
                 '@id': 'id',
                 matonto: {
-                    originalIri: 'iri'
                 }
             };
             this.annotationSelect = 'select';

@@ -40,7 +40,6 @@ describe('Ontology State Service', function() {
     var commitId = 'commitId';
     var ontologyId = 'ontologyId';
     var catalogId = 'catalogId';
-    var originalIRI = 'originalIRI';
     var anonymous = 'anonymous';
     var branch = {
         '@id': branchId
@@ -273,7 +272,6 @@ describe('Ontology State Service', function() {
             '@id': ontologyId,
             '@type': [prefixes.owl + 'Ontology'],
             matonto: {
-                originalIRI: originalIRI,
                 anonymous: anonymous
             }
         };
@@ -281,21 +279,18 @@ describe('Ontology State Service', function() {
             '@id': classId,
             '@type': [prefixes.owl + 'Class'],
             matonto: {
-                originalIRI: classId
             }
         };
         dataPropertyObj = {
             '@id': dataPropertyId,
             '@type': [prefixes.owl + 'DatatypeProperty'],
             matonto: {
-                originalIRI: dataPropertyId
             }
         };
         individualObj = {
             '@id': individualId,
             '@type': [prefixes.owl + 'NamedIndividual', classId],
             matonto: {
-                originalIRI: individualId
             }
         };
         ontology = [ontologyObj, classObj, dataPropertyObj];
@@ -1612,7 +1607,6 @@ describe('Ontology State Service', function() {
                     expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith([ontology, [{
                         '@id': 'ontologyId',
                         matonto: {
-                            originalIRI: 'ontologyId',
                             icon: 'fa-square-o',
                             imported: true
                         }
