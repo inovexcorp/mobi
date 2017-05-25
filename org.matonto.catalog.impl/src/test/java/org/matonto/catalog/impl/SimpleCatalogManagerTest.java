@@ -3125,9 +3125,11 @@ public class SimpleCatalogManagerTest {
             assertTrue(conn.getStatements(inProgressCommitId, null, null, inProgressCommitId).hasNext());
             assertTrue(conn.getStatements(branchId, headIRI, originalHead, branchId).hasNext());
 
-            manager.addCommit(distributedCatalogId, recordId, branchId, user, "Message");
+            Resource commitId = manager.addCommit(distributedCatalogId, recordId, branchId, user, "Message");
             assertFalse(conn.getStatements(inProgressCommitId, null, null, inProgressCommitId).hasNext());
             assertFalse(conn.getStatements(branchId, headIRI, originalHead, branchId).hasNext());
+            assertTrue(conn.getStatements(branchId, headIRI, commitId, branchId).hasNext());
+            assertTrue(conn.getStatements(commitId, null, null, commitId).hasNext());
         }
     }
 
@@ -3191,9 +3193,9 @@ public class SimpleCatalogManagerTest {
             assertTrue(conn.getStatements(inProgressCommitId, null, null, inProgressCommitId).hasNext());
             assertFalse(conn.getStatements(branchId, headIRI, null, branchId).hasNext());
 
-            manager.addCommit(distributedCatalogId, recordId, branchId, user, "Message");
+            Resource commitId = manager.addCommit(distributedCatalogId, recordId, branchId, user, "Message");
             assertFalse(conn.getStatements(inProgressCommitId, null, null, inProgressCommitId).hasNext());
-            assertTrue(conn.getStatements(branchId, headIRI, null, branchId).hasNext());
+            assertTrue(conn.getStatements(branchId, headIRI, commitId, branchId).hasNext());
         }
     }
 
@@ -3205,6 +3207,101 @@ public class SimpleCatalogManagerTest {
         User user = userFactory.createNew(vf.createIRI("http://matonto.org/test/user"));
 
         manager.addCommit(distributedCatalogId, recordId, branchId, user, "Message");
+    }
+
+    /* addCommit(Resource, Resource, Resource, User, String, Model, Model) */
+
+    @Test
+    public void testAddCommitWithChanges() throws Exception {
+        // Setup:
+        IRI headIRI = vf.createIRI(Branch.head_IRI);
+        Resource recordId = vf.createIRI("http://matonto.org/test/records#versionedRDF");
+        Resource branchId = vf.createIRI("http://matonto.org/test/branches#test");
+        Resource originalHead = vf.createIRI("http://matonto.org/test/commits#conflict2");
+        User user = userFactory.createNew(vf.createIRI("http://matonto.org/test/user"));
+        Statement statement1 = vf.createStatement(vf.createIRI("https://matonto.org/test"), vf.createIRI(DC_TITLE),
+                vf.createLiteral("Title"));
+        Statement statement2 = vf.createStatement(vf.createIRI("https://matonto.org/test"), vf.createIRI(DC_DESCRIPTION),
+                vf.createLiteral("Description"));
+        Statement statement3 = vf.createStatement(vf.createIRI("https://matonto.org/test"), vf.createIRI(DC_IDENTIFIER),
+                vf.createLiteral("Identifier"));
+        Statement existingDeleteStatement = vf.createStatement(vf.createIRI("http://matonto.org/test/delete"), vf.createIRI(DC_TITLE),
+                vf.createLiteral("Delete"));
+        Statement existingAddStatement = vf.createStatement(vf.createIRI("http://matonto.org/test/add"), vf.createIRI(DC_TITLE),
+                vf.createLiteral("Add"));
+        Model additions = mf.createModel(Stream.of(statement1, statement2, existingDeleteStatement).collect(Collectors.toSet()));
+        Model deletions = mf.createModel(Stream.of(statement2, statement3, existingAddStatement).collect(Collectors.toSet()));
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertTrue(conn.getStatements(branchId, headIRI, originalHead, branchId).hasNext());
+
+            Resource commitId = manager.addCommit(distributedCatalogId, recordId, branchId, user, "Message", additions, deletions);
+            assertFalse(conn.getStatements(branchId, headIRI, originalHead, branchId).hasNext());
+            assertTrue(conn.getStatements(branchId, headIRI, commitId, branchId).hasNext());
+            assertTrue(conn.getStatements(commitId, null, null, commitId).hasNext());
+        }
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testAddCommitWithChangesToBranchOfRecordInMissingCatalog() {
+        // Setup:
+        Resource recordId = vf.createIRI("http://matonto.org/test/records#versionedRDF");
+        Resource branchId = vf.createIRI("http://matonto.org/test/branches#test");
+        User user = userFactory.createNew(vf.createIRI("http://matonto.org/test/user/taken"));
+
+        manager.addCommit(differentId, recordId, branchId, user, "Message", mf.createModel(), mf.createModel());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testAddCommitWithChangesToBranchOfMissingRecord() {
+        // Setup:
+        Resource branchId = vf.createIRI("http://matonto.org/test/branches#test");
+        User user = userFactory.createNew(vf.createIRI("http://matonto.org/test/user/taken"));
+
+        manager.addCommit(distributedCatalogId, notPresentId, branchId, user, "Message", mf.createModel(), mf.createModel());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testAddCommitWithChangesToBranchOfWrongTypeOfRecord() {
+        // Setup:
+        Resource recordId = vf.createIRI("http://matonto.org/test/records#unversioned");
+        Resource branchId = vf.createIRI("http://matonto.org/test/branches#test");
+        User user = userFactory.createNew(vf.createIRI("http://matonto.org/test/user/taken"));
+
+        manager.addCommit(distributedCatalogId, recordId, branchId, user, "Message", mf.createModel(), mf.createModel());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testAddCommitWithChangesToBranchOfRecordInWrongCatalog() {
+        // Setup:
+        Resource recordId = vf.createIRI("http://matonto.org/test/records#versionedRDF");
+        Resource branchId = vf.createIRI("http://matonto.org/test/branches#test");
+        User user = userFactory.createNew(vf.createIRI("http://matonto.org/test/user/taken"));
+
+        manager.addCommit(localCatalogId, recordId, branchId, user, "Message", mf.createModel(), mf.createModel());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testAddCommitWithChangesToMissingBranch() {
+        // Setup:
+        Resource recordId = vf.createIRI("http://matonto.org/test/records#versionedRDF");
+        User user = userFactory.createNew(vf.createIRI("http://matonto.org/test/user/taken"));
+
+        manager.addCommit(distributedCatalogId, recordId, notPresentId, user, "Message", mf.createModel(), mf.createModel());
+    }
+
+    @Test
+    public void testAddCommitWithChangesToBranchWithNoHeadSet() {
+        // Setup:
+        IRI headIRI = vf.createIRI(Branch.head_IRI);
+        Resource recordId = vf.createIRI("http://matonto.org/test/records#versionedRDF");
+        Resource branchId = vf.createIRI("http://matonto.org/test/branches#test2");
+        User user = userFactory.createNew(vf.createIRI("http://matonto.org/test/user/taken"));
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertFalse(conn.getStatements(branchId, headIRI, null, branchId).hasNext());
+
+            Resource commitId = manager.addCommit(distributedCatalogId, recordId, branchId, user, "Message", mf.createModel(), mf.createModel());
+            assertTrue(conn.getStatements(branchId, headIRI, commitId, branchId).hasNext());
+        }
     }
 
     /* addInProgressCommit */

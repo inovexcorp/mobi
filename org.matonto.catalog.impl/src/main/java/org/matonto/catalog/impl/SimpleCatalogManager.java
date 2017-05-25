@@ -928,8 +928,8 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public <T extends Branch> Optional<T> getBranch(Resource catalogId, Resource versionedRDFRecordId, Resource branchId,
-                                          OrmFactory<T> factory) {
+    public <T extends Branch> Optional<T> getBranch(Resource catalogId, Resource versionedRDFRecordId,
+                                                    Resource branchId, OrmFactory<T> factory) {
         try (RepositoryConnection conn = repository.getConnection()) {
             VersionedRDFRecord record = getRecord(catalogId, versionedRDFRecordId, versionedRDFRecordFactory, conn);
             if (!record.getBranch_resource().contains(branchId)) {
@@ -1075,6 +1075,31 @@ public class SimpleCatalogManager implements CatalogManager {
         }
     }
 
+    @Override
+    public Resource addCommit(Resource catalogId, Resource versionedRDFRecordId, Resource branchId, User user,
+                              String message, Model additions, Model deletions) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            Branch branch = getBranch(catalogId, versionedRDFRecordId, branchId, branchFactory, conn);
+            Commit baseCommit = branch.getHead_resource().map(resource -> getObject(resource, commitFactory, conn))
+                    .orElse(null);
+            return addCommit(branch, user, message, additions, deletions, baseCommit, null, conn);
+        }
+    }
+
+    private Resource addCommit(Branch branch, User user, String message, Model additions, Model deletions,
+                           Commit baseCommit, Commit auxCommit, RepositoryConnection conn) {
+        InProgressCommit inProgressCommit = createInProgressCommit(user);
+        Resource additionsResource = getAdditionsResource(inProgressCommit);
+        Resource deletionsResource = getDeletionsResource(inProgressCommit);
+        conn.begin();
+        addChanges(additionsResource, deletionsResource, additions, conn);
+        addChanges(deletionsResource, additionsResource, deletions, conn);
+        conn.commit();
+        Commit newCommit = createCommit(inProgressCommit, message, baseCommit, auxCommit);
+        addCommit(branch, newCommit, conn);
+        return newCommit.getResource();
+    }
+
     private void addCommit(Branch branch, Commit commit, RepositoryConnection conn) {
         if (!resourceExists(commit.getResource(), conn)) {
             branch.setHead(commit);
@@ -1084,7 +1109,7 @@ public class SimpleCatalogManager implements CatalogManager {
             addObject(commit, conn);
             conn.commit();
         } else {
-            throw new IllegalArgumentException("Commit " + commit.getResource().stringValue() + " already exists.");
+            throw throwAlreadyExists(commit.getResource(), commitFactory);
         }
     }
 
@@ -1110,7 +1135,8 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public Optional<Commit> getCommit(Resource catalogId, Resource versionedRDFRecordId, Resource branchId, Resource commitId) {
+    public Optional<Commit> getCommit(Resource catalogId, Resource versionedRDFRecordId, Resource branchId,
+                                      Resource commitId) {
         try (RepositoryConnection conn = repository.getConnection()) {
             testBranchPath(catalogId, versionedRDFRecordId, branchId, conn);
             Branch branch = optObject(branchId, branchFactory, conn).orElseThrow(() ->
@@ -1137,7 +1163,8 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public Optional<InProgressCommit> getInProgressCommit(Resource catalogId, Resource versionedRDFRecordId, User user) {
+    public Optional<InProgressCommit> getInProgressCommit(Resource catalogId, Resource versionedRDFRecordId,
+                                                          User user) {
         try (RepositoryConnection conn = repository.getConnection()) {
             testRecordPath(catalogId, versionedRDFRecordId, versionedRDFRecordFactory.getTypeIRI(), conn);
             return getInProgressCommitIRI(versionedRDFRecordId, user.getResource(), conn).flatMap(resource ->
@@ -1357,20 +1384,11 @@ public class SimpleCatalogManager implements CatalogManager {
     public Resource mergeBranches(Resource catalogId, Resource versionedRDFRecordId, Resource sourceBranchId,
                               Resource targetBranchId, User user, Model additions, Model deletions) {
         try (RepositoryConnection conn = repository.getConnection()) {
-            InProgressCommit inProgressCommit = createInProgressCommit(user);
-            Resource additionsResource = getAdditionsResource(inProgressCommit);
-            Resource deletionsResource = getDeletionsResource(inProgressCommit);
             Branch sourceBranch = getBranch(catalogId, versionedRDFRecordId, sourceBranchId, branchFactory, conn);
             Branch targetBranch = getBranch(catalogId, versionedRDFRecordId, targetBranchId, branchFactory, conn);
-            conn.begin();
-            addChanges(additionsResource, deletionsResource, additions, conn);
-            addChanges(deletionsResource, additionsResource, deletions, conn);
-            conn.commit();
-            Commit newCommit = createCommit(inProgressCommit, getMergeMessage(sourceBranch, targetBranch),
+            return addCommit(targetBranch, user, getMergeMessage(sourceBranch, targetBranch), additions, deletions,
                     getObject(getHeadCommitIRI(targetBranch), commitFactory, conn),
-                    getObject(getHeadCommitIRI(sourceBranch), commitFactory, conn));
-            addCommit(targetBranch, newCommit, conn);
-            return newCommit.getResource();
+                    getObject(getHeadCommitIRI(sourceBranch), commitFactory, conn), conn);
         }
     }
 
@@ -1915,11 +1933,9 @@ public class SimpleCatalogManager implements CatalogManager {
                 + " could not be found");
     }
 
-    private <T extends Thing, S extends Thing> IllegalArgumentException throwDoesNotBelong(Resource child,
-                                                                                           OrmFactory<T> childFactory,
-                                                                                           Resource parent,
-                                                                                           OrmFactory<S> parentFactory)
-    {
+    private <T extends Thing, S extends Thing> IllegalArgumentException
+            throwDoesNotBelong(Resource child, OrmFactory<T> childFactory, Resource parent,
+                               OrmFactory<S> parentFactory) {
         return new IllegalArgumentException(childFactory.getTypeIRI().getLocalName() + " " + child.stringValue()
                 + " does not belong to " + parentFactory.getTypeIRI().getLocalName() + " " + parent.stringValue());
     }
