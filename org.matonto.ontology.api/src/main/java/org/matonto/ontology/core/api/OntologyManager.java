@@ -24,7 +24,6 @@ package org.matonto.ontology.core.api;
  */
 
 import org.matonto.ontology.core.utils.MatontoOntologyCreationException;
-import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
@@ -37,13 +36,6 @@ import java.util.Optional;
 import javax.annotation.Nonnull;
 
 public interface OntologyManager {
-
-    /**
-     * Returns the SesameTransformer used by the OntologyManager.
-     *
-     * @return the SesameTransformer used by the OntologyManager.
-     */
-    SesameTransformer getTransformer();
 
     /**
      * Creates a new Ontology Object using the provided OntologyId.

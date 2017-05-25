@@ -17,7 +17,6 @@ GRAPH <http://matonto.org/test/records#just-a-record>
         mcat:catalog <http://matonto.org/test/catalog-distributed> ;
         dc:title "Just a Record" ;
         dc:description "Description" ;
-        dc:identifier "Record" ;
         dc:issued "2016-01-01T00:00:00Z"^^xsd:dateTime ;
         dc:modified "2016-03-02T00:00:00Z"^^xsd:dateTime ;
         dc:publisher matuser:tester .
@@ -29,7 +28,6 @@ GRAPH <http://matonto.org/test/records#unique>
         mcat:catalog <http://matonto.org/test/catalog-local> ;
         dc:title "Unique" ;
         dc:description "Description" ;
-        dc:identifier "Unique" ;
         dc:issued "2016-01-01T00:00:00Z"^^xsd:dateTime ;
         dc:modified "2016-03-02T00:00:00Z"^^xsd:dateTime ;
         dc:publisher matuser:tester .
@@ -41,7 +39,6 @@ GRAPH <http://matonto.org/test/records#dataset>
         mcat:catalog <http://matonto.org/test/catalog-distributed> ;
         dc:title "Dataset" ;
         dc:description "Description" ;
-        dc:identifier "Dataset" ;
         dc:issued "2016-01-01T00:00:00Z"^^xsd:dateTime ;
         dc:modified "2016-03-02T00:00:00Z"^^xsd:dateTime ;
         dc:publisher matuser:tester .
@@ -53,10 +50,24 @@ GRAPH <http://matonto.org/test/records#update>
         mcat:catalog <http://matonto.org/test/catalog-distributed> ;
         dc:title "Update" ;
         dc:description "Description" ;
-        dc:identifier "Identifier" ;
         dc:issued "2015-01-01T00:00:00Z"^^xsd:dateTime ;
         dc:modified "2016-12-02T00:00:00Z"^^xsd:dateTime ;
         dc:publisher matuser:tester .
+}
+
+GRAPH <http://matonto.org/test/records#update-missing>
+{
+    <http://matonto.org/test/records#update-missing> a mcat:VersionedRDFRecord, mcat:VersionedRecord, mcat:Record ;
+        mcat:catalog <http://matonto.org/test/catalog-distributed> ;
+        dc:title "Update Missing Version, Latest Version, Branch, and Master Branch" ;
+        dc:issued "2015-01-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-12-02T00:00:00Z"^^xsd:dateTime ;
+        dc:publisher matuser:tester ;
+        mcat:version <http://matonto.org/test/records#not-present> ;
+        mcat:latestVersion <http://matonto.org/test/records#not-present> ;
+        mcat:branch <http://matonto.org/test/records#not-present> ;
+        mcat:branch <http://matonto.org/test/branches#test-missing> ;
+        mcat:masterBranch <http://matonto.org/test/records#not-present> .
 }
 
 GRAPH <http://matonto.org/test/records#remove>
@@ -65,10 +76,10 @@ GRAPH <http://matonto.org/test/records#remove>
         mcat:catalog <http://matonto.org/test/catalog-distributed> ;
         dc:title "Remove" ;
         dc:description "Description" ;
-        dc:identifier "Identifier" ;
         dc:issued "2016-02-01T00:00:00Z"^^xsd:dateTime ;
         dc:modified "2016-02-02T00:00:00Z"^^xsd:dateTime ;
-        dc:publisher matuser:tester .
+        dc:publisher matuser:tester ;
+        mcat:version <http://matonto.org/test/tags#test-missing> .
 }
 
 GRAPH <http://matonto.org/test/records#unversioned>
@@ -77,11 +88,21 @@ GRAPH <http://matonto.org/test/records#unversioned>
         mcat:catalog <http://matonto.org/test/catalog-distributed> ;
         dc:title "Unversioned" ;
         dc:description "Description" ;
-        dc:identifier "Identifier" ;
         dc:issued "2016-03-01T00:00:00Z"^^xsd:dateTime ;
         dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime ;
         dc:publisher matuser:tester ;
         mcat:unversionedDistribution <http://matonto.org/test/distributions#test> .
+}
+
+GRAPH <http://matonto.org/test/records#unversioned-missing>
+{
+    <http://matonto.org/test/records#unversioned-missing> a mcat:UnversionedRecord, mcat:Record ;
+        mcat:catalog <http://matonto.org/test/catalog-distributed> ;
+        dc:title "Unversioned Missing Distribution" ;
+        dc:issued "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime ;
+        dc:publisher matuser:tester ;
+        mcat:unversionedDistribution <http://matonto.org/test/records#not-present> .
 }
 
 GRAPH <http://matonto.org/test/records#versionedRDF>
@@ -90,12 +111,18 @@ GRAPH <http://matonto.org/test/records#versionedRDF>
         mcat:catalog <http://matonto.org/test/catalog-distributed> ;
         dc:title "Versioned RDF" ;
         dc:description "Description" ;
-        dc:identifier "Identifier" ;
         dc:issued "2016-03-01T00:00:00Z"^^xsd:dateTime ;
         dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime ;
         dc:publisher matuser:tester ;
+        mcat:version <http://matonto.org/test/versions#test> ;
+        mcat:version <http://matonto.org/test/versions#test-missing> ;
+        mcat:version <http://matonto.org/test/tags#test> ;
+        mcat:version <http://matonto.org/test/tags#noCommit> ;
+        mcat:latestVersion <http://matonto.org/test/tags#test> ;
+        mcat:branch <http://matonto.org/test/branches#test2> ;
         mcat:branch <http://matonto.org/test/branches#test> ;
         mcat:branch <http://matonto.org/test/branches#master> ;
+        mcat:branch <http://matonto.org/test/user-branches#test> ;
         mcat:masterBranch <http://matonto.org/test/branches#master> .
 }
 
@@ -105,7 +132,6 @@ GRAPH <http://matonto.org/test/records#get>
         mcat:catalog <http://matonto.org/test/catalog-distributed> ;
         dc:title "Get" ;
         dc:description "Description" ;
-        dc:identifier "Identifier" ;
         dc:issued "2016-03-01T00:00:00Z"^^xsd:dateTime ;
         dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime ;
         dc:publisher matuser:tester ;
@@ -116,6 +142,18 @@ GRAPH <http://matonto.org/test/records#get>
         mcat:latestVersion <http://matonto.org/test/versions#test> .
 }
 
+GRAPH <http://matonto.org/test/records#get-missing>
+{
+    <http://matonto.org/test/records#get-missing> a mcat:VersionedRecord, mcat:Record ;
+        mcat:catalog <http://matonto.org/test/catalog-distributed> ;
+        dc:title "Get Missing Version" ;
+        dc:issued "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime ;
+        dc:publisher matuser:tester ;
+        mcat:version <http://matonto.org/test/records#not-present> ;
+        mcat:latestVersion <http://matonto.org/test/records#not-present> .
+}
+
 GRAPH <http://matonto.org/test/versions#test>
 {
     <http://matonto.org/test/versions#test> a mcat:Version ;
@@ -123,6 +161,15 @@ GRAPH <http://matonto.org/test/versions#test>
         dc:issued "2016-03-01T00:00:00Z"^^xsd:dateTime ;
         dc:modified "2016-11-11T00:00:00Z"^^xsd:dateTime ;
         mcat:versionedDistribution <http://matonto.org/test/distributions#test2> .
+}
+
+GRAPH <http://matonto.org/test/versions#test-missing>
+{
+    <http://matonto.org/test/versions#test-missing> a mcat:Version ;
+        dc:title "Version" ;
+        dc:issued "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-11-11T00:00:00Z"^^xsd:dateTime ;
+        mcat:versionedDistribution <http://matonto.org/test/records#not-present> .
 }
 
 GRAPH <http://matonto.org/test/versions#test2>
@@ -193,6 +240,15 @@ GRAPH <http://matonto.org/test/branches#test>
         mcat:head <http://matonto.org/test/commits#conflict2> .
 }
 
+GRAPH <http://matonto.org/test/branches#test-missing>
+{
+    <http://matonto.org/test/branches#test-missing> a mcat:Branch ;
+        dc:title "Branch Missing Commit" ;
+        dc:issued "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime ;
+        mcat:head <http://matonto.org/test/records#not-present> .
+}
+
 GRAPH <http://matonto.org/test/branches#test2>
 {
     <http://matonto.org/test/branches#test2> a mcat:Branch ;
@@ -204,13 +260,26 @@ GRAPH <http://matonto.org/test/branches#test2>
 GRAPH <http://matonto.org/test/in-progress-commits#test>
 {
     <http://matonto.org/test/in-progress-commits#test> a mcat:InProgressCommit, mcat:Commit ;
-        dc:title "In progress commit" ;
+        dc:title "In Progress Commit" ;
         prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
         prov:generated <http://matonto.org/test/revisions#in-revision> ;
         prov:wasAssociatedWith <http://matonto.org/test/user/taken> ;
         mcat:onVersionedRDFRecord <http://matonto.org/test/records#versionedRDF> .
 
     <http://matonto.org/test/revisions#in-revision> a mcat:Revision ;
+        mcat:additions <http://matonto.org/test/in-additions#test> ;
+        mcat:deletions <http://matonto.org/test/in-deletions#test> .
+}
+
+GRAPH <http://matonto.org/test/in-progress-commits#test2>
+{
+    <http://matonto.org/test/in-progress-commits#test2> a mcat:InProgressCommit, mcat:Commit ;
+        dc:title "In Progress Commit" ;
+        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        prov:generated <http://matonto.org/test/revisions#in-revision> ;
+        prov:wasAssociatedWith <http://matonto.org/test/user/taken> .
+
+    <http://matonto.org/test/revisions#in-revision2> a mcat:Revision ;
         mcat:additions <http://matonto.org/test/in-additions#test> ;
         mcat:deletions <http://matonto.org/test/in-deletions#test> .
 }
@@ -254,6 +323,23 @@ GRAPH <http://matonto.org/test/tags#test>
         dc:issued "2016-03-01T00:00:00Z"^^xsd:dateTime ;
         dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime ;
         mcat:commit <http://matonto.org/test/commits#conflict2> .
+}
+
+GRAPH <http://matonto.org/test/tags#test-missing>
+{
+    <http://matonto.org/test/tags#test> a mcat:Tag, mcat:Version ;
+        dc:title "Tag Missing Commit" ;
+        dc:issued "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime ;
+        mcat:commit <http://matonto.org/test/records#not-present> .
+}
+
+GRAPH <http://matonto.org/test/tags#noCommit>
+{
+    <http://matonto.org/test/tags#noCommit> a mcat:Tag, mcat:Version ;
+        dc:title "Tag" ;
+        dc:issued "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime .
 }
 
 GRAPH <http://matonto.org/test/commits#test0>
