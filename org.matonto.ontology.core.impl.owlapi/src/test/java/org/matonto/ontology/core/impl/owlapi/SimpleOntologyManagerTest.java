@@ -32,8 +32,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import javax.cache.Cache;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -45,9 +43,7 @@ import org.matonto.catalog.api.ontologies.mcat.Catalog;
 import org.matonto.catalog.api.ontologies.mcat.CatalogFactory;
 import org.matonto.catalog.api.ontologies.mcat.Commit;
 import org.matonto.catalog.api.ontologies.mcat.CommitFactory;
-import org.matonto.catalog.api.ontologies.mcat.OntologyRecord;
 import org.matonto.catalog.api.ontologies.mcat.OntologyRecordFactory;
-import org.matonto.exception.MatOntoException;
 import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.ontology.utils.cache.OntologyCache;
@@ -92,6 +88,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.cache.Cache;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(SimpleOntologyValues.class)
@@ -181,7 +178,9 @@ public class SimpleOntologyManagerTest {
         Catalog catalog = catalogFactory.createNew(catalogIRI);
         when(catalogManager.getLocalCatalogIRI()).thenReturn(catalogIRI);
         when(catalogManager.getLocalCatalog()).thenReturn(catalog);
-        when(catalogManager.getRecord(catalogIRI, missingIRI, ontologyRecordFactory)).thenReturn(Optional.empty());
+        doThrow(new IllegalArgumentException()).when(catalogManager).getMasterBranch(catalogIRI, missingIRI);
+        doThrow(new IllegalArgumentException()).when(catalogManager).getBranch(catalogIRI, recordIRI, missingIRI, branchFactory);
+        doThrow(new IllegalArgumentException()).when(catalogManager).getCommit(catalogIRI, recordIRI, branchIRI, missingIRI);
 
         when(sesameTransformer.sesameModel(any(Model.class))).thenReturn(new org.openrdf.model.impl.LinkedHashModel());
 
@@ -209,16 +208,9 @@ public class SimpleOntologyManagerTest {
         manager.setModelFactory(modelFactory);
         manager.setSesameTransformer(sesameTransformer);
         manager.setCatalogManager(catalogManager);
-        manager.setOntologyRecordFactory(ontologyRecordFactory);
         manager.setBranchFactory(branchFactory);
         manager.setRepositoryManager(repoManager);
         manager.setCacheManager(cacheManager);
-    }
-
-    @Test
-    public void testGetTransformer() throws Exception {
-        SesameTransformer result = manager.getTransformer();
-        assertEquals(sesameTransformer, result);
     }
 
     @Test
@@ -229,73 +221,46 @@ public class SimpleOntologyManagerTest {
 
     // Testing retrieveOntology(Resource recordId)
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void testRetrieveOntologyWithMissingIdentifier() {
-        Optional<Ontology> result = manager.retrieveOntology(missingIRI);
-        assertFalse(result.isPresent());
+        manager.retrieveOntology(missingIRI);
     }
 
     @Test(expected = IllegalStateException.class)
     public void testRetrieveOntologyWithMasterBranchNotSet() {
-        OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
-
-        when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
-
-        manager.retrieveOntology(recordIRI);
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testRetrieveOntologyWithMissingMasterBranch() {
-        OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
-        record.setMasterBranch(branchFactory.createNew(branchIRI));
-
-        when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
-        when(catalogManager.getBranch(branchIRI, branchFactory)).thenReturn(Optional.empty());
+        // Setup:
+        doThrow(new IllegalStateException()).when(catalogManager).getMasterBranch(catalogIRI, recordIRI);
 
         manager.retrieveOntology(recordIRI);
     }
 
     @Test(expected = IllegalStateException.class)
     public void testRetrieveOntologyWithHeadCommitNotSet() {
-        OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
-        record.setMasterBranch(branchFactory.createNew(branchIRI));
-
+        // Setup:
         Branch branch = branchFactory.createNew(branchIRI);
-
-        when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
-        when(catalogManager.getBranch(branchIRI, branchFactory)).thenReturn(Optional.of(branch));
+        when(catalogManager.getMasterBranch(catalogIRI, recordIRI)).thenReturn(branch);
 
         manager.retrieveOntology(recordIRI);
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testRetrieveOntologyWhenCompiledResourceCannotBeFound() {
-        OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
-        record.setMasterBranch(branchFactory.createNew(branchIRI));
-
+        // Setup:
         Branch branch = branchFactory.createNew(branchIRI);
         branch.setHead(commitFactory.createNew(commitIRI));
-
-        when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
-        when(catalogManager.getBranch(branchIRI, branchFactory)).thenReturn(Optional.of(branch));
-        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(Optional.empty());
+        when(catalogManager.getMasterBranch(catalogIRI, recordIRI)).thenReturn(branch);
+        doThrow(new IllegalArgumentException()).when(catalogManager).getCompiledResource(commitIRI);
 
         manager.retrieveOntology(recordIRI);
     }
 
     @Test
     public void testRetrieveOntologyWithCacheMiss() {
-        OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
-        record.setMasterBranch(branchFactory.createNew(branchIRI));
-
+        // Setup
         Branch branch = branchFactory.createNew(branchIRI);
         branch.setHead(commitFactory.createNew(commitIRI));
-
-        Model model = modelFactory.createModel();
-
-        when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
-        when(catalogManager.getBranch(branchIRI, branchFactory)).thenReturn(Optional.of(branch));
-        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(Optional.of(model));
+        when(catalogManager.getMasterBranch(catalogIRI, recordIRI)).thenReturn(branch);
+        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(modelFactory.createModel());
 
         Optional<Ontology> optionalOntology = manager.retrieveOntology(recordIRI);
         assertTrue(optionalOntology.isPresent());
@@ -307,19 +272,12 @@ public class SimpleOntologyManagerTest {
 
     @Test
     public void testRetrieveOntologyWithCacheHit() {
-        OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
-        record.setMasterBranch(branchFactory.createNew(branchIRI));
-
+        // Setup:
         Branch branch = branchFactory.createNew(branchIRI);
         branch.setHead(commitFactory.createNew(commitIRI));
-
-        Model model = modelFactory.createModel();
-
         String key = OntologyCache.generateKey(recordIRI.stringValue(), branchIRI.stringValue(), commitIRI.stringValue());
-
-        when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
-        when(catalogManager.getBranch(branchIRI, branchFactory)).thenReturn(Optional.of(branch));
-        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(Optional.of(model));
+        when(catalogManager.getMasterBranch(catalogIRI, recordIRI)).thenReturn(branch);
+        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(modelFactory.createModel());
         when(mockCache.containsKey(key)).thenReturn(true);
         when(mockCache.get(key)).thenReturn(ontology);
 
@@ -332,83 +290,55 @@ public class SimpleOntologyManagerTest {
 
     // Testing retrieveOntology(Resource recordId, Resource branchId)
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void testRetrieveOntologyUsingABranchWithMissingIdentifier() throws Exception {
-        Optional<Ontology> result = manager.retrieveOntology(missingIRI, branchIRI);
-        assertFalse(result.isPresent());
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testRetrieveOntologyUsingABranchWithNoBranches() throws Exception {
-        OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
-
-        when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
-
-        Optional<Ontology> optionalOntology = manager.retrieveOntology(recordIRI, missingIRI);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testRetrieveOntologyUsingABranchNotForThisRecord() throws Exception {
-        OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
-        record.setBranch(Stream.of(branchFactory.createNew(branchIRI)).collect(Collectors.toSet()));
-
-        when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
-
-        Optional<Ontology> optionalOntology = manager.retrieveOntology(recordIRI, missingIRI);
+        manager.retrieveOntology(recordIRI, missingIRI);
     }
 
     @Test(expected = IllegalStateException.class)
     public void testRetrieveOntologyUsingABranchThatCannotBeRetrieved() {
-        OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
-        record.setBranch(Stream.of(branchFactory.createNew(branchIRI)).collect(Collectors.toSet()));
+        // Setup:
+        doThrow(new IllegalStateException()).when(catalogManager).getBranch(catalogIRI, recordIRI, missingIRI, branchFactory);
 
-        when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
-        when(catalogManager.getBranch(branchIRI, branchFactory)).thenReturn(Optional.empty());
+        manager.retrieveOntology(recordIRI, missingIRI);
+    }
 
-        manager.retrieveOntology(recordIRI, branchIRI);
+    @Test
+    public void testRetrieveOntologyUsingAMissingBranch() {
+        // Setup:
+        when(catalogManager.getBranch(catalogIRI, recordIRI, branchIRI, branchFactory)).thenReturn(Optional.empty());
+
+        Optional<Ontology> result = manager.retrieveOntology(recordIRI, branchIRI);
+        assertFalse(result.isPresent());
     }
 
     @Test(expected = IllegalStateException.class)
     public void testRetrieveOntologyUsingABranchWithHeadCommitNotSet() {
-        OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
-        record.setBranch(Stream.of(branchFactory.createNew(branchIRI)).collect(Collectors.toSet()));
-
+        // Setup:
         Branch branch = branchFactory.createNew(branchIRI);
-
-        when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
-        when(catalogManager.getBranch(branchIRI, branchFactory)).thenReturn(Optional.of(branch));
+        when(catalogManager.getBranch(catalogIRI, recordIRI, branchIRI, branchFactory)).thenReturn(Optional.of(branch));
 
         manager.retrieveOntology(recordIRI, branchIRI);
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testRetrieveOntologyUsingABranchWhenCompiledResourceCannotBeFound() {
-        OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
-        record.setBranch(Stream.of(branchFactory.createNew(branchIRI)).collect(Collectors.toSet()));
-
+        // Setup:
         Branch branch = branchFactory.createNew(branchIRI);
         branch.setHead(commitFactory.createNew(commitIRI));
-
-        when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
-        when(catalogManager.getBranch(branchIRI, branchFactory)).thenReturn(Optional.of(branch));
-        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(Optional.empty());
+        when(catalogManager.getBranch(catalogIRI, recordIRI, branchIRI, branchFactory)).thenReturn(Optional.of(branch));
+        doThrow(new IllegalArgumentException()).when(catalogManager).getCompiledResource(commitIRI);
 
         manager.retrieveOntology(recordIRI, branchIRI);
     }
 
     @Test
     public void testRetrieveOntologyUsingABranchCacheMiss() {
-        OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
-        record.setBranch(Stream.of(branchFactory.createNew(branchIRI)).collect(Collectors.toSet()));
-
+        // Setup:
         Branch branch = branchFactory.createNew(branchIRI);
         branch.setHead(commitFactory.createNew(commitIRI));
-
-        Model model = modelFactory.createModel();
-
-        when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
-        when(catalogManager.getBranch(branchIRI, branchFactory)).thenReturn(Optional.of(branch));
-        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(Optional.of(model));
+        when(catalogManager.getBranch(catalogIRI, recordIRI, branchIRI, branchFactory)).thenReturn(Optional.of(branch));
+        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(modelFactory.createModel());
 
         Optional<Ontology> optionalOntology = manager.retrieveOntology(recordIRI, branchIRI);
         assertTrue(optionalOntology.isPresent());
@@ -420,19 +350,12 @@ public class SimpleOntologyManagerTest {
 
     @Test
     public void testRetrieveOntologyUsingABranchCacheHit() {
-        OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
-        record.setBranch(Stream.of(branchFactory.createNew(branchIRI)).collect(Collectors.toSet()));
-
+        // Setup:
         Branch branch = branchFactory.createNew(branchIRI);
         branch.setHead(commitFactory.createNew(commitIRI));
-
-        Model model = modelFactory.createModel();
-
         String key = OntologyCache.generateKey(recordIRI.stringValue(), branchIRI.stringValue(), commitIRI.stringValue());
-
-        when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
-        when(catalogManager.getBranch(branchIRI, branchFactory)).thenReturn(Optional.of(branch));
-        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(Optional.of(model));
+        when(catalogManager.getBranch(catalogIRI, recordIRI, branchIRI, branchFactory)).thenReturn(Optional.of(branch));
+        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(modelFactory.createModel());
         when(mockCache.containsKey(key)).thenReturn(true);
         when(mockCache.get(key)).thenReturn(ontology);
 
@@ -445,122 +368,44 @@ public class SimpleOntologyManagerTest {
 
     // Testing retrieveOntology(Resource recordId, Resource branchId, Resource commitId)
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void testRetrieveOntologyUsingACommitWithMissingIdentifier() throws Exception {
-        Optional<Ontology> result = manager.retrieveOntology(missingIRI, branchIRI, commitIRI);
-        assertFalse(result.isPresent());
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testRetrieveOntologyUsingACommitWithNoBranches() throws Exception {
-        OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
-
-        when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
-
-        manager.retrieveOntology(recordIRI, branchIRI, commitIRI);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testRetrieveOntologyUsingACommitWithABranchNotForThisRecord() throws Exception {
-        OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
-        record.setBranch(Stream.of(branchFactory.createNew(branchIRI)).collect(Collectors.toSet()));
-
-        when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
-
-        manager.retrieveOntology(recordIRI, missingIRI, commitIRI);
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testRetrieveOntologyUsingACommitWithABranchThatCannotBeRetrieved() {
-        OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
-        record.setBranch(Stream.of(branchFactory.createNew(branchIRI)).collect(Collectors.toSet()));
-
-        when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
-        when(catalogManager.getBranch(branchIRI, branchFactory)).thenReturn(Optional.empty());
-
-        manager.retrieveOntology(recordIRI, branchIRI, commitIRI);
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testRetrieveOntologyUsingACommitWithHeadCommitNotSetOnBranch() {
-        OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
-        record.setBranch(Stream.of(branchFactory.createNew(branchIRI)).collect(Collectors.toSet()));
-
-        Branch branch = branchFactory.createNew(branchIRI);
-
-        when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
-        when(catalogManager.getBranch(branchIRI, branchFactory)).thenReturn(Optional.of(branch));
-
-        manager.retrieveOntology(recordIRI, branchIRI, commitIRI);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testRetrieveOntologyUsingACommitNotPartOfTheBranch() throws Exception {
-        OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
-        record.setBranch(Stream.of(branchFactory.createNew(branchIRI)).collect(Collectors.toSet()));
-
-        Branch branch = branchFactory.createNew(branchIRI);
-        branch.setHead(commitFactory.createNew(commitIRI));
-
-        when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
-        when(catalogManager.getBranch(branchIRI, branchFactory)).thenReturn(Optional.of(branch));
-        when(catalogManager.getCommitChain(commitIRI)).thenReturn(Stream.of(commitIRI).collect(Collectors.toList()));
-
         manager.retrieveOntology(recordIRI, branchIRI, missingIRI);
     }
 
     @Test(expected = IllegalStateException.class)
-    public void testRetrieveOntologyUsingACommitNotRetrievableButPartOfTheBranch() {
-        OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
-        record.setBranch(Stream.of(branchFactory.createNew(branchIRI)).collect(Collectors.toSet()));
+    public void testRetrieveOntologyUsingACommitThatCannotBeRetrieved() {
+        // Setup:
+        doThrow(new IllegalStateException()).when(catalogManager).getCommit(catalogIRI,recordIRI, branchIRI, missingIRI);
 
-        Branch branch = branchFactory.createNew(branchIRI);
-        branch.setHead(commitFactory.createNew(commitIRI));
-
-        when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
-        when(catalogManager.getBranch(branchIRI, branchFactory)).thenReturn(Optional.of(branch));
-        when(catalogManager.getCommitChain(commitIRI)).thenReturn(Stream.of(commitIRI).collect(Collectors.toList()));
-        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(Optional.empty());
-
-        manager.retrieveOntology(recordIRI, branchIRI, commitIRI);
+        manager.retrieveOntology(recordIRI, branchIRI, missingIRI);
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
+    public void testRetrieveOntologyUsingAMissingCommit() {
+        // Setup:
+        when(catalogManager.getCommit(catalogIRI,recordIRI, branchIRI, commitIRI)).thenReturn(Optional.empty());
+
+        Optional<Ontology> result = manager.retrieveOntology(recordIRI, branchIRI, commitIRI);
+        assertFalse(result.isPresent());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
     public void testRetrieveOntologyUsingACommitWhenCompiledResourceCannotBeFound() {
-        OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
-        record.setBranch(Stream.of(branchFactory.createNew(branchIRI)).collect(Collectors.toSet()));
-
+        // Setup:
         Commit commit = commitFactory.createNew(commitIRI);
-
-        Branch branch = branchFactory.createNew(branchIRI);
-        branch.setHead(commit);
-
-        when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
-        when(catalogManager.getBranch(branchIRI, branchFactory)).thenReturn(Optional.of(branch));
-        when(catalogManager.getCommitChain(commitIRI)).thenReturn(Stream.of(commitIRI).collect(Collectors.toList()));
-        when(catalogManager.getCommit(commitIRI, commitFactory)).thenReturn(Optional.of(commit));
-        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(Optional.empty());
+        when(catalogManager.getCommit(catalogIRI, recordIRI, branchIRI, commitIRI)).thenReturn(Optional.of(commit));
+        doThrow(new IllegalArgumentException()).when(catalogManager).getCompiledResource(commitIRI);
 
         manager.retrieveOntology(recordIRI, branchIRI, commitIRI);
     }
 
     @Test
     public void testRetrieveOntologyUsingACommitCacheMiss() {
-        OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
-        record.setBranch(Stream.of(branchFactory.createNew(branchIRI)).collect(Collectors.toSet()));
-
+        // Setup:
         Commit commit = commitFactory.createNew(commitIRI);
-
-        Branch branch = branchFactory.createNew(branchIRI);
-        branch.setHead(commit);
-
-        Model model = modelFactory.createModel();
-
-        when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
-        when(catalogManager.getBranch(branchIRI, branchFactory)).thenReturn(Optional.of(branch));
-        when(catalogManager.getCommitChain(commitIRI)).thenReturn(Stream.of(commitIRI).collect(Collectors.toList()));
-        when(catalogManager.getCommit(commitIRI, commitFactory)).thenReturn(Optional.of(commit));
-        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(Optional.of(model));
+        when(catalogManager.getCommit(catalogIRI, recordIRI, branchIRI, commitIRI)).thenReturn(Optional.of(commit));
+        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(modelFactory.createModel());
 
         Optional<Ontology> optionalOntology = manager.retrieveOntology(recordIRI, branchIRI, commitIRI);
         assertTrue(optionalOntology.isPresent());
@@ -572,23 +417,11 @@ public class SimpleOntologyManagerTest {
 
     @Test
     public void testRetrieveOntologyUsingACommitCacheHit() {
-        OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
-        record.setBranch(Stream.of(branchFactory.createNew(branchIRI)).collect(Collectors.toSet()));
-
+        // Setup:
         Commit commit = commitFactory.createNew(commitIRI);
-
-        Branch branch = branchFactory.createNew(branchIRI);
-        branch.setHead(commit);
-
-        Model model = modelFactory.createModel();
-
         String key = OntologyCache.generateKey(recordIRI.stringValue(), branchIRI.stringValue(), commitIRI.stringValue());
-
-        when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
-        when(catalogManager.getBranch(branchIRI, branchFactory)).thenReturn(Optional.of(branch));
-        when(catalogManager.getCommitChain(commitIRI)).thenReturn(Stream.of(commitIRI).collect(Collectors.toList()));
-        when(catalogManager.getCommit(commitIRI, commitFactory)).thenReturn(Optional.of(commit));
-        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(Optional.of(model));
+        when(catalogManager.getCommit(catalogIRI, recordIRI, branchIRI, commitIRI)).thenReturn(Optional.of(commit));
+        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(modelFactory.createModel());
         when(mockCache.containsKey(key)).thenReturn(true);
         when(mockCache.get(key)).thenReturn(ontology);
 
@@ -601,43 +434,51 @@ public class SimpleOntologyManagerTest {
     // Testing deleteOntology(Resource recordId)
 
     @Test(expected = IllegalArgumentException.class)
-    public void testDeleteMissingOntologyRecord() {
-        when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.empty());
+    public void testDeleteOntologyRecordWithMissingIdentifier() {
+        doThrow(new IllegalArgumentException()).when(catalogManager).removeRecord(catalogIRI, missingIRI);
 
-        try {
-            manager.deleteOntology(recordIRI);
-        } catch (IllegalArgumentException e) {
-            String expectedMessage = "The OntologyRecord could not be retrieved.";
-            assertEquals(expectedMessage, e.getMessage());
-            throw e;
-        }
+        manager.deleteOntology(missingIRI);
     }
 
     @Test
     public void testDeleteOntology() throws Exception {
-        OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
-
+        // Setup:
         Mockito.doNothing().when(mockCache).forEach(Mockito.any());
-        when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
 
         manager.deleteOntology(recordIRI);
-
         verify(catalogManager).removeRecord(catalogIRI, recordIRI);
         verify(mockCache).forEach(Mockito.any());
     }
 
+    /* Testing deleteOntologyBranch(Resource recordId, Resource branchId) */
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testDeleteOntologyBranchWithMissingIdentifier() {
+        // Setup:
+        doThrow(new IllegalArgumentException()).when(catalogManager).removeBranch(catalogIRI, recordIRI, missingIRI);
+
+        manager.deleteOntologyBranch(recordIRI, missingIRI);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testDeleteOntologyBranchWithInvalidCommit() {
+        // Setup:
+        doThrow(new IllegalStateException()).when(catalogManager).removeBranch(catalogIRI, recordIRI, missingIRI);
+
+        manager.deleteOntologyBranch(recordIRI, missingIRI);
+    }
+
     @Test
     public void testDeleteOntologyBranch() throws Exception {
-        OntologyRecord record = ontologyRecordFactory.createNew(recordIRI);
-
+        // Setup:
         Mockito.doNothing().when(mockCache).forEach(Mockito.any());
-        when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
 
         manager.deleteOntologyBranch(recordIRI, branchIRI);
-
-        verify(catalogManager).removeBranch(branchIRI, recordIRI);
+        verify(catalogManager).removeBranch(catalogIRI, recordIRI, branchIRI);
         verify(mockCache).forEach(Mockito.any());
     }
+
+    /* Testing getSubClassesOf(Ontology ontology) */
 
     @Test
     public void testGetSubClassesOf() throws Exception {

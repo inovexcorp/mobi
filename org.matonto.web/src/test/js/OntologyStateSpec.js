@@ -423,10 +423,10 @@ describe('Ontology State Service', function() {
                 });
             });
             describe('and getInProgressCommit is rejected', function() {
-                describe('with message "User has no InProgressCommit"', function() {
+                describe('with message "InProgressCommit could not be found"', function() {
                     var getOntologyDeferred;
                     beforeEach(function() {
-                        getDeferred.reject('User has no InProgressCommit');
+                        getDeferred.reject('InProgressCommit could not be found');
                         getOntologyDeferred = $q.defer();
                         ontologyManagerSvc.getOntology.and.returnValue(getOntologyDeferred.promise);
                     });
@@ -1103,12 +1103,12 @@ describe('Ontology State Service', function() {
             });
         });
         describe('when getInProgressCommit rejects', function() {
-            describe('and the error message is "User has no InProgressCommit"', function() {
+            describe('and the error message is "InProgressCommit could not be found"', function() {
                 var createDeferred;
                 beforeEach(function() {
                     createDeferred = $q.defer();
                     catalogManagerSvc.createInProgressCommit.and.returnValue(createDeferred.promise);
-                    getDeferred.reject('User has no InProgressCommit');
+                    getDeferred.reject('InProgressCommit could not be found');
                 });
                 describe('and createInProgressCommit resolves', function() {
                     var updateDeferred;
@@ -1156,7 +1156,7 @@ describe('Ontology State Service', function() {
                     scope.$apply();
                 });
             });
-            it('and the error message is not "User has no InProgressCommit"', function() {
+            it('and the error message is not "InProgressCommit could not be found"', function() {
                 getDeferred.reject(error);
                 ontologyStateSvc.saveChanges(recordId, differenceObj)
                     .then(function() {
