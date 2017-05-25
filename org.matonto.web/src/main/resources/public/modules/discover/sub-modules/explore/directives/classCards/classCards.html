@@ -36,7 +36,7 @@
                     <md-card-content>
                         <p class="overview">{{item.classDescription}}</p>
                         <p class="text-muted">Defined in {{item.ontologyRecordTitle}}</p>
-                        <em class="text-muted">Examples: <span class="example" ng-repeat="example in item.classExamples track by $index">{{example}}</em>
+                        <em class="text-muted">Examples: <span class="example" ng-repeat="example in item.classExamples track by $index">{{example}}</span></em>
                     </md-card-content>
                     <md-card-actions layout="row" layout-align="end center">
                         <md-button ng-click="dvm.exploreData(item)">Explore Data</md-button>

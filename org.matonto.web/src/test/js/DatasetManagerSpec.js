@@ -239,7 +239,7 @@ describe('Dataset Manager service', function() {
                 sortOption: {
                     field: prefixes.dcterms + 'title'
                 }
-            }
+            };
             expect(datasetManagerSvc.getDatasetRecords).toHaveBeenCalledWith(config);
             expect(datasetManagerSvc.datasetRecords).toEqual([datasetRecord]);
         });
@@ -251,7 +251,7 @@ describe('Dataset Manager service', function() {
                 sortOption: {
                     field: prefixes.dcterms + 'title'
                 }
-            }
+            };
             expect(datasetManagerSvc.getDatasetRecords).toHaveBeenCalledWith(config);
             expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');
         });

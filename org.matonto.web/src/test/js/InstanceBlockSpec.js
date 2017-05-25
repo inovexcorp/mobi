@@ -44,12 +44,6 @@ describe('Instance Block directive', function() {
         controller = element.controller('instanceBlock');
     });
 
-    function flushAndVerify() {
-        $httpBackend.flush();
-        $httpBackend.verifyNoOutstandingExpectation();
-        $httpBackend.verifyNoOutstandingRequest();
-    }
-
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
@@ -97,14 +91,14 @@ describe('Instance Block directive', function() {
                 it('succeeds', function() {
                     $httpBackend.expectGET(nextLink).respond(200, [{}]);
                     controller.getPage('next');
-                    flushAndVerify();
+                    flushAndVerify($httpBackend);
                     expect(exploreSvc.createPagedResultsObject).toHaveBeenCalledWith(jasmine.objectContaining({status: 200, data: [{}]}));
                     expect(discoverStateSvc.explore.instanceDetails).toEqual(jasmine.objectContaining({prop: 'paged', currentPage: 1}));
                 });
                 it('fails', function() {
                     $httpBackend.expectGET(nextLink).respond(400, null, null, 'error');
                     controller.getPage('next');
-                    flushAndVerify();
+                    flushAndVerify($httpBackend);
                     expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');
                 });
             });
@@ -112,14 +106,14 @@ describe('Instance Block directive', function() {
                 it('succeeds', function() {
                     $httpBackend.expectGET(prevLink).respond(200, [{}]);
                     controller.getPage('prev');
-                    flushAndVerify();
+                    flushAndVerify($httpBackend);
                     expect(exploreSvc.createPagedResultsObject).toHaveBeenCalledWith(jasmine.objectContaining({status: 200, data: [{}]}));
                     expect(discoverStateSvc.explore.instanceDetails).toEqual(jasmine.objectContaining({prop: 'paged', currentPage: -1}));
                 });
                 it('fails', function() {
                     $httpBackend.expectGET(prevLink).respond(400, null, null, 'error');
                     controller.getPage('prev');
-                    flushAndVerify();
+                    flushAndVerify($httpBackend);
                     expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');
                 });
             });

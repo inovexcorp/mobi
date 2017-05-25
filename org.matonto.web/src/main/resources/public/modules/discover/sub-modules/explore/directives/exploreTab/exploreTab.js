@@ -41,7 +41,8 @@
          * @requires discoverState.service:discoverStateService
          *
          * @description
-         * HTML contents in the explore tab.
+         * HTML contents in the explore tab which contains either the class or instance cards
+         * depending on the step you are currently viewing.
          */
         .directive('exploreTab', exploreTab);
         

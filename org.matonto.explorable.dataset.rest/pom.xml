@@ -125,7 +125,7 @@
                         <Bundle-Name>MatOnto Explorable Dataset REST Services</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
-                            org.matonto.explorable-dataset.rest
+                            org.matonto.explorable.dataset.rest
                         </Export-Package>
                         <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>

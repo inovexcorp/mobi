@@ -42,7 +42,7 @@
          * @requires datasetManager.service:datasetManagerService
          *
          * @description
-         * HTML contents in the dataset select which provides a list of all datasets.
+         * HTML contents in the dataset select which provides a dropdown select of all datasets.
          */
         .directive('datasetSelect', datasetSelect);
         

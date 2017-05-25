@@ -35,12 +35,6 @@ describe('Explore Service', function() {
             utilSvc = _utilService_;
         });
     });
-
-    function flushAndVerify() {
-        $httpBackend.flush();
-        $httpBackend.verifyNoOutstandingExpectation();
-        $httpBackend.verifyNoOutstandingRequest();
-    }
     
     describe('getClassDetails calls the correct functions when GET /matontorest/explorable-datasets/{recordId}/class-details', function() {
         it('succeeds', function() {
@@ -52,7 +46,7 @@ describe('Explore Service', function() {
                 }, function() {
                     fail('Should have been resolved.');
                 });
-            flushAndVerify();
+            flushAndVerify($httpBackend);
         });
         it('fails', function() {
             $httpBackend.expectGET('/matontorest/explorable-datasets/recordId/class-details').respond(400, null, null, 'error');
@@ -62,7 +56,7 @@ describe('Explore Service', function() {
                 }, function(response) {
                     expect(response).toBe('error');
                 });
-            flushAndVerify();
+            flushAndVerify($httpBackend);
         });
     });
     
@@ -80,7 +74,7 @@ describe('Explore Service', function() {
                 }, function() {
                     fail('Should have been resolved.');
                 });
-             flushAndVerify();
+             flushAndVerify($httpBackend);
         });
         it('fails', function() {
             $httpBackend.expectGET('/matontorest/explorable-datasets/recordId/classes/classId/instance-details?limit=99&offset=0').respond(400, null, null, 'error');
@@ -90,7 +84,7 @@ describe('Explore Service', function() {
                 }, function(response) {
                     expect(response).toBe('error');
                 });
-             flushAndVerify();
+             flushAndVerify($httpBackend);
         });
     });
     
@@ -98,10 +92,11 @@ describe('Explore Service', function() {
         var response;
         var nextLink = 'http://example.com/next';
         var prevLink = 'http://example.com/prev';
+        var headers = jasmine.createSpy('headers');
         beforeEach(function() {
             response = {
                 data: ['data'],
-                headers: jasmine.createSpy('headers').and.returnValue({
+                headers: headers.and.returnValue({
                     'x-total-count': 10,
                     link: 'link'
                 })
@@ -118,7 +113,7 @@ describe('Explore Service', function() {
             expect(result.links.prev).toBe(prevLink);
         });
         it('does not have link', function() {
-            response.headers = jasmine.createSpy('headers').and.returnValue({
+            response.headers = headers.and.returnValue({
                 'x-total-count': 10
             });
             var result = exploreSvc.createPagedResultsObject(response);

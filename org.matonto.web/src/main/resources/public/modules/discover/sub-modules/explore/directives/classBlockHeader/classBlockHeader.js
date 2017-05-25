@@ -43,7 +43,8 @@
          * @requires util.service:utilService
          *
          * @description
-         * HTML contents in the class block header.
+         * HTML contents in the class block header which provides a dropdown select to allow users to
+         * pick a dataset to determine what class details are to be shown on the page.
          */
         .directive('classBlockHeader', classBlockHeader);
         

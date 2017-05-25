@@ -30,7 +30,8 @@
          *
          * @description
          * The `instanceBlock` module only provides the `instanceBlock` directive which creates
-         * the instance block.
+         * the instance block which shows the users instance cards associated with the selected
+         * class.
          */
         .module('instanceBlock', [])
         /**
@@ -44,7 +45,9 @@
          * @requires util.service:utilService
          *
          * @description
-         * HTML contents in the instance block.
+         * HTML contents in the instance block which shows the users the instances associated
+         * with the class they have selected. They have a bread crumb trail to get back to early
+         * pages and pagination controls at the bottom of the page.
          */
         .directive('instanceBlock', instanceBlock);
         

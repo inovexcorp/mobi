@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Data Select directive', function() {
+describe('Dataset Select directive', function() {
     var $compile, scope, element, controller;
 
     beforeEach(function() {

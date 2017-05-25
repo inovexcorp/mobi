@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Class Cards directive', function() {
-    var $compile, scope, element, discoverStateSvc, exploreSvc, utilSvc, $q;
+    var $compile, scope, element, discoverStateSvc, exploreSvc, utilSvc, $q, controller;
 
     beforeEach(function() {
         module('templates');
@@ -55,6 +55,7 @@ describe('Class Cards directive', function() {
         }];
         element = $compile(angular.element('<class-cards></class-cards>'))(scope);
         scope.$digest();
+        controller = element.controller('classCards');
     });
 
     describe('replaces the element with the correct html', function() {
@@ -66,37 +67,37 @@ describe('Class Cards directive', function() {
         it('with a .rows-container.full-height', function() {
             expect(element.querySelectorAll('.rows-container.full-height').length).toBe(1);
         });
-        it('with a .row', function() {
+        it('with .rows', function() {
             expect(element.querySelectorAll('.row').length).toBe(2);
         });
-        it('with a .col-xs-4.card-container', function() {
+        it('with .col-xs-4.card-containers', function() {
             expect(element.querySelectorAll('.col-xs-4.card-container').length).toBe(4);
         });
-        it('with a md-card', function() {
+        it('with md-cards', function() {
             expect(element.find('md-card').length).toBe(4);
         });
-        it('with a md-card-title', function() {
+        it('with md-card-titles', function() {
             expect(element.find('md-card-title').length).toBe(4);
         });
-        it('with a md-card-title-text', function() {
+        it('with md-card-title-texts', function() {
             expect(element.find('md-card-title-text').length).toBe(4);
         });
-        it('with a .card-header', function() {
+        it('with .card-headers', function() {
             expect(element.querySelectorAll('.card-header').length).toBe(4);
         });
-        it('with a .md-headline.text', function() {
+        it('with .md-headline.texts', function() {
             expect(element.querySelectorAll('.md-headline.text').length).toBe(4);
         });
-        it('with a .badge', function() {
+        it('with .badges', function() {
             expect(element.querySelectorAll('.badge').length).toBe(4);
         });
-        it('with a md-card-content', function() {
+        it('with md-card-contents', function() {
             expect(element.find('md-card-content').length).toBe(4);
         });
-        it('with a .overview', function() {
+        it('with .overviews', function() {
             expect(element.querySelectorAll('.overview').length).toBe(4);
         });
-        it('with a .text-muted', function() {
+        it('with .text-muteds', function() {
             expect(element.querySelectorAll('.text-muted').length).toBe(8);
         });
     });
@@ -114,12 +115,9 @@ describe('Class Cards directive', function() {
             instancesCount: 1,
             classTitle: 'z'
         }]];
-        expect(angular.copy(element.controller('classCards').chunks)).toEqual(expected);
+        expect(angular.copy(controller.chunks)).toEqual(expected);
     });
     describe('controller methods', function() {
-        beforeEach(function() {
-            controller = element.controller('classCards');
-        });
         describe('exploreData should set the correct variables when getClassInstances is', function() {
             it('resolved', function() {
                 var data = [{prop: 'data'}];

@@ -229,7 +229,7 @@
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
-            <artifactId>explorable-dataset.rest</artifactId>
+            <artifactId>explorable.dataset.rest</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>

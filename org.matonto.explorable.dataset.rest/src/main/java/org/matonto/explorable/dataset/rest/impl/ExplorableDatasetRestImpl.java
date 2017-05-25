@@ -43,7 +43,6 @@ import org.matonto.query.api.BindingSet;
 import org.matonto.query.api.TupleQuery;
 import org.matonto.rdf.api.BNode;
 import org.matonto.rdf.api.IRI;
-import org.matonto.rdf.api.Literal;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.Statement;
@@ -325,8 +324,9 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
      * @return the binding value that is found
      */
     private String getValueFromBindingSet(BindingSet bindingSet, String first, String second, String fallback) {
-        String firstStr = bindingSet.getValue(first).orElse(factory.createLiteral("")).stringValue();
-        String secondStr = bindingSet.getValue(second).orElse(factory.createLiteral(fallback)).stringValue();
+        String firstStr = bindingSet.getValue(first).flatMap(value -> Optional.of(value.stringValue())).orElse("");
+        String secondStr = bindingSet.getValue(second).flatMap(value -> Optional.of(value.stringValue()))
+                .orElse(fallback);
         return !firstStr.isEmpty() ? firstStr : secondStr;
     }
 
@@ -409,8 +409,8 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
         List<InstanceDetails> instances = new ArrayList<>();
         results.forEach(instance -> {
             InstanceDetails instanceDetails = new InstanceDetails();
-            String instanceIRI = (instance.getValue(INSTANCE_BINDING).isPresent() ? instance.getValue(INSTANCE_BINDING)
-                    .get().stringValue() : "");
+            String instanceIRI = instance.getValue(INSTANCE_BINDING).flatMap(value -> Optional.of(value.stringValue()))
+                    .orElse("");
             instanceDetails.setInstanceIRI(instanceIRI);
             instanceDetails.setTitle(getValueFromBindingSet(instance, LABEL_BINDING, TITLE_BINDING,
                     splitCamelCase(factory.createIRI(instanceIRI).getLocalName())));

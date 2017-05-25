@@ -2,7 +2,7 @@ package org.matonto.explorable.dataset.rest.jaxb;
 
 /*-
  * #%L
- * org.matonto.explorable-dataset.rest
+ * org.matonto.explorable.dataset.rest
  * $Id:$
  * $HeadURL:$
  * %%

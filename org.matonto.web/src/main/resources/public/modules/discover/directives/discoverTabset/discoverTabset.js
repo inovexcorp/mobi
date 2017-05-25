@@ -41,7 +41,7 @@
          * @requires discoverState.service:discoverStateService
          *
          * @description
-         * HTML contents in the discover tabset.
+         * HTML contents in the discover tabset which contains the explore and query tabs.
          */
         .directive('discoverTabset', discoverTabset);
         

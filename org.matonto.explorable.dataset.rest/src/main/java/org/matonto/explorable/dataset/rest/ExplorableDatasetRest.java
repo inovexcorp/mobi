@@ -59,7 +59,7 @@ public interface ExplorableDatasetRest {
                              @PathParam("recordIRI") String recordIRI);
 
     /**
-     * Retrieves all the instance details associated with classes found in ontologies linked to a
+     * Retrieves all the instance details associated with a specific class found in the ontologies linked to a
      * {@link org.matonto.dataset.ontology.dataset.Dataset} in the local
      * {@link org.matonto.catalog.api.ontologies.mcat.Catalog} in a JSON array. Can optionally be paged if passed limit
      * and offset. Can optionally be sorted in ascending or descending order based on the instance details title.

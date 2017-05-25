@@ -945,3 +945,9 @@ function mockExplore() {
         });
     });
 }
+
+function flushAndVerify($httpBackend) {
+    $httpBackend.flush();
+    $httpBackend.verifyNoOutstandingExpectation();
+    $httpBackend.verifyNoOutstandingRequest();
+}

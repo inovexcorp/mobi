@@ -41,7 +41,8 @@
          * @requires discoverState.service:discoverStateService
          *
          * @description
-         * HTML contents in the instance block header.
+         * HTML contents in the instance block header which shows users a bread crumb trail to get to earlier
+         * pages.
          */
         .directive('instanceBlockHeader', instanceBlockHeader);
         

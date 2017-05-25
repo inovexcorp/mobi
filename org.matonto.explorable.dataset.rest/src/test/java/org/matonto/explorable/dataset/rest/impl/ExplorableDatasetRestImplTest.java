@@ -2,7 +2,7 @@ package org.matonto.explorable.dataset.rest.impl;
 
 /*-
  * #%L
- * org.matonto.explorable-dataset.rest
+ * org.matonto.explorable.dataset.rest
  * $Id:$
  * $HeadURL:$
  * %%
@@ -31,6 +31,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 import net.sf.json.JSONArray;
+import org.apache.commons.io.IOUtils;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.dataset.api.DatasetConnection;
@@ -238,6 +239,19 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
         JSONArray responseArray = JSONArray.fromObject(response.readEntity(String.class));
         assertEquals(responseArray.size(), 13);
         assertEquals(response.getHeaders().get("X-Total-Count").get(0), "13");
+    }
+
+    @Test
+    public void getInstanceDetailsDataTest() throws Exception {
+        String otherClassIdStr = "http://matonto.org/ontologies/uhtc/CrystalStructure";
+        JSONArray expected = JSONArray.fromObject(IOUtils.toString(getClass()
+                .getResourceAsStream("/expected-instance-details.json")));
+        Response response = target().path("explorable-datasets/" + encode(recordIdStr) + "/classes/"
+                + encode(otherClassIdStr) + "/instance-details").request().get();
+        assertEquals(response.getStatus(), 200);
+        JSONArray responseArray = JSONArray.fromObject(response.readEntity(String.class));
+        assertEquals(responseArray, expected);
+        assertEquals(response.getHeaders().get("X-Total-Count").get(0), "4");
     }
 
     @Test

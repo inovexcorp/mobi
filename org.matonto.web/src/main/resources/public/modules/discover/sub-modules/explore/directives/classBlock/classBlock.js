@@ -41,7 +41,8 @@
          * @requires discoverState.service:discoverStateService
          *
          * @description
-         * HTML contents in the class block.
+         * HTML contents in the class block which contains the class details associatd with
+         * a selected dataset.
          */
         .directive('classBlock', classBlock);
         

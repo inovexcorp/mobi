@@ -61,7 +61,7 @@ describe('Discover State Service', function() {
                 prev: 'prev'
             },
             total: 1
-        }
+        };
         discoverStateSvc.resetPagedInstanceDetails();
         expect(discoverStateSvc.explore.instanceDetails).toEqual({
             currentPage: 0,
