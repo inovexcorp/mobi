@@ -6,8 +6,10 @@ WHERE {
     ?example a ?classIRI .
     OPTIONAL {
         ?example dcterms:title ?title .
+        FILTER(lang(?title) = "" || langMatches(lang(?title), "EN"))
     }
     OPTIONAL {
         ?example rdfs:label ?label .
+        FILTER(lang(?label) = "" || langMatches(lang(?label), "EN"))
     }
 } LIMIT 3

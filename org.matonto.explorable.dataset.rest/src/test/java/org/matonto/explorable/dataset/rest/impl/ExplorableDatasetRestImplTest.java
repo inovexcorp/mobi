@@ -90,13 +90,13 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
 
     private Repository repository;
     private RepositoryConnection conn;
-
-    private String recordIdStr;
     private Resource recordId;
     private DatasetRecord record;
     private String commitId;
     private Model compiledModel;
-    private String classIdStr;
+
+    private static final String RECORD_ID_STR = "https://matonto.org/records#90075db8-e0b1-45b8-9f9e-1eda496ebcc5";
+    private static final String CLASS_ID_STR = "http://matonto.org/ontologies/uhtc/Material";
 
     @Mock
     private DatasetManager datasetManager;
@@ -131,11 +131,8 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
         datasetRecordFactory.setValueConverterRegistry(vcr);
         vcr.registerValueConverter(datasetRecordFactory);
 
-        recordIdStr = "https://matonto.org/records#90075db8-e0b1-45b8-9f9e-1eda496ebcc5";
-        recordId = vf.createIRI(recordIdStr);
+        recordId = vf.createIRI(RECORD_ID_STR);
         record = datasetRecordFactory.createNew(recordId);
-
-        classIdStr = "http://matonto.org/ontologies/uhtc/Material";
 
         String ontologyRecordId = "https://matonto.org/records/0";
         String branchId = "https://matonto.org/branches/0";
@@ -178,7 +175,7 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void getClassDetailsTest() {
-        Response response = target().path("explorable-datasets/" + encode(recordIdStr) + "/class-details").request()
+        Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/class-details").request()
                 .get();
         assertEquals(response.getStatus(), 200);
         JSONArray responseArray = JSONArray.fromObject(response.readEntity(String.class));
@@ -188,7 +185,7 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
     @Test
     public void getClassDetailsWhenClassesNotFound() {
         when(catalogManager.getCompiledResource(vf.createIRI(commitId))).thenReturn(Optional.empty());
-        Response response = target().path("explorable-datasets/" + encode(recordIdStr) + "/class-details").request()
+        Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/class-details").request()
                 .get();
         assertEquals(response.getStatus(), 200);
         JSONArray responseArray = JSONArray.fromObject(response.readEntity(String.class));
@@ -200,7 +197,7 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
         InputStream partialData = getClass().getResourceAsStream("/partial-compiled-resource.trig");
         Model partialModel = Values.matontoModel(Rio.parse(partialData, "", RDFFormat.TRIG));
         when(catalogManager.getCompiledResource(vf.createIRI(commitId))).thenReturn(Optional.of(partialModel));
-        Response response = target().path("explorable-datasets/" + encode(recordIdStr) + "/class-details").request()
+        Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/class-details").request()
                 .get();
         assertEquals(response.getStatus(), 200);
         JSONArray responseArray = JSONArray.fromObject(response.readEntity(String.class));
@@ -210,7 +207,7 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
     @Test
     public void getClassDetailsWithEmptyDatasetRecordTest() {
         when(datasetManager.getDatasetRecord(recordId)).thenReturn(Optional.empty());
-        Response response = target().path("explorable-datasets/" + encode(recordIdStr) + "/class-details").request()
+        Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/class-details").request()
                 .get();
         assertEquals(response.getStatus(), 400);
     }
@@ -218,7 +215,7 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
     @Test
     public void getClassDetailsWithNoDatasetConnectionTestIllegalArgumentThrown() {
         when(datasetManager.getConnection(recordId)).thenThrow(new IllegalArgumentException());
-        Response response = target().path("explorable-datasets/" + encode(recordIdStr) + "/class-details").request()
+        Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/class-details").request()
                 .get();
         assertEquals(response.getStatus(), 400);
     }
@@ -226,15 +223,15 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
     @Test
     public void getClassDetailsWithNoDatasetConnectionTestIllegalStateThrown() {
         when(datasetManager.getConnection(recordId)).thenThrow(new IllegalStateException());
-        Response response = target().path("explorable-datasets/" + encode(recordIdStr) + "/class-details").request()
+        Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/class-details").request()
                 .get();
         assertEquals(response.getStatus(), 500);
     }
 
     @Test
     public void getInstanceDetailsTest() {
-        Response response = target().path("explorable-datasets/" + encode(recordIdStr) + "/classes/"
-                + encode(classIdStr) + "/instance-details").request().get();
+        Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
+                + encode(CLASS_ID_STR) + "/instance-details").request().get();
         assertEquals(response.getStatus(), 200);
         JSONArray responseArray = JSONArray.fromObject(response.readEntity(String.class));
         assertEquals(responseArray.size(), 13);
@@ -243,11 +240,11 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void getInstanceDetailsDataTest() throws Exception {
-        String otherClassIdStr = "http://matonto.org/ontologies/uhtc/CrystalStructure";
+        String otherCLASS_ID_STR = "http://matonto.org/ontologies/uhtc/CrystalStructure";
         JSONArray expected = JSONArray.fromObject(IOUtils.toString(getClass()
                 .getResourceAsStream("/expected-instance-details.json")));
-        Response response = target().path("explorable-datasets/" + encode(recordIdStr) + "/classes/"
-                + encode(otherClassIdStr) + "/instance-details").request().get();
+        Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
+                + encode(otherCLASS_ID_STR) + "/instance-details").request().get();
         assertEquals(response.getStatus(), 200);
         JSONArray responseArray = JSONArray.fromObject(response.readEntity(String.class));
         assertEquals(responseArray, expected);
@@ -257,22 +254,22 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
     @Test
     public void getInstanceDetailsWithNoDatasetConnectionTestIllegalArgumentThrown() {
         when(datasetManager.getConnection(recordId)).thenThrow(new IllegalArgumentException());
-        Response response = target().path("explorable-datasets/" + encode(recordIdStr) + "/classes/"
-                + encode(classIdStr) + "/instance-details").request().get();
+        Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
+                + encode(CLASS_ID_STR) + "/instance-details").request().get();
         assertEquals(response.getStatus(), 400);
     }
 
     @Test
     public void getInstanceDetailsWithNoDatasetConnectionTestIllegalStateThrown() {
         when(datasetManager.getConnection(recordId)).thenThrow(new IllegalStateException());
-        Response response = target().path("explorable-datasets/" + encode(recordIdStr) + "/classes/"
-                + encode(classIdStr) + "/instance-details").request().get();
+        Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
+                + encode(CLASS_ID_STR) + "/instance-details").request().get();
         assertEquals(response.getStatus(), 500);
     }
 
     @Test
     public void getInstanceDetailsWithOffsetAndLimitTest() {
-        String pathString = "explorable-datasets/" + encode(recordIdStr) + "/classes/" + encode(classIdStr)
+        String pathString = "explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/" + encode(CLASS_ID_STR)
                 + "/instance-details";
         Response response = target().path(pathString).queryParam("offset", 0).queryParam("limit", 13).request()
                 .get();
@@ -285,7 +282,7 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void getInstanceDetailsWithLinksTest() {
-        String pathString = "explorable-datasets/" + encode(recordIdStr) + "/classes/" + encode(classIdStr)
+        String pathString = "explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/" + encode(CLASS_ID_STR)
                 + "/instance-details";
         Response response = target().path(pathString).queryParam("offset", 3).queryParam("limit", 3).request()
                 .get();
@@ -303,7 +300,7 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void getInstanceDetailsWithNextLinkTest() {
-        String pathString = "explorable-datasets/" + encode(recordIdStr) + "/classes/" + encode(classIdStr)
+        String pathString = "explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/" + encode(CLASS_ID_STR)
                 + "/instance-details";
         Response response = target().path(pathString).queryParam("offset", 0).queryParam("limit", 3).request()
                 .get();
@@ -318,7 +315,7 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void getInstanceDetailsWithPrevLinkTest() {
-        String pathString = "explorable-datasets/" + encode(recordIdStr) + "/classes/" + encode(classIdStr)
+        String pathString = "explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/" + encode(CLASS_ID_STR)
                 + "/instance-details";
         Response response = target().path(pathString).queryParam("offset", 12).queryParam("limit", 3).request()
                 .get();
@@ -333,22 +330,22 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void getInstanceDetailsWithNegativeOffsetTest() {
-        Response response = target().path("explorable-datasets/" + encode(recordIdStr) + "/classes/"
-                + encode(classIdStr) + "/instance-details").queryParam("offset", -1).request().get();
+        Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
+                + encode(CLASS_ID_STR) + "/instance-details").queryParam("offset", -1).request().get();
         assertEquals(response.getStatus(), 400);
     }
 
     @Test
     public void getInstanceDetailsWithNegativeLimitTest() {
-        Response response = target().path("explorable-datasets/" + encode(recordIdStr) + "/classes/"
-                + encode(classIdStr) + "/instance-details").queryParam("limit", -1).request().get();
+        Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
+                + encode(CLASS_ID_STR) + "/instance-details").queryParam("limit", -1).request().get();
         assertEquals(response.getStatus(), 400);
     }
 
     @Test
     public void getInstanceDetailsWithOffsetThatIsTooLargeTest() {
-        Response response = target().path("explorable-datasets/" + encode(recordIdStr) + "/classes/"
-                + encode(classIdStr) + "/instance-details").queryParam("offset", 14).request().get();
+        Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
+                + encode(CLASS_ID_STR) + "/instance-details").queryParam("offset", 14).request().get();
         assertEquals(response.getStatus(), 400);
     }
 }

@@ -78,22 +78,26 @@
 		<http://matonto.org/ontologies/uhtc/density> 6.56E0 .
 
 	<http://matonto.org/data/uhtc/crystalstructure/Cubic> a <http://matonto.org/ontologies/uhtc/CrystalStructure> ;
-	    <http://www.w3.org/2000/01/rdf-schema#label> "Label" ;
+	    <http://www.w3.org/2000/01/rdf-schema#label> "French Label"@fr ;
+	    <http://www.w3.org/2000/01/rdf-schema#label> "Label"@en ;
 	    <http://www.w3.org/2000/01/rdf-schema#comment> "Comment" ;
 		<http://purl.org/dc/terms/title> "Title" ;
 		<http://purl.org/dc/terms/description> "Description" .
 
 	<http://matonto.org/data/uhtc/crystalstructure/FCC> a <http://matonto.org/ontologies/uhtc/CrystalStructure> ;
-	    <http://www.w3.org/2000/01/rdf-schema#comment> "Comment" ;
+	    <http://www.w3.org/2000/01/rdf-schema#comment> "French Comment"@fr ;
+	    <http://www.w3.org/2000/01/rdf-schema#comment> "Comment"@en ;
 		<http://purl.org/dc/terms/title> "Title" ;
 		<http://purl.org/dc/terms/description> "Description" .
 
 	<http://matonto.org/data/uhtc/crystalstructure/Hexagonal> a <http://matonto.org/ontologies/uhtc/CrystalStructure> ;
 	    <http://www.w3.org/2000/01/rdf-schema#label> "Label" ;
 		<http://purl.org/dc/terms/title> "Title" ;
-		<http://purl.org/dc/terms/description> "Description" .
+		<http://purl.org/dc/terms/description> "French Description"@fr ;
+		<http://purl.org/dc/terms/description> "Description"@en .
 
 	<http://matonto.org/data/uhtc/crystalstructure/Polymorphic> a <http://matonto.org/ontologies/uhtc/CrystalStructure> ;
-		<http://purl.org/dc/terms/title> "Title" ;
+	    <http://purl.org/dc/terms/title> "French Title"@fr ;
+		<http://purl.org/dc/terms/title> "Title"@en ;
 		<http://purl.org/dc/terms/description> "Description" .
 }

@@ -6,14 +6,18 @@ WHERE {
     ?inst a ?classIRI .
     OPTIONAL {
         ?inst dcterms:title ?title .
+        FILTER(lang(?title) = "" || langMatches(lang(?title), "EN"))
     }
     OPTIONAL {
         ?inst dcterms:description ?description .
+        FILTER(lang(?description) = "" || langMatches(lang(?description), "EN"))
     }
     OPTIONAL {
         ?inst rdfs:label ?label .
+        FILTER(lang(?label) = "" || langMatches(lang(?label), "EN"))
     }
     OPTIONAL {
         ?inst rdfs:comment ?comment .
+        FILTER(lang(?comment) = "" || langMatches(lang(?comment), "EN"))
     }
 }
