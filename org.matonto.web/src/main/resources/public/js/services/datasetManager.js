@@ -39,17 +39,20 @@
          * @requires $http
          * @requires $q
          * @requires util.service:utilService
+         * @requires prefixes.service:prefixes
+         * @requires discoverState.service:discoverStateService
          *
          * @description
          * `datasetManagerService` is a service that provides access to the MatOnto Dataset REST endpoints.
          */
         .service('datasetManagerService', datasetManagerService);
 
-        datasetManagerService.$inject = ['$http', '$q', 'utilService', 'prefixes'];
+        datasetManagerService.$inject = ['$http', '$q', 'utilService', 'prefixes', 'discoverStateService'];
 
-        function datasetManagerService($http, $q, utilService, prefixes) {
+        function datasetManagerService($http, $q, utilService, prefixes, discoverStateService) {
             var self = this,
                 util = utilService,
+                ds = discoverStateService,
                 prefix = '/matontorest/datasets';
 
             /**
@@ -171,6 +174,7 @@
                     config = {params: {force}};
                 $http.delete(prefix + '/' + encodeURIComponent(datasetRecordIRI), config)
                     .then(response => {
+                        ds.cleanUpOnDatasetDelete(datasetRecordIRI);
                         _.remove(self.datasetRecords, {'@id': datasetRecordIRI});
                         deferred.resolve();
                     }, error => util.onError(error, deferred));
@@ -196,7 +200,10 @@
                 var deferred = $q.defer(),
                     config = {params: {force}};
                 $http.delete(prefix + '/' + encodeURIComponent(datasetRecordIRI) + '/data', config)
-                    .then(response => deferred.resolve(), error => util.onError(error, deferred));
+                    .then(response => {
+                        ds.cleanUpOnDatasetClear(datasetRecordIRI);
+                        deferred.resolve();
+                    }, error => util.onError(error, deferred));
                 return deferred.promise;
             }
 

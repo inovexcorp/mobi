@@ -74,4 +74,52 @@ describe('Discover State Service', function() {
             total: 0
         });
     });
+    
+    describe('cleanUpOnDatasetDelete should reset the proper variables if the datasetIRI', function() {
+        beforeEach(function() {
+            spyOn(discoverStateSvc, 'resetPagedInstanceDetails');
+            discoverStateSvc.explore = {
+                breadcrumbs: ['Classes', 'instance'],
+                classDetails: [{}],
+                recordId: 'recordId'
+            };
+        });
+        it('matches the recordId', function() {
+            discoverStateSvc.cleanUpOnDatasetDelete('recordId');
+            expect(discoverStateSvc.explore.breadcrumbs).toEqual(['Classes']);
+            expect(discoverStateSvc.explore.classDetails).toEqual([]);
+            expect(discoverStateSvc.explore.recordId).toEqual('');
+            expect(discoverStateSvc.resetPagedInstanceDetails).toHaveBeenCalled();
+        });
+        it('does not match the recordId', function() {
+            discoverStateSvc.cleanUpOnDatasetDelete('other');
+            expect(discoverStateSvc.explore.breadcrumbs).toEqual(['Classes', 'instance']);
+            expect(discoverStateSvc.explore.classDetails).toEqual([{}]);
+            expect(discoverStateSvc.explore.recordId).toEqual('recordId');
+            expect(discoverStateSvc.resetPagedInstanceDetails).not.toHaveBeenCalled();
+        });
+    });
+    
+    describe('cleanUpOnDatasetClear should reset the proper variables if the datasetIRI', function() {
+        beforeEach(function() {
+            spyOn(discoverStateSvc, 'resetPagedInstanceDetails');
+            discoverStateSvc.explore = {
+                breadcrumbs: ['Classes', 'instance'],
+                classDetails: [{}],
+                recordId: 'recordId'
+            };
+        });
+        it('matches the recordId', function() {
+            discoverStateSvc.cleanUpOnDatasetClear('recordId');
+            expect(discoverStateSvc.explore.breadcrumbs).toEqual(['Classes']);
+            expect(discoverStateSvc.explore.classDetails).toEqual([]);
+            expect(discoverStateSvc.resetPagedInstanceDetails).toHaveBeenCalled();
+        });
+        it('does not match the recordId', function() {
+            discoverStateSvc.cleanUpOnDatasetClear('other');
+            expect(discoverStateSvc.explore.breadcrumbs).toEqual(['Classes', 'instance']);
+            expect(discoverStateSvc.explore.classDetails).toEqual([{}]);
+            expect(discoverStateSvc.resetPagedInstanceDetails).not.toHaveBeenCalled();
+        });
+    });
 });

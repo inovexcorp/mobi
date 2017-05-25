@@ -59,7 +59,8 @@
                             &:after {
                                 content: ', ';
                             }
-                            &.last:after {
+    
+                            &:last-child:after {
                                 content: '';
                             }
                         }

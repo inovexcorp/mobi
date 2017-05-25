@@ -88,6 +88,14 @@
             active: false
         };
         
+        /**
+         * @ngdoc method
+         * @name resetPagedInstanceDetails
+         * @methodOf discoverState.service:discoverStateService
+         *
+         * @description
+         * Resets the explore properties to be their initial values.
+         */
         self.resetPagedInstanceDetails = function() {
             self.explore.instanceDetails = {
                 currentPage: 0,
@@ -98,7 +106,50 @@
                     prev: ''
                 },
                 total: 0
+            };
+        }
+        
+        /**
+         * @ngdoc method
+         * @name cleanUpOnDatasetDelete
+         * @methodOf discoverState.service:discoverStateService
+         *
+         * @description
+         * Resets the paged details and all data associated with the provided dataset if
+         * the provided datasetIRI matches the dataset that is selected. The recordId is
+         * also cleared.
+         *
+         * @param {string} datasetIRI The IRI of the DatasetRecord which was deleted.
+         */
+        self.cleanUpOnDatasetDelete = function(datasetIRI) {
+            if (datasetIRI === self.explore.recordId) {
+                resetOnClear();
+                self.explore.recordId = '';
             }
+        }
+        
+        /**
+         * @ngdoc method
+         * @name cleanUpOnDatasetDelete
+         * @methodOf discoverState.service:discoverStateService
+         *
+         * @description
+         * Resets the paged details and all data associated with the provided dataset if
+         * the provided datasetIRI matches the dataset that is selected. The recordId is
+         * not cleared in this case.
+         *
+         * @param {string} datasetIRI The IRI of the DatasetRecord which was cleared.
+         */
+        self.cleanUpOnDatasetClear = function(datasetIRI) {
+            if (datasetIRI === self.explore.recordId) {
+                resetOnClear();
+            }
+        }
+        
+        function resetOnClear() {
+            self.resetPagedInstanceDetails();
+            self.explore.breadcrumbs = ['Classes'];
+            self.explore.classDetails = [];
         }
     }
 })();

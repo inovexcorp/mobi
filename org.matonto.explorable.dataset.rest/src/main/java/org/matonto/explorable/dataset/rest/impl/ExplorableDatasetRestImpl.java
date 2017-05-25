@@ -267,7 +267,7 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
             } else {
                 Optional<Statement> dcterm = model.filter(null, factory.createIRI(dcProp), null).stream().findFirst();
                 return dcterm.map(statement -> statement.getObject().stringValue()).orElseGet(() -> splitCamelCase(iri
-                        .stringValue()));
+                        .getLocalName()));
             }
         }
         return "";

@@ -932,6 +932,8 @@ function mockDiscoverState() {
                 active: false
             };
             this.resetPagedInstanceDetails = jasmine.createSpy('resetPagedInstanceDetails');
+            this.cleanUpOnDatasetDelete = jasmine.createSpy('cleanUpOnDatasetDelete');
+            this.cleanUpOnDatasetClear = jasmine.createSpy('cleanUpOnDatasetClear');
         });
     });
 }
