@@ -26,7 +26,8 @@ describe('Commit Changes Display directive', function() {
         element,
         isolatedScope,
         controller,
-        utilSvc;
+        utilSvc,
+        ontologyUtilsManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -34,12 +35,14 @@ describe('Commit Changes Display directive', function() {
         mockUtil();
         mockPrefixes();
         injectSplitIRIFilter();
+        mockOntologyUtilsManager();
 
-        inject(function(_$compile_, _$rootScope_, _utilService_, _splitIRIFilter_) {
+        inject(function(_$compile_, _$rootScope_, _utilService_, _splitIRIFilter_, _ontologyUtilsManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             utilSvc = _utilService_;
             splitIRI = _splitIRIFilter_;
+            ontologyUtilsManagerSvc = _ontologyUtilsManagerService_;
         });
 
         scope.additions = [];
@@ -50,7 +53,7 @@ describe('Commit Changes Display directive', function() {
         controller = element.controller('commitChangesDisplay');
     });
 
-    describe('in insolated scope', function() {
+    describe('in isolated scope', function() {
         it('additions should be one way bound', function() {
             isolatedScope.additions = [{}];
             scope.$digest();
@@ -70,7 +73,8 @@ describe('Commit Changes Display directive', function() {
         it('depending on whether there are additions and deletions', function() {
             expect(element.querySelectorAll('div.property-values').length).toBe(0);
 
-            controller.list = [''];
+            controller.list = ['id'];
+            controller.results = {'id': {additions: [''], deletions: []}};
             scope.$digest();
             expect(element.querySelectorAll('div.property-values').length).toBe(controller.list.length);
         });
