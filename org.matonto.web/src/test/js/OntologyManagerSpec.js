@@ -41,7 +41,6 @@ describe('Ontology Manager service', function() {
         }]
     }
     var fileName = 'fileName';
-    var originalIRI = 'originalIRI';
     var anonymous = 'anonymous';
     var classId = 'classId';
     var objectPropertyId = 'objectPropertyId';
@@ -104,66 +103,41 @@ describe('Ontology Manager service', function() {
             '@id': ontologyId,
             '@type': [prefixes.owl + 'Ontology'],
             matonto: {
-                originalIRI: originalIRI,
                 anonymous: anonymous
             }
         }
         classObj = {
             '@id': classId,
-            '@type': [prefixes.owl + 'Class'],
-            matonto: {
-                originalIRI: classId
-            }
+            '@type': [prefixes.owl + 'Class']
         }
         objectPropertyObj = {
             '@id': objectPropertyId,
-            '@type': [prefixes.owl + 'ObjectProperty'],
-            matonto: {
-                originalIRI: objectPropertyId
-            }
+            '@type': [prefixes.owl + 'ObjectProperty']
         }
         objectPropertyObj[prefixes.rdfs + 'domain'] = [{'@id': classId}];
         dataPropertyObj = {
             '@id': dataPropertyId,
-            '@type': [prefixes.owl + 'DatatypeProperty'],
-            matonto: {
-                originalIRI: dataPropertyId
-            }
+            '@type': [prefixes.owl + 'DatatypeProperty']
         };
         annotationObj = {
             '@id': annotationId,
-            '@type': [prefixes.owl + 'AnnotationProperty'],
-            matonto: {
-                originalIRI: annotationId
-            }
+            '@type': [prefixes.owl + 'AnnotationProperty']
         };
         individualObj = {
             '@id': individualId,
-            '@type': [prefixes.owl + 'NamedIndividual', classId],
-            matonto: {
-                originalIRI: individualId
-            }
+            '@type': [prefixes.owl + 'NamedIndividual', classId]
         };
         restrictionObj = {
             '@id': restrictionId,
-            '@type': [prefixes.owl + 'Restriction'],
-            matonto: {
-                originalIRI: restrictionId
-            }
+            '@type': [prefixes.owl + 'Restriction']
         }
         conceptObj = {
             '@id': conceptId,
-            '@type': [prefixes.skos + 'Concept'],
-            matonto: {
-                originalIRI: conceptId
-            }
+            '@type': [prefixes.skos + 'Concept']
         }
         schemeObj = {
             '@id': schemeId,
-            '@type': [prefixes.skos + 'ConceptScheme'],
-            matonto: {
-                originalIRI: schemeId
-            }
+            '@type': [prefixes.skos + 'ConceptScheme']
         }
         ontology = [ontologyObj, classObj, dataPropertyObj];
 
@@ -171,7 +145,6 @@ describe('Ontology Manager service', function() {
             '@id': importedOntologyId,
             '@type': [prefixes.owl + 'Ontology'],
             matonto: {
-              originalIRI: originalIRI,
               anonymous: anonymous,
               imported: true
             }
@@ -181,7 +154,6 @@ describe('Ontology Manager service', function() {
             '@id': importedClassId,
             '@type': [prefixes.owl + 'Class'],
             matonto: {
-              originalIRI: importedClassId,
               imported: true
             }
         }
@@ -190,54 +162,35 @@ describe('Ontology Manager service', function() {
             '@id': importedDataPropertyId,
             '@type': [prefixes.owl + 'DatatypeProperty'],
             matonto: {
-                originalIRI: importedDataPropertyId,
                 imported: true
             }
         };
 
         importedObjectPropertyObj = {
             '@id': importedObjectPropertyId,
-            '@type': [prefixes.owl + 'ObjectProperty'],
-            matonto: {
-                originalIRI: importedObjectPropertyId
-            }
+            '@type': [prefixes.owl + 'ObjectProperty']
         }
         importedObjectPropertyObj[prefixes.rdfs + 'domain'] = [{'@id': importedClassId}];
 
         importedAnnotationObj = {
             '@id': importedAnnotationId,
-            '@type': [prefixes.owl + 'AnnotationProperty'],
-            matonto: {
-                originalIRI: importedAnnotationId
-            }
+            '@type': [prefixes.owl + 'AnnotationProperty']
         };
         importedIndividualObj = {
             '@id': importedIndividualId,
-            '@type': [prefixes.owl + 'NamedIndividual', importedClassId],
-            matonto: {
-                originalIRI: importedIndividualId
-            }
+            '@type': [prefixes.owl + 'NamedIndividual', importedClassId]
         };
         importedRestrictionObj = {
             '@id': importedRestrictionId,
-            '@type': [prefixes.owl + 'Restriction'],
-            matonto: {
-                originalIRI: importedRestrictionId
-            }
+            '@type': [prefixes.owl + 'Restriction']
         }
         importedConceptObj = {
             '@id': importedConceptId,
-            '@type': [prefixes.skos + 'Concept'],
-            matonto: {
-                originalIRI: importedConceptId
-            }
+            '@type': [prefixes.skos + 'Concept']
         }
         importedSchemeObj = {
             '@id': importedSchemeId,
-            '@type': [prefixes.skos + 'ConceptScheme'],
-            matonto: {
-                originalIRI: importedSchemeId
-            }
+            '@type': [prefixes.skos + 'ConceptScheme']
         }
 
         importedOntology = [importedOntObj, importedClassObj, importedDataPropertyObj];
@@ -959,17 +912,7 @@ describe('Ontology Manager service', function() {
         it('@id if there is an ontology entity in the ontology with @id', function() {
             expect(ontologyManagerSvc.getOntologyIRI([ontologyObj])).toBe(ontologyId);
         });
-        it('matonto.originalIRI if there is an ontology entity without @id', function() {
-            var obj = {
-                '@type': prefixes.owl + 'Ontology',
-                matonto: {
-                    originalIRI: originalIRI,
-                    anonymous: anonymous
-                }
-            }
-            expect(ontologyManagerSvc.getOntologyIRI([obj])).toBe(originalIRI);
-        });
-        it('matonto.anonymous if there is an ontology entity without @id and matonto.originalIRI', function() {
+        it('matonto.anonymous if there is an ontology entity without @id', function() {
             var obj = {
                 '@type': prefixes.owl + 'Ontology',
                 matonto: {
@@ -1423,10 +1366,7 @@ describe('Ontology Manager service', function() {
         it('true if there are any in the ontology with no other @type', function() {
             var diffIndividualObj = {
                 '@id': individualId,
-                '@type': [prefixes.owl + 'NamedIndividual'],
-                matonto: {
-                    originalIRI: originalIRI
-                }
+                '@type': [prefixes.owl + 'NamedIndividual']
             }
             expect(ontologyManagerSvc.hasNoTypeIndividuals([[diffIndividualObj, ontologyObj]])).toBe(true);
         });
@@ -1441,10 +1381,7 @@ describe('Ontology Manager service', function() {
         it('correct individual objects if there are any in the ontology with no other @type', function() {
             var diffIndividualObj = {
                 '@id': individualId,
-                '@type': [prefixes.owl + 'NamedIndividual'],
-                matonto: {
-                    originalIRI: originalIRI
-                }
+                '@type': [prefixes.owl + 'NamedIndividual']
             }
             expect(ontologyManagerSvc.getNoTypeIndividuals([[diffIndividualObj, ontologyObj]]))
                 .toEqual([diffIndividualObj]);

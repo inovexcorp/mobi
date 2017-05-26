@@ -156,7 +156,6 @@ describe('Create Concept Scheme Overlay directive', function() {
             controller.scheme = {'@id': 'scheme'};
 
             controller.create();
-            expect(controller.scheme.matonto.originalIRI).toEqual(controller.scheme['@id']);
             expect(controller.scheme[prefixes.skos + 'hasTopConcept']).toEqual(controller.concepts);
             expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, controller.scheme);
             expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(controller.scheme, controller.language);

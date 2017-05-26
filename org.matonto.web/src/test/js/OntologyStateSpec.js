@@ -40,7 +40,6 @@ describe('Ontology State Service', function() {
     var commitId = 'commitId';
     var ontologyId = 'ontologyId';
     var catalogId = 'catalogId';
-    var originalIRI = 'originalIRI';
     var anonymous = 'anonymous';
     var branch = {
         '@id': branchId
@@ -273,30 +272,20 @@ describe('Ontology State Service', function() {
             '@id': ontologyId,
             '@type': [prefixes.owl + 'Ontology'],
             matonto: {
-                originalIRI: originalIRI,
                 anonymous: anonymous
             }
         };
         classObj = {
             '@id': classId,
-            '@type': [prefixes.owl + 'Class'],
-            matonto: {
-                originalIRI: classId
-            }
+            '@type': [prefixes.owl + 'Class']
         };
         dataPropertyObj = {
             '@id': dataPropertyId,
-            '@type': [prefixes.owl + 'DatatypeProperty'],
-            matonto: {
-                originalIRI: dataPropertyId
-            }
+            '@type': [prefixes.owl + 'DatatypeProperty']
         };
         individualObj = {
             '@id': individualId,
-            '@type': [prefixes.owl + 'NamedIndividual', classId],
-            matonto: {
-                originalIRI: individualId
-            }
+            '@type': [prefixes.owl + 'NamedIndividual', classId]
         };
         ontology = [ontologyObj, classObj, dataPropertyObj];
         listItem = {
@@ -1612,7 +1601,6 @@ describe('Ontology State Service', function() {
                     expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith([ontology, [{
                         '@id': 'ontologyId',
                         matonto: {
-                            originalIRI: 'ontologyId',
                             icon: 'fa-square-o',
                             imported: true
                         }

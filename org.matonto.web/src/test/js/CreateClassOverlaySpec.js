@@ -141,7 +141,6 @@ describe('Create Class Overlay directive', function() {
             controller.clazz[prefixes.dcterms + 'title'] = [{'@value': 'label'}];
             controller.clazz[prefixes.dcterms + 'description'] = [{'@value': 'description'}];
             controller.create();
-            expect(_.get(controller.clazz, 'matonto.originalIRI')).toEqual(controller.clazz['@id']);
             expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(controller.clazz, controller.language);
             expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, controller.clazz);
             expect(ontologyStateSvc.getOntologiesArray).toHaveBeenCalled();
