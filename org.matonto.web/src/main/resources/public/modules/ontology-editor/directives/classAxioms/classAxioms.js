@@ -52,10 +52,6 @@
                     dvm.updateHierarchy = function(axiom, values) {
                         if (_.get(axiom, 'localName') === 'subClassOf') {
                             dvm.ontoUtils.setSuperClasses(dvm.os.selected['@id'], _.map(values, value => dvm.ro.getItemIri(value)));
-                            // _.forEach(values, value => {
-                            //     dvm.os.addEntityToHierarchy(dvm.os.listItem.classHierarchy, dvm.os.selected['@id'], dvm.os.listItem.classIndex, dvm.ro.getItemIri(value));
-                            // });
-                            // dvm.os.listItem.flatClassHierarchy = dvm.os.flattenHierarchy(dvm.os.listItem.classHierarchy, dvm.os.listItem.recordId);
                         }
                     }
 
