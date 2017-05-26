@@ -664,7 +664,7 @@
              */
             self.getOntologyIRI = function(ontology) {
                 var entity = self.getOntologyEntity(ontology);
-                return _.get(entity, '@id', _.get(entity, 'matonto.originalIRI', _.get(entity, 'matonto.anonymous', '')));
+                return _.get(entity, '@id', _.get(entity, 'matonto.anonymous', ''));
             }
             /**
              * @ngdoc method
@@ -728,7 +728,7 @@
              * @returns {string[]} An array of all owl:Class entity IRI strings within the ontologies.
              */
             self.getClassIRIs = function(ontologies) {
-                return _.map(self.getClasses(ontologies), 'matonto.originalIRI');
+                return _.map(self.getClasses(ontologies), '@id');
             }
             /**
              * @ngdoc method
@@ -781,7 +781,7 @@
              * @returns {string[]} Returns an array of all the property IRIs associated with the provided class IRI.
              */
             self.getClassPropertyIRIs = function(ontologies, classIRI) {
-                return _.map(self.getClassProperties(ontologies, classIRI), 'matonto.originalIRI');
+                return _.map(self.getClassProperties(ontologies, classIRI), '@id');
             }
             /**
              * @ngdoc method
@@ -845,7 +845,7 @@
              * @returns {string[]} An array of all owl:ObjectProperty entity IRI strings within the ontologies.
              */
             self.getObjectPropertyIRIs = function(ontologies) {
-                return _.map(self.getObjectProperties(ontologies), 'matonto.originalIRI');
+                return _.map(self.getObjectProperties(ontologies), '@id');
             }
             /**
              * @ngdoc method
@@ -911,7 +911,7 @@
              * @returns {string[]} An array of all owl:DatatypeProperty entity IRI strings within the ontologies.
              */
             self.getDataTypePropertyIRIs = function(ontologies) {
-                return _.map(self.getDataTypeProperties(ontologies), 'matonto.originalIRI');
+                return _.map(self.getDataTypeProperties(ontologies),'@id');
             }
             /**
              * @ngdoc method
@@ -978,7 +978,7 @@
              * @returns {string[]} Returns an array of property IRIs not associated with a class.
              */
             self.getNoDomainPropertyIRIs = function(ontologies) {
-                return _.map(self.getNoDomainProperties(ontologies), 'matonto.originalIRI');
+                return _.map(self.getNoDomainProperties(ontologies), '@id');
             }
             /**
              * @ngdoc method
@@ -1042,7 +1042,7 @@
              * @returns {string[]} An array of all owl:AnnotationProperty entity IRI strings within the ontologies.
              */
             self.getAnnotationIRIs = function(ontologies) {
-                return _.map(self.getAnnotations(ontologies), 'matonto.originalIRI');
+                return _.map(self.getAnnotations(ontologies), '@id');
             }
             /**
              * @ngdoc method
@@ -1253,7 +1253,7 @@
             self.getEntity = function(ontologies, entityIRI) {
                 var retValue;
                 _.forEach(ontologies, ont => {
-                    retValue = _.find(ont, {matonto:{originalIRI: entityIRI}}) || _.find(ont, {'@id': entityIRI});
+                    retValue = _.find(ont, {'@id': entityIRI});
                     if (retValue != null) {
                         return false; //This breaks the loop. It is NOT the entire function's return value!
                     }
@@ -1368,7 +1368,7 @@
              * @returns {string[]} An array of all skos:Concept entity IRI strings within the ontologies.
              */
             self.getConceptIRIs = function(ontologies) {
-                return _.map(self.getConcepts(ontologies), 'matonto.originalIRI');
+                return _.map(self.getConcepts(ontologies), '@id');
             }
             /**
              * @ngdoc method
@@ -1433,7 +1433,7 @@
              * @returns {string[]} An array of all skos:ConceptScheme entity IRI strings within the ontology.
              */
             self.getConceptSchemeIRIs = function(ontologies) {
-                return _.map(self.getConceptSchemes(ontologies), 'matonto.originalIRI');
+                return _.map(self.getConceptSchemes(ontologies), '@id');
             }
             /* Private helper functions */
             function getAllRecords(sortingOption = _.find(cm.sortOptions, {label: 'Title (desc)'})) {
