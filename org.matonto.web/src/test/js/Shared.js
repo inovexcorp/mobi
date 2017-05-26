@@ -854,11 +854,13 @@ function mockUtil() {
 function mockDatasetManager() {
     module(function($provide) {
         $provide.service('datasetManagerService', function($q) {
+            this.datasetRecords = [];
             this.getResultsPage = jasmine.createSpy('getResultsPage').and.returnValue($q.when({}));
             this.getDatasetRecords = jasmine.createSpy('getDatasetRecords').and.returnValue($q.when({}));
             this.createDatasetRecord = jasmine.createSpy('createDatasetRecord').and.returnValue($q.when(''));
             this.deleteDatasetRecord = jasmine.createSpy('deleteDatasetRecord').and.returnValue($q.when());
             this.clearDatasetRecord = jasmine.createSpy('clearDatasetRecord').and.returnValue($q.when());
+            this.initialize = jasmine.createSpy('initialize');
         });
     });
 }
@@ -902,4 +904,49 @@ function mockToastr() {
             this.warning = jasmine.createSpy('warning');
         });
     });
+}
+
+function mockDiscoverState() {
+    module(function($provide) {
+        $provide.service('discoverStateService', function() {
+            this.explore = {
+                active: true,
+                breadcrumbs: ['Classes'],
+                classDetails: [],
+                instanceDetails: {
+                    currentPage: 0,
+                    data: [],
+                    limit: 99,
+                    links: {
+                        next: '',
+                        prev: ''
+                    },
+                    total: 0
+                },
+                recordId: ''
+            };
+            this.query = {
+                active: false
+            };
+            this.resetPagedInstanceDetails = jasmine.createSpy('resetPagedInstanceDetails');
+            this.cleanUpOnDatasetDelete = jasmine.createSpy('cleanUpOnDatasetDelete');
+            this.cleanUpOnDatasetClear = jasmine.createSpy('cleanUpOnDatasetClear');
+        });
+    });
+}
+
+function mockExplore() {
+    module(function($provide) {
+        $provide.service('exploreService', function($q) {
+            this.getClassDetails = jasmine.createSpy('getClassDetails').and.returnValue($q.when([]));
+            this.getClassInstanceDetails = jasmine.createSpy('getClassInstanceDetails').and.returnValue($q.when([]));
+            this.createPagedResultsObject = jasmine.createSpy('createPagedResultsObject').and.returnValue({});
+        });
+    });
+}
+
+function flushAndVerify($httpBackend) {
+    $httpBackend.flush();
+    $httpBackend.verifyNoOutstandingExpectation();
+    $httpBackend.verifyNoOutstandingRequest();
 }

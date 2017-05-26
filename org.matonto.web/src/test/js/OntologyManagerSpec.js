@@ -202,12 +202,6 @@ describe('Ontology Manager service', function() {
 
     });
 
-    function flushAndVerify() {
-        $httpBackend.flush();
-        $httpBackend.verifyNoOutstandingExpectation();
-        $httpBackend.verifyNoOutstandingRequest();
-    }
-
     it('reset should clear the proper variables', function() {
         ontologyManagerSvc.ontologyRecords = ['record'];
         ontologyManagerSvc.reset();
@@ -262,7 +256,7 @@ describe('Ontology Manager service', function() {
                     fail('Promise should have resolved');
                     done();
                 });
-            flushAndVerify();
+            flushAndVerify($httpBackend);
         });
         it('with no description or keywords', function(done) {
             $httpBackend.expectPOST('/matontorest/ontologies',
@@ -279,7 +273,7 @@ describe('Ontology Manager service', function() {
                     fail('Promise should have resolved');
                     done();
                 });
-            flushAndVerify();
+            flushAndVerify($httpBackend);
         });
         it('unless an error occurs', function(done) {
             var params = paramSerializer({ title: title });
@@ -299,7 +293,7 @@ describe('Ontology Manager service', function() {
                     expect(util.onError).toHaveBeenCalled();
                     done();
                 });
-            flushAndVerify();
+            flushAndVerify($httpBackend);
         });
     });
     describe('uploadJson hits the proper endpoint', function() {
@@ -321,7 +315,7 @@ describe('Ontology Manager service', function() {
                     fail('Promise should have resolved');
                     done();
                 });
-            flushAndVerify();
+            flushAndVerify($httpBackend);
         });
         it('with no description or keywords', function(done) {
             var params = paramSerializer({ title: title });
@@ -337,7 +331,7 @@ describe('Ontology Manager service', function() {
                     fail('Promise should have resolved');
                     done();
                 });
-            flushAndVerify();
+            flushAndVerify($httpBackend);
         });
         it('unless an error occurs', function(done) {
             var params = paramSerializer({ title: title });
@@ -354,7 +348,7 @@ describe('Ontology Manager service', function() {
                     expect(util.onError).toHaveBeenCalled();
                     done();
                 });
-                flushAndVerify();
+                flushAndVerify($httpBackend);
         });
     });
     describe('downloadOntology should set the $window.location properly', function() {
@@ -394,7 +388,7 @@ describe('Ontology Manager service', function() {
                     expect(util.onError).toHaveBeenCalled();
                     done();
                 });
-            flushAndVerify();
+            flushAndVerify($httpBackend);
         });
         it('successfully', function(done) {
             $httpBackend.expectGET('/matontorest/ontologies/' + encodeURIComponent(recordId) + '?' + params,
@@ -409,7 +403,7 @@ describe('Ontology Manager service', function() {
                     fail('Promise should have resolved');
                     done();
                 });
-            flushAndVerify();
+            flushAndVerify($httpBackend);
         });
     });
     describe('getIris retrieves all IRIs in an ontology', function() {
@@ -428,7 +422,7 @@ describe('Ontology Manager service', function() {
                     expect(util.onError).toHaveBeenCalled();
                     done();
                 });
-            flushAndVerify();
+            flushAndVerify($httpBackend);
         });
         it('successfully', function(done) {
             $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/iris?' + params).respond(200, {});
@@ -440,7 +434,7 @@ describe('Ontology Manager service', function() {
                     fail('Promise should have resolved');
                     done();
                 });
-            flushAndVerify();
+            flushAndVerify($httpBackend);
         });
     });
     describe('getImportedIris retrieves all IRIs in an ontology', function() {
@@ -459,7 +453,7 @@ describe('Ontology Manager service', function() {
                     expect(util.onError).toHaveBeenCalled();
                     done();
                 });
-            flushAndVerify();
+            flushAndVerify($httpBackend);
         });
         it('unless there are none', function(done) {
             $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/imported-iris?' + params).respond(204);
@@ -471,7 +465,7 @@ describe('Ontology Manager service', function() {
                     fail('Promise should have resolved');
                     done();
                 });
-            flushAndVerify();
+            flushAndVerify($httpBackend);
         });
         it('successfully', function(done) {
             $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/imported-iris?' + params).respond(200, [{}]);
@@ -483,7 +477,7 @@ describe('Ontology Manager service', function() {
                     fail('Promise should have resolved');
                     done();
                 });
-            flushAndVerify();
+            flushAndVerify($httpBackend);
         });
     });
     describe('getClassHierarchies retrieves all IRIs in an ontology', function() {
@@ -502,7 +496,7 @@ describe('Ontology Manager service', function() {
                     expect(util.onError).toHaveBeenCalled();
                     done();
                 });
-            flushAndVerify();
+            flushAndVerify($httpBackend);
         });
         it('successfully', function(done) {
             $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/class-hierarchies?' + params).respond(200, {});
@@ -514,7 +508,7 @@ describe('Ontology Manager service', function() {
                     fail('Promise should have resolved');
                     done();
                 });
-            flushAndVerify();
+            flushAndVerify($httpBackend);
         });
     });
     describe('getClassesWithIndividuals retrieves all IRIs in an ontology', function() {
@@ -533,7 +527,7 @@ describe('Ontology Manager service', function() {
                     expect(util.onError).toHaveBeenCalled();
                     done();
                 });
-            flushAndVerify();
+            flushAndVerify($httpBackend);
         });
         it('successfully', function(done) {
             $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/classes-with-individuals?' + params).respond(200, {});
@@ -545,7 +539,7 @@ describe('Ontology Manager service', function() {
                     fail('Promise should have resolved');
                     done();
                 });
-            flushAndVerify();
+            flushAndVerify($httpBackend);
         });
     });
     describe('getDataPropertyHierarchies retrieves all IRIs in an ontology', function() {
@@ -564,7 +558,7 @@ describe('Ontology Manager service', function() {
                     expect(util.onError).toHaveBeenCalled();
                     done();
                 });
-            flushAndVerify();
+            flushAndVerify($httpBackend);
         });
         it('successfully', function(done) {
             $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/data-property-hierarchies?' + params).respond(200, {});
@@ -576,7 +570,7 @@ describe('Ontology Manager service', function() {
                     fail('Promise should have resolved');
                     done();
                 });
-            flushAndVerify();
+            flushAndVerify($httpBackend);
         });
     });
     describe('getObjectPropertyHierarchies retrieves all IRIs in an ontology', function() {
@@ -593,7 +587,7 @@ describe('Ontology Manager service', function() {
                     expect(response).toEqual(error);
                     expect(util.onError).toHaveBeenCalled();
                 });
-            flushAndVerify();
+            flushAndVerify($httpBackend);
         });
         it('successfully', function() {
             $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/object-property-hierarchies?' + params).respond(200, {});
@@ -603,7 +597,7 @@ describe('Ontology Manager service', function() {
                 }, function() {
                     fail('Promise should have resolved');
                 });
-            flushAndVerify();
+            flushAndVerify($httpBackend);
         });
     });
     describe('getAnnotationPropertyHierarchies retrieves all IRIs in an ontology', function() {
@@ -622,7 +616,7 @@ describe('Ontology Manager service', function() {
                     expect(util.onError).toHaveBeenCalled();
                     done();
                 });
-            flushAndVerify();
+            flushAndVerify($httpBackend);
         });
         it('successfully', function(done) {
             $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/annotation-property-hierarchies?' + params).respond(200, {});
@@ -634,7 +628,7 @@ describe('Ontology Manager service', function() {
                     fail('Promise should have resolved');
                     done();
                 });
-            flushAndVerify();
+            flushAndVerify($httpBackend);
         });
     });
     describe('getConceptHierarchies retrieves all IRIs in an ontology', function() {
@@ -651,7 +645,7 @@ describe('Ontology Manager service', function() {
                     expect(response).toEqual(error);
                     expect(util.onError).toHaveBeenCalled();
                 });
-            flushAndVerify();
+            flushAndVerify($httpBackend);
         });
         it('successfully', function() {
             $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/concept-hierarchies?' + params).respond(200, {});
@@ -661,7 +655,7 @@ describe('Ontology Manager service', function() {
                 }, function() {
                     fail('Promise should have resolved');
                 });
-            flushAndVerify();
+            flushAndVerify($httpBackend);
         });
     });
     describe('getImportedOntologies should call the proper functions', function() {
@@ -684,7 +678,7 @@ describe('Ontology Manager service', function() {
                     fail('Promise should have resolved');
                     done();
                 });
-            flushAndVerify();
+            flushAndVerify($httpBackend);
         });
         it('when get is empty', function(done) {
             $httpBackend.expectGET('/matontorest/ontologies/recordId/imported-ontologies?' + params)
@@ -697,7 +691,7 @@ describe('Ontology Manager service', function() {
                     fail('Promise should have resolved');
                     done();
                 });
-            flushAndVerify();
+            flushAndVerify($httpBackend);
         });
         it('when another success response', function(done) {
             $httpBackend.expectGET('/matontorest/ontologies/recordId/imported-ontologies?' + params)
@@ -710,7 +704,7 @@ describe('Ontology Manager service', function() {
                     expect(response).toEqual(error);
                     done();
                 });
-            flushAndVerify();
+            flushAndVerify($httpBackend);
         });
         it('when get fails', function(done) {
             $httpBackend.expectGET('/matontorest/ontologies/recordId/imported-ontologies?' + params)
@@ -723,7 +717,7 @@ describe('Ontology Manager service', function() {
                     expect(response).toEqual(error);
                     done();
                 });
-            flushAndVerify();
+            flushAndVerify($httpBackend);
         });
     });
     describe('getEntityUsages should call the proper functions', function() {
@@ -756,7 +750,7 @@ describe('Ontology Manager service', function() {
                             fail('Promise should have resolved');
                             done();
                         });
-                    flushAndVerify();
+                    flushAndVerify($httpBackend);
                 });
                 it('and queryType is construct', function(done) {
                     $httpBackend.expectGET('/matontorest/ontologies/recordId/entity-usages/classId?' + params + '&queryType=construct')
@@ -769,7 +763,7 @@ describe('Ontology Manager service', function() {
                             fail('Promise should have resolved');
                             done();
                         });
-                    flushAndVerify();
+                    flushAndVerify($httpBackend);
                 });
             });
             describe('when id is set', function() {
@@ -815,7 +809,7 @@ describe('Ontology Manager service', function() {
                         expect(response).toEqual(error);
                         done();
                     });
-                flushAndVerify();
+                flushAndVerify($httpBackend);
             });
             it('when id is set', function() {
                 getDeferred.reject(error);
