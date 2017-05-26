@@ -196,7 +196,6 @@ describe('Create Property Overlay directive', function() {
                 expect(_.has(controller.property, prefixes.dcterms + 'description')).toBe(false);
                 expect(_.has(controller.property, prefixes.rdfs + 'range')).toBe(false);
                 expect(_.has(controller.property, prefixes.rdfs + 'domain')).toBe(false);
-                expect(controller.property.matonto.originalIRI).toEqual(controller.property['@id']);
                 expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(controller.property, controller.language);
                 expect(ontologyStateSvc.updatePropertyIcon).toHaveBeenCalledWith(controller.property);
                 expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, controller.property);
@@ -210,7 +209,6 @@ describe('Create Property Overlay directive', function() {
                 controller.property[prefixes.dcterms + 'description'] = [{'@value': 'description'}];
                 ontologyManagerSvc.isObjectProperty.and.returnValue(true);
                 controller.create();
-                expect(controller.property.matonto.originalIRI).toEqual(controller.property['@id']);
                 expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(controller.property, controller.language);
                 expect(ontologyStateSvc.updatePropertyIcon).toHaveBeenCalledWith(controller.property);
                 expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, controller.property);
@@ -235,7 +233,6 @@ describe('Create Property Overlay directive', function() {
                 controller.property[prefixes.dcterms + 'description'] = [{'@value': 'description'}];
                 ontologyManagerSvc.isDataTypeProperty.and.returnValue(true);
                 controller.create();
-                expect(controller.property.matonto.originalIRI).toEqual(controller.property['@id']);
                 expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(controller.property, controller.language);
                 expect(ontologyStateSvc.updatePropertyIcon).toHaveBeenCalledWith(controller.property);
                 expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, controller.property);
@@ -260,7 +257,6 @@ describe('Create Property Overlay directive', function() {
                 controller.property[prefixes.dcterms + 'description'] = [{'@value': 'description'}];
                 ontologyManagerSvc.isAnnotation.and.returnValue(true);
                 controller.create();
-                expect(controller.property.matonto.originalIRI).toEqual(controller.property['@id']);
                 expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(controller.property, controller.language);
                 expect(ontologyStateSvc.updatePropertyIcon).toHaveBeenCalledWith(controller.property);
                 expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, controller.property);

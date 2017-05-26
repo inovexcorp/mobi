@@ -73,7 +73,6 @@
                             _.unset(dvm.clazz, prefixes.dcterms + 'description');
                         }
                         ontoUtils.addLanguageToNewEntity(dvm.clazz, dvm.language);
-                        _.set(dvm.clazz, 'matonto.originalIRI', dvm.clazz['@id']);
                         // add the entity to the ontology
                         dvm.os.addEntity(dvm.os.listItem, dvm.clazz);
                         dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.getOntologiesArray(), dvm.os.listItem);

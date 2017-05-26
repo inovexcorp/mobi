@@ -52,7 +52,6 @@
         var self = this;
         var exclude = [
                 '$$hashKey',
-                'originalIRI',
                 'unsaved',
                 'valid'
             ];
