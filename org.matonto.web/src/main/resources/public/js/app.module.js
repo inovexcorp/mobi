@@ -208,6 +208,6 @@
         function ariaConfig($ariaProvider) {
             $ariaProvider.config({
                 tabindex: false
-           });
+            });
         }
 })();
