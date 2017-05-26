@@ -1253,7 +1253,7 @@
             self.getEntity = function(ontologies, entityIRI) {
                 var retValue;
                 _.forEach(ontologies, ont => {
-                    retValue = _.find(ont, {matonto:{originalIRI: entityIRI}}) || _.find(ont, {'@id': entityIRI});
+                    retValue = _.find(ont, {'@id': entityIRI});
                     if (retValue != null) {
                         return false; //This breaks the loop. It is NOT the entire function's return value!
                     }
