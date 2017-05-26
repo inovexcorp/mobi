@@ -24,7 +24,30 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name superPropertySelect
+         *
+         * @description
+         * The `superPropertySelect` module only provides the `superPropertySelect` directive which creates
+         * the super property select.
+         */
         .module('superPropertySelect', [])
+        /**
+         * @ngdoc directive
+         * @name superPropertySelect.directive:superPropertySelect
+         * @scope
+         * @restrict E
+         * @requires responseObj.service:responseObj
+         * @requires ontologyState.service:ontologyStateService
+         * @requires util.service:utilService
+         * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+         * @requires prefixes.service:prefixes
+         *
+         * @description
+         * HTML contents in the super property select which provides a link to show a dropdown select of
+         * all available properties idetified by the provided key.
+         */
         .directive('superPropertySelect', superPropertySelect);
 
         superPropertySelect.$inject = ['responseObj', 'ontologyStateService', 'utilService', 'ontologyUtilsManagerService', 'prefixes'];

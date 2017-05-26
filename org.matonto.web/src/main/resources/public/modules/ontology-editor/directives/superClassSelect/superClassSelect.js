@@ -24,7 +24,30 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name superClassSelect
+         *
+         * @description
+         * The `superClassSelect` module only provides the `superClassSelect` directive which creates
+         * the super class select.
+         */
         .module('superClassSelect', [])
+        /**
+         * @ngdoc directive
+         * @name superClassSelect.directive:superClassSelect
+         * @scope
+         * @restrict E
+         * @requires responseObj.service:responseObj
+         * @requires ontologyState.service:ontologyStateService
+         * @requires util.service:utilService
+         * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+         * @requires prefixes.service:prefixes
+         *
+         * @description
+         * HTML contents in the super class select which provides a link to show a dropdown select of
+         * all available classes.
+         */
         .directive('superClassSelect', superClassSelect);
 
         superClassSelect.$inject = ['responseObj', 'ontologyStateService', 'utilService', 'ontologyUtilsManagerService', 'prefixes'];
