@@ -66,6 +66,7 @@
                 scope: {},
                 controller: function() {
                     var dvm = this;
+                    dvm.isNumber = angular.isNumber;
                     dvm.prefixes = prefixes;
                     dvm.state = mapperStateService;
                     dvm.mm = mappingManagerService;
@@ -101,10 +102,10 @@
                                 }
 
                                 // Add object property mapping pointing to new range class mapping
-                                dvm.mm.addObjectProp(dvm.state.mapping.jsonld, ontology.entities, dvm.state.selectedClassMappingId, propId, classMapping['@id']);
+                                dvm.mm.addObjectProp(dvm.state.mapping.jsonld, _.get(ontology, 'entities', []), dvm.state.selectedClassMappingId, propId, classMapping['@id']);
                                 dvm.state.setAvailableProps(classMapping['@id']);
                             } else {
-                                dvm.mm.addDataProp(dvm.state.mapping.jsonld, ontology.entities, dvm.state.selectedClassMappingId, propId, dvm.selectedColumn);
+                                dvm.mm.addDataProp(dvm.state.mapping.jsonld, _.get(ontology, 'entities', []), dvm.state.selectedClassMappingId, propId, dvm.selectedColumn);
                             }
 
                             dvm.state.setAvailableProps(dvm.state.selectedClassMappingId);
@@ -132,7 +133,11 @@
                         var propMapping = _.find(dvm.state.mapping.jsonld, {'@id': dvm.state.selectedPropMappingId});
                         var propId = dvm.mm.getPropIdByMapping(propMapping);
                         var ontology = dvm.mm.findSourceOntologyWithProp(propId, dvm.state.sourceOntologies);
-                        dvm.selectedProp = {propObj: dvm.om.getEntity([ontology.entities], propId), ontologyId: ontology.id};
+                        if (_.includes(dvm.mm.annotationProperties, propId)) {
+                            dvm.selectedProp = {propObj: {'@id': propId}, ontologyId: ''};
+                        } else {
+                            dvm.selectedProp = {propObj: dvm.om.getEntity([ontology.entities], propId), ontologyId: ontology.id};
+                        }
                         dvm.selectedColumn = dvm.util.getPropertyValue(propMapping, dvm.prefixes.delim + 'columnIndex');
                         dvm.rangeClassMapping = dvm.getRangeClassMapping(dvm.selectedProp);
                     }

@@ -24,7 +24,6 @@ describe('Mapping Manager service', function() {
     var $httpBackend,
         mappingManagerSvc,
         ontologyManagerSvc,
-        catalogManagerSvc,
         utilSvc,
         uuidSvc,
         windowSvc,
@@ -38,7 +37,6 @@ describe('Mapping Manager service', function() {
         mockPrefixes();
         injectSplitIRIFilter();
         mockOntologyManager();
-        mockCatalogManager();
         mockUtil();
 
         module(function($provide) {
@@ -50,10 +48,9 @@ describe('Mapping Manager service', function() {
             });
         });
 
-        inject(function(mappingManagerService, _ontologyManagerService_, _catalogManagerService_, _utilService_, _uuid_, _$httpBackend_, _$window_, _prefixes_, _splitIRIFilter_, _$q_, _$timeout_) {
+        inject(function(mappingManagerService, _ontologyManagerService_, _utilService_, _uuid_, _$httpBackend_, _$window_, _prefixes_, _splitIRIFilter_, _$q_, _$timeout_) {
             mappingManagerSvc = mappingManagerService;
             ontologyManagerSvc = _ontologyManagerService_;
-            catalogManagerSvc = _catalogManagerService_;
             utilSvc = _utilService_;
             uuidSvc = _uuid_;
             $httpBackend = _$httpBackend_;
@@ -314,25 +311,37 @@ describe('Mapping Manager service', function() {
             this.mapping = [{'@id': 'mappingname', '@type': ['Mapping']}, this.classMapping];
         });
         it('unless the parent class mapping does not exist in the mapping', function() {
-            var result = mappingManagerSvc.addDataProp(this.mapping, {}, this.classMapping['@id'], 'propId', 0);
+            var result = mappingManagerSvc.addDataProp(this.mapping, [], this.classMapping['@id'], 'propId', 0);
             expect(result).toBeUndefined();
             expect(this.mapping).not.toContain(result);
         });
         it('unless the property does not exist in the passed ontology', function() {
             ontologyManagerSvc.getEntity.and.returnValue(undefined);
-            var result = mappingManagerSvc.addDataProp(this.mapping, {}, this.classMapping['@id'], 'propId', 0);
+            var result = mappingManagerSvc.addDataProp(this.mapping, [], this.classMapping['@id'], 'propId', 0);
             expect(result).toBeUndefined();
             expect(this.mapping).not.toContain(result);
         });
-        it('unless the IRI passed is not for a data property', function() {
+        it('unless the IRI passed is not for a data property and is not a supported annotation', function() {
             ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
-            var result = mappingManagerSvc.addDataProp(this.mapping, {}, this.classMapping['@id'], 'propId', 0);
+            var result = mappingManagerSvc.addDataProp(this.mapping, [], this.classMapping['@id'], 'propId', 0);
             expect(result).toBeUndefined();
             expect(this.mapping).not.toContain(result);
         });
         it('if the data property exists in the passed ontology', function() {
             ontologyManagerSvc.isDataTypeProperty.and.returnValue(true);
-            var result = mappingManagerSvc.addDataProp(this.mapping, {}, this.classMapping['@id'], 'propId', 0);
+            var result = mappingManagerSvc.addDataProp(this.mapping, [], this.classMapping['@id'], 'propId', 0);
+            expect(this.mapping).toContain(result);
+            expect(uuidSvc.v4).toHaveBeenCalled();
+            expect(result['@type']).toContain(prefixes.delim + 'DataMapping');
+            expect(result[prefixes.delim + 'columnIndex']).toEqual([{'@value': '0'}]);
+            expect(result[prefixes.delim + 'hasProperty']).toEqual([{'@id': 'propId'}]);
+            expect(_.isArray(this.classMapping[prefixes.delim + 'dataProperty'])).toBe(true);
+            expect(this.classMapping[prefixes.delim + 'dataProperty']).toContain({'@id': result['@id']});
+        });
+        it('if the property is a supported annotation', function() {
+            ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
+            mappingManagerSvc.annotationProperties = ['propId'];
+            var result = mappingManagerSvc.addDataProp(this.mapping, [], this.classMapping['@id'], 'propId', 0);
             expect(this.mapping).toContain(result);
             expect(uuidSvc.v4).toHaveBeenCalled();
             expect(result['@type']).toContain(prefixes.delim + 'DataMapping');
@@ -497,7 +506,6 @@ describe('Mapping Manager service', function() {
     describe('should get an ontology in the correct structure', function() {
         beforeEach(function() {
             this.ontologyInfo = {recordId: '', branchId: '', commitId: ''};
-            catalogManagerSvc.localCatalog = {'@id': ''};
         });
         it('unless the parameter object is missing information', function(done) {
             mappingManagerSvc.getOntology({}).then(function() {
@@ -510,7 +518,7 @@ describe('Mapping Manager service', function() {
             $timeout.flush();
         });
         it('unless an error occurs', function(done) {
-            catalogManagerSvc.getResource.and.returnValue($q.reject('Error message'));
+            ontologyManagerSvc.getOntology.and.returnValue($q.reject('Error message'));
             mappingManagerSvc.getOntology(this.ontologyInfo).then(function() {
                 fail('Promise should have rejected');
                 done();
@@ -522,7 +530,7 @@ describe('Mapping Manager service', function() {
         });
         it('successfully', function(done) {
             var test = this;
-            catalogManagerSvc.getResource.and.returnValue($q.when([]));
+            ontologyManagerSvc.getOntology.and.returnValue($q.when([]));
             ontologyManagerSvc.getOntologyIRI.and.returnValue('ontology');
             mappingManagerSvc.getOntology(test.ontologyInfo).then(function(response) {
                 expect(typeof response).toBe('object');
@@ -659,31 +667,37 @@ describe('Mapping Manager service', function() {
     it('should collect incompatible entities within a mapping based on its source ontologies', function() {
         var mapping = {jsonld: []};
         var sourceOntologies = [{}];
-        spyOn(mappingManagerSvc, 'getAllClassMappings').and.returnValue([{id: 'class'}]);
-        spyOn(mappingManagerSvc, 'getClassIdByMapping').and.returnValue('');
+        var classMapping = {id: 'class'};
+        var propMapping = {id: 'prop'};
+        spyOn(mappingManagerSvc, 'getAllClassMappings').and.returnValue([classMapping]);
+        spyOn(mappingManagerSvc, 'getClassIdByMapping').and.returnValue(classMapping.id);
         spyOn(mappingManagerSvc, 'findSourceOntologyWithClass').and.returnValue(undefined);
-        expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([{id: 'class'}]);
+        expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([classMapping]);
 
         mappingManagerSvc.findSourceOntologyWithClass.and.returnValue({});
-        spyOn(mappingManagerSvc, 'getPropMappingsByClass').and.returnValue([{id: 'prop'}]);
-        spyOn(mappingManagerSvc, 'getPropIdByMapping').and.returnValue('');
+        spyOn(mappingManagerSvc, 'getPropMappingsByClass').and.returnValue([propMapping]);
+        spyOn(mappingManagerSvc, 'getPropIdByMapping').and.returnValue(propMapping.id);
         spyOn(mappingManagerSvc, 'findSourceOntologyWithProp').and.returnValue(undefined);
-        expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([{id: 'prop'}]);
+        expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([propMapping]);
 
+        mappingManagerSvc.annotationProperties = [propMapping.id];
+        expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([]);
+
+        mappingManagerSvc.annotationProperties = [];
         mappingManagerSvc.findSourceOntologyWithProp.and.returnValue({});
         ontologyManagerSvc.isObjectProperty.and.returnValue(true);
         spyOn(mappingManagerSvc, 'isDataMapping').and.returnValue(true);
-        expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([{id: 'prop'}]);
+        expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([propMapping]);
 
         mappingManagerSvc.isDataMapping.and.returnValue(false);
         spyOn(mappingManagerSvc, 'getClassIdByMappingId').and.returnValue('test');
-        expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([{id: 'prop'}]);
+        expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([propMapping]);
 
         mappingManagerSvc.getClassIdByMappingId.and.returnValue('');
         ontologyManagerSvc.isObjectProperty.and.returnValue(false);
         ontologyManagerSvc.isDataTypeProperty.and.returnValue(true);
         spyOn(mappingManagerSvc, 'isObjectMapping').and.returnValue(true);
-        expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([{id: 'prop'}]);
+        expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([propMapping]);
 
         ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
         expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([]);
