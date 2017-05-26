@@ -425,6 +425,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         when(catalogManager.applyInProgressCommit(eq(inProgressCommitId), any(Model.class))).thenReturn(modelFactory
                 .createModel());
         when(catalogManager.addCommit(eq(catalogId), eq(recordId), eq(branchId), eq(user), anyString())).thenReturn(commitId);
+        when(catalogManager.addCommit(eq(catalogId), eq(recordId), eq(branchId), eq(user), anyString(), any(Model.class), any(Model.class))).thenReturn(commitId);
         when(catalogManager.getDiff(any(Model.class), any(Model.class))).thenReturn(difference);
         when(ontologyManager.createOntology(any(FileInputStream.class))).thenReturn(ontology);
         when(ontologyManager.createOntology(anyString())).thenReturn(ontology);
@@ -609,10 +610,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         verify(catalogManager).getLocalCatalogIRI();
         verify(catalogManager).createRecord(any(RecordConfig.class), eq(ontologyRecordFactory));
         verify(catalogManager).addRecord(catalogId, record);
-        verify(catalogManager).createInProgressCommit(user);
-        verify(catalogManager).addInProgressCommit(catalogId, recordId, inProgressCommit);
-        verify(catalogManager).updateInProgressCommit(eq(catalogId), eq(recordId), eq(inProgressCommitId), any(Model.class), eq(null));
-        verify(catalogManager).addCommit(eq(catalogId), eq(recordId), eq(branchId), eq(user), anyString());
+        verify(catalogManager).addCommit(eq(catalogId), eq(recordId), eq(branchId), eq(user), anyString(), any(Model.class), eq(null));
         verify(mockCache).put(Mockito.anyString(), Mockito.any(Ontology.class));
     }
 
@@ -677,10 +675,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         verify(catalogManager).getLocalCatalogIRI();
         verify(catalogManager).createRecord(any(RecordConfig.class), eq(ontologyRecordFactory));
         verify(catalogManager).addRecord(catalogId, record);
-        verify(catalogManager).createInProgressCommit(user);
-        verify(catalogManager).addInProgressCommit(catalogId, recordId, inProgressCommit);
-        verify(catalogManager).updateInProgressCommit(eq(catalogId), eq(recordId), eq(inProgressCommitId), any(Model.class), eq(null));
-        verify(catalogManager).addCommit(eq(catalogId), eq(recordId), eq(branchId), eq(user), anyString());
+        verify(catalogManager).addCommit(eq(catalogId), eq(recordId), eq(branchId), eq(user), anyString(), any(Model.class), eq(null));
         verify(mockCache).put(Mockito.anyString(), Mockito.any(Ontology.class));
     }
 
