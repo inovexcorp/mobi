@@ -52,9 +52,9 @@
          */
         .directive('commitChangesDisplay', commitChangesDisplay);
 
-        commitChangesDisplay.$inject = ['$filter', 'utilService', 'prefixes']
+        commitChangesDisplay.$inject = ['$filter', 'utilService', 'prefixes', 'ontologyUtilsManagerService']
 
-        function commitChangesDisplay($filter, utilService, prefixes) {
+        function commitChangesDisplay($filter, utilService, prefixes, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -66,18 +66,41 @@
                 },
                 controller: ['$scope', function($scope) {
                     var dvm = this;
+                    dvm.size = 100;
+                    dvm.index = 0;
                     dvm.util = utilService;
+                    dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.list = [];
-                    dvm.results = {};
+                    dvm.chunkList = [];
+                    dvm.results = getResults();
+
+                    dvm.getMoreResults = function() {
+                        dvm.index++;
+                        _.forEach(_.get(dvm.chunkList, dvm.index, dvm.list), id => {
+                            addToResults(dvm.util.getChangesById(id, dvm.additions), dvm.util.getChangesById(id, dvm.deletions), id, dvm.results);
+                        });
+                    }
 
                     $scope.$watchGroup(['dvm.additions', 'dvm.deletions'], () => {
-                        dvm.list = _.unionWith(_.map(dvm.additions, '@id'), _.map(dvm.deletions, '@id'), _.isEqual);
-                        dvm.results = {};
-                        _.forEach(dvm.list, id => dvm.results[id] = {
-                            additions: dvm.util.getChangesById(id, dvm.additions),
-                            deletions: dvm.util.getChangesById(id, dvm.deletions)
-                        });
+                         dvm.list = _.unionWith(_.map(dvm.additions, '@id'), _.map(dvm.deletions, '@id'), _.isEqual);
+                         dvm.size = 100;
+                         dvm.index = 0;
+                         dvm.results = getResults();
                     });
+
+                    function getResults() {
+                        var results = {};
+                        dvm.chunkList = _.chunk(dvm.list, dvm.size);
+                        dvm.chunks = dvm.chunkList.length === 0 ? 0 : dvm.chunkList.length - 1;
+                        _.forEach(_.get(dvm.chunkList, dvm.index, dvm.list), id => {
+                            addToResults(dvm.util.getChangesById(id, dvm.additions), dvm.util.getChangesById(id, dvm.deletions), id, results);
+                        });
+                        return results;
+                    }
+
+                    function addToResults(additions, deletions, id, results) {
+                        results[id] = { additions: additions, deletions: deletions };
+                    }
                 }],
                 templateUrl: 'directives/commitChangesDisplay/commitChangesDisplay.html'
             }

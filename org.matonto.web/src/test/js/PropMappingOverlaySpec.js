@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Prop Mapping Overlay directive', function() {
+describe('Prop Mapping Overlay directive', function() {
     var $compile,
         scope,
         element,
