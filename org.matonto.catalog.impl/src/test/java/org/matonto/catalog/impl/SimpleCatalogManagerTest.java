@@ -2583,16 +2583,18 @@ public class SimpleCatalogManagerTest {
             assertTrue(conn.getStatements(null, null, null, commitIdToKeep).hasNext());
             assertTrue(conn.getStatements(null, null, null, additionsToRemove).hasNext());
             assertTrue(conn.getStatements(null, null, null, additionsToKeep).hasNext());
+            assertTrue(conn.getStatements(tagId, null, null, tagId).hasNext());
             assertTrue(conn.getStatements(tagId, commitIRI, commitIdToRemove, tagId).hasNext());
 
             manager.removeBranch(distributedCatalogId, recordId, branchId);
             assertFalse(conn.getStatements(branchId, null, null, branchId).hasNext());
+            assertFalse(conn.getStatements(branchId, null, null).hasNext());
             assertFalse(conn.getStatements(recordId, branchIRI, branchId, recordId).hasNext());
             assertFalse(conn.getStatements(null, null, null, commitIdToRemove).hasNext());
             assertTrue(conn.getStatements(null, null, null, commitIdToKeep).hasNext());
             assertFalse(conn.getStatements(null, null, null, additionsToRemove).hasNext());
             assertTrue(conn.getStatements(null, null, null, additionsToKeep).hasNext());
-            assertFalse(conn.getStatements(tagId, commitIRI, commitIdToRemove, tagId).hasNext());
+            assertFalse(conn.getStatements(tagId, null, null, tagId).hasNext());
         }
     }
 

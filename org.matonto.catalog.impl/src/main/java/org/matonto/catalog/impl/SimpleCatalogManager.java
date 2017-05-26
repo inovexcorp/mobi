@@ -87,6 +87,7 @@ import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.ontologies.provo.Activity;
 import org.matonto.ontologies.provo.Entity;
 import org.matonto.persistence.utils.Bindings;
+import org.matonto.persistence.utils.RepositoryResults;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.query.api.Binding;
 import org.matonto.query.api.BindingSet;
@@ -413,12 +414,14 @@ public class SimpleCatalogManager implements CatalogManager {
         try (RepositoryConnection conn = repository.getConnection()) {
             if (!resourceExists(record.getResource(), conn)) {
                 record.setCatalog(getCatalog(catalogId));
+                conn.begin();
                 if (record.getModel().contains(null, vf.createIRI(RDF.TYPE.stringValue()),
                         versionedRDFRecordFactory.getTypeIRI())) {
                     addMasterBranch((VersionedRDFRecord) record, conn);
                 } else {
                     addObject(record, conn);
                 }
+                conn.commit();
             } else {
                 throw throwAlreadyExists(record.getResource(), recordFactory);
             }
@@ -429,6 +432,7 @@ public class SimpleCatalogManager implements CatalogManager {
     public <T extends Record> void updateRecord(Resource catalogId, T newRecord) {
         try (RepositoryConnection conn = repository.getConnection()) {
             testRecordPath(catalogId, newRecord.getResource(), conn);
+            conn.begin();
             updateObject(newRecord, conn);
             conn.commit();
         }
@@ -438,6 +442,7 @@ public class SimpleCatalogManager implements CatalogManager {
     public void removeRecord(Resource catalogId, Resource recordId) {
         try (RepositoryConnection conn = repository.getConnection()) {
             Record record = getRecord(catalogId, recordId, recordFactory, conn);
+            conn.begin();
             if (record.getModel().contains(null, null, vf.createIRI(UnversionedRecord.TYPE))) {
                 removeUnversionedRecord(record, conn);
             } else if (record.getModel().contains(null, null, vf.createIRI(VersionedRDFRecord.TYPE))) {
@@ -447,6 +452,7 @@ public class SimpleCatalogManager implements CatalogManager {
             } else {
                 removeObject(record, conn);
             }
+            conn.commit();
         }
     }
 
@@ -515,7 +521,7 @@ public class SimpleCatalogManager implements CatalogManager {
                         .collect(Collectors.toSet());
                 distributions.add(distribution);
                 record.setUnversionedDistribution(distributions);
-                beginTransaction(conn);
+                conn.begin();
                 removeObject(record, conn);
                 addObject(record, conn);
                 addObject(distribution, conn);
@@ -531,6 +537,7 @@ public class SimpleCatalogManager implements CatalogManager {
                                               Distribution newDistribution) {
         try (RepositoryConnection conn = repository.getConnection()) {
             testUnversionedDistributionPath(catalogId, unversionedRecordId, newDistribution.getResource(), conn);
+            conn.begin();
             updateObject(newDistribution, conn);
             conn.commit();
         }
@@ -542,6 +549,7 @@ public class SimpleCatalogManager implements CatalogManager {
         try (RepositoryConnection conn = repository.getConnection()) {
             Distribution distribution = getUnversionedDistribution(catalogId, unversionedRecordId, distributionId,
                     conn);
+            conn.begin();
             removeObjectWithRelationship(distribution.getResource(), unversionedRecordId,
                     UnversionedRecord.unversionedDistribution_IRI, conn);
             conn.commit();
@@ -603,7 +611,7 @@ public class SimpleCatalogManager implements CatalogManager {
                         .collect(Collectors.toSet());
                 versions.add(version);
                 record.setVersion(versions);
-                beginTransaction(conn);
+                conn.begin();
                 removeObject(record, conn);
                 addObject(record, conn);
                 addObject(version, conn);
@@ -618,6 +626,7 @@ public class SimpleCatalogManager implements CatalogManager {
     public <T extends Version> void updateVersion(Resource catalogId, Resource versionedRecordId, T newVersion) {
         try (RepositoryConnection conn = repository.getConnection()) {
             testVersionPath(catalogId, versionedRecordId, newVersion.getResource(), conn);
+            conn.begin();
             updateObject(newVersion, conn);
             conn.commit();
         }
@@ -627,12 +636,13 @@ public class SimpleCatalogManager implements CatalogManager {
     public void removeVersion(Resource catalogId, Resource versionedRecordId, Resource versionId) {
         try (RepositoryConnection conn = repository.getConnection()) {
             Version version = getVersion(catalogId, versionedRecordId, versionId, versionFactory, conn);
+            conn.begin();
             removeVersion(versionedRecordId, version, conn);
+            conn.commit();
         }
     }
 
     private void removeVersion(Resource recordId, Version version, RepositoryConnection conn) {
-        beginTransaction(conn);
         removeObjectWithRelationship(version.getResource(), recordId, VersionedRecord.version_IRI, conn);
         IRI latestVersionIRI = vf.createIRI(VersionedRecord.latestVersion_IRI);
         if (conn.getStatements(recordId, latestVersionIRI, version.getResource(), recordId).hasNext()) {
@@ -647,7 +657,6 @@ public class SimpleCatalogManager implements CatalogManager {
             }
         }
         version.getVersionedDistribution_resource().forEach(conn::clear);
-        conn.commit();
     }
 
     private void removeVersion(Resource recordId, Resource versionId, RepositoryConnection conn) {
@@ -720,6 +729,7 @@ public class SimpleCatalogManager implements CatalogManager {
         try (RepositoryConnection conn = repository.getConnection()) {
             Distribution distribution = getVersionedDistribution(catalogId, versionedRecordId, versionId,
                     distributionId, conn);
+            conn.begin();
             removeObjectWithRelationship(distribution.getResource(), versionId, Version.versionedDistribution_IRI,
                     conn);
             conn.commit();
@@ -757,7 +767,7 @@ public class SimpleCatalogManager implements CatalogManager {
                         .collect(Collectors.toSet());
                 distributions.add(distribution);
                 version.setVersionedDistribution(distributions);
-                beginTransaction(conn);
+                conn.begin();
                 removeObject(version, conn);
                 addObject(version, conn);
                 addObject(distribution, conn);
@@ -773,6 +783,7 @@ public class SimpleCatalogManager implements CatalogManager {
                                             Distribution newDistribution) {
         try (RepositoryConnection conn = repository.getConnection()) {
             testVersionedDistributionPath(catalogId, versionedRecordId, versionId, newDistribution.getResource(), conn);
+            conn.begin();
             updateObject(newDistribution, conn);
             conn.commit();
         }
@@ -813,7 +824,7 @@ public class SimpleCatalogManager implements CatalogManager {
                         .collect(Collectors.toSet());
                 branches.add(branch);
                 record.setBranch(branches);
-                beginTransaction(conn);
+                conn.begin();
                 removeObject(record, conn);
                 addObject(record, conn);
                 addObject(branch, conn);
@@ -828,7 +839,9 @@ public class SimpleCatalogManager implements CatalogManager {
     public void addMasterBranch(Resource catalogId, Resource versionedRDFRecordId) {
         try (RepositoryConnection conn = repository.getConnection()) {
             VersionedRDFRecord record = getRecord(catalogId, versionedRDFRecordId, versionedRDFRecordFactory, conn);
+            conn.begin();
             addMasterBranch(record, conn);
+            conn.commit();
         }
     }
 
@@ -844,11 +857,11 @@ public class SimpleCatalogManager implements CatalogManager {
                 .collect(Collectors.toSet());
         branches.add(branch);
         record.setBranch(branches);
-        beginTransaction(conn);
+//        conn.begin();
         removeObject(record, conn);
         addObject(record, conn);
         addObject(branch, conn);
-        conn.commit();
+//        conn.commit();
     }
 
     @Override
@@ -860,6 +873,7 @@ public class SimpleCatalogManager implements CatalogManager {
                 throw new IllegalArgumentException("Branch " + newBranch.getResource().stringValue()
                         + "is the master Branch and cannot be updated.");
             }
+            conn.begin();
             updateObject(newBranch, conn);
             conn.commit();
         }
@@ -869,7 +883,7 @@ public class SimpleCatalogManager implements CatalogManager {
     public void updateHead(Resource catalogId, Resource versionedRDFRecordId, Resource branchId, Resource commitId) {
         try (RepositoryConnection conn = repository.getConnection()) {
             Branch branch = getBranch(catalogId, versionedRDFRecordId, branchId, branchFactory, conn);
-            beginTransaction(conn);
+            conn.begin();
             testObjectId(commitId, commitFactory.getTypeIRI(), conn);
             branch.setHead(commitFactory.createNew(commitId));
             removeObject(branch, conn);
@@ -886,31 +900,32 @@ public class SimpleCatalogManager implements CatalogManager {
             if (conn.getStatements(versionedRDFRecordId, masterBranchIRI, branchId, versionedRDFRecordId).hasNext()) {
                 throw new IllegalStateException("Branch is the master Branch and cannot be removed.");
             }
+            conn.begin();
             removeBranch(versionedRDFRecordId, branch, conn);
+            conn.commit();
         }
     }
 
     private void removeBranch(Resource recordId, Branch branch, RepositoryConnection conn) {
         removeObjectWithRelationship(branch.getResource(), recordId, VersionedRDFRecord.branch_IRI, conn);
-        conn.commit();
         Optional<Resource> headCommit = branch.getHead_resource();
         if (headCommit.isPresent()) {
             List<Resource> chain = getCommitChain(headCommit.get(), conn);
             IRI commitIRI = vf.createIRI(Tag.commit_IRI);
             Set<Resource> deltaIRIs = new HashSet<>();
-            beginTransaction(conn);
             for (Resource commitId : chain) {
                 if (!commitIsReferenced(commitId, conn)) {
                     deltaIRIs.add(getAdditionsResource(commitId, conn));
                     deltaIRIs.add(getDeletionsResource(commitId, conn));
-                    conn.clear(commitId);
-                    conn.remove((Resource) null, commitIRI, commitId);
+                    remove(commitId, conn);
+                    RepositoryResults.asModel(conn.getStatements(null, commitIRI, commitId), mf).subjects()
+                            .forEach(tagId -> removeObjectWithRelationship(tagId, recordId, VersionedRecord.version_IRI,
+                                    conn));
                 } else {
                     break;
                 }
             }
             deltaIRIs.forEach(conn::clear);
-            conn.commit();
         } else {
             log.warn("The HEAD Commit was not set on the Branch.");
         }
@@ -1025,7 +1040,7 @@ public class SimpleCatalogManager implements CatalogManager {
             testInProgressCommitPath(catalogId, versionedRDFRecordId, commitId, conn);
             Resource additionsResource = getAdditionsResource(commitId, conn);
             Resource deletionsResource = getDeletionsResource(commitId, conn);
-            beginTransaction(conn);
+            conn.begin();
             addChanges(additionsResource, deletionsResource, additions, conn);
             addChanges(deletionsResource, additionsResource, deletions, conn);
             conn.commit();
@@ -1040,7 +1055,7 @@ public class SimpleCatalogManager implements CatalogManager {
             testInProgressCommitPath(catalogId, versionedRDFRecordId, commit.getResource(), conn);
             Resource additionsResource = getAdditionsResource(commit);
             Resource deletionsResource = getDeletionsResource(commit);
-            beginTransaction(conn);
+            conn.begin();
             addChanges(additionsResource, deletionsResource, additions, conn);
             addChanges(deletionsResource, additionsResource, deletions, conn);
             conn.commit();
@@ -1079,7 +1094,10 @@ public class SimpleCatalogManager implements CatalogManager {
             Branch branch = getBranch(catalogId, versionedRDFRecordId, branchId, branchFactory, conn);
             Commit baseCommit = branch.getHead_resource().map(resource -> getObject(resource, commitFactory, conn))
                     .orElse(null);
-            return addCommit(branch, user, message, additions, deletions, baseCommit, null, conn);
+            conn.begin();
+            Resource commitId = addCommit(branch, user, message, additions, deletions, baseCommit, null, conn);
+            conn.commit();
+            return commitId;
         }
     }
 
@@ -1088,19 +1106,18 @@ public class SimpleCatalogManager implements CatalogManager {
         InProgressCommit inProgressCommit = createInProgressCommit(user);
         Resource additionsResource = getAdditionsResource(inProgressCommit);
         Resource deletionsResource = getDeletionsResource(inProgressCommit);
-        beginTransaction(conn);
+//        conn.begin();
         addChanges(additionsResource, deletionsResource, additions, conn);
         addChanges(deletionsResource, additionsResource, deletions, conn);
         Commit newCommit = createCommit(inProgressCommit, message, baseCommit, auxCommit);
         addCommit(branch, newCommit, conn);
-        conn.commit();
+//        conn.commit();
         return newCommit.getResource();
     }
 
     private void addCommit(Branch branch, Commit commit, RepositoryConnection conn) {
         if (!resourceExists(commit.getResource(), conn)) {
             branch.setHead(commit);
-            beginTransaction(conn);
             removeObject(branch, conn);
             addObject(branch, conn);
             addObject(commit, conn);
@@ -1389,9 +1406,12 @@ public class SimpleCatalogManager implements CatalogManager {
         try (RepositoryConnection conn = repository.getConnection()) {
             Branch sourceBranch = getBranch(catalogId, versionedRDFRecordId, sourceBranchId, branchFactory, conn);
             Branch targetBranch = getBranch(catalogId, versionedRDFRecordId, targetBranchId, branchFactory, conn);
-            return addCommit(targetBranch, user, getMergeMessage(sourceBranch, targetBranch), additions, deletions,
-                    getObject(getHeadCommitIRI(targetBranch), commitFactory, conn),
+            conn.begin();
+            Resource commitId = addCommit(targetBranch, user, getMergeMessage(sourceBranch, targetBranch), additions,
+                    deletions, getObject(getHeadCommitIRI(targetBranch), commitFactory, conn),
                     getObject(getHeadCommitIRI(sourceBranch), commitFactory, conn), conn);
+            conn.commit();
+            return commitId;
         }
     }
 
@@ -1587,13 +1607,11 @@ public class SimpleCatalogManager implements CatalogManager {
 
     private void removeObjectWithRelationship(Resource objectId, Resource removeFromId, String predicate,
                                               RepositoryConnection conn) {
-        beginTransaction(conn);
         remove(objectId, conn);
         conn.remove(removeFromId, vf.createIRI(predicate), objectId, removeFromId);
     }
 
     private <T extends Thing> void updateObject(T object, RepositoryConnection conn) {
-        beginTransaction(conn);
         removeObject(object, conn);
         conn.add(object.getModel(), object.getResource());
     }
@@ -1605,6 +1623,7 @@ public class SimpleCatalogManager implements CatalogManager {
      * @param conn       A connection to the Repository.
      */
     private void remove(Resource resourceId, RepositoryConnection conn) {
+        conn.remove(resourceId, null, null);
         conn.clear(resourceId);
     }
 
@@ -1947,11 +1966,5 @@ public class SimpleCatalogManager implements CatalogManager {
                                OrmFactory<S> parentFactory) {
         return new IllegalArgumentException(childFactory.getTypeIRI().getLocalName() + " " + child.stringValue()
                 + " does not belong to " + parentFactory.getTypeIRI().getLocalName() + " " + parent.stringValue());
-    }
-
-    private void beginTransaction(RepositoryConnection conn) {
-        if (!conn.isActive()) {
-            conn.begin();
-        }
     }
 }
