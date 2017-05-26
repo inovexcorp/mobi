@@ -857,11 +857,9 @@ public class SimpleCatalogManager implements CatalogManager {
                 .collect(Collectors.toSet());
         branches.add(branch);
         record.setBranch(branches);
-//        conn.begin();
         removeObject(record, conn);
         addObject(record, conn);
         addObject(branch, conn);
-//        conn.commit();
     }
 
     @Override
@@ -1106,12 +1104,10 @@ public class SimpleCatalogManager implements CatalogManager {
         InProgressCommit inProgressCommit = createInProgressCommit(user);
         Resource additionsResource = getAdditionsResource(inProgressCommit);
         Resource deletionsResource = getDeletionsResource(inProgressCommit);
-//        conn.begin();
         addChanges(additionsResource, deletionsResource, additions, conn);
         addChanges(deletionsResource, additionsResource, deletions, conn);
         Commit newCommit = createCommit(inProgressCommit, message, baseCommit, auxCommit);
         addCommit(branch, newCommit, conn);
-//        conn.commit();
         return newCommit.getResource();
     }
 
