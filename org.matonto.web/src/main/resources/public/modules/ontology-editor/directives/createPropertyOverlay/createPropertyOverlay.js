@@ -48,7 +48,7 @@
                     dvm.om = ontologyManagerService;
                     dvm.os = ontologyStateService;
                     dvm.prefix = dvm.os.getDefaultPrefix();
-
+                    dvm.values = [];
                     dvm.property = {
                         '@id': dvm.prefix,
                         [prefixes.dcterms + 'title']: [{
@@ -88,27 +88,15 @@
                         // add the entity to the ontology
                         dvm.os.addEntity(dvm.os.listItem, dvm.property);
                         // update relevant lists
-                        var split = $filter('splitIRI')(dvm.property['@id']);
                         if (dvm.om.isObjectProperty(dvm.property)) {
-                            _.get(dvm.os.listItem, 'subObjectProperties').push({namespace:split.begin + split.then, localName: split.end});
-                            var hierarchy = _.get(dvm.os.listItem, 'objectPropertyHierarchy');
-                            hierarchy.push({'entityIRI': dvm.property['@id']});
-                            dvm.os.listItem.flatObjectPropertyHierarchy = dvm.os.flattenHierarchy(hierarchy, dvm.os.listItem.recordId);
-                            dvm.os.setObjectPropertiesOpened(dvm.os.listItem.recordId, true);
+                            commonUpdate('subObjectProperties', 'objectPropertyHierarchy', 'flatObjectPropertyHierarchy', 'objectPropertyIndex', dvm.os.setObjectPropertiesOpened);
                             dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.getOntologiesArray(), dvm.os.listItem);
                         } else if (dvm.om.isDataTypeProperty(dvm.property)) {
-                            _.get(dvm.os.listItem, 'subDataProperties').push({namespace:split.begin + split.then, localName: split.end});
-                            var hierarchy = _.get(dvm.os.listItem, 'dataPropertyHierarchy');
-                            hierarchy.push({'entityIRI': dvm.property['@id']});
-                            dvm.os.listItem.flatDataPropertyHierarchy = dvm.os.flattenHierarchy(hierarchy, dvm.os.listItem.recordId);
-                            dvm.os.setDataPropertiesOpened(dvm.os.listItem.recordId, true);
+                            commonUpdate('subDataProperties', 'dataPropertyHierarchy', 'flatDataPropertyHierarchy', 'dataPropertyIndex', dvm.os.setDataPropertiesOpened);
                             dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.getOntologiesArray(), dvm.os.listItem);
                         } else if (dvm.om.isAnnotation(dvm.property)) {
-                            _.get(dvm.os.listItem, 'annotations').push({namespace:split.begin + split.then, localName: split.end});
-                            var hierarchy = _.get(dvm.os.listItem, 'annotationPropertyHierarchy');
-                            hierarchy.push({'entityIRI': dvm.property['@id']});
-                            dvm.os.listItem.flatAnnotationPropertyHierarchy = dvm.os.flattenHierarchy(hierarchy, dvm.os.listItem.recordId);
-                            dvm.os.setAnnotationPropertiesOpened(dvm.os.listItem.recordId, true);
+                            dvm.values = [];
+                            commonUpdate('annotations', 'annotationPropertyHierarchy', 'flatAnnotationPropertyHierarchy', 'annotationPropertyIndex', dvm.os.setAnnotationPropertiesOpened);
                         }
                         dvm.os.addToAdditions(dvm.os.listItem.recordId, dvm.property);
                         // select the new property
@@ -116,6 +104,26 @@
                         // hide the overlay
                         dvm.os.showCreatePropertyOverlay = false;
                         ontoUtils.saveCurrentChanges();
+                    }
+                    
+                    dvm.getKey = function() {
+                        if (dvm.om.isDataTypeProperty(dvm.property)) {
+                            return 'subDataProperties'
+                        }
+                        return 'subObjectProperties';
+                    }
+                    
+                    function commonUpdate(listKey, hierarchyKey, flatHierarchyKey, indexKey, func) {
+                        var split = $filter('splitIRI')(dvm.property['@id']);
+                        dvm.os.listItem[listKey].push({namespace:split.begin + split.then, localName: split.end});
+                        if (dvm.values.length) {
+                            dvm.property[prefixes.rdfs + 'subPropertyOf'] = dvm.values;
+                            ontoUtils.setSuperProperties(dvm.property['@id'], _.map(dvm.values, '@id'), hierarchyKey, indexKey, flatHierarchyKey);
+                        } else {
+                            dvm.os.listItem[hierarchyKey].push({'entityIRI': dvm.property['@id']});
+                            dvm.os.listItem[flatHierarchyKey] = dvm.os.flattenHierarchy(dvm.os.listItem[hierarchyKey], dvm.os.listItem.recordId);
+                        }
+                        func(dvm.os.listItem.recordId, true);
                     }
                 }
             }

@@ -469,4 +469,15 @@ describe('Ontology Utils Manager service', function() {
         expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.classHierarchy, ontologyStateSvc.listItem.recordId);
         expect(ontologyStateSvc.listItem.flatClassHierarchy).toEqual([{prop: 'flattened'}]);
     });
+    
+    it('setSuperProperties should call the correct methods', function() {
+        ontologyStateSvc.flattenHierarchy.and.returnValue([{prop: 'flattened'}]);
+        var propertyIRIs = ['classId1', 'classId2'];
+        ontologyUtilsManagerSvc.setSuperProperties('iri', propertyIRIs, 'hierarchy', 'index', 'flatHierarchy');
+        _.forEach(propertyIRIs, function(value) {
+            expect(ontologyStateSvc.addEntityToHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.hierarchy, 'iri', ontologyStateSvc.listItem.index, value);
+        });
+        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.hierarchy, ontologyStateSvc.listItem.recordId);
+        expect(ontologyStateSvc.listItem.flatHierarchy).toEqual([{prop: 'flattened'}]);
+    });
 });

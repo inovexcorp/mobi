@@ -206,5 +206,12 @@
                 });
                 os.listItem.flatClassHierarchy = os.flattenHierarchy(os.listItem.classHierarchy, os.listItem.recordId);
             }
+            
+            self.setSuperProperties = function(iri, propertyIRIs, hierarchyKey, indexKey, flatHierarchyKey) {
+                _.forEach(propertyIRIs, propertyIRI => {
+                    os.addEntityToHierarchy(os.listItem[hierarchyKey], iri, os.listItem[indexKey], propertyIRI);
+                });
+                os.listItem[flatHierarchyKey] = os.flattenHierarchy(os.listItem[hierarchyKey], os.listItem.recordId);
+            }
         }
 })();
