@@ -48,7 +48,7 @@
 
                     dvm.show = function() {
                         dvm.isShown = true;
-                      }
+                    }
 
                     dvm.hide = function() {
                         dvm.isShown = false;

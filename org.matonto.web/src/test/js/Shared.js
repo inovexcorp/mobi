@@ -614,6 +614,7 @@ function mockOntologyUtilsManager() {
             this.updateLabel = jasmine.createSpy('updateLabel');
             this.getLabelForIRI = jasmine.createSpy('getLabelForIRI');
             this.getDropDownText = jasmine.createSpy('getDropDownText');
+            this.setSuperClasses = jasmine.createSpy('setSuperClasses');
         });
     });
 }

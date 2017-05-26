@@ -199,5 +199,12 @@
             self.getDropDownText = function(item) {
                 return os.getEntityNameByIndex(ro.getItemIri(item), os.listItem);
             }
+            
+            self.setSuperClasses = function(iri, classIRIs) {
+                _.forEach(classIRIs, classIRI => {
+                    os.addEntityToHierarchy(os.listItem.classHierarchy, iri, os.listItem.classIndex, classIRI);
+                });
+                os.listItem.flatClassHierarchy = os.flattenHierarchy(os.listItem.classHierarchy, os.listItem.recordId);
+            }
         }
 })();

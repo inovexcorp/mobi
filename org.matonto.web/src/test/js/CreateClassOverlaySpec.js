@@ -91,6 +91,9 @@ describe('Create Class Overlay directive', function() {
         it('with an advanced-language-select', function() {
             expect(element.find('advanced-language-select').length).toBe(1);
         });
+        it('with a super-class-select', function() {
+            expect(element.find('super-class-select').length).toBe(1);
+        });
         it('depending on whether there is an error', function() {
             expect(element.find('error-display').length).toBe(0);
 
