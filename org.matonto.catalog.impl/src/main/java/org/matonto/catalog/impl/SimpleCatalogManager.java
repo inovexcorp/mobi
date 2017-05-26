@@ -1064,6 +1064,7 @@ public class SimpleCatalogManager implements CatalogManager {
     public void addCommit(Resource catalogId, Resource versionedRDFRecordId, Resource branchId, Commit commit) {
         try (RepositoryConnection conn = repository.getConnection()) {
             Branch branch = getBranch(catalogId, versionedRDFRecordId, branchId, branchFactory, conn);
+            conn.begin();
             addCommit(branch, commit, conn);
             conn.commit();
         }
@@ -1078,6 +1079,7 @@ public class SimpleCatalogManager implements CatalogManager {
                     .orElse(null);
             InProgressCommit inProgressCommit = getInProgressCommit(versionedRDFRecordId, user.getResource(), conn);
             Commit newCommit = createCommit(inProgressCommit, message, baseCommit, null);
+            conn.begin();
             addCommit(branch, newCommit, conn);
             removeObject(inProgressCommit, conn);
             conn.commit();
@@ -1619,8 +1621,7 @@ public class SimpleCatalogManager implements CatalogManager {
      * @param conn       A connection to the Repository.
      */
     private void remove(Resource resourceId, RepositoryConnection conn) {
-        conn.remove(resourceId, null, null);
-        conn.clear(resourceId);
+        conn.remove((Resource) null, null, resourceId);
     }
 
     /**
