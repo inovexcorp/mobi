@@ -28,6 +28,7 @@
             /* Third Party */
             'angular-uuid',
             'ngAnimate',
+            'ngAria',
             'ngCookies',
             'ngMaterial',
             'ngclipboard',
@@ -140,6 +141,7 @@
         })
         .constant('INDENT', 1.28571429)
         .config(httpInterceptorConfig)
+        .config(ariaConfig)
         .factory('requestInterceptor', requestInterceptor)
         .service('beforeUnload', beforeUnload)
         .run(function(beforeUnload) {
@@ -201,5 +203,11 @@
                     return $q.reject(rejection);
                 }
             };
+        }
+
+        function ariaConfig($ariaProvider) {
+            $ariaProvider.config({
+                tabindex: false
+           });
         }
 })();
