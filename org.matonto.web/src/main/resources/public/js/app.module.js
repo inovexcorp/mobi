@@ -28,7 +28,9 @@
             /* Third Party */
             'angular-uuid',
             'ngAnimate',
+            'ngAria',
             'ngCookies',
+            'ngMaterial',
             'ngclipboard',
             'ngHandsontable',
             'ngMessages',
@@ -95,13 +97,13 @@
             /* Custom Modules */
             'catalog',
             'datasets',
+            'discover',
             'home',
             'login',
             'mapper',
             'nav',
             'ontology-editor',
             'settings',
-            'sparql',
             'user-management',
             'webtop',
 
@@ -111,6 +113,7 @@
             'datasetManager',
             'datasetState',
             'delimitedManager',
+            'discoverState',
             'httpService',
             'loginManager',
             'manchesterConverter',
@@ -138,6 +141,7 @@
         })
         .constant('INDENT', 1.28571429)
         .config(httpInterceptorConfig)
+        .config(ariaConfig)
         .factory('requestInterceptor', requestInterceptor)
         .service('beforeUnload', beforeUnload)
         .run(function(beforeUnload) {
@@ -199,5 +203,11 @@
                     return $q.reject(rejection);
                 }
             };
+        }
+
+        function ariaConfig($ariaProvider) {
+            $ariaProvider.config({
+                tabindex: false
+            });
         }
 })();

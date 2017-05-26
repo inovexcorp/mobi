@@ -45,7 +45,6 @@ describe('SPARQL Editor directive', function() {
             prefixes = _prefixes_;
             datasetManagerSvc = _datasetManagerService_;
         });
-
         datasetRecord = {'@id': 'dataset', '@type': [prefixes.dataset + 'DatasetRecord']};
         datasetManagerSvc.getDatasetRecords.and.returnValue($q.when({data: [[datasetRecord]]}));
         element = $compile(angular.element('<sparql-editor></sparql-editor>'))(scope);
@@ -56,10 +55,6 @@ describe('SPARQL Editor directive', function() {
     describe('initializes with the correct values', function() {
         it('for prefixes', function() {
             expect(controller.prefixList.length).toBe(_.keys(prefixes).length);
-        });
-        it('for a dataset record list', function() {
-            scope.$apply();
-            expect(controller.datasetRecords).toEqual([datasetRecord]);
         });
     });
     describe('replaces the element with the correct html', function() {

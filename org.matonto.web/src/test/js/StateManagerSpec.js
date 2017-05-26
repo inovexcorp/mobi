@@ -60,19 +60,13 @@ describe('State Manager service', function() {
         ontologyState[prefixes.ontologyState + 'record'] = [{'@id': recordId}];
     });
 
-    function flushAndVerify() {
-        $httpBackend.flush();
-        $httpBackend.verifyNoOutstandingExpectation();
-        $httpBackend.verifyNoOutstandingRequest();
-    }
-
     describe('getStates', function() {
         it('without parameters', function() {
             $httpBackend.whenGET('/matontorest/states?').respond(200, states);
             stateManagerSvc.getStates().then(function(response) {
                 expect(response).toEqual(states);
             });
-            flushAndVerify();
+            flushAndVerify($httpBackend);
         });
         it('with application and no subjects', function() {
             var params = $httpParamSerializer({
@@ -82,7 +76,7 @@ describe('State Manager service', function() {
             stateManagerSvc.getStates({application: application}).then(function(response) {
                 expect(response).toEqual(states);
             });
-            flushAndVerify();
+            flushAndVerify($httpBackend);
         });
         it('with application and subjects', function() {
             var params = $httpParamSerializer({
@@ -93,7 +87,7 @@ describe('State Manager service', function() {
             stateManagerSvc.getStates({application: application, subjects: subjects}).then(function(response) {
                 expect(response).toEqual(states);
             });
-            flushAndVerify();
+            flushAndVerify($httpBackend);
         });
         it('with no application and subjects', function() {
             var params = $httpParamSerializer({
@@ -103,7 +97,7 @@ describe('State Manager service', function() {
             stateManagerSvc.getStates({subjects: subjects}).then(function(response) {
                 expect(response).toEqual(states);
             });
-            flushAndVerify();
+            flushAndVerify($httpBackend);
         });
     });
 
@@ -118,7 +112,7 @@ describe('State Manager service', function() {
                 expect(stateManagerSvc.states.length).toBe(1);
                 expect(stateManagerSvc.states[0]).toEqual({id: stateId, model: [state]});
             });
-            flushAndVerify();
+            flushAndVerify($httpBackend);
         });
         it('with application', function() {
             $httpBackend.expectPOST('/matontorest/states?application=' + application, function(data) {
@@ -130,7 +124,7 @@ describe('State Manager service', function() {
                 expect(stateManagerSvc.states.length).toBe(1);
                 expect(stateManagerSvc.states[0]).toEqual({id: stateId, model: [state]});
             });
-            flushAndVerify();
+            flushAndVerify($httpBackend);
         });
     });
 
@@ -139,7 +133,7 @@ describe('State Manager service', function() {
         stateManagerSvc.getState(stateId).then(function(response) {
             expect(response).toEqual(states[0]);
         });
-        flushAndVerify();
+        flushAndVerify($httpBackend);
     });
 
     it('updateState hits the correct endpoint', function() {
@@ -151,7 +145,7 @@ describe('State Manager service', function() {
             expect(stateManagerSvc.states.length).toBe(1);
             expect(stateManagerSvc.states[0]).toEqual({id: stateId, model: [state]});
         });
-        flushAndVerify();
+        flushAndVerify($httpBackend);
     });
 
     it('deleteState hits the correct endpoint', function() {
@@ -160,7 +154,7 @@ describe('State Manager service', function() {
         stateManagerSvc.deleteState(stateId).then(function() {
             expect(stateManagerSvc.states.length).toBe(0);
         });
-        flushAndVerify();
+        flushAndVerify($httpBackend);
     });
 
     describe('initialize calls the correct method and sets the correct value', function() {

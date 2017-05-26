@@ -39,18 +39,33 @@
          * @requires $http
          * @requires $q
          * @requires util.service:utilService
+         * @requires prefixes.service:prefixes
+         * @requires discoverState.service:discoverStateService
          *
          * @description
          * `datasetManagerService` is a service that provides access to the MatOnto Dataset REST endpoints.
          */
         .service('datasetManagerService', datasetManagerService);
 
-        datasetManagerService.$inject = ['$http', '$q', 'utilService'];
+        datasetManagerService.$inject = ['$http', '$q', 'utilService', 'prefixes', 'discoverStateService'];
 
-        function datasetManagerService($http, $q, utilService) {
+        function datasetManagerService($http, $q, utilService, prefixes, discoverStateService) {
             var self = this,
                 util = utilService,
+                ds = discoverStateService,
                 prefix = '/matontorest/datasets';
+
+            /**
+             * @ngdoc property
+             * @name datasetRecords
+             * @propertyOf datasetManager.service:datasetManagerService
+             * @type {Object[]}
+             * 
+             * @description
+             * 'datasetRecords' holds an array of dataset record objects which contain properties for the metadata
+             * associated with that record.
+             */
+            self.datasetRecords = [];
 
             /**
              * @ngdoc method
@@ -128,7 +143,14 @@
                 }
                 _.forEach(_.get(recordConfig, 'ontologies', []), id => fd.append('ontologies', id));
                 $http.post(prefix, fd, config)
-                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
+                    .then(response => {
+                        self.datasetRecords.push({
+                            '@id': response.data,
+                            [prefixes.dcterms + 'title']: [{'@value': recordConfig.title}]
+                        });
+                        self.datasetRecords = _.orderBy(self.datasetRecords, record => util.getDctermsValue(record, 'title'));
+                        deferred.resolve(response.data);
+                    }, error => util.onError(error, deferred));
                 return deferred.promise;
             }
 
@@ -151,7 +173,11 @@
                 var deferred = $q.defer(),
                     config = {params: {force}};
                 $http.delete(prefix + '/' + encodeURIComponent(datasetRecordIRI), config)
-                    .then(response => deferred.resolve(), error => util.onError(error, deferred));
+                    .then(response => {
+                        ds.cleanUpOnDatasetDelete(datasetRecordIRI);
+                        _.remove(self.datasetRecords, {'@id': datasetRecordIRI});
+                        deferred.resolve();
+                    }, error => util.onError(error, deferred));
                 return deferred.promise;
             }
 
@@ -174,8 +200,33 @@
                 var deferred = $q.defer(),
                     config = {params: {force}};
                 $http.delete(prefix + '/' + encodeURIComponent(datasetRecordIRI) + '/data', config)
-                    .then(response => deferred.resolve(), error => util.onError(error, deferred));
+                    .then(response => {
+                        ds.cleanUpOnDatasetClear(datasetRecordIRI);
+                        deferred.resolve();
+                    }, error => util.onError(error, deferred));
                 return deferred.promise;
+            }
+
+            
+            /**
+             * @ngdoc method
+             * @name initialize
+             * @methodOf datasetManager.service:datasetManagerService
+             *
+             * @description
+             * Populates the 'datasetRecords' with results from the 'getDatasetRecords' method. If that method results in an error,
+             * an error toast will be displayed.
+             */
+            self.initialize = function() {
+                var paginatedConfig = {
+                    sortOption: {
+                        field: prefixes.dcterms + 'title'
+                    }
+                }
+                self.getDatasetRecords(paginatedConfig)
+                    .then(response => {
+                        self.datasetRecords = _.map(response.data, arr => _.find(arr, obj => _.includes(obj['@type'], prefixes.dataset + 'DatasetRecord')));
+                    }, util.createErrorToast);
             }
         }
 })();

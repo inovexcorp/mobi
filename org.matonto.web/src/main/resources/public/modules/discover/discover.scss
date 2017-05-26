@@ -1,0 +1,13 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.discover {
+    background-color: $gray-lighter;
+    display: flex;
+    flex-direction: column;
+    
+    .discover-page-content {
+        flex: 1;
+        min-height: 0;
+    }
+}
