@@ -91,6 +91,7 @@
         <module>org.matonto.sparql.utils</module>
         <module>org.matonto.cache</module>
         <module>org.matonto.cache.impl.ehcache</module>
+        <module>org.matonto.explorable.dataset.rest</module>
     </modules>
 
     <properties>
