@@ -28,6 +28,7 @@ describe('Static IRI directive', function() {
         controller,
         isolatedScope,
         ontologyStateSvc,
+        ontoUtils,
         toastr;
 
     beforeEach(function() {
@@ -36,13 +37,15 @@ describe('Static IRI directive', function() {
         injectSplitIRIFilter();
         injectRegexConstant();
         mockOntologyState();
+        mockOntologyUtilsManager();
         mockToastr();
 
-        inject(function(_$compile_, _$rootScope_, _$filter_, _ontologyStateService_, _toastr_) {
+        inject(function(_$compile_, _$rootScope_, _$filter_, _ontologyStateService_, _ontologyUtilsManagerService_, _toastr_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $filter = _$filter_;
             ontologyStateSvc = _ontologyStateService_;
+            ontoUtils = _ontologyUtilsManagerService_;
             toastr = _toastr_;
         });
 

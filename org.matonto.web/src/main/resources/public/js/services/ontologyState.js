@@ -372,6 +372,7 @@
                     om.getAnnotationPropertyHierarchies(recordId, branchId, commitId),
                     om.getImportedOntologies(recordId, branchId, commitId)
                 ]).then(response => {
+                    listItem.iriList = _.reduce(_.flatten(_.at(response[0], _.keys(response[0]))), (a, b) => a.concat([b.namespace + b.localName]), []);
                     listItem.annotations = _.unionWith(
                         _.get(response[0], 'annotationProperties'),
                         propertyManagerService.defaultAnnotations,

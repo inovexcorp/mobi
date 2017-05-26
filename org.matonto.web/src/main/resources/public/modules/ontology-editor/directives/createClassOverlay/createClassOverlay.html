@@ -35,7 +35,7 @@
                        display-text="'Description'" muted-text="'(Optional)'"></text-area>
             <advanced-language-select ng-model="dvm.language"></advanced-language-select>
             <div class="btn-container clearfix">
-                <button class="btn btn-primary pull-right" ng-disabled="dvm.form.$invalid" ng-click="dvm.create()">Create</button>
+                <button id="create" class="btn btn-primary pull-right" ng-disabled="dvm.form.$invalid || dvm.ontoUtils.checkIri(dvm.clazz['@id'])" ng-click="dvm.create()">Create</button>
                 <button class="btn btn-default pull-right" ng-click="dvm.os.showCreateClassOverlay = false">Cancel</button>
             </div>
         </form>

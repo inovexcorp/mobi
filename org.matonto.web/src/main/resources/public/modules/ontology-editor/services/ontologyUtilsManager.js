@@ -199,5 +199,9 @@
             self.getDropDownText = function(item) {
                 return os.getEntityNameByIndex(ro.getItemIri(item), os.listItem);
             }
+            
+            self.checkIri = function(iri) {
+                return _.includes(os.listItem.iriList, iri);
+            }
         }
 })();

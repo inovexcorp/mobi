@@ -38,11 +38,11 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    var ontoUtils = ontologyUtilsManagerService;
 
                     dvm.prefixes = prefixes;
                     dvm.iriPattern = REGEX.IRI;
                     dvm.os = ontologyStateService;
+                    dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.prefix = dvm.os.getDefaultPrefix();
                     dvm.clazz = {
                         '@id': dvm.prefix,
@@ -72,7 +72,7 @@
                         if (_.isEqual(dvm.clazz[prefixes.dcterms + 'description'][0]['@value'], '')) {
                             _.unset(dvm.clazz, prefixes.dcterms + 'description');
                         }
-                        ontoUtils.addLanguageToNewEntity(dvm.clazz, dvm.language);
+                        dvm.ontoUtils.addLanguageToNewEntity(dvm.clazz, dvm.language);
                         // add the entity to the ontology
                         dvm.os.addEntity(dvm.os.listItem, dvm.clazz);
                         dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.getOntologiesArray(), dvm.os.listItem);
@@ -87,7 +87,7 @@
                         dvm.os.selectItem(_.get(dvm.clazz, '@id'));
                         // hide the overlay
                         dvm.os.showCreateClassOverlay = false;
-                        ontoUtils.saveCurrentChanges();
+                        dvm.ontoUtils.saveCurrentChanges();
                     }
                 }
             }

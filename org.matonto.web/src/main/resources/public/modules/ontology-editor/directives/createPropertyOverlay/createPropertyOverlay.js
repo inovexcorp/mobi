@@ -40,13 +40,13 @@
                     var dvm = this;
                     var setAsObject = false;
                     var setAsDatatype = false;
-                    var ontoUtils = ontologyUtilsManagerService;
-
+                    
                     dvm.checkbox = false;
                     dvm.prefixes = prefixes;
                     dvm.iriPattern = REGEX.IRI;
                     dvm.om = ontologyManagerService;
                     dvm.os = ontologyStateService;
+                    dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.prefix = dvm.os.getDefaultPrefix();
 
                     dvm.property = {
@@ -83,7 +83,7 @@
                                 _.unset(dvm.property, prefixes.rdfs + axiom);
                             }
                         });
-                        ontoUtils.addLanguageToNewEntity(dvm.property, dvm.language);
+                        dvm.ontoUtils.addLanguageToNewEntity(dvm.property, dvm.language);
                         dvm.os.updatePropertyIcon(dvm.property);
                         // add the entity to the ontology
                         dvm.os.addEntity(dvm.os.listItem, dvm.property);
@@ -115,7 +115,7 @@
                         dvm.os.selectItem(_.get(dvm.property, '@id'));
                         // hide the overlay
                         dvm.os.showCreatePropertyOverlay = false;
-                        ontoUtils.saveCurrentChanges();
+                        dvm.ontoUtils.saveCurrentChanges();
                     }
                 }
             }

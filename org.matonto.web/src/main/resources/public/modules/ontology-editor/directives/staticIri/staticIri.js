@@ -27,9 +27,9 @@
         .module('staticIri', [])
         .directive('staticIri', staticIri);
 
-        staticIri.$inject = ['$filter', 'REGEX', 'ontologyStateService', 'toastr'];
+        staticIri.$inject = ['$filter', 'REGEX', 'ontologyStateService', 'ontologyUtilsManagerService', 'toastr'];
 
-        function staticIri($filter, REGEX, ontologyStateService, toastr) {
+        function staticIri($filter, REGEX, ontologyStateService, ontologyUtilsManagerService, toastr) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/ontology-editor/directives/staticIri/staticIri.html',
@@ -42,7 +42,9 @@
                 controllerAs: 'dvm',
                 controller: ['$scope', function($scope) {
                     var dvm = this;
+                    
                     dvm.os = ontologyStateService;
+                    dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.refresh = {};
                     dvm.namespacePattern = REGEX.IRI;
                     dvm.localNamePattern = REGEX.LOCALNAME;
@@ -63,7 +65,7 @@
                     dvm.onSuccess = function() {
                         toastr.success('', 'Copied', {timeOut: 2000});
                     }
-
+                    
                     $scope.$watch('dvm.iri', function() {
                         dvm.setVariables(dvm);
                         dvm.setVariables(dvm.refresh);
