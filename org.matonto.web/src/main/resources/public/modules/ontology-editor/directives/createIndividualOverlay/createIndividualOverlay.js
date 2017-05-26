@@ -69,8 +69,6 @@
                     }
 
                     dvm.create = function() {
-                        _.set(dvm.individual, 'matonto.originalIRI', dvm.individual['@id']);
-                        
                         // update relevant lists
                         var split = $filter('splitIRI')(dvm.individual['@id']);
                         _.get(dvm.os.listItem, 'individuals').push({namespace:split.begin + split.then, localName: split.end});

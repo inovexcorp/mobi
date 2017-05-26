@@ -179,7 +179,6 @@ describe('Create Individual Overlay directive', function() {
             splitIRIFilter.and.returnValue(split);
             controller.individual = {'@id': 'id', '@type': ['ClassA']};
             controller.create();
-            expect(controller.individual.matonto.originalIRI).toBe(controller.individual['@id']);
             expect(ontologyStateSvc.listItem.individuals).toContain({namespace: split.begin + split.then, localName: split.end});
             expect(ontologyStateSvc.listItem.classesWithIndividuals).toEqual(['ClassA']);
             expect(ontologyStateSvc.listItem.classesAndIndividuals).toEqual({'ClassA': ['id']});
