@@ -49,7 +49,9 @@ import java.util.Optional;
 
 public class RestUtilsTest {
     private Model model;
+    private Model largeModel;
     private String expectedJsonld;
+    private String expectedLargeTurtle;
     private String expectedTurtle;
     private String expectedRdfxml;
     private ValueFactory vf = SimpleValueFactory.getInstance();
@@ -66,13 +68,11 @@ public class RestUtilsTest {
 
     @Before
     public void setUp() throws Exception {
-        org.matonto.rdf.api.Model temp = mf.createModel();
-        temp.add(vf.createIRI("http://example.com/test/0"), vf.createIRI("http://example.com/prop1"), vf.createLiteral("true"));
-        temp.add(vf.createIRI("http://example.com/test/1"), vf.createIRI("http://example.com/prop1"), vf.createLiteral("true"));
-        temp.add(vf.createIRI("http://example.com/test/0"), vf.createIRI("http://example.com/prop2"), vf.createLiteral("true"));
-        model = Values.sesameModel(temp);
+        setUpModel();
+        setUpLargeModel();
 
         expectedJsonld = IOUtils.toString(getClass().getResourceAsStream("/test.json"));
+        expectedLargeTurtle = IOUtils.toString(getClass().getResourceAsStream("/large-test.ttl"));
         expectedTurtle = IOUtils.toString(getClass().getResourceAsStream("/test.ttl"));
         expectedRdfxml = IOUtils.toString(getClass().getResourceAsStream("/test.xml"));
 
@@ -149,6 +149,12 @@ public class RestUtilsTest {
 
         result = RestUtils.modelToString(model, "something");
         assertEquals(expectedJsonld, result);
+    }
+
+    @Test
+    public void groupedModelToString() throws Exception {
+        String result = RestUtils.groupedModelToString(largeModel, "turtle");
+        assertEquals(expectedLargeTurtle, result);
     }
 
     @Test
@@ -236,5 +242,33 @@ public class RestUtilsTest {
     public void getObjectFromJsonldThatDoesNotExistTest() {
         assertEquals(new JSONObject(), RestUtils.getObjectFromJsonld("[]"));
         assertEquals(new JSONObject(), RestUtils.getObjectFromJsonld("[{'@graph': []}]"));
+    }
+
+    private void setUpModel() {
+        org.matonto.rdf.api.Model temp = mf.createModel();
+        temp.add(vf.createIRI("http://example.com/test/0"), vf.createIRI("http://example.com/prop1"), vf.createLiteral("true"));
+        temp.add(vf.createIRI("http://example.com/test/0"), vf.createIRI("http://example.com/prop2"), vf.createLiteral("true"));
+        temp.add(vf.createIRI("http://example.com/test/1"), vf.createIRI("http://example.com/prop1"), vf.createLiteral("true"));
+        model = Values.sesameModel(temp);
+    }
+
+    private void setUpLargeModel() {
+        org.matonto.rdf.api.Model temp = mf.createModel();
+        temp.add(vf.createIRI("http://example.com/test/0"), vf.createIRI("http://example.com/prop1"), vf.createLiteral("true"));
+        temp.add(vf.createIRI("http://example.com/test/0"), vf.createIRI("http://example.com/prop2"), vf.createLiteral("true"));
+        temp.add(vf.createIRI("http://example.com/test/0"), vf.createIRI("http://example.com/prop3"), vf.createLiteral("true"));
+        temp.add(vf.createIRI("http://example.com/test/0"), vf.createIRI("http://example.com/prop4"), vf.createLiteral("true"));
+        temp.add(vf.createIRI("http://example.com/test/0"), vf.createIRI("http://example.com/prop4"), vf.createLiteral("false"));
+        temp.add(vf.createIRI("http://example.com/test/1"), vf.createIRI("http://example.com/prop1"), vf.createLiteral("true"));
+        temp.add(vf.createIRI("http://example.com/test/1"), vf.createIRI("http://example.com/prop2"), vf.createLiteral("true"));
+        temp.add(vf.createIRI("http://example.com/test/1"), vf.createIRI("http://example.com/prop3"), vf.createLiteral("true"));
+        temp.add(vf.createIRI("http://example.com/test/1"), vf.createIRI("http://example.com/prop4"), vf.createLiteral("true"));
+        temp.add(vf.createIRI("http://example.com/test/1"), vf.createIRI("http://example.com/prop4"), vf.createLiteral("false"));
+        temp.add(vf.createIRI("http://example.com/test/2"), vf.createIRI("http://example.com/prop1"), vf.createLiteral("true"));
+        temp.add(vf.createIRI("http://example.com/test/2"), vf.createIRI("http://example.com/prop2"), vf.createLiteral("true"));
+        temp.add(vf.createIRI("http://example.com/test/2"), vf.createIRI("http://example.com/prop3"), vf.createLiteral("true"));
+        temp.add(vf.createIRI("http://example.com/test/2"), vf.createIRI("http://example.com/prop4"), vf.createLiteral("true"));
+        temp.add(vf.createIRI("http://example.com/test/2"), vf.createIRI("http://example.com/prop4"), vf.createLiteral("false"));
+        largeModel = Values.sesameModel(temp);
     }
 }
