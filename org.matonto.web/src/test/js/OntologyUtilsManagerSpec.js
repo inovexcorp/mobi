@@ -461,6 +461,8 @@ describe('Ontology Utils Manager service', function() {
     
     it('setSuperClasses should call the correct methods', function() {
         ontologyStateSvc.flattenHierarchy.and.returnValue([{prop: 'flattened'}]);
+        ontologyStateSvc.createFlatIndividualTree.and.returnValue([{prop: 'individual'}]);
+        ontologyStateSvc.getPathsTo.and.returnValue([['classId1'], ['classId2']]);
         var classIRIs = ['classId1', 'classId2'];
         ontologyUtilsManagerSvc.setSuperClasses('iri', classIRIs);
         _.forEach(classIRIs, function(value) {
@@ -468,6 +470,9 @@ describe('Ontology Utils Manager service', function() {
         });
         expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.classHierarchy, ontologyStateSvc.listItem.recordId);
         expect(ontologyStateSvc.listItem.flatClassHierarchy).toEqual([{prop: 'flattened'}]);
+        expect(ontologyStateSvc.listItem.individualsParentPath).toEqual(['classId1', 'classId2']);
+        expect(ontologyStateSvc.createFlatIndividualTree).toHaveBeenCalledWith(ontologyStateSvc.listItem);
+        expect(ontologyStateSvc.listItem.flatIndividualsHierarchy).toEqual([{prop: 'individual'}]);
     });
     
     it('setSuperProperties should call the correct methods', function() {
