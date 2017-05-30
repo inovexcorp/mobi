@@ -57,7 +57,7 @@ describe('Super Property Select directive', function() {
         });
     });
     describe('controller bound variable', function() {
-        it('values should be one way bound', function() {
+        it('values should be two way bound', function() {
             controller.values = ['different'];
             scope.$apply();
             expect(scope.values).toEqual(['different']);

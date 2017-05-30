@@ -118,7 +118,7 @@
                         dvm.values = [];
                     }
                     
-                    function commonUpdate(listKey, hierarchyKey, flatHierarchyKey, indexKey, func) {
+                    function commonUpdate(listKey, hierarchyKey, flatHierarchyKey, indexKey, setThisOpened) {
                         dvm.os.listItem[listKey].push(ro.createItemFromIri(dvm.property['@id']));
                         if (dvm.values.length) {
                             dvm.property[prefixes.rdfs + 'subPropertyOf'] = dvm.values;
@@ -127,7 +127,7 @@
                             dvm.os.listItem[hierarchyKey].push({'entityIRI': dvm.property['@id']});
                             dvm.os.listItem[flatHierarchyKey] = dvm.os.flattenHierarchy(dvm.os.listItem[hierarchyKey], dvm.os.listItem.recordId);
                         }
-                        func(dvm.os.listItem.recordId, true);
+                        setThisOpened(dvm.os.listItem.recordId, true);
                     }
                 }
             }
