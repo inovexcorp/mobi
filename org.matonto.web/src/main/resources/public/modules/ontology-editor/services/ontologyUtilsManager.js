@@ -201,14 +201,22 @@
             }
             
             self.setSuperClasses = function(iri, classIRIs) {
-                var paths = [];
                 _.forEach(classIRIs, classIRI => {
                     os.addEntityToHierarchy(os.listItem.classHierarchy, iri, os.listItem.classIndex, classIRI);
-                    paths.push(os.getPathsTo(os.listItem.classHierarchy, os.listItem.classIndex, classIRI));
                 });
                 os.listItem.flatClassHierarchy = os.flattenHierarchy(os.listItem.classHierarchy, os.listItem.recordId);
-                os.listItem.individualsParentPath = _.concat(os.listItem.individualsParentPath, _.uniq(_.flattenDeep(paths)));
-                os.listItem.flatIndividualsHierarchy = os.createFlatIndividualTree(os.listItem);
+            }
+
+            self.updateflatIndividualsHierarchy = function(classIRIs) {
+                var paths = [];
+                _.forEach(classIRIs, classIRI => {
+                    paths.push(os.getPathsTo(os.listItem.classHierarchy, os.listItem.classIndex, classIRI));
+                });
+                var flattenedPaths = _.uniq(_.flattenDeep(paths));
+                if (flattenedPaths.length) {
+                    os.listItem.individualsParentPath = _.concat(os.listItem.individualsParentPath, flattenedPaths);
+                    os.listItem.flatIndividualsHierarchy = os.createFlatIndividualTree(os.listItem);
+                }
             }
             
             self.setSuperProperties = function(iri, propertyIRIs, hierarchyKey, indexKey, flatHierarchyKey) {
