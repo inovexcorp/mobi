@@ -22,16 +22,18 @@
   -->
 <div class="super-property-select advanced-language-select">
     <a ng-if="!dvm.isShown" class="btn-link btn-show" ng-click="dvm.show()"><i class="fa fa-fw fa-plus"></i>Show Sub Property Of</a>
-    <a ng-if="dvm.isShown" class="btn-link btn-hide" ng-click="dvm.hide()"><i class="fa fa-fw fa-times"></i>Hide Sub Property Of</a>
-    <div class="form-group" ng-if="dvm.isShown">
-        <custom-label>Properties</custom-label>
-        <ui-select multiple ng-model="dvm.values">
-            <ui-select-match placeholder="Select values">
-                <span title="{{dvm.ro.getItemIri($item)}}">{{dvm.ontoUtils.getDropDownText($item)}}</span>
-            </ui-select-match>
-            <ui-select-choices group-by="dvm.util.getItemNamespace" repeat="{'@id': dvm.ro.getItemIri(value)} as value in dvm.os.listItem[key] | filter:$select.search | orderBy:dvm.ontoUtils.getDropDownText">
-                <div title="{{dvm.ro.getItemIri(value)}}" ng-bind-html="dvm.ontoUtils.getDropDownText(value) | highlight: $select.search | trusted"></div>
-            </ui-select-choices>
-        </ui-select>
+    <div ng-if="dvm.isShown">
+        <a class="btn-link btn-hide" ng-click="dvm.hide()"><i class="fa fa-fw fa-times"></i>Hide Sub Property Of</a>
+        <div class="form-group">
+            <custom-label>Properties</custom-label>
+            <ui-select multiple ng-model="dvm.values">
+                <ui-select-match placeholder="Select properties">
+                    <span title="{{dvm.ro.getItemIri($item)}}">{{dvm.ontoUtils.getDropDownText($item)}}</span>
+                </ui-select-match>
+                <ui-select-choices group-by="dvm.util.getItemNamespace" repeat="{'@id': dvm.ro.getItemIri(value)} as value in dvm.os.listItem[key] | filter:$select.search | orderBy:dvm.ontoUtils.getDropDownText">
+                    <div title="{{dvm.ro.getItemIri(value)}}" ng-bind-html="dvm.ontoUtils.getDropDownText(value) | highlight: $select.search | trusted"></div>
+                </ui-select-choices>
+            </ui-select>
+        </div>
     </div>
 </div>

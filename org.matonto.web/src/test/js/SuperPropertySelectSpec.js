@@ -20,12 +20,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Super Class Select directive', function() {
-    var $compile, scope, element, controller;
+describe('Super Property Select directive', function() {
+    var $compile, scope, element, controller, isolatedScope;
 
     beforeEach(function() {
         module('templates');
-        module('superClassSelect');
+        module('superPropertySelect');
+        mockResponseObj();
+        mockOntologyState();
+        mockUtil();
+        mockOntologyUtilsManager();
+        mockPrefixes();
+        injectTrustedFilter();
+        injectHighlightFilter();
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;
@@ -33,13 +40,24 @@ describe('Super Class Select directive', function() {
         });
 
         scope.values = [];
-        element = $compile(angular.element('<super-class-select values="values"></super-class-select>'))(scope);
+        scope.key = 'key';
+        element = $compile(angular.element('<super-property-select values="values" key="key"></super-property-select>'))(scope);
         scope.$digest();
-        controller = element.controller('superClassSelect');
+        controller = element.controller('superPropertySelect');
     });
 
+    describe('in isolated scope', function() {
+        beforeEach(function() {
+            isolatedScope = element.isolateScope();
+        });
+        it('key should be one way bound', function() {
+            isolatedScope.key = 'new';
+            scope.$digest();
+            expect(scope.key).toBe('key');
+        });
+    });
     describe('controller bound variable', function() {
-        it('values should be two way bound', function() {
+        it('values should be one way bound', function() {
             controller.values = ['different'];
             scope.$apply();
             expect(scope.values).toEqual(['different']);
@@ -48,7 +66,7 @@ describe('Super Class Select directive', function() {
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('super-class-select')).toBe(true);
+            expect(element.hasClass('super-property-select')).toBe(true);
             expect(element.hasClass('advanced-language-select')).toBe(true);
         });
         it('for correct links', function() {
@@ -59,43 +77,43 @@ describe('Super Class Select directive', function() {
             expect(element.querySelectorAll('.btn-link .fa-plus').length).toBe(0);
             expect(element.querySelectorAll('.btn-link .fa-times').length).toBe(1);
         });
-        it('for .form-group', function() {
+        it('with a .form-group', function() {
             expect(element.querySelectorAll('.form-group').length).toBe(0);
             controller.isShown = true;
             scope.$apply();
             expect(element.querySelectorAll('.form-group').length).toBe(1);
         });
-        it('for custom-label', function() {
+        it('with a custom-label', function() {
             expect(element.find('custom-label').length).toBe(0);
             controller.isShown = true;
             scope.$apply();
             expect(element.find('custom-label').length).toBe(1);
         });
-        it('for ui-select', function() {
+        it('with a ui-select', function() {
             expect(element.find('ui-select').length).toBe(0);
             controller.isShown = true;
             scope.$apply();
             expect(element.find('ui-select').length).toBe(1);
         });
-        it('for ui-select-match', function() {
+        it('with a ui-select-match', function() {
             expect(element.find('ui-select-match').length).toBe(0);
             controller.isShown = true;
             scope.$apply();
             expect(element.find('ui-select-match').length).toBe(1);
         });
-        it('for span[title]', function() {
+        it('with a span[title]', function() {
             expect(element.querySelectorAll('span[title]').length).toBe(0);
             controller.isShown = true;
             scope.$apply();
             expect(element.querySelectorAll('span[title]').length).toBe(1);
         });
-        it('for ui-select-choices', function() {
+        it('with a ui-select-choices', function() {
             expect(element.find('ui-select-choices').length).toBe(0);
             controller.isShown = true;
             scope.$apply();
             expect(element.find('ui-select-choices').length).toBe(1);
         });
-        it('for div[title]', function() {
+        it('with a div[title]', function() {
             expect(element.querySelectorAll('div[title]').length).toBe(0);
             controller.isShown = true;
             scope.$apply();

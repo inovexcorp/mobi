@@ -27,9 +27,9 @@
         .module('createPropertyOverlay', [])
         .directive('createPropertyOverlay', createPropertyOverlay);
 
-        createPropertyOverlay.$inject = ['$filter', 'REGEX', 'ontologyManagerService', 'ontologyStateService', 'prefixes', 'ontologyUtilsManagerService'];
+        createPropertyOverlay.$inject = ['$filter', 'REGEX', 'ontologyManagerService', 'ontologyStateService', 'prefixes', 'ontologyUtilsManagerService', 'responseObj'];
 
-        function createPropertyOverlay($filter, REGEX, ontologyManagerService, ontologyStateService, prefixes, ontologyUtilsManagerService) {
+        function createPropertyOverlay($filter, REGEX, ontologyManagerService, ontologyStateService, prefixes, ontologyUtilsManagerService, responseObj) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -41,6 +41,7 @@
                     var setAsObject = false;
                     var setAsDatatype = false;
                     var ontoUtils = ontologyUtilsManagerService;
+                    var ro = responseObj;
 
                     dvm.checkbox = false;
                     dvm.prefixes = prefixes;
@@ -113,9 +114,12 @@
                         return 'subObjectProperties';
                     }
                     
+                    dvm.typeChange = function() {
+                        dvm.values = [];
+                    }
+                    
                     function commonUpdate(listKey, hierarchyKey, flatHierarchyKey, indexKey, func) {
-                        var split = $filter('splitIRI')(dvm.property['@id']);
-                        dvm.os.listItem[listKey].push({namespace:split.begin + split.then, localName: split.end});
+                        dvm.os.listItem[listKey].push(ro.createItemFromIri(dvm.property['@id']));
                         if (dvm.values.length) {
                             dvm.property[prefixes.rdfs + 'subPropertyOf'] = dvm.values;
                             ontoUtils.setSuperProperties(dvm.property['@id'], _.map(dvm.values, '@id'), hierarchyKey, indexKey, flatHierarchyKey);
