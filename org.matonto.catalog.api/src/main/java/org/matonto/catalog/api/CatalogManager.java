@@ -611,6 +611,22 @@ public interface CatalogManager {
     Resource addCommit(Resource catalogId, Resource versionedRDFRecordId, Resource branchId, User user, String message);
 
     /**
+     * Creates a new Commit for the provided User in the repository for the Branch identified by the provided Resources
+     * using the provided added and deleted statements, updating the head of the Branch in the process.
+     *
+     * @param catalogId The Resource identifying the Catalog which contains the Record.
+     * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord which has the Branch.
+     * @param branchId The Resource identifying the Branch which will get the new Commit.
+     * @param user The User which will be associated with the new Commit.
+     * @param message The String with the message text associated with the new Commit.
+     * @param additions The statements which were added to the named graph.
+     * @param deletions The statements which were added to the named graph.
+     * @return The Resource of the new Commit.
+     */
+    Resource addCommit(Resource catalogId, Resource versionedRDFRecordId, Resource branchId, User user, String message,
+                       Model additions, Model deletions);
+
+    /**
      * Adds the provided InProgressCommit to the repository for the VersionedRDFRecord identified by the provided
      * Resources.
      *

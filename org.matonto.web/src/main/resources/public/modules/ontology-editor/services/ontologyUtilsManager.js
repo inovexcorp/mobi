@@ -206,5 +206,31 @@
                             || os.showCreateIndividualOverlay || os.showCreateConceptOverlay 
                             || os.showCreateConceptSchemeOverlay);
             }
+
+            self.setSuperClasses = function(iri, classIRIs) {
+                _.forEach(classIRIs, classIRI => {
+                    os.addEntityToHierarchy(os.listItem.classHierarchy, iri, os.listItem.classIndex, classIRI);
+                });
+                os.listItem.flatClassHierarchy = os.flattenHierarchy(os.listItem.classHierarchy, os.listItem.recordId);
+            }
+
+            self.updateflatIndividualsHierarchy = function(classIRIs) {
+                var paths = [];
+                _.forEach(classIRIs, classIRI => {
+                    paths.push(os.getPathsTo(os.listItem.classHierarchy, os.listItem.classIndex, classIRI));
+                });
+                var flattenedPaths = _.uniq(_.flattenDeep(paths));
+                if (flattenedPaths.length) {
+                    os.listItem.individualsParentPath = _.concat(os.listItem.individualsParentPath, flattenedPaths);
+                    os.listItem.flatIndividualsHierarchy = os.createFlatIndividualTree(os.listItem);
+                }
+            }
+            
+            self.setSuperProperties = function(iri, propertyIRIs, hierarchyKey, indexKey, flatHierarchyKey) {
+                _.forEach(propertyIRIs, propertyIRI => {
+                    os.addEntityToHierarchy(os.listItem[hierarchyKey], iri, os.listItem[indexKey], propertyIRI);
+                });
+                os.listItem[flatHierarchyKey] = os.flattenHierarchy(os.listItem[hierarchyKey], os.listItem.recordId);
+            }
         }
 })();
