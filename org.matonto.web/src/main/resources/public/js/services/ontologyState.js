@@ -374,7 +374,8 @@
                     om.getAnnotationPropertyHierarchies(recordId, branchId, commitId),
                     om.getImportedOntologies(recordId, branchId, commitId)
                 ]).then(response => {
-                    listItem.iriList = _.reduce(_.flatten(_.at(response[0], _.keys(response[0]))), (a, b) => a.concat([b.namespace + b.localName]), []);
+                    listItem.iriList.push(listItem.ontologyId);
+                    listItem.iriList = _.uniq(_.concat(listItem.iriList, _.reduce(_.flatten(_.at(response[0], _.keys(response[0]))), (a, b) => a.concat([b.namespace + b.localName]), [])));
                     listItem.annotations = _.unionWith(
                         _.get(response[0], 'annotationProperties'),
                         propertyManagerService.defaultAnnotations,
@@ -420,7 +421,8 @@
                             listItem.dataPropertyRange,
                             compareListItems
                         );
-                        listItem.iriList = _.uniq(listItem.iriList.concat(_.reduce(_.flatten(_.at(iriList, _.keys(iriList))), function (a, b) { return a.concat([b.namespace + b.localName]); }, [])));
+                        listItem.iriList.push(iriList['@id'])
+                        listItem.iriList = _.uniq(_.concat(listItem.iriList, _.reduce(_.flatten(_.at(iriList, _.keys(iriList))), function (a, b) { return a.concat([b.namespace + b.localName]); }, [])));
                     });
 
                     listItem.classHierarchy = response[2].hierarchy;
@@ -471,7 +473,8 @@
                     cm.getRecordBranches(recordId, catalogId),
                     om.getImportedOntologies(recordId, branchId, commitId)
                 ]).then(response => {
-                    listItem.iriList = _.reduce(_.flatten(_.at(response[0], _.keys(response[0]))), (a, b) => a.concat([b.namespace + b.localName]), []);
+                    listItem.iriList.push(listItem.ontologyId);
+                    listItem.iriList = _.concat(listItem.iriList, _.reduce(_.flatten(_.at(response[0], _.keys(response[0]))), (a, b) => a.concat([b.namespace + b.localName]), []));
                     listItem.subDataProperties = _.get(response[0], 'dataProperties');
                     listItem.subObjectProperties = _.get(response[0], 'objectProperties');
                     listItem.annotations = _.unionWith(
@@ -501,6 +504,8 @@
                             listItem.subObjectProperties,
                             compareListItems
                         );
+                        listItem.iriList.push(iriList['@id']);
+                        listItem.iriList = _.concat(listItem.iriList, _.reduce(_.flatten(_.at(iriList, _.keys(iriList))), (a, b) => a.concat([b.namespace + b.localName]), []));
                     });
                     listItem.conceptHierarchy = response[2].hierarchy;
                     listItem.conceptIndex = response[2].index;
