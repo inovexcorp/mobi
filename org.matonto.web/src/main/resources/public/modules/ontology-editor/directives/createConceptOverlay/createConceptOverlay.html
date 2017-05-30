@@ -28,7 +28,7 @@
         <form name="dvm.form" class="clearfix" novalidate autocomplete="off">
             <div class="form-group">
                 <custom-label>Name</custom-label>
-                <input type="text" class="form-control" ng-trim="false" ng-keyup="dvm.nameChanged()" required
+                <input type="text" class="form-control" ng-class="{'duplicate-iri': dvm.ontoUtils.checkIri(dvm.concept['@id'])}" ng-trim="false" ng-keyup="dvm.nameChanged()" required
                        ng-model="dvm.concept[dvm.prefixes.skos + 'prefLabel'][0]['@value']" focus-me />
             </div>
             <div ng-if="dvm.om.hasConceptSchemes(dvm.os.getOntologiesArray())" class="form-group">
@@ -44,7 +44,7 @@
             </div>
             <advanced-language-select ng-model="dvm.language"></advanced-language-select>
             <div class="btn-container clearfix">
-                <button class="btn btn-primary pull-right" ng-disabled="dvm.form.$invalid" ng-click="dvm.create()">Create</button>
+                <button class="btn btn-primary pull-right" ng-disabled="dvm.form.$invalid || dvm.ontoUtils.checkIri(dvm.concept['@id'])" ng-click="dvm.create()">Create</button>
                 <button class="btn btn-default pull-right" ng-click="dvm.os.showCreateConceptOverlay = false">Cancel</button>
             </div>
         </form>

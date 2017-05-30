@@ -516,7 +516,8 @@ function mockOntologyState() {
                 importedOntologyIds: [],
                 upToDate: true,
                 conceptHierarchy: [],
-                flatConceptHierarchy: []
+                flatConceptHierarchy: [],
+                iriList: []
             };
             this.states = {};
             this.list = [];

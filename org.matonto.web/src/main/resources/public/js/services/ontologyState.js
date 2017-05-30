@@ -93,7 +93,8 @@
                 flatAnnotationPropertyHierarchy: [],
                 classesAndIndividuals: {},
                 classesWithIndividuals: [],
-                individualsParentPath: []
+                individualsParentPath: [],
+                iriList: []
             };
             var vocabularyListItemTemplate = {
                 ontology: [],
@@ -114,7 +115,8 @@
                 branches: [],
                 upToDate: true,
                 isSaved: false,
-                flatConceptHierarchy: []
+                flatConceptHierarchy: [],
+                iriList: []
             };
             var emptyInProgressCommit = {
                 additions: [],
@@ -468,6 +470,7 @@
                     cm.getRecordBranches(recordId, catalogId),
                     om.getImportedOntologies(recordId, branchId, commitId)
                 ]).then(response => {
+                    listItem.iriList = _.reduce(_.flatten(_.at(response[0], _.keys(response[0]))), (a, b) => a.concat([b.namespace + b.localName]), []);
                     listItem.subDataProperties = _.get(response[0], 'dataProperties');
                     listItem.subObjectProperties = _.get(response[0], 'objectProperties');
                     listItem.annotations = _.unionWith(
@@ -633,6 +636,7 @@
              */
             self.addEntity = function(listItem, entityJSON) {
                 listItem.ontology.push(entityJSON);
+                listItem.iriList.push(entityJSON['@id']);
                 _.get(listItem, 'index', {})[entityJSON['@id']] = {
                     position: listItem.ontology.length - 1,
                     label: om.getEntityName(entityJSON, listItem.type),
@@ -653,6 +657,7 @@
              */
             self.removeEntity = function(listItem, entityIRI) {
                 var entityPosition = _.get(listItem.index, "['" + entityIRI + "'].position");
+                _.remove(listItem.iriList, function(iri) { return iri === entityIRI; });
                 _.unset(listItem.index, entityIRI);
                 _.forOwn(listItem.index, (value, key) => {
                     if (value.position > entityPosition) {

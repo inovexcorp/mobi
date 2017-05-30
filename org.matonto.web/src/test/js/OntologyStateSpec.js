@@ -298,7 +298,8 @@ describe('Ontology State Service', function() {
             branchId: branchId,
             branches: [branch],
             index: index,
-            upToDate: true
+            upToDate: true,
+            iriList: []
         };
         getResponse = {
             recordId: recordId,
