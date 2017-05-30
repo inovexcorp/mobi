@@ -44,6 +44,7 @@
                     dvm.iriPattern = REGEX.IRI;
                     dvm.os = ontologyStateService;
                     dvm.prefix = dvm.os.getDefaultPrefix();
+                    dvm.values = [];
                     dvm.clazz = {
                         '@id': dvm.prefix,
                         '@type': [prefixes.owl + 'Class'],
@@ -79,9 +80,14 @@
                         // update relevant lists
                         var split = $filter('splitIRI')(dvm.clazz['@id']);
                         _.get(dvm.os.listItem, 'subClasses').push({namespace:split.begin + split.then, localName: split.end});
-                        var hierarchy = _.get(dvm.os.listItem, 'classHierarchy');
-                        hierarchy.push({'entityIRI': dvm.clazz['@id']});
-                        dvm.os.listItem.flatClassHierarchy = dvm.os.flattenHierarchy(hierarchy, dvm.os.listItem.recordId);
+                        if (dvm.values.length) {
+                            dvm.clazz[prefixes.rdfs + 'subClassOf'] = dvm.values;
+                            ontoUtils.setSuperClasses(dvm.clazz['@id'], _.map(dvm.values, '@id'));
+                        } else {
+                            var hierarchy = _.get(dvm.os.listItem, 'classHierarchy');
+                            hierarchy.push({'entityIRI': dvm.clazz['@id']});
+                            dvm.os.listItem.flatClassHierarchy = dvm.os.flattenHierarchy(hierarchy, dvm.os.listItem.recordId);
+                        }
                         dvm.os.addToAdditions(dvm.os.listItem.recordId, dvm.clazz);
                         // select the new class
                         dvm.os.selectItem(_.get(dvm.clazz, '@id'));

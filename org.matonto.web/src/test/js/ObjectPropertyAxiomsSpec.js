@@ -21,14 +21,7 @@
  * #L%
  */
 describe('Object Property Axioms directive', function() {
-    var $compile,
-        scope,
-        element,
-        controller,
-        ontologyStateSvc,
-        propertyManagerSvc,
-        resObj,
-        prefixes;
+    var $compile, scope, element, controller, ontologyStateSvc, propertyManagerSvc, resObj, prefixes, ontoUtils;
 
     beforeEach(function() {
         module('templates');
@@ -40,13 +33,14 @@ describe('Object Property Axioms directive', function() {
         mockPrefixes();
         mockOntologyUtilsManager();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _propertyManagerService_, _responseObj_, _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _propertyManagerService_, _responseObj_, _prefixes_, _ontologyUtilsManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
             propertyManagerSvc = _propertyManagerService_;
             resObj = _responseObj_;
             prefixes = _prefixes_;
+            ontoUtils = _ontologyUtilsManagerService_;
         });
 
         ontologyStateSvc.selected = {
@@ -106,11 +100,9 @@ describe('Object Property Axioms directive', function() {
             });
             it('if the axiom is subPropertyOf', function() {
                 this.axiom.localName = 'subPropertyOf';
+                resObj.getItemIri.and.returnValue('iri');
                 controller.updateHierarchy(this.axiom, this.values);
-                expect(ontologyStateSvc.addEntityToHierarchy.calls.count()).toBe(this.values.length);
-                _.forEach(this.values, function(value) {
-                    expect(resObj.getItemIri).toHaveBeenCalledWith(value);
-                });
+                expect(ontoUtils.setSuperProperties).toHaveBeenCalledWith(ontologyStateSvc.selected['@id'], ['iri'], 'objectPropertyHierarchy', 'objectPropertyIndex', 'flatObjectPropertyHierarchy');
             });
             it('if the axiom is domain', function() {
                 this.axiom.localName = 'domain';
