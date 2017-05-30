@@ -111,6 +111,7 @@ describe('Class Axioms directive', function() {
                     expect(resObj.getItemIri).toHaveBeenCalledWith(value);
                 });
                 expect(ontoUtils.setSuperClasses).toHaveBeenCalledWith('classId', ['iri']);
+                expect(ontoUtils.updateflatIndividualsHierarchy).toHaveBeenCalledWith(['iri']);
             });
         });
         describe('should remove a class from the hierarchy', function() {
