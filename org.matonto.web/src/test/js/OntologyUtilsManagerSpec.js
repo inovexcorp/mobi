@@ -395,7 +395,12 @@ describe('Ontology Utils Manager service', function() {
         });
         describe('when the listItem.index contains the selected @id', function() {
             beforeEach(function() {
-                ontologyStateSvc.selected = {'@id': 'iri'};
+                ontologyStateSvc.selected = {
+                    '@id': 'iri',
+                    matonto: {
+                        originalIRI: ''
+                    }
+                };
             });            
             it('and listItem.type is vocabulary', function() {
                 ontologyStateSvc.listItem.type = 'vocabulary';
@@ -452,5 +457,27 @@ describe('Ontology Utils Manager service', function() {
         expect(ontologyUtilsManagerSvc.getDropDownText({})).toBe('name');
         expect(responseObj.getItemIri).toHaveBeenCalledWith({});
         expect(ontologyStateSvc.getEntityNameByIndex).toHaveBeenCalledWith('iri', ontologyStateSvc.listItem);
+    });
+    
+    it('setSuperClasses should call the correct methods', function() {
+        ontologyStateSvc.flattenHierarchy.and.returnValue([{prop: 'flattened'}]);
+        var classIRIs = ['classId1', 'classId2'];
+        ontologyUtilsManagerSvc.setSuperClasses('iri', classIRIs);
+        _.forEach(classIRIs, function(value) {
+            expect(ontologyStateSvc.addEntityToHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.classHierarchy, 'iri', ontologyStateSvc.listItem.classIndex, value);
+        });
+        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.classHierarchy, ontologyStateSvc.listItem.recordId);
+        expect(ontologyStateSvc.listItem.flatClassHierarchy).toEqual([{prop: 'flattened'}]);
+    });
+    
+    it('setSuperProperties should call the correct methods', function() {
+        ontologyStateSvc.flattenHierarchy.and.returnValue([{prop: 'flattened'}]);
+        var propertyIRIs = ['classId1', 'classId2'];
+        ontologyUtilsManagerSvc.setSuperProperties('iri', propertyIRIs, 'hierarchy', 'index', 'flatHierarchy');
+        _.forEach(propertyIRIs, function(value) {
+            expect(ontologyStateSvc.addEntityToHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.hierarchy, 'iri', ontologyStateSvc.listItem.index, value);
+        });
+        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.hierarchy, ontologyStateSvc.listItem.recordId);
+        expect(ontologyStateSvc.listItem.flatHierarchy).toEqual([{prop: 'flattened'}]);
     });
 });
