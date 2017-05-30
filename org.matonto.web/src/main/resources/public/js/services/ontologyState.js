@@ -420,6 +420,7 @@
                             listItem.dataPropertyRange,
                             compareListItems
                         );
+                        listItem.iriList = _.uniq(listItem.iriList.concat(_.reduce(_.flatten(_.at(iriList, _.keys(iriList))), function (a, b) { return a.concat([b.namespace + b.localName]); }, [])));
                     });
 
                     listItem.classHierarchy = response[2].hierarchy;

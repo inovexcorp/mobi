@@ -28,7 +28,7 @@
         <form name="dvm.form" class="clearfix" novalidate autocomplete="off">
             <div class="form-group">
                 <custom-label>Name</custom-label>
-                <input type="text" name="name" class="form-control" ng-class="{'duplicate-iri': dvm.ontoUtils.checkIri(dvm.individual['@id'])}" ng-trim="false" ng-keyup="dvm.nameChanged()" required ng-model="dvm.name" focus-me />
+                <input type="text" name="name" class="form-control" ng-trim="false" ng-keyup="dvm.nameChanged()" required ng-model="dvm.name" focus-me />
             </div>
             <div class="form-group">
                 <custom-label>Type</custom-label>

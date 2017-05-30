@@ -201,7 +201,10 @@
             }
             
             self.checkIri = function(iri) {
-                return _.includes(os.listItem.iriList, iri);
+                return _.includes(os.listItem.iriList, iri) 
+                        && (os.showIriOverlay || os.showCreateClassOverlay || os.showCreatePropertyOverlay 
+                            || os.showCreateIndividualOverlay || os.showCreateConceptOverlay 
+                            || os.showCreateConceptSchemeOverlay);
             }
         }
 })();

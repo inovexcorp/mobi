@@ -28,7 +28,7 @@
         <form name="dvm.form" class="clearfix" novalidate autocomplete="off">
             <div class="form-group">
                 <custom-label>Name</custom-label>
-                <input type="text" class="form-control" ng-class="{'duplicate-iri': dvm.ontoUtils.checkIri(dvm.scheme['@id'])}" ng-trim="false" ng-keyup="dvm.nameChanged()" required
+                <input type="text" class="form-control" ng-trim="false" ng-keyup="dvm.nameChanged()" required
                        ng-model="dvm.scheme[dvm.prefixes.dcterms + 'title'][0]['@value']" focus-me>
             </div>
             <div ng-if="dvm.om.hasConcepts(dvm.os.getOntologiesArray())" class="form-group">

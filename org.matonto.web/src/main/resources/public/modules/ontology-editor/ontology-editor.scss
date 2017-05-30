@@ -6,7 +6,15 @@
     height: 100%;
 }
 
-.duplicate-iri {
-    border-color: red !important;
-    box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(255,0,0,.6) !important;
+.overlay .duplicate-iri {
+    border-bottom: solid red 1px;
+}
+
+.overlay .error-text:before {
+    content: '\f071';
+    font-family: FontAwesome;
+}
+.overlay .error-text {
+    color: red;
+    font-size: .75em;
 }
