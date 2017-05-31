@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.7.14</version>
+        <version>1.7.15</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
 
     </parent>
@@ -47,7 +47,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rest.util</artifactId>
-            <version>1.6.43</version>
+            <version>1.7.15</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>

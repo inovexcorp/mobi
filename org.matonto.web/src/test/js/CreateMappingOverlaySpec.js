@@ -80,10 +80,11 @@ describe('Create Mapping Overlay directive', function() {
                 expect(mappingManagerSvc.getMapping).not.toHaveBeenCalled();
                 expect(mappingManagerSvc.copyMapping).not.toHaveBeenCalled();
                 expect(catalogManagerSvc.getRecord).not.toHaveBeenCalled();
+                expect(mappingManagerSvc.getSourceOntologies).not.toHaveBeenCalled();
+                expect(mappingManagerSvc.areCompatible).not.toHaveBeenCalled();
                 expect(mapperStateSvc.mappingSearchString).toBe('');
                 expect(mapperStateSvc.mapping.jsonld).toBeDefined();
-                expect(mappingManagerSvc.getSourceOntologies).toHaveBeenCalledWith(jasmine.any(Object));
-                expect(mapperStateSvc.sourceOntologies).toEqual(this.ontologies);
+                expect(mapperStateSvc.sourceOntologies).toEqual([]);
                 expect(mapperStateSvc.step).toBe(mapperStateSvc.fileUploadStep);
                 expect(mapperStateSvc.displayCreateMappingOverlay).toBe(false);
             });
@@ -120,7 +121,7 @@ describe('Create Mapping Overlay directive', function() {
                     expect(mapperStateSvc.availableClasses).toEqual([]);
                     expect(mapperStateSvc.mappingSearchString).not.toBe('');
                     expect(mapperStateSvc.step).not.toBe(mapperStateSvc.fileUploadStep);
-                    expect(controller.errorMessage).toBe('Error message');
+                    expect(controller.errorMessage).toBe('Error retrieving mapping');
                     expect(mapperStateSvc.mapping.jsonld).toEqual([]);
                     expect(mapperStateSvc.mapping.record).toBeUndefined();
                     expect(mapperStateSvc.displayCreateMappingOverlay).toBe(true);
