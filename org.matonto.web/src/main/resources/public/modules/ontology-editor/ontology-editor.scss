@@ -4,13 +4,15 @@
 .ontology-editor {
     background-color: $gray-lighter;
     height: 100%;
-}
-
-.overlay .error-text:before {
-    content: '\f071';
-    font-family: FontAwesome;
-}
-.overlay .error-text {
-    color: red;
-    font-size: .75em;
+    
+    .overlay {
+        .error-text:before {
+            content: '\f071';
+            font-family: FontAwesome;
+        }
+        .error-text {
+            color: red;
+            font-size: .75em;
+        }
+    }
 }
