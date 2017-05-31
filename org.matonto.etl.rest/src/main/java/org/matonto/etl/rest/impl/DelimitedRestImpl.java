@@ -26,8 +26,8 @@ package org.matonto.etl.rest.impl;
 import static java.nio.file.FileVisitResult.CONTINUE;
 import static org.matonto.rest.util.RestUtils.checkStringParam;
 import static org.matonto.rest.util.RestUtils.getRDFFormat;
+import static org.matonto.rest.util.RestUtils.groupedModelToString;
 import static org.matonto.rest.util.RestUtils.jsonldToModel;
-import static org.matonto.rest.util.RestUtils.modelToString;
 
 import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
@@ -191,7 +191,7 @@ public class DelimitedRestImpl implements DelimitedRest {
         Model data = transformer.sesameModel(etlFile(fileName, () -> jsonldToModel(jsonld), containsHeaders, separator,
                 true));
 
-        return Response.ok(modelToString(data, format)).build();
+        return Response.ok(groupedModelToString(data, format)).build();
     }
 
     @Override
@@ -202,7 +202,7 @@ public class DelimitedRestImpl implements DelimitedRest {
         // Convert the data
         Model data = transformer.sesameModel(etlFile(fileName, () -> getUploadedMapping(mappingIRI), containsHeaders,
                 separator, false));
-        String result = modelToString(data, format);
+        String result = groupedModelToString(data, format);
 
         // Write data into a stream
         StreamingOutput stream = os -> {
