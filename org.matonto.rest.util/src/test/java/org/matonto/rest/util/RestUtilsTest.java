@@ -49,10 +49,10 @@ import java.util.Optional;
 
 public class RestUtilsTest {
     private Model model;
-    private Model largeModel;
     private String expectedJsonld;
-    private String expectedLargeTurtle;
     private String expectedTurtle;
+    private String expectedGroupedTurtle;
+    private String expectedGroupedRdfxml;
     private String expectedRdfxml;
     private ValueFactory vf = SimpleValueFactory.getInstance();
     private org.matonto.rdf.api.ModelFactory mf = LinkedHashModelFactory.getInstance();
@@ -69,12 +69,12 @@ public class RestUtilsTest {
     @Before
     public void setUp() throws Exception {
         setUpModel();
-        setUpLargeModel();
 
         expectedJsonld = IOUtils.toString(getClass().getResourceAsStream("/test.json"));
-        expectedLargeTurtle = IOUtils.toString(getClass().getResourceAsStream("/large-test.ttl"));
         expectedTurtle = IOUtils.toString(getClass().getResourceAsStream("/test.ttl"));
+        expectedGroupedTurtle = IOUtils.toString(getClass().getResourceAsStream("/grouped-test.ttl"));
         expectedRdfxml = IOUtils.toString(getClass().getResourceAsStream("/test.xml"));
+        expectedGroupedRdfxml = IOUtils.toString(getClass().getResourceAsStream("/grouped-test.xml"));
 
         MockitoAnnotations.initMocks(this);
         when(context.getProperty(AuthenticationProps.USERNAME)).thenReturn("tester");
@@ -126,35 +126,25 @@ public class RestUtilsTest {
 
     @Test
     public void modelToStringWithRDFFormatTest() throws Exception {
-        String result = RestUtils.modelToString(model, RDFFormat.JSONLD);
-        assertEquals(expectedJsonld, result);
-
-        result = RestUtils.modelToString(model, RDFFormat.TURTLE);
-        assertEquals(expectedTurtle, result);
-
-        result = RestUtils.modelToString(model, RDFFormat.RDFXML);
-        assertEquals(expectedRdfxml, result);
+        assertEquals(expectedJsonld, RestUtils.modelToString(model, RDFFormat.JSONLD));
+        assertEquals(expectedTurtle, RestUtils.modelToString(model, RDFFormat.TURTLE));
+        assertEquals(expectedRdfxml, RestUtils.modelToString(model, RDFFormat.RDFXML));
     }
 
     @Test
     public void modelToString() throws Exception {
-        String result = RestUtils.modelToString(model, "jsonld");
-        assertEquals(expectedJsonld, result);
-
-        result = RestUtils.modelToString(model, "turtle");
-        assertEquals(expectedTurtle, result);
-
-        result = RestUtils.modelToString(model, "rdf/xml");
-        assertEquals(expectedRdfxml, result);
-
-        result = RestUtils.modelToString(model, "something");
-        assertEquals(expectedJsonld, result);
+        assertEquals(expectedJsonld, RestUtils.modelToString(model, "jsonld"));
+        assertEquals(expectedTurtle, RestUtils.modelToString(model, "turtle"));
+        assertEquals(expectedRdfxml, RestUtils.modelToString(model, "rdf/xml"));
+        assertEquals(expectedJsonld, RestUtils.modelToString(model, "something"));
     }
 
     @Test
     public void groupedModelToString() throws Exception {
-        String result = RestUtils.groupedModelToString(largeModel, "turtle");
-        assertEquals(expectedLargeTurtle, result);
+        assertEquals(expectedJsonld, RestUtils.groupedModelToString(model, "jsonld"));
+        assertEquals(expectedGroupedTurtle, RestUtils.groupedModelToString(model, "turtle"));
+        assertEquals(expectedGroupedRdfxml, RestUtils.groupedModelToString(model, "rdf/xml"));
+        assertEquals(expectedJsonld, RestUtils.groupedModelToString(model, "something"));
     }
 
     @Test
@@ -248,14 +238,6 @@ public class RestUtilsTest {
         org.matonto.rdf.api.Model temp = mf.createModel();
         temp.add(vf.createIRI("http://example.com/test/0"), vf.createIRI("http://example.com/prop1"), vf.createLiteral("true"));
         temp.add(vf.createIRI("http://example.com/test/0"), vf.createIRI("http://example.com/prop2"), vf.createLiteral("true"));
-        temp.add(vf.createIRI("http://example.com/test/1"), vf.createIRI("http://example.com/prop1"), vf.createLiteral("true"));
-        model = Values.sesameModel(temp);
-    }
-
-    private void setUpLargeModel() {
-        org.matonto.rdf.api.Model temp = mf.createModel();
-        temp.add(vf.createIRI("http://example.com/test/0"), vf.createIRI("http://example.com/prop1"), vf.createLiteral("true"));
-        temp.add(vf.createIRI("http://example.com/test/0"), vf.createIRI("http://example.com/prop2"), vf.createLiteral("true"));
         temp.add(vf.createIRI("http://example.com/test/0"), vf.createIRI("http://example.com/prop3"), vf.createLiteral("true"));
         temp.add(vf.createIRI("http://example.com/test/0"), vf.createIRI("http://example.com/prop4"), vf.createLiteral("true"));
         temp.add(vf.createIRI("http://example.com/test/0"), vf.createIRI("http://example.com/prop4"), vf.createLiteral("false"));
@@ -269,6 +251,6 @@ public class RestUtilsTest {
         temp.add(vf.createIRI("http://example.com/test/2"), vf.createIRI("http://example.com/prop3"), vf.createLiteral("true"));
         temp.add(vf.createIRI("http://example.com/test/2"), vf.createIRI("http://example.com/prop4"), vf.createLiteral("true"));
         temp.add(vf.createIRI("http://example.com/test/2"), vf.createIRI("http://example.com/prop4"), vf.createLiteral("false"));
-        largeModel = Values.sesameModel(temp);
+        model = Values.sesameModel(temp);
     }
 }
