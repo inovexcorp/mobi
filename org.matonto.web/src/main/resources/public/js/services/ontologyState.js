@@ -46,13 +46,14 @@
          */
         .service('ontologyStateService', ontologyStateService);
 
-        ontologyStateService.$inject = ['$timeout', '$q', '$filter', '$document', 'ontologyManagerService', 'updateRefsService', 'stateManagerService', 'utilService', 'catalogManagerService', 'propertyManagerService', 'prefixes', 'manchesterConverterService', 'httpService'];
+        ontologyStateService.$inject = ['$timeout', '$q', '$filter', '$document', 'ontologyManagerService', 'updateRefsService', 'stateManagerService', 'utilService', 'catalogManagerService', 'propertyManagerService', 'prefixes', 'manchesterConverterService', 'httpService', 'responseObj'];
 
-        function ontologyStateService($timeout, $q, $filter, $document, ontologyManagerService, updateRefsService, stateManagerService, utilService, catalogManagerService, propertyManagerService, prefixes, manchesterConverterService, httpService) {
+        function ontologyStateService($timeout, $q, $filter, $document, ontologyManagerService, updateRefsService, stateManagerService, utilService, catalogManagerService, propertyManagerService, prefixes, manchesterConverterService, httpService, responseObj) {
             var self = this;
             var om = ontologyManagerService;
             var sm = stateManagerService;
             var cm = catalogManagerService;
+            var ro = responseObj;
             var util = utilService;
             var mc = manchesterConverterService;
             var catalogId = '';
@@ -375,7 +376,7 @@
                     om.getImportedOntologies(recordId, branchId, commitId)
                 ]).then(response => {
                     listItem.iriList.push(listItem.ontologyId);
-                    listItem.iriList = _.uniq(_.concat(listItem.iriList, _.reduce(_.flatten(_.at(response[0], _.keys(response[0]))), (a, b) => a.concat([b.namespace + b.localName]), [])));
+                    listItem.iriList = _.union(listItem.iriList, _.map(_.flatten(_.values(response[0])), ro.getItemIri))
                     listItem.annotations = _.unionWith(
                         _.get(response[0], 'annotationProperties'),
                         propertyManagerService.defaultAnnotations,
@@ -422,7 +423,7 @@
                             compareListItems
                         );
                         listItem.iriList.push(iriList['@id'])
-                        listItem.iriList = _.uniq(_.concat(listItem.iriList, _.reduce(_.flatten(_.at(iriList, _.keys(iriList))), function (a, b) { return a.concat([b.namespace + b.localName]); }, [])));
+                        listItem.iriList = _.union(listItem.iriList, _.map(_.flatten(_.values(iriList)), ro.getItemIri))
                     });
 
                     listItem.classHierarchy = response[2].hierarchy;
@@ -474,7 +475,7 @@
                     om.getImportedOntologies(recordId, branchId, commitId)
                 ]).then(response => {
                     listItem.iriList.push(listItem.ontologyId);
-                    listItem.iriList = _.concat(listItem.iriList, _.reduce(_.flatten(_.at(response[0], _.keys(response[0]))), (a, b) => a.concat([b.namespace + b.localName]), []));
+                    listItem.iriList = _.union(listItem.iriList, _.map(_.flatten(_.values(response[0])), ro.getItemIri))
                     listItem.subDataProperties = _.get(response[0], 'dataProperties');
                     listItem.subObjectProperties = _.get(response[0], 'objectProperties');
                     listItem.annotations = _.unionWith(
@@ -505,7 +506,7 @@
                             compareListItems
                         );
                         listItem.iriList.push(iriList['@id']);
-                        listItem.iriList = _.concat(listItem.iriList, _.reduce(_.flatten(_.at(iriList, _.keys(iriList))), (a, b) => a.concat([b.namespace + b.localName]), []));
+                        listItem.iriList = _.union(listItem.iriList, _.map(_.flatten(_.values(iriList)), ro.getItemIri))
                     });
                     listItem.conceptHierarchy = response[2].hierarchy;
                     listItem.conceptIndex = response[2].index;
@@ -663,7 +664,7 @@
              */
             self.removeEntity = function(listItem, entityIRI) {
                 var entityPosition = _.get(listItem.index, "['" + entityIRI + "'].position");
-                _.remove(listItem.iriList, function(iri) { return iri === entityIRI; });
+                _.remove(listItem.iriList, (iri) => { return iri === entityIRI });
                 _.unset(listItem.index, entityIRI);
                 _.forOwn(listItem.index, (value, key) => {
                     if (value.position > entityPosition) {
@@ -1166,14 +1167,6 @@
                         self.setOpened(pathString, true);
                     });
                 }
-                // var index = _.findIndex(flatHierarchy, {entityIRI});
-                // $timeout(function() {
-                //     var $element = $document.querySelectorAll('[data-path-to="' + _.join(path, '.') + '"]');
-                //     var $container = $document.querySelectorAll('[class*=hierarchy-block] .repeater-container');
-                //     if (!!$container.length && !!$element.length) {
-                //         $container[0].scrollTop = $element[0].offsetTop;
-                //     }
-                // });
             }
             self.getDefaultPrefix = function() {
                 return _.replace(_.get(self.listItem, 'iriBegin', self.listItem.ontologyId), '#', '/') + _.get(self.listItem, 'iriThen', '#');

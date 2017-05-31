@@ -21,18 +21,19 @@
   #L%
   -->
 <span class="static-iri">
-    <strong class="text-muted" ng-class="{'duplicate-iri': dvm.ontoUtils.checkIri(dvm.iriBegin + dvm.iriThen + dvm.iriEnd)}" uib-tooltip="Copy to clipboard" ngclipboard data-clipboard-text="{{dvm.iri}}" ngclipboard-success="dvm.onSuccess()">{{dvm.iri}}</strong>
-    <a ng-if="!dvm.os.selected.matonto.imported" ng-click="dvm.os.showIriOverlay = true"><i class="fa fa-pencil"></i></a><div class="error-text" ng-show="dvm.ontoUtils.checkIri(dvm.iriBegin + dvm.iriThen + dvm.iriEnd)">This IRI already exists</div>
+    <strong class="text-muted" ng-class="{'duplicate-iri': dvm.ontoUtils.checkIri(dvm.iriBegin + dvm.iriThen + dvm.iriEnd) && dvm.isOverlay()}" uib-tooltip="Copy to clipboard" ngclipboard data-clipboard-text="{{dvm.iri}}" ngclipboard-success="dvm.onSuccess()">{{dvm.iri}}</strong>
+    <a ng-if="!dvm.os.selected.matonto.imported" ng-click="dvm.os.showIriOverlay = true"><i class="fa fa-pencil"></i></a>
+    <div class="error-text" ng-if="dvm.ontoUtils.checkIri(dvm.iriBegin + dvm.iriThen + dvm.iriEnd) && dvm.isOverlay()">This IRI already exists</div>
 </span>
 <div ng-if="dvm.os.showIriOverlay" class="overlay">
     <form name="dvm.iriForm" class="content clearfix" novalidate autocomplete="off">
         <!-- section header -->
         <h6>Edit IRI</h6>
-        <div><span class="error-text" ng-show="dvm.ontoUtils.checkIri(dvm.iriBegin + dvm.iriThen + dvm.iriEnd)">This IRI already exists</span></div>
+        <div class="error-text" ng-if="dvm.ontoUtils.checkIri(dvm.iriBegin + dvm.iriThen + dvm.iriEnd) && dvm.isOverlay()">This IRI already exists</div>
         <!-- Begins with -->
         <div ng-class="{'has-error': dvm.iriForm.iriBegin.$error.pattern}" class="form-group begin-container">
             <custom-label muted-text="'*Required'">Begins with</custom-label>
-            <input class="form-control" id="iriBegin" name="iriBegin" ng-model="dvm.iriBegin" ng-pattern="dvm.namespacePattern" ng-keyup="dvm.checkIri()" ng-trim="false" required />
+            <input class="form-control" id="iriBegin" name="iriBegin" ng-model="dvm.iriBegin" ng-pattern="dvm.namespacePattern" ng-keyup="dvm.ontoUtils.checkIri(dvm.iriBegin + dvm.iriThen + dvm.iriEnd)" ng-trim="false" required />
             <p ng-messages="dvm.iriForm.iriBegin.$error" class="error-msg">
                 <ng-message when="pattern">Value is not a valid namespace.</ng-message>
             </p>
@@ -40,7 +41,7 @@
         <!-- Then -->
         <div class="form-group then-container">
             <custom-label muted-text="'*Required'">Then</custom-label>
-            <select class="form-control" id="iriThen" name="iriThen" ng-keyup="dvm.checkIri()" ng-model="dvm.iriThen" required>
+            <select class="form-control" id="iriThen" name="iriThen" ng-keyup="dvm.ontoUtils.checkIri(dvm.iriBegin + dvm.iriThen + dvm.iriEnd)" ng-model="dvm.iriThen" required>
                 <option value="#">#</option>
                 <option value="/">/</option>
                 <option value=":">:</option>
@@ -49,7 +50,7 @@
         <!-- Ends with -->
         <div ng-class="{'has-error': dvm.iriForm.iriEnd.$error.pattern}" class="form-group ends-container">
             <custom-label muted-text="'*Required'">Ends with</custom-label>
-            <input class="form-control" id="iriEnd" name="iriEnd" ng-model="dvm.iriEnd" ng-pattern="/^\S+$/" ng-keyup="dvm.checkIri()" ng-trim="false" required />
+            <input class="form-control" id="iriEnd" name="iriEnd" ng-model="dvm.iriEnd" ng-pattern="/^\S+$/" ng-keyup="dvm.ontoUtils.checkIri(dvm.iriBegin + dvm.iriThen + dvm.iriEnd)" ng-trim="false" required />
             <p ng-messages="dvm.iriForm.iriEnd.$error" class="error-msg">
                 <ng-message when="pattern">Spaces are not allowed.</ng-message>
             </p>
@@ -62,3 +63,4 @@
         </div>
     </form>
 </div>
+

@@ -66,6 +66,11 @@
                         toastr.success('', 'Copied', {timeOut: 2000});
                     }
                     
+                    dvm.isOverlay = function() {
+                          return (dvm.os.showIriOverlay || dvm.os.showCreateClassOverlay || dvm.os.showCreatePropertyOverlay 
+                                  || dvm.os.showCreateIndividualOverlay || dvm.os.showCreateConceptOverlay 
+                                  || dvm.os.showCreateConceptSchemeOverlay);
+                    }
                     $scope.$watch('dvm.iri', function() {
                         dvm.setVariables(dvm);
                         dvm.setVariables(dvm.refresh);

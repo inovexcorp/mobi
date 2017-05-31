@@ -201,10 +201,11 @@
             }
             
             self.checkIri = function(iri) {
-                return _.includes(os.listItem.iriList, iri) 
-                        && (os.showIriOverlay || os.showCreateClassOverlay || os.showCreatePropertyOverlay 
-                            || os.showCreateIndividualOverlay || os.showCreateConceptOverlay 
-                            || os.showCreateConceptSchemeOverlay);
+                var rtn = _.includes(os.listItem.iriList, iri);
+                if (os.selected) {
+                    rtn = rtn && iri !== os.selected['@id'];
+                }
+                return rtn;
             }
 
             self.setSuperClasses = function(iri, classIRIs) {

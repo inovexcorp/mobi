@@ -12,7 +12,11 @@
     }
 }
 
-.overlay .static-iri strong {
+.static-iri strong {
     display: inline-block;
     margin-bottom: 10px;
+}
+
+.duplicate-iri {
+    border-bottom: solid red 1px;
 }
