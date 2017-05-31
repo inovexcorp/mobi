@@ -615,6 +615,7 @@ function mockOntologyUtilsManager() {
             this.setSuperClasses = jasmine.createSpy('setSuperClasses');
             this.setSuperProperties = jasmine.createSpy('setSuperProperties');
             this.updateflatIndividualsHierarchy = jasmine.createSpy('updateflatIndividualsHierarchy');
+            this.checkIri = jasmine.createSpy('checkIri');
         });
     });
 }
