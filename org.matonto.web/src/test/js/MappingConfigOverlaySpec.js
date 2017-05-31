@@ -425,7 +425,7 @@ describe('Mapping Config Overlay directive', function() {
                     mapperStateSvc.invalidProps = [''];
                     this.classMapping = {'@id': 'classMapping'};
                     mappingManagerSvc.getAllClassMappings.and.returnValue([this.classMapping]);
-                    controller.classes = [{'@id': 'class1'}, {'@id': 'class2'}];
+                    controller.classes = [{classObj: {'@id': 'class1'}}, {classObj: {'@id': 'class2'}}];
                     mappingManagerSvc.getClassIdByMapping.and.returnValue('class1');
                 });
                 it('setting appropriate state', function() {
@@ -435,7 +435,7 @@ describe('Mapping Config Overlay directive', function() {
                     expect(mapperStateSvc.mapping.record).toBe(controller.selectedRecord);
                     expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                     expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(this.classMapping['@id']);
-                    expect(mapperStateSvc.availableClasses).toEqual([{'@id': 'class2'}]);
+                    expect(mapperStateSvc.availableClasses).toEqual([{classObj: {'@id': 'class2'}}]);
                     expect(mapperStateSvc.displayMappingConfigOverlay).toBe(false);
                     expect(mapperStateSvc.changedMapping).toBe(true);
                 });
