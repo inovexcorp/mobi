@@ -132,7 +132,7 @@ public class RestUtilsTest {
     }
 
     @Test
-    public void modelToString() throws Exception {
+    public void modelToStringTest() throws Exception {
         assertEquals(expectedJsonld, RestUtils.modelToString(model, "jsonld"));
         assertEquals(expectedTurtle, RestUtils.modelToString(model, "turtle"));
         assertEquals(expectedRdfxml, RestUtils.modelToString(model, "rdf/xml"));
@@ -140,7 +140,14 @@ public class RestUtilsTest {
     }
 
     @Test
-    public void groupedModelToString() throws Exception {
+    public void groupedModelToStringWithRDFFormatTest() throws Exception {
+        assertEquals(expectedJsonld, RestUtils.groupedModelToString(model, RDFFormat.JSONLD));
+        assertEquals(expectedGroupedTurtle, RestUtils.groupedModelToString(model, RDFFormat.TURTLE));
+        assertEquals(expectedGroupedRdfxml, RestUtils.groupedModelToString(model, RDFFormat.RDFXML));
+    }
+
+    @Test
+    public void groupedModelToStringTest() throws Exception {
         assertEquals(expectedJsonld, RestUtils.groupedModelToString(model, "jsonld"));
         assertEquals(expectedGroupedTurtle, RestUtils.groupedModelToString(model, "turtle"));
         assertEquals(expectedGroupedRdfxml, RestUtils.groupedModelToString(model, "rdf/xml"));
