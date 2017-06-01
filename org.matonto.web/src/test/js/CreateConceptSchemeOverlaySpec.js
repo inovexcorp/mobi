@@ -125,6 +125,15 @@ describe('Create Concept Scheme Overlay directive', function() {
             scope.$digest();
             expect(button.attr('disabled')).toBeFalsy();
         });
+        it('depending on whether the scheme IRI already exists in the ontology.', function() {
+            ontoUtils.checkIri.and.returnValue(true);
+            
+            scope.$digest();
+            
+            var disabled = element.querySelectorAll('[disabled]');
+            expect(disabled.length).toBe(1);
+            expect(angular.element(disabled[0]).text()).toBe('Create');
+        });
     });
     describe('controller methods', function() {
         describe('should update the concept scheme id', function() {
