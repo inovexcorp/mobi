@@ -21,17 +21,19 @@
   #L%
   -->
 <span class="static-iri">
-    <strong class="text-muted" uib-tooltip="Copy to clipboard" ngclipboard data-clipboard-text="{{dvm.iri}}" ngclipboard-success="dvm.onSuccess()">{{dvm.iri}}</strong>
+    <strong class="text-muted" ng-class="{'duplicate-iri': dvm.ontoUtils.checkIri(dvm.iriBegin + dvm.iriThen + dvm.iriEnd) && dvm.isOverlay()}" uib-tooltip="Copy to clipboard" ngclipboard data-clipboard-text="{{dvm.iri}}" ngclipboard-success="dvm.onSuccess()">{{dvm.iri}}</strong>
     <a ng-if="!dvm.os.selected.matonto.imported" ng-click="dvm.os.showIriOverlay = true"><i class="fa fa-pencil"></i></a>
+    <div class="error-text" ng-if="dvm.ontoUtils.checkIri(dvm.iriBegin + dvm.iriThen + dvm.iriEnd) && dvm.isOverlay()">This IRI already exists</div>
 </span>
 <div ng-if="dvm.os.showIriOverlay" class="overlay">
     <form name="dvm.iriForm" class="content clearfix" novalidate autocomplete="off">
         <!-- section header -->
         <h6>Edit IRI</h6>
+        <div class="error-text" ng-if="dvm.ontoUtils.checkIri(dvm.iriBegin + dvm.iriThen + dvm.iriEnd)">This IRI already exists</div>
         <!-- Begins with -->
         <div ng-class="{'has-error': dvm.iriForm.iriBegin.$error.pattern}" class="form-group begin-container">
             <custom-label muted-text="'*Required'">Begins with</custom-label>
-            <input class="form-control" id="iriBegin" name="iriBegin" ng-model="dvm.iriBegin" ng-pattern="dvm.namespacePattern" ng-trim="false" required />
+            <input class="form-control" id="iriBegin" name="iriBegin" ng-model="dvm.iriBegin" ng-pattern="dvm.namespacePattern" ng-trim="false" required focus-me />
             <p ng-messages="dvm.iriForm.iriBegin.$error" class="error-msg">
                 <ng-message when="pattern">Value is not a valid namespace.</ng-message>
             </p>
@@ -55,9 +57,10 @@
         </div>
         <!-- buttons -->
         <div class="btn-container clearfix">
-            <button type="button" class="btn btn-primary pull-right" ng-click="onEdit({iriBegin: dvm.iriBegin, iriThen: dvm.iriThen, iriEnd: dvm.iriEnd}); dvm.os.showIriOverlay = false" ng-disabled="dvm.iriForm.$invalid">Edit</button>
-            <button type="button" class="btn btn-default pull-right" ng-click="dvm.os.showIriOverlay = false">Cancel</button>
+            <button type="button" class="btn btn-primary pull-right" ng-click="onEdit({iriBegin: dvm.iriBegin, iriThen: dvm.iriThen, iriEnd: dvm.iriEnd}); dvm.os.showIriOverlay = false" ng-disabled="dvm.iriForm.$invalid || dvm.ontoUtils.checkIri(dvm.iriBegin + dvm.iriThen + dvm.iriEnd)">Submit</button>
+            <button type="button" class="btn btn-default pull-right" ng-click="dvm.resetVariables(); dvm.os.showIriOverlay = false">Cancel</button>
             <button type="button" class="btn btn-primary pull-left" ng-click="dvm.resetVariables()"><i class="fa fa-refresh"></i></button>
         </div>
     </form>
 </div>
+
