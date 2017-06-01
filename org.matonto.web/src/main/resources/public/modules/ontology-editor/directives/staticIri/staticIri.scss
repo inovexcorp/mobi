@@ -9,13 +9,13 @@
         a {
             white-space: nowrap;
         }
+
+        .overlay {
+            display: inline-block;
+            margin-bottom: 10px;
+        }
     }
     .duplicate-iri {
         border-bottom: solid red 1px;
     }
-}
-
-.overlay .static-iri strong {
-    display: inline-block;
-    margin-bottom: 10px;
 }
