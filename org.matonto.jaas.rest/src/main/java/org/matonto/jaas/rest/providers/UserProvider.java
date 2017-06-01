@@ -32,8 +32,7 @@ import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.engines.UserConfig;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.jaas.engines.RdfEngine;
-import org.matonto.rdf.api.Literal;
-import org.matonto.rdf.orm.Thing;
+import org.matonto.rdf.api.Value;
 import org.matonto.rest.util.ErrorUtils;
 
 import java.io.IOException;
@@ -43,8 +42,6 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Optional;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
@@ -85,14 +82,10 @@ public class UserProvider implements MessageBodyWriter<User>, MessageBodyReader<
                         MultivaluedMap<String, Object> multivaluedMap, OutputStream outputStream)
             throws IOException, WebApplicationException {
         JSONObject object = new JSONObject();
-        Optional<Literal> usernameOpt = user.getUsername();
-        Iterator<Literal> firstNameIt = user.getFirstName().iterator();
-        Iterator<Literal> lastNameIt = user.getLastName().iterator();
-        Iterator<Thing> emailIt = user.getMbox().iterator();
-        object.put("username", usernameOpt.isPresent() ? usernameOpt.get().stringValue() : "");
-        object.put("firstName", firstNameIt.hasNext() ? firstNameIt.next().stringValue() : "");
-        object.put("lastName", lastNameIt.hasNext() ? lastNameIt.next().stringValue() : "");
-        object.put("email", emailIt.hasNext() ? emailIt.next().getResource().stringValue() : "");
+        object.put("username", user.getUsername().map(Value::stringValue).orElse(""));
+        object.put("firstName", user.getFirstName().stream().findFirst().map(Value::stringValue).orElse(""));
+        object.put("lastName", user.getLastName().stream().findFirst().map(Value::stringValue).orElse(""));
+        object.put("email", user.getMbox_resource().stream().findFirst().map(Value::stringValue).orElse(""));
 
         outputStream.write(object.toString().getBytes());
     }
