@@ -143,30 +143,30 @@ describe('Static IRI directive', function() {
             ontoUtils.checkIri.and.returnValue(true);
             controller = element.controller('staticIri');
             controller.iriForm.$invalid = false;
-            
+
             scope.$digest();
-            
+
             var disabled = element.querySelectorAll(':disabled');
             expect(disabled.length).toBe(1);
             expect(angular.element(disabled[0]).text()).toBe('Submit');
-            
-            var rendered = element.querySelectorAll('div.error-text');
-            expect(rendered.length).toBe(2);
-            expect(angular.element(rendered[0]).text()).toBe('This IRI already exists');
-            expect(angular.element(rendered[1]).text()).toBe('This IRI already exists');
+
+            var errorDisplays = element.find('error-display');
+            expect(errorDisplays.length).toBe(2);
+            expect(angular.element(errorDisplays[0]).text()).toBe('This IRI already exists');
+            expect(angular.element(errorDisplays[1]).text()).toBe('This IRI already exists');
         });
         it('depending on the IRI which does not exist in the ontology.', function() {
             ontoUtils.checkIri.and.returnValue(false);
             controller = element.controller('staticIri');
             controller.iriForm.$invalid = false;
-            
+
             scope.$digest();
-            
+
             var disabled = element.querySelectorAll(':disabled');
             expect(disabled.length).toBe(0);
-            
-            var rendered = element.querySelectorAll('div.error-text');
-            expect(rendered.length).toBe(0);
+
+            var errorDisplays = element.find('error-display');
+            expect(errorDisplays.length).toBe(0);
         });
 
     });

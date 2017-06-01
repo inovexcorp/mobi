@@ -23,16 +23,16 @@
 <span class="static-iri">
     <strong class="text-muted" ng-class="{'duplicate-iri': dvm.ontoUtils.checkIri(dvm.iriBegin + dvm.iriThen + dvm.iriEnd) && dvm.isOverlay()}" uib-tooltip="Copy to clipboard" ngclipboard data-clipboard-text="{{dvm.iri}}" ngclipboard-success="dvm.onSuccess()">{{dvm.iri}}</strong>
     <a ng-if="!dvm.os.selected.matonto.imported" ng-click="dvm.os.showIriOverlay = true"><i class="fa fa-pencil"></i></a>
-    <div class="error-text" ng-if="dvm.ontoUtils.checkIri(dvm.iriBegin + dvm.iriThen + dvm.iriEnd) && dvm.isOverlay()">This IRI already exists</div>
+        <error-display ng-if="dvm.ontoUtils.checkIri(dvm.iriBegin + dvm.iriThen + dvm.iriEnd) && dvm.isOverlay()">This IRI already exists</error-display>
 </span>
 <div ng-if="dvm.os.showIriOverlay" class="overlay">
     <form name="dvm.iriForm" class="content clearfix" novalidate autocomplete="off">
         <!-- section header -->
         <h6>Edit IRI</h6>
-        <div class="error-text" ng-if="dvm.ontoUtils.checkIri(dvm.iriBegin + dvm.iriThen + dvm.iriEnd)">This IRI already exists</div>
+        <error-display ng-if="dvm.ontoUtils.checkIri(dvm.iriBegin + dvm.iriThen + dvm.iriEnd)">This IRI already exists</error-display>
         <!-- Begins with -->
         <div ng-class="{'has-error': dvm.iriForm.iriBegin.$error.pattern}" class="form-group begin-container">
-            <custom-label muted-text="'*Required'">Begins with</custom-label>
+            <custom-label>Begins with</custom-label>
             <input class="form-control" id="iriBegin" name="iriBegin" ng-model="dvm.iriBegin" ng-pattern="dvm.namespacePattern" ng-trim="false" required focus-me />
             <p ng-messages="dvm.iriForm.iriBegin.$error" class="error-msg">
                 <ng-message when="pattern">Value is not a valid namespace.</ng-message>
@@ -40,7 +40,7 @@
         </div>
         <!-- Then -->
         <div class="form-group then-container">
-            <custom-label muted-text="'*Required'">Then</custom-label>
+            <custom-label>Then</custom-label>
             <select class="form-control" id="iriThen" name="iriThen" ng-model="dvm.iriThen" required>
                 <option value="#">#</option>
                 <option value="/">/</option>
@@ -49,7 +49,7 @@
         </div>
         <!-- Ends with -->
         <div ng-class="{'has-error': dvm.iriForm.iriEnd.$error.pattern}" class="form-group ends-container">
-            <custom-label muted-text="'*Required'">Ends with</custom-label>
+            <custom-label>Ends with</custom-label>
             <input class="form-control" id="iriEnd" name="iriEnd" ng-model="dvm.iriEnd" ng-pattern="/^\S+$/" ng-trim="false" required />
             <p ng-messages="dvm.iriForm.iriEnd.$error" class="error-msg">
                 <ng-message when="pattern">Spaces are not allowed.</ng-message>
