@@ -504,6 +504,9 @@ describe('Ontology Utils Manager service', function() {
     });
     
     describe('checkIri should return correct values when', function() {
+        beforeEach(function() {
+            ontologyStateSvc.listItem.iriList.push('id');
+        });
         it('the IRI is not a duplicate and not selected.', function() {
             expect(ontologyUtilsManagerSvc.checkIri('newIri')).toBe(false);
         });
