@@ -50,7 +50,7 @@
 
     function beautify() {
         return function(value) {
-            if(value && typeof value !== 'object') {
+            if (value && typeof value !== 'object') {
                 return value
                     // insert a space between lower & upper
                     .replace(/([a-z])([A-Z])/g, '$1 $2')
