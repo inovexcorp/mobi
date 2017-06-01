@@ -108,6 +108,15 @@ describe('Create Class Overlay directive', function() {
             expect(['Cancel', 'Create']).toContain(angular.element(buttons[0]).text().trim());
             expect(['Cancel', 'Create']).toContain(angular.element(buttons[1]).text().trim());
         });
+        it('depending on whether the class IRI already exists in the ontology.', function() {
+            ontoUtils.checkIri.and.returnValue(true);
+            
+            scope.$digest();
+            
+            var disabled = element.querySelectorAll('[disabled]');
+            expect(disabled.length).toBe(1);
+            expect(angular.element(disabled[0]).text()).toBe('Create');
+        });
     });
     describe('controller methods', function() {
         describe('nameChanged', function() {

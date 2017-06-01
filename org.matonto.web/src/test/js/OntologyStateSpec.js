@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Ontology State Service', function() {
-    var ontologyStateSvc, $q, scope, util, stateManagerSvc, ontologyManagerSvc, updateRefsSvc, prefixes, catalogManagerSvc, hierarchy, indexObject, expectedPaths, ontologyState, defaultDatatypes, ontologyObj, classObj, dataPropertyObj, individualObj, ontology, getResponse, httpSvc, $document;
+    var ontologyStateSvc, $q, scope, util, stateManagerSvc, ontologyManagerSvc, updateRefsSvc, prefixes, catalogManagerSvc, hierarchy, indexObject, expectedPaths, ontologyState, defaultDatatypes, ontologyObj, classObj, dataPropertyObj, individualObj, ontology, getResponse, httpSvc, $document, responseObj;
     var error = 'error';
     var format = 'jsonld';
     var title = 'title';
@@ -141,6 +141,7 @@ describe('Ontology State Service', function() {
         mockPrefixes();
         mockManchesterConverter();
         mockHttpService();
+        mockResponseObj();
 
         module(function($provide) {
             $provide.value('jsonFilter', function() {
@@ -154,11 +155,12 @@ describe('Ontology State Service', function() {
             });
         });
 
-        inject(function(ontologyStateService, _updateRefsService_, _ontologyManagerService_, _catalogManagerService_, _$q_, _$rootScope_, _utilService_, _stateManagerService_, _prefixes_, _httpService_, _$document_) {
+        inject(function(ontologyStateService, _updateRefsService_, _ontologyManagerService_, _catalogManagerService_, _$q_, _$rootScope_, _utilService_, _stateManagerService_, _prefixes_, _httpService_, _$document_, _responseObj_) {
             ontologyStateSvc = ontologyStateService;
             updateRefsSvc = _updateRefsService_;
             ontologyManagerSvc = _ontologyManagerService_;
             catalogManagerSvc = _catalogManagerService_;
+            responseObj = _responseObj_
             $q = _$q_;
             scope = _$rootScope_;
             util = _utilService_;
@@ -298,7 +300,8 @@ describe('Ontology State Service', function() {
             branchId: branchId,
             branches: [branch],
             index: index,
-            upToDate: true
+            upToDate: true,
+            iriList: [ontologyId, classId, dataPropertyId]
         };
         getResponse = {
             recordId: recordId,
@@ -1598,6 +1601,7 @@ describe('Ontology State Service', function() {
                     expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.annotationPropertyHierarchy, recordId, response);
                     expect(_.get(response, 'flatAnnotationPropertyHierarchy')).toEqual([{prop: 'flatten'}]);
                     expect(_.get(response, 'upToDate')).toBe(true);
+                    expect(_.get(response, 'iriList')).toEqual([ontologyId, annotationId, classId, dataPropertyId, objectPropertyId, individualId, datatypeId, annotationId2, classId2, dataPropertyId2, objectPropertyId2, individualId2, datatypeId2]);
                     expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith([ontology, [{
                         '@id': 'ontologyId',
                         matonto: {
@@ -1719,6 +1723,7 @@ describe('Ontology State Service', function() {
                     expect(_.get(response, 'conceptIndex')).toEqual(conceptHierarchiesResponse.index);
                     expect(_.get(response, 'branches')).toEqual(branches);
                     expect(_.get(response, 'upToDate')).toBe(true);
+                    expect(_.get(response, 'iriList')).toEqual([ontologyId, annotationId, classId, dataPropertyId, objectPropertyId, individualId, datatypeId, annotationId2, classId2, dataPropertyId2, objectPropertyId2, individualId2, datatypeId2]);
                 }, function() {
                     fail('Promise should have resolved');
                 });

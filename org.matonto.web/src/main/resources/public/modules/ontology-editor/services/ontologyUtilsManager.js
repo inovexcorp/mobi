@@ -200,6 +200,10 @@
                 return os.getEntityNameByIndex(ro.getItemIri(item), os.listItem);
             }
             
+            self.checkIri = function(iri) {
+                return _.includes(os.listItem.iriList, iri) && iri !== _.get(os.selected, '@id');
+            }
+
             self.setSuperClasses = function(iri, classIRIs) {
                 _.forEach(classIRIs, classIRI => {
                     os.addEntityToHierarchy(os.listItem.classHierarchy, iri, os.listItem.classIndex, classIRI);
