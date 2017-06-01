@@ -50,22 +50,20 @@
 
     function beautify() {
         return function(value) {
-            var result = '';
-
             if(value && typeof value !== 'object') {
-                var reg = /[A-Z]/,
-                    i = 1;
-                result += value[0].toUpperCase();
-
-                while(i < value.length) {
-                    if(value[i].match(reg) !== null) {
-                        result += ' ';
-                    }
-                    result += value[i];
-                    i++;
-                }
+                return value
+                    // insert a space between lower & upper
+                    .replace(/([a-z])([A-Z])/g, '$1 $2')
+                    // insert a space after number
+                    .replace(/([0-9]+)/, '$1 ')
+                    // insert a space before number that follows letters
+                    .replace(/([a-zA-Z])([0-9]+)/, '$1 $2')
+                    // space before last upper in a sequence followed by lower
+                    .replace(/\b([A-Z]+)([A-Z])([a-z])/, '$1 $2$3')
+                    // uppercase the first character
+                    .replace(/^./, _.toUpper);
             }
-            return result;
+            return '';
         }
     }
 })();
