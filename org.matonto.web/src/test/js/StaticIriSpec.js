@@ -163,7 +163,6 @@ describe('Static IRI directive', function() {
             scope.$digest();
             
             var disabled = element.querySelectorAll(':disabled');
-            console.error(disabled);
             expect(disabled.length).toBe(0);
             
             var rendered = element.querySelectorAll('div.error-text');
