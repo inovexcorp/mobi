@@ -118,19 +118,19 @@
 
                     dvm.getRecords = function() {
                         dvm.recordsConfig.pageIndex = 0;
-                        dvm.cm.getRecords(dvm.cm.localCatalog['@id'], dvm.recordsConfig).then(parseRecordResults, onError);
+                        dvm.cm.getRecords(dvm.cm.localCatalog['@id'], dvm.recordsConfig).then(parseRecordResults, onRecordsError);
                     }
                     dvm.getRecordPage = function(direction) {
                         if (direction === 'prev') {
                             dvm.util.getResultsPage(dvm.links.prev).then(response => {
                                 dvm.recordsConfig.pageIndex -= 1;
                                 parseRecordResults(response);
-                            }, onError);
+                            }, onRecordsError);
                         } else {
                             dvm.util.getResultsPage(dvm.links.next).then(response => {
                                 dvm.recordsConfig.pageIndex += 1;
                                 parseRecordResults(response);
-                            }, onError);
+                            }, onRecordsError);
                         }
                     }
                     dvm.selectOntology = function(record) {
@@ -247,7 +247,7 @@
                             dvm.state.resetEdit();
                             var classMappings = dvm.mm.getAllClassMappings(dvm.state.mapping.jsonld);
                             _.forEach(classMappings, classMapping => dvm.state.setAvailableProps(classMapping['@id']));
-                            dvm.state.availableClasses = _.filter(dvm.classes, clazz => !_.find(classMappings, classMapping => dvm.mm.getClassIdByMapping(classMapping) === clazz['@id']));
+                            dvm.state.availableClasses = _.filter(dvm.classes, clazz => !_.find(classMappings, classMapping => dvm.mm.getClassIdByMapping(classMapping) === clazz.classObj['@id']));
                             dvm.state.changedMapping = true;
                         }
 
@@ -266,10 +266,16 @@
                         var links = dvm.util.parseLinks(_.get(headers, 'link', ''));
                         dvm.links.prev = _.get(links, 'prev', '');
                         dvm.links.next = _.get(links, 'next', '');
-                        dvm.errorMessage = '';
+                        dvm.recordsErrorMessage = '';
                     }
-                    function onError(errorMessage) {
-                        dvm.errorMessage = errorMessage;
+                    function onError() {
+                        dvm.errorMessage = 'Error retrieving ontology';
+                        dvm.selectedRecord = undefined;
+                        dvm.selectedOntologyState = undefined;
+                        dvm.classes = [];
+                    }
+                    function onRecordsError() {
+                        dvm.recordsErrorMessage = 'Error retrieving ontologies';
                     }
 
                     dvm.getRecords();

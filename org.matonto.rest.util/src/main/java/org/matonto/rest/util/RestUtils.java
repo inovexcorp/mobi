@@ -41,7 +41,9 @@ import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.web.security.util.AuthenticationProps;
 import org.openrdf.model.Model;
 import org.openrdf.rio.RDFFormat;
+import org.openrdf.rio.RDFHandler;
 import org.openrdf.rio.Rio;
+import org.openrdf.rio.helpers.BufferedGroupingRDFHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -107,6 +109,25 @@ public class RestUtils {
     }
 
     /**
+     * Converts a Sesame Model into a string containing grouped RDF in the specified RDFFormat.
+     *
+     * @param model  A Sesame Model of RDF to convert.
+     * @param format The RDFFormat the RDF should be serialized into.
+     * @return A String of the serialized grouped RDF from the Model.
+     */
+    public static String groupedModelToString(Model model, RDFFormat format) {
+        long start = System.currentTimeMillis();
+        try {
+            StringWriter sw = new StringWriter();
+            RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(format, sw));
+            Rio.write(model, rdfWriter);
+            return sw.toString();
+        } finally {
+            LOG.trace("modelToString took {}ms", System.currentTimeMillis() - start);
+        }
+    }
+
+    /**
      * Converts a Sesame Model into a string containing RDF in the format specified by the passed string.
      *
      * @param model  A Sesame Model of RDF to convert.
@@ -115,6 +136,17 @@ public class RestUtils {
      */
     public static String modelToString(Model model, String format) {
         return modelToString(model, getRDFFormat(format));
+    }
+
+    /**
+     * Converts a Sesame Model into a string containing grouped RDF in the format specified by the passed string.
+     *
+     * @param model  A Sesame Model of RDF to convert.
+     * @param format The abbreviated name of a RDFFormat.
+     * @return A String of the serialized grouped RDF from the Model.
+     */
+    public static String groupedModelToString(Model model, String format) {
+        return groupedModelToString(model, getRDFFormat(format));
     }
 
     /**
