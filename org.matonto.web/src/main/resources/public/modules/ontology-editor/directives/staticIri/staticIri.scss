@@ -2,17 +2,18 @@
 @import "./src/main/resources/public/css/variables";
 
 .static-iri {
+    .overlay { 
+        strong {
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+    }
     strong {
         cursor: pointer;
         word-break: break-all;
 
         a {
             white-space: nowrap;
-        }
-
-        .overlay {
-            display: inline-block;
-            margin-bottom: 10px;
         }
     }
     .duplicate-iri {
