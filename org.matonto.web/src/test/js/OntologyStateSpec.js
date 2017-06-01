@@ -301,7 +301,7 @@ describe('Ontology State Service', function() {
             branches: [branch],
             index: index,
             upToDate: true,
-            iriList: []
+            iriList: [ontologyId, classId, dataPropertyId]
         };
         getResponse = {
             recordId: recordId,
@@ -1601,6 +1601,7 @@ describe('Ontology State Service', function() {
                     expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.annotationPropertyHierarchy, recordId, response);
                     expect(_.get(response, 'flatAnnotationPropertyHierarchy')).toEqual([{prop: 'flatten'}]);
                     expect(_.get(response, 'upToDate')).toBe(true);
+                    expect(_.get(response, 'iriList')).toEqual([ontologyId, annotationId, classId, dataPropertyId, objectPropertyId, individualId, datatypeId, annotationId2, classId2, dataPropertyId2, objectPropertyId2, individualId2, datatypeId2])
                     expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith([ontology, [{
                         '@id': 'ontologyId',
                         matonto: {

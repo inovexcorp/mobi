@@ -422,7 +422,7 @@
                             listItem.dataPropertyRange,
                             compareListItems
                         );
-                        listItem.iriList.push(iriList['@id'])
+                        listItem.iriList.push(iriList['id'])
                         listItem.iriList = _.union(listItem.iriList, _.map(_.flatten(_.values(iriList)), ro.getItemIri))
                     });
 
@@ -505,7 +505,7 @@
                             listItem.subObjectProperties,
                             compareListItems
                         );
-                        listItem.iriList.push(iriList['@id']);
+                        listItem.iriList.push(iriList['id']);
                         listItem.iriList = _.union(listItem.iriList, _.map(_.flatten(_.values(iriList)), ro.getItemIri))
                     });
                     listItem.conceptHierarchy = response[2].hierarchy;
