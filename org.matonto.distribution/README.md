@@ -23,7 +23,7 @@ credentials.  To do this, add an entry in the `<servers>` entry of your
   <username>{username}</username>
   <password>{J0QfBsYxFCkHKWpkA+b74DH72XwUaxvgCEPYltmTRfk=}</password>
   <configuration>
-    <email>bdgould@smcm.edu</email>
+    <email>{email.address}</email>
   </configuration>
 </server>
 ```
