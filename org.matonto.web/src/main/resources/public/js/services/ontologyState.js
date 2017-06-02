@@ -469,6 +469,8 @@
                 ]).then(response => {
                     listItem.subDataProperties = _.get(response[0], 'dataProperties');
                     listItem.subObjectProperties = _.get(response[0], 'objectProperties');
+                    listItem.concepts = _.get(response[0], 'concepts', []);
+                    listItem.conceptSchemes = _.get(response[0], 'conceptSchemes', []);
                     listItem.annotations = _.unionWith(
                         _.get(response[0], 'annotationProperties'),
                         propertyManagerService.defaultAnnotations,

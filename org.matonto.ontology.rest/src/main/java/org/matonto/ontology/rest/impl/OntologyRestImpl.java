@@ -72,6 +72,7 @@ import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rest.util.ErrorUtils;
 import org.matonto.web.security.util.AuthenticationProps;
 import org.openrdf.model.vocabulary.OWL;
+import org.openrdf.model.vocabulary.SKOS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -79,6 +80,7 @@ import java.io.BufferedWriter;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -1027,6 +1029,24 @@ public class OntologyRestImpl implements OntologyRest {
         return new JSONObject().element("namedIndividuals", iriListToJsonArray(iris));
     }
 
+    private JSONObject getConceptArray(Ontology ontology) {
+        List<IRI> iris = ontology.getIndividualsOfType(sesameTransformer.matontoIRI(SKOS.CONCEPT))
+                .stream()
+                .filter(ind -> ind instanceof NamedIndividual)
+                .map(ind -> ((NamedIndividual) ind).getIRI())
+                .collect(Collectors.toList());
+        return new JSONObject().element("concepts", iriListToJsonArray(iris));
+    }
+
+    private JSONObject getConceptSchemeArray(Ontology ontology) {
+        List<IRI> iris = ontology.getIndividualsOfType(sesameTransformer.matontoIRI(SKOS.CONCEPT_SCHEME))
+                .stream()
+                .filter(ind -> ind instanceof NamedIndividual)
+                .map(ind -> ((NamedIndividual) ind).getIRI())
+                .collect(Collectors.toList());
+        return new JSONObject().element("conceptSchemes", iriListToJsonArray(iris));
+    }
+
     /**
      * Creates a JSONArray of items in a specific format to more easily display the results to the users.
      *
@@ -1092,7 +1112,7 @@ public class OntologyRestImpl implements OntologyRest {
     private JSONObject getAllIRIs(Ontology ontology) {
         return combineJsonObjects(getAnnotationArray(ontology), getClassArray(ontology),
                 getDatatypeArray(ontology), getObjectPropertyArray(ontology), getDataPropertyArray(ontology),
-                getNamedIndividualArray(ontology));
+                getNamedIndividualArray(ontology), getConceptArray(ontology), getConceptSchemeArray(ontology));
     }
 
     /**

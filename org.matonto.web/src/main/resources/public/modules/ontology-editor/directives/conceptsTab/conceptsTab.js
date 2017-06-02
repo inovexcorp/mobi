@@ -27,9 +27,9 @@
         .module('conceptsTab', [])
         .directive('conceptsTab', conceptsTab);
 
-        conceptsTab.$inject = ['ontologyStateService', 'ontologyManagerService'];
+        conceptsTab.$inject = ['ontologyStateService', 'ontologyManagerService', 'responseObj'];
 
-        function conceptsTab(ontologyStateService, ontologyManagerService) {
+        function conceptsTab(ontologyStateService, ontologyManagerService, responseObj) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,14 +38,17 @@
                 controllerAs: 'dvm',
                 controller: ['$scope', function($scope) {
                     var dvm = this;
+                    var resObj = responseObj;
                     dvm.sm = ontologyStateService;
                     dvm.om = ontologyManagerService;
                     dvm.relationshipList = [];
 
                     $scope.$watch('dvm.sm.selected', function(newValue) {
-                        if (dvm.om.isConcept(dvm.sm.selected)) {
+                        if (dvm.om.isConcept(dvm.sm.selected)
+                            || _.includes(dvm.sm.listItem.concepts, resObj.createItemFromIri(_.get(dvm.sm.selected, '@id')))) {
                             dvm.relationshipList = dvm.om.conceptRelationshipList;
-                        } else if (dvm.om.isConceptScheme(dvm.sm.selected)) {
+                        } else if (dvm.om.isConceptScheme(dvm.sm.selected)
+                            || _.includes(dvm.sm.listItem.conceptSchemes, resObj.createItemFromIri(_.get(dvm.sm.selected, '@id')))) {
                             dvm.relationshipList = dvm.om.schemeRelationshipList;
                         }
                     });

@@ -33,6 +33,7 @@ describe('Concepts Tab directive', function() {
         module('conceptsTab');
         mockOntologyManager();
         mockOntologyState();
+        mockResponseObj();
 
         inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_) {
             $compile = _$compile_;

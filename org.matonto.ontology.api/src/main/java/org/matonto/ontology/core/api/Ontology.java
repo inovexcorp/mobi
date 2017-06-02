@@ -162,6 +162,10 @@ public interface Ontology {
 
     Set<Individual> getAllIndividuals();
 
+    Set<Individual> getIndividualsOfType(IRI classIRI);
+
+    Set<Individual> getIndividualsOfType(OClass clazz);
+
     /**
      * Compares two SimpleOntology objects by their resource ids (ontologyId) and RDF model of the ontology objects,
      * and returns true if the resource ids are equal and their RDF models are isomorphic.

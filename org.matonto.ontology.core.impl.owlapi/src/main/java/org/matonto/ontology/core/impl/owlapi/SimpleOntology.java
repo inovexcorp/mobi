@@ -35,6 +35,7 @@ import org.matonto.ontology.core.api.datarange.Datatype;
 import org.matonto.ontology.core.api.propertyexpression.AnnotationProperty;
 import org.matonto.ontology.core.api.propertyexpression.DataProperty;
 import org.matonto.ontology.core.api.propertyexpression.ObjectProperty;
+import org.matonto.ontology.core.impl.owlapi.classexpression.SimpleClass;
 import org.matonto.ontology.core.utils.MatOntoStringUtils;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.ontology.utils.api.SesameTransformer;
@@ -78,6 +79,9 @@ import org.semanticweb.owlapi.model.OWLOntologyLoaderConfiguration;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.model.parameters.OntologyCopy;
+import org.semanticweb.owlapi.reasoner.OWLReasoner;
+import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
+import org.semanticweb.owlapi.reasoner.structural.StructuralReasonerFactory;
 import org.semanticweb.owlapi.rio.RioJsonLDParserFactory;
 import org.semanticweb.owlapi.rio.RioMemoryTripleSource;
 import org.semanticweb.owlapi.rio.RioRenderer;
@@ -398,6 +402,20 @@ public class SimpleOntology implements Ontology {
     @Override
     public Set<Individual> getAllIndividuals() {
         return owlOntology.individualsInSignature()
+                .map(SimpleOntologyValues::matontoIndividual)
+                .collect(Collectors.toSet());
+    }
+
+    @Override
+    public Set<Individual> getIndividualsOfType(IRI classIRI) {
+        return getIndividualsOfType(new SimpleClass(classIRI));
+    }
+
+    @Override
+    public Set<Individual> getIndividualsOfType(OClass clazz) {
+        OWLReasonerFactory reasonerFactory = new StructuralReasonerFactory();
+        OWLReasoner reasoner = reasonerFactory.createReasoner(owlOntology);
+        return reasoner.getInstances(SimpleOntologyValues.owlapiClass(clazz)).entities()
                 .map(SimpleOntologyValues::matontoIndividual)
                 .collect(Collectors.toSet());
     }
