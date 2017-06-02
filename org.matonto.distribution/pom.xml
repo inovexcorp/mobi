@@ -232,7 +232,8 @@
                 <artifactId>docker-maven-plugin</artifactId>
                 <version>0.4.12</version>
                 <configuration>
-                    <dockerMaintainer>MatOnto.org</dockerMaintainer>
+                    <serverId>docker-hub</serverId>
+                    <registryUrl>https://index.docker.io/v1/</registryUrl>
                     <useGitCommitId>true</useGitCommitId>
                     <dockerDirectory>${project.build.directory}/assembly/docker</dockerDirectory>
                     <imageName>matonto/matonto</imageName>
