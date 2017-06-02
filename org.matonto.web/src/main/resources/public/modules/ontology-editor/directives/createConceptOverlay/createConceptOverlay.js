@@ -74,7 +74,6 @@
                             } else {
                                 entity[prefixes.skos + 'hasTopConcept'] = [{'@id': dvm.concept['@id']}];
                             }
-                            entity.matonto.unsaved = true;
                         });
                         dvm.ontoUtils.addLanguageToNewEntity(dvm.concept, dvm.language);
                         // add the entity to the ontology
