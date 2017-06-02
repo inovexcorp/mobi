@@ -8,6 +8,9 @@
 .classpath
 *.checkstyle
 
+#NetBeans
+**/nb-configuration.xml
+
 #Maven
 target
 
