@@ -1,0 +1,16 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.instance-block {
+    .block-footer {
+        .paging-details p {
+            line-height: 34px;
+            margin: 0;
+        }
+        
+        .page-nav .pagination {
+            display: block;
+            margin: 0;
+        }
+    }
+}

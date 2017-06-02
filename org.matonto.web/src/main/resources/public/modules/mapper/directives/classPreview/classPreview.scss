@@ -14,6 +14,9 @@
             &.last:after {
                 content: '';
             }
+            &.last.limited:after {
+                content: '...'
+            }
         }
     }
 }

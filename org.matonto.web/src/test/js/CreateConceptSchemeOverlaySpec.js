@@ -125,6 +125,15 @@ describe('Create Concept Scheme Overlay directive', function() {
             scope.$digest();
             expect(button.attr('disabled')).toBeFalsy();
         });
+        it('depending on whether the scheme IRI already exists in the ontology.', function() {
+            ontoUtils.checkIri.and.returnValue(true);
+            
+            scope.$digest();
+            
+            var disabled = element.querySelectorAll('[disabled]');
+            expect(disabled.length).toBe(1);
+            expect(angular.element(disabled[0]).text()).toBe('Create');
+        });
     });
     describe('controller methods', function() {
         describe('should update the concept scheme id', function() {
@@ -156,7 +165,6 @@ describe('Create Concept Scheme Overlay directive', function() {
             controller.scheme = {'@id': 'scheme'};
 
             controller.create();
-            expect(controller.scheme.matonto.originalIRI).toEqual(controller.scheme['@id']);
             expect(controller.scheme[prefixes.skos + 'hasTopConcept']).toEqual(controller.concepts);
             expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, controller.scheme);
             expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(controller.scheme, controller.language);

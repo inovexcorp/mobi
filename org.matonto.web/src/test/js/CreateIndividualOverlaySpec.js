@@ -126,6 +126,15 @@ describe('Create Individual Overlay directive', function() {
             scope.$digest();
             expect(button.attr('disabled')).toBeFalsy();
         });
+        it('depending on whether the individual IRI already exists in the ontology.', function() {
+            ontoUtils.checkIri.and.returnValue(true);
+            
+            scope.$digest();
+            
+            var disabled = element.querySelectorAll('[disabled]');
+            expect(disabled.length).toBe(1);
+            expect(angular.element(disabled[0]).text()).toBe('Create');
+        });
     });
     describe('controller methods', function() {
         beforeEach(function() {
@@ -179,7 +188,6 @@ describe('Create Individual Overlay directive', function() {
             splitIRIFilter.and.returnValue(split);
             controller.individual = {'@id': 'id', '@type': ['ClassA']};
             controller.create();
-            expect(controller.individual.matonto.originalIRI).toBe(controller.individual['@id']);
             expect(ontologyStateSvc.listItem.individuals).toContain({namespace: split.begin + split.then, localName: split.end});
             expect(ontologyStateSvc.listItem.classesWithIndividuals).toEqual(['ClassA']);
             expect(ontologyStateSvc.listItem.classesAndIndividuals).toEqual({'ClassA': ['id']});

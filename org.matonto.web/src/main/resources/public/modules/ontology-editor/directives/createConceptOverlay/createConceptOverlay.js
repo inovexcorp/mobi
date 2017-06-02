@@ -77,7 +77,6 @@
                             entity.matonto.unsaved = true;
                         });
                         dvm.ontoUtils.addLanguageToNewEntity(dvm.concept, dvm.language);
-                        _.set(dvm.concept, 'matonto.originalIRI', dvm.concept['@id']);
                         // add the entity to the ontology
                         dvm.os.addEntity(dvm.os.listItem, dvm.concept);
                         // update relevant lists

@@ -40,6 +40,7 @@
          * @scope
          * @restrict E
          * @requires ontologyManager.service:ontologyManagerService
+         * @requires $filter
          *
          * @description
          * `classSelect` is a directive which creates a ui-select with the passed class
@@ -57,9 +58,9 @@
          */
         .directive('classSelect', classSelect);
 
-        classSelect.$inject = ['ontologyManagerService'];
+        classSelect.$inject = ['$filter', 'ontologyManagerService'];
 
-        function classSelect(ontologyManagerService) {
+        function classSelect($filter, ontologyManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -75,6 +76,10 @@
                 controller: function() {
                     var dvm = this;
                     dvm.om = ontologyManagerService;
+
+                    dvm.getOntologyId = function(clazz) {
+                        return clazz.ontologyId || $filter('splitIRI')(clazz.classObj['@id']).begin;
+                    }
                 },
                 templateUrl: 'modules/mapper/directives/classSelect/classSelect.html'
             }

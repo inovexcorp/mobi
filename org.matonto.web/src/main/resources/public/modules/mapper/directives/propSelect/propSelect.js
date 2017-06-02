@@ -40,6 +40,7 @@
          * @scope
          * @restrict E
          * @requires ontologyManager.service:ontologyManagerService
+         * @requires $filter
          *
          * @description
          * `propSelect` is a directive which creates a ui-select with the passed property
@@ -56,9 +57,9 @@
          */
         .directive('propSelect', propSelect);
 
-        propSelect.$inject = ['ontologyManagerService'];
+        propSelect.$inject = ['$filter', 'ontologyManagerService'];
 
-        function propSelect(ontologyManagerService) {
+        function propSelect($filter, ontologyManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -74,6 +75,10 @@
                 controller: function() {
                     var dvm = this;
                     dvm.om = ontologyManagerService;
+
+                    dvm.getOntologyId = function(prop) {
+                        return prop.ontologyId || $filter('splitIRI')(prop.propObj['@id']).begin;
+                    }
                 },
                 templateUrl: 'modules/mapper/directives/propSelect/propSelect.html'
             }

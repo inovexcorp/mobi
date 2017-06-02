@@ -256,6 +256,7 @@ function mockMappingManager() {
     module(function($provide) {
         $provide.service('mappingManagerService', function($q) {
             this.mappingIds = [];
+            this.annotationProperties = [];
 
             this.reset = jasmine.createSpy('reset');
             this.initialize = jasmine.createSpy('initialize');
@@ -348,7 +349,6 @@ function mockMapperState() {
             this.step = 0;
             this.invalidProps = [];
             this.availableClasses = [];
-            this.availableColumns = [];
             this.invalidOntology = false;
             this.editMappingName = false;
             this.displayCancelConfirm = false;
@@ -370,7 +370,6 @@ function mockMapperState() {
             this.resetEdit = jasmine.createSpy('resetEdit');
             this.createMapping = jasmine.createSpy('createMapping');
             this.setInvalidProps = jasmine.createSpy('setInvalidProps');
-            this.updateAvailableColumns = jasmine.createSpy('updateAvailableColumns');
             this.getAvailableProps = jasmine.createSpy('getAvailableProps').and.returnValue([]);
             this.setAvailableProps = jasmine.createSpy('setAvailableProps');
             this.hasAvailableProps = jasmine.createSpy('hasAvailableProps');
@@ -466,10 +465,7 @@ function mockOntologyState() {
                 type: ''
             };
             this.selected = {
-                '@id': 'id',
-                matonto: {
-                    originalIri: 'iri'
-                }
+                '@id': 'id'
             };
             this.annotationSelect = 'select';
             this.annotationValue = 'value';
@@ -520,7 +516,8 @@ function mockOntologyState() {
                 importedOntologyIds: [],
                 upToDate: true,
                 conceptHierarchy: [],
-                flatConceptHierarchy: []
+                flatConceptHierarchy: [],
+                iriList: []
             };
             this.states = {};
             this.list = [];
@@ -615,6 +612,10 @@ function mockOntologyUtilsManager() {
             this.updateLabel = jasmine.createSpy('updateLabel');
             this.getLabelForIRI = jasmine.createSpy('getLabelForIRI');
             this.getDropDownText = jasmine.createSpy('getDropDownText');
+            this.setSuperClasses = jasmine.createSpy('setSuperClasses');
+            this.setSuperProperties = jasmine.createSpy('setSuperProperties');
+            this.updateflatIndividualsHierarchy = jasmine.createSpy('updateflatIndividualsHierarchy');
+            this.checkIri = jasmine.createSpy('checkIri');
         });
     });
 }
@@ -858,11 +859,13 @@ function mockUtil() {
 function mockDatasetManager() {
     module(function($provide) {
         $provide.service('datasetManagerService', function($q) {
+            this.datasetRecords = [];
             this.getResultsPage = jasmine.createSpy('getResultsPage').and.returnValue($q.when({}));
             this.getDatasetRecords = jasmine.createSpy('getDatasetRecords').and.returnValue($q.when({}));
             this.createDatasetRecord = jasmine.createSpy('createDatasetRecord').and.returnValue($q.when(''));
             this.deleteDatasetRecord = jasmine.createSpy('deleteDatasetRecord').and.returnValue($q.when());
             this.clearDatasetRecord = jasmine.createSpy('clearDatasetRecord').and.returnValue($q.when());
+            this.initialize = jasmine.createSpy('initialize');
         });
     });
 }
@@ -906,4 +909,49 @@ function mockToastr() {
             this.warning = jasmine.createSpy('warning');
         });
     });
+}
+
+function mockDiscoverState() {
+    module(function($provide) {
+        $provide.service('discoverStateService', function() {
+            this.explore = {
+                active: true,
+                breadcrumbs: ['Classes'],
+                classDetails: [],
+                instanceDetails: {
+                    currentPage: 0,
+                    data: [],
+                    limit: 99,
+                    links: {
+                        next: '',
+                        prev: ''
+                    },
+                    total: 0
+                },
+                recordId: ''
+            };
+            this.query = {
+                active: false
+            };
+            this.resetPagedInstanceDetails = jasmine.createSpy('resetPagedInstanceDetails');
+            this.cleanUpOnDatasetDelete = jasmine.createSpy('cleanUpOnDatasetDelete');
+            this.cleanUpOnDatasetClear = jasmine.createSpy('cleanUpOnDatasetClear');
+        });
+    });
+}
+
+function mockExplore() {
+    module(function($provide) {
+        $provide.service('exploreService', function($q) {
+            this.getClassDetails = jasmine.createSpy('getClassDetails').and.returnValue($q.when([]));
+            this.getClassInstanceDetails = jasmine.createSpy('getClassInstanceDetails').and.returnValue($q.when([]));
+            this.createPagedResultsObject = jasmine.createSpy('createPagedResultsObject').and.returnValue({});
+        });
+    });
+}
+
+function flushAndVerify($httpBackend) {
+    $httpBackend.flush();
+    $httpBackend.verifyNoOutstandingExpectation();
+    $httpBackend.verifyNoOutstandingRequest();
 }

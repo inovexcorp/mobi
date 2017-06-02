@@ -27,9 +27,9 @@
         .module('createPropertyOverlay', [])
         .directive('createPropertyOverlay', createPropertyOverlay);
 
-        createPropertyOverlay.$inject = ['$filter', 'REGEX', 'ontologyManagerService', 'ontologyStateService', 'prefixes', 'ontologyUtilsManagerService'];
+        createPropertyOverlay.$inject = ['$filter', 'REGEX', 'ontologyManagerService', 'ontologyStateService', 'prefixes', 'ontologyUtilsManagerService', 'responseObj'];
 
-        function createPropertyOverlay($filter, REGEX, ontologyManagerService, ontologyStateService, prefixes, ontologyUtilsManagerService) {
+        function createPropertyOverlay($filter, REGEX, ontologyManagerService, ontologyStateService, prefixes, ontologyUtilsManagerService, responseObj) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -40,15 +40,16 @@
                     var dvm = this;
                     var setAsObject = false;
                     var setAsDatatype = false;
-                    var ontoUtils = ontologyUtilsManagerService;
+                    var ro = responseObj;
 
                     dvm.checkbox = false;
                     dvm.prefixes = prefixes;
                     dvm.iriPattern = REGEX.IRI;
                     dvm.om = ontologyManagerService;
                     dvm.os = ontologyStateService;
+                    dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.prefix = dvm.os.getDefaultPrefix();
-
+                    dvm.values = [];
                     dvm.property = {
                         '@id': dvm.prefix,
                         [prefixes.dcterms + 'title']: [{
@@ -83,40 +84,50 @@
                                 _.unset(dvm.property, prefixes.rdfs + axiom);
                             }
                         });
-                        _.set(dvm.property, 'matonto.originalIRI', dvm.property['@id']);
-                        ontoUtils.addLanguageToNewEntity(dvm.property, dvm.language);
+                        dvm.ontoUtils.addLanguageToNewEntity(dvm.property, dvm.language);
                         dvm.os.updatePropertyIcon(dvm.property);
                         // add the entity to the ontology
                         dvm.os.addEntity(dvm.os.listItem, dvm.property);
                         // update relevant lists
-                        var split = $filter('splitIRI')(dvm.property['@id']);
                         if (dvm.om.isObjectProperty(dvm.property)) {
-                            _.get(dvm.os.listItem, 'subObjectProperties').push({namespace:split.begin + split.then, localName: split.end});
-                            var hierarchy = _.get(dvm.os.listItem, 'objectPropertyHierarchy');
-                            hierarchy.push({'entityIRI': dvm.property['@id']});
-                            dvm.os.listItem.flatObjectPropertyHierarchy = dvm.os.flattenHierarchy(hierarchy, dvm.os.listItem.recordId);
-                            dvm.os.setObjectPropertiesOpened(dvm.os.listItem.recordId, true);
+                            commonUpdate('subObjectProperties', 'objectPropertyHierarchy', 'flatObjectPropertyHierarchy', 'objectPropertyIndex', dvm.os.setObjectPropertiesOpened);
                             dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.getOntologiesArray(), dvm.os.listItem);
                         } else if (dvm.om.isDataTypeProperty(dvm.property)) {
-                            _.get(dvm.os.listItem, 'subDataProperties').push({namespace:split.begin + split.then, localName: split.end});
-                            var hierarchy = _.get(dvm.os.listItem, 'dataPropertyHierarchy');
-                            hierarchy.push({'entityIRI': dvm.property['@id']});
-                            dvm.os.listItem.flatDataPropertyHierarchy = dvm.os.flattenHierarchy(hierarchy, dvm.os.listItem.recordId);
-                            dvm.os.setDataPropertiesOpened(dvm.os.listItem.recordId, true);
+                            commonUpdate('subDataProperties', 'dataPropertyHierarchy', 'flatDataPropertyHierarchy', 'dataPropertyIndex', dvm.os.setDataPropertiesOpened);
                             dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.getOntologiesArray(), dvm.os.listItem);
                         } else if (dvm.om.isAnnotation(dvm.property)) {
-                            _.get(dvm.os.listItem, 'annotations').push({namespace:split.begin + split.then, localName: split.end});
-                            var hierarchy = _.get(dvm.os.listItem, 'annotationPropertyHierarchy');
-                            hierarchy.push({'entityIRI': dvm.property['@id']});
-                            dvm.os.listItem.flatAnnotationPropertyHierarchy = dvm.os.flattenHierarchy(hierarchy, dvm.os.listItem.recordId);
-                            dvm.os.setAnnotationPropertiesOpened(dvm.os.listItem.recordId, true);
+                            dvm.values = [];
+                            commonUpdate('annotations', 'annotationPropertyHierarchy', 'flatAnnotationPropertyHierarchy', 'annotationPropertyIndex', dvm.os.setAnnotationPropertiesOpened);
                         }
                         dvm.os.addToAdditions(dvm.os.listItem.recordId, dvm.property);
                         // select the new property
                         dvm.os.selectItem(_.get(dvm.property, '@id'));
                         // hide the overlay
                         dvm.os.showCreatePropertyOverlay = false;
-                        ontoUtils.saveCurrentChanges();
+                        dvm.ontoUtils.saveCurrentChanges();
+                    }
+                    
+                    dvm.getKey = function() {
+                        if (dvm.om.isDataTypeProperty(dvm.property)) {
+                            return 'subDataProperties'
+                        }
+                        return 'subObjectProperties';
+                    }
+                    
+                    dvm.typeChange = function() {
+                        dvm.values = [];
+                    }
+                    
+                    function commonUpdate(listKey, hierarchyKey, flatHierarchyKey, indexKey, setThisOpened) {
+                        dvm.os.listItem[listKey].push(ro.createItemFromIri(dvm.property['@id']));
+                        if (dvm.values.length) {
+                            dvm.property[prefixes.rdfs + 'subPropertyOf'] = dvm.values;
+                            dvm.ontoUtils.setSuperProperties(dvm.property['@id'], _.map(dvm.values, '@id'), hierarchyKey, indexKey, flatHierarchyKey);
+                        } else {
+                            dvm.os.listItem[hierarchyKey].push({'entityIRI': dvm.property['@id']});
+                            dvm.os.listItem[flatHierarchyKey] = dvm.os.flattenHierarchy(dvm.os.listItem[hierarchyKey], dvm.os.listItem.recordId);
+                        }
+                        setThisOpened(dvm.os.listItem.recordId, true);
                     }
                 }
             }

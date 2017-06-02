@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Ontology State Service', function() {
-    var ontologyStateSvc, $q, scope, util, stateManagerSvc, ontologyManagerSvc, updateRefsSvc, prefixes, catalogManagerSvc, hierarchy, indexObject, expectedPaths, ontologyState, defaultDatatypes, ontologyObj, classObj, dataPropertyObj, individualObj, ontology, getResponse, httpSvc, $document;
+    var ontologyStateSvc, $q, scope, util, stateManagerSvc, ontologyManagerSvc, updateRefsSvc, prefixes, catalogManagerSvc, hierarchy, indexObject, expectedPaths, ontologyState, defaultDatatypes, ontologyObj, classObj, dataPropertyObj, individualObj, ontology, getResponse, httpSvc, $document, responseObj;
     var error = 'error';
     var format = 'jsonld';
     var title = 'title';
@@ -40,7 +40,6 @@ describe('Ontology State Service', function() {
     var commitId = 'commitId';
     var ontologyId = 'ontologyId';
     var catalogId = 'catalogId';
-    var originalIRI = 'originalIRI';
     var anonymous = 'anonymous';
     var branch = {
         '@id': branchId
@@ -142,6 +141,7 @@ describe('Ontology State Service', function() {
         mockPrefixes();
         mockManchesterConverter();
         mockHttpService();
+        mockResponseObj();
 
         module(function($provide) {
             $provide.value('jsonFilter', function() {
@@ -155,11 +155,12 @@ describe('Ontology State Service', function() {
             });
         });
 
-        inject(function(ontologyStateService, _updateRefsService_, _ontologyManagerService_, _catalogManagerService_, _$q_, _$rootScope_, _utilService_, _stateManagerService_, _prefixes_, _httpService_, _$document_) {
+        inject(function(ontologyStateService, _updateRefsService_, _ontologyManagerService_, _catalogManagerService_, _$q_, _$rootScope_, _utilService_, _stateManagerService_, _prefixes_, _httpService_, _$document_, _responseObj_) {
             ontologyStateSvc = ontologyStateService;
             updateRefsSvc = _updateRefsService_;
             ontologyManagerSvc = _ontologyManagerService_;
             catalogManagerSvc = _catalogManagerService_;
+            responseObj = _responseObj_
             $q = _$q_;
             scope = _$rootScope_;
             util = _utilService_;
@@ -273,30 +274,20 @@ describe('Ontology State Service', function() {
             '@id': ontologyId,
             '@type': [prefixes.owl + 'Ontology'],
             matonto: {
-                originalIRI: originalIRI,
                 anonymous: anonymous
             }
         };
         classObj = {
             '@id': classId,
-            '@type': [prefixes.owl + 'Class'],
-            matonto: {
-                originalIRI: classId
-            }
+            '@type': [prefixes.owl + 'Class']
         };
         dataPropertyObj = {
             '@id': dataPropertyId,
-            '@type': [prefixes.owl + 'DatatypeProperty'],
-            matonto: {
-                originalIRI: dataPropertyId
-            }
+            '@type': [prefixes.owl + 'DatatypeProperty']
         };
         individualObj = {
             '@id': individualId,
-            '@type': [prefixes.owl + 'NamedIndividual', classId],
-            matonto: {
-                originalIRI: individualId
-            }
+            '@type': [prefixes.owl + 'NamedIndividual', classId]
         };
         ontology = [ontologyObj, classObj, dataPropertyObj];
         listItem = {
@@ -309,7 +300,8 @@ describe('Ontology State Service', function() {
             branchId: branchId,
             branches: [branch],
             index: index,
-            upToDate: true
+            upToDate: true,
+            iriList: [ontologyId, classId, dataPropertyId]
         };
         getResponse = {
             recordId: recordId,
@@ -423,10 +415,10 @@ describe('Ontology State Service', function() {
                 });
             });
             describe('and getInProgressCommit is rejected', function() {
-                describe('with message "User has no InProgressCommit"', function() {
+                describe('with message "InProgressCommit could not be found"', function() {
                     var getOntologyDeferred;
                     beforeEach(function() {
-                        getDeferred.reject('User has no InProgressCommit');
+                        getDeferred.reject('InProgressCommit could not be found');
                         getOntologyDeferred = $q.defer();
                         ontologyManagerSvc.getOntology.and.returnValue(getOntologyDeferred.promise);
                     });
@@ -1103,12 +1095,12 @@ describe('Ontology State Service', function() {
             });
         });
         describe('when getInProgressCommit rejects', function() {
-            describe('and the error message is "User has no InProgressCommit"', function() {
+            describe('and the error message is "InProgressCommit could not be found"', function() {
                 var createDeferred;
                 beforeEach(function() {
                     createDeferred = $q.defer();
                     catalogManagerSvc.createInProgressCommit.and.returnValue(createDeferred.promise);
-                    getDeferred.reject('User has no InProgressCommit');
+                    getDeferred.reject('InProgressCommit could not be found');
                 });
                 describe('and createInProgressCommit resolves', function() {
                     var updateDeferred;
@@ -1156,7 +1148,7 @@ describe('Ontology State Service', function() {
                     scope.$apply();
                 });
             });
-            it('and the error message is not "User has no InProgressCommit"', function() {
+            it('and the error message is not "InProgressCommit could not be found"', function() {
                 getDeferred.reject(error);
                 ontologyStateSvc.saveChanges(recordId, differenceObj)
                     .then(function() {
@@ -1609,10 +1601,10 @@ describe('Ontology State Service', function() {
                     expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.annotationPropertyHierarchy, recordId, response);
                     expect(_.get(response, 'flatAnnotationPropertyHierarchy')).toEqual([{prop: 'flatten'}]);
                     expect(_.get(response, 'upToDate')).toBe(true);
+                    expect(_.get(response, 'iriList')).toEqual([ontologyId, annotationId, classId, dataPropertyId, objectPropertyId, individualId, datatypeId, annotationId2, classId2, dataPropertyId2, objectPropertyId2, individualId2, datatypeId2]);
                     expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith([ontology, [{
                         '@id': 'ontologyId',
                         matonto: {
-                            originalIRI: 'ontologyId',
                             icon: 'fa-square-o',
                             imported: true
                         }
@@ -1731,6 +1723,7 @@ describe('Ontology State Service', function() {
                     expect(_.get(response, 'conceptIndex')).toEqual(conceptHierarchiesResponse.index);
                     expect(_.get(response, 'branches')).toEqual(branches);
                     expect(_.get(response, 'upToDate')).toBe(true);
+                    expect(_.get(response, 'iriList')).toEqual([ontologyId, annotationId, classId, dataPropertyId, objectPropertyId, individualId, datatypeId, annotationId2, classId2, dataPropertyId2, objectPropertyId2, individualId2, datatypeId2]);
                 }, function() {
                     fail('Promise should have resolved');
                 });

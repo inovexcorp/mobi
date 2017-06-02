@@ -55,7 +55,6 @@ describe('Mapper State service', function() {
         expect(mapperStateSvc.newMapping).toBe(false);
         expect(mapperStateSvc.step).toBe(0);
         expect(mapperStateSvc.invalidProps).toEqual([]);
-        expect(mapperStateSvc.availableColumns).toEqual([]);
         expect(mapperStateSvc.availablePropsByClass).toEqual({});
         expect(mapperStateSvc.mapping).toBeUndefined();
         expect(mapperStateSvc.sourceOntologies).toEqual([]);
@@ -101,20 +100,6 @@ describe('Mapper State service', function() {
             expect(result).toBe('0');
         });
     });
-    it('should update availableColumns depending on whether a property mapping has been selected', function() {
-        spyOn(mapperStateSvc, 'getMappedColumns').and.returnValue(['0'])
-        delimitedManagerSvc.dataRows = [['', '']];
-        mapperStateSvc.updateAvailableColumns();
-        expect(mapperStateSvc.availableColumns).not.toContain('0');
-        expect(mapperStateSvc.availableColumns).toContain('1');
-
-        mapperStateSvc.selectedPropMappingId = 'prop';
-        mapperStateSvc.mapping.jsonld = [{'@id': 'prop'}];
-        utilSvc.getPropertyValue.and.returnValue('0');
-        mapperStateSvc.updateAvailableColumns();
-        expect(mapperStateSvc.availableColumns).toContain('0');
-        expect(mapperStateSvc.availableColumns).toContain('1');
-    });
     it('should check whether a class mapping has available properties', function() {
         mapperStateSvc.availablePropsByClass = {'class': [{}]};
         var result = mapperStateSvc.hasAvailableProps('class');
@@ -141,6 +126,7 @@ describe('Mapper State service', function() {
             return obj[prop];
         });
         mappingManagerSvc.getClassIdByMappingId.and.returnValue(classId);
+        mappingManagerSvc.annotationProperties = ['test'];
         spyOn(mapperStateSvc, 'getClassProps').and.returnValue(_.union(classProps, noDomainProps));
         mapperStateSvc.setAvailableProps(classMapId);
         _.forEach(propMappings, function(propMapping) {
@@ -153,6 +139,9 @@ describe('Mapper State service', function() {
         expect(mapperStateSvc.availablePropsByClass[classMapId]).toContain(classProps[1]);
         expect(mapperStateSvc.availablePropsByClass[classMapId] ).not.toContain(noDomainProps[0]);
         expect(mapperStateSvc.availablePropsByClass[classMapId]).toContain(noDomainProps[1]);
+        _.forEach(mappingManagerSvc.annotationProperties, function(prop) {
+            expect(mapperStateSvc.availablePropsByClass[classMapId]).toContain({ontologyId: '', propObj: {'@id': prop}});
+        });
     });
     it('should get the list of available properties for a class mapping', function() {
         var availableProps = [{}];

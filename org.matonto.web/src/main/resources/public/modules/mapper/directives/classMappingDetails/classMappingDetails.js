@@ -107,13 +107,11 @@
                         }
                     }
                     dvm.addProp = function() {
-                        dvm.state.updateAvailableColumns();
                         dvm.state.displayPropMappingOverlay = true;
                         dvm.state.newProp = true;
                     }
                     dvm.editProp = function(propMapping) {
                         dvm.state.selectedPropMappingId = propMapping['@id'];
-                        dvm.state.updateAvailableColumns();
                         dvm.state.displayPropMappingOverlay = true;
                     }
                     dvm.deleteProp = function(propMapping) {

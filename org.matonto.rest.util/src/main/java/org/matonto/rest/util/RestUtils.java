@@ -44,8 +44,12 @@ import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.RDFHandler;
 import org.openrdf.rio.Rio;
 import org.openrdf.rio.helpers.BufferedGroupingRDFHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RestUtils {
+
+    private static final Logger LOG = LoggerFactory.getLogger(RestUtils.class);
 
     /**
      * Encodes the passed string using percent encoding for use in a URL.
@@ -89,26 +93,60 @@ public class RestUtils {
     /**
      * Converts a Sesame Model into a string containing RDF in the specified RDFFormat.
      *
-     * @param model A Sesame Model of RDF to convert.
+     * @param model  A Sesame Model of RDF to convert.
      * @param format The RDFFormat the RDF should be serialized into.
      * @return A String of the serialized RDF from the Model.
      */
     public static String modelToString(Model model, RDFFormat format) {
-        StringWriter sw = new StringWriter();
-        RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(format, sw));
-        Rio.write(model, rdfWriter);
-        return sw.toString();
+        long start = System.currentTimeMillis();
+        try {
+            StringWriter sw = new StringWriter();
+            Rio.write(model, sw, format);
+            return sw.toString();
+        } finally {
+            LOG.trace("modelToString took {}ms", System.currentTimeMillis() - start);
+        }
+    }
+
+    /**
+     * Converts a Sesame Model into a string containing grouped RDF in the specified RDFFormat.
+     *
+     * @param model  A Sesame Model of RDF to convert.
+     * @param format The RDFFormat the RDF should be serialized into.
+     * @return A String of the serialized grouped RDF from the Model.
+     */
+    public static String groupedModelToString(Model model, RDFFormat format) {
+        long start = System.currentTimeMillis();
+        try {
+            StringWriter sw = new StringWriter();
+            RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(format, sw));
+            Rio.write(model, rdfWriter);
+            return sw.toString();
+        } finally {
+            LOG.trace("modelToString took {}ms", System.currentTimeMillis() - start);
+        }
     }
 
     /**
      * Converts a Sesame Model into a string containing RDF in the format specified by the passed string.
      *
-     * @param model A Sesame Model of RDF to convert.
+     * @param model  A Sesame Model of RDF to convert.
      * @param format The abbreviated name of a RDFFormat.
      * @return A String of the serialized RDF from the Model.
      */
     public static String modelToString(Model model, String format) {
         return modelToString(model, getRDFFormat(format));
+    }
+
+    /**
+     * Converts a Sesame Model into a string containing grouped RDF in the format specified by the passed string.
+     *
+     * @param model  A Sesame Model of RDF to convert.
+     * @param format The abbreviated name of a RDFFormat.
+     * @return A String of the serialized grouped RDF from the Model.
+     */
+    public static String groupedModelToString(Model model, String format) {
+        return groupedModelToString(model, getRDFFormat(format));
     }
 
     /**
@@ -179,7 +217,7 @@ public class RestUtils {
      * Retrieves the User associated with a Request using the passed EngineManager. If the User cannot be found,
      * throws a 401 Response.
      *
-     * @param context The context of a Request.
+     * @param context       The context of a Request.
      * @param engineManager The EngineManager to use when attempting to retrieve the User.
      * @return The User who made the Request if found; throws a 401 otherwise.
      */
@@ -206,7 +244,7 @@ public class RestUtils {
     /**
      * Tests for the existence and value of a string, assumed to be from a REST parameter.
      *
-     * @param param The string parameter to check
+     * @param param        The string parameter to check
      * @param errorMessage The error message to send if parameter is not set
      */
     public static void checkStringParam(@Nullable String param, String errorMessage) {
@@ -241,21 +279,26 @@ public class RestUtils {
      * @return The first object representing the specified type of entity present in the JSON-LD.
      */
     public static JSONObject getTypedObjectFromJsonld(String json, String type) {
-        List<JSONObject> objects = new ArrayList<>();
-        JSONArray array = JSONArray.fromObject(json);
+        long start = System.currentTimeMillis();
+        try {
+            List<JSONObject> objects = new ArrayList<>();
+            JSONArray array = JSONArray.fromObject(json);
 
-        array.forEach(o -> objects.add(JSONObject.fromObject(o)));
+            array.forEach(o -> objects.add(JSONObject.fromObject(o)));
 
-        for (JSONObject o : objects) {
-            if (o.isArray()) {
-                o = getTypedObjectFromJsonld(o.toString(), type);
-            } else if (o.containsKey("@graph")) {
-                o = getTypedObjectFromJsonld(JSONArray.fromObject(o.get("@graph")).toString(), type);
+            for (JSONObject o : objects) {
+                if (o.isArray()) {
+                    o = getTypedObjectFromJsonld(o.toString(), type);
+                } else if (o.containsKey("@graph")) {
+                    o = getTypedObjectFromJsonld(JSONArray.fromObject(o.get("@graph")).toString(), type);
+                }
+                if (o != null && o.containsKey("@type") && JSONArray.fromObject(o.get("@type")).contains(type)) {
+                    return o;
+                }
             }
-            if (o != null && o.containsKey("@type") && JSONArray.fromObject(o.get("@type")).contains(type)) {
-                return o;
-            }
+            return null;
+        } finally {
+            LOG.trace("getTypedObjectFromJsonld took {}ms", System.currentTimeMillis() - start);
         }
-        return null;
     }
 }

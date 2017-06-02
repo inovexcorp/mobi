@@ -122,6 +122,15 @@ describe('Create Concept Overlay directive', function() {
             scope.$digest();
             expect(button.attr('disabled')).toBeFalsy();
         });
+        it('depending on whether the concept IRI already exists in the ontology.', function() {
+            ontoUtils.checkIri.and.returnValue(true);
+            
+            scope.$digest();
+            
+            var disabled = element.querySelectorAll('[disabled]');
+            expect(disabled.length).toBe(1);
+            expect(angular.element(disabled[0]).text()).toBe('Create');
+        });
     });
     describe('controller methods', function() {
         describe('should update the concept id', function() {
@@ -165,7 +174,6 @@ describe('Create Concept Overlay directive', function() {
             expect(schemes.scheme1.matonto.unsaved).toBe(true);
             expect(schemes.scheme2[prefixes.skos + 'hasTopConcept'].length).toBe(1);
             expect(schemes.scheme2.matonto.unsaved).toBe(true);
-            expect(controller.concept.matonto.originalIRI).toEqual(controller.concept['@id']);
             expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(controller.concept, controller.language);
             expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, controller.concept);
             expect(ontologyStateSvc.listItem.conceptHierarchy).toContain({entityIRI: controller.concept['@id']});
