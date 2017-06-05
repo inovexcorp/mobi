@@ -79,39 +79,42 @@
                         dvm.state.displayCreateMappingOverlay = false;
                     }
                     dvm.continue = function() {
-                        var deferred = $q.defer();
                         dvm.state.mapping.id = dvm.mm.getMappingId(dvm.newName);
                         if (dvm.mappingType === 'new') {
-                            deferred.resolve(dvm.mm.createNewMapping(dvm.state.mapping.id));
+                            dvm.state.mapping.jsonld = dvm.mm.createNewMapping(dvm.state.mapping.id);
+                            dvm.sourceOntologies = [];
+                            dvm.availableClasses = [];
+                            nextStep();
                         } else {
-                            dvm.mm.getMapping(dvm.savedMappingId).then(mapping => {
-                                deferred.resolve(dvm.mm.copyMapping(mapping, dvm.state.mapping.id));
-                            }, deferred.reject);
+                            var sourceOntologyInfo;
+                            dvm.mm.getMapping(dvm.savedMappingId)
+                                .then(mapping => {
+                                    dvm.state.mapping.jsonld = dvm.mm.copyMapping(mapping, dvm.state.mapping.id);
+                                    sourceOntologyInfo = dvm.mm.getSourceOntologyInfo(mapping);
+                                    return dvm.cm.getRecord(sourceOntologyInfo.recordId, dvm.cm.localCatalog['@id']);
+                                }, $q.reject)
+                                .then(record => {
+                                    dvm.state.mapping.record = record;
+                                    return dvm.mm.getSourceOntologies(sourceOntologyInfo);
+                                }, $q.reject)
+                                .then(ontologies => {
+                                    if (dvm.mm.areCompatible(dvm.state.mapping.jsonld, ontologies)) {
+                                        dvm.state.sourceOntologies = ontologies;
+                                        var usedClassIds = _.map(dvm.mm.getAllClassMappings(dvm.state.mapping.jsonld), dvm.mm.getClassIdByMapping);
+                                        dvm.state.availableClasses = _.filter(dvm.state.getClasses(ontologies), clazz => !_.includes(usedClassIds, clazz.classObj['@id']));
+                                        nextStep();
+                                    } else {
+                                        onError('The selected mapping is incompatible with its source ontologies.');
+                                    }
+                                }, () => onError('Error retrieving mapping'));
                         }
-
-                        deferred.promise.then(mapping => {
-                            dvm.state.mapping.jsonld = mapping;
-                            var sourceOntologyInfo = dvm.mm.getSourceOntologyInfo(mapping);
-                            if (_.get(sourceOntologyInfo, 'recordId')) {
-                                dvm.cm.getRecord(sourceOntologyInfo.recordId, dvm.cm.localCatalog['@id']).then(record => {
-                                    dvm.state.mapping.record = _.pick(record, ['@id', '@type', prefixes.dcterms + 'title', prefixes.dcterms + 'description', prefixes.dcterms + 'issued', prefixes.dcterms + 'modified', prefixes.catalog + 'keyword'])
-                                });
-                            }
-                            return dvm.mm.getSourceOntologies(sourceOntologyInfo);
-                        }, $q.reject).then(ontologies => {
-                            if (dvm.mm.areCompatible(dvm.state.mapping.jsonld, ontologies)) {
-                                dvm.state.sourceOntologies = ontologies;
-                                var usedClassIds = _.map(dvm.mm.getAllClassMappings(dvm.state.mapping.jsonld), dvm.mm.getClassIdByMapping);
-                                dvm.state.availableClasses = _.filter(dvm.state.getClasses(ontologies), clazz => !_.includes(usedClassIds, clazz.classObj['@id']));
-                                dvm.state.mappingSearchString = '';
-                                dvm.state.step = dvm.state.fileUploadStep;
-                                dvm.state.displayCreateMappingOverlay = false;
-                            } else {
-                                onError('The selected mapping is incompatible with its source ontologies.');
-                            }
-                        }, onError);
                     }
 
+                    function nextStep() {
+                        dvm.state.mappingSearchString = '';
+                        dvm.state.step = dvm.state.fileUploadStep;
+                        dvm.state.displayCreateMappingOverlay = false;
+                    }
                     function onError(message) {
                         dvm.errorMessage = message;
                         dvm.state.mapping.jsonld = [];

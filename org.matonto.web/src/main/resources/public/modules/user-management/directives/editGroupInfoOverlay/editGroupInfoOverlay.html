@@ -24,7 +24,7 @@
     <form class="content" name="dvm.form">
         <h6>Edit Group Description</h6>
         <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
-        <text-area ng-model="dvm.newGroup.description" display-text="'Description'"></text-area>
+        <text-area ng-model="dvm.newGroup.description" display-text="'Description'" muted-text="'(Optional)'"></text-area>
 
         <div class="btn-container clearfix">
             <button class="btn btn-primary pull-right" ng-click="dvm.set()" ng-disabled="dvm.form.$invalid">Set</button>

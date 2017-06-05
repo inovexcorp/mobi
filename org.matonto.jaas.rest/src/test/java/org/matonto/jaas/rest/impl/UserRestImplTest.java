@@ -23,6 +23,18 @@ package org.matonto.jaas.rest.impl;
  * #L%
  */
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
+
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.glassfish.jersey.client.ClientConfig;
@@ -30,8 +42,17 @@ import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.engines.UserConfig;
-import org.matonto.jaas.api.ontologies.usermanagement.*;
-import org.matonto.jaas.rest.providers.*;
+import org.matonto.jaas.api.ontologies.usermanagement.Group;
+import org.matonto.jaas.api.ontologies.usermanagement.GroupFactory;
+import org.matonto.jaas.api.ontologies.usermanagement.Role;
+import org.matonto.jaas.api.ontologies.usermanagement.RoleFactory;
+import org.matonto.jaas.api.ontologies.usermanagement.User;
+import org.matonto.jaas.api.ontologies.usermanagement.UserFactory;
+import org.matonto.jaas.rest.providers.GroupProvider;
+import org.matonto.jaas.rest.providers.GroupSetProvider;
+import org.matonto.jaas.rest.providers.RoleProvider;
+import org.matonto.jaas.rest.providers.RoleSetProvider;
+import org.matonto.jaas.rest.providers.UserProvider;
 import org.matonto.ontologies.foaf.AgentFactory;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
@@ -40,7 +61,16 @@ import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory;
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
 import org.matonto.rdf.orm.Thing;
 import org.matonto.rdf.orm.conversion.ValueConverterRegistry;
-import org.matonto.rdf.orm.conversion.impl.*;
+import org.matonto.rdf.orm.conversion.impl.DefaultValueConverterRegistry;
+import org.matonto.rdf.orm.conversion.impl.DoubleValueConverter;
+import org.matonto.rdf.orm.conversion.impl.FloatValueConverter;
+import org.matonto.rdf.orm.conversion.impl.IRIValueConverter;
+import org.matonto.rdf.orm.conversion.impl.IntegerValueConverter;
+import org.matonto.rdf.orm.conversion.impl.LiteralValueConverter;
+import org.matonto.rdf.orm.conversion.impl.ResourceValueConverter;
+import org.matonto.rdf.orm.conversion.impl.ShortValueConverter;
+import org.matonto.rdf.orm.conversion.impl.StringValueConverter;
+import org.matonto.rdf.orm.conversion.impl.ValueValueConverter;
 import org.matonto.rdf.orm.impl.ThingFactory;
 import org.matonto.rest.util.MatontoRestTestNg;
 import org.matonto.rest.util.UsernameTestFilter;
@@ -50,22 +80,18 @@ import org.openrdf.model.vocabulary.DCTERMS;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
-
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.*;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
 
 public class UserRestImplTest extends MatontoRestTestNg {
     private UserRestImpl rest;
@@ -91,7 +117,7 @@ public class UserRestImplTest extends MatontoRestTestNg {
     private Set<Role> roles;
 
     @Mock
-    EngineManager engineManager;
+    private EngineManager engineManager;
 
     @Override
     protected Application configureApp() throws Exception {
@@ -147,19 +173,19 @@ public class UserRestImplTest extends MatontoRestTestNg {
 
         email = thingFactory.createNew(vf.createIRI("mailto:example@example.com"));
 
-        role = roleFactory.createNew(vf.createIRI("http://matonto.org/roles/user"), email.getModel());
+        role = roleFactory.createNew(vf.createIRI("http://matonto.org/roles/user"));
         role.setProperty(vf.createLiteral("user"), vf.createIRI(DCTERMS.TITLE.stringValue()));
         roles = Collections.singleton(role);
 
-        user = userFactory.createNew(vf.createIRI("http://matonto.org/users/" + UsernameTestFilter.USERNAME), email.getModel());
+        user = userFactory.createNew(vf.createIRI("http://matonto.org/users/" + UsernameTestFilter.USERNAME), role.getModel());
         user.setHasUserRole(roles);
         user.setUsername(vf.createLiteral(UsernameTestFilter.USERNAME));
         user.setPassword(vf.createLiteral("ABC"));
         user.setMbox(Collections.singleton(email));
         users = Collections.singleton(user);
 
-        group = groupFactory.createNew(vf.createIRI("http://matonto.org/groups/testGroup"), email.getModel());
-        Role adminRole = roleFactory.createNew(vf.createIRI("http://matonto.org/roles/admin"), email.getModel());
+        group = groupFactory.createNew(vf.createIRI("http://matonto.org/groups/testGroup"), role.getModel());
+        Role adminRole = roleFactory.createNew(vf.createIRI("http://matonto.org/roles/admin"), role.getModel());
         adminRole.setProperty(vf.createLiteral("admin"), vf.createIRI(DCTERMS.TITLE.stringValue()));
         group.setHasGroupRole(Collections.singleton(adminRole));
         group.setMember(Collections.singleton(user));
@@ -295,6 +321,9 @@ public class UserRestImplTest extends MatontoRestTestNg {
         verify(engineManager).retrieveUser(anyString(), eq(UsernameTestFilter.USERNAME));
         JSONObject user = JSONObject.fromObject(response.readEntity(String.class));
         assertTrue(user.containsKey("username"));
+        assertEquals(user.getString("username"), UsernameTestFilter.USERNAME);
+        assertTrue(user.containsKey("email"));
+        assertEquals(user.getString("email"), email.getResource().stringValue());
     }
 
     @Test

@@ -181,7 +181,7 @@ describe('Mapping Config Overlay directive', function() {
                 scope.$apply();
                 expect(controller.recordsConfig.pageIndex).toBe(0);
                 expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith(catalogManagerSvc.localCatalog['@id'], controller.recordsConfig);
-                expect(controller.errorMessage).toBe('Error message');
+                expect(controller.recordsErrorMessage).toBe('Error retrieving ontologies');
             });
             it('successfully', function() {
                 var headers = {
@@ -204,7 +204,7 @@ describe('Mapping Config Overlay directive', function() {
                 expect(controller.totalSize).toEqual(headers['x-total-count']);
                 expect(controller.links).toEqual(headers.links);
                 expect(controller.selectedRecord).toBe(record);
-                expect(controller.errorMessage).toBe('');
+                expect(controller.recordsErrorMessage).toBe('');
             });
         });
         describe('should get a page of records', function() {
@@ -217,7 +217,7 @@ describe('Mapping Config Overlay directive', function() {
                 controller.getRecordPage('prev');
                 scope.$apply();
                 expect(utilSvc.getResultsPage).toHaveBeenCalledWith(jasmine.any(String));
-                expect(controller.errorMessage).toBe('Error message');
+                expect(controller.recordsErrorMessage).toBe('Error retrieving ontologies');
                 expect(controller.recordsConfig.pageIndex).toBe(this.pageIndex);
                 expect(controller.records).toEqual(this.response.data);
             });
@@ -227,7 +227,7 @@ describe('Mapping Config Overlay directive', function() {
                 expect(utilSvc.getResultsPage).toHaveBeenCalledWith(controller.links.prev);
                 expect(controller.recordsConfig.pageIndex).toBe(this.pageIndex - 1);
                 expect(controller.records).toEqual(this.response.data);
-                expect(controller.errorMessage).toBe('');
+                expect(controller.recordsErrorMessage).toBe('');
             });
             it('if the direction is next', function() {
                 controller.getRecordPage('next');
@@ -235,7 +235,7 @@ describe('Mapping Config Overlay directive', function() {
                 expect(utilSvc.getResultsPage).toHaveBeenCalledWith(controller.links.next);
                 expect(controller.recordsConfig.pageIndex).toBe(this.pageIndex + 1);
                 expect(controller.records).toEqual(this.response.data);
-                expect(controller.errorMessage).toBe('');
+                expect(controller.recordsErrorMessage).toBe('');
             });
         });
         describe('should select an ontology', function() {
@@ -262,9 +262,11 @@ describe('Mapping Config Overlay directive', function() {
                     catalogManagerSvc.getRecordMasterBranch.and.returnValue($q.reject('Error message'));
                     controller.selectOntology(this.record);
                     scope.$apply();
-                    expect(controller.selectedRecord).toBe(this.record);
                     expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(this.record['@id'], catalogManagerSvc.localCatalog['@id']);
-                    expect(controller.errorMessage).toBe('Error message');
+                    expect(controller.errorMessage).toBe('Error retrieving ontology');
+                    expect(controller.selectedRecord).toBeUndefined();
+                    expect(controller.selectedOntologyState).toBeUndefined();
+                    expect(controller.classes).toEqual([]);
                 });
                 it('successfully', function() {
                     var expectedState = {
@@ -329,11 +331,15 @@ describe('Mapping Config Overlay directive', function() {
                             controller.selectedVersion = 'latest';
                         });
                         it('unless an error occurs', function() {
+                            var selectedOntologyState = angular.copy(controller.selectedOntologyState);
                             catalogManagerSvc.getRecordBranch.and.returnValue($q.reject('Error message'));
                             controller.selectVersion();
                             scope.$apply();
-                            expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(controller.selectedOntologyState.branchId, controller.selectedOntologyState.recordId, catalogManagerSvc.localCatalog['@id']);
-                            expect(controller.errorMessage).toBe('Error message');
+                            expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(selectedOntologyState.branchId, selectedOntologyState.recordId, catalogManagerSvc.localCatalog['@id']);
+                            expect(controller.errorMessage).toBe('Error retrieving ontology');
+                            expect(controller.selectedRecord).toBeUndefined();
+                            expect(controller.selectedOntologyState).toBeUndefined();
+                            expect(controller.classes).toEqual([]);
                         });
                         it('successfully', function() {
                             var expectedVersion = {
@@ -370,7 +376,10 @@ describe('Mapping Config Overlay directive', function() {
                             scope.$apply();
                             expect(mappingManagerSvc.getSourceOntologyInfo).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld);
                             expect(mappingManagerSvc.getOntology).toHaveBeenCalledWith(this.ontologyInfo);
-                            expect(controller.errorMessage).toBe('Error message');
+                            expect(controller.errorMessage).toBe('Error retrieving ontology');
+                            expect(controller.selectedRecord).toBeUndefined();
+                            expect(controller.selectedOntologyState).toBeUndefined();
+                            expect(controller.classes).toEqual([]);
                         });
                         it('successfully', function() {
                             var expectedVersion = {
@@ -425,7 +434,7 @@ describe('Mapping Config Overlay directive', function() {
                     mapperStateSvc.invalidProps = [''];
                     this.classMapping = {'@id': 'classMapping'};
                     mappingManagerSvc.getAllClassMappings.and.returnValue([this.classMapping]);
-                    controller.classes = [{'@id': 'class1'}, {'@id': 'class2'}];
+                    controller.classes = [{classObj: {'@id': 'class1'}}, {classObj: {'@id': 'class2'}}];
                     mappingManagerSvc.getClassIdByMapping.and.returnValue('class1');
                 });
                 it('setting appropriate state', function() {
@@ -435,7 +444,7 @@ describe('Mapping Config Overlay directive', function() {
                     expect(mapperStateSvc.mapping.record).toBe(controller.selectedRecord);
                     expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                     expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(this.classMapping['@id']);
-                    expect(mapperStateSvc.availableClasses).toEqual([{'@id': 'class2'}]);
+                    expect(mapperStateSvc.availableClasses).toEqual([{classObj: {'@id': 'class2'}}]);
                     expect(mapperStateSvc.displayMappingConfigOverlay).toBe(false);
                     expect(mapperStateSvc.changedMapping).toBe(true);
                 });
@@ -508,6 +517,14 @@ describe('Mapping Config Overlay directive', function() {
             expect(element.find('error-display').length).toBe(0);
 
             controller.errorMessage = 'test';
+            scope.$digest();
+            expect(element.find('error-display').length).toBe(1);
+        });
+        it('depending on whether an error has occured when retrieving the records', function() {
+            controller = element.controller('mappingConfigOverlay');
+            expect(element.find('error-display').length).toBe(0);
+
+            controller.recordsErrorMessage = 'test';
             scope.$digest();
             expect(element.find('error-display').length).toBe(1);
         });

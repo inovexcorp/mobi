@@ -24,7 +24,7 @@ package org.matonto.etl.rest.impl;
  */
 
 import static org.matonto.rest.util.RestUtils.getRDFFormat;
-import static org.matonto.rest.util.RestUtils.modelToString;
+import static org.matonto.rest.util.RestUtils.groupedModelToString;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
@@ -234,7 +234,7 @@ public class MappingRestImpl implements MappingRest {
         String mapping;
         Optional<MappingWrapper> mappingModel = manager.retrieveMapping(mappingIRI);
         if (mappingModel.isPresent()) {
-            mapping = modelToString(transformer.sesameModel(mappingModel.get().getModel()), format);
+            mapping = groupedModelToString(transformer.sesameModel(mappingModel.get().getModel()), format);
         } else {
             return Optional.empty();
         }

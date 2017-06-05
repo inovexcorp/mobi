@@ -40,7 +40,6 @@
                     var dvm = this;
                     var setAsObject = false;
                     var setAsDatatype = false;
-                    var ontoUtils = ontologyUtilsManagerService;
                     var ro = responseObj;
 
                     dvm.checkbox = false;
@@ -48,6 +47,7 @@
                     dvm.iriPattern = REGEX.IRI;
                     dvm.om = ontologyManagerService;
                     dvm.os = ontologyStateService;
+                    dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.prefix = dvm.os.getDefaultPrefix();
                     dvm.values = [];
                     dvm.property = {
@@ -84,7 +84,7 @@
                                 _.unset(dvm.property, prefixes.rdfs + axiom);
                             }
                         });
-                        ontoUtils.addLanguageToNewEntity(dvm.property, dvm.language);
+                        dvm.ontoUtils.addLanguageToNewEntity(dvm.property, dvm.language);
                         dvm.os.updatePropertyIcon(dvm.property);
                         // add the entity to the ontology
                         dvm.os.addEntity(dvm.os.listItem, dvm.property);
@@ -104,7 +104,7 @@
                         dvm.os.selectItem(_.get(dvm.property, '@id'));
                         // hide the overlay
                         dvm.os.showCreatePropertyOverlay = false;
-                        ontoUtils.saveCurrentChanges();
+                        dvm.ontoUtils.saveCurrentChanges();
                     }
                     
                     dvm.getKey = function() {
@@ -122,7 +122,7 @@
                         dvm.os.listItem[listKey].push(ro.createItemFromIri(dvm.property['@id']));
                         if (dvm.values.length) {
                             dvm.property[prefixes.rdfs + 'subPropertyOf'] = dvm.values;
-                            ontoUtils.setSuperProperties(dvm.property['@id'], _.map(dvm.values, '@id'), hierarchyKey, indexKey, flatHierarchyKey);
+                            dvm.ontoUtils.setSuperProperties(dvm.property['@id'], _.map(dvm.values, '@id'), hierarchyKey, indexKey, flatHierarchyKey);
                         } else {
                             dvm.os.listItem[hierarchyKey].push({'entityIRI': dvm.property['@id']});
                             dvm.os.listItem[flatHierarchyKey] = dvm.os.flattenHierarchy(dvm.os.listItem[hierarchyKey], dvm.os.listItem.recordId);
