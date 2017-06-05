@@ -20,12 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Explore Tab directive', function() {
+describe('Instance View directive', function() {
     var $compile, scope, element, discoverStateSvc;
 
     beforeEach(function() {
         module('templates');
-        module('exploreTab');
+        module('instanceView');
         mockDiscoverState();
 
         inject(function(_$compile_, _$rootScope_, _discoverStateService_) {
@@ -33,40 +33,27 @@ describe('Explore Tab directive', function() {
             scope = _$rootScope_;
             discoverStateSvc = _discoverStateService_;
         });
-        
-        element = $compile(angular.element('<explore-tab></explore-tab>'))(scope);
+
+        element = $compile(angular.element('<instance-view></instance-view>'))(scope);
         scope.$digest();
     });
 
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('explore-tab')).toBe(true);
-            expect(element.hasClass('row')).toBe(true);
+            expect(element.hasClass('instance-view')).toBe(true);
         });
-        it('with a class-block.col-xs-12', function() {
-            expect(element.querySelectorAll('class-block.col-xs-12').length).toBe(1);
-            
-            discoverStateSvc.explore.breadcrumbs = ['', ''];
-            scope.$apply();
-            
-            expect(element.querySelectorAll('class-block.col-xs-12').length).toBe(0);
+        it('for a block-header', function() {
+            expect(element.find('block-header').length).toBe(1);
         });
-        it('with a instance-block.col-xs-12', function() {
-            expect(element.querySelectorAll('instance-block.col-xs-12').length).toBe(0);
-            
-            discoverStateSvc.explore.breadcrumbs = ['', ''];
-            scope.$apply();
-            
-            expect(element.querySelectorAll('instance-block.col-xs-12').length).toBe(1);
+        it('for a instance-block-header', function() {
+            expect(element.find('instance-block-header').length).toBe(1);
         });
-        it('with a instance-view.col-xs-12', function() {
-            expect(element.querySelectorAll('instance-view.col-xs-12').length).toBe(0);
-            
-            discoverStateSvc.explore.breadcrumbs = ['', '', ''];
-            scope.$apply();
-            
-            expect(element.querySelectorAll('instance-view.col-xs-12').length).toBe(1);
+        it('for a block-content.padding', function() {
+            expect(element.querySelectorAll('block-content.padding').length).toBe(1);
+        });
+        it('for a pre', function() {
+            expect(element.find('pre').length).toBe(1);
         });
     });
 });

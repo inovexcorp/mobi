@@ -40,6 +40,7 @@
             'instanceBlock',
             'instanceBlockHeader',
             'instanceCards',
+            'instanceView',
             
             /* Query tab */
             'downloadQueryOverlay',
