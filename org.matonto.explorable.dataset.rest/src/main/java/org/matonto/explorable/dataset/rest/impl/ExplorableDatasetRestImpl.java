@@ -55,6 +55,7 @@ import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rest.util.ErrorUtils;
 import org.matonto.rest.util.LinksUtils;
 import org.matonto.rest.util.jaxb.Links;
+import org.openrdf.model.vocabulary.RDF;
 import org.openrdf.model.vocabulary.RDFS;
 
 import java.io.IOException;
@@ -188,6 +189,10 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
                     statement.getPredicate(), statement.getObject()));
             if (instanceModel.size() == 0) {
                 throw ErrorUtils.sendError("The requested instance could not be found.", Response.Status.BAD_REQUEST);
+            } else if (!instanceModel.contains(instanceId, factory.createIRI(RDF.TYPE.stringValue()),
+                    factory.createIRI(classIRI))) {
+                throw ErrorUtils.sendError("The requested instance of that type could not be found.",
+                        Response.Status.BAD_REQUEST);
             } else {
                 String jsonld = modelToJsonld(sesameTransformer.sesameModel(instanceModel));
                 return Response.ok(getTypedObjectFromJsonld(jsonld, classIRI)).build();

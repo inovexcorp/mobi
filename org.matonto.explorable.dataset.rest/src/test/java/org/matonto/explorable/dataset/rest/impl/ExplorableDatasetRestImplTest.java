@@ -383,6 +383,13 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
     }
 
     @Test
+    public void getInstanceTestWhenClassIdIsWrong() {
+        Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
+                + encode(MISSING_ID) + "/instances/" + encode(INSTANCE_ID_STR)).request().get();
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
     public void getInstanceTestWithNoDatasetConnectionTestIllegalArgumentThrown() {
         when(datasetManager.getConnection(recordId)).thenThrow(new IllegalArgumentException());
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
