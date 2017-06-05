@@ -24,6 +24,7 @@
     <form class="content" name="dvm.configForm">
         <h6>{{(dvm.state.mapping.id | splitIRI).end}} Configuration</h6>
         <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
+        <error-display ng-if="dvm.recordsErrorMessage">{{dvm.recordsErrorMessage}}</error-display>
         <div class="row">
             <div class="col-xs-6 ontology-select-container">
                 <div class="form-group">
