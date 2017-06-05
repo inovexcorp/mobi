@@ -24,6 +24,7 @@ package org.matonto.explorable.dataset.rest.impl;
  */
 
 import static org.matonto.rest.util.RestUtils.checkStringParam;
+import static org.matonto.rest.util.RestUtils.getTypedObjectFromJsonld;
 import static org.matonto.rest.util.RestUtils.modelToJsonld;
 
 import aQute.bnd.annotation.component.Component;
@@ -182,9 +183,15 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
         checkStringParam(instanceIRI, "The Instance IRI is required.");
         try (DatasetConnection conn = datasetManager.getConnection(factory.createIRI(recordIRI))) {
             Model instanceModel = modelFactory.createModel();
-            conn.getStatements(factory.createIRI(instanceIRI), null, null).forEach(statement -> instanceModel
-                    .add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
-            return Response.ok(modelToJsonld(sesameTransformer.sesameModel(instanceModel))).build();
+            Resource instanceId = factory.createIRI(instanceIRI);
+            conn.getStatements(instanceId, null, null).forEach(statement -> instanceModel.add(instanceId,
+                    statement.getPredicate(), statement.getObject()));
+            if (instanceModel.size() == 0) {
+                throw ErrorUtils.sendError("The requested instance could not be found.", Response.Status.BAD_REQUEST);
+            } else {
+                String jsonld = modelToJsonld(sesameTransformer.sesameModel(instanceModel));
+                return Response.ok(getTypedObjectFromJsonld(jsonld, classIRI)).build();
+            }
         } catch (IllegalArgumentException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException e) {

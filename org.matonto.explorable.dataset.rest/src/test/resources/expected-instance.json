@@ -1,8 +1,0 @@
-{
-  "@id": "http://matonto.org/data/uhtc/material/c1855eb9-89dc-445e-8f02-22c1162c0844",
-  "@type": ["http://matonto.org/ontologies/uhtc/Material"],
-  "http://www.w3.org/2000/01/rdf-schema#label": [{"@value": "ZrN"}],
-  "http://matonto.org/ontologies/uhtc/density": [{"@value": 7.29E0}],
-  "http://www.w3.org/2000/01/rdf-schema#comment": [{"@value": "Comment"}],
-  "http://matonto.org/ontologies/uhtc/crystalStructure": [{"@id": "http://matonto.org/data/uhtc/crystalstructure/FCC"}]
-}

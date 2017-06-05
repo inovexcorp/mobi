@@ -103,11 +103,11 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
     private DatasetRecord record;
     private String commitId;
     private Model compiledModel;
-    private Model instanceModel;
 
     private static final String RECORD_ID_STR = "https://matonto.org/records#90075db8-e0b1-45b8-9f9e-1eda496ebcc5";
     private static final String CLASS_ID_STR = "http://matonto.org/ontologies/uhtc/Material";
     private static final String INSTANCE_ID_STR = "http://matonto.org/data/uhtc/material/c1855eb9-89dc-445e-8f02-22c1162c0844";
+    private static final String MISSING_ID = "http://matonto.org/data/missing";
 
     @Mock
     private DatasetManager datasetManager;
@@ -163,16 +163,6 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
 
         InputStream compiledData = getClass().getResourceAsStream("/compiled-resource.trig");
         compiledModel = Values.matontoModel(Rio.parse(compiledData, "", RDFFormat.TRIG));
-
-        Resource instanceId = vf.createIRI(INSTANCE_ID_STR);
-        instanceModel = mf.createModel();
-        instanceModel.add(instanceId, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI("http://matonto.org/ontologies/uhtc/Material"));
-        instanceModel.add(instanceId, vf.createIRI(RDFS.LABEL.stringValue()), vf.createLiteral("ZrN"));
-        instanceModel.add(instanceId, vf.createIRI("http://matonto.org/ontologies/uhtc/density"), vf.createLiteral(7.29E0));
-        instanceModel.add(instanceId, vf.createIRI(RDFS.COMMENT.stringValue()), vf.createLiteral("Comment"));
-        instanceModel.add(instanceId, vf.createIRI("http://matonto.org/ontologies/uhtc/crystalStructure"), vf.createIRI("http://matonto.org/data/uhtc/crystalstructure/FCC"));
-
-
 
         rest = new ExplorableDatasetRestImpl();
         rest.setCatalogManager(catalogManager);
@@ -383,5 +373,28 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
         JSONObject instance = JSONObject.fromObject(response.readEntity(String.class));
         assertTrue(instance.containsKey("@id"));
         assertEquals(instance.getString("@id"), INSTANCE_ID_STR);
+    }
+
+    @Test
+    public void getInstanceTestWhenNotFound() {
+        Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
+                + encode(CLASS_ID_STR) + "/instances/" + encode(MISSING_ID)).request().get();
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void getInstanceTestWithNoDatasetConnectionTestIllegalArgumentThrown() {
+        when(datasetManager.getConnection(recordId)).thenThrow(new IllegalArgumentException());
+        Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
+                + encode(CLASS_ID_STR) + "/instances/" + encode(INSTANCE_ID_STR)).request().get();
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void getInstanceTestWithNoDatasetConnectionTestIllegalStateThrown() {
+        when(datasetManager.getConnection(recordId)).thenThrow(new IllegalStateException());
+        Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
+                + encode(CLASS_ID_STR) + "/instances/" + encode(INSTANCE_ID_STR)).request().get();
+        assertEquals(response.getStatus(), 500);
     }
 }
