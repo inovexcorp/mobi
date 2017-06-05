@@ -42,32 +42,32 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>dataset.api</artifactId>
-            <version>1.7.8</version>
+            <version>1.7.20</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rest.util</artifactId>
-            <version>1.7.8</version>
+            <version>1.7.20</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>web.security</artifactId>
-            <version>1.7.8</version>
+            <version>1.7.20</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.utils</artifactId>
-            <version>1.7.8</version>
+            <version>1.7.20</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>catalog.api</artifactId>
-            <version>1.7.8</version>
+            <version>1.7.20</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rdf.orm.ontologies</artifactId>
-            <version>1.7.8</version>
+            <version>1.7.20</version>
         </dependency>
         <dependency>
             <groupId>javax.ws.rs</groupId>
@@ -109,7 +109,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>repository.impl.sesame</artifactId>
-            <version>1.7.8</version>
+            <version>1.7.20</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

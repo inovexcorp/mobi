@@ -42,12 +42,12 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>catalog.api</artifactId>
-            <version>1.7.7</version>
+            <version>1.7.20</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>persistence.api</artifactId>
-            <version>1.6.43</version>
+            <version>1.7.20</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
