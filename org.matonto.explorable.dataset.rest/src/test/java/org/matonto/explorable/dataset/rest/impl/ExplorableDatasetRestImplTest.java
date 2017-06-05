@@ -24,6 +24,7 @@ package org.matonto.explorable.dataset.rest.impl;
  */
 
 import static org.matonto.rest.util.RestUtils.encode;
+import static org.matonto.rest.util.RestUtils.jsonldToModel;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
@@ -31,6 +32,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.matonto.catalog.api.CatalogManager;
@@ -39,9 +41,13 @@ import org.matonto.dataset.api.DatasetManager;
 import org.matonto.dataset.api.builder.OntologyIdentifier;
 import org.matonto.dataset.ontology.dataset.DatasetRecord;
 import org.matonto.dataset.ontology.dataset.DatasetRecordFactory;
+import org.matonto.ontology.utils.api.SesameTransformer;
+import org.matonto.ontology.utils.impl.SimpleSesameTransformer;
+import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory;
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
@@ -63,6 +69,8 @@ import org.matonto.repository.impl.sesame.SesameRepositoryWrapper;
 import org.matonto.rest.util.MatontoRestTestNg;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.openrdf.model.vocabulary.RDF;
+import org.openrdf.model.vocabulary.RDFS;
 import org.openrdf.repository.sail.SailRepository;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.Rio;
@@ -87,6 +95,7 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
     private ModelFactory mf;
     private ValueConverterRegistry vcr;
     private DatasetRecordFactory datasetRecordFactory;
+    private SesameTransformer sesameTransformer;
 
     private Repository repository;
     private RepositoryConnection conn;
@@ -94,9 +103,11 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
     private DatasetRecord record;
     private String commitId;
     private Model compiledModel;
+    private Model instanceModel;
 
     private static final String RECORD_ID_STR = "https://matonto.org/records#90075db8-e0b1-45b8-9f9e-1eda496ebcc5";
     private static final String CLASS_ID_STR = "http://matonto.org/ontologies/uhtc/Material";
+    private static final String INSTANCE_ID_STR = "http://matonto.org/data/uhtc/material/c1855eb9-89dc-445e-8f02-22c1162c0844";
 
     @Mock
     private DatasetManager datasetManager;
@@ -113,6 +124,8 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
 
         vf = SimpleValueFactory.getInstance();
         mf = LinkedHashModelFactory.getInstance();
+
+        sesameTransformer = new SimpleSesameTransformer();
 
         vcr = new DefaultValueConverterRegistry();
         vcr.registerValueConverter(new ResourceValueConverter());
@@ -151,10 +164,22 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
         InputStream compiledData = getClass().getResourceAsStream("/compiled-resource.trig");
         compiledModel = Values.matontoModel(Rio.parse(compiledData, "", RDFFormat.TRIG));
 
+        Resource instanceId = vf.createIRI(INSTANCE_ID_STR);
+        instanceModel = mf.createModel();
+        instanceModel.add(instanceId, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI("http://matonto.org/ontologies/uhtc/Material"));
+        instanceModel.add(instanceId, vf.createIRI(RDFS.LABEL.stringValue()), vf.createLiteral("ZrN"));
+        instanceModel.add(instanceId, vf.createIRI("http://matonto.org/ontologies/uhtc/density"), vf.createLiteral(7.29E0));
+        instanceModel.add(instanceId, vf.createIRI(RDFS.COMMENT.stringValue()), vf.createLiteral("Comment"));
+        instanceModel.add(instanceId, vf.createIRI("http://matonto.org/ontologies/uhtc/crystalStructure"), vf.createIRI("http://matonto.org/data/uhtc/crystalstructure/FCC"));
+
+
+
         rest = new ExplorableDatasetRestImpl();
         rest.setCatalogManager(catalogManager);
         rest.setDatasetManager(datasetManager);
         rest.setFactory(vf);
+        rest.setSesameTransformer(sesameTransformer);
+        rest.setModelFactory(mf);
 
         return new ResourceConfig().register(rest);
     }
@@ -165,6 +190,7 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
         when(datasetManager.getDatasetRecord(recordId)).thenReturn(Optional.of(record));
         when(datasetManager.getConnection(recordId)).thenReturn(datasetConnection);
         when(datasetConnection.prepareTupleQuery(any(String.class))).thenAnswer(i -> conn.prepareTupleQuery(i.getArgumentAt(0, String.class)));
+        when(datasetConnection.getStatements(any(Resource.class), any(IRI.class), any(Value.class))).thenAnswer(i -> conn.getStatements(i.getArgumentAt(0, Resource.class), i.getArgumentAt(1, IRI.class), i.getArgumentAt(2, Value.class)));
         when(catalogManager.getCompiledResource(vf.createIRI(commitId))).thenReturn(compiledModel);
     }
 
@@ -347,5 +373,15 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
                 + encode(CLASS_ID_STR) + "/instance-details").queryParam("offset", 14).request().get();
         assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void getInstanceTest() {
+        Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
+                + encode(CLASS_ID_STR) + "/instances/" + encode(INSTANCE_ID_STR)).request().get();
+        assertEquals(response.getStatus(), 200);
+        JSONObject instance = JSONObject.fromObject(response.readEntity(String.class));
+        assertTrue(instance.containsKey("@id"));
+        assertEquals(instance.getString("@id"), INSTANCE_ID_STR);
     }
 }

@@ -24,6 +24,7 @@ package org.matonto.explorable.dataset.rest.impl;
  */
 
 import static org.matonto.rest.util.RestUtils.checkStringParam;
+import static org.matonto.rest.util.RestUtils.modelToJsonld;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
@@ -37,6 +38,7 @@ import org.matonto.explorable.dataset.rest.ExplorableDatasetRest;
 import org.matonto.explorable.dataset.rest.jaxb.ClassDetails;
 import org.matonto.explorable.dataset.rest.jaxb.InstanceDetails;
 import org.matonto.ontologies.dcterms._Thing;
+import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.persistence.utils.Bindings;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.query.api.BindingSet;
@@ -44,6 +46,7 @@ import org.matonto.query.api.TupleQuery;
 import org.matonto.rdf.api.BNode;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
+import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.Statement;
 import org.matonto.rdf.api.Value;
@@ -71,6 +74,8 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
     private DatasetManager datasetManager;
     private CatalogManager catalogManager;
     private ValueFactory factory;
+    private ModelFactory modelFactory;
+    private SesameTransformer sesameTransformer;
 
     private static final String GET_CLASSES_TYPES;
     private static final String GET_CLASSES_DETAILS;
@@ -127,6 +132,15 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
         this.catalogManager = catalogManager;
     }
 
+    @Reference
+    public void setModelFactory(ModelFactory modelFactory) {
+        this.modelFactory = modelFactory;
+    }
+
+    @Reference
+    public void setSesameTransformer(SesameTransformer sesameTransformer) {
+        this.sesameTransformer = sesameTransformer;
+    }
 
     @Override
     public Response getClassDetails(UriInfo uriInfo, String recordIRI) {
@@ -157,6 +171,23 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
             Comparator<InstanceDetails> comparator = Comparator.comparing(InstanceDetails::getTitle);
             return createPagedResponse(uriInfo, instances, comparator, asc, limit, offset);
         } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Override
+    public Response getInstance(UriInfo uriInfo, String recordIRI, String classIRI, String instanceIRI) {
+        checkStringParam(recordIRI, "The Dataset Record IRI is required.");
+        checkStringParam(classIRI, "The Class IRI is required.");
+        checkStringParam(instanceIRI, "The Instance IRI is required.");
+        try (DatasetConnection conn = datasetManager.getConnection(factory.createIRI(recordIRI))) {
+            Model instanceModel = modelFactory.createModel();
+            conn.getStatements(factory.createIRI(instanceIRI), null, null).forEach(statement -> instanceModel
+                    .add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
+            return Response.ok(modelToJsonld(sesameTransformer.sesameModel(instanceModel))).build();
+        } catch (IllegalArgumentException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+        } catch (IllegalStateException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
