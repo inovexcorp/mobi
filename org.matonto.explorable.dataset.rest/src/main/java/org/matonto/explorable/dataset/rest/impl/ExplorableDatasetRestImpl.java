@@ -24,11 +24,11 @@ package org.matonto.explorable.dataset.rest.impl;
  */
 
 import static org.matonto.rest.util.RestUtils.checkStringParam;
-import static org.matonto.rest.util.RestUtils.getTypedObjectFromJsonld;
 import static org.matonto.rest.util.RestUtils.modelToJsonld;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
+import net.sf.json.JSONArray;
 import org.apache.commons.io.IOUtils;
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.dataset.api.DatasetConnection;
@@ -52,10 +52,10 @@ import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.Statement;
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
+import org.matonto.repository.base.RepositoryResult;
 import org.matonto.rest.util.ErrorUtils;
 import org.matonto.rest.util.LinksUtils;
 import org.matonto.rest.util.jaxb.Links;
-import org.openrdf.model.vocabulary.RDF;
 import org.openrdf.model.vocabulary.RDFS;
 
 import java.io.IOException;
@@ -178,24 +178,24 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
     }
 
     @Override
-    public Response getInstance(UriInfo uriInfo, String recordIRI, String classIRI, String instanceIRI) {
+    public Response getInstance(UriInfo uriInfo, String recordIRI, String instanceIRI) {
         checkStringParam(recordIRI, "The Dataset Record IRI is required.");
-        checkStringParam(classIRI, "The Class IRI is required.");
         checkStringParam(instanceIRI, "The Instance IRI is required.");
         try (DatasetConnection conn = datasetManager.getConnection(factory.createIRI(recordIRI))) {
             Model instanceModel = modelFactory.createModel();
             Resource instanceId = factory.createIRI(instanceIRI);
-            conn.getStatements(instanceId, null, null).forEach(statement -> instanceModel.add(instanceId,
-                    statement.getPredicate(), statement.getObject()));
+            RepositoryResult<Statement> statements = conn.getStatements(instanceId, null, null);
+            int count = 100;
+            while (statements.hasNext() && count != 0) {
+                Statement statement = statements.next();
+                instanceModel.add(instanceId, statement.getPredicate(), statement.getObject());
+                count--;
+            }
             if (instanceModel.size() == 0) {
                 throw ErrorUtils.sendError("The requested instance could not be found.", Response.Status.BAD_REQUEST);
-            } else if (!instanceModel.contains(instanceId, factory.createIRI(RDF.TYPE.stringValue()),
-                    factory.createIRI(classIRI))) {
-                throw ErrorUtils.sendError("The requested instance of that type could not be found.",
-                        Response.Status.BAD_REQUEST);
             } else {
-                String jsonld = modelToJsonld(sesameTransformer.sesameModel(instanceModel));
-                return Response.ok(getTypedObjectFromJsonld(jsonld, classIRI)).build();
+                String json = modelToJsonld(sesameTransformer.sesameModel(instanceModel));
+                return Response.ok(JSONArray.fromObject(json).get(0)).build();
             }
         } catch (IllegalArgumentException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);

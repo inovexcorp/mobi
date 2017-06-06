@@ -47,6 +47,7 @@ import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.Statement;
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory;
@@ -65,6 +66,8 @@ import org.matonto.rdf.orm.conversion.impl.StringValueConverter;
 import org.matonto.rdf.orm.conversion.impl.ValueValueConverter;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
+import org.matonto.repository.base.RepositoryResult;
+import org.matonto.repository.impl.sesame.SesameRepositoryResult;
 import org.matonto.repository.impl.sesame.SesameRepositoryWrapper;
 import org.matonto.rest.util.MatontoRestTestNg;
 import org.mockito.Mock;
@@ -108,6 +111,7 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
     private static final String CLASS_ID_STR = "http://matonto.org/ontologies/uhtc/Material";
     private static final String INSTANCE_ID_STR = "http://matonto.org/data/uhtc/material/c1855eb9-89dc-445e-8f02-22c1162c0844";
     private static final String MISSING_ID = "http://matonto.org/data/missing";
+    private static final String LARGE_ID = "http://matonto.org/data/large";
 
     @Mock
     private DatasetManager datasetManager;
@@ -367,8 +371,8 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void getInstanceTest() {
-        Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
-                + encode(CLASS_ID_STR) + "/instances/" + encode(INSTANCE_ID_STR)).request().get();
+        Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
+                + encode(INSTANCE_ID_STR)).request().get();
         assertEquals(response.getStatus(), 200);
         JSONObject instance = JSONObject.fromObject(response.readEntity(String.class));
         assertTrue(instance.containsKey("@id"));
@@ -377,31 +381,33 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void getInstanceTestWhenNotFound() {
-        Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
-                + encode(CLASS_ID_STR) + "/instances/" + encode(MISSING_ID)).request().get();
+        Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
+                + encode(MISSING_ID)).request().get();
         assertEquals(response.getStatus(), 400);
     }
 
     @Test
-    public void getInstanceTestWhenClassIdIsWrong() {
-        Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
-                + encode(MISSING_ID) + "/instances/" + encode(INSTANCE_ID_STR)).request().get();
-        assertEquals(response.getStatus(), 400);
+    public void getInstanceTestWhenMoreThan100() {
+        Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
+                + encode(LARGE_ID)).request().get();
+        assertEquals(response.getStatus(), 200);
+        JSONArray titles = JSONObject.fromObject(response.readEntity(String.class)).getJSONArray("http://purl.org/dc/terms/title");
+        assertEquals(100, titles.size());
     }
 
     @Test
     public void getInstanceTestWithNoDatasetConnectionTestIllegalArgumentThrown() {
         when(datasetManager.getConnection(recordId)).thenThrow(new IllegalArgumentException());
-        Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
-                + encode(CLASS_ID_STR) + "/instances/" + encode(INSTANCE_ID_STR)).request().get();
+        Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
+                + encode(INSTANCE_ID_STR)).request().get();
         assertEquals(response.getStatus(), 400);
     }
 
     @Test
     public void getInstanceTestWithNoDatasetConnectionTestIllegalStateThrown() {
         when(datasetManager.getConnection(recordId)).thenThrow(new IllegalStateException());
-        Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
-                + encode(CLASS_ID_STR) + "/instances/" + encode(INSTANCE_ID_STR)).request().get();
+        Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
+                + encode(INSTANCE_ID_STR)).request().get();
         assertEquals(response.getStatus(), 500);
     }
 }
