@@ -87,23 +87,21 @@ public interface ExplorableDatasetRest {
                                 @DefaultValue("true") @QueryParam("ascending") boolean asc);
 
     /**
-     * Retrieves an instance of a specific class owned by a {@link org.matonto.dataset.ontology.dataset.Dataset} in the
-     * local {@link org.matonto.catalog.api.ontologies.mcat.Catalog}.
+     * Retrieves an instance owned by a {@link org.matonto.dataset.ontology.dataset.Dataset} in the local
+     * {@link org.matonto.catalog.api.ontologies.mcat.Catalog}.
      *
      * @param uriInfo     The URI information of the request.
      * @param recordIRI   The id of the {@link org.matonto.dataset.ontology.dataset.DatasetRecord} for the
      *                    {@link org.matonto.dataset.ontology.dataset.Dataset} to summarize.
-     * @param classIRI    The IRI of the class type to get
      * @param instanceIRI The IRI of the instance to get
      * @return A {@link Response} with a JSON-LD serialization of the desired instance.
      */
     @GET
-    @Path("{recordIRI}/classes/{classIRI}/instances/{instanceIRI}")
+    @Path("{recordIRI}/instances/{instanceIRI}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @ApiOperation("Retrieves an instance of a particular class type from a Dataset in the local Catalog")
     Response getInstance(@Context UriInfo uriInfo,
                          @PathParam("recordIRI") String recordIRI,
-                         @PathParam("classIRI") String classIRI,
                          @PathParam("instanceIRI") String instanceIRI);
 }
