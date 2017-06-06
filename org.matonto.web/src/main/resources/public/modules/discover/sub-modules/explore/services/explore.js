@@ -106,8 +106,8 @@
          * @returns {Promise} A promise that resolves to an instance object defined as the identified class in the
          * identified dataset record.
          */
-        self.getInstance = function(recordId, classId, instanceId) {
-            return $http.get(prefix + encodeURIComponent(recordId) + '/classes/' + encodeURIComponent(classId) + '/instances/' + encodeURIComponent(instanceId))
+        self.getInstance = function(recordId, instanceId) {
+            return $http.get(prefix + encodeURIComponent(recordId) + '/instances/' + encodeURIComponent(instanceId))
                 .then(response => response.data, response => $q.reject(response.statusText));
         }
         

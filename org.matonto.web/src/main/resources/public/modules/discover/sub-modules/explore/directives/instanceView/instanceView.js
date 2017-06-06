@@ -39,6 +39,7 @@
          * @scope
          * @restrict E
          * @requires discoverState.service:discoverStateService
+         * @requires util.service:utilService
          *
          * @description
          * HTML contents in the instance view page which shows the complete list of properites
@@ -46,9 +47,9 @@
          */
         .directive('instanceView', instanceView);
         
-        instanceView.$inject = ['discoverStateService'];
+        instanceView.$inject = ['discoverStateService', 'utilService'];
 
-        function instanceView(discoverStateService) {
+        function instanceView(discoverStateService, utilService) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/discover/sub-modules/explore/directives/instanceView/instanceView.html',
@@ -58,6 +59,13 @@
                 controller: function() {
                     var dvm = this;
                     dvm.ds = discoverStateService;
+                    dvm.util = utilService;
+                    dvm.entity = _.omit(dvm.ds.explore.instance.entity, ['@id', '@type']);
+                    
+                    dvm.getLimit = function(array, limit) {
+                        var len = array.length;
+                        return len === limit ? 1 : len;
+                    }
                 }
             }
         }

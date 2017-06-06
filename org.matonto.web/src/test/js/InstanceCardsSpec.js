@@ -40,7 +40,6 @@ describe('Instance Cards directive', function() {
         });
 
         discoverStateSvc.explore.recordId = 'recordId';
-        discoverStateSvc.explore.classId = 'classId';
         discoverStateSvc.explore.instanceDetails.data = [{
             title: 'y'
         }, {
@@ -115,19 +114,21 @@ describe('Instance Cards directive', function() {
         describe('view should set the correct variables when getInstance is', function() {
             it('resolved', function() {
                 var data = {'@id': 'instanceId'};
+                var item = {instanceIRI: 'instanceId', title: 'title'};
                 discoverStateSvc.explore.breadcrumbs = ['', ''];
                 exploreSvc.getInstance.and.returnValue($q.when(data));
-                controller.view({instanceIRI: 'instanceId', title: 'title'});
+                controller.view(item);
                 scope.$apply();
-                expect(exploreSvc.getInstance).toHaveBeenCalledWith('recordId', 'classId', 'instanceId');
-                expect(discoverStateSvc.explore.instance).toEqual(data);
+                expect(exploreSvc.getInstance).toHaveBeenCalledWith('recordId', 'instanceId');
+                expect(discoverStateSvc.explore.instance.entity).toEqual(data);
+                expect(discoverStateSvc.explore.instance.metadata).toEqual(item);
                 expect(discoverStateSvc.explore.breadcrumbs).toEqual(['', '', 'title']);
             });
             it('rejected', function() {
                 exploreSvc.getInstance.and.returnValue($q.reject('error'));
                 controller.view({instanceIRI: 'instanceId', title: 'title'});
                 scope.$apply();
-                expect(exploreSvc.getInstance).toHaveBeenCalledWith('recordId', 'classId', 'instanceId');
+                expect(exploreSvc.getInstance).toHaveBeenCalledWith('recordId', 'instanceId');
                 expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');
             });
         });

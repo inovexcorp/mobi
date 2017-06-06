@@ -70,7 +70,6 @@
                                 ds.resetPagedInstanceDetails();
                                 _.merge(ds.explore.instanceDetails, es.createPagedResultsObject(response));
                                 ds.explore.breadcrumbs.push(item.classTitle);
-                                ds.explore.classId = item.classIRI;
                             }, util.createErrorToast);
                     }
                     

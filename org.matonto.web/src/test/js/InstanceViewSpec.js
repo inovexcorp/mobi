@@ -21,12 +21,13 @@
  * #L%
  */
 describe('Instance View directive', function() {
-    var $compile, scope, element, discoverStateSvc;
+    var $compile, scope, element, discoverStateSvc, controller;
 
     beforeEach(function() {
         module('templates');
         module('instanceView');
         mockDiscoverState();
+        mockUtil();
 
         inject(function(_$compile_, _$rootScope_, _discoverStateService_) {
             $compile = _$compile_;
@@ -34,8 +35,21 @@ describe('Instance View directive', function() {
             discoverStateSvc = _discoverStateService_;
         });
 
+        discoverStateSvc.explore.instance.entity = {
+            '@id': 'ignored',
+            '@type': ['ignored'],
+            'prop1': [{
+                '@id': 'http://matonto.org/id'
+            }],
+            'prop2': [{
+                '@value': 'value1'
+            }, {
+                '@value': 'value2'
+            }]
+        }
         element = $compile(angular.element('<instance-view></instance-view>'))(scope);
         scope.$digest();
+        controller = element.controller('instanceView');
     });
 
     describe('replaces the element with the correct html', function() {
@@ -49,11 +63,58 @@ describe('Instance View directive', function() {
         it('for a instance-block-header', function() {
             expect(element.find('instance-block-header').length).toBe(1);
         });
-        it('for a block-content.padding', function() {
-            expect(element.querySelectorAll('block-content.padding').length).toBe(1);
+        it('for a block-content', function() {
+            expect(element.find('block-content').length).toBe(1);
         });
-        it('for a pre', function() {
-            expect(element.find('pre').length).toBe(1);
+        it('for a .row', function() {
+            expect(element.querySelectorAll('.row').length).toBe(1);
+        });
+        it('for a .col-xs-8.col-xs-offset-2', function() {
+            expect(element.querySelectorAll('.col-xs-8.col-xs-offset-2').length).toBe(1);
+        });
+        it('for a h2', function() {
+            expect(element.find('h2').length).toBe(1);
+        });
+        it('for two h3.property', function() {
+            expect(element.querySelectorAll('h3.property').length).toBe(2);
+        });
+        it('for two ul.values', function() {
+            expect(element.querySelectorAll('ul.values').length).toBe(2);
+        });
+        it('for a .values.show-link', function() {
+            expect(element.querySelectorAll('.values.show-link').length).toBe(1);
+            
+            discoverStateSvc.explore.instance.entity = _.omit(discoverStateSvc.explore.instance.entity, 'prop2');
+            element = $compile(angular.element('<instance-view></instance-view>'))(scope);
+            scope.$digest();
+            
+            expect(element.querySelectorAll('.values.show-link').length).toBe(0);
+        });
+        it('for a .values.show-more', function() {
+            expect(element.querySelectorAll('.values.show-more').length).toBe(0);
+            angular.element(element.querySelectorAll('.link')[0]).triggerHandler('click');
+            expect(element.querySelectorAll('.values.show-more').length).toBe(1);
+        });
+        it('for two li.link-containers', function() {
+            expect(element.querySelectorAll('li.link-container').length).toBe(2);
+        });
+        it('for two a.links', function() {
+            expect(element.querySelectorAll('a.link').length).toBe(2);
+        });
+        it('for a a.more', function() {
+            expect(element.querySelectorAll('a.more').length).toBe(0);
+            angular.element(element.querySelectorAll('.link')[0]).triggerHandler('click');
+            expect(element.querySelectorAll('a.more').length).toBe(1);
+        });
+    });
+    describe('controller methods', function() {
+        describe('getLimit returns the proper value when limit and array.length are', function() {
+            it('equal', function() {
+                expect(controller.getLimit(['', ''], 2)).toBe(1);
+            });
+            it('not equal', function() {
+                expect(controller.getLimit(['', ''], 1)).toBe(2);
+            });
         });
     });
 });

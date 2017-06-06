@@ -93,6 +93,7 @@
             'textArea',
             'textInput',
             'uniqueValue',
+            'valueDisplay',
 
             /* Custom Modules */
             'catalog',

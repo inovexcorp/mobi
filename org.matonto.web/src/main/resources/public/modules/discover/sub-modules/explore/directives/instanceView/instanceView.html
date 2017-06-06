@@ -25,8 +25,24 @@
         <block-header>
             <instance-block-header></instance-block-header>
         </block-header>
-        <block-content class="padding">
-            <pre>{{dvm.ds.explore.instance | json}}</pre>
+        <block-content>
+            <div class="row">
+                <div class="col-xs-8 col-xs-offset-2">
+                    <h2>{{dvm.ds.explore.instance.metadata.title}}</h2>
+                    <p class="lead">{{dvm.ds.explore.instance.metadata.description}}</p>
+                    <div ng-repeat="(key, value) in dvm.entity track by $index" ng-init="more = false">
+                        <h3 class="property">{{dvm.util.getBeautifulIRI(key)}}</h3>
+                        <ul class="values" ng-class="{'show-more': more, 'show-link': value.length > 1}">
+                            <li ng-repeat="item in value">
+                                <value-display value="item"></value-display>
+                            </li>
+                            <li class="link-container">
+                                <a class="link" ng-class="{'more': more}" ng-click="more = !more">Show</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
         </block-content>
     </block>
 </div>

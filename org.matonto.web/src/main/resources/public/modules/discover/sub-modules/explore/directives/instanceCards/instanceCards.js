@@ -64,11 +64,13 @@
                     var es = exploreService;
                     var util = utilService;
                     dvm.chunks = getChunks(ds.explore.instanceDetails.data);
+                    dvm.classTitle = _.last(ds.explore.breadcrumbs);
                     
                     dvm.view = function(item) {
-                        es.getInstance(ds.explore.recordId, ds.explore.classId, item.instanceIRI)
+                        es.getInstance(ds.explore.recordId, item.instanceIRI)
                             .then(response => {
-                                ds.explore.instance = response;
+                                ds.explore.instance.entity = response;
+                                ds.explore.instance.metadata = item;
                                 ds.explore.breadcrumbs.push(item.title);
                             }, util.createErrorToast);
                     } 

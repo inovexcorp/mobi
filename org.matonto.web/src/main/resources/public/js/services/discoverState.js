@@ -61,8 +61,10 @@
             active: true,
             breadcrumbs: ['Classes'],
             classDetails: [],
-            classId: '',
-            instance: {},
+            instance: {
+                entity: {},
+                metadata: {}
+            },
             instanceDetails: {
                 currentPage: 0,
                 data: [],
@@ -152,8 +154,10 @@
             self.resetPagedInstanceDetails();
             self.explore.breadcrumbs = ['Classes'];
             self.explore.classDetails = [];
-            self.explore.classId = '';
-            self.explore.instance = {};
+            self.explore.instance = {
+                entity: {},
+                metadata: {}
+            };
         }
     }
 })();

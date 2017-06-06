@@ -142,7 +142,6 @@ describe('Class Cards directive', function() {
                     data: [{prop: 'new'}]
                 }));
                 expect(discoverStateSvc.explore.breadcrumbs).toEqual(['', 'new']);
-                expect(discoverStateSvc.explore.classId).toBe('classId');
             });
             it('rejected', function() {
                 exploreSvc.getClassInstanceDetails.and.returnValue($q.reject('error'));

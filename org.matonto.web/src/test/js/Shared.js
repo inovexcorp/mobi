@@ -918,6 +918,10 @@ function mockDiscoverState() {
                 active: true,
                 breadcrumbs: ['Classes'],
                 classDetails: [],
+                instance: {
+                    entity: {},
+                    metadata: {}
+                },
                 instanceDetails: {
                     currentPage: 0,
                     data: [],
