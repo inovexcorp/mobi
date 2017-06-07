@@ -75,6 +75,9 @@ describe('Instance View directive', function() {
         it('for a h2', function() {
             expect(element.find('h2').length).toBe(1);
         });
+        it('for a small', function() {
+            expect(element.find('small').length).toBe(1);
+        });
         it('for two h3.property', function() {
             expect(element.querySelectorAll('h3.property').length).toBe(2);
         });

@@ -27,6 +27,7 @@ describe('Value Display directive', function() {
         module('templates');
         module('valueDisplay');
         injectPrefixationFilter();
+        mockUtil();
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;
@@ -51,20 +52,36 @@ describe('Value Display directive', function() {
             expect(element.prop('tagName')).toBe('SPAN');
             expect(element.hasClass('value-display')).toBe(true);
         });
+        it('with a .has-id', function() {
+            expect(element.querySelectorAll('.has-id').length).toBe(1);
+
+            scope.value = {};
+            scope.$apply();
+
+            expect(element.querySelectorAll('.has-id').length).toBe(0);
+        });
+        it('with a .has-value', function() {
+            expect(element.querySelectorAll('.has-value').length).toBe(0);
+
+            scope.value = {'@value': 'value'};
+            scope.$apply();
+
+            expect(element.querySelectorAll('.has-value').length).toBe(1);
+        });
         it('with a .text-muted.lang-display', function() {
             expect(element.querySelectorAll('.text-muted.lang-display').length).toBe(0);
-            
+
             scope.value = {'@value': 'value', '@language': 'en'};
             scope.$apply();
-            
+
             expect(element.querySelectorAll('.text-muted.lang-display').length).toBe(1);
         });
         it('with a .text-muted.type-display', function() {
             expect(element.querySelectorAll('.text-muted.type-display').length).toBe(0);
-            
+
             scope.value = {'@value': 'value', '@type': 'type'};
             scope.$apply();
-            
+
             expect(element.querySelectorAll('.text-muted.type-display').length).toBe(1);
         });
     });

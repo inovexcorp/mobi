@@ -35,7 +35,7 @@
         .module('instanceView', [])
         /**
          * @ngdoc directive
-         * @name sparqlResultTable.directive:instanceBlockHeader
+         * @name instanceView.directive:instanceView
          * @scope
          * @restrict E
          * @requires discoverState.service:discoverStateService

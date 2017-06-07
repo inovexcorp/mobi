@@ -55,7 +55,8 @@ function injectRegexConstant() {
         $provide.constant('REGEX', {
             'IRI': new RegExp('[a-zA-Z]'),
             'LOCALNAME': new RegExp('[a-zA-Z]'),
-            'FILENAME': new RegExp('[a-zA-Z]')
+            'FILENAME': new RegExp('[a-zA-Z]'),
+            'UUID': /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/
         });
     });
 }

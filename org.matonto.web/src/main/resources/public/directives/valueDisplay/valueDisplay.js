@@ -38,6 +38,7 @@
          * @name valueDisplay.directive:valueDisplay
          * @scope
          * @restrict E
+         * @requires util.service:utilService
          *
          * @description 
          * `valueDisplay` is a directive which creates a span element for displaying json-ld values.
@@ -47,14 +48,21 @@
          */
         .directive('valueDisplay', valueDisplay);
 
-        function valueDisplay() {
+        valueDisplay.$inject = ['utilService'];
+
+        function valueDisplay(utilService) {
             return {
                 restrict: 'E',
                 replace: true,
                 scope: {
                     value: '<'
                 },
-                templateUrl: 'directives/valueDisplay/valueDisplay.html'
+                templateUrl: 'directives/valueDisplay/valueDisplay.html',
+                controllerAs: 'dvm',
+                controller: function() {
+                    var dvm = this;
+                    dvm.util = utilService;
+                }
             }
         }
 })();
