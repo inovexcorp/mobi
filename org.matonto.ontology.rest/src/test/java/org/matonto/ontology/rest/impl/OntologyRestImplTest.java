@@ -38,6 +38,22 @@ import static org.testng.Assert.assertNotEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
+import javax.cache.Cache;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.Application;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Collections;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
@@ -122,24 +138,7 @@ import org.openrdf.rio.WriterConfig;
 import org.openrdf.rio.helpers.JSONLDMode;
 import org.openrdf.rio.helpers.JSONLDSettings;
 import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.ExpectedExceptions;
 import org.testng.annotations.Test;
-
-import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Collections;
-import java.util.Optional;
-import java.util.Set;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import javax.cache.Cache;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Application;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 
 public class OntologyRestImplTest extends MatontoRestTestNg {
     private OntologyRestImpl rest;
@@ -173,6 +172,9 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
 
     @Mock
     private Cache<String, Ontology> mockCache;
+
+    @Mock
+    private TupleQueryResult mockTuple;
 
     private ValueConverterRegistry vcr;
     private ModelFactory modelFactory;
@@ -440,6 +442,9 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         when(catalogManager.addCommit(eq(catalogId), eq(recordId), eq(branchId), eq(user), anyString())).thenReturn(commitId);
         when(catalogManager.addCommit(eq(catalogId), eq(recordId), eq(branchId), eq(user), anyString(), any(Model.class), any(Model.class))).thenReturn(commitId);
         when(catalogManager.getDiff(any(Model.class), any(Model.class))).thenReturn(difference);
+        when(mockTuple.getBindingNames()).thenReturn(Collections.EMPTY_LIST);
+        when(mockTuple.hasNext()).thenReturn(false);
+        when(mockTuple.iterator()).thenReturn(Collections.emptyIterator());
         when(ontologyManager.createOntology(any(FileInputStream.class))).thenReturn(ontology);
         when(ontologyManager.createOntology(anyString())).thenReturn(ontology);
         when(ontologyManager.createOntology(any(Model.class))).thenReturn(ontology);
@@ -456,9 +461,18 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         TupleQueryResult subClassesOf = simpleOntologyManager.getSubClassesOf(ontology);
         when(ontologyManager.getSubClassesOf(ontology)).thenReturn(subClassesOf);
 
+        TupleQueryResult conceptsOf = simpleOntologyManager.getSubClassesFor(ontology, valueFactory.createIRI(SKOS.CONCEPT.stringValue()));
+        when(ontologyManager.getSubClassesFor(Mockito.eq(ontology), Mockito.eq(valueFactory.createIRI(SKOS.CONCEPT.stringValue())))).thenReturn(conceptsOf);
+        TupleQueryResult conceptSchemesOf = simpleOntologyManager.getSubClassesFor(ontology, valueFactory.createIRI(SKOS.CONCEPT_SCHEME.stringValue()));
+        when(ontologyManager.getSubClassesFor(Mockito.eq(ontology), Mockito.eq(valueFactory.createIRI(SKOS.CONCEPT_SCHEME.stringValue())))).thenReturn(conceptSchemesOf);
+
+        TupleQueryResult importedConceptsOf = simpleOntologyManager.getSubClassesFor(importedOntology, valueFactory.createIRI(SKOS.CONCEPT.stringValue()));
+        when(ontologyManager.getSubClassesFor(Mockito.eq(importedOntology), Mockito.eq(valueFactory.createIRI(SKOS.CONCEPT.stringValue())))).thenReturn(importedConceptsOf);
+        TupleQueryResult importedConceptSchemesOf = simpleOntologyManager.getSubClassesFor(ontology, valueFactory.createIRI(SKOS.CONCEPT_SCHEME.stringValue()));
+        when(ontologyManager.getSubClassesFor(Mockito.eq(importedOntology), Mockito.eq(valueFactory.createIRI(SKOS.CONCEPT_SCHEME.stringValue())))).thenReturn(importedConceptSchemesOf);
+
         TupleQueryResult individualsOf = simpleOntologyManager.getClassesWithIndividuals(ontology);
         when(ontologyManager.getClassesWithIndividuals(ontology)).thenReturn(individualsOf);
-
         TupleQueryResult subObjectPropertiesOf = simpleOntologyManager.getSubObjectPropertiesOf(ontology);
         when(ontologyManager.getSubObjectPropertiesOf(ontology)).thenReturn(subObjectPropertiesOf);
         TupleQueryResult subDatatypePropertiesOf = simpleOntologyManager.getSubDatatypePropertiesOf(ontology);
@@ -567,7 +581,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         assertNotNull(jsonIndividuals);
         assertEquals(jsonIndividuals.size(), set.size());
         set.forEach(individual -> assertTrue(jsonIndividuals.contains(createJsonIRI(
-                ((NamedIndividual)individual).getIRI()))));
+                ((NamedIndividual) individual).getIRI()))));
     }
 
     private void assertConcepts(JSONObject responseObject, Set<Individual> set) {
@@ -575,7 +589,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         assertNotNull(jsonConcepts);
         assertEquals(jsonConcepts.size(), set.size());
         set.forEach(individual -> assertTrue(jsonConcepts.contains(createJsonIRI(
-                ((NamedIndividual)individual).getIRI()))));
+                ((NamedIndividual) individual).getIRI()))));
     }
 
     private void assertConceptSchemes(JSONObject responseObject, Set<Individual> set) {
@@ -583,7 +597,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         assertNotNull(jsonConceptSchemes);
         assertEquals(jsonConceptSchemes.size(), set.size());
         set.forEach(individual -> assertTrue(jsonConceptSchemes.contains(createJsonIRI(
-                ((NamedIndividual)individual).getIRI()))));
+                ((NamedIndividual) individual).getIRI()))));
     }
 
     private void assertAdditionsToInProgressCommit(boolean hasInProgressCommit) {
@@ -598,7 +612,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
 
     private void assertImportedOntologies(JSONArray responseArray, Consumer<JSONObject> assertConsumer) {
         for (Object o : responseArray) {
-            JSONObject jsonO = (JSONObject)o;
+            JSONObject jsonO = (JSONObject) o;
             String ontologyId = jsonO.get("id").toString();
             assertNotEquals(importedOntologies.stream()
                     .filter(ont -> ont.getOntologyId().getOntologyIdentifier().stringValue().equals(ontologyId))
@@ -876,7 +890,6 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
 
         assertEquals(response.getStatus(), 400);
     }
-
 
 
     // Test save changes to ontology
@@ -1782,7 +1795,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/object-properties")
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId",
-                commitId.stringValue()).request().get();
+                        commitId.stringValue()).request().get();
 
         assertEquals(response.getStatus(), 400);
     }
@@ -1992,7 +2005,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/data-properties")
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId",
-                commitId.stringValue()).request().get();
+                        commitId.stringValue()).request().get();
 
         assertEquals(response.getStatus(), 400);
     }
@@ -2373,7 +2386,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         assertEquals(response.getStatus(), 200);
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
-        assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), (responseObject) ->{
+        assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), (responseObject) -> {
             assertAnnotations(responseObject, annotationProperties, annotations);
             assertClasses(responseObject, classes);
             assertDatatypes(responseObject, datatypes);
@@ -2396,7 +2409,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         assertEquals(response.getStatus(), 200);
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(false);
-        assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), (responseObject) ->{
+        assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), (responseObject) -> {
             assertAnnotations(responseObject, annotationProperties, annotations);
             assertClasses(responseObject, classes);
             assertDatatypes(responseObject, datatypes);
@@ -2424,7 +2437,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         assertEquals(response.getStatus(), 200);
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         assertGetOntology(true);
-        assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), (responseObject) ->{
+        assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), (responseObject) -> {
             assertAnnotations(responseObject, annotationProperties, annotations);
             assertClasses(responseObject, classes);
             assertDatatypes(responseObject, datatypes);
@@ -2444,7 +2457,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         assertEquals(response.getStatus(), 200);
         verify(ontologyManager).retrieveOntology(recordId);
         assertGetOntology(true);
-        assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), (responseObject) ->{
+        assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), (responseObject) -> {
             assertAnnotations(responseObject, annotationProperties, annotations);
             assertClasses(responseObject, classes);
             assertDatatypes(responseObject, datatypes);
@@ -2463,7 +2476,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/imported-iris")
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId",
-                commitId.stringValue()).request().get();
+                        commitId.stringValue()).request().get();
 
         assertEquals(response.getStatus(), 400);
     }
@@ -2799,7 +2812,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/imported-datatypes")
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId",
-                commitId.stringValue()).request().get();
+                        commitId.stringValue()).request().get();
 
         assertEquals(response.getStatus(), 400);
     }
@@ -2895,7 +2908,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue())
                 + "/imported-object-properties").queryParam("branchId", branchId.stringValue()).queryParam("commitId",
-                        commitId.stringValue()).request().get();
+                commitId.stringValue()).request().get();
 
         assertEquals(response.getStatus(), 204);
     }

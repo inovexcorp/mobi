@@ -28,6 +28,27 @@ import static org.matonto.rest.util.RestUtils.getRDFFormatMimeType;
 import static org.matonto.rest.util.RestUtils.jsonldToModel;
 import static org.matonto.rest.util.RestUtils.modelToJsonld;
 
+import javax.cache.Cache;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
+import java.io.BufferedWriter;
+import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.google.common.collect.Iterables;
@@ -40,7 +61,6 @@ import org.matonto.cache.api.CacheManager;
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.Difference;
 import org.matonto.catalog.api.builder.RecordConfig;
-import org.matonto.catalog.api.ontologies.mcat.Commit;
 import org.matonto.catalog.api.ontologies.mcat.InProgressCommit;
 import org.matonto.catalog.api.ontologies.mcat.OntologyRecord;
 import org.matonto.catalog.api.ontologies.mcat.OntologyRecordFactory;
@@ -61,7 +81,6 @@ import org.matonto.ontology.utils.cache.OntologyCache;
 import org.matonto.persistence.utils.JSONQueryResults;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.query.api.Binding;
-import org.matonto.query.api.BindingSet;
 import org.matonto.rdf.api.BNode;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
@@ -75,28 +94,6 @@ import org.openrdf.model.vocabulary.OWL;
 import org.openrdf.model.vocabulary.SKOS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.BufferedWriter;
-import java.io.InputStream;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import javax.cache.Cache;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
 
 @Component(immediate = true)
 public class OntologyRestImpl implements OntologyRest {
@@ -594,7 +591,7 @@ public class OntologyRestImpl implements OntologyRest {
 
     @Override
     public Response getOntologyAnnotationPropertyHierarchy(ContainerRequestContext context, String recordIdStr,
-                                                     String branchIdStr, String commitIdStr) {
+                                                           String branchIdStr, String commitIdStr) {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
@@ -793,7 +790,7 @@ public class OntologyRestImpl implements OntologyRest {
      * provided Resource. If that User does not have an InProgressCommit, a new one will be created and that Resource
      * will be returned.
      *
-     * @param user the User with the InProgressCommit
+     * @param user     the User with the InProgressCommit
      * @param recordId the Resource identifying the Record with the InProgressCommit
      * @return a Resource which identifies the InProgressCommit associated with the User for the Record
      */
@@ -1038,6 +1035,15 @@ public class OntologyRestImpl implements OntologyRest {
         return new JSONObject().element("concepts", iriListToJsonArray(iris));
     }
 
+    private JSONObject getDerivedConceptTypeArray(Ontology ontology) {
+        List<IRI> iris = new ArrayList<>();
+        ontologyManager.getSubClassesFor(ontology, sesameTransformer.matontoIRI(SKOS.CONCEPT))
+                .forEach(r -> r.getBinding("s")
+                        .ifPresent(b -> iris.add(valueFactory.createIRI(b.getValue().stringValue()))));
+        return new JSONObject().element("derivedConcepts", iriListToJsonArray(iris));
+
+    }
+
     private JSONObject getConceptSchemeArray(Ontology ontology) {
         List<IRI> iris = ontology.getIndividualsOfType(sesameTransformer.matontoIRI(SKOS.CONCEPT_SCHEME))
                 .stream()
@@ -1045,6 +1051,15 @@ public class OntologyRestImpl implements OntologyRest {
                 .map(ind -> ((NamedIndividual) ind).getIRI())
                 .collect(Collectors.toList());
         return new JSONObject().element("conceptSchemes", iriListToJsonArray(iris));
+    }
+
+    private JSONObject getDerivedConceptSchemeTypeArray(Ontology ontology) {
+        List<IRI> iris = new ArrayList<>();
+        ontologyManager.getSubClassesFor(ontology, sesameTransformer.matontoIRI(SKOS.CONCEPT_SCHEME))
+                .forEach(r -> r.getBinding("s")
+                        .ifPresent(b -> iris.add(valueFactory.createIRI(b.getValue().stringValue()))));
+        return new JSONObject().element("derivedConceptSchemes", iriListToJsonArray(iris));
+
     }
 
     /**
@@ -1112,7 +1127,8 @@ public class OntologyRestImpl implements OntologyRest {
     private JSONObject getAllIRIs(Ontology ontology) {
         return combineJsonObjects(getAnnotationArray(ontology), getClassArray(ontology),
                 getDatatypeArray(ontology), getObjectPropertyArray(ontology), getDataPropertyArray(ontology),
-                getNamedIndividualArray(ontology), getConceptArray(ontology), getConceptSchemeArray(ontology));
+                getNamedIndividualArray(ontology), getConceptArray(ontology), getDerivedConceptTypeArray(ontology),
+                getConceptSchemeArray(ontology), getDerivedConceptSchemeTypeArray(ontology));
     }
 
     /**
@@ -1269,7 +1285,6 @@ public class OntologyRestImpl implements OntologyRest {
      * @param tupleQueryResult the TupleQueryResult that contains the parent-individuals relationships for creating the
      *                         map.
      * @return a JSONObject containing the map of the individuals provided.
-     *
      */
     private Map<String, Set<String>> getClassIndividuals(TupleQueryResult tupleQueryResult) {
         Map<String, Set<String>> classIndividuals = new HashMap<>();
@@ -1290,7 +1305,7 @@ public class OntologyRestImpl implements OntologyRest {
         });
         return classIndividuals;
     }
-    
+
     private Optional<Cache<String, Ontology>> getOntologyCache() {
         Optional<Cache<String, Ontology>> cache = Optional.empty();
         if (cacheManager != null) {

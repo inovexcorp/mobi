@@ -45,10 +45,12 @@
 
                     $scope.$watch('dvm.sm.selected', function(newValue) {
                         if (dvm.om.isConcept(dvm.sm.selected)
-                            || _.includes(dvm.sm.listItem.concepts, resObj.createItemFromIri(_.get(dvm.sm.selected, '@id')))) {
+                            || _.includes(dvm.sm.listItem.concepts, resObj.createItemFromIri(_.get(dvm.sm.selected, '@id')))
+                            || dvm.sm.isDerivedConcept(dvm.sm.listItem, dvm.sm.selected)) {
                             dvm.relationshipList = dvm.om.conceptRelationshipList;
                         } else if (dvm.om.isConceptScheme(dvm.sm.selected)
-                            || _.includes(dvm.sm.listItem.conceptSchemes, resObj.createItemFromIri(_.get(dvm.sm.selected, '@id')))) {
+                            || _.includes(dvm.sm.listItem.conceptSchemes, resObj.createItemFromIri(_.get(dvm.sm.selected, '@id')))
+                            || dvm.sm.isDerivedConceptScheme(dvm.sm.listItem, dvm.sm.selected)) {
                             dvm.relationshipList = dvm.om.schemeRelationshipList;
                         }
                     });

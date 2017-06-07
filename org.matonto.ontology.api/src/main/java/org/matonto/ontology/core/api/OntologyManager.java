@@ -23,17 +23,17 @@ package org.matonto.ontology.core.api;
  * #L%
  */
 
+import javax.annotation.Nonnull;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.util.Optional;
+
 import org.matonto.ontology.core.utils.MatontoOntologyCreationException;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.Resource;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
-import java.util.Optional;
-import javax.annotation.Nonnull;
 
 public interface OntologyManager {
 
@@ -52,7 +52,7 @@ public interface OntologyManager {
      * @param file the File that contains the data to make up the Ontology.
      * @return an Ontology created with the provided File.
      * @throws MatontoOntologyCreationException - if the ontology can't be created.
-     * @throws FileNotFoundException - if the file path is invalid.
+     * @throws FileNotFoundException            - if the file path is invalid.
      */
     Ontology createOntology(File file) throws FileNotFoundException;
 
@@ -110,7 +110,7 @@ public interface OntologyManager {
      * @param branchId the branch id for the Branch you want to retrieve.
      * @return an Optional of the Ontology if found, otherwise Optional.empty().
      * @throws MatontoOntologyCreationException - the ontology can't be created.
-     * @throws IllegalArgumentException if the branch cannot be found.
+     * @throws IllegalArgumentException         if the branch cannot be found.
      */
     Optional<Ontology> retrieveOntology(@Nonnull Resource recordId, @Nonnull Resource branchId);
 
@@ -123,7 +123,7 @@ public interface OntologyManager {
      * @param commitId the commit id for the Commit you want to retrieve.
      * @return an Optional of the Ontology if found, otherwise Optional.empty().
      * @throws MatontoOntologyCreationException - the ontology can't be created.
-     * @throws IllegalArgumentException if the branch or commit cannot be found.
+     * @throws IllegalArgumentException         if the branch or commit cannot be found.
      */
     Optional<Ontology> retrieveOntology(@Nonnull Resource recordId, @Nonnull Resource branchId,
                                         @Nonnull Resource commitId);
@@ -173,7 +173,7 @@ public interface OntologyManager {
      * Creates a new OntologyId using the provided version IRI as the identifier.
      *
      * @param ontologyIRI the IRI for the ontology you want to create the recordId for.
-     * @param versionIRI the version IRI for the ontology you want to create the recordId for.
+     * @param versionIRI  the version IRI for the ontology you want to create the recordId for.
      * @return an OntologyId using the ontologyIRI and versionIRI to determine the proper identifier.
      */
     OntologyId createOntologyId(IRI ontologyIRI, IRI versionIRI);
@@ -185,6 +185,16 @@ public interface OntologyManager {
      * @return a Set with the query results.
      */
     TupleQueryResult getSubClassesOf(Ontology ontology);
+
+    /**
+     * Gets the subClassOf relationships for a particular {@link IRI} in the provided {@link Ontology}. It will provide
+     * <em>all</em> classes that can be traced back to the provided class IRI, even if nested.
+     *
+     * @param ontology The {@link Ontology} you wish to query.
+     * @param iri      The {@link IRI} of the class for which you want the list of subclasses.
+     * @return a {@link Set} with the query results.
+     */
+    TupleQueryResult getSubClassesFor(Ontology ontology, IRI iri);
 
     /**
      * Gets the subPropertyOf relationships for datatype properties in the provided Ontology.
@@ -222,7 +232,7 @@ public interface OntologyManager {
      * Gets the entity usages for the provided Resource in the provided Ontology.
      *
      * @param ontology the Ontology you wish to query.
-     * @param entity the Resource for the entity you want to get the usages of.
+     * @param entity   the Resource for the entity you want to get the usages of.
      * @return a Set with the query results.
      */
     TupleQueryResult getEntityUsages(Ontology ontology, Resource entity);
@@ -231,7 +241,7 @@ public interface OntologyManager {
      * Constructs the entity usages for the provided Resource in the provided Ontology.
      *
      * @param ontology the Ontology you wish to query.
-     * @param entity the Resource for the entity you want to get the usages of.
+     * @param entity   the Resource for the entity you want to get the usages of.
      * @return a Model with the constructed statements.
      */
     Model constructEntityUsages(Ontology ontology, Resource entity);
@@ -247,7 +257,7 @@ public interface OntologyManager {
     /**
      * Searches the provided Ontology using the provided searchText.
      *
-     * @param ontology the Ontology you wish to query.
+     * @param ontology   the Ontology you wish to query.
      * @param searchText the String for the text you want to search for in the Ontology.
      * @return a Set with the query results.
      */
