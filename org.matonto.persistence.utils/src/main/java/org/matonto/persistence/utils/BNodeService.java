@@ -17,7 +17,7 @@ public class BNodeService {
     private ValueFactory vf;
     private ModelFactory mf;
 
-    public static final String BNODE_NAMESPACE = "bnode:";
+    public static final String BNODE_NAMESPACE = "http://matonto.org/.well-known/genid/";
 
     public BNodeService() {}
 
@@ -35,12 +35,21 @@ public class BNodeService {
      * Skolemizes the provided BNode.
      *
      * @param bnode BNode to skolemize.
-     * @return Resource containing the skolemized BNode.
+     * @return IRI which is a skolemized representation of the provided BNode.
      */
-    public Resource skolemize(BNode bnode) {
+    public IRI skolemize(BNode bnode) {
         return vf.createIRI(BNODE_NAMESPACE, bnode.getID());
+    }
 
-        /*return value instanceof BNode ? vf.createIRI(BNODE_NAMESPACE, ((BNode) value).getID()) : value;*/
+    /**
+     * Skolemizes the provided Value if it is a BNode.
+     *
+     * @param value Value to attempt to skolemize.
+     * @return Value which is a skolemized representation of the provided Value if it is a BNode; otherwise, returns the
+     *         provided Value.
+     */
+    public Value skolemize(Value value) {
+        return value instanceof BNode ? skolemize((BNode) value) : value;
     }
 
     /**
@@ -62,10 +71,6 @@ public class BNodeService {
             skolemized = true;
         }
         return skolemized ? vf.createStatement(subject, statement.getPredicate(), object) : statement;
-
-        /*Resource subject = (Resource) skolemize(statement.getSubject());
-        Value object = skolemize(statement.getObject());
-        return vf.createStatement(subject, statement.getPredicate(), object);*/
     }
 
     /**
@@ -84,15 +89,20 @@ public class BNodeService {
      * Deskolemizes the provided IRI.
      *
      * @param iri IRI to deskolemize.
-     * @return Value containing the deskolemized BNode.
+     * @return BNode containing the deskolemized BNode.
      */
-    public Value deskolemize(IRI iri) {
+    public BNode deskolemize(IRI iri) {
         return vf.createBNode(iri.getLocalName());
+    }
 
-        /*if (iri.getNamespace().equals("bnode:")) {
-            return vf.createBNode(iri.getLocalName());
-        }
-        return iri;*/
+    /**
+     * Deskolemizes the provided value if it is a skolemized IRI.
+     *
+     * @param value Value to deskolemize.
+     * @return Value which is the BNode if the Value is a skolemized IRI; otherwise, returns the provided Value.
+     */
+    public Value deskolemize(Value value) {
+        return isSkolemized(value) ? deskolemize((IRI) value) : value;
     }
 
     /**
@@ -105,7 +115,7 @@ public class BNodeService {
         boolean deskolemized = false;
         Resource subject = statement.getSubject();
         if (isSkolemized(subject)) {
-            subject = (Resource) deskolemize((IRI) subject);
+            subject = deskolemize((IRI) subject);
             deskolemized = true;
         }
         Value object = statement.getObject();
@@ -114,10 +124,6 @@ public class BNodeService {
             deskolemized = true;
         }
         return deskolemized ? vf.createStatement(subject, statement.getPredicate(), object) : statement;
-
-        /*Resource subject = (Resource) deskolemize((IRI) statement.getSubject());
-        Value object = deskolemize((IRI) statement.getObject());
-        return vf.createStatement(subject, statement.getPredicate(), object);*/
     }
 
     /**
