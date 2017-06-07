@@ -59,6 +59,7 @@ import org.matonto.catalog.api.ontologies.mcat.InProgressCommit;
 import org.matonto.catalog.api.ontologies.mcat.InProgressCommitFactory;
 import org.matonto.catalog.api.ontologies.mcat.OntologyRecord;
 import org.matonto.catalog.api.ontologies.mcat.OntologyRecordFactory;
+import org.matonto.catalog.api.versioning.VersioningManager;
 import org.matonto.catalog.impl.SimpleDifference;
 import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.engines.EngineManager;
@@ -121,7 +122,6 @@ import org.openrdf.rio.WriterConfig;
 import org.openrdf.rio.helpers.JSONLDMode;
 import org.openrdf.rio.helpers.JSONLDSettings;
 import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.ExpectedExceptions;
 import org.testng.annotations.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -169,6 +169,9 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
 
     @Mock
     private CacheManager cacheManager;
+
+    @Mock
+    private VersioningManager versioningManager;
 
     @Mock
     private Cache<String, Ontology> mockCache;
@@ -298,6 +301,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         rest.setEngineManager(engineManager);
         rest.setSesameTransformer(sesameTransformer);
         rest.setCacheManager(cacheManager);
+        rest.setVersioningManager(versioningManager);
 
         simpleOntologyManager = new SimpleOntologyManager();
         simpleOntologyManager.setModelFactory(modelFactory);
@@ -388,10 +392,14 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
 
     @BeforeMethod
     public void setupMocks() {
-        reset(engineManager, ontologyId, ontology, importedOntologyId, importedOntology, catalogManager,
+        reset(engineManager, versioningManager, ontologyId, ontology, importedOntologyId, importedOntology, catalogManager,
                 ontologyManager, sesameTransformer, cacheManager, mockCache);
+        when(versioningManager.commit(eq(catalogId), eq(recordId), eq(branchId), eq(user), anyString(), any(Model.class), any(Model.class))).thenReturn(commitId);
+
         when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.of(user));
+
         when(ontologyId.getOntologyIdentifier()).thenReturn(ontologyIRI);
+
         when(ontology.getOntologyId()).thenReturn(ontologyId);
         when(ontology.asModel(modelFactory)).thenReturn(ontologyModel);
         when(ontology.getAllAnnotations()).thenReturn(annotations);
@@ -403,7 +411,9 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         when(ontology.getAllIndividuals()).thenReturn(individuals);
         when(ontology.getImportsClosure()).thenReturn(importedOntologies);
         when(ontology.asJsonLD()).thenReturn(ontologyJsonLd);
+
         when(importedOntologyId.getOntologyIdentifier()).thenReturn(importedOntologyIRI);
+
         when(importedOntology.getOntologyId()).thenReturn(importedOntologyId);
         when(importedOntology.asModel(modelFactory)).thenReturn(importedOntologyModel);
         when(importedOntology.getAllAnnotations()).thenReturn(annotations);
@@ -414,6 +424,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         when(importedOntology.getAllDataProperties()).thenReturn(dataProperties);
         when(importedOntology.getAllIndividuals()).thenReturn(individuals);
         when(importedOntology.asJsonLD()).thenReturn(importedOntologyJsonLd);
+
         when(catalogManager.getLocalCatalog()).thenReturn(catalog);
         when(catalogManager.getLocalCatalogIRI()).thenReturn((IRI) catalogId);
         when(catalogManager.createRecord(any(RecordConfig.class), eq(ontologyRecordFactory))).thenReturn(record);
@@ -424,9 +435,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         when(catalogManager.createCommit(eq(inProgressCommit), anyString(), any(Commit.class), any(Commit.class))).thenReturn(commit);
         when(catalogManager.applyInProgressCommit(eq(inProgressCommitId), any(Model.class))).thenReturn(modelFactory
                 .createModel());
-        when(catalogManager.addCommit(eq(catalogId), eq(recordId), eq(branchId), eq(user), anyString())).thenReturn(commitId);
-        when(catalogManager.addCommit(eq(catalogId), eq(recordId), eq(branchId), eq(user), anyString(), any(Model.class), any(Model.class))).thenReturn(commitId);
         when(catalogManager.getDiff(any(Model.class), any(Model.class))).thenReturn(difference);
+
         when(ontologyManager.createOntology(any(FileInputStream.class))).thenReturn(ontology);
         when(ontologyManager.createOntology(anyString())).thenReturn(ontology);
         when(ontologyManager.createOntology(any(Model.class))).thenReturn(ontology);
@@ -442,10 +452,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         simpleOntologyManager.setRepositoryManager(repoManager);
         TupleQueryResult subClassesOf = simpleOntologyManager.getSubClassesOf(ontology);
         when(ontologyManager.getSubClassesOf(ontology)).thenReturn(subClassesOf);
-
         TupleQueryResult individualsOf = simpleOntologyManager.getClassesWithIndividuals(ontology);
         when(ontologyManager.getClassesWithIndividuals(ontology)).thenReturn(individualsOf);
-
         TupleQueryResult subObjectPropertiesOf = simpleOntologyManager.getSubObjectPropertiesOf(ontology);
         when(ontologyManager.getSubObjectPropertiesOf(ontology)).thenReturn(subObjectPropertiesOf);
         TupleQueryResult subDatatypePropertiesOf = simpleOntologyManager.getSubDatatypePropertiesOf(ontology);
@@ -462,13 +470,14 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         when(ontologyManager.constructEntityUsages(eq(ontology), any(Resource.class))).thenReturn(constructModel);
         when(ontologyManager.getSearchResults(eq(ontology), anyString())).thenAnswer(invocationOnMock ->
                 simpleOntologyManager.getSearchResults(ontology, invocationOnMock.getArgumentAt(1, String.class)));
+
         when(sesameTransformer.matontoModel(any(org.openrdf.model.Model.class))).thenAnswer(invocationOnMock ->
                 Values.matontoModel(invocationOnMock.getArgumentAt(0, org.openrdf.model.Model.class)));
         when(sesameTransformer.sesameModel(any(Model.class))).thenAnswer(invocationOnMock ->
                 Values.sesameModel(invocationOnMock.getArgumentAt(0, Model.class)));
+
         entityUsagesConstruct = modelToJsonld(sesameTransformer.sesameModel(constructs));
         when(cacheManager.getCache(Mockito.anyString(), Mockito.eq(String.class), Mockito.eq(Ontology.class))).thenReturn(Optional.of(mockCache));
-        rest.setCacheManager(cacheManager);
     }
 
     private JSONObject getResource(String path) throws Exception {
@@ -610,7 +619,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         verify(catalogManager).getLocalCatalogIRI();
         verify(catalogManager).createRecord(any(RecordConfig.class), eq(ontologyRecordFactory));
         verify(catalogManager).addRecord(catalogId, record);
-        verify(catalogManager).addCommit(eq(catalogId), eq(recordId), eq(branchId), eq(user), anyString(), any(Model.class), eq(null));
+        verify(versioningManager).commit(eq(catalogId), eq(recordId), eq(branchId), eq(user), anyString(), any(Model.class), eq(null));
         verify(mockCache).put(Mockito.anyString(), Mockito.any(Ontology.class));
     }
 
@@ -675,7 +684,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         verify(catalogManager).getLocalCatalogIRI();
         verify(catalogManager).createRecord(any(RecordConfig.class), eq(ontologyRecordFactory));
         verify(catalogManager).addRecord(catalogId, record);
-        verify(catalogManager).addCommit(eq(catalogId), eq(recordId), eq(branchId), eq(user), anyString(), any(Model.class), eq(null));
+        verify(versioningManager).commit(eq(catalogId), eq(recordId), eq(branchId), eq(user), anyString(), any(Model.class), eq(null));
         verify(mockCache).put(Mockito.anyString(), Mockito.any(Ontology.class));
     }
 
@@ -845,8 +854,6 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
 
         assertEquals(response.getStatus(), 400);
     }
-
-
 
     // Test save changes to ontology
 

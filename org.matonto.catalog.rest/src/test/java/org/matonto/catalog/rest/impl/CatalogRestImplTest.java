@@ -78,6 +78,7 @@ import org.matonto.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import org.matonto.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
 import org.matonto.catalog.api.ontologies.mcat.VersionedRecord;
 import org.matonto.catalog.api.ontologies.mcat.VersionedRecordFactory;
+import org.matonto.catalog.api.versioning.VersioningManager;
 import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
@@ -91,6 +92,7 @@ import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory;
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
 import org.matonto.rdf.core.utils.Values;
 import org.matonto.rdf.orm.OrmFactory;
+import org.matonto.rdf.orm.OrmFactoryRegistry;
 import org.matonto.rdf.orm.Thing;
 import org.matonto.rdf.orm.conversion.ValueConverterRegistry;
 import org.matonto.rdf.orm.conversion.impl.DefaultValueConverterRegistry;
@@ -180,7 +182,13 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     private static final String CONFLICT_IRI = "http://matonto.org/conflicts/test";
 
     @Mock
+    private OrmFactoryRegistry factoryRegistry;
+
+    @Mock
     private CatalogManager catalogManager;
+
+    @Mock
+    private VersioningManager versioningManager;
 
     @Mock
     private EngineManager engineManager;
@@ -327,6 +335,12 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
                 vf.createLiteral("Title"));
 
         MockitoAnnotations.initMocks(this);
+        when(factoryRegistry.getFactoriesOfType(Record.TYPE)).thenReturn(Stream.of(recordFactory,
+                unversionedRecordFactory, versionedRecordFactory, versionedRDFRecordFactory, ontologyRecordFactory,
+                mappingRecordFactory).collect(Collectors.toList()));
+        when(factoryRegistry.getFactoriesOfType(VersionedRDFRecord.TYPE)).thenReturn(Stream.of(versionedRDFRecordFactory, mappingRecordFactory, ontologyRecordFactory).collect(Collectors.toList()));
+        when(factoryRegistry.getFactoriesOfType(Version.TYPE)).thenReturn(Stream.of(versionFactory, tagFactory).collect(Collectors.toList()));
+        when(factoryRegistry.getFactoriesOfType(Branch.TYPE)).thenReturn(Stream.of(branchFactory, userBranchFactory).collect(Collectors.toList()));
         rest = new CatalogRestImpl();
         rest.setVf(vf);
         rest.setEngineManager(engineManager);
@@ -335,16 +349,9 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         rest.setDistributionFactory(distributionFactory);
         rest.setCommitFactory(commitFactory);
         rest.setInProgressCommitFactory(inProgressCommitFactory);
-        rest.addBranchFactory(branchFactory);
-        rest.addBranchFactory(userBranchFactory);
-        rest.addVersionFactory(versionFactory);
-        rest.addVersionFactory(tagFactory);
-        rest.addRecordFactory(recordFactory);
-        rest.addRecordFactory(unversionedRecordFactory);
-        rest.addRecordFactory(versionedRecordFactory);
-        rest.addRecordFactory(versionedRDFRecordFactory);
-        rest.addRecordFactory(ontologyRecordFactory);
-        rest.addRecordFactory(mappingRecordFactory);
+        rest.setFactoryRegistry(factoryRegistry);
+        rest.setVersioningManager(versioningManager);
+        rest.start();
 
         return new ResourceConfig()
                 .register(rest)
@@ -359,7 +366,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
 
     @BeforeMethod
     public void setupMocks() {
-        reset(catalogManager, engineManager, transformer, conflict, difference, results);
+        reset(catalogManager, versioningManager, engineManager, transformer, conflict, difference, results);
 
         when(transformer.sesameModel(any(Model.class)))
                 .thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, Model.class)));
@@ -435,14 +442,15 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         when(catalogManager.getCommitChain(any(Resource.class))).thenReturn(testCommits);
         when(catalogManager.getCommitChain(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(testCommits);
         when(catalogManager.createCommit(any(InProgressCommit.class), anyString(), any(Commit.class), any(Commit.class))).thenReturn(testCommits.get(0));
-        when(catalogManager.addCommit(any(Resource.class), any(Resource.class), any(Resource.class), any(User.class), anyString())).thenReturn(vf.createIRI(COMMIT_IRIS[0]));
-        when(catalogManager.mergeBranches(any(Resource.class), any(Resource.class), any(Resource.class), any(Resource.class), any(User.class), any(Model.class), any(Model.class))).thenReturn(vf.createIRI(COMMIT_IRIS[0]));
         when(catalogManager.getHeadCommit(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(testCommits.get(0));
         when(catalogManager.getCompiledResource(any(Resource.class))).thenReturn(compiledResource);
         when(catalogManager.getInProgressCommit(any(Resource.class), any(Resource.class), any(User.class))).thenReturn(Optional.of(testInProgressCommit));
         when(catalogManager.applyInProgressCommit(any(Resource.class), any(Model.class))).thenReturn(compiledResourceWithChanges);
         when(catalogManager.createInProgressCommit(any(User.class))).thenReturn(testInProgressCommit);
         when(catalogManager.getCommitDifference(any(Resource.class))).thenReturn(difference);
+
+        when(versioningManager.commit(any(Resource.class), any(Resource.class), any(Resource.class), any(User.class), anyString())).thenReturn(vf.createIRI(COMMIT_IRIS[0]));
+        when(versioningManager.merge(any(Resource.class), any(Resource.class), any(Resource.class), any(Resource.class), any(User.class), any(Model.class), any(Model.class))).thenReturn(vf.createIRI(COMMIT_IRIS[0]));
 
         when(conflict.getIRI()).thenReturn(vf.createIRI(CONFLICT_IRI));
         when(conflict.getOriginal()).thenReturn(mf.createModel());
@@ -2345,7 +2353,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
                 .queryParam("message", "Message").request().post(Entity.entity("", MediaType.TEXT_PLAIN));
         assertEquals(response.getStatus(), 201);
         assertEquals(response.readEntity(String.class), COMMIT_IRIS[0]);
-        verify(catalogManager).addCommit(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(BRANCH_IRI)), any(User.class), eq("Message"));
+        verify(versioningManager).commit(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(BRANCH_IRI)), any(User.class), eq("Message"));
     }
 
     @Test
@@ -2362,7 +2370,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     @Test
     public void createBranchCommitWithIncorrectPathTest() {
         // Setup:
-        doThrow(new IllegalArgumentException()).when(catalogManager).addCommit(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(ERROR_IRI)), any(User.class), eq("Message"));
+        doThrow(new IllegalArgumentException()).when(versioningManager).commit(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(ERROR_IRI)), any(User.class), eq("Message"));
 
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(ERROR_IRI) + "/commits")
@@ -2373,14 +2381,14 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     @Test
     public void createBranchCommitWithErrorTest() {
         // Setup:
-        doThrow(new MatOntoException()).when(catalogManager).addCommit(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(BRANCH_IRI)), any(User.class), eq("Message"));
+        doThrow(new MatOntoException()).when(versioningManager).commit(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(BRANCH_IRI)), any(User.class), eq("Message"));
 
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits")
                 .queryParam("message", "Message").request().post(Entity.entity("", MediaType.TEXT_PLAIN));
         assertEquals(response.getStatus(), 500);
 
-        doThrow(new IllegalStateException()).when(catalogManager).addCommit(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(BRANCH_IRI)), any(User.class), eq("Message"));
+        doThrow(new IllegalStateException()).when(versioningManager).commit(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(BRANCH_IRI)), any(User.class), eq("Message"));
         response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits")
                 .queryParam("message", "Message").request().post(Entity.entity("", MediaType.TEXT_PLAIN));
@@ -2572,13 +2580,13 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
                 .queryParam("targetId", BRANCH_IRI).request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 200);
         assertEquals(response.readEntity(String.class), COMMIT_IRIS[0]);
-        verify(catalogManager).mergeBranches(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(BRANCH_IRI)), eq(vf.createIRI(BRANCH_IRI)), any(User.class), any(Model.class), any(Model.class));
+        verify(versioningManager).merge(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(BRANCH_IRI)), eq(vf.createIRI(BRANCH_IRI)), any(User.class), any(Model.class), any(Model.class));
     }
 
     @Test
     public void mergeWithIncorrectPathTest() {
         // Setup:
-        doThrow(new IllegalArgumentException()).when(catalogManager).mergeBranches(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(ERROR_IRI)), eq(vf.createIRI(BRANCH_IRI)), any(User.class), any(Model.class), any(Model.class));
+        doThrow(new IllegalArgumentException()).when(versioningManager).merge(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(ERROR_IRI)), eq(vf.createIRI(BRANCH_IRI)), any(User.class), any(Model.class), any(Model.class));
         JSONArray adds = new JSONArray();
         adds.add(new JSONObject().element("@id", "http://example.com/add").element("@type", new JSONArray().element("http://example.com/Add")));
         FormDataMultiPart fd = new FormDataMultiPart();
@@ -2608,7 +2616,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     @Test
     public void mergeWithErrorTest() {
         // Setup:
-        doThrow(new MatOntoException()).when(catalogManager).mergeBranches(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(BRANCH_IRI)), eq(vf.createIRI(BRANCH_IRI)), any(User.class), any(Model.class), any(Model.class));
+        doThrow(new MatOntoException()).when(versioningManager).merge(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(BRANCH_IRI)), eq(vf.createIRI(BRANCH_IRI)), any(User.class), any(Model.class), any(Model.class));
         JSONArray adds = new JSONArray();
         adds.add(new JSONObject().element("@id", "http://example.com/add").element("@type", new JSONArray().element("http://example.com/Add")));
         FormDataMultiPart fd = new FormDataMultiPart();
@@ -2619,7 +2627,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
                 .queryParam("targetId", BRANCH_IRI).request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 500);
 
-        doThrow(new IllegalStateException()).when(catalogManager).mergeBranches(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(BRANCH_IRI)), eq(vf.createIRI(BRANCH_IRI)), any(User.class), any(Model.class), any(Model.class));
+        doThrow(new IllegalStateException()).when(versioningManager).merge(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(BRANCH_IRI)), eq(vf.createIRI(BRANCH_IRI)), any(User.class), any(Model.class), any(Model.class));
         response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/conflicts/resolution")
                 .queryParam("targetId", BRANCH_IRI).request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));

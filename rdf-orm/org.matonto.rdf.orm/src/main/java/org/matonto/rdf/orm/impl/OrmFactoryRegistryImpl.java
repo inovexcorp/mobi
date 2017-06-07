@@ -37,6 +37,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Component(immediate = true)
 public class OrmFactoryRegistryImpl implements OrmFactoryRegistry {
@@ -78,9 +79,13 @@ public class OrmFactoryRegistryImpl implements OrmFactoryRegistry {
 
     @Override
     public <T extends Thing> List<OrmFactory> getFactoriesOfType(Class<T> type) {
-        return factories.stream()
-                .filter(factory -> type.equals(Thing.class)
-                        ? factory.getType().equals(Thing.class) : type.isAssignableFrom(factory.getType()))
+        return getFactoryStreamOfType(type).collect(Collectors.toList());
+    }
+
+    @Override
+    public <T extends Thing> List<OrmFactory> getSortedFactoriesOfType(Class<T> type) {
+        return getFactoryStreamOfType(type)
+                .sorted((factory1, factory2) -> factory1.getType().isAssignableFrom(factory2.getType()) ? 1 : -1)
                 .collect(Collectors.toList());
     }
 
@@ -90,10 +95,32 @@ public class OrmFactoryRegistryImpl implements OrmFactoryRegistry {
     }
 
     @Override
+    public List<OrmFactory> getSortedFactoriesOfType(String typeIRI) {
+        return getSortedFactoriesOfType(valueFactory.createIRI(typeIRI));
+    }
+
+    @Override
     public List<OrmFactory> getFactoriesOfType(IRI typeIRI) {
+        return getFactoryStreamOfType(typeIRI).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<OrmFactory> getSortedFactoriesOfType(IRI typeIRI) {
+        return getFactoryStreamOfType(typeIRI)
+                .sorted((factory1, factory2) -> factory1.getType().isAssignableFrom(factory2.getType()) ? 1 : -1)
+                .collect(Collectors.toList());
+    }
+
+    private <T extends Thing> Stream<OrmFactory> getFactoryStreamOfType(Class<T> type) {
+        return factories.stream()
+                .filter(factory -> type.equals(Thing.class)
+                        ? factory.getType().equals(Thing.class) : type.isAssignableFrom(factory.getType()));
+    }
+
+
+    private Stream<OrmFactory> getFactoryStreamOfType(IRI typeIRI) {
         return factories.stream()
                 .filter(factory -> factory.getParentTypeIRIs().contains(typeIRI)
-                        || factory.getTypeIRI().equals(typeIRI))
-                .collect(Collectors.toList());
+                        || factory.getTypeIRI().equals(typeIRI));
     }
 }

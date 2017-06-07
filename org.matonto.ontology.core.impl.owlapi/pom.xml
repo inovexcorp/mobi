@@ -61,7 +61,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>catalog.api</artifactId>
-            <version>1.7.20</version>
+            <version>1.8.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
@@ -148,7 +148,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>catalog.impl</artifactId>
-            <version>1.7.20</version>
+            <version>1.8.1-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
         <dependency>

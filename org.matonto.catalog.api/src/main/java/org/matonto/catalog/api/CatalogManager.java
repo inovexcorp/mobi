@@ -590,7 +590,7 @@ public interface CatalogManager {
      *      Record does not belong to the Catalog, the Branch could not be found, or the Commit already exists in the
      *      repository.
      */
-    void addCommit(Resource catalogId, Resource versionedRDFRecordId, Resource branchId, Commit commit);
+//    void addCommit(Resource catalogId, Resource versionedRDFRecordId, Resource branchId, Commit commit);
 
     /**
      * Creates a new Commit in the repository using the InProgressCommit identified by the provided Resources and User
@@ -608,7 +608,7 @@ public interface CatalogManager {
      *      Record does not belong to the Catalog, the Branch could not be found, or the InProgress could not be found.
      * @throws IllegalStateException Thrown if the Branch does not have a head Commit.
      */
-    Resource addCommit(Resource catalogId, Resource versionedRDFRecordId, Resource branchId, User user, String message);
+//    Resource addCommit(Resource catalogId, Resource versionedRDFRecordId, Resource branchId, User user, String message);
 
     /**
      * Creates a new Commit for the provided User in the repository for the Branch identified by the provided Resources
@@ -623,8 +623,8 @@ public interface CatalogManager {
      * @param deletions The statements which were added to the named graph.
      * @return The Resource of the new Commit.
      */
-    Resource addCommit(Resource catalogId, Resource versionedRDFRecordId, Resource branchId, User user, String message,
-                       Model additions, Model deletions);
+    /*Resource addCommit(Resource catalogId, Resource versionedRDFRecordId, Resource branchId, User user, String message,
+                       Model additions, Model deletions);*/
 
     /**
      * Adds the provided InProgressCommit to the repository for the VersionedRDFRecord identified by the provided
@@ -811,8 +811,8 @@ public interface CatalogManager {
      * @param deletions The statements which were deleted from the named graph.
      * @return The Resource of the new merge Commit.
      */
-    Resource mergeBranches(Resource catalogId, Resource versionedRDFRecordId, Resource sourceBranchId,
-                       Resource targetBranchId, User user, Model additions, Model deletions);
+    /*Resource mergeBranches(Resource catalogId, Resource versionedRDFRecordId, Resource sourceBranchId,
+                       Resource targetBranchId, User user, Model additions, Model deletions);*/
 
     /**
      * Gets the Difference, consisting of Models of additions and deletions, made between the original and the changed

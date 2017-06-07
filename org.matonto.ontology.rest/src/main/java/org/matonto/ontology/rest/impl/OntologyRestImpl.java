@@ -40,10 +40,10 @@ import org.matonto.cache.api.CacheManager;
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.Difference;
 import org.matonto.catalog.api.builder.RecordConfig;
-import org.matonto.catalog.api.ontologies.mcat.Commit;
 import org.matonto.catalog.api.ontologies.mcat.InProgressCommit;
 import org.matonto.catalog.api.ontologies.mcat.OntologyRecord;
 import org.matonto.catalog.api.ontologies.mcat.OntologyRecordFactory;
+import org.matonto.catalog.api.versioning.VersioningManager;
 import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
@@ -61,7 +61,6 @@ import org.matonto.ontology.utils.cache.OntologyCache;
 import org.matonto.persistence.utils.JSONQueryResults;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.query.api.Binding;
-import org.matonto.query.api.BindingSet;
 import org.matonto.rdf.api.BNode;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
@@ -90,7 +89,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.cache.Cache;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Response;
@@ -107,6 +105,7 @@ public class OntologyRestImpl implements OntologyRest {
     private EngineManager engineManager;
     private SesameTransformer sesameTransformer;
     private CacheManager cacheManager;
+    private VersioningManager versioningManager;
 
     private final Logger log = LoggerFactory.getLogger(OntologyRestImpl.class);
 
@@ -148,6 +147,11 @@ public class OntologyRestImpl implements OntologyRest {
     @Reference
     public void setCacheManager(CacheManager cacheManager) {
         this.cacheManager = cacheManager;
+    }
+
+    @Reference
+    public void setVersioningManager(VersioningManager versioningManager) {
+        this.versioningManager = versioningManager;
     }
 
     @Override
@@ -1224,7 +1228,7 @@ public class OntologyRestImpl implements OntologyRest {
         OntologyRecord record = catalogManager.createRecord(builder.build(), ontologyRecordFactory);
         catalogManager.addRecord(catalogId, record);
         Resource masterBranchId = record.getMasterBranch_resource().get();
-        Resource commitId = catalogManager.addCommit(catalogId, record.getResource(), masterBranchId, user,
+        Resource commitId = versioningManager.commit(catalogId, record.getResource(), masterBranchId, user,
                 "The initial commit.", ontology.asModel(modelFactory), null);
 
         // Cache

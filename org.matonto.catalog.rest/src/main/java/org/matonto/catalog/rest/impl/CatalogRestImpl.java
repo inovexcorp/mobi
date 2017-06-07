@@ -30,28 +30,7 @@ import static org.matonto.rest.util.RestUtils.getTypedObjectFromJsonld;
 import static org.matonto.rest.util.RestUtils.jsonldToModel;
 import static org.matonto.rest.util.RestUtils.modelToString;
 
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
-import javax.ws.rs.core.UriInfo;
-import java.io.BufferedWriter;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
+import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import net.sf.json.JSONArray;
@@ -75,6 +54,7 @@ import org.matonto.catalog.api.ontologies.mcat.InProgressCommitFactory;
 import org.matonto.catalog.api.ontologies.mcat.Record;
 import org.matonto.catalog.api.ontologies.mcat.UserBranch;
 import org.matonto.catalog.api.ontologies.mcat.Version;
+import org.matonto.catalog.api.versioning.VersioningManager;
 import org.matonto.catalog.rest.CatalogRest;
 import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.engines.EngineManager;
@@ -89,6 +69,7 @@ import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.orm.OrmFactory;
+import org.matonto.rdf.orm.OrmFactoryRegistry;
 import org.matonto.rdf.orm.Thing;
 import org.matonto.rest.util.ErrorUtils;
 import org.matonto.rest.util.LinksUtils;
@@ -98,14 +79,38 @@ import org.openrdf.model.vocabulary.RDF;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedWriter;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
+import javax.ws.rs.core.UriInfo;
+
 @Component(immediate = true)
 public class CatalogRestImpl implements CatalogRest {
     private static final Logger LOG = LoggerFactory.getLogger(CatalogRestImpl.class);
     private static final Set<String> SORT_RESOURCES;
 
+    private OrmFactoryRegistry factoryRegistry;
     private SesameTransformer transformer;
     private CatalogManager catalogManager;
     private ValueFactory vf;
+    private VersioningManager versioningManager;
 
     protected EngineManager engineManager;
     protected Map<String, OrmFactory<? extends Record>> recordFactories = new HashMap<>();
@@ -143,37 +148,9 @@ public class CatalogRestImpl implements CatalogRest {
         this.vf = vf;
     }
 
-    @Reference(type = '*', dynamic = true)
-    protected <T extends Record> void addRecordFactory(OrmFactory<T> factory) {
-        if (Record.class.isAssignableFrom(factory.getType())) {
-            recordFactories.put(factory.getTypeIRI().stringValue(), factory);
-        }
-    }
-
-    protected <T extends Record> void removeRecordFactory(OrmFactory<T> factory) {
-        recordFactories.remove(factory.getTypeIRI().stringValue());
-    }
-
-    @Reference(type = '*', dynamic = true)
-    protected <T extends Version> void addVersionFactory(OrmFactory<T> factory) {
-        if (Version.class.isAssignableFrom(factory.getType())) {
-            versionFactories.put(factory.getTypeIRI().stringValue(), factory);
-        }
-    }
-
-    protected <T extends Version> void removeVersionFactory(OrmFactory<T> factory) {
-        versionFactories.remove(factory.getTypeIRI().stringValue());
-    }
-
-    @Reference(type = '*', dynamic = true)
-    protected <T extends Branch> void addBranchFactory(OrmFactory<T> factory) {
-        if (Branch.class.isAssignableFrom(factory.getType())) {
-            branchFactories.put(factory.getTypeIRI().stringValue(), factory);
-        }
-    }
-
-    protected <T extends Branch> void removeBranchFactory(OrmFactory<T> factory) {
-        branchFactories.remove(factory.getTypeIRI().stringValue());
+    @Reference
+    protected void setFactoryRegistry(OrmFactoryRegistry factoryRegistry) {
+        this.factoryRegistry = factoryRegistry;
     }
 
     @Reference
@@ -189,6 +166,21 @@ public class CatalogRestImpl implements CatalogRest {
     @Reference
     protected void setInProgressCommitFactory(InProgressCommitFactory inProgressCommitFactory) {
         this.inProgressCommitFactory = inProgressCommitFactory;
+    }
+
+    @Reference
+    protected void setVersioningManager(VersioningManager versioningManager) {
+        this.versioningManager = versioningManager;
+    }
+
+    @Activate
+    protected void start() {
+        factoryRegistry.getFactoriesOfType(Record.TYPE).forEach(factory ->
+                recordFactories.put(factory.getTypeIRI().stringValue(), factory));
+        factoryRegistry.getFactoriesOfType(Version.TYPE).forEach(factory ->
+                versionFactories.put(factory.getTypeIRI().stringValue(), factory));
+        factoryRegistry.getFactoriesOfType(Branch.TYPE).forEach(factory ->
+                branchFactories.put(factory.getTypeIRI().stringValue(), factory));
     }
 
     @Override
@@ -730,7 +722,7 @@ public class CatalogRestImpl implements CatalogRest {
                 throw ErrorUtils.sendError("Commit message is required", Response.Status.BAD_REQUEST);
             }
             User activeUser = getActiveUser(context, engineManager);
-            Resource newCommitId = catalogManager.addCommit(vf.createIRI(catalogId), vf.createIRI(recordId),
+            Resource newCommitId = versioningManager.commit(vf.createIRI(catalogId), vf.createIRI(recordId),
                     vf.createIRI(branchId), activeUser, message);
             return Response.status(201).entity(newCommitId.stringValue()).build();
         } catch (IllegalArgumentException ex) {
@@ -802,7 +794,7 @@ public class CatalogRestImpl implements CatalogRest {
             User activeUser = getActiveUser(context, engineManager);
             Model additions = StringUtils.isEmpty(additionsJson) ? null : convertJsonld(additionsJson);
             Model deletions = StringUtils.isEmpty(deletionsJson) ? null : convertJsonld(deletionsJson);
-            Resource newCommitId = catalogManager.mergeBranches(vf.createIRI(catalogId), vf.createIRI(recordId),
+            Resource newCommitId = versioningManager.merge(vf.createIRI(catalogId), vf.createIRI(recordId),
                     vf.createIRI(sourceBranchId), vf.createIRI(targetBranchId), activeUser, additions, deletions);
             return Response.ok(newCommitId.stringValue()).build();
         } catch (IllegalArgumentException ex) {
