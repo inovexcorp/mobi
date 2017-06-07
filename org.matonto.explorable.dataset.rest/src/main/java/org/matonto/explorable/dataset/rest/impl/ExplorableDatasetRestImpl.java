@@ -186,7 +186,7 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
             Resource instanceId = factory.createIRI(instanceIRI);
             RepositoryResult<Statement> statements = conn.getStatements(instanceId, null, null);
             int count = 100;
-            while (statements.hasNext() && count != 0) {
+            while (statements.hasNext() && count > 0) {
                 Statement statement = statements.next();
                 instanceModel.add(instanceId, statement.getPredicate(), statement.getObject());
                 count--;
