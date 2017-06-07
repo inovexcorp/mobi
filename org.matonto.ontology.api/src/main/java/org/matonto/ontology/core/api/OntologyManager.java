@@ -192,7 +192,7 @@ public interface OntologyManager {
      *
      * @param ontology The {@link Ontology} you wish to query.
      * @param iri      The {@link IRI} of the class for which you want the list of subclasses.
-     * @return a {@link Set} with the query results.
+     * @return a {@link TupleQueryResult} with the query results.
      */
     TupleQueryResult getSubClassesFor(Ontology ontology, IRI iri);
 
