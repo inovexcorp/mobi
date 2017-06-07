@@ -104,9 +104,7 @@
                 importedOntologyIds: [],
                 annotations: angular.copy(_.union(propertyManagerService.defaultAnnotations,
                     propertyManagerService.skosAnnotations)),
-                concepts: [],
                 derivedConcepts: [],
-                conceptSchemes: [],
                 derivedConceptSchemes: [],
                 conceptHierarchy: [],
                 conceptIndex: {},
@@ -482,9 +480,7 @@
                     listItem.iriList = _.union(listItem.iriList, _.map(_.flatten(_.values(response[0])), ro.getItemIri));
                     listItem.subDataProperties = _.get(response[0], 'dataProperties');
                     listItem.subObjectProperties = _.get(response[0], 'objectProperties');
-                    listItem.concepts = _.get(response[0], 'concepts', []);
                     listItem.derivedConcepts = _.map(_.get(response[0], 'derivedConcepts', []), ro.getItemIri);
-                    listItem.conceptSchemes = _.get(response[0], 'conceptSchemes', []);
                     listItem.derivedConceptSchemes = _.map(_.get(response[0], 'derivedConceptSchemes', []), ro.getItemIri);
                     listItem.annotations = _.unionWith(
                         _.get(response[0], 'annotationProperties'),
@@ -848,7 +844,7 @@
              * @methodOf ontologyState.service:ontologyStateService
              *
              * @description
-             * Checks if the provided entity is an skos:Concept entity. Returns a boolean.
+             * Checks if the provided entity is an skos:ConceptScheme entity. Returns a boolean.
              *
              * @param {Object} entity The entity you want to check.
              * @returns {boolean} Returns true if it is an skos:ConceptScheme entity, otherwise returns false.

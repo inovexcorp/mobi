@@ -22,6 +22,7 @@
  */
 {
   "http://www.w3.org/2002/07/owl#Class": [
+    "https://matonto.org/vocabulary#ConceptSubClass",
     "http://matonto.org/ontology#Class1a",
     "http://matonto.org/ontology#Class1b"
   ]

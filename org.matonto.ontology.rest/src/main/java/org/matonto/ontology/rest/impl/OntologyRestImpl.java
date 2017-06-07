@@ -78,6 +78,7 @@ import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.ontology.rest.OntologyRest;
 import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.ontology.utils.cache.OntologyCache;
+import org.matonto.persistence.utils.Bindings;
 import org.matonto.persistence.utils.JSONQueryResults;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.query.api.Binding;
@@ -1038,8 +1039,7 @@ public class OntologyRestImpl implements OntologyRest {
     private JSONObject getDerivedConceptTypeArray(Ontology ontology) {
         List<IRI> iris = new ArrayList<>();
         ontologyManager.getSubClassesFor(ontology, sesameTransformer.matontoIRI(SKOS.CONCEPT))
-                .forEach(r -> r.getBinding("s")
-                        .ifPresent(b -> iris.add(valueFactory.createIRI(b.getValue().stringValue()))));
+                .forEach(r -> iris.add(valueFactory.createIRI(Bindings.requiredResource(r, "s").stringValue())));
         return new JSONObject().element("derivedConcepts", iriListToJsonArray(iris));
 
     }
@@ -1127,8 +1127,8 @@ public class OntologyRestImpl implements OntologyRest {
     private JSONObject getAllIRIs(Ontology ontology) {
         return combineJsonObjects(getAnnotationArray(ontology), getClassArray(ontology),
                 getDatatypeArray(ontology), getObjectPropertyArray(ontology), getDataPropertyArray(ontology),
-                getNamedIndividualArray(ontology), getConceptArray(ontology), getDerivedConceptTypeArray(ontology),
-                getConceptSchemeArray(ontology), getDerivedConceptSchemeTypeArray(ontology));
+                getNamedIndividualArray(ontology), getDerivedConceptTypeArray(ontology),
+                getDerivedConceptSchemeTypeArray(ontology));
     }
 
     /**
