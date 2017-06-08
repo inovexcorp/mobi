@@ -53,9 +53,10 @@ function injectChromaConstant() {
 function injectRegexConstant() {
     module(function($provide) {
         $provide.constant('REGEX', {
-            'IRI': new RegExp('[a-zA-Z]'),
-            'LOCALNAME': new RegExp('[a-zA-Z]'),
-            'FILENAME': new RegExp('[a-zA-Z]')
+            'IRI': /[a-zA-Z]/,
+            'LOCALNAME': /[a-zA-Z]/,
+            'FILENAME': /[a-zA-Z]/,
+            'UUID': /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/
         });
     });
 }
@@ -920,6 +921,10 @@ function mockDiscoverState() {
                 active: true,
                 breadcrumbs: ['Classes'],
                 classDetails: [],
+                instance: {
+                    entity: {},
+                    metadata: {}
+                },
                 instanceDetails: {
                     currentPage: 0,
                     data: [],
@@ -947,6 +952,7 @@ function mockExplore() {
         $provide.service('exploreService', function($q) {
             this.getClassDetails = jasmine.createSpy('getClassDetails').and.returnValue($q.when([]));
             this.getClassInstanceDetails = jasmine.createSpy('getClassInstanceDetails').and.returnValue($q.when([]));
+            this.getInstance = jasmine.createSpy('getInstance').and.returnValue($q.when({}));
             this.createPagedResultsObject = jasmine.createSpy('createPagedResultsObject').and.returnValue({});
         });
     });

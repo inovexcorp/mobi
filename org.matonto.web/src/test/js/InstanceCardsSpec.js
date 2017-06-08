@@ -21,19 +21,25 @@
  * #L%
  */
 describe('Instance Cards directive', function() {
-    var $compile, scope, element, discoverStateSvc;
+    var $compile, scope, element, discoverStateSvc, controller, exploreSvc, utilSvc, $q;
 
     beforeEach(function() {
         module('templates');
         module('instanceCards');
         mockDiscoverState();
+        mockExplore();
+        mockUtil();
 
-        inject(function(_$compile_, _$rootScope_, _discoverStateService_) {
+        inject(function(_$compile_, _$rootScope_, _discoverStateService_, _exploreService_, _utilService_, _$q_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             discoverStateSvc = _discoverStateService_;
+            exploreSvc = _exploreService_;
+            utilSvc = _utilService_;
+            $q = _$q_;
         });
 
+        discoverStateSvc.explore.recordId = 'recordId';
         discoverStateSvc.explore.instanceDetails.data = [{
             title: 'y'
         }, {
@@ -45,6 +51,7 @@ describe('Instance Cards directive', function() {
         }];
         element = $compile(angular.element('<instance-cards></instance-cards>'))(scope);
         scope.$digest();
+        controller = element.controller('instanceCards');
     });
 
     describe('replaces the element with the correct html', function() {
@@ -84,6 +91,12 @@ describe('Instance Cards directive', function() {
         it('with a .overview', function() {
             expect(element.querySelectorAll('.overview').length).toBe(4);
         });
+        it('with a md-card-actions', function() {
+            expect(element.find('md-card-actions').length).toBe(4);
+        });
+        it('with a md-button', function() {
+            expect(element.find('md-button').length).toBe(4);
+        });
     });
     it('properly defines controller.chunks on load', function() {
         var expected = [[{
@@ -96,5 +109,28 @@ describe('Instance Cards directive', function() {
             title: 'z'
         }]];
         expect(angular.copy(element.controller('instanceCards').chunks)).toEqual(expected);
+    });
+    describe('controller methods', function() {
+        describe('view should set the correct variables when getInstance is', function() {
+            it('resolved', function() {
+                var data = {'@id': 'instanceId'};
+                var item = {instanceIRI: 'instanceId', title: 'title'};
+                discoverStateSvc.explore.breadcrumbs = ['', ''];
+                exploreSvc.getInstance.and.returnValue($q.when(data));
+                controller.view(item);
+                scope.$apply();
+                expect(exploreSvc.getInstance).toHaveBeenCalledWith('recordId', 'instanceId');
+                expect(discoverStateSvc.explore.instance.entity).toEqual(data);
+                expect(discoverStateSvc.explore.instance.metadata).toEqual(item);
+                expect(discoverStateSvc.explore.breadcrumbs).toEqual(['', '', 'title']);
+            });
+            it('rejected', function() {
+                exploreSvc.getInstance.and.returnValue($q.reject('error'));
+                controller.view({instanceIRI: 'instanceId', title: 'title'});
+                scope.$apply();
+                expect(exploreSvc.getInstance).toHaveBeenCalledWith('recordId', 'instanceId');
+                expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');
+            });
+        });
     });
 });
