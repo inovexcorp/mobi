@@ -4,7 +4,7 @@
   $Id:$
   $HeadURL:$
   %%
-  Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
+  Copyright (C) 2016 iNovex Information Systems, Inc.
   %%
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU Affero General Public License as published by
@@ -20,8 +20,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="explore-tab row">
-    <class-block ng-if="dvm.ds.explore.breadcrumbs.length === 1" class="col-xs-12"></class-block>
-    <instance-block ng-if="dvm.ds.explore.breadcrumbs.length === 2" class="col-xs-12"></instance-block>
-    <instance-view ng-if="dvm.ds.explore.breadcrumbs.length === 3" class="col-xs-12"></instance-view>
-</div>
+<span class="value-display">
+    <span ng-if="value['@id']" class="has-id">{{dvm.util.getBeautifulIRI(value['@id'])}} <small>&lt;{{value['@id']}}&gt;</small></span>
+    <span ng-if="value['@value']" class="has-value">{{value['@value']}}<small class="text-muted lang-display" ng-if="value['@language']">[language: {{value['@language']}}]</small><small ng-if="value['@type']" class="text-muted type-display">[type: {{value['@type'] | prefixation}}]</small></span>
+</span>
