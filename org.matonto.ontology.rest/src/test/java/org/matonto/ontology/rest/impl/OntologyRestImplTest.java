@@ -358,10 +358,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         individualIRI = valueFactory.createIRI("http://matonto.org/ontology#Individual1a");
         individuals = Collections.singleton(new SimpleNamedIndividual(individualIRI));
         derivedConceptIri = valueFactory.createIRI("https://matonto.org/vocabulary#ConceptSubClass");
-//        concepts = Collections.singleton(new SimpleNamedIndividual(conceptIRI));
         derivedConcepts = Collections.singleton(derivedConceptIri);
-//        conceptSchemeIRI = valueFactory.createIRI("http://matonto.org/ontology#ConceptScheme");
-//        conceptSchemes = Collections.singleton(new SimpleNamedIndividual(conceptSchemeIRI));
         derivedConceptSchemes = Collections.EMPTY_SET;
         importedOntologies = Collections.singleton(importedOntology);
         ontologyIRI = valueFactory.createIRI("http://matonto.org/ontology-id");
@@ -413,8 +410,6 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         when(ontology.getAllObjectProperties()).thenReturn(objectProperties);
         when(ontology.getAllDataProperties()).thenReturn(dataProperties);
         when(ontology.getAllIndividuals()).thenReturn(individuals);
-//        when(ontology.getIndividualsOfType(skosConcept)).thenReturn(concepts);
-//        when(ontology.getIndividualsOfType(skosConceptScheme)).thenReturn(conceptSchemes);
         when(ontology.getImportsClosure()).thenReturn(importedOntologies);
         when(ontology.asJsonLD()).thenReturn(ontologyJsonLd);
         when(importedOntologyId.getOntologyIdentifier()).thenReturn(importedOntologyIRI);
