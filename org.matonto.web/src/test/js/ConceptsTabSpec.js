@@ -78,14 +78,14 @@ describe('Concepts Tab directive', function() {
         it('if it is a concept', function() {
             ontologyStateSvc.selected = {};
             scope.$digest();
-            expect(ontologyManagerSvc.isConcept).toHaveBeenCalledWith(ontologyStateSvc.selected);
+            expect(ontologyManagerSvc.isConcept).toHaveBeenCalledWith(ontologyStateSvc.selected, undefined);
             expect(controller.relationshipList).toBe(ontologyManagerSvc.conceptRelationshipList);
         });
         it('if it is a concept scheme', function() {
             ontologyManagerSvc.isConcept.and.returnValue(false);
             ontologyStateSvc.selected = {};
             scope.$digest();
-            expect(ontologyManagerSvc.isConceptScheme).toHaveBeenCalledWith(ontologyStateSvc.selected);
+            expect(ontologyManagerSvc.isConceptScheme).toHaveBeenCalledWith(ontologyStateSvc.selected, undefined);
             expect(controller.relationshipList).toBe(ontologyManagerSvc.schemeRelationshipList);
         });
     });

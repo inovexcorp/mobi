@@ -44,11 +44,9 @@
                     dvm.relationshipList = [];
 
                     $scope.$watch('dvm.sm.selected', function(newValue) {
-                        if (dvm.om.isConcept(dvm.sm.selected)
-                            || dvm.sm.isDerivedConcept(dvm.sm.listItem, dvm.sm.selected)) {
+                        if (dvm.om.isConcept(dvm.sm.selected, dvm.sm.listItem.derivedConcepts)) {
                             dvm.relationshipList = dvm.om.conceptRelationshipList;
-                        } else if (dvm.om.isConceptScheme(dvm.sm.selected)
-                            || dvm.sm.isDerivedConceptScheme(dvm.sm.listItem, dvm.sm.selected)) {
+                        } else if (dvm.om.isConceptScheme(dvm.sm.selected, dvm.sm.listItem.derivedConceptSchemes)) {
                             dvm.relationshipList = dvm.om.schemeRelationshipList;
                         }
                     });

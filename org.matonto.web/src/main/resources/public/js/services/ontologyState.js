@@ -824,34 +824,6 @@
             self.closeOntology = function(recordId) {
                 _.remove(self.list, {recordId});
             }
-            /**
-             * @ngdoc method
-             * @name isDerivedConcept
-             * @methodOf ontologyState.service:ontologyStateService
-             *
-             * @description
-             * Checks if the provided entity is an skos:Concept entity. Returns a boolean.
-             *
-             * @param {Object} entity The entity you want to check.
-             * @returns {boolean} Returns true if it is an skos:Concept entity, otherwise returns false.
-             */
-            self.isDerivedConcept = function(listItem, entity) {
-                return _.intersection(_.get(entity, '@type', []), listItem.derivedConcepts).length > 0;
-            }
-            /**
-             * @ngdoc method
-             * @name isDerivedConceptScheme
-             * @methodOf ontologyState.service:ontologyStateService
-             *
-             * @description
-             * Checks if the provided entity is an skos:ConceptScheme entity. Returns a boolean.
-             *
-             * @param {Object} entity The entity you want to check.
-             * @returns {boolean} Returns true if it is an skos:ConceptScheme entity, otherwise returns false.
-             */
-            self.isDerivedConceptScheme = function(listItem, entity) {
-                return _.intersection(_.get(entity, '@type', []), listItem.derivedConceptSchemes).length > 0;
-            }
             self.removeBranch = function(recordId, branchId) {
                 _.remove(self.getListItemByRecordId(recordId).branches, {'@id': branchId});
             }
