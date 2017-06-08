@@ -43,6 +43,7 @@
         <module>itests-web</module>
         <module>itests-platform</module>
         <module>itests-etl</module>
+        <module>itests-rest</module>
     </modules>
 
     <properties>
