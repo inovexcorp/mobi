@@ -26,17 +26,13 @@ package org.matonto.itests.rest;
 import static org.junit.Assert.assertTrue;
 
 import javax.inject.Inject;
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Optional;
 
-import net.sf.json.JSON;
 import net.sf.json.JSONObject;
-import net.sf.json.util.JSONBuilder;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -45,6 +41,7 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -88,15 +85,9 @@ public class RESTIT extends KarafTestSupport {
     public void testUploadOntology() throws Exception {
         HttpEntity entity = createFormData("/test-ontology.ttl", "Test Ontology");
         try (CloseableHttpResponse response = uploadFile(entity)) {
-            assertTrue(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK);
-            BufferedReader br = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
-            StringBuilder json = new StringBuilder();
-            String input;
-
-            while ((input = br.readLine()) != null) {
-                json.append(input);
-            }
-            JSON
+            assertTrue(response.getStatusLine().getStatusCode() == HttpStatus.SC_CREATED);
+            JSONObject object = JSONObject.fromObject(EntityUtils.toString(response.getEntity()));
+            ontologyId = Optional.ofNullable(object.get("recordId").toString());
         }
     }
 
@@ -109,7 +100,9 @@ public class RESTIT extends KarafTestSupport {
     public void testUploadVocabulary() throws Exception {
         HttpEntity entity = createFormData("/test-vocabulary.ttl", "Test Vocabulary");
         try (CloseableHttpResponse response = uploadFile(entity)) {
-            assertTrue(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK);
+            assertTrue(response.getStatusLine().getStatusCode() == HttpStatus.SC_CREATED);
+            JSONObject object = JSONObject.fromObject(EntityUtils.toString(response.getEntity()));
+            vocabularyId = Optional.ofNullable(object.get("recordId").toString());
         }
     }
 
