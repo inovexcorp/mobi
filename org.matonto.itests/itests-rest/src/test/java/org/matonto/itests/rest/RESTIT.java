@@ -26,19 +26,29 @@ package org.matonto.itests.rest;
 import static org.junit.Assert.assertTrue;
 
 import javax.inject.Inject;
-import java.io.File;
-import java.io.FileInputStream;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Optional;
 
+import net.sf.json.JSON;
+import net.sf.json.JSONObject;
+import net.sf.json.util.JSONBuilder;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpStatus;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.matonto.itests.support.KarafTestSupport;
-import org.openrdf.model.Model;
-import org.openrdf.model.util.Models;
-import org.openrdf.rio.RDFFormat;
-import org.openrdf.rio.Rio;
 import org.ops4j.pax.exam.junit.PaxExam;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
@@ -49,7 +59,6 @@ import org.osgi.framework.BundleContext;
 public class RESTIT extends KarafTestSupport {
 
     private static Boolean setupComplete = false;
-    private static File outputFile;
 
     @Inject
     protected static BundleContext thisBundleContext;
@@ -58,36 +67,75 @@ public class RESTIT extends KarafTestSupport {
     public synchronized void setup() throws Exception {
         if (setupComplete) return;
 
-        String delimitedFile = "testFile.xlsx";
-        Files.copy(getBundleEntry(thisBundleContext, "/" + delimitedFile), Paths.get(delimitedFile));
+        String ontology = "test-ontology.ttl";
+        Files.copy(getBundleEntry(thisBundleContext, "/" + ontology), Paths.get(ontology));
 
-        String mappingFile = "newestMapping.ttl";
-        Files.copy(getBundleEntry(thisBundleContext, "/" + mappingFile), Paths.get(mappingFile));
+        String vocabulary = "test-vocabulary.ttl";
+        Files.copy(getBundleEntry(thisBundleContext, "/" + vocabulary), Paths.get(vocabulary));
 
-        waitForService("(&(objectClass=org.matonto.etl.api.delimited.DelimitedConverter))", 10000L);
-        waitForService("(&(objectClass=org.matonto.rdf.orm.impl.ThingFactory))", 10000L);
+        waitForService("(&(objectClass=org.matonto.catalog.rest.impl.CatalogRestImpl))", 10000L);
+        waitForService("(&(objectClass=org.matonto.ontology.rest.impl.OntologyRestImpl))", 10000L);
+        waitForService("(&(objectClass=org.matonto.ontology.orm.impl.ThingFactory))", 10000L);
         waitForService("(&(objectClass=org.matonto.rdf.orm.conversion.ValueConverterRegistry))", 10000L);
-
-        String outputFilename = "test.ttl";
-        executeCommand(String.format("matonto:transform -h=true -o=%s %s %s", outputFilename, delimitedFile, mappingFile));
-
-        outputFile = new File(outputFilename);
 
         setupComplete = true;
     }
 
+    private Optional<String> ontologyId = Optional.empty();
+    private Optional<String> vocabularyId = Optional.empty();
+
     @Test
-    public void outputFileExists() throws Exception {
-        assertTrue("Output file does not exist.", outputFile.exists());
+    public void testUploadOntology() throws Exception {
+        HttpEntity entity = createFormData("/test-ontology.ttl", "Test Ontology");
+        try (CloseableHttpResponse response = uploadFile(entity)) {
+            assertTrue(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK);
+            BufferedReader br = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
+            StringBuilder json = new StringBuilder();
+            String input;
+
+            while ((input = br.readLine()) != null) {
+                json.append(input);
+            }
+            JSON
+        }
     }
 
     @Test
-    public void outputContentIsCorrect() throws Exception {
-        Model expected = Rio.parse(getBundleEntry(thisBundleContext, "/testOutput.ttl"), "", RDFFormat.TURTLE);
-        Model actual = Rio.parse(new FileInputStream(outputFile), "", RDFFormat.TURTLE);
+    public void testDeleteOntology() throws Exception {
 
-        // TODO: I get around the UUID issue by setting the localname to values in the cells. We need to support IRI
-        // isomorphism the same way bnode isomorphism is handled.
-        assertTrue(Models.isomorphic(expected, actual));
+    }
+
+    @Test
+    public void testUploadVocabulary() throws Exception {
+        HttpEntity entity = createFormData("/test-vocabulary.ttl", "Test Vocabulary");
+        try (CloseableHttpResponse response = uploadFile(entity)) {
+            assertTrue(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK);
+        }
+    }
+
+    @Test
+    public void testDeleteVocabulary() throws Exception {
+
+    }
+
+
+    private HttpEntity createFormData(String filename, String title) throws IOException {
+        InputStream ontology = getBundleEntry(thisBundleContext, filename);
+        MultipartEntityBuilder mb = MultipartEntityBuilder.create();
+        mb.addBinaryBody("file", ontology, ContentType.APPLICATION_OCTET_STREAM, filename);
+        mb.addTextBody("title", title);
+        mb.addTextBody("description", "Test");
+        mb.addTextBody("keywords", "Test");
+        return mb.build();
+    }
+
+    private CloseableHttpResponse uploadFile(HttpEntity entity) throws IOException {
+        CloseableHttpResponse response;
+        try (CloseableHttpClient client = HttpClients.createDefault()) {
+            HttpPost post = new HttpPost("https://localhost:8443/matontorest/ontologies");
+            post.setEntity(entity);
+            response = client.execute(post);
+        }
+        return response;
     }
 }
