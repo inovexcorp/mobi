@@ -427,8 +427,6 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         when(importedOntology.getAllObjectProperties()).thenReturn(objectProperties);
         when(importedOntology.getAllDataProperties()).thenReturn(dataProperties);
         when(importedOntology.getAllIndividuals()).thenReturn(individuals);
-//        when(importedOntology.getIndividualsOfType(skosConcept)).thenReturn(concepts);
-//        when(importedOntology.getIndividualsOfType(skosConceptScheme)).thenReturn(conceptSchemes);
         when(importedOntology.asJsonLD()).thenReturn(importedOntologyJsonLd);
         when(catalogManager.getLocalCatalog()).thenReturn(catalog);
         when(catalogManager.getLocalCatalogIRI()).thenReturn((IRI) catalogId);
