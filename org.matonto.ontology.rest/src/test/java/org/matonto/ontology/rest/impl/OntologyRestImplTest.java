@@ -85,6 +85,7 @@ import org.matonto.ontology.core.impl.owlapi.propertyExpression.SimpleDataProper
 import org.matonto.ontology.core.impl.owlapi.propertyExpression.SimpleObjectProperty;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.ontology.utils.api.SesameTransformer;
+import org.matonto.persistence.utils.BNodeService;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
@@ -121,7 +122,6 @@ import org.openrdf.rio.WriterConfig;
 import org.openrdf.rio.helpers.JSONLDMode;
 import org.openrdf.rio.helpers.JSONLDSettings;
 import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.ExpectedExceptions;
 import org.testng.annotations.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -172,6 +172,9 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
 
     @Mock
     private Cache<String, Ontology> mockCache;
+
+    @Mock
+    private BNodeService bnodeService;
 
     private ValueConverterRegistry vcr;
     private ModelFactory modelFactory;
@@ -298,6 +301,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         rest.setEngineManager(engineManager);
         rest.setSesameTransformer(sesameTransformer);
         rest.setCacheManager(cacheManager);
+        rest.setbNodeService(bnodeService);
 
         simpleOntologyManager = new SimpleOntologyManager();
         simpleOntologyManager.setModelFactory(modelFactory);
@@ -389,7 +393,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
     @BeforeMethod
     public void setupMocks() {
         reset(engineManager, ontologyId, ontology, importedOntologyId, importedOntology, catalogManager,
-                ontologyManager, sesameTransformer, cacheManager, mockCache);
+                ontologyManager, sesameTransformer, cacheManager, mockCache, bnodeService);
         when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.of(user));
         when(ontologyId.getOntologyIdentifier()).thenReturn(ontologyIRI);
         when(ontology.getOntologyId()).thenReturn(ontologyId);
@@ -469,6 +473,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         entityUsagesConstruct = modelToJsonld(sesameTransformer.sesameModel(constructs));
         when(cacheManager.getCache(Mockito.anyString(), Mockito.eq(String.class), Mockito.eq(Ontology.class))).thenReturn(Optional.of(mockCache));
         rest.setCacheManager(cacheManager);
+        when(bnodeService.skolemize(ontologyModel)).thenReturn(ontologyModel);
+        when(bnodeService.deskolemize(ontologyModel)).thenReturn(ontologyModel);
     }
 
     private JSONObject getResource(String path) throws Exception {
@@ -499,6 +505,11 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
             verify(catalogManager).applyInProgressCommit(any(Resource.class), any(Model.class));
             verify(ontologyManager).createOntology(any(Model.class));
         }
+    }
+
+    private void assertGetDeskolemizedOntology(boolean hasInProgressCommit) {
+        assertGetOntology(hasInProgressCommit);
+        verify(bnodeService).deskolemize(ontologyModel);
     }
 
     private JSONObject createJsonIRI(IRI iri) {
@@ -612,6 +623,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         verify(catalogManager).addRecord(catalogId, record);
         verify(catalogManager).addCommit(eq(catalogId), eq(recordId), eq(branchId), eq(user), anyString(), any(Model.class), eq(null));
         verify(mockCache).put(Mockito.anyString(), Mockito.any(Ontology.class));
+        verify(bnodeService).skolemize(ontologyModel);
     }
 
     @Test
@@ -677,6 +689,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         verify(catalogManager).addRecord(catalogId, record);
         verify(catalogManager).addCommit(eq(catalogId), eq(recordId), eq(branchId), eq(user), anyString(), any(Model.class), eq(null));
         verify(mockCache).put(Mockito.anyString(), Mockito.any(Ontology.class));
+        verify(bnodeService).skolemize(ontologyModel);
     }
 
     @Test
@@ -714,7 +727,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .request().accept(MediaType.APPLICATION_OCTET_STREAM_TYPE).get();
 
         assertEquals(response.getStatus(), 200);
-        assertGetOntology(true);
+        assertGetDeskolemizedOntology(true);
     }
 
     @Test
@@ -726,7 +739,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .request().accept(MediaType.APPLICATION_OCTET_STREAM_TYPE).get();
 
         assertEquals(response.getStatus(), 200);
-        assertGetOntology(false);
+        assertGetDeskolemizedOntology(false);
     }
 
     @Test
@@ -745,7 +758,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .accept(MediaType.APPLICATION_OCTET_STREAM_TYPE).get();
 
         assertEquals(response.getStatus(), 200);
-        assertGetOntology(true);
+        assertGetDeskolemizedOntology(true);
     }
 
     @Test
