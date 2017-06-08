@@ -46,6 +46,7 @@ public interface ExplorableDatasetRest {
      * {@link org.matonto.dataset.ontology.dataset.Dataset} in the local
      * {@link org.matonto.catalog.api.ontologies.mcat.Catalog} in a JSON array.
      *
+     * @param uriInfo   The URI information of the request.
      * @param recordIRI The id of the {@link org.matonto.dataset.ontology.dataset.DatasetRecord} for the
      *                  {@link org.matonto.dataset.ontology.dataset.Dataset} from which to retrieve the data.
      * @return A {@link Response} with a JSON array of ontology objects.
@@ -64,12 +65,13 @@ public interface ExplorableDatasetRest {
      * {@link org.matonto.catalog.api.ontologies.mcat.Catalog} in a JSON array. Can optionally be paged if passed limit
      * and offset. Can optionally be sorted in ascending or descending order based on the instance details title.
      *
-     * @param recordIRI   The id of the {@link org.matonto.dataset.ontology.dataset.DatasetRecord} for the
-     *                    {@link org.matonto.dataset.ontology.dataset.Dataset} to summarize.
-     * @param classIRI    The IRI of the class type to get
-     * @param offset      The offset for a page of Dataset data
-     * @param limit       The number of data to return in one page
-     * @param asc         Whether or not the list should be sorted ascending or descending. Default is ascending.
+     * @param uriInfo   The URI information of the request.
+     * @param recordIRI The id of the {@link org.matonto.dataset.ontology.dataset.DatasetRecord} for the
+     *                  {@link org.matonto.dataset.ontology.dataset.Dataset} to summarize.
+     * @param classIRI  The IRI of the class type to get
+     * @param offset    The offset for a page of Dataset data
+     * @param limit     The number of data to return in one page
+     * @param asc       Whether or not the list should be sorted ascending or descending. Default is ascending.
      * @return A {@link Response} with a JSON object.
      */
     @GET
@@ -83,4 +85,23 @@ public interface ExplorableDatasetRest {
                                 @QueryParam("offset") int offset,
                                 @QueryParam("limit") int limit,
                                 @DefaultValue("true") @QueryParam("ascending") boolean asc);
+
+    /**
+     * Retrieves an instance owned by a {@link org.matonto.dataset.ontology.dataset.Dataset} in the local
+     * {@link org.matonto.catalog.api.ontologies.mcat.Catalog}.
+     *
+     * @param uriInfo     The URI information of the request.
+     * @param recordIRI   The id of the {@link org.matonto.dataset.ontology.dataset.DatasetRecord} for the
+     *                    {@link org.matonto.dataset.ontology.dataset.Dataset} to summarize.
+     * @param instanceIRI The IRI of the instance to get
+     * @return A {@link Response} with a JSON-LD serialization of the desired instance.
+     */
+    @GET
+    @Path("{recordIRI}/instances/{instanceIRI}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Retrieves an instance of a particular class type from a Dataset in the local Catalog")
+    Response getInstance(@Context UriInfo uriInfo,
+                         @PathParam("recordIRI") String recordIRI,
+                         @PathParam("instanceIRI") String instanceIRI);
 }
