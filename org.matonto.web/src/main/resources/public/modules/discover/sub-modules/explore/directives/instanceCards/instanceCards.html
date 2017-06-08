@@ -28,13 +28,16 @@
                     <md-card-title>
                         <md-card-title-text>
                             <span class="card-header">
-                                <span class="md-headline text">{{item.title}}</span>
+                                <span class="md-headline text" title="{{item.instanceIRI}}">{{item.title}}</span>
                             </span>
                         </md-card-title-text>
                     </md-card-title>
                     <md-card-content>
                         <p class="overview">{{item.description}}</p>
                     </md-card-content>
+                    <md-card-actions layout="row" layout-align="end">
+                        <md-button ng-click="dvm.view(item)">View {{dvm.classTitle}}</md-button>
+                    </md-card-actions>
                 </md-card>
             </div>
         </div>

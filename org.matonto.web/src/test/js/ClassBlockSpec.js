@@ -42,7 +42,6 @@ describe('Class Block directive', function() {
         it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
             expect(element.hasClass('class-block')).toBe(true);
-            expect(element.hasClass('full-height')).toBe(true);
         });
         it('with a block', function() {
             expect(element.find('block').length).toBe(1);
