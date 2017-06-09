@@ -1265,11 +1265,11 @@ public class SimpleCatalogManager implements CatalogManager {
         removeObject(commit, conn);
         Resource additionsResource = getAdditionsResource(commit);
         if (!conn.getStatements(null, null, additionsResource).hasNext()) {
-            conn.clear(additionsResource);
+            remove(additionsResource, conn);
         }
         Resource deletionsResource = getDeletionsResource(commit);
         if (!conn.getStatements(null, null, deletionsResource).hasNext()) {
-            conn.clear(deletionsResource);
+            remove(deletionsResource, conn);
         }
     }
 
