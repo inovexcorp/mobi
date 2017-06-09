@@ -61,10 +61,10 @@ describe('Concept Hierarchy directive', function() {
         it('with a block-footer', function() {
             expect(element.find('block-footer').length).toBe(1);
         });
-        it('with a button to delete an entity', function() {
+        it('with a button to delete a concept', function() {
             var button = element.querySelectorAll('block-footer button');
             expect(button.length).toBe(1);
-            expect(angular.element(button[0]).text()).toContain('Delete Entity');
+            expect(angular.element(button[0]).text()).toContain('Delete Concept');
         });
         it('depending on whether a delete should be confirmed', function() {
             expect(element.find('confirmation-overlay').length).toBe(0);
