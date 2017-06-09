@@ -20,20 +20,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Concept Scheme Hierarchy directive', function() {
-    var $compile, scope, element, ontologyStateSvc, ontologyUtilsManagerSvc, controller;
+describe('Concept Scheme Hierarchy Block directive', function() {
+    var $compile, scope, element, ontologyStateSvc, ontologyUtilsManagerSvc, controller, ontologyManagerSvc;
 
     beforeEach(function() {
         module('templates');
         module('conceptSchemeHierarchyBlock');
         mockOntologyState();
+        mockOntologyManager();
         mockOntologyUtilsManager();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyUtilsManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyUtilsManagerService_, _ontologyManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
             ontologyUtilsManagerSvc = _ontologyUtilsManagerService_;
+            ontologyManagerSvc = _ontologyManagerService_;
         });
 
         element = $compile(angular.element('<concept-scheme-hierarchy-block></concept-scheme-hierarchy-block>'))(scope);
@@ -64,7 +66,7 @@ describe('Concept Scheme Hierarchy directive', function() {
         it('with a button to delete a concept scheme', function() {
             var button = element.querySelectorAll('block-footer button');
             expect(button.length).toBe(1);
-            expect(angular.element(button[0]).text()).toContain('Delete Concept Scheme');
+            expect(angular.element(button[0]).text()).toContain('Delete Entity');
         });
         it('depending on whether a delete should be confirmed', function() {
             expect(element.find('confirmation-overlay').length).toBe(0);
@@ -73,6 +75,13 @@ describe('Concept Scheme Hierarchy directive', function() {
             scope.$digest();
 
             expect(element.find('confirmation-overlay').length).toBe(1);
+        });
+        it('depending on whether a concept is being created', function() {
+            expect(element.find('create-concept-scheme-overlay').length).toBe(0);
+
+            ontologyStateSvc.showCreateConceptSchemeOverlay = true;
+            scope.$digest();
+            expect(element.find('create-concept-scheme-overlay').length).toBe(1);
         });
         it('depending on whether a concept scheme is being created', function() {
             expect(element.find('create-concept-scheme-overlay').length).toBe(0);
@@ -91,15 +100,34 @@ describe('Concept Scheme Hierarchy directive', function() {
         });
     });
     describe('controller methods', function() {
-        it('should delete a concept scheme', function() {
-            controller.showDeleteConfirmation = true;
-            controller.deleteEntity();
-            expect(ontologyUtilsManagerSvc.deleteConceptScheme).toHaveBeenCalled();
-            expect(controller.showDeleteConfirmation).toBe(false);
+        describe('should delete an entity', function() {
+            beforeEach(function() {
+                controller.showDeleteConfirmation = true;
+            });
+            it('if it is a concept', function() {
+                controller.deleteEntity();
+                expect(ontologyManagerSvc.isConcept).toHaveBeenCalledWith(ontologyStateSvc.selected, undefined);
+                expect(ontologyUtilsManagerSvc.deleteConcept).toHaveBeenCalled();
+                expect(ontologyUtilsManagerSvc.deleteConceptScheme).not.toHaveBeenCalled();
+                expect(controller.showDeleteConfirmation).toBe(false);
+            });
+            it('if it is a concept scheme', function() {
+                ontologyManagerSvc.isConcept.and.returnValue(false);
+                controller.deleteEntity();
+                expect(ontologyManagerSvc.isConceptScheme).toHaveBeenCalledWith(ontologyStateSvc.selected, undefined);
+                expect(ontologyUtilsManagerSvc.deleteConcept).not.toHaveBeenCalled();
+                expect(ontologyUtilsManagerSvc.deleteConceptScheme).toHaveBeenCalled();
+                expect(controller.showDeleteConfirmation).toBe(false);
+            });
         });
     });
-    it('should set the correct state when the create concept scheme link is clicked', function() {
+    it('should set the correct state when the create concept link is clicked', function() {
         var link = angular.element(element.querySelectorAll('block-header a')[0]);
+        link.triggerHandler('click');
+        expect(ontologyStateSvc.showCreateConceptOverlay).toBe(true);
+    });
+    it('should set the correct state when the create concept scheme link is clicked', function() {
+        var link = angular.element(element.querySelectorAll('block-header a')[1]);
         link.triggerHandler('click');
         expect(ontologyStateSvc.showCreateConceptSchemeOverlay).toBe(true);
     });

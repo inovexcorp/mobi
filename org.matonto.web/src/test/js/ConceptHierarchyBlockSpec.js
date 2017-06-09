@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Concept Hierarchy directive', function() {
+describe('Concept Hierarchy Block directive', function() {
     var $compile, scope, element, ontologyStateSvc, ontologyUtilsManagerSvc, controller;
 
     beforeEach(function() {

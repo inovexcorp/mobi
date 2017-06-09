@@ -36,11 +36,11 @@
                 templateUrl: 'modules/ontology-editor/directives/conceptsTab/conceptsTab.html',
                 scope: {},
                 controllerAs: 'dvm',
-                controller: ['$scope', function($scope) {
+                controller: function($scope) {
                     var dvm = this;
                     dvm.sm = ontologyStateService;
                     dvm.om = ontologyManagerService;
-                }]
+                }
             }
         }
 })();

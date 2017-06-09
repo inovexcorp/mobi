@@ -27,9 +27,9 @@
         .module('conceptSchemeHierarchyBlock', [])
         .directive('conceptSchemeHierarchyBlock', conceptSchemeHierarchyBlock);
 
-        conceptSchemeHierarchyBlock.$inject = ['ontologyStateService', 'ontologyUtilsManagerService'];
+        conceptSchemeHierarchyBlock.$inject = ['ontologyStateService', 'ontologyManagerService', 'ontologyUtilsManagerService'];
 
-        function conceptSchemeHierarchyBlock(ontologyStateService, ontologyUtilsManagerService) {
+        function conceptSchemeHierarchyBlock(ontologyStateService, ontologyManagerService, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -39,10 +39,15 @@
                 controller: function() {
                     var dvm = this;
                     dvm.os = ontologyStateService;
+                    dvm.om = ontologyManagerService
                     dvm.ontoUtils = ontologyUtilsManagerService;
 
                     dvm.deleteEntity = function() {
-                        dvm.ontoUtils.deleteConceptScheme();
+                        if (dvm.om.isConcept(dvm.os.selected, dvm.os.listItem.derivedConcepts)) {
+                            dvm.ontoUtils.deleteConcept();
+                        } else if (dvm.om.isConceptScheme(dvm.os.selected, dvm.os.listItem.derivedConceptSchemes)) {
+                            dvm.ontoUtils.deleteConceptScheme();
+                        }
                         dvm.showDeleteConfirmation = false;
                     }
                 }

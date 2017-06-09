@@ -37,7 +37,7 @@ describe('Concept Schemes Tab directive', function() {
             ontologyStateSvc = _ontologyStateService_;
         });
 
-        element = $compile(angular.element('<concepts-schemes-tab></concepts-schemes-tab>'))(scope);
+        element = $compile(angular.element('<concept-schemes-tab></concept-schemes-tab>'))(scope);
         scope.$digest();
     });
 

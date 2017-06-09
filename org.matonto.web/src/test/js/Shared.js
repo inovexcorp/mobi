@@ -519,6 +519,9 @@ function mockOntologyState() {
                 upToDate: true,
                 conceptHierarchy: [],
                 flatConceptHierarchy: [],
+                conceptSchemeHierarchy: [],
+                conceptSchemeIndex: {},
+                flatConceptSchemeHierarchy: [],
                 iriList: []
             };
             this.states = {};

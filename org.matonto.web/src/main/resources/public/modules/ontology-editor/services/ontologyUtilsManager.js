@@ -122,11 +122,14 @@
                 var entityIRI = os.getActiveEntityIRI();
                 os.deleteEntityFromHierarchy(os.listItem.conceptHierarchy, entityIRI, os.listItem.conceptIndex);
                 os.listItem.flatConceptHierarchy = os.flattenHierarchy(os.listItem.conceptHierarchy, os.listItem.recordId);
+                updateFlatConceptSchemeHierarchy(entityIRI);
                 self.commonDelete(entityIRI);
             }
 
             self.deleteConceptScheme = function() {
-                self.deleteConcept();
+                var entityIRI = os.getActiveEntityIRI();
+                updateFlatConceptSchemeHierarchy(entityIRI);
+                self.commonDelete(entityIRI);
             }
 
             self.getBlankNodeValue = function(id) {
@@ -228,6 +231,11 @@
                     os.addEntityToHierarchy(os.listItem[hierarchyKey], iri, os.listItem[indexKey], propertyIRI);
                 });
                 os.listItem[flatHierarchyKey] = os.flattenHierarchy(os.listItem[hierarchyKey], os.listItem.recordId);
+            }
+
+            function updateFlatConceptSchemeHierarchy(entityIRI) {
+                os.deleteEntityFromHierarchy(os.listItem.conceptSchemeHierarchy, entityIRI, os.listItem.conceptSchemeIndex);
+                os.listItem.flatConceptSchemeHierarchy = os.flattenHierarchy(os.listItem.conceptSchemeHierarchy, os.listItem.recordId);
             }
         }
 })();

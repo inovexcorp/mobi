@@ -968,6 +968,9 @@
                             active: true,
                             entityIRI: entityIRI
                         },
+                        schemes: {
+                            active: false
+                        },
                         concepts: {
                             active: false
                         },
@@ -1150,8 +1153,10 @@
             }
             self.goTo = function(iri) {
                 var entity = self.getEntityByRecordId(self.listItem.recordId, iri);
-                if (self.state.type === 'vocabulary') {
+                if (om.isConcept(entity)) {
                     commonGoTo('concepts', iri, self.listItem.flatConceptHierarchy);
+                } else if (om.isConceptScheme(entity)) {
+                    commonGoTo('schemes', iri, self.listItem.flatConceptSchemeHierarchy);
                 } else if (om.isClass(entity)) {
                     commonGoTo('classes', iri, self.listItem.flatClassHierarchy);
                 } else if (om.isDataTypeProperty(entity)) {
@@ -1256,7 +1261,7 @@
             }
             function findValuesMissingDatatypes(object) {
                 if (_.has(object, '@value')) {
-                    if (!_.has(object, '@type')) {
+                    if (!_.has(object, '@type') && !_.has(object, '@language')) {
                         object['@type'] = prefixes.xsd + "string";
                     }
                 } else if (_.isObject(object)) {
