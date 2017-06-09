@@ -91,7 +91,7 @@ describe('Concept Hierarchy directive', function() {
         });
     });
     describe('controller methods', function() {
-        it('should delete an entity', function() {
+        it('should delete a concept', function() {
             controller.showDeleteConfirmation = true;
             controller.deleteEntity();
             expect(ontologyUtilsManagerSvc.deleteConcept).toHaveBeenCalled();
@@ -103,7 +103,7 @@ describe('Concept Hierarchy directive', function() {
         link.triggerHandler('click');
         expect(ontologyStateSvc.showCreateConceptOverlay).toBe(true);
     });
-    it('should set the correct state when the delete class button is clicked', function() {
+    it('should set the correct state when the delete concept button is clicked', function() {
         var button = angular.element(element.querySelectorAll('block-footer button')[0]);
         button.triggerHandler('click');
         expect(controller.showDeleteConfirmation).toBe(true);
