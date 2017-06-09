@@ -30,7 +30,6 @@ import org.matonto.cache.api.CacheManager;
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.ontologies.mcat.Branch;
 import org.matonto.catalog.api.ontologies.mcat.BranchFactory;
-import org.matonto.catalog.api.ontologies.mcat.OntologyRecordFactory;
 import org.matonto.exception.MatOntoException;
 import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyId;
@@ -284,19 +283,9 @@ public class SimpleOntologyManager implements OntologyManager {
     @Override
     public Optional<Ontology> retrieveOntology(@Nonnull Resource recordId, @Nonnull Resource branchId,
                                                @Nonnull Resource commitId) {
-        Optional<Ontology> result;
         long start = log.isTraceEnabled() ? System.currentTimeMillis() : 0L;
-
-        Optional<Cache<String, Ontology>> optCache = getOntologyCache();
-        String key = OntologyCache.generateKey(recordId.stringValue(), branchId.stringValue(), commitId.stringValue());
-
-        if (optCache.isPresent() && optCache.get().containsKey(key)) {
-            log.trace("cache hit");
-            result = Optional.ofNullable(optCache.get().get(key));
-        } else {
-            result = catalogManager.getCommit(catalogManager.getLocalCatalogIRI(), recordId, branchId, commitId)
-                    .flatMap(commit -> getOntology(recordId, branchId, commitId));
-        }
+        Optional<Ontology> result = catalogManager.getCommit(catalogManager.getLocalCatalogIRI(), recordId, branchId,
+                commitId).flatMap(commit -> getOntology(recordId, branchId, commitId));
 
         if (log.isTraceEnabled()) {
             log.trace(String.format("retrieveOntology(record, branch, commit) complete in %d ms",
@@ -421,9 +410,7 @@ public class SimpleOntologyManager implements OntologyManager {
             log.trace("cache miss");
             final Ontology ontology = createOntologyFromCommit(commitId);
             result = Optional.of(ontology);
-            getOntologyCache().ifPresent(cache -> {
-                cache.put(key, ontology);
-            });
+            getOntologyCache().ifPresent(cache -> cache.put(key, ontology));
         }
         return result;
     }

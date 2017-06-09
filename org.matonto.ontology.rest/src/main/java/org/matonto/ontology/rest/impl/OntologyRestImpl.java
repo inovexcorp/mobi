@@ -836,18 +836,15 @@ public class OntologyRestImpl implements OntologyRest {
                                            String commitIdStr) {
         try {
             Optional<Ontology> optionalOntology = retrieveOntology(recordIdStr, branchIdStr, commitIdStr);
-
             if (optionalOntology.isPresent()) {
                 Optional<InProgressCommit> optional = getInProgressCommit(getUserFromContext(context),
                         valueFactory.createIRI(recordIdStr));
-
                 if (optional.isPresent()) {
                     Model ontologyModel = catalogManager.applyInProgressCommit(optional.get().getResource(),
                             optionalOntology.get().asModel(modelFactory));
                     optionalOntology = Optional.of(ontologyManager.createOntology(ontologyModel));
                 }
             }
-
             return optionalOntology;
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -869,18 +866,15 @@ public class OntologyRestImpl implements OntologyRest {
                                                        String branchIdStr, String commitIdStr) {
         try {
             Optional<Ontology> optionalOntology = retrieveOntology(recordIdStr, branchIdStr, commitIdStr);
-
             if (optionalOntology.isPresent()) {
                 Model ontologyModel = bnodeService.deskolemize(optionalOntology.get().asModel(modelFactory));
                 Optional<InProgressCommit> optional = getInProgressCommit(getUserFromContext(context),
                         valueFactory.createIRI(recordIdStr));
-
                 if (optional.isPresent()) {
                     ontologyModel = catalogManager.applyInProgressCommit(optional.get().getResource(), ontologyModel);
                 }
                 optionalOntology = Optional.of(ontologyManager.createOntology(ontologyModel));
             }
-
             return optionalOntology;
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -899,7 +893,6 @@ public class OntologyRestImpl implements OntologyRest {
      */
     private Optional<Ontology> retrieveOntology(String recordIdStr, String branchIdStr, String commitIdStr) {
         throwErrorIfMissingStringParam(recordIdStr, "The recordIdStr is missing.");
-
         Optional<Cache<String, Ontology>> cache = getOntologyCache();
         String key = OntologyCache.generateKey(recordIdStr, branchIdStr, commitIdStr);
 
@@ -1284,15 +1277,16 @@ public class OntologyRestImpl implements OntologyRest {
         OntologyRecord record = catalogManager.createRecord(builder.build(), ontologyRecordFactory);
         catalogManager.addRecord(catalogId, record);
         Resource masterBranchId = record.getMasterBranch_resource().get();
+        Model skolemizedOntologyModel = bnodeService.skolemize(ontology.asModel(modelFactory));
         Resource commitId = catalogManager.addCommit(catalogId, record.getResource(), masterBranchId, user,
-                "The initial commit.", bnodeService.skolemize(ontology.asModel(modelFactory)), null);
+                "The initial commit.", skolemizedOntologyModel, null);
 
         // Cache
         getOntologyCache().ifPresent(cache -> {
             String key = OntologyCache.generateKey(record.getResource().stringValue(),
                     masterBranchId.stringValue(), commitId.stringValue());
             log.trace("caching " + key);
-            cache.put(key, ontology);
+            cache.put(key, ontologyManager.createOntology(skolemizedOntologyModel));
         });
 
         JSONObject response = new JSONObject()
