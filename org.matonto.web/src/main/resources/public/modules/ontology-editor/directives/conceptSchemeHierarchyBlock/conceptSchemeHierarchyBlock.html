@@ -23,7 +23,7 @@
 <div class="concept-scheme-hierarchy-block">
     <block>
         <block-header>
-            <span>Concept Schemes</span><a class="pull-right" ng-click="dvm.os.unSelectItem(); dvm.os.showCreateConceptOverlay = true"><i class="fa fa-plus"></i><span>Concept</span></a><a class="pull-right" ng-click="dvm.os.showCreateConceptSchemeOverlay = true"><i class="fa fa-plus"></i><span>Scheme</span></a>
+            <span>Concept Schemes</span><!--<a class="pull-right concept-link" ng-click="dvm.os.unSelectItem(); dvm.os.showCreateConceptOverlay = true"><i class="fa fa-plus"></i><span>Concept</span></a>--><a class="pull-right scheme-link" ng-click="dvm.os.showCreateConceptSchemeOverlay = true"><i class="fa fa-plus"></i><span>Scheme</span></a>
         </block-header>
         <block-content>
             <hierarchy-tree hierarchy="dvm.os.listItem.flatConceptSchemeHierarchy"></hierarchy-tree>
@@ -36,5 +36,5 @@
         <p>Are you sure that you want to delete <strong>{{dvm.os.selected['@id']}}</strong>?</p>
     </confirmation-overlay>
     <create-concept-scheme-overlay ng-if="dvm.os.showCreateConceptSchemeOverlay"></create-concept-scheme-overlay>
-    <create-concept-overlay ng-if="dvm.os.showCreateConceptOverlay"></create-concept-overlay>
+    <!-- <create-concept-overlay ng-if="dvm.os.showCreateConceptOverlay"></create-concept-overlay> -->
 </div>

@@ -74,9 +74,9 @@
                         // add the entity to the ontology
                         dvm.os.addEntity(dvm.os.listItem, dvm.scheme);
                         // update relevant lists
-                        var hierarchy = _.get(dvm.os.listItem, 'conceptHierarchy');
+                        var hierarchy = _.get(dvm.os.listItem, 'conceptSchemeHierarchy');
                         hierarchy.push({'entityIRI': dvm.scheme['@id']});
-                        dvm.os.listItem.flatConceptHierarchy = dvm.os.flattenHierarchy(hierarchy, dvm.os.listItem.recordId);
+                        dvm.os.listItem.flatConceptSchemeHierarchy = dvm.os.flattenHierarchy(hierarchy, dvm.os.listItem.recordId);
                         dvm.os.addToAdditions(dvm.os.listItem.recordId, dvm.scheme);
                         // select the new concept
                         dvm.os.selectItem(_.get(dvm.scheme, '@id'));

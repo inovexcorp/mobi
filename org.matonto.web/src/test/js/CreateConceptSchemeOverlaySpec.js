@@ -168,10 +168,10 @@ describe('Create Concept Scheme Overlay directive', function() {
             expect(controller.scheme[prefixes.skos + 'hasTopConcept']).toEqual(controller.concepts);
             expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, controller.scheme);
             expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(controller.scheme, controller.language);
-            expect(ontologyStateSvc.listItem.conceptHierarchy).toContain({entityIRI: controller.scheme['@id']});
+            expect(ontologyStateSvc.listItem.conceptSchemeHierarchy).toContain({entityIRI: controller.scheme['@id']});
             expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, controller.scheme);
-            expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptHierarchy, ontologyStateSvc.listItem.recordId);
-            expect(ontologyStateSvc.listItem.flatConceptHierarchy).toEqual([{prop: 'entity'}]);
+            expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemeHierarchy, ontologyStateSvc.listItem.recordId);
+            expect(ontologyStateSvc.listItem.flatConceptSchemeHierarchy).toEqual([{prop: 'entity'}]);
             expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(controller.scheme['@id']);
             expect(ontologyStateSvc.showCreateConceptSchemeOverlay).toBe(false);
             expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
