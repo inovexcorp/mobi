@@ -43,9 +43,9 @@
                     dvm.utils = ontologyUtilsManagerService;
 
                     dvm.deleteEntity = function() {
-                        if (dvm.om.isConcept(dvm.sm.selected)) {
+                        if (dvm.om.isConcept(dvm.sm.selected, dvm.sm.listItem.derivedConcepts)) {
                             dvm.utils.deleteConcept();
-                        } else if (dvm.om.isConceptScheme(dvm.sm.selected)) {
+                        } else if (dvm.om.isConceptScheme(dvm.sm.selected, dvm.sm.listItem.derivedConceptSchemes)) {
                             dvm.utils.deleteConceptScheme();
                         }
                         dvm.showDeleteConfirmation = false;

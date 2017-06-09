@@ -104,6 +104,8 @@
                 importedOntologyIds: [],
                 annotations: angular.copy(_.union(propertyManagerService.defaultAnnotations,
                     propertyManagerService.skosAnnotations)),
+                derivedConcepts: [],
+                derivedConceptSchemes: [],
                 conceptHierarchy: [],
                 conceptIndex: {},
                 index: {},
@@ -475,9 +477,11 @@
                     om.getImportedOntologies(recordId, branchId, commitId)
                 ]).then(response => {
                     listItem.iriList.push(listItem.ontologyId);
-                    listItem.iriList = _.union(listItem.iriList, _.map(_.flatten(_.values(response[0])), ro.getItemIri))
+                    listItem.iriList = _.union(listItem.iriList, _.map(_.flatten(_.values(response[0])), ro.getItemIri));
                     listItem.subDataProperties = _.get(response[0], 'dataProperties');
                     listItem.subObjectProperties = _.get(response[0], 'objectProperties');
+                    listItem.derivedConcepts = _.map(_.get(response[0], 'derivedConcepts', []), ro.getItemIri);
+                    listItem.derivedConceptSchemes = _.map(_.get(response[0], 'derivedConceptSchemes', []), ro.getItemIri);
                     listItem.annotations = _.unionWith(
                         _.get(response[0], 'annotationProperties'),
                         propertyManagerService.defaultAnnotations,
