@@ -114,7 +114,7 @@ describe('Concept Hierarchy directive', function() {
             });
             it('if it is a concept', function() {
                 controller.deleteEntity();
-                expect(ontologyManagerSvc.isConcept).toHaveBeenCalledWith(ontologyStateSvc.selected);
+                expect(ontologyManagerSvc.isConcept).toHaveBeenCalledWith(ontologyStateSvc.selected, undefined);
                 expect(ontologyUtilsManagerSvc.deleteConcept).toHaveBeenCalled();
                 expect(ontologyUtilsManagerSvc.deleteConceptScheme).not.toHaveBeenCalled();
                 expect(controller.showDeleteConfirmation).toBe(false);
@@ -122,7 +122,7 @@ describe('Concept Hierarchy directive', function() {
             it('if it is a concept scheme', function() {
                 ontologyManagerSvc.isConcept.and.returnValue(false);
                 controller.deleteEntity();
-                expect(ontologyManagerSvc.isConceptScheme).toHaveBeenCalledWith(ontologyStateSvc.selected);
+                expect(ontologyManagerSvc.isConceptScheme).toHaveBeenCalledWith(ontologyStateSvc.selected, undefined);
                 expect(ontologyUtilsManagerSvc.deleteConcept).not.toHaveBeenCalled();
                 expect(ontologyUtilsManagerSvc.deleteConceptScheme).toHaveBeenCalled();
                 expect(controller.showDeleteConfirmation).toBe(false);
