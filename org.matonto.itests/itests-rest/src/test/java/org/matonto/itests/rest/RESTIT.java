@@ -24,6 +24,7 @@ package org.matonto.itests.rest;
  */
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -36,6 +37,7 @@ import net.sf.json.JSONObject;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
@@ -78,37 +80,46 @@ public class RESTIT extends KarafTestSupport {
         setupComplete = true;
     }
 
-    private Optional<String> ontologyId = Optional.empty();
-    private Optional<String> vocabularyId = Optional.empty();
-
     @Test
-    public void testUploadOntology() throws Exception {
+    public void testDeleteOntology() throws Exception {
+        Optional<String> ontologyId;
         HttpEntity entity = createFormData("/test-ontology.ttl", "Test Ontology");
+
         try (CloseableHttpResponse response = uploadFile(entity)) {
             assertTrue(response.getStatusLine().getStatusCode() == HttpStatus.SC_CREATED);
             JSONObject object = JSONObject.fromObject(EntityUtils.toString(response.getEntity()));
             ontologyId = Optional.ofNullable(object.get("recordId").toString());
+            assertTrue(ontologyId.isPresent());
         }
-    }
 
-    @Test
-    public void testDeleteOntology() throws Exception {
-
-    }
-
-    @Test
-    public void testUploadVocabulary() throws Exception {
-        HttpEntity entity = createFormData("/test-vocabulary.ttl", "Test Vocabulary");
-        try (CloseableHttpResponse response = uploadFile(entity)) {
-            assertTrue(response.getStatusLine().getStatusCode() == HttpStatus.SC_CREATED);
-            JSONObject object = JSONObject.fromObject(EntityUtils.toString(response.getEntity()));
-            vocabularyId = Optional.ofNullable(object.get("recordId").toString());
-        }
+        ontologyId.ifPresent(id -> {
+            try (CloseableHttpResponse response = deleteOntology(id)) {
+                assertTrue(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK);
+            } catch (IOException e) {
+                fail("Exception thrown: " + e.getLocalizedMessage());
+            }
+        });
     }
 
     @Test
     public void testDeleteVocabulary() throws Exception {
+        Optional<String> vocabularyId;
+        HttpEntity entity = createFormData("/test-vocabulary.ttl", "Test Vocabulary");
 
+        try (CloseableHttpResponse response = uploadFile(entity)) {
+            assertTrue(response.getStatusLine().getStatusCode() == HttpStatus.SC_CREATED);
+            JSONObject object = JSONObject.fromObject(EntityUtils.toString(response.getEntity()));
+            vocabularyId = Optional.ofNullable(object.get("recordId").toString());
+            assertTrue(vocabularyId.isPresent());
+        }
+
+        vocabularyId.ifPresent(id -> {
+            try (CloseableHttpResponse response = deleteOntology(id)) {
+                assertTrue(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK);
+            } catch (IOException e) {
+                fail("Exception thrown: " + e.getLocalizedMessage());
+            }
+        });
     }
 
 
@@ -128,6 +139,15 @@ public class RESTIT extends KarafTestSupport {
             HttpPost post = new HttpPost("https://localhost:8443/matontorest/ontologies");
             post.setEntity(entity);
             response = client.execute(post);
+        }
+        return response;
+    }
+
+    private CloseableHttpResponse deleteOntology(String recordId) throws IOException {
+        CloseableHttpResponse response;
+        try (CloseableHttpClient client = HttpClients.createDefault()) {
+            HttpDelete delete = new HttpDelete("https://localhost:8443/matontorest/ontologies/" + recordId);
+            response = client.execute(delete);
         }
         return response;
     }
