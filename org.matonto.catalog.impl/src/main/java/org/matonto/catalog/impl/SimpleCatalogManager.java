@@ -1244,7 +1244,9 @@ public class SimpleCatalogManager implements CatalogManager {
             inProgressCommitId) {
         try (RepositoryConnection conn = repository.getConnection()) {
             InProgressCommit commit = getInProgressCommit(catalogId, versionedRDFRecordId, inProgressCommitId, conn);
-            removeObject(commit, conn);
+            conn.begin();
+            removeInProgressCommit(commit, conn);
+            conn.commit();
         }
     }
 
@@ -1253,7 +1255,21 @@ public class SimpleCatalogManager implements CatalogManager {
         try (RepositoryConnection conn = repository.getConnection()) {
             testRecordPath(catalogId, versionedRDFRecordId, versionedRDFRecordFactory.getTypeIRI(), conn);
             InProgressCommit commit = getInProgressCommit(versionedRDFRecordId, user.getResource(), conn);
-            removeObject(commit, conn);
+            conn.begin();
+            removeInProgressCommit(commit, conn);
+            conn.commit();
+        }
+    }
+
+    private void removeInProgressCommit(InProgressCommit commit, RepositoryConnection conn) {
+        removeObject(commit, conn);
+        Resource additionsResource = getAdditionsResource(commit);
+        if (!conn.getStatements(null, null, additionsResource).hasNext()) {
+            conn.clear(additionsResource);
+        }
+        Resource deletionsResource = getDeletionsResource(commit);
+        if (!conn.getStatements(null, null, deletionsResource).hasNext()) {
+            conn.clear(deletionsResource);
         }
     }
 

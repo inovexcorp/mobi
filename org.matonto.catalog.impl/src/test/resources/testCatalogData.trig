@@ -280,8 +280,22 @@ GRAPH <http://matonto.org/test/in-progress-commits#test2>
         prov:wasAssociatedWith <http://matonto.org/test/user/taken> .
 
     <http://matonto.org/test/revisions#in-revision2> a mcat:Revision ;
-        mcat:additions <http://matonto.org/test/in-additions#test> ;
-        mcat:deletions <http://matonto.org/test/in-deletions#test> .
+        mcat:additions <http://matonto.org/test/in-additions2#test> ;
+        mcat:deletions <http://matonto.org/test/in-deletions2#test> .
+}
+
+GRAPH <http://matonto.org/test/in-progress-commits#test3>
+{
+    <http://matonto.org/test/in-progress-commits#test3> a mcat:InProgressCommit, mcat:Commit ;
+        dc:title "In Progress Commit" ;
+        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        prov:generated <http://matonto.org/test/revisions#in-revision> ;
+        prov:wasAssociatedWith <http://matonto.org/test/user/taken> ;
+        mcat:onVersionedRDFRecord <http://matonto.org/test/records#update> .
+
+    <http://matonto.org/test/revisions#in-revision2> a mcat:Revision ;
+        mcat:additions <http://matonto.org/test/additions#test> ;
+        mcat:deletions <http://matonto.org/test/deletions#test> .
 }
 
 GRAPH <http://matonto.org/test/in-additions#test>
