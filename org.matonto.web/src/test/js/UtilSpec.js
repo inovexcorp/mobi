@@ -29,6 +29,7 @@ describe('Util service', function() {
         injectSplitIRIFilter();
         injectBeautifyFilter();
         mockToastr();
+        injectRegexConstant();
 
         inject(function(utilService, _prefixes_, _toastr_, _splitIRIFilter_, _beautifyFilter_, _$filter_, _$httpBackend_, _$q_, _$timeout_) {
             utilSvc = utilService;
@@ -47,12 +48,22 @@ describe('Util service', function() {
         beforeEach(function() {
             this.iri = 'iri';
         });
-        it('if it has a local name', function() {
-            splitIRIFilter.and.returnValue({begin: 'begin', then: 'then', end: 'end'});
-            var result = utilSvc.getBeautifulIRI(this.iri);
-            expect(splitIRIFilter).toHaveBeenCalledWith(this.iri);
-            expect(beautifyFilter).toHaveBeenCalledWith('end');
-            expect(result).toBe('end');
+        describe('if it has a local name', function() {
+            it('that is a UUID', function() {
+                var uuid = '01234567-9ABC-DEF0-1234-56789ABCDEF0';
+                splitIRIFilter.and.returnValue({begin: 'begin', then: 'then', end: uuid});
+                var result = utilSvc.getBeautifulIRI(this.iri);
+                expect(splitIRIFilter).toHaveBeenCalledWith(this.iri);
+                expect(beautifyFilter).not.toHaveBeenCalled();
+                expect(result).toBe(uuid);
+            });
+            it('that is not a UUID', function() {
+                splitIRIFilter.and.returnValue({begin: 'begin', then: 'then', end: 'end'});
+                var result = utilSvc.getBeautifulIRI(this.iri);
+                expect(splitIRIFilter).toHaveBeenCalledWith(this.iri);
+                expect(beautifyFilter).toHaveBeenCalledWith('end');
+                expect(result).toBe('end');
+            });
         });
         it('if it does not have a local name', function() {
             var result = utilSvc.getBeautifulIRI(this.iri);

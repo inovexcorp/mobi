@@ -39,6 +39,8 @@
          * @scope
          * @restrict E
          * @requires discoverState.service:discoverStateService
+         * @requires explore.service:exploreService
+         * @requires util.service:utilService
          *
          * @description
          * `instanceCards` is a directive that creates a div which contains a 3 column grid used to display the
@@ -47,9 +49,9 @@
          */
         .directive('instanceCards', instanceCards);
 
-        instanceCards.$inject = ['discoverStateService']
+        instanceCards.$inject = ['discoverStateService', 'exploreService', 'utilService']
 
-        function instanceCards(discoverStateService) {
+        function instanceCards(discoverStateService, exploreService, utilService) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/discover/sub-modules/explore/directives/instanceCards/instanceCards.html',
@@ -59,7 +61,19 @@
                 controller: ['$scope', function($scope) {
                     var dvm = this;
                     var ds = discoverStateService;
+                    var es = exploreService;
+                    var util = utilService;
                     dvm.chunks = getChunks(ds.explore.instanceDetails.data);
+                    dvm.classTitle = _.last(ds.explore.breadcrumbs);
+                    
+                    dvm.view = function(item) {
+                        es.getInstance(ds.explore.recordId, item.instanceIRI)
+                            .then(response => {
+                                ds.explore.instance.entity = response;
+                                ds.explore.instance.metadata = item;
+                                ds.explore.breadcrumbs.push(item.title);
+                            }, util.createErrorToast);
+                    } 
                     
                     $scope.$watch(() => ds.explore.instanceDetails.data, newValue => {
                         dvm.chunks = getChunks(newValue);

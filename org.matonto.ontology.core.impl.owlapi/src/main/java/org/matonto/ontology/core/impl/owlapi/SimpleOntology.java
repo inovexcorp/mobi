@@ -23,6 +23,22 @@ package org.matonto.ontology.core.impl.owlapi;
  * #L%
  */
 
+import javax.annotation.Nonnull;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.apache.commons.io.IOUtils;
 import org.matonto.ontology.core.api.Annotation;
 import org.matonto.ontology.core.api.Individual;
@@ -35,6 +51,7 @@ import org.matonto.ontology.core.api.datarange.Datatype;
 import org.matonto.ontology.core.api.propertyexpression.AnnotationProperty;
 import org.matonto.ontology.core.api.propertyexpression.DataProperty;
 import org.matonto.ontology.core.api.propertyexpression.ObjectProperty;
+import org.matonto.ontology.core.impl.owlapi.classexpression.SimpleClass;
 import org.matonto.ontology.core.utils.MatOntoStringUtils;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.ontology.utils.api.SesameTransformer;
@@ -78,6 +95,9 @@ import org.semanticweb.owlapi.model.OWLOntologyLoaderConfiguration;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.model.parameters.OntologyCopy;
+import org.semanticweb.owlapi.reasoner.OWLReasoner;
+import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
+import org.semanticweb.owlapi.reasoner.structural.StructuralReasonerFactory;
 import org.semanticweb.owlapi.rio.RioJsonLDParserFactory;
 import org.semanticweb.owlapi.rio.RioMemoryTripleSource;
 import org.semanticweb.owlapi.rio.RioRenderer;
@@ -86,28 +106,11 @@ import org.semanticweb.owlapi.util.OWLOntologyWalkerVisitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-import javax.annotation.Nonnull;
-
-
 
 public class SimpleOntology implements Ontology {
 
     private static final Logger LOG = LoggerFactory.getLogger(SimpleOntologyManager.class);
-    
+
     private OntologyId ontologyId;
     private OntologyManager ontologyManager;
     private SesameTransformer transformer;
@@ -331,14 +334,14 @@ public class SimpleOntology implements Ontology {
                 .map(SimpleOntologyValues::matontoAxiom)
                 .collect(Collectors.toSet());
     }
-    
+
     @Override
     public Set<Datatype> getAllDatatypes() {
         return owlOntology.datatypesInSignature()
                 .map(SimpleOntologyValues::matontoDatatype)
                 .collect(Collectors.toSet());
     }
-    
+
     @Override
     public Set<ObjectProperty> getAllObjectProperties() {
         return owlOntology.objectPropertiesInSignature()
@@ -398,6 +401,20 @@ public class SimpleOntology implements Ontology {
     @Override
     public Set<Individual> getAllIndividuals() {
         return owlOntology.individualsInSignature()
+                .map(SimpleOntologyValues::matontoIndividual)
+                .collect(Collectors.toSet());
+    }
+
+    @Override
+    public Set<Individual> getIndividualsOfType(IRI classIRI) {
+        return getIndividualsOfType(new SimpleClass(classIRI));
+    }
+
+    @Override
+    public Set<Individual> getIndividualsOfType(OClass clazz) {
+        OWLReasonerFactory reasonerFactory = new StructuralReasonerFactory();
+        OWLReasoner reasoner = reasonerFactory.createReasoner(owlOntology);
+        return reasoner.getInstances(SimpleOntologyValues.owlapiClass(clazz)).entities()
                 .map(SimpleOntologyValues::matontoIndividual)
                 .collect(Collectors.toSet());
     }
