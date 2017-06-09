@@ -255,6 +255,14 @@ public interface OntologyManager {
     TupleQueryResult getConceptRelationships(Ontology ontology);
 
     /**
+     * Gets the concept scheme relationships in the provided Ontology.
+     *
+     * @param ontology the Ontology you wish to query.
+     * @return a Set with the query results.
+     */
+    TupleQueryResult getConceptSchemeRelationships(Ontology ontology);
+
+    /**
      * Searches the provided Ontology using the provided searchText.
      *
      * @param ontology   the Ontology you wish to query.

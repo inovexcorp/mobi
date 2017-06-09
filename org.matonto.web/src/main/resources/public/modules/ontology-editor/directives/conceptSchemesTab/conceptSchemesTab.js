@@ -24,20 +24,21 @@
     'use strict';
 
     angular
-        .module('conceptsTab', [])
-        .directive('conceptsTab', conceptsTab);
+        .module('conceptSchemesTab', [])
+        .directive('conceptSchemesTab', conceptSchemesTab);
 
-        conceptsTab.$inject = ['ontologyStateService', 'ontologyManagerService'];
+        conceptSchemesTab.$inject = ['ontologyStateService', 'ontologyManagerService', 'responseObj'];
 
-        function conceptsTab(ontologyStateService, ontologyManagerService) {
+        function conceptSchemesTab(ontologyStateService, ontologyManagerService, responseObj) {
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/conceptsTab/conceptsTab.html',
+                templateUrl: 'modules/ontology-editor/directives/conceptSchemesTab/conceptSchemesTab.html',
                 scope: {},
                 controllerAs: 'dvm',
                 controller: ['$scope', function($scope) {
                     var dvm = this;
+                    var resObj = responseObj;
                     dvm.sm = ontologyStateService;
                     dvm.om = ontologyManagerService;
                 }]

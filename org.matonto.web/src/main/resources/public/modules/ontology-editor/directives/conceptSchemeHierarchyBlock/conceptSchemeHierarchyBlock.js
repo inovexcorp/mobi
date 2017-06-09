@@ -24,23 +24,28 @@
     'use strict';
 
     angular
-        .module('conceptsTab', [])
-        .directive('conceptsTab', conceptsTab);
+        .module('conceptSchemeHierarchyBlock', [])
+        .directive('conceptSchemeHierarchyBlock', conceptSchemeHierarchyBlock);
 
-        conceptsTab.$inject = ['ontologyStateService', 'ontologyManagerService'];
+        conceptSchemeHierarchyBlock.$inject = ['ontologyStateService', 'ontologyUtilsManagerService'];
 
-        function conceptsTab(ontologyStateService, ontologyManagerService) {
+        function conceptSchemeHierarchyBlock(ontologyStateService, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/conceptsTab/conceptsTab.html',
+                templateUrl: 'modules/ontology-editor/directives/conceptSchemeHierarchyBlock/conceptSchemeHierarchyBlock.html',
                 scope: {},
                 controllerAs: 'dvm',
-                controller: ['$scope', function($scope) {
+                controller: function() {
                     var dvm = this;
-                    dvm.sm = ontologyStateService;
-                    dvm.om = ontologyManagerService;
-                }]
+                    dvm.os = ontologyStateService;
+                    dvm.ontoUtils = ontologyUtilsManagerService;
+
+                    dvm.deleteEntity = function() {
+                        dvm.ontoUtils.deleteConceptScheme();
+                        dvm.showDeleteConfirmation = false;
+                    }
+                }
             }
         }
 })();

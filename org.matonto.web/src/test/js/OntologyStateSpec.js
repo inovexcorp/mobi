@@ -109,6 +109,10 @@ describe('Ontology State Service', function() {
         hierarchy: [],
         index: {}
     };
+    var conceptSchemeHierarchiesResponse = {
+        hierarchy: [],
+        index: {}
+    };
     var classesWithIndividualsResponse = {
         individuals: {
             'ClassA': ['IndivA1', 'IndivA2']
@@ -1698,7 +1702,9 @@ describe('Ontology State Service', function() {
     describe('createVocabularyListItem should call the correct functions', function() {
         beforeEach(function() {
             ontologyManagerSvc.getConceptHierarchies.and.returnValue($q.when(conceptHierarchiesResponse));
+            ontologyManagerSvc.getConceptSchemeHierarchies.and.returnValue($q.when(conceptSchemeHierarchiesResponse));
             catalogManagerSvc.getRecordBranches.and.returnValue($q.when({data: branches}));
+            spyOn(ontologyStateSvc, 'flattenHierarchy').and.returnValue([{prop: 'flatten'}]);
         });
         it('when all promises resolve', function() {
             ontologyManagerSvc.getIris.and.returnValue($q.when(irisResponse));
@@ -1708,6 +1714,7 @@ describe('Ontology State Service', function() {
                     expect(ontologyManagerSvc.getIris).toHaveBeenCalledWith(recordId, branchId, commitId);
                     expect(ontologyManagerSvc.getImportedIris).toHaveBeenCalledWith(recordId, branchId, commitId);
                     expect(ontologyManagerSvc.getConceptHierarchies).toHaveBeenCalledWith(recordId, branchId, commitId);
+                    expect(ontologyManagerSvc.getConceptSchemeHierarchies).toHaveBeenCalledWith(recordId, branchId, commitId);
                     expect(catalogManagerSvc.getRecordBranches).toHaveBeenCalledWith(recordId, catalogId);
                     expect(_.get(response, 'subDataProperties')).toEqual([{
                         localName: dataPropertyId2, namespace: dataPropertyId2, ontologyId: ontologyId
@@ -1721,6 +1728,12 @@ describe('Ontology State Service', function() {
                     }]);
                     expect(_.get(response, 'conceptHierarchy')).toEqual(conceptHierarchiesResponse.hierarchy);
                     expect(_.get(response, 'conceptIndex')).toEqual(conceptHierarchiesResponse.index);
+                    expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.conceptHierarchy, recordId, response);
+                    expect(_.get(response, 'flatConceptHierarchy')).toEqual([{prop: 'flatten'}]);
+                    expect(_.get(response, 'conceptHierarchy')).toEqual(conceptSchemeHierarchiesResponse.hierarchy);
+                    expect(_.get(response, 'conceptIndex')).toEqual(conceptSchemeHierarchiesResponse.index);
+                    expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.conceptSchemeHierarchy, recordId, response);
+                    expect(_.get(response, 'flatConceptSchemeHierarchy')).toEqual([{prop: 'flatten'}]);
                     expect(_.get(response, 'branches')).toEqual(branches);
                     expect(_.get(response, 'upToDate')).toBe(true);
                     expect(_.get(response, 'iriList')).toEqual([ontologyId, annotationId, classId, dataPropertyId, objectPropertyId, individualId, datatypeId, annotationId2, classId2, dataPropertyId2, objectPropertyId2, individualId2, datatypeId2]);

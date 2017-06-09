@@ -108,6 +108,10 @@
                 derivedConceptSchemes: [],
                 conceptHierarchy: [],
                 conceptIndex: {},
+                flatConceptHierarchy: [],
+                conceptSchemeHierarchy: [],
+                conceptSchemeIndex: {},
+                flatConceptSchemeHierarchy: [],
                 index: {},
                 additions: [],
                 deletions: [],
@@ -118,7 +122,6 @@
                 branches: [],
                 upToDate: true,
                 isSaved: false,
-                flatConceptHierarchy: [],
                 iriList: []
             };
             var emptyInProgressCommit = {
@@ -473,6 +476,7 @@
                     om.getIris(recordId, branchId, commitId),
                     om.getImportedIris(recordId, branchId, commitId),
                     om.getConceptHierarchies(recordId, branchId, commitId),
+                    om.getConceptSchemeHierarchies(recordId, branchId, commitId),
                     cm.getRecordBranches(recordId, catalogId),
                     om.getImportedOntologies(recordId, branchId, commitId)
                 ]).then(response => {
@@ -515,8 +519,11 @@
                     listItem.conceptHierarchy = response[2].hierarchy;
                     listItem.conceptIndex = response[2].index;
                     listItem.flatConceptHierarchy = self.flattenHierarchy(listItem.conceptHierarchy, recordId, listItem);
-                    listItem.branches = response[3].data;
-                    _.forEach(response[4], importedOntObj => {
+                    listItem.conceptSchemeHierarchy = response[3].hierarchy;
+                    listItem.conceptSchemeIndex = response[3].index;
+                    listItem.flatConceptSchemeHierarchy = self.flattenHierarchy(listItem.conceptSchemeHierarchy, recordId, listItem);
+                    listItem.branches = response[4].data;
+                    _.forEach(response[5], importedOntObj => {
                         addImportedOntologyToListItem(listItem, importedOntObj, 'vocabulary');
                     });
                     listItem.upToDate = upToDate;

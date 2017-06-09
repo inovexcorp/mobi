@@ -20,12 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Concepts Tab directive', function() {
+describe('Concept Schemes Tab directive', function() {
     var $compile, scope, element, controller, ontologyManagerSvc, ontologyStateSvc;
 
     beforeEach(function() {
         module('templates');
-        module('conceptsTab');
+        module('conceptSchemesTab');
         mockOntologyManager();
         mockOntologyState();
         mockResponseObj();
@@ -37,18 +37,18 @@ describe('Concepts Tab directive', function() {
             ontologyStateSvc = _ontologyStateService_;
         });
 
-        element = $compile(angular.element('<concepts-tab></concepts-tab>'))(scope);
+        element = $compile(angular.element('<concepts-schemes-tab></concepts-schemes-tab>'))(scope);
         scope.$digest();
     });
 
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('concepts-tab')).toBe(true);
+            expect(element.hasClass('concept-schemes-tab')).toBe(true);
             expect(element.hasClass('row')).toBe(true);
         });
-        it('with a concept-hierarchy-block', function() {
-            expect(element.find('concept-hierarchy-block').length).toBe(1);
+        it('with a concept-scheme-hierarchy-block', function() {
+            expect(element.find('concept-scheme-hierarchy-block').length).toBe(1);
         });
         it('with a .editor', function() {
             expect(element.querySelectorAll('.editor').length).toBe(1);
