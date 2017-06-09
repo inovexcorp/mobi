@@ -27,9 +27,9 @@
         .module('propertyManager', [])
         .service('propertyManagerService', propertyManagerService);
 
-        propertyManagerService.$inject = ['$rootScope', '$filter', '$q', '$http', 'prefixes'];
+        propertyManagerService.$inject = ['$filter', '$q', '$http', 'prefixes'];
 
-        function propertyManagerService($rootScope, $filter, $q, $http, prefixes) {
+        function propertyManagerService($filter, $q, $http, prefixes) {
             var self = this;
             var prefix = '/matontorest/ontologies/';
 
@@ -72,7 +72,6 @@
                     valuesKey: 'subClasses'
                 }
             ];
-
 
             self.datatypeAxiomList = [
                 {
@@ -142,11 +141,14 @@
                 }
             }
 
-            self.add = function(entity, prop, value, type) {
+            self.add = function(entity, prop, value, type, language) {
                 if (prop) {
                     var annotation = {'@value': value};
                     if (type) {
                         annotation['@type'] = type;
+                    }
+                    if (language) {
+                        annotation['@language'] = language;
                     }
                     if (_.has(entity, prop)) {
                         entity[prop].push(annotation);
@@ -156,19 +158,24 @@
                 }
             }
 
-            self.edit = function(entity, prop, value, index, type) {
+            self.edit = function(entity, prop, value, index, type, language) {
                 if (prop) {
                     var annotation = entity[prop][index];
                     annotation['@value'] = value;
-
                     if (type) {
                         annotation['@type'] = type;
+                    } else {
+                        _.unset(annotation, '@type');
+                    }
+                    if (language) {
+                        annotation['@language'] = language;
+                    } else {
+                        _.unset(annotation, '@language');
                     }
                 }
             }
 
-            self.create = function(ontologyId, annotationIRIs, iri) {
-                $rootScope.showSpinner = true;
+            self.create = function(recordId, annotationIRIs, iri) {
                 var deferred = $q.defer();
                 var annotationJSON = {'@id': iri, '@type': [prefixes.owl + 'AnnotationProperty']};
                 if (_.indexOf(annotationIRIs, iri) === -1) {
@@ -177,22 +184,16 @@
                             annotationjson: annotationJSON
                         }
                     }
-                    $http.post(prefix + encodeURIComponent(ontologyId) + '/annotations', null, config)
+                    $http.post(prefix + encodeURIComponent(recordId) + '/annotations', null, config)
                         .then(response => {
                             if (_.get(response, 'status') === 200) {
                                 deferred.resolve(annotationJSON);
                             } else {
                                 deferred.reject(_.get(response, 'statusText'));
                             }
-                        }, response => {
-                            deferred.reject(_.get(response, 'statusText'));
-                        })
-                        .then(() => {
-                            $rootScope.showSpinner = false;
-                        });
+                        }, response => deferred.reject(_.get(response, 'statusText')));
                 } else {
                     deferred.reject('This ontology already has an OWL Annotation declared with that IRI.');
-                    $rootScope.showSpinner = false;
                 }
                 return deferred.promise;
             }

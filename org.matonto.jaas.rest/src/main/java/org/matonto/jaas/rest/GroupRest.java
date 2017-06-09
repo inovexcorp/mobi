@@ -25,11 +25,14 @@ package org.matonto.jaas.rest;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.matonto.jaas.api.ontologies.usermanagement.Group;
+import org.matonto.jaas.api.ontologies.usermanagement.Role;
 
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.List;
 
 @Path("/groups")
 @Api( value = "/groups")
@@ -46,103 +49,132 @@ public interface GroupRest {
     Response listGroups();
 
     /**
-     * Creates a group in MatOnto with the passed name.
+     * Creates a group in MatOnto with the passed information.
      *
-     * @param groupName the name to give the new group
+     * @param group the new group to create
      * @return a Response indicating the success or failure of the request
      */
     @POST
     @RolesAllowed("admin")
     @ApiOperation("Create a new MatOnto group")
-    Response createGroup(@QueryParam("name") String groupName);
+    @Produces(MediaType.TEXT_PLAIN)
+    @Consumes(MediaType.APPLICATION_JSON)
+    Response createGroup(Group group);
 
     /**
      * Retrieves a specific group in MatOnto.
      *
-     * @param groupName the name of the group to retrieve
+     * @param groupTitle the title of the group to retrieve
      * @return a Response with a JSON representation of the group in MatOnto
      */
     @GET
-    @Path("{groupId}")
-    @RolesAllowed("admin")
+    @Path("{groupTitle}")
+    @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation("Get a single MatOnto group")
-    Response getGroup(@PathParam("groupId") String groupName);
+    Response getGroup(@PathParam("groupTitle") String groupTitle);
 
     /**
      * Updates information about the specified group in MatOnto.
-     * NOT IMPLEMENTED YET
      *
-     * @param groupName the name of the group to update
+     * @param groupTitle the title of the group to update
+     * @param newGroup the new group to replace the existing one
      * @return a Response indicating the success or failure of the request
      */
     @PUT
-    @Path("{groupId}")
+    @Path("{groupTitle}")
     @RolesAllowed("admin")
     @ApiOperation("Update a MatOnto group's information")
-    Response updateGroup(@PathParam("groupId") String groupName);
+    @Consumes(MediaType.APPLICATION_JSON)
+    Response updateGroup(@PathParam("groupTitle") String groupTitle, Group newGroup);
 
     /**
      * Removes a group from MatOnto, and by consequence removing all users from it as well.
      *
-     * @param groupName the name of the group to remove
+     * @param groupTitle the title of the group to remove
      * @return a Response indicating the success or failure of the request
      */
     @DELETE
-    @Path("{groupId}")
+    @Path("{groupTitle}")
     @RolesAllowed("admin")
     @ApiOperation("Remove a MatOnto group")
-    Response deleteGroup(@PathParam("groupId") String groupName);
+    Response deleteGroup(@PathParam("groupTitle") String groupTitle);
 
     /**
      * Retrieves the list of roles of the specified group in MatOnto.
      *
-     * @param groupName the name of the group to retrieve roles from
+     * @param groupTitle the title of the group to retrieve roles from
      * @return a Response with a JSON array of the roles of the group in MatOnto
      */
     @GET
-    @Path("{groupId}/roles")
+    @Path("{groupTitle}/roles")
     @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation("List roles of a MatOnto group")
-    Response getGroupRoles(@PathParam("groupId") String groupName);
+    Response getGroupRoles(@PathParam("groupTitle") String groupTitle);
 
     /**
-     * Adds a role to the specified group in MatOnto.
+     * Adds roles to the specified group in MatOnto.
      *
-     * @param groupName the name of the group to add a role to
-     * @param role the name of the role to add to the specified group
+     * @param groupTitle the title of the group to add a role to
+     * @param roles the name of the roles to add to the specified group
      * @return a Response indicating the success or failure of the request
      */
     @PUT
-    @Path("{groupId}/roles")
+    @Path("{groupTitle}/roles")
     @RolesAllowed("admin")
-    @ApiOperation("Add role to a MatOnto group")
-    Response addGroupRole(@PathParam("groupId") String groupName, @QueryParam("role") String role);
+    @ApiOperation("Add roles to a MatOnto group")
+    Response addGroupRoles(@PathParam("groupTitle") String groupTitle, @QueryParam("roles") List<String> roles);
 
     /**
      * Removes a role from the specified group in MatOnto.
      *
-     * @param groupName the name of the group to remove a role from
+     * @param groupTitle the title of the group to remove a role from
      * @param role the role to remove from the specified group
      * @return a Response indicating the success or failure of the request
      */
     @DELETE
-    @Path("{groupId}/roles")
+    @Path("{groupTitle}/roles")
     @RolesAllowed("admin")
     @ApiOperation("Remove role from a MatOnto group")
-    Response removeGroupRole(@PathParam("groupId") String groupName, @QueryParam("role") String role);
+    Response removeGroupRole(@PathParam("groupTitle") String groupTitle, @QueryParam("role") String role);
 
     /**
      * Retrieves the list of users for the specified group in MatOnto.
      *
-     * @param groupName the name of the group to retrieve users from
+     * @param groupTitle the title of the group to retrieve users from
      * @return a Response with a JSON array of the users of the group in MatOnto
      */
     @GET
-    @Path("{groupId}/users")
-    @RolesAllowed("admin")
+    @Path("{groupTitle}/users")
+    @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation("List users of a MatOnto group")
-    Response getGroupUsers(@PathParam("groupId") String groupName);
+    Response getGroupUsers(@PathParam("groupTitle") String groupTitle);
+
+    /**
+     * Adds the users specified by usernames to the specified group in MatOnto.
+     *
+     * @param groupTitle the title of the group to add users to
+     * @param usernames the list of usernames of users to add to the group
+     * @return a Response indicating the success or failure of the request
+     */
+    @PUT
+    @Path("{groupTitle}/users")
+    @RolesAllowed("admin")
+    @ApiOperation("Add a MatOnto User to a Group")
+    Response addGroupUser(@PathParam("groupTitle") String groupTitle, @QueryParam("users") List<String> usernames);
+
+    /**
+     * Removes the user specified by username from the specified group in MatOnto.
+     *
+     * @param groupTitle the title of the group to remove a user from
+     * @param username the username of the user to remove from the group
+     * @return a Response indicating the success or failure of the request
+     */
+    @DELETE
+    @Path("{groupTitle}/users")
+    @RolesAllowed("admin")
+    @ApiOperation("Remove a MatOnto User from a Group")
+    Response removeGroupUser(@PathParam("groupTitle") String groupTitle, @QueryParam("user") String username);
 }

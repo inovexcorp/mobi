@@ -53,9 +53,9 @@
          */
         .directive('runMappingOverlay', runMappingOverlay);
 
-        runMappingOverlay.$inject = ['$filter', 'mapperStateService', 'mappingManagerService', 'delimitedManagerService'];
+        runMappingOverlay.$inject = ['$filter', 'mapperStateService', 'mappingManagerService', 'delimitedManagerService', 'datasetManagerService', 'utilService', 'prefixes'];
 
-        function runMappingOverlay($filter, mapperStateService, mappingManagerService, delimitedManagerService) {
+        function runMappingOverlay($filter, mapperStateService, mappingManagerService, delimitedManagerService, datasetManagerService, utilService, prefixes) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -66,17 +66,24 @@
                     dvm.state = mapperStateService;
                     dvm.mm = mappingManagerService;
                     dvm.dm = delimitedManagerService;
+                    dvm.dam = datasetManagerService;
+                    dvm.util = utilService;
                     dvm.fileName = ($filter('splitIRI')(dvm.state.mapping.id)).end;
                     dvm.format = 'turtle';
                     dvm.errorMessage = '';
+                    dvm.runMethod = 'download';
+                    dvm.datasetRecords = [];
+
+                    dvm.dam.getDatasetRecords().then(response => {
+                        dvm.datasetRecords =_.map(response.data, arr => _.find(arr, obj => _.includes(obj['@type'], prefixes.dataset + 'DatasetRecord')));
+                    }, onError);
 
                     dvm.run = function() {
                         if (dvm.state.editMapping) {
                             if (_.includes(dvm.mm.mappingIds, dvm.state.mapping.id)) {
-                                dvm.mm.deleteMapping(dvm.state.mapping.id)
-                                    .then(() => saveMapping(), errorMessage => dvm.errorMessage = errorMessage);
+                                dvm.mm.updateMapping(dvm.state.mapping.id, dvm.state.mapping.jsonld).then(runMapping, onError);
                             } else {
-                                saveMapping();
+                                dvm.mm.upload(dvm.state.mapping.jsonld, dvm.state.mapping.id).then(runMapping, onError);
                             }
                         } else {
                             runMapping();
@@ -85,12 +92,21 @@
                     dvm.cancel = function() {
                         dvm.state.displayRunMappingOverlay = false;
                     }
-                    function saveMapping() {
-                        dvm.mm.upload(dvm.state.mapping.jsonld, dvm.state.mapping.id)
-                            .then(() => runMapping(), errorMessage => dvm.errorMessage = errorMessage);
+
+                    function onError(errorMessage) {
+                        dvm.errorMessage = errorMessage;
                     }
                     function runMapping() {
-                        dvm.dm.map(dvm.state.mapping.id, dvm.format, dvm.fileName);
+                        if (dvm.runMethod === 'download') {
+                            dvm.state.changedMapping = false;
+                            dvm.dm.mapAndDownload(dvm.state.mapping.id, dvm.format, dvm.fileName);
+                            reset();
+                        } else {
+                            dvm.dm.mapAndUpload(dvm.state.mapping.id, dvm.datasetRecordIRI).then(reset, onError);
+                        }
+                    }
+                    function reset() {
+                        dvm.state.changedMapping = false;
                         dvm.state.step = dvm.state.selectMappingStep;
                         dvm.state.initialize();
                         dvm.state.resetEdit();

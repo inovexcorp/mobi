@@ -27,9 +27,9 @@
         .module('staticIri', [])
         .directive('staticIri', staticIri);
 
-        staticIri.$inject = ['$filter', 'REGEX', 'ontologyStateService', 'ontologyManagerService'];
+        staticIri.$inject = ['$filter', 'REGEX', 'ontologyStateService', 'ontologyUtilsManagerService', 'toastr'];
 
-        function staticIri($filter, REGEX, ontologyStateService, ontologyManagerService) {
+        function staticIri($filter, REGEX, ontologyStateService, ontologyUtilsManagerService, toastr) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/ontology-editor/directives/staticIri/staticIri.html',
@@ -42,8 +42,9 @@
                 controllerAs: 'dvm',
                 controller: ['$scope', function($scope) {
                     var dvm = this;
-                    dvm.sm = ontologyStateService;
-                    dvm.om = ontologyManagerService;
+                    
+                    dvm.os = ontologyStateService;
+                    dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.refresh = {};
                     dvm.namespacePattern = REGEX.IRI;
                     dvm.localNamePattern = REGEX.LOCALNAME;
@@ -61,13 +62,15 @@
                         dvm.iriEnd = angular.copy(dvm.refresh.iriEnd);
                     }
 
-                    dvm.afterEdit = function() {
-                        var listItem = dvm.om.getListItemById(dvm.sm.state.ontologyId);
-                        _.set(listItem, 'iriBegin', angular.copy(dvm.iriBegin));
-                        _.set(listItem, 'iriThen', angular.copy(dvm.iriThen));
-                        dvm.sm.showIriOverlay = false;
+                    dvm.onSuccess = function() {
+                        toastr.success('', 'Copied', {timeOut: 2000});
                     }
-
+                    
+                    dvm.isOverlay = function() {
+                          return (dvm.os.showIriOverlay || dvm.os.showCreateClassOverlay || dvm.os.showCreatePropertyOverlay 
+                                  || dvm.os.showCreateIndividualOverlay || dvm.os.showCreateConceptOverlay 
+                                  || dvm.os.showCreateConceptSchemeOverlay);
+                    }
                     $scope.$watch('dvm.iri', function() {
                         dvm.setVariables(dvm);
                         dvm.setVariables(dvm.refresh);

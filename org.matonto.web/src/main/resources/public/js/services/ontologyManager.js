@@ -37,15 +37,13 @@
         /**
          * @ngdoc service
          * @name ontologyManager.service:ontologyManagerService
-         * @requires $rootScope
-         * @requires $window
          * @requires $http
          * @requires $q
-         * @requires $timeout
-         * @requires $filter
          * @requires prefixes.service:prefixes
-         * @requires uuid
-         * @requires propertyManager.service:propertyManagerService
+         * @requires catalogManager.service:catalogManagerService
+         * @requires util.service:utilService
+         * @requires $httpParamSerializer
+         * @requires httpService
          *
          * @description
          * `ontologyManagerService` is a service that provides access to the MatOnto ontology REST
@@ -54,100 +52,39 @@
          */
         .service('ontologyManagerService', ontologyManagerService);
 
-        ontologyManagerService.$inject = ['$rootScope', '$window', '$http', '$q', '$timeout', '$filter', 'prefixes',
-            'uuid', 'propertyManagerService'];
+        ontologyManagerService.$inject = ['$http', '$q', '$window', 'prefixes', 'catalogManagerService', 'utilService', '$httpParamSerializer', 'httpService'];
 
-        function ontologyManagerService($rootScope, $window, $http, $q, $timeout, $filter, prefixes, uuid,
-            propertyManagerService) {
+        function ontologyManagerService($http, $q, $window, prefixes, catalogManagerService, utilService, $httpParamSerializer, httpService) {
             var self = this;
-            var prefix = '/matontorest/ontologies/';
-            var defaultDatatypes = _.map(['anyURI', 'boolean', 'byte', 'dateTime', 'decimal', 'double', 'float', 'int',
-                'integer', 'language', 'long', 'string'], function(item) {
+            var prefix = '/matontorest/ontologies';
+            var cm = catalogManagerService;
+            var util = utilService;
+            var catalogId = '';
+
+            /**
+             * @ngdoc property
+             * @name ontologyRecords
+             * @propertyOf ontologyManager.service:ontologyManagerService
+             * @type {Object[]}
+             *
+             * @description
+             * 'ontologyRecords' holds an array of ontology record objects which contain properties for the metadata
+             * associated with that record.
+             */
+            self.ontologyRecords = [];
+            var xsdDatatypes = _.map(['anyURI', 'boolean', 'byte', 'dateTime', 'decimal', 'double', 'float', 'int', 'integer', 'language', 'long', 'string'], item => {
                 return {
                     'namespace': prefixes.xsd,
                     'localName': item
                 }
             });
-            var defaultErrorMessage = defaultErrorMessage;
-            var ontologyListItemTemplate = {
-                ontology: [],
-                ontologyId: '',
-                annotations: angular.copy(propertyManagerService.defaultAnnotations),
-                dataPropertyRange: defaultDatatypes,
-                subClasses: [],
-                subDataProperties: [],
-                subObjectProperties: [],
-                individuals: [],
-                classHierarchy: [],
-                classIndex: {},
-                dataPropertyHierarchy: [],
-                dataPropertyIndex: {},
-                objectPropertyHierarchy: [],
-                objectPropertyIndex: {},
-                classesWithIndividuals: [],
-                blankNodes: {},
-                index: {}
-            };
-            var vocabularyListItemTemplate = {
-                ontology: [],
-                ontologyId: '',
-                annotations: angular.copy(_.union(propertyManagerService.defaultAnnotations, propertyManagerService.skosAnnotations)),
-                conceptHierarchy: [],
-                conceptIndex: {},
-                index: {}
-            };
-
-            /**
-             * @ngdoc property
-             * @name ontologyIds
-             * @propertyOf ontologyManager.service:ontologyManagerService
-             * @type {string[]}
-             *
-             * @description
-             * `ontologyIds` holds an array of the unopened ontology ids in the MatOnto repository.
-             */
-            self.ontologyIds = [];
-            /**
-             * @ngdoc property
-             * @name list
-             * @propertyOf ontologyManager.service:ontologyManagerService
-             * @type {Object[]}
-             *
-             * @description
-             * `list` holds an array of ontology objects which contain properties associated with the ontology.
-             * The structure of the ontology object is:
-             * ```
-             * {
-             *      ontologyId: '',
-             *      ontology: [],
-             *      annotations: [],
-             *      subDataProperties: [],
-             *      subObjectProperties: [],
-             *      dataPropertyRange: [],
-             *      classHierarchy: [],
-             *      individuals: [],
-             *      classesWithIndividuals: [],
-             *      subClasses: [],
-             *      blankNodes: {},
-             *      index: {}
-             * }
-             * ```
-             */
-            self.list = [];
-            /**
-             * @ngdoc property
-             * @name propertyTypes
-             * @propertyOf ontologyManager.service:ontologyManagerService
-             * @type {string[]}
-             *
-             * @description
-             * `propertyTypes` holds an array of the property types available to be added to the property entities
-             * within the ontology.
-             */
-            self.propertyTypes = [
-                prefixes.owl + 'DatatypeProperty',
-                prefixes.owl + 'ObjectProperty'
-            ];
+            var rdfDatatypes = _.map(['langString'], item => {
+                return {
+                    namespace: prefixes.rdf,
+                    localName: item
+                }
+            });
+            self.defaultDatatypes = _.concat(xsdDatatypes, rdfDatatypes);
             /**
              * @ngdoc property
              * @name ontologyProperties
@@ -206,14 +143,11 @@
              * `schemeRelationshipList` holds an array of the relationships that skos:ConceptSchemes can have with other
              * entities.
              */
-            self.schemeRelationshipList = [
-                {
-                    namespace: prefixes.skos,
-                    localName: 'hasTopConcept',
-                    values: 'conceptList'
-                }
-            ];
-
+            self.schemeRelationshipList = [{
+                namespace: prefixes.skos,
+                localName: 'hasTopConcept',
+                values: 'conceptList'
+            }];
             /**
              * @ngdoc method
              * @name reset
@@ -223,8 +157,7 @@
              * Resets all state variables.
              */
             self.reset = function() {
-                self.ontologyIds = [];
-                self.list = [];
+                self.ontologyRecords = [];
             }
             /**
              * @ngdoc method
@@ -232,34 +165,28 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Initializes the `ontologyManagerService` by setting the list of
-             * {@link ontologyManager.service:ontologyManagerService#ontologyIds ontology ids}.
+             * Initializes the `catalogId` variable.
              */
             self.initialize = function() {
-                $rootScope.showSpinner = true;
-                self.getAllOntologyIds()
-                    .then(response => {
-                        self.ontologyIds = _.get(response, 'data', []);
-                    }, response => {
-                        console.log(_.get(response, 'statusText'), 'Something went wrong. Could not load ontology ids.');
-                    })
-                    .then(() => {
-                        $rootScope.showSpinner = false;
-                    });
+                catalogId = _.get(cm.localCatalog, '@id', '');
             }
             /**
              * @ngdoc method
-             * @name getAllOntologyIds
+             * @name getAllOntologyRecords
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Calls the GET /matontorest/ontologies/ontologyids endpoint which gets the list of ontology ids in the
-             * MatOnto repository. Returns a promise with an array of the ontology ids.
+             * Gets a list of all the OntologyRecords in the catalog by utilizing the `catalogManager`. Returns a
+             * promise with an array of the OntologyRecords.
              *
-             * @returns {Promise} A promise with an array of the ontology ids.
+             * @param {Object} sortingOption An object describing the order for the OntologyRecords.
+             * @returns {Promise} A promise with an array of the OntologyRecords.
              */
-            self.getAllOntologyIds = function() {
-                return $http.get(prefix + 'ontologyids');
+            self.getAllOntologyRecords = function(sortingOption) {
+                var deferred = $q.defer();
+                getAllRecords(sortingOption)
+                    .then(response => deferred.resolve(response.data), deferred.reject);
+                return deferred.promise;
             }
             /**
              * @ngdoc method
@@ -268,13 +195,18 @@
              *
              * @description
              * Calls the POST /matontorest/ontologies endpoint which uploads an ontology to the MatOnto repository
-             * with the file provided. Returns a promise indicating whether the ontology was persisted.
+             * with the file provided. This creates a new OntologyRecord associated with this ontology. Returns a
+             * promise indicating whether the ontology was persisted.
              *
              * @param {File} file The ontology file.
+             * @param {string} title The record title.
+             * @param {string} description The record description.
+             * @param {string} keywords The record list of keywords separated by commas.
              * @returns {Promise} A promise indicating whether the ontology was persisted.
              */
-            self.uploadFile = function(file) {
-                var fd = new FormData(),
+            self.uploadFile = function(file, title, description, keywords) {
+                var deferred = $q.defer(),
+                    fd = new FormData(),
                     config = {
                         transformRequest: angular.identity,
                         headers: {
@@ -282,326 +214,404 @@
                         }
                     };
                 fd.append('file', file);
-                return $http.post(prefix, fd, config);
-            }
-            /**
-             * @ngdoc method
-             * @name getOntology
-             * @methodOf ontologyManager.service:ontologyManagerService
-             *
-             * @description
-             * Calls the GET /matontorest/ontologies/{ontologyId} endpoint which gets an ontology from the MatOnto
-             * repository with the JSON-LD ontology string provided. Returns a promise which includes the serialized
-             * ontology.
-             *
-             * @param {string} ontologyId The ontology ID of the ontology you want to get from the repository.
-             * @param {string} [rdfFormat='jsonld'] The format string to identify the serialization requested.
-             * @returns {Promise} A promise containing the ontology id and JSON-LD serialization of the ontology.
-             */
-            self.getOntology = function(ontologyId, rdfFormat = 'jsonld') {
-                var config = {
-                    params: {
-                        rdfformat: rdfFormat
-                    }
-                };
-                return $http.get(prefix + encodeURIComponent(ontologyId), config);
-            }
-            /**
-             * @ngdoc method
-             * @name downloadOntologyFile
-             * @methodOf ontologyManager.service:ontologyManagerService
-             *
-             * @description
-             * Calls the GET /matontorest/ontologies/{ontologyId} endpoint using the `window.location` function which
-             * will start a download of the specified ontology.
-             *
-             * @param {string} ontologyId The ontology ID of the ontology you want to download.
-             * @param {string} [rdfFormat='jsonld'] The format string to identify the serialization requested.
-             * @param {string} [fileName='ontology'] The ontology file name specified.
-             * @returns {Promise} A promise indicating whether the ontology was persisted.
-             */
-            self.downloadOntologyFile = function(ontologyId, rdfFormat = 'jsonld', fileName = 'ontology') {
-                $window.location = prefix + encodeURIComponent(ontologyId)
-                    + `?rdfFormat=${rdfFormat}&fileName=${fileName}`;
-            }
+                fd.append('title', title);
+                if (description) {
+                    fd.append('description', description);
+                }
+                if (keywords) {
+                    fd.append('keywords', keywords);
+                }
+                $http.post(prefix, fd, config)
+                    .then(response => deferred.resolve(response.data), response => util.onError(response, deferred));
 
+                return deferred.promise;
+            }
             /**
              * @ngdoc method
-             * @name uploadThenGet
+             * @name uploadJson
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
              * Calls the POST /matontorest/ontologies endpoint which uploads an ontology to the MatOnto repository
-             * with the file provided and then calls {@link ontologyManager.service:ontologyManagerService#getOntology getOntology}
-             * to get the ontology they just uploaded. Returns a promise.
+             * with the JSON-LD ontology string provided. Creates a new OntologyRecord for the associated ontology.
+             * Returns a promise with the entityIRI and ontologyId for the state of the newly created ontology.
              *
-             * @param {File} file The ontology file.
-             * @returns {Promise} A promise with the ontology ID or error message.
+             * @param {string} ontologyJson The JSON-LD representing the ontology.
+             * @param {string} title The title for the OntologyRecord.
+             * @param {string} description The description for the OntologyRecord.
+             * @param {string} keywords The keywords for the OntologyRecord.
+             * @param {string} type The type (either "ontology" or "vocabulary") for the document being created.
+             * @returns {Promise} A promise with the entityIRI and ontologyId for the state of the newly created
+             * ontology.
              */
-            self.uploadThenGet = function(file, type='ontology') {
-                $rootScope.showSpinner = true;
+            self.uploadJson = function(ontologyJson, title, description, keywords) {
                 var deferred = $q.defer();
-                var onError = function(response) {
-                    deferred.reject(response);
-                    $rootScope.showSpinner = false;
+                var config = {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    params: {title}
                 };
-                var onAddSuccess = function(ontologyId) {
-                    $rootScope.showSpinner = false;
-                    deferred.resolve(ontologyId);
+                if (description) {
+                    config.params.description = description;
                 }
-                var onUploadSuccess = function(ontologyId) {
-                    self.getOntology(ontologyId)
-                        .then(response => {
-                            if (_.get(response, 'status') === 200 && _.has(response, 'data.id')
-                                && _.has(response, 'data.ontology')) {
-                                if (type === 'ontology') {
-                                    addOntologyToList(response.data.id, response.data.ontology).then(() => onAddSuccess(ontologyId));
-                                } else if (type === 'vocabulary') {
-                                    addVocabularyToList(response.data.id, response.data.ontology).then(() => onAddSuccess(ontologyId));
-                                }
-                            } else {
-                                onError(response);
-                            }
-                        }, response => {
-                            onError(response);
-                        });
+                if (keywords) {
+                    config.params.keywords = keywords;
+                }
+                $http.post(prefix, ontologyJson, config)
+                    .then(response => deferred.resolve(response.data), response => util.onError(response, deferred));
+                return deferred.promise;
+            }
+            /**
+             * @ngdoc method
+             * @name getOntology
+             * @methodOf catalogManager.service:catalogManagerService
+             *
+             * @description
+             * Calls the GET /matontorest/ontologies/{recordId} endpoint which retrieves an ontology in the provided
+             * RDF format.
+             *
+             * @param {string} recordId The id of the Record the Branch should be part of
+             * @param {string} branchId The id of the Branch with the specified Commit
+             * @param {string} commitId The id of the Commit to retrieve the ontology from
+             * @param {string} [rdfFormat='jsonld'] The RDF format to return the ontology in
+             * @return {Promise} A promise with the ontology at the specified commit in the specified RDF format`
+             */
+            self.getOntology = function(recordId, branchId, commitId, rdfFormat = 'jsonld') {
+                var deferred = $q.defer();
+                var config = {
+                    headers: {
+                        'Accept': 'text/plain'
+                    },
+                    params: {
+                        branchId,
+                        commitId,
+                        rdfFormat
+                    }
                 };
-                self.uploadFile(file)
-                    .then(response => {
-                        if (_.get(response, 'status') === 200 && _.get(response, 'data.persisted')
-                            && _.has(response, 'data.ontologyId')) {
-                            onUploadSuccess(response.data.ontologyId);
-                        } else {
-                            onError(response);
-                        }
-                    }, response => {
-                        onError(response);
-                    });
+                $http.get(prefix + '/' + encodeURIComponent(recordId), config)
+                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
                 return deferred.promise;
             }
             /**
              * @ngdoc method
-             * @name openOntology
-             * @methodOf ontologyManager.service:ontologyManagerService
+             * @name getOntology
+             * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Used to open an ontology from the MatOnto repository. It calls {@link ontologyManager.service:ontologyManagerService#getOntology getOntology}
-             * to get the specified ontology from the MatOnto repository. Returns a promise.
+             * Calls the DELETE /matontorest/ontologies/{recordId} endpoint which deletes the ontology unless the
+             * branchId is provided. In which case just the branch is removed.
              *
-             * @param {string} ontologyId The ontology ID of the requested ontology.
-             * @returns {Promise} A promise with with the ontology ID or error message.
+             * @param {string} recordId The id of the Record to be deleted if no branchId is provided.
+             * @param {string} branchId The id of the Branch that should be removed.
+             * @return {Promise} HTTP OK unless there was an error.
              */
-            self.openOntology = function(ontologyId, type='ontology') {
-                $rootScope.showSpinner = true;
+            self.deleteOntology = function(recordId, branchId) {
                 var deferred = $q.defer();
-                var onAddSuccess = function() {
-                    _.pull(self.ontologyIds, ontologyId);
-                    deferred.resolve(ontologyId);
-                }
-                self.getOntology(ontologyId)
-                    .then(response => {
-                        if (_.get(response, 'status') === 200 && _.has(response, 'data.id')
-                            && _.has(response, 'data.ontology')) {
-                            if (type === 'ontology') {
-                                addOntologyToList(response.data.id, response.data.ontology).then(onAddSuccess);
-                            } else if (type === 'vocabulary') {
-                                addVocabularyToList(response.data.id, response.data.ontology).then(onAddSuccess);
-                            }
-                        } else {
-                            deferred.reject(_.get(response, 'statusText'));
-                        }
-                    }, response => {
-                        deferred.reject(_.get(response, 'statusText'));
-                    });
-                deferred.promise.then(() => {
-                    $rootScope.showSpinner = false;
-                });
-                return deferred.promise;
-            }
-            /**
-             * @ngdoc method
-             * @name closeOntology
-             * @methodOf ontologyManager.service:ontologyManagerService
-             *
-             * @description
-             * Used to close an ontology from the MatOnto application. It removes the ontology list item from the
-             * {@link ontologyManager.service:ontologyManagerService#list list} and adds the ontology ID to the
-             * {@link ontologyManager.service:ontologyManagerService#ontologyIds ontologyIds array} so that it
-             * can be opened later if necessary.
-             *
-             * @param {string} ontologyId The ontology ID of the requested ontology.
-             */
-            self.closeOntology = function(ontologyId) {
-                _.remove(self.list, item => _.get(item, 'ontologyId') === ontologyId);
-                self.ontologyIds.push(ontologyId);
-            }
-            /**
-             * @ngdoc method
-             * @name getPreview
-             * @methodOf ontologyManager.service:ontologyManagerService
-             *
-             * @description
-             * Used to get the string representation of the requested serialization of the ontology. It calls
-             * {@link ontologyManager.service:ontologyManagerService#getOntology getOntology} to get the specified
-             * ontology from the MatOnto repository. Returns a promise with the string representation of the ontology.
-             *
-             * @param {string} ontologyId The ontology ID of the requested ontology.
-             * @param {string} [rdfFormat='jsonld'] The format string to identify the serialization requested.
-             * @returns {Promise} A promise with the string representation of the ontology.
-             */
-            self.getPreview = function(ontologyId, rdfFormat = 'jsonld') {
-                $rootScope.showSpinner = true;
-                var deferred = $q.defer();
-                self.getOntology(ontologyId, rdfFormat)
-                    .then(response => {
-                        if (_.get(response, 'status') === 200 && _.has(response, 'data.ontology')) {
-                            deferred.resolve((rdfFormat === 'jsonld') ? $filter('json')(response.data.ontology)
-                                : response.data.ontology);
-                        } else {
-                            deferred.reject('No data was returned. This typically happens whenever you try to preview'
-                                + 'a new, unsaved ontology. Please try again after you save the ontology.');
-                        }
-                    }, response => {
-                        deferred.reject('An error has occurred, please try again later');
-                    })
-                    .then(() => {
-                        $rootScope.showSpinner = false;
-                    });
-                return deferred.promise;
-            }
-            /**
-             * @ngdoc method
-             * @name saveChanges
-             * @methodOf ontologyManager.service:ontologyManagerService
-             *
-             * @description
-             * Saves all changes to the ontology with the specified ontology ID. It calls the POST
-             * /matontorest/ontology/{ontologyId} for each of the unsaved entities. Returns a promise with the new
-             * ontology ID.
-             *
-             * @param {string} ontologyId The ontology ID of the requested ontology.
-             * @param {Object[]} unsavedEntities The array of ontology entities with unsaved changes.
-             * @returns {Promise} A promise with the ontology ID.
-             */
-            self.saveChanges = function(ontologyId, unsavedEntities, createdEntities, deletedEntities) {
-                var deferred = $q.defer();
-                var promises = [];
                 var config = {};
-                _.forEach(unsavedEntities, entity => {
-                    config = {
-                        params: {
-                            resourceid: _.get(entity, 'matonto.originalIRI'),
-                            resourcejson: $filter('removeMatonto')(entity)
-                        }
-                    };
-                    promises.push($http.post(prefix + encodeURIComponent(ontologyId), null, config));
-                    // TODO: the following calls should only be done on successful save
-                    // This will be addressed in a future branch dealing with $q.all()
-                    _.set(entity, 'matonto.unsaved', false);
-                    if (_.has(entity, '@id')) {
-                        _.set(entity, 'matonto.originalIRI', entity['@id']);
-                    }
-                });
-                _.forEach(createdEntities, entity => {
-                    var newEntity = $filter('removeMatonto')(entity);
-                    if (self.isClass(entity)) {
-                        promises.push(self.createClass(ontologyId, newEntity));
-                    } else if (self.isObjectProperty(entity)) {
-                        promises.push(self.createObjectProperty(ontologyId, newEntity));
-                    } else if (self.isDataTypeProperty(entity)) {
-                        promises.push(self.createDataTypeProperty(ontologyId, newEntity));
-                    } else if (self.isIndividual(entity)) {
-                        promises.push(self.createIndividual(ontologyId, newEntity));
-                    }
-                    _.set(entity, 'matonto.created', false);
-                });
-                _.forEach(deletedEntities, entity => {
-                    if (self.isClass(entity)) {
-                        promises.push(self.deleteClass(ontologyId, entity.matonto.originalIRI));
-                    } else if (self.isObjectProperty(entity)) {
-                        promises.push(self.deleteObjectProperty(ontologyId, entity.matonto.originalIRI));
-                    } else if (self.isDataTypeProperty(entity)) {
-                        promises.push(self.deleteDataTypeProperty(ontologyId, entity.matonto.originalIRI));
-                    } else if (self.isIndividual(entity)) {
-                        promises.push(self.deleteIndividual(ontologyId, entity.matonto.originalIRI));
-                    }
-                });
-                $q.all(promises)
-                    .then(responses => {
-                        if (!_.some(responses, {data: {updated: false}})) {
-                            var newId = _.get(_.find(responses, response => _.has(response, 'data.id')), 'data.id', ontologyId);
-                            if (ontologyId !== newId) {
-                                self.setOntologyId(ontologyId, newId);
-                            }
-                            deferred.resolve(newId);
-                        } else {
-                            // TODO: find a useful error message if this did go wrong
-                            deferred.reject('An error has occurred.');
-                        }
-                    }, response => {
-                        // TODO: find a more useful error message
-                        deferred.reject('An error has occurred.');
-                    });
+
+                if (branchId) {
+                    config.params = { branchId };
+                }
+
+                $http.delete(prefix + '/' + encodeURIComponent(recordId), config)
+                    .then(response => deferred.resolve(), error => util.onError(error, deferred));
                 return deferred.promise;
             }
             /**
              * @ngdoc method
-             * @name getListItemById
+             * @name downloadOntology
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Gets the associated object from the {@link ontologyManager.service:ontologyManagerService#list list} that
-             * contains the requested ontology ID. Returns the list item.
+             * Calls the GET /matontorest/ontologies/{recordId} endpoint using the `window.location` variable which will
+             * start a download of the ontology starting at the identified Commit.
              *
-             * @param {string} ontologyId The ontology ID of the requested ontology.
-             * @returns {Object} The associated Object from the
-             * {@link ontologyManager.service:ontologyManagerService#list list}.
+             * @param {string} recordId The id of the Record the Branch should be part of
+             * @param {string} branchId The id of the Branch with the specified Commit
+             * @param {string} commitId The id of the Commit to retrieve the ontology from
+             * @param {string} [rdfFormat='jsonld'] The RDF format to return the ontology in
+             * @param {string} [fileName='ontology'] The name given to the downloaded file
              */
-            self.getListItemById = function(ontologyId) {
-                return _.find(self.list, {ontologyId: ontologyId});
+            self.downloadOntology = function(recordId, branchId, commitId, rdfFormat = 'jsonld', fileName = 'ontology') {
+                var params = $httpParamSerializer({
+                    branchId,
+                    commitId,
+                    rdfFormat,
+                    fileName
+                });
+                $window.location = prefix + '/' + encodeURIComponent(recordId) + '?' + params;
             }
             /**
              * @ngdoc method
-             * @name setOntologyId
+             * @name getIris
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Sets the ontology ID in the list item to a new value.
+             * Calls the GET /matontorest/ontologies/{recordId}/iris endpoint and retrieves an object with all the IRIs
+             * defined in the ontology for various entity types.
              *
-             * @param {string} oldId The old ontology ID that will be changed.
-             * @param {string} newId The new ontology ID that it will be changed to.
+             * @param {string} recordId The id of the Record the Branch should be part of
+             * @param {string} branchId The id of the Branch with the specified Commit
+             * @param {string} commitId The id of the Commit to retrieve the ontology from
+             * @return {Promise} A promise with an object containing keys for various entities in the ontology and values
+             * of arrays of IRI strings
              */
-            self.setOntologyId = function(oldId, newId) {
-                _.set(self.getListItemById(oldId), 'ontologyId', newId);
+            self.getIris = function(recordId, branchId, commitId) {
+                var deferred = $q.defer();
+                var config = { params: { branchId, commitId } };
+                $http.get(prefix + '/' + encodeURIComponent(recordId) + '/iris', config)
+                    .then(response => deferred.resolve(response.data), response => util.onError(response, deferred));
+                return deferred.promise;
             }
             /**
              * @ngdoc method
-             * @name getOntologyById
+             * @name getImportedIris
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Gets the ontology from the {@link ontologyManager.service:ontologyManagerService#list list} using the
-             * requested ontology ID. Returns the JSON-LD of the ontology.
+             * Calls the GET /matontorest/ontologies/{recordId}/imported-iris endpoint and retrieves an array of objects
+             * with IRIs for various entity types for each imported ontology of the identified ontology.
              *
-             * @param {string} ontologyId The ontology ID of the requested ontology.
-             * @returns {Object[]} The JSON-LD of the requested ontology.
+             * @param {string} recordId The id of the Record the Branch should be part of
+             * @param {string} branchId The id of the Branch with the specified Commit
+             * @param {string} commitId The id of the Commit to retrieve the ontology from
+             * @return {Promise} A promise with an array of objects containing keys for various entities in an imported
+             * ontology and values of arrays of IRI strings
              */
-            self.getOntologyById = function(ontologyId) {
-                return _.get(self.getListItemById(ontologyId), 'ontology', []);
+            self.getImportedIris = function(recordId, branchId, commitId) {
+                var deferred = $q.defer();
+                var config = { params: { branchId, commitId } };
+                $http.get(prefix + '/' + encodeURIComponent(recordId) + '/imported-iris', config)
+                    .then(response => deferred.resolve(_.get(response, 'status') === 200 ? response.data : []), response => util.onError(response, deferred));
+                return deferred.promise;
             }
             /**
              * @ngdoc method
-             * @name getIdByOntology
+             * @name getClassHierarchies
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Gets the ontology ID of the ontology requested. Returns the ontology ID.
+             * Calls the GET /matontorest/ontologies/{recordId}/class-hierarchies endpoint and retrieves an object with the
+             * hierarchy of classes in the ontology organized by the subClassOf property and with an index of each IRI and
+             * its parent IRIs.
              *
-             * @param {Object[]} ontology The ontology you want to get the ID from.
-             * @returns {string} The ontology ID for the requested ontology.
+             * @param {string} recordId The id of the Record the Branch should be part of
+             * @param {string} branchId The id of the Branch with the specified Commit
+             * @param {string} commitId The id of the Commit to retrieve the ontology from
+             * @return {Promise} A promise with an object containing the class hierarchy and an index of IRIs to parent IRIs
              */
-            self.getIdByOntology = function(ontology) {
-                return _.get(_.find(self.list, {ontology: ontology}), 'id', '');
+            self.getClassHierarchies = function(recordId, branchId, commitId) {
+                var deferred = $q.defer();
+                var config = { params: { branchId, commitId } };
+                $http.get(prefix + '/' + encodeURIComponent(recordId) + '/class-hierarchies', config)
+                    .then(response => deferred.resolve(response.data), response => util.onError(response, deferred));
+                return deferred.promise;
+            }
+            /**
+             * @ngdoc method
+             * @name getClassesWithIndividuals
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Calls the GET /matontorest/ontologies/{recordId}/classes-with-individuals endpoint and retrieves an object
+             * with the hierarchy of classes with individuals in the ontology organized by the subClassOf property and with
+             * an index of each IRI and its parent IRIs.
+             *
+             * @param {string} recordId The id of the Record the Branch should be part of
+             * @param {string} branchId The id of the Branch with the specified Commit
+             * @param {string} commitId The id of the Commit to retrieve the ontology from
+             * @return {Promise} A promise with an object containing the hierarchy of classes with individuals and an index
+             * of IRIs to parent IRIs
+             */
+            self.getClassesWithIndividuals = function(recordId, branchId, commitId) {
+                var deferred = $q.defer();
+                var config = { params: { branchId, commitId } };
+                $http.get(prefix + '/' + encodeURIComponent(recordId) + '/classes-with-individuals', config)
+                    .then(response => deferred.resolve(response.data), response => util.onError(response, deferred));
+                return deferred.promise;
+            }
+            /**
+             * @ngdoc method
+             * @name getDataPropertyHierarchies
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Calls the GET /matontorest/ontologies/{recordId}/data-property-hierarchies endpoint and retrieves an object
+             * with the hierarchy of data properties in the ontology organized by the subPropertyOf property and with an
+             * index of each IRI and its parent IRIs.
+             *
+             * @param {string} recordId The id of the Record the Branch should be part of
+             * @param {string} branchId The id of the Branch with the specified Commit
+             * @param {string} commitId The id of the Commit to retrieve the ontology from
+             * @return {Promise} A promise with an object containing the data property hierarchy and an index of IRIs to
+             * parent IRIs
+             */
+            self.getDataPropertyHierarchies = function(recordId, branchId, commitId) {
+                var deferred = $q.defer();
+                var config = { params: { branchId, commitId } };
+                $http.get(prefix + '/' + encodeURIComponent(recordId) + '/data-property-hierarchies', config)
+                    .then(response => deferred.resolve(response.data), response => util.onError(response, deferred));
+                return deferred.promise;
+            }
+            /**
+             * @ngdoc method
+             * @name getObjectPropertyHierarchies
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Calls the GET /matontorest/ontologies/{recordId}/object-property-hierarchies endpoint and retrieves an object
+             * with the hierarchy of object properties in the ontology organized by the subPropertyOf property and with an
+             * index of each IRI and its parent IRIs.
+             *
+             * @param {string} recordId The id of the Record the Branch should be part of
+             * @param {string} branchId The id of the Branch with the specified Commit
+             * @param {string} commitId The id of the Commit to retrieve the ontology from
+             * @return {Promise} A promise with an object containing the object property hierarchy and an index of IRIs to
+             * parent IRIs
+             */
+            self.getObjectPropertyHierarchies = function(recordId, branchId, commitId) {
+                var deferred = $q.defer();
+                var config = { params: { branchId, commitId } };
+                $http.get(prefix + '/' + encodeURIComponent(recordId) + '/object-property-hierarchies', config)
+                    .then(response => deferred.resolve(response.data), response => util.onError(response, deferred));
+                return deferred.promise;
+            }
+            /**
+             * @ngdoc method
+             * @name getAnnotationPropertyHierarchies
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Calls the GET /matontorest/ontologies/{recordId}/annotation-property-hierarchies endpoint and retrieves an object
+             * with the hierarchy of annotation properties in the ontology organized by the subPropertyOf property and
+             * with an index of each IRI and its parent IRIs.
+             *
+             * @param {string} recordId The id of the Record the Branch should be part of
+             * @param {string} branchId The id of the Branch with the specified Commit
+             * @param {string} commitId The id of the Commit to retrieve the ontology from
+             * @return {Promise} A promise with an object containing the annotation property hierarchy and an index of
+             * IRIs to parent IRIs
+             */
+            self.getAnnotationPropertyHierarchies = function(recordId, branchId, commitId) {
+                var deferred = $q.defer();
+                var config = { params: { branchId, commitId } };
+                $http.get(prefix + '/' + encodeURIComponent(recordId) + '/annotation-property-hierarchies', config)
+                    .then(response => deferred.resolve(response.data), response => util.onError(response, deferred));
+                return deferred.promise;
+            }
+            /**
+             * @ngdoc method
+             * @name getObjectPropertyHierarchies
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Calls the GET /matontorest/ontologies/{recordId}/concept-hierarchies endpoint and retrieves an object
+             * with the hierarchy of concept schemes and concepts in the ontology organized by the inScheme and
+             * hasTopConcept properties and with an index of each IRI and its parent IRIs.
+             *
+             * @param {string} recordId The id of the Record the Branch should be part of
+             * @param {string} branchId The id of the Branch with the specified Commit
+             * @param {string} commitId The id of the Commit to retrieve the ontology from
+             * @return {Promise} A promise with an object containing the concept hierarchy and an index of IRIs to
+             * parent IRIs
+             */
+            self.getConceptHierarchies = function(recordId, branchId, commitId) {
+                var deferred = $q.defer();
+                var config = { params: { branchId, commitId } };
+                $http.get(prefix + '/' + encodeURIComponent(recordId) + '/concept-hierarchies', config)
+                    .then(response => deferred.resolve(response.data), response => util.onError(response, deferred));
+                return deferred.promise;
+            }
+            /**
+             * @ngdoc method
+             * @name getImportedOntologies
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Calls the GET /matontorest/ontologies/{recordId}/imported-ontologies endpoint which gets the list of
+             * all ontologies imported by the ontology with the requested ontology ID.
+             *
+             * @param {string} recordId The record ID of the ontology you want to get from the repository.
+             * @param {string} [rdfFormat='jsonld'] The format string to identify the serialization requested.
+             * @returns {Promise} A promise containing the list of ontologies that are imported by the requested
+             * ontology.
+             */
+            self.getImportedOntologies = function(recordId, branchId, commitId, rdfFormat = 'jsonld') {
+                var deferred = $q.defer();
+                var config = {params: {rdfFormat, branchId, commitId}};
+                $http.get(prefix + '/' + encodeURIComponent(recordId) + '/imported-ontologies', config)
+                    .then(response => {
+                        if (_.get(response, 'status') === 200) {
+                            deferred.resolve(response.data);
+                        } else if (_.get(response, 'status') === 204) {
+                            deferred.resolve([]);
+                        } else {
+                            util.onError(response, deferred);
+                        }
+                    }, response => util.onError(response, deferred));
+                return deferred.promise;
+            }
+            /**
+             * @ngdoc method
+             * @name getEntityUsages
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Calls the GET /matontorest/ontologies/{recordId}/entity-usages/{entityIRI} endpoint which gets the
+             * JSON SPARQL query results for all statements which have the provided entityIRI as an object.
+             *
+             * @param {string} recordId The record ID of the ontology you want to get from the repository.
+             * @param {string} entityIRI The entity IRI of the entity you want the usages for from the repository.
+             * @param {string} queryType The type of query you want to perform (either 'select' or 'construct').
+             * @param {string} id The identifier for this
+             * @returns {Promise} A promise containing the JSON SPARQL query results bindings.
+             */
+            self.getEntityUsages = function(recordId, branchId, commitId, entityIRI, queryType = 'select', id = '') {
+                var deferred = $q.defer();
+                var config = {params: {branchId, commitId, queryType}};
+                var url = prefix + '/' + encodeURIComponent(recordId) + '/entity-usages/' + encodeURIComponent(entityIRI);
+                var promise = id ? httpService.get(url, config, id) : $http.get(url, config);
+                promise.then(response => {
+                    if (queryType === 'construct') {
+                        deferred.resolve(response.data);
+                    } else {
+                        deferred.resolve(response.data.results.bindings);
+                    }
+                }, response => util.onError(response, deferred));
+                return deferred.promise;
+            }
+            /**
+             * @ngdoc method
+             * @name getSearchResults
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Gets the search results for literals that contain the requested search text.
+             *
+             * @param {string} recordId The record ID of the ontology you want to get from the repository.
+             * @param {string} branchId The branch ID of the ontology you want to get from the repository.
+             * @param {string} commitId The commit ID of the ontology you want to get from the repository.
+             * @param {string} searchText The text that you are searching for in the ontology entity literal values.
+             * @param {string} id The id to link this REST call to.
+             * @returns {Promise} A promise containing the SPARQL query results.
+             */
+            self.getSearchResults = function(recordId, branchId, commitId, searchText, id) {
+                var defaultErrorMessage = 'An error has occurred with your search.';
+                var deferred = $q.defer();
+                var config = {params: {searchText, branchId, commitId}};
+
+                httpService.get(prefix + '/' + encodeURIComponent(recordId) + '/search-results', config, id)
+                    .then(response => {
+                        if(_.get(response, 'status') === 200) {
+                            deferred.resolve(response.data);
+                        } else if (_.get(response, 'status') === 204) {
+                            deferred.resolve([]);
+                        } else {
+                            deferred.reject(defaultErrorMessage);
+                        }
+                    }, response => util.onError(response, deferred, defaultErrorMessage));
+                return deferred.promise;
             }
             /**
              * @ngdoc method
@@ -644,7 +654,7 @@
              * @returns {Object} Returns the ontology entity.
              */
             self.getOntologyEntity = function(ontology) {
-                return _.find(ontology, entity => self.isOntology(entity), {});
+                return _.find(ontology, entity => self.isOntology(entity));
             }
             /**
              * @ngdoc method
@@ -659,84 +669,7 @@
              */
             self.getOntologyIRI = function(ontology) {
                 var entity = self.getOntologyEntity(ontology);
-                return _.get(entity, '@id', _.get('matonto.originalIRI', _.get(entity, 'matonto.anonymous', '')));
-            }
-            /**
-             * @ngdoc method
-             * @name deleteOntology
-             * @methodOf ontologyManager.service:ontologyManagerService
-             *
-             * @description
-             * Calls the DELETE /matontorest/ontology/{ontologyId} endpoint which deletes the specified ontology from
-             * the MatOnto repository. Returns a promise with the success of the deletion.
-             *
-             * @param {string} ontologyId The ontology ID of the requested ontology.
-             * @returns {Promise} A promise with a boolean indicating the success of the deletion.
-             */
-            self.deleteOntology = function(ontologyId) {
-                $rootScope.showSpinner = true;
-                var deferred = $q.defer();
-                $http.delete(prefix + encodeURIComponent(ontologyId))
-                    .then(response => {
-                        if (_.get(response, 'data.deleted')) {
-                            _.remove(self.ontologyIds, id => id === ontologyId);
-                            deferred.resolve();
-                        } else {
-                            deferred.reject(_.get(response, 'statusText', defaultErrorMessage));
-                        }
-                    }, response => {
-                        deferred.reject(_.get(response, 'data.error', defaultErrorMessage));
-                    })
-                    .then(() => {
-                        $rootScope.showSpinner = false;
-                    });
-                return deferred.promise;
-            }
-            /**
-             * @ngdoc method
-             * @name createOntology
-             * @methodOf ontologyManager.service:ontologyManagerService
-             *
-             * @description
-             * Calls the POST /matontorest/ontologies endpoint which uploads an ontology to the MatOnto repository
-             * with the JSON-LD ontology string provided. Returns a promise with the entityIRI and ontologyId for the
-             * state of the newly created ontology.
-             *
-             * @param {string} ontologyJSON The JSON-LD representing the ontology.
-             * @returns {Promise} A promise with the entityIRI and ontologyId for the state of the newly created
-             * ontology.
-             */
-            self.createOntology = function(ontologyJSON, type='ontology') {
-                $rootScope.showSpinner = true;
-                var deferred = $q.defer();
-                var config = {
-                    params: {
-                        ontologyjson: ontologyJSON
-                    }
-                };
-                $http.post(prefix, null, config)
-                    .then(response => {
-                        if (_.has(response, 'data.persisted') && _.has(response, 'data.ontologyId')) {
-                            _.set(ontologyJSON, 'matonto.originalIRI', ontologyJSON['@id']);
-                            var listItem = (type === 'ontology') ? angular.copy(ontologyListItemTemplate)
-                                : angular.copy(vocabularyListItemTemplate);
-                            listItem.ontology.push(ontologyJSON);
-                            listItem.ontologyId = response.data.ontologyId;
-                            self.list.push(listItem);
-                            deferred.resolve({
-                                entityIRI: ontologyJSON['@id'],
-                                ontologyId: response.data.ontologyId
-                            });
-                        } else {
-                            deferred.reject(_.get(response, 'statusText', defaultErrorMessage));
-                        }
-                    }, response => {
-                        deferred.reject(_.get(response, 'statusText', defaultErrorMessage));
-                    })
-                    .then(() => {
-                        $rootScope.showSpinner = false;
-                    });
-                return deferred.promise;
+                return _.get(entity, '@id', _.get(entity, 'matonto.anonymous', ''));
             }
             /**
              * @ngdoc method
@@ -758,14 +691,14 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Checks if the provided ontology contains any owl:Class entities. Returns a boolean.
+             * Checks if the provided ontologies contain any owl:Class entities. Returns a boolean.
              *
-             * @param {Object[]} ontology The ontology you want to check.
-             * @returns {boolean} Returns true if there are any owl:Class entities in the ontology, otherwise returns
+             * @param {Object[]} ontologies The array of ontologies you want to check.
+             * @returns {boolean} Returns true if there are any owl:Class entities in the ontologies, otherwise returns
              * false.
              */
-            self.hasClasses = function(ontology) {
-                return _.some(ontology, entity => self.isClass(entity) && !self.isBlankNode(entity));
+            self.hasClasses = function(ontologies) {
+                return _.some(ontologies, ont => _.some(ont, entity => self.isClass(entity) && !self.isBlankNode(entity)));
             }
             /**
              * @ngdoc method
@@ -773,14 +706,19 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Gets the list of all owl:Class entities within the provided ontology that are not blank nodes. Returns
+             * Gets the list of all owl:Class entities within the provided ontologies that are not blank nodes. Returns
              * an Object[].
              *
-             * @param {Object[]} ontology The ontology you want to check.
-             * @returns {Object[]} An array of all owl:Class entities within the ontology.
+             * @param {Object[]} ontologies The array of ontologies you want to check.
+             * @returns {Object[]} An array of all owl:Class entities within the ontologies.
              */
-            self.getClasses = function(ontology) {
-                return _.filter(ontology, entity => self.isClass(entity) && !self.isBlankNode(entity));
+            self.getClasses = function(ontologies) {
+                var classes = [];
+                _.forEach(ontologies, ont => {
+                    classes.push.apply(classes,
+                        _.filter(ont, entity => self.isClass(entity) && !self.isBlankNode(entity)));
+                });
+                return classes;
             }
             /**
              * @ngdoc method
@@ -788,82 +726,14 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Gets the list of all owl:Class entity IRIs within the provided ontology that are not blank nodes. Returns
-             * an string[].
+             * Gets the list of all owl:Class entity IRIs within the provided ontologies that are not blank nodes.
+             * Returns a string[].
              *
-             * @param {Object[]} ontology The ontology you want to check.
-             * @returns {string[]} An array of all owl:Class entity IRI strings within the ontology.
+             * @param {Object[]} ontologies The array of ontologies you want to check.
+             * @returns {string[]} An array of all owl:Class entity IRI strings within the ontologies.
              */
-            self.getClassIRIs = function(ontology) {
-                return _.map(self.getClasses(ontology), 'matonto.originalIRI');
-            }
-            /**
-             * @ngdoc method
-             * @name deleteClass
-             * @methodOf ontologyManager.service:ontologyManagerService
-             *
-             * @description
-             * Calls the DELETE /matontorest/ontology/{ontologyId}/classes/{classId} endpoint which deletes the
-             * specified class from the ontology in the MatOnto repository. Returns a promise with the success of the
-             * deletion.
-             *
-             * @param {string} ontologyId The ontology ID of the requested ontology.
-             * @returns {Promise} A promise with a boolean indicating the success of the deletion.
-             */
-            self.deleteClass = function(ontologyId, classIRI) {
-                return $http.delete(prefix + encodeURIComponent(ontologyId) + '/classes/' + encodeURIComponent(classIRI));
-            }
-            /**
-             * @ngdoc method
-             * @name createClass
-             * @methodOf ontologyManager.service:ontologyManagerService
-             *
-             * @description
-             * Calls the POST /matontorest/ontologies/{ontologyId}/classes endpoint which adds the provided class to
-             * the ontology within the MatOnto repository. Returns a promise with the entityIRI and ontologyId for the
-             * state of the newly created class.
-             *
-             * @param {string} ontologyId The ontology ID of the requested ontology.
-             * @param {string} classJSON The JSON-LD representing the owl:Class to create.
-             * @returns {Promise} A promise with the $http response of the POST.
-             */
-            self.createClass = function(ontologyId, classJSON) {
-                var config = {
-                    params: {
-                        resourcejson: classJSON
-                    }
-                };
-                return $http.post(prefix + encodeURIComponent(ontologyId) + '/classes', null, config);
-            }
-            /**
-             * @ngdoc method
-             * @name updateClassHierarchies
-             * @methodOf ontologyManager.service:ontologyManagerService
-             *
-             * @description
-             * Calls the GET /matontorest/ontologies/{ontologyId}/class-hierarchies endpoint which gets the class
-             * hierarchy of the ontology for the provided ontology ID and uses the response data to update the list
-             * item's class hierarchy associated with the provided ontology ID.
-             *
-             * @param {string} ontologyId The ontology ID of the requested ontology.
-             * @returns {Promise} An empty promise
-             */
-            self.updateClassHierarchies = function(ontologyId) {
-                var deferred = $q.defer();
-                $http.get(prefix + encodeURIComponent(ontologyId) + '/class-hierarchies')
-                    .then(hierarchyResponse => {
-                        if (_.get(hierarchyResponse, 'status') === 200) {
-                            var listItem = self.getListItemById(ontologyId);
-                            listItem.classHierarchy = hierarchyResponse.data.hierarchy;
-                            listItem.classIndex = hierarchyResponse.data.index;
-                        }
-                        deferred.resolve();
-                    }, () => {
-                        // TODO: perhaps use a toast to let the user know this in the future
-                        console.log('Unable to update class hierarchy');
-                        deferred.resolve();
-                    });
-                return deferred.promise;
+            self.getClassIRIs = function(ontologies) {
+                return _.map(self.getClasses(ontologies), '@id');
             }
             /**
              * @ngdoc method
@@ -871,15 +741,15 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Checks to see if the class within the provided ontology has an properties associated it via the
+             * Checks to see if the class within the provided ontologies has any properties associated it via the
              * rdfs:domain axiom. Returns a boolean indicating the existence of those properties.
              *
-             * @param {Object[]} ontology The ontology you want to check.
+             * @param {Object[]} ontologies The array of ontologies you want to check.
              * @param {string} classIRI The class IRI of the class you want to check about.
              * @returns {boolean} Returns true if it does have properties, otherwise returns false.
              */
-            self.hasClassProperties = function(ontology, classIRI) {
-                return _.some(ontology, {[prefixes.rdfs + 'domain']: [{'@id': classIRI}]});
+            self.hasClassProperties = function(ontologies, classIRI) {
+                return _.some(ontologies, ont => _.some(ont, {[prefixes.rdfs + 'domain']: [{'@id': classIRI}]}));
             }
             /**
              * @ngdoc method
@@ -887,15 +757,20 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Gets the properties associated with the class within the provided ontology by the rdfs:domain axiom.
+             * Gets the properties associated with the class within the provided ontologies by the rdfs:domain axiom.
              * Returns an array of all the properties associated with the provided class IRI.
              *
-             * @param {Object[]} ontology The ontology you want to check.
+             * @param {Object[]} ontologies The array of ontologies you want to check.
              * @param {string} classIRI The class IRI of the class you want to check about.
              * @returns {Object[]} Returns an array of all the properties associated with the provided class IRI.
              */
-            self.getClassProperties = function(ontology, classIRI) {
-                return _.filter(ontology, {[prefixes.rdfs + 'domain']: [{'@id': classIRI}]});
+            self.getClassProperties = function(ontologies, classIRI) {
+                var classProperties = [];
+                _.forEach(ontologies, ont => {
+                    classProperties.push.apply(classProperties,
+                        _.filter(ont, {[prefixes.rdfs + 'domain']: [{'@id': classIRI}]}));
+                });
+                return classProperties;
             }
             /**
              * @ngdoc method
@@ -903,15 +778,15 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Gets the property IRIs associated with the class within the provided ontology by the rdfs:domain axiom.
+             * Gets the property IRIs associated with the class within the provided ontologies by the rdfs:domain axiom.
              * Returns an array of all the property IRIs associated with the provided class IRI.
              *
-             * @param {Object[]} ontology The ontology you want to check.
+             * @param {Object[]} ontologies The array of ontologies you want to check.
              * @param {string} classIRI The class IRI of the class you want to check about.
              * @returns {string[]} Returns an array of all the property IRIs associated with the provided class IRI.
              */
-            self.getClassPropertyIRIs = function(ontology, classIRI) {
-                return _.map(self.getClassProperties(ontology, classIRI), 'matonto.originalIRI');
+            self.getClassPropertyIRIs = function(ontologies, classIRI) {
+                return _.map(self.getClassProperties(ontologies, classIRI), '@id');
             }
             /**
              * @ngdoc method
@@ -929,6 +804,56 @@
             }
             /**
              * @ngdoc method
+             * @name hasObjectProperties
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Checks if the provided ontologies contain any owl:ObjectProperty entities. Returns a boolean.
+             *
+             * @param {Object[]} ontologies The array of ontologies you want to check.
+             * @returns {boolean} Returns true if there are any owl:ObjectProperty entities in the ontologies, otherwise
+             * returns false.
+             */
+            self.hasObjectProperties = function(ontologies) {
+                return _.some(ontologies, ont => _.some(ont, entity => self.isObjectProperty(entity) && !self.isBlankNode(entity)));
+            }
+            /**
+             * @ngdoc method
+             * @name getObjectProperties
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Gets the list of all owl:ObjectProperty entities within the provided ontologies that are not blank nodes.
+             * Returns an Object[].
+             *
+             * @param {Object[]} ontologies The array of ontologies you want to check.
+             * @returns {Object[]} An array of all owl:ObjectProperty entities within the ontologies.
+             */
+            self.getObjectProperties = function(ontologies) {
+                var objectProperties = [];
+                _.forEach(ontologies, ont => {
+                    objectProperties.push.apply(objectProperties,
+                        _.filter(ont, entity => self.isObjectProperty(entity) && !self.isBlankNode(entity)));
+                });
+                return objectProperties;
+            }
+            /**
+             * @ngdoc method
+             * @name getObjectPropertyIRIs
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Gets the list of all owl:ObjectProperty entity IRIs within the provided ontologies that are not blank
+             * nodes. Returns an string[].
+             *
+             * @param {Object[]} ontologies The array of ontologies you want to check.
+             * @returns {string[]} An array of all owl:ObjectProperty entity IRI strings within the ontologies.
+             */
+            self.getObjectPropertyIRIs = function(ontologies) {
+                return _.map(self.getObjectProperties(ontologies), '@id');
+            }
+            /**
+             * @ngdoc method
              * @name isDataTypeProperty
              * @methodOf ontologyManager.service:ontologyManagerService
              *
@@ -942,6 +867,56 @@
                 var types = _.get(entity, '@type', []);
                 return _.includes(types, prefixes.owl + 'DatatypeProperty')
                     || _.includes(types, prefixes.owl + 'DataTypeProperty');
+            }
+            /**
+             * @ngdoc method
+             * @name hasDataTypeProperties
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Checks if the provided ontologies contain any owl:DatatypeProperty entities. Returns a boolean.
+             *
+             * @param {Object[]} ontologies The array of ontologies you want to check.
+             * @returns {boolean} Returns true if there are any owl:DatatypeProperty entities in the ontologies,
+             * otherwise returns false.
+             */
+            self.hasDataTypeProperties = function(ontologies) {
+                return _.some(ontologies, ont => _.some(ont, entity => self.isDataTypeProperty(entity)));
+            }
+            /**
+             * @ngdoc method
+             * @name getDataTypeProperties
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Gets the list of all owl:DatatypeProperty entities within the provided ontologies that are not blank
+             * nodes. Returns an Object[].
+             *
+             * @param {Object[]} ontologies The array of ontologies you want to check.
+             * @returns {Object[]} An array of all owl:DatatypeProperty entities within the ontologies.
+             */
+            self.getDataTypeProperties = function(ontologies) {
+                var dataTypeProperties = [];
+                _.forEach(ontologies, ont => {
+                    dataTypeProperties.push.apply(dataTypeProperties,
+                        _.filter(ont, entity => self.isDataTypeProperty(entity) && !self.isBlankNode(entity)));
+                });
+                return dataTypeProperties;
+            }
+            /**
+             * @ngdoc method
+             * @name getDataTypePropertyIRIs
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Gets the list of all owl:DatatypeProperty entity IRIs within the provided ontologies that are not blank
+             * nodes. Returns an string[].
+             *
+             * @param {Object[]} ontologies The array of ontologies you want to check.
+             * @returns {string[]} An array of all owl:DatatypeProperty entity IRI strings within the ontologies.
+             */
+            self.getDataTypePropertyIRIs = function(ontologies) {
+                return _.map(self.getDataTypeProperties(ontologies),'@id');
             }
             /**
              * @ngdoc method
@@ -964,15 +939,16 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Checks if the provided ontology has any property that is not associated with a class by the rdfs:domain
-             * axiom. Return a boolean indicating if any such properties exist.
+             * Checks if the provided ontologies have any properties that are not associated with a class by the
+             * rdfs:domain axiom. Return a boolean indicating if any such properties exist.
              *
-             * @param {Object[]} ontology The ontology you want to check.
+             * @param {Object[]} ontologies The array of ontologies you want to check.
              * @returns {boolean} Returns true if it contains properties without an rdfs:domain set, otherwise returns
              * false.
              */
-            self.hasNoDomainProperties = function(ontology) {
-                return _.some(ontology, entity => self.isProperty(entity) && !_.has(entity, prefixes.rdfs + 'domain'));
+            self.hasNoDomainProperties = function(ontologies) {
+                return _.some(ontologies, ont =>
+                            _.some(ont, entity => self.isProperty(entity) && !_.has(entity, prefixes.rdfs + 'domain')));
             }
             /**
              * @ngdoc method
@@ -983,11 +959,16 @@
              * Gets the list of properties that are not associated with a class by the rdfs:domain axiom. Returns an
              * array of the properties not associated with a class.
              *
-             * @param {Object[]} ontology The ontology you want to check.
+             * @param {Object[]} ontologies The array of ontologies you want to check.
              * @returns {Object[]} Returns an array of properties not associated with a class.
              */
-            self.getNoDomainProperties = function(ontology) {
-                return _.filter(ontology, entity => self.isProperty(entity) && !_.has(entity, prefixes.rdfs + 'domain'));
+            self.getNoDomainProperties = function(ontologies) {
+                var noDomainProperties = [];
+                _.forEach(ontologies, ont => {
+                    noDomainProperties.push.apply(noDomainProperties,
+                        _.filter(ont, entity => self.isProperty(entity) && !_.has(entity, prefixes.rdfs + 'domain')));
+                });
+                return noDomainProperties;
             }
             /**
              * @ngdoc method
@@ -998,181 +979,25 @@
              * Gets the list of property IRIs that are not associated with a class by the rdfs:domain axiom. Returns an
              * array of the property IRIs not associated with a class.
              *
-             * @param {Object[]} ontology The ontology you want to check.
+             * @param {Object[]} ontologies The array of ontologies you want to check.
              * @returns {string[]} Returns an array of property IRIs not associated with a class.
              */
-            self.getNoDomainPropertyIRIs = function(ontology) {
-                return _.map(self.getNoDomainProperties(ontology), 'matonto.originalIRI');
+            self.getNoDomainPropertyIRIs = function(ontologies) {
+                return _.map(self.getNoDomainProperties(ontologies), '@id');
             }
             /**
              * @ngdoc method
-             * @name hasObjectProperties
+             * @name isAnnotation
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Checks if the provided ontology contains any owl:ObjectProperty entities. Returns a boolean.
+             * Checks if the provided entity is an owl:AnnotationProperty entity. Returns a boolean.
              *
-             * @param {Object[]} ontology The ontology you want to check.
-             * @returns {boolean} Returns true if there are any owl:ObjectProperty entities in the ontology, otherwise
-             * returns false.
+             * @param {Object} entity The entity you want to check.
+             * @returns {boolean} Returns true if it is an owl:AnnotationProperty entity, otherwise returns false.
              */
-            self.hasObjectProperties = function(ontology) {
-                return _.some(ontology, entity => self.isObjectProperty(entity) && !self.isBlankNode(entity));
-            }
-            /**
-             * @ngdoc method
-             * @name getObjectProperties
-             * @methodOf ontologyManager.service:ontologyManagerService
-             *
-             * @description
-             * Gets the list of all owl:ObjectProperty entities within the provided ontology that are not blank nodes.
-             * Returns an Object[].
-             *
-             * @param {Object[]} ontology The ontology you want to check.
-             * @returns {Object[]} An array of all owl:ObjectProperty entities within the ontology.
-             */
-            self.getObjectProperties = function(ontology) {
-                return _.filter(ontology, entity => self.isObjectProperty(entity) && !self.isBlankNode(entity));
-            }
-            /**
-             * @ngdoc method
-             * @name getObjectPropertyIRIs
-             * @methodOf ontologyManager.service:ontologyManagerService
-             *
-             * @description
-             * Gets the list of all owl:ObjectProperty entity IRIs within the provided ontology that are not blank
-             * nodes. Returns an string[].
-             *
-             * @param {Object[]} ontology The ontology you want to check.
-             * @returns {string[]} An array of all owl:ObjectProperty entity IRI strings within the ontology.
-             */
-            self.getObjectPropertyIRIs = function(ontology) {
-                return _.map(self.getObjectProperties(ontology), 'matonto.originalIRI');
-            }
-            /**
-             * @ngdoc method
-             * @name deleteObjectProperty
-             * @methodOf ontologyManager.service:ontologyManagerService
-             *
-             * @description
-             * Calls the DELETE /matontorest/ontology/{ontologyId}/object-properties/{propertyId} endpoint which
-             * deletes the specified property from the ontology in the MatOnto repository. Returns a promise with the
-             * success of the deletion.
-             *
-             * @param {string} ontologyId The ontology ID of the requested ontology.
-             * @param {string} propertyIRI The IRI of the object property you want to delete.
-             * @returns {Promise} A promise with a boolean indicating the success of the deletion.
-             */
-            self.deleteObjectProperty = function(ontologyId, propertyIRI) {
-                return $http.delete(prefix + encodeURIComponent(ontologyId) + '/object-properties/' + encodeURIComponent(propertyIRI));
-            }
-            /**
-             * @ngdoc method
-             * @name createObjectProperty
-             * @methodOf ontologyManager.service:ontologyManagerService
-             *
-             * @description
-             * Calls the POST /matontorest/ontology/{ontologyId}/object-properties endpoint which adds the provided
-             * object property to the ontology within the MatOnto repository. Returns a promise with the entityIRI and
-             * ontologyId for the state of the newly created object property.
-             *
-             * @param {string} ontologyId The ontology ID of the requested ontology.
-             * @param {string} propertyJSON The JSON-LD representing the owl:ObjectProperty to create.
-             * @returns {Promise} A promise with the entityIRI and ontologyId for the state of the newly created
-             * property.
-             */
-            self.createObjectProperty = function(ontologyId, propertyJSON) {
-                var config = {
-                    params: {
-                        resourcejson: propertyJSON
-                    }
-                };
-                return $http.post(prefix + encodeURIComponent(ontologyId) + '/object-properties', null, config);
-            }
-            /**
-             * @ngdoc method
-             * @name hasDataTypeProperties
-             * @methodOf ontologyManager.service:ontologyManagerService
-             *
-             * @description
-             * Checks if the provided ontology contains any owl:DatatypeProperty entities. Returns a boolean.
-             *
-             * @param {Object[]} ontology The ontology you want to check.
-             * @returns {boolean} Returns true if there are any owl:DatatypeProperty entities in the ontology, otherwise
-             * returns false.
-             */
-            self.hasDataTypeProperties = function(ontology) {
-                return _.some(ontology, entity =>  self.isDataTypeProperty(entity));
-            }
-            /**
-             * @ngdoc method
-             * @name getDataTypeProperties
-             * @methodOf ontologyManager.service:ontologyManagerService
-             *
-             * @description
-             * Gets the list of all owl:DatatypeProperty entities within the provided ontology that are not blank nodes.
-             * Returns an Object[].
-             *
-             * @param {Object[]} ontology The ontology you want to check.
-             * @returns {Object[]} An array of all owl:DatatypeProperty entities within the ontology.
-             */
-            self.getDataTypeProperties = function(ontology) {
-                return _.filter(ontology, entity => self.isDataTypeProperty(entity) && !self.isBlankNode(entity));
-            }
-            /**
-             * @ngdoc method
-             * @name getDataTypePropertyIRIs
-             * @methodOf ontologyManager.service:ontologyManagerService
-             *
-             * @description
-             * Gets the list of all owl:DatatypeProperty entity IRIs within the provided ontology that are not blank
-             * nodes. Returns an string[].
-             *
-             * @param {Object[]} ontology The ontology you want to check.
-             * @returns {string[]} An array of all owl:DatatypeProperty entity IRI strings within the ontology.
-             */
-            self.getDataTypePropertyIRIs = function(ontology) {
-                return _.map(self.getDataTypeProperties(ontology), 'matonto.originalIRI');
-            }
-            /**
-             * @ngdoc method
-             * @name deleteDataTypeProperty
-             * @methodOf ontologyManager.service:ontologyManagerService
-             *
-             * @description
-             * Calls the DELETE /matontorest/ontology/{ontologyId}/data-properties/{propertyId} endpoint which
-             * deletes the specified property from the ontology in the MatOnto repository. Returns a promise with the
-             * success of the deletion.
-             *
-             * @param {string} ontologyId The ontology ID of the requested ontology.
-             * @param {string} propertyIRI The IRI of the datatype property you want to delete.
-             * @returns {Promise} A promise with a boolean indicating the success of the deletion.
-             */
-            self.deleteDataTypeProperty = function(ontologyId, propertyIRI) {
-                return $http.delete(prefix + encodeURIComponent(ontologyId) + '/data-properties/' + encodeURIComponent(propertyIRI));
-            }
-            /**
-             * @ngdoc method
-             * @name createDataTypeProperty
-             * @methodOf ontologyManager.service:ontologyManagerService
-             *
-             * @description
-             * Calls the POST /matontorest/ontology/{ontologyId}/data-properties endpoint which adds the provided
-             * object property to the ontology within the MatOnto repository. Returns a promise with the entityIRI and
-             * ontologyId for the state of the newly created object property.
-             *
-             * @param {string} ontologyId The ontology ID of the requested ontology.
-             * @param {string} propertyJSON The JSON-LD representing the owl:ObjectProperty to create.
-             * @returns {Promise} A promise with the entityIRI and ontologyId for the state of the newly created
-             * property.
-             */
-            self.createDataTypeProperty = function(ontologyId, propertyJSON) {
-                var config = {
-                    params: {
-                        resourcejson: propertyJSON
-                    }
-                };
-                return $http.post(prefix + encodeURIComponent(ontologyId) + '/data-properties', null, config);
+            self.isAnnotation = function(entity) {
+                return _.includes(_.get(entity, '@type', []), prefixes.owl + 'AnnotationProperty');
             }
             /**
              * @ngdoc method
@@ -1180,14 +1005,15 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Checks if the provided ontology contains any owl:AnnotationProperty entities. Returns a boolean.
+             * Checks if the provided ontologies contain any owl:AnnotationProperty entities. Returns a boolean.
              *
-             * @param {Object[]} ontology The ontology you want to check.
-             * @returns {boolean} Returns true if there are any owl:AnnotationProperty entities in the ontology,
+             * @param {Object[]} ontologies The array of ontologies you want to check.
+             * @returns {boolean} Returns true if there are any owl:AnnotationProperty entities in the ontologies,
              * otherwise returns false.
              */
-            self.hasAnnotations = function(ontology) {
-                return _.some(ontology, {'@type': [prefixes.owl + 'AnnotationProperty']});
+            self.hasAnnotations = function(ontologies) {
+                return _.some(ontologies, ont =>
+                            _.some(ont, entity => self.isAnnotation(entity) && !self.isBlankNode(entity)));
             }
             /**
              * @ngdoc method
@@ -1195,13 +1021,18 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Gets the list of all owl:AnnotationProperty entities within the provided ontology. Returns an Object[].
+             * Gets the list of all owl:AnnotationProperty entities within the provided ontologies. Returns an Object[].
              *
-             * @param {Object[]} ontology The ontology you want to check.
-             * @returns {Object[]} An array of all owl:AnnotationProperty entities within the ontology.
+             * @param {Object[]} ontologies The array of ontologies you want to check.
+             * @returns {Object[]} An array of all owl:AnnotationProperty entities within the ontologies.
              */
-            self.getAnnotations = function(ontology) {
-                return _.filter(ontology, {'@type': [prefixes.owl + 'AnnotationProperty']});
+            self.getAnnotations = function(ontologies) {
+                var annotations = [];
+                _.forEach(ontologies, ont => {
+                    annotations.push.apply(annotations,
+                        _.filter(ont, entity => self.isAnnotation(entity) && !self.isBlankNode(entity)));
+                });
+                return annotations;
             }
             /**
              * @ngdoc method
@@ -1209,14 +1040,14 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Gets the list of all owl:AnnotationProperty entity IRIs within the provided ontology that are not blank
+             * Gets the list of all owl:AnnotationProperty entity IRIs within the provided ontologies that are not blank
              * nodes. Returns an string[].
              *
-             * @param {Object[]} ontology The ontology you want to check.
-             * @returns {string[]} An array of all owl:AnnotationProperty entity IRI strings within the ontology.
+             * @param {Object[]} ontologies The array of ontologies you want to check.
+             * @returns {string[]} An array of all owl:AnnotationProperty entity IRI strings within the ontologies.
              */
-            self.getAnnotationIRIs = function(ontology) {
-                return _.map(self.getAnnotations(ontology), 'matonto.originalIRI');
+            self.getAnnotationIRIs = function(ontologies) {
+                return _.map(self.getAnnotations(ontologies), '@id');
             }
             /**
              * @ngdoc method
@@ -1238,14 +1069,14 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Checks to see if the ontology has individuals. Returns a boolean indicating the existence of those
+             * Checks to see if the ontologies have individuals. Returns a boolean indicating the existence of those
              * individuals.
              *
-             * @param {Object[]} ontology The ontology you want to check.
+             * @param {Object[]} ontologies The array of ontologies you want to check.
              * @returns {boolean} Returns true if it does have individuals, otherwise returns false.
              */
-            self.hasIndividuals = function(ontology) {
-                return _.some(ontology, entity => self.isIndividual(entity));
+            self.hasIndividuals = function(ontologies) {
+                return _.some(ontologies, ont => _.some(ont, entity => self.isIndividual(entity)));
             }
             /**
              * @ngdoc method
@@ -1253,13 +1084,17 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Gets the list of all owl:NamedIndividual entities within the provided ontology. Returns an Object[].
+             * Gets the list of all owl:NamedIndividual entities within the provided ontologies. Returns an Object[].
              *
-             * @param {Object[]} ontology The ontology you want to check.
-             * @returns {Object[]} An array of all owl:NamedIndividual entities within the ontology.
+             * @param {Object[]} ontologies The array of ontologies you want to check.
+             * @returns {Object[]} An array of all owl:NamedIndividual entities within the ontologies.
              */
-            self.getIndividuals = function(ontology) {
-                return _.filter(ontology, entity => self.isIndividual(entity));
+            self.getIndividuals = function(ontologies) {
+                var individuals = [];
+                _.forEach(ontologies, ont => {
+                    individuals.push.apply(individuals, _.filter(ont, entity => self.isIndividual(entity)));
+                });
+                return individuals;
             }
             /**
              * @ngdoc method
@@ -1267,14 +1102,15 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Checks to see if the ontology has individuals with no other type. Returns a boolean indicating the
+             * Checks to see if the ontologies have individuals with no other type. Returns a boolean indicating the
              * existence of those individuals.
              *
-             * @param {Object[]} ontology The ontology you want to check.
+             * @param {Object[]} ontologies The array of ontologies you want to check.
              * @returns {boolean} Returns true if it does have individuals with no other type, otherwise returns false.
              */
-            self.hasNoTypeIndividuals = function(ontology) {
-                return _.some(ontology, entity => self.isIndividual(entity) && entity['@type'].length === 1);
+            self.hasNoTypeIndividuals = function(ontologies) {
+                return _.some(ontologies, ont =>
+                            _.some(ont, entity => self.isIndividual(entity) && entity['@type'].length === 1));
             }
             /**
              * @ngdoc method
@@ -1282,14 +1118,19 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Gets the list of all owl:NamedIndividual entities within the provided ontology that have no other type.
+             * Gets the list of all owl:NamedIndividual entities within the provided ontologies that have no other type.
              * Returns an Object[].
              *
-             * @param {Object[]} ontology The ontology you want to check.
-             * @returns {Object[]} An array of all owl:NamedIndividual entities with no other type within the ontology.
+             * @param {Object[]} ontologies The array of ontologies you want to check.
+             * @returns {Object[]} An array of all owl:NamedIndividual entities with no other type within the ontologies.
              */
-            self.getNoTypeIndividuals = function(ontology) {
-                return _.filter(ontology, entity => self.isIndividual(entity) && entity['@type'].length === 1);
+            self.getNoTypeIndividuals = function(ontologies) {
+                var individuals = [];
+                _.forEach(ontologies, ont => {
+                    individuals.push.apply(individuals,
+                        _.filter(ont, entity => self.isIndividual(entity) && entity['@type'].length === 1));
+                });
+                return individuals;
             }
             /**
              * @ngdoc method
@@ -1297,15 +1138,15 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Checks to see if the class within the provided ontology has individuals with that type. Returns a
+             * Checks to see if the class within the provided ontologies have individuals with that type. Returns a
              * boolean indicating the existence of those individuals.
              *
-             * @param {Object[]} ontology The ontology you want to check.
+             * @param {Object[]} ontologies The array of ontologies you want to check.
              * @param {string} classIRI The class IRI of the class you want to check about.
              * @returns {boolean} Returns true if it does have individuals, otherwise returns false.
              */
-            self.hasClassIndividuals = function(ontology, classIRI) {
-                return _.some(self.getIndividuals(ontology), {'@type': [classIRI]});
+            self.hasClassIndividuals = function(ontologies, classIRI) {
+                return _.some(self.getIndividuals(ontologies), {'@type': [classIRI]});
             }
             /**
              * @ngdoc method
@@ -1313,55 +1154,15 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Gets the individuals associated with the class within the provided ontology by the type. Returns an
+             * Gets the individuals associated with the class within the provided ontologies by the type. Returns an
              * array of all the properties associated with the provided class IRI.
              *
-             * @param {Object[]} ontology The ontology you want to check.
+             * @param {Object[]} ontologies The array of ontologies you want to check.
              * @param {string} classIRI The class IRI of the class you want to check about.
              * @returns {Object[]} Returns an array of all the individuals associated with the provided class IRI.
              */
-            self.getClassIndividuals = function(ontology, classIRI) {
-                return _.filter(self.getIndividuals(ontology), {'@type': [classIRI]});
-            }
-            /**
-             * @ngdoc method
-             * @name deleteIndividual
-             * @methodOf ontologyManager.service:ontologyManagerService
-             *
-             * @description
-             * Calls the DELETE /matontorest/ontology/{ontologyId}/named-individuals/{individualId} endpoint which
-             * deletes the specified individual from the ontology in the MatOnto repository. Returns a promise with the
-             * success of the deletion.
-             *
-             * @param {string} ontologyId The ontology ID of the requested ontology.
-             * @param {string} individualIRI The IRI of the individual you want to delete.
-             * @returns {Promise} A promise with a boolean indicating the success of the deletion.
-             */
-            self.deleteIndividual = function(ontologyId, individualIRI) {
-                return $http.delete(prefix + encodeURIComponent(ontologyId) + '/named-individuals/' + encodeURIComponent(individualIRI));
-            }
-            /**
-             * @ngdoc method
-             * @name createIndividual
-             * @methodOf ontologyManager.service:ontologyManagerService
-             *
-             * @description
-             * Calls the POST /matontorest/ontology/{ontologyId}/named-individuals endpoint which adds the provided
-             * individual to the ontology within the MatOnto repository. Returns a promise with the entityIRI and
-             * ontologyId for the state of the newly created individual.
-             *
-             * @param {string} ontologyId The ontology ID of the requested ontology.
-             * @param {string} individualJSON The JSON-LD representing the owl:NamedIndividual to create.
-             * @returns {Promise} A promise with the entityIRI and ontologyId for the state of the newly created
-             * property.
-             */
-            self.createIndividual = function(ontologyId, individualJSON) {
-                var config = {
-                    params: {
-                        resourcejson: individualJSON
-                    }
-                };
-                return $http.post(prefix + encodeURIComponent(ontologyId) + '/named-individuals', null, config);
+            self.getClassIndividuals = function(ontologies, classIRI) {
+                return _.filter(self.getIndividuals(ontologies), {'@type': [classIRI]});
             }
             /**
              * @ngdoc method
@@ -1383,13 +1184,17 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Gets the list of all owl:Restriction entities within the provided ontology. Returns an Object[].
+             * Gets the list of all owl:Restriction entities within the provided ontologies. Returns an Object[].
              *
-             * @param {Object[]} ontology The ontology you want to check.
-             * @returns {Object[]} An array of all owl:Restriction entities within the ontology.
+             * @param {Object[]} ontologies The array of ontologies you want to check.
+             * @returns {Object[]} An array of all owl:Restriction entities within the ontologies.
              */
-            self.getRestrictions = function(ontology) {
-                return _.filter(ontology, entity => self.isRestriction(entity));
+            self.getRestrictions = function(ontologies) {
+                var restrictions = [];
+                _.forEach(ontologies, ont => {
+                    restrictions.push.apply(restrictions, _.filter(ont, entity => self.isRestriction(entity)));
+                });
+                return restrictions;
             }
             /**
              * @ngdoc method
@@ -1403,7 +1208,21 @@
              * @returns {boolean} Returns true if it is a blank node entity, otherwise returns false.
              */
             self.isBlankNode = function(entity) {
-                return _.includes(_.get(entity, '@id', ''), '_:b');
+                return self.isBlankNodeId(_.get(entity, '@id', ''));
+            }
+            /**
+             * @ngdoc method
+             * @name isBlankNodeId
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Checks if the provided entity id is a blank node id. Returns a boolean.
+             *
+             * @param {string} id The id to check.
+             * @return {boolean} Retrurns true if the id is a blank node id, otherwise returns false.
+             */
+            self.isBlankNodeId = function(id) {
+                return _.isString(id) && (_.includes(id, '_:genid') || _.includes(id, '_:b'));
             }
             /**
              * @ngdoc method
@@ -1411,13 +1230,17 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Gets the list of all entities within the provided ontology that are blank nodes. Returns an Object[].
+             * Gets the list of all entities within the provided ontologies that are blank nodes. Returns an Object[].
              *
-             * @param {Object[]} ontology The ontology you want to check.
-             * @returns {Object[]} An array of all owl:Restriction entities within the ontology.
+             * @param {Object[]} ontologies The array of ontologies you want to check.
+             * @returns {Object[]} An array of all owl:Restriction entities within the ontologies.
              */
-            self.getBlankNodes = function(ontology) {
-                return _.filter(ontology, entity => self.isBlankNode(entity));
+            self.getBlankNodes = function(ontologies) {
+                var blankNodes = [];
+                _.forEach(ontologies, ont => {
+                    blankNodes.push.apply(blankNodes, _.filter(ont, entity => self.isBlankNode(entity)));
+                });
+                return blankNodes;
             }
             /**
              * @ngdoc method
@@ -1425,81 +1248,22 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Gets entity with the provided IRI from the provided ontology in the MatOnto repository. Returns the
+             * Gets entity with the provided IRI from the provided ontologies in the MatOnto repository. Returns the
              * entity Object.
              *
-             * @param {Object[]} ontology The ontology you want to check.
+             * @param {Object[]} ontologies The array of ontologies you want to check.
              * @param {string} entityIRI The IRI of the entity that you want.
              * @returns {Object} An Object which represents the requested entity.
              */
-            self.getEntity = function(ontology, entityIRI) {
-                return _.find(ontology, {matonto:{originalIRI: entityIRI}}) || _.find(ontology, {'@id': entityIRI});
-            }
-            /**
-             * @ngdoc method
-             * @name getEntityById
-             * @methodOf ontologyManager.service:ontologyManagerService
-             *
-             * @description
-             * Gets entity with the provided IRI from the ontology linked to the provided ontologyId in the MatOnto
-             * repository. Returns the entity Object.
-             *
-             * @param {string} ontologyId The ontologyId linked to the ontology you want to check.
-             * @param {string} entityIRI The IRI of the entity that you want.
-             * @returns {Object} An Object which represents the requested entity.
-             */
-            self.getEntityById = function(ontologyId, entityIRI) {
-                var index = _.get(self.getListItemById(ontologyId), 'index');
-                var ontology = self.getOntologyById(ontologyId);
-                if (_.has(index, entityIRI)) {
-                    return ontology[_.get(index, entityIRI)];
-                } else {
-                    return self.getEntity(ontology, entityIRI);
-                }
-            }
-            /**
-             * @ngdoc method
-             * @name removeEntity
-             * @methodOf ontologyManager.service:ontologyManagerService
-             *
-             * @description
-             * Removes the entity with the provided IRI from the ontology with the provided ontology ID in the MatOnto
-             * repository. Returns the entity Object.
-             *
-             * @param {Object[]} ontology The ontology you want to check.
-             * @returns {Object} An Object which represents the requested entity.
-             */
-            self.removeEntity = function(ontology, entityIRI) {
-                return _.remove(ontology, {matonto:{originalIRI: entityIRI}});
-            }
-            /**
-             * @ngdoc method
-             * @name addEntity
-             * @methodOf ontologyManager.service:ontologyManagerService
-             *
-             * @description
-             * Adds the entity represented by the entityJSON to the ontology with the provided ontology ID in the
-             * MatOnto repository.
-             *
-             * @param {Object[]} ontology The ontology you want to check.
-             */
-            self.addEntity = function(ontology, entityJSON) {
-                ontology.push(entityJSON);
-            }
-            /**
-             * @ngdoc method
-             * @name getBeautifulIRI
-             * @methodOf ontologyManager.service:ontologyManagerService
-             *
-             * @description
-             * Gets the "beautified" IRI representation for the iri passed. Returns the modified IRI.
-             *
-             * @param {string} iri The IRI string that you want to beautify.
-             * @returns {string} The beautified IRI string.
-             */
-            self.getBeautifulIRI = function(iri) {
-                var splitEnd = $filter('splitIRI')(iri).end;
-                return splitEnd ? $filter('beautify')(splitEnd) : iri;
+            self.getEntity = function(ontologies, entityIRI) {
+                var retValue;
+                _.forEach(ontologies, ont => {
+                    retValue = _.find(ont, {'@id': entityIRI});
+                    if (retValue != null) {
+                        return false; //This breaks the loop. It is NOT the entire function's return value!
+                    }
+                });
+                return retValue;
             }
             /**
              * @ngdoc method
@@ -1514,20 +1278,18 @@
              * @param {Object} entity The entity you want the name of.
              * @returns {string} The beautified IRI string.
              */
-            self.getEntityName = function(entity, type='ontology') {
-                var result = _.get(entity, "['" + prefixes.rdfs + "label'][0]['@value']") || _.get(entity, "['"
-                    + prefixes.dcterms + "title'][0]['@value']") || _.get(entity, "['" + prefixes.dc
-                    + "title'][0]['@value']");
+            self.getEntityName = function(entity, type = 'ontology') {
+                var result = utilService.getPropertyValue(entity, prefixes.rdfs + 'label')
+                    || utilService.getDctermsValue(entity, 'title')
+                    || utilService.getPropertyValue(entity, prefixes.dc + 'title')
+                    || utilService.getPropertyValue(entity, prefixes.skos + 'prefLabel')
+                    || utilService.getPropertyValue(entity, prefixes.skos + 'altLabel');
                 if (!result) {
                     if (_.has(entity, '@id')) {
-                        result = self.getBeautifulIRI(entity['@id']);
+                        result = utilService.getBeautifulIRI(entity['@id']);
                     } else {
-                        result = _.get(entity, 'matonto.anonymous');
+                        result = _.get(entity, 'matonto.anonymous', '');
                     }
-                }
-                if (type === 'vocabulary') {
-                    result = _.get(entity, "['" + prefixes.skos + "prefLabel'][0]['@value']") || _.get(entity, "['"
-                        + prefixes.skos + "altLabel'][0]['@value']") || result;
                 }
                 return result;
             }
@@ -1544,75 +1306,9 @@
              * @returns {string} The entity's description text.
              */
             self.getEntityDescription = function(entity) {
-                return _.get(entity, "['" + prefixes.rdfs + "comment'][0]['@value']",
-                    _.get(entity, "['" + prefixes.dcterms + "description'][0]['@value']",
-                    _.get(entity, "['" + prefixes.dc + "description'][0]['@value']")));
-            }
-            /**
-             * @ngdoc method
-             * @name getImportedOntologies
-             * @methodOf ontologyManager.service:ontologyManagerService
-             *
-             * @description
-             * Calls the GET /matontorest/ontologies/{ontologyId}/imported-ontologies endpoint which gets the list of
-             * all ontologies imported by the ontology with the requested ontology ID.
-             *
-             * @param {string} ontologyId The ontology ID of the ontology you want to get from the repository.
-             * @param {string} [rdfFormat='jsonld'] The format string to identify the serialization requested.
-             * @returns {Promise} A promise containing the list of ontologies that are imported by the requested
-             * ontology.
-             */
-            self.getImportedOntologies = function(ontologyId, rdfFormat = 'jsonld') {
-                $rootScope.showSpinner = true;
-                var deferred = $q.defer();
-                var config = {
-                    params: {
-                        rdfformat: rdfFormat
-                    }
-                };
-                $http.get(prefix + encodeURIComponent(ontologyId) + '/imported-ontologies', null, config)
-                    .then(response => {
-                        if(_.get(response, 'status') === 200 && _.has(response, 'data')) {
-                            deferred.resolve(response.data);
-                        } else if (_.get(response, 'status') === 204) {
-                            deferred.resolve([]);
-                        } else {
-                            deferred.reject(_.get(response, 'statusText', defaultErrorMessage));
-                        }
-                    }, response => {
-                        deferred.reject(_.get(response, 'statusText', defaultErrorMessage))
-                    })
-                    .then(() => {
-                        $rootScope.showSpinner = false;
-                    });
-                return deferred.promise;
-            }
-            /**
-             * @ngdoc method
-             * @name getEntityUsages
-             * @methodOf ontologyManager.service:ontologyManagerService
-             *
-             * @description
-             * Calls the GET /matontorest/ontologies/{ontologyId}/entity-usages/{entityIRI} endpoint which gets the
-             * JSON SPARQL query results for all statements which have the provided entityIRI as an object.
-             *
-             * @param {string} ontologyId The ontology ID of the ontology you want to get from the repository.
-             * @param {string} entityIRI The entity IRI of the entity you want the usages for from the repository.
-             * @returns {Promise} A promise containing the JSON SPARQL query results bindings.
-             */
-            self.getEntityUsages = function(ontologyId, entityIRI) {
-                var deferred = $q.defer();
-                $http.get(prefix + encodeURIComponent(ontologyId) + '/entity-usages/' + encodeURIComponent(entityIRI))
-                    .then(response => {
-                        if(_.get(response, 'status') === 200) {
-                            deferred.resolve(response.data.results.bindings);
-                        } else if (_.get(response, 'status') === 204) {
-                            deferred.resolve([]);
-                        } else {
-                            deferred.reject();
-                        }
-                    }, () => deferred.reject());
-                return deferred.promise;
+                return utilService.getPropertyValue(entity, prefixes.rdfs + 'comment')
+                    || utilService.getDctermsValue(entity, 'description')
+                    || utilService.getPropertyValue(entity, prefixes.dc + 'description');
             }
             /**
              * @ngdoc method
@@ -1625,8 +1321,9 @@
              * @param {Object} entity The entity you want to check.
              * @returns {boolean} Returns true if it is an skos:Concept entity, otherwise returns false.
              */
-            self.isConcept = function(entity) {
-                return _.includes(_.get(entity, '@type', []), prefixes.skos + 'Concept');
+            self.isConcept = function(entity, derivedConcepts = []) {
+                    return (_.includes(_.get(entity, '@type', []), prefixes.skos + 'Concept')
+                        || _.intersection(_.get(entity, '@type', []), derivedConcepts).length > 0);
             }
             /**
              * @ngdoc method
@@ -1634,14 +1331,15 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Checks if the provided ontology contains any skos:Concept entities. Returns a boolean.
+             * Checks if the provided ontologies contain any skos:Concept entities. Returns a boolean.
              *
-             * @param {Object[]} ontology The ontology you want to check.
-             * @returns {boolean} Returns true if there are any skos:Concept entities in the ontology, otherwise returns
-             * false.
+             * @param {Object[]} ontologies The array of ontologies you want to check.
+             * @returns {boolean} Returns true if there are any skos:Concept entities in the ontologies, otherwise
+             * returns false.
              */
-            self.hasConcepts = function(ontology) {
-                return _.some(ontology, entity => self.isConcept(entity) && !self.isBlankNode(entity));
+            self.hasConcepts = function(ontologies, derivedConcepts) {
+                return _.some(ontologies, ont =>
+                            _.some(ont, entity => self.isConcept(entity, derivedConcepts) && !self.isBlankNode(entity)));
             }
             /**
              * @ngdoc method
@@ -1649,14 +1347,19 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Gets the list of all skos:Concept entities within the provided ontology that are not blank nodes. Returns
-             * an Object[].
+             * Gets the list of all skos:Concept entities within the provided ontologies that are not blank nodes.
+             * Returns an Object[].
              *
-             * @param {Object[]} ontology The ontology you want to check.
-             * @returns {Object[]} An array of all skos:Concept entities within the ontology.
+             * @param {Object[]} ontologies The array of ontologies you want to check.
+             * @returns {Object[]} An array of all skos:Concept entities within the ontologies.
              */
-            self.getConcepts = function(ontology) {
-                return _.filter(ontology, entity => self.isConcept(entity) && !self.isBlankNode(entity));
+            self.getConcepts = function(ontologies, derivedConcepts) {
+                var concepts = [];
+                _.forEach(ontologies, ont => {
+                    concepts.push.apply(concepts,
+                        _.filter(ont, entity => self.isConcept(entity, derivedConcepts) && !self.isBlankNode(entity)));
+                });
+                return concepts;
             }
             /**
              * @ngdoc method
@@ -1664,14 +1367,14 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Gets the list of all skos:Concept entity IRIs within the provided ontology that are not blank nodes.
+             * Gets the list of all skos:Concept entity IRIs within the provided ontologies that are not blank nodes.
              * Returns an string[].
              *
-             * @param {Object[]} ontology The ontology you want to check.
-             * @returns {string[]} An array of all skos:Concept entity IRI strings within the ontology.
+             * @param {Object[]} ontologies The array of ontologies you want to check.
+             * @returns {string[]} An array of all skos:Concept entity IRI strings within the ontologies.
              */
-            self.getConceptIRIs = function(ontology) {
-                return _.map(self.getConcepts(ontology), 'matonto.originalIRI');
+            self.getConceptIRIs = function(ontologies, derivedConcepts) {
+                return _.map(self.getConcepts(ontologies, derivedConcepts), '@id');
             }
             /**
              * @ngdoc method
@@ -1684,8 +1387,9 @@
              * @param {Object} entity The entity you want to check.
              * @returns {boolean} Returns true if it is an skos:ConceptScheme entity, otherwise returns false.
              */
-            self.isConceptScheme = function(entity) {
-                return _.includes(_.get(entity, '@type', []), prefixes.skos + 'ConceptScheme');
+            self.isConceptScheme = function(entity, derivedConceptSchemes = []) {
+                   return (_.includes(_.get(entity, '@type', []), prefixes.skos + 'ConceptScheme')
+                        || _.intersection(_.get(entity, '@type', []), derivedConceptSchemes).length > 0);
             }
             /**
              * @ngdoc method
@@ -1693,14 +1397,15 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Checks if the provided ontology contains any skos:ConceptScheme entities. Returns a boolean.
+             * Checks if the provided ontologies contain any skos:ConceptScheme entities. Returns a boolean.
              *
-             * @param {Object[]} ontology The ontology you want to check.
-             * @returns {boolean} Returns true if there are any skos:ConceptScheme entities in the ontology, otherwise
+             * @param {Object[]} ontologies The array of ontologies you want to check.
+             * @returns {boolean} Returns true if there are any skos:ConceptScheme entities in the ontologies, otherwise
              * returns false.
              */
-            self.hasConceptSchemes = function(ontology) {
-                return _.some(ontology, entity => self.isConceptScheme(entity) && !self.isBlankNode(entity));
+            self.hasConceptSchemes = function(ontologies, derivedConceptSchemes) {
+                return _.some(ontologies, ont =>
+                            _.some(ont, entity => self.isConceptScheme(entity, derivedConceptSchemes) && !self.isBlankNode(entity)));
             }
             /**
              * @ngdoc method
@@ -1708,14 +1413,19 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Gets the list of all skos:ConceptScheme entities within the provided ontology that are not blank nodes.
+             * Gets the list of all skos:ConceptScheme entities within the provided ontologies that are not blank nodes.
              * Returns an Object[].
              *
-             * @param {Object[]} ontology The ontology you want to check.
-             * @returns {Object[]} An array of all skos:ConceptScheme entities within the ontology.
+             * @param {Object[]} ontologies The array of ontologies you want to check.
+             * @returns {Object[]} An array of all skos:ConceptScheme entities within the ontologies.
              */
-            self.getConceptSchemes = function(ontology) {
-                return _.filter(ontology, entity => self.isConceptScheme(entity) && !self.isBlankNode(entity));
+            self.getConceptSchemes = function(ontologies) {
+                var conceptSchemes = [];
+                _.forEach(ontologies, ont => {
+                    conceptSchemes.push.apply(conceptSchemes,
+                        _.filter(ont, entity => self.isConceptScheme(entity) && !self.isBlankNode(entity)));
+                });
+                return conceptSchemes;
             }
             /**
              * @ngdoc method
@@ -1723,344 +1433,25 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Gets the list of all skos:ConceptScheme entity IRIs within the provided ontology that are not blank nodes.
-             * Returns an string[].
+             * Gets the list of all skos:ConceptScheme entity IRIs within the provided ontologies that are not blank
+             * nodes. Returns a string[].
              *
-             * @param {Object[]} ontology The ontology you want to check.
+             * @param {Object[]} ontologies The array of ontologies you want to check.
              * @returns {string[]} An array of all skos:ConceptScheme entity IRI strings within the ontology.
              */
-            self.getConceptSchemeIRIs = function(ontology) {
-                return _.map(self.getConceptSchemes(ontology), 'matonto.originalIRI');
+            self.getConceptSchemeIRIs = function(ontologies) {
+                return _.map(self.getConceptSchemes(ontologies), '@id');
             }
-            /**
-             * @ngdoc method
-             * @name getSearchResults
-             * @methodOf ontologyManager.service:ontologyManagerService
-             *
-             * @description
-             * Gets the search results for literals that contain the requested search text.
-             *
-             * @param {string} ontologyId The ontology ID of the ontology you want to get from the repository.
-             * @param {string} searchText The text that you are searching for in the ontology entity literal values.
-             * @returns {Promise} A promise containing the SPARQL query results.
-             */
-            self.getSearchResults = function(ontologyId, searchText) {
-                var defaultErrorMessage = 'An error has occurred with your search.';
-                var deferred = $q.defer();
-                var config = {
-                    params: {searchText}
-                };
-                $rootScope.showSpinner = true;
-                $http.get(prefix + encodeURIComponent(ontologyId) + '/search-results', config)
-                    .then(response => {
-                        if(_.get(response, 'status') === 200) {
-                            deferred.resolve(response.data);
-                        } else if (_.get(response, 'status') === 204) {
-                            deferred.resolve([]);
-                        } else {
-                            deferred.reject(defaultErrorMessage);
-                        }
-                    }, response => {
-                        deferred.reject(_.get(response, 'statusText', defaultErrorMessage));
-                    })
-                    .then(() => {
-                        $rootScope.showSpinner = false;
-                    });
-                return deferred.promise;
-            }
-
             /* Private helper functions */
-            function updateModels(response) {
-                if(_.has(response, 'data.models', [])) {
-                    _.forEach(response.data.models, model => {
-                        var ontology = self.getOntologyById(_.get(model, "[0]['@id']"));
-                        var newEntity = _.get(model, "[0]['@graph'][0]");
-                        var newEntityIRI = _.get(newEntity, '@id');
-                        var oldEntity = self.getEntity(ontology, newEntityIRI);
-                        if (_.has(oldEntity, 'matonto.icon')) {
-                            _.set(newEntity, 'matonto.icon', oldEntity.matonto.icon);
-                        }
-                        _.set(newEntity, 'matonto.originalIRI', newEntityIRI);
-                        self.removeEntity(ontology, oldEntity.matonto.originalIRI);
-                        self.addEntity(ontology, newEntity);
-                    });
+            function getAllRecords(sortingOption = _.find(cm.sortOptions, {label: 'Title (desc)'})) {
+                var ontologyRecordType = prefixes.catalog + 'OntologyRecord';
+                var paginatedConfig = {
+                    pageIndex: 0,
+                    limit: 100,
+                    sortOption: sortingOption,
+                    recordType: ontologyRecordType
                 }
-            }
-            function getIcon(property) {
-                var range = _.get(property, prefixes.rdfs + 'range');
-                var icon = 'fa-square-o';
-                if (range) {
-                    if (range.length === 1) {
-                        switch(range[0]['@id']) {
-                            case prefixes.xsd + 'string':
-                                icon = 'fa-font';
-                                break;
-                            case prefixes.xsd + 'decimal':
-                            case prefixes.xsd + 'double':
-                            case prefixes.xsd + 'float':
-                            case prefixes.xsd + 'int':
-                            case prefixes.xsd + 'integer':
-                            case prefixes.xsd + 'long':
-                            case prefixes.xsd + 'nonNegativeInteger':
-                                icon = 'fa-calculator';
-                                break;
-                            case prefixes.xsd + 'language':
-                                icon = 'fa-language';
-                                break;
-                            case prefixes.xsd + 'anyURI':
-                                icon = 'fa-external-link';
-                                break;
-                            case prefixes.xsd + 'dateTime':
-                                icon = 'fa-clock-o';
-                                break;
-                            case prefixes.xsd + 'boolean':
-                            case prefixes.xsd + 'byte':
-                                icon = 'fa-signal';
-                                break;
-                            default:
-                                icon = 'fa-link';
-                                break;
-                        }
-                    } else {
-                        icon = 'fa-cubes';
-                    }
-                }
-                return icon;
-            }
-            function addOntologyIdToArray(arr, ontologyId) {
-                return _.forEach(arr, item => _.set(item, 'ontologyId', ontologyId));
-            }
-            function compareListItems(obj1, obj2) {
-                return _.isEqual(_.get(obj1, 'localName'), _.get(obj2, 'localName'))
-                    && _.isEqual(_.get(obj1, 'namespace'), _.get(obj2, 'namespace'));
-            }
-            function getReadableRestrictionText(restrictionId, restriction) {
-                var readableText = restrictionId;
-                var keys = _.keys(restriction);
-                _.pull(keys, prefixes.owl + 'onProperty', prefixes.owl + 'onClass', '@id', '@type', 'matonto');
-                if (keys.length === 1 && _.isArray(restriction[keys[0]]) && restriction[keys[0]].length === 1) {
-                    var detailedKey = keys[0];
-                    var detailedValue = restriction[detailedKey][0];
-                    var onValue = _.get(restriction, prefixes.owl + 'onProperty',
-                        _.get(restriction, prefixes.owl + 'onClass'));
-                    if (onValue && _.isArray(onValue) && onValue.length === 1) {
-                        var onId = _.get(onValue[0], '@id');
-                        readableText = $filter('splitIRI')(onId).end + ' ' + $filter('splitIRI')(detailedKey).end + ' ';
-                        if (_.has(detailedValue, '@id')) {
-                            readableText += $filter('splitIRI')(detailedValue['@id']).end;
-                        } else if (_.has(detailedValue, '@value') && _.has(detailedValue, '@type')) {
-                            readableText += detailedValue['@value'] + ' '
-                                + $filter('splitIRI')(detailedValue['@type']).end;
-                        }
-                    }
-                }
-                return readableText;
-            }
-            function getReadableBlankNodeText(blankNodeId, blankNode) {
-                var readableText = blankNodeId;
-                var list = [];
-                var joiningWord;
-                if (_.has(blankNode, prefixes.owl + 'unionOf')) {
-                    list = _.get(blankNode[prefixes.owl + 'unionOf'], "[0]['@list']", []);
-                    joiningWord = ' or ';
-                } else if (_.has(blankNode, prefixes.owl + 'intersectionOf')) {
-                    list = _.get(blankNode[prefixes.owl + 'intersectionOf'], "[0]['@list']", []);
-                    joiningWord = ' and ';
-                }
-                if (list.length) {
-                    readableText = _.join(_.map(list, item => {
-                        return $filter('splitIRI')(_.get(item, '@id')).end;
-                    }), joiningWord);
-                }
-                return readableText;
-            }
-            function setupListItem(ontologyId, ontology, template) {
-                var listItem = angular.copy(template);
-                var blankNodes = {};
-                var index = {};
-                _.forEach(ontology, (entity, i) => {
-                    if (_.has(entity, '@id')) {
-                        _.set(entity, 'matonto.originalIRI', entity['@id']);
-                        index[entity['@id']] = i;
-                    } else {
-                        _.set(entity, 'matonto.anonymous', ontologyId + ' (Anonymous Ontology)');
-                    }
-                    if (self.isProperty(entity)) {
-                        _.set(entity, 'matonto.icon', getIcon(entity));
-                    } else if (self.isRestriction(entity)) {
-                        let id = _.get(entity, '@id');
-                        _.set(blankNodes, id, getReadableRestrictionText(id, entity));
-                    } else if (self.isBlankNode(entity)) {
-                        let id = _.get(entity, '@id');
-                        _.set(blankNodes, id, getReadableBlankNodeText(id, entity));
-                    }
-                });
-                listItem.ontologyId = ontologyId;
-                listItem.ontology = ontology;
-                listItem.blankNodes = blankNodes;
-                listItem.index = index;
-                return listItem;
-            }
-            function addOntologyToList(ontologyId, ontology) {
-                var deferred = $q.defer();
-                var listItem = setupListItem(ontologyId, ontology, ontologyListItemTemplate);
-                $q.all([
-                    $http.get(prefix + encodeURIComponent(ontologyId) + '/iris'),
-                    $http.get(prefix + encodeURIComponent(ontologyId) + '/imported-iris'),
-                    $http.get(prefix + encodeURIComponent(ontologyId) + '/class-hierarchies'),
-                    $http.get(prefix + encodeURIComponent(ontologyId) + '/classes-with-individuals'),
-                    $http.get(prefix + encodeURIComponent(ontologyId) + '/data-property-hierarchies'),
-                    $http.get(prefix + encodeURIComponent(ontologyId) + '/object-property-hierarchies')
-                ]).then(response => {
-                    var irisResponse = response[0];
-                    if (_.get(irisResponse, 'status') === 200) {
-                        listItem.annotations = _.unionWith(
-                            _.get(irisResponse, 'data.annotationProperties'),
-                            propertyManagerService.defaultAnnotations,
-                            _.isMatch
-                        );
-                        listItem.subClasses = _.get(irisResponse, 'data.classes');
-                        listItem.subDataProperties = _.get(irisResponse, 'data.dataProperties');
-                        listItem.subObjectProperties = _.get(irisResponse, 'data.objectProperties');
-                        listItem.individuals = _.get(irisResponse, 'data.namedIndividuals');
-                        listItem.dataPropertyRange = _.unionWith(
-                            _.get(irisResponse, 'data.datatypes'),
-                            defaultDatatypes,
-                            _.isMatch
-                        );
-                        var importedIrisResponse = response[1];
-                        if (_.get(importedIrisResponse, 'status') === 200) {
-                            _.forEach(importedIrisResponse.data, iriList => {
-                                listItem.annotations = _.unionWith(
-                                    addOntologyIdToArray(iriList.annotationProperties, iriList.id),
-                                    listItem.annotations,
-                                    compareListItems
-                                );
-                                listItem.subClasses = _.unionWith(
-                                    addOntologyIdToArray(iriList.classes, iriList.id),
-                                    listItem.subClasses,
-                                    compareListItems
-                                );
-                                listItem.subDataProperties = _.unionWith(
-                                    addOntologyIdToArray(iriList.dataProperties, iriList.id),
-                                    listItem.subDataProperties,
-                                    compareListItems
-                                );
-                                listItem.subObjectProperties = _.unionWith(
-                                    addOntologyIdToArray(iriList.objectProperties, iriList.id),
-                                    listItem.subObjectProperties,
-                                    compareListItems
-                                );
-                                listItem.individuals = _.unionWith(
-                                    addOntologyIdToArray(iriList.individuals, iriList.id),
-                                    listItem.individuals,
-                                    compareListItems
-                                );
-                                listItem.dataPropertyRange = _.unionWith(
-                                    addOntologyIdToArray(iriList.datatypes, iriList.id),
-                                    listItem.dataPropertyRange,
-                                    compareListItems
-                                );
-                            });
-                        }
-                        var classHierarchyResponse = response[2];
-                        if (_.get(classHierarchyResponse, 'status') === 200) {
-                            listItem.classHierarchy = classHierarchyResponse.data.hierarchy;
-                            listItem.classIndex = classHierarchyResponse.data.index;
-                        }
-                        var classesWithIndividualsResponse = response[3];
-                        if (_.get(classesWithIndividualsResponse, 'status') === 200) {
-                            listItem.classesWithIndividuals = classesWithIndividualsResponse.data.hierarchy;
-                            listItem.classesWithIndividualsIndex = classesWithIndividualsResponse.data.index;
-                        }
-                        var dataPropertyHierarchyResponse = response[4];
-                        if (_.get(dataPropertyHierarchyResponse, 'status') === 200) {
-                            listItem.dataPropertyHierarchy = dataPropertyHierarchyResponse.data.hierarchy;
-                            listItem.dataPropertyIndex = dataPropertyHierarchyResponse.data.index;
-                        }
-                        var objectPropertyHierarchyResponse = response[5];
-                        if (_.get(objectPropertyHierarchyResponse, 'status') === 200) {
-                            listItem.objectPropertyHierarchy = objectPropertyHierarchyResponse.data.hierarchy;
-                            listItem.objectPropertyIndex = objectPropertyHierarchyResponse.data.index;
-                        }
-                        _.pullAllWith(
-                            listItem.annotations,
-                            _.concat(self.ontologyProperties, listItem.subDataProperties, listItem.subObjectProperties),
-                            compareListItems
-                        );
-                        self.list.push(listItem);
-                        deferred.resolve();
-                    } else {
-                        deferred.reject();
-                    }
-                }, () => {
-                    deferred.reject();
-                });
-                return deferred.promise;
-            }
-            function addVocabularyToList(ontologyId, ontology) {
-                var deferred = $q.defer();
-                var listItem = setupListItem(ontologyId, ontology, vocabularyListItemTemplate);
-                $q.all([
-                    $http.get(prefix + encodeURIComponent(ontologyId) + '/iris'),
-                    $http.get(prefix + encodeURIComponent(ontologyId) + '/imported-iris'),
-                    $http.get(prefix + encodeURIComponent(ontologyId) + '/concept-hierarchies')
-                ]).then(response => {
-                    var irisResponse = response[0];
-                    if (_.get(irisResponse, 'status') === 200) {
-                        listItem.subDataProperties = _.get(irisResponse, 'data.dataProperties');
-                        listItem.subObjectProperties = _.get(irisResponse, 'data.objectProperties');
-                        listItem.annotations = _.unionWith(
-                            _.get(irisResponse, 'data.annotationProperties'),
-                            propertyManagerService.defaultAnnotations,
-                            angular.copy(propertyManagerService.skosAnnotations),
-                            _.isMatch
-                        );
-                        listItem.dataPropertyRange = _.unionWith(
-                            _.get(irisResponse, 'data.datatypes'),
-                            defaultDatatypes,
-                            _.isMatch
-                        );
-                        var importedIrisResponse = response[1];
-                        if (_.get(importedIrisResponse, 'status') === 200) {
-                            _.forEach(importedIrisResponse.data, iriList => {
-                                listItem.annotations = _.unionWith(
-                                    addOntologyIdToArray(iriList.annotationProperties, iriList.id),
-                                    listItem.annotations,
-                                    compareListItems
-                                );
-                                listItem.subDataProperties = _.unionWith(
-                                    addOntologyIdToArray(iriList.dataProperties, iriList.id),
-                                    listItem.subDataProperties,
-                                    compareListItems
-                                );
-                                listItem.subObjectProperties = _.unionWith(
-                                    addOntologyIdToArray(iriList.objectProperties, iriList.id),
-                                    listItem.subObjectProperties,
-                                    compareListItems
-                                );
-                            });
-                        }
-                        var conceptHierarchyResponse = response[2];
-                        if (_.get(conceptHierarchyResponse, 'status') === 200) {
-                            listItem.conceptHierarchy = conceptHierarchyResponse.data.hierarchy;
-                            listItem.conceptIndex = conceptHierarchyResponse.data.index;
-                        }
-                        _.pullAllWith(
-                            listItem.annotations,
-                            _.concat(self.ontologyProperties, listItem.subDataProperties, listItem.subObjectProperties,
-                                angular.copy(self.conceptRelationshipList), angular.copy(self.schemeRelationshipList)),
-                            compareListItems
-                        );
-                        self.list.push(listItem);
-                        deferred.resolve();
-                    } else {
-                        deferred.reject();
-                    }
-                }, () => {
-                    deferred.reject();
-                });
-                return deferred.promise;
+                return cm.getRecords(catalogId, paginatedConfig);
             }
         }
 })();

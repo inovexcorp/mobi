@@ -28,7 +28,7 @@
          * @ngdoc overview
          * @name mappingPreview
          *
-         * @description 
+         * @description
          * The `mappingPreview` module only provides the `mappingPreview` directive which creates
          * a "boxed" area with a preview of a mapping and a button to select it.
          */
@@ -44,17 +44,17 @@
          * @requires  mapperState.service:mapperStateService
          * @requires  delimitedManager.service:delimitedManagerService
          *
-         * @description 
-         * `mappingPreview` is a directive that creates a "boxed" div with a preview of a mapping with 
+         * @description
+         * `mappingPreview` is a directive that creates a "boxed" div with a preview of a mapping with
          * its source ontology and all its mapped classes and properties. It also provides a button to
-         * select the mapping for mapping delimited data. The directive is replaced by the contents of 
+         * select the mapping for mapping delimited data. The directive is replaced by the contents of
          * its template.
          */
         .directive('mappingPreview', mappingPreview);
 
-        mappingPreview.$inject = ['prefixes', 'mappingManagerService', 'mapperStateService', 'ontologyManagerService', 'delimitedManagerService'];
+        mappingPreview.$inject = ['prefixes', 'utilService', 'mappingManagerService', 'mapperStateService', 'delimitedManagerService'];
 
-        function mappingPreview(prefixes, mappingManagerService, mapperStateService, ontologyManagerService, delimitedManagerService) {
+        function mappingPreview(prefixes, utilService, mappingManagerService, mapperStateService, delimitedManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -64,22 +64,17 @@
                     var dvm = this;
                     dvm.state = mapperStateService;
                     dvm.mm = mappingManagerService;
-                    dvm.om = ontologyManagerService;
                     dvm.dm = delimitedManagerService;
+                    dvm.util = utilService;
 
-                    dvm.ontologyExists = function() {
-                        var objs = angular.copy(dvm.om.list);
-                        var ids = _.union(dvm.om.ontologyIds, _.map(objs, 'ontologyId'));
-                        return _.includes(ids, dvm.mm.getSourceOntologyId(dvm.state.mapping.jsonld));
-                    }
                     dvm.getClassName = function(classMapping) {
-                        return dvm.om.getBeautifulIRI(dvm.mm.getClassIdByMapping(classMapping));
+                        return dvm.util.getBeautifulIRI(dvm.mm.getClassIdByMapping(classMapping));
                     }
                     dvm.getPropName = function(propMapping) {
-                        return dvm.om.getBeautifulIRI(dvm.mm.getPropIdByMapping(propMapping));
+                        return dvm.util.getBeautifulIRI(dvm.mm.getPropIdByMapping(propMapping));
                     }
                     dvm.getColumnIndex = function(propMapping) {
-                        return propMapping[prefixes.delim + 'columnIndex'][0]['@value'];
+                        return dvm.util.getPropertyValue(propMapping, prefixes.delim + 'columnIndex');
                     }
                     dvm.isInvalid = function(propMappingId) {
                         return _.some(dvm.state.invalidProps, {'@id': propMappingId});

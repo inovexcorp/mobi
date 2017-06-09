@@ -27,9 +27,9 @@
         .module('datatypePropertyAxioms', [])
         .directive('datatypePropertyAxioms', datatypePropertyAxioms);
 
-        datatypePropertyAxioms.$inject = ['ontologyStateService', 'propertyManagerService', 'responseObj', 'prefixes'];
+        datatypePropertyAxioms.$inject = ['ontologyStateService', 'propertyManagerService', 'responseObj', 'prefixes', 'ontologyUtilsManagerService'];
 
-        function datatypePropertyAxioms(ontologyStateService, propertyManagerService, responseObj, prefixes) {
+        function datatypePropertyAxioms(ontologyStateService, propertyManagerService, responseObj, prefixes, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,9 +38,10 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    dvm.sm = ontologyStateService;
+                    dvm.os = ontologyStateService;
                     dvm.pm = propertyManagerService;
                     dvm.ro = responseObj;
+                    dvm.ontoUtils = ontologyUtilsManagerService;
 
                     dvm.openRemoveOverlay = function(key, index) {
                         dvm.key = key;
@@ -49,21 +50,18 @@
                     }
 
                     dvm.updateHierarchy = function(axiom, values) {
-                        if (_.get(axiom, 'localName') === 'subPropertyOf') {
-                            _.forEach(values, value => {
-                                dvm.sm.addEntityToHierarchy(dvm.sm.listItem.dataPropertyHierarchy,
-                                    dvm.sm.selected.matonto.originalIRI, dvm.sm.listItem.dataPropertyIndex,
-                                    dvm.ro.getItemIri(value));
-                            });
-                            dvm.sm.goTo(dvm.sm.selected.matonto.originalIRI);
+                        var localName = _.get(axiom, 'localName');
+                        if (localName === 'subPropertyOf') {
+                            dvm.ontoUtils.setSuperProperties(dvm.os.selected['@id'], _.map(values, value => dvm.ro.getItemIri(value)), 'dataPropertyHierarchy', 'dataPropertyIndex', 'flatDataPropertyHierarchy');
+                        } else if (localName === 'domain') {
+                            dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.getOntologiesArray(), dvm.os.listItem);
                         }
                     }
 
                     dvm.removeFromHierarchy = function(axiomObject) {
                         if (prefixes.rdfs + 'subPropertyOf' === dvm.key) {
-                            dvm.sm.deleteEntityFromParentInHierarchy(dvm.sm.listItem.dataPropertyHierarchy,
-                                dvm.sm.selected.matonto.originalIRI, axiomObject['@id'], dvm.sm.listItem.dataPropertyIndex);
-                            dvm.sm.goTo(dvm.sm.selected.matonto.originalIRI);
+                            dvm.os.deleteEntityFromParentInHierarchy(dvm.os.listItem.dataPropertyHierarchy, dvm.os.selected['@id'], axiomObject['@id'], dvm.os.listItem.dataPropertyIndex);
+                            dvm.os.listItem.flatDataPropertyHierarchy = dvm.os.flattenHierarchy(dvm.os.listItem.dataPropertyHierarchy, dvm.os.listItem.recordId);
                         }
                     }
                 }

@@ -27,9 +27,9 @@
         .module('searchTab', [])
         .directive('searchTab', searchTab);
 
-        searchTab.$inject = ['ontologyStateService', 'ontologyUtilsManagerService', 'ontologyManagerService'];
+        searchTab.$inject = ['ontologyStateService', 'ontologyUtilsManagerService', 'ontologyManagerService', 'httpService'];
 
-        function searchTab(ontologyStateService, ontologyUtilsManagerService, ontologyManagerService) {
+        function searchTab(ontologyStateService, ontologyUtilsManagerService, ontologyManagerService, httpService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,40 +38,50 @@
                 controllerAs: 'dvm',
                 controller: ['$scope', function($scope) {
                     var dvm = this;
-                    dvm.sm = ontologyStateService;
-                    dvm.um = ontologyUtilsManagerService;
+                    dvm.os = ontologyStateService;
+                    dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.om = ontologyManagerService;
+                    dvm.id = 'search-' + dvm.os.listItem.recordId;
 
                     dvm.onKeyup = function($event) {
                         if ($event.keyCode === 13) {
-                            dvm.sm.unSelectItem();
-                            dvm.om.getSearchResults(dvm.sm.listItem.ontologyId, dvm.sm.state.searchText)
+                            httpService.cancel(dvm.id);
+                            dvm.os.unSelectItem();
+                            var state = dvm.os.getState(dvm.os.listItem.recordId);
+                            dvm.om.getSearchResults(dvm.os.listItem.recordId, dvm.os.listItem.branchId, dvm.os.listItem.commitId, dvm.os.state.search.searchText, dvm.id)
                                 .then(results => {
-                                    dvm.sm.state.errorMessage = '';
-                                    dvm.sm.state.results = results;
-                                    dvm.sm.state.infoMessage = !_.isEmpty(results) ? '' : 'There were no results for your search text.';
-                                    dvm.sm.state.highlightText = dvm.sm.state.searchText;
+                                    state.search.errorMessage = '';
+                                    state.search.results = results;
+                                    state.search.infoMessage = !_.isEmpty(results) ? '' : 'There were no results for your search text.';
+                                    state.search.highlightText = state.search.searchText;
                                 }, errorMessage => {
-                                    dvm.sm.state.errorMessage = errorMessage;
-                                    dvm.sm.state.infoMessage = '';
+                                    state.search.errorMessage = errorMessage;
+                                    state.search.infoMessage = '';
                                 });
                         }
                     }
 
                     dvm.onClear = function() {
-                        dvm.sm.state.errorMessage = '';
-                        dvm.sm.state.highlightText = '';
-                        dvm.sm.state.infoMessage = '';
-                        dvm.sm.state.results = {};
-                        dvm.sm.state.searchText = '';
-                        dvm.sm.state.selected = {};
+                        httpService.cancel(dvm.id);
+                        dvm.os.state.search.errorMessage = '';
+                        dvm.os.state.search.highlightText = '';
+                        dvm.os.state.search.infoMessage = '';
+                        dvm.os.state.search.results = {};
+                        dvm.os.state.search.searchText = '';
+                        dvm.os.state.search.selected = {};
                     }
 
-                    function setSelected() {
-                        dvm.sm.state.selected = _.omit(angular.copy(dvm.sm.selected), '@id', '@type', 'matonto');
-                    }
+                    $scope.$watch('dvm.os.selected', (newValue, oldValue) => {
+                        if (!_.isEqual(oldValue, newValue)) {
+                            dvm.os.state.search.selected = _.omit(angular.copy(newValue), '@id', '@type', 'matonto');
+                        }
+                    });
 
-                    $scope.$watch('dvm.sm.selected', setSelected);
+                    $scope.$watch('dvm.os.listItem.recordId', (newValue, oldValue) => {
+                        if (!_.isEqual(oldValue, newValue)) {
+                            dvm.id = 'search-' + newValue;
+                        }
+                    });
                 }]
             }
         }

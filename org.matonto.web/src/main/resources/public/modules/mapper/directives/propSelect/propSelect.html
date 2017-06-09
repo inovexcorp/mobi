@@ -21,12 +21,12 @@
   #L%
   -->
 <div class="prop-select">
-    <ui-select ng-model="dvm.selectedProp" on-select="onChange()" ng-disabled="isDisabledWhen">
+    <ui-select ng-model="dvm.selectedProp" on-select="onChange()" ng-disabled="isDisabledWhen" autofocus>
         <ui-select-match placeholder="Select a property">
-            <span title="{{$select.selected['@id']}}">{{dvm.om.getBeautifulIRI($select.selected['@id'])}}</span>
+            <span title="{{$select.selected.propObj['@id']}}">{{dvm.om.getEntityName($select.selected.propObj)}}</span>
         </ui-select-match>
-        <ui-select-choices repeat="prop in props track by prop['@id'] | filter:$select.search">
-            <div title="{{prop['@id']}}" ng-bind-html="dvm.om.getBeautifulIRI(prop['@id']) | highlight:$select.search | trusted"></div>
+        <ui-select-choices group-by="dvm.getOntologyId" repeat="prop in props | filter:$select.search | orderBy:dvm.om.getEntityName track by $index">
+            <div title="{{prop.propObj['@id']}}" ng-bind-html="dvm.om.getEntityName(prop.propObj) | highlight:$select.search | trusted"></div>
         </ui-select-choices>
     </ui-select>
 </div>

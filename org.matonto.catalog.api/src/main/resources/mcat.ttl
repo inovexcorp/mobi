@@ -9,26 +9,19 @@
 @base <http://matonto.org/ontologies/catalog>.
 
 <http://matonto.org/ontologies/catalog> a owl:Ontology;
-    owl:versionIRI <http://matonto.org/ontologies/catalog#1.2>;
+    owl:versionIRI <http://matonto.org/ontologies/catalog#1.4>;
     owl:imports <http://www.w3.org/ns/prov-o#>;
     rdfs:label "The MatOnto Catalog Ontology"@en;
     rdfs:comment "The MatOnto catalog ontology is designed to facilitate interoperability between MatOnto catalogs published on the Web. By using the MatOnto catalog to describe resources, publishers increase discoverability and enable easy consumption of metadata from multiple catalogs. It further enables decentralized publishing of catalogs and facilitates federated resource search across sites. Aggregated MatOnto catalog metadata can serve as a manifest file to facilitate digital preservation."@en;
     dct:creator [foaf:name "Jordan Lewis"], [foaf:name "Megan Mercer"];
     foaf:maker [foaf:name "MatOnto"; foaf:homepage <http://matonto.org>];
-    dct:modified "2016-10-17"^^xsd:date.
+    dct:modified "2017-05-16"^^xsd:date.
 
 # Catalog
 
 :Catalog a owl:Class;
     rdfs:label "Catalog"@en;
     rdfs:comment "A curated collection of metadata about resources."@en.
-
-:record a owl:ObjectProperty;
-    rdfs:subPropertyOf dct:hasPart;
-    rdfs:label "record"@en;
-    rdfs:comment "A Record within the described Catalog."@en;
-    rdfs:domain :Catalog;
-    rdfs:range :Record.
 
 # Record
 
@@ -42,6 +35,12 @@
     rdfs:comment "A keyword describing the resource."@en;
     rdfs:domain :Record;
     rdfs:range rdfs:Literal.
+
+:catalog a owl:ObjectProperty, owl:FunctionalProperty;
+    rdfs:label "catalog"@en;
+    rdfs:comment "The Catalog containing the described Record."@en;
+    rdfs:domain :Record;
+    rdfs:range :Catalog.
 
 # Unversioned Record
 
@@ -88,38 +87,50 @@
     rdfs:domain :VersionedRDFRecord;
     rdfs:range :Branch.
 
-# Ontology
+:masterBranch a owl:ObjectProperty, owl:FunctionalProperty;
+    rdfs:label "master branch"@en;
+    rdfs:comment "The master Branch of the described Versioned RDF Record."@en;
+    rdfs:domain :VersionedRDFRecord;
+    rdfs:range :Branch.
 
-:Ontology a owl:Class;
+# OntologyRecord
+
+:OntologyRecord a owl:Class;
     rdfs:subClassOf :VersionedRDFRecord;
     rdfs:label "Ontology"@en;
     rdfs:comment "A collection of RDF data that defines an ontology resource."@en.
 
-# Mapping
+# MappingRecord
 
-:Mapping a owl:Class;
+:MappingRecord a owl:Class;
     rdfs:subClassOf :VersionedRDFRecord;
     rdfs:label "Mapping"@en;
     rdfs:comment "A collection of RDF data that defines a mapping resource."@en.
-
-# Dataset
-
-:Dataset a owl:Class;
-    rdfs:subClassOf :VersionedRDFRecord;
-    rdfs:label "Dataset"@en;
-    rdfs:comment "A collection of RDF data that defines a dataset resource."@en.
 
 # Branch
 
 :Branch a owl:Class;
     rdfs:label "Branch"@en;
-    rdfs:comment "A set of Commits of a Versioned RDF Resource."@en.
+    rdfs:comment "A set of Commits of a Versioned RDF Record."@en.
 
 :head a owl:ObjectProperty, owl:FunctionalProperty;
     rdfs:label "head"@en;
     rdfs:comment "The latest Commit of the described Branch."@en;
     rdfs:domain :Branch;
     rdfs:range :Commit.
+
+# UserBranch
+
+:UserBranch a owl:Class;
+    rdfs:subClassOf :Branch;
+    rdfs:label "User Branch"@en;
+    rdfs:comment "A set of Commits of a Versioned RDF Record linked to a specific User."@en.
+
+:createdFrom a owl:ObjectProperty, owl:FunctionalProperty;
+    rdfs:label "created from"@en;
+    rdfs:comment "The Branch that the described UserBranch was created from."@en;
+    rdfs:domain :UserBranch;
+    rdfs:range :Branch.
 
 # Version
 
@@ -152,16 +163,16 @@
     rdfs:label "Distribution"@en;
     rdfs:comment "Represents a specific available form of a record. Each record might be available in different forms, these forms might represent different formats of the record or different endpoints. Examples of distributions include a downloadable CSV file, an API or an RSS feed."@en.
 
-:accessURL a owl:ObjectProperty, owl:FunctionalProperty;
+:accessURL a owl:DatatypeProperty, owl:FunctionalProperty;
     rdfs:label "access URL"@en;
     rdfs:domain :Distribution;
-    rdfs:range rdfs:Resource;
+    rdfs:range xsd:anyURI;
     rdfs:comment "Could be any kind of URL that gives access to a distribution of the record. E.g. landing page, download, feed URL, SPARQL endpoint. Use when your catalog does not have information on which it is or when it is definitely not a download."@en.
 
-:downloadURL a owl:ObjectProperty, owl:FunctionalProperty;
+:downloadURL a owl:DatatypeProperty, owl:FunctionalProperty;
     rdfs:label "download URL"@en;
     rdfs:domain :Distribution;
-    rdfs:range rdfs:Resource;
+    rdfs:range xsd:anyURI;
     rdfs:comment "This is a direct link to a downloadable file in a given format. E.g. CSV file or RDF file. The format is described by the distribution's dc:format and/or :mediaType."@en.
 
 # Commit
@@ -171,6 +182,20 @@
     rdfs:label "Commit"@en;
     rdfs:comment "The provenance describing a commit activity made on a Versioned RDF Record."@en.
 
+:baseCommit a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:subPropertyOf prov:wasInformedBy ;
+    rdfs:label "base commit"@en ;
+    rdfs:comment "The base Commit of the described Commit."@en ;
+    rdfs:domain :Commit ;
+    rdfs:range :Commit .
+
+:auxiliaryCommit a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:subPropertyOf prov:wasInformedBy ;
+    rdfs:label "auxiliary commit"@en ;
+    rdfs:comment "The Commit that was merged into the described Commit."@en ;
+    rdfs:domain :Commit ;
+    rdfs:range :Commit .
+
 # In Progress Commit
 
 :InProgressCommit a owl:Class;
@@ -178,11 +203,11 @@
     rdfs:label "In Progress Commit"@en;
     rdfs:comment "The provenance describing a commit activity that is currently being made on a Versioned RDF Record."@en.
 
-:onBranch a owl:ObjectProperty, owl:FunctionalProperty;
-    rdfs:label "on branch"@en;
-    rdfs:comment "The branch that the described In Progress Commit belongs to."@en;
+:onVersionedRDFRecord a owl:ObjectProperty, owl:FunctionalProperty;
+    rdfs:label "on versioned RDF record"@en;
+    rdfs:comment "The versioned RDF record that the described In Progress Commit belongs to."@en;
     rdfs:domain :InProgressCommit;
-    rdfs:range :Branch.
+    rdfs:range :VersionedRDFRecord.
 
 # Revision
 
@@ -191,17 +216,17 @@
     rdfs:label "Revision"@en;
     rdfs:comment "The entity created by a Commit."@en.
 
-:additions a owl:ObjectProperty, owl:FunctionalProperty;
+:additions a owl:DatatypeProperty, owl:FunctionalProperty;
     rdfs:label "additions"@en;
     rdfs:comment "Links the IRI of a graph containing the statements that were added with the described Revision."@en;
     rdfs:domain :Revision;
-    rdfs:range rdfs:Resource.
+    rdfs:range xsd:anyURI.
 
-:deletions a owl:ObjectProperty, owl:FunctionalProperty;
+:deletions a owl:DatatypeProperty, owl:FunctionalProperty;
     rdfs:label "deletions"@en;
     rdfs:comment "Links the IRI of a graph containing the statements that were deleted with the described Revision."@en;
     rdfs:domain :Revision;
-    rdfs:range rdfs:Resource.
+    rdfs:range xsd:anyURI.
 
 # Misc.
 

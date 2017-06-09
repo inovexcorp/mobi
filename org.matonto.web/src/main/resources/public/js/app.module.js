@@ -28,23 +28,31 @@
             /* Third Party */
             'angular-uuid',
             'ngAnimate',
+            'ngAria',
             'ngCookies',
+            'ngMaterial',
+            'ngclipboard',
             'ngHandsontable',
             'ngMessages',
+            'toastr',
+            'ui.bootstrap',
             'ui.codemirror',
             'ui.router',
             'ui.select',
+            'vs-repeat',
 
             /* Custom Filters */
             'beautify',
             'camelCase',
             'escapeHTML',
+            'inArray',
             'prefixation',
             'removeIriFromArray',
             'removeMatonto',
             'showProperties',
             'splitIRI',
             'trusted',
+            'uniqueKey',
 
             /* Custom Directives */
             'block',
@@ -52,35 +60,64 @@
             'blockFooter',
             'blockHeader',
             'blockSearch',
+            'checkbox',
             'circleButton',
+            'circleButtonStack',
+            'clickAnywhereButHere',
+            'commitChangesDisplay',
+            'commitHistoryTable',
+            'commitInfoOverlay',
             'confirmationOverlay',
             'customHeader',
             'customLabel',
+            'emailInput',
+            'entityDates',
+            'entityDescription',
             'errorDisplay',
             'fileInput',
+            'focusMe',
             'infoMessage',
+            'keywordSelect',
             'pagination',
+            'pagingDetails',
+            'passwordConfirmInput',
             'radioButton',
+            'recordKeywords',
+            'spinner',
+            'statementContainer',
+            'statementDisplay',
+            'stepProgressBar',
             'tab',
             'tabset',
+            'targetedSpinner',
             'textArea',
             'textInput',
+            'uniqueValue',
+            'valueDisplay',
 
             /* Custom Modules */
             'catalog',
+            'datasets',
+            'discover',
             'home',
             'login',
             'mapper',
             'nav',
             'ontology-editor',
             'settings',
-            'sparql',
+            'user-management',
             'webtop',
 
             /* Custom Services */
             'catalogManager',
+            'catalogState',
+            'datasetManager',
+            'datasetState',
             'delimitedManager',
+            'discoverState',
+            'httpService',
             'loginManager',
+            'manchesterConverter',
             'mapperState',
             'mappingManager',
             'ontologyManager',
@@ -90,29 +127,89 @@
             'responseObj',
             'settingsManager',
             'sparqlManager',
-            'updateRefs'
+            'stateManager',
+            'updateRefs',
+            'userManager',
+            'userState',
+            'util'
         ])
-        .constant('_', window._)
+        .constant('chroma', window.chroma)
+        .constant('Snap', window.Snap)
         .constant('REGEX', {
             'IRI': /^(?:(?:https?|ftp):\/\/)(?:\S+(?::\S*)?@)?(?:(?!10(?:\.\d{1,3}){3})(?!127(?:\.\d{1,3}){3})(?!169\.254(?:\.\d{1,3}){2})(?!192\.168(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]+-?)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]+-?)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,})))(?::\d{2,5})?(?:\/[^\s]*)?$/i,
             'LOCALNAME': /^[a-zA-Z0-9._\-]+$/,
-            'FILENAME': /^[\w\-. ]+$/
+            'FILENAME': /^[\w\-. ]+$/,
+            'UUID': /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/
         })
+        .constant('INDENT', 1.28571429)
+        .config(httpInterceptorConfig)
+        .config(ariaConfig)
+        .factory('requestInterceptor', requestInterceptor)
         .service('beforeUnload', beforeUnload)
         .run(function(beforeUnload) {
             // We have to invoke the service at least once
         });
 
-        beforeUnload.$inject = ['$window', 'ontologyManagerService', 'ontologyStateService'];
+        beforeUnload.$inject = ['$window', 'ontologyManagerService', 'ontologyStateService', 'mapperStateService'];
 
-        function beforeUnload($window, ontologyManagerService, ontologyStateService) {
+        function beforeUnload($window, ontologyManagerService, ontologyStateService, mapperStateService) {
             $window.onbeforeunload = function(e) {
-                var hasChanges = _.some(ontologyManagerService.list, listItem => {
-                    return ontologyStateService.hasChanges(_.get(listItem, 'ontology'), _.get(listItem, 'ontologyId'));
+                var ontologyHasChanges = _.some(ontologyManagerService.list, listItem => {
+                    return ontologyStateService.hasChanges(_.get(listItem, 'recordId'));
                 });
-                if (hasChanges) {
+                var mappingHasChanges = mapperStateService.changedMapping;
+                if (ontologyHasChanges || mappingHasChanges) {
                     return true;
                 }
             }
+        }
+
+        httpInterceptorConfig.$inject = ['$httpProvider'];
+
+        function httpInterceptorConfig($httpProvider) {
+            $httpProvider.interceptors.push('requestInterceptor');
+        }
+
+        requestInterceptor.$inject = ['$q', '$rootScope', '$httpParamSerializer'];
+
+        function requestInterceptor($q, $rootScope, $httpParamSerializer) {
+            $rootScope.pendingRequests = 0;
+
+            function checkConfig(config) {
+                return !_.includes(config.url, '.html') && !_.has(config, 'timeout');
+            }
+
+            function handleStop(config) {
+                if (checkConfig(config)) {
+                    $rootScope.pendingRequests--;
+                }
+            }
+
+            return {
+                'request': function (config) {
+                    if (checkConfig(config)) {
+                        $rootScope.pendingRequests++;
+                    }
+                    return config || $q.when(config);
+                },
+                'requestError': function(rejection) {
+                    handleStop(rejection.config);
+                    return $q.reject(rejection);
+                },
+                'response': function(response) {
+                    handleStop(response.config);
+                    return response || $q.when(response);
+                },
+                'responseError': function(rejection) {
+                    handleStop(rejection.config);
+                    return $q.reject(rejection);
+                }
+            };
+        }
+
+        function ariaConfig($ariaProvider) {
+            $ariaProvider.config({
+                tabindex: false
+            });
         }
 })();

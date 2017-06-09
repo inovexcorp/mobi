@@ -33,6 +33,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 public class LinksUtils {
@@ -41,7 +42,7 @@ public class LinksUtils {
         List<NameValuePair> params = new ArrayList<>();
 
         queryParams.forEach( (key, values) -> {
-            if (key.equals("start")) {
+            if (key.equals("offset")) {
                 params.add(new BasicNameValuePair(key, String.valueOf(start)));
             } else {
                 params.add(new BasicNameValuePair(key, values.get(0)));
@@ -52,33 +53,49 @@ public class LinksUtils {
     }
 
     /**
-     * Creates the Links that will be used to get the next and previous page of results in the PaginatedResults based
-     * off of the provided details.
+     * Creates the Links that will be used to get the next and previous page of results based off of the provided
+     * details.
      *
      * @param uriInfo the request URI information.
      * @param size the number of results returned.
      * @param limit the maximum number of results returned.
-     * @param start the starting index of the results.
+     * @param offset the offset of the results.
      * @return Links for the provided details.
      */
-    public static Links buildLinks(UriInfo uriInfo, int size, int totalSize, int limit, int start) {
-        String path = uriInfo.getPath();
+    public static Links buildLinks(UriInfo uriInfo, int size, int totalSize, int limit, int offset) {
+        String path = uriInfo.getPath(false);
 
         Links links = new Links();
         links.setBase(uriInfo.getBaseUri().toString());
         links.setSelf(uriInfo.getAbsolutePath().toString());
         links.setContext(path);
 
-        if (size == limit && totalSize - (start + limit) > 0) {
-            String next = path + "?" + buildQueryString(uriInfo.getQueryParameters(), start + limit);
+        if (size == limit && totalSize - (offset + limit) > 0) {
+            String next = path + "?" + buildQueryString(uriInfo.getQueryParameters(), offset + limit);
             links.setNext(next);
         }
 
-        if (start != 0) {
-            String prev = path + "?" + buildQueryString(uriInfo.getQueryParameters(), start - limit);
+        if (offset != 0) {
+            String prev = path + "?" + buildQueryString(uriInfo.getQueryParameters(), offset - limit);
             links.setPrev(prev);
         }
 
         return links;
+    }
+
+    /**
+     * Checks whether the passed limit and offset values are valid pagination parameters. The
+     * offset must not be negative and the limits must not be zero or negative.
+     *
+     * @param limit the maximum number of results to return
+     * @param offset the offset of the results
+     */
+    public static void validateParams(int limit, int offset) {
+        if (offset < 0) {
+            throw ErrorUtils.sendError("Offset cannot be negative.", Response.Status.BAD_REQUEST);
+        }
+        if (limit < 0) {
+            throw ErrorUtils.sendError("Limit cannot be negative", Response.Status.BAD_REQUEST);
+        }
     }
 }

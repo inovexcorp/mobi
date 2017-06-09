@@ -42,9 +42,7 @@
         </div>
         <section ng-if="$state.current.name === 'login'" ui-view="container" class="view-container full-height"></section>
         <footer ui-view="footer"></footer>
-        <div class="spinner" ng-show="$root.showSpinner">
-            <i class="fa fa-4x fa-spin fa-spinner"></i>
-        </div>
+        <spinner ng-show="pendingRequests > 0"></spinner>
         <!-- inject:js -->
         <!-- endinject -->
     </body>

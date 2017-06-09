@@ -23,73 +23,95 @@
 describe('Mapping List directive', function() {
     var $compile,
         scope,
+        $q,
+        element,
+        controller,
+        utilSvc,
         mappingManagerSvc,
-        mapperStateSvc;
+        mapperStateSvc,
+        catalogManagerSvc,
+        prefixes;
 
     beforeEach(function() {
         module('templates');
         module('mappingList');
         mockPrefixes();
+        mockUtil();
         mockMappingManager();
         mockMapperState();
+        mockCatalogManager();
         injectSplitIRIFilter();
+        injectHighlightFilter();
+        injectTrustedFilter();
 
-        module(function($provide) {
-            $provide.value('highlightFilter', jasmine.createSpy('highlightFilter'));
-            $provide.value('trustedFilter', jasmine.createSpy('trustedFilter'));
-        });
-
-        inject(function(_$compile_, _$rootScope_, _mappingManagerService_, _mapperStateService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _utilService_, _mappingManagerService_, _mapperStateService_, _catalogManagerService_, _prefixes_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            $q = _$q_;
+            utilSvc = _utilService_;
             mappingManagerSvc = _mappingManagerService_;
             mapperStateSvc = _mapperStateService_;
+            catalogManagerSvc = _catalogManagerService_;
+            prefixes = _prefixes_;
         });
+
+        catalogManagerSvc.localCatalog = {'@id': ''};
+        mappingManagerSvc.mappingIds = ['test1'];
+        element = $compile(angular.element('<mapping-list></mapping-list>'))(scope);
+        scope.$digest();
+        controller = element.controller('mappingList');
     });
 
     describe('controller methods', function() {
-        beforeEach(function() {
-            this.element = $compile(angular.element('<mapping-list></mapping-list>'))(scope);
-            scope.$digest();
-            controller = this.element.controller('mappingList');
-        });
-        it('should open a mapping on click', function() {
-            mappingManagerSvc.mappingIds = ['test1', 'test2'];
-            controller.onClick('test1');
-            scope.$apply();
-            expect(mappingManagerSvc.getMapping).toHaveBeenCalledWith('test1');
-            expect(mapperStateSvc.mapping).toEqual({jsonld: [], id: 'test1'});
+        describe('should open a mapping on click', function() {
+            it('if it was already open', function() {
+                controller.onClick('test1');
+                scope.$apply();
 
-            controller.onClick('test2');
-            scope.$apply();
-            expect(mappingManagerSvc.getMapping).toHaveBeenCalledWith('test2');
-            expect(mapperStateSvc.mapping).toEqual({jsonld: [], id: 'test2'});
-
-            mappingManagerSvc.getMapping.calls.reset();
-            controller.onClick('test1');
-            scope.$apply();
-            expect(mappingManagerSvc.getMapping).not.toHaveBeenCalled();
-            expect(mapperStateSvc.mapping).toEqual({jsonld: [], id: 'test1'});
+                mappingManagerSvc.getMapping.calls.reset();
+                controller.onClick('test1');
+                expect(mappingManagerSvc.getMapping).not.toHaveBeenCalled();
+                expect(mapperStateSvc.mapping).toEqual({jsonld: [], id: 'test1', record: {}});
+            });
+            describe('if it had not been opened yet', function() {
+                it('unless an error occurs', function() {
+                    mappingManagerSvc.getMapping.and.returnValue($q.reject('Error message'));
+                    controller.onClick('test1');
+                    scope.$apply();
+                    expect(mappingManagerSvc.getMapping).toHaveBeenCalledWith('test1');
+                    expect(mapperStateSvc.mapping).toBeUndefined();
+                    expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Mapping test1 could not be found');
+                });
+                it('successfully', function() {
+                    var record = {
+                        '@id': '',
+                        '@type': []
+                    };
+                    record[prefixes.dcterms + 'title'] = '';
+                    record[prefixes.dcterms + 'description'] = '';
+                    record[prefixes.dcterms + 'issued'] = '';
+                    record[prefixes.dcterms + 'modified'] = '';
+                    record[prefixes.catalog + 'keyword'] = '';
+                    catalogManagerSvc.getRecord.and.returnValue($q.when(record));
+                    controller.onClick('test1');
+                    scope.$apply();
+                    expect(mappingManagerSvc.getMapping).toHaveBeenCalledWith('test1');
+                    expect(catalogManagerSvc.getRecord).toHaveBeenCalled();
+                    expect(mapperStateSvc.mapping).toEqual({jsonld: [], id: 'test1', record: record});
+                });
+            });
         });
     });
     describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
-            this.element = $compile(angular.element('<mapping-list></mapping-list>'))(scope);
-            scope.$digest();
-        });
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('mapping-list')).toBe(true);
-            expect(this.element.hasClass('tree')).toBe(true);
+            expect(element.hasClass('mapping-list')).toBe(true);
+            expect(element.hasClass('tree')).toBe(true);
         });
         it('with the correct number of mapping list items', function() {
-            mappingManagerSvc.mappingIds = ['test1'];
-            scope.$digest();
-            expect(this.element.find('li').length).toBe(mappingManagerSvc.mappingIds.length);
+            expect(element.find('li').length).toBe(mappingManagerSvc.mappingIds.length);
         });
         it('depending on whether the mapping is selected', function() {
-            mappingManagerSvc.mappingIds = ['test1'];
-            scope.$digest();
-            var mappingName = angular.element(this.element.querySelectorAll('li a'));
+            var mappingName = angular.element(element.querySelectorAll('li a'));
             expect(mappingName.hasClass('active')).toBe(false);
 
             mapperStateSvc.mapping = {id: 'test1'};
@@ -100,20 +122,15 @@ describe('Mapping List directive', function() {
             mappingManagerSvc.mappingIds = ['test1', 'test2'];
             mapperStateSvc.mappingSearchString = 'test1';
             scope.$digest();
-            expect(this.element.find('li').length).toBe(1);
+            expect(element.find('li').length).toBe(1);
 
             mapperStateSvc.mappingSearchString = 'test12';
             scope.$digest();
-            expect(this.element.find('li').length).toBe(0);
+            expect(element.find('li').length).toBe(0);
         });
     });
     it('should call onClick when a mapping name is clicked', function() {
-        mappingManagerSvc.mappingIds = ['test1'];
-        var element = $compile(angular.element('<mapping-list></mapping-list>'))(scope);
-        scope.$digest();
-        controller = element.controller('mappingList');
         spyOn(controller, 'onClick');
-
         angular.element(element.querySelectorAll('li a')[0]).triggerHandler('click');
         expect(controller.onClick).toHaveBeenCalled();
     });

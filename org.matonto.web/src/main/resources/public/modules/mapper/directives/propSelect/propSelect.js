@@ -40,6 +40,7 @@
          * @scope
          * @restrict E
          * @requires ontologyManager.service:ontologyManagerService
+         * @requires $filter
          *
          * @description
          * `propSelect` is a directive which creates a ui-select with the passed property
@@ -48,25 +49,25 @@
          * its template.
          *
          * @param {object[]} props an array of property objects from the
-         * {@link ontologyManager.service:ontologyMangerService ontologyMangerService}
+         * {@link ontologyManager.service:ontologyManagerService ontologyManagerService}
+         * @param {boolean} isDisabledWhen whether or not the select should be disabled
          * @param {function} [onChange=undefined] an optional function to be called on change
          * of the selected property
          * @param {object} selectedProp the currently selected property object
-         * @param {string} selectedProp['@id'] the IRI of the property
          */
         .directive('propSelect', propSelect);
 
-        propSelect.$inject = ['ontologyManagerService'];
+        propSelect.$inject = ['$filter', 'ontologyManagerService'];
 
-        function propSelect(ontologyManagerService) {
+        function propSelect($filter, ontologyManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
                 replace: true,
                 scope: {
                     props: '<',
-                    isDisabledWhen: '=',
-                    onChange: '&'
+                    isDisabledWhen: '<',
+                    onChange: '&?'
                 },
                 bindToController: {
                     selectedProp: '='
@@ -74,6 +75,10 @@
                 controller: function() {
                     var dvm = this;
                     dvm.om = ontologyManagerService;
+
+                    dvm.getOntologyId = function(prop) {
+                        return prop.ontologyId || $filter('splitIRI')(prop.propObj['@id']).begin;
+                    }
                 },
                 templateUrl: 'modules/mapper/directives/propSelect/propSelect.html'
             }

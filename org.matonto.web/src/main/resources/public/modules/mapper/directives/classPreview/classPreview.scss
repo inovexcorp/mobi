@@ -2,5 +2,21 @@
 @import "./src/main/resources/public/css/variables";
 
 .class-preview {
-    overflow-y: auto;
+    margin-bottom: 15px;
+
+    .props {
+        li {
+            display: inline;
+
+            &:after {
+                content: ', ';
+            }
+            &.last:after {
+                content: '';
+            }
+            &.last.limited:after {
+                content: '...'
+            }
+        }
+    }
 }

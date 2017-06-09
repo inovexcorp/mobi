@@ -24,7 +24,7 @@
     <div class="col-xs-5">
         <mapping-title></mapping-title>
         <tabset class="edit-tabs">
-            <tab heading="'Edit'" active="true">
+            <tab heading="'Edit'" active="dvm.tabs.edit">
                 <block>
                     <block-content class="padding">
                         <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
@@ -32,12 +32,12 @@
                     </block-content>
                     <block-footer>
                         <button class="btn btn-default pull-left" ng-click="dvm.cancel()">Cancel</button>
-                        <button class="btn btn-primary pull-right save-btn" ng-click="dvm.save()" ng-disabled="(!dvm.mm.getSourceOntologyId(dvm.state.mapping.jsonld) && dvm.state.mapping.jsonld.length <= 1) || dvm.state.invalidProps.length > 0">Save</button>
-                        <button class="btn btn-primary pull-right save-run-btn" ng-click="dvm.state.displayRunMappingOverlay = true" ng-disabled="(!dvm.mm.getSourceOntologyId(dvm.state.mapping.jsonld) && dvm.state.mapping.jsonld.length <= 1) || dvm.state.invalidProps.length > 0">Save &amp; Run</button>
+                        <button class="btn btn-primary pull-right save-btn" ng-click="dvm.save()" ng-disabled="(dvm.configNotSet() && dvm.state.mapping.jsonld.length <= 1) || dvm.state.invalidProps.length > 0">Save</button>
+                        <button class="btn btn-primary pull-right save-run-btn" ng-click="dvm.state.displayRunMappingOverlay = true" ng-disabled="(dvm.configNotSet() && dvm.state.mapping.jsonld.length <= 1) || dvm.state.invalidProps.length > 0">Save &amp; Run</button>
                     </block-footer>
                 </block>
             </tab>
-            <tab heading="'Preview'">
+            <tab heading="'Preview'" active="dvm.tabs.preview">
                 <block>
                     <block-content class="padding">
                         <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
@@ -45,8 +45,8 @@
                     </block-content>
                     <block-footer>
                         <button class="btn btn-default pull-left" ng-click="dvm.cancel()">Cancel</button>
-                        <button class="btn btn-primary pull-right save-btn" ng-click="dvm.save()" ng-disabled="(!dvm.mm.getSourceOntologyId(dvm.state.mapping.jsonld) && dvm.state.mapping.jsonld.length <= 1) || dvm.state.invalidProps.length > 0">Save</button>
-                        <button class="btn btn-primary pull-right save-run-btn" ng-click="dvm.state.displayRunMappingOverlay = true" ng-disabled="(!dvm.mm.getSourceOntologyId(dvm.state.mapping.jsonld) && dvm.state.mapping.jsonld.length <= 1) || dvm.state.invalidProps.length > 0">Save &amp; Run</button>
+                        <button class="btn btn-primary pull-right save-btn" ng-click="dvm.save()" ng-disabled="(dvm.configNotSet() && dvm.state.mapping.jsonld.length <= 1) || dvm.state.invalidProps.length > 0">Save</button>
+                        <button class="btn btn-primary pull-right save-run-btn" ng-click="dvm.state.displayRunMappingOverlay = true" ng-disabled="(dvm.configNotSet() && dvm.state.mapping.jsonld.length <= 1) || dvm.state.invalidProps.length > 0">Save &amp; Run</button>
                     </block-footer>
                 </block>
             </tab>

@@ -27,9 +27,9 @@
         .module('classAxioms', [])
         .directive('classAxioms', classAxioms);
 
-        classAxioms.$inject = ['ontologyStateService', 'propertyManagerService', 'responseObj', 'prefixes'];
+        classAxioms.$inject = ['ontologyStateService', 'propertyManagerService', 'responseObj', 'prefixes', 'ontologyUtilsManagerService'];
 
-        function classAxioms(ontologyStateService, propertyManagerService, responseObj, prefixes) {
+        function classAxioms(ontologyStateService, propertyManagerService, responseObj, prefixes, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,9 +38,10 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    dvm.sm = ontologyStateService;
+                    dvm.os = ontologyStateService;
                     dvm.pm = propertyManagerService;
                     dvm.ro = responseObj;
+                    dvm.ontoUtils = ontologyUtilsManagerService;
 
                     dvm.openRemoveOverlay = function(key, index) {
                         dvm.key = key;
@@ -50,20 +51,18 @@
 
                     dvm.updateHierarchy = function(axiom, values) {
                         if (_.get(axiom, 'localName') === 'subClassOf') {
-                            _.forEach(values, value => {
-                                dvm.sm.addEntityToHierarchy(dvm.sm.listItem.classHierarchy,
-                                    dvm.sm.selected.matonto.originalIRI, dvm.sm.listItem.classIndex,
-                                    dvm.ro.getItemIri(value));
-                            });
-                            dvm.sm.goTo(dvm.sm.selected.matonto.originalIRI);
+                            var classIRIs = _.map(values, value => dvm.ro.getItemIri(value));
+                            dvm.ontoUtils.setSuperClasses(dvm.os.selected['@id'], classIRIs);
+                            dvm.ontoUtils.updateflatIndividualsHierarchy(classIRIs);
                         }
                     }
 
                     dvm.removeFromHierarchy = function(axiomObject) {
                         if (prefixes.rdfs + 'subClassOf' === dvm.key) {
-                            dvm.sm.deleteEntityFromParentInHierarchy(dvm.sm.listItem.classHierarchy,
-                                dvm.sm.selected.matonto.originalIRI, axiomObject['@id'], dvm.sm.listItem.classIndex);
-                            dvm.sm.goTo(dvm.sm.selected.matonto.originalIRI);
+                            dvm.os.deleteEntityFromParentInHierarchy(dvm.os.listItem.classHierarchy, dvm.os.selected['@id'], axiomObject['@id'], dvm.os.listItem.classIndex);
+                            dvm.os.listItem.flatClassHierarchy = dvm.os.flattenHierarchy(dvm.os.listItem.classHierarchy, dvm.os.listItem.recordId);
+                            dvm.os.listItem.individualsParentPath = dvm.os.getIndividualsParentPath(dvm.os.listItem);
+                            dvm.os.listItem.flatIndividualsHierarchy = dvm.os.createFlatIndividualTree(dvm.os.listItem);
                         }
                     }
                 }

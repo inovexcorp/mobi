@@ -27,6 +27,7 @@ import org.matonto.etl.api.delimited.MappingWrapper
 import org.matonto.etl.api.ontologies.delimited.*
 import org.matonto.exception.MatOntoException
 import org.matonto.ontologies.rdfs.Resource
+import org.matonto.ontology.utils.api.SesameTransformer
 import org.matonto.rdf.api.Model
 import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory
@@ -36,7 +37,6 @@ import org.matonto.rdf.orm.impl.ThingFactory
 import org.matonto.repository.api.Repository
 import org.matonto.repository.api.RepositoryConnection
 import org.matonto.repository.config.RepositoryConfig
-import org.matonto.vocabularies.xsd.XSD
 import org.openrdf.rio.RDFFormat
 import org.openrdf.rio.Rio
 import spock.lang.Specification
@@ -64,6 +64,7 @@ class SimpleMappingManagerSpec extends Specification {
     def builder = new SimpleMappingId.Builder(vf)
     def mappingIRI = vf.createIRI("http://test.com/mapping")
     def versionIRI = vf.createIRI("http://test.com/mapping/1.0")
+    def transformer = Mock(SesameTransformer)
 
     def setup() {
         mappingFactory.setValueFactory(vf)
@@ -71,7 +72,7 @@ class SimpleMappingManagerSpec extends Specification {
         mappingFactory.setValueConverterRegistry(vcr)
         classMappingFactory.setValueFactory(vf)
         classMappingFactory.setModelFactory(mf)
-        classMappingFactory.setValueConverterRegistry(vcr);
+        classMappingFactory.setValueConverterRegistry(vcr)
         dataMappingFactory.setValueFactory(vf)
         dataMappingFactory.setValueConverterRegistry(vcr)
         propertyFactory.setValueFactory(vf)
@@ -101,6 +102,7 @@ class SimpleMappingManagerSpec extends Specification {
         service.setModelFactory(mf)
         service.setMappingFactory(mappingFactory)
         service.setClassMappingFactory(classMappingFactory)
+        service.setSesameTransformer(transformer)
 
         mappingWrapper.getId() >> mappingId
         mappingWrapper.getMapping() >> mapping
@@ -108,6 +110,10 @@ class SimpleMappingManagerSpec extends Specification {
         mappingWrapper.getModel() >> model
 
         mapping.getModel() >> model
+
+        mappingId.getMappingIdentifier() >> mappingIRI
+
+        transformer.matontoModel(_) >> { args -> Values.matontoModel(args[0])}
     }
 
     def "storeMapping throws an exception when mapping exists"() {
@@ -136,32 +142,67 @@ class SimpleMappingManagerSpec extends Specification {
         manager.setRepository(repository)
 
         when:
-        def result = manager.storeMapping(mappingWrapper)
+        manager.storeMapping(mappingWrapper)
 
         then:
         repository.getConnection() >> connection
         repository.getConfig() >> Mock(RepositoryConfig.class)
-        result
+        1 * connection.add(model, mappingIRI)
+    }
+
+    def "updateMapping throws an exception when mapping does not exist"() {
+        setup:
+        def manager = [
+                mappingExists: { o -> return false }
+        ] as SimpleMappingManager
+        manager.setValueFactory(vf)
+        manager.setModelFactory(mf)
+        manager.setRepository(repository)
+
+        when:
+        manager.updateMapping(mappingIRI, mappingWrapper)
+
+        then:
+        thrown(MatOntoException)
+    }
+
+    def "updateMapping updates a Mapping if mapping exists"() {
+        setup:
+        def manager = [
+                mappingExists: { o -> return true }
+        ] as SimpleMappingManager
+        manager.setValueFactory(vf)
+        manager.setModelFactory(mf)
+        manager.setRepository(repository)
+
+        when:
+        manager.updateMapping(mappingIRI, mappingWrapper)
+
+        then:
+        repository.getConnection() >> connection
+        repository.getConfig() >> Mock(RepositoryConfig.class)
+        1 * connection.clear(mappingIRI)
+        1 * connection.add(model, mappingIRI)
     }
 
     def "Create a Mapping using a MappingId with an id"() {
         setup:
-        def mappingId = builder.id(mappingIRI).build();
+        def mappingId = builder.id(mappingIRI).build()
         def mapping = service.createMapping(mappingId)
 
         expect:
-        mapping.getId() == mappingId;
-        mapping.getModel().contains(mappingIRI, vf.createIRI(Resource.type_IRI), vf.createIRI(Mapping.TYPE));
+        mapping.getId() == mappingId
+        mapping.getModel().contains(mappingIRI, vf.createIRI(Resource.type_IRI), vf.createIRI(Mapping.TYPE))
     }
 
     def "Create a Mapping using a MappingId with a mapping iri"() {
         setup:
-        def mappingId = builder.mappingIRI(mappingIRI).build();
+        def mappingId = builder.mappingIRI(mappingIRI).build()
         def mapping = service.createMapping(mappingId)
 
         expect:
-        mapping.getId() == mappingId;
-        mapping.getModel().contains(mappingIRI, vf.createIRI(Resource.type_IRI), vf.createIRI(Mapping.TYPE));
+        mapping.getId() == mappingId
+        mapping.getModel().contains(mappingIRI, vf.createIRI(Resource.type_IRI), vf.createIRI(Mapping.TYPE))
     }
 
     def "Create a Mapping using a MappingId with a version IRI"() {
@@ -169,13 +210,13 @@ class SimpleMappingManagerSpec extends Specification {
         SimpleMappingId mappingId = new SimpleMappingId.Builder(vf)
                 .mappingIRI(mappingIRI)
                 .versionIRI(versionIRI)
-                .build();
+                .build()
         def mapping = service.createMapping(mappingId)
 
         expect:
-        mapping.getId() == mappingId;
-        mapping.getModel().contains(mappingIRI, vf.createIRI(Resource.type_IRI), vf.createIRI(Mapping.TYPE));
-        mapping.getModel().contains(mappingIRI, vf.createIRI(Mapping.versionIRI_IRI), vf.createLiteral(versionIRI.stringValue(), vf.createIRI(XSD.ANYURI)));
+        mapping.getId() == mappingId
+        mapping.getModel().contains(mappingIRI, vf.createIRI(Resource.type_IRI), vf.createIRI(Mapping.TYPE))
+        mapping.getModel().contains(mappingIRI, vf.createIRI(Mapping.versionIRI_IRI), versionIRI)
     }
 
     def "Create a Mapping using a valid File"() {
@@ -187,29 +228,33 @@ class SimpleMappingManagerSpec extends Specification {
                 .toURI()).toFile()
 
         def expectedModel = Values.matontoModel(Rio.parse(mappingStream, "", RDFFormat.TURTLE))
-        def actualMapping = service.createMapping(mappingFile)
         def expectedVersionedModel = Values.matontoModel(Rio.parse(versionedMappingStream, "", RDFFormat.JSONLD))
+
+        when:
+        def actualMapping = service.createMapping(mappingFile)
         def actualVersionedMapping = service.createMapping(versionedMappingFile)
 
-        expect:
-        actualMapping.getModel() == expectedModel;
-        actualVersionedMapping.getModel() == expectedVersionedModel;
+        then:
+        actualMapping.getModel() == expectedModel
+        actualVersionedMapping.getModel() == expectedVersionedModel
     }
 
     def "Create a Mapping using a valid InputStream"() {
         setup:
         def model = Values.matontoModel(Rio.parse(getClass().getClassLoader()
                 .getResourceAsStream("newestMapping.ttl"), "", RDFFormat.TURTLE))
-        def mapping = service.createMapping(getClass().getClassLoader()
-                .getResourceAsStream("newestMapping.ttl"), RDFFormat.TURTLE)
         def versionedModel = Values.matontoModel(Rio.parse(getClass().getClassLoader()
                 .getResourceAsStream("newestVersionedMapping.jsonld"), "", RDFFormat.JSONLD))
+
+        when:
+        def mapping = service.createMapping(getClass().getClassLoader()
+                .getResourceAsStream("newestMapping.ttl"), RDFFormat.TURTLE)
         def versionedMapping = service.createMapping(getClass().getClassLoader()
                 .getResourceAsStream("newestVersionedMapping.jsonld"), RDFFormat.JSONLD)
 
-        expect:
-        mapping.getModel() == model;
-        versionedMapping.getModel() == versionedModel;
+        then:
+        mapping.getModel() == model
+        versionedMapping.getModel() == versionedModel
     }
 
     def "Create a Mapping using a valid JSON-LD String"() {
@@ -221,21 +266,23 @@ class SimpleMappingManagerSpec extends Specification {
                 .toURI()).toFile()
 
         def expectedModel = Values.matontoModel(Rio.parse(mappingStream, "", RDFFormat.JSONLD))
-        def actualMapping = service.createMapping(mappingFile.getText("UTF-8"))
         def expectedVersionedModel = Values.matontoModel(Rio.parse(versionedMappingStream, "", RDFFormat.JSONLD))
+
+        when:
+        def actualMapping = service.createMapping(mappingFile.getText("UTF-8"))
         def actualVersionedMapping = service.createMapping(versionedMappingFile.getText("UTF-8"))
 
-        expect:
-        actualMapping.getModel() == expectedModel;
-        actualVersionedMapping.getModel() == expectedVersionedModel;
+        then:
+        actualMapping.getModel() == expectedModel
+        actualVersionedMapping.getModel() == expectedVersionedModel
     }
 
     def "Throw an exception when Mapping is invalid"() {
         when:
         service.createMapping(getClass().getClassLoader()
-                .getResourceAsStream("testInvalidMapping.ttl"), RDFFormat.TURTLE)
+                .getResourceAsStream("invalidMapping.ttl"), RDFFormat.TURTLE)
 
         then:
-        thrown(MatOntoException);
+        thrown(MatOntoException)
     }
 }

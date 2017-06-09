@@ -27,9 +27,9 @@
         .module('createIndividualOverlay', [])
         .directive('createIndividualOverlay', createIndividualOverlay);
 
-        createIndividualOverlay.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'responseObj', 'prefixes'];
+        createIndividualOverlay.$inject = ['$filter', 'ontologyStateService', 'responseObj', 'prefixes', 'ontologyUtilsManagerService'];
 
-        function createIndividualOverlay($filter, ontologyManagerService, ontologyStateService, responseObj, prefixes) {
+        function createIndividualOverlay($filter, ontologyStateService, responseObj, prefixes, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,25 +38,19 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-
+                    dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.prefixes = prefixes;
                     dvm.ro = responseObj;
-                    dvm.om = ontologyManagerService;
-                    dvm.sm = ontologyStateService;
+                    dvm.os = ontologyStateService;
 
-                    dvm.prefix = _.get(dvm.om.getListItemById(dvm.sm.state.ontologyId), 'iriBegin',
-                        dvm.om.getOntologyIRI(dvm.sm.ontology)) + _.get(dvm.om.getListItemById(dvm.sm.state.ontologyId),
-                        'iriThen', '#');
+                    dvm.prefix = dvm.os.getDefaultPrefix();
 
                     dvm.individual = {
                         '@id': dvm.prefix,
-                        '@type': [],
-                        matonto: {
-                            created: true
-                        }
+                        '@type': []
                     };
 
-                    dvm.subClasses = _.map(dvm.sm.state.subClasses, obj => dvm.ro.getItemIri(obj));
+                    dvm.subClasses = _.map(dvm.os.state.subClasses, obj => dvm.ro.getItemIri(obj));
 
                     dvm.nameChanged = function() {
                         if (!dvm.iriHasChanged) {
@@ -67,31 +61,50 @@
                     dvm.onEdit = function(iriBegin, iriThen, iriEnd) {
                         dvm.iriHasChanged = true;
                         dvm.individual['@id'] = iriBegin + iriThen + iriEnd;
+                        dvm.os.setCommonIriParts(iriBegin, iriThen);
                     }
 
                     dvm.getItemOntologyIri = function(item) {
-                        return _.get(item, 'ontologyId', dvm.sm.state.ontologyId);
+                        return _.get(item, 'ontologyId', dvm.os.listItem.ontologyId);
                     }
 
                     dvm.create = function() {
-                        _.set(dvm.individual, 'matonto.originalIRI', dvm.individual['@id']);
                         // update relevant lists
                         var split = $filter('splitIRI')(dvm.individual['@id']);
-                        var listItem = dvm.om.getListItemById(dvm.sm.state.ontologyId);
-                        _.get(listItem, 'individuals').push({namespace:split.begin + split.then, localName: split.end});
-                        var classesWithIndividuals = _.get(listItem, 'classesWithIndividuals');
-                        _.forEach(dvm.individual['@type'], type => {
-                            _.set(listItem, 'classesWithIndividuals', _.union(classesWithIndividuals,
-                                [{ entityIRI: type }]));
+                        _.get(dvm.os.listItem, 'individuals').push({namespace:split.begin + split.then, localName: split.end});
+                        var classesWithIndividuals = _.get(dvm.os.listItem, 'classesWithIndividuals');
+                        var classesAndIndividuals = _.get(dvm.os.listItem, 'classesAndIndividuals');
+                        var individualsParentPath = _.get(dvm.os.listItem, 'individualsParentPath');
+                        var paths = [];
+                        var individuals = [];
+
+                        _.forEach(dvm.individual['@type'], (type) => {
+                            var individual = [];
+                            var existingInds = _.get(dvm.os.listItem.classesAndIndividuals, type);
+                            var path = dvm.os.getPathsTo(_.get(dvm.os.listItem, 'classHierarchy'), _.get(dvm.os.listItem, 'classIndex'), type);
+
+                            individual.push(dvm.individual['@id']);
+                            dvm.os.listItem.classesAndIndividuals[type] = existingInds ? _.concat(individual, existingInds) : individual;
+                            individuals.push(type);
+                            paths.push(path);
                         });
+
+                        var uniqueUris =  _.uniq(_.flattenDeep(paths));
+                        _.set(dvm.os.listItem, 'classesWithIndividuals', _.concat(classesWithIndividuals, individuals));
+                        _.set(dvm.os.listItem, 'individualsParentPath', _.concat(individualsParentPath, uniqueUris));
+                        
                         // add the entity to the ontology
                         dvm.individual['@type'].push(prefixes.owl + 'NamedIndividual');
-                        dvm.om.addEntity(dvm.sm.ontology, dvm.individual);
-                        _.set(_.get(listItem, 'index'), dvm.individual['@id'], dvm.sm.ontology.length - 1);
+                        dvm.os.addEntity(dvm.os.listItem, dvm.individual);
+                        dvm.os.addToAdditions(dvm.os.listItem.recordId, dvm.individual);
+                        dvm.os.listItem.flatIndividualsHierarchy = dvm.os.createFlatIndividualTree(dvm.os.listItem);
+                        
                         // select the new individual
-                        dvm.sm.selectItem(dvm.individual['@id']);
+                        dvm.os.selectItem(dvm.individual['@id'], false);
+                        
                         // hide the overlay
-                        dvm.sm.showCreateIndividualOverlay = false;
+                        dvm.os.showCreateIndividualOverlay = false;
+                        dvm.ontoUtils.saveCurrentChanges();
                     }
                 }
             }

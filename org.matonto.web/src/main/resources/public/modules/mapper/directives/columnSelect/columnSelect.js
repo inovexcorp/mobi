@@ -28,7 +28,7 @@
          * @ngdoc overview
          * @name columnSelect
          *
-         * @description 
+         * @description
          * The `columnSelect` module only provides the `columnSelect` directive which creates
          * a `ui-select` with the passed column list and selected column.
          */
@@ -40,7 +40,7 @@
          * @restrict E
          * @requires delimitedManager.service:delimitedManagerService
          *
-         * @description 
+         * @description
          * `columnSelect` is a directive which creates a `ui-select` with the passed column list and
          * selected column. The directive is replaced by the contents of its template.
          *
@@ -56,18 +56,22 @@
                 restrict: 'E',
                 controllerAs: 'dvm',
                 replace: true,
-                scope: {
-                    columns: '<'
-                },
+                scope: {},
                 bindToController: {
                     selectedColumn: '='
                 },
                 controller: function() {
                     var dvm = this;
+                    dvm.isNumber = angular.isNumber;
                     dvm.dm = delimitedManagerService;
+                    dvm.columns = _.range(0, dvm.dm.dataRows[0].length);
 
-                    dvm.compare = function(actual, expected) {
-                        return _.includes(_.toUpper(dvm.dm.getHeader(actual)), _.toUpper(expected));
+                    dvm.compare = function(idx, expected) {
+                        return _.includes(_.toUpper(dvm.dm.getHeader(idx)), _.toUpper(expected));
+                    }
+                    dvm.getValuePreview = function() {
+                        var firstRowIndex = dvm.dm.containsHeaders ? 1 : 0;
+                        return _.get(dvm.dm.dataRows, '[' + firstRowIndex + '][' + dvm.selectedColumn + ']', '(None)');
                     }
                 },
                 templateUrl: 'modules/mapper/directives/columnSelect/columnSelect.html'

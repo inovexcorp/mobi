@@ -23,16 +23,18 @@ package org.matonto.etl.cli;
  * #L%
  */
 
-import java.io.File;
-import java.io.IOException;
 import org.apache.karaf.shell.api.action.Action;
 import org.apache.karaf.shell.api.action.Argument;
 import org.apache.karaf.shell.api.action.Command;
 import org.apache.karaf.shell.api.action.Option;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
-import org.apache.log4j.Logger;
 import org.matonto.etl.api.rdf.RDFImportService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.IOException;
 
 @Command(scope = "matonto", name = "import", description = "Imports objects to a repository")
 @Service
@@ -49,7 +51,7 @@ public class CLIImporter implements Action {
 
     @Option( name = "-c", aliases = "--continueOnError", description = "If true, continue parsing even if there is an error on a line.")
     boolean continueOnError = false;
-    private static final Logger LOGGER = Logger.getLogger(CLIImporter.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(CLIImporter.class);
 
     @Reference
     private RDFImportService importService;

@@ -27,9 +27,9 @@
         .module('individualTree', [])
         .directive('individualTree', individualTree);
 
-        individualTree.$inject = ['ontologyManagerService', 'ontologyStateService', 'settingsManagerService'];
+        individualTree.$inject = ['ontologyManagerService', 'ontologyStateService', 'utilService', 'ontologyUtilsManagerService', 'INDENT'];
 
-        function individualTree(ontologyManagerService, ontologyStateService, settingsManagerService) {
+        function individualTree(ontologyManagerService, ontologyStateService, utilService, ontologyUtilsManagerService, INDENT) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,15 +38,18 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    var treeDisplay = settingsManagerService.getTreeDisplay();
+                    dvm.indent = INDENT;
                     dvm.om = ontologyManagerService;
-                    dvm.sm = ontologyStateService;
-
-                    dvm.getTreeDisplay = function(entity) {
-                        if (treeDisplay === 'pretty') {
-                            return dvm.om.getEntityName(entity, dvm.sm.state.type);
-                        }
-                        return _.get(entity, 'matonto.originalIRI', _.get(entity, 'matonto.anonymous', ''));
+                    dvm.os = ontologyStateService;
+                    dvm.ontoUtils = ontologyUtilsManagerService;
+                    dvm.util = utilService;
+                    
+                    dvm.isShown = function(node) {
+                        return (node.indent > 0 && dvm.os.areParentsOpen(node, dvm.os.getIndividualsOpened)) || (node.indent === 0 && _.get(node, 'path', []).length === 2);
+                    }
+                    
+                    dvm.isImported = function(entityIRI) {
+                        return !_.has(dvm.os.listItem.index, entityIRI);
                     }
                 }
             }

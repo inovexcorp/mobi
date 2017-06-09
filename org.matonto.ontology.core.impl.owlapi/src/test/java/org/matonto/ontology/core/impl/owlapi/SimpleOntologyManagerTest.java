@@ -23,161 +23,680 @@ package org.matonto.ontology.core.impl.owlapi;
  * #L%
  */
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.matonto.cache.api.CacheManager;
+import org.matonto.catalog.api.CatalogManager;
+import org.matonto.catalog.api.ontologies.mcat.Branch;
+import org.matonto.catalog.api.ontologies.mcat.BranchFactory;
+import org.matonto.catalog.api.ontologies.mcat.Catalog;
+import org.matonto.catalog.api.ontologies.mcat.CatalogFactory;
+import org.matonto.catalog.api.ontologies.mcat.Commit;
+import org.matonto.catalog.api.ontologies.mcat.CommitFactory;
+import org.matonto.catalog.api.ontologies.mcat.OntologyRecordFactory;
 import org.matonto.ontology.core.api.Ontology;
-import org.matonto.ontology.core.api.OntologyId;
-import org.matonto.rdf.api.BNode;
+import org.matonto.ontology.utils.api.SesameTransformer;
+import org.matonto.ontology.utils.cache.OntologyCache;
+import org.matonto.persistence.utils.Bindings;
+import org.matonto.query.TupleQueryResult;
+import org.matonto.query.api.Binding;
 import org.matonto.rdf.api.IRI;
+import org.matonto.rdf.api.Model;
+import org.matonto.rdf.api.ModelFactory;
+import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
+import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory;
+import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
+import org.matonto.rdf.core.utils.Values;
+import org.matonto.rdf.orm.conversion.ValueConverterRegistry;
+import org.matonto.rdf.orm.conversion.impl.DefaultValueConverterRegistry;
+import org.matonto.rdf.orm.conversion.impl.DoubleValueConverter;
+import org.matonto.rdf.orm.conversion.impl.FloatValueConverter;
+import org.matonto.rdf.orm.conversion.impl.IRIValueConverter;
+import org.matonto.rdf.orm.conversion.impl.IntegerValueConverter;
+import org.matonto.rdf.orm.conversion.impl.LiteralValueConverter;
+import org.matonto.rdf.orm.conversion.impl.ResourceValueConverter;
+import org.matonto.rdf.orm.conversion.impl.ShortValueConverter;
+import org.matonto.rdf.orm.conversion.impl.StringValueConverter;
+import org.matonto.rdf.orm.conversion.impl.ValueValueConverter;
+import org.matonto.repository.api.RepositoryManager;
+import org.matonto.repository.impl.core.SimpleRepositoryManager;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
+import org.openrdf.rio.RDFFormat;
+import org.openrdf.rio.Rio;
+import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
+import org.semanticweb.owlapi.model.OWLOntology;
 
-import java.io.File;
 import java.io.InputStream;
-import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
-
-import static org.easymock.EasyMock.anyString;
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.isA;
-import static org.easymock.EasyMock.mock;
-import static org.junit.Assert.assertEquals;
-import static org.powermock.api.easymock.PowerMock.mockStatic;
-import static org.powermock.api.easymock.PowerMock.replay;
-
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import javax.cache.Cache;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({SimpleOntologyValues.class, SimpleOntologyId.class})
+@PrepareForTest(SimpleOntologyValues.class)
 public class SimpleOntologyManagerTest {
 
-    private ValueFactory factory;
-    private OntologyId ontologyIdMock;
-    private IRI idMock;
+    @Mock
+    private CatalogManager catalogManager;
+
+    @Mock
+    private SesameTransformer sesameTransformer;
+
+    @Mock
+    private Ontology ontology;
+
+    @Mock
+    private Ontology vocabulary;
+
+    @Mock
+    private CacheManager cacheManager;
+
+    @Mock
+    private Cache<String, Ontology> mockCache;
+
+    private SimpleOntologyManager manager;
+    private ValueFactory valueFactory = SimpleValueFactory.getInstance();
+    private ModelFactory modelFactory = LinkedHashModelFactory.getInstance();
+    private OntologyRecordFactory ontologyRecordFactory = new OntologyRecordFactory();
+    private CommitFactory commitFactory = new CommitFactory();
+    private BranchFactory branchFactory = new BranchFactory();
+    private CatalogFactory catalogFactory = new CatalogFactory();
+    private ValueConverterRegistry vcr = new DefaultValueConverterRegistry();
+    private IRI missingIRI;
+    private IRI recordIRI;
+    private IRI branchIRI;
+    private IRI commitIRI;
+    private IRI catalogIRI;
     private IRI ontologyIRI;
     private IRI versionIRI;
+    private org.semanticweb.owlapi.model.IRI owlOntologyIRI;
+    private org.semanticweb.owlapi.model.IRI owlVersionIRI;
+    private RepositoryManager repoManager = new SimpleRepositoryManager();
 
     @Before
-    public void setUp() {
-        factory = mock(ValueFactory.class);    
-        ontologyIdMock = mock(OntologyId.class);
-        idMock = mock(IRI.class);
-        org.semanticweb.owlapi.model.IRI owlOntologyIRI = org.semanticweb.owlapi.model.IRI.create("http://test.com/ontology1");
-        org.semanticweb.owlapi.model.IRI owlVersionIRI = org.semanticweb.owlapi.model.IRI.create("http://test.com/ontology1/1.0.0");
+    public void setUp() throws Exception {
+        missingIRI = valueFactory.createIRI("http://matonto.org/missing");
+        recordIRI = valueFactory.createIRI("http://matonto.org/record");
+        branchIRI = valueFactory.createIRI("http://matonto.org/branch");
+        commitIRI = valueFactory.createIRI("http://matonto.org/commit");
+        catalogIRI = valueFactory.createIRI("http://matonto.org/catalog");
+        ontologyIRI = valueFactory.createIRI("http://matonto.org/ontology");
+        versionIRI = valueFactory.createIRI("http://matonto.org/ontology/1.0");
+        owlOntologyIRI = org.semanticweb.owlapi.model.IRI.create("http://matonto.org/ontology");
+        owlVersionIRI = org.semanticweb.owlapi.model.IRI.create("http://matonto.org/ontology/1.0");
 
-        ontologyIRI = mock(IRI.class);
-        expect(ontologyIRI.stringValue()).andReturn("http://test.com/ontology1").anyTimes();
-        expect(ontologyIRI.getNamespace()).andReturn("http://test.com/ontology1").anyTimes();
+        ontologyRecordFactory.setModelFactory(modelFactory);
+        ontologyRecordFactory.setValueFactory(valueFactory);
+        ontologyRecordFactory.setValueConverterRegistry(vcr);
 
-        versionIRI = mock(IRI.class);
-        expect(versionIRI.stringValue()).andReturn("http://test.com/ontology1/1.0.0").anyTimes();
-        expect(versionIRI.getNamespace()).andReturn("http://test.com/ontology1").anyTimes();
-        
-        replay(ontologyIRI, versionIRI);     
+        commitFactory.setModelFactory(modelFactory);
+        commitFactory.setValueFactory(valueFactory);
+        commitFactory.setValueConverterRegistry(vcr);
 
-        mockStatic(SimpleOntologyValues.class);
-        expect(SimpleOntologyValues.owlapiIRI(ontologyIRI)).andReturn(owlOntologyIRI).anyTimes();
-        expect(SimpleOntologyValues.owlapiIRI(versionIRI)).andReturn(owlVersionIRI).anyTimes();
-        expect(SimpleOntologyValues.matontoIRI(owlOntologyIRI)).andReturn(ontologyIRI).anyTimes();
-        expect(SimpleOntologyValues.matontoIRI(owlVersionIRI)).andReturn(versionIRI).anyTimes();
-    }
-    
-    @Test
-    public void testCreateOntologyIdWithNoParam() throws Exception {
-        expect(factory.createIRI(anyString())).andReturn(idMock).anyTimes();
+        branchFactory.setModelFactory(modelFactory);
+        branchFactory.setValueFactory(valueFactory);
+        branchFactory.setValueConverterRegistry(vcr);
 
-        replay(factory);
-        
-        SimpleOntologyManager manager = new SimpleOntologyManager();
-        manager.setValueFactory(factory);
-        ontologyIdMock = manager.createOntologyId();
-        assertEquals(idMock, ontologyIdMock.getOntologyIdentifier());
-        assertEquals(Optional.empty(), ontologyIdMock.getOntologyIRI());
-        assertEquals(Optional.empty(), ontologyIdMock.getVersionIRI());
-    } 
-    
-    @Test
-    public void testCreateOntologyIdWithBNode() throws Exception {
-        BNode bNodeMock = mock(BNode.class);
-        replay(factory, idMock, bNodeMock);
-        
-        SimpleOntologyManager manager = new SimpleOntologyManager();
-        manager.setValueFactory(factory);
-        ontologyIdMock = manager.createOntologyId(bNodeMock);
-        assertEquals(bNodeMock, ontologyIdMock.getOntologyIdentifier());
-        assertEquals(Optional.empty(), ontologyIdMock.getOntologyIRI());
-        assertEquals(Optional.empty(), ontologyIdMock.getVersionIRI());
+        catalogFactory.setModelFactory(modelFactory);
+        catalogFactory.setValueFactory(valueFactory);
+        catalogFactory.setValueConverterRegistry(vcr);
+
+        vcr.registerValueConverter(ontologyRecordFactory);
+        vcr.registerValueConverter(commitFactory);
+        vcr.registerValueConverter(branchFactory);
+        vcr.registerValueConverter(catalogFactory);
+        vcr.registerValueConverter(new ResourceValueConverter());
+        vcr.registerValueConverter(new IRIValueConverter());
+        vcr.registerValueConverter(new DoubleValueConverter());
+        vcr.registerValueConverter(new IntegerValueConverter());
+        vcr.registerValueConverter(new FloatValueConverter());
+        vcr.registerValueConverter(new ShortValueConverter());
+        vcr.registerValueConverter(new StringValueConverter());
+        vcr.registerValueConverter(new ValueValueConverter());
+        vcr.registerValueConverter(new LiteralValueConverter());
+
+        MockitoAnnotations.initMocks(this);
+
+        Catalog catalog = catalogFactory.createNew(catalogIRI);
+        when(catalogManager.getLocalCatalogIRI()).thenReturn(catalogIRI);
+        when(catalogManager.getLocalCatalog()).thenReturn(catalog);
+        doThrow(new IllegalArgumentException()).when(catalogManager).getMasterBranch(catalogIRI, missingIRI);
+        doThrow(new IllegalArgumentException()).when(catalogManager).getBranch(catalogIRI, recordIRI, missingIRI, branchFactory);
+        doThrow(new IllegalArgumentException()).when(catalogManager).getCommit(catalogIRI, recordIRI, branchIRI, missingIRI);
+
+        when(sesameTransformer.sesameModel(any(Model.class))).thenReturn(new org.openrdf.model.impl.LinkedHashModel());
+
+        InputStream testOntology = getClass().getResourceAsStream("/test-ontology.ttl");
+        when(ontology.asModel(modelFactory)).thenReturn(Values.matontoModel(Rio.parse(testOntology, "",
+                RDFFormat.TURTLE)));
+
+        InputStream testVocabulary = getClass().getResourceAsStream("/test-vocabulary.ttl");
+        when(vocabulary.asModel(modelFactory)).thenReturn(Values.matontoModel(Rio.parse(testVocabulary, "",
+                RDFFormat.TURTLE)));
+
+        PowerMockito.mockStatic(SimpleOntologyValues.class);
+        when(SimpleOntologyValues.owlapiIRI(ontologyIRI)).thenReturn(owlOntologyIRI);
+        when(SimpleOntologyValues.owlapiIRI(versionIRI)).thenReturn(owlVersionIRI);
+        when(SimpleOntologyValues.matontoIRI(owlOntologyIRI)).thenReturn(ontologyIRI);
+        when(SimpleOntologyValues.matontoIRI(owlVersionIRI)).thenReturn(versionIRI);
+        when(SimpleOntologyValues.matontoOntology(any(OWLOntology.class))).thenReturn(ontology);
+
+        when(mockCache.containsKey(Mockito.anyString())).thenReturn(false);
+
+        when(cacheManager.getCache(Mockito.anyString(), Mockito.eq(String.class), Mockito.eq(Ontology.class))).thenReturn(Optional.of(mockCache));
+
+        manager = Mockito.spy(new SimpleOntologyManager());
+        manager.setValueFactory(valueFactory);
+        manager.setModelFactory(modelFactory);
+        manager.setSesameTransformer(sesameTransformer);
+        manager.setCatalogManager(catalogManager);
+        manager.setBranchFactory(branchFactory);
+        manager.setRepositoryManager(repoManager);
+        manager.setCacheManager(cacheManager);
     }
-    
+
     @Test
-    public void testCreateOntologyIdWithOntologyIRI() throws Exception {
-        expect(factory.createIRI(isA(String.class))).andReturn(ontologyIRI);
-        replay(factory, SimpleOntologyValues.class);
-        
-        SimpleOntologyManager manager = new SimpleOntologyManager();
-        manager.setValueFactory(factory);
-        ontologyIdMock = manager.createOntologyId(ontologyIRI);
-        assertEquals(ontologyIRI, ontologyIdMock.getOntologyIdentifier());
-        assertEquals(ontologyIRI, ontologyIdMock.getOntologyIRI().get());
-        assertEquals(Optional.empty(), ontologyIdMock.getVersionIRI());
-    }   
-    
-    @Test
-    public void testCreateOntologyIdWithOntologyIRIAndVersionIRI() throws Exception {
-        expect(factory.createIRI(isA(String.class))).andReturn(versionIRI);
-        expect(SimpleOntologyValues.matontoIRI(isA(org.semanticweb.owlapi.model.IRI.class))).andReturn(versionIRI);
-        replay(factory, SimpleOntologyValues.class);
-        
-        SimpleOntologyManager manager = new SimpleOntologyManager();
-        manager.setValueFactory(factory);
-        ontologyIdMock = manager.createOntologyId(ontologyIRI, versionIRI);
-        assertEquals(versionIRI, ontologyIdMock.getOntologyIdentifier());
-        assertEquals(ontologyIRI, ontologyIdMock.getOntologyIRI().get());
-        assertEquals(versionIRI, ontologyIdMock.getVersionIRI().get());
+    public void testCreateOntology() throws Exception {
+        Ontology result = manager.createOntology(modelFactory.createModel());
+        assertEquals(ontology, result);
     }
-    
-    @Test
-    public void testCreateOntologyWithOntologyId() throws Exception {
-        expect(ontologyIdMock.getOntologyIRI()).andReturn(Optional.of(ontologyIRI)).anyTimes();
-        expect(ontologyIdMock.getVersionIRI()).andReturn(Optional.of(versionIRI)).anyTimes();
-        replay(ontologyIdMock, SimpleOntologyValues.class);
-        
-        SimpleOntologyManager manager = new SimpleOntologyManager();
-        Ontology ontology = manager.createOntology(ontologyIdMock);
-        assertEquals(ontologyIdMock, ontology.getOntologyId());
+
+    // Testing retrieveOntology(Resource recordId)
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testRetrieveOntologyWithMissingIdentifier() {
+        manager.retrieveOntology(missingIRI);
     }
-    
-    @Test
-    public void testCreateOntologyWithFile() throws Exception {
-        expect(SimpleOntologyValues.matontoIRI(isA(org.semanticweb.owlapi.model.IRI.class))).andReturn(ontologyIRI).anyTimes();
-        expect(ontologyIdMock.getOntologyIRI()).andReturn(Optional.of(ontologyIRI)).anyTimes();
-        expect(ontologyIdMock.getVersionIRI()).andReturn(Optional.of(versionIRI)).anyTimes();
-        expect(factory.createIRI(isA(String.class))).andReturn(ontologyIRI);
-        replay(factory, ontologyIdMock, SimpleOntologyValues.class);
-        
-        File file = Paths.get(getClass().getResource("/test.owl").toURI()).toFile();
-        SimpleOntologyManager manager = new SimpleOntologyManager();
-        manager.setValueFactory(factory);
-        Ontology ontology = manager.createOntology(file);
-        assertEquals(ontologyIRI, ontology.getOntologyId().getOntologyIRI().get());
+
+    @Test(expected = IllegalStateException.class)
+    public void testRetrieveOntologyWithMasterBranchNotSet() {
+        // Setup:
+        doThrow(new IllegalStateException()).when(catalogManager).getMasterBranch(catalogIRI, recordIRI);
+
+        manager.retrieveOntology(recordIRI);
     }
-    
-    @Test
-    public void testCreateOntologyWithInputStream() throws Exception {
-        expect(SimpleOntologyValues.matontoIRI(isA(org.semanticweb.owlapi.model.IRI.class))).andReturn(ontologyIRI).anyTimes();
-        expect(factory.createIRI(isA(String.class))).andReturn(ontologyIRI);
-        replay(factory, SimpleOntologyValues.class);
-        SimpleOntologyManager manager = new SimpleOntologyManager();
-        manager.setValueFactory(factory);
-        InputStream stream = this.getClass().getResourceAsStream("/test.owl");
-        Ontology ontology = manager.createOntology(stream);
-        assertEquals(ontologyIRI, ontology.getOntologyId().getOntologyIRI().get());
+
+    @Test(expected = IllegalStateException.class)
+    public void testRetrieveOntologyWithHeadCommitNotSet() {
+        // Setup:
+        Branch branch = branchFactory.createNew(branchIRI);
+        when(catalogManager.getMasterBranch(catalogIRI, recordIRI)).thenReturn(branch);
+
+        manager.retrieveOntology(recordIRI);
     }
-    
-    //ToDo: TestRetrieveOntology
-    
-    //ToDo: TestStoreOntology
-    
-    //ToDo: TestDeleteOntology
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testRetrieveOntologyWhenCompiledResourceCannotBeFound() {
+        // Setup:
+        Branch branch = branchFactory.createNew(branchIRI);
+        branch.setHead(commitFactory.createNew(commitIRI));
+        when(catalogManager.getMasterBranch(catalogIRI, recordIRI)).thenReturn(branch);
+        doThrow(new IllegalArgumentException()).when(catalogManager).getCompiledResource(commitIRI);
+
+        manager.retrieveOntology(recordIRI);
+    }
+
+    @Test
+    public void testRetrieveOntologyWithCacheMiss() {
+        // Setup
+        Branch branch = branchFactory.createNew(branchIRI);
+        branch.setHead(commitFactory.createNew(commitIRI));
+        when(catalogManager.getMasterBranch(catalogIRI, recordIRI)).thenReturn(branch);
+        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(modelFactory.createModel());
+
+        Optional<Ontology> optionalOntology = manager.retrieveOntology(recordIRI);
+        assertTrue(optionalOntology.isPresent());
+        assertEquals(ontology, optionalOntology.get());
+        String key = OntologyCache.generateKey(recordIRI.stringValue(), branchIRI.stringValue(), commitIRI.stringValue());
+        verify(mockCache).containsKey(Mockito.matches(key));
+        verify(mockCache).put(Mockito.matches(key), Mockito.eq(optionalOntology.get()));
+    }
+
+    @Test
+    public void testRetrieveOntologyWithCacheHit() {
+        // Setup:
+        Branch branch = branchFactory.createNew(branchIRI);
+        branch.setHead(commitFactory.createNew(commitIRI));
+        String key = OntologyCache.generateKey(recordIRI.stringValue(), branchIRI.stringValue(), commitIRI.stringValue());
+        when(catalogManager.getMasterBranch(catalogIRI, recordIRI)).thenReturn(branch);
+        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(modelFactory.createModel());
+        when(mockCache.containsKey(key)).thenReturn(true);
+        when(mockCache.get(key)).thenReturn(ontology);
+
+        Optional<Ontology> optionalOntology = manager.retrieveOntology(recordIRI);
+        assertTrue(optionalOntology.isPresent());
+        verify(mockCache).containsKey(Mockito.matches(key));
+        verify(mockCache).get(Mockito.matches(key));
+        verify(mockCache, Mockito.times(0)).put(Mockito.matches(key), Mockito.eq(optionalOntology.get()));
+    }
+
+    // Testing retrieveOntology(Resource recordId, Resource branchId)
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testRetrieveOntologyUsingABranchWithMissingIdentifier() throws Exception {
+        manager.retrieveOntology(recordIRI, missingIRI);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testRetrieveOntologyUsingABranchThatCannotBeRetrieved() {
+        // Setup:
+        doThrow(new IllegalStateException()).when(catalogManager).getBranch(catalogIRI, recordIRI, missingIRI, branchFactory);
+
+        manager.retrieveOntology(recordIRI, missingIRI);
+    }
+
+    @Test
+    public void testRetrieveOntologyUsingAMissingBranch() {
+        // Setup:
+        when(catalogManager.getBranch(catalogIRI, recordIRI, branchIRI, branchFactory)).thenReturn(Optional.empty());
+
+        Optional<Ontology> result = manager.retrieveOntology(recordIRI, branchIRI);
+        assertFalse(result.isPresent());
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testRetrieveOntologyUsingABranchWithHeadCommitNotSet() {
+        // Setup:
+        Branch branch = branchFactory.createNew(branchIRI);
+        when(catalogManager.getBranch(catalogIRI, recordIRI, branchIRI, branchFactory)).thenReturn(Optional.of(branch));
+
+        manager.retrieveOntology(recordIRI, branchIRI);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testRetrieveOntologyUsingABranchWhenCompiledResourceCannotBeFound() {
+        // Setup:
+        Branch branch = branchFactory.createNew(branchIRI);
+        branch.setHead(commitFactory.createNew(commitIRI));
+        when(catalogManager.getBranch(catalogIRI, recordIRI, branchIRI, branchFactory)).thenReturn(Optional.of(branch));
+        doThrow(new IllegalArgumentException()).when(catalogManager).getCompiledResource(commitIRI);
+
+        manager.retrieveOntology(recordIRI, branchIRI);
+    }
+
+    @Test
+    public void testRetrieveOntologyUsingABranchCacheMiss() {
+        // Setup:
+        Branch branch = branchFactory.createNew(branchIRI);
+        branch.setHead(commitFactory.createNew(commitIRI));
+        when(catalogManager.getBranch(catalogIRI, recordIRI, branchIRI, branchFactory)).thenReturn(Optional.of(branch));
+        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(modelFactory.createModel());
+
+        Optional<Ontology> optionalOntology = manager.retrieveOntology(recordIRI, branchIRI);
+        assertTrue(optionalOntology.isPresent());
+        assertEquals(ontology, optionalOntology.get());
+        String key = OntologyCache.generateKey(recordIRI.stringValue(), branchIRI.stringValue(), commitIRI.stringValue());
+        verify(mockCache).containsKey(Mockito.matches(key));
+        verify(mockCache).put(Mockito.matches(key), Mockito.eq(optionalOntology.get()));
+    }
+
+    @Test
+    public void testRetrieveOntologyUsingABranchCacheHit() {
+        // Setup:
+        Branch branch = branchFactory.createNew(branchIRI);
+        branch.setHead(commitFactory.createNew(commitIRI));
+        String key = OntologyCache.generateKey(recordIRI.stringValue(), branchIRI.stringValue(), commitIRI.stringValue());
+        when(catalogManager.getBranch(catalogIRI, recordIRI, branchIRI, branchFactory)).thenReturn(Optional.of(branch));
+        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(modelFactory.createModel());
+        when(mockCache.containsKey(key)).thenReturn(true);
+        when(mockCache.get(key)).thenReturn(ontology);
+
+        Optional<Ontology> optionalOntology = manager.retrieveOntology(recordIRI, branchIRI);
+        assertTrue(optionalOntology.isPresent());
+        verify(mockCache).containsKey(Mockito.matches(key));
+        verify(mockCache).get(Mockito.matches(key));
+        verify(mockCache, Mockito.times(0)).put(Mockito.matches(key), Mockito.eq(optionalOntology.get()));
+    }
+
+    // Testing retrieveOntology(Resource recordId, Resource branchId, Resource commitId)
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testRetrieveOntologyUsingACommitWithMissingIdentifier() throws Exception {
+        manager.retrieveOntology(recordIRI, branchIRI, missingIRI);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testRetrieveOntologyUsingACommitThatCannotBeRetrieved() {
+        // Setup:
+        doThrow(new IllegalStateException()).when(catalogManager).getCommit(catalogIRI,recordIRI, branchIRI, missingIRI);
+
+        manager.retrieveOntology(recordIRI, branchIRI, missingIRI);
+    }
+
+    @Test
+    public void testRetrieveOntologyUsingAMissingCommit() {
+        // Setup:
+        when(catalogManager.getCommit(catalogIRI,recordIRI, branchIRI, commitIRI)).thenReturn(Optional.empty());
+
+        Optional<Ontology> result = manager.retrieveOntology(recordIRI, branchIRI, commitIRI);
+        assertFalse(result.isPresent());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testRetrieveOntologyUsingACommitWhenCompiledResourceCannotBeFound() {
+        // Setup:
+        Commit commit = commitFactory.createNew(commitIRI);
+        when(catalogManager.getCommit(catalogIRI, recordIRI, branchIRI, commitIRI)).thenReturn(Optional.of(commit));
+        doThrow(new IllegalArgumentException()).when(catalogManager).getCompiledResource(commitIRI);
+
+        manager.retrieveOntology(recordIRI, branchIRI, commitIRI);
+    }
+
+    @Test
+    public void testRetrieveOntologyUsingACommitCacheMiss() {
+        // Setup:
+        Commit commit = commitFactory.createNew(commitIRI);
+        when(catalogManager.getCommit(catalogIRI, recordIRI, branchIRI, commitIRI)).thenReturn(Optional.of(commit));
+        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(modelFactory.createModel());
+
+        Optional<Ontology> optionalOntology = manager.retrieveOntology(recordIRI, branchIRI, commitIRI);
+        assertTrue(optionalOntology.isPresent());
+        assertEquals(ontology, optionalOntology.get());
+        String key = OntologyCache.generateKey(recordIRI.stringValue(), branchIRI.stringValue(), commitIRI.stringValue());
+        verify(mockCache, times(2)).containsKey(Mockito.matches(key));
+        verify(mockCache).put(Mockito.matches(key), Mockito.eq(optionalOntology.get()));
+    }
+
+    @Test
+    public void testRetrieveOntologyUsingACommitCacheHit() {
+        // Setup:
+        Commit commit = commitFactory.createNew(commitIRI);
+        String key = OntologyCache.generateKey(recordIRI.stringValue(), branchIRI.stringValue(), commitIRI.stringValue());
+        when(catalogManager.getCommit(catalogIRI, recordIRI, branchIRI, commitIRI)).thenReturn(Optional.of(commit));
+        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(modelFactory.createModel());
+        when(mockCache.containsKey(key)).thenReturn(true);
+        when(mockCache.get(key)).thenReturn(ontology);
+
+        Optional<Ontology> optionalOntology = manager.retrieveOntology(recordIRI, branchIRI, commitIRI);
+        assertTrue(optionalOntology.isPresent());
+        verify(mockCache).get(Mockito.matches(key));
+        verify(mockCache, Mockito.times(0)).put(Mockito.matches(key), Mockito.eq(optionalOntology.get()));
+    }
+
+    // Testing deleteOntology(Resource recordId)
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testDeleteOntologyRecordWithMissingIdentifier() {
+        doThrow(new IllegalArgumentException()).when(catalogManager).removeRecord(catalogIRI, missingIRI);
+
+        manager.deleteOntology(missingIRI);
+    }
+
+    @Test
+    public void testDeleteOntology() throws Exception {
+        // Setup:
+        Mockito.doNothing().when(mockCache).forEach(Mockito.any());
+
+        manager.deleteOntology(recordIRI);
+        verify(catalogManager).removeRecord(catalogIRI, recordIRI);
+        verify(mockCache).forEach(Mockito.any());
+    }
+
+    /* Testing deleteOntologyBranch(Resource recordId, Resource branchId) */
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testDeleteOntologyBranchWithMissingIdentifier() {
+        // Setup:
+        doThrow(new IllegalArgumentException()).when(catalogManager).removeBranch(catalogIRI, recordIRI, missingIRI);
+
+        manager.deleteOntologyBranch(recordIRI, missingIRI);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testDeleteOntologyBranchWithInvalidCommit() {
+        // Setup:
+        doThrow(new IllegalStateException()).when(catalogManager).removeBranch(catalogIRI, recordIRI, missingIRI);
+
+        manager.deleteOntologyBranch(recordIRI, missingIRI);
+    }
+
+    @Test
+    public void testDeleteOntologyBranch() throws Exception {
+        // Setup:
+        Mockito.doNothing().when(mockCache).forEach(Mockito.any());
+
+        manager.deleteOntologyBranch(recordIRI, branchIRI);
+        verify(catalogManager).removeBranch(catalogIRI, recordIRI, branchIRI);
+        verify(mockCache).forEach(Mockito.any());
+    }
+
+    /* Testing getSubClassesOf(Ontology ontology) */
+
+    @Test
+    public void testGetSubClassesOf() throws Exception {
+        Set<String> parents = Stream.of("http://matonto.org/ontology#Class2a", "http://matonto.org/ontology#Class2b",
+                "http://matonto.org/ontology#Class1b", "http://matonto.org/ontology#Class1c",
+                "http://matonto.org/ontology#Class1a").collect(Collectors.toSet());
+        Map<String, String> children = new HashMap<>();
+        children.put("http://matonto.org/ontology#Class1b", "http://matonto.org/ontology#Class1c");
+        children.put("http://matonto.org/ontology#Class1a", "http://matonto.org/ontology#Class1b");
+        children.put("http://matonto.org/ontology#Class2a", "http://matonto.org/ontology#Class2b");
+
+        TupleQueryResult result = manager.getSubClassesOf(ontology);
+
+        assertTrue(result.hasNext());
+        result.forEach(b -> {
+            String parent = Bindings.requiredResource(b, "parent").stringValue();
+            assertTrue(parents.contains(parent));
+            parents.remove(parent);
+            Optional<Binding> child = b.getBinding("child");
+            if (child.isPresent()) {
+                assertEquals(children.get(parent), child.get().getValue().stringValue());
+                children.remove(parent);
+            }
+        });
+        assertEquals(0, parents.size());
+        assertEquals(0, children.size());
+    }
+
+    @Test
+    public void testGetSubDatatypePropertiesOf() throws Exception {
+        Set<String> parents = Stream.of("http://matonto.org/ontology#dataProperty1b",
+                "http://matonto.org/ontology#dataProperty1a").collect(Collectors.toSet());
+        Map<String, String> children = new HashMap<>();
+        children.put("http://matonto.org/ontology#dataProperty1a", "http://matonto.org/ontology#dataProperty1b");
+
+        TupleQueryResult result = manager.getSubDatatypePropertiesOf(ontology);
+
+        assertTrue(result.hasNext());
+        result.forEach(b -> {
+            String parent = Bindings.requiredResource(b, "parent").stringValue();
+            assertTrue(parents.contains(parent));
+            parents.remove(parent);
+            Optional<Binding> child = b.getBinding("child");
+            if (child.isPresent()) {
+                assertEquals(children.get(parent), child.get().getValue().stringValue());
+                children.remove(parent);
+            }
+        });
+        assertEquals(0, parents.size());
+        assertEquals(0, children.size());
+    }
+
+    @Test
+    public void testGetSubAnnotationPropertiesOf() throws Exception {
+        Set<String> parents = Stream.of("http://matonto.org/ontology#annotationProperty1b",
+                "http://matonto.org/ontology#annotationProperty1a", "http://purl.org/dc/terms/title")
+                .collect(Collectors.toSet());
+        Map<String, String> children = new HashMap<>();
+        children.put("http://matonto.org/ontology#annotationProperty1a",
+                "http://matonto.org/ontology#annotationProperty1b");
+
+        TupleQueryResult result = manager.getSubAnnotationPropertiesOf(ontology);
+
+        assertTrue(result.hasNext());
+        result.forEach(b -> {
+            String parent = Bindings.requiredResource(b, "parent").stringValue();
+            assertTrue(parents.contains(parent));
+            parents.remove(parent);
+            Optional<Binding> child = b.getBinding("child");
+            if (child.isPresent()) {
+                assertEquals(children.get(parent), child.get().getValue().stringValue());
+                children.remove(parent);
+            }
+        });
+        assertEquals(0, parents.size());
+        assertEquals(0, children.size());
+    }
+
+    @Test
+    public void testGetSubObjectPropertiesOf() throws Exception {
+        Set<String> parents = Stream.of("http://matonto.org/ontology#objectProperty1b",
+                "http://matonto.org/ontology#objectProperty1a").collect(Collectors.toSet());
+        Map<String, String> children = new HashMap<>();
+        children.put("http://matonto.org/ontology#objectProperty1a", "http://matonto.org/ontology#objectProperty1b");
+
+        TupleQueryResult result = manager.getSubObjectPropertiesOf(ontology);
+
+        assertTrue(result.hasNext());
+        result.forEach(b -> {
+            String parent = Bindings.requiredResource(b, "parent").stringValue();
+            assertTrue(parents.contains(parent));
+            parents.remove(parent);
+            Optional<Binding> child = b.getBinding("child");
+            if (child.isPresent()) {
+                assertEquals(children.get(parent), child.get().getValue().stringValue());
+                children.remove(parent);
+            }
+        });
+        assertEquals(0, parents.size());
+        assertEquals(0, children.size());
+    }
+
+    @Test
+    public void testGetClassesWithIndividuals() throws Exception {
+        Set<String> parents = Stream.of("http://matonto.org/ontology#Class2a", "http://matonto.org/ontology#Class2b",
+                "http://matonto.org/ontology#Class1b", "http://matonto.org/ontology#Class1c",
+                "http://matonto.org/ontology#Class1a").collect(Collectors.toSet());
+        Map<String, String> children = new HashMap<>();
+        children.put("http://matonto.org/ontology#Class1a", "http://matonto.org/ontology#Individual1a");
+        children.put("http://matonto.org/ontology#Class1b", "http://matonto.org/ontology#Individual1b");
+        children.put("http://matonto.org/ontology#Class1c", "http://matonto.org/ontology#Individual1c");
+        children.put("http://matonto.org/ontology#Class2a", "http://matonto.org/ontology#Individual2a");
+        children.put("http://matonto.org/ontology#Class2b", "http://matonto.org/ontology#Individual2b");
+        TupleQueryResult result = manager.getClassesWithIndividuals(ontology);
+
+        assertTrue(result.hasNext());
+        result.forEach(b -> {
+            String parent = Bindings.requiredResource(b, "parent").stringValue();
+            assertTrue(parents.contains(parent));
+            parents.remove(parent);
+            Optional<Binding> child = b.getBinding("individual");
+            if (child.isPresent()) {
+                String lclChild = children.get(parent);
+                String individual = child.get().getValue().stringValue();
+                  assertEquals(lclChild, individual);
+                  children.remove(parent);
+            }
+        });
+        assertEquals(0, parents.size());
+        assertEquals(0, children.size());
+    }
+
+    @Test
+    public void testGetEntityUsages() throws Exception {
+        Set<String> subjects = Stream.of("http://matonto.org/ontology#Class1b",
+                "http://matonto.org/ontology#Individual1a").collect(Collectors.toSet());
+        Set<String> predicates = Stream.of("http://www.w3.org/2000/01/rdf-schema#subClassOf",
+                "http://www.w3.org/1999/02/22-rdf-syntax-ns#type").collect(Collectors.toSet());
+
+        TupleQueryResult result = manager.getEntityUsages(ontology, valueFactory
+                .createIRI("http://matonto.org/ontology#Class1a"));
+
+        assertTrue(result.hasNext());
+        result.forEach(b -> {
+            Optional<Binding> optionalSubject = b.getBinding("s");
+            if (optionalSubject.isPresent()) {
+                String subject = optionalSubject.get().getValue().stringValue();
+                assertTrue(subjects.contains(subject));
+                subjects.remove(subject);
+            }
+            Optional<Binding> optionalPredicate = b.getBinding("p");
+            if (optionalPredicate.isPresent()) {
+                String predicate = optionalPredicate.get().getValue().stringValue();
+                assertTrue(predicates.contains(predicate));
+                predicates.remove(predicate);
+            }
+        });
+        assertEquals(0, subjects.size());
+        assertEquals(0, predicates.size());
+    }
+
+    @Test
+    public void testConstructEntityUsages() throws Exception {
+        Resource class1b = valueFactory.createIRI("http://matonto.org/ontology#Class1b");
+        IRI subClassOf = valueFactory.createIRI("http://www.w3.org/2000/01/rdf-schema#subClassOf");
+        Resource class1a = valueFactory.createIRI("http://matonto.org/ontology#Class1a");
+        Resource individual1a = valueFactory.createIRI("http://matonto.org/ontology#Individual1a");
+        IRI type = valueFactory.createIRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
+        Model expected = modelFactory.createModel(Stream.of(valueFactory.createStatement(class1b, subClassOf,
+                class1a), valueFactory.createStatement(individual1a, type, class1a)).collect(Collectors.toSet()));
+
+        Model result = manager.constructEntityUsages(ontology, class1a);
+
+        assertTrue(result.equals(expected));
+    }
+
+    @Test
+    public void testGetConceptRelationships() throws Exception {
+        Set<String> parents = Stream.of("https://matonto.org/vocabulary#Concept1",
+                "https://matonto.org/vocabulary#Concept2","https://matonto.org/vocabulary#Concept3",
+                "https://matonto.org/vocabulary#Concept4","https://matonto.org/vocabulary#ConceptScheme1",
+                "https://matonto.org/vocabulary#ConceptScheme2","https://matonto.org/vocabulary#ConceptScheme3")
+                .collect(Collectors.toSet());
+        Map<String, String> children = new HashMap<>();
+        children.put("https://matonto.org/vocabulary#Concept1", "https://matonto.org/vocabulary#Concept2");
+
+        TupleQueryResult result = manager.getConceptRelationships(vocabulary);
+
+        assertTrue(result.hasNext());
+        result.forEach(b -> {
+            String parent = Bindings.requiredResource(b, "parent").stringValue();
+            assertTrue(parents.contains(parent));
+            parents.remove(parent);
+            Optional<Binding> child = b.getBinding("child");
+            if (child.isPresent()) {
+                assertEquals(children.get(parent), child.get().getValue().stringValue());
+                children.remove(parent);
+            }
+        });
+        assertEquals(0, parents.size());
+        assertEquals(0, children.size());
+    }
+
+    @Test
+    public void testGetSearchResults() throws Exception {
+        Set<String> entities = Stream.of("http://matonto.org/ontology#Class2a", "http://matonto.org/ontology#Class2b",
+                "http://matonto.org/ontology#Class1b", "http://matonto.org/ontology#Class1c",
+                "http://matonto.org/ontology#Class1a").collect(Collectors.toSet());
+
+        TupleQueryResult result = manager.getSearchResults(ontology, "class");
+
+        assertTrue(result.hasNext());
+        result.forEach(b -> {
+            String parent = Bindings.requiredResource(b, "entity").stringValue();
+            assertTrue(entities.contains(parent));
+            entities.remove(parent);
+            assertEquals("http://www.w3.org/2002/07/owl#Class", Bindings.requiredResource(b, "type").stringValue());
+        });
+        assertEquals(0, entities.size());
+    }
 }

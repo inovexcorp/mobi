@@ -27,9 +27,9 @@
         .module('objectPropertyOverlay', [])
         .directive('objectPropertyOverlay', objectPropertyOverlay);
 
-        objectPropertyOverlay.$inject = ['$filter', 'responseObj', 'ontologyManagerService', 'ontologyStateService'];
+        objectPropertyOverlay.$inject = ['$filter', 'responseObj', 'ontologyStateService', 'utilService', 'ontologyUtilsManagerService'];
 
-        function objectPropertyOverlay($filter, responseObj, ontologyManagerService, ontologyStateService) {
+        function objectPropertyOverlay($filter, responseObj, ontologyStateService, utilService, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,39 +38,36 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    dvm.om = ontologyManagerService;
+                    dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.ro = responseObj;
-                    dvm.sm = ontologyStateService;
-                    dvm.individuals = $filter('removeIriFromArray')(dvm.sm.listItem.individuals, dvm.sm.getActiveEntityIRI());
-                    dvm.valueSelect = _.find(dvm.individuals, individual => dvm.ro.getItemIri(individual) === dvm.sm.propertyValue);
-
-                    function closeAndMark() {
-                        dvm.sm.setUnsaved(dvm.sm.listItem.ontologyId, dvm.sm.getActiveEntityIRI(), true);
-                        dvm.sm.showObjectPropertyOverlay = false;
-                    }
+                    dvm.os = ontologyStateService;
+                    dvm.util = utilService;
+                    dvm.individuals = $filter('removeIriFromArray')(dvm.os.listItem.individuals, dvm.os.getActiveEntityIRI());
+                    dvm.valueSelect = _.find(dvm.individuals, individual => dvm.ro.getItemIri(individual) === dvm.os.propertyValue);
 
                     dvm.addProperty = function(select, value) {
                         var property = dvm.ro.getItemIri(select);
                         if (property) {
-                            if (_.has(dvm.sm.selected, property)) {
-                                dvm.sm.selected[property].push(value);
+                            if (_.has(dvm.os.selected, property)) {
+                                dvm.os.selected[property].push(value);
                             } else {
-                                dvm.sm.selected[property] = [value];
+                                dvm.os.selected[property] = [value];
                             }
                         }
-                        closeAndMark();
+                        dvm.os.addToAdditions(dvm.os.listItem.recordId, dvm.util.createJson(dvm.os.selected['@id'], property, value));
+                        dvm.os.showObjectPropertyOverlay = false;
+                        dvm.ontoUtils.saveCurrentChanges();
                     }
 
                     dvm.editProperty = function(select, value) {
                         var property = dvm.ro.getItemIri(select);
                         if (property) {
-                            dvm.sm.selected[property][dvm.sm.propertyIndex] = value;
+                            dvm.os.addToDeletions(dvm.os.listItem.recordId, dvm.util.createJson(dvm.os.selected['@id'], property, dvm.os.selected[property][dvm.os.propertyIndex]));
+                            dvm.os.selected[property][dvm.os.propertyIndex] = value;
+                            dvm.os.addToAdditions(dvm.os.listItem.recordId, dvm.util.createJson(dvm.os.selected['@id'], property, value));
                         }
-                        closeAndMark();
-                    }
-
-                    dvm.getItemNamespace = function(item) {
-                        return _.get(item, 'namespace', 'No namespace');
+                        dvm.os.showObjectPropertyOverlay = false;
+                        dvm.ontoUtils.saveCurrentChanges();
                     }
                 }
             }

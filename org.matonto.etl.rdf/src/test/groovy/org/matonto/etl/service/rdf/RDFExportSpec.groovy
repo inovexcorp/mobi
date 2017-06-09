@@ -22,8 +22,10 @@
  */
 package org.matonto.etl.service.rdf
 
+import org.matonto.ontology.utils.api.SesameTransformer
 import org.matonto.rdf.api.ModelFactory
 import org.matonto.rdf.core.impl.sesame.LinkedHashModel
+import org.matonto.rdf.core.utils.Values
 import org.matonto.repository.api.DelegatingRepository
 import org.springframework.core.io.ClassPathResource
 import spock.lang.Specification
@@ -32,6 +34,12 @@ import org.matonto.repository.base.RepositoryResult
 
 
 class RDFExportSpec extends Specification {
+
+    def transformer = Mock(SesameTransformer)
+
+    def setup() {
+        transformer.sesameModel(_) >> { args -> Values.sesameModel(args[0])}
+    }
 
     def "Nonexistant repository causes exception" (){
         setup:
@@ -79,6 +87,7 @@ class RDFExportSpec extends Specification {
         RepositoryResult result = Mock()
         ModelFactory mf = Mock()
         exportService.setModelFactory(mf)
+        exportService.setTransformer(transformer)
 
         when:
         exportService.addRepository(repo)

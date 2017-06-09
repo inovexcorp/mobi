@@ -62,7 +62,6 @@
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/mapper/directives/editMappingPage/editMappingPage.html',
                 scope: {},
                 controllerAs: 'dvm',
                 controller: function() {
@@ -71,29 +70,37 @@
                     dvm.mm = mappingManagerService;
                     dvm.dm = delimitedManagerService;
                     dvm.errorMessage = '';
+                    dvm.tabs = {
+                        edit: true,
+                        preview: false
+                    };
 
+                    dvm.configNotSet = function() {
+                        return _.isEmpty(dvm.mm.getSourceOntologyInfo(dvm.state.mapping.jsonld));
+                    }
                     dvm.save = function() {
                         if (_.includes(dvm.mm.mappingIds, dvm.state.mapping.id)) {
-                            dvm.mm.deleteMapping(dvm.state.mapping.id)
-                                .then(() => saveMapping(), errorMessage => dvm.errorMessage = errorMessage);
+                            dvm.mm.updateMapping(dvm.state.mapping.id, dvm.state.mapping.jsonld).then(success, onError);
                         } else {
-                            saveMapping();
+                            dvm.mm.upload(dvm.state.mapping.jsonld).then(success, onError);
                         }
                     }
                     dvm.cancel = function() {
                         dvm.state.displayCancelConfirm = true;
                     }
-                    function saveMapping() {
-                        dvm.mm.upload(dvm.state.mapping.jsonld, dvm.state.mapping.id)
-                            .then(() => {
-                                dvm.errorMessage = '';
-                                dvm.state.step = dvm.state.selectMappingStep;
-                                dvm.state.initialize();
-                                dvm.state.resetEdit();
-                                dvm.dm.reset();
-                            }, errorMessage => dvm.errorMessage = errorMessage);
+
+                    function onError(errorMessage) {
+                        dvm.errorMessage = errorMessage
                     }
-                }
+                    function success() {
+                        dvm.errorMessage = '';
+                        dvm.state.step = dvm.state.selectMappingStep;
+                        dvm.state.initialize();
+                        dvm.state.resetEdit();
+                        dvm.dm.reset();
+                    }
+                },
+                templateUrl: 'modules/mapper/directives/editMappingPage/editMappingPage.html'
             }
         }
 })();

@@ -1,6 +1,7 @@
 package org.matonto.rdf.orm;
 
 import aQute.bnd.annotation.component.Reference;
+import org.matonto.exception.MatOntoException;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
@@ -12,6 +13,7 @@ import org.matonto.rdf.orm.conversion.ValueConverterRegistry;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -138,7 +140,7 @@ public abstract class AbstractOrmFactory<T extends Thing> implements OrmFactory<
      */
     @Override
     public T convertValue(Value value, Thing thing, Class<? extends T> desiredType) throws ValueConversionException {
-        return getExisting((Resource) value, thing.getModel());
+        return getExisting((Resource) value, thing.getModel()).orElseThrow(() -> new ValueConversionException("Issue getting existing " + getType().getName() + "' from " + value.stringValue()));
     }
 
     /**
@@ -153,7 +155,7 @@ public abstract class AbstractOrmFactory<T extends Thing> implements OrmFactory<
      * {@inheritDoc}
      */
     @Override
-    public T getExisting(Resource resource, Model model, ValueFactory valueFactory) {
+    public Optional<T> getExisting(Resource resource, Model model, ValueFactory valueFactory) {
         return getExisting(resource, model, valueFactory, this.valueConverterRegistry);
     }
 
@@ -161,7 +163,7 @@ public abstract class AbstractOrmFactory<T extends Thing> implements OrmFactory<
      * {@inheritDoc}
      */
     @Override
-    public T getExisting(Resource resource, Model model) {
+    public Optional<T> getExisting(Resource resource, Model model) {
         return getExisting(resource, model, this.valueFactory);
     }
 
@@ -185,8 +187,8 @@ public abstract class AbstractOrmFactory<T extends Thing> implements OrmFactory<
      * {@inheritDoc}
      */
     @Override
-    public Stream<T> streamExisting(final Model model){
-        return model.filter(null, valueFactory.createIRI(OrmFactory.RDF_TYPE_IRI), getTypeIRI()).stream().map(stmt -> getExisting(stmt.getSubject(), model));
+    public Stream<T> streamExisting(final Model model) {
+        return model.filter(null, valueFactory.createIRI(OrmFactory.RDF_TYPE_IRI), getTypeIRI()).stream().map(stmt -> getExisting(stmt.getSubject(), model).get());
     }
 
     /**
@@ -197,10 +199,11 @@ public abstract class AbstractOrmFactory<T extends Thing> implements OrmFactory<
                        ValueConverterRegistry valueConverterRegistry) {
         model.add(valueFactory.createStatement(resource, valueFactory.createIRI(OrmFactory.RDF_TYPE_IRI),
                 valueFactory.createIRI(typeIriString)));
-        getParentTypeIRIs().stream().forEach(iri->{
+        getParentTypeIRIs().forEach(iri -> {
             model.add(valueFactory.createStatement(resource, valueFactory.createIRI(OrmFactory.RDF_TYPE_IRI), iri));
         });
-        return getExisting(resource, model, valueFactory, valueConverterRegistry);
+        // Will always be present in this condition.
+        return getExisting(resource, model, valueFactory, valueConverterRegistry).orElseThrow(() -> new MatOntoException("Issue creating new OrmThing, expected previously created resource " + resource.stringValue() + "was not found"));
     }
 
     /**

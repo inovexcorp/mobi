@@ -27,9 +27,9 @@
         .module('removePropertyOverlay', [])
         .directive('removePropertyOverlay', removePropertyOverlay);
 
-        removePropertyOverlay.$inject = ['ontologyStateService', 'propertyManagerService'];
+        removePropertyOverlay.$inject = ['ontologyStateService', 'propertyManagerService', 'ontologyUtilsManagerService', 'prefixes'];
 
-        function removePropertyOverlay(ontologyStateService, propertyManagerService) {
+        function removePropertyOverlay(ontologyStateService, propertyManagerService, ontologyUtilsManagerService, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -44,16 +44,28 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    dvm.sm = ontologyStateService;
+                    var ontoUtils = ontologyUtilsManagerService;
+                    dvm.os = ontologyStateService;
                     dvm.pm = propertyManagerService;
 
                     dvm.removeProperty = function() {
                         if (dvm.onSubmit) {
-                            dvm.onSubmit({axiomObject: dvm.sm.selected[dvm.key][dvm.index]});
+                            dvm.onSubmit({axiomObject: dvm.os.selected[dvm.key][dvm.index]});
                         }
-                        dvm.pm.remove(dvm.sm.selected, dvm.key, dvm.index);
-                        dvm.sm.setUnsaved(dvm.sm.listItem.ontologyId, dvm.sm.selected.matonto.originalIRI, true);
+                        var json = {
+                            '@id': dvm.os.selected['@id'],
+                            [dvm.key]: [angular.copy(dvm.os.selected[dvm.key][dvm.index])]
+                        }
+                        dvm.os.addToDeletions(dvm.os.listItem.recordId, json);
+                        dvm.pm.remove(dvm.os.selected, dvm.key, dvm.index);
+                        if (prefixes.rdfs + 'domain' === dvm.key) {
+                            dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.getOntologiesArray(), dvm.os.listItem);
+                        } else if (prefixes.rdfs + 'range' === dvm.key) {
+                            dvm.os.updatePropertyIcon(dvm.os.selected);
+                        }
                         dvm.overlayFlag = false;
+                        ontoUtils.saveCurrentChanges();
+                        ontoUtils.updateLabel();
                     }
                 }
             }

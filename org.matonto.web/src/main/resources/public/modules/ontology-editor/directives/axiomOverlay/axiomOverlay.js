@@ -27,9 +27,9 @@
         .module('axiomOverlay', [])
         .directive('axiomOverlay', axiomOverlay);
 
-        axiomOverlay.$inject = ['responseObj', 'ontologyManagerService', 'ontologyStateService'];
+        axiomOverlay.$inject = ['responseObj', 'ontologyStateService', 'utilService', 'ontologyUtilsManagerService', 'prefixes'];
 
-        function axiomOverlay(responseObj, ontologyManagerService, ontologyStateService) {
+        function axiomOverlay(responseObj, ontologyStateService, utilService, ontologyUtilsManagerService, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -41,29 +41,26 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    dvm.om = ontologyManagerService;
+                    dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.ro = responseObj;
-                    dvm.sm = ontologyStateService;
-
-                    function closeAndMark() {
-                        dvm.sm.setUnsaved(dvm.sm.listItem.ontologyId, dvm.sm.selected.matonto.originalIRI, true);
-                        dvm.sm.showAxiomOverlay = false;
-                    }
+                    dvm.os = ontologyStateService;
+                    dvm.util = utilService;
 
                     dvm.addAxiom = function() {
                         var values = [];
                         _.forEach(dvm.values, value => values.push({'@id': dvm.ro.getItemIri(value)}));
                         var axiom = dvm.ro.getItemIri(dvm.axiom);
-                        if (_.has(dvm.sm.selected, axiom)) {
-                            dvm.sm.selected[axiom] = _.union(dvm.sm.selected[axiom], values);
+                        if (_.has(dvm.os.selected, axiom)) {
+                            dvm.os.selected[axiom] = _.union(dvm.os.selected[axiom], values);
                         } else {
-                            dvm.sm.selected[axiom] = values;
+                            dvm.os.selected[axiom] = values;
                         }
-                        closeAndMark();
-                    }
-
-                    dvm.getItemNamespace = function(item) {
-                        return _.get(item, 'namespace', 'No namespace');
+                        if (axiom === prefixes.rdfs + 'range') {
+                            dvm.os.updatePropertyIcon(dvm.os.selected);
+                        }
+                        dvm.os.addToAdditions(dvm.os.listItem.recordId, {'@id': dvm.os.selected['@id'], [axiom]: values});
+                        dvm.os.showAxiomOverlay = false;
+                        dvm.ontoUtils.saveCurrentChanges();
                     }
                 }
             }

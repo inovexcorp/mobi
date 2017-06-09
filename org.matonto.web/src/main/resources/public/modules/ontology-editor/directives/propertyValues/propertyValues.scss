@@ -43,7 +43,7 @@
         }
 
         /* Removes paragraph margin from the property value */
-        .value-display {
+        .value-display-wrapper {
             display: inline-block;
             font-size: 14px;
             margin: 0;
@@ -52,11 +52,7 @@
             width: -webkit-calc(100% - 62px);
             width:    -moz-calc(100% - 62px);
             width:         calc(100% - 62px);
-
-            .type-display {
-                padding-left: 5px;
-                vertical-align: text-bottom;
-            }
+            word-wrap: break-word;
         }
 
         /* Places the button in the top right corner */

@@ -4,6 +4,25 @@
 .ontology-editor-tabset {
     height: 100%;
 
+    .up-to-date .heading .fa.fa-exclamation-triangle {
+        display: none;
+    }
+
+    .heading {
+        &.active .fa.fa-exclamation-triangle {
+            color: $brand-danger;
+        }
+
+        .fa {
+            line-height: 22px;
+            padding-right: 5px;
+
+            &.fa-exclamation-triangle {
+                color: $brand-danger-light;
+            }
+        }
+    }
+
     > .tabset > .tabset-headings {
         background-color: $highlight-blue;
 

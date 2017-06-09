@@ -21,92 +21,69 @@
  * #L%
  */
 describe('Radio Button directive', function() {
-    var $compile,
-        $timeout,
-        scope;
+    var $compile, $timeout, scope, element, isolatedScope;
 
     beforeEach(function() {
         module('templates');
         module('radioButton');
 
-        // To test out a directive, you need to inject $compile and $rootScope
-        // and save them to use. We save $timeout because one of the methods
-        // we are testing uses it
         inject(function(_$compile_, _$rootScope_, _$timeout_) {
             $compile = _$compile_;
             $timeout = _$timeout_;
             scope = _$rootScope_;
         });
+
+        scope.ngModel = false;
+        scope.value = 0;
+        scope.displayText = '';
+        scope.isDisabledWhen = false;
+        scope.changeEvent = jasmine.createSpy('changeEvent');
+        scope.inline = false;
+
+        element = $compile(angular.element('<radio-button ng-model="ngModel" value="value" display-text="displayText" is-disabled-when="isDisabledWhen" change-event="changeEvent()" inline="inline"></radio-button>'))(scope);
+        scope.$digest();
+        isolatedScope = element.isolateScope();
     });
 
-    // To access the functions in a directive's controller to test them directly,
-    // use element.controller('controllerName')
     it('calls changeEvent if value of radio button is changed', function() {
-        scope.changeEvent = jasmine.createSpy('changeEvent');
-        scope.ngModel = false;
-        var element = $compile(angular.element('<radio-button ng-model="ngModel" value="value" display-text="displayText" is-disabled-when="isDisabledWhen" change-event="changeEvent()"></radio-button>'))(scope);
-        scope.$digest();
-
-        // This is the way I found to trigger a radio button ng-change function
         element.find('input')[0].click();
         scope.$digest();
-        // If your method uses $timeout, you need to run this method to update everything
         $timeout.flush();
         expect(scope.changeEvent).toHaveBeenCalled();
     });
     describe('in isolated scope', function() {
-        beforeEach(function() {
-            this.model = false;
-            scope.ngModel = this.model;
-            scope.value = 0;
-            scope.displayText = '';
-            scope.isDisabledWhen = false;
-            scope.changeEvent = jasmine.createSpy('changeEvent');
-
-            // To create a copy of the directive, use the $compile(angular.element())($rootScope) 
-            // syntax
-            this.element = $compile(angular.element('<radio-button ng-model="ngModel" value="value" display-text="displayText" is-disabled-when="isDisabledWhen" change-event="changeEvent()"></radio-button>'))(scope);
-            // This needs to be called explicitly if you change anything with the directive,
-            // being either a variable change or a function call
-            scope.$digest();
-        });
-
         it('bindModel should be two way bound', function() {
-            var isolatedScope = this.element.isolateScope();
             isolatedScope.bindModel = true;
             scope.$digest();
             expect(scope.ngModel).toEqual(true);
         });
-        it('value should be two way bound', function() {
-            var isolatedScope = this.element.isolateScope();
+        it('value should be one way bound', function() {
             isolatedScope.value = 1;
             scope.$digest();
-            expect(scope.value).toEqual(1);
+            expect(scope.value).toEqual(0);
         });
-        it('displayText should be two way bound', function() {
-            var isolatedScope = this.element.isolateScope();
+        it('displayText should be one way bound', function() {
             isolatedScope.displayText = 'abc';
             scope.$digest();
-            expect(scope.displayText).toEqual('abc');
+            expect(scope.displayText).toEqual('');
         });
-        it('isDisabledWhen should be two way bound', function() {
-            var isolatedScope = this.element.isolateScope();
+        it('isDisabledWhen should be one way bound', function() {
             isolatedScope.isDisabledWhen = true;
             scope.$digest();
-            expect(scope.isDisabledWhen).toEqual(true);
+            expect(scope.isDisabledWhen).toBe(false);
+        });
+        it('inline should be one way bound', function() {
+            isolatedScope.inline = true;
+            scope.$digest();
+            expect(scope.inline).toBe(false);
         });
         it('changeEvent should be called in parent scope when invoked', function() {
-            var isolatedScope = this.element.isolateScope();
             isolatedScope.changeEvent();
-
             expect(scope.changeEvent).toHaveBeenCalled();
         });
     });
     describe('replaces the element with the correct html', function() {
         it('for a label and radio button', function() {
-            var element = $compile(angular.element('<radio-button ng-model="ngModel" value="value" display-text="displayText" is-disabled-when="isDisabledWhen" change-event="changeEvent()"></radio-button>'))(scope);
-            scope.$digest();
-
             expect(element.prop('tagName')).toBe('DIV');
             expect(element.hasClass('form-group'));
             var labelList = element.querySelectorAll('label');
@@ -115,6 +92,16 @@ describe('Radio Button directive', function() {
             expect(inputList.length).toBe(1);
             var input = inputList[0];
             expect(input.type).toBe('radio');
+        });
+        it('when inline is false', function() {
+            expect(element.querySelectorAll('label.radio-inline').length).toEqual(0);
+            expect(element.hasClass('wrapper-inline')).toBe(false);
+        });
+        it('when inline is true', function() {
+            scope.inline = true;
+            scope.$digest();
+            expect(element.querySelectorAll('label.radio-inline').length).toEqual(1);
+            expect(element.hasClass('wrapper-inline')).toBe(true);
         });
     });
 });

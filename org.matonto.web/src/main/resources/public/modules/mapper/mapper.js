@@ -27,8 +27,10 @@
         .module('mapper', [
             /* Custom Directives */
             'classMappingDetails',
+            'classMappingOverlay',
             'classMappingSelect',
             'classPreview',
+            'classSelect',
             'columnSelect',
             'createMappingOverlay',
             'downloadMappingOverlay',
@@ -48,9 +50,9 @@
             'mappingPreview',
             'mappingSelectPage',
             'mappingTitle',
-            'ontologyPreview',
             'previewDataGrid',
             'propMappingOverlay',
+            'propPreview',
             'propSelect',
             'rdfPreviewForm',
             'runMappingOverlay'

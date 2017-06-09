@@ -1,0 +1,44 @@
+@prefix : <https://matonto.org/vocabulary#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xml: <http://www.w3.org/XML/1998/namespace> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@base <https://matonto.org/vocabulary> .
+
+<https://matonto.org/vocabulary> rdf:type owl:Ontology ;
+                                  owl:imports <http://www.w3.org/2004/02/skos/core#> ;
+                                  <http://purl.org/dc/terms/title> "Vocabulary"^^xsd:string .
+
+#################################################################
+#    Classes
+#################################################################
+
+###  https://matonto.org/vocabulary#ConceptSubClass
+:ConceptSubClass rdf:type owl:Class;
+    rdfs:subClassOf skos:Concept;
+    <http://www.w3.org/2004/02/skos/core#prefLabel> "Concept Sub-Class"^^xsd:string .
+
+###  https://matonto.org/vocabulary#ConceptSchemeSubClass
+#:ConceptSchemeSubClass rdf:type owl:Class;
+#    rdfs:subClassOf skos:ConceptScheme;
+#    <http://www.w3.org/2004/02/skos/core#prefLabel> "Concept Scheme Sub-Class"^^xsd:string .
+
+#################################################################
+#    Individuals
+#################################################################
+
+###  https://matonto.org/vocabulary#Concept1
+:Concept1 rdf:type owl:NamedIndividual ,
+                   <https://matonto.org/vocabulary#ConceptSubClass> ;
+          <http://www.w3.org/2004/02/skos/core#narrower> :Concept2 ;
+          <http://www.w3.org/2004/02/skos/core#prefLabel> "Concept 1"^^xsd:string .
+
+
+###  https://matonto.org/vocabulary#Concept2
+:Concept2 rdf:type owl:NamedIndividual ,
+                   <https://matonto.org/vocabulary#ConceptSubClass> ;
+          <http://www.w3.org/2004/02/skos/core#prefLabel> "Concept 2"^^xsd:string .
+
+
+

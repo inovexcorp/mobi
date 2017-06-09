@@ -29,22 +29,23 @@
             <div class="form-group">
                 <custom-label>Name</custom-label>
                 <input type="text" class="form-control" ng-trim="false" ng-keyup="dvm.nameChanged()" required
-                       ng-model="dvm.scheme[dvm.prefixes.dcterms + 'title'][0]['@value']">
+                       ng-model="dvm.scheme[dvm.prefixes.dcterms + 'title'][0]['@value']" focus-me>
             </div>
-            <div ng-if="dvm.om.hasConcepts(dvm.sm.ontology)" class="form-group">
+            <div ng-if="dvm.om.hasConcepts(dvm.os.getOntologiesArray())" class="form-group">
                 <custom-label muted-text="'(Optional)'">Top Concept(s)</custom-label>
                 <ui-select multiple ng-model="dvm.concepts">
                     <ui-select-match placeholder="Select Concept(s)">
-                        <span title="{{$item}}">{{($item | splitIRI).end}}</span>
+                        <span title="{{$item}}">{{dvm.ontoUtils.getLabelForIRI($item)}}</span>
                     </ui-select-match>
-                    <ui-select-choices group-by="dvm.getIRINamespace" repeat="{'@id': iri} as iri in dvm.om.getConceptIRIs(dvm.sm.ontology) | filter:$select.search | orderBy:'localName' track by iri">
-                        <div title="{{iri}}" ng-bind-html="(iri | splitIRI).end | highlight: $select.search | trusted"></div>
+                    <ui-select-choices group-by="dvm.util.getIRINamespace" repeat="{'@id': iri} as iri in dvm.om.getConceptIRIs(dvm.os.getOntologiesArray()) | filter:$select.search | orderBy:dvm.ontoUtils.getLabelForIRI track by iri">
+                        <div title="{{iri}}" ng-bind-html="dvm.ontoUtils.getLabelForIRI(iri) | highlight: $select.search | trusted"></div>
                     </ui-select-choices>
                 </ui-select>
             </div>
+            <advanced-language-select ng-model="dvm.language"></advanced-language-select>
             <div class="btn-container clearfix">
-                <button class="btn btn-primary pull-right" ng-disabled="dvm.form.$invalid" ng-click="dvm.create()">Create</button>
-                <button class="btn btn-default pull-right" ng-click="dvm.sm.showCreateConceptSchemeOverlay = false">Cancel</button>
+                <button class="btn btn-primary pull-right" ng-disabled="dvm.form.$invalid || dvm.ontoUtils.checkIri(dvm.scheme['@id'])" ng-click="dvm.create()">Create</button>
+                <button class="btn btn-default pull-right" ng-click="dvm.os.showCreateConceptSchemeOverlay = false">Cancel</button>
             </div>
         </form>
     </div>

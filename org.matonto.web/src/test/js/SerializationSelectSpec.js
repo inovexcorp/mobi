@@ -33,11 +33,8 @@ describe('Serialization Select directive', function() {
             $compile = _$compile_;
             scope = _$rootScope_;
         });
-    });
 
-    beforeEach(function() {
         scope.bindModel = '';
-
         element = $compile(angular.element('<serialization-select ng-model="bindModel"></serialization-select>'))(scope);
         scope.$digest();
     });
@@ -51,16 +48,16 @@ describe('Serialization Select directive', function() {
         });
     });
     describe('replaces the element with the correct html', function() {
-        it('for a DIV', function() {
+        it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
+            expect(element.hasClass('serialization-select')).toBe(true);
+            expect(element.hasClass('form-group')).toBe(true);
         });
-        it('based on select', function() {
-            var selects = element.find('select');
-            expect(selects.length).toBe(1);
+        it('with a select', function() {
+            expect(element.find('select').length).toBe(1);
         });
-        it('based on options', function() {
-            var options = element.find('option');
-            expect(options.length).toBe(5);
+        it('with options', function() {
+            expect(element.find('option').length).toBe(5);
         });
     });
 });

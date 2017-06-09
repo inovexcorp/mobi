@@ -25,266 +25,497 @@ package org.matonto.jaas.rest.impl;
 
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
-import org.apache.karaf.jaas.boot.ProxyLoginModule;
-import org.apache.karaf.jaas.boot.principal.GroupPrincipal;
-import org.apache.karaf.jaas.boot.principal.RolePrincipal;
-import org.apache.karaf.jaas.boot.principal.UserPrincipal;
-import org.apache.karaf.jaas.config.JaasRealm;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.junit.Assert;
-import org.matonto.jaas.modules.token.TokenBackingEngine;
-import org.matonto.jaas.modules.token.TokenBackingEngineFactory;
+import org.matonto.jaas.api.engines.EngineManager;
+import org.matonto.jaas.api.engines.GroupConfig;
+import org.matonto.jaas.api.engines.UserConfig;
+import org.matonto.jaas.api.ontologies.usermanagement.*;
+import org.matonto.jaas.rest.providers.*;
+import org.matonto.ontologies.foaf.AgentFactory;
+import org.matonto.rdf.api.ModelFactory;
+import org.matonto.rdf.api.ValueFactory;
+import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory;
+import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
+import org.matonto.rdf.orm.conversion.ValueConverterRegistry;
+import org.matonto.rdf.orm.conversion.impl.*;
+import org.matonto.rdf.orm.impl.ThingFactory;
 import org.matonto.rest.util.MatontoRestTestNg;
+import org.matonto.rest.util.UsernameTestFilter;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.openrdf.model.vocabulary.DCTERMS;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import javax.security.auth.login.AppConfigurationEntry;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 public class GroupRestImplTest extends MatontoRestTestNg {
     private GroupRestImpl rest;
-    private Map<GroupPrincipal, String> groups;
-    private List<UserPrincipal> users;
-    private List<GroupPrincipal> admin1Groups;
-    private List<GroupPrincipal> user1Groups;
-    private List<RolePrincipal> roles;
+    private GroupProvider groupProvider;
+    private RoleProvider roleProvider;
+    private RoleSetProvider roleSetProvider;
+    private UserProvider userProvider;
+    private UserSetProvider userSetProvider;
+    private UserFactory userFactory;
+    private GroupFactory groupFactory;
+    private RoleFactory roleFactory;
+    private AgentFactory agentFactory;
+    private ThingFactory thingFactory;
+    private ValueFactory vf;
+    private ModelFactory mf;
+    private ValueConverterRegistry vcr;
+    private User user;
+    private Group group;
+    private Role role;
+    private Set<User> users;
+    private Set<Group> groups;
+    private Set<Role> roles;
 
     @Mock
-    JaasRealm realm;
-
-    @Mock
-    TokenBackingEngine engine;
-
-    @Mock
-    TokenBackingEngineFactory factory;
+    EngineManager engineManager;
 
     @Override
     protected Application configureApp() throws Exception {
-        MockitoAnnotations.initMocks(this);
+        groupProvider = new GroupProvider();
+        roleProvider = new RoleProvider();
+        roleSetProvider = new RoleSetProvider();
+        userProvider = new UserProvider();
+        userSetProvider = new UserSetProvider();
+        userFactory = new UserFactory();
+        groupFactory = new GroupFactory();
+        roleFactory = new RoleFactory();
+        agentFactory = new AgentFactory();
+        thingFactory = new ThingFactory();
+        vf = SimpleValueFactory.getInstance();
+        mf = LinkedHashModelFactory.getInstance();
+        vcr = new DefaultValueConverterRegistry();
+        groupProvider.setFactory(vf);
+        roleProvider.setFactory(vf);
+        roleSetProvider.setFactory(vf);
+        roleSetProvider.setRoleProvider(roleProvider);
+        userSetProvider.setUserProvider(userProvider);
+        userFactory.setModelFactory(mf);
+        userFactory.setValueFactory(vf);
+        userFactory.setValueConverterRegistry(vcr);
+        groupFactory.setModelFactory(mf);
+        groupFactory.setValueFactory(vf);
+        groupFactory.setValueConverterRegistry(vcr);
+        roleFactory.setModelFactory(mf);
+        roleFactory.setValueFactory(vf);
+        roleFactory.setValueConverterRegistry(vcr);
+        agentFactory.setValueFactory(vf);
+        agentFactory.setModelFactory(mf);
+        agentFactory.setValueConverterRegistry(vcr);
+        thingFactory.setValueFactory(vf);
+        thingFactory.setModelFactory(mf);
+        thingFactory.setValueConverterRegistry(vcr);
 
-        // Setup groups
-        GroupPrincipal testGroup1 = new GroupPrincipal("testGroup1");
-        GroupPrincipal testGroup2 = new GroupPrincipal("testGroup2");
-        GroupPrincipal testGroup3 = new GroupPrincipal("testGroup3");
-        groups = new HashMap<>();
-        groups.put(testGroup1, "admin,user");
-        groups.put(testGroup2, "user");
-        groups.put(testGroup3, "");
+        vcr.registerValueConverter(userFactory);
+        vcr.registerValueConverter(groupFactory);
+        vcr.registerValueConverter(roleFactory);
+        vcr.registerValueConverter(agentFactory);
+        vcr.registerValueConverter(thingFactory);
+        vcr.registerValueConverter(new ResourceValueConverter());
+        vcr.registerValueConverter(new IRIValueConverter());
+        vcr.registerValueConverter(new DoubleValueConverter());
+        vcr.registerValueConverter(new IntegerValueConverter());
+        vcr.registerValueConverter(new FloatValueConverter());
+        vcr.registerValueConverter(new ShortValueConverter());
+        vcr.registerValueConverter(new StringValueConverter());
+        vcr.registerValueConverter(new ValueValueConverter());
+        vcr.registerValueConverter(new LiteralValueConverter());
 
-        // Setup users
-        UserPrincipal admin1 = new UserPrincipal("admin1");
-        UserPrincipal user1 = new UserPrincipal("user1");
-        users = new ArrayList<>();
-        users.add(admin1);
-        users.add(user1);
+        role = roleFactory.createNew(vf.createIRI("http://matonto.org/roles/user"));
+        role.setProperty(vf.createLiteral("user"), vf.createIRI(DCTERMS.TITLE.stringValue()));
+        roles = Collections.singleton(role);
 
-        admin1Groups = Collections.singletonList(testGroup1);
-        user1Groups = new ArrayList<>();
-        user1Groups.add(testGroup1);
-        user1Groups.add(testGroup2);
+        user = userFactory.createNew(vf.createIRI("http://matonto.org/users/testUser"), role.getModel());
+        user.setHasUserRole(roles);
+        users = Collections.singleton(user);
 
-        // Setup roles
-        RolePrincipal adminRole = new RolePrincipal("admin");
-        RolePrincipal userRole = new RolePrincipal("user");
-        roles = new ArrayList<>();
-        roles.add(adminRole);
-        roles.add(userRole);
-
-        when(engine.listGroups()).thenReturn(groups);
-        when(engine.listUsers()).thenReturn(users);
-        when(engine.listGroups(admin1)).thenReturn(admin1Groups);
-        when(engine.listGroups(user1)).thenReturn(user1Groups);
-        doNothing().when(engine).createGroup(anyString());
-        doNothing().when(engine).addGroupRole(anyString(), anyString());
-        doNothing().when(engine).deleteGroup(anyString(), anyString());
-        doNothing().when(engine).deleteGroupRole(anyString(), anyString());
-
-        // Setup realm and factory
-        Map<String, Object> tokenOptions = new HashMap<>();
-        tokenOptions.put(ProxyLoginModule.PROPERTY_MODULE, UserRestImpl.TOKEN_MODULE);
-
-        when(factory.getModuleClass()).thenReturn(UserRestImpl.TOKEN_MODULE);
-        when(factory.build(any(Map.class))).thenReturn(engine);
-        when(realm.getEntries()).thenReturn(new AppConfigurationEntry[] {
-                new AppConfigurationEntry("loginModule", AppConfigurationEntry.LoginModuleControlFlag.OPTIONAL,
-                        tokenOptions),
-                new AppConfigurationEntry("loginModule", AppConfigurationEntry.LoginModuleControlFlag.OPTIONAL,
-                        new HashMap<>())});
+        group = groupFactory.createNew(vf.createIRI("http://matonto.org/groups/testGroup"), role.getModel());
+        group.setHasGroupRole(roles);
+        group.setProperty(vf.createLiteral("testGroup"), vf.createIRI(DCTERMS.TITLE.stringValue()));
+        group.setProperty(vf.createLiteral("This is a description"), vf.createIRI(DCTERMS.DESCRIPTION.stringValue()));
+        group.setMember(Collections.singleton(user));
+        groups = Collections.singleton(group);
 
         // Setup rest
+        MockitoAnnotations.initMocks(this);
+        groupProvider.setEngineManager(engineManager);
         rest = spy(new GroupRestImpl());
-        rest.setRealm(realm);
-        rest.addEngineFactory(factory);
-        rest.start();
+        rest.setEngineManager(engineManager);
+        rest.setFactory(vf);
+        rest.setUserFactory(userFactory);
 
         return new ResourceConfig()
                 .register(rest)
-                .register(MultiPartFeature.class);
+                .register(MultiPartFeature.class)
+                .register(userProvider)
+                .register(userSetProvider)
+                .register(groupProvider)
+                .register(roleProvider)
+                .register(roleSetProvider);
     }
 
     @Override
     protected void configureClient(ClientConfig config) {
         config.register(MultiPartFeature.class);
+        config.register(userProvider);
+        config.register(userSetProvider);
+        config.register(groupProvider);
+        config.register(roleProvider);
+        config.register(roleSetProvider);
+    }
+
+    @BeforeMethod
+    public void setupMocks() {
+        reset(engineManager);
+        when(engineManager.getUsers(anyString())).thenReturn(users);
+        when(engineManager.userExists(anyString())).thenReturn(true);
+        when(engineManager.createUser(anyString(), any(UserConfig.class))).thenReturn(user);
+        when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.of(user));
+        when(engineManager.getGroups(anyString())).thenReturn(groups);
+        when(engineManager.groupExists(anyString())).thenReturn(true);
+        when(engineManager.createGroup(anyString(), any(GroupConfig.class))).thenReturn(group);
+        when(engineManager.retrieveGroup(anyString(), anyString())).thenReturn(Optional.of(group));
+        when(engineManager.getRole(anyString(), anyString())).thenReturn(Optional.of(role));
     }
 
     @Test
     public void listGroupsTest() {
         Response response = target().path("groups").request().get();
-        verify(engine, atLeastOnce()).listGroups();
-        Assert.assertEquals(200, response.getStatus());
+        verify(engineManager, atLeastOnce()).getGroups(anyString());
+        assertEquals(response.getStatus(), 200);
         try {
-            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-            Assert.assertTrue(result.size() == groups.size());
+            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            assertEquals(result.size(), groups.size());
         } catch (Exception e) {
-            Assert.fail("Expected no exception, but got: " + e.getMessage());
+            fail("Expected no exception, but got: " + e.getMessage());
         }
     }
 
     @Test
     public void createGroupTest() {
-        String existingGroup = "testGroup1";
-        String newGroup = "testGroup4";
+        // Setup:
+        when(engineManager.groupExists(anyString())).thenReturn(false);
+        JSONObject group = new JSONObject();
+        group.put("title", "newGroup");
+        group.put("description", "This is a description");
 
-        Response response = target().path("groups").queryParam("name", newGroup)
-                .request().post(Entity.entity(null, MediaType.MULTIPART_FORM_DATA));
-        verify(engine).createGroup(newGroup);
-        Assert.assertEquals(200, response.getStatus());
+        Response response = target().path("groups")
+                .request().post(Entity.entity(group.toString(), MediaType.APPLICATION_JSON));
+        assertEquals(response.getStatus(), 201);
+        verify(engineManager).storeGroup(anyString(), any(Group.class));
+    }
 
-        response = target().path("groups")
-                .request().post(Entity.entity(null, MediaType.MULTIPART_FORM_DATA));
-        Assert.assertEquals(400, response.getStatus());
+    @Test
+    public void createGroupWithoutTitleTest() {
+        // Setup:
+        when(engineManager.groupExists(anyString())).thenReturn(false);
+        JSONObject group = new JSONObject();
+        group.put("description", "This is a description");
 
-        response = target().path("groups").queryParam("name", existingGroup)
-                .request().post(Entity.entity(null, MediaType.MULTIPART_FORM_DATA));
-        Assert.assertEquals(400, response.getStatus());
+        Response response = target().path("groups")
+                .request().post(Entity.entity(group.toString(), MediaType.APPLICATION_JSON));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void createExistingGroupTest() {
+        //Setup:
+        JSONObject group = new JSONObject();
+        group.put("title", "testGroup");
+        group.put("description", "This is a description");
+
+        Response response = target().path("groups")
+                .request().post(Entity.entity(group.toString(), MediaType.APPLICATION_JSON));
+        assertEquals(response.getStatus(), 400);
     }
 
     @Test
     public void getGroupTest() {
-        String existingGroup = "testGroup1";
+        Response response = target().path("groups/testGroup").request().get();
+        assertEquals(response.getStatus(), 200);
+        verify(engineManager).retrieveGroup(anyString(), eq("testGroup"));
+        JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
+        assertEquals(result.get("title"), "testGroup");
+    }
 
-        Response response = target().path("groups/" + existingGroup).request().get();
-        Assert.assertEquals(200, response.getStatus());
-        try {
-            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-            Assert.assertTrue(result.get("name").equals(existingGroup));
-        } catch (Exception e) {
-            Assert.fail("Expected no exception, but got: " + e.getMessage());
-        }
+    @Test
+    public void getGroupThatDoesNotExistTest() {
+        //Setup:
+        when(engineManager.retrieveGroup(anyString(), anyString())).thenReturn(Optional.empty());
 
-        response = target().path("groups/error").request().get();
-        Assert.assertEquals(400, response.getStatus());
+        Response response = target().path("groups/error").request().get();
+        assertEquals(response.getStatus(), 404);
+    }
+
+    @Test
+    public void updateGroupTest() {
+        //Setup:
+        JSONObject group = new JSONObject();
+        group.put("title", "testGroup");
+        group.put("description", "This is a new description");
+
+        Response response = target().path("groups/testGroup")
+                .request().put(Entity.entity(group.toString(), MediaType.APPLICATION_JSON));
+        assertEquals(response.getStatus(), 200);
+        verify(engineManager).retrieveGroup(anyString(), eq("testGroup"));
+        verify(engineManager).updateGroup(anyString(), any(Group.class));
+    }
+
+    @Test
+    public void updateGroupWithDifferentTitleTest() {
+        //Setup:
+        JSONObject group = new JSONObject();
+        group.put("title", "newGroup");
+        group.put("description", "This is a new description");
+        Group newGroup = groupFactory.createNew(vf.createIRI("http://matonto.org/groups/" + group.getString("title")));
+        newGroup.setProperty(vf.createLiteral(group.getString("title")), vf.createIRI(DCTERMS.TITLE.stringValue()));
+        newGroup.setProperty(vf.createLiteral(group.getString("description")),
+                vf.createIRI(DCTERMS.DESCRIPTION.stringValue()));
+        when(engineManager.createGroup(anyString(), any(GroupConfig.class))).thenReturn(newGroup);
+
+        Response response = target().path("groups/testGroup")
+                .request().put(Entity.entity(group.toString(), MediaType.APPLICATION_JSON));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void updateGroupThatDoesNotExistTest() {
+        //Setup:
+        JSONObject group = new JSONObject();
+        group.put("title", "testGroup");
+        group.put("description", "This is a new description");
+        when(engineManager.retrieveGroup(anyString(), anyString())).thenReturn(Optional.empty());
+
+        Response response = target().path("groups/error")
+                .request().put(Entity.entity(group.toString(), MediaType.APPLICATION_JSON));
+        assertEquals(response.getStatus(), 400);
     }
 
     @Test
     public void deleteGroupTest() {
-        String existingGroup = "testGroup1";
+        Response response = target().path("groups/testGroup").request().delete();
+        assertEquals(response.getStatus(), 200);
+        verify(engineManager).deleteGroup(anyString(), eq("testGroup"));
+    }
 
-        Response response = target().path("groups/" + existingGroup).request().delete();
-        Assert.assertEquals(200, response.getStatus());
+    @Test
+    public void deleteGroupThatDoesNotExistTest() {
+        //Setup:
+        when(engineManager.groupExists(anyString())).thenReturn(false);
 
-        response = target().path("groups/error").request().delete();
-        Assert.assertEquals(400, response.getStatus());
+        Response response = target().path("groups/error").request().delete();
+        assertEquals(response.getStatus(), 400);
     }
 
     @Test
     public void getGroupRolesTest() {
-        String existingGroup = "testGroup1";
-
-        Response response = target().path("groups/" + existingGroup + "/roles").request().get();
-        Assert.assertEquals(200, response.getStatus());
+        Response response = target().path("groups/testGroup/roles").request().get();
+        assertEquals(response.getStatus(), 200);
         try {
             JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
-            Assert.assertEquals(roles.size(), result.size());
+            assertEquals(result.size(), roles.size());
         } catch (Exception e) {
-            Assert.fail("Expected no exception, but got: " + e.getMessage());
+            fail("Expected no exception, but got: " + e.getMessage());
         }
-
-        response = target().path("groups/error/roles").request().get();
-        Assert.assertEquals(400, response.getStatus());
     }
 
     @Test
-    public void addGroupRoleTest() {
-        String existingGroup = "testGroup1";
+    public void getGroupRolesThatDoNotExistTest() {
+        //Setup:
+        when(engineManager.retrieveGroup(anyString(), anyString())).thenReturn(Optional.empty());
 
-        Response response = target().path("groups/" + existingGroup + "/roles").queryParam("role", "testRole")
-                .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        verify(engine).addGroupRole(existingGroup, "testRole");
-        Assert.assertEquals(200, response.getStatus());
+        Response response = target().path("groups/error/roles").request().get();
+        assertEquals(response.getStatus(), 400);
+    }
 
-        response = target().path("groups/error/roles").queryParam("role", "testRole")
+    @Test
+    public void addGroupRolesTest() {
+        //Setup:
+        Map<String, Role> roles = new HashMap<>();
+        IntStream.range(1, 3)
+                .mapToObj(Integer::toString)
+                .forEach(s -> roles.put(s, roleFactory.createNew(vf.createIRI("http://matonto.org/roles/" + s))));
+        Group newGroup = groupFactory.createNew(vf.createIRI("http://matonto.org/groups/testGroup"));
+        when(engineManager.getRole(anyString(), anyString())).thenAnswer(i -> Optional.of(roles.get(i.getArgumentAt(1, String.class))));
+        when(engineManager.retrieveGroup(anyString(), anyString())).thenReturn(Optional.of(newGroup));
+
+        Response response = target().path("groups/testGroup/roles").queryParam("roles", roles.keySet().toArray())
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        Assert.assertEquals(400, response.getStatus());
+        assertEquals(response.getStatus(), 200);
+        verify(engineManager).retrieveGroup(anyString(), eq("testGroup"));
+        roles.keySet().forEach(s -> verify(engineManager).getRole(anyString(), eq(s)));
+        verify(engineManager).updateGroup(anyString(), any(Group.class));
+    }
+
+    @Test
+    public void addRoleToGroupThatDoesNotExistTest() {
+        //Setup:
+        when(engineManager.retrieveGroup(anyString(), anyString())).thenReturn(Optional.empty());
+        String[] roles = {"testRole"};
+
+        Response response = target().path("groups/error/roles").queryParam("roles", roles)
+                .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void addRoleThatDoesNotExistToGroupTest() {
+        //Setup:
+        when(engineManager.getRole(anyString(), anyString())).thenReturn(Optional.empty());
+        String[] roles = {"testRole"};
+
+        Response response = target().path("groups/testGroup/roles").queryParam("roles", roles)
+                .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void addGroupRolesWithoutRolesTest() {
+        Response response = target().path("groups/testGroup/roles")
+                .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
+        assertEquals(response.getStatus(), 400);
     }
 
     @Test
     public void removeGroupRoleTest() {
-        String existingGroup = "testGroup1";
-
-        Response response = target().path("groups/" + existingGroup + "/roles").queryParam("role", "testRole")
+        Response response = target().path("groups/testGroup/roles").queryParam("role", "testRole")
                 .request().delete();
-        verify(engine).deleteGroupRole(existingGroup, "testRole");
-        Assert.assertEquals(200, response.getStatus());
+        assertEquals(response.getStatus(), 200);
+        verify(engineManager).retrieveGroup(anyString(), eq("testGroup"));
+        verify(engineManager).updateGroup(anyString(), any(Group.class));
+    }
 
-        response = target().path("groups/error/roles").queryParam("role", "testRole")
+    @Test
+    public void removeRoleFromGroupThatDoesNotExistTest() {
+        //Setup:
+        when(engineManager.retrieveGroup(anyString(), anyString())).thenReturn(Optional.empty());
+
+        Response response = target().path("groups/error/roles").queryParam("role", "testRole")
                 .request().delete();
-        Assert.assertEquals(400, response.getStatus());
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void removeRoleThatDoesNotExistFromGroupTest() {
+        //Setup:
+        when(engineManager.getRole(anyString(), anyString())).thenReturn(Optional.empty());
+
+        Response response = target().path("groups/testGroup/roles").queryParam("role", "error")
+                .request().delete();
+        assertEquals(response.getStatus(), 400);
     }
 
     @Test
     public void getGroupUsersTest() {
-        Response response = target().path("groups/testGroup1/users").request().get();
-        Assert.assertEquals(200, response.getStatus());
+        Response response = target().path("groups/testGroup/users").request().get();
+        assertEquals(response.getStatus(), 200);
         try {
             JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
-            Assert.assertTrue(result.size() == 2);
-            Assert.assertTrue(result.contains("admin1"));
-            Assert.assertTrue(result.contains("user1"));
-            Assert.assertFalse(result.contains("user2"));
+            assertEquals(result.size(), users.size());
         } catch (Exception e) {
-            Assert.fail("Expected no exception, but got: " + e.getMessage());
+            fail("Expected no exception, but got: " + e.getMessage());
         }
+    }
 
-        response = target().path("groups/testGroup2/users").request().get();
-        Assert.assertEquals(200, response.getStatus());
-        try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
-            Assert.assertTrue(result.size() == 1);
-            Assert.assertTrue(result.contains("user1"));
-        } catch (Exception e) {
-            Assert.fail("Expected no exception, but got: " + e.getMessage());
-        }
+    @Test
+    public void getGroupUsersThatDoNotExistTest() {
+        //Setup:
+        when(engineManager.retrieveGroup(anyString(), anyString())).thenReturn(Optional.empty());
 
-        response = target().path("groups/testGroup3/users").request().get();
-        Assert.assertEquals(200, response.getStatus());
-        try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
-            Assert.assertTrue(result.size() == 0);
-        } catch (Exception e) {
-            Assert.fail("Expected no exception, but got: " + e.getMessage());
-        }
+        Response response = target().path("groups/error/users").request().get();
+        assertEquals(response.getStatus(), 400);
+    }
 
-        response = target().path("groups/error/users").request().get();
-        Assert.assertEquals(400, response.getStatus());
+    @Test
+    public void addGroupUserTest() {
+        // Setup:
+        Map<String, User> users = new HashMap<>();
+        IntStream.range(1, 6)
+                .mapToObj(Integer::toString)
+                .forEach(s -> users.put(s, userFactory.createNew(vf.createIRI("http://matonto.org/users/" + s))));
+        Group newGroup = groupFactory.createNew(vf.createIRI("http://matonto.org/groups/testGroup"));
+        when(engineManager.retrieveUser(anyString(), anyString())).thenAnswer(i -> Optional.of(users.get(i.getArgumentAt(1, String.class))));
+        when(engineManager.retrieveGroup(anyString(), anyString())).thenReturn(Optional.of(newGroup));
+
+        Response response = target().path("groups/testGroup/users").queryParam("users", users.keySet().toArray())
+                .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
+        assertEquals(response.getStatus(), 200);
+        verify(engineManager).retrieveGroup(anyString(), eq("testGroup"));
+        users.keySet().forEach(s -> verify(engineManager).retrieveUser(anyString(), eq(s)));
+        verify(engineManager).updateGroup(anyString(), any(Group.class));
+    }
+
+    @Test
+    public void addGroupUserToGroupThatDoesNotExistTest() {
+        // Setup:
+        when(engineManager.retrieveGroup(anyString(), anyString())).thenReturn(Optional.empty());
+
+        Response response = target().path("groups/error/users").request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void addGroupUserThatDoesNotExistTest() {
+        // Setup:
+        when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.empty());
+        String[] usernames = {"error"};
+
+        Response response = target().path("groups/testGroup/users").queryParam("users", usernames)
+                .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void removeGroupUserTest() {
+        Response response = target().path("groups/testGroup/users").queryParam("user", "tester")
+                .request().delete();
+        assertEquals(response.getStatus(), 200);
+        verify(engineManager).retrieveGroup(anyString(), eq("testGroup"));
+        verify(engineManager).retrieveUser(anyString(), eq("tester"));
+        verify(engineManager).updateGroup(anyString(), any(Group.class));
+    }
+
+    @Test
+    public void removeGroupUserFromGroupThatDoesNotExistTest() {
+        // Setup:
+        when(engineManager.retrieveGroup(anyString(), anyString())).thenReturn(Optional.empty());
+
+        Response response = target().path("groups/error/users").queryParam("user", "tester")
+                .request().delete();
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void removeGroupUserTHatDoesNotExistTest() {
+        // Setup:
+        when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.empty());
+
+        Response response = target().path("groups/testGroup/users").queryParam("user", "error")
+                .request().delete();
+        assertEquals(response.getStatus(), 400);
     }
 }

@@ -130,15 +130,35 @@
                     title: 'Settings'
                 }
             })
-            .state('root.sparql', {
-                url: '/sparql',
+            .state('root.discover', {
+                url: '/discover',
                 views: {
                     'container@': {
-                        templateUrl: 'modules/sparql/sparql.html'
+                        templateUrl: 'modules/discover/discover.html'
                     }
                 },
                 data: {
-                    title: 'SPARQL Editor'
+                    title: 'Discover'
+                }
+            }).state('root.user-management', {
+                url: '/user-management',
+                views: {
+                    'container@': {
+                        templateUrl: 'modules/user-management/user-management.html'
+                    }
+                },
+                data: {
+                    title: 'User Management'
+                }
+            }).state('root.datasets', {
+                url: '/datasets',
+                views: {
+                    'container@': {
+                        templateUrl: 'modules/datasets/datasets.html'
+                    }
+                },
+                data: {
+                    title: 'Datasets'
                 }
             });
 

@@ -22,21 +22,32 @@
   -->
 <div class="class-mapping-details">
     <div class="iri-template">
-        <custom-label><small>IRI Template <a ng-click="dvm.state.editIriTemplate = true"><i class="fa fa-pencil"></i></a></small></custom-label>
+        <custom-label><small>IRI Template <button class="btn btn-link no-padding" ng-disabled="!dvm.state.selectedClassMappingId" ng-click="dvm.state.editIriTemplate = true"><i class="fa fa-pencil"></i></button></small></custom-label>
         <p><small class="text-muted">{{dvm.getIriTemplate()}}</small></p>
     </div>
 
     <div class="class-mapping-props">
-        <custom-label>Properties <button class="btn btn-link pull-right" ng-disabled="!dvm.state.hasAvailableProps(dvm.state.selectedClassMappingId)" ng-click="dvm.addProp()"><i class="fa fa-plus"></i> Add Property</button></custom-label>
+        <div class="properties-field-name">
+            <span class="field-name">Properties</span>
+            <button class="btn btn-link no-padding pull-right add-prop-mapping-button" ng-disabled="!dvm.state.hasAvailableProps(dvm.state.selectedClassMappingId)" ng-click="dvm.addProp()"><i class="fa fa-plus"></i> Add Property</button>
+        </div>
         <div class="prop-list list-group">
-            <button ng-repeat="propMapping in dvm.mm.getPropMappingsByClass(dvm.state.mapping.jsonld, dvm.state.selectedClassMappingId)" class="list-group-item" ng-class="{'active': dvm.state.selectedPropMappingId === propMapping['@id'], 'invalid': dvm.isInvalid(propMapping)}" ng-click="dvm.state.selectedPropMappingId = propMapping['@id']; dvm.state.highlightIndexes = [dvm.getLinkedColumnIndex(propMapping)]" ng-dblclick="dvm.switchClass(propMapping)">
+            <div ng-repeat="propMapping in dvm.mm.getPropMappingsByClass(dvm.state.mapping.jsonld, dvm.state.selectedClassMappingId)" class="list-group-item" ng-class="{'active': dvm.state.selectedPropMappingId === propMapping['@id'], 'invalid': dvm.isInvalid(propMapping)}" ng-click="dvm.state.selectedPropMappingId = propMapping['@id']; dvm.state.highlightIndexes = [dvm.getLinkedColumnIndex(propMapping)]" ng-dblclick="dvm.switchClass(propMapping)">
                 <div class="prop-actions pull-right">
                     <a class="edit-prop" ng-click="dvm.editProp(propMapping)"><i class="fa fa-pencil"></i></a>
                     <a class="delete-prop" ng-click="dvm.deleteProp(propMapping)"><i class="fa fa-trash"></i></a>
                 </div>
                 <h4 class="list-group-item-heading">{{dvm.getPropName(propMapping)}}</h4>
-                <p class="list-group-item-text">{{dvm.getPropValue(propMapping)}}</p>
-            </button>
+                <div class="list-group-item-text">
+                    <div ng-if="dvm.mm.isDataMapping(propMapping)" class="data-prop-value">
+                        <div><span class="field-name">Column: </span>{{dvm.getPropValue(propMapping)}}</div>
+                        <div><span class="field-name">Preview: </span><span ng-class="{'text-muted': dvm.getDataValuePreview(propMapping) === '(None)'}">{{dvm.getDataValuePreview(propMapping)}}</span></div>
+                    </div>
+                    <div ng-if="dvm.mm.isObjectMapping(propMapping)" class="object-prop-value">
+                        <p><span class="field-name">Class: </span>{{dvm.getPropValue(propMapping)}}</p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>

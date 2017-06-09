@@ -2,16 +2,24 @@
 @import "./src/main/resources/public/css/variables";
 
 .static-iri {
+    padding-bottom: 5px;
+    display: inline-block;
+
+    .overlay {
+        strong {
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+    }
     strong {
+        cursor: pointer;
         word-break: break-all;
 
         a {
             white-space: nowrap;
         }
     }
-}
-
-.overlay .static-iri strong {
-    display: inline-block;
-    margin-bottom: 10px;
+    .duplicate-iri {
+        border-bottom: solid red 1px;
+    }
 }

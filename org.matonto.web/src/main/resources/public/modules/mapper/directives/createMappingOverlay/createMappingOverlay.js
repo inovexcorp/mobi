@@ -38,10 +38,12 @@
          * @name createMappingOverlay.directive:createMappingOverlay
          * @scope
          * @restrict E
-         * @requires  $q
-         * @requires  $filter
-         * @requires  mappingManager.service:mappingManagerService
-         * @requires  mapperState.service:mapperStateService
+         * @requires $q
+         * @requires $filter
+         * @requires mappingManager.service:mappingManagerService
+         * @requires mapperState.service:mapperStateService
+         * @requires catalogManager.service:catalogManagerService
+         * @requires prefixes.service:prefixes
          *
          * @description
          * `createMappingOverlay` is a directive that creates an overlay with functionality to create a
@@ -51,9 +53,9 @@
          */
         .directive('createMappingOverlay', createMappingOverlay);
 
-        createMappingOverlay.$inject = ['$q', '$filter', 'mappingManagerService', 'mapperStateService']
+        createMappingOverlay.$inject = ['$q', '$filter', 'mappingManagerService', 'mapperStateService', 'catalogManagerService', 'prefixes']
 
-        function createMappingOverlay($q, $filter, mappingManagerService, mapperStateService) {
+        function createMappingOverlay($q, $filter, mappingManagerService, mapperStateService, catalogManagerService, prefixes) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -63,6 +65,7 @@
                     var dvm = this;
                     dvm.state = mapperStateService;
                     dvm.mm = mappingManagerService;
+                    dvm.cm = catalogManagerService;
                     dvm.mappingType = 'new';
                     dvm.errorMessage = '';
                     dvm.newName = $filter('splitIRI')(_.get(dvm.state.mapping, 'id', '')).end;
@@ -76,36 +79,46 @@
                         dvm.state.displayCreateMappingOverlay = false;
                     }
                     dvm.continue = function() {
-                        var deferred = $q.defer();
                         dvm.state.mapping.id = dvm.mm.getMappingId(dvm.newName);
                         if (dvm.mappingType === 'new') {
-                            deferred.resolve(dvm.mm.createNewMapping(dvm.state.mapping.id));
+                            dvm.state.mapping.jsonld = dvm.mm.createNewMapping(dvm.state.mapping.id);
+                            dvm.sourceOntologies = [];
+                            dvm.availableClasses = [];
+                            nextStep();
                         } else {
-                            dvm.mm.getMapping(dvm.savedMappingId).then(mapping => {
-                                deferred.resolve(dvm.mm.copyMapping(mapping, dvm.state.mapping.id));
-                            }, error => {
-                                deferred.reject(error);
-                            });
+                            var sourceOntologyInfo;
+                            dvm.mm.getMapping(dvm.savedMappingId)
+                                .then(mapping => {
+                                    dvm.state.mapping.jsonld = dvm.mm.copyMapping(mapping, dvm.state.mapping.id);
+                                    sourceOntologyInfo = dvm.mm.getSourceOntologyInfo(mapping);
+                                    return dvm.cm.getRecord(sourceOntologyInfo.recordId, dvm.cm.localCatalog['@id']);
+                                }, $q.reject)
+                                .then(record => {
+                                    dvm.state.mapping.record = record;
+                                    return dvm.mm.getSourceOntologies(sourceOntologyInfo);
+                                }, $q.reject)
+                                .then(ontologies => {
+                                    if (dvm.mm.areCompatible(dvm.state.mapping.jsonld, ontologies)) {
+                                        dvm.state.sourceOntologies = ontologies;
+                                        var usedClassIds = _.map(dvm.mm.getAllClassMappings(dvm.state.mapping.jsonld), dvm.mm.getClassIdByMapping);
+                                        dvm.state.availableClasses = _.filter(dvm.state.getClasses(ontologies), clazz => !_.includes(usedClassIds, clazz.classObj['@id']));
+                                        nextStep();
+                                    } else {
+                                        onError('The selected mapping is incompatible with its source ontologies.');
+                                    }
+                                }, () => onError('Error retrieving mapping'));
                         }
-
-                        deferred.promise.then(mapping => {
-                            dvm.state.mapping.jsonld = mapping;
-                            return dvm.mm.getSourceOntologies(dvm.mm.getSourceOntologyId(dvm.state.mapping.jsonld));
-                        }, error => $q.reject(error)).then(ontologies => {
-                            if (dvm.mm.areCompatible(dvm.state.mapping.jsonld, ontologies)) {
-                                dvm.state.sourceOntologies = ontologies;
-                                dvm.state.mappingSearchString = '';
-                                dvm.state.step = dvm.state.fileUploadStep;
-                                dvm.state.displayCreateMappingOverlay = false;
-                            } else {
-                                onError('The selected mapping is incompatible with its source ontologies.');
-                            }
-                        }, onError);
                     }
 
+                    function nextStep() {
+                        dvm.state.mappingSearchString = '';
+                        dvm.state.step = dvm.state.fileUploadStep;
+                        dvm.state.displayCreateMappingOverlay = false;
+                    }
                     function onError(message) {
                         dvm.errorMessage = message;
                         dvm.state.mapping.jsonld = [];
+                        dvm.state.mapping.record = undefined;
                     }
                 },
                 templateUrl: 'modules/mapper/directives/createMappingOverlay/createMappingOverlay.html'

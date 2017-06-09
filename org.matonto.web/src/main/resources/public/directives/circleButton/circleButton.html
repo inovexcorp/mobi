@@ -20,4 +20,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<button type="button" class="btn btn-primary btn-circle" ng-class="{'small': btnSmall}" ng-click="onClick()" ng-disabled="!isEnabled"><i class="fa fa-fw {{btnIcon}}"></i></button>
+<button type="button" class="btn btn-circle circle-button" ng-class="{'small': btnSmall}">
+    <i class="fa fa-fw {{btnIcon}}"></i>
+    <span class="display-text">{{displayText}}</span>
+</button>

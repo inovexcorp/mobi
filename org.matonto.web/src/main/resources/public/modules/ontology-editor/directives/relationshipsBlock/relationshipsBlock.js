@@ -27,9 +27,9 @@
         .module('relationshipsBlock', [])
         .directive('relationshipsBlock', relationshipsBlock);
 
-        relationshipsBlock.$inject = ['ontologyStateService', 'ontologyManagerService', 'prefixes', 'responseObj'];
+        relationshipsBlock.$inject = ['ontologyStateService', 'ontologyManagerService', 'ontologyUtilsManagerService', 'prefixes', 'responseObj'];
 
-        function relationshipsBlock(ontologyStateService, ontologyManagerService, prefixes, responseObj) {
+        function relationshipsBlock(ontologyStateService, ontologyManagerService, ontologyUtilsManagerService, prefixes, responseObj) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -41,6 +41,7 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
+                    var ro = responseObj;
                     var broaderRelations = [
                         prefixes.skos + 'broaderTransitive',
                         prefixes.skos + 'broader',
@@ -52,9 +53,9 @@
                         prefixes.skos + 'narrowMatch'
                     ];
                     dvm.om = ontologyManagerService;
-                    dvm.sm = ontologyStateService;
-                    dvm.ro = responseObj;
-
+                    dvm.os = ontologyStateService;
+                    dvm.ontoUtils = ontologyUtilsManagerService;
+                    
                     function containsProperty(entity, properties) {
                         _.forOwn(entity, (value, key) => {
                             if (_.includes(properties, key)) {
@@ -71,40 +72,40 @@
                     }
 
                     dvm.updateHierarchy = function(relationship, values) {
-                        var relationshipIRI = dvm.ro.getItemIri(relationship);
-                        if (_.includes(broaderRelations, relationshipIRI) && !containsProperty(dvm.sm.selected,
+                        var relationshipIRI = ro.getItemIri(relationship);
+                        if (_.includes(broaderRelations, relationshipIRI) && !containsProperty(dvm.os.selected,
                             _.without(broaderRelations, relationshipIRI))) {
                             _.forEach(values, value => {
-                                if (!containsProperty(dvm.om.getEntityById(dvm.sm.listItem.ontologyId, value['@id']),
+                                if (!containsProperty(dvm.om.getEntityById(dvm.os.listItem.ontologyId, value['@id']),
                                     narrowerRelations)) {
-                                    dvm.sm.addEntityToHierarchy(dvm.sm.listItem.conceptHierarchy,
-                                        dvm.sm.selected.matonto.originalIRI, dvm.sm.listItem.conceptIndex,
+                                    dvm.os.addEntityToHierarchy(dvm.os.listItem.conceptHierarchy,
+                                        dvm.os.selected.matonto.originalIRI, dvm.os.listItem.conceptIndex,
                                         value['@id']);
                                 }
                             });
-                            dvm.sm.goTo(dvm.sm.selected.matonto.originalIRI);
-                        } else if (_.includes(narrowerRelations, relationshipIRI) && !containsProperty(dvm.sm.selected,
+                            dvm.os.goTo(dvm.os.selected.matonto.originalIRI);
+                        } else if (_.includes(narrowerRelations, relationshipIRI) && !containsProperty(dvm.os.selected,
                             _.without(narrowerRelations, relationshipIRI))) {
                             _.forEach(values, value => {
-                                if (!containsProperty(dvm.om.getEntityById(dvm.sm.listItem.ontologyId, value['@id']),
+                                if (!containsProperty(dvm.om.getEntityById(dvm.os.listItem.ontologyId, value['@id']),
                                     narrowerRelations)) {
-                                    dvm.sm.addEntityToHierarchy(dvm.sm.listItem.conceptHierarchy, value['@id'],
-                                        dvm.sm.listItem.conceptIndex, dvm.sm.selected.matonto.originalIRI);
+                                    dvm.os.addEntityToHierarchy(dvm.os.listItem.conceptHierarchy, value['@id'],
+                                        dvm.os.listItem.conceptIndex, dvm.os.selected.matonto.originalIRI);
                                 }
                             });
-                            dvm.sm.goTo(dvm.sm.selected.matonto.originalIRI);
-                        } else if ()
+                            dvm.os.goTo(dvm.os.selected.matonto.originalIRI);
+                        }
                     }
 
                     dvm.removeFromHierarchy = function(axiomObject) {
                         if (_.includes(broaderRelations, dvm.key)) {
-                            dvm.sm.deleteEntityFromParentInHierarchy(dvm.sm.listItem.conceptHierarchy,
-                                dvm.sm.selected.matonto.originalIRI, axiomObject['@id'], dvm.sm.listItem.conceptIndex);
-                            dvm.sm.goTo(dvm.sm.selected.matonto.originalIRI);
+                            dvm.os.deleteEntityFromParentInHierarchy(dvm.os.listItem.conceptHierarchy,
+                                dvm.os.selected.matonto.originalIRI, axiomObject['@id'], dvm.os.listItem.conceptIndex);
+                            dvm.os.goTo(dvm.os.selected.matonto.originalIRI);
                         } else if (_.includes(narrowerRelations, dvm.key)) {
-                            dvm.sm.deleteEntityFromParentInHierarchy(dvm.sm.listItem.conceptHierarchy,
-                                axiomObject['@id'], dvm.sm.selected.matonto.originalIRI, dvm.sm.listItem.conceptIndex);
-                            dvm.sm.goTo(dvm.sm.selected.matonto.originalIRI);
+                            dvm.os.deleteEntityFromParentInHierarchy(dvm.os.listItem.conceptHierarchy,
+                                axiomObject['@id'], dvm.os.selected.matonto.originalIRI, dvm.os.listItem.conceptIndex);
+                            dvm.os.goTo(dvm.os.selected.matonto.originalIRI);
                         }
                     }
                 }

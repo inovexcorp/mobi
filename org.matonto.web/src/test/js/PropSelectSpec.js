@@ -21,73 +21,71 @@
  * #L%
  */
 describe('Prop Select directive', function() {
-    var $compile,
-        scope,
-        ontologyManagerSvc,
-        controller;
+    var $compile, scope, element, isolatedScope, controller, ontologyManagerSvc, splitIRI;
 
     beforeEach(function() {
         module('templates');
         module('propSelect');
+        injectHighlightFilter();
+        injectTrustedFilter();
         mockOntologyManager();
+        injectSplitIRIFilter();
 
-        module(function($provide) {
-            $provide.value('highlightFilter', jasmine.createSpy('highlightFilter'));
-            $provide.value('trustedFilter', jasmine.createSpy('trustedFilter'));
-        });
-
-        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _splitIRIFilter_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyManagerSvc = _ontologyManagerService_;
+            splitIRI = _splitIRIFilter_;
         });
-    });
 
+        scope.props = [];
+        scope.isDisabledWhen = false;
+        scope.selectedProp = undefined;
+        scope.onChange = jasmine.createSpy('onChange');
+        element = $compile(angular.element('<prop-select props="props" selected-prop="selectedProp" is-disabled-when="isDisabledWhen" on-change="onChange()"></prop-select>'))(scope);
+        scope.$digest();
+        isolatedScope = element.isolateScope();
+        controller = element.controller('propSelect');
+    });
     describe('in isolated scope', function() {
-        beforeEach(function() {
-            scope.props = [];
-            scope.selectedProp = '';
-            scope.onChange = jasmine.createSpy('onChange');
-            this.element = $compile(angular.element('<prop-select props="props" selected-prop="selectedProp" on-change="onChange()"></prop-select>'))(scope);
-            scope.$digest();
-        });
         it('props should be one way bound', function() {
-            var isolatedScope = this.element.isolateScope();
             isolatedScope.props = [{}];
             scope.$digest();
-            expect(scope.props).not.toEqual([{}]);
+            expect(scope.props).toEqual([]);
+        });
+        it('isDisabledWhen should be one way bound', function() {
+            isolatedScope.isDisabledWhen = true;
+            scope.$digest();
+            expect(scope.isDisabledWhen).toEqual(false);
         });
         it('onChange should be called in the parent scope', function() {
-            var isolatedScope = this.element.isolateScope();
             isolatedScope.onChange();
             expect(scope.onChange).toHaveBeenCalled();
         });
     });
     describe('controller bound variable', function() {
-        beforeEach(function() {
-            scope.props = [];
-            scope.selectedProp = '';
-            scope.onChange = jasmine.createSpy('onChange');
-            this.element = $compile(angular.element('<prop-select props="props" selected-prop="selectedProp" on-change="onChange()"></prop-select>'))(scope);
-            scope.$digest();
-            controller = this.element.controller('propSelect');
-        });
         it('selectedProp should be two way bound', function() {
-            controller.selectedProp = 'test';
+            controller.selectedProp = {};
             scope.$digest();
-            expect(scope.selectedProp).toEqual('test');
+            expect(scope.selectedProp).toEqual({});
+        });
+    });
+    describe('controller methods', function() {
+        it('should get the ontology id of a prop', function() {
+            expect(controller.getOntologyId({ontologyId: 'test'})).toBe('test');
+            expect(splitIRI).not.toHaveBeenCalled();
+
+            splitIRI.and.returnValue({begin: 'test'});
+            expect(controller.getOntologyId({propObj: {'@id': ''}})).toBe('test');
+            expect(splitIRI).toHaveBeenCalledWith('');
         });
     });
     describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
-            this.element = $compile(angular.element('<prop-select props="props" selected-prop="selectedProp" on-change="onChange()"></prop-select>'))(scope);
-            scope.$digest();
-        });
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('prop-select')).toBe(true);
+            expect(element.hasClass('prop-select')).toBe(true);
         });
         it('with a ui-select', function() {
-            expect(this.element.find('ui-select').length).toBe(1);
+            expect(element.find('ui-select').length).toBe(1);
         });
     });
 });

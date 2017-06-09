@@ -51,11 +51,7 @@
     function updateRefsService($filter, responseObj) {
         var self = this;
         var exclude = [
-                '$$hashKey',
-                'originalIRI',
-                'unsaved',
-                'valid',
-                'ontologyId'
+                '$$hashKey'
             ];
 
         /**

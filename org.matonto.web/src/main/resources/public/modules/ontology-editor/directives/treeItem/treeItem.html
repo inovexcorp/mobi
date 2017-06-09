@@ -20,17 +20,17 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<li class="tree-item" ng-class="{'invalid': dvm.currentEntity.matonto.valid === false}">
-    <a ng-if="!hasChildren" ng-click="onClick()"
-       ng-class="{'unsaved': dvm.currentEntity.matonto.unsaved, 'active': isActive}">
+<div class="tree-item" ng-class="{'saved': dvm.saved , 'imported': dvm.currentEntity.matonto.imported}">
+    <a ng-if="!hasChildren" ng-click="onClick()" ng-class="{'active': isActive}">
         <i class="fa fa-fw {{dvm.currentEntity.matonto.icon || 'fa-square-o'}}"></i>
-            <span ng-class="{'bold': isBold}">{{dvm.getTreeDisplay()}}</span>
+        <span ng-class="{'bold': isBold}">{{dvm.getTreeDisplay()}}</span>
+        <i class="fa fa-fw fa-caret-left"></i>
     </a>
-    <a ng-if="hasChildren" ng-click="onClick()" ng-dblclick="dvm.toggleOpen()"
-       ng-class="{'unsaved': dvm.currentEntity.matonto.unsaved, 'active': isActive}">
+    <a ng-if="hasChildren" ng-click="onClick()" ng-dblclick="dvm.toggleOpen()" ng-class="{'active': isActive}">
         <i class="fa fa-fw"
            ng-class="{'fa-minus-square-o': dvm.isOpened, 'fa-plus-square-o': !dvm.isOpened}"
            ng-click="dvm.toggleOpen(); $event.stopPropagation()"></i>
-            <span ng-class="{'bold': isBold}">{{dvm.getTreeDisplay()}}</span>
+        <span ng-class="{'bold': isBold}">{{dvm.getTreeDisplay()}}</span>
+        <i class="fa fa-fw fa-caret-left"></i>
     </a>
-</li>
+</div>

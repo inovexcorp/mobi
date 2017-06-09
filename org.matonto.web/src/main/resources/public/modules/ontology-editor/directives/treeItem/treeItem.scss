@@ -1,5 +1,21 @@
+@import "./src/main/resources/public/css/variables";
+
 .tree-item {
+    &.saved .fa-caret-left {
+        display: inherit;
+    }
+
+    .fa-caret-left {
+        display: none;
+    }
+
+    &.saved,
     .bold {
         font-weight: bold;
+    }
+
+    &.imported {
+        font-style: italic;
+        color: gray;
     }
 }

@@ -27,9 +27,9 @@
         .module('treeItem', [])
         .directive('treeItem', treeItem);
 
-        treeItem.$inject = ['settingsManagerService', 'ontologyManagerService', 'ontologyStateService', 'prefixes'];
+        treeItem.$inject = ['settingsManagerService', 'ontologyStateService'];
 
-        function treeItem(settingsManagerService, ontologyManagerService, ontologyStateService, prefixes) {
+        function treeItem(settingsManagerService, ontologyStateService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -40,35 +40,38 @@
                     onClick: '&'
                 },
                 bindToController: {
-                    currentEntity: '=',
+                    currentEntity: '<',
                     isOpened: '=',
-                    path: '='
+                    path: '<'
                 },
                 templateUrl: 'modules/ontology-editor/directives/treeItem/treeItem.html',
                 controllerAs: 'dvm',
-                controller: function() {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
                     var treeDisplay = settingsManagerService.getTreeDisplay();
-                    dvm.om = ontologyManagerService;
-                    dvm.sm = ontologyStateService;
-
-                    function getCurrentEntityIRI() {
-                        return _.get(dvm.currentEntity, 'matonto.originalIRI',
-                            _.get(dvm.currentEntity, 'matonto.anonymous', ''));
-                    }
+                    var os = ontologyStateService;
 
                     dvm.getTreeDisplay = function() {
                         if (treeDisplay === 'pretty') {
-                            return dvm.om.getEntityName(dvm.currentEntity, dvm.sm.state.type);
+                            return os.getEntityNameByIndex(_.get(dvm.currentEntity, '@id'), os.listItem);
                         }
-                        return getCurrentEntityIRI();
+                        return _.get(dvm.currentEntity, 'matonto.anonymous', '');
                     }
 
                     dvm.toggleOpen = function() {
                         dvm.isOpened = !dvm.isOpened;
-                        dvm.sm.setOpened(dvm.path, dvm.isOpened);
+                        os.setOpened(_.join(dvm.path, '.'), dvm.isOpened);
                     }
-                }
+
+                    dvm.isSaved = function() {
+                        var ids = _.unionWith(_.map(os.listItem.inProgressCommit.additions, '@id'), _.map(os.listItem.inProgressCommit.deletions, '@id'), _.isEqual);
+                        return _.includes(ids, _.get(dvm.currentEntity, '@id'));
+                    }
+
+                    dvm.saved = dvm.isSaved();
+                    
+                    $scope.$watch(() => os.listItem.inProgressCommit.additions + os.listItem.inProgressCommit.deletions, () => dvm.saved = dvm.isSaved() );
+                }]
             }
         }
 })();

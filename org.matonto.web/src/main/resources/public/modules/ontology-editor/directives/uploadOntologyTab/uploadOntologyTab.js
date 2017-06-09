@@ -27,9 +27,9 @@
         .module('uploadOntologyTab', [])
         .directive('uploadOntologyTab', uploadOntologyTab);
 
-        uploadOntologyTab.$inject = ['$filter', 'REGEX', 'ontologyManagerService', 'ontologyStateService', 'prefixes'];
+        uploadOntologyTab.$inject = ['REGEX', 'ontologyManagerService', 'ontologyStateService'];
 
-        function uploadOntologyTab($filter, REGEX, ontologyManagerService, ontologyStateService, prefixes) {
+        function uploadOntologyTab(REGEX, ontologyManagerService, ontologyStateService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -39,19 +39,17 @@
                 controller: function() {
                     var dvm = this;
                     dvm.om = ontologyManagerService;
-                    dvm.sm = ontologyStateService;
+                    dvm.os = ontologyStateService;
                     dvm.type = 'ontology';
 
                     dvm.upload = function() {
-                        dvm.om.uploadThenGet(dvm.file, dvm.type)
-                            .then(ontologyId => {
-                                var listItem = dvm.om.getListItemById(ontologyId);
-                                dvm.sm.addState(ontologyId, dvm.om.getOntologyIRI(listItem.ontology), dvm.type);
-                                dvm.sm.setState(ontologyId);
-                                dvm.sm.showUploadTab = false;
-                            }, response => {
-                                dvm.error = response.statusText;
-                            });
+                        dvm.os.uploadThenGet(dvm.file, dvm.title, dvm.description,
+                            _.join(_.map(dvm.keywords, _.trim), ','), dvm.type).then(recordId => {
+                                var listItem = dvm.os.getListItemByRecordId(recordId);
+                                dvm.os.addState(recordId, dvm.om.getOntologyIRI(listItem.ontology), dvm.type);
+                                dvm.os.setState(recordId);
+                                dvm.os.showUploadTab = false;
+                            }, errorMessage => dvm.error = errorMessage);
                     }
                 }
             }

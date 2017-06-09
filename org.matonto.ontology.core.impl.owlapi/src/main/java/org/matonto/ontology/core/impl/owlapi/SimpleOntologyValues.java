@@ -57,12 +57,32 @@ import org.matonto.ontology.core.impl.owlapi.propertyExpression.SimpleAnnotation
 import org.matonto.ontology.core.impl.owlapi.propertyExpression.SimpleDataProperty;
 import org.matonto.ontology.core.impl.owlapi.propertyExpression.SimpleObjectProperty;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
+import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Literal;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
-import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.model.NodeID;
+import org.semanticweb.owlapi.model.OWLAnnotation;
+import org.semanticweb.owlapi.model.OWLAnnotationProperty;
+import org.semanticweb.owlapi.model.OWLAnnotationValue;
+import org.semanticweb.owlapi.model.OWLAnonymousIndividual;
+import org.semanticweb.owlapi.model.OWLAxiom;
+import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLDataOneOf;
+import org.semanticweb.owlapi.model.OWLDataProperty;
+import org.semanticweb.owlapi.model.OWLDatatype;
+import org.semanticweb.owlapi.model.OWLDeclarationAxiom;
+import org.semanticweb.owlapi.model.OWLEntity;
+import org.semanticweb.owlapi.model.OWLFacetRestriction;
+import org.semanticweb.owlapi.model.OWLIndividual;
+import org.semanticweb.owlapi.model.OWLLiteral;
+import org.semanticweb.owlapi.model.OWLNamedIndividual;
+import org.semanticweb.owlapi.model.OWLObjectProperty;
+import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyID;
+import org.semanticweb.owlapi.model.OWLRuntimeException;
 import org.semanticweb.owlapi.vocab.OWLFacet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -79,18 +99,19 @@ import uk.ac.manchester.cs.owl.owlapi.OWLLiteralImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLNamedIndividualImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLObjectPropertyImpl;
 
-import javax.annotation.Nonnull;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.annotation.Nonnull;
 
 @Component (immediate = true)
 public class SimpleOntologyValues {
     
     private static ValueFactory factory;
     private static OntologyManager ontologyManager;
+    private static SesameTransformer sesameTransformer;
     private static final Logger LOG = LoggerFactory.getLogger(SimpleOntologyValues.class);
     
     @Activate
@@ -109,8 +130,13 @@ public class SimpleOntologyValues {
     }
 
     @Reference
-	protected void setOntologyManager(final OntologyManager manager) {
+    protected void setOntologyManager(final OntologyManager manager) {
         ontologyManager = manager;
+    }
+
+    @Reference
+    protected void setTransformer(final SesameTransformer transformer) {
+        sesameTransformer = transformer;
     }
 
     public SimpleOntologyValues() {}
@@ -122,7 +148,7 @@ public class SimpleOntologyValues {
         if (ontology == null) {
             return null;
         }
-        return new SimpleOntology(ontology, resource, ontologyManager);
+        return new SimpleOntology(ontology, resource, ontologyManager, sesameTransformer);
     }
 
     /**
@@ -219,7 +245,7 @@ public class SimpleOntologyValues {
         if (owlAnno == null) {
             return null;
         }
-        Set<OWLAnnotation> owlAnnos = owlAnno.getAnnotations();
+        Set<OWLAnnotation> owlAnnos = owlAnno.annotations().collect(Collectors.toSet());
         if (owlAnnos.isEmpty()) {
             AnnotationProperty property = matontoAnnotationProperty(owlAnno.getProperty());
             OWLAnnotationValue value = owlAnno.getValue();
@@ -599,7 +625,7 @@ public class SimpleOntologyValues {
         if (dataOneOf == null) {
             return null;
         }
-        Set<OWLLiteral> values = dataOneOf.getValues();
+        Set<OWLLiteral> values = dataOneOf.values().collect(Collectors.toSet());
         Set<Literal> matontoValues = new HashSet<>();
         for (OWLLiteral value : values) {
             matontoValues.add(matontoLiteral(value));
@@ -731,7 +757,7 @@ public class SimpleOntologyValues {
                 return null;
         }
 
-        Set<Annotation> matontoAnnotations = owlapiAxiom.getAnnotations().stream()
+        Set<Annotation> matontoAnnotations = owlapiAxiom.annotations()
                 .map(SimpleOntologyValues::matontoAnnotation)
                 .collect(Collectors.toSet());
 

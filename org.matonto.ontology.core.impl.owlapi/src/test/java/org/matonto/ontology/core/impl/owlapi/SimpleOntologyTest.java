@@ -23,6 +23,16 @@ package org.matonto.ontology.core.impl.owlapi;
  * #L%
  */
 
+import static org.easymock.EasyMock.capture;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.isA;
+import static org.easymock.EasyMock.mock;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
+import static org.powermock.api.easymock.PowerMock.mockStatic;
+import static org.powermock.api.easymock.PowerMock.replay;
+
 import org.easymock.Capture;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -33,7 +43,6 @@ import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyId;
 import org.matonto.ontology.core.api.OntologyManager;
 import org.matonto.ontology.core.api.axiom.Axiom;
-import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.rdf.api.IRI;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -42,19 +51,10 @@ import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLAxiom;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.InputStream;
-import java.net.URISyntaxException;
 import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.Set;
-
-import static org.easymock.EasyMock.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
-import static org.powermock.api.easymock.PowerMock.mockStatic;
-import static org.powermock.api.easymock.PowerMock.replay;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(SimpleOntologyValues.class)
@@ -103,7 +103,7 @@ public class SimpleOntologyTest {
     public void testGetOntologyIdReturnsAnEqualObject() throws Exception {
         replay(ontologyIdMock, ontologyManager, SimpleOntologyValues.class);
 
-        Ontology ontology = new SimpleOntology(ontologyIdMock, ontologyManager);
+        Ontology ontology = new SimpleOntology(ontologyIdMock, ontologyManager, transformer);
         assertEquals(ontologyIdMock, ontology.getOntologyId());
     }
 
@@ -112,7 +112,7 @@ public class SimpleOntologyTest {
         replay(ontologyManager, SimpleOntologyValues.class, ontologyIdMock);
 
         InputStream stream = this.getClass().getResourceAsStream("/test.owl");
-        Ontology ontology = new SimpleOntology(stream, ontologyManager);
+        Ontology ontology = new SimpleOntology(stream, ontologyManager, transformer);
         assertEquals(ontologyIRI, ontology.getOntologyId().getOntologyIRI().get());
         assertEquals(versionIRI, ontology.getOntologyId().getVersionIRI().get());
     }
@@ -122,7 +122,7 @@ public class SimpleOntologyTest {
         replay(ontologyManager, SimpleOntologyValues.class, ontologyIdMock);
 
         File file = Paths.get(getClass().getResource("/test.owl").toURI()).toFile();
-        Ontology ontology = new SimpleOntology(file, ontologyManager);
+        Ontology ontology = new SimpleOntology(file, ontologyManager, transformer);
         assertEquals(ontologyIRI, ontology.getOntologyId().getOntologyIRI().get());
         assertEquals(versionIRI, ontology.getOntologyId().getVersionIRI().get());
     }
@@ -135,14 +135,14 @@ public class SimpleOntologyTest {
         InputStream stream2 = this.getClass().getResourceAsStream("/test.owl");
         File file = Paths.get(getClass().getResource("/test.owl").toURI()).toFile();
 
-        Ontology ontology1 = new SimpleOntology(ontologyIdMock, ontologyManager);
-        Ontology ontology2 = new SimpleOntology(ontologyIdMock, ontologyManager);
+        Ontology ontology1 = new SimpleOntology(ontologyIdMock, ontologyManager, transformer);
+        Ontology ontology2 = new SimpleOntology(ontologyIdMock, ontologyManager, transformer);
 
-        Ontology ontology3 = new SimpleOntology(file, ontologyManager);
-        Ontology ontology4 = new SimpleOntology(file, ontologyManager);
+        Ontology ontology3 = new SimpleOntology(file, ontologyManager, transformer);
+        Ontology ontology4 = new SimpleOntology(file, ontologyManager, transformer);
 
-        Ontology ontology5 = new SimpleOntology(stream1, ontologyManager);
-        Ontology ontology6 = new SimpleOntology(stream2, ontologyManager);
+        Ontology ontology5 = new SimpleOntology(stream1, ontologyManager, transformer);
+        Ontology ontology6 = new SimpleOntology(stream2, ontologyManager, transformer);
 
         assertEquals(ontology1, ontology2);
         assertEquals(ontology3, ontology4);
@@ -157,9 +157,9 @@ public class SimpleOntologyTest {
         InputStream stream1 = this.getClass().getResourceAsStream("/test.owl");
         InputStream stream2 = this.getClass().getResourceAsStream("/travel.owl");
 
-        Ontology ontology1 = new SimpleOntology(ontologyIdMock, ontologyManager);
-        Ontology ontology2 = new SimpleOntology(stream1, ontologyManager);
-        Ontology ontology3 = new SimpleOntology(stream2, ontologyManager);
+        Ontology ontology1 = new SimpleOntology(ontologyIdMock, ontologyManager, transformer);
+        Ontology ontology2 = new SimpleOntology(stream1, ontologyManager, transformer);
+        Ontology ontology3 = new SimpleOntology(stream2, ontologyManager, transformer);
 
         assertNotEquals(ontology1, ontology2);
         assertNotEquals(ontology1, ontology3);
@@ -175,14 +175,14 @@ public class SimpleOntologyTest {
         InputStream stream2 = this.getClass().getResourceAsStream("/test.owl");
         File file = Paths.get(getClass().getResource("/test.owl").toURI()).toFile();
 
-        Ontology ontology1 = new SimpleOntology(ontologyIdMock, ontologyManager);
-        Ontology ontology2 = new SimpleOntology(ontologyIdMock, ontologyManager);
+        Ontology ontology1 = new SimpleOntology(ontologyIdMock, ontologyManager, transformer);
+        Ontology ontology2 = new SimpleOntology(ontologyIdMock, ontologyManager, transformer);
 
-        Ontology ontology3 = new SimpleOntology(file, ontologyManager);
-        Ontology ontology4 = new SimpleOntology(file, ontologyManager);
+        Ontology ontology3 = new SimpleOntology(file, ontologyManager, transformer);
+        Ontology ontology4 = new SimpleOntology(file, ontologyManager, transformer);
 
-        Ontology ontology5 = new SimpleOntology(stream1, ontologyManager);
-        Ontology ontology6 = new SimpleOntology(stream2, ontologyManager);
+        Ontology ontology5 = new SimpleOntology(stream1, ontologyManager, transformer);
+        Ontology ontology6 = new SimpleOntology(stream2, ontologyManager, transformer);
 
         assertEquals(ontology1.hashCode(), ontology2.hashCode());
         assertEquals(ontology3.hashCode(), ontology4.hashCode());
@@ -194,7 +194,7 @@ public class SimpleOntologyTest {
     public void annotationsAreEmptyForEmptyOntology() throws Exception {
         replay(ontologyManager, SimpleOntologyValues.class, ontologyIdMock);
 
-        Ontology ontology = new SimpleOntology(ontologyIdMock, ontologyManager);
+        Ontology ontology = new SimpleOntology(ontologyIdMock, ontologyManager, transformer);
         Set<Annotation> annotations = ontology.getOntologyAnnotations();
 
         assertTrue(annotations.size() == 0);
@@ -208,7 +208,7 @@ public class SimpleOntologyTest {
 
         // Setup
         InputStream stream = this.getClass().getResourceAsStream("/test.owl");
-        Ontology ontology = new SimpleOntology(stream, ontologyManager);
+        Ontology ontology = new SimpleOntology(stream, ontologyManager, transformer);
 
         // Test
         Set<Annotation> annotations = ontology.getOntologyAnnotations();
@@ -221,7 +221,7 @@ public class SimpleOntologyTest {
     public void axiomsAreEmptyForEmptyOntology() throws Exception {
         replay(ontologyManager, SimpleOntologyValues.class, ontologyIdMock);
 
-        Ontology ontology = new SimpleOntology(ontologyIdMock, ontologyManager);
+        Ontology ontology = new SimpleOntology(ontologyIdMock, ontologyManager, transformer);
         Set<Axiom> axioms = ontology.getAxioms();
         assertTrue(axioms.size() == 0);
     }
@@ -234,7 +234,7 @@ public class SimpleOntologyTest {
 
         // Setup
         InputStream stream = this.getClass().getResourceAsStream("/test.owl");
-        Ontology ontology = new SimpleOntology(stream, ontologyManager);
+        Ontology ontology = new SimpleOntology(stream, ontologyManager, transformer);
 
         // Test
         Set<Axiom> axioms = ontology.getAxioms();
@@ -248,7 +248,7 @@ public class SimpleOntologyTest {
         replay(ontologyManager, SimpleOntologyValues.class, ontologyIdMock);
 
         File file = Paths.get(getClass().getResource("/protegeSample.owl").toURI()).toFile();
-        Ontology ontology = new SimpleOntology(file, ontologyManager);
+        Ontology ontology = new SimpleOntology(file, ontologyManager, transformer);
 
         assertEquals(5, ontology.getUnloadableImportIRIs().size());
     }

@@ -39,7 +39,6 @@
         /**
          * @ngdoc service
          * @name sparqlManager.service:sparqlManagerService
-         * @requires $rootScope
          * @requires $http
          *
          * @description
@@ -48,11 +47,12 @@
          */
         .service('sparqlManagerService', sparqlManagerService);
 
-        sparqlManagerService.$inject = ['$rootScope', '$http'];
+        sparqlManagerService.$inject = ['$http', '$q', '$window', '$httpParamSerializer', 'utilService'];
 
-        function sparqlManagerService($rootScope, $http) {
-            var prefix = '/matontorest/sparql/page';
+        function sparqlManagerService($http, $q, $window, $httpParamSerializer, utilService) {
+            var prefix = '/matontorest/sparql';
             var self = this;
+            var util = utilService;
 
             /**
              * @ngdoc property
@@ -78,14 +78,24 @@
             self.queryString = '';
             /**
              * @ngdoc property
+             * @name datasetRecordIRI
+             * @propertyOf sparqlManager.service:sparqlManagerService
+             * @type {string}
+             *
+             * @description
+             * The IRI of a DatasetRecord in the MatOnto repository to perform the query against.
+             */
+            self.datasetRecordIRI = '';
+            /**
+             * @ngdoc property
              * @name data
              * @propertyOf sparqlManager.service:sparqlManagerService
-             * @type {Object}
+             * @type {Object[]}
              *
              * @description
              * The results from the running the {@link sparqlManager.service:sparqlManagerService#queryString}.
              */
-            self.data = {};
+            self.data = undefined;
             /**
              * @ngdoc property
              * @name errorMessage
@@ -96,6 +106,16 @@
              * An error message obtained from attempting to run a SPARQL query against the MatOnto repository.
              */
             self.errorMessage = '';
+            /**
+             * @ngdoc property
+             * @name errorDetails
+             * @propertyOf sparqlManager.service:sparqlManagerService
+             * @type {string}
+             *
+             * @description
+             * Details about an error obtained from attempting to run a SPARQL query against the MatOnto repository.
+             */
+            self.errorDetails = '';
             /**
              * @ngdoc property
              * @name infoMessage
@@ -117,6 +137,52 @@
              * displayed in the {@link sparqlResultTable.directive:sparqlResultTable SPARQL result table}.
              */
             self.currentPage = 0;
+            /**
+             * @ngdoc property
+             * @name links
+             * @propertyOf sparqlManager.service:sparqlManagerService
+             * @type {Object}
+             *
+             * @description
+             * The URLs for the next and previous page of results from running the
+             * {@link sparqlManager.service:sparqlManagerService#queryString query}.
+             */
+            self.links = {
+                next: '',
+                prev: ''
+            };
+            /**
+             * @ngdoc property
+             * @name limit
+             * @propertyOf sparqlManager.service:sparqlManagerService
+             * @type {number}
+             *
+             * @description
+             * The number of results to return at one time from {@link sparqlManager.service:sparqlManager#queryRdf querying}
+             * the repository.
+             */
+            self.limit = 100;
+            /**
+             * @ngdoc property
+             * @name totalSize
+             * @propertyOf sparqlManager.service:sparqlManagerService
+             * @type {number}
+             *
+             * @description
+             * The total number of results from running the {@link sparqlManager.service:sparqlManagerService#queryString query}
+             * with {@link sparqlManager.service:sparqlManager#queryRdf queryRdf}.
+             */
+            self.totalSize = 0;
+            /**
+             * @ngdoc property
+             * @name bindings
+             * @propertyOf sparqlManager.service:sparqlManagerService
+             * @type {string[]}
+             *
+             * @description
+             * The binding names in the result of running the {@link sparqlManager.service:sparqlManagerService#queryString query}.
+             */
+            self.bindings = [];
 
             /**
              * @ngdoc method
@@ -136,68 +202,101 @@
             }
             /**
              * @ngdoc method
+             * @name downloadResults
+             * @methodOf sparqlManager.service:sparqlManagerService
+             *
+             * @description
+             * Calls the GET /matontorest/sparql endpoint using the `window.location` variable which
+             * will start a download of the results of running the current
+             * {@link sparqlManager.service:sparqlManagerService#queryString query} and
+             * {@link sparqlManager.service:sparqlManagerService#prefixes prefixes}, optionally using
+             * the selected {@link sparqlManager.service:sparqlManagerService#datasetRecordIRI dataset},
+             * in the specified file type with an optional file name.
+             *
+             * @param {string} fileType The type of file to download based on file extension
+             * @param {string=''} fileName The optional name of the downloaded file
+             */
+            self.downloadResults = function(fileType, fileName = '') {
+                var paramsObj = {
+                    query: getPrefixString() + this.queryString,
+                    fileType
+                };
+                if (fileName) {
+                    paramsObj.fileName = fileName;
+                }
+                if (self.datasetRecordIRI) {
+                    paramsObj.dataset = self.datasetRecordIRI;
+                }
+                $window.location = prefix + '?' + $httpParamSerializer(paramsObj);
+            }
+            /**
+             * @ngdoc method
              * @name queryRdf
              * @methodOf sparqlManager.service:sparqlManagerService
              *
              * @description
              * Calls the GET /sparql/page REST endpoint to conduct a SPARQL query using the current
              * {@link sparqlManager.service:sparqlManagerService#queryString query} and
-             * {@link sparqlManager.service:sparqlManagerService#prefixes prefixes} and sets the results
-             * to {@link sparqlManager.service:sparqlManagerService#data data}.
+             * {@link sparqlManager.service:sparqlManagerService#prefixes prefixes}, optionally using
+             * the selected {@link sparqlManager.service:sparqlManagerService#datasetRecordIRI dataset},
+             * and sets the results to {@link sparqlManager.service:sparqlManagerService#data data}.
              */
             self.queryRdf = function() {
                 self.currentPage = 0;
-                self.data = {};
+                self.data = undefined;
                 self.errorMessage = '';
+                self.errorDetails = '';
                 self.infoMessage = '';
 
-                var prefixes = self.prefixes.length ? 'PREFIX ' + _.join(self.prefixes, '\nPREFIX ') + '\n\n' : '';
+                var prefixes = getPrefixString();
                 var config = {
                     params: {
                         query: prefixes + self.queryString,
-                        limit: 100,
-                        start: 0
+                        limit: self.limit,
+                        offset: self.currentPage * self.limit
                     }
+                };
+                if (self.datasetRecordIRI) {
+                    config.params.dataset = self.datasetRecordIRI;
                 }
-
-                $rootScope.showSpinner = true;
-                $http.get(prefix, config)
-                    .then(onSuccess, onError)
-                    .then(() => {
-                        $rootScope.showSpinner = false;
-                    });
+                $http.get(prefix + '/page', config)
+                    .then(onSuccess, response => self.errorMessage = getMessage(response));
             }
             /**
              * @ngdoc method
-             * @name getResults
+             * @name setResults
              * @methodOf sparqlManager.service:sparqlManagerService
              *
              * @description
-             * Uses the passed URL to get the next page of results from a SPARQL query. Expects a URL using the
-             * GET /sparql/page REST endpoint and sets the results to
-             * {@link sparqlManager.service:sparqlManagerService#data data}.
+             * Sets the results of a SPARQL query to the appropriate state variables using the passed HTTP
+             * response containing the results.
+             *
+             * @param {Object} response A HTTP response object containing paginated SPARQL query results
              */
-            self.getResults = function(url) {
-                $rootScope.showSpinner = true;
-                $http.get(url)
-                    .then(onSuccess, onError)
-                    .then(() => {
-                        $rootScope.showSpinner = false;
-                    });
+            self.setResults = function(url) {
+                util.getResultsPage(url, response => $q.reject(getMessage(response)))
+                    .then(onSuccess, errorMessage => self.errorMessage = errorMessage);
             }
 
-            function getMessage(response, defaultMessage) {
-                return _.get(response, 'statusText') || defaultMessage;
-            }
             function onSuccess(response) {
-                if (_.get(response, 'status') === 200) {
-                    self.data = response.data;
+                if (_.get(response, 'data.bindings', []).length) {
+                    self.bindings = response.data.bindings;
+                    self.data = response.data.data;
+                    var headers = response.headers();
+                    self.totalSize = _.get(headers, 'x-total-count', 0);
+                    var links = util.parseLinks(_.get(headers, 'link', ''));
+                    self.links.prev = _.get(links, 'prev', '');
+                    self.links.next = _.get(links, 'next', '');
                 } else {
-                    self.infoMessage = getMessage(response, 'There was a problem getting the results.');
+                    self.infoMessage = 'There were no results for the submitted query.';
                 }
             }
-            function onError(response) {
-                self.errorMessage = getMessage(response, 'A server error has occurred. Please try again later.');
+            function getMessage(response) {
+                self.errorDetails = _.get(response, 'data.details', '');
+                return util.getErrorMessage(response, 'A server error has occurred. Please try again later.');
+            }
+            function getPrefixString() {
+                return self.prefixes.length ? 'PREFIX ' + _.join(self.prefixes, '\nPREFIX ') + '\n\n' : '';
             }
         }
 })();

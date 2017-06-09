@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.4.1-SNAPSHOT</version>
+        <version>1.8.4-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -41,17 +41,22 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>persistence.api</artifactId>
-            <version>1.3.11</version>
+            <version>1.7.20</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rdf.orm</artifactId>
-            <version>1.3.11</version>
+            <version>${orm.version}</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rdf.orm.ontologies</artifactId>
-            <version>1.3.11</version>
+            <version>1.7.20</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>jaas</artifactId>
+            <version>1.7.20</version>
         </dependency>
         <dependency>
             <groupId>biz.aQute.bnd</groupId>
@@ -71,10 +76,11 @@
                         <Bundle-Name>MatOnto Catalog API</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
-                            org.matonto.catalog.api,
+                            org.matonto.catalog.api.*,
                             org.matonto.catalog.config,
                             org.matonto.catalog.util
                         </Export-Package>
+                        <Service-Component>*</Service-Component>
                         <_metatype>*</_metatype>
                         <build>${maven.build.timestamp}</build>
                         <_snapshot>${maven.build.timestamp}</_snapshot>
@@ -84,7 +90,6 @@
             <plugin>
                 <groupId>org.matonto.orm</groupId>
                 <artifactId>rdf-orm-maven-plugin</artifactId>
-                <version>${project.version}</version>
                 <executions>
                     <execution>
                         <id>generateOrmSources</id>
@@ -98,6 +103,7 @@
                                 <ontology>
                                     <ontologyFile>${project.basedir}/src/main/resources/mcat.ttl</ontologyFile>
                                     <outputPackage>org.matonto.catalog.api.ontologies.mcat</outputPackage>
+                                    <ontologyName>MCAT</ontologyName>
                                 </ontology>
                             </generates>
                             <references>

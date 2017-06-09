@@ -21,88 +21,111 @@
  * #L%
  */
 describe('SPARQL Manager service', function() {
-    var $httpBackend,
-        sparqlManagerSvc,
-        url;
+    var $httpBackend, $httpParamSerializer, sparqlManagerSvc, windowSvc, utilSvc, params;
 
     beforeEach(function() {
         module('sparqlManager');
+        mockUtil();
 
-        inject(function(sparqlManagerService, _$httpBackend_) {
-            sparqlManagerSvc = sparqlManagerService;
-            $httpBackend = _$httpBackend_;
+        module(function($provide) {
+            $provide.service('$window', function() {
+                this.location = '';
+            });
         });
 
-        url = '/matontorest/sparql/page?limit=100&query=&start=0';
+        inject(function(sparqlManagerService, _$httpBackend_, _$httpParamSerializer_, _$window_, _utilService_) {
+            sparqlManagerSvc = sparqlManagerService;
+            $httpBackend = _$httpBackend_;
+            $httpParamSerializer = _$httpParamSerializer_;
+            windowSvc = _$window_;
+            utilSvc = _utilService_;
+        });
+
+        params = { query: sparqlManagerSvc.queryString };
     });
 
-    it('should query the repository', function(done) {
-        var response = {
-            paginatedResults: {
-                links: {},
-                limit: 100,
-                start: 0,
-                results: [],
-                totalSize: 0
-            },
-            bindingNames: []
-        };
+    describe('should query the repository', function() {
+        beforeEach(function() {
+            params.limit = sparqlManagerSvc.limit;
+            params.offset = sparqlManagerSvc.currentPage * sparqlManagerSvc.limit;
+            this.url = '/matontorest/sparql/page?';
+        });
+        it('with a dataset', function() {
+            sparqlManagerSvc.datasetRecordIRI = 'dataset';
+            params.dataset = sparqlManagerSvc.datasetRecordIRI;
+            this.url += $httpParamSerializer(params);
+            $httpBackend.expectGET(this.url).respond(200);
+            sparqlManagerSvc.queryRdf();
+            $httpBackend.flush();
+            expect(true).toBe(true);
+        });
+        it('unless an error occurs', function() {
+            this.url += $httpParamSerializer(params);
+            var statusMessage = 'Error message';
+            var details = 'Details';
+            utilSvc.getErrorMessage.and.returnValue(statusMessage);
+            $httpBackend.expectGET(this.url).respond(400, {details: details}, undefined, statusMessage);
+            sparqlManagerSvc.queryRdf();
+            $httpBackend.flush();
 
-        $httpBackend
-            .expectGET(url)
-            .respond(200, response);
-        sparqlManagerSvc.queryRdf();
-        $httpBackend.flush();
+            expect(sparqlManagerSvc.errorMessage).toEqual(statusMessage);
+            expect(sparqlManagerSvc.errorDetails).toEqual(details);
+            expect(sparqlManagerSvc.currentPage).toBe(0);
+            expect(sparqlManagerSvc.data).toBeUndefined();
+        });
+        it('when returning no bindings', function(done) {
+            this.url += $httpParamSerializer(params);
+            $httpBackend.expectGET(this.url).respond(200, {bindings: [], data: []});
+            sparqlManagerSvc.queryRdf();
+            $httpBackend.flush();
 
-        expect(sparqlManagerSvc.data).toEqual(response);
-        done();
+            expect(sparqlManagerSvc.infoMessage).toEqual('There were no results for the submitted query.');
+            expect(sparqlManagerSvc.currentPage).toBe(0);
+            expect(sparqlManagerSvc.data).toBeUndefined();
+            done();
+        });
+        it('when returning bindings', function(done) {
+            this.url += $httpParamSerializer(params);
+            var nextLink = 'http://example.com/next';
+            var prevLink = 'http://example.com/prev';
+            var headers = {
+                'X-Total-Count': '10'
+            };
+            utilSvc.parseLinks.and.returnValue({next: nextLink, prev: prevLink});
+            $httpBackend.expectGET(this.url).respond(200, {bindings: [''], data: []}, headers);
+            sparqlManagerSvc.queryRdf();
+            $httpBackend.flush();
+
+            expect(sparqlManagerSvc.data).toEqual([]);
+            expect(sparqlManagerSvc.bindings).toEqual(['']);
+            expect(sparqlManagerSvc.totalSize).toEqual(headers['X-Total-Count']);
+            expect(sparqlManagerSvc.links.next).toEqual(nextLink);
+            expect(sparqlManagerSvc.links.prev).toEqual(prevLink);
+            done();
+        });
     });
-    it('should set infoMessage', function(done) {
-        var statusMessage = 'Status Message';
+    describe('should download query results', function() {
+        beforeEach(function() {
+            params.fileType = 'csv';
+        });
+        it('with a dataset', function() {
+            sparqlManagerSvc.datasetRecordIRI = 'dataset';
+            params.dataset = sparqlManagerSvc.datasetRecordIRI;
+            sparqlManagerSvc.downloadResults(params.fileType);
+            expect(windowSvc.location).toBe('/matontorest/sparql?' + $httpParamSerializer(params));
+        });
+        it('with a file name', function() {
+            params.fileName = 'test';
+            sparqlManagerSvc.downloadResults(params.fileType, params.fileName);
+            expect(windowSvc.location).toBe('/matontorest/sparql?' + $httpParamSerializer(params));
+        });
+        it('without a file name', function() {
+            sparqlManagerSvc.downloadResults(params.fileType);
+            expect(windowSvc.location).toBe('/matontorest/sparql?' + $httpParamSerializer(params));
 
-        $httpBackend
-            .expectGET(url)
-            .respond(204, undefined, undefined, statusMessage);
-        sparqlManagerSvc.queryRdf();
-        $httpBackend.flush();
-
-        expect(sparqlManagerSvc.infoMessage).toEqual(statusMessage);
-        done();
-    });
-    it('should set infoMessage to default if not provided', function(done) {
-        var defaultStatusMessage = 'There was a problem getting the results.';
-
-        $httpBackend
-            .expectGET(url)
-            .respond(204);
-        sparqlManagerSvc.queryRdf();
-        $httpBackend.flush();
-
-        expect(sparqlManagerSvc.infoMessage).toEqual(defaultStatusMessage);
-        done();
-    });
-    it('should set errorMessage', function(done) {
-        var statusMessage = 'Status Message';
-
-        $httpBackend
-            .expectGET(url)
-            .respond(400, undefined, undefined, statusMessage);
-        sparqlManagerSvc.queryRdf();
-        $httpBackend.flush();
-
-        expect(sparqlManagerSvc.errorMessage).toEqual(statusMessage);
-        done();
-    });
-    it('should set errorMessage to default if not provided', function(done) {
-        var defaultStatusMessage = 'A server error has occurred. Please try again later.';
-
-        $httpBackend
-            .expectGET(url)
-            .respond(400);
-        sparqlManagerSvc.queryRdf();
-        $httpBackend.flush();
-
-        expect(sparqlManagerSvc.errorMessage).toEqual(defaultStatusMessage);
-        done();
+            windowSvc.location = '';
+            sparqlManagerSvc.downloadResults(params.fileType, '');
+            expect(windowSvc.location).toBe('/matontorest/sparql?' + $httpParamSerializer(params));
+        });
     });
 });

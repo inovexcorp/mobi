@@ -27,9 +27,11 @@
         .module('openOntologyTab', [])
         .directive('openOntologyTab', openOntologyTab);
 
-        openOntologyTab.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService'];
+        openOntologyTab.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'prefixes',
+            'stateManagerService', 'utilService'];
 
-        function openOntologyTab($filter, ontologyManagerService, ontologyStateService) {
+        function openOntologyTab($filter, ontologyManagerService, ontologyStateService, prefixes,
+            stateManagerService, utilService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -40,22 +42,23 @@
                 controllerAs: 'dvm',
                 controller: ['$scope', function($scope) {
                     var dvm = this;
+                    var sm = stateManagerService;
+                    var ontologyRecords = [];
+
                     dvm.om = ontologyManagerService;
-                    dvm.sm = ontologyStateService;
+                    dvm.os = ontologyStateService;
+                    dvm.util = utilService;
                     dvm.begin = 0;
-                    dvm.limit = 20;
-                    dvm.filteredIds = dvm.om.ontologyIds;
+                    dvm.limit = 10;
+                    dvm.filteredList = [];
                     dvm.type = 'ontology';
 
-                    dvm.open = function(id, type) {
-                        dvm.om.openOntology(id, type)
+                    dvm.open = function() {
+                        dvm.os.openOntology(dvm.recordId, dvm.type)
                             .then(ontologyId => {
-                                var listItem = dvm.om.getListItemById(ontologyId);
-                                dvm.sm.addState(ontologyId, dvm.om.getOntologyIRI(listItem.ontology), type);
-                                dvm.sm.setState(ontologyId);
-                            }, errorMessage => {
-                                dvm.errorMessage = errorMessage;
-                            });
+                                dvm.os.addState(dvm.recordId, ontologyId, dvm.type);
+                                dvm.os.setState(dvm.recordId);
+                            }, errorMessage => dvm.errorMessage = errorMessage);
                     }
 
                     dvm.getPage = function(direction) {
@@ -66,33 +69,50 @@
                         }
                     }
 
-                    dvm.showDeleteConfirmationOverlay = function(ontologyId) {
-                        dvm.ontologyId = ontologyId;
+                    dvm.showDeleteConfirmationOverlay = function(record) {
+                        dvm.recordId = _.get(record, '@id', '');
+                        dvm.recordTitle = dvm.util.getDctermsValue(record, 'title');
                         dvm.errorMessage = '';
                         dvm.showDeleteConfirmation = true;
                     }
 
                     dvm.deleteOntology = function() {
-                        dvm.om.deleteOntology(dvm.ontologyId)
-                            .then(
-                                response => dvm.showDeleteConfirmation = false,
-                                errorMessage => dvm.errorMessage = errorMessage
-                            );
+                        dvm.om.deleteOntology(dvm.recordId)
+                            .then(response => {
+                                _.remove(ontologyRecords, record => _.get(record, '@id', '') === dvm.recordId);
+                                var state = sm.getOntologyStateByRecordId(dvm.recordId);
+                                if (!_.isEmpty(state)) {
+                                    sm.deleteState(_.get(state, 'id', ''));
+                                }
+                                dvm.showDeleteConfirmation = false;
+                            }, errorMessage => dvm.errorMessage = errorMessage);
                     }
 
-                    dvm.download = function(id) {
-                        dvm.sm.downloadId = id;
-                        dvm.sm.showDownloadOverlay = true;
+                    dvm.getAllOntologyRecords = function(sortingOption) {
+                        dvm.om.getAllOntologyRecords(sortingOption)
+                            .then(records => {
+                                ontologyRecords = records;
+                                dvm.filteredList = getFilteredRecords(ontologyRecords);
+                            });
                     }
 
-                    $scope.$watch(
-                        function watchFilterText(scope) {
-                            return(dvm.filterText + dvm.om.ontologyIds);
-                        },
-                        function handleFilterTextChange(newValue, oldValue) {
-                            dvm.filteredIds = $filter('filter')(dvm.om.ontologyIds, dvm.filterText);
-                        }
-                    );
+                    $scope.$watch(function() {
+                        return dvm.filterText + dvm.os.list + ontologyRecords;
+                    }, function handleFilterTextChange(newValue, oldValue) {
+                        dvm.filteredList = $filter('filter')(getFilteredRecords(ontologyRecords), dvm.filterText,
+                            (actual, expected) => {
+                                expected = _.lowerCase(expected);
+                                return _.includes(_.lowerCase(dvm.util.getDctermsValue(actual, 'title')), expected)
+                                    || _.includes(_.lowerCase(dvm.util.getDctermsValue(actual, 'description')), expected)
+                                    || _.includes(_.lowerCase(dvm.util.getDctermsValue(actual, 'identifier')), expected);
+                            });
+                    });
+
+                    dvm.getAllOntologyRecords();
+
+                    function getFilteredRecords(records) {
+                        return _.reject(records, record => _.find(dvm.os.list, {recordId: record['@id']}));
+                    }
                 }]
             }
         }

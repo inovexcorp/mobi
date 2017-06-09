@@ -27,9 +27,9 @@
         .module('importsBlock', [])
         .directive('importsBlock', importsBlock);
 
-        importsBlock.$inject = ['ontologyStateService', 'prefixes'];
+        importsBlock.$inject = ['$q', 'ontologyStateService', 'prefixes', 'utilService', 'propertyManagerService'];
 
-        function importsBlock(ontologyStateService, prefixes) {
+        function importsBlock($q, ontologyStateService, prefixes, utilService, propertyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,8 +38,34 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
+                    var util = utilService;
+                    var pm = propertyManagerService;
                     dvm.prefixes = prefixes;
-                    dvm.sm = ontologyStateService;
+                    dvm.os = ontologyStateService;
+                    dvm.showNewOverlay = false;
+                    dvm.showRemoveOverlay = false;
+
+                    dvm.setupRemove = function(url) {
+                        dvm.url = url;
+                        dvm.showRemoveOverlay = true;
+                    }
+
+                    dvm.remove = function() {
+                        var importsIRI = dvm.prefixes.owl + 'imports';
+                        dvm.os.addToDeletions(dvm.os.listItem.recordId, util.createJson(dvm.os.selected['@id'], importsIRI, {'@id': dvm.url}));
+                        pm.remove(dvm.os.selected, importsIRI, _.findIndex(dvm.os.selected[importsIRI], {'@id': dvm.url}));
+                        dvm.os.saveChanges(dvm.os.listItem.recordId, {additions: dvm.os.listItem.additions, deletions: dvm.os.listItem.deletions})
+                            .then(() => dvm.os.afterSave(), $q.reject)
+                            .then(() => dvm.os.updateOntology(dvm.os.listItem.recordId, dvm.os.listItem.branchId, dvm.os.listItem.commitId, dvm.os.listItem.type, dvm.os.listItem.upToDate, dvm.os.listItem.inProgressCommit), $q.reject)
+                            .then(() => {
+                                dvm.os.listItem.isSaved = dvm.os.isCommittable(dvm.os.listItem.recordId);
+                                dvm.showRemoveOverlay = false;
+                            }, errorMessage => dvm.error = errorMessage);
+                    }
+
+                    dvm.get = function(obj) {
+                        return _.get(obj, '@id');
+                    }
                 }
             }
         }
