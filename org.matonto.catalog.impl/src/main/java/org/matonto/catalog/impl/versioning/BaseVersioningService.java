@@ -32,7 +32,6 @@ import org.matonto.catalog.api.ontologies.mcat.BranchFactory;
 import org.matonto.catalog.api.ontologies.mcat.Commit;
 import org.matonto.catalog.api.ontologies.mcat.CommitFactory;
 import org.matonto.catalog.api.ontologies.mcat.InProgressCommit;
-import org.matonto.catalog.api.ontologies.mcat.Record;
 import org.matonto.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import org.matonto.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
 import org.matonto.catalog.api.versioning.VersioningService;
@@ -101,8 +100,8 @@ public class BaseVersioningService implements VersioningService<VersionedRDFReco
     }
 
     @Override
-    public void removeInProgressCommit(Resource commitId, RepositoryConnection conn) {
-        catalogUtils.remove(commitId, conn);
+    public void removeInProgressCommit(InProgressCommit commit, RepositoryConnection conn) {
+        catalogUtils.removeObject(commit, conn);
     }
 
     @Override

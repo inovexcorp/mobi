@@ -23,9 +23,13 @@ package org.matonto.rdf.orm.impl;
  * #L%
  */
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.when;
+
 import org.junit.Before;
 import org.junit.Test;
-import org.matonto.exception.MatOntoException;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
@@ -39,11 +43,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.when;
 
 public class OrmFactoryRegistryImplTest {
     private OrmFactoryRegistryImpl registry;
@@ -220,5 +219,29 @@ public class OrmFactoryRegistryImplTest {
     public void getFactoriesByTypeIriThatDoesNotExistTest() throws Exception {
         List<OrmFactory> result = registry.getFactoriesOfType(errorIRI);
         assertEquals(0, result.size());
+    }
+
+    @Test
+    public void getSortedFactoriesByTypeClassTest() throws Exception {
+        List<OrmFactory> result = registry.getSortedFactoriesOfType(A.class);
+        assertEquals(result.get(0), cFactory);
+        assertEquals(result.get(1), bFactory);
+        assertEquals(result.get(2), aFactory);
+    }
+
+    @Test
+    public void getSortedFactoriesByTypeStringTest() throws Exception {
+        List<OrmFactory> result = registry.getSortedFactoriesOfType(A.TYPE);
+        assertEquals(result.get(0), cFactory);
+        assertEquals(result.get(1), bFactory);
+        assertEquals(result.get(2), aFactory);
+    }
+
+    @Test
+    public void getSortedFactoriesByTypeIRITest() throws Exception {
+        List<OrmFactory> result = registry.getSortedFactoriesOfType(aIRI);
+        assertEquals(result.get(0), cFactory);
+        assertEquals(result.get(1), bFactory);
+        assertEquals(result.get(2), aFactory);
     }
 }

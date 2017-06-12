@@ -121,10 +121,10 @@ public interface VersioningService<T extends VersionedRDFRecord> {
                      Commit auxCommit, RepositoryConnection conn);
 
     /**
-     * Removes the {@link InProgressCommit} identified by the provided Resource.
+     * Removes the provided {@link InProgressCommit} from the Repository.
      *
-     * @param commitId The Resource identifying the InProgressCommit which will be removed.
+     * @param commit The InProgressCommit which will be removed.
      * @param conn A RepositoryConnection to use for lookup.
      */
-    void removeInProgressCommit(Resource commitId, RepositoryConnection conn);
+    void removeInProgressCommit(InProgressCommit commit, RepositoryConnection conn);
 }

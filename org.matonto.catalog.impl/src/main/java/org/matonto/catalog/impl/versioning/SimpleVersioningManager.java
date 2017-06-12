@@ -108,7 +108,7 @@ public class SimpleVersioningManager implements VersioningManager {
             Commit newCommit = service.createCommit(inProgressCommit, message, head, null);
             conn.begin();
             service.addCommit(branch, newCommit, conn);
-            service.removeInProgressCommit(inProgressCommit.getResource(), conn);
+            service.removeInProgressCommit(inProgressCommit, conn);
             conn.commit();
             return newCommit.getResource();
         }

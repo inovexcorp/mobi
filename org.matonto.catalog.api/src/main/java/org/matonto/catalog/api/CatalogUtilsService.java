@@ -89,6 +89,18 @@ public interface CatalogUtilsService {
     <T extends Thing> void updateObject(T object, RepositoryConnection conn);
 
     /**
+     * Retrieves an object identified by the provided Resource from the Repository using the provided OrmFactory if
+     * found.
+     *
+     * @param id The Resource identifying the object to retrieve.
+     * @param factory The OrmFactory which specifies the type the object should be.
+     * @param conn A RepositoryConnection to use for lookup.
+     * @param <T> A Class that extends Thing.
+     * @return The identified object if found; empty Optional otherwise.
+     */
+    <T extends Thing> Optional<T> optObject(Resource id, OrmFactory<T> factory, RepositoryConnection conn);
+
+    /**
      * Retrieves an object identified by the provided Resource from the Repository using the provided OrmFactory.
      * Throws a IllegalArgumentException if the object cannot be found.
      *
@@ -102,16 +114,12 @@ public interface CatalogUtilsService {
     <T extends Thing> T getObject(Resource id, OrmFactory<T> factory, RepositoryConnection conn);
 
     /**
-     * Retrieves an object identified by the provided Resource from the Repository using the provided OrmFactory if
-     * found.
+     * Removes the object identified by the provided Resource.
      *
-     * @param id The Resource identifying the object to retrieve.
-     * @param factory The OrmFactory which specifies the type the object should be.
+     * @param resourceId The Resource identifying the object to be removed.
      * @param conn A RepositoryConnection to use for lookup.
-     * @param <T> A Class that extends Thing.
-     * @return The identified object if found; empty Optional otherwise.
      */
-    <T extends Thing> Optional<T> optObject(Resource id, OrmFactory<T> factory, RepositoryConnection conn);
+    void remove(Resource resourceId, RepositoryConnection conn);
 
     /**
      * Removes the provided Object from the Repository.
@@ -121,14 +129,6 @@ public interface CatalogUtilsService {
      * @param <T> A Class that extends Thing.
      */
     <T extends Thing> void removeObject(T object, RepositoryConnection conn);
-
-    /**
-     * Removes the object identified by the provided Resource.
-     *
-     * @param resourceId The Resource identifying the object to be removed.
-     * @param conn A RepositoryConnection to use for lookup.
-     */
-    void remove(Resource resourceId, RepositoryConnection conn);
 
     /**
      * Tests the path to a Record using the provided Resources and IRI of a subclass of Record. If a portion of the

@@ -182,8 +182,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     @Override
     public void testObjectId(Resource objectId, IRI classId, RepositoryConnection conn) {
         if (!resourceExists(objectId, classId.stringValue(), conn)) {
-            throw new IllegalArgumentException(classId.getLocalName() + " " + objectId.stringValue()
-                    + " could not be found.");
+            throw new IllegalArgumentException(classId.getLocalName() + " " + objectId + " could not be found");
         }
     }
 
@@ -199,26 +198,25 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     }
 
     @Override
-    public <T extends Thing> T getObject(Resource id, OrmFactory<T> factory, RepositoryConnection conn) {
-        return optObject(id, factory, conn).orElseThrow(() ->
-                new IllegalArgumentException(factory.getTypeIRI().getLocalName() + " " + id.stringValue()
-                        + " could not be found"));
-    }
-
-    @Override
     public <T extends Thing> Optional<T> optObject(Resource id, OrmFactory<T> factory, RepositoryConnection conn) {
         Model model = RepositoryResults.asModel(conn.getStatements(null, null, null, id), mf);
         return factory.getExisting(id, model);
     }
 
     @Override
-    public <T extends Thing> void removeObject(T object, RepositoryConnection conn) {
-        remove(object.getResource(), conn);
+    public <T extends Thing> T getObject(Resource id, OrmFactory<T> factory, RepositoryConnection conn) {
+        return optObject(id, factory, conn).orElseThrow(() ->
+                new IllegalArgumentException(factory.getTypeIRI().getLocalName() + " " + id + " could not be found"));
     }
 
     @Override
     public void remove(Resource resourceId, RepositoryConnection conn) {
         conn.remove((Resource) null, null, null, resourceId);
+    }
+
+    @Override
+    public <T extends Thing> void removeObject(T object, RepositoryConnection conn) {
+        remove(object.getResource(), conn);
     }
 
     @Override
@@ -243,7 +241,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         UnversionedRecord record = getRecord(catalogId, recordId, unversionedRecordFactory, conn);
         Set<Resource> distributionIRIs = record.getUnversionedDistribution_resource();
         if (!distributionIRIs.contains(distributionId)) {
-            throw throwDoesNotBelong(distributionId, distributionFactory, recordId, recordFactory);
+            throw throwDoesNotBelong(distributionId, distributionFactory, recordId, unversionedRecordFactory);
         }
     }
 
@@ -259,7 +257,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         VersionedRecord record = getRecord(catalogId, recordId, versionedRecordFactory, conn);
         Set<Resource> versionIRIs = record.getVersion_resource();
         if (!versionIRIs.contains(versionId)) {
-            throw throwDoesNotBelong(versionId, versionFactory, recordId, recordFactory);
+            throw throwDoesNotBelong(versionId, versionFactory, recordId, versionedRecordFactory);
         }
     }
 
@@ -292,6 +290,13 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         testBranchPath(record, branchId);
     }
 
+    private void testBranchPath(VersionedRDFRecord record, Resource branchId) {
+        Set<Resource> branchIRIs = record.getBranch_resource();
+        if (!branchIRIs.contains(branchId)) {
+            throw throwDoesNotBelong(branchId, branchFactory, record.getResource(), versionedRDFRecordFactory);
+        }
+    }
+
     @Override
     public <T extends Branch> T getBranch(Resource catalogId, Resource recordId, Resource branchId,
                                           OrmFactory<T> factory, RepositoryConnection conn) {
@@ -308,8 +313,8 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
 
     @Override
     public Resource getHeadCommitIRI(Branch branch) {
-        return branch.getHead_resource().orElseThrow(() -> new IllegalStateException("Branch "
-                + branch.getResource().stringValue() + " does not have a head Commit set."));
+        return branch.getHead_resource().orElseThrow(() -> new IllegalStateException("Branch " + branch.getResource()
+                + " does not have a head Commit set"));
     }
 
     @Override
@@ -318,9 +323,9 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         testRecordPath(catalogId, recordId, versionedRDFRecordFactory.getTypeIRI(), conn);
         InProgressCommit commit = getObject(commitId, inProgressCommitFactory, conn);
         Resource onRecord = commit.getOnVersionedRDFRecord_resource().orElseThrow(() ->
-                new IllegalStateException("Record was not set on InProgressCommit " + commitId.stringValue()));
+                new IllegalStateException("Record was not set on InProgressCommit " + commitId));
         if (!onRecord.equals(recordId)) {
-            throw throwDoesNotBelong(commitId, commitFactory, recordId, recordFactory);
+            throw throwDoesNotBelong(commitId, inProgressCommitFactory, recordId, versionedRDFRecordFactory);
         }
     }
 
@@ -371,8 +376,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     public void addCommit(Branch branch, Commit commit, RepositoryConnection conn) {
         if (!resourceExists(commit.getResource(), conn)) {
             branch.setHead(commit);
-            removeObject(branch, conn);
-            addObject(branch, conn);
+            updateObject(branch, conn);
             addObject(commit, conn);
         } else {
             throw throwAlreadyExists(commit.getResource(), commitFactory);
@@ -384,7 +388,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         RepositoryResult<Statement> results = conn.getStatements(null, vf.createIRI(Revision.additions_IRI), null,
                 commitId);
         if (!results.hasNext()) {
-            throw new IllegalStateException("Additions not set on Commit " + commitId.stringValue());
+            throw new IllegalStateException("Additions not set on Commit " + commitId);
         }
         return (Resource) results.next().getObject();
     }
@@ -394,7 +398,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         Set<Value> values = mf.createModel(commit.getModel()).filter(null, vf.createIRI(Revision.additions_IRI), null)
                 .objects();
         if (values.isEmpty()) {
-            throw new IllegalStateException("Additions not set on Commit " + commit.getResource().stringValue());
+            throw new IllegalStateException("Additions not set on Commit " + commit.getResource());
         }
         return (Resource) new ArrayList<>(values).get(0);
     }
@@ -404,7 +408,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         RepositoryResult<Statement> results = conn.getStatements(null, vf.createIRI(Revision.deletions_IRI), null,
                 commitId);
         if (!results.hasNext()) {
-            throw new IllegalStateException("Deletions not set on Commit " + commitId.stringValue());
+            throw new IllegalStateException("Deletions not set on Commit " + commitId);
         }
         return (Resource) results.next().getObject();
     }
@@ -414,7 +418,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         Set<Value> values = mf.createModel(commit.getModel()).filter(null, vf.createIRI(Revision.deletions_IRI), null)
                 .objects();
         if (values.isEmpty()) {
-            throw new IllegalStateException("Deletions not set on Commit " + commit.getResource().stringValue());
+            throw new IllegalStateException("Deletions not set on Commit " + commit.getResource());
         }
         return (Resource) new ArrayList<>(values).get(0);
     }
@@ -436,8 +440,8 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
 
     @Override
     public <T extends Thing> IllegalArgumentException throwAlreadyExists(Resource id, OrmFactory<T> factory) {
-        return new IllegalArgumentException(factory.getTypeIRI().getLocalName() + " " + id.stringValue()
-                + " already exists");
+        return new IllegalArgumentException(String.format("%s %s already exists", factory.getTypeIRI().getLocalName(),
+                id));
     }
 
     @Override
@@ -445,20 +449,13 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
                                                                                           OrmFactory<T> childFactory,
                                                                                           Resource parent,
                                                                                           OrmFactory<S> parentFactory) {
-        return new IllegalArgumentException(childFactory.getTypeIRI().getLocalName() + " " + child.stringValue()
-                + " does not belong to " + parentFactory.getTypeIRI().getLocalName() + " " + parent.stringValue());
+        return new IllegalArgumentException(String.format("%s %s does not belong to %s %s",
+                childFactory.getTypeIRI().getLocalName(), child, parentFactory.getTypeIRI().getLocalName(), parent));
     }
 
     @Override
     public <T extends Thing> IllegalStateException throwThingNotFound(Resource id, OrmFactory<T> factory) {
-        return new IllegalStateException(factory.getTypeIRI().getLocalName() + " " + id.stringValue()
-                + " could not be found");
-    }
-
-    private void testBranchPath(VersionedRDFRecord record, Resource branchId) {
-        Set<Resource> branchIRIs = record.getBranch_resource();
-        if (!branchIRIs.contains(branchId)) {
-            throw throwDoesNotBelong(branchId, branchFactory, record.getResource(), versionedRDFRecordFactory);
-        }
+        return new IllegalStateException(String.format("%s %s could not be found", factory.getTypeIRI().getLocalName(),
+                id));
     }
 }
