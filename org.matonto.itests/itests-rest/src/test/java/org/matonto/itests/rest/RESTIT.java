@@ -23,31 +23,51 @@ package org.matonto.itests.rest;
  * #L%
  */
 
+//import static com.sun.deploy.util.URLUtil.encodePath;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import javax.inject.Inject;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLSession;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Optional;
+import java.security.GeneralSecurityException;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 
 import net.sf.json.JSONObject;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.conn.ssl.TrustStrategy;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.util.EntityUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.matonto.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import org.matonto.itests.support.KarafTestSupport;
+import org.matonto.rdf.api.IRI;
+import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.ValueFactory;
+import org.matonto.repository.api.Repository;
+import org.matonto.repository.api.RepositoryConnection;
 import org.ops4j.pax.exam.junit.PaxExam;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
@@ -58,9 +78,14 @@ import org.osgi.framework.BundleContext;
 public class RESTIT extends KarafTestSupport {
 
     private static Boolean setupComplete = false;
+    private static String userName = "admin";
+    private static String password = "admin";
+    private static String baseUrl = "https://localhost:9082/matontorest";
 
     @Inject
     protected static BundleContext thisBundleContext;
+
+    private HttpClientContext context = HttpClientContext.create();
 
     @Before
     public synchronized void setup() throws Exception {
@@ -72,56 +97,99 @@ public class RESTIT extends KarafTestSupport {
         String vocabulary = "test-vocabulary.ttl";
         Files.copy(getBundleEntry(thisBundleContext, "/" + vocabulary), Paths.get(vocabulary));
 
-        waitForService("(&(objectClass=org.matonto.catalog.rest.impl.CatalogRestImpl))", 10000L);
-        waitForService("(&(objectClass=org.matonto.ontology.rest.impl.OntologyRestImpl))", 10000L);
+        waitForService("(&(objectClass=org.matonto.catalog.rest.impl.CatalogRest))", 10000L);
+        waitForService("(&(objectClass=org.matonto.ontology.rest.impl.OntologyRest))", 10000L);
         waitForService("(&(objectClass=org.matonto.ontology.orm.impl.ThingFactory))", 10000L);
         waitForService("(&(objectClass=org.matonto.rdf.orm.conversion.ValueConverterRegistry))", 10000L);
+        waitForService("(&(objectClass=org.matonto.rdf.api.ValueFactory))", 10000L);
 
         setupComplete = true;
     }
 
     @Test
     public void testDeleteOntology() throws Exception {
-        Optional<String> ontologyId;
+        String recordId, branchId, commitId;
+        ValueFactory vf = getOsgiService(ValueFactory.class);
         HttpEntity entity = createFormData("/test-ontology.ttl", "Test Ontology");
 
-        try (CloseableHttpResponse response = uploadFile(entity)) {
+        try (CloseableHttpResponse response = uploadFile(createHttpClient(), entity)) {
             assertTrue(response.getStatusLine().getStatusCode() == HttpStatus.SC_CREATED);
             JSONObject object = JSONObject.fromObject(EntityUtils.toString(response.getEntity()));
-            ontologyId = Optional.ofNullable(object.get("recordId").toString());
-            assertTrue(ontologyId.isPresent());
+            recordId = object.get("recordId").toString();
+            branchId = object.get("branchId").toString();
+            commitId = object.get("commitId").toString();
+            assertNotNull(recordId);
+            assertNotNull(branchId);
+            assertNotNull(commitId);
+            assertFalse(recordId.isEmpty());
+            assertFalse(branchId.isEmpty());
+            assertFalse(commitId.isEmpty());
         }
 
-        ontologyId.ifPresent(id -> {
-            try (CloseableHttpResponse response = deleteOntology(id)) {
-                assertTrue(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK);
-            } catch (IOException e) {
-                fail("Exception thrown: " + e.getLocalizedMessage());
-            }
-        });
+        try (CloseableHttpResponse response = deleteOntology(createHttpClient(), recordId)) {
+            assertNotNull(response);
+            assertTrue(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK);
+            validateOntologyDeleted(vf.createIRI(recordId), vf.createIRI(branchId), vf.createIRI(commitId));
+        } catch (IOException | GeneralSecurityException e) {
+            fail("Exception thrown: " + e.getLocalizedMessage());
+        }
     }
 
     @Test
     public void testDeleteVocabulary() throws Exception {
-        Optional<String> vocabularyId;
+        String recordId, branchId, commitId;
+        ValueFactory vf = getOsgiService(ValueFactory.class);
         HttpEntity entity = createFormData("/test-vocabulary.ttl", "Test Vocabulary");
 
-        try (CloseableHttpResponse response = uploadFile(entity)) {
+        try (CloseableHttpResponse response = uploadFile(createHttpClient(), entity)) {
             assertTrue(response.getStatusLine().getStatusCode() == HttpStatus.SC_CREATED);
             JSONObject object = JSONObject.fromObject(EntityUtils.toString(response.getEntity()));
-            vocabularyId = Optional.ofNullable(object.get("recordId").toString());
-            assertTrue(vocabularyId.isPresent());
+            recordId = object.get("recordId").toString();
+            branchId = object.get("branchId").toString();
+            commitId = object.get("commitId").toString();
+            assertNotNull(recordId);
+            assertNotNull(branchId);
+            assertNotNull(commitId);
+            assertFalse(recordId.isEmpty());
+            assertFalse(branchId.isEmpty());
+            assertFalse(commitId.isEmpty());
         }
 
-        vocabularyId.ifPresent(id -> {
-            try (CloseableHttpResponse response = deleteOntology(id)) {
-                assertTrue(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK);
-            } catch (IOException e) {
-                fail("Exception thrown: " + e.getLocalizedMessage());
-            }
-        });
+        try (CloseableHttpResponse response = deleteOntology(createHttpClient(), recordId)) {
+            assertNotNull(response);
+            assertTrue(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK);
+            validateOntologyDeleted(vf.createIRI(recordId), vf.createIRI(branchId), vf.createIRI(commitId));
+        } catch (IOException | GeneralSecurityException e) {
+            fail("Exception thrown: " + e.getLocalizedMessage());
+        }
     }
 
+    private CloseableHttpClient createHttpClient() throws GeneralSecurityException {
+        SSLContextBuilder builder = new SSLContextBuilder();
+        builder.loadTrustMaterial(null, new TrustStrategy() {
+            @Override
+            public boolean isTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+                return true;
+            }
+        });
+        SSLConnectionSocketFactory factory = new SSLConnectionSocketFactory(builder.build(), new HostnameVerifier() {
+            @Override
+            public boolean verify(String s, SSLSession sslSession) {
+                return true;
+            }
+        });
+        return HttpClients.custom().setSSLSocketFactory(factory).build();
+    }
+
+    private void authenticateUser(String username, String password) throws IOException, GeneralSecurityException {
+        try (CloseableHttpClient client = createHttpClient()) {
+            HttpGet get = new HttpGet(baseUrl + "/user/login?password="
+                    + URLEncoder.encode(password, "UTF-8") + "&username=" + URLEncoder.encode(username, "UTF-8"));
+            CloseableHttpResponse response = client.execute(get, context);
+            assertNotNull(response);
+            assertTrue(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK);
+        }
+    }
 
     private HttpEntity createFormData(String filename, String title) throws IOException {
         InputStream ontology = getBundleEntry(thisBundleContext, filename);
@@ -133,22 +201,30 @@ public class RESTIT extends KarafTestSupport {
         return mb.build();
     }
 
-    private CloseableHttpResponse uploadFile(HttpEntity entity) throws IOException {
-        CloseableHttpResponse response;
-        try (CloseableHttpClient client = HttpClients.createDefault()) {
-            HttpPost post = new HttpPost("https://localhost:8443/matontorest/ontologies");
-            post.setEntity(entity);
-            response = client.execute(post);
-        }
-        return response;
+    private CloseableHttpResponse uploadFile(CloseableHttpClient client, HttpEntity entity) throws IOException, GeneralSecurityException {
+        authenticateUser(userName, password);
+        HttpPost post = new HttpPost(baseUrl + "/ontologies");
+        post.setEntity(entity);
+        return client.execute(post, context);
     }
 
-    private CloseableHttpResponse deleteOntology(String recordId) throws IOException {
-        CloseableHttpResponse response;
-        try (CloseableHttpClient client = HttpClients.createDefault()) {
-            HttpDelete delete = new HttpDelete("https://localhost:8443/matontorest/ontologies/" + recordId);
-            response = client.execute(delete);
+    private CloseableHttpResponse deleteOntology(CloseableHttpClient client, String recordId) throws IOException, GeneralSecurityException {
+        authenticateUser(userName, password);
+        HttpDelete delete = new HttpDelete(baseUrl + "/ontologies/" + URLEncoder.encode(recordId, "UTF-8"));
+        return client.execute(delete, context);
+    }
+
+    private void validateOntologyDeleted(Resource recordId, Resource branchId, Resource commitId) {
+        Repository repo = getOsgiService(Repository.class);
+        ValueFactory vf = getOsgiService(ValueFactory.class);
+        IRI branchIRI = vf.createIRI(VersionedRDFRecord.branch_IRI);
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertFalse(conn.getStatements(branchId, null, null, branchId).hasNext());
+            assertFalse(conn.getStatements(branchId, null, null).hasNext());
+            assertFalse(conn.getStatements(recordId, branchIRI, branchId, recordId).hasNext());
+            assertFalse(conn.getStatements(null, null, null, commitId).hasNext());
+
         }
-        return response;
     }
 }
